@@ -12,7 +12,7 @@ import BrandHeader from "@/components/pick/BrandHeader";
 import type { Mood, Context, TimeAvailable, MovieDetail } from "@/lib/tmdb";
 import { getRecommendations } from "@/lib/tmdb";
 
-type Step = "home" | "mood" | "context" | "time" | "platforms" | "result";
+type Step = "home" | "mood" | "context" | "time" | "platforms" | "loading-surprise" | "result";
 
 const STEP_ORDER: Step[] = ["mood", "context", "time", "platforms"];
 const TOTAL_STEPS = STEP_ORDER.length;
@@ -42,6 +42,12 @@ const Index = () => {
   const [chatReason, setChatReason] = useState<string | null>(null);
 
   const handleStart = () => setStep("mood");
+
+  const handleSurprise = (movie: MovieDetail) => {
+    setResults([movie]);
+    setCurrentResultIndex(0);
+    setStep("result");
+  };
 
   const handleOpenChat = () => setShowChat(true);
 
@@ -143,6 +149,7 @@ const Index = () => {
             <HomeScreen
               onStart={handleStart}
               onOpenChat={handleOpenChat}
+              onSurprise={handleSurprise}
               loading={loading}
             />
           </motion.div>
