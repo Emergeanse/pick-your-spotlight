@@ -54,6 +54,7 @@ const Index = () => {
   const [mediaType, setMediaType] = useState<MediaType>("both");
   const [mood, setMood] = useState<Mood | null>(null);
   const [genreIds, setGenreIds] = useState<number[]>([]);
+  const [excludedGenreIds, setExcludedGenreIds] = useState<number[]>([]);
   const [context, setContext] = useState<Context | null>(null);
   const [time, setTime] = useState<TimeAvailable | null>(null);
   const [minRating, setMinRating] = useState(0);
@@ -109,8 +110,9 @@ const Index = () => {
     setStep("genre");
   };
 
-  const handleGenreSelect = (ids: number[]) => {
+  const handleGenreSelect = (ids: number[], excludedIds: number[]) => {
     setGenreIds(ids);
+    setExcludedGenreIds(excludedIds);
     setStep("context");
   };
 
@@ -140,7 +142,7 @@ const Index = () => {
       const finalContext = context || "alone";
       const finalTime = time || "movie-night";
       const finalMediaType = mediaType || "both";
-      const recs = await getRecommendations(finalMood, finalContext, finalTime, platformIds, genreIds, minRating, finalMediaType);
+      const recs = await getRecommendations(finalMood, finalContext, finalTime, platformIds, genreIds, minRating, finalMediaType, excludedGenreIds);
       setLoadingMessage("Presque prêt…");
       await new Promise(r => setTimeout(r, 400));
       const score = computeMatchScore(mood, genreIds, context, time, platformIds, minRating, finalMediaType);
@@ -168,6 +170,7 @@ const Index = () => {
     setMediaType("both");
     setMood(null);
     setGenreIds([]);
+    setExcludedGenreIds([]);
     setContext(null);
     setTime(null);
     setMinRating(0);
@@ -261,6 +264,7 @@ const Index = () => {
                 context,
                 time,
                 genreIds,
+                excludedGenreIds,
                 platformIds: selectedPlatformIds,
                 minRating,
                 mediaType,

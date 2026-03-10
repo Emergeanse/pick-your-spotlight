@@ -20,6 +20,7 @@ interface ResultScreenProps {
     context: Context | null;
     time: TimeAvailable | null;
     genreIds: number[];
+    excludedGenreIds: number[];
     platformIds: number[];
     minRating: number;
     mediaType: MediaType;
@@ -98,6 +99,9 @@ const ResultScreen = ({ movie, onShowAnother, onRestart, hasMore, matchScore, ma
     }
     if (userCriteria.platformIds.length > 0 && providers.length > 0) {
       matchReasons.push(`Sur vos plateformes`);
+    }
+    if (userCriteria.excludedGenreIds.length > 0) {
+      matchReasons.push(`Genres exclus évités`);
     }
   }
 
