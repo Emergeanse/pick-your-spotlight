@@ -1,5 +1,8 @@
 import { motion } from "framer-motion";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, User, LogOut } from "lucide-react";
+import { useAuth } from "@/hooks/use-auth";
+import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 
 interface BrandHeaderProps {
   showBack?: boolean;
@@ -7,12 +10,15 @@ interface BrandHeaderProps {
 }
 
 const BrandHeader = ({ showBack, onBack }: BrandHeaderProps) => {
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
+
   return (
     <motion.div
       initial={{ opacity: 0, y: -8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay: 0.1 }}
-      className="absolute top-0 left-0 z-30 p-3 md:p-6"
+      className="absolute top-0 left-0 right-0 z-30 p-3 md:p-6 flex items-center justify-between"
     >
       {showBack ? (
         <button
@@ -27,6 +33,30 @@ const BrandHeader = ({ showBack, onBack }: BrandHeaderProps) => {
           Pick
         </span>
       )}
+
+      <div className="flex items-center gap-2">
+        {user ? (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={signOut}
+            className="text-foreground/50 hover:text-foreground text-xs font-sans gap-1.5"
+          >
+            <LogOut className="w-3.5 h-3.5" />
+            Déconnexion
+          </Button>
+        ) : (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate("/auth")}
+            className="text-foreground/50 hover:text-foreground text-xs font-sans gap-1.5"
+          >
+            <User className="w-3.5 h-3.5" />
+            Connexion
+          </Button>
+        )}
+      </div>
     </motion.div>
   );
 };

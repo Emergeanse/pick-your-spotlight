@@ -3,8 +3,12 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Mic, Play, Wand2 } from "lucide-react";
 import { getTrendingMovies, getBackdropUrl, getSurpriseRecommendation } from "@/lib/tmdb";
+import { getLikedMovies } from "@/lib/liked-movies";
+import { useAuth } from "@/hooks/use-auth";
+import { supabase } from "@/integrations/supabase/client";
 import type { Movie, MovieDetail } from "@/lib/tmdb";
 import BrandHeader from "./BrandHeader";
+import { useNavigate } from "react-router-dom";
 
 interface HomeScreenProps {
   onStart: () => void;
@@ -14,6 +18,13 @@ interface HomeScreenProps {
 }
 
 const SURPRISE_MESSAGES = [
+  "Analyse de tes goûts…",
+  "Parcours des pépites cachées…",
+  "Un peu de magie…",
+  "Presque prêt…",
+];
+
+const SURPRISE_MESSAGES_ANON = [
   "Analyse de vos envies…",
   "Parcours des pépites cachées…",
   "Un peu de magie…",
@@ -26,6 +37,8 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, loading }: HomeScreenProp
   const [surpriseMsg, setSurpriseMsg] = useState("");
   const [bgImages, setBgImages] = useState<string[]>([]);
   const [currentBgIndex, setCurrentBgIndex] = useState(0);
+  const { user } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
     getTrendingMovies(20).then((movies: Movie[]) => {
@@ -55,24 +68,50 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, loading }: HomeScreenProp
 
   const handleSurprise = async () => {
     setIsSurprising(true);
+    const msgs = user ? SURPRISE_MESSAGES : SURPRISE_MESSAGES_ANON;
     let msgIndex = 0;
-    setSurpriseMsg(SURPRISE_MESSAGES[0]);
+    setSurpriseMsg(msgs[0]);
     const msgInterval = setInterval(() => {
       msgIndex++;
-      if (msgIndex < SURPRISE_MESSAGES.length) {
-        setSurpriseMsg(SURPRISE_MESSAGES[msgIndex]);
+      if (msgIndex < msgs.length) {
+        setSurpriseMsg(msgs[msgIndex]);
       }
     }, 500);
 
     try {
-      const movie = await getSurpriseRecommendation();
+      let movie: MovieDetail;
+
+      if (user) {
+        // Personalized: use liked movies history
+        const liked = await getLikedMovies();
+        if (liked.length >= 2) {
+          const { data, error } = await supabase.functions.invoke("surprise-personalized", {
+            body: { likedMovies: liked },
+          });
+          if (error) throw error;
+          movie = data.movie as MovieDetail;
+        } else {
+          // Not enough history, fall back to random
+          movie = await getSurpriseRecommendation();
+        }
+      } else {
+        movie = await getSurpriseRecommendation();
+      }
+
       clearInterval(msgInterval);
       setSurpriseMsg("✨ Trouvé !");
       await new Promise(r => setTimeout(r, 400));
       onSurprise(movie);
     } catch (e) {
       console.error(e);
-      clearInterval(msgInterval);
+      // Fallback to random
+      try {
+        const movie = await getSurpriseRecommendation();
+        clearInterval(msgInterval);
+        onSurprise(movie);
+      } catch {
+        clearInterval(msgInterval);
+      }
     } finally {
       setIsSurprising(false);
       setSurpriseMsg("");
@@ -107,7 +146,9 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, loading }: HomeScreenProp
             Qu'est-ce qu'on regarde ?
           </h1>
           <p className="text-foreground/50 text-sm md:text-base font-sans font-light mb-8 md:mb-10 max-w-sm mx-auto">
-            Dis-nous ce que tu as envie de voir ou laisse-toi guider
+            {user
+              ? "On te connaît — laisse-nous te surprendre"
+              : "Dis-nous ce que tu as envie de voir ou laisse-toi guider"}
           </p>
         </motion.div>
 

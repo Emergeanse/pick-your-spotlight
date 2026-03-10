@@ -6,6 +6,9 @@ import type { MovieDetail } from "@/lib/tmdb";
 import { getDisplayTitle, getYear, getBackdropUrl, getPosterUrl, getWatchProviders, getMovieTrailerUrl } from "@/lib/tmdb";
 import type { Mood, Context, TimeAvailable } from "@/lib/tmdb";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/use-auth";
+import { likeMovie, unlikeMovie, isMovieLiked } from "@/lib/liked-movies";
+import { toast } from "sonner";
 import BrandHeader from "./BrandHeader";
 
 const IMG_BASE = "https://image.tmdb.org/t/p";
@@ -36,6 +39,9 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
   const [trailerUrl, setTrailerUrl] = useState<string | null>(null);
   const [matchData, setMatchData] = useState<MatchData | null>(null);
   const [matchLoading, setMatchLoading] = useState(false);
+  const [liked, setLiked] = useState(false);
+  const [likeLoading, setLikeLoading] = useState(false);
+  const { user } = useAuth();
 
   const title = getDisplayTitle(movie);
   const year = getYear(movie);
@@ -68,6 +74,37 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
       setMatchLoading(false);
     });
   }, [movie.id]);
+
+  // Check if movie is liked
+  useEffect(() => {
+    if (user) {
+      isMovieLiked(movie.id).then(setLiked).catch(() => {});
+    }
+  }, [movie.id, user]);
+
+  const handleToggleLike = async () => {
+    if (!user) {
+      toast.info("Connecte-toi pour sauvegarder tes films !");
+      return;
+    }
+    setLikeLoading(true);
+    try {
+      if (liked) {
+        await unlikeMovie(movie.id);
+        setLiked(false);
+        toast.success("Film retiré de tes favoris");
+      } else {
+        await likeMovie(movie);
+        setLiked(true);
+        toast.success("Film ajouté à tes favoris !");
+      }
+    } catch (e) {
+      console.error(e);
+      toast.error("Erreur lors de la sauvegarde");
+    } finally {
+      setLikeLoading(false);
+    }
+  };
 
   return (
     <div ref={ref} className="h-full w-full overflow-y-auto">
@@ -249,8 +286,22 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.7 }}
-              className="flex flex-wrap gap-3"
+              className="flex flex-wrap gap-3 items-center"
             >
+              {/* Like button */}
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleToggleLike}
+                disabled={likeLoading}
+                className={`rounded-full w-11 h-11 border transition-all ${
+                  liked
+                    ? "bg-primary/20 border-primary/50 text-primary"
+                    : "border-border/30 text-foreground/50 hover:text-primary hover:border-primary/30"
+                }`}
+              >
+                <Heart className={`w-5 h-5 ${liked ? "fill-primary" : ""}`} />
+              </Button>
               {trailerUrl && (
                 <Button
                   variant="hero"

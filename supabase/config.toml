@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.movie-match]
 verify_jwt = false
+
+[functions.surprise-personalized]
+verify_jwt = false
