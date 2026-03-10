@@ -43,6 +43,12 @@ const Index = () => {
 
   const handleStart = () => setStep("mood");
 
+  const handleSurprise = (movie: MovieDetail) => {
+    setResults([movie]);
+    setCurrentResultIndex(0);
+    setStep("result");
+  };
+
   const handleOpenChat = () => setShowChat(true);
 
   const handleCloseChat = () => setShowChat(false);
