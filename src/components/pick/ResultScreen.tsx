@@ -137,17 +137,54 @@ const ResultScreen = ({ movie, onShowAnother, onRestart, hasMore, userCriteria }
               </motion.div>
             )}
 
-            {/* Mood match tag */}
-            {userCriteria?.mood && (
+            {/* Why it's for you card */}
+            {userCriteria && (
               <motion.div
-                initial={{ opacity: 0, y: 5 }}
+                initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.6 }}
-                className="mb-5 md:mb-7"
+                className="mb-5 md:mb-7 bg-foreground/5 backdrop-blur-md border border-border/30 rounded-xl p-4 max-w-md w-full"
               >
-                <span className="bg-primary/15 text-primary text-[10px] md:text-xs font-sans font-medium px-3 py-1.5 rounded-full border border-primary/20">
-                  Parfait pour une soirée « {moodLabels[userCriteria.mood]} »
-                </span>
+                <p className="text-[11px] md:text-xs font-sans font-semibold text-primary uppercase tracking-widest mb-2.5">
+                  Pourquoi c'est fait pour vous
+                </p>
+                <ul className="space-y-1.5 text-foreground/70 text-xs md:text-sm font-sans font-light">
+                  {userCriteria.mood && (
+                    <li className="flex items-center gap-2">
+                      <span className="w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0" />
+                      Ambiance « {moodLabels[userCriteria.mood]} » — parfait pour votre humeur
+                    </li>
+                  )}
+                  {userCriteria.context && (
+                    <li className="flex items-center gap-2">
+                      <span className="w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0" />
+                      {userCriteria.context === "alone" && "Idéal pour un moment solo"}
+                      {userCriteria.context === "couple" && "Parfait pour une soirée en couple"}
+                      {userCriteria.context === "friends" && "Super choix entre amis"}
+                      {userCriteria.context === "family" && "Adapté pour toute la famille"}
+                    </li>
+                  )}
+                  {userCriteria.time && (
+                    <li className="flex items-center gap-2">
+                      <span className="w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0" />
+                      {userCriteria.time === "short" && "Court — parfait si vous avez peu de temps"}
+                      {userCriteria.time === "movie-night" && "Durée idéale pour votre soirée"}
+                      {userCriteria.time === "episode" && "Mode marathon activé 🍿"}
+                    </li>
+                  )}
+                  {runtime > 0 && (
+                    <li className="flex items-center gap-2">
+                      <span className="w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0" />
+                      {runtime} min — correspond à votre créneau
+                    </li>
+                  )}
+                  {movie.vote_average >= 7 && (
+                    <li className="flex items-center gap-2">
+                      <span className="w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0" />
+                      Très bien noté ({movie.vote_average.toFixed(1)}/10)
+                    </li>
+                  )}
+                </ul>
               </motion.div>
             )}
 

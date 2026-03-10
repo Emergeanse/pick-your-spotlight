@@ -81,7 +81,7 @@ const HomeScreen = ({ onStart, onSurprise, onPickForMe, onMovieSelect, loading }
       <BrandHeader />
 
       {/* Hero Section */}
-      <section className="relative h-[85vh] md:h-[90vh] flex items-end">
+      <section className="relative h-screen flex items-center justify-center">
         {bgImage && (
           <motion.div
             initial={{ opacity: 0, scale: 1.05 }}
@@ -94,7 +94,7 @@ const HomeScreen = ({ onStart, onSurprise, onPickForMe, onMovieSelect, loading }
         <div className="absolute inset-0 bg-gradient-to-t from-background via-background/70 to-background/20" />
         <div className="absolute inset-0 bg-gradient-to-r from-background/80 via-transparent to-transparent" />
 
-        <div className="relative z-10 p-5 md:p-12 lg:p-16 pb-8 md:pb-14 max-w-2xl w-full">
+        <div className="relative z-10 p-5 md:p-12 lg:p-16 max-w-2xl w-full text-center flex flex-col items-center">
           <motion.p
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -163,7 +163,7 @@ const HomeScreen = ({ onStart, onSurprise, onPickForMe, onMovieSelect, loading }
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5, duration: 0.4 }}
-            className="flex flex-wrap gap-3 items-center"
+            className="flex flex-wrap gap-3 items-center justify-center"
           >
             <Button
               variant="hero"
@@ -226,19 +226,6 @@ const HomeScreen = ({ onStart, onSurprise, onPickForMe, onMovieSelect, loading }
         </div>
       </section>
 
-      {/* Discovery sections */}
-      <section className="relative z-10 space-y-8 md:space-y-12 pb-12 md:pb-20 max-w-6xl mx-auto md:px-12">
-        <TrendingRow
-          title="Tendances du moment"
-          fetchFn={getTrendingMovies}
-          onMovieClick={handleMovieClick}
-        />
-        <TrendingRow
-          title="Pépites cachées"
-          fetchFn={getHiddenGems}
-          onMovieClick={handleMovieClick}
-        />
-      </section>
     </div>
   );
 };
