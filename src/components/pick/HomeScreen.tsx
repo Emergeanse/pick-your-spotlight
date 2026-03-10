@@ -65,7 +65,7 @@ const HomeScreen = ({ onStart, onSurprise, onPickForMe, loading }: HomeScreenPro
           transition={{ duration: 0.6 }}
           className="text-5xl md:text-7xl font-serif leading-tight mb-4 tracking-wide"
         >
-          Don't know what to watch tonight?
+          Vous ne savez pas quoi regarder ce soir ?
         </motion.h1>
 
         <motion.p
