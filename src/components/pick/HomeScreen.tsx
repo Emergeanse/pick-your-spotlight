@@ -74,7 +74,7 @@ const HomeScreen = ({ onStart, onSurprise, onPickForMe, loading }: HomeScreenPro
           transition={{ delay: 0.3, duration: 0.5 }}
           className="text-muted-foreground text-lg md:text-xl mb-10 font-light"
         >
-          Find the perfect movie in under 30 seconds.
+          Trouvez le film parfait en moins de 30 secondes.
         </motion.p>
 
         <motion.div
