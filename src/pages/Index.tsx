@@ -230,6 +230,13 @@ const Index = () => {
               hasMore={currentResultIndex < results.length - 1}
               matchScore={matchScore}
               matchLabel={matchLabel}
+              userCriteria={{
+                mood,
+                context,
+                time,
+                genreIds,
+                platformIds: selectedPlatformIds,
+              }}
             />
           </motion.div>
         )}
