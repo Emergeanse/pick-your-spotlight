@@ -24,8 +24,11 @@ const HomeScreen = ({ onStart, onSurprise, loading }: HomeScreenProps) => {
         <h1 className="text-5xl md:text-7xl font-serif leading-tight mb-4 tracking-wide">
           Don't know what to watch?
         </h1>
-        <p className="text-muted-foreground text-lg md:text-xl mb-12 font-light">
+        <p className="text-muted-foreground text-lg md:text-xl mb-3 font-light">
           Pick vous trouve le film parfait en moins de 30 secondes.
+        </p>
+        <p className="text-muted-foreground/60 text-sm mb-12 font-sans">
+          Basé sur votre humeur, votre temps disponible et vos plateformes
         </p>
 
         <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">

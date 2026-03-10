@@ -50,6 +50,10 @@ const ResultScreen = ({ movie, onShowAnother, onRestart, hasMore }: ResultScreen
             transition={{ duration: 0.6, delay: 0.2 }}
             className="max-w-2xl"
           >
+            <p className="text-primary text-xs mb-4 tracking-widest uppercase font-sans font-medium">
+              Recommandé pour vous
+            </p>
+
             {genres && (
               <p className="text-muted-foreground text-sm mb-3 tracking-wider uppercase font-sans">
                 {genres}

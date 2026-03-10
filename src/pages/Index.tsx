@@ -114,7 +114,7 @@ const Index = () => {
         )}
         {step === "platforms" && (
           <FadeWrapper key="platforms">
-            <PlatformStep onSelect={handlePlatformSelect} loading={loading} />
+            <PlatformStep onSelect={handlePlatformSelect} loading={loading} loadingMessage={loadingMessage} />
           </FadeWrapper>
         )}
         {step === "result" && results.length > 0 && (
