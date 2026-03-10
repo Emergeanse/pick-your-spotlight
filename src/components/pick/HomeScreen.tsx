@@ -92,9 +92,9 @@ const HomeScreen = ({ onStart, onSurprise, onPickForMe, loading }: HomeScreenPro
               disabled={isLoading || loading}
             >
               {isLoading ? (
-                <span className="relative z-10 opacity-0">Find something to watch</span>
+                <span className="relative z-10 opacity-0">Trouver quelque chose à regarder</span>
               ) : (
-                "Find something to watch"
+                "Trouver quelque chose à regarder"
               )}
               {isLoading && (
                 <div className="absolute inset-0 flex items-center">
