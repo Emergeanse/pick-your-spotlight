@@ -81,7 +81,7 @@ const HomeScreen = ({ onStart, onSurprise, onPickForMe, onMovieSelect, loading }
       <BrandHeader />
 
       {/* Hero Section */}
-      <section className="relative h-[85vh] md:h-[90vh] flex items-end">
+      <section className="relative h-screen flex items-center justify-center">
         {bgImage && (
           <motion.div
             initial={{ opacity: 0, scale: 1.05 }}
