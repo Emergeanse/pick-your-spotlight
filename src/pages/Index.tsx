@@ -149,6 +149,7 @@ const Index = () => {
             <HomeScreen
               onStart={handleStart}
               onOpenChat={handleOpenChat}
+              onSurprise={handleSurprise}
               loading={loading}
             />
           </motion.div>
