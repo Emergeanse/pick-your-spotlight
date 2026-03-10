@@ -24,9 +24,10 @@ const platforms: StreamingPlatform[] = [
 interface PlatformStepProps {
   onSelect: (platformIds: number[]) => void;
   loading?: boolean;
+  loadingMessage?: string;
 }
 
-const PlatformStep = ({ onSelect, loading }: PlatformStepProps) => {
+const PlatformStep = ({ onSelect, loading, loadingMessage }: PlatformStepProps) => {
   const [selected, setSelected] = useState<number[]>([]);
 
   const toggle = (id: number) => {
@@ -101,7 +102,7 @@ const PlatformStep = ({ onSelect, loading }: PlatformStepProps) => {
           onClick={() => onSelect(selected)}
           disabled={loading}
         >
-          {loading ? "Recherche…" : selected.length === 0 ? "Peu importe" : "Valider"}
+          {loading && loadingMessage ? loadingMessage : selected.length === 0 ? "Peu importe" : "Valider"}
         </Button>
         {selected.length > 0 && (
           <button
