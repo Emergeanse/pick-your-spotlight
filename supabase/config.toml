@@ -1,0 +1,4 @@
+project_id = "lrjhpflvkrebbngfnaif"
+
+[functions.movie-chat]
+verify_jwt = false

@@ -6,10 +6,11 @@ import ContextStep from "@/components/pick/ContextStep";
 import TimeStep from "@/components/pick/TimeStep";
 import PlatformStep from "@/components/pick/PlatformStep";
 import ResultScreen from "@/components/pick/ResultScreen";
+import VoiceChat from "@/components/pick/VoiceChat";
 import StepLayout from "@/components/pick/StepLayout";
 import BrandHeader from "@/components/pick/BrandHeader";
 import type { Mood, Context, TimeAvailable, MovieDetail } from "@/lib/tmdb";
-import { getRecommendations, getSurpriseRecommendation } from "@/lib/tmdb";
+import { getRecommendations } from "@/lib/tmdb";
 
 type Step = "home" | "mood" | "context" | "time" | "platforms" | "result";
 
@@ -37,26 +38,19 @@ const Index = () => {
   const [loading, setLoading] = useState(false);
   const [currentResultIndex, setCurrentResultIndex] = useState(0);
   const [loadingMessage, setLoadingMessage] = useState("");
+  const [showChat, setShowChat] = useState(false);
+  const [chatReason, setChatReason] = useState<string | null>(null);
 
   const handleStart = () => setStep("mood");
 
-  const handleSurprise = async () => {
-    setLoading(true);
-    try {
-      const movie = await getSurpriseRecommendation();
-      setResults([movie]);
-      setCurrentResultIndex(0);
-      setStep("result");
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const handleOpenChat = () => setShowChat(true);
 
-  const handleMovieSelect = (movie: MovieDetail) => {
+  const handleCloseChat = () => setShowChat(false);
+
+  const handleMovieSuggested = (movie: MovieDetail) => {
     setResults([movie]);
     setCurrentResultIndex(0);
+    setShowChat(false);
     setStep("result");
   };
 
@@ -113,6 +107,7 @@ const Index = () => {
     setSelectedPlatformIds([]);
     setResults([]);
     setCurrentResultIndex(0);
+    setChatReason(null);
   };
 
   const currentStepNumber = getStepNumber(step);
@@ -147,9 +142,7 @@ const Index = () => {
           >
             <HomeScreen
               onStart={handleStart}
-              onSurprise={handleSurprise}
-              onPickForMe={handleSurprise}
-              onMovieSelect={handleMovieSelect}
+              onOpenChat={handleOpenChat}
               loading={loading}
             />
           </motion.div>
@@ -189,6 +182,16 @@ const Index = () => {
               userCriteria={{ mood, context, time }}
             />
           </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Voice Chat Overlay */}
+      <AnimatePresence>
+        {showChat && (
+          <VoiceChat
+            onClose={handleCloseChat}
+            onMovieSuggested={handleMovieSuggested}
+          />
         )}
       </AnimatePresence>
     </div>
