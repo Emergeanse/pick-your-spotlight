@@ -286,8 +286,22 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.7 }}
-              className="flex flex-wrap gap-3"
+              className="flex flex-wrap gap-3 items-center"
             >
+              {/* Like button */}
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleToggleLike}
+                disabled={likeLoading}
+                className={`rounded-full w-11 h-11 border transition-all ${
+                  liked
+                    ? "bg-primary/20 border-primary/50 text-primary"
+                    : "border-border/30 text-foreground/50 hover:text-primary hover:border-primary/30"
+                }`}
+              >
+                <Heart className={`w-5 h-5 ${liked ? "fill-primary" : ""}`} />
+              </Button>
               {trailerUrl && (
                 <Button
                   variant="hero"
