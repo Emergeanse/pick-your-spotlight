@@ -1,13 +1,23 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, forwardRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Play, ExternalLink, RotateCcw, ChevronRight, Star, Clock } from "lucide-react";
+import { Play, RotateCcw, ChevronRight, Star, Clock, Sparkles, Heart, Lightbulb, PartyPopper, Loader2 } from "lucide-react";
 import type { MovieDetail } from "@/lib/tmdb";
 import { getDisplayTitle, getYear, getBackdropUrl, getPosterUrl, getWatchProviders, getMovieTrailerUrl } from "@/lib/tmdb";
 import type { Mood, Context, TimeAvailable } from "@/lib/tmdb";
+import { supabase } from "@/integrations/supabase/client";
 import BrandHeader from "./BrandHeader";
 
 const IMG_BASE = "https://image.tmdb.org/t/p";
+
+interface MatchData {
+  matchScore: number;
+  headline: string;
+  whyItMatches: string;
+  emotionalJourney: string;
+  perfectFor: string;
+  funFact: string;
+}
 
 interface ResultScreenProps {
   movie: MovieDetail;
@@ -21,18 +31,11 @@ interface ResultScreenProps {
   };
 }
 
-const moodLabels: Record<Mood, string> = {
-  relax: "Détente",
-  excited: "Adrénaline",
-  romantic: "Romance",
-  "mind-blowing": "Vertige",
-  "easy-watch": "Léger",
-  fun: "Rire",
-};
-
-const ResultScreen = ({ movie, onShowAnother, onRestart, hasMore, userCriteria }: ResultScreenProps) => {
+const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onShowAnother, onRestart, hasMore, userCriteria }, ref) => {
   const [providers, setProviders] = useState<{ name: string; logo_path: string }[]>([]);
   const [trailerUrl, setTrailerUrl] = useState<string | null>(null);
+  const [matchData, setMatchData] = useState<MatchData | null>(null);
+  const [matchLoading, setMatchLoading] = useState(false);
 
   const title = getDisplayTitle(movie);
   const year = getYear(movie);
@@ -49,8 +52,25 @@ const ResultScreen = ({ movie, onShowAnother, onRestart, hasMore, userCriteria }
     getMovieTrailerUrl(movie.id, mediaType).then(setTrailerUrl).catch(() => setTrailerUrl(null));
   }, [movie.id, mediaType]);
 
+  // Fetch AI match analysis
+  useEffect(() => {
+    setMatchData(null);
+    setMatchLoading(true);
+    supabase.functions.invoke("movie-match", {
+      body: { movie, userCriteria },
+    }).then(({ data, error }) => {
+      if (error) {
+        console.error("Match error:", error);
+        setMatchLoading(false);
+        return;
+      }
+      setMatchData(data as MatchData);
+      setMatchLoading(false);
+    });
+  }, [movie.id]);
+
   return (
-    <div className="h-full w-full overflow-y-auto">
+    <div ref={ref} className="h-full w-full overflow-y-auto">
       <BrandHeader showBack onBack={onRestart} />
 
       <div className="relative min-h-screen w-full">
@@ -75,6 +95,21 @@ const ResultScreen = ({ movie, onShowAnother, onRestart, hasMore, userCriteria }
             transition={{ duration: 0.6, delay: 0.2 }}
             className="max-w-2xl"
           >
+            {/* Match score badge */}
+            {matchData && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+                className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/20 border border-primary/30 mb-3 md:mb-4"
+              >
+                <Sparkles className="w-3.5 h-3.5 text-primary" />
+                <span className="text-primary text-xs md:text-sm font-sans font-semibold">
+                  Match {matchData.matchScore}%
+                </span>
+              </motion.div>
+            )}
+
             {/* Genre tags */}
             {genres && (
               <motion.p
@@ -110,7 +145,7 @@ const ResultScreen = ({ movie, onShowAnother, onRestart, hasMore, userCriteria }
             </div>
 
             {/* Overview */}
-            <p className="text-foreground/70 text-sm md:text-base leading-relaxed mb-5 md:mb-7 max-w-lg font-sans font-light line-clamp-4">
+            <p className="text-foreground/70 text-sm md:text-base leading-relaxed mb-5 md:mb-7 max-w-lg font-sans font-light line-clamp-3">
               {overview}
             </p>
 
@@ -137,56 +172,77 @@ const ResultScreen = ({ movie, onShowAnother, onRestart, hasMore, userCriteria }
               </motion.div>
             )}
 
-            {/* Why it's for you card */}
-            {userCriteria && (
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.6 }}
-                className="mb-5 md:mb-7 bg-foreground/5 backdrop-blur-md border border-border/30 rounded-xl p-4 max-w-md w-full"
-              >
-                <p className="text-[11px] md:text-xs font-sans font-semibold text-primary uppercase tracking-widest mb-2.5">
-                  Pourquoi c'est fait pour vous
-                </p>
-                <ul className="space-y-1.5 text-foreground/70 text-xs md:text-sm font-sans font-light">
-                  {userCriteria.mood && (
-                    <li className="flex items-center gap-2">
-                      <span className="w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0" />
-                      Ambiance « {moodLabels[userCriteria.mood]} » — parfait pour votre humeur
-                    </li>
-                  )}
-                  {userCriteria.context && (
-                    <li className="flex items-center gap-2">
-                      <span className="w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0" />
-                      {userCriteria.context === "alone" && "Idéal pour un moment solo"}
-                      {userCriteria.context === "couple" && "Parfait pour une soirée en couple"}
-                      {userCriteria.context === "friends" && "Super choix entre amis"}
-                      {userCriteria.context === "family" && "Adapté pour toute la famille"}
-                    </li>
-                  )}
-                  {userCriteria.time && (
-                    <li className="flex items-center gap-2">
-                      <span className="w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0" />
-                      {userCriteria.time === "short" && "Court — parfait si vous avez peu de temps"}
-                      {userCriteria.time === "movie-night" && "Durée idéale pour votre soirée"}
-                      {userCriteria.time === "episode" && "Mode marathon activé 🍿"}
-                    </li>
-                  )}
-                  {runtime > 0 && (
-                    <li className="flex items-center gap-2">
-                      <span className="w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0" />
-                      {runtime} min — correspond à votre créneau
-                    </li>
-                  )}
-                  {movie.vote_average >= 7 && (
-                    <li className="flex items-center gap-2">
-                      <span className="w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0" />
-                      Très bien noté ({movie.vote_average.toFixed(1)}/10)
-                    </li>
-                  )}
-                </ul>
-              </motion.div>
-            )}
+            {/* AI Match Card */}
+            <AnimatePresence>
+              {matchLoading && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                  className="mb-5 md:mb-7 bg-foreground/5 backdrop-blur-md border border-border/30 rounded-xl p-5 max-w-md w-full"
+                >
+                  <div className="flex items-center gap-3">
+                    <Loader2 className="w-4 h-4 animate-spin text-primary" />
+                    <span className="text-foreground/50 text-sm font-sans">Analyse de votre match…</span>
+                  </div>
+                </motion.div>
+              )}
+
+              {matchData && !matchLoading && (
+                <motion.div
+                  initial={{ opacity: 0, y: 15 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1, duration: 0.5 }}
+                  className="mb-5 md:mb-7 bg-foreground/5 backdrop-blur-md border border-primary/20 rounded-xl p-5 max-w-md w-full space-y-4"
+                >
+                  <p className="text-sm md:text-base font-serif text-primary font-medium">
+                    {matchData.headline}
+                  </p>
+
+                  <div className="space-y-3">
+                    <div className="flex gap-3">
+                      <div className="mt-0.5 w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                        <Lightbulb className="w-3.5 h-3.5 text-primary" />
+                      </div>
+                      <div>
+                        <p className="text-[10px] uppercase tracking-widest text-primary/70 font-sans font-semibold mb-1">Pourquoi ça matche</p>
+                        <p className="text-foreground/70 text-xs md:text-sm font-sans font-light leading-relaxed">{matchData.whyItMatches}</p>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-3">
+                      <div className="mt-0.5 w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                        <Heart className="w-3.5 h-3.5 text-primary" />
+                      </div>
+                      <div>
+                        <p className="text-[10px] uppercase tracking-widest text-primary/70 font-sans font-semibold mb-1">Ce que tu vas ressentir</p>
+                        <p className="text-foreground/70 text-xs md:text-sm font-sans font-light leading-relaxed">{matchData.emotionalJourney}</p>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-3">
+                      <div className="mt-0.5 w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                        <PartyPopper className="w-3.5 h-3.5 text-primary" />
+                      </div>
+                      <div>
+                        <p className="text-[10px] uppercase tracking-widest text-primary/70 font-sans font-semibold mb-1">Moment idéal</p>
+                        <p className="text-foreground/70 text-xs md:text-sm font-sans font-light leading-relaxed">{matchData.perfectFor}</p>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-3">
+                      <div className="mt-0.5 w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                        <Sparkles className="w-3.5 h-3.5 text-primary" />
+                      </div>
+                      <div>
+                        <p className="text-[10px] uppercase tracking-widest text-primary/70 font-sans font-semibold mb-1">Le savais-tu ?</p>
+                        <p className="text-foreground/70 text-xs md:text-sm font-sans font-light leading-relaxed">{matchData.funFact}</p>
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
             {/* Action buttons */}
             <motion.div
@@ -234,6 +290,8 @@ const ResultScreen = ({ movie, onShowAnother, onRestart, hasMore, userCriteria }
       </div>
     </div>
   );
-};
+});
+
+ResultScreen.displayName = "ResultScreen";
 
 export default ResultScreen;
