@@ -168,7 +168,7 @@ const HomeScreen = ({ onStart, onSurprise, onPickForMe, loading }: HomeScreenPro
             className="mt-14"
           >
             <p className="text-muted-foreground/60 text-xs font-sans uppercase tracking-widest mb-4">
-              Tonight's recommendation
+              Recommandation du soir
             </p>
             <div className="flex items-center gap-4 bg-card/60 backdrop-blur-md rounded-2xl p-4 max-w-sm mx-auto border border-border/50">
               <img
