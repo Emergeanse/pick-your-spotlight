@@ -142,7 +142,7 @@ const Index = () => {
       const finalContext = context || "alone";
       const finalTime = time || "movie-night";
       const finalMediaType = mediaType || "both";
-      const recs = await getRecommendations(finalMood, finalContext, finalTime, platformIds, genreIds, minRating, finalMediaType);
+      const recs = await getRecommendations(finalMood, finalContext, finalTime, platformIds, genreIds, minRating, finalMediaType, excludedGenreIds);
       setLoadingMessage("Presque prêt…");
       await new Promise(r => setTimeout(r, 400));
       const score = computeMatchScore(mood, genreIds, context, time, platformIds, minRating, finalMediaType);
