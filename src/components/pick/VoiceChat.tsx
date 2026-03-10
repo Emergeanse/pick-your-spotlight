@@ -49,7 +49,6 @@ const VoiceChat = ({ onClose, onMovieSuggested }: VoiceChatProps) => {
       }
 
       if (data?.movie) {
-        // Small delay before showing movie result
         setTimeout(() => {
           onMovieSuggested(data.movie as MovieDetail);
         }, 1500);
@@ -144,6 +143,8 @@ const VoiceChat = ({ onClose, onMovieSuggested }: VoiceChatProps) => {
     }
   };
 
+  const showEmptyState = messages.length === 0 && !isListening && !interimText;
+
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
@@ -181,17 +182,41 @@ const VoiceChat = ({ onClose, onMovieSuggested }: VoiceChatProps) => {
 
         {/* Messages */}
         <div ref={scrollRef} className="flex-1 overflow-y-auto px-5 py-4 space-y-3 min-h-[200px]">
-          {messages.length === 0 && !isListening && (
+          {/* Empty state — big clickable mic */}
+          {showEmptyState && (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               className="flex flex-col items-center justify-center h-full text-center py-10"
             >
-              <div className="w-16 h-16 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center mb-4">
-                <Mic className="w-7 h-7 text-primary" />
-              </div>
+              <button
+                onClick={isListening ? stopListening : startListening}
+                disabled={isLoading}
+                className="w-20 h-20 rounded-full bg-primary/10 border-2 border-primary/30 flex items-center justify-center mb-4 transition-all duration-200 hover:bg-primary/20 hover:border-primary/50 hover:scale-105 active:scale-95 cursor-pointer disabled:opacity-50"
+              >
+                <Mic className="w-8 h-8 text-primary" />
+              </button>
               <p className="text-foreground/60 text-sm font-sans max-w-xs">
                 Appuie sur le micro et dis-moi comment tu te sens ou ce que tu as envie de regarder
+              </p>
+            </motion.div>
+          )}
+
+          {/* Listening state — pulsing mic */}
+          {isListening && messages.length === 0 && !interimText && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="flex flex-col items-center justify-center h-full text-center py-10"
+            >
+              <button
+                onClick={stopListening}
+                className="w-20 h-20 rounded-full bg-primary/20 border-2 border-primary flex items-center justify-center mb-4 animate-pulse cursor-pointer hover:bg-primary/30 active:scale-95 transition-transform"
+              >
+                <MicOff className="w-8 h-8 text-primary" />
+              </button>
+              <p className="text-primary text-sm font-sans animate-pulse">
+                Je t'écoute…
               </p>
             </motion.div>
           )}
@@ -249,7 +274,7 @@ const VoiceChat = ({ onClose, onMovieSuggested }: VoiceChatProps) => {
           )}
         </div>
 
-        {/* Input area */}
+        {/* Input area — text only, no mic button */}
         <div className="border-t border-border/20 px-4 py-3 flex items-center gap-2">
           <input
             ref={inputRef}
@@ -261,38 +286,15 @@ const VoiceChat = ({ onClose, onMovieSuggested }: VoiceChatProps) => {
             className="flex-1 bg-transparent text-foreground text-sm font-sans placeholder:text-muted-foreground/50 outline-none"
             disabled={isLoading}
           />
-
-          {inputText.trim() ? (
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => handleSend(inputText)}
-              disabled={isLoading}
-              className="text-primary hover:text-primary/80"
-            >
-              <Send className="w-5 h-5" />
-            </Button>
-          ) : speechSupported ? (
-            <Button
-              variant={isListening ? "default" : "ghost"}
-              size="icon"
-              onClick={isListening ? stopListening : startListening}
-              disabled={isLoading}
-              className={isListening ? "bg-primary text-primary-foreground animate-pulse" : "text-primary hover:text-primary/80"}
-            >
-              {isListening ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
-            </Button>
-          ) : (
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => handleSend(inputText)}
-              disabled={isLoading || !inputText.trim()}
-              className="text-primary hover:text-primary/80"
-            >
-              <Send className="w-5 h-5" />
-            </Button>
-          )}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => handleSend(inputText)}
+            disabled={isLoading || !inputText.trim()}
+            className="text-primary hover:text-primary/80"
+          >
+            <Send className="w-5 h-5" />
+          </Button>
         </div>
       </motion.div>
     </motion.div>
