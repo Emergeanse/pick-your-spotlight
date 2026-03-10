@@ -36,12 +36,12 @@ const PlatformStep = ({ onSelect, loading, loadingMessage }: PlatformStepProps) 
   };
 
   return (
-    <div className="flex flex-col items-center justify-center h-full px-6">
+    <div className="flex flex-col items-center justify-start md:justify-center min-h-full px-4 md:px-6 py-6 md:py-0 overflow-y-auto">
       <motion.h2
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
-        className="text-3xl md:text-5xl font-serif mb-4 text-center"
+        className="text-2xl md:text-5xl font-serif mb-3 md:mb-4 text-center"
       >
         Où regardez-vous ?
       </motion.h2>
@@ -50,12 +50,12 @@ const PlatformStep = ({ onSelect, loading, loadingMessage }: PlatformStepProps) 
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.15, duration: 0.3 }}
-        className="text-muted-foreground text-sm font-sans mb-10 text-center"
+        className="text-muted-foreground text-xs md:text-sm font-sans mb-6 md:mb-10 text-center"
       >
         Sélectionnez vos abonnements pour des suggestions adaptées
       </motion.p>
 
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 md:gap-4 max-w-xl w-full mb-10">
+      <div className="grid grid-cols-4 gap-2 md:gap-4 max-w-xl w-full mb-6 md:mb-10">
         {platforms.map((platform, i) => {
           const isSelected = selected.includes(platform.id);
           return (
@@ -66,7 +66,7 @@ const PlatformStep = ({ onSelect, loading, loadingMessage }: PlatformStepProps) 
               whileTap={{ scale: 0.95 }}
               transition={{ delay: i * 0.04, duration: 0.3, ease: "easeOut" }}
               onClick={() => toggle(platform.id)}
-              className={`relative bg-card rounded-2xl p-4 md:p-5 flex flex-col items-center gap-2.5 transition-all duration-200 hover:scale-[1.02] cursor-pointer border ${
+              className={`relative bg-card rounded-xl md:rounded-2xl p-2.5 md:p-5 flex flex-col items-center gap-1.5 md:gap-2.5 transition-all duration-200 hover:scale-[1.02] cursor-pointer border ${
                 isSelected
                   ? "border-primary neon-glow"
                   : "border-transparent hover:border-primary/30"
@@ -76,17 +76,17 @@ const PlatformStep = ({ onSelect, loading, loadingMessage }: PlatformStepProps) 
                 <motion.div
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
-                  className="absolute top-2 right-2 w-5 h-5 rounded-full bg-primary flex items-center justify-center"
+                  className="absolute top-1 right-1 md:top-2 md:right-2 w-4 h-4 md:w-5 md:h-5 rounded-full bg-primary flex items-center justify-center"
                 >
-                  <Check className="w-3 h-3 text-primary-foreground" />
+                  <Check className="w-2.5 h-2.5 md:w-3 md:h-3 text-primary-foreground" />
                 </motion.div>
               )}
               <img
                 src={platform.logo}
                 alt={platform.label}
-                className="w-10 h-10 md:w-12 md:h-12 rounded-lg object-cover"
+                className="w-8 h-8 md:w-12 md:h-12 rounded-lg object-cover"
               />
-              <span className="font-sans text-xs md:text-sm tracking-wide text-foreground/90">
+              <span className="font-sans text-[10px] md:text-sm tracking-wide text-foreground/90 leading-tight text-center">
                 {platform.label}
               </span>
             </motion.button>
@@ -98,7 +98,7 @@ const PlatformStep = ({ onSelect, loading, loadingMessage }: PlatformStepProps) 
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.4, duration: 0.3 }}
-        className="flex flex-col sm:flex-row gap-3 items-center"
+        className="flex flex-col sm:flex-row gap-3 items-center pb-4"
       >
         <Button
           variant="hero"

@@ -69,7 +69,6 @@ const ResultScreen = ({ movie, onShowAnother, onRestart, hasMore, matchScore, ma
     getWatchProviders(movie.id, mediaType).then(setProviders).catch(() => setProviders([]));
   }, [movie.id, mediaType]);
 
-  // Build "why it matches" reasons
   const matchReasons: string[] = [];
   if (userCriteria) {
     if (userCriteria.mood) {
@@ -116,43 +115,42 @@ const ResultScreen = ({ movie, onShowAnother, onRestart, hasMore, matchScore, ma
 
         <div className="absolute inset-0 poster-gradient" />
 
-        <div className="relative z-10 flex flex-col justify-end min-h-screen p-6 md:p-12 lg:p-16">
+        <div className="relative z-10 flex flex-col justify-end min-h-screen p-4 pb-8 md:p-12 lg:p-16">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
             className="max-w-2xl"
           >
-            {/* Match score + emotional label */}
             {matchLabel && (
               <motion.div
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.4, duration: 0.4 }}
-                className="mb-4 flex items-center gap-3"
+                className="mb-3 md:mb-4 flex items-center gap-2 md:gap-3 flex-wrap"
               >
                 {matchScore > 0 && (
-                  <span className="bg-primary/20 text-primary text-xs font-sans font-semibold px-3 py-1 rounded-full border border-primary/30">
+                  <span className="bg-primary/20 text-primary text-[10px] md:text-xs font-sans font-semibold px-2.5 py-1 rounded-full border border-primary/30">
                     {matchScore}% match
                   </span>
                 )}
-                <span className="text-primary/80 text-sm font-sans font-light italic">
+                <span className="text-primary/80 text-xs md:text-sm font-sans font-light italic">
                   {matchLabel}
                 </span>
               </motion.div>
             )}
 
             {genres && (
-              <p className="text-muted-foreground text-sm mb-3 tracking-wider uppercase font-sans">
+              <p className="text-muted-foreground text-[10px] md:text-sm mb-2 md:mb-3 tracking-wider uppercase font-sans">
                 {genres}
               </p>
             )}
 
-            <h1 className="text-4xl md:text-6xl lg:text-7xl font-serif mb-4 leading-tight">
+            <h1 className="text-3xl md:text-6xl lg:text-7xl font-serif mb-3 md:mb-4 leading-tight">
               {title}
             </h1>
 
-            <div className="flex items-center gap-4 text-muted-foreground text-sm mb-6 font-sans">
+            <div className="flex items-center gap-3 md:gap-4 text-muted-foreground text-xs md:text-sm mb-4 md:mb-6 font-sans flex-wrap">
               {year && <span>{year}</span>}
               {runtime > 0 && (
                 <>
@@ -168,43 +166,41 @@ const ResultScreen = ({ movie, onShowAnother, onRestart, hasMore, matchScore, ma
               )}
             </div>
 
-            {/* Streaming platforms */}
             {providers.length > 0 && (
-              <div className="flex items-center gap-3 mb-6">
-                <span className="text-muted-foreground text-xs font-sans">Disponible sur</span>
-                <div className="flex gap-2">
+              <div className="flex items-center gap-2 md:gap-3 mb-4 md:mb-6">
+                <span className="text-muted-foreground text-[10px] md:text-xs font-sans">Disponible sur</span>
+                <div className="flex gap-1.5 md:gap-2">
                   {providers.map((p) => (
                     <img
                       key={p.name}
                       src={`${IMG_BASE}/w92${p.logo_path}`}
                       alt={p.name}
                       title={p.name}
-                      className="w-8 h-8 rounded-lg object-cover"
+                      className="w-6 h-6 md:w-8 md:h-8 rounded-md md:rounded-lg object-cover"
                     />
                   ))}
                 </div>
               </div>
             )}
 
-            {/* Why it matches — always visible card */}
             {matchReasons.length > 0 && (
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.6, duration: 0.4 }}
-                className="bg-card/50 backdrop-blur-md rounded-2xl p-4 md:p-5 border border-primary/20 mb-6 max-w-md"
+                className="bg-card/50 backdrop-blur-md rounded-xl md:rounded-2xl p-3 md:p-5 border border-primary/20 mb-4 md:mb-6 max-w-md"
               >
-                <h3 className="text-primary text-xs uppercase tracking-wider font-sans font-semibold mb-3">
+                <h3 className="text-primary text-[10px] md:text-xs uppercase tracking-wider font-sans font-semibold mb-2 md:mb-3">
                   Pourquoi ce film est fait pour vous
                 </h3>
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-1.5 md:gap-2">
                   {matchReasons.map((reason, i) => (
                     <motion.span
                       key={i}
                       initial={{ opacity: 0, scale: 0.9 }}
                       animate={{ opacity: 1, scale: 1 }}
                       transition={{ delay: 0.7 + i * 0.06, duration: 0.25 }}
-                      className="bg-primary/10 text-foreground/80 text-xs font-sans px-3 py-1.5 rounded-full border border-primary/20"
+                      className="bg-primary/10 text-foreground/80 text-[10px] md:text-xs font-sans px-2 md:px-3 py-1 md:py-1.5 rounded-full border border-primary/20"
                     >
                       {reason}
                     </motion.span>
@@ -213,16 +209,15 @@ const ResultScreen = ({ movie, onShowAnother, onRestart, hasMore, matchScore, ma
               </motion.div>
             )}
 
-            <p className="text-foreground/80 text-base md:text-lg leading-relaxed mb-6 max-w-lg font-sans font-light">
-              {showDetails ? overview : (overview.length > 200 ? overview.substring(0, 200) + "…" : overview)}
+            <p className="text-foreground/80 text-sm md:text-lg leading-relaxed mb-4 md:mb-6 max-w-lg font-sans font-light">
+              {showDetails ? overview : (overview.length > 150 ? overview.substring(0, 150) + "…" : overview)}
             </p>
 
-            {/* Expand / collapse details */}
             <button
               onClick={() => setShowDetails(!showDetails)}
-              className="flex items-center gap-2 text-primary/70 hover:text-primary text-sm font-sans mb-6 transition-colors cursor-pointer"
+              className="flex items-center gap-2 text-primary/70 hover:text-primary text-xs md:text-sm font-sans mb-4 md:mb-6 transition-colors cursor-pointer"
             >
-              {showDetails ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+              {showDetails ? <ChevronUp className="w-3.5 h-3.5 md:w-4 md:h-4" /> : <ChevronDown className="w-3.5 h-3.5 md:w-4 md:h-4" />}
               {showDetails ? "Moins d'infos" : "Plus d'infos"}
             </button>
 
@@ -233,47 +228,47 @@ const ResultScreen = ({ movie, onShowAnother, onRestart, hasMore, matchScore, ma
                   animate={{ opacity: 1, height: "auto" }}
                   exit={{ opacity: 0, height: 0 }}
                   transition={{ duration: 0.3, ease: "easeOut" }}
-                  className="overflow-hidden mb-8"
+                  className="overflow-hidden mb-6 md:mb-8"
                 >
-                  <div className="space-y-4">
-                    {overview.length > 200 && (
+                  <div className="space-y-3 md:space-y-4">
+                    {overview.length > 150 && (
                       <div>
-                        <h3 className="text-foreground/60 text-xs uppercase tracking-wider font-sans mb-2">Synopsis complet</h3>
-                        <p className="text-foreground/70 text-sm leading-relaxed font-sans font-light max-w-lg">
+                        <h3 className="text-foreground/60 text-[10px] md:text-xs uppercase tracking-wider font-sans mb-1.5 md:mb-2">Synopsis complet</h3>
+                        <p className="text-foreground/70 text-xs md:text-sm leading-relaxed font-sans font-light max-w-lg">
                           {overview}
                         </p>
                       </div>
                     )}
 
-                    <div className="grid grid-cols-2 gap-3 max-w-md">
+                    <div className="grid grid-cols-2 gap-2 md:gap-3 max-w-md">
                       {year && (
-                        <div className="bg-card/60 backdrop-blur-sm rounded-xl p-3 border border-border/30">
-                          <span className="text-muted-foreground text-xs font-sans block mb-1">Année</span>
-                          <span className="text-foreground text-sm font-sans">{year}</span>
+                        <div className="bg-card/60 backdrop-blur-sm rounded-xl p-2.5 md:p-3 border border-border/30">
+                          <span className="text-muted-foreground text-[10px] md:text-xs font-sans block mb-0.5 md:mb-1">Année</span>
+                          <span className="text-foreground text-xs md:text-sm font-sans">{year}</span>
                         </div>
                       )}
                       {runtime > 0 && (
-                        <div className="bg-card/60 backdrop-blur-sm rounded-xl p-3 border border-border/30">
-                          <span className="text-muted-foreground text-xs font-sans block mb-1">Durée</span>
-                          <span className="text-foreground text-sm font-sans flex items-center gap-1.5">
-                            <Clock className="w-3.5 h-3.5 text-primary/60" />
+                        <div className="bg-card/60 backdrop-blur-sm rounded-xl p-2.5 md:p-3 border border-border/30">
+                          <span className="text-muted-foreground text-[10px] md:text-xs font-sans block mb-0.5 md:mb-1">Durée</span>
+                          <span className="text-foreground text-xs md:text-sm font-sans flex items-center gap-1.5">
+                            <Clock className="w-3 h-3 md:w-3.5 md:h-3.5 text-primary/60" />
                             {Math.floor(runtime / 60)}h{runtime % 60 > 0 ? `${String(runtime % 60).padStart(2, "0")}` : ""}
                           </span>
                         </div>
                       )}
                       {movie.vote_average > 0 && (
-                        <div className="bg-card/60 backdrop-blur-sm rounded-xl p-3 border border-border/30">
-                          <span className="text-muted-foreground text-xs font-sans block mb-1">Note</span>
-                          <span className="text-foreground text-sm font-sans flex items-center gap-1.5">
-                            <Star className="w-3.5 h-3.5 text-yellow-500" />
+                        <div className="bg-card/60 backdrop-blur-sm rounded-xl p-2.5 md:p-3 border border-border/30">
+                          <span className="text-muted-foreground text-[10px] md:text-xs font-sans block mb-0.5 md:mb-1">Note</span>
+                          <span className="text-foreground text-xs md:text-sm font-sans flex items-center gap-1.5">
+                            <Star className="w-3 h-3 md:w-3.5 md:h-3.5 text-yellow-500" />
                             {movie.vote_average.toFixed(1)} / 10
                           </span>
                         </div>
                       )}
                       {genres && (
-                        <div className="bg-card/60 backdrop-blur-sm rounded-xl p-3 border border-border/30">
-                          <span className="text-muted-foreground text-xs font-sans block mb-1">Genres</span>
-                          <span className="text-foreground text-xs font-sans">{genres}</span>
+                        <div className="bg-card/60 backdrop-blur-sm rounded-xl p-2.5 md:p-3 border border-border/30">
+                          <span className="text-muted-foreground text-[10px] md:text-xs font-sans block mb-0.5 md:mb-1">Genres</span>
+                          <span className="text-foreground text-[10px] md:text-xs font-sans">{genres}</span>
                         </div>
                       )}
                     </div>
@@ -282,11 +277,12 @@ const ResultScreen = ({ movie, onShowAnother, onRestart, hasMore, matchScore, ma
               )}
             </AnimatePresence>
 
-            <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex flex-col sm:flex-row gap-3 md:gap-4">
               {hasMore && (
                 <Button
                   variant="heroOutline"
                   size="xl"
+                  className="text-sm md:text-base"
                   onClick={onShowAnother}
                 >
                   Autre suggestion
@@ -295,7 +291,7 @@ const ResultScreen = ({ movie, onShowAnother, onRestart, hasMore, matchScore, ma
               <Button
                 variant="ghost"
                 size="xl"
-                className="text-muted-foreground hover:text-foreground"
+                className="text-muted-foreground hover:text-foreground text-sm md:text-base"
                 onClick={onRestart}
               >
                 Recommencer
