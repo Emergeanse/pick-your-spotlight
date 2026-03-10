@@ -74,7 +74,7 @@ const Index = () => {
       setResults([movie]);
       setCurrentResultIndex(0);
       setMatchScore(0);
-      setMatchLabel("Hidden gem just for you");
+      setMatchLabel("Une pépite rien que pour vous");
       setStep("result");
     } catch (e) {
       console.error(e);
