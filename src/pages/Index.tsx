@@ -51,11 +51,18 @@ const Index = () => {
     setStep("platforms");
   };
 
+  const [loadingMessage, setLoadingMessage] = useState("");
+
   const handlePlatformSelect = async (platformIds: number[]) => {
     if (!mood || !context || !time) return;
     setLoading(true);
+    setLoadingMessage("Analyse de vos préférences…");
     try {
+      await new Promise(r => setTimeout(r, 600));
+      setLoadingMessage("Recherche du film idéal…");
       const recs = await getRecommendations(mood, context, time, platformIds);
+      setLoadingMessage("Presque prêt…");
+      await new Promise(r => setTimeout(r, 400));
       setResults(recs);
       setCurrentResultIndex(0);
       setStep("result");
@@ -63,6 +70,7 @@ const Index = () => {
       console.error(e);
     } finally {
       setLoading(false);
+      setLoadingMessage("");
     }
   };
 
