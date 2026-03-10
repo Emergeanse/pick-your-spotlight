@@ -148,7 +148,7 @@ const HomeScreen = ({ onStart, onSurprise, onPickForMe, loading }: HomeScreenPro
           disabled={loading}
           className="mt-6 text-muted-foreground/60 text-sm font-sans hover:text-primary transition-colors disabled:opacity-50"
         >
-          Pick for me — zero effort
+          Choisis pour moi — zéro effort
         </motion.button>
 
         <motion.p
