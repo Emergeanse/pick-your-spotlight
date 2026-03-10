@@ -82,7 +82,8 @@ async function getMovieDetails(id: number, mediaType: string): Promise<MovieDeta
 export async function getRecommendations(
   mood: Mood,
   context: Context,
-  time: TimeAvailable
+  time: TimeAvailable,
+  platformIds: number[] = []
 ): Promise<MovieDetail[]> {
   const moodGenres = moodToGenres[mood];
   const contextGenres = contextModifiers[context];
@@ -106,6 +107,11 @@ export async function getRecommendations(
     params["with_runtime.lte"] = "90";
   }
 
+  if (platformIds.length > 0) {
+    params["with_watch_providers"] = platformIds.join("|");
+    params["watch_region"] = "FR";
+  }
+
   const data = await fetchFromTMDB(endpoint, params);
   const results: Movie[] = data.results || [];
   
@@ -118,6 +124,14 @@ export async function getRecommendations(
   );
   
   return details;
+}
+
+export async function getWatchProviders(id: number, mediaType: string): Promise<{ name: string; logo_path: string }[]> {
+  const endpoint = mediaType === "tv" ? `/tv/${id}/watch/providers` : `/movie/${id}/watch/providers`;
+  const data = await fetchFromTMDB(endpoint);
+  const fr = data.results?.FR;
+  if (!fr) return [];
+  return fr.flatrate || [];
 }
 
 export async function getSurpriseRecommendation(): Promise<MovieDetail> {
