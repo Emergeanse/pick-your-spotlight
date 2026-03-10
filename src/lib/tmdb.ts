@@ -142,4 +142,11 @@ export async function getSurpriseRecommendation(): Promise<MovieDetail> {
   return getMovieDetails(pick.id, "movie");
 }
 
+export async function getTrendingMovie(): Promise<MovieDetail> {
+  const data = await fetchFromTMDB("/trending/movie/day");
+  const results: Movie[] = data.results || [];
+  const pick = results[Math.floor(Math.random() * Math.min(5, results.length))];
+  return getMovieDetails(pick.id, "movie");
+}
+
 export { getDisplayTitle, getYear, getPosterUrl, getBackdropUrl };
