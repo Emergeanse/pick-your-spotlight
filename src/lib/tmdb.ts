@@ -84,12 +84,13 @@ export async function getRecommendations(
   context: Context,
   time: TimeAvailable,
   platformIds: number[] = [],
-  userGenreIds: number[] = []
+  userGenreIds: number[] = [],
+  minRating: number = 0,
+  mediaType: string = "both"
 ): Promise<MovieDetail[]> {
   const moodGenres = moodToGenres[mood];
   const contextGenres = contextModifiers[context];
   
-  // If user picked genres, prioritize those; otherwise combine mood+context
   let genres: number[];
   if (userGenreIds.length > 0) {
     genres = userGenreIds.slice(0, 3);
@@ -98,38 +99,54 @@ export async function getRecommendations(
     genres = combined.length > 0 ? combined : moodGenres.slice(0, 2);
   }
   
-  const isTV = time === "episode";
-  const endpoint = isTV ? "/discover/tv" : "/discover/movie";
-  
-  const params: Record<string, string> = {
-    with_genres: genres.join(","),
-    sort_by: "popularity.desc",
-    "vote_average.gte": "6",
-    "vote_count.gte": "100",
-    page: String(Math.floor(Math.random() * 3) + 1),
-  };
+  const searchTypes: string[] = [];
+  if (mediaType === "movie" || mediaType === "both") searchTypes.push("movie");
+  if (mediaType === "tv" || mediaType === "both") searchTypes.push("tv");
+  // If time is "episode", force TV
+  if (time === "episode" && !searchTypes.includes("tv")) searchTypes.push("tv");
 
-  if (!isTV && time === "short") {
-    params["with_runtime.lte"] = "90";
+  const voteGte = minRating > 0 ? String(minRating) : "6";
+
+  const allDetails: MovieDetail[] = [];
+
+  for (const type of searchTypes) {
+    const isTV = type === "tv";
+    const endpoint = isTV ? "/discover/tv" : "/discover/movie";
+    
+    const params: Record<string, string> = {
+      with_genres: genres.join(","),
+      sort_by: "popularity.desc",
+      "vote_average.gte": voteGte,
+      "vote_count.gte": "100",
+      page: String(Math.floor(Math.random() * 3) + 1),
+    };
+
+    if (!isTV && time === "short") {
+      params["with_runtime.lte"] = "90";
+    }
+
+    if (platformIds.length > 0) {
+      params["with_watch_providers"] = platformIds.join("|");
+      params["watch_region"] = "FR";
+    }
+
+    try {
+      const data = await fetchFromTMDB(endpoint, params);
+      const results: Movie[] = data.results || [];
+      const top = results.slice(0, 10);
+      const shuffled = top.sort(() => Math.random() - 0.5).slice(0, 2);
+      
+      const details = await Promise.all(
+        shuffled.map(m => getMovieDetails(m.id, isTV ? "tv" : "movie"))
+      );
+      allDetails.push(...details);
+    } catch (e) {
+      console.error(`Error fetching ${type}:`, e);
+    }
   }
 
-  if (platformIds.length > 0) {
-    params["with_watch_providers"] = platformIds.join("|");
-    params["watch_region"] = "FR";
-  }
-
-  const data = await fetchFromTMDB(endpoint, params);
-  const results: Movie[] = data.results || [];
-  
-  // Pick 3 random from top 10
-  const top = results.slice(0, 10);
-  const shuffled = top.sort(() => Math.random() - 0.5).slice(0, 3);
-  
-  const details = await Promise.all(
-    shuffled.map(m => getMovieDetails(m.id, isTV ? "tv" : "movie"))
-  );
-  
-  return details;
+  // Shuffle and return top 3
+  return allDetails.sort(() => Math.random() - 0.5).slice(0, 3);
 }
 
 export async function getWatchProviders(id: number, mediaType: string): Promise<{ name: string; logo_path: string }[]> {

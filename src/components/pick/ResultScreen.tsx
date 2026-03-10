@@ -5,6 +5,8 @@ import { ChevronDown, ChevronUp, Star, Clock, Users, Zap, Heart, Sun, Brain, Fil
 import type { MovieDetail } from "@/lib/tmdb";
 import { getDisplayTitle, getYear, getBackdropUrl, getPosterUrl, getWatchProviders } from "@/lib/tmdb";
 import type { Mood, Context, TimeAvailable } from "@/lib/tmdb";
+import type { MediaType } from "./MediaTypeStep";
+import BrandHeader from "./BrandHeader";
 
 interface ResultScreenProps {
   movie: MovieDetail;
@@ -19,6 +21,8 @@ interface ResultScreenProps {
     time: TimeAvailable | null;
     genreIds: number[];
     platformIds: number[];
+    minRating: number;
+    mediaType: MediaType;
   };
 }
 
@@ -70,36 +74,38 @@ const ResultScreen = ({ movie, onShowAnother, onRestart, hasMore, matchScore, ma
   if (userCriteria) {
     if (userCriteria.mood) {
       const m = moodLabels[userCriteria.mood];
-      matchReasons.push(`Ambiance « ${m.label} » — correspond à votre humeur`);
+      matchReasons.push(`Ambiance « ${m.label} »`);
     }
     if (userCriteria.genreIds.length > 0 && movie.genres) {
       const matchedGenres = movie.genres.filter(g => userCriteria.genreIds.includes(g.id));
       if (matchedGenres.length > 0) {
-        matchReasons.push(`Genre${matchedGenres.length > 1 ? "s" : ""} : ${matchedGenres.map(g => g.name).join(", ")}`);
+        matchReasons.push(`${matchedGenres.map(g => g.name).join(", ")}`);
       }
     }
     if (userCriteria.context) {
-      matchReasons.push(`Parfait pour regarder ${contextLabels[userCriteria.context].toLowerCase()}`);
+      matchReasons.push(`${contextLabels[userCriteria.context]}`);
     }
     if (userCriteria.time) {
       if (userCriteria.time === "short" && runtime > 0 && runtime <= 90) {
-        matchReasons.push(`Durée courte (${runtime} min) — idéal pour votre temps disponible`);
+        matchReasons.push(`Durée courte (${runtime} min)`);
       } else if (userCriteria.time === "movie-night") {
-        matchReasons.push(`Film complet pour votre soirée ciné`);
+        matchReasons.push(`Soirée ciné`);
       } else if (userCriteria.time === "episode") {
-        matchReasons.push(`Format épisode, parfait pour un moment rapide`);
+        matchReasons.push(`Format épisode`);
       }
     }
-    if (userCriteria.platformIds.length > 0 && providers.length > 0) {
-      matchReasons.push(`Disponible sur vos plateformes`);
+    if (userCriteria.minRating > 0 && movie.vote_average >= userCriteria.minRating) {
+      matchReasons.push(`Note ≥ ${userCriteria.minRating} (★ ${movie.vote_average.toFixed(1)})`);
     }
-    if (movie.vote_average >= 7.5) {
-      matchReasons.push(`Très bien noté (★ ${movie.vote_average.toFixed(1)})`);
+    if (userCriteria.platformIds.length > 0 && providers.length > 0) {
+      matchReasons.push(`Sur vos plateformes`);
     }
   }
 
   return (
     <div className="h-full w-full overflow-y-auto">
+      <BrandHeader showBack onBack={onRestart} />
+
       <div className="relative min-h-screen w-full">
         {bgImage && (
           <div
@@ -180,6 +186,33 @@ const ResultScreen = ({ movie, onShowAnother, onRestart, hasMore, matchScore, ma
               </div>
             )}
 
+            {/* Why it matches — always visible card */}
+            {matchReasons.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.6, duration: 0.4 }}
+                className="bg-card/50 backdrop-blur-md rounded-2xl p-4 md:p-5 border border-primary/20 mb-6 max-w-md"
+              >
+                <h3 className="text-primary text-xs uppercase tracking-wider font-sans font-semibold mb-3">
+                  Pourquoi ce film est fait pour vous
+                </h3>
+                <div className="flex flex-wrap gap-2">
+                  {matchReasons.map((reason, i) => (
+                    <motion.span
+                      key={i}
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: 0.7 + i * 0.06, duration: 0.25 }}
+                      className="bg-primary/10 text-foreground/80 text-xs font-sans px-3 py-1.5 rounded-full border border-primary/20"
+                    >
+                      {reason}
+                    </motion.span>
+                  ))}
+                </div>
+              </motion.div>
+            )}
+
             <p className="text-foreground/80 text-base md:text-lg leading-relaxed mb-6 max-w-lg font-sans font-light">
               {showDetails ? overview : (overview.length > 200 ? overview.substring(0, 200) + "…" : overview)}
             </p>
@@ -203,7 +236,6 @@ const ResultScreen = ({ movie, onShowAnother, onRestart, hasMore, matchScore, ma
                   className="overflow-hidden mb-8"
                 >
                   <div className="space-y-4">
-                    {/* Full synopsis if was truncated */}
                     {overview.length > 200 && (
                       <div>
                         <h3 className="text-foreground/60 text-xs uppercase tracking-wider font-sans mb-2">Synopsis complet</h3>
@@ -213,7 +245,6 @@ const ResultScreen = ({ movie, onShowAnother, onRestart, hasMore, matchScore, ma
                       </div>
                     )}
 
-                    {/* Movie details grid */}
                     <div className="grid grid-cols-2 gap-3 max-w-md">
                       {year && (
                         <div className="bg-card/60 backdrop-blur-sm rounded-xl p-3 border border-border/30">
@@ -246,29 +277,6 @@ const ResultScreen = ({ movie, onShowAnother, onRestart, hasMore, matchScore, ma
                         </div>
                       )}
                     </div>
-
-                    {/* Why it matches */}
-                    {matchReasons.length > 0 && (
-                      <div className="mt-2">
-                        <h3 className="text-foreground/60 text-xs uppercase tracking-wider font-sans mb-3">
-                          Pourquoi ce film est fait pour vous
-                        </h3>
-                        <div className="space-y-2">
-                          {matchReasons.map((reason, i) => (
-                            <motion.div
-                              key={i}
-                              initial={{ opacity: 0, x: -10 }}
-                              animate={{ opacity: 1, x: 0 }}
-                              transition={{ delay: i * 0.08, duration: 0.3 }}
-                              className="flex items-start gap-2.5"
-                            >
-                              <div className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5 shrink-0" />
-                              <span className="text-foreground/70 text-sm font-sans font-light">{reason}</span>
-                            </motion.div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
                   </div>
                 </motion.div>
               )}
