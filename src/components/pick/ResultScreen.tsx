@@ -20,6 +20,7 @@ interface ResultScreenProps {
     context: Context | null;
     time: TimeAvailable | null;
     genreIds: number[];
+    excludedGenreIds: number[];
     platformIds: number[];
     minRating: number;
     mediaType: MediaType;
