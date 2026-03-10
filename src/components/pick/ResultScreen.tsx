@@ -75,6 +75,37 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
     });
   }, [movie.id]);
 
+  // Check if movie is liked
+  useEffect(() => {
+    if (user) {
+      isMovieLiked(movie.id).then(setLiked).catch(() => {});
+    }
+  }, [movie.id, user]);
+
+  const handleToggleLike = async () => {
+    if (!user) {
+      toast.info("Connecte-toi pour sauvegarder tes films !");
+      return;
+    }
+    setLikeLoading(true);
+    try {
+      if (liked) {
+        await unlikeMovie(movie.id);
+        setLiked(false);
+        toast.success("Film retiré de tes favoris");
+      } else {
+        await likeMovie(movie);
+        setLiked(true);
+        toast.success("Film ajouté à tes favoris !");
+      }
+    } catch (e) {
+      console.error(e);
+      toast.error("Erreur lors de la sauvegarde");
+    } finally {
+      setLikeLoading(false);
+    }
+  };
+
   return (
     <div ref={ref} className="h-full w-full overflow-y-auto">
       <BrandHeader showBack onBack={onRestart} />
