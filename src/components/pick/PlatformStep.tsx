@@ -24,9 +24,10 @@ const platforms: StreamingPlatform[] = [
 interface PlatformStepProps {
   onSelect: (platformIds: number[]) => void;
   loading?: boolean;
+  loadingMessage?: string;
 }
 
-const PlatformStep = ({ onSelect, loading }: PlatformStepProps) => {
+const PlatformStep = ({ onSelect, loading, loadingMessage }: PlatformStepProps) => {
   const [selected, setSelected] = useState<number[]>([]);
 
   const toggle = (id: number) => {
