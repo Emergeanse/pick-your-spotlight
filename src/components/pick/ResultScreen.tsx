@@ -6,6 +6,9 @@ import type { MovieDetail } from "@/lib/tmdb";
 import { getDisplayTitle, getYear, getBackdropUrl, getPosterUrl, getWatchProviders, getMovieTrailerUrl } from "@/lib/tmdb";
 import type { Mood, Context, TimeAvailable } from "@/lib/tmdb";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/use-auth";
+import { likeMovie, unlikeMovie, isMovieLiked } from "@/lib/liked-movies";
+import { toast } from "sonner";
 import BrandHeader from "./BrandHeader";
 
 const IMG_BASE = "https://image.tmdb.org/t/p";
