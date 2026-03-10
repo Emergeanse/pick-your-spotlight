@@ -157,7 +157,7 @@ const HomeScreen = ({ onStart, onSurprise, onPickForMe, loading }: HomeScreenPro
           transition={{ delay: 0.9, duration: 0.5 }}
           className="text-muted-foreground/40 text-xs font-sans tracking-wider mt-4"
         >
-          Works with Netflix · Prime · Disney+ · Canal+ · Apple TV+
+          Compatible avec Netflix · Prime · Disney+ · Canal+ · Apple TV+
         </motion.p>
 
         {tonightPick && (
