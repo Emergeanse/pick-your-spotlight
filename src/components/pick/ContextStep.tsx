@@ -3,6 +3,7 @@ import type { Context } from "@/lib/tmdb";
 
 interface ContextStepProps {
   onSelect: (context: Context) => void;
+  onSkip?: () => void;
 }
 
 const contexts: { value: Context; label: string; description: string }[] = [
@@ -12,7 +13,7 @@ const contexts: { value: Context; label: string; description: string }[] = [
   { value: "family", label: "En famille", description: "Pour tout le monde" },
 ];
 
-const ContextStep = ({ onSelect }: ContextStepProps) => {
+const ContextStep = ({ onSelect, onSkip }: ContextStepProps) => {
   return (
     <div className="flex flex-col items-center justify-center h-full px-6">
       <motion.h2
@@ -39,6 +40,18 @@ const ContextStep = ({ onSelect }: ContextStepProps) => {
           </motion.button>
         ))}
       </div>
+
+      {onSkip && (
+        <motion.button
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.4, duration: 0.3 }}
+          onClick={onSkip}
+          className="mt-8 text-muted-foreground/50 text-sm font-sans hover:text-muted-foreground transition-colors"
+        >
+          Passer cette étape
+        </motion.button>
+      )}
     </div>
   );
 };

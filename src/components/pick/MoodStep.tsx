@@ -3,6 +3,7 @@ import type { Mood } from "@/lib/tmdb";
 
 interface MoodStepProps {
   onSelect: (mood: Mood) => void;
+  onSkip?: () => void;
 }
 
 const moods: { value: Mood; label: string; description: string }[] = [
@@ -14,7 +15,7 @@ const moods: { value: Mood; label: string; description: string }[] = [
   { value: "fun", label: "Rire", description: "Quelque chose de drôle" },
 ];
 
-const MoodStep = ({ onSelect }: MoodStepProps) => {
+const MoodStep = ({ onSelect, onSkip }: MoodStepProps) => {
   return (
     <div className="flex flex-col items-center justify-center h-full px-6">
       <motion.h2
@@ -41,6 +42,18 @@ const MoodStep = ({ onSelect }: MoodStepProps) => {
           </motion.button>
         ))}
       </div>
+
+      {onSkip && (
+        <motion.button
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.5, duration: 0.3 }}
+          onClick={onSkip}
+          className="mt-8 text-muted-foreground/50 text-sm font-sans hover:text-muted-foreground transition-colors"
+        >
+          Passer cette étape
+        </motion.button>
+      )}
     </div>
   );
 };

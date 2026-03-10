@@ -9,11 +9,13 @@ interface ResultScreenProps {
   onShowAnother: () => void;
   onRestart: () => void;
   hasMore: boolean;
+  matchScore?: number;
+  matchLabel?: string;
 }
 
 const IMG_BASE = "https://image.tmdb.org/t/p";
 
-const ResultScreen = ({ movie, onShowAnother, onRestart, hasMore }: ResultScreenProps) => {
+const ResultScreen = ({ movie, onShowAnother, onRestart, hasMore, matchScore, matchLabel }: ResultScreenProps) => {
   const [providers, setProviders] = useState<{ name: string; logo_path: string }[]>([]);
 
   const title = getDisplayTitle(movie);
@@ -50,9 +52,24 @@ const ResultScreen = ({ movie, onShowAnother, onRestart, hasMore }: ResultScreen
             transition={{ duration: 0.6, delay: 0.2 }}
             className="max-w-2xl"
           >
-            <p className="text-primary text-xs mb-4 tracking-widest uppercase font-sans font-medium">
-              Recommandé pour vous
-            </p>
+            {/* Match score + emotional label */}
+            {matchLabel && (
+              <motion.div
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.4, duration: 0.4 }}
+                className="mb-4 flex items-center gap-3"
+              >
+                {matchScore > 0 && (
+                  <span className="bg-primary/20 text-primary text-xs font-sans font-semibold px-3 py-1 rounded-full border border-primary/30">
+                    {matchScore}% match
+                  </span>
+                )}
+                <span className="text-primary/80 text-sm font-sans font-light italic">
+                  {matchLabel}
+                </span>
+              </motion.div>
+            )}
 
             {genres && (
               <p className="text-muted-foreground text-sm mb-3 tracking-wider uppercase font-sans">
