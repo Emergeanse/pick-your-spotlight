@@ -90,7 +90,7 @@ const Index = () => {
       setResults([movie]);
       setCurrentResultIndex(0);
       setMatchScore(0);
-      setMatchLabel("Watch this tonight");
+      setMatchLabel("À regarder ce soir");
       setStep("result");
     } catch (e) {
       console.error(e);
