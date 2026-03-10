@@ -7,12 +7,20 @@ import ContextStep from "@/components/pick/ContextStep";
 import TimeStep from "@/components/pick/TimeStep";
 import PlatformStep from "@/components/pick/PlatformStep";
 import ResultScreen from "@/components/pick/ResultScreen";
+import StepLayout from "@/components/pick/StepLayout";
 import type { Mood, Context, TimeAvailable, MovieDetail } from "@/lib/tmdb";
 import { getRecommendations, getSurpriseRecommendation } from "@/lib/tmdb";
 
 type Step = "home" | "mood" | "genre" | "context" | "time" | "platforms" | "result";
 
-// Compute a fake match score based on how many steps were answered
+const STEP_ORDER: Step[] = ["mood", "genre", "context", "time", "platforms"];
+const TOTAL_STEPS = STEP_ORDER.length;
+
+function getStepNumber(step: Step): number {
+  const idx = STEP_ORDER.indexOf(step);
+  return idx >= 0 ? idx + 1 : 0;
+}
+
 function computeMatchScore(mood: Mood | null, genreIds: number[], context: Context | null, time: TimeAvailable | null, platformIds: number[]): number {
   let base = 65;
   if (mood) base += 8;
@@ -20,7 +28,6 @@ function computeMatchScore(mood: Mood | null, genreIds: number[], context: Conte
   if (context) base += 6;
   if (time) base += 5;
   if (platformIds.length > 0) base += 4;
-  // Add some randomness
   return Math.min(98, base + Math.floor(Math.random() * 5));
 }
 
@@ -29,6 +36,12 @@ function getMatchLabel(score: number): string {
   if (score >= 80) return "Perfect movie for tonight";
   return "Great match for your mood";
 }
+
+const slideVariants = {
+  enter: { x: 80, opacity: 0 },
+  center: { x: 0, opacity: 1 },
+  exit: { x: -80, opacity: 0 },
+};
 
 const Index = () => {
   const [step, setStep] = useState<Step>("home");
@@ -52,7 +65,7 @@ const Index = () => {
       const movie = await getSurpriseRecommendation();
       setResults([movie]);
       setCurrentResultIndex(0);
-      setMatchScore(0); // No score for surprise
+      setMatchScore(0);
       setMatchLabel("Hidden gem just for you");
       setStep("result");
     } catch (e) {
@@ -105,20 +118,15 @@ const Index = () => {
     try {
       await new Promise(r => setTimeout(r, 600));
       setLoadingMessage("Recherche du film idéal…");
-      
-      // Use defaults if skipped
       const finalMood = mood || "easy-watch";
       const finalContext = context || "alone";
       const finalTime = time || "movie-night";
-      
       const recs = await getRecommendations(finalMood, finalContext, finalTime, platformIds, genreIds);
       setLoadingMessage("Presque prêt…");
       await new Promise(r => setTimeout(r, 400));
-      
       const score = computeMatchScore(mood, genreIds, context, time, platformIds);
       setMatchScore(score);
       setMatchLabel(getMatchLabel(score));
-      
       setResults(recs);
       setCurrentResultIndex(0);
       setStep("result");
@@ -149,46 +157,72 @@ const Index = () => {
     setMatchLabel("");
   };
 
+  const currentStepNumber = getStepNumber(step);
+  const isQuestionStep = currentStepNumber > 0;
+
+  const renderStep = () => {
+    switch (step) {
+      case "mood":
+        return <MoodStep onSelect={handleMoodSelect} onSkip={() => handleMoodSelect(null)} />;
+      case "genre":
+        return <GenreStep onSelect={handleGenreSelect} />;
+      case "context":
+        return <ContextStep onSelect={handleContextSelect} onSkip={() => handleContextSelect(null)} />;
+      case "time":
+        return <TimeStep onSelect={handleTimeSelect} onSkip={() => handleTimeSelect(null)} loading={false} />;
+      case "platforms":
+        return <PlatformStep onSelect={handlePlatformSelect} loading={loading} loadingMessage={loadingMessage} />;
+      default:
+        return null;
+    }
+  };
+
   return (
     <div className="fixed inset-0 bg-background overflow-hidden">
       <AnimatePresence mode="wait">
         {step === "home" && (
-          <FadeWrapper key="home">
+          <motion.div
+            key="home"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.4 }}
+            className="absolute inset-0"
+          >
             <HomeScreen
               onStart={handleStart}
               onSurprise={handleSurprise}
               onPickForMe={handlePickForMe}
               loading={loading}
             />
-          </FadeWrapper>
+          </motion.div>
         )}
-        {step === "mood" && (
-          <FadeWrapper key="mood">
-            <MoodStep onSelect={handleMoodSelect} onSkip={() => handleMoodSelect(null)} />
-          </FadeWrapper>
+
+        {isQuestionStep && (
+          <motion.div
+            key={step}
+            variants={slideVariants}
+            initial="enter"
+            animate="center"
+            exit="exit"
+            transition={{ duration: 0.35, ease: "easeOut" }}
+            className="absolute inset-0"
+          >
+            <StepLayout currentStep={currentStepNumber} totalSteps={TOTAL_STEPS}>
+              {renderStep()}
+            </StepLayout>
+          </motion.div>
         )}
-        {step === "genre" && (
-          <FadeWrapper key="genre">
-            <GenreStep onSelect={handleGenreSelect} />
-          </FadeWrapper>
-        )}
-        {step === "context" && (
-          <FadeWrapper key="context">
-            <ContextStep onSelect={handleContextSelect} onSkip={() => handleContextSelect(null)} />
-          </FadeWrapper>
-        )}
-        {step === "time" && (
-          <FadeWrapper key="time">
-            <TimeStep onSelect={handleTimeSelect} onSkip={() => handleTimeSelect(null)} loading={false} />
-          </FadeWrapper>
-        )}
-        {step === "platforms" && (
-          <FadeWrapper key="platforms">
-            <PlatformStep onSelect={handlePlatformSelect} loading={loading} loadingMessage={loadingMessage} />
-          </FadeWrapper>
-        )}
+
         {step === "result" && results.length > 0 && (
-          <FadeWrapper key="result">
+          <motion.div
+            key="result"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.4 }}
+            className="absolute inset-0"
+          >
             <ResultScreen
               movie={results[currentResultIndex]}
               onShowAnother={handleShowAnother}
@@ -197,24 +231,11 @@ const Index = () => {
               matchScore={matchScore}
               matchLabel={matchLabel}
             />
-          </FadeWrapper>
+          </motion.div>
         )}
       </AnimatePresence>
     </div>
   );
 };
-
-const FadeWrapper = ({ children, key }: { children: React.ReactNode; key: string }) => (
-  <motion.div
-    key={key}
-    initial={{ opacity: 0 }}
-    animate={{ opacity: 1 }}
-    exit={{ opacity: 0 }}
-    transition={{ duration: 0.4, ease: "easeInOut" }}
-    className="absolute inset-0"
-  >
-    {children}
-  </motion.div>
-);
 
 export default Index;
