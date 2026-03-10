@@ -113,7 +113,7 @@ const HomeScreen = ({ onStart, onSurprise, onPickForMe, loading }: HomeScreenPro
               disabled={isLoading || loading}
             >
               <Wand2 className="w-4 h-4 mr-2 transition-transform duration-300 group-hover:rotate-12" />
-              {loading ? "..." : "Surprise me"}
+              {loading ? "..." : "Surprends-moi"}
             </Button>
             <AnimatePresence>
               {sparkle && (
