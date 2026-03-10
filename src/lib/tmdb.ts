@@ -83,14 +83,20 @@ export async function getRecommendations(
   mood: Mood,
   context: Context,
   time: TimeAvailable,
-  platformIds: number[] = []
+  platformIds: number[] = [],
+  userGenreIds: number[] = []
 ): Promise<MovieDetail[]> {
   const moodGenres = moodToGenres[mood];
   const contextGenres = contextModifiers[context];
   
-  // Find overlapping genres or combine
-  const combined = moodGenres.filter(g => contextGenres.includes(g));
-  const genres = combined.length > 0 ? combined : moodGenres.slice(0, 2);
+  // If user picked genres, prioritize those; otherwise combine mood+context
+  let genres: number[];
+  if (userGenreIds.length > 0) {
+    genres = userGenreIds.slice(0, 3);
+  } else {
+    const combined = moodGenres.filter(g => contextGenres.includes(g));
+    genres = combined.length > 0 ? combined : moodGenres.slice(0, 2);
+  }
   
   const isTV = time === "episode";
   const endpoint = isTV ? "/discover/tv" : "/discover/movie";
@@ -139,6 +145,13 @@ export async function getSurpriseRecommendation(): Promise<MovieDetail> {
   const data = await fetchFromTMDB("/movie/top_rated", { page: String(page) });
   const results: Movie[] = data.results || [];
   const pick = results[Math.floor(Math.random() * results.length)];
+  return getMovieDetails(pick.id, "movie");
+}
+
+export async function getTrendingMovie(): Promise<MovieDetail> {
+  const data = await fetchFromTMDB("/trending/movie/day");
+  const results: Movie[] = data.results || [];
+  const pick = results[Math.floor(Math.random() * Math.min(5, results.length))];
   return getMovieDetails(pick.id, "movie");
 }
 

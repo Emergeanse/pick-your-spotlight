@@ -2,6 +2,7 @@ import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import HomeScreen from "@/components/pick/HomeScreen";
 import MoodStep from "@/components/pick/MoodStep";
+import GenreStep from "@/components/pick/GenreStep";
 import ContextStep from "@/components/pick/ContextStep";
 import TimeStep from "@/components/pick/TimeStep";
 import PlatformStep from "@/components/pick/PlatformStep";
@@ -9,16 +10,18 @@ import ResultScreen from "@/components/pick/ResultScreen";
 import type { Mood, Context, TimeAvailable, MovieDetail } from "@/lib/tmdb";
 import { getRecommendations, getSurpriseRecommendation } from "@/lib/tmdb";
 
-type Step = "home" | "mood" | "context" | "time" | "platforms" | "result";
+type Step = "home" | "mood" | "genre" | "context" | "time" | "platforms" | "result";
 
 const Index = () => {
   const [step, setStep] = useState<Step>("home");
   const [mood, setMood] = useState<Mood | null>(null);
+  const [genreIds, setGenreIds] = useState<number[]>([]);
   const [context, setContext] = useState<Context | null>(null);
   const [time, setTime] = useState<TimeAvailable | null>(null);
   const [results, setResults] = useState<MovieDetail[]>([]);
   const [loading, setLoading] = useState(false);
   const [currentResultIndex, setCurrentResultIndex] = useState(0);
+  const [loadingMessage, setLoadingMessage] = useState("");
 
   const handleStart = () => setStep("mood");
 
@@ -38,6 +41,11 @@ const Index = () => {
 
   const handleMoodSelect = (m: Mood) => {
     setMood(m);
+    setStep("genre");
+  };
+
+  const handleGenreSelect = (ids: number[]) => {
+    setGenreIds(ids);
     setStep("context");
   };
 
@@ -51,8 +59,6 @@ const Index = () => {
     setStep("platforms");
   };
 
-  const [loadingMessage, setLoadingMessage] = useState("");
-
   const handlePlatformSelect = async (platformIds: number[]) => {
     if (!mood || !context || !time) return;
     setLoading(true);
@@ -60,7 +66,7 @@ const Index = () => {
     try {
       await new Promise(r => setTimeout(r, 600));
       setLoadingMessage("Recherche du film idéal…");
-      const recs = await getRecommendations(mood, context, time, platformIds);
+      const recs = await getRecommendations(mood, context, time, platformIds, genreIds);
       setLoadingMessage("Presque prêt…");
       await new Promise(r => setTimeout(r, 400));
       setResults(recs);
@@ -83,6 +89,7 @@ const Index = () => {
   const handleRestart = () => {
     setStep("home");
     setMood(null);
+    setGenreIds([]);
     setContext(null);
     setTime(null);
     setResults([]);
@@ -100,6 +107,11 @@ const Index = () => {
         {step === "mood" && (
           <FadeWrapper key="mood">
             <MoodStep onSelect={handleMoodSelect} />
+          </FadeWrapper>
+        )}
+        {step === "genre" && (
+          <FadeWrapper key="genre">
+            <GenreStep onSelect={handleGenreSelect} />
           </FadeWrapper>
         )}
         {step === "context" && (
