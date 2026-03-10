@@ -1,59 +1,38 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { ChevronDown, ChevronUp, Star, Clock, Users, Zap, Heart, Sun, Brain, Film, Smile } from "lucide-react";
+import { Play, ExternalLink, RotateCcw, ChevronRight, Star, Clock } from "lucide-react";
 import type { MovieDetail } from "@/lib/tmdb";
-import { getDisplayTitle, getYear, getBackdropUrl, getPosterUrl, getWatchProviders } from "@/lib/tmdb";
+import { getDisplayTitle, getYear, getBackdropUrl, getPosterUrl, getWatchProviders, getMovieTrailerUrl } from "@/lib/tmdb";
 import type { Mood, Context, TimeAvailable } from "@/lib/tmdb";
-import type { MediaType } from "./MediaTypeStep";
 import BrandHeader from "./BrandHeader";
+
+const IMG_BASE = "https://image.tmdb.org/t/p";
 
 interface ResultScreenProps {
   movie: MovieDetail;
   onShowAnother: () => void;
   onRestart: () => void;
   hasMore: boolean;
-  matchScore?: number;
-  matchLabel?: string;
   userCriteria?: {
     mood: Mood | null;
     context: Context | null;
     time: TimeAvailable | null;
-    genreIds: number[];
-    excludedGenreIds: number[];
-    platformIds: number[];
-    minRating: number;
-    mediaType: MediaType;
   };
 }
 
-const IMG_BASE = "https://image.tmdb.org/t/p";
-
-const moodLabels: Record<Mood, { label: string; icon: React.ElementType }> = {
-  relax: { label: "Détente", icon: Sun },
-  excited: { label: "Adrénaline", icon: Zap },
-  romantic: { label: "Romance", icon: Heart },
-  "mind-blowing": { label: "Vertige", icon: Brain },
-  "easy-watch": { label: "Léger", icon: Film },
-  fun: { label: "Rire", icon: Smile },
+const moodLabels: Record<Mood, string> = {
+  relax: "Détente",
+  excited: "Adrénaline",
+  romantic: "Romance",
+  "mind-blowing": "Vertige",
+  "easy-watch": "Léger",
+  fun: "Rire",
 };
 
-const contextLabels: Record<Context, string> = {
-  alone: "Seul·e",
-  couple: "En couple",
-  friends: "Entre amis",
-  family: "En famille",
-};
-
-const timeLabels: Record<TimeAvailable, string> = {
-  short: "Film court (< 90 min)",
-  "movie-night": "Soirée ciné",
-  episode: "Un épisode",
-};
-
-const ResultScreen = ({ movie, onShowAnother, onRestart, hasMore, matchScore, matchLabel, userCriteria }: ResultScreenProps) => {
+const ResultScreen = ({ movie, onShowAnother, onRestart, hasMore, userCriteria }: ResultScreenProps) => {
   const [providers, setProviders] = useState<{ name: string; logo_path: string }[]>([]);
-  const [showDetails, setShowDetails] = useState(false);
+  const [trailerUrl, setTrailerUrl] = useState<string | null>(null);
 
   const title = getDisplayTitle(movie);
   const year = getYear(movie);
@@ -63,116 +42,87 @@ const ResultScreen = ({ movie, onShowAnother, onRestart, hasMore, matchScore, ma
   const genres = movie.genres?.map(g => g.name).join(", ") || "";
   const overview = movie.overview || "Aucune description disponible.";
   const mediaType = movie.first_air_date ? "tv" : "movie";
-
   const bgImage = backdrop || poster;
 
   useEffect(() => {
     getWatchProviders(movie.id, mediaType).then(setProviders).catch(() => setProviders([]));
+    getMovieTrailerUrl(movie.id, mediaType).then(setTrailerUrl).catch(() => setTrailerUrl(null));
   }, [movie.id, mediaType]);
-
-  const matchReasons: string[] = [];
-  if (userCriteria) {
-    if (userCriteria.mood) {
-      const m = moodLabels[userCriteria.mood];
-      matchReasons.push(`Ambiance « ${m.label} »`);
-    }
-    if (userCriteria.genreIds.length > 0 && movie.genres) {
-      const matchedGenres = movie.genres.filter(g => userCriteria.genreIds.includes(g.id));
-      if (matchedGenres.length > 0) {
-        matchReasons.push(`${matchedGenres.map(g => g.name).join(", ")}`);
-      }
-    }
-    if (userCriteria.context) {
-      matchReasons.push(`${contextLabels[userCriteria.context]}`);
-    }
-    if (userCriteria.time) {
-      if (userCriteria.time === "short" && runtime > 0 && runtime <= 90) {
-        matchReasons.push(`Durée courte (${runtime} min)`);
-      } else if (userCriteria.time === "movie-night") {
-        matchReasons.push(`Soirée ciné`);
-      } else if (userCriteria.time === "episode") {
-        matchReasons.push(`Format épisode`);
-      }
-    }
-    if (userCriteria.minRating > 0 && movie.vote_average >= userCriteria.minRating) {
-      matchReasons.push(`Note ≥ ${userCriteria.minRating} (★ ${movie.vote_average.toFixed(1)})`);
-    }
-    if (userCriteria.platformIds.length > 0 && providers.length > 0) {
-      matchReasons.push(`Sur vos plateformes`);
-    }
-    if (userCriteria.excludedGenreIds.length > 0) {
-      matchReasons.push(`Genres exclus évités`);
-    }
-  }
 
   return (
     <div className="h-full w-full overflow-y-auto">
       <BrandHeader showBack onBack={onRestart} />
 
       <div className="relative min-h-screen w-full">
+        {/* Cinematic backdrop */}
         {bgImage && (
-          <div
+          <motion.div
+            initial={{ opacity: 0, scale: 1.05 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 1.2 }}
             className="absolute inset-0 bg-cover bg-center bg-no-repeat"
             style={{ backgroundImage: `url(${bgImage})` }}
           />
         )}
-
         <div className="absolute inset-0 poster-gradient" />
+        <div className="absolute inset-0 bg-gradient-to-r from-background/90 via-background/50 to-transparent" />
 
-        <div className="relative z-10 flex flex-col justify-end min-h-screen p-4 pb-8 md:p-12 lg:p-16">
+        {/* Content */}
+        <div className="relative z-10 flex flex-col justify-end min-h-screen p-5 pb-10 md:p-12 lg:p-16">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
             className="max-w-2xl"
           >
-            {matchLabel && (
-              <motion.div
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.4, duration: 0.4 }}
-                className="mb-3 md:mb-4 flex items-center gap-2 md:gap-3 flex-wrap"
-              >
-                {matchScore > 0 && (
-                  <span className="bg-primary/20 text-primary text-[10px] md:text-xs font-sans font-semibold px-2.5 py-1 rounded-full border border-primary/30">
-                    {matchScore}% match
-                  </span>
-                )}
-                <span className="text-primary/80 text-xs md:text-sm font-sans font-light italic">
-                  {matchLabel}
-                </span>
-              </motion.div>
-            )}
-
+            {/* Genre tags */}
             {genres && (
-              <p className="text-muted-foreground text-[10px] md:text-sm mb-2 md:mb-3 tracking-wider uppercase font-sans">
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.3 }}
+                className="text-primary/80 text-[10px] md:text-xs mb-2 md:mb-3 tracking-[0.15em] uppercase font-sans font-medium"
+              >
                 {genres}
-              </p>
+              </motion.p>
             )}
 
-            <h1 className="text-3xl md:text-6xl lg:text-7xl font-serif mb-3 md:mb-4 leading-tight">
+            {/* Title */}
+            <h1 className="text-4xl md:text-6xl lg:text-8xl font-serif mb-3 md:mb-4 leading-[1.02]">
               {title}
             </h1>
 
-            <div className="flex items-center gap-3 md:gap-4 text-muted-foreground text-xs md:text-sm mb-4 md:mb-6 font-sans flex-wrap">
-              {year && <span>{year}</span>}
+            {/* Meta row */}
+            <div className="flex items-center gap-3 md:gap-4 text-foreground/60 text-xs md:text-sm mb-4 md:mb-5 font-sans flex-wrap">
+              {year && <span className="font-medium text-foreground/80">{year}</span>}
               {runtime > 0 && (
-                <>
-                  <span className="w-1 h-1 rounded-full bg-muted-foreground" />
-                  <span>{runtime} min</span>
-                </>
+                <span className="flex items-center gap-1">
+                  <Clock className="w-3 h-3" />
+                  {runtime} min
+                </span>
               )}
               {movie.vote_average > 0 && (
-                <>
-                  <span className="w-1 h-1 rounded-full bg-muted-foreground" />
-                  <span>★ {movie.vote_average.toFixed(1)}</span>
-                </>
+                <span className="flex items-center gap-1 text-primary font-medium">
+                  <Star className="w-3 h-3 fill-primary" />
+                  {movie.vote_average.toFixed(1)}
+                </span>
               )}
             </div>
 
+            {/* Overview */}
+            <p className="text-foreground/70 text-sm md:text-base leading-relaxed mb-5 md:mb-7 max-w-lg font-sans font-light line-clamp-4">
+              {overview}
+            </p>
+
+            {/* Platform badges */}
             {providers.length > 0 && (
-              <div className="flex items-center gap-2 md:gap-3 mb-4 md:mb-6">
-                <span className="text-muted-foreground text-[10px] md:text-xs font-sans">Disponible sur</span>
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.5 }}
+                className="flex items-center gap-2 md:gap-3 mb-5 md:mb-7"
+              >
+                <span className="text-foreground/40 text-[10px] md:text-xs font-sans">Disponible sur</span>
                 <div className="flex gap-1.5 md:gap-2">
                   {providers.map((p) => (
                     <img
@@ -180,108 +130,46 @@ const ResultScreen = ({ movie, onShowAnother, onRestart, hasMore, matchScore, ma
                       src={`${IMG_BASE}/w92${p.logo_path}`}
                       alt={p.name}
                       title={p.name}
-                      className="w-6 h-6 md:w-8 md:h-8 rounded-md md:rounded-lg object-cover"
+                      className="w-7 h-7 md:w-9 md:h-9 rounded-lg object-cover border border-border/30"
                     />
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {matchReasons.length > 0 && (
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.6, duration: 0.4 }}
-                className="bg-card/50 backdrop-blur-md rounded-xl md:rounded-2xl p-3 md:p-5 border border-primary/20 mb-4 md:mb-6 max-w-md"
-              >
-                <h3 className="text-primary text-[10px] md:text-xs uppercase tracking-wider font-sans font-semibold mb-2 md:mb-3">
-                  Pourquoi ce film est fait pour vous
-                </h3>
-                <div className="flex flex-wrap gap-1.5 md:gap-2">
-                  {matchReasons.map((reason, i) => (
-                    <motion.span
-                      key={i}
-                      initial={{ opacity: 0, scale: 0.9 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ delay: 0.7 + i * 0.06, duration: 0.25 }}
-                      className="bg-primary/10 text-foreground/80 text-[10px] md:text-xs font-sans px-2 md:px-3 py-1 md:py-1.5 rounded-full border border-primary/20"
-                    >
-                      {reason}
-                    </motion.span>
                   ))}
                 </div>
               </motion.div>
             )}
 
-            <p className="text-foreground/80 text-sm md:text-lg leading-relaxed mb-4 md:mb-6 max-w-lg font-sans font-light">
-              {showDetails ? overview : (overview.length > 150 ? overview.substring(0, 150) + "…" : overview)}
-            </p>
+            {/* Mood match tag */}
+            {userCriteria?.mood && (
+              <motion.div
+                initial={{ opacity: 0, y: 5 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.6 }}
+                className="mb-5 md:mb-7"
+              >
+                <span className="bg-primary/15 text-primary text-[10px] md:text-xs font-sans font-medium px-3 py-1.5 rounded-full border border-primary/20">
+                  Parfait pour une soirée « {moodLabels[userCriteria.mood]} »
+                </span>
+              </motion.div>
+            )}
 
-            <button
-              onClick={() => setShowDetails(!showDetails)}
-              className="flex items-center gap-2 text-primary/70 hover:text-primary text-xs md:text-sm font-sans mb-4 md:mb-6 transition-colors cursor-pointer"
+            {/* Action buttons */}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.7 }}
+              className="flex flex-wrap gap-3"
             >
-              {showDetails ? <ChevronUp className="w-3.5 h-3.5 md:w-4 md:h-4" /> : <ChevronDown className="w-3.5 h-3.5 md:w-4 md:h-4" />}
-              {showDetails ? "Moins d'infos" : "Plus d'infos"}
-            </button>
-
-            <AnimatePresence>
-              {showDetails && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: "auto" }}
-                  exit={{ opacity: 0, height: 0 }}
-                  transition={{ duration: 0.3, ease: "easeOut" }}
-                  className="overflow-hidden mb-6 md:mb-8"
+              {trailerUrl && (
+                <Button
+                  variant="hero"
+                  size="xl"
+                  className="text-sm md:text-base"
+                  onClick={() => window.open(trailerUrl, "_blank")}
                 >
-                  <div className="space-y-3 md:space-y-4">
-                    {overview.length > 150 && (
-                      <div>
-                        <h3 className="text-foreground/60 text-[10px] md:text-xs uppercase tracking-wider font-sans mb-1.5 md:mb-2">Synopsis complet</h3>
-                        <p className="text-foreground/70 text-xs md:text-sm leading-relaxed font-sans font-light max-w-lg">
-                          {overview}
-                        </p>
-                      </div>
-                    )}
-
-                    <div className="grid grid-cols-2 gap-2 md:gap-3 max-w-md">
-                      {year && (
-                        <div className="bg-card/60 backdrop-blur-sm rounded-xl p-2.5 md:p-3 border border-border/30">
-                          <span className="text-muted-foreground text-[10px] md:text-xs font-sans block mb-0.5 md:mb-1">Année</span>
-                          <span className="text-foreground text-xs md:text-sm font-sans">{year}</span>
-                        </div>
-                      )}
-                      {runtime > 0 && (
-                        <div className="bg-card/60 backdrop-blur-sm rounded-xl p-2.5 md:p-3 border border-border/30">
-                          <span className="text-muted-foreground text-[10px] md:text-xs font-sans block mb-0.5 md:mb-1">Durée</span>
-                          <span className="text-foreground text-xs md:text-sm font-sans flex items-center gap-1.5">
-                            <Clock className="w-3 h-3 md:w-3.5 md:h-3.5 text-primary/60" />
-                            {Math.floor(runtime / 60)}h{runtime % 60 > 0 ? `${String(runtime % 60).padStart(2, "0")}` : ""}
-                          </span>
-                        </div>
-                      )}
-                      {movie.vote_average > 0 && (
-                        <div className="bg-card/60 backdrop-blur-sm rounded-xl p-2.5 md:p-3 border border-border/30">
-                          <span className="text-muted-foreground text-[10px] md:text-xs font-sans block mb-0.5 md:mb-1">Note</span>
-                          <span className="text-foreground text-xs md:text-sm font-sans flex items-center gap-1.5">
-                            <Star className="w-3 h-3 md:w-3.5 md:h-3.5 text-yellow-500" />
-                            {movie.vote_average.toFixed(1)} / 10
-                          </span>
-                        </div>
-                      )}
-                      {genres && (
-                        <div className="bg-card/60 backdrop-blur-sm rounded-xl p-2.5 md:p-3 border border-border/30">
-                          <span className="text-muted-foreground text-[10px] md:text-xs font-sans block mb-0.5 md:mb-1">Genres</span>
-                          <span className="text-foreground text-[10px] md:text-xs font-sans">{genres}</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </motion.div>
+                  <Play className="w-4 h-4 fill-current" />
+                  Bande-annonce
+                </Button>
               )}
-            </AnimatePresence>
 
-            <div className="flex flex-col sm:flex-row gap-3 md:gap-4">
               {hasMore && (
                 <Button
                   variant="heroOutline"
@@ -289,18 +177,21 @@ const ResultScreen = ({ movie, onShowAnother, onRestart, hasMore, matchScore, ma
                   className="text-sm md:text-base"
                   onClick={onShowAnother}
                 >
+                  <ChevronRight className="w-4 h-4" />
                   Autre suggestion
                 </Button>
               )}
+
               <Button
                 variant="ghost"
                 size="xl"
-                className="text-muted-foreground hover:text-foreground text-sm md:text-base"
+                className="text-foreground/50 hover:text-foreground text-sm md:text-base"
                 onClick={onRestart}
               >
+                <RotateCcw className="w-4 h-4" />
                 Recommencer
               </Button>
-            </div>
+            </motion.div>
           </motion.div>
         </div>
       </div>

@@ -1,19 +1,21 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Wand2 } from "lucide-react";
-import { getTrendingMovie, getDisplayTitle, getYear, getBackdropUrl, getPosterUrl } from "@/lib/tmdb";
-import type { MovieDetail } from "@/lib/tmdb";
+import { Wand2, Play } from "lucide-react";
+import { getTrendingMovie, getTrendingMovies, getHiddenGems, getDisplayTitle, getYear, getBackdropUrl, getPosterUrl, getMovieDetails } from "@/lib/tmdb";
+import type { MovieDetail, Movie } from "@/lib/tmdb";
 import BrandHeader from "./BrandHeader";
+import TrendingRow from "./TrendingRow";
 
 interface HomeScreenProps {
   onStart: () => void;
   onSurprise: () => void;
   onPickForMe: () => void;
+  onMovieSelect: (movie: MovieDetail) => void;
   loading: boolean;
 }
 
-const HomeScreen = ({ onStart, onSurprise, onPickForMe, loading }: HomeScreenProps) => {
+const HomeScreen = ({ onStart, onSurprise, onPickForMe, onMovieSelect, loading }: HomeScreenProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [tonightPick, setTonightPick] = useState<MovieDetail | null>(null);
   const [sparkle, setSparkle] = useState(false);
@@ -27,7 +29,7 @@ const HomeScreen = ({ onStart, onSurprise, onPickForMe, loading }: HomeScreenPro
     setTimeout(() => {
       setIsLoading(false);
       onStart();
-    }, 1600);
+    }, 800);
   };
 
   const handleSurprise = () => {
@@ -35,7 +37,17 @@ const HomeScreen = ({ onStart, onSurprise, onPickForMe, loading }: HomeScreenPro
     setTimeout(() => {
       setSparkle(false);
       onSurprise();
-    }, 800);
+    }, 600);
+  };
+
+  const handleMovieClick = async (movie: Movie) => {
+    const mediaType = movie.first_air_date ? "tv" : "movie";
+    try {
+      const details = await getMovieDetails(movie.id, mediaType);
+      onMovieSelect(details);
+    } catch (e) {
+      console.error(e);
+    }
   };
 
   const bgImage = tonightPick?.backdrop_path
@@ -43,157 +55,145 @@ const HomeScreen = ({ onStart, onSurprise, onPickForMe, loading }: HomeScreenPro
     : "";
 
   return (
-    <div className="relative flex flex-col items-center justify-center h-full px-4 md:px-6 overflow-y-auto">
+    <div className="relative w-full h-full overflow-y-auto overflow-x-hidden">
       <BrandHeader />
 
-      {/* Cinematic background */}
-      {bgImage && (
-        <motion.div
-          initial={{ opacity: 0, scale: 1.05 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 1.5, ease: "easeOut" }}
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-          style={{ backgroundImage: `url(${bgImage})` }}
-        />
-      )}
-      <div className="absolute inset-0 bg-gradient-to-t from-background via-background/85 to-background/40" />
+      {/* Hero Section */}
+      <section className="relative h-[85vh] md:h-[90vh] flex items-end">
+        {bgImage && (
+          <motion.div
+            initial={{ opacity: 0, scale: 1.05 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 1.5, ease: "easeOut" }}
+            className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+            style={{ backgroundImage: `url(${bgImage})` }}
+          />
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/70 to-background/20" />
+        <div className="absolute inset-0 bg-gradient-to-r from-background/80 via-transparent to-transparent" />
 
-      <div className="relative z-10 text-center max-w-2xl w-full">
-        <motion.h1
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="text-3xl md:text-5xl lg:text-7xl font-serif leading-tight mb-3 md:mb-4 tracking-wide"
-        >
-          Vous ne savez pas quoi regarder ce soir ?
-        </motion.h1>
+        <div className="relative z-10 p-5 md:p-12 lg:p-16 pb-8 md:pb-14 max-w-2xl w-full">
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.2 }}
+            className="text-primary text-[10px] md:text-xs font-sans uppercase tracking-[0.2em] mb-2 md:mb-3"
+          >
+            Recommandation du soir
+          </motion.p>
 
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.3, duration: 0.5 }}
-          className="text-muted-foreground text-base md:text-xl mb-6 md:mb-10 font-light"
-        >
-          Trouvez le film parfait en moins de 30 secondes.
-        </motion.p>
+          {tonightPick && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3, duration: 0.6 }}
+            >
+              <h1 className="text-3xl md:text-6xl lg:text-7xl font-serif leading-[1.05] mb-2 md:mb-3">
+                {getDisplayTitle(tonightPick)}
+              </h1>
+              <div className="flex items-center gap-3 text-muted-foreground text-xs md:text-sm font-sans mb-3 md:mb-4">
+                {getYear(tonightPick) && <span>{getYear(tonightPick)}</span>}
+                {tonightPick.runtime > 0 && (
+                  <>
+                    <span className="w-1 h-1 rounded-full bg-muted-foreground" />
+                    <span>{tonightPick.runtime} min</span>
+                  </>
+                )}
+                {tonightPick.vote_average > 0 && (
+                  <>
+                    <span className="w-1 h-1 rounded-full bg-muted-foreground" />
+                    <span>★ {tonightPick.vote_average.toFixed(1)}</span>
+                  </>
+                )}
+                {tonightPick.genres && (
+                  <>
+                    <span className="w-1 h-1 rounded-full bg-muted-foreground" />
+                    <span>{tonightPick.genres.map(g => g.name).slice(0, 2).join(" · ")}</span>
+                  </>
+                )}
+              </div>
+              <p className="text-foreground/70 text-sm md:text-base font-sans font-light leading-relaxed mb-5 md:mb-8 max-w-lg line-clamp-3">
+                {tonightPick.overview}
+              </p>
+            </motion.div>
+          )}
 
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5, duration: 0.4 }}
-          className="flex flex-col sm:flex-row gap-3 md:gap-4 justify-center items-center mb-4 md:mb-6"
-        >
-          <div className="relative w-full sm:w-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5, duration: 0.4 }}
+            className="flex flex-wrap gap-3 items-center"
+          >
             <Button
               variant="hero"
               size="xl"
-              className="w-full sm:w-auto sm:min-w-[280px] relative overflow-hidden text-sm md:text-base"
+              className="text-sm md:text-base"
               onClick={handleStart}
               disabled={isLoading || loading}
             >
               {isLoading ? (
-                <span className="relative z-10 opacity-0">Trouver quelque chose à regarder</span>
+                <span className="flex items-center gap-2">
+                  <div className="w-4 h-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
+                </span>
               ) : (
-                "Trouver quelque chose à regarder"
-              )}
-              {isLoading && (
-                <div className="absolute inset-0 flex items-center">
-                  <div className="h-full bg-primary-foreground/20 animate-fill-bar" />
-                </div>
-              )}
-            </Button>
-          </div>
-
-          <div className="relative w-full sm:w-auto">
-            <Button
-              variant="heroOutline"
-              size="xl"
-              className="w-full sm:w-auto sm:min-w-[200px] group relative overflow-hidden text-sm md:text-base"
-              onClick={handleSurprise}
-              disabled={isLoading || loading}
-            >
-              <Wand2 className="w-4 h-4 mr-2 transition-transform duration-300 group-hover:rotate-12" />
-              {loading ? "..." : "Surprends-moi"}
-            </Button>
-            <AnimatePresence>
-              {sparkle && (
                 <>
-                  {[...Array(6)].map((_, i) => (
-                    <motion.div
-                      key={i}
-                      initial={{ opacity: 1, scale: 0, x: 0, y: 0 }}
-                      animate={{
-                        opacity: 0,
-                        scale: 1,
-                        x: (Math.random() - 0.5) * 120,
-                        y: (Math.random() - 0.5) * 80,
-                      }}
-                      exit={{ opacity: 0 }}
-                      transition={{ duration: 0.6, delay: i * 0.05 }}
-                      className="absolute top-1/2 left-1/2 w-1.5 h-1.5 rounded-full bg-primary"
-                      style={{ boxShadow: "0 0 6px hsl(var(--primary))" }}
-                    />
-                  ))}
+                  <Play className="w-4 h-4 fill-current" />
+                  Trouver mon film
                 </>
               )}
-            </AnimatePresence>
-          </div>
-        </motion.div>
+            </Button>
 
-        <motion.button
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.7, duration: 0.4 }}
-          onClick={onPickForMe}
-          disabled={loading}
-          className="mt-4 md:mt-6 text-muted-foreground/60 text-xs md:text-sm font-sans hover:text-primary transition-colors disabled:opacity-50"
-        >
-          Choisis pour moi — zéro effort
-        </motion.button>
-
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.9, duration: 0.5 }}
-          className="text-muted-foreground/40 text-[10px] md:text-xs font-sans tracking-wider mt-3 md:mt-4"
-        >
-          Compatible avec Netflix · Prime · Disney+ · Canal+ · Apple TV+
-        </motion.p>
-
-        {tonightPick && (
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 1.2, duration: 0.6 }}
-            className="mt-8 md:mt-14"
-          >
-            <p className="text-muted-foreground/60 text-[10px] md:text-xs font-sans uppercase tracking-widest mb-3 md:mb-4">
-              Recommandation du soir
-            </p>
-            <div className="flex items-center gap-3 md:gap-4 bg-card/60 backdrop-blur-md rounded-2xl p-3 md:p-4 max-w-sm mx-auto border border-border/50">
-              <img
-                src={getPosterUrl(tonightPick.poster_path, "w185")}
-                alt={getDisplayTitle(tonightPick)}
-                className="w-12 h-18 md:w-16 md:h-24 rounded-lg object-cover flex-shrink-0"
-              />
-              <div className="text-left min-w-0">
-                <h3 className="font-serif text-sm md:text-base truncate">
-                  {getDisplayTitle(tonightPick)}
-                </h3>
-                <p className="text-muted-foreground text-[10px] md:text-xs font-sans mt-1">
-                  {tonightPick.genres?.map(g => g.name).slice(0, 2).join(" · ")}
-                  {tonightPick.runtime ? ` · ${Math.floor(tonightPick.runtime / 60)}h${(tonightPick.runtime % 60).toString().padStart(2, '0')}` : ""}
-                </p>
-                {tonightPick.vote_average > 0 && (
-                  <p className="text-primary text-[10px] md:text-xs font-sans mt-1">
-                    ★ {tonightPick.vote_average.toFixed(1)}
-                  </p>
+            <div className="relative">
+              <Button
+                variant="heroOutline"
+                size="xl"
+                className="text-sm md:text-base group"
+                onClick={handleSurprise}
+                disabled={isLoading || loading}
+              >
+                <Wand2 className="w-4 h-4 mr-1 transition-transform duration-300 group-hover:rotate-12" />
+                {loading ? "..." : "Surprends-moi"}
+              </Button>
+              <AnimatePresence>
+                {sparkle && (
+                  <>
+                    {[...Array(6)].map((_, i) => (
+                      <motion.div
+                        key={i}
+                        initial={{ opacity: 1, scale: 0, x: 0, y: 0 }}
+                        animate={{
+                          opacity: 0,
+                          scale: 1,
+                          x: (Math.random() - 0.5) * 120,
+                          y: (Math.random() - 0.5) * 80,
+                        }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.6, delay: i * 0.05 }}
+                        className="absolute top-1/2 left-1/2 w-1.5 h-1.5 rounded-full bg-primary"
+                        style={{ boxShadow: "0 0 6px hsl(var(--primary))" }}
+                      />
+                    ))}
+                  </>
                 )}
-              </div>
+              </AnimatePresence>
             </div>
           </motion.div>
-        )}
-      </div>
+        </div>
+      </section>
+
+      {/* Discovery sections */}
+      <section className="relative z-10 space-y-8 md:space-y-12 pb-12 md:pb-20 max-w-6xl mx-auto md:px-12">
+        <TrendingRow
+          title="Tendances du moment"
+          fetchFn={getTrendingMovies}
+          onMovieClick={handleMovieClick}
+        />
+        <TrendingRow
+          title="Pépites cachées"
+          fetchFn={getHiddenGems}
+          onMovieClick={handleMovieClick}
+        />
+      </section>
     </div>
   );
 };
