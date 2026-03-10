@@ -22,6 +22,7 @@ const VoiceChat = ({ onClose, onMovieSuggested }: VoiceChatProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [inputText, setInputText] = useState("");
   const [interimText, setInterimText] = useState("");
+  const [micError, setMicError] = useState<string | null>(null);
   const recognitionRef = useRef<any>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -75,7 +76,12 @@ const VoiceChat = ({ onClose, onMovieSuggested }: VoiceChatProps) => {
   }, [messages, sendToAI]);
 
   const startListening = useCallback(() => {
-    if (!speechSupported) return;
+    if (!speechSupported) {
+      setMicError("La reconnaissance vocale n'est pas supportée par ton navigateur. Tape ton message.");
+      inputRef.current?.focus();
+      return;
+    }
+    setMicError(null);
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     const recognition = new SpeechRecognition();
     recognition.lang = "fr-FR";
@@ -100,17 +106,30 @@ const VoiceChat = ({ onClose, onMovieSuggested }: VoiceChatProps) => {
       }
     };
 
-    recognition.onerror = () => {
+    recognition.onerror = (e: any) => {
+      console.error("SpeechRecognition error:", e.error);
       setIsListening(false);
+      if (e.error === "not-allowed" || e.error === "permission-denied") {
+        setMicError("Accès au micro refusé. Autorise le micro dans les paramètres de ton navigateur.");
+      } else if (e.error === "no-speech") {
+        setMicError("Aucune voix détectée. Réessaie ou tape ton message.");
+      } else {
+        setMicError("Erreur micro. Tape ton message à la place.");
+      }
     };
 
     recognition.onend = () => {
       setIsListening(false);
     };
 
-    recognition.start();
-    recognitionRef.current = recognition;
-    setIsListening(true);
+    try {
+      recognition.start();
+      recognitionRef.current = recognition;
+      setIsListening(true);
+    } catch (err) {
+      console.error("Failed to start speech recognition:", err);
+      setMicError("Impossible de démarrer le micro. Tape ton message.");
+    }
   }, [speechSupported, handleSend]);
 
   const stopListening = useCallback(() => {
@@ -201,6 +220,14 @@ const VoiceChat = ({ onClose, onMovieSuggested }: VoiceChatProps) => {
               </div>
             </motion.div>
           ))}
+
+          {micError && (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex justify-center">
+              <div className="px-4 py-2 rounded-xl bg-destructive/10 text-destructive text-xs font-sans text-center max-w-[90%]">
+                {micError}
+              </div>
+            </motion.div>
+          )}
 
           {interimText && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex justify-end">
