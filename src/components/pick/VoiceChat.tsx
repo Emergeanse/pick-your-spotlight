@@ -225,8 +225,6 @@ const VoiceChat = ({ onClose, onMovieSuggested }: VoiceChatProps) => {
               </div>
             </motion.div>
           )}
-            </motion.div>
-          ))}
 
           {interimText && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex justify-end">
