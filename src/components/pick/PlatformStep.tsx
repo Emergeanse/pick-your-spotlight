@@ -9,7 +9,6 @@ export interface StreamingPlatform {
   logo: string;
 }
 
-// Major streaming providers (TMDB provider IDs for FR region)
 const platforms: StreamingPlatform[] = [
   { id: 8, label: "Netflix", logo: "https://image.tmdb.org/t/p/original/pbpMk2JmcoNnQwx5JGpXngfoWtp.jpg" },
   { id: 337, label: "Disney+", logo: "https://image.tmdb.org/t/p/original/7rwgEs15tFwyR9NPQ5vpzxTj19Q.jpg" },
@@ -44,7 +43,7 @@ const PlatformStep = ({ onSelect, loading, loadingMessage }: PlatformStepProps) 
         transition={{ duration: 0.4 }}
         className="text-3xl md:text-5xl font-serif mb-4 text-center"
       >
-        Vos plateformes
+        Où regardez-vous ?
       </motion.h2>
 
       <motion.p
@@ -64,6 +63,7 @@ const PlatformStep = ({ onSelect, loading, loadingMessage }: PlatformStepProps) 
               key={platform.id}
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
+              whileTap={{ scale: 0.95 }}
               transition={{ delay: i * 0.04, duration: 0.3, ease: "easeOut" }}
               onClick={() => toggle(platform.id)}
               className={`relative bg-card rounded-2xl p-4 md:p-5 flex flex-col items-center gap-2.5 transition-all duration-200 hover:scale-[1.02] cursor-pointer border ${
@@ -73,9 +73,13 @@ const PlatformStep = ({ onSelect, loading, loadingMessage }: PlatformStepProps) 
               }`}
             >
               {isSelected && (
-                <div className="absolute top-2 right-2 w-5 h-5 rounded-full bg-primary flex items-center justify-center">
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  className="absolute top-2 right-2 w-5 h-5 rounded-full bg-primary flex items-center justify-center"
+                >
                   <Check className="w-3 h-3 text-primary-foreground" />
-                </div>
+                </motion.div>
               )}
               <img
                 src={platform.logo}

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
+import { Check } from "lucide-react";
 
 export interface Genre {
   id: number;
@@ -43,7 +44,7 @@ const GenreStep = ({ onSelect }: GenreStepProps) => {
         transition={{ duration: 0.4 }}
         className="text-3xl md:text-5xl font-serif mb-4 text-center"
       >
-        Quel genre vous tente ?
+        Qu'est-ce qui vous ferait vibrer ?
       </motion.h2>
 
       <motion.p
@@ -63,14 +64,24 @@ const GenreStep = ({ onSelect }: GenreStepProps) => {
               key={genre.id}
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
+              whileTap={{ scale: 0.95 }}
               transition={{ delay: i * 0.03, duration: 0.3, ease: "easeOut" }}
               onClick={() => toggle(genre.id)}
-              className={`rounded-xl px-3 py-3 md:py-4 text-sm font-sans transition-all duration-200 hover:scale-[1.03] cursor-pointer border ${
+              className={`relative rounded-xl px-3 py-3 md:py-4 text-sm font-sans transition-all duration-200 hover:scale-[1.03] cursor-pointer border ${
                 isSelected
                   ? "bg-primary/15 border-primary text-foreground neon-glow"
                   : "bg-card border-transparent text-foreground/80 hover:border-primary/30"
               }`}
             >
+              {isSelected && (
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-primary flex items-center justify-center"
+                >
+                  <Check className="w-2.5 h-2.5 text-primary-foreground" />
+                </motion.div>
+              )}
               {genre.label}
             </motion.button>
           );
