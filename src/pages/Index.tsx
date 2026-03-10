@@ -110,8 +110,9 @@ const Index = () => {
     setStep("genre");
   };
 
-  const handleGenreSelect = (ids: number[]) => {
+  const handleGenreSelect = (ids: number[], excludedIds: number[]) => {
     setGenreIds(ids);
+    setExcludedGenreIds(excludedIds);
     setStep("context");
   };
 
