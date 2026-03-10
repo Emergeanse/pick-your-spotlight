@@ -163,7 +163,7 @@ const HomeScreen = ({ onStart, onSurprise, onPickForMe, onMovieSelect, loading }
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5, duration: 0.4 }}
-            className="flex flex-wrap gap-3 items-center"
+            className="flex flex-wrap gap-3 items-center justify-center"
           >
             <Button
               variant="hero"
