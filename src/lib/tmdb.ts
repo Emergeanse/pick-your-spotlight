@@ -204,4 +204,4 @@ export async function getMovieTrailerUrl(id: number, mediaType: string = "movie"
   }
 }
 
-export { getDisplayTitle, getYear, getPosterUrl, getBackdropUrl };
+export { getDisplayTitle, getYear, getPosterUrl, getBackdropUrl, getMovieDetails };
