@@ -226,19 +226,6 @@ const HomeScreen = ({ onStart, onSurprise, onPickForMe, onMovieSelect, loading }
         </div>
       </section>
 
-      {/* Discovery sections */}
-      <section className="relative z-10 space-y-8 md:space-y-12 pb-12 md:pb-20 max-w-6xl mx-auto md:px-12">
-        <TrendingRow
-          title="Tendances du moment"
-          fetchFn={getTrendingMovies}
-          onMovieClick={handleMovieClick}
-        />
-        <TrendingRow
-          title="Pépites cachées"
-          fetchFn={getHiddenGems}
-          onMovieClick={handleMovieClick}
-        />
-      </section>
     </div>
   );
 };
