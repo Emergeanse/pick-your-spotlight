@@ -6,44 +6,46 @@
 
 @layer base {
   :root {
-    --background: 0 0% 4.3%;
+    --background: 260 20% 5%;
     --foreground: 0 0% 100%;
 
-    --card: 0 0% 10.2%;
+    --card: 260 15% 11%;
     --card-foreground: 0 0% 100%;
 
-    --popover: 0 0% 10.2%;
+    --popover: 260 15% 11%;
     --popover-foreground: 0 0% 100%;
 
-    --primary: 357 91% 47%;
+    --primary: 265 90% 62%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 0 0% 10.2%;
+    --secondary: 260 15% 14%;
     --secondary-foreground: 0 0% 100%;
 
-    --muted: 0 0% 10.2%;
-    --muted-foreground: 0 0% 63%;
+    --muted: 260 12% 14%;
+    --muted-foreground: 260 10% 55%;
 
-    --accent: 0 0% 10.2%;
+    --accent: 265 90% 62%;
     --accent-foreground: 0 0% 100%;
 
-    --destructive: 357 91% 47%;
+    --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 0 0% 16%;
-    --input: 0 0% 16%;
-    --ring: 357 91% 47%;
+    --border: 260 15% 18%;
+    --input: 260 15% 18%;
+    --ring: 265 90% 62%;
 
     --radius: 0.75rem;
 
-    --sidebar-background: 0 0% 4.3%;
+    --glow: 265 100% 65%;
+
+    --sidebar-background: 260 20% 5%;
     --sidebar-foreground: 0 0% 100%;
-    --sidebar-primary: 357 91% 47%;
+    --sidebar-primary: 265 90% 62%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 0 0% 10.2%;
+    --sidebar-accent: 260 15% 11%;
     --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 0 0% 16%;
-    --sidebar-ring: 357 91% 47%;
+    --sidebar-border: 260 15% 18%;
+    --sidebar-ring: 265 90% 62%;
   }
 }
 
@@ -77,13 +79,22 @@
   z-index: 1;
 }
 
+/* Neon glow effect */
+.neon-glow {
+  box-shadow: 0 0 20px hsl(265 90% 62% / 0.15), 0 0 60px hsl(265 90% 62% / 0.05);
+}
+
+.neon-glow-strong {
+  box-shadow: 0 0 20px hsl(265 90% 62% / 0.3), 0 0 60px hsl(265 90% 62% / 0.1);
+}
+
 /* Poster gradient overlay */
 .poster-gradient {
   background: linear-gradient(
     to top,
-    hsl(0 0% 4.3% / 0.95) 0%,
-    hsl(0 0% 4.3% / 0.7) 30%,
-    hsl(0 0% 4.3% / 0.2) 60%,
+    hsl(260 20% 5% / 0.95) 0%,
+    hsl(260 20% 5% / 0.7) 30%,
+    hsl(260 20% 5% / 0.2) 60%,
     transparent 100%
   );
 }
@@ -98,13 +109,12 @@
   animation: fill-bar 1.5s ease-in-out forwards;
 }
 
-/* Cross-fade animation */
-@keyframes fade-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
+/* Subtle pulse for loading states */
+@keyframes subtle-pulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 1; }
 }
 
-@keyframes fade-out {
-  from { opacity: 1; }
-  to { opacity: 0; }
+.animate-subtle-pulse {
+  animation: subtle-pulse 1.5s ease-in-out infinite;
 }
