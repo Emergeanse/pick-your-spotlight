@@ -38,9 +38,9 @@ function computeMatchScore(mood: Mood | null, genreIds: number[], context: Conte
 }
 
 function getMatchLabel(score: number): string {
-  if (score >= 90) return "You're going to love this one";
-  if (score >= 80) return "Perfect movie for tonight";
-  return "Great match for your mood";
+  if (score >= 90) return "Vous allez adorer";
+  if (score >= 80) return "Le film parfait pour ce soir";
+  return "Excellent choix pour votre humeur";
 }
 
 const slideVariants = {
@@ -74,7 +74,7 @@ const Index = () => {
       setResults([movie]);
       setCurrentResultIndex(0);
       setMatchScore(0);
-      setMatchLabel("Hidden gem just for you");
+      setMatchLabel("Une pépite rien que pour vous");
       setStep("result");
     } catch (e) {
       console.error(e);
@@ -90,7 +90,7 @@ const Index = () => {
       setResults([movie]);
       setCurrentResultIndex(0);
       setMatchScore(0);
-      setMatchLabel("Watch this tonight");
+      setMatchLabel("À regarder ce soir");
       setStep("result");
     } catch (e) {
       console.error(e);

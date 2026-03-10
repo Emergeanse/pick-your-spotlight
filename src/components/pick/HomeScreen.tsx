@@ -65,7 +65,7 @@ const HomeScreen = ({ onStart, onSurprise, onPickForMe, loading }: HomeScreenPro
           transition={{ duration: 0.6 }}
           className="text-5xl md:text-7xl font-serif leading-tight mb-4 tracking-wide"
         >
-          Don't know what to watch tonight?
+          Vous ne savez pas quoi regarder ce soir ?
         </motion.h1>
 
         <motion.p
@@ -74,7 +74,7 @@ const HomeScreen = ({ onStart, onSurprise, onPickForMe, loading }: HomeScreenPro
           transition={{ delay: 0.3, duration: 0.5 }}
           className="text-muted-foreground text-lg md:text-xl mb-10 font-light"
         >
-          Find the perfect movie in under 30 seconds.
+          Trouvez le film parfait en moins de 30 secondes.
         </motion.p>
 
         <motion.div
@@ -92,9 +92,9 @@ const HomeScreen = ({ onStart, onSurprise, onPickForMe, loading }: HomeScreenPro
               disabled={isLoading || loading}
             >
               {isLoading ? (
-                <span className="relative z-10 opacity-0">Find something to watch</span>
+                <span className="relative z-10 opacity-0">Trouver quelque chose à regarder</span>
               ) : (
-                "Find something to watch"
+                "Trouver quelque chose à regarder"
               )}
               {isLoading && (
                 <div className="absolute inset-0 flex items-center">
@@ -113,7 +113,7 @@ const HomeScreen = ({ onStart, onSurprise, onPickForMe, loading }: HomeScreenPro
               disabled={isLoading || loading}
             >
               <Wand2 className="w-4 h-4 mr-2 transition-transform duration-300 group-hover:rotate-12" />
-              {loading ? "..." : "Surprise me"}
+              {loading ? "..." : "Surprends-moi"}
             </Button>
             <AnimatePresence>
               {sparkle && (
@@ -148,7 +148,7 @@ const HomeScreen = ({ onStart, onSurprise, onPickForMe, loading }: HomeScreenPro
           disabled={loading}
           className="mt-6 text-muted-foreground/60 text-sm font-sans hover:text-primary transition-colors disabled:opacity-50"
         >
-          Pick for me — zero effort
+          Choisis pour moi — zéro effort
         </motion.button>
 
         <motion.p
@@ -157,7 +157,7 @@ const HomeScreen = ({ onStart, onSurprise, onPickForMe, loading }: HomeScreenPro
           transition={{ delay: 0.9, duration: 0.5 }}
           className="text-muted-foreground/40 text-xs font-sans tracking-wider mt-4"
         >
-          Works with Netflix · Prime · Disney+ · Canal+ · Apple TV+
+          Compatible avec Netflix · Prime · Disney+ · Canal+ · Apple TV+
         </motion.p>
 
         {tonightPick && (
@@ -168,7 +168,7 @@ const HomeScreen = ({ onStart, onSurprise, onPickForMe, loading }: HomeScreenPro
             className="mt-14"
           >
             <p className="text-muted-foreground/60 text-xs font-sans uppercase tracking-widest mb-4">
-              Tonight's recommendation
+              Recommandation du soir
             </p>
             <div className="flex items-center gap-4 bg-card/60 backdrop-blur-md rounded-2xl p-4 max-w-sm mx-auto border border-border/50">
               <img
