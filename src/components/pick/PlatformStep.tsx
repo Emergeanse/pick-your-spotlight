@@ -102,7 +102,7 @@ const PlatformStep = ({ onSelect, loading, loadingMessage }: PlatformStepProps) 
           onClick={() => onSelect(selected)}
           disabled={loading}
         >
-          {loading ? "Recherche…" : selected.length === 0 ? "Peu importe" : "Valider"}
+          {loading && loadingMessage ? loadingMessage : selected.length === 0 ? "Peu importe" : "Valider"}
         </Button>
         {selected.length > 0 && (
           <button
