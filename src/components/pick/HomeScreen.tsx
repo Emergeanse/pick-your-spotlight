@@ -1,23 +1,32 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Mic, Play } from "lucide-react";
-import { getTrendingMovies, getBackdropUrl } from "@/lib/tmdb";
-import type { Movie } from "@/lib/tmdb";
+import { Mic, Play, Wand2 } from "lucide-react";
+import { getTrendingMovies, getBackdropUrl, getSurpriseRecommendation } from "@/lib/tmdb";
+import type { Movie, MovieDetail } from "@/lib/tmdb";
 import BrandHeader from "./BrandHeader";
 
 interface HomeScreenProps {
   onStart: () => void;
   onOpenChat: () => void;
+  onSurprise: (movie: MovieDetail) => void;
   loading: boolean;
 }
 
-const HomeScreen = ({ onStart, onOpenChat, loading }: HomeScreenProps) => {
+const SURPRISE_MESSAGES = [
+  "Analyse de vos envies…",
+  "Parcours des pépites cachées…",
+  "Un peu de magie…",
+  "Presque prêt…",
+];
+
+const HomeScreen = ({ onStart, onOpenChat, onSurprise, loading }: HomeScreenProps) => {
   const [isLoading, setIsLoading] = useState(false);
+  const [isSurprising, setIsSurprising] = useState(false);
+  const [surpriseMsg, setSurpriseMsg] = useState("");
   const [bgImages, setBgImages] = useState<string[]>([]);
   const [currentBgIndex, setCurrentBgIndex] = useState(0);
 
-  // Load random movie backdrops
   useEffect(() => {
     getTrendingMovies(20).then((movies: Movie[]) => {
       const bgs = movies
@@ -28,7 +37,6 @@ const HomeScreen = ({ onStart, onOpenChat, loading }: HomeScreenProps) => {
     }).catch(() => {});
   }, []);
 
-  // Rotate backgrounds
   useEffect(() => {
     if (bgImages.length <= 1) return;
     const interval = setInterval(() => {
@@ -45,13 +53,36 @@ const HomeScreen = ({ onStart, onOpenChat, loading }: HomeScreenProps) => {
     }, 800);
   };
 
-  const currentBg = bgImages[currentBgIndex] || "";
+  const handleSurprise = async () => {
+    setIsSurprising(true);
+    let msgIndex = 0;
+    setSurpriseMsg(SURPRISE_MESSAGES[0]);
+    const msgInterval = setInterval(() => {
+      msgIndex++;
+      if (msgIndex < SURPRISE_MESSAGES.length) {
+        setSurpriseMsg(SURPRISE_MESSAGES[msgIndex]);
+      }
+    }, 500);
+
+    try {
+      const movie = await getSurpriseRecommendation();
+      clearInterval(msgInterval);
+      setSurpriseMsg("✨ Trouvé !");
+      await new Promise(r => setTimeout(r, 400));
+      onSurprise(movie);
+    } catch (e) {
+      console.error(e);
+      clearInterval(msgInterval);
+    } finally {
+      setIsSurprising(false);
+      setSurpriseMsg("");
+    }
+  };
 
   return (
     <div className="relative w-full h-full overflow-hidden">
       <BrandHeader />
 
-      {/* Rotating movie backgrounds */}
       {bgImages.map((bg, i) => (
         <motion.div
           key={bg}
@@ -65,7 +96,6 @@ const HomeScreen = ({ onStart, onOpenChat, loading }: HomeScreenProps) => {
       <div className="absolute inset-0 bg-gradient-to-t from-background via-background/70 to-background/30" />
       <div className="absolute inset-0 bg-background/40" />
 
-      {/* Centered content */}
       <div className="relative z-10 h-full flex flex-col items-center justify-center text-center px-5">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -81,40 +111,64 @@ const HomeScreen = ({ onStart, onOpenChat, loading }: HomeScreenProps) => {
           </p>
         </motion.div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5, duration: 0.4 }}
-          className="flex flex-col sm:flex-row gap-3 items-center"
-        >
-          <Button
-            variant="hero"
-            size="xl"
-            className="text-sm md:text-base"
-            onClick={onOpenChat}
-            disabled={loading}
+        {isSurprising ? (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="flex flex-col items-center gap-3"
           >
-            <Mic className="w-4 h-4" />
-            Parle-moi
-          </Button>
+            <div className="w-16 h-16 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center">
+              <Wand2 className="w-7 h-7 text-primary animate-pulse" />
+            </div>
+            <p className="text-foreground/60 text-sm font-sans animate-pulse">{surpriseMsg}</p>
+          </motion.div>
+        ) : (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5, duration: 0.4 }}
+            className="flex flex-col sm:flex-row gap-3 items-center"
+          >
+            <Button
+              variant="hero"
+              size="xl"
+              className="text-sm md:text-base"
+              onClick={onOpenChat}
+              disabled={loading}
+            >
+              <Mic className="w-4 h-4" />
+              Parle-moi
+            </Button>
 
-          <Button
-            variant="heroOutline"
-            size="xl"
-            className="text-sm md:text-base"
-            onClick={handleStart}
-            disabled={isLoading || loading}
-          >
-            {isLoading ? (
-              <div className="w-4 h-4 border-2 border-foreground/30 border-t-foreground rounded-full animate-spin" />
-            ) : (
-              <>
-                <Play className="w-4 h-4 fill-current" />
-                Trouver mon film
-              </>
-            )}
-          </Button>
-        </motion.div>
+            <Button
+              variant="heroOutline"
+              size="xl"
+              className="text-sm md:text-base"
+              onClick={handleStart}
+              disabled={isLoading || loading}
+            >
+              {isLoading ? (
+                <div className="w-4 h-4 border-2 border-foreground/30 border-t-foreground rounded-full animate-spin" />
+              ) : (
+                <>
+                  <Play className="w-4 h-4 fill-current" />
+                  Trouver mon film
+                </>
+              )}
+            </Button>
+
+            <Button
+              variant="ghost"
+              size="xl"
+              className="text-sm md:text-base text-foreground/60 hover:text-foreground border border-border/30 hover:border-primary/40 hover:bg-primary/5"
+              onClick={handleSurprise}
+              disabled={loading}
+            >
+              <Wand2 className="w-4 h-4" />
+              Surprends-moi
+            </Button>
+          </motion.div>
+        )}
       </div>
     </div>
   );
