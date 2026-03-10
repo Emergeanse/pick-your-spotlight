@@ -76,7 +76,12 @@ const VoiceChat = ({ onClose, onMovieSuggested }: VoiceChatProps) => {
   }, [messages, sendToAI]);
 
   const startListening = useCallback(() => {
-    if (!speechSupported) return;
+    if (!speechSupported) {
+      setMicError("La reconnaissance vocale n'est pas supportée par ton navigateur. Tape ton message.");
+      inputRef.current?.focus();
+      return;
+    }
+    setMicError(null);
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     const recognition = new SpeechRecognition();
     recognition.lang = "fr-FR";
@@ -101,17 +106,30 @@ const VoiceChat = ({ onClose, onMovieSuggested }: VoiceChatProps) => {
       }
     };
 
-    recognition.onerror = () => {
+    recognition.onerror = (e: any) => {
+      console.error("SpeechRecognition error:", e.error);
       setIsListening(false);
+      if (e.error === "not-allowed" || e.error === "permission-denied") {
+        setMicError("Accès au micro refusé. Autorise le micro dans les paramètres de ton navigateur.");
+      } else if (e.error === "no-speech") {
+        setMicError("Aucune voix détectée. Réessaie ou tape ton message.");
+      } else {
+        setMicError("Erreur micro. Tape ton message à la place.");
+      }
     };
 
     recognition.onend = () => {
       setIsListening(false);
     };
 
-    recognition.start();
-    recognitionRef.current = recognition;
-    setIsListening(true);
+    try {
+      recognition.start();
+      recognitionRef.current = recognition;
+      setIsListening(true);
+    } catch (err) {
+      console.error("Failed to start speech recognition:", err);
+      setMicError("Impossible de démarrer le micro. Tape ton message.");
+    }
   }, [speechSupported, handleSend]);
 
   const stopListening = useCallback(() => {
