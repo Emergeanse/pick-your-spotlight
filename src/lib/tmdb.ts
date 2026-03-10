@@ -84,29 +84,21 @@ export async function getRecommendations(
   context: Context,
   time: TimeAvailable,
   platformIds: number[] = [],
-  userGenreIds: number[] = [],
-  minRating: number = 0,
-  mediaType: string = "both",
-  excludedGenreIds: number[] = []
 ): Promise<MovieDetail[]> {
   const moodGenres = moodToGenres[mood];
   const contextGenres = contextModifiers[context];
   
-  let genres: number[];
-  if (userGenreIds.length > 0) {
-    genres = userGenreIds.slice(0, 3);
-  } else {
-    const combined = moodGenres.filter(g => contextGenres.includes(g));
-    genres = combined.length > 0 ? combined : moodGenres.slice(0, 2);
-  }
+  const combined = moodGenres.filter(g => contextGenres.includes(g));
+  const genres = combined.length > 0 ? combined : moodGenres.slice(0, 2);
   
+  // Determine search types based on time
   const searchTypes: string[] = [];
-  if (mediaType === "movie" || mediaType === "both") searchTypes.push("movie");
-  if (mediaType === "tv" || mediaType === "both") searchTypes.push("tv");
-  // If time is "episode", force TV
-  if (time === "episode" && !searchTypes.includes("tv")) searchTypes.push("tv");
-
-  const voteGte = minRating > 0 ? String(minRating) : "6";
+  if (time === "episode") {
+    searchTypes.push("tv");
+  } else {
+    searchTypes.push("movie");
+    searchTypes.push("tv");
+  }
 
   const allDetails: MovieDetail[] = [];
 
@@ -117,8 +109,7 @@ export async function getRecommendations(
     const params: Record<string, string> = {
       with_genres: genres.join(","),
       sort_by: "popularity.desc",
-      ...(excludedGenreIds.length > 0 && { without_genres: excludedGenreIds.join(",") }),
-      "vote_average.gte": voteGte,
+      "vote_average.gte": "6",
       "vote_count.gte": "100",
       page: String(Math.floor(Math.random() * 3) + 1),
     };
@@ -147,7 +138,6 @@ export async function getRecommendations(
     }
   }
 
-  // Shuffle and return top 3
   return allDetails.sort(() => Math.random() - 0.5).slice(0, 3);
 }
 
@@ -174,4 +164,44 @@ export async function getTrendingMovie(): Promise<MovieDetail> {
   return getMovieDetails(pick.id, "movie");
 }
 
-export { getDisplayTitle, getYear, getPosterUrl, getBackdropUrl };
+export async function getTrendingMovies(count: number = 10): Promise<Movie[]> {
+  const data = await fetchFromTMDB("/trending/movie/day");
+  const results: Movie[] = data.results || [];
+  return results.slice(0, count);
+}
+
+export async function getHiddenGems(count: number = 10): Promise<Movie[]> {
+  const page = Math.floor(Math.random() * 3) + 1;
+  const data = await fetchFromTMDB("/discover/movie", {
+    sort_by: "vote_average.desc",
+    "vote_average.gte": "7.5",
+    "vote_count.gte": "200",
+    "vote_count.lte": "2000",
+    "with_runtime.gte": "70",
+    page: String(page),
+  });
+  const results: Movie[] = data.results || [];
+  return results.sort(() => Math.random() - 0.5).slice(0, count);
+}
+
+export async function getMovieTrailerUrl(id: number, mediaType: string = "movie"): Promise<string | null> {
+  const endpoint = mediaType === "tv" ? `/tv/${id}/videos` : `/movie/${id}/videos`;
+  try {
+    const data = await fetchFromTMDB(endpoint, { language: "fr-FR" });
+    let trailer = (data.results || []).find(
+      (v: any) => v.type === "Trailer" && v.site === "YouTube"
+    );
+    if (!trailer) {
+      // Fallback to English
+      const dataEn = await fetchFromTMDB(endpoint, { language: "en-US" });
+      trailer = (dataEn.results || []).find(
+        (v: any) => v.type === "Trailer" && v.site === "YouTube"
+      );
+    }
+    return trailer ? `https://www.youtube.com/watch?v=${trailer.key}` : null;
+  } catch {
+    return null;
+  }
+}
+
+export { getDisplayTitle, getYear, getPosterUrl, getBackdropUrl, getMovieDetails };
