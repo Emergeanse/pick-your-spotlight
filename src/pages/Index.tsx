@@ -4,16 +4,18 @@ import HomeScreen from "@/components/pick/HomeScreen";
 import MoodStep from "@/components/pick/MoodStep";
 import ContextStep from "@/components/pick/ContextStep";
 import TimeStep from "@/components/pick/TimeStep";
+import PlatformStep from "@/components/pick/PlatformStep";
 import ResultScreen from "@/components/pick/ResultScreen";
 import type { Mood, Context, TimeAvailable, MovieDetail } from "@/lib/tmdb";
 import { getRecommendations, getSurpriseRecommendation } from "@/lib/tmdb";
 
-type Step = "home" | "mood" | "context" | "time" | "result";
+type Step = "home" | "mood" | "context" | "time" | "platforms" | "result";
 
 const Index = () => {
   const [step, setStep] = useState<Step>("home");
   const [mood, setMood] = useState<Mood | null>(null);
   const [context, setContext] = useState<Context | null>(null);
+  const [time, setTime] = useState<TimeAvailable | null>(null);
   const [results, setResults] = useState<MovieDetail[]>([]);
   const [loading, setLoading] = useState(false);
   const [currentResultIndex, setCurrentResultIndex] = useState(0);
@@ -44,11 +46,16 @@ const Index = () => {
     setStep("time");
   };
 
-  const handleTimeSelect = async (t: TimeAvailable) => {
-    if (!mood || !context) return;
+  const handleTimeSelect = (t: TimeAvailable) => {
+    setTime(t);
+    setStep("platforms");
+  };
+
+  const handlePlatformSelect = async (platformIds: number[]) => {
+    if (!mood || !context || !time) return;
     setLoading(true);
     try {
-      const recs = await getRecommendations(mood, context, t);
+      const recs = await getRecommendations(mood, context, time, platformIds);
       setResults(recs);
       setCurrentResultIndex(0);
       setStep("result");
@@ -69,6 +76,7 @@ const Index = () => {
     setStep("home");
     setMood(null);
     setContext(null);
+    setTime(null);
     setResults([]);
     setCurrentResultIndex(0);
   };
@@ -93,7 +101,12 @@ const Index = () => {
         )}
         {step === "time" && (
           <FadeWrapper key="time">
-            <TimeStep onSelect={handleTimeSelect} loading={loading} />
+            <TimeStep onSelect={handleTimeSelect} loading={false} />
+          </FadeWrapper>
+        )}
+        {step === "platforms" && (
+          <FadeWrapper key="platforms">
+            <PlatformStep onSelect={handlePlatformSelect} loading={loading} />
           </FadeWrapper>
         )}
         {step === "result" && results.length > 0 && (
