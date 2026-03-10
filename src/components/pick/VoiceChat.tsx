@@ -22,6 +22,7 @@ const VoiceChat = ({ onClose, onMovieSuggested }: VoiceChatProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [inputText, setInputText] = useState("");
   const [interimText, setInterimText] = useState("");
+  const [micError, setMicError] = useState<string | null>(null);
   const recognitionRef = useRef<any>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
