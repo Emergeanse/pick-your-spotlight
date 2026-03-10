@@ -216,7 +216,10 @@ const VoiceChat = ({ onClose, onMovieSuggested }: VoiceChatProps) => {
                   </div>
                 ) : (
                   msg.content
-          )}
+                )}
+              </div>
+            </motion.div>
+          ))}
 
           {micError && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex justify-center">
