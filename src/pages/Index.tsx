@@ -170,6 +170,7 @@ const Index = () => {
     setMediaType("both");
     setMood(null);
     setGenreIds([]);
+    setExcludedGenreIds([]);
     setContext(null);
     setTime(null);
     setMinRating(0);

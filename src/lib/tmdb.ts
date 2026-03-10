@@ -117,6 +117,7 @@ export async function getRecommendations(
     const params: Record<string, string> = {
       with_genres: genres.join(","),
       sort_by: "popularity.desc",
+      ...(excludedGenreIds.length > 0 && { without_genres: excludedGenreIds.join(",") }),
       "vote_average.gte": voteGte,
       "vote_count.gte": "100",
       page: String(Math.floor(Math.random() * 3) + 1),

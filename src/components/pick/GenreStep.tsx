@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Check } from "lucide-react";
+import { Check, X } from "lucide-react";
 
 export interface Genre {
   id: number;
@@ -23,18 +23,26 @@ const genres: Genre[] = [
   { id: 9648, label: "Mystère" },
 ];
 
+type GenreState = "neutral" | "included" | "excluded";
+
 interface GenreStepProps {
-  onSelect: (genreIds: number[]) => void;
+  onSelect: (genreIds: number[], excludedGenreIds: number[]) => void;
 }
 
 const GenreStep = ({ onSelect }: GenreStepProps) => {
-  const [selected, setSelected] = useState<number[]>([]);
+  const [states, setStates] = useState<Record<number, GenreState>>({});
 
-  const toggle = (id: number) => {
-    setSelected((prev) =>
-      prev.includes(id) ? prev.filter((g) => g !== id) : [...prev, id]
-    );
+  const cycle = (id: number) => {
+    setStates((prev) => {
+      const current = prev[id] || "neutral";
+      const next: GenreState = current === "neutral" ? "included" : current === "included" ? "excluded" : "neutral";
+      return { ...prev, [id]: next };
+    });
   };
+
+  const included = Object.entries(states).filter(([, s]) => s === "included").map(([id]) => Number(id));
+  const excluded = Object.entries(states).filter(([, s]) => s === "excluded").map(([id]) => Number(id));
+  const hasSelection = included.length > 0 || excluded.length > 0;
 
   return (
     <div className="flex flex-col items-center justify-start md:justify-center min-h-full px-4 md:px-6 py-6 md:py-0 overflow-y-auto">
@@ -42,7 +50,7 @@ const GenreStep = ({ onSelect }: GenreStepProps) => {
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
-        className="text-2xl md:text-5xl font-serif mb-3 md:mb-4 text-center"
+        className="text-2xl md:text-5xl font-serif mb-2 md:mb-3 text-center"
       >
         Qu'est-ce qui vous ferait vibrer ?
       </motion.h2>
@@ -51,14 +59,28 @@ const GenreStep = ({ onSelect }: GenreStepProps) => {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.15, duration: 0.3 }}
-        className="text-muted-foreground text-xs md:text-sm font-sans mb-6 md:mb-10 text-center"
+        className="text-muted-foreground text-[11px] md:text-sm font-sans mb-1.5 md:mb-2 text-center"
       >
-        Choisissez un ou plusieurs genres
+        Appuyez une fois pour inclure, deux fois pour exclure
       </motion.p>
+
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.2, duration: 0.3 }}
+        className="flex items-center gap-3 md:gap-4 text-[10px] md:text-xs text-muted-foreground/60 font-sans mb-4 md:mb-8"
+      >
+        <span className="flex items-center gap-1">
+          <span className="w-2.5 h-2.5 rounded-full bg-primary/40" /> Inclus
+        </span>
+        <span className="flex items-center gap-1">
+          <span className="w-2.5 h-2.5 rounded-full bg-destructive/40" /> Exclu
+        </span>
+      </motion.div>
 
       <div className="grid grid-cols-3 gap-2 md:gap-3 max-w-xl w-full mb-6 md:mb-10">
         {genres.map((genre, i) => {
-          const isSelected = selected.includes(genre.id);
+          const state = states[genre.id] || "neutral";
           return (
             <motion.button
               key={genre.id}
@@ -66,20 +88,31 @@ const GenreStep = ({ onSelect }: GenreStepProps) => {
               animate={{ opacity: 1, y: 0 }}
               whileTap={{ scale: 0.95 }}
               transition={{ delay: i * 0.03, duration: 0.3, ease: "easeOut" }}
-              onClick={() => toggle(genre.id)}
+              onClick={() => cycle(genre.id)}
               className={`relative rounded-xl px-2 py-2.5 md:px-3 md:py-4 text-xs md:text-sm font-sans transition-all duration-200 hover:scale-[1.03] cursor-pointer border ${
-                isSelected
+                state === "included"
                   ? "bg-primary/15 border-primary text-foreground neon-glow"
+                  : state === "excluded"
+                  ? "bg-destructive/10 border-destructive/50 text-foreground/50 line-through"
                   : "bg-card border-transparent text-foreground/80 hover:border-primary/30"
               }`}
             >
-              {isSelected && (
+              {state === "included" && (
                 <motion.div
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
                   className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-primary flex items-center justify-center"
                 >
                   <Check className="w-2.5 h-2.5 text-primary-foreground" />
+                </motion.div>
+              )}
+              {state === "excluded" && (
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-destructive flex items-center justify-center"
+                >
+                  <X className="w-2.5 h-2.5 text-destructive-foreground" />
                 </motion.div>
               )}
               {genre.label}
@@ -97,9 +130,9 @@ const GenreStep = ({ onSelect }: GenreStepProps) => {
         <Button
           variant="hero"
           size="xl"
-          onClick={() => onSelect(selected)}
+          onClick={() => onSelect(included, excluded)}
         >
-          {selected.length === 0 ? "Peu importe" : "Continuer"}
+          {!hasSelection ? "Peu importe" : "Continuer"}
         </Button>
       </motion.div>
     </div>
