@@ -3,6 +3,7 @@ import type { TimeAvailable } from "@/lib/tmdb";
 
 interface TimeStepProps {
   onSelect: (time: TimeAvailable) => void;
+  onSkip?: () => void;
   loading: boolean;
 }
 
@@ -12,7 +13,7 @@ const times: { value: TimeAvailable; label: string; sub: string }[] = [
   { value: "episode", label: "Juste un épisode", sub: "Une série, un épisode" },
 ];
 
-const TimeStep = ({ onSelect, loading }: TimeStepProps) => {
+const TimeStep = ({ onSelect, onSkip, loading }: TimeStepProps) => {
   return (
     <div className="flex flex-col items-center justify-center h-full px-6">
       <motion.h2
@@ -40,6 +41,18 @@ const TimeStep = ({ onSelect, loading }: TimeStepProps) => {
           </motion.button>
         ))}
       </div>
+
+      {onSkip && (
+        <motion.button
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.4, duration: 0.3 }}
+          onClick={onSkip}
+          className="mt-8 text-muted-foreground/50 text-sm font-sans hover:text-muted-foreground transition-colors"
+        >
+          Passer cette étape
+        </motion.button>
+      )}
 
       {loading && (
         <motion.div
