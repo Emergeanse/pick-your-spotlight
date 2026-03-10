@@ -94,7 +94,7 @@ const HomeScreen = ({ onStart, onSurprise, onPickForMe, onMovieSelect, loading }
         <div className="absolute inset-0 bg-gradient-to-t from-background via-background/70 to-background/20" />
         <div className="absolute inset-0 bg-gradient-to-r from-background/80 via-transparent to-transparent" />
 
-        <div className="relative z-10 p-5 md:p-12 lg:p-16 pb-8 md:pb-14 max-w-2xl w-full">
+        <div className="relative z-10 p-5 md:p-12 lg:p-16 max-w-2xl w-full text-center flex flex-col items-center">
           <motion.p
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
