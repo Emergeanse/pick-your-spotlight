@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Wand2 } from "lucide-react";
 import { getTrendingMovie, getDisplayTitle, getYear, getBackdropUrl, getPosterUrl } from "@/lib/tmdb";
 import type { MovieDetail } from "@/lib/tmdb";
+import BrandHeader from "./BrandHeader";
 
 interface HomeScreenProps {
   onStart: () => void;
@@ -43,6 +44,8 @@ const HomeScreen = ({ onStart, onSurprise, onPickForMe, loading }: HomeScreenPro
 
   return (
     <div className="relative flex flex-col items-center justify-center h-full px-6 overflow-hidden">
+      <BrandHeader />
+
       {/* Cinematic background */}
       {bgImage && (
         <motion.div
@@ -80,7 +83,6 @@ const HomeScreen = ({ onStart, onSurprise, onPickForMe, loading }: HomeScreenPro
           transition={{ delay: 0.5, duration: 0.4 }}
           className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-6"
         >
-          {/* Primary CTA */}
           <div className="relative w-full sm:w-auto">
             <Button
               variant="hero"
@@ -102,7 +104,6 @@ const HomeScreen = ({ onStart, onSurprise, onPickForMe, loading }: HomeScreenPro
             </Button>
           </div>
 
-          {/* Surprise Me — magic style */}
           <div className="relative">
             <Button
               variant="heroOutline"
@@ -114,7 +115,6 @@ const HomeScreen = ({ onStart, onSurprise, onPickForMe, loading }: HomeScreenPro
               <Wand2 className="w-4 h-4 mr-2 transition-transform duration-300 group-hover:rotate-12" />
               {loading ? "..." : "Surprise me"}
             </Button>
-            {/* Magic sparkles */}
             <AnimatePresence>
               {sparkle && (
                 <>
@@ -140,7 +140,6 @@ const HomeScreen = ({ onStart, onSurprise, onPickForMe, loading }: HomeScreenPro
           </div>
         </motion.div>
 
-        {/* Pick for me — zero effort */}
         <motion.button
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -152,7 +151,6 @@ const HomeScreen = ({ onStart, onSurprise, onPickForMe, loading }: HomeScreenPro
           Pick for me — zero effort
         </motion.button>
 
-        {/* Platform badges */}
         <motion.p
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -162,7 +160,6 @@ const HomeScreen = ({ onStart, onSurprise, onPickForMe, loading }: HomeScreenPro
           Works with Netflix · Prime · Disney+ · Canal+ · Apple TV+
         </motion.p>
 
-        {/* Tonight's recommendation */}
         {tonightPick && (
           <motion.div
             initial={{ opacity: 0, y: 30 }}
