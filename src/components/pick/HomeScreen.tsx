@@ -140,12 +140,24 @@ const HomeScreen = ({ onStart, onSurprise, onPickForMe, loading }: HomeScreenPro
           </div>
         </motion.div>
 
+        {/* Pick for me — zero effort */}
+        <motion.button
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.7, duration: 0.4 }}
+          onClick={onPickForMe}
+          disabled={loading}
+          className="mt-6 text-muted-foreground/60 text-sm font-sans hover:text-primary transition-colors disabled:opacity-50"
+        >
+          Pick for me — zero effort
+        </motion.button>
+
         {/* Platform badges */}
         <motion.p
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.8, duration: 0.5 }}
-          className="text-muted-foreground/50 text-xs font-sans tracking-wider"
+          transition={{ delay: 0.9, duration: 0.5 }}
+          className="text-muted-foreground/40 text-xs font-sans tracking-wider mt-4"
         >
           Works with Netflix · Prime · Disney+ · Canal+ · Apple TV+
         </motion.p>
