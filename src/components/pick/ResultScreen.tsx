@@ -158,7 +158,7 @@ const ResultScreen = ({ movie, onShowAnother, onRestart, hasMore, userCriteria }
                   {userCriteria.context && (
                     <li className="flex items-center gap-2">
                       <span className="w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0" />
-                      {userCriteria.context === "solo" && "Idéal pour un moment solo"}
+                      {userCriteria.context === "alone" && "Idéal pour un moment solo"}
                       {userCriteria.context === "couple" && "Parfait pour une soirée en couple"}
                       {userCriteria.context === "friends" && "Super choix entre amis"}
                       {userCriteria.context === "family" && "Adapté pour toute la famille"}
@@ -168,9 +168,8 @@ const ResultScreen = ({ movie, onShowAnother, onRestart, hasMore, userCriteria }
                     <li className="flex items-center gap-2">
                       <span className="w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0" />
                       {userCriteria.time === "short" && "Court — parfait si vous avez peu de temps"}
-                      {userCriteria.time === "medium" && "Durée idéale pour votre soirée"}
-                      {userCriteria.time === "long" && "Vous avez le temps — profitez d'un film complet"}
-                      {userCriteria.time === "binge" && "Mode marathon activé 🍿"}
+                      {userCriteria.time === "movie-night" && "Durée idéale pour votre soirée"}
+                      {userCriteria.time === "episode" && "Mode marathon activé 🍿"}
                     </li>
                   )}
                   {runtime > 0 && (
