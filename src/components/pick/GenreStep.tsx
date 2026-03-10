@@ -37,12 +37,12 @@ const GenreStep = ({ onSelect }: GenreStepProps) => {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center h-full px-6">
+    <div className="flex flex-col items-center justify-start md:justify-center min-h-full px-4 md:px-6 py-6 md:py-0 overflow-y-auto">
       <motion.h2
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
-        className="text-3xl md:text-5xl font-serif mb-4 text-center"
+        className="text-2xl md:text-5xl font-serif mb-3 md:mb-4 text-center"
       >
         Qu'est-ce qui vous ferait vibrer ?
       </motion.h2>
@@ -51,12 +51,12 @@ const GenreStep = ({ onSelect }: GenreStepProps) => {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.15, duration: 0.3 }}
-        className="text-muted-foreground text-sm font-sans mb-10 text-center"
+        className="text-muted-foreground text-xs md:text-sm font-sans mb-6 md:mb-10 text-center"
       >
         Choisissez un ou plusieurs genres
       </motion.p>
 
-      <div className="grid grid-cols-3 sm:grid-cols-4 gap-2.5 md:gap-3 max-w-xl w-full mb-10">
+      <div className="grid grid-cols-3 gap-2 md:gap-3 max-w-xl w-full mb-6 md:mb-10">
         {genres.map((genre, i) => {
           const isSelected = selected.includes(genre.id);
           return (
@@ -67,7 +67,7 @@ const GenreStep = ({ onSelect }: GenreStepProps) => {
               whileTap={{ scale: 0.95 }}
               transition={{ delay: i * 0.03, duration: 0.3, ease: "easeOut" }}
               onClick={() => toggle(genre.id)}
-              className={`relative rounded-xl px-3 py-3 md:py-4 text-sm font-sans transition-all duration-200 hover:scale-[1.03] cursor-pointer border ${
+              className={`relative rounded-xl px-2 py-2.5 md:px-3 md:py-4 text-xs md:text-sm font-sans transition-all duration-200 hover:scale-[1.03] cursor-pointer border ${
                 isSelected
                   ? "bg-primary/15 border-primary text-foreground neon-glow"
                   : "bg-card border-transparent text-foreground/80 hover:border-primary/30"
@@ -92,6 +92,7 @@ const GenreStep = ({ onSelect }: GenreStepProps) => {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.4, duration: 0.3 }}
+        className="pb-4"
       >
         <Button
           variant="hero"

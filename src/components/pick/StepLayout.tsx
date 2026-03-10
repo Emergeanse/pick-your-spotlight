@@ -60,7 +60,7 @@ const StepLayout = ({ children, currentStep, totalSteps }: StepLayoutProps) => {
 
       <StepProgress current={currentStep} total={totalSteps} />
 
-      <div className="relative z-10 h-full pt-14">{children}</div>
+      <div className="relative z-10 h-full pt-12 md:pt-14 overflow-y-auto">{children}</div>
     </div>
   );
 };

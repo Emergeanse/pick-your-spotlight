@@ -43,7 +43,7 @@ const HomeScreen = ({ onStart, onSurprise, onPickForMe, loading }: HomeScreenPro
     : "";
 
   return (
-    <div className="relative flex flex-col items-center justify-center h-full px-6 overflow-hidden">
+    <div className="relative flex flex-col items-center justify-center h-full px-4 md:px-6 overflow-y-auto">
       <BrandHeader />
 
       {/* Cinematic background */}
@@ -58,12 +58,12 @@ const HomeScreen = ({ onStart, onSurprise, onPickForMe, loading }: HomeScreenPro
       )}
       <div className="absolute inset-0 bg-gradient-to-t from-background via-background/85 to-background/40" />
 
-      <div className="relative z-10 text-center max-w-2xl">
+      <div className="relative z-10 text-center max-w-2xl w-full">
         <motion.h1
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="text-5xl md:text-7xl font-serif leading-tight mb-4 tracking-wide"
+          className="text-3xl md:text-5xl lg:text-7xl font-serif leading-tight mb-3 md:mb-4 tracking-wide"
         >
           Vous ne savez pas quoi regarder ce soir ?
         </motion.h1>
@@ -72,7 +72,7 @@ const HomeScreen = ({ onStart, onSurprise, onPickForMe, loading }: HomeScreenPro
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.3, duration: 0.5 }}
-          className="text-muted-foreground text-lg md:text-xl mb-10 font-light"
+          className="text-muted-foreground text-base md:text-xl mb-6 md:mb-10 font-light"
         >
           Trouvez le film parfait en moins de 30 secondes.
         </motion.p>
@@ -81,13 +81,13 @@ const HomeScreen = ({ onStart, onSurprise, onPickForMe, loading }: HomeScreenPro
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5, duration: 0.4 }}
-          className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-6"
+          className="flex flex-col sm:flex-row gap-3 md:gap-4 justify-center items-center mb-4 md:mb-6"
         >
           <div className="relative w-full sm:w-auto">
             <Button
               variant="hero"
               size="xl"
-              className="w-full sm:w-auto min-w-[280px] relative overflow-hidden"
+              className="w-full sm:w-auto sm:min-w-[280px] relative overflow-hidden text-sm md:text-base"
               onClick={handleStart}
               disabled={isLoading || loading}
             >
@@ -104,11 +104,11 @@ const HomeScreen = ({ onStart, onSurprise, onPickForMe, loading }: HomeScreenPro
             </Button>
           </div>
 
-          <div className="relative">
+          <div className="relative w-full sm:w-auto">
             <Button
               variant="heroOutline"
               size="xl"
-              className="w-full sm:w-auto min-w-[200px] group relative overflow-hidden"
+              className="w-full sm:w-auto sm:min-w-[200px] group relative overflow-hidden text-sm md:text-base"
               onClick={handleSurprise}
               disabled={isLoading || loading}
             >
@@ -146,7 +146,7 @@ const HomeScreen = ({ onStart, onSurprise, onPickForMe, loading }: HomeScreenPro
           transition={{ delay: 0.7, duration: 0.4 }}
           onClick={onPickForMe}
           disabled={loading}
-          className="mt-6 text-muted-foreground/60 text-sm font-sans hover:text-primary transition-colors disabled:opacity-50"
+          className="mt-4 md:mt-6 text-muted-foreground/60 text-xs md:text-sm font-sans hover:text-primary transition-colors disabled:opacity-50"
         >
           Choisis pour moi — zéro effort
         </motion.button>
@@ -155,7 +155,7 @@ const HomeScreen = ({ onStart, onSurprise, onPickForMe, loading }: HomeScreenPro
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.9, duration: 0.5 }}
-          className="text-muted-foreground/40 text-xs font-sans tracking-wider mt-4"
+          className="text-muted-foreground/40 text-[10px] md:text-xs font-sans tracking-wider mt-3 md:mt-4"
         >
           Compatible avec Netflix · Prime · Disney+ · Canal+ · Apple TV+
         </motion.p>
@@ -165,27 +165,27 @@ const HomeScreen = ({ onStart, onSurprise, onPickForMe, loading }: HomeScreenPro
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 1.2, duration: 0.6 }}
-            className="mt-14"
+            className="mt-8 md:mt-14"
           >
-            <p className="text-muted-foreground/60 text-xs font-sans uppercase tracking-widest mb-4">
+            <p className="text-muted-foreground/60 text-[10px] md:text-xs font-sans uppercase tracking-widest mb-3 md:mb-4">
               Recommandation du soir
             </p>
-            <div className="flex items-center gap-4 bg-card/60 backdrop-blur-md rounded-2xl p-4 max-w-sm mx-auto border border-border/50">
+            <div className="flex items-center gap-3 md:gap-4 bg-card/60 backdrop-blur-md rounded-2xl p-3 md:p-4 max-w-sm mx-auto border border-border/50">
               <img
                 src={getPosterUrl(tonightPick.poster_path, "w185")}
                 alt={getDisplayTitle(tonightPick)}
-                className="w-16 h-24 rounded-lg object-cover flex-shrink-0"
+                className="w-12 h-18 md:w-16 md:h-24 rounded-lg object-cover flex-shrink-0"
               />
               <div className="text-left min-w-0">
-                <h3 className="font-serif text-base truncate">
+                <h3 className="font-serif text-sm md:text-base truncate">
                   {getDisplayTitle(tonightPick)}
                 </h3>
-                <p className="text-muted-foreground text-xs font-sans mt-1">
+                <p className="text-muted-foreground text-[10px] md:text-xs font-sans mt-1">
                   {tonightPick.genres?.map(g => g.name).slice(0, 2).join(" · ")}
                   {tonightPick.runtime ? ` · ${Math.floor(tonightPick.runtime / 60)}h${(tonightPick.runtime % 60).toString().padStart(2, '0')}` : ""}
                 </p>
                 {tonightPick.vote_average > 0 && (
-                  <p className="text-primary text-xs font-sans mt-1">
+                  <p className="text-primary text-[10px] md:text-xs font-sans mt-1">
                     ★ {tonightPick.vote_average.toFixed(1)}
                   </p>
                 )}

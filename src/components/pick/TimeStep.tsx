@@ -25,17 +25,17 @@ const TimeStep = ({ onSelect, onSkip, loading }: TimeStepProps) => {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center h-full px-6">
+    <div className="flex flex-col items-center justify-start md:justify-center min-h-full px-4 md:px-6 py-6 md:py-0 overflow-y-auto">
       <motion.h2
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
-        className="text-3xl md:text-5xl font-serif mb-12 text-center"
+        className="text-2xl md:text-5xl font-serif mb-6 md:mb-12 text-center"
       >
         Vous avez combien de temps ?
       </motion.h2>
 
-      <div className="flex flex-col gap-3 max-w-md w-full">
+      <div className="flex flex-col gap-2.5 md:gap-3 max-w-md w-full">
         {times.map((time, i) => {
           const Icon = time.icon;
           const isSelected = selected === time.value;
@@ -56,20 +56,20 @@ const TimeStep = ({ onSelect, onSkip, loading }: TimeStepProps) => {
               }}
               onClick={() => handleSelect(time.value)}
               disabled={loading || selected !== null}
-              className={`bg-card rounded-2xl p-6 md:p-8 text-left transition-all duration-200 hover:scale-[1.02] cursor-pointer border flex items-center gap-4 ${
+              className={`bg-card rounded-2xl p-4 md:p-8 text-left transition-all duration-200 hover:scale-[1.02] cursor-pointer border flex items-center gap-3 md:gap-4 ${
                 isSelected
                   ? "border-primary neon-glow bg-primary/10"
                   : "border-transparent hover:border-primary/30"
               } disabled:opacity-50 disabled:cursor-default`}
             >
               <Icon
-                className={`w-6 h-6 shrink-0 transition-colors duration-200 ${
+                className={`w-5 h-5 md:w-6 md:h-6 shrink-0 transition-colors duration-200 ${
                   isSelected ? "text-primary" : "text-primary/40"
                 }`}
               />
               <div>
-                <span className="font-serif text-xl md:text-2xl tracking-wide block">{time.label}</span>
-                <span className="text-muted-foreground text-sm mt-1 block font-sans">{time.sub}</span>
+                <span className="font-serif text-lg md:text-2xl tracking-wide block">{time.label}</span>
+                <span className="text-muted-foreground text-xs md:text-sm mt-0.5 md:mt-1 block font-sans">{time.sub}</span>
               </div>
             </motion.button>
           );
@@ -82,7 +82,7 @@ const TimeStep = ({ onSelect, onSkip, loading }: TimeStepProps) => {
           animate={{ opacity: 1 }}
           transition={{ delay: 0.4, duration: 0.3 }}
           onClick={onSkip}
-          className="mt-8 text-muted-foreground/50 text-sm font-sans hover:text-muted-foreground transition-colors"
+          className="mt-6 md:mt-8 text-muted-foreground/50 text-sm font-sans hover:text-muted-foreground transition-colors pb-4"
         >
           Passer cette étape
         </motion.button>
@@ -92,7 +92,7 @@ const TimeStep = ({ onSelect, onSkip, loading }: TimeStepProps) => {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="mt-8 flex items-center gap-3 text-muted-foreground"
+          className="mt-6 md:mt-8 flex items-center gap-3 text-muted-foreground"
         >
           <div className="w-8 h-0.5 bg-primary animate-subtle-pulse rounded-full" />
           <span className="text-sm font-sans">Recherche en cours…</span>
