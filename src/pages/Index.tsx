@@ -264,6 +264,7 @@ const Index = () => {
                 context,
                 time,
                 genreIds,
+                excludedGenreIds,
                 platformIds: selectedPlatformIds,
                 minRating,
                 mediaType,
