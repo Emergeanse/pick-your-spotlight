@@ -8,10 +8,11 @@ import type { MovieDetail } from "@/lib/tmdb";
 interface HomeScreenProps {
   onStart: () => void;
   onSurprise: () => void;
+  onPickForMe: () => void;
   loading: boolean;
 }
 
-const HomeScreen = ({ onStart, onSurprise, loading }: HomeScreenProps) => {
+const HomeScreen = ({ onStart, onSurprise, onPickForMe, loading }: HomeScreenProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [tonightPick, setTonightPick] = useState<MovieDetail | null>(null);
   const [sparkle, setSparkle] = useState(false);
