@@ -2,13 +2,67 @@ import { useEffect, useState, useRef } from "react";
 import { motion } from "framer-motion";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { Movie } from "@/lib/tmdb";
-import { getPosterUrl, getDisplayTitle } from "@/lib/tmdb";
+import { getPosterUrl, getDisplayTitle, getWatchProviders } from "@/lib/tmdb";
 
 interface TrendingRowProps {
   title: string;
   fetchFn: () => Promise<Movie[]>;
   onMovieClick?: (movie: Movie) => void;
 }
+
+const IMG_BASE = "https://image.tmdb.org/t/p";
+
+const MovieCard = ({ movie, index, onMovieClick }: { movie: Movie; index: number; onMovieClick?: (m: Movie) => void }) => {
+  const [provider, setProvider] = useState<{ name: string; logo_path: string } | null>(null);
+
+  useEffect(() => {
+    const mediaType = movie.first_air_date ? "tv" : "movie";
+    getWatchProviders(movie.id, mediaType)
+      .then(providers => { if (providers.length > 0) setProvider(providers[0]); })
+      .catch(() => {});
+  }, [movie.id]);
+
+  return (
+    <motion.button
+      initial={{ opacity: 0, scale: 0.9 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ delay: index * 0.05, duration: 0.3 }}
+      onClick={() => onMovieClick?.(movie)}
+      className="flex-shrink-0 snap-start group/card cursor-pointer"
+    >
+      <div className="relative w-28 md:w-40 aspect-[2/3] rounded-lg md:rounded-xl overflow-hidden">
+        <img
+          src={getPosterUrl(movie.poster_path, "w342")}
+          alt={getDisplayTitle(movie)}
+          className="w-full h-full object-cover transition-transform duration-500 group-hover/card:scale-110"
+          loading="lazy"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent opacity-0 group-hover/card:opacity-100 transition-opacity duration-300" />
+
+        {/* Rating badge */}
+        {movie.vote_average > 0 && (
+          <div className="absolute top-1.5 right-1.5 md:top-2 md:right-2 bg-background/80 backdrop-blur-sm text-primary text-[10px] md:text-xs font-sans font-semibold px-1.5 py-0.5 rounded-md">
+            ★ {movie.vote_average.toFixed(1)}
+          </div>
+        )}
+
+        {/* Platform badge */}
+        {provider && (
+          <div className="absolute bottom-1.5 left-1.5 md:bottom-2 md:left-2">
+            <img
+              src={`${IMG_BASE}/w92${provider.logo_path}`}
+              alt={provider.name}
+              className="w-5 h-5 md:w-6 md:h-6 rounded-md object-cover border border-border/30"
+            />
+          </div>
+        )}
+      </div>
+      <p className="mt-1.5 md:mt-2 text-[11px] md:text-sm font-sans text-foreground/70 truncate w-28 md:w-40 text-left">
+        {getDisplayTitle(movie)}
+      </p>
+    </motion.button>
+  );
+};
 
 const TrendingRow = ({ title, fetchFn, onMovieClick }: TrendingRowProps) => {
   const [movies, setMovies] = useState<Movie[]>([]);
@@ -35,7 +89,7 @@ const TrendingRow = ({ title, fetchFn, onMovieClick }: TrendingRowProps) => {
       <div className="relative">
         <button
           onClick={() => scroll("left")}
-          className="absolute left-0 top-0 bottom-0 z-10 w-10 bg-gradient-to-r from-background to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer hidden md:flex"
+          className="absolute left-0 top-0 bottom-8 z-10 w-10 bg-gradient-to-r from-background to-transparent opacity-0 group-hover:opacity-100 transition-opacity items-center justify-center cursor-pointer hidden md:flex"
         >
           <ChevronLeft className="w-5 h-5 text-foreground/60" />
         </button>
@@ -46,38 +100,13 @@ const TrendingRow = ({ title, fetchFn, onMovieClick }: TrendingRowProps) => {
           style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
         >
           {movies.map((movie, i) => (
-            <motion.button
-              key={movie.id}
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: i * 0.05, duration: 0.3 }}
-              onClick={() => onMovieClick?.(movie)}
-              className="flex-shrink-0 snap-start group/card cursor-pointer"
-            >
-              <div className="relative w-28 md:w-40 aspect-[2/3] rounded-lg md:rounded-xl overflow-hidden">
-                <img
-                  src={getPosterUrl(movie.poster_path, "w342")}
-                  alt={getDisplayTitle(movie)}
-                  className="w-full h-full object-cover transition-transform duration-500 group-hover/card:scale-110"
-                  loading="lazy"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent opacity-0 group-hover/card:opacity-100 transition-opacity duration-300" />
-                {movie.vote_average > 0 && (
-                  <div className="absolute top-1.5 right-1.5 md:top-2 md:right-2 bg-background/80 backdrop-blur-sm text-primary text-[10px] md:text-xs font-sans font-semibold px-1.5 py-0.5 rounded-md">
-                    ★ {movie.vote_average.toFixed(1)}
-                  </div>
-                )}
-              </div>
-              <p className="mt-1.5 md:mt-2 text-[11px] md:text-sm font-sans text-foreground/70 truncate w-28 md:w-40 text-left">
-                {getDisplayTitle(movie)}
-              </p>
-            </motion.button>
+            <MovieCard key={movie.id} movie={movie} index={i} onMovieClick={onMovieClick} />
           ))}
         </div>
 
         <button
           onClick={() => scroll("right")}
-          className="absolute right-0 top-0 bottom-0 z-10 w-10 bg-gradient-to-l from-background to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer hidden md:flex"
+          className="absolute right-0 top-0 bottom-8 z-10 w-10 bg-gradient-to-l from-background to-transparent opacity-0 group-hover:opacity-100 transition-opacity items-center justify-center cursor-pointer hidden md:flex"
         >
           <ChevronRight className="w-5 h-5 text-foreground/60" />
         </button>
