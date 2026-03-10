@@ -54,6 +54,7 @@ const Index = () => {
   const [mediaType, setMediaType] = useState<MediaType>("both");
   const [mood, setMood] = useState<Mood | null>(null);
   const [genreIds, setGenreIds] = useState<number[]>([]);
+  const [excludedGenreIds, setExcludedGenreIds] = useState<number[]>([]);
   const [context, setContext] = useState<Context | null>(null);
   const [time, setTime] = useState<TimeAvailable | null>(null);
   const [minRating, setMinRating] = useState(0);
