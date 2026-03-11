@@ -39,9 +39,11 @@ interface ResultScreenProps {
     context: Context | null;
     time: TimeAvailable | null;
   };
+  alternativeMovies?: MovieDetail[];
+  onSelectAlternative?: (movie: MovieDetail) => void;
 }
 
-const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onShowAnother, onRestart, onRefineWithVoice, onStartCompanion, hasMore, userCriteria }, ref) => {
+const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onShowAnother, onRestart, onRefineWithVoice, onStartCompanion, hasMore, userCriteria, alternativeMovies, onSelectAlternative }, ref) => {
   const [providers, setProviders] = useState<{ name: string; logo_path: string }[]>([]);
   const [trailerUrl, setTrailerUrl] = useState<string | null>(null);
   const [matchData, setMatchData] = useState<MatchData | null>(null);
@@ -52,6 +54,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
   const [bookmarkLoading, setBookmarkLoading] = useState(false);
   const [synopsisExpanded, setSynopsisExpanded] = useState(false);
   const [showOptions, setShowOptions] = useState(false);
+  const [altProviders, setAltProviders] = useState<Record<number, { name: string; logo_path: string }[]>>({});
   const { user } = useAuth();
 
   const title = getDisplayTitle(movie);
@@ -78,7 +81,17 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
     getMovieTrailerUrl(movie.id, mediaType).then(setTrailerUrl).catch(() => setTrailerUrl(null));
   }, [movie.id, mediaType]);
 
+  // Fetch providers for alternative movies
   useEffect(() => {
+    if (!alternativeMovies || alternativeMovies.length === 0) return;
+    alternativeMovies.forEach((alt) => {
+      const altMedia = alt.first_air_date ? "tv" : "movie";
+      getWatchProviders(alt.id, altMedia).then((p) => {
+        setAltProviders((prev) => ({ ...prev, [alt.id]: p }));
+      }).catch(() => {});
+    });
+  }, [alternativeMovies]);
+
     setMatchData(null);
     setMatchLoading(true);
     setShowOptions(false);
@@ -399,6 +412,63 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
           </motion.div>
         </div>
       </div>
+
+      {/* Alternative recommendations */}
+      {alternativeMovies && alternativeMovies.length > 0 && onSelectAlternative && (
+        <div className="relative z-10 px-5 md:px-12 lg:px-16 pb-8 pt-2 bg-background">
+          <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-sans font-semibold mb-3">
+            Autres options pour ce soir
+          </p>
+          <div className="flex gap-3 overflow-x-auto pb-1">
+            {alternativeMovies.map((alt, i) => {
+              const altPoster = getPosterUrl(alt.poster_path, "w342");
+              const altTitle = getDisplayTitle(alt);
+              const altProvs = altProviders[alt.id] || [];
+              return (
+                <motion.button
+                  key={alt.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1 + i * 0.1 }}
+                  onClick={() => onSelectAlternative(alt)}
+                  className="flex-shrink-0 w-32 text-left group"
+                >
+                  <div className="relative w-32 h-48 rounded-xl overflow-hidden mb-2 border border-border/20 group-hover:border-primary/30 transition-colors">
+                    {altPoster ? (
+                      <img
+                        src={altPoster}
+                        alt={altTitle}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        loading="lazy"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-foreground/5 flex items-center justify-center">
+                        <span className="text-muted-foreground text-xs">No poster</span>
+                      </div>
+                    )}
+                  </div>
+                  <p className="text-foreground/80 text-[12px] font-sans font-medium line-clamp-2 leading-tight mb-1 group-hover:text-foreground transition-colors">
+                    {altTitle}
+                  </p>
+                  {altProvs.length > 0 && (
+                    <div className="flex gap-1">
+                      {altProvs.slice(0, 3).map((p) => (
+                        <img
+                          key={p.name}
+                          src={`${IMG_BASE}/w92${p.logo_path}`}
+                          alt={p.name}
+                          className="w-4 h-4 rounded-sm object-cover opacity-60"
+                          loading="lazy"
+                        />
+                      ))}
+                    </div>
+                  )}
+                </motion.button>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Bottom Sheet: Plus d'options */}
       <AnimatePresence>
