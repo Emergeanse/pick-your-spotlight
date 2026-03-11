@@ -371,43 +371,61 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                 )}
               </div>
 
-              {/* Bottom row: icons + more */}
+              {/* Feedback actions */}
               <div className="flex items-center gap-2">
-                {/* Like */}
                 <button
-                  onClick={handleToggleLike}
-                  disabled={likeLoading}
-                  className={`w-9 h-9 rounded-full flex items-center justify-center border transition-all active:scale-90 ${
-                    liked
+                  onClick={() => {
+                    if (feedbackGiven === "good") return;
+                    setFeedbackGiven("good");
+                    trackInteraction(movie.id, "liked", { mood: userCriteria?.mood, context: userCriteria?.context, time: userCriteria?.time, feedback: "good_reco" });
+                    if (!liked && user) { likeMovie(movie).then(() => setLiked(true)).catch(() => {}); }
+                    toast.success("Merci pour ton retour !");
+                  }}
+                  className={`flex items-center gap-1.5 px-3.5 h-9 rounded-full border text-xs font-sans font-medium transition-all active:scale-95 ${
+                    feedbackGiven === "good"
                       ? "bg-primary/15 border-primary/30 text-primary"
-                      : "border-border/25 text-foreground/35 hover:text-primary hover:border-primary/25"
+                      : "border-border/25 text-foreground/40 hover:text-primary hover:border-primary/25"
                   }`}
                 >
-                  <Heart className={`w-4 h-4 ${liked ? "fill-primary" : ""}`} />
+                  <ThumbsUp className={`w-3.5 h-3.5 ${feedbackGiven === "good" ? "fill-primary" : ""}`} />
+                  Bonne reco
                 </button>
 
-                {/* Bookmark */}
+                <button
+                  onClick={() => {
+                    setShowRejectReasons(true);
+                  }}
+                  className={`flex items-center gap-1.5 px-3.5 h-9 rounded-full border text-xs font-sans font-medium transition-all active:scale-95 ${
+                    feedbackGiven === "bad"
+                      ? "bg-destructive/10 border-destructive/30 text-destructive"
+                      : "border-border/25 text-foreground/40 hover:text-foreground/60 hover:border-border/40"
+                  }`}
+                >
+                  <ThumbsDown className={`w-3.5 h-3.5 ${feedbackGiven === "bad" ? "fill-destructive" : ""}`} />
+                  Pas pour moi
+                </button>
+
                 <button
                   onClick={handleToggleBookmark}
                   disabled={bookmarkLoading}
-                  className={`w-9 h-9 rounded-full flex items-center justify-center border transition-all active:scale-90 ${
+                  className={`flex items-center gap-1.5 px-3.5 h-9 rounded-full border text-xs font-sans font-medium transition-all active:scale-95 ${
                     bookmarked
                       ? "bg-primary/15 border-primary/30 text-primary"
-                      : "border-border/25 text-foreground/35 hover:text-primary hover:border-primary/25"
+                      : "border-border/25 text-foreground/40 hover:text-primary hover:border-primary/25"
                   }`}
                 >
-                  <Bookmark className={`w-4 h-4 ${bookmarked ? "fill-primary" : ""}`} />
+                  <Bookmark className={`w-3.5 h-3.5 ${bookmarked ? "fill-primary" : ""}`} />
+                  Sauvegarder
                 </button>
+              </div>
 
-                {/* Spacer */}
-                <div className="flex-1" />
-
-                {/* More options */}
+              {/* More options link */}
+              <div className="flex items-center">
                 <button
                   onClick={() => setShowOptions(true)}
-                  className="flex items-center gap-1.5 px-3 h-9 rounded-full text-foreground/35 hover:text-foreground/60 text-xs font-sans transition-all"
+                  className="flex items-center gap-1.5 px-1 h-8 text-foreground/30 hover:text-foreground/50 text-[11px] font-sans transition-all"
                 >
-                  <MoreHorizontal className="w-4 h-4" />
+                  <MoreHorizontal className="w-3.5 h-3.5" />
                   <span>Plus d'options</span>
                 </button>
               </div>
