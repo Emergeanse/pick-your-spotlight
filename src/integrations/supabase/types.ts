@@ -53,6 +53,8 @@ export type Database = {
           display_name: string | null
           favorite_genres: string[] | null
           id: string
+          onboarding_completed: boolean
+          preferred_platforms: number[] | null
           updated_at: string
         }
         Insert: {
@@ -60,6 +62,8 @@ export type Database = {
           display_name?: string | null
           favorite_genres?: string[] | null
           id: string
+          onboarding_completed?: boolean
+          preferred_platforms?: number[] | null
           updated_at?: string
         }
         Update: {
@@ -67,7 +71,39 @@ export type Database = {
           display_name?: string | null
           favorite_genres?: string[] | null
           id?: string
+          onboarding_completed?: boolean
+          preferred_platforms?: number[] | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      watchlist: {
+        Row: {
+          added_at: string
+          id: string
+          media_type: string
+          poster_path: string | null
+          title: string
+          tmdb_id: number
+          user_id: string
+        }
+        Insert: {
+          added_at?: string
+          id?: string
+          media_type?: string
+          poster_path?: string | null
+          title: string
+          tmdb_id: number
+          user_id: string
+        }
+        Update: {
+          added_at?: string
+          id?: string
+          media_type?: string
+          poster_path?: string | null
+          title?: string
+          tmdb_id?: number
+          user_id?: string
         }
         Relationships: []
       }
