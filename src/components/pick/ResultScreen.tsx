@@ -419,16 +419,42 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                 </button>
               </div>
 
-              {/* More options link */}
-              <div className="flex items-center">
-                <button
-                  onClick={() => setShowOptions(true)}
-                  className="flex items-center gap-1.5 px-1 h-8 text-foreground/30 hover:text-foreground/50 text-[11px] font-sans transition-all"
+              {/* Conversational follow-up */}
+              {matchData && (
+                <motion.div
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 1.2, duration: 0.4 }}
+                  className="pt-1"
                 >
-                  <MoreHorizontal className="w-3.5 h-3.5" />
-                  <span>Plus d'options</span>
-                </button>
-              </div>
+                  <div className="flex items-start gap-2 mb-2.5">
+                    <MessageCircle className="w-3 h-3 text-primary/50 mt-0.5 flex-shrink-0" />
+                    <p className="text-foreground/40 text-[11px] font-sans leading-relaxed">
+                      Je pense que ce film pourrait te plaire. Tu veux affiner ?
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    <button
+                      onClick={() => { if (onRefineWithVoice) onRefineWithVoice(); }}
+                      className="px-3 py-1.5 rounded-full bg-foreground/[0.04] border border-border/25 text-foreground/50 hover:text-primary hover:border-primary/25 hover:bg-primary/5 text-[11px] font-sans transition-all active:scale-95"
+                    >
+                      Quelque chose de plus intense
+                    </button>
+                    <button
+                      onClick={onShowAnother}
+                      className="px-3 py-1.5 rounded-full bg-foreground/[0.04] border border-border/25 text-foreground/50 hover:text-primary hover:border-primary/25 hover:bg-primary/5 text-[11px] font-sans transition-all active:scale-95"
+                    >
+                      Un film plus court
+                    </button>
+                    <button
+                      onClick={onShowAnother}
+                      className="px-3 py-1.5 rounded-full bg-foreground/[0.04] border border-border/25 text-foreground/50 hover:text-primary hover:border-primary/25 hover:bg-primary/5 text-[11px] font-sans transition-all active:scale-95"
+                    >
+                      D'autres options similaires
+                    </button>
+                  </div>
+                </motion.div>
+              )}
             </motion.div>
           </motion.div>
         </div>
