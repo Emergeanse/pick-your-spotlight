@@ -790,7 +790,13 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                           feedback: "bad_reco",
                           reject_reason: reason.value,
                         });
-                        toast.success("Merci, on fera mieux !");
+                        const reaction = getRejectReaction(reason.value);
+                        setRejectReaction(reaction);
+                        // Show Pick's reaction briefly, then trigger next movie
+                        setTimeout(() => {
+                          setRejectReaction(null);
+                          onShowAnother();
+                        }, 1800);
                       }}
                       className="px-4 py-3 rounded-xl border border-border/30 bg-foreground/[0.03] hover:bg-primary/10 hover:border-primary/20 text-foreground/60 hover:text-foreground text-sm font-sans font-medium transition-all active:scale-[0.97]"
                     >
