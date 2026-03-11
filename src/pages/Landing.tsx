@@ -230,22 +230,14 @@ const Landing = () => {
             Dis ton envie. Pick trouve ton film.
           </motion.p>
 
-          {/* Mini conversation example */}
+          {/* Mini conversation avec messages défilants */}
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.65 }}
-            className="max-w-xs mx-auto mb-8 flex flex-col gap-2"
+            className="max-w-xs mx-auto mb-8"
           >
-            <div className="self-end px-3.5 py-2 rounded-2xl rounded-br-md bg-primary/15 border border-primary/20">
-              <p className="text-foreground/70 text-[13px] font-sans">Un film drôle ce soir 🎬</p>
-            </div>
-            <div className="self-start flex items-end gap-2">
-              <img src={pickDefault} alt="Pick" className="w-6 h-6 object-contain flex-shrink-0" />
-              <div className="px-3.5 py-2 rounded-2xl rounded-bl-md bg-card/60 border border-border/20">
-                <p className="text-foreground/70 text-[13px] font-sans">J'ai exactement ce qu'il te faut ! ✨</p>
-              </div>
-            </div>
+            <ScrollingRequests />
           </motion.div>
 
           <motion.div
