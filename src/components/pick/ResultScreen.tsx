@@ -27,6 +27,7 @@ interface ResultScreenProps {
   movie: MovieDetail;
   onShowAnother: () => void;
   onRestart: () => void;
+  onRefineWithVoice?: () => void;
   hasMore: boolean;
   userCriteria?: {
     mood: Mood | null;
