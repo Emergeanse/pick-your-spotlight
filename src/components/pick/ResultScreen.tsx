@@ -13,6 +13,7 @@ import { trackInteraction, getUserTasteProfile } from "@/lib/interactions";
 import { toast } from "sonner";
 import { computeUserTasteVector, ensureMovieEmbedding } from "@/lib/taste-engine";
 import BrandHeader from "./BrandHeader";
+import PickCharacter from "./PickCharacter";
 
 const IMG_BASE = "https://image.tmdb.org/t/p";
 
@@ -523,7 +524,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                 </motion.div>
               )}
 
-              {/* Conversational follow-up */}
+              {/* Conversational follow-up with Pick */}
               {matchData && !refining && (
                 <motion.div
                   initial={{ opacity: 0, y: 8 }}
@@ -531,9 +532,9 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                   transition={{ delay: 1.2, duration: 0.4 }}
                   className="pt-1"
                 >
-                  <div className="flex items-start gap-2 mb-2.5">
-                    <MessageCircle className="w-3 h-3 text-primary/50 mt-0.5 flex-shrink-0" />
-                    <p className="text-foreground/40 text-[11px] font-sans leading-relaxed">
+                  <div className="flex items-start gap-3 mb-3">
+                    <PickCharacter mood="default" size="sm" animate={false} />
+                    <p className="text-foreground/50 text-[12px] font-sans leading-relaxed pt-2">
                       Alors, ça te tente ? On peut affiner si tu veux.
                     </p>
                   </div>
@@ -557,15 +558,14 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                 </motion.div>
               )}
 
-              {/* Refining loading state */}
+              {/* Refining loading state with Pick */}
               {refining && (
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  className="pt-2 flex items-center gap-2"
+                  className="pt-2 flex items-center gap-3"
                 >
-                  <Loader2 className="w-3.5 h-3.5 animate-spin text-primary/60" />
-                  <span className="text-foreground/40 text-[11px] font-sans">Pick cherche mieux…</span>
+                  <PickCharacter mood="think" message="Je cherche mieux…" size="sm" animate={false} />
                 </motion.div>
               )}
             </motion.div>
