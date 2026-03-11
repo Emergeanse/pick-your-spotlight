@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Mic, MicOff, X, Send, Loader2, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
+import { useScribe } from "@elevenlabs/react";
 import type { MovieDetail } from "@/lib/tmdb";
 import ReactMarkdown from "react-markdown";
 
@@ -31,15 +32,8 @@ const SoundWave = () => (
       <motion.div
         key={i}
         className="w-[3px] rounded-full bg-primary"
-        animate={{
-          height: [8, 24, 12, 28, 8],
-        }}
-        transition={{
-          duration: 0.8,
-          repeat: Infinity,
-          delay: i * 0.12,
-          ease: "easeInOut",
-        }}
+        animate={{ height: [8, 24, 12, 28, 8] }}
+        transition={{ duration: 0.8, repeat: Infinity, delay: i * 0.12, ease: "easeInOut" }}
       />
     ))}
   </div>
@@ -51,22 +45,49 @@ const VoiceChat = ({ onClose, onMovieSuggested }: VoiceChatProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [inputText, setInputText] = useState("");
-  const [interimText, setInterimText] = useState("");
   const [micError, setMicError] = useState<string | null>(null);
   const [detectedFilters, setDetectedFilters] = useState<string[] | null>(null);
-  const recognitionRef = useRef<any>(null);
+  const [partialText, setPartialText] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-
-  const speechSupported = typeof window !== "undefined" && ("SpeechRecognition" in window || "webkitSpeechRecognition" in window);
+  const pendingSendRef = useRef(false);
+  const committedTextRef = useRef("");
 
   const randomExample = EXAMPLE_PROMPTS[Math.floor(Math.random() * EXAMPLE_PROMPTS.length)];
+
+  // ElevenLabs Scribe for cross-browser STT
+  const scribe = useScribe({
+    modelId: "scribe_v2_realtime",
+    commitStrategy: "vad",
+    onPartialTranscript: (data) => {
+      setPartialText(data.text);
+    },
+    onCommittedTranscript: (data) => {
+      if (data.text.trim()) {
+        committedTextRef.current = data.text.trim();
+        setPartialText("");
+        // Auto-send after VAD commits
+        pendingSendRef.current = true;
+      }
+    },
+  });
+
+  // Handle auto-send when committed text arrives
+  useEffect(() => {
+    if (pendingSendRef.current && committedTextRef.current) {
+      pendingSendRef.current = false;
+      const text = committedTextRef.current;
+      committedTextRef.current = "";
+      stopListening();
+      handleSend(text);
+    }
+  }, [partialText]); // triggered when partialText resets after commit
 
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [messages, interimText]);
+  }, [messages, partialText]);
 
   const sendToAI = useCallback(async (allMessages: ChatMessage[]) => {
     setIsLoading(true);
@@ -79,14 +100,12 @@ const VoiceChat = ({ onClose, onMovieSuggested }: VoiceChatProps) => {
       });
 
       if (error) throw error;
-
       setIsAnalyzing(false);
 
       if (data?.reply) {
         setMessages(prev => [...prev, { role: "assistant", content: data.reply }]);
       }
 
-      // Show detected filters if movie found
       if (data?.movie) {
         const movie = data.movie as MovieDetail;
         const filters: string[] = [];
@@ -116,73 +135,47 @@ const VoiceChat = ({ onClose, onMovieSuggested }: VoiceChatProps) => {
     const newMessages = [...messages, userMsg];
     setMessages(newMessages);
     setInputText("");
-    setInterimText("");
+    setPartialText("");
     await sendToAI(newMessages);
   }, [messages, sendToAI]);
 
-  const startListening = useCallback(() => {
-    if (!speechSupported) {
-      setMicError("Reconnaissance vocale non disponible sur ce navigateur. Tape ton message ci-dessous 👇");
-      inputRef.current?.focus();
-      // On iOS, auto-focus the input so keyboard opens
-      setTimeout(() => inputRef.current?.focus(), 100);
-      return;
-    }
+  const startListening = useCallback(async () => {
     setMicError(null);
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    const recognition = new SpeechRecognition();
-    recognition.lang = "fr-FR";
-    recognition.continuous = false;
-    recognition.interimResults = true;
-
-    recognition.onresult = (event: any) => {
-      let interim = "";
-      let final = "";
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        const transcript = event.results[i][0].transcript;
-        if (event.results[i].isFinal) {
-          final += transcript;
-        } else {
-          interim += transcript;
-        }
-      }
-      setInterimText(interim);
-      if (final) {
-        setInterimText("");
-        handleSend(final);
-      }
-    };
-
-    recognition.onerror = (e: any) => {
-      console.error("SpeechRecognition error:", e.error);
-      setIsListening(false);
-      if (e.error === "not-allowed" || e.error === "permission-denied") {
-        setMicError("Accès au micro refusé. Autorise le micro dans les paramètres de ton navigateur.");
-      } else if (e.error === "no-speech") {
-        setMicError("Aucune voix détectée. Réessaie ou tape ton message.");
-      } else {
-        setMicError("Erreur micro. Tape ton message à la place.");
-      }
-    };
-
-    recognition.onend = () => {
-      setIsListening(false);
-    };
-
     try {
-      recognition.start();
-      recognitionRef.current = recognition;
+      // Request mic permission directly in click handler (critical for iOS)
+      await navigator.mediaDevices.getUserMedia({ audio: true });
+
+      // Get ElevenLabs scribe token
+      const { data, error } = await supabase.functions.invoke("scribe-token");
+      if (error || !data?.token) {
+        throw new Error("Failed to get voice token");
+      }
+
+      await scribe.connect({
+        token: data.token,
+        microphone: {
+          echoCancellation: true,
+          noiseSuppression: true,
+        },
+      });
+
       setIsListening(true);
-    } catch (err) {
-      console.error("Failed to start speech recognition:", err);
-      setMicError("Impossible de démarrer le micro. Tape ton message.");
+    } catch (e: any) {
+      console.error("Mic error:", e);
+      if (e?.name === "NotAllowedError") {
+        setMicError("Accès au micro refusé. Autorise le micro dans les paramètres de ton navigateur.");
+      } else {
+        setMicError("Erreur micro. Tape ton message ci-dessous 👇");
+      }
+      inputRef.current?.focus();
     }
-  }, [speechSupported, handleSend]);
+  }, [scribe]);
 
   const stopListening = useCallback(() => {
-    recognitionRef.current?.stop();
+    scribe.disconnect();
     setIsListening(false);
-  }, []);
+    setPartialText("");
+  }, [scribe]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -191,7 +184,7 @@ const VoiceChat = ({ onClose, onMovieSuggested }: VoiceChatProps) => {
     }
   };
 
-  const showEmptyState = messages.length === 0 && !isListening && !interimText && !isLoading;
+  const showEmptyState = messages.length === 0 && !isListening && !partialText && !isLoading;
 
   return (
     <motion.div
@@ -260,7 +253,6 @@ const VoiceChat = ({ onClose, onMovieSuggested }: VoiceChatProps) => {
               <p className="text-muted-foreground text-xs font-sans mb-4">
                 Appuie sur le micro et parle naturellement
               </p>
-              {/* Example prompt hint */}
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -276,16 +268,16 @@ const VoiceChat = ({ onClose, onMovieSuggested }: VoiceChatProps) => {
           )}
 
           {/* Listening state — pulsing mic with sound wave */}
-          {isListening && messages.length === 0 && !interimText && (
+          {isListening && messages.length === 0 && !partialText && (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               className="flex flex-col items-center justify-center h-full text-center py-8"
             >
               <motion.div
-                animate={{ boxShadow: ["0 0 0 0px rgba(var(--primary-rgb, 139 92 246), 0.3)", "0 0 0 20px rgba(var(--primary-rgb, 139 92 246), 0)", "0 0 0 0px rgba(var(--primary-rgb, 139 92 246), 0.3)"] }}
+                animate={{ boxShadow: ["0 0 0 0px rgba(139, 92, 246, 0.3)", "0 0 0 20px rgba(139, 92, 246, 0)", "0 0 0 0px rgba(139, 92, 246, 0.3)"] }}
                 transition={{ duration: 2, repeat: Infinity }}
-                className="mb-5"
+                className="mb-5 rounded-full"
               >
                 <button
                   type="button"
@@ -315,9 +307,7 @@ const VoiceChat = ({ onClose, onMovieSuggested }: VoiceChatProps) => {
             >
               <div className="max-w-[85%] px-4 py-3 rounded-2xl rounded-bl-md bg-secondary/80 border border-border/20">
                 <div className="flex items-center gap-3">
-                  <div className="relative">
-                    <Loader2 className="w-5 h-5 animate-spin text-primary" />
-                  </div>
+                  <Loader2 className="w-5 h-5 animate-spin text-primary" />
                   <div>
                     <p className="text-sm font-sans text-foreground/80 font-medium">Analyse de ta demande…</p>
                     <p className="text-xs font-sans text-muted-foreground mt-0.5">Film parfait en cours de recherche</p>
@@ -382,10 +372,11 @@ const VoiceChat = ({ onClose, onMovieSuggested }: VoiceChatProps) => {
             </motion.div>
           )}
 
-          {interimText && (
+          {/* Live transcription preview */}
+          {partialText && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex justify-end">
               <div className="max-w-[85%] px-4 py-2.5 rounded-2xl rounded-br-md text-sm font-sans bg-primary/50 text-primary-foreground/70 italic">
-                {interimText}…
+                {partialText}…
               </div>
             </motion.div>
           )}
@@ -409,7 +400,7 @@ const VoiceChat = ({ onClose, onMovieSuggested }: VoiceChatProps) => {
             <Button
               variant="ghost"
               size="icon"
-              onClick={isListening ? stopListening : startListening}
+              onClick={() => isListening ? stopListening() : startListening()}
               disabled={isLoading}
               className={`rounded-full flex-shrink-0 ${isListening ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-primary"}`}
             >
