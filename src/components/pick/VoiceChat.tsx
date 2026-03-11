@@ -286,10 +286,12 @@ const VoiceChat = ({ onClose, onMovieSuggested }: VoiceChatProps) => {
                 className="mb-5"
               >
                 <button
-                  onClick={stopListening}
-                  className="w-24 h-24 rounded-full bg-primary/20 border-2 border-primary flex items-center justify-center cursor-pointer hover:bg-primary/30 active:scale-95 transition-transform"
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); stopListening(); }}
+                  onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); stopListening(); }}
+                  className="w-24 h-24 rounded-full bg-primary/20 border-2 border-primary flex items-center justify-center cursor-pointer active:scale-95 transition-transform touch-manipulation"
                 >
-                  <MicOff className="w-10 h-10 text-primary" />
+                  <MicOff className="w-10 h-10 text-primary pointer-events-none" />
                 </button>
               </motion.div>
               <SoundWave />
