@@ -61,6 +61,15 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
   const mediaType = movie.first_air_date ? "tv" : "movie";
   const bgImage = backdrop || poster;
 
+  // Track movie opened
+  useEffect(() => {
+    trackInteraction(movie.id, "opened", {
+      mood: userCriteria?.mood,
+      context: userCriteria?.context,
+      time: userCriteria?.time,
+    });
+  }, [movie.id]);
+
   useEffect(() => {
     getWatchProviders(movie.id, mediaType).then(setProviders).catch(() => setProviders([]));
     getMovieTrailerUrl(movie.id, mediaType).then(setTrailerUrl).catch(() => setTrailerUrl(null));
@@ -70,12 +79,16 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
     setMatchData(null);
     setMatchLoading(true);
     setShowOptions(false);
-    supabase.functions.invoke("movie-match", {
-      body: { movie, userCriteria },
-    }).then(({ data, error }) => {
-      if (error) { console.error("Match error:", error); setMatchLoading(false); return; }
-      setMatchData(data as MatchData);
-      setMatchLoading(false);
+
+    // Load taste profile and pass to match function
+    getUserTasteProfile().then(tasteProfile => {
+      supabase.functions.invoke("movie-match", {
+        body: { movie, userCriteria, tasteProfile },
+      }).then(({ data, error }) => {
+        if (error) { console.error("Match error:", error); setMatchLoading(false); return; }
+        setMatchData(data as MatchData);
+        setMatchLoading(false);
+      });
     });
   }, [movie.id]);
 
