@@ -24,8 +24,7 @@ serve(async (req) => {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
-    // Build taste profile from liked movies
-    const titles = (likedMovies || []).map((m: any) => m.title).slice(0, 15);
+    const titles = (likedMovies || []).map((m: any) => m.title).slice(0, 20);
     const allGenres = (likedMovies || []).flatMap((m: any) => m.genres || []);
     const genreCounts: Record<string, number> = {};
     allGenres.forEach((g: string) => { genreCounts[g] = (genreCounts[g] || 0) + 1; });
@@ -34,34 +33,56 @@ serve(async (req) => {
       .slice(0, 8)
       .map(([g]) => g);
 
-    // Use enriched taste profile if available
-    const excludeTitles = titles.join(", ");
+    // ── Extract enriched profile data ──
+    const confidence = tasteProfile?.confidence || { score: 50, discoveryRatio: 0.2 };
+    const tasteClusters = tasteProfile?.tasteClusters || [];
+    const skipPatterns = tasteProfile?.skipPatterns || {};
     const stats = tasteProfile?.stats || {};
-    const skippedCount = stats.skipCount || 0;
-    const watchedCount = stats.watchCount || 0;
+    const session = tasteProfile?.session || {};
+    const scoringWeights = tasteProfile?.scoringWeights || {};
+    const acceptanceRate = stats.acceptanceRate || 0;
 
-    // Determine discovery vs taste ratio
-    const totalInteractions = (likedMovies || []).length + skippedCount + watchedCount;
-    const shouldDiscover = totalInteractions > 10 && Math.random() < 0.2;
+    // ── Decide mode: discovery vs precision ──
+    const shouldDiscover = Math.random() < confidence.discoveryRatio;
 
-    const systemPrompt = `Tu es un expert cinéma et un système de recommandation personnalisée. On te donne le profil de goûts détaillé d'un utilisateur. Tu dois recommander UN film qu'il n'a probablement pas vu mais qui va lui plaire.
+    // ── Build skip insights ──
+    const skipInsights = skipPatterns.avgSkipRate > 0.6
+      ? "L'utilisateur skip souvent — sois plus sélectif et surprenant."
+      : skipPatterns.recentSkipStreak > 3
+        ? "L'utilisateur vient de skip plusieurs films d'affilée — change radicalement de direction."
+        : "";
+
+    const systemPrompt = `Tu es un moteur de recommandation cinéma de niveau Netflix. Tu combines plusieurs signaux pour trouver LE film parfait.
+
+SYSTÈME DE SCORING (poids) :
+- taste_match (${scoringWeights.taste_match || 0.35}) : correspondance avec les genres et micro-genres préférés
+- context_match (${scoringWeights.context_match || 0.25}) : correspond à l'humeur et au contexte de session actuel
+- behaviour_match (${scoringWeights.behaviour_match || 0.15}) : cohérent avec les patterns de comportement (skip patterns, durées préférées)
+- rating_score (${scoringWeights.rating_score || 0.10}) : note du film (>6.5 minimum)
+- availability (${scoringWeights.availability || 0.10}) : disponible sur les plateformes de l'utilisateur
+- novelty (${scoringWeights.novelty || 0.05}) : film que l'utilisateur ne connaît probablement pas
+
+PROFIL ENRICHI :
+- Confiance du profil : ${confidence.score}/100 (${confidence.score < 40 ? "profil jeune, plus de découverte" : confidence.score > 70 ? "profil mature, haute précision" : "profil en développement"})
+- Taux d'acceptation : ${acceptanceRate}%
+- Micro-genres favoris : ${tasteClusters.join(", ") || "non déterminés"}
+${skipInsights ? `- Insight skip : ${skipInsights}` : ""}
+${session.mood ? `- Session actuelle : humeur "${session.mood}", contexte "${session.context || "?"}", temps "${session.time || "?"}"` : ""}
 
 RÈGLES :
 - Réponds UNIQUEMENT avec un JSON valide sans backticks
-- Structure : {"title": "<titre exact du film>", "reason": "<2-3 phrases expliquant pourquoi>", "confidence": <0-100>}
-- Ne recommande JAMAIS un film déjà dans sa liste
-- Le film doit correspondre à ses genres préférés${shouldDiscover ? "\n- IMPORTANT : cette fois, propose une pépite inattendue ou un genre qu'il ne connaît peut-être pas encore, pour élargir ses horizons. Reste pertinent mais surprends-le." : ""}
-- Privilégie des films avec une bonne note (>6.5/10)
-- Tiens compte du nombre de films aimés pour calibrer la précision`;
+- Structure : {"title": "<titre exact>", "reason": "<2-3 phrases>", "confidence": <0-100>, "scores": {"taste": <0-100>, "context": <0-100>, "behaviour": <0-100>, "rating": <0-100>, "novelty": <0-100>}}
+- Ne recommande JAMAIS un film déjà dans la liste
+- ${shouldDiscover ? "MODE DÉCOUVERTE : propose une pépite inattendue, un micro-genre adjacent, ou un film sous-estimé. Surprends." : "MODE PRÉCISION : colle au plus près des micro-genres et clusters identifiés."}
+- Calibre le score de confiance selon la qualité du match`;
 
-    const userPrompt = `Profil utilisateur :
-- Films aimés (${titles.length}) : ${excludeTitles}
-- Genres préférés : ${topGenres.join(", ")}
-- Films regardés : ${watchedCount}
-- Films passés/skippés : ${skippedCount}
-${shouldDiscover ? "- Mode : DÉCOUVERTE (propose quelque chose d'inattendu)" : "- Mode : PERSONNALISÉ (colle à ses goûts)"}
+    const userPrompt = `Films aimés (${titles.length}, pondérés par récence) : ${titles.join(", ")}
+Genres préférés (pondérés) : ${topGenres.join(", ")}
+Micro-genres : ${tasteClusters.join(", ") || "à déduire des films aimés"}
+Films regardés : ${stats.watchCount || 0} | Films skippés : ${stats.skipCount || 0}
+${shouldDiscover ? "→ MODE DÉCOUVERTE" : "→ MODE PRÉCISION"}
 
-Recommande UN film surprise.`;
+Recommande UN film avec les scores détaillés.`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -93,7 +114,7 @@ Recommande UN film surprise.`;
       throw new Error("Failed to parse AI suggestion");
     }
 
-    // Search TMDB for the suggested movie
+    // Search TMDB
     const searchUrl = `https://api.themoviedb.org/3/search/movie?api_key=${TMDB_API_KEY}&language=fr-FR&query=${encodeURIComponent(suggestion.title)}&page=1`;
     const searchRes = await fetch(searchUrl);
     const searchData = await searchRes.json();
@@ -108,8 +129,15 @@ Recommande UN film surprise.`;
     return new Response(JSON.stringify({
       movie: movieDetail,
       reason: suggestion.reason,
-      confidence: suggestion.confidence || 85,
+      confidence: suggestion.confidence || 75,
       isDiscovery: shouldDiscover,
+      scores: suggestion.scores || null,
+      engineMeta: {
+        profileConfidence: confidence.score,
+        discoveryRatio: confidence.discoveryRatio,
+        acceptanceRate,
+        mode: shouldDiscover ? "discovery" : "precision",
+      },
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
