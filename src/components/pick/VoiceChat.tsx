@@ -216,6 +216,7 @@ const VoiceChat = ({ onClose, onMovieSuggested }: VoiceChatProps) => {
         transition={{ type: "spring", damping: 25, stiffness: 300 }}
         className="relative z-10 w-full max-w-lg bg-card/80 backdrop-blur-md border border-border/20 rounded-3xl overflow-hidden flex flex-col shadow-2xl shadow-primary/5"
         style={{ maxHeight: "85vh" }}
+        onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-border/10">
@@ -244,10 +245,12 @@ const VoiceChat = ({ onClose, onMovieSuggested }: VoiceChatProps) => {
               className="flex flex-col items-center justify-center h-full text-center py-8"
             >
               <button
-                onClick={startListening}
-                className="group w-24 h-24 rounded-full bg-primary/10 border-2 border-primary/30 flex items-center justify-center mb-5 transition-all duration-300 hover:bg-primary/20 hover:border-primary/50 hover:scale-110 hover:shadow-lg hover:shadow-primary/20 active:scale-95 cursor-pointer"
+                type="button"
+                onClick={(e) => { e.stopPropagation(); startListening(); }}
+                onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); startListening(); }}
+                className="group w-24 h-24 rounded-full bg-primary/10 border-2 border-primary/30 flex items-center justify-center mb-5 transition-all duration-200 active:scale-95 active:bg-primary/20 cursor-pointer touch-manipulation"
               >
-                <Mic className="w-10 h-10 text-primary transition-transform group-hover:scale-110" />
+                <Mic className="w-10 h-10 text-primary pointer-events-none" />
               </button>
               <p className="text-foreground/70 text-base font-serif mb-2">
                 Dis-moi ce que tu veux regarder
@@ -283,10 +286,12 @@ const VoiceChat = ({ onClose, onMovieSuggested }: VoiceChatProps) => {
                 className="mb-5"
               >
                 <button
-                  onClick={stopListening}
-                  className="w-24 h-24 rounded-full bg-primary/20 border-2 border-primary flex items-center justify-center cursor-pointer hover:bg-primary/30 active:scale-95 transition-transform"
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); stopListening(); }}
+                  onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); stopListening(); }}
+                  className="w-24 h-24 rounded-full bg-primary/20 border-2 border-primary flex items-center justify-center cursor-pointer active:scale-95 transition-transform touch-manipulation"
                 >
-                  <MicOff className="w-10 h-10 text-primary" />
+                  <MicOff className="w-10 h-10 text-primary pointer-events-none" />
                 </button>
               </motion.div>
               <SoundWave />
