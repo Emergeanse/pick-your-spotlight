@@ -28,6 +28,7 @@ interface ResultScreenProps {
   onShowAnother: () => void;
   onRestart: () => void;
   onRefineWithVoice?: () => void;
+  onStartCompanion?: () => void;
   hasMore: boolean;
   userCriteria?: {
     mood: Mood | null;
