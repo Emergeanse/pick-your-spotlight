@@ -49,6 +49,32 @@ interface ResultScreenProps {
   refining?: boolean;
 }
 
+const REJECT_REACTIONS: Record<string, string[]> = {
+  already_seen: [
+    "Ah t'as déjà vu celui-là ! Attends, j'en ai un autre.",
+    "Noté ! Voyons ce que j'ai d'autre dans ma collection.",
+  ],
+  not_my_style: [
+    "Pas ton délire ? OK, je change de direction.",
+    "Hmm, je vois. Laisse-moi fouiller dans un autre registre.",
+    "OK, changeons d'ambiance.",
+  ],
+  too_long: [
+    "Trop long ? J'ai un truc plus court en réserve.",
+    "OK, on part sur quelque chose de plus rapide.",
+  ],
+  not_tonight: [
+    "Pas ce soir ? Pas de souci, j'ai mieux pour l'instant.",
+    "Attends, celui-ci pourrait mieux te plaire.",
+    "Pas convaincu ? J'en ai un autre.",
+  ],
+};
+
+function getRejectReaction(reason: string): string {
+  const messages = REJECT_REACTIONS[reason] || REJECT_REACTIONS.not_tonight;
+  return messages[Math.floor(Math.random() * messages.length)];
+}
+
 const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onShowAnother, onRestart, onRefineWithVoice, onRefineWithMessage, onStartCompanion, hasMore, userCriteria, alternativeMovies, onSelectAlternative, searchTags, onRemoveTag, refining }, ref) => {
   const [providers, setProviders] = useState<{ name: string; logo_path: string }[]>([]);
   const [trailerUrl, setTrailerUrl] = useState<string | null>(null);
@@ -63,6 +89,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
   const [showOptions, setShowOptions] = useState(false);
   const [showRejectReasons, setShowRejectReasons] = useState(false);
   const [feedbackGiven, setFeedbackGiven] = useState<"good" | "bad" | null>(null);
+  const [rejectReaction, setRejectReaction] = useState<string | null>(null);
   const [altProviders, setAltProviders] = useState<Record<number, { name: string; logo_path: string }[]>>({});
   const { user } = useAuth();
 
@@ -763,7 +790,13 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                           feedback: "bad_reco",
                           reject_reason: reason.value,
                         });
-                        toast.success("Merci, on fera mieux !");
+                        const reaction = getRejectReaction(reason.value);
+                        setRejectReaction(reaction);
+                        // Show Pick's reaction briefly, then trigger next movie
+                        setTimeout(() => {
+                          setRejectReaction(null);
+                          onShowAnother();
+                        }, 1800);
                       }}
                       className="px-4 py-3 rounded-xl border border-border/30 bg-foreground/[0.03] hover:bg-primary/10 hover:border-primary/20 text-foreground/60 hover:text-foreground text-sm font-sans font-medium transition-all active:scale-[0.97]"
                     >
@@ -776,9 +809,32 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
           </>
         )}
       </AnimatePresence>
+
+      {/* Pick's reject reaction overlay */}
+      <AnimatePresence>
+        {rejectReaction && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="fixed inset-0 z-[60] flex items-center justify-center bg-background/80 backdrop-blur-sm"
+          >
+            <motion.div
+              initial={{ scale: 0.9, y: 10 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.95, y: -10, opacity: 0 }}
+              transition={{ type: "spring", stiffness: 200, damping: 20 }}
+            >
+              <PickCharacter mood="think" message={rejectReaction} size="lg" />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 });
+
 
 ResultScreen.displayName = "ResultScreen";
 
