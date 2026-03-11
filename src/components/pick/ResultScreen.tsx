@@ -160,7 +160,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
             )}
 
             {/* Title */}
-            <h1 className="text-4xl md:text-6xl lg:text-8xl font-serif mb-3 md:mb-4 leading-[1.02]">
+            <h1 className="text-3xl md:text-6xl lg:text-8xl font-serif mb-3 md:mb-4 leading-[1.05]">
               {title}
             </h1>
 
