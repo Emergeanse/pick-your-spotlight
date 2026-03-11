@@ -13,6 +13,7 @@ import { trackInteraction, getUserTasteProfile } from "@/lib/interactions";
 import { toast } from "sonner";
 import { computeUserTasteVector, ensureMovieEmbedding } from "@/lib/taste-engine";
 import BrandHeader from "./BrandHeader";
+import PickCharacter from "./PickCharacter";
 
 const IMG_BASE = "https://image.tmdb.org/t/p";
 
