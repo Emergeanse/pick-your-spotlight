@@ -13,7 +13,7 @@ interface VoiceChatProps {
   initialMessages?: ChatMessage[];
 }
 
-type ChatMessage = {
+export type ChatMessage = {
   role: "user" | "assistant";
   content: string;
 };
