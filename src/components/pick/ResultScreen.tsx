@@ -471,28 +471,27 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                   <div className="flex items-start gap-2 mb-2.5">
                     <MessageCircle className="w-3 h-3 text-primary/50 mt-0.5 flex-shrink-0" />
                     <p className="text-foreground/40 text-[11px] font-sans leading-relaxed">
-                      Alors, ça te tente ? On peut affiner si tu veux.
+                      {matchData.headline?.includes("?") 
+                        ? matchData.headline 
+                        : "Alors, ça te tente ? On peut affiner si tu veux."}
                     </p>
                   </div>
                   <div className="flex flex-wrap gap-1.5">
-                    <button
-                      onClick={() => onRefineWithMessage?.("Je veux quelque chose de plus intense")}
-                      className="px-3 py-1.5 rounded-full bg-foreground/[0.04] border border-border/25 text-foreground/50 hover:text-primary hover:border-primary/25 hover:bg-primary/5 text-[11px] font-sans transition-all active:scale-95"
-                    >
-                      Quelque chose de plus intense
-                    </button>
-                    <button
-                      onClick={() => onRefineWithMessage?.("Je préfère un film plus court")}
-                      className="px-3 py-1.5 rounded-full bg-foreground/[0.04] border border-border/25 text-foreground/50 hover:text-primary hover:border-primary/25 hover:bg-primary/5 text-[11px] font-sans transition-all active:scale-95"
-                    >
-                      Un film plus court
-                    </button>
-                    <button
-                      onClick={() => onRefineWithMessage?.("Montre-moi d'autres options similaires")}
-                      className="px-3 py-1.5 rounded-full bg-foreground/[0.04] border border-border/25 text-foreground/50 hover:text-primary hover:border-primary/25 hover:bg-primary/5 text-[11px] font-sans transition-all active:scale-95"
-                    >
-                      D'autres options similaires
-                    </button>
+                    {[
+                      { label: "🔥 Plus intense", message: "Je veux quelque chose de plus intense" },
+                      { label: "💛 Plus émouvant", message: "Je veux quelque chose de plus émouvant et touchant" },
+                      { label: "⏱ Plus court", message: "Je préfère un film plus court" },
+                      { label: "😂 Plus drôle", message: "Je veux un truc plus drôle et léger" },
+                      { label: "🔄 Autre suggestion", message: "Montre-moi une autre suggestion dans le même style" },
+                    ].map((chip) => (
+                      <button
+                        key={chip.label}
+                        onClick={() => onRefineWithMessage?.(chip.message)}
+                        className="px-3 py-1.5 rounded-full bg-foreground/[0.04] border border-border/25 text-foreground/50 hover:text-primary hover:border-primary/25 hover:bg-primary/5 text-[11px] font-sans transition-all active:scale-95"
+                      >
+                        {chip.label}
+                      </button>
+                    ))}
                   </div>
                 </motion.div>
               )}
