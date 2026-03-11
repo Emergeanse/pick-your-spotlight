@@ -477,6 +477,48 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                               </p>
                             </div>
                           )}
+  // Auto-play intro TTS when result loads
+  const autoPlayTts = useCallback(async () => {
+    const autoPlayEnabled = localStorage.getItem("pick-autoplay-tts") !== "false";
+    if (!autoPlayEnabled || autoPlayDone) return;
+    setAutoPlayDone(true);
+    try {
+      const introText = `Je pense que ${getDisplayTitle(movie)} pourrait vraiment te plaire.`;
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/pick-tts`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          },
+          body: JSON.stringify({ text: introText }),
+        }
+      );
+      if (!response.ok) return;
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const audio = new Audio(url);
+      audio.onended = () => URL.revokeObjectURL(url);
+      audio.onerror = () => URL.revokeObjectURL(url);
+      await audio.play();
+    } catch (e) {
+      console.error("Auto-play TTS error:", e);
+    }
+  }, [movie, autoPlayDone]);
+
+  // Trigger auto-play when matchData arrives (so the page is loaded)
+  useEffect(() => {
+    if (matchData && !autoPlayDone) {
+      autoPlayTts();
+    }
+  }, [matchData, autoPlayDone, autoPlayTts]);
+
+  // Reset autoPlayDone when movie changes
+  useEffect(() => {
+    setAutoPlayDone(false);
+  }, [movie.id]);
 
 
                           {/* Similar liked movies */}
