@@ -404,7 +404,7 @@ const VoiceChat = ({ onClose, onMovieSuggested, initialMessages }: VoiceChatProp
               transition={{ duration: 0.3 }}
               className="flex flex-col items-center text-center"
             >
-              <PickCharacter mood="think" message="Je cherche le match parfait…" size="md" animate={false} />
+              <PickCharacter mood="think" message="Attends, j'ai un truc en tête…" size="md" animate={false} />
 
               {userText && (
                 <motion.p

@@ -199,7 +199,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
             transition={{ delay: 0.2, duration: 0.5 }}
             className="mb-8 md:mb-10"
           >
-            <PickCharacter mood="wave" message="Alors… qu'est-ce qu'on regarde ce soir ?" size="md" animate />
+            <PickCharacter mood="wave" showGreeting size="md" animate />
           </motion.div>
 
           {isSurprising ? (
