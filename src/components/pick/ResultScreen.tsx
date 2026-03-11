@@ -283,22 +283,17 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
             transition={{ duration: 0.6, delay: 0.2 }}
             className="max-w-xl"
           >
-            {/* Pick delivers the recommendation */}
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.15, duration: 0.4 }}
-              className="mb-3"
-            >
-              <PickCharacter
-                mood="default"
-                message={matchData?.pickNote || matchData?.headline || "Je pense que celui-ci est parfait pour ce soir."}
-                size="sm"
-                animate={false}
-                bounce
-                speakable
-              />
-            </motion.div>
+            {/* PickNote as styled text (no character) */}
+            {matchData?.pickNote && (
+              <motion.p
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.15, duration: 0.4 }}
+                className="text-foreground/50 text-[12px] font-sans italic mb-3 leading-relaxed"
+              >
+                « {matchData.pickNote} »
+              </motion.p>
+            )}
 
             {/* Match badge */}
             {matchData && (
