@@ -1,7 +1,7 @@
 import { useState, useEffect, forwardRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Play, RotateCcw, ChevronRight, Star, Clock, Sparkles, Heart, Lightbulb, PartyPopper, Loader2, Bookmark, Mic, Tv } from "lucide-react";
+import { Play, RotateCcw, ChevronRight, Star, Clock, Sparkles, Heart, Lightbulb, PartyPopper, Loader2, Bookmark, Mic, Tv, ChevronDown, ChevronUp } from "lucide-react";
 import type { MovieDetail } from "@/lib/tmdb";
 import { getDisplayTitle, getYear, getBackdropUrl, getPosterUrl, getWatchProviders, getMovieTrailerUrl } from "@/lib/tmdb";
 import type { Mood, Context, TimeAvailable } from "@/lib/tmdb";
@@ -46,6 +46,8 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
   const [likeLoading, setLikeLoading] = useState(false);
   const [bookmarked, setBookmarked] = useState(false);
   const [bookmarkLoading, setBookmarkLoading] = useState(false);
+  const [synopsisExpanded, setSynopsisExpanded] = useState(false);
+  const [matchExpanded, setMatchExpanded] = useState(false);
   const { user } = useAuth();
 
   const title = getDisplayTitle(movie);
@@ -53,7 +55,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
   const backdrop = getBackdropUrl(movie.backdrop_path);
   const poster = getPosterUrl(movie.poster_path, "w780");
   const runtime = movie.runtime || (movie.episode_run_time?.[0]) || 0;
-  const genres = movie.genres?.map(g => g.name).join(", ") || "";
+  const genres = movie.genres?.map(g => g.name).join(" · ") || "";
   const overview = movie.overview || "Aucune description disponible.";
   const mediaType = movie.first_air_date ? "tv" : "movie";
   const bgImage = backdrop || poster;
@@ -66,6 +68,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
   useEffect(() => {
     setMatchData(null);
     setMatchLoading(true);
+    setMatchExpanded(false);
     supabase.functions.invoke("movie-match", {
       body: { movie, userCriteria },
     }).then(({ data, error }) => {
@@ -87,51 +90,23 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
   }, [movie.id, user]);
 
   const handleToggleLike = async () => {
-    if (!user) {
-      toast.info("Connecte-toi pour sauvegarder tes films !");
-      return;
-    }
+    if (!user) { toast.info("Connecte-toi pour sauvegarder tes films !"); return; }
     setLikeLoading(true);
     try {
-      if (liked) {
-        await unlikeMovie(movie.id);
-        setLiked(false);
-        toast.success("Film retiré de tes favoris");
-      } else {
-        await likeMovie(movie);
-        setLiked(true);
-        toast.success("Film ajouté à tes favoris !");
-      }
-    } catch (e) {
-      console.error(e);
-      toast.error("Erreur lors de la sauvegarde");
-    } finally {
-      setLikeLoading(false);
-    }
+      if (liked) { await unlikeMovie(movie.id); setLiked(false); toast.success("Retiré des favoris"); }
+      else { await likeMovie(movie); setLiked(true); toast.success("Ajouté aux favoris !"); }
+    } catch { toast.error("Erreur lors de la sauvegarde"); }
+    finally { setLikeLoading(false); }
   };
 
   const handleToggleBookmark = async () => {
-    if (!user) {
-      toast.info("Connecte-toi pour ta watchlist !");
-      return;
-    }
+    if (!user) { toast.info("Connecte-toi pour ta watchlist !"); return; }
     setBookmarkLoading(true);
     try {
-      if (bookmarked) {
-        await removeFromWatchlist(movie.id);
-        setBookmarked(false);
-        toast.success("Retiré de ta watchlist");
-      } else {
-        await addToWatchlist(movie);
-        setBookmarked(true);
-        toast.success("Ajouté à ta watchlist !");
-      }
-    } catch (e) {
-      console.error(e);
-      toast.error("Erreur lors de la sauvegarde");
-    } finally {
-      setBookmarkLoading(false);
-    }
+      if (bookmarked) { await removeFromWatchlist(movie.id); setBookmarked(false); toast.success("Retiré de ta watchlist"); }
+      else { await addToWatchlist(movie); setBookmarked(true); toast.success("Ajouté à ta watchlist !"); }
+    } catch { toast.error("Erreur lors de la sauvegarde"); }
+    finally { setBookmarkLoading(false); }
   };
 
   return (
@@ -139,6 +114,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
       <BrandHeader showBack onBack={onRestart} />
 
       <div className="relative min-h-screen w-full">
+        {/* Background image */}
         {bgImage && (
           <motion.div
             initial={{ opacity: 0, scale: 1.05 }}
@@ -149,46 +125,51 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
           />
         )}
         <div className="absolute inset-0 poster-gradient" />
-        <div className="absolute inset-0 bg-gradient-to-r from-background/90 via-background/50 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-r from-background/90 via-background/60 to-transparent" />
 
-        <div className="relative z-10 flex flex-col justify-end min-h-screen p-4 pb-[calc(2.5rem+env(safe-area-inset-bottom))] md:p-12 lg:p-16">
+        {/* Content */}
+        <div className="relative z-10 flex flex-col justify-end min-h-screen px-5 pb-[calc(1.5rem+env(safe-area-inset-bottom))] md:px-12 lg:px-16 md:pb-12">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
-            className="max-w-2xl"
+            className="max-w-xl"
           >
+            {/* Match badge */}
             {matchData && (
               <motion.div
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
-                className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/20 border border-primary/30 mb-3 md:mb-4"
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary/15 border border-primary/25 mb-3"
               >
-                <Sparkles className="w-3.5 h-3.5 text-primary" />
-                <span className="text-primary text-xs md:text-sm font-sans font-semibold">
+                <Sparkles className="w-3 h-3 text-primary" />
+                <span className="text-primary text-[11px] font-sans font-semibold">
                   Match {matchData.matchScore}%
                 </span>
               </motion.div>
             )}
 
+            {/* Genres */}
             {genres && (
               <motion.p
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.3 }}
-                className="text-primary/80 text-[10px] md:text-xs mb-2 md:mb-3 tracking-[0.15em] uppercase font-sans font-medium"
+                className="text-primary/70 text-[10px] md:text-xs mb-1.5 tracking-[0.15em] uppercase font-sans font-medium"
               >
                 {genres}
               </motion.p>
             )}
 
-            <h1 className="text-3xl md:text-6xl lg:text-8xl font-serif mb-3 md:mb-4 leading-[1.05]">
+            {/* Title */}
+            <h1 className="text-2xl md:text-5xl lg:text-7xl font-serif mb-2 md:mb-3 leading-[1.05]">
               {title}
             </h1>
 
-            <div className="flex items-center gap-3 md:gap-4 text-foreground/60 text-xs md:text-sm mb-4 md:mb-5 font-sans flex-wrap">
-              {year && <span className="font-medium text-foreground/80">{year}</span>}
+            {/* Meta info */}
+            <div className="flex items-center gap-3 text-foreground/50 text-xs mb-3 font-sans flex-wrap">
+              {year && <span className="font-medium text-foreground/70">{year}</span>}
               {runtime > 0 && (
                 <span className="flex items-center gap-1">
                   <Clock className="w-3 h-3" />
@@ -203,172 +184,204 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
               )}
             </div>
 
-            <p className="text-foreground/70 text-sm md:text-base leading-relaxed mb-5 md:mb-7 max-w-lg font-sans font-light line-clamp-3">
-              {overview}
-            </p>
+            {/* Synopsis — expandable */}
+            <div className="mb-3">
+              <p className={`text-foreground/60 text-[13px] md:text-sm leading-relaxed font-sans font-light ${!synopsisExpanded ? "line-clamp-2" : ""}`}>
+                {overview}
+              </p>
+              {overview.length > 120 && (
+                <button
+                  onClick={() => setSynopsisExpanded(!synopsisExpanded)}
+                  className="text-primary/70 text-[11px] font-sans font-medium mt-1 flex items-center gap-0.5 hover:text-primary transition-colors"
+                >
+                  {synopsisExpanded ? "Moins" : "Lire plus"}
+                  {synopsisExpanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                </button>
+              )}
+            </div>
 
+            {/* Platforms */}
             {providers.length > 0 && (
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.5 }}
-                className="flex items-center gap-2 md:gap-3 mb-5 md:mb-7"
+                className="flex items-center gap-2 mb-4"
               >
-                <span className="text-foreground/40 text-[10px] md:text-xs font-sans">Disponible sur</span>
-                <div className="flex gap-1.5 md:gap-2">
+                <span className="text-foreground/30 text-[10px] font-sans">Dispo sur</span>
+                <div className="flex gap-1.5">
                   {providers.map((p) => (
                     <img
                       key={p.name}
                       src={`${IMG_BASE}/w92${p.logo_path}`}
                       alt={p.name}
                       title={p.name}
-                      className="w-7 h-7 md:w-9 md:h-9 rounded-lg object-cover border border-border/30"
+                      className="w-6 h-6 md:w-7 md:h-7 rounded-md object-cover border border-border/20"
                     />
                   ))}
                 </div>
               </motion.div>
             )}
 
-            {/* AI Match Card */}
+            {/* AI Match — collapsible card */}
             <AnimatePresence>
               {matchLoading && (
                 <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  className="mb-5 md:mb-7 bg-foreground/5 backdrop-blur-md border border-border/30 rounded-xl p-5 max-w-md w-full"
+                  className="mb-4 flex items-center gap-2"
                 >
-                  <div className="flex items-center gap-3">
-                    <Loader2 className="w-4 h-4 animate-spin text-primary" />
-                    <span className="text-foreground/50 text-sm font-sans">Analyse de votre match…</span>
-                  </div>
+                  <Loader2 className="w-3.5 h-3.5 animate-spin text-primary/60" />
+                  <span className="text-foreground/40 text-xs font-sans">Analyse en cours…</span>
                 </motion.div>
               )}
 
               {matchData && !matchLoading && (
                 <motion.div
-                  initial={{ opacity: 0, y: 15 }}
+                  initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.1, duration: 0.5 }}
-                  className="mb-5 md:mb-7 bg-foreground/5 backdrop-blur-md border border-primary/20 rounded-xl p-5 max-w-md w-full space-y-4"
+                  transition={{ delay: 0.1, duration: 0.4 }}
+                  className="mb-4 max-w-md"
                 >
-                  <p className="text-sm md:text-base font-serif text-primary font-medium">
-                    {matchData.headline}
-                  </p>
+                  {/* Collapsed: just headline */}
+                  <button
+                    onClick={() => setMatchExpanded(!matchExpanded)}
+                    className="w-full text-left bg-foreground/[0.04] backdrop-blur-md border border-primary/15 rounded-xl px-4 py-3 group hover:border-primary/30 transition-colors"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="text-[13px] md:text-sm font-serif text-primary/90 leading-snug">
+                        {matchData.headline}
+                      </p>
+                      <ChevronDown className={`w-4 h-4 text-primary/40 flex-shrink-0 mt-0.5 transition-transform ${matchExpanded ? "rotate-180" : ""}`} />
+                    </div>
+                  </button>
 
-                  <div className="space-y-3">
-                    {[
-                      { icon: Lightbulb, label: "Pourquoi ça matche", text: matchData.whyItMatches },
-                      { icon: Heart, label: "Ce que tu vas ressentir", text: matchData.emotionalJourney },
-                      { icon: PartyPopper, label: "Moment idéal", text: matchData.perfectFor },
-                      { icon: Sparkles, label: "Le savais-tu ?", text: matchData.funFact },
-                    ].map(({ icon: Icon, label, text }) => (
-                      <div key={label} className="flex gap-3">
-                        <div className="mt-0.5 w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                          <Icon className="w-3.5 h-3.5 text-primary" />
+                  {/* Expanded details */}
+                  <AnimatePresence>
+                    {matchExpanded && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.3 }}
+                        className="overflow-hidden"
+                      >
+                        <div className="bg-foreground/[0.04] backdrop-blur-md border border-t-0 border-primary/15 rounded-b-xl px-4 py-3 space-y-3 -mt-px">
+                          {[
+                            { icon: Lightbulb, label: "Pourquoi ça matche", text: matchData.whyItMatches },
+                            { icon: Heart, label: "Ce que tu vas ressentir", text: matchData.emotionalJourney },
+                            { icon: PartyPopper, label: "Moment idéal", text: matchData.perfectFor },
+                            { icon: Sparkles, label: "Le savais-tu ?", text: matchData.funFact },
+                          ].map(({ icon: Icon, label, text }) => (
+                            <div key={label} className="flex gap-2.5">
+                              <div className="mt-0.5 w-6 h-6 rounded-md bg-primary/10 flex items-center justify-center flex-shrink-0">
+                                <Icon className="w-3 h-3 text-primary" />
+                              </div>
+                              <div>
+                                <p className="text-[9px] uppercase tracking-widest text-primary/60 font-sans font-semibold mb-0.5">{label}</p>
+                                <p className="text-foreground/60 text-xs font-sans font-light leading-relaxed">{text}</p>
+                              </div>
+                            </div>
+                          ))}
                         </div>
-                        <div>
-                          <p className="text-[10px] uppercase tracking-widest text-primary/70 font-sans font-semibold mb-1">{label}</p>
-                          <p className="text-foreground/70 text-xs md:text-sm font-sans font-light leading-relaxed">{text}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </motion.div>
               )}
             </AnimatePresence>
 
-            {/* Action buttons */}
+            {/* Action buttons — compact row */}
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.7 }}
-              className="flex flex-wrap gap-2 md:gap-3 items-center"
+              transition={{ delay: 0.6 }}
+              className="flex items-center gap-2 flex-wrap"
             >
-              {/* Like button */}
+              {/* Icon buttons: like & bookmark */}
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={handleToggleLike}
                 disabled={likeLoading}
-                className={`rounded-full w-11 h-11 border transition-all ${
+                className={`rounded-full w-9 h-9 border transition-all ${
                   liked
-                    ? "bg-primary/20 border-primary/50 text-primary"
-                    : "border-border/30 text-foreground/50 hover:text-primary hover:border-primary/30"
+                    ? "bg-primary/20 border-primary/40 text-primary"
+                    : "border-border/30 text-foreground/40 hover:text-primary hover:border-primary/30"
                 }`}
               >
-                <Heart className={`w-5 h-5 ${liked ? "fill-primary" : ""}`} />
+                <Heart className={`w-4 h-4 ${liked ? "fill-primary" : ""}`} />
               </Button>
 
-              {/* Bookmark button */}
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={handleToggleBookmark}
                 disabled={bookmarkLoading}
-                className={`rounded-full w-11 h-11 border transition-all ${
+                className={`rounded-full w-9 h-9 border transition-all ${
                   bookmarked
-                    ? "bg-accent/20 border-accent/50 text-accent"
-                    : "border-border/30 text-foreground/50 hover:text-accent hover:border-accent/30"
+                    ? "bg-accent/20 border-accent/40 text-accent"
+                    : "border-border/30 text-foreground/40 hover:text-accent hover:border-accent/30"
                 }`}
               >
-                <Bookmark className={`w-5 h-5 ${bookmarked ? "fill-accent" : ""}`} />
+                <Bookmark className={`w-4 h-4 ${bookmarked ? "fill-accent" : ""}`} />
               </Button>
 
+              {/* Divider */}
+              <div className="w-px h-5 bg-border/20 mx-0.5" />
+
+              {/* Primary actions */}
               {onStartCompanion && (
                 <Button
-                  variant="hero"
-                  size="xl"
-                  className="text-sm md:text-base"
+                  size="sm"
+                  className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90 text-xs font-sans font-medium px-4 h-9 gap-1.5"
                   onClick={onStartCompanion}
                 >
-                  <Tv className="w-4 h-4" />
+                  <Tv className="w-3.5 h-3.5" />
                   Je regarde
                 </Button>
               )}
 
               {trailerUrl && (
                 <Button
-                  variant="hero"
-                  size="xl"
-                  className="text-sm md:text-base"
+                  size="sm"
+                  className="rounded-full bg-foreground/10 text-foreground/80 hover:bg-foreground/15 text-xs font-sans font-medium px-4 h-9 gap-1.5 border border-border/20"
                   onClick={() => window.open(trailerUrl, "_blank")}
                 >
-                  <Play className="w-4 h-4 fill-current" />
-                  Bande-annonce
+                  <Play className="w-3.5 h-3.5 fill-current" />
+                  Trailer
                 </Button>
               )}
 
               <Button
-                  variant="heroOutline"
-                  size="xl"
-                  className="text-sm md:text-base"
-                  onClick={onShowAnother}
-                >
-                  <ChevronRight className="w-4 h-4" />
-                  Autre suggestion
-                </Button>
+                size="sm"
+                className="rounded-full bg-foreground/10 text-foreground/80 hover:bg-foreground/15 text-xs font-sans font-medium px-4 h-9 gap-1.5 border border-border/20"
+                onClick={onShowAnother}
+              >
+                <ChevronRight className="w-3.5 h-3.5" />
+                Autre
+              </Button>
 
               {onRefineWithVoice && (
                 <Button
-                  variant="heroOutline"
-                  size="xl"
-                  className="text-sm md:text-base"
+                  size="sm"
+                  className="rounded-full bg-foreground/10 text-foreground/80 hover:bg-foreground/15 text-xs font-sans font-medium px-3.5 h-9 gap-1.5 border border-border/20"
                   onClick={onRefineWithVoice}
                 >
-                  <Mic className="w-4 h-4" />
+                  <Mic className="w-3.5 h-3.5" />
                   Affiner
                 </Button>
               )}
 
               <Button
                 variant="ghost"
-                size="xl"
-                className="text-foreground/50 hover:text-foreground text-sm md:text-base"
+                size="sm"
+                className="rounded-full text-foreground/30 hover:text-foreground/60 text-xs font-sans h-9 px-3 gap-1"
                 onClick={onRestart}
               >
-                <RotateCcw className="w-4 h-4" />
-                Recommencer
+                <RotateCcw className="w-3 h-3" />
+                Relancer
               </Button>
             </motion.div>
           </motion.div>
