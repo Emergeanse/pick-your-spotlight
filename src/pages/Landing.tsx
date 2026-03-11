@@ -46,6 +46,72 @@ const stagger = {
   visible: { transition: { staggerChildren: 0.1 } },
 };
 
+// Messages qui défilent pour montrer les capacités de Pick
+const SCROLLING_MESSAGES = [
+  "Un thriller sous-estimé des années 2000",
+  "Une série aussi addictive que Breaking Bad",
+  "Un film comme Gone Girl mais moins connu",
+  "Une mini-série parfaite pour un week-end",
+  "Un film qui retourne le cerveau",
+];
+
+// Composant pour les messages défilants
+const ScrollingRequests = () => {
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentIndex((prev) => (prev + 1) % SCROLLING_MESSAGES.length);
+    }, 2000);
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <div className="flex flex-col items-center gap-3">
+      {/* Message utilisateur qui change */}
+      <div className="self-end overflow-hidden">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={currentIndex}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
+            className="px-4 py-2.5 rounded-2xl rounded-br-md bg-primary/15 border border-primary/20 max-w-[280px]"
+          >
+            <p className="text-foreground/80 text-[14px] font-sans text-right">
+              {SCROLLING_MESSAGES[currentIndex]}
+            </p>
+          </motion.div>
+        </AnimatePresence>
+      </div>
+
+      {/* Réponse fixe de Pick */}
+      <div className="self-start flex items-end gap-2">
+        <img src={pickDefault} alt="Pick" className="w-7 h-7 object-contain flex-shrink-0" />
+        <div className="px-4 py-2.5 rounded-2xl rounded-bl-md bg-card/60 border border-border/20">
+          <p className="text-foreground/70 text-[14px] font-sans">J'ai exactement ce qu'il te faut ! ✨</p>
+        </div>
+      </div>
+
+      {/* Indicateurs de progression */}
+      <div className="flex gap-1.5 mt-1">
+        {SCROLLING_MESSAGES.map((_, index) => (
+          <motion.div
+            key={index}
+            className="w-1.5 h-1.5 rounded-full"
+            animate={{
+              backgroundColor: index === currentIndex ? "hsl(var(--primary))" : "hsl(var(--border))",
+              scale: index === currentIndex ? 1.2 : 1,
+            }}
+            transition={{ duration: 0.3 }}
+          />
+        ))}
+      </div>
+    </div>
+  );
+};
+
 const Landing = () => {
   const navigate = useNavigate();
   const heroRef = useRef<HTMLDivElement>(null);
