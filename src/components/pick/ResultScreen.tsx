@@ -58,6 +58,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
   const [bookmarked, setBookmarked] = useState(false);
   const [bookmarkLoading, setBookmarkLoading] = useState(false);
   const [synopsisExpanded, setSynopsisExpanded] = useState(false);
+  const [whyExpanded, setWhyExpanded] = useState(false);
   const [showOptions, setShowOptions] = useState(false);
   const [showRejectReasons, setShowRejectReasons] = useState(false);
   const [feedbackGiven, setFeedbackGiven] = useState<"good" | "bad" | null>(null);
