@@ -12,7 +12,7 @@ serve(async (req) => {
   }
 
   try {
-    const { movie, userCriteria } = await req.json();
+    const { movie, userCriteria, tasteProfile } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
@@ -26,26 +26,33 @@ serve(async (req) => {
       ? `L'utilisateur cherchait : humeur "${userCriteria.mood || "non précisée"}", contexte "${userCriteria.context || "non précisé"}", temps "${userCriteria.time || "non précisé"}".`
       : "L'utilisateur a demandé une surprise aléatoire.";
 
-    const systemPrompt = `Tu es un critique de cinéma passionné et empathique. On te donne un film et les préférences d'un utilisateur. Tu dois créer une fiche de match personnalisée et détaillée.
+    // Enriched taste context
+    const tasteContext = tasteProfile
+      ? `\nProfil de goûts : genres préférés (${(tasteProfile.topGenres || []).join(", ")}), ${tasteProfile.stats?.likeCount || 0} films aimés, ${tasteProfile.stats?.watchCount || 0} films vus.`
+      : "";
+
+    const systemPrompt = `Tu es un critique de cinéma passionné et empathique. On te donne un film, les préférences d'un utilisateur, et son profil de goûts. Tu dois créer une fiche de match personnalisée et précise.
 
 RÈGLES :
 - Réponds UNIQUEMENT avec un JSON valide, sans markdown, sans backticks
 - Le JSON doit avoir cette structure exacte :
 {
-  "matchScore": <number 70-99>,
+  "matchScore": <number 50-99>,
   "headline": "<phrase d'accroche percutante, 10 mots max>",
-  "whyItMatches": "<2-3 phrases expliquant pourquoi ça correspond à ses critères>",
+  "whyItMatches": "<2-3 phrases expliquant pourquoi ça correspond à ses critères et son profil>",
   "emotionalJourney": "<2-3 phrases décrivant les émotions qu'il va ressentir pendant le visionnage>",
   "perfectFor": "<1 phrase décrivant le moment idéal pour regarder ce film>",
   "funFact": "<1 anecdote intéressante sur le film>"
 }
 - Sois chaleureux, enthousiaste, personnel
 - Parle directement à l'utilisateur (tu/toi)
-- Adapte le score au vrai niveau de correspondance`;
+- Adapte le score en fonction de la correspondance avec le profil de goûts
+- Si le film ne correspond pas bien au profil, donne un score plus bas (50-70) mais explique pourquoi il peut quand même plaire
+- Si le film colle parfaitement au profil, donne un score élevé (85-99)`;
 
     const userPrompt = `Film : "${title}" (${genres}, ${runtime}min, note ${rating}/10)
 Synopsis : ${overview}
-${criteriaText}
+${criteriaText}${tasteContext}
 
 Génère la fiche de match personnalisée.`;
 
@@ -73,7 +80,6 @@ Génère la fiche de match personnalisée.`;
     const aiData = await response.json();
     const content = aiData.choices?.[0]?.message?.content || "";
 
-    // Parse JSON from response (handle potential markdown wrapping)
     let matchData;
     try {
       const jsonStr = content.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
@@ -81,7 +87,7 @@ Génère la fiche de match personnalisée.`;
     } catch {
       console.error("Failed to parse AI response:", content);
       matchData = {
-        matchScore: 85,
+        matchScore: 75,
         headline: "Un excellent choix pour toi !",
         whyItMatches: "Ce film correspond parfaitement à ce que tu recherches.",
         emotionalJourney: "Prépare-toi à vivre un voyage émotionnel intense.",
