@@ -14,6 +14,12 @@ const Auth = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
+  // Redirect if already logged in
+  const { user, isReady } = useAuth();
+  if (isReady && user) {
+    return <Navigate to="/app" replace />;
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
