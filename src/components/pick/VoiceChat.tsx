@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useScribe, CommitStrategy } from "@elevenlabs/react";
 import type { MovieDetail } from "@/lib/tmdb";
+import PickCharacter from "./PickCharacter";
 
 interface VoiceChatProps {
   onClose: () => void;
