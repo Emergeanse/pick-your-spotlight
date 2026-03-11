@@ -35,7 +35,7 @@ const BrandHeader = ({ showBack, onBack, showDiscoveryToggle, onToggleDiscovery,
         </button>
       ) : (
         <div className="flex items-center gap-1.5 md:gap-2">
-          <img src={pickLogo} alt="Pick" className="w-5 h-5 md:w-6 md:h-6 object-contain" />
+          <img src={pickLogo} alt="Pick" className="w-5 h-5 md:w-6 md:h-6 object-contain invert brightness-200" />
           <span className="font-serif text-lg md:text-xl tracking-wide text-foreground/80">
             Pick
           </span>
