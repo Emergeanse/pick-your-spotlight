@@ -190,8 +190,30 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3, duration: 0.6 }}
-            className="max-w-md mb-8 md:mb-10"
+            className="max-w-md mb-8 md:mb-10 flex flex-col items-center"
           >
+            {/* Pick mascot */}
+            <motion.img
+              src={pickSquirrel}
+              alt="Pick, ton expert ciné"
+              className="w-14 h-14 md:w-16 md:h-16 mb-3 drop-shadow-lg"
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+            />
+            {/* Rotating speech bubble */}
+            <AnimatePresence mode="wait">
+              <motion.p
+                key={phraseIndex}
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -6 }}
+                transition={{ duration: 0.3 }}
+                className="text-foreground/70 text-sm md:text-base font-sans font-medium italic mb-4"
+              >
+                « {PICK_PHRASES[phraseIndex]} »
+              </motion.p>
+            </AnimatePresence>
             <h1 className="text-3xl md:text-6xl lg:text-7xl font-serif mb-3 md:mb-4">
               Tu ne sais pas quoi regarder ?
             </h1>
