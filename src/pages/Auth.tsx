@@ -3,7 +3,9 @@ import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Mail, Lock, User, ArrowLeft } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Navigate } from "react-router-dom";
+import { toast } from "sonner";
+import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
 
 const Auth = () => {
