@@ -26,9 +26,11 @@ const EXAMPLE_PROMPTS = [
   "Un film noir et blanc oscarisé",
   "Un documentaire sur la musique",
   "Un film d'animation japonais poétique",
-  "Un film indépendant avec peu de dialogues",
   "Une série courte qu'on finit en un week-end",
   "Un film de science-fiction sous-estimé",
+  "Je suis fatigué, un truc léger sans prise de tête",
+  "On est deux, on sait pas quoi regarder",
+  "Une série feel-good pour se vider la tête",
 ];
 
 // Sound wave bars animation

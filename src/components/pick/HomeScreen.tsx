@@ -132,9 +132,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
               Dis-moi ce que tu veux regarder
             </h1>
             <p className="text-foreground/50 text-sm md:text-base font-sans font-light mb-8 md:mb-10 max-w-sm mx-auto">
-              {user
-                ? "Décris ton envie et on trouve le film parfait en quelques secondes."
-                : "Décris ton envie et on trouve le film parfait en moins de 30 secondes."}
+              Décris ton envie, on trouve le film ou la série parfaite en quelques secondes.
             </p>
           </motion.div>
 
