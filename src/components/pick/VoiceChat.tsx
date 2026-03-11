@@ -292,7 +292,7 @@ const VoiceChat = ({ onClose, onMovieSuggested, initialMessages }: VoiceChatProp
                 transition={{ delay: 0.1 }}
                 className="mb-6"
               >
-                <PickCharacter mood="wave" message="Dis-moi ce que tu veux regarder." size="md" />
+                <PickCharacter mood="wave" message="Raconte-moi ce que t'as envie de mater." size="md" />
               </motion.div>
 
               {/* Mic button */}
