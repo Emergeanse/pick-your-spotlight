@@ -351,6 +351,20 @@ const VoiceChat = ({ onClose, onMovieSuggested, initialMessages }: VoiceChatProp
               transition={{ duration: 0.3 }}
               className="flex flex-col items-center text-center"
             >
+              {/* Pick listening */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="mb-5"
+              >
+                <PickCharacter
+                  mood="default"
+                  message={partialText ? `« ${partialText}… »` : "Je t'écoute…"}
+                  size="sm"
+                  animate={false}
+                />
+              </motion.div>
+
               <motion.div
                 animate={{
                   boxShadow: [
@@ -360,42 +374,27 @@ const VoiceChat = ({ onClose, onMovieSuggested, initialMessages }: VoiceChatProp
                   ],
                 }}
                 transition={{ duration: 2, repeat: Infinity }}
-                className="mb-6 rounded-full"
+                className="mb-5 rounded-full"
               >
                 <button
                   type="button"
                   onClick={stopListening}
-                  className="w-28 h-28 rounded-full bg-primary/20 border-2 border-primary flex items-center justify-center cursor-pointer active:scale-95 transition-transform select-none"
+                  className="w-24 h-24 rounded-full bg-primary/20 border-2 border-primary flex items-center justify-center cursor-pointer active:scale-95 transition-transform select-none"
                   style={{ WebkitTapHighlightColor: "transparent", touchAction: "manipulation" }}
                 >
-                  <MicOff className="w-12 h-12 text-primary pointer-events-none" />
+                  <MicOff className="w-10 h-10 text-primary pointer-events-none" />
                 </button>
               </motion.div>
 
               <SoundWave />
 
-              {partialText ? (
-                <motion.p
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className="text-foreground/70 text-sm font-sans mt-5 max-w-xs italic"
-                >
-                  « {partialText}… »
-                </motion.p>
-              ) : (
-                <>
-                  <p className="text-primary text-sm font-sans mt-5 font-medium">
-                    Je t'écoute…
-                  </p>
-                  <p className="text-muted-foreground text-xs font-sans mt-1">
-                    Appuie pour arrêter
-                  </p>
-                </>
-              )}
+              <p className="text-muted-foreground text-xs font-sans mt-3">
+                Appuie pour arrêter
+              </p>
             </motion.div>
           )}
 
-          {/* PROCESSING — Analyzing animation */}
+          {/* PROCESSING — Pick is thinking */}
           {phase === "processing" && (
             <motion.div
               key="processing"
@@ -405,28 +404,26 @@ const VoiceChat = ({ onClose, onMovieSuggested, initialMessages }: VoiceChatProp
               transition={{ duration: 0.3 }}
               className="flex flex-col items-center text-center"
             >
-              <motion.div
-                animate={{ rotate: 360 }}
-                transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-                className="w-16 h-16 rounded-full border-2 border-primary/20 border-t-primary flex items-center justify-center mb-6"
-              />
+              <PickCharacter mood="think" message="Je cherche le match parfait…" size="md" animate={false} />
 
               {userText && (
                 <motion.p
                   initial={{ opacity: 0, y: 5 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="text-foreground/60 text-sm font-sans italic mb-4 max-w-xs"
+                  className="text-foreground/40 text-sm font-sans italic mt-5 max-w-xs"
                 >
                   « {userText} »
                 </motion.p>
               )}
 
-              <p className="text-primary text-sm font-sans font-medium">
-                Analyse en cours…
-              </p>
-              <p className="text-muted-foreground text-xs font-sans mt-1">
-                Je cherche le match parfait
-              </p>
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.3 }}
+                className="mt-4"
+              >
+                <Loader2 className="w-5 h-5 animate-spin text-primary/50" />
+              </motion.div>
             </motion.div>
           )}
 
