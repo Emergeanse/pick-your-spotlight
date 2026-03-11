@@ -119,7 +119,7 @@ const VoiceChat = ({ onClose, onMovieSuggested, initialMessages }: VoiceChatProp
 
         // Show recap for a moment, then transition to result
         setTimeout(() => {
-          onMovieSuggested(data.movie as MovieDetail);
+          onMovieSuggested(data.movie as MovieDetail, recap);
         }, recap.length > 0 ? 1800 : 800);
       } else if (data?.reply) {
         // AI asked a follow-up question — for now just close and let them retry

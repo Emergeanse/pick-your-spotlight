@@ -122,9 +122,12 @@ const Index = () => {
     setShowChat(true);
   };
 
-  const handleMovieSuggested = (movie: MovieDetail) => {
+  const handleMovieSuggested = (movie: MovieDetail, recapTags?: string[]) => {
     setResults([movie]);
     setCurrentResultIndex(0);
+    if (recapTags && recapTags.length > 0) {
+      setSearchTags(recapTags);
+    }
     setShowChat(false);
     setStep("result");
   };
