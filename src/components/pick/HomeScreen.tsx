@@ -327,6 +327,128 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
           )}
         </AnimatePresence>
       </div>
+
+      {/* Tonight's Pick overlay */}
+      <AnimatePresence>
+        {tonightPick && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute inset-0 z-40 flex flex-col"
+          >
+            {/* Background */}
+            <div
+              className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+              style={{ backgroundImage: `url(${getBackdropUrl(tonightPick.backdrop_path) || getPosterUrl(tonightPick.poster_path, "w780")})` }}
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-background via-background/85 to-background/50" />
+
+            {/* Close */}
+            <div className="relative z-10 flex justify-between items-center px-5 pt-[calc(1rem+env(safe-area-inset-top))]">
+              <button
+                onClick={() => setTonightPick(null)}
+                className="text-foreground/50 hover:text-foreground text-xs font-sans transition-colors"
+              >
+                ← Retour
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="relative z-10 flex-1 flex flex-col items-center justify-end px-6 pb-[calc(2rem+env(safe-area-inset-bottom))]">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+                className="flex flex-col items-center text-center max-w-sm"
+              >
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/15 border border-primary/25 mb-4">
+                  <Sparkles className="w-3 h-3 text-primary" />
+                  <span className="text-primary text-[11px] font-sans font-semibold">Tonight's Pick</span>
+                </div>
+
+                {/* Poster */}
+                {tonightPick.poster_path && (
+                  <motion.img
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.3, type: "spring", stiffness: 200 }}
+                    src={getPosterUrl(tonightPick.poster_path, "w342") || ""}
+                    alt={getDisplayTitle(tonightPick)}
+                    className="w-36 h-52 md:w-44 md:h-64 rounded-xl object-cover shadow-2xl border border-border/20 mb-4"
+                  />
+                )}
+
+                <h2 className="text-xl md:text-2xl font-serif text-foreground mb-1">
+                  {getDisplayTitle(tonightPick)}
+                </h2>
+
+                {tonightPick.genres && (
+                  <p className="text-primary/60 text-[10px] tracking-[0.12em] uppercase font-sans font-medium mb-2">
+                    {tonightPick.genres.map(g => g.name).join(" · ")}
+                  </p>
+                )}
+
+                {/* Platforms */}
+                {tonightProviders.length > 0 && (
+                  <div className="flex items-center gap-2 mb-4">
+                    <span className="text-foreground/30 text-[10px] font-sans">Dispo sur</span>
+                    <div className="flex gap-1.5">
+                      {tonightProviders.map((p) => (
+                        <img
+                          key={p.name}
+                          src={`https://image.tmdb.org/t/p/w92${p.logo_path}`}
+                          alt={p.name}
+                          className="w-5 h-5 rounded-md object-cover border border-border/20"
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {tonightPick.overview && (
+                  <p className="text-foreground/50 text-[12px] font-sans leading-relaxed line-clamp-3 mb-6">
+                    {tonightPick.overview}
+                  </p>
+                )}
+
+                {/* Actions */}
+                <div className="flex items-center gap-3 w-full justify-center">
+                  <Button
+                    size="lg"
+                    className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90 font-sans font-semibold px-6 h-11 gap-2 text-sm neon-glow transition-all active:scale-[0.97]"
+                    onClick={() => {
+                      onSurprise(tonightPick);
+                      setTonightPick(null);
+                    }}
+                  >
+                    <Tv className="w-4 h-4" />
+                    Je regarde
+                  </Button>
+
+                  <Button
+                    variant="ghost"
+                    size="lg"
+                    className="rounded-full border border-border/30 text-foreground/50 hover:text-foreground hover:border-border/50 font-sans font-medium px-5 h-11 gap-2 text-sm transition-all active:scale-[0.97]"
+                    onClick={() => {
+                      setTonightPick(null);
+                      generateTonightPick();
+                    }}
+                    disabled={tonightLoading}
+                  >
+                    {tonightLoading ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <ThumbsDown className="w-4 h-4" />
+                    )}
+                    Pas pour moi
+                  </Button>
+                </div>
+              </motion.div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
