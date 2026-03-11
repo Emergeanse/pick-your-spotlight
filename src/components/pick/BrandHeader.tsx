@@ -30,7 +30,7 @@ const BrandHeader = ({ showBack, onBack, showDiscoveryToggle, onToggleDiscovery,
           className="flex items-center gap-1.5 md:gap-2 text-foreground/60 hover:text-foreground transition-colors cursor-pointer group"
         >
           <ArrowLeft className="w-3.5 h-3.5 md:w-4 md:h-4 group-hover:-translate-x-0.5 transition-transform" />
-          <img src={pickLogo} alt="Pick" className="w-5 h-5 md:w-6 md:h-6 object-contain" />
+          <img src={pickLogo} alt="Pick" className="w-5 h-5 md:w-6 md:h-6 object-contain invert brightness-200" />
           <span className="font-serif text-base md:text-lg tracking-wide">Pick</span>
         </button>
       ) : (
