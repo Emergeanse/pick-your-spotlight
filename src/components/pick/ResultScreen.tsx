@@ -103,8 +103,13 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
     if (!user) { toast.info("Connecte-toi pour sauvegarder tes films !"); return; }
     setLikeLoading(true);
     try {
-      if (liked) { await unlikeMovie(movie.id); setLiked(false); toast.success("Retiré des favoris"); }
-      else { await likeMovie(movie); setLiked(true); toast.success("Ajouté aux favoris !"); }
+      if (liked) {
+        await unlikeMovie(movie.id); setLiked(false); toast.success("Retiré des favoris");
+        trackInteraction(movie.id, "unliked");
+      } else {
+        await likeMovie(movie); setLiked(true); toast.success("Ajouté aux favoris !");
+        trackInteraction(movie.id, "liked");
+      }
     } catch { toast.error("Erreur lors de la sauvegarde"); }
     finally { setLikeLoading(false); }
   };
