@@ -285,19 +285,27 @@ const VoiceChat = ({ onClose, onMovieSuggested, initialMessages }: VoiceChatProp
               transition={{ duration: 0.3 }}
               className="flex flex-col items-center text-center"
             >
+              {/* Pick as the guide */}
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+                className="mb-6"
+              >
+                <PickCharacter mood="wave" message="Dis-moi ce que tu veux regarder." size="md" />
+              </motion.div>
+
+              {/* Mic button */}
               <button
                 type="button"
                 onClick={startListening}
-                className="w-28 h-28 rounded-full bg-primary/10 border-2 border-primary/30 flex items-center justify-center mb-6 transition-all duration-200 active:scale-95 active:bg-primary/20 cursor-pointer select-none hover:bg-primary/15 hover:border-primary/40"
+                className="w-24 h-24 rounded-full bg-primary/10 border-2 border-primary/30 flex items-center justify-center mb-6 transition-all duration-200 active:scale-95 active:bg-primary/20 cursor-pointer select-none hover:bg-primary/15 hover:border-primary/40"
                 style={{ WebkitTapHighlightColor: "transparent", touchAction: "manipulation" }}
               >
-                <Mic className="w-12 h-12 text-primary pointer-events-none" />
+                <Mic className="w-10 h-10 text-primary pointer-events-none" />
               </button>
 
-              <h2 className="text-foreground text-lg font-serif mb-2">
-                Dis-moi ce que tu veux regarder
-              </h2>
-              <p className="text-muted-foreground text-sm font-sans mb-6">
+              <p className="text-muted-foreground text-xs font-sans mb-6">
                 Appuie et parle naturellement
               </p>
 
