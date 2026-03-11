@@ -412,6 +412,27 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
               )}
             </AnimatePresence>
 
+            {/* Fun fact — standalone subtle block */}
+            <AnimatePresence>
+              {matchData && matchData.funFact && !matchLoading && (
+                <motion.div
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ delay: 0.8, duration: 0.5 }}
+                  className="mb-4 max-w-md flex items-start gap-2.5 px-3.5 py-2.5 rounded-xl bg-foreground/[0.04] border border-border/15"
+                >
+                  <span className="text-base mt-0.5 flex-shrink-0">🎬</span>
+                  <div>
+                    <p className="text-[10px] text-primary/60 font-sans font-semibold tracking-wide uppercase mb-0.5">Fun fact</p>
+                    <p className="text-foreground/55 text-[12px] font-sans leading-relaxed">
+                      {matchData.funFact}
+                    </p>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
             {/* Primary Actions */}
             <motion.div
               initial={{ opacity: 0, y: 10 }}
