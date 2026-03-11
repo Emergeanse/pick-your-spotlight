@@ -292,6 +292,9 @@ const Index = () => {
               onRefineWithMessage={(message) => {
                 const currentMovie = results[currentResultIndex];
                 if (!currentMovie) return;
+                // Add refinement as a search tag
+                const shortLabel = message.replace(/^(Je veux |Je préfère |Montre-moi )/i, "").toLowerCase();
+                setSearchTags(prev => prev.includes(shortLabel) ? prev : [...prev, shortLabel]);
                 const contextMessages: ChatMessage[] = [
                   { role: "assistant", content: `Je t'ai recommandé **${getDisplayTitle(currentMovie)}**. Dis-moi ce qui ne te convient pas et je te trouverai quelque chose de mieux !` },
                   { role: "user", content: message },
@@ -302,6 +305,8 @@ const Index = () => {
               onStartCompanion={handleStartCompanion}
               hasMore={currentResultIndex < results.length - 1}
               userCriteria={{ mood, context, time }}
+              searchTags={searchTags}
+              onRemoveTag={handleRemoveTag}
               alternativeMovies={results.filter((_, i) => i !== currentResultIndex).slice(0, 2)}
               onSelectAlternative={(movie) => {
                 const idx = results.findIndex(r => r.id === movie.id);
