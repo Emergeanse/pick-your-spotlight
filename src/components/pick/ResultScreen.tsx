@@ -14,7 +14,6 @@ import { toast } from "sonner";
 import { computeUserTasteVector, ensureMovieEmbedding } from "@/lib/taste-engine";
 import BrandHeader from "./BrandHeader";
 import PickCharacter from "./PickCharacter";
-import pickSquirrel from "@/assets/pick-squirrel.png";
 
 const IMG_BASE = "https://image.tmdb.org/t/p";
 
@@ -97,6 +96,20 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
   const [whyAudioLoading, setWhyAudioLoading] = useState(false);
   const { user } = useAuth();
 
+  const playBrowserWhyFallback = useCallback((text: string) => {
+    if (typeof window === "undefined" || !("speechSynthesis" in window)) return false;
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = "fr-FR";
+    utterance.rate = 1;
+    utterance.pitch = 1;
+    utterance.onstart = () => setWhySpeaking(true);
+    utterance.onend = () => setWhySpeaking(false);
+    utterance.onerror = () => setWhySpeaking(false);
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(utterance);
+    return true;
+  }, []);
+
   const handleReadWhy = useCallback(async () => {
     if (!matchData || whyAudioLoading || whySpeaking) return;
     const textToRead = [
@@ -106,14 +119,6 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
       matchData.perfectFor,
     ].filter(Boolean).join(". ");
     if (!textToRead) return;
-
-    // Create audio element immediately on user gesture to preserve playback permission
-    const audio = new Audio();
-    // Play a tiny silent WAV to unlock the audio context on this gesture
-    audio.src = "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAIA+AAACABAAZGF0YQAAAAA=";
-    try { await audio.play(); } catch { /* ignore */ }
-    audio.pause();
-
     setWhyAudioLoading(true);
     try {
       const response = await fetch(
@@ -134,19 +139,21 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
       }
       const blob = await response.blob();
       const url = URL.createObjectURL(blob);
-      audio.src = url;
+      const audio = new Audio(url);
       setWhySpeaking(true);
       audio.onended = () => { setWhySpeaking(false); URL.revokeObjectURL(url); };
       audio.onerror = () => { setWhySpeaking(false); URL.revokeObjectURL(url); };
       await audio.play();
     } catch (e) {
       console.error("Why TTS error:", e);
-      setWhySpeaking(false);
+      const fallbackStarted = playBrowserWhyFallback(textToRead);
+      if (!fallbackStarted) {
+        setWhySpeaking(false);
+      }
     } finally {
       setWhyAudioLoading(false);
     }
-  }, [matchData, whyAudioLoading, whySpeaking]);
-
+  }, [matchData, whyAudioLoading, whySpeaking, playBrowserWhyFallback]);
 
   const title = getDisplayTitle(movie);
   const year = getYear(movie);
@@ -394,42 +401,41 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.1, duration: 0.4 }}
-                  className="mb-5 max-w-md rounded-2xl bg-primary/10 border border-primary/25 backdrop-blur-sm p-4"
+                  className="mb-5 max-w-md"
                 >
                   {/* Headline + expand toggle */}
                   <button
                     onClick={() => setWhyExpanded(prev => !prev)}
                     className="w-full text-left group"
                   >
-                    <p className="text-[10px] uppercase tracking-widest text-primary/70 font-sans font-semibold mb-1.5 flex items-center gap-1.5">
+                    <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-sans font-semibold mb-1.5 flex items-center gap-1.5">
                       Pourquoi ce film ?
-                      <ChevronDown className={`w-3 h-3 text-primary/50 transition-transform duration-200 ${whyExpanded ? "rotate-180" : ""}`} />
+                      <ChevronDown className={`w-3 h-3 text-muted-foreground/60 transition-transform duration-200 ${whyExpanded ? "rotate-180" : ""}`} />
                     </p>
-                    <p className="text-foreground/80 text-[13px] font-sans leading-relaxed">
+                    <p className="text-foreground/70 text-[13px] font-sans leading-relaxed">
                       {matchData.headline}
                     </p>
                   </button>
-
-                  {/* Listen button with squirrel */}
+                  {/* Read aloud button — prominent */}
                   <motion.button
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ delay: 0.3, duration: 0.3 }}
                     onClick={(e) => { e.stopPropagation(); handleReadWhy(); }}
                     disabled={whyAudioLoading || whySpeaking}
-                    className={`mt-3 w-full flex items-center gap-3 px-4 py-2.5 rounded-xl border transition-all active:scale-[0.98] text-[13px] font-sans font-medium ${
+                    className={`mt-3 inline-flex items-center gap-2 px-4 py-2 rounded-xl border transition-all active:scale-95 text-[12px] font-sans font-medium shadow-sm ${
                       whySpeaking
-                        ? "bg-primary/20 border-primary/50 text-primary"
-                        : "bg-background/40 border-primary/20 text-foreground/70 hover:bg-primary/15 hover:border-primary/40 hover:text-primary"
+                        ? "bg-primary/15 border-primary/40 text-primary"
+                        : "bg-card/80 backdrop-blur-sm border-primary/25 text-foreground/70 hover:text-primary hover:border-primary/40 hover:bg-primary/10"
                     }`}
+                    title="Pick lit l'explication"
                   >
-                    <img src={pickSquirrel} alt="Pick" className="w-7 h-7 object-contain flex-shrink-0" />
                     {whyAudioLoading ? (
-                      <Loader2 className="w-4 h-4 animate-spin text-primary" />
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
                     ) : (
-                      <Volume2 className={`w-4 h-4 flex-shrink-0 ${whySpeaking ? "text-primary animate-pulse" : ""}`} />
+                      <Volume2 className={`w-3.5 h-3.5 ${whySpeaking ? "text-primary animate-pulse" : ""}`} />
                     )}
-                    <span>{whySpeaking ? "Pick parle…" : "Je peux te présenter ce film si tu veux"}</span>
+                    <span>{whySpeaking ? "Pick parle…" : "🎧 Écouter Pick"}</span>
                   </motion.button>
 
                   {/* Expanded detailed explanation */}
@@ -468,7 +474,9 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                                 {matchData.perfectFor}
                               </p>
                             </div>
-                           )}
+                          )}
+
+
                           {/* Similar liked movies */}
                           {matchData.similarLikedMovies && matchData.similarLikedMovies.length > 0 && (
                             <div>
