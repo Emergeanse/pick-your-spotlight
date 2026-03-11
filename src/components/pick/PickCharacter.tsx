@@ -62,22 +62,15 @@ const PickCharacter = ({
 
   const displayMessage = message || (showGreeting ? greeting : "");
 
-  const playBrowserFallback = useCallback((text: string) => {
-    if (typeof window === "undefined" || !("speechSynthesis" in window)) return false;
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = "fr-FR";
-    utterance.rate = 1;
-    utterance.pitch = 1;
-    utterance.onstart = () => setSpeaking(true);
-    utterance.onend = () => setSpeaking(false);
-    utterance.onerror = () => setSpeaking(false);
-    window.speechSynthesis.cancel();
-    window.speechSynthesis.speak(utterance);
-    return true;
-  }, []);
-
   const handleSpeak = useCallback(async () => {
     if (!displayMessage || audioLoading || speaking) return;
+
+    // Create audio element immediately on user gesture to preserve playback permission
+    const audio = new Audio();
+    audio.src = "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAIA+AAACABAAZGF0YQAAAAA=";
+    try { await audio.play(); } catch { /* ignore */ }
+    audio.pause();
+
     setAudioLoading(true);
     try {
       const response = await fetch(
@@ -100,27 +93,18 @@ const PickCharacter = ({
 
       const blob = await response.blob();
       const url = URL.createObjectURL(blob);
-      const audio = new Audio(url);
+      audio.src = url;
       setSpeaking(true);
-      audio.onended = () => {
-        setSpeaking(false);
-        URL.revokeObjectURL(url);
-      };
-      audio.onerror = () => {
-        setSpeaking(false);
-        URL.revokeObjectURL(url);
-      };
+      audio.onended = () => { setSpeaking(false); URL.revokeObjectURL(url); };
+      audio.onerror = () => { setSpeaking(false); URL.revokeObjectURL(url); };
       await audio.play();
     } catch (e) {
       console.error("Pick TTS error:", e);
-      const fallbackStarted = playBrowserFallback(displayMessage);
-      if (!fallbackStarted) {
-        setSpeaking(false);
-      }
+      setSpeaking(false);
     } finally {
       setAudioLoading(false);
     }
-  }, [displayMessage, audioLoading, speaking, playBrowserFallback]);
+  }, [displayMessage, audioLoading, speaking]);
 
   // Determine which CSS animation class to apply
   const getAnimationClass = () => {
