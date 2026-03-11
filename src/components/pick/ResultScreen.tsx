@@ -231,7 +231,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
             >
               <PickCharacter
                 mood="default"
-                message={matchData ? matchData.headline : "Je pense que celui-ci est parfait pour ce soir."}
+                message={matchData?.pickNote || matchData?.headline || "Je pense que celui-ci est parfait pour ce soir."}
                 size="sm"
                 animate={false}
               />
