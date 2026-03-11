@@ -2,7 +2,7 @@ import { motion, useScroll, useTransform } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Target, Dice5, Mic, Brain, Tv, ArrowRight, ChevronDown } from "lucide-react";
+import { Sparkles, Target, Dice5, Mic, Brain, Tv, ArrowRight, ChevronDown, Clapperboard, MessageCircle } from "lucide-react";
 
 const POSTER_URLS = [
   "https://image.tmdb.org/t/p/w342/qJ2tW6WMUDux911BTUgMe1cEgGR.jpg",
@@ -67,9 +67,10 @@ const Landing = () => {
             <Button
               size="sm"
               className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90 font-sans text-sm px-4 neon-glow"
-              onClick={() => navigate("/auth")}
+              onClick={() => navigate("/app")}
             >
-              Get started
+              <Clapperboard className="w-3.5 h-3.5 mr-1.5" />
+              Find my movie
             </Button>
           </div>
         </div>
@@ -112,7 +113,7 @@ const Landing = () => {
             className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20 mb-6"
           >
             <Sparkles className="w-3.5 h-3.5 text-primary" />
-            <span className="text-primary text-xs font-sans font-medium">AI-powered recommendations</span>
+            <span className="text-primary text-xs font-sans font-medium">AI-powered · No account needed</span>
           </motion.div>
 
           <motion.h1
@@ -121,8 +122,8 @@ const Landing = () => {
             transition={{ duration: 0.7, delay: 0.3 }}
             className="text-4xl md:text-6xl lg:text-7xl font-serif leading-[1.05] mb-5"
           >
-            Never waste time choosing what to watch{" "}
-            <span className="text-primary italic">again.</span>
+            Find what to watch in{" "}
+            <span className="text-primary italic">30 seconds.</span>
           </motion.h1>
 
           <motion.p
@@ -131,7 +132,7 @@ const Landing = () => {
             transition={{ duration: 0.6, delay: 0.5 }}
             className="text-foreground/50 text-base md:text-lg font-sans font-light max-w-xl mx-auto mb-8 leading-relaxed"
           >
-            Pick learns your taste and finds the perfect movie or series for you tonight.
+            Pick learns your taste and finds the perfect movie or series for tonight.
           </motion.p>
 
           <motion.div
@@ -143,21 +144,31 @@ const Landing = () => {
             <Button
               size="lg"
               className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90 font-sans font-semibold px-7 h-12 gap-2.5 text-base neon-glow transition-all active:scale-[0.97]"
-              onClick={() => navigate("/auth")}
+              onClick={() => navigate("/app")}
             >
-              Find something to watch
-              <ArrowRight className="w-4 h-4" />
+              <Clapperboard className="w-4 h-4" />
+              Find my movie
             </Button>
             <Button
               size="lg"
               variant="ghost"
               className="rounded-full text-foreground/60 hover:text-foreground font-sans font-medium px-6 h-12 gap-2 text-base border border-border/20 hover:border-border/40 transition-all"
-              onClick={() => navigate("/auth")}
+              onClick={() => navigate("/app")}
             >
               <Dice5 className="w-4 h-4" />
               Surprise me
             </Button>
           </motion.div>
+
+          {/* No account needed hint */}
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 1.2 }}
+            className="text-foreground/25 text-xs font-sans mt-5"
+          >
+            No sign-up required · Create an account to save your taste
+          </motion.p>
         </motion.div>
 
         {/* Scroll indicator */}
@@ -187,7 +198,7 @@ const Landing = () => {
             className="text-center mb-16"
           >
             <h2 className="text-3xl md:text-5xl font-serif mb-3">
-              Find the perfect movie in seconds
+              How Pick works
             </h2>
             <p className="text-foreground/40 font-sans text-sm md:text-base max-w-md mx-auto">
               Three steps. One perfect recommendation.
@@ -207,18 +218,21 @@ const Landing = () => {
                 title: "Tell Pick how you feel",
                 desc: "Your mood, available time, and who you're watching with.",
                 icon: "🎭",
+                label: "Ask Pick",
               },
               {
                 step: "02",
-                title: "Pick learns what you love",
-                desc: "Choose movies you like and Pick builds your taste profile.",
-                icon: "🧠",
+                title: "Get the perfect movie",
+                desc: "One movie, perfectly matched for tonight. Not a list — the one.",
+                icon: "🎬",
+                label: "Get matched",
               },
               {
                 step: "03",
-                title: "Get the perfect match",
-                desc: "One movie, perfectly matched for tonight. Not a list — the one.",
-                icon: "🎬",
+                title: "Watch with your AI companion",
+                desc: "Ask questions, get fun facts, and explore behind the scenes while watching.",
+                icon: "🍿",
+                label: "Enjoy",
               },
             ].map((item, i) => (
               <motion.div
@@ -231,7 +245,10 @@ const Landing = () => {
                   {item.step}
                 </div>
                 <div className="text-3xl mb-4">{item.icon}</div>
-                <h3 className="text-lg md:text-xl font-serif mb-2">{item.title}</h3>
+                <span className="text-[10px] uppercase tracking-widest text-primary/60 font-sans font-semibold">
+                  {item.label}
+                </span>
+                <h3 className="text-lg md:text-xl font-serif mb-2 mt-1">{item.title}</h3>
                 <p className="text-foreground/40 text-sm font-sans leading-relaxed">{item.desc}</p>
               </motion.div>
             ))}
@@ -257,6 +274,9 @@ const Landing = () => {
               Recommendations that actually{" "}
               <span className="text-primary italic">understand</span> your taste
             </h2>
+            <p className="text-foreground/40 font-sans text-sm md:text-base max-w-lg mx-auto">
+              Create a free account to unlock personalized recommendations that get smarter over time.
+            </p>
           </motion.div>
 
           <motion.div
@@ -338,7 +358,7 @@ const Landing = () => {
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true, margin: "-80px" }}
-            className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4"
+            className="grid sm:grid-cols-2 lg:grid-cols-5 gap-4"
           >
             {[
               {
@@ -361,18 +381,35 @@ const Landing = () => {
                 title: "Learns over time",
                 desc: "The more you use Pick, the better it gets.",
               },
+              {
+                icon: <MessageCircle className="w-5 h-5" />,
+                title: "Movie companion",
+                desc: "Ask questions while watching. Fun facts, cast info, no spoilers.",
+                highlight: true,
+              },
             ].map((f, i) => (
               <motion.div
                 key={f.title}
                 variants={fadeUp}
                 custom={i}
-                className="group bg-card/40 border border-border/15 rounded-2xl p-6 hover:border-primary/20 transition-all duration-300"
+                className={`group border rounded-2xl p-6 hover:border-primary/20 transition-all duration-300 ${
+                  (f as any).highlight
+                    ? "bg-primary/5 border-primary/15 sm:col-span-2 lg:col-span-1"
+                    : "bg-card/40 border-border/15"
+                }`}
               >
-                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary mb-4 group-hover:bg-primary/15 transition-colors">
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-4 group-hover:bg-primary/15 transition-colors ${
+                  (f as any).highlight ? "bg-primary/15 text-primary" : "bg-primary/10 text-primary"
+                }`}>
                   {f.icon}
                 </div>
                 <h3 className="text-base font-serif mb-1.5">{f.title}</h3>
                 <p className="text-foreground/40 text-sm font-sans leading-relaxed">{f.desc}</p>
+                {(f as any).highlight && (
+                  <span className="inline-block mt-3 text-[10px] uppercase tracking-widest text-primary font-sans font-semibold">
+                    New ✨
+                  </span>
+                )}
               </motion.div>
             ))}
           </motion.div>
@@ -446,21 +483,25 @@ const Landing = () => {
             <Button
               size="lg"
               className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90 font-sans font-semibold px-7 h-12 gap-2.5 text-base neon-glow transition-all active:scale-[0.97]"
-              onClick={() => navigate("/auth")}
+              onClick={() => navigate("/app")}
             >
-              Start discovering
-              <ArrowRight className="w-4 h-4" />
+              <Clapperboard className="w-4 h-4" />
+              Start picking
             </Button>
             <Button
               size="lg"
               variant="ghost"
               className="rounded-full text-foreground/60 hover:text-foreground font-sans font-medium px-6 h-12 gap-2 text-base border border-border/20 hover:border-border/40 transition-all"
-              onClick={() => navigate("/auth")}
+              onClick={() => navigate("/app")}
             >
               <Dice5 className="w-4 h-4" />
-              Try surprise mode
+              Surprise me
             </Button>
           </div>
+
+          <p className="text-foreground/20 text-xs font-sans mt-4">
+            Free to use · No account required
+          </p>
         </motion.div>
       </section>
 

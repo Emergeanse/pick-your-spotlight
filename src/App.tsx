@@ -19,6 +19,10 @@ function HomePage() {
   return user ? <Index /> : <Landing />;
 }
 
+function AppRoute() {
+  return <Index />;
+}
+
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, isReady } = useAuth();
   if (!isReady) return null;
@@ -34,7 +38,7 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<HomePage />} />
-          <Route path="/app" element={<HomePage />} />
+          <Route path="/app" element={<AppRoute />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
           <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
