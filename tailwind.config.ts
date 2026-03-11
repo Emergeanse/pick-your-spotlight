@@ -13,6 +13,9 @@ export default {
       },
     },
     extend: {
+      screens: {
+        'xs': '375px',
+      },
       fontFamily: {
         serif: ['"DM Serif Display"', 'serif'],
         sans: ['Inter', 'sans-serif'],
