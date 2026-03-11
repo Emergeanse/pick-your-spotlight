@@ -187,36 +187,17 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, loading }: HomeScreenProp
               </p>
             </div>
 
-            {/* Secondary actions */}
-            <div className="flex flex-row gap-3 items-center">
-              <Button
-                variant="heroOutline"
-                size="xl"
-                className="text-sm md:text-base"
-                onClick={handleStart}
-                disabled={isLoading || loading}
-              >
-                {isLoading ? (
-                  <div className="w-4 h-4 border-2 border-foreground/30 border-t-foreground rounded-full animate-spin" />
-                ) : (
-                  <>
-                    <Play className="w-4 h-4 fill-current" />
-                    Trouver mon film
-                  </>
-                )}
-              </Button>
-
-              <Button
-                variant="ghost"
-                size="xl"
-                className="text-sm md:text-base text-foreground/60 hover:text-foreground border border-border/30 hover:border-primary/40 hover:bg-primary/5"
-                onClick={handleSurprise}
-                disabled={loading}
-              >
-                <Wand2 className="w-4 h-4" />
-                Surprends-moi
-              </Button>
-            </div>
+            {/* Secondary action */}
+            <Button
+              variant="ghost"
+              size="xl"
+              className="text-sm md:text-base text-foreground/60 hover:text-foreground border border-border/30 hover:border-primary/40 hover:bg-primary/5"
+              onClick={handleSurprise}
+              disabled={loading}
+            >
+              <Wand2 className="w-4 h-4" />
+              Surprends-moi
+            </Button>
           </motion.div>
         )}
       </div>

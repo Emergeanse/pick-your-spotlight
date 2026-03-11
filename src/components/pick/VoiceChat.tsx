@@ -122,8 +122,10 @@ const VoiceChat = ({ onClose, onMovieSuggested }: VoiceChatProps) => {
 
   const startListening = useCallback(() => {
     if (!speechSupported) {
-      setMicError("La reconnaissance vocale n'est pas supportée par ton navigateur. Tape ton message.");
+      setMicError("Reconnaissance vocale non disponible sur ce navigateur. Tape ton message ci-dessous 👇");
       inputRef.current?.focus();
+      // On iOS, auto-focus the input so keyboard opens
+      setTimeout(() => inputRef.current?.focus(), 100);
       return;
     }
     setMicError(null);
