@@ -118,8 +118,13 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
     if (!user) { toast.info("Connecte-toi pour ta watchlist !"); return; }
     setBookmarkLoading(true);
     try {
-      if (bookmarked) { await removeFromWatchlist(movie.id); setBookmarked(false); toast.success("Retiré de ta watchlist"); }
-      else { await addToWatchlist(movie); setBookmarked(true); toast.success("Ajouté à ta watchlist !"); }
+      if (bookmarked) {
+        await removeFromWatchlist(movie.id); setBookmarked(false); toast.success("Retiré de ta watchlist");
+        trackInteraction(movie.id, "unsaved");
+      } else {
+        await addToWatchlist(movie); setBookmarked(true); toast.success("Ajouté à ta watchlist !");
+        trackInteraction(movie.id, "saved");
+      }
     } catch { toast.error("Erreur lors de la sauvegarde"); }
     finally { setBookmarkLoading(false); }
   };
