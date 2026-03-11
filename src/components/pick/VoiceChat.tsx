@@ -122,8 +122,10 @@ const VoiceChat = ({ onClose, onMovieSuggested }: VoiceChatProps) => {
 
   const startListening = useCallback(() => {
     if (!speechSupported) {
-      setMicError("La reconnaissance vocale n'est pas supportée par ton navigateur. Tape ton message.");
+      setMicError("Reconnaissance vocale non disponible sur ce navigateur. Tape ton message ci-dessous 👇");
       inputRef.current?.focus();
+      // On iOS, auto-focus the input so keyboard opens
+      setTimeout(() => inputRef.current?.focus(), 100);
       return;
     }
     setMicError(null);
@@ -246,9 +248,9 @@ const VoiceChat = ({ onClose, onMovieSuggested }: VoiceChatProps) => {
             >
               <button
                 type="button"
-                onClick={(e) => { e.stopPropagation(); startListening(); }}
-                onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); startListening(); }}
-                className="group w-24 h-24 rounded-full bg-primary/10 border-2 border-primary/30 flex items-center justify-center mb-5 transition-all duration-200 active:scale-95 active:bg-primary/20 cursor-pointer touch-manipulation"
+                onClick={() => startListening()}
+                className="group w-24 h-24 rounded-full bg-primary/10 border-2 border-primary/30 flex items-center justify-center mb-5 transition-all duration-200 active:scale-95 active:bg-primary/20 cursor-pointer select-none"
+                style={{ WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}
               >
                 <Mic className="w-10 h-10 text-primary pointer-events-none" />
               </button>
@@ -287,9 +289,9 @@ const VoiceChat = ({ onClose, onMovieSuggested }: VoiceChatProps) => {
               >
                 <button
                   type="button"
-                  onClick={(e) => { e.stopPropagation(); stopListening(); }}
-                  onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); stopListening(); }}
-                  className="w-24 h-24 rounded-full bg-primary/20 border-2 border-primary flex items-center justify-center cursor-pointer active:scale-95 transition-transform touch-manipulation"
+                  onClick={() => stopListening()}
+                  className="w-24 h-24 rounded-full bg-primary/20 border-2 border-primary flex items-center justify-center cursor-pointer active:scale-95 transition-transform select-none"
+                  style={{ WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}
                 >
                   <MicOff className="w-10 h-10 text-primary pointer-events-none" />
                 </button>
