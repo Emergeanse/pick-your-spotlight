@@ -62,7 +62,7 @@ const Profile = () => {
         setProfile(data);
         setSelectedPlatforms(data?.preferred_platforms || []);
         setSelectedGenres(data?.favorite_genres || []);
-        setSelectedEras(data?.preferred_eras || []);
+        // Eras not yet persisted in DB — keep local only
 
         const [liked, wl] = await Promise.all([
           getLikedMovies().catch(() => []),
