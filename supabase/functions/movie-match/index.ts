@@ -102,10 +102,13 @@ serve(async (req) => {
     const topGenres = tasteProfile?.topGenres || [];
     const scoringWeights = tasteProfile?.scoringWeights || {};
 
+    const likedTitlesStr = (likedMovieTitles || []).slice(0, 30).join(", ");
+
     const tasteSection = tasteProfile ? `
 PROFIL DE GOÛTS ENRICHI :
 - Genres préférés (pondérés par récence) : ${topGenres.join(", ")}
 - Micro-genres / clusters : ${tasteClusters.join(", ") || "non déterminés"}
+- Films aimés : ${likedTitlesStr || "aucun encore"}
 - ${stats.likeCount || 0} films aimés, ${stats.watchCount || 0} vus, ${stats.skipCount || 0} skippés
 - Confiance profil : ${confidence.score}/100
 - Taux d'acceptation : ${stats.acceptanceRate || 0}%
