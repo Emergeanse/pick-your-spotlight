@@ -213,10 +213,11 @@ Génère la fiche de match.`;
       console.error("Failed to parse AI response:", content);
       matchData = {
         matchScore: 70,
-        headline: "Un choix intéressant pour toi",
-        whyItMatches: "Ce film pourrait correspondre à ce que tu recherches.",
-        emotionalJourney: "Une expérience cinématographique à découvrir.",
-        perfectFor: "Idéal pour ce soir.",
+        headline: "Celui-là pourrait bien te plaire",
+        whyItMatches: "Vu ce que tu cherches, ça devrait coller.",
+        detailedExplanation: "C'est le genre de film qui surprend — laisse-toi porter et tu verras.",
+        emotionalJourney: "Une expérience qui vaut le détour.",
+        perfectFor: "Parfait pour une soirée ciné sans prise de tête.",
         funFact: "Un film qui a marqué son genre.",
         scores: { taste: 70, context: 70, embedding: embeddingSimilarity ? Math.round(embeddingSimilarity * 100) : 50, behaviour: 70, rating: 70, novelty: 50 },
       };
