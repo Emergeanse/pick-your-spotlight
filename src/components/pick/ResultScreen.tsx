@@ -235,6 +235,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                 size="sm"
                 animate={false}
                 bounce
+                speakable
               />
             </motion.div>
 
