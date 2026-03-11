@@ -579,7 +579,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                   animate={{ opacity: 1 }}
                   className="pt-3"
                 >
-                  <PickCharacter mood="think" message="Je cherche mieux…" size="sm" animate={false} />
+                  <PickCharacter mood="think" message="Attends, je cherche mieux…" size="sm" animate={false} />
                 </motion.div>
               )}
             </motion.div>
