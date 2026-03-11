@@ -246,9 +246,9 @@ const VoiceChat = ({ onClose, onMovieSuggested }: VoiceChatProps) => {
             >
               <button
                 type="button"
-                onClick={(e) => { e.stopPropagation(); startListening(); }}
-                onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); startListening(); }}
-                className="group w-24 h-24 rounded-full bg-primary/10 border-2 border-primary/30 flex items-center justify-center mb-5 transition-all duration-200 active:scale-95 active:bg-primary/20 cursor-pointer touch-manipulation"
+                onClick={() => startListening()}
+                className="group w-24 h-24 rounded-full bg-primary/10 border-2 border-primary/30 flex items-center justify-center mb-5 transition-all duration-200 active:scale-95 active:bg-primary/20 cursor-pointer select-none"
+                style={{ WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}
               >
                 <Mic className="w-10 h-10 text-primary pointer-events-none" />
               </button>
