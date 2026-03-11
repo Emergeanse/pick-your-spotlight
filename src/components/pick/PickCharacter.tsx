@@ -62,6 +62,20 @@ const PickCharacter = ({
 
   const displayMessage = message || (showGreeting ? greeting : "");
 
+  const playBrowserFallback = useCallback((text: string) => {
+    if (typeof window === "undefined" || !("speechSynthesis" in window)) return false;
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = "fr-FR";
+    utterance.rate = 1;
+    utterance.pitch = 1;
+    utterance.onstart = () => setSpeaking(true);
+    utterance.onend = () => setSpeaking(false);
+    utterance.onerror = () => setSpeaking(false);
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(utterance);
+    return true;
+  }, []);
+
   const handleSpeak = useCallback(async () => {
     if (!displayMessage || audioLoading || speaking) return;
     setAudioLoading(true);
@@ -78,7 +92,12 @@ const PickCharacter = ({
           body: JSON.stringify({ text: displayMessage }),
         }
       );
-      if (!response.ok) throw new Error(`TTS failed: ${response.status}`);
+
+      if (!response.ok) {
+        const errorBody = await response.text();
+        throw new Error(`TTS failed: ${response.status} ${errorBody}`);
+      }
+
       const blob = await response.blob();
       const url = URL.createObjectURL(blob);
       const audio = new Audio(url);
@@ -94,11 +113,14 @@ const PickCharacter = ({
       await audio.play();
     } catch (e) {
       console.error("Pick TTS error:", e);
-      setSpeaking(false);
+      const fallbackStarted = playBrowserFallback(displayMessage);
+      if (!fallbackStarted) {
+        setSpeaking(false);
+      }
     } finally {
       setAudioLoading(false);
     }
-  }, [displayMessage, audioLoading, speaking]);
+  }, [displayMessage, audioLoading, speaking, playBrowserFallback]);
 
   // Determine which CSS animation class to apply
   const getAnimationClass = () => {
