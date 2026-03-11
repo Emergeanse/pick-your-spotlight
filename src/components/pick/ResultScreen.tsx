@@ -419,18 +419,18 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                   </button>
 
                   {/* Purple card with Pick mascot + listen button */}
-                  <div className="mt-3 p-4 rounded-xl bg-primary/10 border border-primary/30 backdrop-blur-sm">
-                    <div className="flex items-center gap-3">
+                  <div className="mt-3 p-3 sm:p-4 rounded-xl bg-primary/10 border border-primary/30 backdrop-blur-sm">
+                    <div className="flex items-center gap-2.5 sm:gap-3">
                       {/* Pick mascot */}
                       <div className="flex-shrink-0">
                         <img
                           src={pickDefault}
                           alt="Pick"
-                          className="w-10 h-10 object-contain drop-shadow-md"
+                          className="w-8 h-8 sm:w-10 sm:h-10 object-contain drop-shadow-md"
                         />
                       </div>
                       {/* Text */}
-                      <p className="flex-1 text-foreground/60 text-[12px] font-sans leading-relaxed">
+                      <p className="flex-1 min-w-0 text-foreground/60 text-[11px] sm:text-[12px] font-sans leading-relaxed">
                         Je peux te présenter ce film si tu veux
                       </p>
                       {/* Listen button */}
@@ -440,7 +440,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                         transition={{ delay: 0.2, duration: 0.3 }}
                         onClick={(e) => { e.stopPropagation(); handleReadWhy(); }}
                         disabled={whyAudioLoading || whySpeaking}
-                        className={`flex-shrink-0 inline-flex items-center gap-2 px-3.5 py-2 rounded-lg border transition-all active:scale-95 text-[12px] font-sans font-medium shadow-sm ${
+                        className={`flex-shrink-0 inline-flex items-center gap-1.5 px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-lg border transition-all active:scale-95 text-[11px] sm:text-[12px] font-sans font-medium shadow-sm ${
                           whySpeaking
                             ? "bg-primary/25 border-primary/50 text-primary"
                             : "bg-primary/20 backdrop-blur-sm border-primary/35 text-foreground/80 hover:text-primary hover:bg-primary/30"
@@ -452,7 +452,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                         ) : (
                           <Volume2 className={`w-3.5 h-3.5 ${whySpeaking ? "text-primary animate-pulse" : ""}`} />
                         )}
-                        <span>{whySpeaking ? "Pick parle…" : "Écouter"}</span>
+                        <span className="hidden xs:inline">{whySpeaking ? "Pick parle…" : "Écouter"}</span>
                       </motion.button>
                     </div>
                   </div>
@@ -592,7 +592,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
               </div>
 
               {/* Feedback actions */}
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
                 <button
                   onClick={() => {
                     if (feedbackGiven === "good") return;
@@ -601,13 +601,13 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                     if (!liked && user) { likeMovie(movie).then(() => setLiked(true)).catch(() => {}); }
                     toast.success("Merci pour ton retour !");
                   }}
-                  className={`flex items-center gap-1.5 px-3.5 h-9 rounded-full border text-xs font-sans font-medium transition-all active:scale-95 ${
+                  className={`flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3.5 h-8 sm:h-9 rounded-full border text-[11px] sm:text-xs font-sans font-medium transition-all active:scale-95 ${
                     feedbackGiven === "good"
                       ? "bg-primary/15 border-primary/30 text-primary"
                       : "border-border/25 text-foreground/40 hover:text-primary hover:border-primary/25"
                   }`}
                 >
-                  <ThumbsUp className={`w-3.5 h-3.5 ${feedbackGiven === "good" ? "fill-primary" : ""}`} />
+                  <ThumbsUp className={`w-3 h-3 sm:w-3.5 sm:h-3.5 ${feedbackGiven === "good" ? "fill-primary" : ""}`} />
                   Bonne reco
                 </button>
 
@@ -615,27 +615,28 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                   onClick={() => {
                     setShowRejectReasons(true);
                   }}
-                  className={`flex items-center gap-1.5 px-3.5 h-9 rounded-full border text-xs font-sans font-medium transition-all active:scale-95 ${
+                  className={`flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3.5 h-8 sm:h-9 rounded-full border text-[11px] sm:text-xs font-sans font-medium transition-all active:scale-95 ${
                     feedbackGiven === "bad"
                       ? "bg-destructive/10 border-destructive/30 text-destructive"
                       : "border-border/25 text-foreground/40 hover:text-foreground/60 hover:border-border/40"
                   }`}
                 >
-                  <ThumbsDown className={`w-3.5 h-3.5 ${feedbackGiven === "bad" ? "fill-destructive" : ""}`} />
+                  <ThumbsDown className={`w-3 h-3 sm:w-3.5 sm:h-3.5 ${feedbackGiven === "bad" ? "fill-destructive" : ""}`} />
                   Pas pour moi
                 </button>
 
                 <button
                   onClick={handleToggleBookmark}
                   disabled={bookmarkLoading}
-                  className={`flex items-center gap-1.5 px-3.5 h-9 rounded-full border text-xs font-sans font-medium transition-all active:scale-95 ${
+                  className={`flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3.5 h-8 sm:h-9 rounded-full border text-[11px] sm:text-xs font-sans font-medium transition-all active:scale-95 ${
                     bookmarked
                       ? "bg-primary/15 border-primary/30 text-primary"
                       : "border-border/25 text-foreground/40 hover:text-primary hover:border-primary/25"
                   }`}
                 >
-                  <Bookmark className={`w-3.5 h-3.5 ${bookmarked ? "fill-primary" : ""}`} />
-                  Sauvegarder
+                  <Bookmark className={`w-3 h-3 sm:w-3.5 sm:h-3.5 ${bookmarked ? "fill-primary" : ""}`} />
+                  <span className="hidden sm:inline">Sauvegarder</span>
+                  <span className="sm:hidden">Sauver</span>
                 </button>
               </div>
 
