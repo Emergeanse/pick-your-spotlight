@@ -417,17 +417,22 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                     </p>
                   </button>
 
-                  {/* Purple card with "Je peux te raconter" button */}
+                  {/* Purple card with Pick mascot + listen button */}
                   <div className="mt-3 p-4 rounded-xl bg-primary/10 border border-primary/30 backdrop-blur-sm">
-                    <div className="flex items-start gap-3">
-                      <div className="flex-1">
-                        <p className="text-[11px] text-primary/70 font-sans font-medium mb-1">
-                          Curieux de l'histoire ?
-                        </p>
-                        <p className="text-foreground/50 text-[12px] font-sans leading-relaxed">
-                          Pick te lit l'explication à haute voix
-                        </p>
+                    <div className="flex items-center gap-3">
+                      {/* Pick mascot */}
+                      <div className="flex-shrink-0">
+                        <img
+                          src={pickDefault}
+                          alt="Pick"
+                          className="w-10 h-10 object-contain drop-shadow-md"
+                        />
                       </div>
+                      {/* Text */}
+                      <p className="flex-1 text-foreground/60 text-[12px] font-sans leading-relaxed">
+                        Je peux te présenter ce film si tu veux
+                      </p>
+                      {/* Listen button */}
                       <motion.button
                         initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
@@ -439,14 +444,14 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                             ? "bg-primary/25 border-primary/50 text-primary"
                             : "bg-primary/20 backdrop-blur-sm border-primary/35 text-foreground/80 hover:text-primary hover:bg-primary/30"
                         }`}
-                        title="Pick lit l'explication"
+                        title="Écouter Pick"
                       >
                         {whyAudioLoading ? (
                           <Loader2 className="w-3.5 h-3.5 animate-spin" />
                         ) : (
                           <Volume2 className={`w-3.5 h-3.5 ${whySpeaking ? "text-primary animate-pulse" : ""}`} />
                         )}
-                        <span>{whySpeaking ? "Pick parle…" : "Je peux te raconter"}</span>
+                        <span>{whySpeaking ? "Pick parle…" : "Écouter"}</span>
                       </motion.button>
                     </div>
                   </div>
