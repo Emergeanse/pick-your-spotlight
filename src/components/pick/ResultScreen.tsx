@@ -404,24 +404,10 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                   transition={{ delay: 0.1, duration: 0.4 }}
                   className="mb-5 max-w-md"
                 >
-                  {/* Headline + expand toggle */}
-                  <button
-                    onClick={() => setWhyExpanded(prev => !prev)}
-                    className="w-full text-left group"
-                  >
-                    <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-sans font-semibold mb-1.5 flex items-center gap-1.5">
-                      Pourquoi ce film ?
-                      <ChevronDown className={`w-3 h-3 text-muted-foreground/60 transition-transform duration-200 ${whyExpanded ? "rotate-180" : ""}`} />
-                    </p>
-                    <p className="text-foreground/70 text-[13px] font-sans leading-relaxed">
-                      {matchData.headline}
-                    </p>
-                  </button>
-
-                  {/* Purple card with Pick mascot + listen button */}
-                  <div className="mt-3 p-3 sm:p-4 rounded-xl bg-primary/10 border border-primary/30 backdrop-blur-sm">
-                    <div className="flex items-center gap-2.5 sm:gap-3">
-                      {/* Pick mascot */}
+                  {/* Purple card — Pourquoi ce film + Pick + Écouter */}
+                  <div className="p-3 sm:p-4 rounded-xl bg-primary/10 border border-primary/30 backdrop-blur-sm">
+                    {/* Top row: Pick mascot + text + listen button */}
+                    <div className="flex items-center gap-2.5 sm:gap-3 mb-3">
                       <div className="flex-shrink-0">
                         <img
                           src={pickDefault}
@@ -429,11 +415,9 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                           className="w-8 h-8 sm:w-10 sm:h-10 object-contain drop-shadow-md"
                         />
                       </div>
-                      {/* Text */}
                       <p className="flex-1 min-w-0 text-foreground/60 text-[11px] sm:text-[12px] font-sans leading-relaxed">
                         Je peux te présenter ce film si tu veux
                       </p>
-                      {/* Listen button */}
                       <motion.button
                         initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
@@ -455,85 +439,92 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                         <span className="hidden xs:inline">{whySpeaking ? "Pick parle…" : "Écouter"}</span>
                       </motion.button>
                     </div>
+
+                    {/* Separator */}
+                    <div className="border-t border-primary/15 mb-3" />
+
+                    {/* Pourquoi ce film — expandable */}
+                    <button
+                      onClick={() => setWhyExpanded(prev => !prev)}
+                      className="w-full text-left group"
+                    >
+                      <p className="text-[10px] uppercase tracking-widest text-primary/60 font-sans font-semibold mb-1.5 flex items-center gap-1.5">
+                        Pourquoi ce film ?
+                        <ChevronDown className={`w-3 h-3 text-primary/40 transition-transform duration-200 ${whyExpanded ? "rotate-180" : ""}`} />
+                      </p>
+                      <p className="text-foreground/70 text-[12px] sm:text-[13px] font-sans leading-relaxed">
+                        {matchData.headline}
+                      </p>
+                    </button>
+
+                    {/* Expanded detailed explanation */}
+                    <AnimatePresence>
+                      {whyExpanded && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: "auto", opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          transition={{ duration: 0.25, ease: "easeOut" }}
+                          className="overflow-hidden"
+                        >
+                          <div className="pt-3 space-y-3">
+                            {matchData.detailedExplanation && (
+                              <p className="text-foreground/55 text-[12px] font-sans leading-relaxed">
+                                {matchData.detailedExplanation}
+                              </p>
+                            )}
+                            {matchData.emotionalJourney && (
+                              <div>
+                                <p className="text-[10px] text-primary/50 font-sans font-medium mb-1">L'expérience</p>
+                                <p className="text-foreground/50 text-[12px] font-sans leading-relaxed italic">
+                                  {matchData.emotionalJourney}
+                                </p>
+                              </div>
+                            )}
+                            {matchData.perfectFor && (
+                              <div className="flex items-start gap-2">
+                                <Sparkles className="w-3 h-3 text-primary/50 mt-0.5 flex-shrink-0" />
+                                <p className="text-foreground/50 text-[12px] font-sans leading-relaxed">
+                                  {matchData.perfectFor}
+                                </p>
+                              </div>
+                            )}
+                            {matchData.similarLikedMovies && matchData.similarLikedMovies.length > 0 && (
+                              <div>
+                                <p className="text-[10px] text-primary/50 font-sans font-medium mb-1.5">Parce que tu as aimé</p>
+                                <div className="flex flex-wrap gap-1.5">
+                                  {matchData.similarLikedMovies.map((title) => (
+                                    <span
+                                      key={title}
+                                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-[11px] font-sans font-medium"
+                                    >
+                                      <Heart className="w-2.5 h-2.5 fill-primary" />
+                                      {title}
+                                    </span>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                            {matchData.matchingReasons && matchData.matchingReasons.length > 0 && (
+                              <div>
+                                <p className="text-[10px] text-primary/50 font-sans font-medium mb-1.5">Ce qui correspond</p>
+                                <div className="flex flex-wrap gap-1.5">
+                                  {matchData.matchingReasons.map((reason) => (
+                                    <span
+                                      key={reason}
+                                      className="inline-flex items-center px-2.5 py-1 rounded-full bg-foreground/5 border border-border/30 text-foreground/60 text-[11px] font-sans font-medium"
+                                    >
+                                      {reason}
+                                    </span>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </div>
-
-                  {/* Expanded detailed explanation */}
-                  <AnimatePresence>
-                    {whyExpanded && (
-                      <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: "auto", opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        transition={{ duration: 0.25, ease: "easeOut" }}
-                        className="overflow-hidden"
-                      >
-                        <div className="pt-3 space-y-3">
-                          {/* Detailed explanation */}
-                          {matchData.detailedExplanation && (
-                            <p className="text-foreground/55 text-[12px] font-sans leading-relaxed">
-                              {matchData.detailedExplanation}
-                            </p>
-                          )}
-
-                          {/* Emotional journey */}
-                          {matchData.emotionalJourney && (
-                            <div>
-                              <p className="text-[10px] text-muted-foreground font-sans font-medium mb-1">L'expérience</p>
-                              <p className="text-foreground/50 text-[12px] font-sans leading-relaxed italic">
-                                {matchData.emotionalJourney}
-                              </p>
-                            </div>
-                          )}
-
-                          {/* Perfect for */}
-                          {matchData.perfectFor && (
-                            <div className="flex items-start gap-2">
-                              <Sparkles className="w-3 h-3 text-primary/50 mt-0.5 flex-shrink-0" />
-                              <p className="text-foreground/50 text-[12px] font-sans leading-relaxed">
-                                {matchData.perfectFor}
-                              </p>
-                            </div>
-                          )}
-
-
-                          {/* Similar liked movies */}
-                          {matchData.similarLikedMovies && matchData.similarLikedMovies.length > 0 && (
-                            <div>
-                              <p className="text-[10px] text-muted-foreground font-sans font-medium mb-1.5">Parce que tu as aimé</p>
-                              <div className="flex flex-wrap gap-1.5">
-                                {matchData.similarLikedMovies.map((title) => (
-                                  <span
-                                    key={title}
-                                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-[11px] font-sans font-medium"
-                                  >
-                                    <Heart className="w-2.5 h-2.5 fill-primary" />
-                                    {title}
-                                  </span>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-
-                          {/* Matching reasons as tags */}
-                          {matchData.matchingReasons && matchData.matchingReasons.length > 0 && (
-                            <div>
-                              <p className="text-[10px] text-muted-foreground font-sans font-medium mb-1.5">Ce qui correspond</p>
-                              <div className="flex flex-wrap gap-1.5">
-                                {matchData.matchingReasons.map((reason) => (
-                                  <span
-                                    key={reason}
-                                    className="inline-flex items-center px-2.5 py-1 rounded-full bg-foreground/5 border border-border/30 text-foreground/60 text-[11px] font-sans font-medium"
-                                  >
-                                    {reason}
-                                  </span>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
                 </motion.div>
               )}
             </AnimatePresence>
