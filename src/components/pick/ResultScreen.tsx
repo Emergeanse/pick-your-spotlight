@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { likeMovie, unlikeMovie, isMovieLiked } from "@/lib/liked-movies";
 import { addToWatchlist, removeFromWatchlist, isInWatchlist } from "@/lib/watchlist";
+import { trackInteraction, getUserTasteProfile } from "@/lib/interactions";
 import { toast } from "sonner";
 import BrandHeader from "./BrandHeader";
 
@@ -60,6 +61,15 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
   const mediaType = movie.first_air_date ? "tv" : "movie";
   const bgImage = backdrop || poster;
 
+  // Track movie opened
+  useEffect(() => {
+    trackInteraction(movie.id, "opened", {
+      mood: userCriteria?.mood,
+      context: userCriteria?.context,
+      time: userCriteria?.time,
+    });
+  }, [movie.id]);
+
   useEffect(() => {
     getWatchProviders(movie.id, mediaType).then(setProviders).catch(() => setProviders([]));
     getMovieTrailerUrl(movie.id, mediaType).then(setTrailerUrl).catch(() => setTrailerUrl(null));
@@ -69,12 +79,16 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
     setMatchData(null);
     setMatchLoading(true);
     setShowOptions(false);
-    supabase.functions.invoke("movie-match", {
-      body: { movie, userCriteria },
-    }).then(({ data, error }) => {
-      if (error) { console.error("Match error:", error); setMatchLoading(false); return; }
-      setMatchData(data as MatchData);
-      setMatchLoading(false);
+
+    // Load taste profile and pass to match function
+    getUserTasteProfile().then(tasteProfile => {
+      supabase.functions.invoke("movie-match", {
+        body: { movie, userCriteria, tasteProfile },
+      }).then(({ data, error }) => {
+        if (error) { console.error("Match error:", error); setMatchLoading(false); return; }
+        setMatchData(data as MatchData);
+        setMatchLoading(false);
+      });
     });
   }, [movie.id]);
 
@@ -89,8 +103,13 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
     if (!user) { toast.info("Connecte-toi pour sauvegarder tes films !"); return; }
     setLikeLoading(true);
     try {
-      if (liked) { await unlikeMovie(movie.id); setLiked(false); toast.success("Retiré des favoris"); }
-      else { await likeMovie(movie); setLiked(true); toast.success("Ajouté aux favoris !"); }
+      if (liked) {
+        await unlikeMovie(movie.id); setLiked(false); toast.success("Retiré des favoris");
+        trackInteraction(movie.id, "unliked");
+      } else {
+        await likeMovie(movie); setLiked(true); toast.success("Ajouté aux favoris !");
+        trackInteraction(movie.id, "liked");
+      }
     } catch { toast.error("Erreur lors de la sauvegarde"); }
     finally { setLikeLoading(false); }
   };
@@ -99,8 +118,13 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
     if (!user) { toast.info("Connecte-toi pour ta watchlist !"); return; }
     setBookmarkLoading(true);
     try {
-      if (bookmarked) { await removeFromWatchlist(movie.id); setBookmarked(false); toast.success("Retiré de ta watchlist"); }
-      else { await addToWatchlist(movie); setBookmarked(true); toast.success("Ajouté à ta watchlist !"); }
+      if (bookmarked) {
+        await removeFromWatchlist(movie.id); setBookmarked(false); toast.success("Retiré de ta watchlist");
+        trackInteraction(movie.id, "unsaved");
+      } else {
+        await addToWatchlist(movie); setBookmarked(true); toast.success("Ajouté à ta watchlist !");
+        trackInteraction(movie.id, "saved");
+      }
     } catch { toast.error("Erreur lors de la sauvegarde"); }
     finally { setBookmarkLoading(false); }
   };

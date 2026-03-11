@@ -20,31 +20,46 @@ serve(async (req) => {
   }
 
   try {
-    const { likedMovies } = await req.json();
+    const { likedMovies, tasteProfile } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
     // Build taste profile from liked movies
-    const titles = (likedMovies || []).map((m: any) => m.title).slice(0, 10);
+    const titles = (likedMovies || []).map((m: any) => m.title).slice(0, 15);
     const allGenres = (likedMovies || []).flatMap((m: any) => m.genres || []);
     const genreCounts: Record<string, number> = {};
     allGenres.forEach((g: string) => { genreCounts[g] = (genreCounts[g] || 0) + 1; });
     const topGenres = Object.entries(genreCounts)
       .sort(([, a], [, b]) => b - a)
-      .slice(0, 5)
+      .slice(0, 8)
       .map(([g]) => g);
 
-    const systemPrompt = `Tu es un expert cinéma. On te donne le profil de goûts d'un utilisateur. Tu dois recommander UN film qu'il n'a probablement pas vu mais qui va lui plaire.
+    // Use enriched taste profile if available
+    const excludeTitles = titles.join(", ");
+    const stats = tasteProfile?.stats || {};
+    const skippedCount = stats.skipCount || 0;
+    const watchedCount = stats.watchCount || 0;
+
+    // Determine discovery vs taste ratio
+    const totalInteractions = (likedMovies || []).length + skippedCount + watchedCount;
+    const shouldDiscover = totalInteractions > 10 && Math.random() < 0.2;
+
+    const systemPrompt = `Tu es un expert cinéma et un système de recommandation personnalisée. On te donne le profil de goûts détaillé d'un utilisateur. Tu dois recommander UN film qu'il n'a probablement pas vu mais qui va lui plaire.
 
 RÈGLES :
 - Réponds UNIQUEMENT avec un JSON valide sans backticks
-- Structure : {"title": "<titre exact du film>", "reason": "<2 phrases expliquant pourquoi>"}
+- Structure : {"title": "<titre exact du film>", "reason": "<2-3 phrases expliquant pourquoi>", "confidence": <0-100>}
 - Ne recommande JAMAIS un film déjà dans sa liste
-- Privilégie les films populaires mais aussi des pépites moins connues
-- Le film doit correspondre à ses genres préférés`;
+- Le film doit correspondre à ses genres préférés${shouldDiscover ? "\n- IMPORTANT : cette fois, propose une pépite inattendue ou un genre qu'il ne connaît peut-être pas encore, pour élargir ses horizons. Reste pertinent mais surprends-le." : ""}
+- Privilégie des films avec une bonne note (>6.5/10)
+- Tiens compte du nombre de films aimés pour calibrer la précision`;
 
-    const userPrompt = `Films aimés : ${titles.join(", ")}
-Genres préférés : ${topGenres.join(", ")}
+    const userPrompt = `Profil utilisateur :
+- Films aimés (${titles.length}) : ${excludeTitles}
+- Genres préférés : ${topGenres.join(", ")}
+- Films regardés : ${watchedCount}
+- Films passés/skippés : ${skippedCount}
+${shouldDiscover ? "- Mode : DÉCOUVERTE (propose quelque chose d'inattendu)" : "- Mode : PERSONNALISÉ (colle à ses goûts)"}
 
 Recommande UN film surprise.`;
 
@@ -93,6 +108,8 @@ Recommande UN film surprise.`;
     return new Response(JSON.stringify({
       movie: movieDetail,
       reason: suggestion.reason,
+      confidence: suggestion.confidence || 85,
+      isDiscovery: shouldDiscover,
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

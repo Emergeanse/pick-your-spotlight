@@ -16,6 +16,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import type { Mood, Context, TimeAvailable, MovieDetail } from "@/lib/tmdb";
 import { getRecommendations, getDisplayTitle } from "@/lib/tmdb";
+import { trackInteraction, getUserTasteProfile } from "@/lib/interactions";
 
 type Step = "home" | "mood" | "context" | "time" | "platforms" | "result";
 
@@ -136,13 +137,22 @@ const Index = () => {
   };
 
   const handleShowAnother = async () => {
+    // Track skip on current movie
+    const currentMovie = results[currentResultIndex];
+    if (currentMovie) {
+      trackInteraction(currentMovie.id, "skipped", { mood, context, time });
+    }
+
     if (currentResultIndex < results.length - 1) {
       setCurrentResultIndex(i => i + 1);
     } else {
-      // Fetch new recommendations excluding already shown movies
       setLoading(true);
       try {
-        const excludeIds = results.map(r => r.id);
+        const tasteProfile = await getUserTasteProfile();
+        const excludeIds = [
+          ...results.map(r => r.id),
+          ...(tasteProfile?.excludeIds || []),
+        ];
         const recs = await getRecommendations(
           mood || "easy-watch", context || "alone", time || "movie-night", selectedPlatformIds, excludeIds
         );
@@ -156,6 +166,14 @@ const Index = () => {
         setLoading(false);
       }
     }
+  };
+
+  const handleStartCompanion = () => {
+    const currentMovie = results[currentResultIndex];
+    if (currentMovie) {
+      trackInteraction(currentMovie.id, "watched", { mood, context, time });
+    }
+    setShowCompanion(true);
   };
 
   const handleRestart = () => {
@@ -239,7 +257,7 @@ const Index = () => {
               onShowAnother={handleShowAnother}
               onRestart={handleRestart}
               onRefineWithVoice={handleRefineWithVoice}
-              onStartCompanion={() => setShowCompanion(true)}
+              onStartCompanion={handleStartCompanion}
               hasMore={currentResultIndex < results.length - 1}
               userCriteria={{ mood, context, time }}
             />

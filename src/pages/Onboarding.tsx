@@ -9,7 +9,7 @@ import { getPopularMoviesForOnboarding, searchMovies, getPosterUrl, getDisplayTi
 import type { Movie } from "@/lib/tmdb";
 import type { StreamingPlatform } from "@/components/pick/PlatformStep";
 
-const MIN_SELECTIONS = 5;
+const MIN_SELECTIONS = 10;
 
 const platforms: StreamingPlatform[] = [
   { id: 8, label: "Netflix", logo: "https://image.tmdb.org/t/p/original/pbpMk2JmcoNnQwx5JGpXngfoWtp.jpg" },
