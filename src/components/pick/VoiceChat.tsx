@@ -10,6 +10,7 @@ import ReactMarkdown from "react-markdown";
 interface VoiceChatProps {
   onClose: () => void;
   onMovieSuggested: (movie: MovieDetail) => void;
+  initialMessages?: ChatMessage[];
 }
 
 type ChatMessage = {
