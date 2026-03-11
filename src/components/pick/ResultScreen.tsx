@@ -547,7 +547,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                   transition={{ delay: 1.2, duration: 0.4 }}
                   className="pt-3"
                 >
-                  <PickCharacter mood="default" message="Alors, ça te tente ? On peut affiner si tu veux." size="sm" animate={false} />
+                  <PickCharacter mood="default" message="Alors, ça te tente ? Sinon j'ai d'autres idées." size="sm" animate={false} />
 
                   <div className="flex flex-wrap gap-1.5 mt-3 ml-1">
                     {[
