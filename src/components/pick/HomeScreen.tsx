@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Mic, Wand2, Compass } from "lucide-react";
 import { getTrendingMovies, getBackdropUrl, getSurpriseRecommendation } from "@/lib/tmdb";
@@ -30,6 +30,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
   const [surpriseMsg, setSurpriseMsg] = useState("");
   const [bgImages, setBgImages] = useState<string[]>([]);
   const [currentBgIndex, setCurrentBgIndex] = useState(0);
+  const [showDiscovery, setShowDiscovery] = useState(false);
   const { user } = useAuth();
 
   useEffect(() => {
@@ -100,7 +101,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
 
   return (
     <div className="relative w-full h-full overflow-hidden">
-      <BrandHeader />
+      <BrandHeader showDiscoveryToggle onToggleDiscovery={() => setShowDiscovery(v => !v)} discoveryOpen={showDiscovery} />
 
       {/* Background slideshow */}
       {bgImages.map((bg, i) => (
@@ -120,7 +121,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
       {/* Scrollable content */}
       <div className="relative z-10 h-full overflow-y-auto">
         {/* Hero section */}
-        <div className="min-h-[70vh] md:min-h-[65vh] flex flex-col items-center justify-center text-center px-5 pt-16">
+        <div className="min-h-[85vh] md:min-h-[80vh] flex flex-col items-center justify-center text-center px-5 pt-16">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -155,7 +156,6 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
               transition={{ delay: 0.5, duration: 0.4 }}
               className="flex flex-col items-center gap-3"
             >
-              {/* Primary CTA — Parle-moi */}
               <Button
                 variant="hero"
                 size="xl"
@@ -167,7 +167,6 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
                 Parle-moi
               </Button>
 
-              {/* Secondary actions row */}
               <div className="flex items-center gap-2">
                 <Button
                   variant="ghost"
@@ -192,7 +191,6 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
                 </Button>
               </div>
 
-              {/* Platform compatibility */}
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -224,10 +222,20 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
           )}
         </div>
 
-        {/* Discovery sections */}
-        <div className="px-5 pb-12">
-          <DiscoverySection onMovieSelect={onMovieSelect} />
-        </div>
+        {/* Discovery sections — hidden by default, toggled via header */}
+        <AnimatePresence>
+          {showDiscovery && (
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 30 }}
+              transition={{ duration: 0.4 }}
+              className="px-5 pb-12"
+            >
+              <DiscoverySection onMovieSelect={onMovieSelect} />
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );

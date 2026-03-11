@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { ArrowLeft, User, LogOut } from "lucide-react";
+import { ArrowLeft, User, LogOut, ChevronUp, ChevronDown } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -7,9 +7,12 @@ import { Button } from "@/components/ui/button";
 interface BrandHeaderProps {
   showBack?: boolean;
   onBack?: () => void;
+  showDiscoveryToggle?: boolean;
+  onToggleDiscovery?: () => void;
+  discoveryOpen?: boolean;
 }
 
-const BrandHeader = ({ showBack, onBack }: BrandHeaderProps) => {
+const BrandHeader = ({ showBack, onBack, showDiscoveryToggle, onToggleDiscovery, discoveryOpen }: BrandHeaderProps) => {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
 
@@ -34,7 +37,19 @@ const BrandHeader = ({ showBack, onBack }: BrandHeaderProps) => {
         </span>
       )}
 
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1">
+        {showDiscoveryToggle && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onToggleDiscovery}
+            className="text-foreground/50 hover:text-foreground text-xs font-sans gap-1"
+            title={discoveryOpen ? "Masquer découvertes" : "Voir découvertes"}
+          >
+            {discoveryOpen ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronUp className="w-3.5 h-3.5" />}
+          </Button>
+        )}
+
         {user ? (
           <>
             <Button
