@@ -84,6 +84,7 @@ export async function getRecommendations(
   context: Context,
   time: TimeAvailable,
   platformIds: number[] = [],
+  excludeIds: number[] = [],
 ): Promise<MovieDetail[]> {
   const moodGenres = moodToGenres[mood];
   const contextGenres = contextModifiers[context];
