@@ -39,6 +39,8 @@ interface ResultScreenProps {
     context: Context | null;
     time: TimeAvailable | null;
   };
+  alternativeMovies?: MovieDetail[];
+  onSelectAlternative?: (movie: MovieDetail) => void;
 }
 
 const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onShowAnother, onRestart, onRefineWithVoice, onStartCompanion, hasMore, userCriteria }, ref) => {
