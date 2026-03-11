@@ -60,7 +60,11 @@ const VoiceChat = ({ onClose, onMovieSuggested, initialMessages }: VoiceChatProp
   const pendingSendRef = useRef(false);
   const committedTextRef = useRef("");
 
-  const randomExample = EXAMPLE_PROMPTS[Math.floor(Math.random() * EXAMPLE_PROMPTS.length)];
+  // Pick 3 random non-repeating examples
+  const [randomExamples] = useState(() => {
+    const shuffled = [...EXAMPLE_PROMPTS].sort(() => Math.random() - 0.5);
+    return shuffled.slice(0, 3);
+  });
 
   // Pre-fetch scribe token on mount so click handler stays synchronous
   useEffect(() => {
