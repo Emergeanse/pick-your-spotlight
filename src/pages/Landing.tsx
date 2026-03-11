@@ -67,7 +67,7 @@ const Landing = () => {
             <Button
               size="sm"
               className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90 font-sans text-sm px-4 neon-glow"
-              onClick={() => navigate("/app")}
+              onClick={() => navigate("/auth")}
             >
               Get started
             </Button>
