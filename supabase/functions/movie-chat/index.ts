@@ -8,11 +8,15 @@ const corsHeaders = {
 
 const TMDB_API_KEY = "2dca580c2a14b55200e784d157207b4d";
 
-async function searchTMDB(query: string): Promise<any[]> {
-  const url = `https://api.themoviedb.org/3/search/movie?api_key=${TMDB_API_KEY}&language=fr-FR&query=${encodeURIComponent(query)}&page=1`;
+// Search both movies and TV shows via multi-search
+async function searchMulti(query: string): Promise<any[]> {
+  const url = `https://api.themoviedb.org/3/search/multi?api_key=${TMDB_API_KEY}&language=fr-FR&query=${encodeURIComponent(query)}&page=1`;
   const res = await fetch(url);
   const data = await res.json();
-  return (data.results || []).slice(0, 5);
+  // Only keep movies and TV shows
+  return (data.results || [])
+    .filter((r: any) => r.media_type === "movie" || r.media_type === "tv")
+    .slice(0, 10);
 }
 
 async function getMovieDetails(id: number): Promise<any> {
@@ -21,12 +25,10 @@ async function getMovieDetails(id: number): Promise<any> {
   return res.json();
 }
 
-async function discoverMovies(genres: string, sortBy = "popularity.desc"): Promise<any[]> {
-  const page = Math.floor(Math.random() * 3) + 1;
-  const url = `https://api.themoviedb.org/3/discover/movie?api_key=${TMDB_API_KEY}&language=fr-FR&with_genres=${genres}&sort_by=${sortBy}&vote_average.gte=6&vote_count.gte=100&page=${page}`;
+async function getTVDetails(id: number): Promise<any> {
+  const url = `https://api.themoviedb.org/3/tv/${id}?api_key=${TMDB_API_KEY}&language=fr-FR`;
   const res = await fetch(url);
-  const data = await res.json();
-  return (data.results || []).sort(() => Math.random() - 0.5).slice(0, 5);
+  return res.json();
 }
 
 serve(async (req) => {
@@ -39,19 +41,30 @@ serve(async (req) => {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
+    const currentYear = new Date().getFullYear();
+
     const systemPrompt = `Tu es un assistant spécialisé UNIQUEMENT dans la recommandation de films et séries. Tu es chaleureux et passionné de cinéma.
 
 RÈGLES ABSOLUES :
 - Tu ne réponds QU'AUX demandes liées aux films et séries (recommandations, suggestions, aide au choix)
-- Si l'utilisateur parle d'autre chose (politique, sport, cuisine, maths, code, etc.), réponds poliment : "Je suis spécialisé dans les films et séries 🎬 Dis-moi plutôt ce que tu as envie de regarder !"
-- Ne donne JAMAIS de réponse sur un sujet hors cinéma/séries, même si l'utilisateur insiste
+- Si l'utilisateur parle d'autre chose, réponds poliment : "Je suis spécialisé dans les films et séries 🎬 Dis-moi plutôt ce que tu as envie de regarder !"
 - Réponds TOUJOURS en français
 - Recommande UN SEUL film ou série à la fois
 - Sois bref et enthousiaste (3-4 phrases max)
 - Explique pourquoi ce film/série correspond à son humeur/envie
+
+RÈGLES DE PERTINENCE CRITIQUES :
+- Si l'utilisateur demande une SÉRIE, recommande OBLIGATOIREMENT une série TV (type "tv"), PAS un film
+- Si l'utilisateur demande un FILM, recommande OBLIGATOIREMENT un film (type "movie"), PAS une série
+- Si l'utilisateur dit "récent" ou "récente", recommande quelque chose sorti après ${currentYear - 2} (${currentYear - 2} ou plus récent)
+- Si l'utilisateur mentionne une décennie (ex: "années 80"), respecte scrupuleusement cette période
+- Si l'utilisateur est vague sur film/série, tu peux proposer l'un ou l'autre
+- RESPECTE TOUJOURS les critères explicites de l'utilisateur : année, genre, durée, ambiance, plateforme
+
+OUTIL :
 - Utilise l'outil suggest_movie pour donner ta recommandation
-- Si l'utilisateur est vague ou que tu manques d'infos, pose UNE question courte pour mieux cerner son envie (humeur, genre, durée, plateforme, avec qui il regarde…)
-- Sois chaleureux, comme un ami cinéphile`;
+- Mets le bon type ("movie" ou "tv") selon ce que tu recommandes
+- Si l'utilisateur est vague ou que tu manques d'infos, pose UNE question courte pour mieux cerner son envie`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -70,14 +83,15 @@ RÈGLES ABSOLUES :
             type: "function",
             function: {
               name: "suggest_movie",
-              description: "Suggest a movie to the user. Call this when you have a recommendation.",
+              description: "Suggest a movie or TV show to the user. Call this when you have a recommendation.",
               parameters: {
                 type: "object",
                 properties: {
-                  title: { type: "string", description: "The movie title to search for" },
-                  reason: { type: "string", description: "Brief reason why this movie fits (in French)" },
+                  title: { type: "string", description: "The movie or TV show title to search for" },
+                  type: { type: "string", enum: ["movie", "tv"], description: "Whether this is a movie or a TV series" },
+                  reason: { type: "string", description: "Brief reason why this fits the user's request (in French)" },
                 },
-                required: ["title", "reason"],
+                required: ["title", "type", "reason"],
                 additionalProperties: false,
               },
             },
@@ -117,18 +131,27 @@ RÈGLES ABSOLUES :
       const toolCall = message.tool_calls[0];
       if (toolCall.function.name === "suggest_movie") {
         const args = JSON.parse(toolCall.function.arguments);
-        
-        // Search TMDB for the movie
-        const searchResults = await searchTMDB(args.title);
-        let movieDetail = null;
-        
-        if (searchResults.length > 0) {
-          movieDetail = await getMovieDetails(searchResults[0].id);
+        const mediaType = args.type || "movie";
+
+        // Search TMDB using multi-search
+        const searchResults = await searchMulti(args.title);
+
+        // Prefer results matching the requested media type
+        const preferredResults = searchResults.filter((r: any) => r.media_type === mediaType);
+        const bestMatch = preferredResults.length > 0 ? preferredResults[0] : searchResults[0];
+
+        let detail = null;
+        if (bestMatch) {
+          if (bestMatch.media_type === "tv") {
+            detail = await getTVDetails(bestMatch.id);
+          } else {
+            detail = await getMovieDetails(bestMatch.id);
+          }
         }
 
         return new Response(JSON.stringify({
           reply: args.reason,
-          movie: movieDetail,
+          movie: detail,
         }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
