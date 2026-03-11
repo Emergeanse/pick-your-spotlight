@@ -260,6 +260,11 @@ const Index = () => {
               onStartCompanion={handleStartCompanion}
               hasMore={currentResultIndex < results.length - 1}
               userCriteria={{ mood, context, time }}
+              alternativeMovies={results.filter((_, i) => i !== currentResultIndex).slice(0, 2)}
+              onSelectAlternative={(movie) => {
+                const idx = results.findIndex(r => r.id === movie.id);
+                if (idx >= 0) setCurrentResultIndex(idx);
+              }}
             />
           </motion.div>
         )}
