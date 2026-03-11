@@ -14,7 +14,7 @@ import { toast } from "sonner";
 import { computeUserTasteVector, ensureMovieEmbedding } from "@/lib/taste-engine";
 import BrandHeader from "./BrandHeader";
 import PickCharacter from "./PickCharacter";
-import pickDefault from "@/assets/pick-squirrel.png";
+import pickLogo from "@/assets/pick-logo.png";
 
 const IMG_BASE = "https://image.tmdb.org/t/p";
 
