@@ -334,6 +334,7 @@ const Index = () => {
               userCriteria={{ mood, context, time }}
               searchTags={searchTags}
               onRemoveTag={handleRemoveTag}
+              refining={loading}
               alternativeMovies={results.filter((_, i) => i !== currentResultIndex).slice(0, 2)}
               onSelectAlternative={(movie) => {
                 const idx = results.findIndex(r => r.id === movie.id);

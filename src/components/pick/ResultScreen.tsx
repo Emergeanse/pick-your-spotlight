@@ -462,7 +462,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
               )}
 
               {/* Conversational follow-up */}
-              {matchData && (
+              {matchData && !refining && (
                 <motion.div
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -472,9 +472,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                   <div className="flex items-start gap-2 mb-2.5">
                     <MessageCircle className="w-3 h-3 text-primary/50 mt-0.5 flex-shrink-0" />
                     <p className="text-foreground/40 text-[11px] font-sans leading-relaxed">
-                      {matchData.headline?.includes("?") 
-                        ? matchData.headline 
-                        : "Alors, ça te tente ? On peut affiner si tu veux."}
+                      Alors, ça te tente ? On peut affiner si tu veux.
                     </p>
                   </div>
                   <div className="flex flex-wrap gap-1.5">
@@ -494,6 +492,18 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                       </button>
                     ))}
                   </div>
+                </motion.div>
+              )}
+
+              {/* Refining loading state */}
+              {refining && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="pt-2 flex items-center gap-2"
+                >
+                  <Loader2 className="w-3.5 h-3.5 animate-spin text-primary/60" />
+                  <span className="text-foreground/40 text-[11px] font-sans">Pick cherche mieux…</span>
                 </motion.div>
               )}
             </motion.div>
