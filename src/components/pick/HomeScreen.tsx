@@ -132,8 +132,9 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, loading }: HomeScreenProp
           style={{ backgroundImage: `url(${bg})` }}
         />
       ))}
-      <div className="absolute inset-0 bg-gradient-to-t from-background via-background/70 to-background/30" />
-      <div className="absolute inset-0 bg-background/40" />
+      <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-background/40" />
+      <div className="absolute inset-0 bg-gradient-to-r from-background/60 via-transparent to-background/60" />
+      <div className="absolute inset-0 bg-background/30" />
 
       <div className="relative z-10 h-full flex flex-col items-center justify-center text-center px-5">
         <motion.div
@@ -143,12 +144,12 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, loading }: HomeScreenProp
           className="max-w-md"
         >
           <h1 className="text-3xl md:text-6xl lg:text-7xl font-serif mb-3 md:mb-4">
-            Qu'est-ce qu'on regarde ?
+            Dis-moi ce que tu veux regarder
           </h1>
           <p className="text-foreground/50 text-sm md:text-base font-sans font-light mb-8 md:mb-10 max-w-sm mx-auto">
             {user
-              ? "On te connaît — laisse-nous te surprendre"
-              : "Dis-nous ce que tu as envie de voir ou laisse-toi guider"}
+              ? "Décris ton envie et on trouve le film parfait en quelques secondes."
+              : "Décris ton envie et on trouve le film parfait en moins de 30 secondes."}
           </p>
         </motion.div>
 
@@ -182,9 +183,6 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, loading }: HomeScreenProp
                 <Mic className="w-4 h-4" />
                 Parle-moi
               </Button>
-              <p className="text-muted-foreground/50 text-[11px] font-sans mt-2">
-                🎤 Essayez : « Un film drôle sur Netflix »
-              </p>
             </div>
 
             {/* Secondary action */}
@@ -198,6 +196,35 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, loading }: HomeScreenProp
               <Wand2 className="w-4 h-4" />
               Surprends-moi
             </Button>
+
+            {/* Platform compatibility */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.8 }}
+              className="flex flex-col items-center gap-2.5 mt-2"
+            >
+              <div className="flex items-center gap-2">
+                {[
+                  { logo: "https://image.tmdb.org/t/p/original/pbpMk2JmcoNnQwx5JGpXngfoWtp.jpg", name: "Netflix" },
+                  { logo: "https://image.tmdb.org/t/p/original/dQeAar5H991VYporEjUspolDarG.jpg", name: "Prime" },
+                  { logo: "https://image.tmdb.org/t/p/original/7rwgEs15tFwyR9NPQ5vpzxTj19Q.jpg", name: "Disney+" },
+                  { logo: "https://image.tmdb.org/t/p/original/6uhKBfmtzFqOcLousHwZuzcrScK.jpg", name: "Apple TV+" },
+                  { logo: "https://image.tmdb.org/t/p/original/6Q3YKUNA60A4DxOrPaUTDOE4BrU.jpg", name: "Max" },
+                ].map((p) => (
+                  <img
+                    key={p.name}
+                    src={p.logo}
+                    alt={p.name}
+                    className="w-5 h-5 md:w-6 md:h-6 rounded-md object-cover opacity-50"
+                    loading="lazy"
+                  />
+                ))}
+              </div>
+              <p className="text-muted-foreground/40 text-[10px] md:text-[11px] font-sans">
+                Compatible avec toutes les plateformes
+              </p>
+            </motion.div>
           </motion.div>
         )}
       </div>
