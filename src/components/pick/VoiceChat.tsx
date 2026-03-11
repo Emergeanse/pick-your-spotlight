@@ -48,12 +48,20 @@ const VoiceChat = ({ onClose, onMovieSuggested }: VoiceChatProps) => {
   const [micError, setMicError] = useState<string | null>(null);
   const [detectedFilters, setDetectedFilters] = useState<string[] | null>(null);
   const [partialText, setPartialText] = useState("");
+  const [scribeToken, setScribeToken] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const pendingSendRef = useRef(false);
   const committedTextRef = useRef("");
 
   const randomExample = EXAMPLE_PROMPTS[Math.floor(Math.random() * EXAMPLE_PROMPTS.length)];
+
+  // Pre-fetch scribe token on mount so click handler stays synchronous
+  useEffect(() => {
+    supabase.functions.invoke("scribe-token").then(({ data }) => {
+      if (data?.token) setScribeToken(data.token);
+    }).catch(console.error);
+  }, []);
 
   // ElevenLabs Scribe for cross-browser STT
   const scribe = useScribe({
