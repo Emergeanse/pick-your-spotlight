@@ -90,9 +90,12 @@ serve(async (req) => {
     }
 
     // ── Session context ──
+    const searchTagsText = (searchTags && searchTags.length > 0) 
+      ? `\nTAGS DE RECHERCHE (ce que l'utilisateur a dit/demandé) : ${searchTags.join(", ")}`
+      : "";
     const criteriaText = userCriteria
-      ? `SESSION ACTUELLE : humeur "${userCriteria.mood || "non précisée"}", contexte "${userCriteria.context || "non précisé"}", temps "${userCriteria.time || "non précisé"}".`
-      : "L'utilisateur a demandé une surprise aléatoire.";
+      ? `SESSION ACTUELLE : humeur "${userCriteria.mood || "non précisée"}", contexte "${userCriteria.context || "non précisé"}", temps "${userCriteria.time || "non précisé"}".${searchTagsText}`
+      : `L'utilisateur a demandé une surprise aléatoire.${searchTagsText}`;
 
     // ── Enriched taste context ──
     const tasteClusters = tasteProfile?.tasteClusters || [];
