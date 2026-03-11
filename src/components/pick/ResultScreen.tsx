@@ -94,6 +94,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
   const [altProviders, setAltProviders] = useState<Record<number, { name: string; logo_path: string }[]>>({});
   const [whySpeaking, setWhySpeaking] = useState(false);
   const [whyAudioLoading, setWhyAudioLoading] = useState(false);
+  const [autoPlayDone, setAutoPlayDone] = useState(false);
   const { user } = useAuth();
 
   const playBrowserWhyFallback = useCallback((text: string) => {
