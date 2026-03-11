@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Mic, Wand2, SlidersHorizontal, Dices, Tv, ThumbsDown, Sparkles, Loader2, Zap } from "lucide-react";
@@ -10,6 +10,15 @@ import { computeUserTasteVector } from "@/lib/taste-engine";
 import type { Movie, MovieDetail } from "@/lib/tmdb";
 import BrandHeader from "./BrandHeader";
 import DiscoverySection from "./DiscoverySection";
+import pickSquirrel from "@/assets/pick-squirrel.png";
+
+const PICK_PHRASES = [
+  "Alors… on regarde quoi ce soir ?",
+  "Tu veux quelque chose de léger ou intense ?",
+  "J'ai peut-être un film parfait pour toi.",
+  "Dis-moi ton mood, je fais le reste.",
+  "Prêt pour une pépite ?",
+];
 
 interface HomeScreenProps {
   onStart: () => void;
