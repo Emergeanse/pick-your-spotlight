@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 import HomeScreen from "@/components/pick/HomeScreen";
 import MoodStep from "@/components/pick/MoodStep";
 import ContextStep from "@/components/pick/ContextStep";
@@ -9,10 +10,12 @@ import ResultScreen from "@/components/pick/ResultScreen";
 import VoiceChat from "@/components/pick/VoiceChat";
 import StepLayout from "@/components/pick/StepLayout";
 import BrandHeader from "@/components/pick/BrandHeader";
+import { useAuth } from "@/hooks/use-auth";
+import { supabase } from "@/integrations/supabase/client";
 import type { Mood, Context, TimeAvailable, MovieDetail } from "@/lib/tmdb";
 import { getRecommendations } from "@/lib/tmdb";
 
-type Step = "home" | "mood" | "context" | "time" | "platforms" | "loading-surprise" | "result";
+type Step = "home" | "mood" | "context" | "time" | "platforms" | "result";
 
 const STEP_ORDER: Step[] = ["mood", "context", "time", "platforms"];
 const TOTAL_STEPS = STEP_ORDER.length;
@@ -39,7 +42,19 @@ const Index = () => {
   const [currentResultIndex, setCurrentResultIndex] = useState(0);
   const [loadingMessage, setLoadingMessage] = useState("");
   const [showChat, setShowChat] = useState(false);
-  const [chatReason, setChatReason] = useState<string | null>(null);
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
+  // Check if user needs onboarding
+  useEffect(() => {
+    if (!user) return;
+    supabase.from("profiles").select("onboarding_completed").eq("id", user.id).single()
+      .then(({ data }) => {
+        if (data && !data.onboarding_completed) {
+          navigate("/onboarding");
+        }
+      });
+  }, [user, navigate]);
 
   const handleStart = () => setStep("mood");
 
@@ -49,8 +64,13 @@ const Index = () => {
     setStep("result");
   };
 
-  const handleOpenChat = () => setShowChat(true);
+  const handleMovieSelect = (movie: MovieDetail) => {
+    setResults([movie]);
+    setCurrentResultIndex(0);
+    setStep("result");
+  };
 
+  const handleOpenChat = () => setShowChat(true);
   const handleCloseChat = () => setShowChat(false);
 
   const handleMovieSuggested = (movie: MovieDetail) => {
@@ -82,10 +102,9 @@ const Index = () => {
     try {
       await new Promise(r => setTimeout(r, 400));
       setLoadingMessage("Recherche du film idéal…");
-      const finalMood = mood || "easy-watch";
-      const finalContext = context || "alone";
-      const finalTime = time || "movie-night";
-      const recs = await getRecommendations(finalMood, finalContext, finalTime, platformIds);
+      const recs = await getRecommendations(
+        mood || "easy-watch", context || "alone", time || "movie-night", platformIds
+      );
       setLoadingMessage("Presque prêt…");
       await new Promise(r => setTimeout(r, 300));
       setResults(recs);
@@ -113,7 +132,6 @@ const Index = () => {
     setSelectedPlatformIds([]);
     setResults([]);
     setCurrentResultIndex(0);
-    setChatReason(null);
   };
 
   const currentStepNumber = getStepNumber(step);
@@ -150,6 +168,7 @@ const Index = () => {
               onStart={handleStart}
               onOpenChat={handleOpenChat}
               onSurprise={handleSurprise}
+              onMovieSelect={handleMovieSelect}
               loading={loading}
             />
           </motion.div>
@@ -192,7 +211,6 @@ const Index = () => {
         )}
       </AnimatePresence>
 
-      {/* Voice Chat Overlay */}
       <AnimatePresence>
         {showChat && (
           <VoiceChat

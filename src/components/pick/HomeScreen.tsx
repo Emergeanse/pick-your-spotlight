@@ -1,19 +1,20 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Mic, Wand2 } from "lucide-react";
+import { Mic, Wand2, Compass } from "lucide-react";
 import { getTrendingMovies, getBackdropUrl, getSurpriseRecommendation } from "@/lib/tmdb";
 import { getLikedMovies } from "@/lib/liked-movies";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import type { Movie, MovieDetail } from "@/lib/tmdb";
 import BrandHeader from "./BrandHeader";
-import { useNavigate } from "react-router-dom";
+import DiscoverySection from "./DiscoverySection";
 
 interface HomeScreenProps {
   onStart: () => void;
   onOpenChat: () => void;
   onSurprise: (movie: MovieDetail) => void;
+  onMovieSelect: (movie: MovieDetail) => void;
   loading: boolean;
 }
 
@@ -24,21 +25,12 @@ const SURPRISE_MESSAGES = [
   "Presque prêt…",
 ];
 
-const SURPRISE_MESSAGES_ANON = [
-  "Analyse de vos envies…",
-  "Parcours des pépites cachées…",
-  "Un peu de magie…",
-  "Presque prêt…",
-];
-
-const HomeScreen = ({ onStart, onOpenChat, onSurprise, loading }: HomeScreenProps) => {
-  const [isLoading, setIsLoading] = useState(false);
+const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }: HomeScreenProps) => {
   const [isSurprising, setIsSurprising] = useState(false);
   const [surpriseMsg, setSurpriseMsg] = useState("");
   const [bgImages, setBgImages] = useState<string[]>([]);
   const [currentBgIndex, setCurrentBgIndex] = useState(0);
   const { user } = useAuth();
-  const navigate = useNavigate();
 
   useEffect(() => {
     getTrendingMovies(20).then((movies: Movie[]) => {
@@ -58,23 +50,14 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, loading }: HomeScreenProp
     return () => clearInterval(interval);
   }, [bgImages]);
 
-  const handleStart = () => {
-    setIsLoading(true);
-    setTimeout(() => {
-      setIsLoading(false);
-      onStart();
-    }, 800);
-  };
-
   const handleSurprise = async () => {
     setIsSurprising(true);
-    const msgs = user ? SURPRISE_MESSAGES : SURPRISE_MESSAGES_ANON;
     let msgIndex = 0;
-    setSurpriseMsg(msgs[0]);
+    setSurpriseMsg(SURPRISE_MESSAGES[0]);
     const msgInterval = setInterval(() => {
       msgIndex++;
-      if (msgIndex < msgs.length) {
-        setSurpriseMsg(msgs[msgIndex]);
+      if (msgIndex < SURPRISE_MESSAGES.length) {
+        setSurpriseMsg(SURPRISE_MESSAGES[msgIndex]);
       }
     }, 500);
 
@@ -82,7 +65,6 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, loading }: HomeScreenProp
       let movie: MovieDetail;
 
       if (user) {
-        // Personalized: use liked movies history
         const liked = await getLikedMovies();
         if (liked.length >= 2) {
           const { data, error } = await supabase.functions.invoke("surprise-personalized", {
@@ -91,7 +73,6 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, loading }: HomeScreenProp
           if (error) throw error;
           movie = data.movie as MovieDetail;
         } else {
-          // Not enough history, fall back to random
           movie = await getSurpriseRecommendation();
         }
       } else {
@@ -104,7 +85,6 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, loading }: HomeScreenProp
       onSurprise(movie);
     } catch (e) {
       console.error(e);
-      // Fallback to random
       try {
         const movie = await getSurpriseRecommendation();
         clearInterval(msgInterval);
@@ -122,6 +102,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, loading }: HomeScreenProp
     <div className="relative w-full h-full overflow-hidden">
       <BrandHeader />
 
+      {/* Background slideshow */}
       {bgImages.map((bg, i) => (
         <motion.div
           key={bg}
@@ -136,43 +117,45 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, loading }: HomeScreenProp
       <div className="absolute inset-0 bg-gradient-to-r from-background/60 via-transparent to-background/60" />
       <div className="absolute inset-0 bg-background/30" />
 
-      <div className="relative z-10 h-full flex flex-col items-center justify-center text-center px-5">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3, duration: 0.6 }}
-          className="max-w-md"
-        >
-          <h1 className="text-3xl md:text-6xl lg:text-7xl font-serif mb-3 md:mb-4">
-            Dis-moi ce que tu veux regarder
-          </h1>
-          <p className="text-foreground/50 text-sm md:text-base font-sans font-light mb-8 md:mb-10 max-w-sm mx-auto">
-            {user
-              ? "Décris ton envie et on trouve le film parfait en quelques secondes."
-              : "Décris ton envie et on trouve le film parfait en moins de 30 secondes."}
-          </p>
-        </motion.div>
-
-        {isSurprising ? (
+      {/* Scrollable content */}
+      <div className="relative z-10 h-full overflow-y-auto">
+        {/* Hero section */}
+        <div className="min-h-[70vh] md:min-h-[65vh] flex flex-col items-center justify-center text-center px-5 pt-16">
           <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="flex flex-col items-center gap-3"
-          >
-            <div className="w-16 h-16 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center">
-              <Wand2 className="w-7 h-7 text-primary animate-pulse" />
-            </div>
-            <p className="text-foreground/60 text-sm font-sans animate-pulse">{surpriseMsg}</p>
-          </motion.div>
-        ) : (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
+            initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5, duration: 0.4 }}
-            className="flex flex-col items-center gap-4"
+            transition={{ delay: 0.3, duration: 0.6 }}
+            className="max-w-md"
           >
-            {/* Primary CTA — Parle-moi */}
-            <div className="flex flex-col items-center">
+            <h1 className="text-3xl md:text-6xl lg:text-7xl font-serif mb-3 md:mb-4">
+              Dis-moi ce que tu veux regarder
+            </h1>
+            <p className="text-foreground/50 text-sm md:text-base font-sans font-light mb-8 md:mb-10 max-w-sm mx-auto">
+              {user
+                ? "Décris ton envie et on trouve le film parfait en quelques secondes."
+                : "Décris ton envie et on trouve le film parfait en moins de 30 secondes."}
+            </p>
+          </motion.div>
+
+          {isSurprising ? (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="flex flex-col items-center gap-3"
+            >
+              <div className="w-16 h-16 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center">
+                <Wand2 className="w-7 h-7 text-primary animate-pulse" />
+              </div>
+              <p className="text-foreground/60 text-sm font-sans animate-pulse">{surpriseMsg}</p>
+            </motion.div>
+          ) : (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5, duration: 0.4 }}
+              className="flex flex-col items-center gap-3"
+            >
+              {/* Primary CTA — Parle-moi */}
               <Button
                 variant="hero"
                 size="xl"
@@ -183,50 +166,68 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, loading }: HomeScreenProp
                 <Mic className="w-4 h-4" />
                 Parle-moi
               </Button>
-            </div>
 
-            {/* Secondary action */}
-            <Button
-              variant="ghost"
-              size="xl"
-              className="text-sm md:text-base text-foreground/60 hover:text-foreground border border-border/30 hover:border-primary/40 hover:bg-primary/5"
-              onClick={handleSurprise}
-              disabled={loading}
-            >
-              <Wand2 className="w-4 h-4" />
-              Surprends-moi
-            </Button>
-
-            {/* Platform compatibility */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.8 }}
-              className="flex flex-col items-center gap-2.5 mt-2"
-            >
+              {/* Secondary actions row */}
               <div className="flex items-center gap-2">
-                {[
-                  { logo: "https://image.tmdb.org/t/p/original/pbpMk2JmcoNnQwx5JGpXngfoWtp.jpg", name: "Netflix" },
-                  { logo: "https://image.tmdb.org/t/p/original/dQeAar5H991VYporEjUspolDarG.jpg", name: "Prime" },
-                  { logo: "https://image.tmdb.org/t/p/original/7rwgEs15tFwyR9NPQ5vpzxTj19Q.jpg", name: "Disney+" },
-                  { logo: "https://image.tmdb.org/t/p/original/6uhKBfmtzFqOcLousHwZuzcrScK.jpg", name: "Apple TV+" },
-                  { logo: "https://image.tmdb.org/t/p/original/6Q3YKUNA60A4DxOrPaUTDOE4BrU.jpg", name: "Max" },
-                ].map((p) => (
-                  <img
-                    key={p.name}
-                    src={p.logo}
-                    alt={p.name}
-                    className="w-5 h-5 md:w-6 md:h-6 rounded-md object-cover opacity-50"
-                    loading="lazy"
-                  />
-                ))}
+                <Button
+                  variant="ghost"
+                  size="lg"
+                  className="text-sm text-foreground/60 hover:text-foreground border border-border/30 hover:border-primary/40 hover:bg-primary/5"
+                  onClick={handleSurprise}
+                  disabled={loading}
+                >
+                  <Wand2 className="w-4 h-4" />
+                  Surprends-moi
+                </Button>
+
+                <Button
+                  variant="ghost"
+                  size="lg"
+                  className="text-sm text-foreground/60 hover:text-foreground border border-border/30 hover:border-primary/40 hover:bg-primary/5"
+                  onClick={onStart}
+                  disabled={loading}
+                >
+                  <Compass className="w-4 h-4" />
+                  Guidé
+                </Button>
               </div>
-              <p className="text-muted-foreground/40 text-[10px] md:text-[11px] font-sans">
-                Compatible avec toutes les plateformes
-              </p>
+
+              {/* Platform compatibility */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.8 }}
+                className="flex flex-col items-center gap-2.5 mt-2"
+              >
+                <div className="flex items-center gap-2">
+                  {[
+                    { logo: "https://image.tmdb.org/t/p/original/pbpMk2JmcoNnQwx5JGpXngfoWtp.jpg", name: "Netflix" },
+                    { logo: "https://image.tmdb.org/t/p/original/dQeAar5H991VYporEjUspolDarG.jpg", name: "Prime" },
+                    { logo: "https://image.tmdb.org/t/p/original/7rwgEs15tFwyR9NPQ5vpzxTj19Q.jpg", name: "Disney+" },
+                    { logo: "https://image.tmdb.org/t/p/original/6uhKBfmtzFqOcLousHwZuzcrScK.jpg", name: "Apple TV+" },
+                    { logo: "https://image.tmdb.org/t/p/original/6Q3YKUNA60A4DxOrPaUTDOE4BrU.jpg", name: "Max" },
+                  ].map((p) => (
+                    <img
+                      key={p.name}
+                      src={p.logo}
+                      alt={p.name}
+                      className="w-5 h-5 md:w-6 md:h-6 rounded-md object-cover opacity-50"
+                      loading="lazy"
+                    />
+                  ))}
+                </div>
+                <p className="text-muted-foreground/40 text-[10px] md:text-[11px] font-sans">
+                  Compatible avec toutes les plateformes
+                </p>
+              </motion.div>
             </motion.div>
-          </motion.div>
-        )}
+          )}
+        </div>
+
+        {/* Discovery sections */}
+        <div className="px-5 pb-12">
+          <DiscoverySection onMovieSelect={onMovieSelect} />
+        </div>
       </div>
     </div>
   );

@@ -91,7 +91,6 @@ export async function getRecommendations(
   const combined = moodGenres.filter(g => contextGenres.includes(g));
   const genres = combined.length > 0 ? combined : moodGenres.slice(0, 2);
   
-  // Determine search types based on time
   const searchTypes: string[] = [];
   if (time === "episode") {
     searchTypes.push("tv");
@@ -192,7 +191,6 @@ export async function getMovieTrailerUrl(id: number, mediaType: string = "movie"
       (v: any) => v.type === "Trailer" && v.site === "YouTube"
     );
     if (!trailer) {
-      // Fallback to English
       const dataEn = await fetchFromTMDB(endpoint, { language: "en-US" });
       trailer = (dataEn.results || []).find(
         (v: any) => v.type === "Trailer" && v.site === "YouTube"
@@ -202,6 +200,30 @@ export async function getMovieTrailerUrl(id: number, mediaType: string = "movie"
   } catch {
     return null;
   }
+}
+
+// New: get popular movies for onboarding grid
+export async function getPopularMoviesForOnboarding(page: number = 1): Promise<Movie[]> {
+  const data = await fetchFromTMDB("/movie/popular", { page: String(page) });
+  return (data.results || []).filter((m: Movie) => m.poster_path);
+}
+
+// New: search movies for onboarding
+export async function searchMovies(query: string): Promise<Movie[]> {
+  if (!query.trim()) return [];
+  const data = await fetchFromTMDB("/search/movie", { query });
+  return (data.results || []).filter((m: Movie) => m.poster_path);
+}
+
+// New: get tonight's pick (single trending movie with details)
+export async function getTonightsPick(): Promise<MovieDetail> {
+  const data = await fetchFromTMDB("/trending/movie/day");
+  const results: Movie[] = data.results || [];
+  // Use a seed based on date for consistent daily pick
+  const today = new Date().toDateString();
+  const seed = today.split("").reduce((a, c) => a + c.charCodeAt(0), 0);
+  const idx = seed % Math.min(5, results.length);
+  return getMovieDetails(results[idx].id, "movie");
 }
 
 export { getDisplayTitle, getYear, getPosterUrl, getBackdropUrl, getMovieDetails };

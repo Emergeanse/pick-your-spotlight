@@ -1,13 +1,14 @@
 import { useState, useEffect, forwardRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Play, RotateCcw, ChevronRight, Star, Clock, Sparkles, Heart, Lightbulb, PartyPopper, Loader2 } from "lucide-react";
+import { Play, RotateCcw, ChevronRight, Star, Clock, Sparkles, Heart, Lightbulb, PartyPopper, Loader2, Bookmark } from "lucide-react";
 import type { MovieDetail } from "@/lib/tmdb";
 import { getDisplayTitle, getYear, getBackdropUrl, getPosterUrl, getWatchProviders, getMovieTrailerUrl } from "@/lib/tmdb";
 import type { Mood, Context, TimeAvailable } from "@/lib/tmdb";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { likeMovie, unlikeMovie, isMovieLiked } from "@/lib/liked-movies";
+import { addToWatchlist, removeFromWatchlist, isInWatchlist } from "@/lib/watchlist";
 import { toast } from "sonner";
 import BrandHeader from "./BrandHeader";
 
@@ -41,6 +42,8 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
   const [matchLoading, setMatchLoading] = useState(false);
   const [liked, setLiked] = useState(false);
   const [likeLoading, setLikeLoading] = useState(false);
+  const [bookmarked, setBookmarked] = useState(false);
+  const [bookmarkLoading, setBookmarkLoading] = useState(false);
   const { user } = useAuth();
 
   const title = getDisplayTitle(movie);
@@ -58,7 +61,6 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
     getMovieTrailerUrl(movie.id, mediaType).then(setTrailerUrl).catch(() => setTrailerUrl(null));
   }, [movie.id, mediaType]);
 
-  // Fetch AI match analysis
   useEffect(() => {
     setMatchData(null);
     setMatchLoading(true);
@@ -75,10 +77,10 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
     });
   }, [movie.id]);
 
-  // Check if movie is liked
   useEffect(() => {
     if (user) {
       isMovieLiked(movie.id).then(setLiked).catch(() => {});
+      isInWatchlist(movie.id).then(setBookmarked).catch(() => {});
     }
   }, [movie.id, user]);
 
@@ -106,12 +108,35 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
     }
   };
 
+  const handleToggleBookmark = async () => {
+    if (!user) {
+      toast.info("Connecte-toi pour ta watchlist !");
+      return;
+    }
+    setBookmarkLoading(true);
+    try {
+      if (bookmarked) {
+        await removeFromWatchlist(movie.id);
+        setBookmarked(false);
+        toast.success("Retiré de ta watchlist");
+      } else {
+        await addToWatchlist(movie);
+        setBookmarked(true);
+        toast.success("Ajouté à ta watchlist !");
+      }
+    } catch (e) {
+      console.error(e);
+      toast.error("Erreur lors de la sauvegarde");
+    } finally {
+      setBookmarkLoading(false);
+    }
+  };
+
   return (
     <div ref={ref} className="h-full w-full overflow-y-auto">
       <BrandHeader showBack onBack={onRestart} />
 
       <div className="relative min-h-screen w-full">
-        {/* Cinematic backdrop */}
         {bgImage && (
           <motion.div
             initial={{ opacity: 0, scale: 1.05 }}
@@ -124,7 +149,6 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
         <div className="absolute inset-0 poster-gradient" />
         <div className="absolute inset-0 bg-gradient-to-r from-background/90 via-background/50 to-transparent" />
 
-        {/* Content */}
         <div className="relative z-10 flex flex-col justify-end min-h-screen p-4 pb-[calc(2.5rem+env(safe-area-inset-bottom))] md:p-12 lg:p-16">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -132,7 +156,6 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
             transition={{ duration: 0.6, delay: 0.2 }}
             className="max-w-2xl"
           >
-            {/* Match score badge */}
             {matchData && (
               <motion.div
                 initial={{ opacity: 0, scale: 0.8 }}
@@ -147,7 +170,6 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
               </motion.div>
             )}
 
-            {/* Genre tags */}
             {genres && (
               <motion.p
                 initial={{ opacity: 0 }}
@@ -159,12 +181,10 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
               </motion.p>
             )}
 
-            {/* Title */}
             <h1 className="text-3xl md:text-6xl lg:text-8xl font-serif mb-3 md:mb-4 leading-[1.05]">
               {title}
             </h1>
 
-            {/* Meta row */}
             <div className="flex items-center gap-3 md:gap-4 text-foreground/60 text-xs md:text-sm mb-4 md:mb-5 font-sans flex-wrap">
               {year && <span className="font-medium text-foreground/80">{year}</span>}
               {runtime > 0 && (
@@ -181,12 +201,10 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
               )}
             </div>
 
-            {/* Overview */}
             <p className="text-foreground/70 text-sm md:text-base leading-relaxed mb-5 md:mb-7 max-w-lg font-sans font-light line-clamp-3">
               {overview}
             </p>
 
-            {/* Platform badges */}
             {providers.length > 0 && (
               <motion.div
                 initial={{ opacity: 0 }}
@@ -237,45 +255,22 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                   </p>
 
                   <div className="space-y-3">
-                    <div className="flex gap-3">
-                      <div className="mt-0.5 w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                        <Lightbulb className="w-3.5 h-3.5 text-primary" />
+                    {[
+                      { icon: Lightbulb, label: "Pourquoi ça matche", text: matchData.whyItMatches },
+                      { icon: Heart, label: "Ce que tu vas ressentir", text: matchData.emotionalJourney },
+                      { icon: PartyPopper, label: "Moment idéal", text: matchData.perfectFor },
+                      { icon: Sparkles, label: "Le savais-tu ?", text: matchData.funFact },
+                    ].map(({ icon: Icon, label, text }) => (
+                      <div key={label} className="flex gap-3">
+                        <div className="mt-0.5 w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                          <Icon className="w-3.5 h-3.5 text-primary" />
+                        </div>
+                        <div>
+                          <p className="text-[10px] uppercase tracking-widest text-primary/70 font-sans font-semibold mb-1">{label}</p>
+                          <p className="text-foreground/70 text-xs md:text-sm font-sans font-light leading-relaxed">{text}</p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="text-[10px] uppercase tracking-widest text-primary/70 font-sans font-semibold mb-1">Pourquoi ça matche</p>
-                        <p className="text-foreground/70 text-xs md:text-sm font-sans font-light leading-relaxed">{matchData.whyItMatches}</p>
-                      </div>
-                    </div>
-
-                    <div className="flex gap-3">
-                      <div className="mt-0.5 w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                        <Heart className="w-3.5 h-3.5 text-primary" />
-                      </div>
-                      <div>
-                        <p className="text-[10px] uppercase tracking-widest text-primary/70 font-sans font-semibold mb-1">Ce que tu vas ressentir</p>
-                        <p className="text-foreground/70 text-xs md:text-sm font-sans font-light leading-relaxed">{matchData.emotionalJourney}</p>
-                      </div>
-                    </div>
-
-                    <div className="flex gap-3">
-                      <div className="mt-0.5 w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                        <PartyPopper className="w-3.5 h-3.5 text-primary" />
-                      </div>
-                      <div>
-                        <p className="text-[10px] uppercase tracking-widest text-primary/70 font-sans font-semibold mb-1">Moment idéal</p>
-                        <p className="text-foreground/70 text-xs md:text-sm font-sans font-light leading-relaxed">{matchData.perfectFor}</p>
-                      </div>
-                    </div>
-
-                    <div className="flex gap-3">
-                      <div className="mt-0.5 w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                        <Sparkles className="w-3.5 h-3.5 text-primary" />
-                      </div>
-                      <div>
-                        <p className="text-[10px] uppercase tracking-widest text-primary/70 font-sans font-semibold mb-1">Le savais-tu ?</p>
-                        <p className="text-foreground/70 text-xs md:text-sm font-sans font-light leading-relaxed">{matchData.funFact}</p>
-                      </div>
-                    </div>
+                    ))}
                   </div>
                 </motion.div>
               )}
@@ -302,6 +297,22 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
               >
                 <Heart className={`w-5 h-5 ${liked ? "fill-primary" : ""}`} />
               </Button>
+
+              {/* Bookmark button */}
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleToggleBookmark}
+                disabled={bookmarkLoading}
+                className={`rounded-full w-11 h-11 border transition-all ${
+                  bookmarked
+                    ? "bg-accent/20 border-accent/50 text-accent"
+                    : "border-border/30 text-foreground/50 hover:text-accent hover:border-accent/30"
+                }`}
+              >
+                <Bookmark className={`w-5 h-5 ${bookmarked ? "fill-accent" : ""}`} />
+              </Button>
+
               {trailerUrl && (
                 <Button
                   variant="hero"

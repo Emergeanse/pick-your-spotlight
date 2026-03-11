@@ -36,15 +36,25 @@ const BrandHeader = ({ showBack, onBack }: BrandHeaderProps) => {
 
       <div className="flex items-center gap-2">
         {user ? (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={signOut}
-            className="text-foreground/50 hover:text-foreground text-xs font-sans gap-1.5"
-          >
-            <LogOut className="w-3.5 h-3.5" />
-            Déconnexion
-          </Button>
+          <>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate("/profile")}
+              className="text-foreground/50 hover:text-foreground text-xs font-sans gap-1.5"
+            >
+              <User className="w-3.5 h-3.5" />
+              Profil
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={signOut}
+              className="text-foreground/50 hover:text-foreground text-xs font-sans gap-1.5"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+            </Button>
+          </>
         ) : (
           <Button
             variant="ghost"
