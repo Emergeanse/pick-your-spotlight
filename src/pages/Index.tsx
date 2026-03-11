@@ -293,18 +293,41 @@ const Index = () => {
               onShowAnother={handleShowAnother}
               onRestart={handleRestart}
               onRefineWithVoice={handleRefineWithVoice}
-              onRefineWithMessage={(message) => {
+              onRefineWithMessage={async (message) => {
                 const currentMovie = results[currentResultIndex];
                 if (!currentMovie) return;
                 // Add refinement as a search tag
                 const shortLabel = message.replace(/^(Je veux |Je préfère |Montre-moi )/i, "").toLowerCase();
                 setSearchTags(prev => prev.includes(shortLabel) ? prev : [...prev, shortLabel]);
-                const contextMessages: ChatMessage[] = [
-                  { role: "assistant", content: `Je t'ai recommandé **${getDisplayTitle(currentMovie)}**. Dis-moi ce qui ne te convient pas et je te trouverai quelque chose de mieux !` },
-                  { role: "user", content: message },
-                ];
-                setChatInitialMessages(contextMessages);
-                setShowChat(true);
+                // Call AI directly to get a new suggestion
+                setLoading(true);
+                setLoadingMessage("Pick cherche mieux…");
+                try {
+                  const contextMessages = [
+                    { role: "assistant" as const, content: `Je t'ai recommandé **${getDisplayTitle(currentMovie)}**.` },
+                    { role: "user" as const, content: message },
+                  ];
+                  const { data, error } = await supabase.functions.invoke("movie-chat", {
+                    body: { messages: contextMessages },
+                  });
+                  if (error) throw error;
+                  if (data?.movie) {
+                    if (data.recap && data.recap.length > 0) {
+                      setSearchTags(prev => {
+                        const merged = [...prev];
+                        data.recap.forEach((t: string) => { if (!merged.includes(t)) merged.push(t); });
+                        return merged;
+                      });
+                    }
+                    setResults(prev => [...prev, data.movie]);
+                    setCurrentResultIndex(results.length);
+                  }
+                } catch (e) {
+                  console.error("Refine error:", e);
+                } finally {
+                  setLoading(false);
+                  setLoadingMessage("");
+                }
               }}
               onStartCompanion={handleStartCompanion}
               hasMore={currentResultIndex < results.length - 1}
