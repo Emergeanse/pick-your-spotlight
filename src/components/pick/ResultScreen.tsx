@@ -1,7 +1,7 @@
-import { useState, useEffect, forwardRef } from "react";
+import { useState, useEffect, forwardRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Mic, MicOff, X, Send, Loader2, Sparkles, Check, Play, Star, Clock, Heart, Bookmark, Tv, ChevronDown, ChevronUp, MoreHorizontal, RefreshCw, ThumbsUp, ThumbsDown, MessageCircle } from "lucide-react";
+import { Mic, MicOff, X, Send, Loader2, Sparkles, Check, Play, Star, Clock, Heart, Bookmark, Tv, ChevronDown, ChevronUp, MoreHorizontal, RefreshCw, ThumbsUp, ThumbsDown, MessageCircle, Volume2 } from "lucide-react";
 import type { MovieDetail } from "@/lib/tmdb";
 import { getDisplayTitle, getYear, getBackdropUrl, getPosterUrl, getWatchProviders, getMovieTrailerUrl } from "@/lib/tmdb";
 import type { Mood, Context, TimeAvailable } from "@/lib/tmdb";
@@ -92,7 +92,48 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
   const [feedbackGiven, setFeedbackGiven] = useState<"good" | "bad" | null>(null);
   const [rejectReaction, setRejectReaction] = useState<string | null>(null);
   const [altProviders, setAltProviders] = useState<Record<number, { name: string; logo_path: string }[]>>({});
+  const [whySpeaking, setWhySpeaking] = useState(false);
+  const [whyAudioLoading, setWhyAudioLoading] = useState(false);
   const { user } = useAuth();
+
+  const handleReadWhy = useCallback(async () => {
+    if (!matchData || whyAudioLoading || whySpeaking) return;
+    const textToRead = [
+      matchData.headline,
+      matchData.detailedExplanation,
+      matchData.emotionalJourney,
+      matchData.perfectFor,
+    ].filter(Boolean).join(". ");
+    if (!textToRead) return;
+    setWhyAudioLoading(true);
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/pick-tts`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          },
+          body: JSON.stringify({ text: textToRead }),
+        }
+      );
+      if (!response.ok) throw new Error(`TTS failed: ${response.status}`);
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const audio = new Audio(url);
+      setWhySpeaking(true);
+      audio.onended = () => { setWhySpeaking(false); URL.revokeObjectURL(url); };
+      audio.onerror = () => { setWhySpeaking(false); URL.revokeObjectURL(url); };
+      await audio.play();
+    } catch (e) {
+      console.error("Why TTS error:", e);
+      setWhySpeaking(false);
+    } finally {
+      setWhyAudioLoading(false);
+    }
+  }, [matchData, whyAudioLoading, whySpeaking]);
 
   const title = getDisplayTitle(movie);
   const year = getYear(movie);
@@ -359,6 +400,20 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                     <p className="text-foreground/70 text-[13px] font-sans leading-relaxed">
                       {matchData.headline}
                     </p>
+                  </button>
+                  {/* Read aloud button */}
+                  <button
+                    onClick={(e) => { e.stopPropagation(); handleReadWhy(); }}
+                    disabled={whyAudioLoading || whySpeaking}
+                    className="mt-2 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-card/60 backdrop-blur-sm border border-border/30 text-foreground/50 hover:text-primary hover:border-primary/30 transition-all active:scale-95 text-[11px] font-sans"
+                    title="Pick lit l'explication"
+                  >
+                    {whyAudioLoading ? (
+                      <Loader2 className="w-3 h-3 animate-spin" />
+                    ) : (
+                      <Volume2 className={`w-3 h-3 ${whySpeaking ? "text-primary" : ""}`} />
+                    )}
+                    {whySpeaking ? "Pick parle…" : "Écouter Pick"}
                   </button>
 
                   {/* Expanded detailed explanation */}
