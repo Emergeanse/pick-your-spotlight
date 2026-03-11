@@ -133,9 +133,26 @@ const Index = () => {
     }
   };
 
-  const handleShowAnother = () => {
+  const handleShowAnother = async () => {
     if (currentResultIndex < results.length - 1) {
       setCurrentResultIndex(i => i + 1);
+    } else {
+      // Fetch new recommendations excluding already shown movies
+      setLoading(true);
+      try {
+        const excludeIds = results.map(r => r.id);
+        const recs = await getRecommendations(
+          mood || "easy-watch", context || "alone", time || "movie-night", selectedPlatformIds, excludeIds
+        );
+        if (recs.length > 0) {
+          setResults(prev => [...prev, ...recs]);
+          setCurrentResultIndex(i => i + 1);
+        }
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
