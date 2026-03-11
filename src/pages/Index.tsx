@@ -232,6 +232,7 @@ const Index = () => {
           <VoiceChat
             onClose={handleCloseChat}
             onMovieSuggested={handleMovieSuggested}
+            initialMessages={chatInitialMessages}
           />
         )}
       </AnimatePresence>
