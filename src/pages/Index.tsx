@@ -62,6 +62,36 @@ const Index = () => {
       });
   }, [user, navigate]);
 
+  const MOOD_LABELS: Record<string, string> = {
+    relax: "détente", excited: "intense", romantic: "romantique",
+    "mind-blowing": "époustouflant", "easy-watch": "facile", fun: "fun",
+  };
+  const CONTEXT_LABELS: Record<string, string> = {
+    alone: "solo", couple: "en couple", friends: "entre amis", family: "en famille",
+  };
+  const TIME_LABELS: Record<string, string> = {
+    short: "film court", "movie-night": "soirée ciné", episode: "un épisode",
+  };
+
+  const buildSearchTags = (m: Mood | null, c: Context | null, t: TimeAvailable | null) => {
+    const tags: string[] = [];
+    if (m) tags.push(MOOD_LABELS[m] || m);
+    if (c) tags.push(CONTEXT_LABELS[c] || c);
+    if (t) tags.push(TIME_LABELS[t] || t);
+    return tags;
+  };
+
+  const handleRemoveTag = (tag: string) => {
+    setSearchTags(prev => prev.filter(t => t !== tag));
+    // Reset the corresponding criteria
+    const moodEntry = Object.entries(MOOD_LABELS).find(([, v]) => v === tag);
+    if (moodEntry) setMood(null);
+    const ctxEntry = Object.entries(CONTEXT_LABELS).find(([, v]) => v === tag);
+    if (ctxEntry) setContext(null);
+    const timeEntry = Object.entries(TIME_LABELS).find(([, v]) => v === tag);
+    if (timeEntry) setTime(null);
+  };
+
   const handleStart = () => setStep("mood");
 
   const handleSurprise = (movie: MovieDetail) => {
