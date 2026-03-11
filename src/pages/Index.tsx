@@ -16,6 +16,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import type { Mood, Context, TimeAvailable, MovieDetail } from "@/lib/tmdb";
 import { getRecommendations, getDisplayTitle } from "@/lib/tmdb";
+import { trackInteraction, getUserTasteProfile } from "@/lib/interactions";
 
 type Step = "home" | "mood" | "context" | "time" | "platforms" | "result";
 
