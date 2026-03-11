@@ -3,8 +3,9 @@ import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Mail, Lock, User, ArrowLeft } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Navigate } from "react-router-dom";
 import { toast } from "sonner";
+import { useAuth } from "@/hooks/use-auth";
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -13,6 +14,12 @@ const Auth = () => {
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+
+  // Redirect if already logged in
+  const { user, isReady } = useAuth();
+  if (isReady && user) {
+    return <Navigate to="/app" replace />;
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,7 +30,7 @@ const Auth = () => {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
         toast.success("Connecté !");
-        navigate("/");
+        navigate("/app");
       } else {
         const { error } = await supabase.auth.signUp({
           email,

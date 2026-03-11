@@ -16,10 +16,13 @@ const queryClient = new QueryClient();
 function HomePage() {
   const { user, isReady } = useAuth();
   if (!isReady) return null;
-  return user ? <Index /> : <Landing />;
+  return user ? <Navigate to="/app" replace /> : <Landing />;
 }
 
 function AppRoute() {
+  const { user, isReady } = useAuth();
+  if (!isReady) return null;
+  if (!user) return <Navigate to="/auth" replace />;
   return <Index />;
 }
 

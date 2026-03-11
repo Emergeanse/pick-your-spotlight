@@ -69,7 +69,7 @@ const BrandHeader = ({ showBack, onBack, showDiscoveryToggle, onToggleDiscovery,
             <Button
               variant="ghost"
               size="sm"
-              onClick={signOut}
+              onClick={async () => { await signOut(); navigate("/"); }}
               className="text-foreground/50 hover:text-foreground text-xs font-sans gap-1.5"
             >
               <LogOut className="w-3.5 h-3.5" />
