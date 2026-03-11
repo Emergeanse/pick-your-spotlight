@@ -582,7 +582,7 @@ const Landing = () => {
               onClick={() => navigate("/app")}
             >
               <Dice5 className="w-4 h-4" />
-              Surprise
+              Surprends-moi
             </Button>
           </div>
 
