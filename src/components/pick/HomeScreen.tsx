@@ -128,12 +128,12 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3, duration: 0.6 }}
-            className="max-w-md"
+            className="max-w-md mb-8 md:mb-10"
           >
             <h1 className="text-3xl md:text-6xl lg:text-7xl font-serif mb-3 md:mb-4">
               Tu ne sais pas quoi regarder ?
             </h1>
-            <p className="text-foreground/50 text-sm md:text-base font-sans font-light mb-8 md:mb-10 max-w-sm mx-auto">
+            <p className="text-foreground/50 text-sm md:text-base font-sans font-light max-w-sm mx-auto">
               Décris ton envie, on trouve le film ou la série parfaite en quelques secondes.
             </p>
           </motion.div>
@@ -154,48 +154,77 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.5, duration: 0.4 }}
-              className="flex flex-col items-center gap-3"
+              className="w-full max-w-lg px-2"
             >
-              <Button
-                variant="hero"
-                size="xl"
-                className="text-sm md:text-base px-8"
-                onClick={onOpenChat}
-                disabled={loading}
-              >
-                <Mic className="w-4 h-4" />
-                Parle-moi
-              </Button>
-
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="ghost"
-                  size="lg"
-                  className="text-sm text-foreground/60 hover:text-foreground border border-border/30 hover:border-primary/40 hover:bg-primary/5"
-                  onClick={handleSurprise}
+              {/* Three mode cards */}
+              <div className="flex flex-col gap-3 mb-6">
+                {/* Primary: Parle à Pick */}
+                <motion.button
+                  whileTap={{ scale: 0.98 }}
+                  onClick={onOpenChat}
                   disabled={loading}
+                  className="group relative w-full text-left rounded-2xl p-5 bg-primary/10 border-2 border-primary/30 hover:border-primary/50 hover:bg-primary/15 transition-all"
                 >
-                  <Wand2 className="w-4 h-4" />
-                  Surprends-moi
-                </Button>
+                  <div className="flex items-start gap-4">
+                    <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-primary/20 border border-primary/30 flex items-center justify-center group-hover:bg-primary/30 transition-colors">
+                      <Mic className="w-5 h-5 text-primary" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h3 className="text-base font-sans font-semibold text-foreground">Parle à Pick</h3>
+                        <span className="px-1.5 py-0.5 rounded-full bg-primary/20 text-primary text-[9px] font-sans font-bold uppercase tracking-wider">Recommandé</span>
+                      </div>
+                      <p className="text-foreground/45 text-[12px] md:text-[13px] font-sans leading-relaxed">
+                        Dis-moi ce que tu veux regarder.
+                      </p>
+                      <p className="text-foreground/30 text-[11px] font-sans italic mt-1">
+                        Ex : « Un thriller sur Netflix ce soir avec ma copine »
+                      </p>
+                    </div>
+                  </div>
+                </motion.button>
 
-                <Button
-                  variant="ghost"
-                  size="lg"
-                  className="text-sm text-foreground/60 hover:text-foreground border border-border/30 hover:border-primary/40 hover:bg-primary/5"
-                  onClick={onStart}
-                  disabled={loading}
-                >
-                  <Compass className="w-4 h-4" />
-                  Guidé
-                </Button>
+                <div className="grid grid-cols-2 gap-3">
+                  {/* Guidé */}
+                  <motion.button
+                    whileTap={{ scale: 0.97 }}
+                    onClick={onStart}
+                    disabled={loading}
+                    className="group text-left rounded-2xl p-4 bg-foreground/[0.04] border border-border/30 hover:border-primary/30 hover:bg-foreground/[0.07] transition-all"
+                  >
+                    <div className="w-10 h-10 rounded-xl bg-foreground/[0.06] border border-border/20 flex items-center justify-center mb-3 group-hover:border-primary/25 transition-colors">
+                      <SlidersHorizontal className="w-4.5 h-4.5 text-foreground/50 group-hover:text-primary transition-colors" />
+                    </div>
+                    <h3 className="text-sm font-sans font-semibold text-foreground mb-1">Guidé</h3>
+                    <p className="text-foreground/40 text-[11px] md:text-[12px] font-sans leading-relaxed">
+                      Réponds à quelques questions rapides pour trouver le film parfait.
+                    </p>
+                  </motion.button>
+
+                  {/* Surprise */}
+                  <motion.button
+                    whileTap={{ scale: 0.97 }}
+                    onClick={handleSurprise}
+                    disabled={loading}
+                    className="group text-left rounded-2xl p-4 bg-foreground/[0.04] border border-border/30 hover:border-primary/30 hover:bg-foreground/[0.07] transition-all"
+                  >
+                    <div className="w-10 h-10 rounded-xl bg-foreground/[0.06] border border-border/20 flex items-center justify-center mb-3 group-hover:border-primary/25 transition-colors">
+                      <Dices className="w-4.5 h-4.5 text-foreground/50 group-hover:text-primary transition-colors" />
+                    </div>
+                    <h3 className="text-sm font-sans font-semibold text-foreground mb-1">Surprise</h3>
+                    <p className="text-foreground/40 text-[11px] md:text-[12px] font-sans leading-relaxed">
+                      Laisse Pick choisir pour toi.
+                    </p>
+                  </motion.button>
+                </div>
               </div>
 
+              {/* Platform logos */}
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.8 }}
-                className="flex flex-col items-center gap-2.5 mt-2"
+                className="flex flex-col items-center gap-2.5"
               >
                 <div className="flex items-center gap-2">
                   {[
