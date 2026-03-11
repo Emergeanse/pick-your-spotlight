@@ -49,6 +49,32 @@ interface ResultScreenProps {
   refining?: boolean;
 }
 
+const REJECT_REACTIONS: Record<string, string[]> = {
+  already_seen: [
+    "Ah t'as déjà vu celui-là ! Attends, j'en ai un autre.",
+    "Noté ! Voyons ce que j'ai d'autre dans ma collection.",
+  ],
+  not_my_style: [
+    "Pas ton délire ? OK, je change de direction.",
+    "Hmm, je vois. Laisse-moi fouiller dans un autre registre.",
+    "OK, changeons d'ambiance.",
+  ],
+  too_long: [
+    "Trop long ? J'ai un truc plus court en réserve.",
+    "OK, on part sur quelque chose de plus rapide.",
+  ],
+  not_tonight: [
+    "Pas ce soir ? Pas de souci, j'ai mieux pour l'instant.",
+    "Attends, celui-ci pourrait mieux te plaire.",
+    "Pas convaincu ? J'en ai un autre.",
+  ],
+};
+
+function getRejectReaction(reason: string): string {
+  const messages = REJECT_REACTIONS[reason] || REJECT_REACTIONS.not_tonight;
+  return messages[Math.floor(Math.random() * messages.length)];
+}
+
 const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onShowAnother, onRestart, onRefineWithVoice, onRefineWithMessage, onStartCompanion, hasMore, userCriteria, alternativeMovies, onSelectAlternative, searchTags, onRemoveTag, refining }, ref) => {
   const [providers, setProviders] = useState<{ name: string; logo_path: string }[]>([]);
   const [trailerUrl, setTrailerUrl] = useState<string | null>(null);
@@ -63,6 +89,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
   const [showOptions, setShowOptions] = useState(false);
   const [showRejectReasons, setShowRejectReasons] = useState(false);
   const [feedbackGiven, setFeedbackGiven] = useState<"good" | "bad" | null>(null);
+  const [rejectReaction, setRejectReaction] = useState<string | null>(null);
   const [altProviders, setAltProviders] = useState<Record<number, { name: string; logo_path: string }[]>>({});
   const { user } = useAuth();
 
