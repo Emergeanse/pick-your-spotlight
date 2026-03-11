@@ -20,6 +20,7 @@ const IMG_BASE = "https://image.tmdb.org/t/p";
 interface MatchData {
   matchScore: number;
   headline: string;
+  pickNote?: string | null;
   whyItMatches: string;
   detailedExplanation: string;
   emotionalJourney: string;
