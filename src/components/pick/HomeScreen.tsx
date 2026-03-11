@@ -142,7 +142,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, loading }: HomeScreenProp
           transition={{ delay: 0.3, duration: 0.6 }}
           className="max-w-md"
         >
-          <h1 className="text-4xl md:text-6xl lg:text-7xl font-serif mb-3 md:mb-4">
+          <h1 className="text-3xl md:text-6xl lg:text-7xl font-serif mb-3 md:mb-4">
             Qu'est-ce qu'on regarde ?
           </h1>
           <p className="text-foreground/50 text-sm md:text-base font-sans font-light mb-8 md:mb-10 max-w-sm mx-auto">

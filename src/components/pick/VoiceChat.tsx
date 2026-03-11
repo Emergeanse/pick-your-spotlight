@@ -210,7 +210,7 @@ const VoiceChat = ({ onClose, onMovieSuggested }: VoiceChatProps) => {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.3 }}
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4"
     >
       {/* Backdrop */}
       <motion.div
@@ -227,8 +227,8 @@ const VoiceChat = ({ onClose, onMovieSuggested }: VoiceChatProps) => {
         animate={{ y: 0, scale: 1 }}
         exit={{ y: 20, scale: 0.96 }}
         transition={{ type: "spring", damping: 25, stiffness: 300 }}
-        className="relative z-10 w-full max-w-lg bg-card/80 backdrop-blur-md border border-border/20 rounded-3xl overflow-hidden flex flex-col shadow-2xl shadow-primary/5"
-        style={{ maxHeight: "85vh" }}
+        className="relative z-10 w-full max-w-lg bg-card/80 backdrop-blur-md border border-border/20 rounded-none sm:rounded-3xl overflow-hidden flex flex-col shadow-2xl shadow-primary/5"
+        style={{ maxHeight: "100dvh", height: "100dvh" }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -412,7 +412,7 @@ const VoiceChat = ({ onClose, onMovieSuggested }: VoiceChatProps) => {
         </div>
 
         {/* Input area */}
-        <div className="border-t border-border/10 px-5 py-3 flex items-center gap-2">
+        <div className="border-t border-border/10 px-5 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] flex items-center gap-2">
           {/* Mic button in input when messages exist */}
           {messages.length > 0 && (
             <Button
