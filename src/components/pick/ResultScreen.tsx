@@ -416,27 +416,40 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                       {matchData.headline}
                     </p>
                   </button>
-                  {/* Read aloud button — prominent */}
-                  <motion.button
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: 0.3, duration: 0.3 }}
-                    onClick={(e) => { e.stopPropagation(); handleReadWhy(); }}
-                    disabled={whyAudioLoading || whySpeaking}
-                    className={`mt-3 inline-flex items-center gap-2 px-4 py-2 rounded-xl border transition-all active:scale-95 text-[12px] font-sans font-medium shadow-sm ${
-                      whySpeaking
-                        ? "bg-primary/15 border-primary/40 text-primary"
-                        : "bg-card/80 backdrop-blur-sm border-primary/25 text-foreground/70 hover:text-primary hover:border-primary/40 hover:bg-primary/10"
-                    }`}
-                    title="Pick lit l'explication"
-                  >
-                    {whyAudioLoading ? (
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                    ) : (
-                      <Volume2 className={`w-3.5 h-3.5 ${whySpeaking ? "text-primary animate-pulse" : ""}`} />
-                    )}
-                    <span>{whySpeaking ? "Pick parle…" : "🎧 Écouter Pick"}</span>
-                  </motion.button>
+
+                  {/* Purple card with "Je peux te raconter" button */}
+                  <div className="mt-3 p-4 rounded-xl bg-primary/10 border border-primary/30 backdrop-blur-sm">
+                    <div className="flex items-start gap-3">
+                      <div className="flex-1">
+                        <p className="text-[11px] text-primary/70 font-sans font-medium mb-1">
+                          Curieux de l'histoire ?
+                        </p>
+                        <p className="text-foreground/50 text-[12px] font-sans leading-relaxed">
+                          Pick te lit l'explication à haute voix
+                        </p>
+                      </div>
+                      <motion.button
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: 0.2, duration: 0.3 }}
+                        onClick={(e) => { e.stopPropagation(); handleReadWhy(); }}
+                        disabled={whyAudioLoading || whySpeaking}
+                        className={`flex-shrink-0 inline-flex items-center gap-2 px-3.5 py-2 rounded-lg border transition-all active:scale-95 text-[12px] font-sans font-medium shadow-sm ${
+                          whySpeaking
+                            ? "bg-primary/25 border-primary/50 text-primary"
+                            : "bg-primary/20 backdrop-blur-sm border-primary/35 text-foreground/80 hover:text-primary hover:bg-primary/30"
+                        }`}
+                        title="Pick lit l'explication"
+                      >
+                        {whyAudioLoading ? (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        ) : (
+                          <Volume2 className={`w-3.5 h-3.5 ${whySpeaking ? "text-primary animate-pulse" : ""}`} />
+                        )}
+                        <span>{whySpeaking ? "Pick parle…" : "Je peux te raconter"}</span>
+                      </motion.button>
+                    </div>
+                  </div>
 
                   {/* Expanded detailed explanation */}
                   <AnimatePresence>
