@@ -21,18 +21,18 @@ interface HomeScreenProps {
 }
 
 const SURPRISE_MESSAGES = [
-  "Analyse de tes goûts…",
-  "Parcours des pépites cachées…",
-  "Un peu de magie…",
-  "Presque prêt…",
+  "Je fouille dans mes classiques…",
+  "Attends, j'ai un truc en tête…",
+  "Tu vas voir, celui-là est dingue.",
+  "Presque… je peaufine mon choix.",
 ];
 
 const LOADING_MESSAGES = [
-  "Je cherche le film parfait…",
-  "Voyons voir…",
-  "J'ai peut-être quelque chose pour toi.",
-  "Analyse de tes goûts…",
-  "Encore un instant…",
+  "Je cherche la perle rare…",
+  "Voyons voir ce que j'ai pour toi…",
+  "Attends, j'ai peut-être le film parfait.",
+  "Je parcours mes favoris…",
+  "Laisse-moi réfléchir deux secondes…",
 ];
 
 const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }: HomeScreenProps) => {
@@ -199,7 +199,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
             transition={{ delay: 0.2, duration: 0.5 }}
             className="mb-8 md:mb-10"
           >
-            <PickCharacter mood="wave" message="Alors… qu'est-ce qu'on regarde ce soir ?" size="md" animate />
+            <PickCharacter mood="wave" showGreeting size="md" animate />
           </motion.div>
 
           {isSurprising ? (

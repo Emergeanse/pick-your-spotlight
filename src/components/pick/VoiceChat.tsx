@@ -292,7 +292,7 @@ const VoiceChat = ({ onClose, onMovieSuggested, initialMessages }: VoiceChatProp
                 transition={{ delay: 0.1 }}
                 className="mb-6"
               >
-                <PickCharacter mood="wave" message="Dis-moi ce que tu veux regarder." size="md" />
+                <PickCharacter mood="wave" message="Raconte-moi ce que t'as envie de mater." size="md" />
               </motion.div>
 
               {/* Mic button */}
@@ -404,7 +404,7 @@ const VoiceChat = ({ onClose, onMovieSuggested, initialMessages }: VoiceChatProp
               transition={{ duration: 0.3 }}
               className="flex flex-col items-center text-center"
             >
-              <PickCharacter mood="think" message="Je cherche le match parfait…" size="md" animate={false} />
+              <PickCharacter mood="think" message="Attends, j'ai un truc en tête…" size="md" animate={false} />
 
               {userText && (
                 <motion.p
@@ -437,7 +437,7 @@ const VoiceChat = ({ onClose, onMovieSuggested, initialMessages }: VoiceChatProp
               transition={{ duration: 0.3 }}
               className="flex flex-col items-center text-center"
             >
-              <PickCharacter mood="default" message="J'ai compris ce que tu cherches !" size="md" animate={false} />
+              <PickCharacter mood="default" message="OK, je vois exactement ce qu'il te faut." size="md" animate={false} />
 
               <div className="flex flex-wrap gap-2 justify-center mt-5 mb-6 max-w-xs">
                 {recapTags.map((tag, i) => (

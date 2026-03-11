@@ -13,11 +13,11 @@ const PICK_IMAGES: Record<PickMood, string> = {
 };
 
 const GREETINGS = [
-  "Alors… qu'est-ce qu'on regarde ce soir ?",
-  "Je peux choisir un film parfait pour toi.",
-  "Laisse-moi te trouver quelque chose.",
-  "J'ai plein d'idées pour ce soir !",
-  "Dis-moi juste ton humeur, je m'occupe du reste.",
+  "Alors… qu'est-ce qu'on se mate ce soir ?",
+  "J'ai plein de pépites à te montrer !",
+  "Dis-moi ton humeur, je m'occupe du reste.",
+  "Prêt pour une soirée ciné ?",
+  "Je connais le film parfait pour toi.",
 ];
 
 interface PickCharacterProps {
