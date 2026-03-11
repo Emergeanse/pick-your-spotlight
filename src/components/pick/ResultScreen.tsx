@@ -11,6 +11,7 @@ import { likeMovie, unlikeMovie, isMovieLiked } from "@/lib/liked-movies";
 import { addToWatchlist, removeFromWatchlist, isInWatchlist } from "@/lib/watchlist";
 import { trackInteraction, getUserTasteProfile } from "@/lib/interactions";
 import { toast } from "sonner";
+import { computeUserTasteVector, ensureMovieEmbedding } from "@/lib/taste-engine";
 import BrandHeader from "./BrandHeader";
 
 const IMG_BASE = "https://image.tmdb.org/t/p";
