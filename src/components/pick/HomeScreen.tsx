@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Mic, SlidersHorizontal, Dices, Tv, ThumbsDown, Sparkles, Loader2, Zap } from "lucide-react";
+import { Mic, SlidersHorizontal, Dices, Tv, ThumbsDown, Sparkles, Loader2, Zap, X } from "lucide-react";
 import { getTrendingMovies, getBackdropUrl, getSurpriseRecommendation, getPosterUrl, getDisplayTitle, getWatchProviders } from "@/lib/tmdb";
 import { getLikedMovies } from "@/lib/liked-movies";
 import { useAuth } from "@/hooks/use-auth";
@@ -35,6 +35,13 @@ const LOADING_MESSAGES = [
   "Laisse-moi réfléchir deux secondes…",
 ];
 
+const PROACTIVE_MESSAGES = [
+  "J'ai peut-être le film parfait pour ce soir.",
+  "Tiens, j'ai pensé à un truc qui devrait te plaire.",
+  "Avant que tu choisisses… regarde celui-là.",
+  "J'ai une idée pour toi ce soir.",
+];
+
 const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }: HomeScreenProps) => {
   const [isSurprising, setIsSurprising] = useState(false);
   const [surpriseMsg, setSurpriseMsg] = useState("");
@@ -45,8 +52,31 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
   const [tonightLoading, setTonightLoading] = useState(false);
   const [tonightLoadingMsg, setTonightLoadingMsg] = useState("");
   const [tonightProviders, setTonightProviders] = useState<{ name: string; logo_path: string }[]>([]);
+  const [proactivePick, setProactivePick] = useState<MovieDetail | null>(null);
+  const [proactiveMsg] = useState(() => PROACTIVE_MESSAGES[Math.floor(Math.random() * PROACTIVE_MESSAGES.length)]);
+  const [proactiveDismissed, setProactiveDismissed] = useState(false);
   const { user } = useAuth();
 
+  // Proactive recommendation — silently fetch for users with taste data
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const liked = await getLikedMovies();
+        if (liked.length < 3) return; // Need enough taste data
+        const userTasteVector = await computeUserTasteVector(user.id);
+        const { data, error } = await supabase.functions.invoke("surprise-personalized", {
+          body: { likedMovies: liked, userTasteVector },
+        });
+        if (error || cancelled) return;
+        setProactivePick(data.movie as MovieDetail);
+      } catch {
+        // Silently fail — proactive is optional
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [user]);
 
   useEffect(() => {
     getTrendingMovies(20).then((movies: Movie[]) => {
@@ -192,15 +222,87 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
         {/* Hero section */}
         <div className="min-h-[85vh] md:min-h-[80vh] flex flex-col items-center justify-center text-center px-5 pt-16">
           
-          {/* Pick character + greeting bubble */}
+          {/* Pick character + greeting or proactive suggestion */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2, duration: 0.5 }}
-            className="mb-8 md:mb-10"
+            className="mb-6 md:mb-8"
           >
-            <PickCharacter mood="wave" showGreeting size="md" animate />
+            {proactivePick && !proactiveDismissed ? (
+              <PickCharacter mood="default" message={proactiveMsg} size="md" animate />
+            ) : (
+              <PickCharacter mood="wave" showGreeting size="md" animate />
+            )}
           </motion.div>
+
+          {/* Proactive recommendation card */}
+          <AnimatePresence>
+            {proactivePick && !proactiveDismissed && !isSurprising && (
+              <motion.div
+                initial={{ opacity: 0, y: 15, scale: 0.97 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                transition={{ delay: 0.3, duration: 0.4, type: "spring", stiffness: 200 }}
+                className="w-full max-w-md px-2 mb-6"
+              >
+                <div className="relative rounded-2xl overflow-hidden border border-primary/25 bg-card/60 backdrop-blur-sm">
+                  {/* Mini backdrop */}
+                  {proactivePick.backdrop_path && (
+                    <div
+                      className="absolute inset-0 bg-cover bg-center opacity-20"
+                      style={{ backgroundImage: `url(${getBackdropUrl(proactivePick.backdrop_path)})` }}
+                    />
+                  )}
+                  <div className="absolute inset-0 bg-gradient-to-r from-card/90 via-card/70 to-card/50" />
+
+                  <div className="relative z-10 flex items-center gap-4 p-4">
+                    {/* Poster */}
+                    {proactivePick.poster_path && (
+                      <img
+                        src={getPosterUrl(proactivePick.poster_path, "w185") || ""}
+                        alt={getDisplayTitle(proactivePick)}
+                        className="w-16 h-24 rounded-lg object-cover shadow-lg border border-border/20 shrink-0"
+                      />
+                    )}
+                    <div className="flex-1 min-w-0 text-left">
+                      <p className="text-[10px] uppercase tracking-widest text-primary/60 font-sans font-semibold mb-1">
+                        Pick du soir
+                      </p>
+                      <h3 className="text-sm font-serif text-foreground mb-0.5 line-clamp-1">
+                        {getDisplayTitle(proactivePick)}
+                      </h3>
+                      {proactivePick.genres && (
+                        <p className="text-foreground/40 text-[10px] font-sans line-clamp-1">
+                          {proactivePick.genres.map(g => g.name).join(" · ")}
+                        </p>
+                      )}
+                      <div className="flex items-center gap-2 mt-2.5">
+                        <button
+                          onClick={() => { onSurprise(proactivePick); setProactiveDismissed(true); }}
+                          className="px-3 py-1.5 rounded-full bg-primary text-primary-foreground text-[11px] font-sans font-semibold hover:bg-primary/90 transition-colors active:scale-95"
+                        >
+                          Je regarde
+                        </button>
+                        <button
+                          onClick={() => { setProactiveDismissed(true); handleTonightPick(); }}
+                          className="px-3 py-1.5 rounded-full bg-foreground/[0.06] border border-border/25 text-foreground/50 text-[11px] font-sans hover:text-foreground hover:border-border/40 transition-all active:scale-95"
+                        >
+                          Autre chose
+                        </button>
+                        <button
+                          onClick={() => setProactiveDismissed(true)}
+                          className="ml-auto text-foreground/25 hover:text-foreground/50 transition-colors"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           {isSurprising ? (
             <motion.div
