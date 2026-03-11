@@ -239,6 +239,7 @@ const Index = () => {
               onShowAnother={handleShowAnother}
               onRestart={handleRestart}
               onRefineWithVoice={handleRefineWithVoice}
+              onStartCompanion={() => setShowCompanion(true)}
               hasMore={currentResultIndex < results.length - 1}
               userCriteria={{ mood, context, time }}
             />
