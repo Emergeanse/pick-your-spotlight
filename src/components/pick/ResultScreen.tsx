@@ -23,6 +23,8 @@ interface MatchData {
   emotionalJourney: string;
   perfectFor: string;
   funFact: string;
+  similarLikedMovies?: string[];
+  matchingReasons?: string[];
 }
 
 interface ResultScreenProps {
