@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { MovieDetail } from "@/lib/tmdb";
+import { ensureMovieEmbedding } from "@/lib/taste-engine";
 
 export async function likeMovie(movie: MovieDetail) {
   const genres = (movie.genres || []).map(g => g.name);
@@ -11,6 +12,9 @@ export async function likeMovie(movie: MovieDetail) {
     poster_path: movie.poster_path,
   }, { onConflict: "user_id,tmdb_id" });
   if (error) throw error;
+  
+  // Trigger embedding generation in background
+  ensureMovieEmbedding(movie.id, movie.title || movie.name || "", movie.overview || "", genres);
 }
 
 export async function unlikeMovie(tmdbId: number) {
