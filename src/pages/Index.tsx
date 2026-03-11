@@ -47,6 +47,7 @@ const Index = () => {
   const [showChat, setShowChat] = useState(false);
   const [showCompanion, setShowCompanion] = useState(false);
   const [chatInitialMessages, setChatInitialMessages] = useState<ChatMessage[] | undefined>(undefined);
+  const [searchTags, setSearchTags] = useState<string[]>([]);
   const { user } = useAuth();
   const navigate = useNavigate();
 
@@ -60,6 +61,36 @@ const Index = () => {
         }
       });
   }, [user, navigate]);
+
+  const MOOD_LABELS: Record<string, string> = {
+    relax: "détente", excited: "intense", romantic: "romantique",
+    "mind-blowing": "époustouflant", "easy-watch": "facile", fun: "fun",
+  };
+  const CONTEXT_LABELS: Record<string, string> = {
+    alone: "solo", couple: "en couple", friends: "entre amis", family: "en famille",
+  };
+  const TIME_LABELS: Record<string, string> = {
+    short: "film court", "movie-night": "soirée ciné", episode: "un épisode",
+  };
+
+  const buildSearchTags = (m: Mood | null, c: Context | null, t: TimeAvailable | null) => {
+    const tags: string[] = [];
+    if (m) tags.push(MOOD_LABELS[m] || m);
+    if (c) tags.push(CONTEXT_LABELS[c] || c);
+    if (t) tags.push(TIME_LABELS[t] || t);
+    return tags;
+  };
+
+  const handleRemoveTag = (tag: string) => {
+    setSearchTags(prev => prev.filter(t => t !== tag));
+    // Reset the corresponding criteria
+    const moodEntry = Object.entries(MOOD_LABELS).find(([, v]) => v === tag);
+    if (moodEntry) setMood(null);
+    const ctxEntry = Object.entries(CONTEXT_LABELS).find(([, v]) => v === tag);
+    if (ctxEntry) setContext(null);
+    const timeEntry = Object.entries(TIME_LABELS).find(([, v]) => v === tag);
+    if (timeEntry) setTime(null);
+  };
 
   const handleStart = () => setStep("mood");
 
@@ -115,6 +146,7 @@ const Index = () => {
 
   const handlePlatformSelect = async (platformIds: number[]) => {
     setSelectedPlatformIds(platformIds);
+    setSearchTags(buildSearchTags(mood, context, time));
     setLoading(true);
     setLoadingMessage("Analyse de vos préférences…");
     try {
@@ -184,6 +216,7 @@ const Index = () => {
     setSelectedPlatformIds([]);
     setResults([]);
     setCurrentResultIndex(0);
+    setSearchTags([]);
   };
 
   const currentStepNumber = getStepNumber(step);
@@ -260,6 +293,9 @@ const Index = () => {
               onRefineWithMessage={(message) => {
                 const currentMovie = results[currentResultIndex];
                 if (!currentMovie) return;
+                // Add refinement as a search tag
+                const shortLabel = message.replace(/^(Je veux |Je préfère |Montre-moi )/i, "").toLowerCase();
+                setSearchTags(prev => prev.includes(shortLabel) ? prev : [...prev, shortLabel]);
                 const contextMessages: ChatMessage[] = [
                   { role: "assistant", content: `Je t'ai recommandé **${getDisplayTitle(currentMovie)}**. Dis-moi ce qui ne te convient pas et je te trouverai quelque chose de mieux !` },
                   { role: "user", content: message },
@@ -270,6 +306,8 @@ const Index = () => {
               onStartCompanion={handleStartCompanion}
               hasMore={currentResultIndex < results.length - 1}
               userCriteria={{ mood, context, time }}
+              searchTags={searchTags}
+              onRemoveTag={handleRemoveTag}
               alternativeMovies={results.filter((_, i) => i !== currentResultIndex).slice(0, 2)}
               onSelectAlternative={(movie) => {
                 const idx = results.findIndex(r => r.id === movie.id);

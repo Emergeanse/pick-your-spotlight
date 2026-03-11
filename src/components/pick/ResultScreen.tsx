@@ -42,9 +42,11 @@ interface ResultScreenProps {
   };
   alternativeMovies?: MovieDetail[];
   onSelectAlternative?: (movie: MovieDetail) => void;
+  searchTags?: string[];
+  onRemoveTag?: (tag: string) => void;
 }
 
-const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onShowAnother, onRestart, onRefineWithVoice, onRefineWithMessage, onStartCompanion, hasMore, userCriteria, alternativeMovies, onSelectAlternative }, ref) => {
+const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onShowAnother, onRestart, onRefineWithVoice, onRefineWithMessage, onStartCompanion, hasMore, userCriteria, alternativeMovies, onSelectAlternative, searchTags, onRemoveTag }, ref) => {
   const [providers, setProviders] = useState<{ name: string; logo_path: string }[]>([]);
   const [trailerUrl, setTrailerUrl] = useState<string | null>(null);
   const [matchData, setMatchData] = useState<MatchData | null>(null);
@@ -419,6 +421,38 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                   Sauvegarder
                 </button>
               </div>
+
+              {/* Search context tags */}
+              {searchTags && searchTags.length > 0 && (
+                <motion.div
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 1, duration: 0.3 }}
+                  className="pt-0.5"
+                >
+                  <p className="text-[10px] uppercase tracking-widest text-muted-foreground/60 font-sans font-semibold mb-1.5">
+                    Ta recherche actuelle
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {searchTags.map((tag) => (
+                      <span
+                        key={tag}
+                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-primary/8 border border-primary/15 text-primary/70 text-[11px] font-sans font-medium group"
+                      >
+                        {tag}
+                        {onRemoveTag && (
+                          <button
+                            onClick={() => onRemoveTag(tag)}
+                            className="ml-0.5 w-3.5 h-3.5 rounded-full flex items-center justify-center text-primary/40 hover:text-primary hover:bg-primary/15 transition-colors"
+                          >
+                            <X className="w-2.5 h-2.5" />
+                          </button>
+                        )}
+                      </span>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
 
               {/* Conversational follow-up */}
               {matchData && (
