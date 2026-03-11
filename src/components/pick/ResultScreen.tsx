@@ -436,19 +436,19 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                   </div>
                   <div className="flex flex-wrap gap-1.5">
                     <button
-                      onClick={() => { if (onRefineWithVoice) onRefineWithVoice(); }}
+                      onClick={() => onRefineWithMessage?.("Je veux quelque chose de plus intense")}
                       className="px-3 py-1.5 rounded-full bg-foreground/[0.04] border border-border/25 text-foreground/50 hover:text-primary hover:border-primary/25 hover:bg-primary/5 text-[11px] font-sans transition-all active:scale-95"
                     >
                       Quelque chose de plus intense
                     </button>
                     <button
-                      onClick={onShowAnother}
+                      onClick={() => onRefineWithMessage?.("Je préfère un film plus court")}
                       className="px-3 py-1.5 rounded-full bg-foreground/[0.04] border border-border/25 text-foreground/50 hover:text-primary hover:border-primary/25 hover:bg-primary/5 text-[11px] font-sans transition-all active:scale-95"
                     >
                       Un film plus court
                     </button>
                     <button
-                      onClick={onShowAnother}
+                      onClick={() => onRefineWithMessage?.("Montre-moi d'autres options similaires")}
                       className="px-3 py-1.5 rounded-full bg-foreground/[0.04] border border-border/25 text-foreground/50 hover:text-primary hover:border-primary/25 hover:bg-primary/5 text-[11px] font-sans transition-all active:scale-95"
                     >
                       D'autres options similaires
