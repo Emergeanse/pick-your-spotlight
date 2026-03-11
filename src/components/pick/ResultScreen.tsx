@@ -401,6 +401,20 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                       {matchData.headline}
                     </p>
                   </button>
+                  {/* Read aloud button */}
+                  <button
+                    onClick={(e) => { e.stopPropagation(); handleReadWhy(); }}
+                    disabled={whyAudioLoading || whySpeaking}
+                    className="mt-2 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-card/60 backdrop-blur-sm border border-border/30 text-foreground/50 hover:text-primary hover:border-primary/30 transition-all active:scale-95 text-[11px] font-sans"
+                    title="Pick lit l'explication"
+                  >
+                    {whyAudioLoading ? (
+                      <Loader2 className="w-3 h-3 animate-spin" />
+                    ) : (
+                      <Volume2 className={`w-3 h-3 ${whySpeaking ? "text-primary" : ""}`} />
+                    )}
+                    {whySpeaking ? "Pick parle…" : "Écouter Pick"}
+                  </button>
 
                   {/* Expanded detailed explanation */}
                   <AnimatePresence>
