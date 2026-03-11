@@ -455,7 +455,7 @@ const Landing = () => {
               size="lg"
               variant="ghost"
               className="rounded-full text-foreground/60 hover:text-foreground font-sans font-medium px-6 h-12 gap-2 text-base border border-border/20 hover:border-border/40 transition-all"
-              onClick={() => navigate("/app?mode=surprise")}
+              onClick={() => navigate("/auth")}
             >
               <Dice5 className="w-4 h-4" />
               Try surprise mode
