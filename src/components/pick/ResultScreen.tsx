@@ -326,8 +326,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                 </Button>
               )}
 
-              {hasMore && (
-                <Button
+              <Button
                   variant="heroOutline"
                   size="xl"
                   className="text-sm md:text-base"
@@ -336,7 +335,6 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                   <ChevronRight className="w-4 h-4" />
                   Autre suggestion
                 </Button>
-              )}
 
               {onRefineWithVoice && (
                 <Button
