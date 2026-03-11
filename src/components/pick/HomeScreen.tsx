@@ -57,6 +57,14 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
     }).catch(() => {});
   }, []);
 
+  // Rotate Pick's phrases
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setPhraseIndex(i => (i + 1) % PICK_PHRASES.length);
+    }, 4000);
+    return () => clearInterval(interval);
+  }, []);
+
   useEffect(() => {
     if (bgImages.length <= 1) return;
     const interval = setInterval(() => {
