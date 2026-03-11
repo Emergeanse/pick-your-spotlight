@@ -76,6 +76,16 @@ const VoiceChat = ({ onClose, onMovieSuggested, initialMessages }: VoiceChatProp
   }, []);
 
 
+  // Auto-start listening when opened with initial messages (from "Affiner" button)
+  useEffect(() => {
+    if (initialMessages && initialMessages.length > 0 && scribeToken) {
+      const timer = setTimeout(() => {
+        startListening();
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [initialMessages, scribeToken, startListening]);
+
 
   // ElevenLabs Scribe for cross-browser STT
   const scribe = useScribe({
