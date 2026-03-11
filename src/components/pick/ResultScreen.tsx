@@ -495,12 +495,6 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                   </div>
                 </motion.div>
               )}
-                    >
-                      D'autres options similaires
-                    </button>
-                  </div>
-                </motion.div>
-              )}
             </motion.div>
           </motion.div>
         </div>
