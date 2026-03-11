@@ -1,7 +1,7 @@
 import { useState, useEffect, forwardRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Play, RotateCcw, ChevronRight, Star, Clock, Sparkles, Heart, Lightbulb, PartyPopper, Loader2, Bookmark, Mic } from "lucide-react";
+import { Play, RotateCcw, ChevronRight, Star, Clock, Sparkles, Heart, Lightbulb, PartyPopper, Loader2, Bookmark, Mic, Tv } from "lucide-react";
 import type { MovieDetail } from "@/lib/tmdb";
 import { getDisplayTitle, getYear, getBackdropUrl, getPosterUrl, getWatchProviders, getMovieTrailerUrl } from "@/lib/tmdb";
 import type { Mood, Context, TimeAvailable } from "@/lib/tmdb";
@@ -28,6 +28,7 @@ interface ResultScreenProps {
   onShowAnother: () => void;
   onRestart: () => void;
   onRefineWithVoice?: () => void;
+  onStartCompanion?: () => void;
   hasMore: boolean;
   userCriteria?: {
     mood: Mood | null;
@@ -36,7 +37,7 @@ interface ResultScreenProps {
   };
 }
 
-const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onShowAnother, onRestart, onRefineWithVoice, hasMore, userCriteria }, ref) => {
+const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onShowAnother, onRestart, onRefineWithVoice, onStartCompanion, hasMore, userCriteria }, ref) => {
   const [providers, setProviders] = useState<{ name: string; logo_path: string }[]>([]);
   const [trailerUrl, setTrailerUrl] = useState<string | null>(null);
   const [matchData, setMatchData] = useState<MatchData | null>(null);
@@ -313,6 +314,18 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
               >
                 <Bookmark className={`w-5 h-5 ${bookmarked ? "fill-accent" : ""}`} />
               </Button>
+
+              {onStartCompanion && (
+                <Button
+                  variant="hero"
+                  size="xl"
+                  className="text-sm md:text-base"
+                  onClick={onStartCompanion}
+                >
+                  <Tv className="w-4 h-4" />
+                  Je regarde
+                </Button>
+              )}
 
               {trailerUrl && (
                 <Button

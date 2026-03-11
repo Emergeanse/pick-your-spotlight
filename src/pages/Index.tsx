@@ -8,6 +8,7 @@ import TimeStep from "@/components/pick/TimeStep";
 import PlatformStep from "@/components/pick/PlatformStep";
 import ResultScreen from "@/components/pick/ResultScreen";
 import VoiceChat from "@/components/pick/VoiceChat";
+import CompanionMode from "@/components/pick/CompanionMode";
 import type { ChatMessage } from "@/components/pick/VoiceChat";
 import StepLayout from "@/components/pick/StepLayout";
 import BrandHeader from "@/components/pick/BrandHeader";
@@ -43,6 +44,7 @@ const Index = () => {
   const [currentResultIndex, setCurrentResultIndex] = useState(0);
   const [loadingMessage, setLoadingMessage] = useState("");
   const [showChat, setShowChat] = useState(false);
+  const [showCompanion, setShowCompanion] = useState(false);
   const [chatInitialMessages, setChatInitialMessages] = useState<ChatMessage[] | undefined>(undefined);
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -237,6 +239,7 @@ const Index = () => {
               onShowAnother={handleShowAnother}
               onRestart={handleRestart}
               onRefineWithVoice={handleRefineWithVoice}
+              onStartCompanion={() => setShowCompanion(true)}
               hasMore={currentResultIndex < results.length - 1}
               userCriteria={{ mood, context, time }}
             />
@@ -250,6 +253,15 @@ const Index = () => {
             onClose={handleCloseChat}
             onMovieSuggested={handleMovieSuggested}
             initialMessages={chatInitialMessages}
+          />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showCompanion && results[currentResultIndex] && (
+          <CompanionMode
+            movie={results[currentResultIndex]}
+            onClose={() => setShowCompanion(false)}
           />
         )}
       </AnimatePresence>
