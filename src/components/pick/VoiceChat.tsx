@@ -144,20 +144,24 @@ const VoiceChat = ({ onClose, onMovieSuggested, initialMessages }: VoiceChatProp
 
   const startListening = useCallback(async () => {
     setMicError(null);
+    console.log("[VoiceChat] startListening called");
     try {
       // CRITICAL: Request mic permission FIRST, directly in click handler
-      // Safari/iOS requires getUserMedia in the immediate user gesture chain
+      // Safari/iOS & Android require getUserMedia in the immediate user gesture chain
       let stream: MediaStream;
       try {
         stream = await navigator.mediaDevices.getUserMedia({ 
           audio: { echoCancellation: true, noiseSuppression: true } 
         });
+        console.log("[VoiceChat] Mic permission granted, tracks:", stream.getAudioTracks().length);
       } catch (micErr: any) {
-        console.error("Mic permission error:", micErr);
+        console.error("[VoiceChat] Mic permission error:", micErr?.name, micErr?.message);
         if (micErr?.name === "NotAllowedError" || micErr?.name === "PermissionDeniedError") {
           setMicError("Accès au micro refusé. Autorise le micro dans les paramètres de ton navigateur.");
-        } else if (micErr?.name === "NotFoundError") {
-          setMicError("Aucun micro détecté sur cet appareil.");
+        } else if (micErr?.name === "NotFoundError" || micErr?.name === "NotReadableError") {
+          setMicError("Aucun micro détecté ou micro déjà utilisé par une autre app.");
+        } else if (micErr?.name === "AbortError") {
+          setMicError("La demande de micro a été interrompue. Réessaie.");
         } else {
           setMicError("Impossible d'accéder au micro. Tape ton message ci-dessous 👇");
         }
@@ -165,35 +169,62 @@ const VoiceChat = ({ onClose, onMovieSuggested, initialMessages }: VoiceChatProp
         return;
       }
 
-      // Stop the stream we used for permission - scribe will create its own
-      stream.getTracks().forEach(t => t.stop());
+      // Keep the stream alive briefly - some Android browsers need time between
+      // releasing one mic stream and acquiring another
+      // We'll stop it after a small delay to not block scribe
+      const stopStreamLater = () => {
+        setTimeout(() => {
+          stream.getTracks().forEach(t => t.stop());
+          console.log("[VoiceChat] Permission stream stopped");
+        }, 500);
+      };
 
-      // Now fetch token (always get a fresh one to avoid expiry issues)
-      let token = scribeToken;
+      // Fetch a fresh token every time (tokens are single-use and expire)
+      console.log("[VoiceChat] Fetching scribe token...");
+      let token: string | null = null;
       try {
-        const { data } = await supabase.functions.invoke("scribe-token");
+        const { data, error } = await supabase.functions.invoke("scribe-token");
+        if (error) console.error("[VoiceChat] Token fetch error:", error);
         if (data?.token) {
           token = data.token;
           setScribeToken(data.token);
+          console.log("[VoiceChat] Token received");
         }
       } catch (tokenErr) {
-        console.error("Token fetch error:", tokenErr);
+        console.error("[VoiceChat] Token fetch exception:", tokenErr);
       }
 
       if (!token) {
-        setMicError("Erreur de connexion. Tape ton message ci-dessous 👇");
+        stopStreamLater();
+        setMicError("Erreur de connexion vocale. Tape ton message ci-dessous 👇");
         inputRef.current?.focus();
         return;
       }
 
-      // Connect scribe with the token
-      await scribe.connect({
+      // Connect scribe with a timeout to catch silent failures
+      console.log("[VoiceChat] Connecting scribe...");
+      const connectPromise = scribe.connect({
         token,
         microphone: { echoCancellation: true, noiseSuppression: true },
       });
-      setPhase("listening");
+
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error("Connection timeout")), 8000)
+      );
+
+      try {
+        await Promise.race([connectPromise, timeoutPromise]);
+        console.log("[VoiceChat] Scribe connected successfully");
+        setPhase("listening");
+      } catch (connectErr: any) {
+        console.error("[VoiceChat] Scribe connect failed:", connectErr?.message);
+        setMicError("La connexion vocale a échoué. Tape ton message ci-dessous 👇");
+        inputRef.current?.focus();
+      }
+
+      stopStreamLater();
     } catch (e: any) {
-      console.error("Start listening error:", e);
+      console.error("[VoiceChat] startListening unexpected error:", e?.name, e?.message);
       setMicError("Erreur micro. Tape ton message ci-dessous 👇");
       inputRef.current?.focus();
     }
