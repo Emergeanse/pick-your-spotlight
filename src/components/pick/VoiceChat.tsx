@@ -57,10 +57,10 @@ const VoiceChat = ({ onClose, onMovieSuggested, initialMessages }: VoiceChatProp
   const pendingSendRef = useRef(false);
   const committedTextRef = useRef("");
 
-  // Pick 3 random non-repeating examples
+  // Pick 4 random non-repeating examples
   const [randomExamples] = useState(() => {
     const shuffled = [...EXAMPLE_PROMPTS].sort(() => Math.random() - 0.5);
-    return shuffled.slice(0, 3);
+    return shuffled.slice(0, 4);
   });
 
   // Pre-fetch scribe token on mount
