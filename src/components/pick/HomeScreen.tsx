@@ -168,46 +168,55 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, loading }: HomeScreenProp
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5, duration: 0.4 }}
-            className="flex flex-col sm:flex-row gap-3 items-center"
+            className="flex flex-col items-center gap-4"
           >
-            <Button
-              variant="hero"
-              size="xl"
-              className="text-sm md:text-base"
-              onClick={onOpenChat}
-              disabled={loading}
-            >
-              <Mic className="w-4 h-4" />
-              Parle-moi
-            </Button>
+            {/* Primary CTA — Parle-moi */}
+            <div className="flex flex-col items-center">
+              <Button
+                variant="hero"
+                size="xl"
+                className="text-sm md:text-base px-8"
+                onClick={onOpenChat}
+                disabled={loading}
+              >
+                <Mic className="w-4 h-4" />
+                Parle-moi
+              </Button>
+              <p className="text-muted-foreground/50 text-[11px] font-sans mt-2">
+                🎤 Essayez : « Un film drôle sur Netflix »
+              </p>
+            </div>
 
-            <Button
-              variant="heroOutline"
-              size="xl"
-              className="text-sm md:text-base"
-              onClick={handleStart}
-              disabled={isLoading || loading}
-            >
-              {isLoading ? (
-                <div className="w-4 h-4 border-2 border-foreground/30 border-t-foreground rounded-full animate-spin" />
-              ) : (
-                <>
-                  <Play className="w-4 h-4 fill-current" />
-                  Trouver mon film
-                </>
-              )}
-            </Button>
+            {/* Secondary actions */}
+            <div className="flex flex-row gap-3 items-center">
+              <Button
+                variant="heroOutline"
+                size="xl"
+                className="text-sm md:text-base"
+                onClick={handleStart}
+                disabled={isLoading || loading}
+              >
+                {isLoading ? (
+                  <div className="w-4 h-4 border-2 border-foreground/30 border-t-foreground rounded-full animate-spin" />
+                ) : (
+                  <>
+                    <Play className="w-4 h-4 fill-current" />
+                    Trouver mon film
+                  </>
+                )}
+              </Button>
 
-            <Button
-              variant="ghost"
-              size="xl"
-              className="text-sm md:text-base text-foreground/60 hover:text-foreground border border-border/30 hover:border-primary/40 hover:bg-primary/5"
-              onClick={handleSurprise}
-              disabled={loading}
-            >
-              <Wand2 className="w-4 h-4" />
-              Surprends-moi
-            </Button>
+              <Button
+                variant="ghost"
+                size="xl"
+                className="text-sm md:text-base text-foreground/60 hover:text-foreground border border-border/30 hover:border-primary/40 hover:bg-primary/5"
+                onClick={handleSurprise}
+                disabled={loading}
+              >
+                <Wand2 className="w-4 h-4" />
+                Surprends-moi
+              </Button>
+            </div>
           </motion.div>
         )}
       </div>
