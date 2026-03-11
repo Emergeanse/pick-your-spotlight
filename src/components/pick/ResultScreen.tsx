@@ -465,7 +465,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                   <div className="flex items-start gap-2 mb-2.5">
                     <MessageCircle className="w-3 h-3 text-primary/50 mt-0.5 flex-shrink-0" />
                     <p className="text-foreground/40 text-[11px] font-sans leading-relaxed">
-                      Je pense que ce film pourrait te plaire. Tu veux affiner ?
+                      Alors, ça te tente ? On peut affiner si tu veux.
                     </p>
                   </div>
                   <div className="flex flex-wrap gap-1.5">
