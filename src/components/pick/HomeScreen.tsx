@@ -44,6 +44,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
   const [tonightPick, setTonightPick] = useState<MovieDetail | null>(null);
   const [tonightLoading, setTonightLoading] = useState(false);
   const [tonightProviders, setTonightProviders] = useState<{ name: string; logo_path: string }[]>([]);
+  const [phraseIndex, setPhraseIndex] = useState(0);
   const { user } = useAuth();
 
   useEffect(() => {
