@@ -315,6 +315,18 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                 <Bookmark className={`w-5 h-5 ${bookmarked ? "fill-accent" : ""}`} />
               </Button>
 
+              {onStartCompanion && (
+                <Button
+                  variant="hero"
+                  size="xl"
+                  className="text-sm md:text-base"
+                  onClick={onStartCompanion}
+                >
+                  <Tv className="w-4 h-4" />
+                  Je regarde
+                </Button>
+              )}
+
               {trailerUrl && (
                 <Button
                   variant="hero"
