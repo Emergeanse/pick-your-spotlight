@@ -410,7 +410,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                     <div className="flex items-center gap-2.5 sm:gap-3 mb-3">
                       <div className="flex-shrink-0">
                         <img
-                          src={pickDefault}
+                          src={pickLogo}
                           alt="Pick"
                           className="w-8 h-8 sm:w-10 sm:h-10 object-contain drop-shadow-md"
                         />
