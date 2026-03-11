@@ -427,7 +427,7 @@ const VoiceChat = ({ onClose, onMovieSuggested, initialMessages }: VoiceChatProp
             </motion.div>
           )}
 
-          {/* RECAP — Show understood criteria */}
+          {/* RECAP — Pick understood */}
           {phase === "recap" && (
             <motion.div
               key="recap"
@@ -437,20 +437,9 @@ const VoiceChat = ({ onClose, onMovieSuggested, initialMessages }: VoiceChatProp
               transition={{ duration: 0.3 }}
               className="flex flex-col items-center text-center"
             >
-              <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                className="w-14 h-14 rounded-full bg-primary/15 border border-primary/30 flex items-center justify-center mb-5"
-              >
-                <Sparkles className="w-7 h-7 text-primary" />
-              </motion.div>
+              <PickCharacter mood="default" message="J'ai compris ce que tu cherches !" size="md" animate={false} />
 
-              <p className="text-foreground text-base font-serif mb-4">
-                J'ai compris ce que tu cherches
-              </p>
-
-              <div className="flex flex-wrap gap-2 justify-center mb-6 max-w-xs">
+              <div className="flex flex-wrap gap-2 justify-center mt-5 mb-6 max-w-xs">
                 {recapTags.map((tag, i) => (
                   <motion.span
                     key={tag}
