@@ -67,7 +67,7 @@ const Landing = () => {
             <Button
               size="sm"
               className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90 font-sans text-sm px-4 neon-glow"
-              onClick={() => navigate("/app")}
+              onClick={() => navigate("/auth")}
             >
               Get started
             </Button>
@@ -143,7 +143,7 @@ const Landing = () => {
             <Button
               size="lg"
               className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90 font-sans font-semibold px-7 h-12 gap-2.5 text-base neon-glow transition-all active:scale-[0.97]"
-              onClick={() => navigate("/app")}
+              onClick={() => navigate("/auth")}
             >
               Find something to watch
               <ArrowRight className="w-4 h-4" />
@@ -152,7 +152,7 @@ const Landing = () => {
               size="lg"
               variant="ghost"
               className="rounded-full text-foreground/60 hover:text-foreground font-sans font-medium px-6 h-12 gap-2 text-base border border-border/20 hover:border-border/40 transition-all"
-              onClick={() => navigate("/app?mode=surprise")}
+              onClick={() => navigate("/auth")}
             >
               <Dice5 className="w-4 h-4" />
               Surprise me
@@ -446,7 +446,7 @@ const Landing = () => {
             <Button
               size="lg"
               className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90 font-sans font-semibold px-7 h-12 gap-2.5 text-base neon-glow transition-all active:scale-[0.97]"
-              onClick={() => navigate("/app")}
+              onClick={() => navigate("/auth")}
             >
               Start discovering
               <ArrowRight className="w-4 h-4" />
@@ -455,7 +455,7 @@ const Landing = () => {
               size="lg"
               variant="ghost"
               className="rounded-full text-foreground/60 hover:text-foreground font-sans font-medium px-6 h-12 gap-2 text-base border border-border/20 hover:border-border/40 transition-all"
-              onClick={() => navigate("/app?mode=surprise")}
+              onClick={() => navigate("/auth")}
             >
               <Dice5 className="w-4 h-4" />
               Try surprise mode

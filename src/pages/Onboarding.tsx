@@ -128,7 +128,7 @@ const Onboarding = () => {
         }).eq("id", userId);
       }
 
-      navigate("/app");
+      navigate("/");
     } catch (e) {
       console.error(e);
     } finally {
