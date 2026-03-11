@@ -27,12 +27,12 @@ export async function trackInteraction(
     const userId = (await supabase.auth.getUser()).data.user?.id;
     if (!userId) return;
 
-    await supabase.from("user_interactions").insert({
+    await supabase.from("user_interactions" as any).insert({
       user_id: userId,
       tmdb_id: tmdbId,
       action_type: actionType,
       context,
-    });
+    } as any);
   } catch (e) {
     console.error("Failed to track interaction:", e);
   }
