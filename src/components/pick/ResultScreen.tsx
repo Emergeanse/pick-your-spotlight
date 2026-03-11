@@ -1,7 +1,7 @@
 import { useState, useEffect, forwardRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Mic, MicOff, X, Send, Loader2, Sparkles, Check, Play, Star, Clock, Heart, Bookmark, Tv, ChevronDown, ChevronUp, MoreHorizontal, RefreshCw, ThumbsUp, ThumbsDown } from "lucide-react";
+import { Mic, MicOff, X, Send, Loader2, Sparkles, Check, Play, Star, Clock, Heart, Bookmark, Tv, ChevronDown, ChevronUp, MoreHorizontal, RefreshCw, ThumbsUp, ThumbsDown, MessageCircle } from "lucide-react";
 import type { MovieDetail } from "@/lib/tmdb";
 import { getDisplayTitle, getYear, getBackdropUrl, getPosterUrl, getWatchProviders, getMovieTrailerUrl } from "@/lib/tmdb";
 import type { Mood, Context, TimeAvailable } from "@/lib/tmdb";
@@ -32,6 +32,7 @@ interface ResultScreenProps {
   onShowAnother: () => void;
   onRestart: () => void;
   onRefineWithVoice?: () => void;
+  onRefineWithMessage?: (message: string) => void;
   onStartCompanion?: () => void;
   hasMore: boolean;
   userCriteria?: {
@@ -43,7 +44,7 @@ interface ResultScreenProps {
   onSelectAlternative?: (movie: MovieDetail) => void;
 }
 
-const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onShowAnother, onRestart, onRefineWithVoice, onStartCompanion, hasMore, userCriteria, alternativeMovies, onSelectAlternative }, ref) => {
+const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onShowAnother, onRestart, onRefineWithVoice, onRefineWithMessage, onStartCompanion, hasMore, userCriteria, alternativeMovies, onSelectAlternative }, ref) => {
   const [providers, setProviders] = useState<{ name: string; logo_path: string }[]>([]);
   const [trailerUrl, setTrailerUrl] = useState<string | null>(null);
   const [matchData, setMatchData] = useState<MatchData | null>(null);
@@ -419,16 +420,42 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                 </button>
               </div>
 
-              {/* More options link */}
-              <div className="flex items-center">
-                <button
-                  onClick={() => setShowOptions(true)}
-                  className="flex items-center gap-1.5 px-1 h-8 text-foreground/30 hover:text-foreground/50 text-[11px] font-sans transition-all"
+              {/* Conversational follow-up */}
+              {matchData && (
+                <motion.div
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 1.2, duration: 0.4 }}
+                  className="pt-1"
                 >
-                  <MoreHorizontal className="w-3.5 h-3.5" />
-                  <span>Plus d'options</span>
-                </button>
-              </div>
+                  <div className="flex items-start gap-2 mb-2.5">
+                    <MessageCircle className="w-3 h-3 text-primary/50 mt-0.5 flex-shrink-0" />
+                    <p className="text-foreground/40 text-[11px] font-sans leading-relaxed">
+                      Je pense que ce film pourrait te plaire. Tu veux affiner ?
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    <button
+                      onClick={() => onRefineWithMessage?.("Je veux quelque chose de plus intense")}
+                      className="px-3 py-1.5 rounded-full bg-foreground/[0.04] border border-border/25 text-foreground/50 hover:text-primary hover:border-primary/25 hover:bg-primary/5 text-[11px] font-sans transition-all active:scale-95"
+                    >
+                      Quelque chose de plus intense
+                    </button>
+                    <button
+                      onClick={() => onRefineWithMessage?.("Je préfère un film plus court")}
+                      className="px-3 py-1.5 rounded-full bg-foreground/[0.04] border border-border/25 text-foreground/50 hover:text-primary hover:border-primary/25 hover:bg-primary/5 text-[11px] font-sans transition-all active:scale-95"
+                    >
+                      Un film plus court
+                    </button>
+                    <button
+                      onClick={() => onRefineWithMessage?.("Montre-moi d'autres options similaires")}
+                      className="px-3 py-1.5 rounded-full bg-foreground/[0.04] border border-border/25 text-foreground/50 hover:text-primary hover:border-primary/25 hover:bg-primary/5 text-[11px] font-sans transition-all active:scale-95"
+                    >
+                      D'autres options similaires
+                    </button>
+                  </div>
+                </motion.div>
+              )}
             </motion.div>
           </motion.div>
         </div>
