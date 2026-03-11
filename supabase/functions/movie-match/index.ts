@@ -25,7 +25,7 @@ serve(async (req) => {
   }
 
   try {
-    const { movie, userCriteria, tasteProfile, userTasteVector } = await req.json();
+    const { movie, userCriteria, tasteProfile, userTasteVector, likedMovieTitles } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
@@ -102,10 +102,13 @@ serve(async (req) => {
     const topGenres = tasteProfile?.topGenres || [];
     const scoringWeights = tasteProfile?.scoringWeights || {};
 
+    const likedTitlesStr = (likedMovieTitles || []).slice(0, 30).join(", ");
+
     const tasteSection = tasteProfile ? `
 PROFIL DE GOÛTS ENRICHI :
 - Genres préférés (pondérés par récence) : ${topGenres.join(", ")}
 - Micro-genres / clusters : ${tasteClusters.join(", ") || "non déterminés"}
+- Films aimés : ${likedTitlesStr || "aucun encore"}
 - ${stats.likeCount || 0} films aimés, ${stats.watchCount || 0} vus, ${stats.skipCount || 0} skippés
 - Confiance profil : ${confidence.score}/100
 - Taux d'acceptation : ${stats.acceptanceRate || 0}%
@@ -139,6 +142,8 @@ RÈGLES :
   "emotionalJourney": "<2-3 phrases sur l'expérience émotionnelle>",
   "perfectFor": "<1 phrase moment idéal>",
   "funFact": "<1 anecdote>",
+  "similarLikedMovies": ["<titre exact d'un film aimé similaire>", ...max 3],
+  "matchingReasons": ["<raison courte, 2-4 mots>", ...max 4],
   "scores": {
     "taste": <0-100>,
     "context": <0-100>,
@@ -148,6 +153,8 @@ RÈGLES :
     "novelty": <0-100>
   }
 }
+- "similarLikedMovies" : choisis parmi les films aimés de l'utilisateur ceux qui partagent le plus de similarités (genre, ton, ambiance). Si aucun film aimé, retourne un tableau vide.
+- "matchingReasons" : raisons courtes du match (ex: "thriller sombre", "suspense psychologique", "ambiance tendue", "soirée solo"). Inclure le mood de session si pertinent.
 - Sois chaleureux et personnel (tu/toi)
 - Score calibré : si le film ne colle PAS à la session → 40-60 max, même si le profil global aime ce genre
 - Si match parfait session + profil + embedding → 85-99

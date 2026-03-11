@@ -7,7 +7,7 @@ import { getDisplayTitle, getYear, getBackdropUrl, getPosterUrl, getWatchProvide
 import type { Mood, Context, TimeAvailable } from "@/lib/tmdb";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
-import { likeMovie, unlikeMovie, isMovieLiked } from "@/lib/liked-movies";
+import { likeMovie, unlikeMovie, isMovieLiked, getLikedMovies } from "@/lib/liked-movies";
 import { addToWatchlist, removeFromWatchlist, isInWatchlist } from "@/lib/watchlist";
 import { trackInteraction, getUserTasteProfile } from "@/lib/interactions";
 import { toast } from "sonner";
@@ -23,6 +23,8 @@ interface MatchData {
   emotionalJourney: string;
   perfectFor: string;
   funFact: string;
+  similarLikedMovies?: string[];
+  matchingReasons?: string[];
 }
 
 interface ResultScreenProps {
@@ -89,13 +91,15 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
       (movie.genres || []).map(g => g.name)
     );
 
-    // Load taste profile + user taste vector and pass to match function
+    // Load taste profile + user taste vector + liked movies and pass to match function
     Promise.all([
       getUserTasteProfile(),
       user ? computeUserTasteVector(user.id) : Promise.resolve(null),
-    ]).then(([tasteProfile, userTasteVector]) => {
+      user ? getLikedMovies().catch(() => []) : Promise.resolve([]),
+    ]).then(([tasteProfile, userTasteVector, likedMovies]) => {
+      const likedMovieTitles = (likedMovies || []).map((m: any) => m.title);
       supabase.functions.invoke("movie-match", {
-        body: { movie, userCriteria, tasteProfile, userTasteVector },
+        body: { movie, userCriteria, tasteProfile, userTasteVector, likedMovieTitles },
       }).then(({ data, error }) => {
         if (error) { console.error("Match error:", error); setMatchLoading(false); return; }
         setMatchData(data as MatchData);
@@ -275,10 +279,46 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                   transition={{ delay: 0.1, duration: 0.4 }}
                   className="mb-5 max-w-md"
                 >
-                  <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-sans font-semibold mb-1.5">Pourquoi ce film ?</p>
-                  <p className="text-foreground/70 text-[13px] font-sans leading-relaxed">
+                  <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-sans font-semibold mb-2">Pourquoi ce film ?</p>
+                  
+                  <p className="text-foreground/70 text-[13px] font-sans leading-relaxed mb-3">
                     {matchData.headline}
                   </p>
+
+                  {/* Similar liked movies */}
+                  {matchData.similarLikedMovies && matchData.similarLikedMovies.length > 0 && (
+                    <div className="mb-2.5">
+                      <p className="text-[10px] text-muted-foreground font-sans font-medium mb-1.5">Parce que tu as aimé</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {matchData.similarLikedMovies.map((title) => (
+                          <span
+                            key={title}
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-[11px] font-sans font-medium"
+                          >
+                            <Heart className="w-2.5 h-2.5 fill-primary" />
+                            {title}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Matching reasons as tags */}
+                  {matchData.matchingReasons && matchData.matchingReasons.length > 0 && (
+                    <div>
+                      <p className="text-[10px] text-muted-foreground font-sans font-medium mb-1.5">Et que tu recherches</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {matchData.matchingReasons.map((reason) => (
+                          <span
+                            key={reason}
+                            className="inline-flex items-center px-2.5 py-1 rounded-full bg-foreground/5 border border-border/30 text-foreground/60 text-[11px] font-sans font-medium"
+                          >
+                            {reason}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </motion.div>
               )}
             </AnimatePresence>
