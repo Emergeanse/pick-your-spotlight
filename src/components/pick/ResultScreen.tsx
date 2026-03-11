@@ -446,41 +446,42 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.1, duration: 0.4 }}
-                  className="mb-5 max-w-md"
+                  className="mb-5 max-w-md rounded-2xl bg-primary/10 border border-primary/25 backdrop-blur-sm p-4"
                 >
                   {/* Headline + expand toggle */}
                   <button
                     onClick={() => setWhyExpanded(prev => !prev)}
                     className="w-full text-left group"
                   >
-                    <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-sans font-semibold mb-1.5 flex items-center gap-1.5">
+                    <p className="text-[10px] uppercase tracking-widest text-primary/70 font-sans font-semibold mb-1.5 flex items-center gap-1.5">
                       Pourquoi ce film ?
-                      <ChevronDown className={`w-3 h-3 text-muted-foreground/60 transition-transform duration-200 ${whyExpanded ? "rotate-180" : ""}`} />
+                      <ChevronDown className={`w-3 h-3 text-primary/50 transition-transform duration-200 ${whyExpanded ? "rotate-180" : ""}`} />
                     </p>
-                    <p className="text-foreground/70 text-[13px] font-sans leading-relaxed">
+                    <p className="text-foreground/80 text-[13px] font-sans leading-relaxed">
                       {matchData.headline}
                     </p>
                   </button>
-                  {/* Read aloud button — prominent */}
+
+                  {/* Listen button with squirrel */}
                   <motion.button
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ delay: 0.3, duration: 0.3 }}
                     onClick={(e) => { e.stopPropagation(); handleReadWhy(); }}
                     disabled={whyAudioLoading || whySpeaking}
-                    className={`mt-3 inline-flex items-center gap-2 px-4 py-2 rounded-xl border transition-all active:scale-95 text-[12px] font-sans font-medium shadow-sm ${
+                    className={`mt-3 w-full flex items-center gap-3 px-4 py-2.5 rounded-xl border transition-all active:scale-[0.98] text-[13px] font-sans font-medium ${
                       whySpeaking
-                        ? "bg-primary/15 border-primary/40 text-primary"
-                        : "bg-card/80 backdrop-blur-sm border-primary/25 text-foreground/70 hover:text-primary hover:border-primary/40 hover:bg-primary/10"
+                        ? "bg-primary/20 border-primary/50 text-primary"
+                        : "bg-background/40 border-primary/20 text-foreground/70 hover:bg-primary/15 hover:border-primary/40 hover:text-primary"
                     }`}
-                    title="Pick lit l'explication"
                   >
+                    <img src={pickSquirrel} alt="Pick" className="w-7 h-7 object-contain flex-shrink-0" />
                     {whyAudioLoading ? (
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <Loader2 className="w-4 h-4 animate-spin text-primary" />
                     ) : (
-                      <Volume2 className={`w-3.5 h-3.5 ${whySpeaking ? "text-primary animate-pulse" : ""}`} />
+                      <Volume2 className={`w-4 h-4 flex-shrink-0 ${whySpeaking ? "text-primary animate-pulse" : ""}`} />
                     )}
-                    <span>{whySpeaking ? "Pick parle…" : "🎧 Écouter Pick"}</span>
+                    <span>{whySpeaking ? "Pick parle…" : "Je peux te présenter ce film si tu veux"}</span>
                   </motion.button>
 
                   {/* Expanded detailed explanation */}
