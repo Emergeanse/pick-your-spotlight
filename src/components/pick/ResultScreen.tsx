@@ -96,6 +96,20 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
   const [whyAudioLoading, setWhyAudioLoading] = useState(false);
   const { user } = useAuth();
 
+  const playBrowserWhyFallback = useCallback((text: string) => {
+    if (typeof window === "undefined" || !("speechSynthesis" in window)) return false;
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = "fr-FR";
+    utterance.rate = 1;
+    utterance.pitch = 1;
+    utterance.onstart = () => setWhySpeaking(true);
+    utterance.onend = () => setWhySpeaking(false);
+    utterance.onerror = () => setWhySpeaking(false);
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(utterance);
+    return true;
+  }, []);
+
   const handleReadWhy = useCallback(async () => {
     if (!matchData || whyAudioLoading || whySpeaking) return;
     const textToRead = [
@@ -119,7 +133,10 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
           body: JSON.stringify({ text: textToRead }),
         }
       );
-      if (!response.ok) throw new Error(`TTS failed: ${response.status}`);
+      if (!response.ok) {
+        const errorBody = await response.text();
+        throw new Error(`TTS failed: ${response.status} ${errorBody}`);
+      }
       const blob = await response.blob();
       const url = URL.createObjectURL(blob);
       const audio = new Audio(url);
@@ -129,11 +146,14 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
       await audio.play();
     } catch (e) {
       console.error("Why TTS error:", e);
-      setWhySpeaking(false);
+      const fallbackStarted = playBrowserWhyFallback(textToRead);
+      if (!fallbackStarted) {
+        setWhySpeaking(false);
+      }
     } finally {
       setWhyAudioLoading(false);
     }
-  }, [matchData, whyAudioLoading, whySpeaking]);
+  }, [matchData, whyAudioLoading, whySpeaking, playBrowserWhyFallback]);
 
   const title = getDisplayTitle(movie);
   const year = getYear(movie);
