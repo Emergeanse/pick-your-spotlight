@@ -145,6 +145,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
     generateTonightPick();
   };
 
+  return (
     <div className="relative w-full h-full overflow-hidden">
       <BrandHeader showDiscoveryToggle onToggleDiscovery={() => setShowDiscovery(v => !v)} discoveryOpen={showDiscovery} />
 
