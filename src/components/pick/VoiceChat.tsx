@@ -19,11 +19,16 @@ export type ChatMessage = {
 };
 
 const EXAMPLE_PROMPTS = [
-  "Un film drôle sur Netflix",
-  "Un thriller court ce soir",
-  "Un film triste comme Interstellar",
-  "Un film pour regarder avec ma copine",
-  "Un film d'action de moins de 2h",
+  "Un film drôle sur Netflix ce soir",
+  "Un thriller psychologique comme Gone Girl",
+  "Un film scandinave sombre et lent",
+  "Une comédie romantique des années 90",
+  "Un film noir et blanc oscarisé",
+  "Un documentaire sur la musique",
+  "Un film d'animation japonais poétique",
+  "Un film indépendant avec peu de dialogues",
+  "Une série courte qu'on finit en un week-end",
+  "Un film de science-fiction sous-estimé",
 ];
 
 // Sound wave bars animation
@@ -55,7 +60,11 @@ const VoiceChat = ({ onClose, onMovieSuggested, initialMessages }: VoiceChatProp
   const pendingSendRef = useRef(false);
   const committedTextRef = useRef("");
 
-  const randomExample = EXAMPLE_PROMPTS[Math.floor(Math.random() * EXAMPLE_PROMPTS.length)];
+  // Pick 3 random non-repeating examples
+  const [randomExamples] = useState(() => {
+    const shuffled = [...EXAMPLE_PROMPTS].sort(() => Math.random() - 0.5);
+    return shuffled.slice(0, 3);
+  });
 
   // Pre-fetch scribe token on mount so click handler stays synchronous
   useEffect(() => {
@@ -272,17 +281,23 @@ const VoiceChat = ({ onClose, onMovieSuggested, initialMessages }: VoiceChatProp
               <p className="text-muted-foreground text-xs font-sans mb-4">
                 Appuie sur le micro et parle naturellement
               </p>
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.6 }}
-                className="flex items-center gap-2 px-4 py-2 rounded-full bg-primary/5 border border-primary/10"
-              >
-                <Mic className="w-3 h-3 text-primary/60" />
-                <span className="text-primary/60 text-xs font-sans italic">
-                  Essayez : « {randomExample} »
-                </span>
-              </motion.div>
+              <div className="flex flex-col gap-2 mt-1">
+                {randomExamples.map((example, i) => (
+                  <motion.button
+                    key={example}
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.5 + i * 0.1 }}
+                    onClick={() => handleSend(example)}
+                    className="flex items-center gap-2 px-4 py-2 rounded-full bg-primary/5 border border-primary/10 hover:bg-primary/10 hover:border-primary/20 transition-all cursor-pointer text-left"
+                  >
+                    <Mic className="w-3 h-3 text-primary/60 flex-shrink-0" />
+                    <span className="text-primary/60 text-xs font-sans italic">
+                      « {example} »
+                    </span>
+                  </motion.button>
+                ))}
+              </div>
             </motion.div>
           )}
 
