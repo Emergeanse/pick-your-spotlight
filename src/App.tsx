@@ -19,6 +19,10 @@ function HomePage() {
   return user ? <Index /> : <Landing />;
 }
 
+function AppRoute() {
+  return <Index />;
+}
+
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, isReady } = useAuth();
   if (!isReady) return null;
