@@ -256,6 +256,15 @@ const Index = () => {
           />
         )}
       </AnimatePresence>
+
+      <AnimatePresence>
+        {showCompanion && results[currentResultIndex] && (
+          <CompanionMode
+            movie={results[currentResultIndex]}
+            onClose={() => setShowCompanion(false)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 };
