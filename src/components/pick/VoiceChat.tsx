@@ -10,9 +10,10 @@ import ReactMarkdown from "react-markdown";
 interface VoiceChatProps {
   onClose: () => void;
   onMovieSuggested: (movie: MovieDetail) => void;
+  initialMessages?: ChatMessage[];
 }
 
-type ChatMessage = {
+export type ChatMessage = {
   role: "user" | "assistant";
   content: string;
 };
@@ -39,8 +40,8 @@ const SoundWave = () => (
   </div>
 );
 
-const VoiceChat = ({ onClose, onMovieSuggested }: VoiceChatProps) => {
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+const VoiceChat = ({ onClose, onMovieSuggested, initialMessages }: VoiceChatProps) => {
+  const [messages, setMessages] = useState<ChatMessage[]>(initialMessages || []);
   const [isListening, setIsListening] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);

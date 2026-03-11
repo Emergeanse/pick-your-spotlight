@@ -8,12 +8,13 @@ import TimeStep from "@/components/pick/TimeStep";
 import PlatformStep from "@/components/pick/PlatformStep";
 import ResultScreen from "@/components/pick/ResultScreen";
 import VoiceChat from "@/components/pick/VoiceChat";
+import type { ChatMessage } from "@/components/pick/VoiceChat";
 import StepLayout from "@/components/pick/StepLayout";
 import BrandHeader from "@/components/pick/BrandHeader";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import type { Mood, Context, TimeAvailable, MovieDetail } from "@/lib/tmdb";
-import { getRecommendations } from "@/lib/tmdb";
+import { getRecommendations, getDisplayTitle } from "@/lib/tmdb";
 
 type Step = "home" | "mood" | "context" | "time" | "platforms" | "result";
 
@@ -42,6 +43,7 @@ const Index = () => {
   const [currentResultIndex, setCurrentResultIndex] = useState(0);
   const [loadingMessage, setLoadingMessage] = useState("");
   const [showChat, setShowChat] = useState(false);
+  const [chatInitialMessages, setChatInitialMessages] = useState<ChatMessage[] | undefined>(undefined);
   const { user } = useAuth();
   const navigate = useNavigate();
 
@@ -70,8 +72,21 @@ const Index = () => {
     setStep("result");
   };
 
-  const handleOpenChat = () => setShowChat(true);
+  const handleOpenChat = () => {
+    setChatInitialMessages(undefined);
+    setShowChat(true);
+  };
   const handleCloseChat = () => setShowChat(false);
+
+  const handleRefineWithVoice = () => {
+    const currentMovie = results[currentResultIndex];
+    if (!currentMovie) return;
+    const contextMessages: ChatMessage[] = [
+      { role: "assistant", content: `Je t'ai recommandé **${getDisplayTitle(currentMovie)}**. Dis-moi ce qui ne te convient pas et je te trouverai quelque chose de mieux !` },
+    ];
+    setChatInitialMessages(contextMessages);
+    setShowChat(true);
+  };
 
   const handleMovieSuggested = (movie: MovieDetail) => {
     setResults([movie]);
@@ -204,6 +219,7 @@ const Index = () => {
               movie={results[currentResultIndex]}
               onShowAnother={handleShowAnother}
               onRestart={handleRestart}
+              onRefineWithVoice={handleRefineWithVoice}
               hasMore={currentResultIndex < results.length - 1}
               userCriteria={{ mood, context, time }}
             />
@@ -216,6 +232,7 @@ const Index = () => {
           <VoiceChat
             onClose={handleCloseChat}
             onMovieSuggested={handleMovieSuggested}
+            initialMessages={chatInitialMessages}
           />
         )}
       </AnimatePresence>

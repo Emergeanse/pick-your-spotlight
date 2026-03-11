@@ -1,7 +1,7 @@
 import { useState, useEffect, forwardRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Play, RotateCcw, ChevronRight, Star, Clock, Sparkles, Heart, Lightbulb, PartyPopper, Loader2, Bookmark } from "lucide-react";
+import { Play, RotateCcw, ChevronRight, Star, Clock, Sparkles, Heart, Lightbulb, PartyPopper, Loader2, Bookmark, Mic } from "lucide-react";
 import type { MovieDetail } from "@/lib/tmdb";
 import { getDisplayTitle, getYear, getBackdropUrl, getPosterUrl, getWatchProviders, getMovieTrailerUrl } from "@/lib/tmdb";
 import type { Mood, Context, TimeAvailable } from "@/lib/tmdb";
@@ -27,6 +27,7 @@ interface ResultScreenProps {
   movie: MovieDetail;
   onShowAnother: () => void;
   onRestart: () => void;
+  onRefineWithVoice?: () => void;
   hasMore: boolean;
   userCriteria?: {
     mood: Mood | null;
@@ -35,7 +36,7 @@ interface ResultScreenProps {
   };
 }
 
-const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onShowAnother, onRestart, hasMore, userCriteria }, ref) => {
+const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onShowAnother, onRestart, onRefineWithVoice, hasMore, userCriteria }, ref) => {
   const [providers, setProviders] = useState<{ name: string; logo_path: string }[]>([]);
   const [trailerUrl, setTrailerUrl] = useState<string | null>(null);
   const [matchData, setMatchData] = useState<MatchData | null>(null);
@@ -334,6 +335,18 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                 >
                   <ChevronRight className="w-4 h-4" />
                   Autre suggestion
+                </Button>
+              )}
+
+              {onRefineWithVoice && (
+                <Button
+                  variant="heroOutline"
+                  size="xl"
+                  className="text-sm md:text-base"
+                  onClick={onRefineWithVoice}
+                >
+                  <Mic className="w-4 h-4" />
+                  Affiner
                 </Button>
               )}
 
