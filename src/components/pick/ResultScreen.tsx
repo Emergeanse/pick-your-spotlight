@@ -54,6 +54,8 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
   const [bookmarkLoading, setBookmarkLoading] = useState(false);
   const [synopsisExpanded, setSynopsisExpanded] = useState(false);
   const [showOptions, setShowOptions] = useState(false);
+  const [showRejectReasons, setShowRejectReasons] = useState(false);
+  const [feedbackGiven, setFeedbackGiven] = useState<"good" | "bad" | null>(null);
   const [altProviders, setAltProviders] = useState<Record<number, { name: string; logo_path: string }[]>>({});
   const { user } = useAuth();
 
