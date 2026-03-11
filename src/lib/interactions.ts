@@ -50,11 +50,11 @@ export async function getUserTasteProfile() {
 
   // Get recent interactions
   const { data: interactions } = await supabase
-    .from("user_interactions")
+    .from("user_interactions" as any)
     .select("tmdb_id, action_type, context, created_at")
     .eq("user_id", userId)
     .order("created_at", { ascending: false })
-    .limit(100);
+    .limit(100) as any;
 
   // Get profile preferences
   const { data: profile } = await supabase

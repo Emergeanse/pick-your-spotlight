@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { likeMovie, unlikeMovie, isMovieLiked } from "@/lib/liked-movies";
 import { addToWatchlist, removeFromWatchlist, isInWatchlist } from "@/lib/watchlist";
+import { trackInteraction, getUserTasteProfile } from "@/lib/interactions";
 import { toast } from "sonner";
 import BrandHeader from "./BrandHeader";
 
