@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Mic, Wand2, SlidersHorizontal, Dices, Tv, ThumbsDown, Sparkles, Loader2, Zap } from "lucide-react";
@@ -10,6 +10,15 @@ import { computeUserTasteVector } from "@/lib/taste-engine";
 import type { Movie, MovieDetail } from "@/lib/tmdb";
 import BrandHeader from "./BrandHeader";
 import DiscoverySection from "./DiscoverySection";
+import pickSquirrel from "@/assets/pick-squirrel.png";
+
+const PICK_PHRASES = [
+  "Alors… on regarde quoi ce soir ?",
+  "Tu veux quelque chose de léger ou intense ?",
+  "J'ai peut-être un film parfait pour toi.",
+  "Dis-moi ton mood, je fais le reste.",
+  "Prêt pour une pépite ?",
+];
 
 interface HomeScreenProps {
   onStart: () => void;
@@ -35,6 +44,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
   const [tonightPick, setTonightPick] = useState<MovieDetail | null>(null);
   const [tonightLoading, setTonightLoading] = useState(false);
   const [tonightProviders, setTonightProviders] = useState<{ name: string; logo_path: string }[]>([]);
+  const [phraseIndex, setPhraseIndex] = useState(0);
   const { user } = useAuth();
 
   useEffect(() => {
@@ -45,6 +55,14 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
         .filter(Boolean);
       setBgImages(bgs);
     }).catch(() => {});
+  }, []);
+
+  // Rotate Pick's phrases
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setPhraseIndex(i => (i + 1) % PICK_PHRASES.length);
+    }, 4000);
+    return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {
@@ -172,8 +190,30 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3, duration: 0.6 }}
-            className="max-w-md mb-8 md:mb-10"
+            className="max-w-md mb-8 md:mb-10 flex flex-col items-center"
           >
+            {/* Pick mascot */}
+            <motion.img
+              src={pickSquirrel}
+              alt="Pick, ton expert ciné"
+              className="w-14 h-14 md:w-16 md:h-16 mb-3 drop-shadow-lg"
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+            />
+            {/* Rotating speech bubble */}
+            <AnimatePresence mode="wait">
+              <motion.p
+                key={phraseIndex}
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -6 }}
+                transition={{ duration: 0.3 }}
+                className="text-foreground/70 text-sm md:text-base font-sans font-medium italic mb-4"
+              >
+                « {PICK_PHRASES[phraseIndex]} »
+              </motion.p>
+            </AnimatePresence>
             <h1 className="text-3xl md:text-6xl lg:text-7xl font-serif mb-3 md:mb-4">
               Tu ne sais pas quoi regarder ?
             </h1>
