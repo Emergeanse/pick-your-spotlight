@@ -555,6 +555,62 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
           </>
         )}
       </AnimatePresence>
+
+      {/* Bottom Sheet: Reject reasons */}
+      <AnimatePresence>
+        {showRejectReasons && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-50 bg-background/60 backdrop-blur-sm"
+              onClick={() => setShowRejectReasons(false)}
+            />
+            <motion.div
+              initial={{ y: "100%" }}
+              animate={{ y: 0 }}
+              exit={{ y: "100%" }}
+              transition={{ type: "spring", damping: 28, stiffness: 300 }}
+              className="fixed bottom-0 left-0 right-0 z-50 bg-card border-t border-border/20 rounded-t-2xl pb-[env(safe-area-inset-bottom)]"
+            >
+              <div className="flex justify-center pt-3 pb-1">
+                <div className="w-10 h-1 rounded-full bg-foreground/15" />
+              </div>
+              <div className="px-5 pb-5 pt-2">
+                <p className="text-sm font-sans font-semibold text-foreground mb-3">Pourquoi ce film ne te convient pas ?</p>
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    { label: "Déjà vu", value: "already_seen" },
+                    { label: "Pas mon style", value: "not_my_style" },
+                    { label: "Trop long", value: "too_long" },
+                    { label: "Pas ce soir", value: "not_tonight" },
+                  ].map((reason) => (
+                    <button
+                      key={reason.value}
+                      onClick={() => {
+                        setFeedbackGiven("bad");
+                        setShowRejectReasons(false);
+                        trackInteraction(movie.id, "skipped", {
+                          mood: userCriteria?.mood,
+                          context: userCriteria?.context,
+                          time: userCriteria?.time,
+                          feedback: "bad_reco",
+                          reject_reason: reason.value,
+                        });
+                        toast.success("Merci, on fera mieux !");
+                      }}
+                      className="px-4 py-3 rounded-xl border border-border/30 bg-foreground/[0.03] hover:bg-primary/10 hover:border-primary/20 text-foreground/60 hover:text-foreground text-sm font-sans font-medium transition-all active:scale-[0.97]"
+                    >
+                      {reason.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   );
 });
