@@ -545,29 +545,28 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 1.2, duration: 0.4 }}
-                  className="pt-1"
+                  className="pt-3"
                 >
-                  <div className="flex items-start gap-3 mb-3">
-                    <PickCharacter mood="default" size="sm" animate={false} />
-                    <p className="text-foreground/50 text-[12px] font-sans leading-relaxed pt-2">
-                      Alors, ça te tente ? On peut affiner si tu veux.
-                    </p>
-                  </div>
-                  <div className="flex flex-wrap gap-1.5">
+                  <PickCharacter mood="default" message="Alors, ça te tente ? On peut affiner si tu veux." size="sm" animate={false} />
+
+                  <div className="flex flex-wrap gap-1.5 mt-3 ml-1">
                     {[
                       { label: "Plus intense", message: "Je veux quelque chose de plus intense" },
                       { label: "Plus émouvant", message: "Je veux quelque chose de plus émouvant et touchant" },
                       { label: "Plus court", message: "Je préfère un film plus court" },
                       { label: "Plus drôle", message: "Je veux un truc plus drôle et léger" },
                       { label: "Autre suggestion", message: "Montre-moi une autre suggestion dans le même style" },
-                    ].map((chip) => (
-                      <button
+                    ].map((chip, i) => (
+                      <motion.button
                         key={chip.label}
+                        initial={{ opacity: 0, y: 4 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 1.4 + i * 0.06 }}
                         onClick={() => onRefineWithMessage?.(chip.message)}
-                        className="px-3 py-1.5 rounded-full bg-foreground/[0.04] border border-border/25 text-foreground/50 hover:text-primary hover:border-primary/25 hover:bg-primary/5 text-[11px] font-sans transition-all active:scale-95"
+                        className="px-3.5 py-2 rounded-full bg-foreground/[0.04] border border-border/25 text-foreground/50 hover:text-primary hover:border-primary/30 hover:bg-primary/5 text-[12px] font-sans transition-all active:scale-95"
                       >
                         {chip.label}
-                      </button>
+                      </motion.button>
                     ))}
                   </div>
                 </motion.div>
@@ -578,7 +577,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  className="pt-2 flex items-center gap-3"
+                  className="pt-3"
                 >
                   <PickCharacter mood="think" message="Je cherche mieux…" size="sm" animate={false} />
                 </motion.div>
