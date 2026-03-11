@@ -47,6 +47,7 @@ const Index = () => {
   const [showChat, setShowChat] = useState(false);
   const [showCompanion, setShowCompanion] = useState(false);
   const [chatInitialMessages, setChatInitialMessages] = useState<ChatMessage[] | undefined>(undefined);
+  const [searchTags, setSearchTags] = useState<string[]>([]);
   const { user } = useAuth();
   const navigate = useNavigate();
 
