@@ -1,11 +1,10 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Mic, MicOff, X, Send, Loader2, Zap } from "lucide-react";
+import { Mic, MicOff, X, Send, Loader2, Sparkles, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useScribe, CommitStrategy } from "@elevenlabs/react";
 import type { MovieDetail } from "@/lib/tmdb";
-import ReactMarkdown from "react-markdown";
 
 interface VoiceChatProps {
   onClose: () => void;
@@ -33,6 +32,8 @@ const EXAMPLE_PROMPTS = [
   "Une série feel-good pour se vider la tête",
 ];
 
+type Phase = "idle" | "listening" | "processing" | "recap";
+
 // Sound wave bars animation
 const SoundWave = () => (
   <div className="flex items-center gap-[3px] h-8">
@@ -48,16 +49,13 @@ const SoundWave = () => (
 );
 
 const VoiceChat = ({ onClose, onMovieSuggested, initialMessages }: VoiceChatProps) => {
-  const [messages, setMessages] = useState<ChatMessage[]>(initialMessages || []);
-  const [isListening, setIsListening] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [phase, setPhase] = useState<Phase>("idle");
+  const [userText, setUserText] = useState("");
+  const [recapTags, setRecapTags] = useState<string[]>([]);
   const [inputText, setInputText] = useState("");
   const [micError, setMicError] = useState<string | null>(null);
-  const [detectedFilters, setDetectedFilters] = useState<string[] | null>(null);
   const [partialText, setPartialText] = useState("");
   const [scribeToken, setScribeToken] = useState<string | null>(null);
-  const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const pendingSendRef = useRef(false);
   const committedTextRef = useRef("");
@@ -68,7 +66,7 @@ const VoiceChat = ({ onClose, onMovieSuggested, initialMessages }: VoiceChatProp
     return shuffled.slice(0, 3);
   });
 
-  // Pre-fetch scribe token on mount so click handler stays synchronous
+  // Pre-fetch scribe token on mount
   useEffect(() => {
     supabase.functions.invoke("scribe-token").then(({ data }) => {
       if (data?.token) setScribeToken(data.token);
@@ -86,7 +84,6 @@ const VoiceChat = ({ onClose, onMovieSuggested, initialMessages }: VoiceChatProp
       if (data.text.trim()) {
         committedTextRef.current = data.text.trim();
         setPartialText("");
-        // Auto-send after VAD commits
         pendingSendRef.current = true;
       }
     },
@@ -101,121 +98,92 @@ const VoiceChat = ({ onClose, onMovieSuggested, initialMessages }: VoiceChatProp
       stopListening();
       handleSend(text);
     }
-  }, [partialText]); // triggered when partialText resets after commit
+  }, [partialText]);
 
-  useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }
-  }, [messages, partialText]);
-
-  const sendToAI = useCallback(async (allMessages: ChatMessage[]) => {
-    setIsLoading(true);
-    setIsAnalyzing(true);
-    setDetectedFilters(null);
+  const sendToAI = useCallback(async (text: string) => {
+    setPhase("processing");
+    setUserText(text);
 
     try {
+      const messages: ChatMessage[] = initialMessages
+        ? [...initialMessages, { role: "user" as const, content: text }]
+        : [{ role: "user" as const, content: text }];
+
       const { data, error } = await supabase.functions.invoke("movie-chat", {
-        body: { messages: allMessages },
+        body: { messages },
       });
 
       if (error) throw error;
-      setIsAnalyzing(false);
-
-      if (data?.reply) {
-        setMessages(prev => [...prev, { role: "assistant", content: data.reply }]);
-      }
 
       if (data?.movie) {
-        const movie = data.movie as MovieDetail;
-        const filters: string[] = [];
-        if (movie.genres?.length) filters.push(...movie.genres.slice(0, 2).map(g => g.name));
-        if (movie.runtime) filters.push(`${movie.runtime} min`);
-        setDetectedFilters(filters);
+        const recap: string[] = data.recap || [];
+        setRecapTags(recap);
+        setPhase("recap");
 
+        // Show recap for a moment, then transition to result
         setTimeout(() => {
-          onMovieSuggested(movie);
-        }, 1800);
+          onMovieSuggested(data.movie as MovieDetail);
+        }, recap.length > 0 ? 1800 : 800);
+      } else if (data?.reply) {
+        // AI asked a follow-up question — for now just close and let them retry
+        // Could be enhanced later with multi-turn voice
+        setPhase("idle");
       }
     } catch (e) {
       console.error("Chat error:", e);
-      setIsAnalyzing(false);
-      setMessages(prev => [
-        ...prev,
-        { role: "assistant", content: "Oups, une erreur est survenue. Réessaie !" },
-      ]);
-    } finally {
-      setIsLoading(false);
+      setPhase("idle");
     }
-  }, [onMovieSuggested]);
+  }, [onMovieSuggested, initialMessages]);
 
   const handleSend = useCallback(async (text: string) => {
     if (!text.trim()) return;
-    const userMsg: ChatMessage = { role: "user", content: text.trim() };
-    const newMessages = [...messages, userMsg];
-    setMessages(newMessages);
     setInputText("");
     setPartialText("");
-    await sendToAI(newMessages);
-  }, [messages, sendToAI]);
+    await sendToAI(text.trim());
+  }, [sendToAI]);
 
   const startListening = useCallback(async () => {
     setMicError(null);
     try {
       if (!scribeToken) {
-        // Token not loaded yet, try fetching now
         const { data } = await supabase.functions.invoke("scribe-token");
         if (!data?.token) throw new Error("Failed to get voice token");
         setScribeToken(data.token);
-        
-        // getUserMedia directly in click handler — critical for Safari
         await scribe.connect({
           token: data.token,
-          microphone: {
-            echoCancellation: true,
-            noiseSuppression: true,
-          },
+          microphone: { echoCancellation: true, noiseSuppression: true },
         });
       } else {
-        // Token pre-loaded: getUserMedia happens inside scribe.connect directly in click handler
         await scribe.connect({
           token: scribeToken,
-          microphone: {
-            echoCancellation: true,
-            noiseSuppression: true,
-          },
+          microphone: { echoCancellation: true, noiseSuppression: true },
         });
       }
-
-      setIsListening(true);
+      setPhase("listening");
     } catch (e: any) {
       console.error("Mic error:", e);
       if (e?.name === "NotAllowedError" || e?.message?.includes("Permission")) {
-        setMicError("Accès au micro refusé. Autorise le micro dans les paramètres de ton navigateur.");
+        setMicError("Accès au micro refusé. Autorise le micro dans les paramètres.");
       } else {
-        setMicError(`Erreur micro. Tape ton message ci-dessous 👇`);
-        console.error("Full error:", JSON.stringify(e, null, 2));
+        setMicError("Erreur micro. Tape ton message ci-dessous 👇");
       }
       inputRef.current?.focus();
-      setTimeout(() => inputRef.current?.focus(), 100);
     }
   }, [scribe, scribeToken]);
 
   // Auto-start listening when opened with initial messages (from "Affiner" button)
   useEffect(() => {
     if (initialMessages && initialMessages.length > 0 && scribeToken) {
-      const timer = setTimeout(() => {
-        startListening();
-      }, 300);
+      const timer = setTimeout(() => startListening(), 300);
       return () => clearTimeout(timer);
     }
   }, [initialMessages, scribeToken, startListening]);
 
   const stopListening = useCallback(() => {
     scribe.disconnect();
-    setIsListening(false);
+    if (phase === "listening") setPhase("idle");
     setPartialText("");
-  }, [scribe]);
+  }, [scribe, phase]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -224,256 +192,258 @@ const VoiceChat = ({ onClose, onMovieSuggested, initialMessages }: VoiceChatProp
     }
   };
 
-  const showEmptyState = messages.length === 0 && !isListening && !partialText && !isLoading;
-
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.3 }}
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4"
+      className="fixed inset-0 z-50 flex flex-col"
     >
-      {/* Backdrop */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className="absolute inset-0 bg-background/90 backdrop-blur-2xl"
-        onClick={onClose}
-      />
+      {/* Full-screen backdrop */}
+      <div className="absolute inset-0 bg-background/95 backdrop-blur-2xl" />
 
-      {/* Chat card */}
-      <motion.div
-        initial={{ y: 30, scale: 0.96 }}
-        animate={{ y: 0, scale: 1 }}
-        exit={{ y: 20, scale: 0.96 }}
-        transition={{ type: "spring", damping: 25, stiffness: 300 }}
-        className="relative z-10 w-full max-w-lg bg-card/80 backdrop-blur-md border border-border/20 rounded-none sm:rounded-3xl overflow-hidden flex flex-col shadow-2xl shadow-primary/5"
-        style={{ maxHeight: "100dvh", height: "100dvh" }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-border/10">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center">
-              <Zap className="w-4 h-4 text-primary" />
-            </div>
-            <div>
-              <h2 className="font-serif text-base">Assistant Pick</h2>
-              <p className="text-muted-foreground text-[11px] font-sans">Film en 2 secondes</p>
-            </div>
-          </div>
-          <Button variant="ghost" size="icon" onClick={onClose} className="text-muted-foreground hover:text-foreground rounded-full">
-            <X className="w-5 h-5" />
-          </Button>
-        </div>
+      {/* Close button */}
+      <div className="relative z-10 flex justify-end p-4 pt-[calc(1rem+env(safe-area-inset-top))]">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onClose}
+          className="text-muted-foreground hover:text-foreground rounded-full"
+        >
+          <X className="w-5 h-5" />
+        </Button>
+      </div>
 
-        {/* Messages */}
-        <div ref={scrollRef} className="flex-1 overflow-y-auto px-5 py-5 space-y-3 min-h-[250px]">
-          {/* Empty state — big clickable mic */}
-          {showEmptyState && (
+      {/* Main content area */}
+      <div className="relative z-10 flex-1 flex flex-col items-center justify-center px-6 pb-[calc(5rem+env(safe-area-inset-bottom))]">
+        <AnimatePresence mode="wait">
+          {/* IDLE — Big mic + examples */}
+          {phase === "idle" && (
             <motion.div
+              key="idle"
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-              className="flex flex-col items-center justify-center h-full text-center py-8"
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.3 }}
+              className="flex flex-col items-center text-center"
             >
               <button
                 type="button"
-                onClick={() => startListening()}
-                className="group w-24 h-24 rounded-full bg-primary/10 border-2 border-primary/30 flex items-center justify-center mb-5 transition-all duration-200 active:scale-95 active:bg-primary/20 cursor-pointer select-none"
-                style={{ WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}
+                onClick={startListening}
+                className="w-28 h-28 rounded-full bg-primary/10 border-2 border-primary/30 flex items-center justify-center mb-6 transition-all duration-200 active:scale-95 active:bg-primary/20 cursor-pointer select-none hover:bg-primary/15 hover:border-primary/40"
+                style={{ WebkitTapHighlightColor: "transparent", touchAction: "manipulation" }}
               >
-                <Mic className="w-10 h-10 text-primary pointer-events-none" />
+                <Mic className="w-12 h-12 text-primary pointer-events-none" />
               </button>
-              <p className="text-foreground/70 text-base font-serif mb-2">
+
+              <h2 className="text-foreground text-lg font-serif mb-2">
                 Dis-moi ce que tu veux regarder
+              </h2>
+              <p className="text-muted-foreground text-sm font-sans mb-6">
+                Appuie et parle naturellement
               </p>
-              <p className="text-muted-foreground text-xs font-sans mb-4">
-                Appuie sur le micro et parle naturellement
-              </p>
-              <div className="flex flex-col gap-2 mt-1">
+
+              <div className="flex flex-col gap-2.5 w-full max-w-xs">
                 {randomExamples.map((example, i) => (
                   <motion.button
                     key={example}
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.5 + i * 0.1 }}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.3 + i * 0.08 }}
                     onClick={() => handleSend(example)}
-                    className="flex items-center gap-2 px-4 py-2 rounded-full bg-primary/5 border border-primary/10 hover:bg-primary/10 hover:border-primary/20 transition-all cursor-pointer text-left"
+                    className="flex items-center gap-2.5 px-4 py-2.5 rounded-full bg-primary/5 border border-primary/10 hover:bg-primary/10 hover:border-primary/20 transition-all cursor-pointer text-left"
                   >
-                    <Mic className="w-3 h-3 text-primary/60 flex-shrink-0" />
-                    <span className="text-primary/60 text-xs font-sans italic">
+                    <Mic className="w-3 h-3 text-primary/50 flex-shrink-0" />
+                    <span className="text-foreground/50 text-xs font-sans">
                       « {example} »
                     </span>
                   </motion.button>
                 ))}
               </div>
+
+              {micError && (
+                <motion.p
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="mt-4 px-4 py-2 rounded-xl bg-destructive/10 text-destructive text-xs font-sans text-center max-w-xs"
+                >
+                  {micError}
+                </motion.p>
+              )}
             </motion.div>
           )}
 
-          {/* Listening state — pulsing mic with sound wave */}
-          {isListening && messages.length === 0 && !partialText && (
+          {/* LISTENING — Pulsing mic + sound wave */}
+          {phase === "listening" && (
             <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="flex flex-col items-center justify-center h-full text-center py-8"
+              key="listening"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.3 }}
+              className="flex flex-col items-center text-center"
             >
               <motion.div
-                animate={{ boxShadow: ["0 0 0 0px rgba(139, 92, 246, 0.3)", "0 0 0 20px rgba(139, 92, 246, 0)", "0 0 0 0px rgba(139, 92, 246, 0.3)"] }}
+                animate={{
+                  boxShadow: [
+                    "0 0 0 0px hsl(var(--primary) / 0.3)",
+                    "0 0 0 24px hsl(var(--primary) / 0)",
+                    "0 0 0 0px hsl(var(--primary) / 0.3)",
+                  ],
+                }}
                 transition={{ duration: 2, repeat: Infinity }}
-                className="mb-5 rounded-full"
+                className="mb-6 rounded-full"
               >
                 <button
                   type="button"
-                  onClick={() => stopListening()}
-                  className="w-24 h-24 rounded-full bg-primary/20 border-2 border-primary flex items-center justify-center cursor-pointer active:scale-95 transition-transform select-none"
-                  style={{ WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}
+                  onClick={stopListening}
+                  className="w-28 h-28 rounded-full bg-primary/20 border-2 border-primary flex items-center justify-center cursor-pointer active:scale-95 transition-transform select-none"
+                  style={{ WebkitTapHighlightColor: "transparent", touchAction: "manipulation" }}
                 >
-                  <MicOff className="w-10 h-10 text-primary pointer-events-none" />
+                  <MicOff className="w-12 h-12 text-primary pointer-events-none" />
                 </button>
               </motion.div>
+
               <SoundWave />
-              <p className="text-primary text-sm font-sans mt-4 font-medium">
-                Je t'écoute…
+
+              {partialText ? (
+                <motion.p
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="text-foreground/70 text-sm font-sans mt-5 max-w-xs italic"
+                >
+                  « {partialText}… »
+                </motion.p>
+              ) : (
+                <>
+                  <p className="text-primary text-sm font-sans mt-5 font-medium">
+                    Je t'écoute…
+                  </p>
+                  <p className="text-muted-foreground text-xs font-sans mt-1">
+                    Appuie pour arrêter
+                  </p>
+                </>
+              )}
+            </motion.div>
+          )}
+
+          {/* PROCESSING — Analyzing animation */}
+          {phase === "processing" && (
+            <motion.div
+              key="processing"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.3 }}
+              className="flex flex-col items-center text-center"
+            >
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                className="w-16 h-16 rounded-full border-2 border-primary/20 border-t-primary flex items-center justify-center mb-6"
+              />
+
+              {userText && (
+                <motion.p
+                  initial={{ opacity: 0, y: 5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="text-foreground/60 text-sm font-sans italic mb-4 max-w-xs"
+                >
+                  « {userText} »
+                </motion.p>
+              )}
+
+              <p className="text-primary text-sm font-sans font-medium">
+                Analyse en cours…
               </p>
               <p className="text-muted-foreground text-xs font-sans mt-1">
-                Appuie pour arrêter
+                Je cherche le match parfait
               </p>
             </motion.div>
           )}
 
-          {/* Analyzing state */}
-          {isAnalyzing && messages.length > 0 && (
+          {/* RECAP — Show understood criteria */}
+          {phase === "recap" && (
             <motion.div
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="flex justify-start"
+              key="recap"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.3 }}
+              className="flex flex-col items-center text-center"
             >
-              <div className="max-w-[85%] px-4 py-3 rounded-2xl rounded-bl-md bg-secondary/80 border border-border/20">
-                <div className="flex items-center gap-3">
-                  <Loader2 className="w-5 h-5 animate-spin text-primary" />
-                  <div>
-                    <p className="text-sm font-sans text-foreground/80 font-medium">Analyse de ta demande…</p>
-                    <p className="text-xs font-sans text-muted-foreground mt-0.5">Film parfait en cours de recherche</p>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          )}
-
-          {messages.map((msg, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
-            >
-              <div
-                className={`max-w-[85%] px-4 py-2.5 rounded-2xl text-sm font-sans ${
-                  msg.role === "user"
-                    ? "bg-primary text-primary-foreground rounded-br-md"
-                    : "bg-secondary/80 text-secondary-foreground rounded-bl-md border border-border/20"
-                }`}
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                className="w-14 h-14 rounded-full bg-primary/15 border border-primary/30 flex items-center justify-center mb-5"
               >
-                {msg.role === "assistant" ? (
-                  <div className="prose prose-sm prose-invert max-w-none">
-                    <ReactMarkdown>{msg.content}</ReactMarkdown>
-                  </div>
-                ) : (
-                  msg.content
-                )}
-              </div>
-            </motion.div>
-          ))}
+                <Sparkles className="w-7 h-7 text-primary" />
+              </motion.div>
 
-          {/* Detected filters badges */}
-          {detectedFilters && detectedFilters.length > 0 && (
-            <motion.div
-              initial={{ opacity: 0, y: 5 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-              className="flex justify-start"
-            >
-              <div className="flex flex-wrap gap-1.5 px-1">
-                <span className="text-[10px] text-muted-foreground font-sans mr-1">Détecté :</span>
-                {detectedFilters.map((f, i) => (
-                  <span
-                    key={i}
-                    className="px-2.5 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-[10px] font-sans font-medium"
+              <p className="text-foreground text-base font-serif mb-4">
+                J'ai compris ce que tu cherches
+              </p>
+
+              <div className="flex flex-wrap gap-2 justify-center mb-6 max-w-xs">
+                {recapTags.map((tag, i) => (
+                  <motion.span
+                    key={tag}
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: i * 0.12, type: "spring", stiffness: 300 }}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-sans font-medium"
                   >
-                    {f}
-                  </span>
+                    <Check className="w-3 h-3" />
+                    {tag}
+                  </motion.span>
                 ))}
               </div>
+
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.5 }}
+                className="flex items-center gap-2"
+              >
+                <Loader2 className="w-4 h-4 animate-spin text-primary/60" />
+                <span className="text-muted-foreground text-xs font-sans">
+                  Suggestion en approche…
+                </span>
+              </motion.div>
             </motion.div>
           )}
+        </AnimatePresence>
+      </div>
 
-          {micError && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex justify-center">
-              <div className="px-4 py-2 rounded-xl bg-destructive/10 text-destructive text-xs font-sans text-center max-w-[90%]">
-                {micError}
-              </div>
-            </motion.div>
-          )}
-
-          {/* Live transcription preview */}
-          {partialText && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex justify-end">
-              <div className="max-w-[85%] px-4 py-2.5 rounded-2xl rounded-br-md text-sm font-sans bg-primary/50 text-primary-foreground/70 italic">
-                {partialText}…
-              </div>
-            </motion.div>
-          )}
-
-          {isLoading && !isAnalyzing && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex justify-start">
-              <div className="px-4 py-2.5 rounded-2xl rounded-bl-md bg-secondary/80 text-secondary-foreground border border-border/20">
-                <div className="flex items-center gap-2 text-sm font-sans">
-                  <Loader2 className="w-4 h-4 animate-spin text-primary" />
-                  <span className="text-muted-foreground">Réflexion…</span>
-                </div>
-              </div>
-            </motion.div>
-          )}
-        </div>
-
-        {/* Input area */}
-        <div className="border-t border-border/10 px-5 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] flex items-center gap-2">
-          {/* Mic button in input when messages exist */}
-          {messages.length > 0 && (
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => isListening ? stopListening() : startListening()}
-              disabled={isLoading}
-              className={`rounded-full flex-shrink-0 ${isListening ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-primary"}`}
-            >
-              {isListening ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
-            </Button>
-          )}
+      {/* Bottom text input (always visible for fallback) */}
+      {(phase === "idle" || phase === "listening") && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="relative z-10 border-t border-border/10 px-5 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] flex items-center gap-2 bg-background/80 backdrop-blur-md"
+        >
           <input
             ref={inputRef}
             type="text"
             value={inputText}
-            onChange={e => setInputText(e.target.value)}
+            onChange={(e) => setInputText(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Ou tape ton message ici…"
-            className="flex-1 bg-transparent text-foreground text-sm font-sans placeholder:text-muted-foreground/40 outline-none"
-            disabled={isLoading}
+            placeholder="Ou tape ta demande ici…"
+            className="flex-1 bg-secondary/50 border border-border/20 rounded-full px-4 py-2.5 text-sm font-sans text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary/30 focus:ring-1 focus:ring-primary/20 transition-all"
           />
           <Button
             variant="ghost"
             size="icon"
             onClick={() => handleSend(inputText)}
-            disabled={isLoading || !inputText.trim()}
-            className="text-primary hover:text-primary/80 rounded-full"
+            disabled={!inputText.trim()}
+            className="rounded-full text-primary hover:bg-primary/10 disabled:opacity-30"
           >
-            <Send className="w-5 h-5" />
+            <Send className="w-4 h-4" />
           </Button>
-        </div>
-      </motion.div>
+        </motion.div>
+      )}
     </motion.div>
   );
 };

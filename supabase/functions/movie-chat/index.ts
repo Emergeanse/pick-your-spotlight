@@ -8,12 +8,10 @@ const corsHeaders = {
 
 const TMDB_API_KEY = "2dca580c2a14b55200e784d157207b4d";
 
-// Search both movies and TV shows via multi-search
 async function searchMulti(query: string): Promise<any[]> {
   const url = `https://api.themoviedb.org/3/search/multi?api_key=${TMDB_API_KEY}&language=fr-FR&query=${encodeURIComponent(query)}&page=1`;
   const res = await fetch(url);
   const data = await res.json();
-  // Only keep movies and TV shows
   return (data.results || [])
     .filter((r: any) => r.media_type === "movie" || r.media_type === "tv")
     .slice(0, 10);
@@ -46,25 +44,23 @@ serve(async (req) => {
     const systemPrompt = `Tu es un assistant spécialisé UNIQUEMENT dans la recommandation de films et séries. Tu es chaleureux et passionné de cinéma.
 
 RÈGLES ABSOLUES :
-- Tu ne réponds QU'AUX demandes liées aux films et séries (recommandations, suggestions, aide au choix)
+- Tu ne réponds QU'AUX demandes liées aux films et séries
 - Si l'utilisateur parle d'autre chose, réponds poliment : "Je suis spécialisé dans les films et séries 🎬 Dis-moi plutôt ce que tu as envie de regarder !"
 - Réponds TOUJOURS en français
 - Recommande UN SEUL film ou série à la fois
-- Sois bref et enthousiaste (3-4 phrases max)
-- Explique pourquoi ce film/série correspond à son humeur/envie
+- Sois bref et enthousiaste (2-3 phrases max pour la raison)
 
 RÈGLES DE PERTINENCE CRITIQUES :
-- Si l'utilisateur demande une SÉRIE, recommande OBLIGATOIREMENT une série TV (type "tv"), PAS un film
-- Si l'utilisateur demande un FILM, recommande OBLIGATOIREMENT un film (type "movie"), PAS une série
-- Si l'utilisateur dit "récent" ou "récente", recommande quelque chose sorti après ${currentYear - 2} (${currentYear - 2} ou plus récent)
-- Si l'utilisateur mentionne une décennie (ex: "années 80"), respecte scrupuleusement cette période
+- Si l'utilisateur demande une SÉRIE → type "tv", PAS un film
+- Si l'utilisateur demande un FILM → type "movie", PAS une série
+- "récent" ou "récente" → sorti après ${currentYear - 2}
+- Respecte scrupuleusement les critères explicites : année, genre, durée, ambiance, plateforme
 - Si l'utilisateur est vague sur film/série, tu peux proposer l'un ou l'autre
-- RESPECTE TOUJOURS les critères explicites de l'utilisateur : année, genre, durée, ambiance, plateforme
 
 OUTIL :
 - Utilise l'outil suggest_movie pour donner ta recommandation
-- Mets le bon type ("movie" ou "tv") selon ce que tu recommandes
-- Si l'utilisateur est vague ou que tu manques d'infos, pose UNE question courte pour mieux cerner son envie`;
+- Le champ "recap" doit contenir 2 à 4 critères courts résumant ce que l'utilisateur recherche (ex: ["Série", "Récente", "Feel-good", "Courte"])
+- Si tu manques d'infos, pose UNE question courte`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -89,9 +85,14 @@ OUTIL :
                 properties: {
                   title: { type: "string", description: "The movie or TV show title to search for" },
                   type: { type: "string", enum: ["movie", "tv"], description: "Whether this is a movie or a TV series" },
-                  reason: { type: "string", description: "Brief reason why this fits the user's request (in French)" },
+                  reason: { type: "string", description: "Brief reason why this fits (in French, 2-3 sentences)" },
+                  recap: {
+                    type: "array",
+                    items: { type: "string" },
+                    description: "2-4 short tags summarizing what the user is looking for, e.g. ['Série', 'Récente', 'Feel-good', 'Courte']. Each tag should be 1-3 words max.",
+                  },
                 },
-                required: ["title", "type", "reason"],
+                required: ["title", "type", "reason", "recap"],
                 additionalProperties: false,
               },
             },
@@ -126,17 +127,13 @@ OUTIL :
     const choice = aiData.choices?.[0];
     const message = choice?.message;
 
-    // Check if AI wants to call the suggest_movie tool
     if (message?.tool_calls?.length > 0) {
       const toolCall = message.tool_calls[0];
       if (toolCall.function.name === "suggest_movie") {
         const args = JSON.parse(toolCall.function.arguments);
         const mediaType = args.type || "movie";
 
-        // Search TMDB using multi-search
         const searchResults = await searchMulti(args.title);
-
-        // Prefer results matching the requested media type
         const preferredResults = searchResults.filter((r: any) => r.media_type === mediaType);
         const bestMatch = preferredResults.length > 0 ? preferredResults[0] : searchResults[0];
 
@@ -152,16 +149,17 @@ OUTIL :
         return new Response(JSON.stringify({
           reply: args.reason,
           movie: detail,
+          recap: args.recap || [],
         }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
     }
 
-    // Regular text response (e.g., asking a follow-up question)
     return new Response(JSON.stringify({
       reply: message?.content || "Hmm, dis-moi en plus !",
       movie: null,
+      recap: null,
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
