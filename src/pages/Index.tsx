@@ -50,7 +50,7 @@ const Index = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  // Check if user needs onboarding
+  // Check if user needs onboarding (only for authenticated users)
   useEffect(() => {
     if (!user) return;
     supabase.from("profiles").select("onboarding_completed").eq("id", user.id).single()
