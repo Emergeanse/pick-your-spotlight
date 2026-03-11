@@ -8,7 +8,7 @@ import type { MovieDetail } from "@/lib/tmdb";
 
 interface VoiceChatProps {
   onClose: () => void;
-  onMovieSuggested: (movie: MovieDetail) => void;
+  onMovieSuggested: (movie: MovieDetail, recapTags?: string[]) => void;
   initialMessages?: ChatMessage[];
 }
 
