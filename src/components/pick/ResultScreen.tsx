@@ -301,46 +301,106 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                   transition={{ delay: 0.1, duration: 0.4 }}
                   className="mb-5 max-w-md"
                 >
-                  <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-sans font-semibold mb-2">Pourquoi ce film ?</p>
-                  
-                  <p className="text-foreground/70 text-[13px] font-sans leading-relaxed mb-3">
-                    {matchData.headline}
-                  </p>
+                  {/* Headline + expand toggle */}
+                  <button
+                    onClick={() => setWhyExpanded(prev => !prev)}
+                    className="w-full text-left group"
+                  >
+                    <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-sans font-semibold mb-1.5 flex items-center gap-1.5">
+                      Pourquoi ce film ?
+                      <ChevronDown className={`w-3 h-3 text-muted-foreground/60 transition-transform duration-200 ${whyExpanded ? "rotate-180" : ""}`} />
+                    </p>
+                    <p className="text-foreground/70 text-[13px] font-sans leading-relaxed">
+                      {matchData.headline}
+                    </p>
+                  </button>
 
-                  {/* Similar liked movies */}
-                  {matchData.similarLikedMovies && matchData.similarLikedMovies.length > 0 && (
-                    <div className="mb-2.5">
-                      <p className="text-[10px] text-muted-foreground font-sans font-medium mb-1.5">Parce que tu as aimé</p>
-                      <div className="flex flex-wrap gap-1.5">
-                        {matchData.similarLikedMovies.map((title) => (
-                          <span
-                            key={title}
-                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-[11px] font-sans font-medium"
-                          >
-                            <Heart className="w-2.5 h-2.5 fill-primary" />
-                            {title}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+                  {/* Expanded detailed explanation */}
+                  <AnimatePresence>
+                    {whyExpanded && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.25, ease: "easeOut" }}
+                        className="overflow-hidden"
+                      >
+                        <div className="pt-3 space-y-3">
+                          {/* Detailed explanation */}
+                          {matchData.detailedExplanation && (
+                            <p className="text-foreground/55 text-[12px] font-sans leading-relaxed">
+                              {matchData.detailedExplanation}
+                            </p>
+                          )}
 
-                  {/* Matching reasons as tags */}
-                  {matchData.matchingReasons && matchData.matchingReasons.length > 0 && (
-                    <div>
-                      <p className="text-[10px] text-muted-foreground font-sans font-medium mb-1.5">Et que tu recherches</p>
-                      <div className="flex flex-wrap gap-1.5">
-                        {matchData.matchingReasons.map((reason) => (
-                          <span
-                            key={reason}
-                            className="inline-flex items-center px-2.5 py-1 rounded-full bg-foreground/5 border border-border/30 text-foreground/60 text-[11px] font-sans font-medium"
-                          >
-                            {reason}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+                          {/* Emotional journey */}
+                          {matchData.emotionalJourney && (
+                            <div>
+                              <p className="text-[10px] text-muted-foreground font-sans font-medium mb-1">L'expérience</p>
+                              <p className="text-foreground/50 text-[12px] font-sans leading-relaxed italic">
+                                {matchData.emotionalJourney}
+                              </p>
+                            </div>
+                          )}
+
+                          {/* Perfect for */}
+                          {matchData.perfectFor && (
+                            <div className="flex items-start gap-2">
+                              <Sparkles className="w-3 h-3 text-primary/50 mt-0.5 flex-shrink-0" />
+                              <p className="text-foreground/50 text-[12px] font-sans leading-relaxed">
+                                {matchData.perfectFor}
+                              </p>
+                            </div>
+                          )}
+
+                          {/* Fun fact */}
+                          {matchData.funFact && (
+                            <div className="px-3 py-2 rounded-lg bg-foreground/[0.03] border border-border/20">
+                              <p className="text-[10px] text-muted-foreground font-sans font-medium mb-0.5">Le savais-tu ?</p>
+                              <p className="text-foreground/50 text-[11px] font-sans leading-relaxed">
+                                {matchData.funFact}
+                              </p>
+                            </div>
+                          )}
+
+                          {/* Similar liked movies */}
+                          {matchData.similarLikedMovies && matchData.similarLikedMovies.length > 0 && (
+                            <div>
+                              <p className="text-[10px] text-muted-foreground font-sans font-medium mb-1.5">Parce que tu as aimé</p>
+                              <div className="flex flex-wrap gap-1.5">
+                                {matchData.similarLikedMovies.map((title) => (
+                                  <span
+                                    key={title}
+                                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-[11px] font-sans font-medium"
+                                  >
+                                    <Heart className="w-2.5 h-2.5 fill-primary" />
+                                    {title}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Matching reasons as tags */}
+                          {matchData.matchingReasons && matchData.matchingReasons.length > 0 && (
+                            <div>
+                              <p className="text-[10px] text-muted-foreground font-sans font-medium mb-1.5">Ce qui correspond</p>
+                              <div className="flex flex-wrap gap-1.5">
+                                {matchData.matchingReasons.map((reason) => (
+                                  <span
+                                    key={reason}
+                                    className="inline-flex items-center px-2.5 py-1 rounded-full bg-foreground/5 border border-border/30 text-foreground/60 text-[11px] font-sans font-medium"
+                                  >
+                                    {reason}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </motion.div>
               )}
             </AnimatePresence>
