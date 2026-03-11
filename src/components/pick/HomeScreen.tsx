@@ -232,7 +232,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
             {proactivePick && !proactiveDismissed ? (
               <PickCharacter mood="default" message={proactiveMsg} size="md" animate speakable />
             ) : (
-              <PickCharacter mood="wave" showGreeting size="md" animate />
+              <PickCharacter mood="wave" showGreeting size="md" animate speakable />
             )}
           </motion.div>
 
