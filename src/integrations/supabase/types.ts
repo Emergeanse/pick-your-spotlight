@@ -77,6 +77,33 @@ export type Database = {
         }
         Relationships: []
       }
+      user_interactions: {
+        Row: {
+          action_type: string
+          context: Json | null
+          created_at: string
+          id: string
+          tmdb_id: number
+          user_id: string
+        }
+        Insert: {
+          action_type: string
+          context?: Json | null
+          created_at?: string
+          id?: string
+          tmdb_id: number
+          user_id: string
+        }
+        Update: {
+          action_type?: string
+          context?: Json | null
+          created_at?: string
+          id?: string
+          tmdb_id?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       watchlist: {
         Row: {
           added_at: string
