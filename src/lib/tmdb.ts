@@ -125,7 +125,7 @@ export async function getRecommendations(
 
     try {
       const data = await fetchFromTMDB(endpoint, params);
-      const results: Movie[] = data.results || [];
+      const results: Movie[] = (data.results || []).filter((m: Movie) => !excludeIds.includes(m.id));
       const top = results.slice(0, 10);
       const shuffled = top.sort(() => Math.random() - 0.5).slice(0, 2);
       
