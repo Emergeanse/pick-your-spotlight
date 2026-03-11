@@ -219,6 +219,7 @@ const Index = () => {
               movie={results[currentResultIndex]}
               onShowAnother={handleShowAnother}
               onRestart={handleRestart}
+              onRefineWithVoice={handleRefineWithVoice}
               hasMore={currentResultIndex < results.length - 1}
               userCriteria={{ mood, context, time }}
             />
