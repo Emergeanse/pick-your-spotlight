@@ -25,7 +25,7 @@ serve(async (req) => {
   }
 
   try {
-    const { movie, userCriteria, tasteProfile, userTasteVector, likedMovieTitles } = await req.json();
+    const { movie, userCriteria, tasteProfile, userTasteVector, likedMovieTitles, searchTags } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
@@ -90,9 +90,12 @@ serve(async (req) => {
     }
 
     // ── Session context ──
+    const searchTagsText = (searchTags && searchTags.length > 0) 
+      ? `\nTAGS DE RECHERCHE (ce que l'utilisateur a dit/demandé) : ${searchTags.join(", ")}`
+      : "";
     const criteriaText = userCriteria
-      ? `SESSION ACTUELLE : humeur "${userCriteria.mood || "non précisée"}", contexte "${userCriteria.context || "non précisé"}", temps "${userCriteria.time || "non précisé"}".`
-      : "L'utilisateur a demandé une surprise aléatoire.";
+      ? `SESSION ACTUELLE : humeur "${userCriteria.mood || "non précisée"}", contexte "${userCriteria.context || "non précisé"}", temps "${userCriteria.time || "non précisé"}".${searchTagsText}`
+      : `L'utilisateur a demandé une surprise aléatoire.${searchTagsText}`;
 
     // ── Enriched taste context ──
     const tasteClusters = tasteProfile?.tasteClusters || [];
@@ -136,7 +139,10 @@ TON : Tu parles comme un pote cinéphile — chaleureux, direct, jamais robotiqu
   • "Une pépite taillée pour toi"
   • "Tu vas pas être déçu"
   JAMAIS : "Ce film correspond à vos préférences" ou "Film recommandé"
-- "whyItMatches" → explique comme si tu parlais à un pote. "Vu que t'adores les thrillers sombres comme Gone Girl, celui-là va te prendre aux tripes de la même façon."
+- "whyItMatches" → 1 phrase courte, style pote. "Vu que t'adores les thrillers sombres, celui-là va te prendre aux tripes."
+- "detailedExplanation" → 3-5 phrases. REPRENDS LES MOTS EXACTS de l'utilisateur (ses tags de recherche, son humeur, ce qu'il a dit).
+  Si l'utilisateur a dit "je suis fatigué, avec ma copine, on veut un truc léger" → écris : "T'es crevé après ta journée, et tu cherches un truc chill à mater avec ta copine. Ce film, c'est exactement ça : léger, doux, avec juste ce qu'il faut d'émotion pour passer une belle soirée sans prise de tête. L'ambiance est enveloppante et le casting est parfait."
+  Si c'est une surprise sans contexte → explique pourquoi ce film est objectivement bon et en quoi il plaît universellement.
 
 SCORING :
 - La SESSION prime sur le profil global
@@ -148,7 +154,8 @@ RÈGLES :
 {
   "matchScore": <number 40-99>,
   "headline": "<accroche naturelle et chaleureuse, 10 mots max>",
-  "whyItMatches": "<2-3 phrases perso, ton conversationnel, tutoiement>",
+  "whyItMatches": "<1 phrase perso, ton conversationnel, tutoiement>",
+  "detailedExplanation": "<3-5 phrases détaillées reprenant les mots de l'utilisateur, expliquant pourquoi CE film pour LUI>",
   "emotionalJourney": "<2-3 phrases sur l'expérience émotionnelle>",
   "perfectFor": "<1 phrase, style 'Parfait pour une soirée solo sous la couette'>",
   "funFact": "<1 anecdote cool>",
