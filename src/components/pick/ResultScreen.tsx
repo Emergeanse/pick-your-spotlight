@@ -369,15 +369,6 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                             </div>
                           )}
 
-                          {/* Fun fact */}
-                          {matchData.funFact && (
-                            <div className="px-3 py-2 rounded-lg bg-foreground/[0.03] border border-border/20">
-                              <p className="text-[10px] text-muted-foreground font-sans font-medium mb-0.5">Le savais-tu ?</p>
-                              <p className="text-foreground/50 text-[11px] font-sans leading-relaxed">
-                                {matchData.funFact}
-                              </p>
-                            </div>
-                          )}
 
                           {/* Similar liked movies */}
                           {matchData.similarLikedMovies && matchData.similarLikedMovies.length > 0 && (
