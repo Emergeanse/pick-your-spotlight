@@ -48,12 +48,20 @@ const VoiceChat = ({ onClose, onMovieSuggested }: VoiceChatProps) => {
   const [micError, setMicError] = useState<string | null>(null);
   const [detectedFilters, setDetectedFilters] = useState<string[] | null>(null);
   const [partialText, setPartialText] = useState("");
+  const [scribeToken, setScribeToken] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const pendingSendRef = useRef(false);
   const committedTextRef = useRef("");
 
   const randomExample = EXAMPLE_PROMPTS[Math.floor(Math.random() * EXAMPLE_PROMPTS.length)];
+
+  // Pre-fetch scribe token on mount so click handler stays synchronous
+  useEffect(() => {
+    supabase.functions.invoke("scribe-token").then(({ data }) => {
+      if (data?.token) setScribeToken(data.token);
+    }).catch(console.error);
+  }, []);
 
   // ElevenLabs Scribe for cross-browser STT
   const scribe = useScribe({
@@ -142,34 +150,44 @@ const VoiceChat = ({ onClose, onMovieSuggested }: VoiceChatProps) => {
   const startListening = useCallback(async () => {
     setMicError(null);
     try {
-      // Request mic permission directly in click handler (critical for iOS)
-      await navigator.mediaDevices.getUserMedia({ audio: true });
-
-      // Get ElevenLabs scribe token
-      const { data, error } = await supabase.functions.invoke("scribe-token");
-      if (error || !data?.token) {
-        throw new Error("Failed to get voice token");
+      if (!scribeToken) {
+        // Token not loaded yet, try fetching now
+        const { data } = await supabase.functions.invoke("scribe-token");
+        if (!data?.token) throw new Error("Failed to get voice token");
+        setScribeToken(data.token);
+        
+        // getUserMedia directly in click handler — critical for Safari
+        await scribe.connect({
+          token: data.token,
+          microphone: {
+            echoCancellation: true,
+            noiseSuppression: true,
+          },
+        });
+      } else {
+        // Token pre-loaded: getUserMedia happens inside scribe.connect directly in click handler
+        await scribe.connect({
+          token: scribeToken,
+          microphone: {
+            echoCancellation: true,
+            noiseSuppression: true,
+          },
+        });
       }
-
-      await scribe.connect({
-        token: data.token,
-        microphone: {
-          echoCancellation: true,
-          noiseSuppression: true,
-        },
-      });
 
       setIsListening(true);
     } catch (e: any) {
       console.error("Mic error:", e);
-      if (e?.name === "NotAllowedError") {
+      if (e?.name === "NotAllowedError" || e?.message?.includes("Permission")) {
         setMicError("Accès au micro refusé. Autorise le micro dans les paramètres de ton navigateur.");
       } else {
-        setMicError("Erreur micro. Tape ton message ci-dessous 👇");
+        setMicError(`Erreur micro. Tape ton message ci-dessous 👇`);
+        console.error("Full error:", JSON.stringify(e, null, 2));
       }
       inputRef.current?.focus();
+      setTimeout(() => inputRef.current?.focus(), 100);
     }
-  }, [scribe]);
+  }, [scribe, scribeToken]);
 
   const stopListening = useCallback(() => {
     scribe.disconnect();
