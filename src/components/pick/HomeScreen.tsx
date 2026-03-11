@@ -350,6 +350,24 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
         </AnimatePresence>
       </div>
 
+      {/* Tonight loading overlay with Pick */}
+      <AnimatePresence>
+        {tonightLoading && !tonightPick && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="absolute inset-0 z-30 flex flex-col items-center justify-center"
+          >
+            <div className="absolute inset-0 bg-background/90 backdrop-blur-md" />
+            <div className="relative z-10 flex flex-col items-center">
+              <PickCharacter mood="think" message={tonightLoadingMsg} size="md" animate />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Tonight's Pick overlay */}
       <AnimatePresence>
         {tonightPick && (
