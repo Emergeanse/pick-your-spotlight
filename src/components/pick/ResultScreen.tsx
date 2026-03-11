@@ -20,6 +20,7 @@ interface MatchData {
   matchScore: number;
   headline: string;
   whyItMatches: string;
+  detailedExplanation: string;
   emotionalJourney: string;
   perfectFor: string;
   funFact: string;
