@@ -1,7 +1,7 @@
 import { useState, useEffect, forwardRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Play, Star, Clock, Sparkles, Heart, Loader2, Bookmark, Tv, ChevronDown, ChevronUp, MoreHorizontal, RefreshCw, Mic, X } from "lucide-react";
+import { Mic, MicOff, X, Send, Loader2, Sparkles, Check, Play, Star, Clock, Heart, Bookmark, Tv, ChevronDown, ChevronUp, MoreHorizontal, RefreshCw, ThumbsUp, ThumbsDown } from "lucide-react";
 import type { MovieDetail } from "@/lib/tmdb";
 import { getDisplayTitle, getYear, getBackdropUrl, getPosterUrl, getWatchProviders, getMovieTrailerUrl } from "@/lib/tmdb";
 import type { Mood, Context, TimeAvailable } from "@/lib/tmdb";
@@ -54,6 +54,8 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
   const [bookmarkLoading, setBookmarkLoading] = useState(false);
   const [synopsisExpanded, setSynopsisExpanded] = useState(false);
   const [showOptions, setShowOptions] = useState(false);
+  const [showRejectReasons, setShowRejectReasons] = useState(false);
+  const [feedbackGiven, setFeedbackGiven] = useState<"good" | "bad" | null>(null);
   const [altProviders, setAltProviders] = useState<Record<number, { name: string; logo_path: string }[]>>({});
   const { user } = useAuth();
 
@@ -369,43 +371,61 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                 )}
               </div>
 
-              {/* Bottom row: icons + more */}
+              {/* Feedback actions */}
               <div className="flex items-center gap-2">
-                {/* Like */}
                 <button
-                  onClick={handleToggleLike}
-                  disabled={likeLoading}
-                  className={`w-9 h-9 rounded-full flex items-center justify-center border transition-all active:scale-90 ${
-                    liked
+                  onClick={() => {
+                    if (feedbackGiven === "good") return;
+                    setFeedbackGiven("good");
+                    trackInteraction(movie.id, "liked", { mood: userCriteria?.mood, context: userCriteria?.context, time: userCriteria?.time, feedback: "good_reco" });
+                    if (!liked && user) { likeMovie(movie).then(() => setLiked(true)).catch(() => {}); }
+                    toast.success("Merci pour ton retour !");
+                  }}
+                  className={`flex items-center gap-1.5 px-3.5 h-9 rounded-full border text-xs font-sans font-medium transition-all active:scale-95 ${
+                    feedbackGiven === "good"
                       ? "bg-primary/15 border-primary/30 text-primary"
-                      : "border-border/25 text-foreground/35 hover:text-primary hover:border-primary/25"
+                      : "border-border/25 text-foreground/40 hover:text-primary hover:border-primary/25"
                   }`}
                 >
-                  <Heart className={`w-4 h-4 ${liked ? "fill-primary" : ""}`} />
+                  <ThumbsUp className={`w-3.5 h-3.5 ${feedbackGiven === "good" ? "fill-primary" : ""}`} />
+                  Bonne reco
                 </button>
 
-                {/* Bookmark */}
+                <button
+                  onClick={() => {
+                    setShowRejectReasons(true);
+                  }}
+                  className={`flex items-center gap-1.5 px-3.5 h-9 rounded-full border text-xs font-sans font-medium transition-all active:scale-95 ${
+                    feedbackGiven === "bad"
+                      ? "bg-destructive/10 border-destructive/30 text-destructive"
+                      : "border-border/25 text-foreground/40 hover:text-foreground/60 hover:border-border/40"
+                  }`}
+                >
+                  <ThumbsDown className={`w-3.5 h-3.5 ${feedbackGiven === "bad" ? "fill-destructive" : ""}`} />
+                  Pas pour moi
+                </button>
+
                 <button
                   onClick={handleToggleBookmark}
                   disabled={bookmarkLoading}
-                  className={`w-9 h-9 rounded-full flex items-center justify-center border transition-all active:scale-90 ${
+                  className={`flex items-center gap-1.5 px-3.5 h-9 rounded-full border text-xs font-sans font-medium transition-all active:scale-95 ${
                     bookmarked
                       ? "bg-primary/15 border-primary/30 text-primary"
-                      : "border-border/25 text-foreground/35 hover:text-primary hover:border-primary/25"
+                      : "border-border/25 text-foreground/40 hover:text-primary hover:border-primary/25"
                   }`}
                 >
-                  <Bookmark className={`w-4 h-4 ${bookmarked ? "fill-primary" : ""}`} />
+                  <Bookmark className={`w-3.5 h-3.5 ${bookmarked ? "fill-primary" : ""}`} />
+                  Sauvegarder
                 </button>
+              </div>
 
-                {/* Spacer */}
-                <div className="flex-1" />
-
-                {/* More options */}
+              {/* More options link */}
+              <div className="flex items-center">
                 <button
                   onClick={() => setShowOptions(true)}
-                  className="flex items-center gap-1.5 px-3 h-9 rounded-full text-foreground/35 hover:text-foreground/60 text-xs font-sans transition-all"
+                  className="flex items-center gap-1.5 px-1 h-8 text-foreground/30 hover:text-foreground/50 text-[11px] font-sans transition-all"
                 >
-                  <MoreHorizontal className="w-4 h-4" />
+                  <MoreHorizontal className="w-3.5 h-3.5" />
                   <span>Plus d'options</span>
                 </button>
               </div>
@@ -530,6 +550,62 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                   <X className="w-4 h-4" />
                   Fermer
                 </button>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* Bottom Sheet: Reject reasons */}
+      <AnimatePresence>
+        {showRejectReasons && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-50 bg-background/60 backdrop-blur-sm"
+              onClick={() => setShowRejectReasons(false)}
+            />
+            <motion.div
+              initial={{ y: "100%" }}
+              animate={{ y: 0 }}
+              exit={{ y: "100%" }}
+              transition={{ type: "spring", damping: 28, stiffness: 300 }}
+              className="fixed bottom-0 left-0 right-0 z-50 bg-card border-t border-border/20 rounded-t-2xl pb-[env(safe-area-inset-bottom)]"
+            >
+              <div className="flex justify-center pt-3 pb-1">
+                <div className="w-10 h-1 rounded-full bg-foreground/15" />
+              </div>
+              <div className="px-5 pb-5 pt-2">
+                <p className="text-sm font-sans font-semibold text-foreground mb-3">Pourquoi ce film ne te convient pas ?</p>
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    { label: "Déjà vu", value: "already_seen" },
+                    { label: "Pas mon style", value: "not_my_style" },
+                    { label: "Trop long", value: "too_long" },
+                    { label: "Pas ce soir", value: "not_tonight" },
+                  ].map((reason) => (
+                    <button
+                      key={reason.value}
+                      onClick={() => {
+                        setFeedbackGiven("bad");
+                        setShowRejectReasons(false);
+                        trackInteraction(movie.id, "skipped", {
+                          mood: userCriteria?.mood,
+                          context: userCriteria?.context,
+                          time: userCriteria?.time,
+                          feedback: "bad_reco",
+                          reject_reason: reason.value,
+                        });
+                        toast.success("Merci, on fera mieux !");
+                      }}
+                      className="px-4 py-3 rounded-xl border border-border/30 bg-foreground/[0.03] hover:bg-primary/10 hover:border-primary/20 text-foreground/60 hover:text-foreground text-sm font-sans font-medium transition-all active:scale-[0.97]"
+                    >
+                      {reason.label}
+                    </button>
+                  ))}
+                </div>
               </div>
             </motion.div>
           </>
