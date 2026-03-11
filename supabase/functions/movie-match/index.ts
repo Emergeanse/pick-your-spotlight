@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -6,14 +7,28 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+function cosineSimilarity(a: number[], b: number[]): number {
+  if (a.length !== b.length) return 0;
+  let dot = 0, magA = 0, magB = 0;
+  for (let i = 0; i < a.length; i++) {
+    dot += a[i] * b[i];
+    magA += a[i] * a[i];
+    magB += b[i] * b[i];
+  }
+  if (magA === 0 || magB === 0) return 0;
+  return dot / (Math.sqrt(magA) * Math.sqrt(magB));
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { movie, userCriteria, tasteProfile } = await req.json();
+    const { movie, userCriteria, tasteProfile, userTasteVector } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
+    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
     const title = movie.title || movie.name || "Film inconnu";
@@ -21,8 +36,60 @@ serve(async (req) => {
     const overview = movie.overview || "";
     const rating = movie.vote_average || 0;
     const runtime = movie.runtime || 0;
+    const tmdbId = movie.id;
 
-    // ── Session context (takes priority over global profile) ──
+    // ── Embedding similarity (new signal) ──
+    let embeddingSimilarity: number | null = null;
+    let movieTasteTags: string[] = [];
+
+    if (userTasteVector && SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) {
+      const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+
+      // Get or generate movie embedding
+      const { data: movieEmb } = await supabase
+        .from("movie_embeddings")
+        .select("embedding, taste_tags")
+        .eq("tmdb_id", tmdbId)
+        .maybeSingle();
+
+      if (movieEmb) {
+        // Parse embedding - could be string "[0.1,0.2,...]" or array
+        let movieVector: number[];
+        if (typeof movieEmb.embedding === "string") {
+          movieVector = JSON.parse(movieEmb.embedding.replace(/^\[/, "[").replace(/\]$/, "]"));
+        } else {
+          movieVector = movieEmb.embedding;
+        }
+        embeddingSimilarity = cosineSimilarity(userTasteVector, movieVector);
+        movieTasteTags = movieEmb.taste_tags || [];
+      } else {
+        // Generate embedding on-the-fly (fire & forget cache)
+        try {
+          const embResponse = await fetch(`${SUPABASE_URL}/functions/v1/generate-embedding`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+            },
+            body: JSON.stringify({
+              tmdbId,
+              title,
+              overview,
+              genres: (movie.genres || []).map((g: any) => g.name),
+            }),
+          });
+          if (embResponse.ok) {
+            const embData = await embResponse.json();
+            embeddingSimilarity = cosineSimilarity(userTasteVector, embData.embedding);
+            movieTasteTags = embData.tasteTags || [];
+          }
+        } catch (e) {
+          console.error("Embedding generation failed:", e);
+        }
+      }
+    }
+
+    // ── Session context ──
     const criteriaText = userCriteria
       ? `SESSION ACTUELLE : humeur "${userCriteria.mood || "non précisée"}", contexte "${userCriteria.context || "non précisé"}", temps "${userCriteria.time || "non précisé"}".`
       : "L'utilisateur a demandé une surprise aléatoire.";
@@ -42,21 +109,25 @@ PROFIL DE GOÛTS ENRICHI :
 - ${stats.likeCount || 0} films aimés, ${stats.watchCount || 0} vus, ${stats.skipCount || 0} skippés
 - Confiance profil : ${confidence.score}/100
 - Taux d'acceptation : ${stats.acceptanceRate || 0}%
+${embeddingSimilarity !== null ? `- 🧬 Similarité embedding : ${Math.round(embeddingSimilarity * 100)}% (signal vectoriel)` : ""}
+${movieTasteTags.length > 0 ? `- 🏷️ Taste tags du film : ${movieTasteTags.join(", ")}` : ""}
 ${skipPatterns.avgSkipRate > 0.5 ? `- ⚠️ Skip rate élevé (${Math.round(skipPatterns.avgSkipRate * 100)}%) — l'utilisateur est exigeant` : ""}
 ${skipPatterns.recentSkipStreak > 2 ? `- ⚠️ ${skipPatterns.recentSkipStreak} skips consécutifs récents` : ""}
 
 SYSTÈME DE SCORING :
 Le match score doit refléter ces poids :
-- taste_match (${scoringWeights.taste_match || 0.35}) : genres + micro-genres
+- taste_match (${scoringWeights.taste_match || 0.30}) : genres + micro-genres + embedding similarity
 - context_match (${scoringWeights.context_match || 0.25}) : session actuelle
-- behaviour_match (${scoringWeights.behaviour_match || 0.15}) : patterns comportementaux
+- embedding_match (${scoringWeights.embedding_match || 0.15}) : similarité vectorielle du profil de goût${embeddingSimilarity !== null ? ` (score brut: ${Math.round(embeddingSimilarity * 100)})` : ""}
+- behaviour_match (${scoringWeights.behaviour_match || 0.10}) : patterns comportementaux
 - rating_score (${scoringWeights.rating_score || 0.10}) : note critique
-- availability (${scoringWeights.availability || 0.10}) : plateforme
+- availability (${scoringWeights.availability || 0.05}) : plateforme
 - novelty (${scoringWeights.novelty || 0.05}) : découverte` : "";
 
-    const systemPrompt = `Tu es un moteur de match cinéma de niveau Netflix. On te donne un film, le profil de goûts enrichi d'un utilisateur, et sa session actuelle. Tu calcules un match score précis et personnalisé.
+    const systemPrompt = `Tu es un moteur de match cinéma de niveau Netflix. On te donne un film, le profil de goûts enrichi d'un utilisateur (incluant un signal de similarité vectorielle), et sa session actuelle. Tu calcules un match score précis et personnalisé.
 
 IMPORTANT : La SESSION prime sur le profil global. Si la session dit "léger" mais le profil aime les thrillers, le match doit refléter la session.
+${embeddingSimilarity !== null ? `\nIMPORTANT : Le score de similarité embedding (${Math.round(embeddingSimilarity * 100)}%) est un signal objectif. Utilise-le comme ancrage pour le taste_match. Si embedding > 80%, le film correspond très probablement aux goûts. Si < 40%, il y a un décalage.` : ""}
 
 RÈGLES :
 - Réponds UNIQUEMENT avec un JSON valide, sans markdown, sans backticks
@@ -71,6 +142,7 @@ RÈGLES :
   "scores": {
     "taste": <0-100>,
     "context": <0-100>,
+    "embedding": <0-100>,
     "behaviour": <0-100>,
     "rating": <0-100>,
     "novelty": <0-100>
@@ -78,7 +150,7 @@ RÈGLES :
 }
 - Sois chaleureux et personnel (tu/toi)
 - Score calibré : si le film ne colle PAS à la session → 40-60 max, même si le profil global aime ce genre
-- Si match parfait session + profil → 85-99
+- Si match parfait session + profil + embedding → 85-99
 - Un profil jeune (confiance < 40) = scores plus modérés et nuancés`;
 
     const userPrompt = `Film : "${title}" (${genres}, ${runtime}min, note ${rating}/10)
@@ -124,8 +196,14 @@ Génère la fiche de match.`;
         emotionalJourney: "Une expérience cinématographique à découvrir.",
         perfectFor: "Idéal pour ce soir.",
         funFact: "Un film qui a marqué son genre.",
-        scores: { taste: 70, context: 70, behaviour: 70, rating: 70, novelty: 50 },
+        scores: { taste: 70, context: 70, embedding: embeddingSimilarity ? Math.round(embeddingSimilarity * 100) : 50, behaviour: 70, rating: 70, novelty: 50 },
       };
+    }
+
+    // Inject raw embedding similarity for client-side use
+    if (embeddingSimilarity !== null) {
+      matchData.embeddingSimilarity = Math.round(embeddingSimilarity * 100);
+      matchData.movieTasteTags = movieTasteTags;
     }
 
     return new Response(JSON.stringify(matchData), {

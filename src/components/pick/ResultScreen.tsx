@@ -11,6 +11,7 @@ import { likeMovie, unlikeMovie, isMovieLiked } from "@/lib/liked-movies";
 import { addToWatchlist, removeFromWatchlist, isInWatchlist } from "@/lib/watchlist";
 import { trackInteraction, getUserTasteProfile } from "@/lib/interactions";
 import { toast } from "sonner";
+import { computeUserTasteVector, ensureMovieEmbedding } from "@/lib/taste-engine";
 import BrandHeader from "./BrandHeader";
 
 const IMG_BASE = "https://image.tmdb.org/t/p";
@@ -80,10 +81,21 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
     setMatchLoading(true);
     setShowOptions(false);
 
-    // Load taste profile and pass to match function
-    getUserTasteProfile().then(tasteProfile => {
+    // Pre-generate embedding for this movie (fire & forget)
+    ensureMovieEmbedding(
+      movie.id,
+      movie.title || movie.name || "",
+      movie.overview || "",
+      (movie.genres || []).map(g => g.name)
+    );
+
+    // Load taste profile + user taste vector and pass to match function
+    Promise.all([
+      getUserTasteProfile(),
+      user ? computeUserTasteVector(user.id) : Promise.resolve(null),
+    ]).then(([tasteProfile, userTasteVector]) => {
       supabase.functions.invoke("movie-match", {
-        body: { movie, userCriteria, tasteProfile },
+        body: { movie, userCriteria, tasteProfile, userTasteVector },
       }).then(({ data, error }) => {
         if (error) { console.error("Match error:", error); setMatchLoading(false); return; }
         setMatchData(data as MatchData);

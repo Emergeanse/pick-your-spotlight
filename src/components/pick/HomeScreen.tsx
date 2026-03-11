@@ -6,6 +6,7 @@ import { getTrendingMovies, getBackdropUrl, getSurpriseRecommendation } from "@/
 import { getLikedMovies } from "@/lib/liked-movies";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
+import { computeUserTasteVector } from "@/lib/taste-engine";
 import type { Movie, MovieDetail } from "@/lib/tmdb";
 import BrandHeader from "./BrandHeader";
 import DiscoverySection from "./DiscoverySection";
@@ -68,8 +69,9 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
       if (user) {
         const liked = await getLikedMovies();
         if (liked.length >= 2) {
+          const userTasteVector = await computeUserTasteVector(user.id);
           const { data, error } = await supabase.functions.invoke("surprise-personalized", {
-            body: { likedMovies: liked },
+            body: { likedMovies: liked, userTasteVector },
           });
           if (error) throw error;
           movie = data.movie as MovieDetail;

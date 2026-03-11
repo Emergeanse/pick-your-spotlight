@@ -47,6 +47,39 @@ export type Database = {
         }
         Relationships: []
       }
+      movie_embeddings: {
+        Row: {
+          created_at: string
+          embedding: string
+          genres: string[] | null
+          id: string
+          taste_tags: string[]
+          title: string
+          tmdb_id: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          embedding: string
+          genres?: string[] | null
+          id?: string
+          taste_tags?: string[]
+          title: string
+          tmdb_id: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          embedding?: string
+          genres?: string[] | null
+          id?: string
+          taste_tags?: string[]
+          title?: string
+          tmdb_id?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -104,6 +137,30 @@ export type Database = {
         }
         Relationships: []
       }
+      user_taste_vectors: {
+        Row: {
+          id: string
+          liked_count: number
+          taste_vector: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          liked_count?: number
+          taste_vector: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          liked_count?: number
+          taste_vector?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       watchlist: {
         Row: {
           added_at: string
@@ -139,7 +196,19 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      match_movies_by_taste: {
+        Args: {
+          exclude_ids?: number[]
+          match_count?: number
+          query_vector: string
+        }
+        Returns: {
+          similarity: number
+          taste_tags: string[]
+          title: string
+          tmdb_id: number
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never
