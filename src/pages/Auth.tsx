@@ -6,7 +6,6 @@ import { Mail, Lock, User, ArrowLeft } from "lucide-react";
 import { useNavigate, Navigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
-import { toast } from "sonner";
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
