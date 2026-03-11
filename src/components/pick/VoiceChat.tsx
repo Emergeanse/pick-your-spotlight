@@ -19,17 +19,14 @@ export type ChatMessage = {
 
 const EXAMPLE_PROMPTS = [
   "Un film drôle sur Netflix ce soir",
-  "Un thriller psychologique comme Gone Girl",
-  "Un film scandinave sombre et lent",
-  "Une comédie romantique des années 90",
-  "Un film noir et blanc oscarisé",
+  "Un thriller sombre comme Gone Girl",
+  "Un film pas trop long pour ce soir",
+  "Un film à regarder en couple",
   "Un documentaire sur la musique",
   "Un film d'animation japonais poétique",
   "Une série courte qu'on finit en un week-end",
   "Un film de science-fiction sous-estimé",
-  "Je suis fatigué, un truc léger sans prise de tête",
-  "On est deux, on sait pas quoi regarder",
-  "Une série feel-good pour se vider la tête",
+  "Je suis fatigué, un truc léger",
 ];
 
 type Phase = "idle" | "listening" | "processing" | "recap";
@@ -60,10 +57,10 @@ const VoiceChat = ({ onClose, onMovieSuggested, initialMessages }: VoiceChatProp
   const pendingSendRef = useRef(false);
   const committedTextRef = useRef("");
 
-  // Pick 3 random non-repeating examples
+  // Pick 4 random non-repeating examples
   const [randomExamples] = useState(() => {
     const shuffled = [...EXAMPLE_PROMPTS].sort(() => Math.random() - 0.5);
-    return shuffled.slice(0, 3);
+    return shuffled.slice(0, 4);
   });
 
   // Pre-fetch scribe token on mount
@@ -303,19 +300,21 @@ const VoiceChat = ({ onClose, onMovieSuggested, initialMessages }: VoiceChatProp
                 Appuie et parle naturellement
               </p>
 
-              <div className="flex flex-col gap-2.5 w-full max-w-xs">
+              <div className="flex flex-wrap gap-2 justify-center w-full max-w-sm">
                 {randomExamples.map((example, i) => (
                   <motion.button
                     key={example}
                     initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.3 + i * 0.08 }}
-                    onClick={() => handleSend(example)}
-                    className="flex items-center gap-2.5 px-4 py-2.5 rounded-full bg-primary/5 border border-primary/10 hover:bg-primary/10 hover:border-primary/20 transition-all cursor-pointer text-left"
+                    onClick={() => {
+                      setInputText(example);
+                      inputRef.current?.focus();
+                    }}
+                    className="px-3.5 py-2 rounded-full bg-foreground/[0.04] border border-border/30 hover:bg-primary/10 hover:border-primary/20 transition-all cursor-pointer"
                   >
-                    <Mic className="w-3 h-3 text-primary/50 flex-shrink-0" />
-                    <span className="text-foreground/50 text-xs font-sans">
-                      « {example} »
+                    <span className="text-foreground/50 text-[11px] font-sans">
+                      {example}
                     </span>
                   </motion.button>
                 ))}
