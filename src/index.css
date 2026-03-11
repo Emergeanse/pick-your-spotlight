@@ -137,3 +137,34 @@
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
+
+/* Pick mascot micro-animations */
+@keyframes pickFloat {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-6px); }
+  100% { transform: translateY(0px); }
+}
+
+@keyframes pickTilt {
+  0% { transform: rotate(-4deg); }
+  50% { transform: rotate(4deg); }
+  100% { transform: rotate(-4deg); }
+}
+
+@keyframes pickBounce {
+  0% { transform: scale(0.9); }
+  50% { transform: scale(1.08); }
+  100% { transform: scale(1); }
+}
+
+.pick-float {
+  animation: pickFloat 4s ease-in-out infinite;
+}
+
+.pick-thinking {
+  animation: pickTilt 1.8s ease-in-out infinite;
+}
+
+.pick-bounce {
+  animation: pickBounce 0.6s ease-out;
+}

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import pickDefault from "@/assets/pick-squirrel.png";
 import pickWave from "@/assets/pick-squirrel-wave.png";
 import pickThink from "@/assets/pick-squirrel-think.png";
@@ -27,6 +27,8 @@ interface PickCharacterProps {
   size?: "sm" | "md" | "lg";
   className?: string;
   animate?: boolean;
+  /** When true, plays the bounce reaction (recommendation appeared) */
+  bounce?: boolean;
 }
 
 const SIZE_MAP = {
@@ -42,6 +44,7 @@ const PickCharacter = ({
   size = "md",
   className = "",
   animate = true,
+  bounce = false,
 }: PickCharacterProps) => {
   const [greeting, setGreeting] = useState("");
 
@@ -52,6 +55,14 @@ const PickCharacter = ({
   }, [showGreeting, message]);
 
   const displayMessage = message || (showGreeting ? greeting : "");
+
+  // Determine which CSS animation class to apply
+  const getAnimationClass = () => {
+    if (bounce) return "pick-bounce";
+    if (mood === "think") return "pick-thinking";
+    if (animate) return "pick-float";
+    return "";
+  };
 
   return (
     <div className={`flex flex-col items-center gap-2 ${className}`}>
@@ -75,29 +86,15 @@ const PickCharacter = ({
         )}
       </AnimatePresence>
 
-      {/* Character */}
-      <motion.div
-        initial={animate ? { opacity: 0, scale: 0.8 } : false}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ type: "spring", stiffness: 200, damping: 15, delay: 0.1 }}
-        className="relative"
-      >
-        <motion.img
+      {/* Character — CSS micro-animations */}
+      <div className="relative">
+        <img
           key={mood}
           src={PICK_IMAGES[mood]}
           alt="Pick"
-          className={`${SIZE_MAP[size]} object-contain drop-shadow-lg`}
-          initial={{ scale: 0.9 }}
-          animate={{
-            scale: 1,
-            y: animate ? [0, -3, 0] : 0,
-          }}
-          transition={{
-            scale: { duration: 0.2 },
-            y: { repeat: Infinity, duration: 3, ease: "easeInOut" },
-          }}
+          className={`${SIZE_MAP[size]} object-contain drop-shadow-lg ${getAnimationClass()}`}
         />
-      </motion.div>
+      </div>
     </div>
   );
 };

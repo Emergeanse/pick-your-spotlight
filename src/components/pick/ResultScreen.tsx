@@ -234,6 +234,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                 message={matchData?.pickNote || matchData?.headline || "Je pense que celui-ci est parfait pour ce soir."}
                 size="sm"
                 animate={false}
+                bounce
               />
             </motion.div>
 
