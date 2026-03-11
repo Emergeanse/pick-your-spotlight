@@ -92,7 +92,48 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
   const [feedbackGiven, setFeedbackGiven] = useState<"good" | "bad" | null>(null);
   const [rejectReaction, setRejectReaction] = useState<string | null>(null);
   const [altProviders, setAltProviders] = useState<Record<number, { name: string; logo_path: string }[]>>({});
+  const [whySpeaking, setWhySpeaking] = useState(false);
+  const [whyAudioLoading, setWhyAudioLoading] = useState(false);
   const { user } = useAuth();
+
+  const handleReadWhy = useCallback(async () => {
+    if (!matchData || whyAudioLoading || whySpeaking) return;
+    const textToRead = [
+      matchData.headline,
+      matchData.detailedExplanation,
+      matchData.emotionalJourney,
+      matchData.perfectFor,
+    ].filter(Boolean).join(". ");
+    if (!textToRead) return;
+    setWhyAudioLoading(true);
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/pick-tts`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          },
+          body: JSON.stringify({ text: textToRead }),
+        }
+      );
+      if (!response.ok) throw new Error(`TTS failed: ${response.status}`);
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const audio = new Audio(url);
+      setWhySpeaking(true);
+      audio.onended = () => { setWhySpeaking(false); URL.revokeObjectURL(url); };
+      audio.onerror = () => { setWhySpeaking(false); URL.revokeObjectURL(url); };
+      await audio.play();
+    } catch (e) {
+      console.error("Why TTS error:", e);
+      setWhySpeaking(false);
+    } finally {
+      setWhyAudioLoading(false);
+    }
+  }, [matchData, whyAudioLoading, whySpeaking]);
 
   const title = getDisplayTitle(movie);
   const year = getYear(movie);
