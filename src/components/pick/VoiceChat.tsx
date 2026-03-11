@@ -227,8 +227,8 @@ const VoiceChat = ({ onClose, onMovieSuggested }: VoiceChatProps) => {
         animate={{ y: 0, scale: 1 }}
         exit={{ y: 20, scale: 0.96 }}
         transition={{ type: "spring", damping: 25, stiffness: 300 }}
-        className="relative z-10 w-full max-w-lg bg-card/80 backdrop-blur-md border border-border/20 rounded-3xl overflow-hidden flex flex-col shadow-2xl shadow-primary/5"
-        style={{ maxHeight: "85vh" }}
+        className="relative z-10 w-full max-w-lg bg-card/80 backdrop-blur-md border border-border/20 rounded-none sm:rounded-3xl overflow-hidden flex flex-col shadow-2xl shadow-primary/5"
+        style={{ maxHeight: "100dvh", height: "100dvh" }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
