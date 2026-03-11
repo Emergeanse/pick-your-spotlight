@@ -592,7 +592,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
               </div>
 
               {/* Feedback actions */}
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
                 <button
                   onClick={() => {
                     if (feedbackGiven === "good") return;
@@ -601,13 +601,13 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                     if (!liked && user) { likeMovie(movie).then(() => setLiked(true)).catch(() => {}); }
                     toast.success("Merci pour ton retour !");
                   }}
-                  className={`flex items-center gap-1.5 px-3.5 h-9 rounded-full border text-xs font-sans font-medium transition-all active:scale-95 ${
+                  className={`flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3.5 h-8 sm:h-9 rounded-full border text-[11px] sm:text-xs font-sans font-medium transition-all active:scale-95 ${
                     feedbackGiven === "good"
                       ? "bg-primary/15 border-primary/30 text-primary"
                       : "border-border/25 text-foreground/40 hover:text-primary hover:border-primary/25"
                   }`}
                 >
-                  <ThumbsUp className={`w-3.5 h-3.5 ${feedbackGiven === "good" ? "fill-primary" : ""}`} />
+                  <ThumbsUp className={`w-3 h-3 sm:w-3.5 sm:h-3.5 ${feedbackGiven === "good" ? "fill-primary" : ""}`} />
                   Bonne reco
                 </button>
 
@@ -615,27 +615,28 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                   onClick={() => {
                     setShowRejectReasons(true);
                   }}
-                  className={`flex items-center gap-1.5 px-3.5 h-9 rounded-full border text-xs font-sans font-medium transition-all active:scale-95 ${
+                  className={`flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3.5 h-8 sm:h-9 rounded-full border text-[11px] sm:text-xs font-sans font-medium transition-all active:scale-95 ${
                     feedbackGiven === "bad"
                       ? "bg-destructive/10 border-destructive/30 text-destructive"
                       : "border-border/25 text-foreground/40 hover:text-foreground/60 hover:border-border/40"
                   }`}
                 >
-                  <ThumbsDown className={`w-3.5 h-3.5 ${feedbackGiven === "bad" ? "fill-destructive" : ""}`} />
+                  <ThumbsDown className={`w-3 h-3 sm:w-3.5 sm:h-3.5 ${feedbackGiven === "bad" ? "fill-destructive" : ""}`} />
                   Pas pour moi
                 </button>
 
                 <button
                   onClick={handleToggleBookmark}
                   disabled={bookmarkLoading}
-                  className={`flex items-center gap-1.5 px-3.5 h-9 rounded-full border text-xs font-sans font-medium transition-all active:scale-95 ${
+                  className={`flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3.5 h-8 sm:h-9 rounded-full border text-[11px] sm:text-xs font-sans font-medium transition-all active:scale-95 ${
                     bookmarked
                       ? "bg-primary/15 border-primary/30 text-primary"
                       : "border-border/25 text-foreground/40 hover:text-primary hover:border-primary/25"
                   }`}
                 >
-                  <Bookmark className={`w-3.5 h-3.5 ${bookmarked ? "fill-primary" : ""}`} />
-                  Sauvegarder
+                  <Bookmark className={`w-3 h-3 sm:w-3.5 sm:h-3.5 ${bookmarked ? "fill-primary" : ""}`} />
+                  <span className="hidden sm:inline">Sauvegarder</span>
+                  <span className="sm:hidden">Sauver</span>
                 </button>
               </div>
 
