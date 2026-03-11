@@ -91,13 +91,15 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
       (movie.genres || []).map(g => g.name)
     );
 
-    // Load taste profile + user taste vector and pass to match function
+    // Load taste profile + user taste vector + liked movies and pass to match function
     Promise.all([
       getUserTasteProfile(),
       user ? computeUserTasteVector(user.id) : Promise.resolve(null),
-    ]).then(([tasteProfile, userTasteVector]) => {
+      user ? getLikedMovies().catch(() => []) : Promise.resolve([]),
+    ]).then(([tasteProfile, userTasteVector, likedMovies]) => {
+      const likedMovieTitles = (likedMovies || []).map((m: any) => m.title);
       supabase.functions.invoke("movie-match", {
-        body: { movie, userCriteria, tasteProfile, userTasteVector },
+        body: { movie, userCriteria, tasteProfile, userTasteVector, likedMovieTitles },
       }).then(({ data, error }) => {
         if (error) { console.error("Match error:", error); setMatchLoading(false); return; }
         setMatchData(data as MatchData);
