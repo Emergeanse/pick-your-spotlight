@@ -62,7 +62,7 @@ const Landing = () => {
               className="text-foreground/60 hover:text-foreground font-sans text-sm"
               onClick={() => navigate("/auth")}
             >
-              Sign in
+              Connexion
             </Button>
             <Button
               size="sm"
@@ -70,7 +70,7 @@ const Landing = () => {
               onClick={() => navigate("/app")}
             >
               <Clapperboard className="w-3.5 h-3.5 mr-1.5" />
-              Find my movie
+              Trouver mon film
             </Button>
           </div>
         </div>
@@ -113,7 +113,7 @@ const Landing = () => {
             className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20 mb-6"
           >
             <Sparkles className="w-3.5 h-3.5 text-primary" />
-            <span className="text-primary text-xs font-sans font-medium">AI-powered · No account needed</span>
+            <span className="text-primary text-xs font-sans font-medium">Propulsé par l'IA · Sans inscription</span>
           </motion.div>
 
           <motion.h1
@@ -122,8 +122,8 @@ const Landing = () => {
             transition={{ duration: 0.7, delay: 0.3 }}
             className="text-4xl md:text-6xl lg:text-7xl font-serif leading-[1.05] mb-5"
           >
-            Find what to watch in{" "}
-            <span className="text-primary italic">30 seconds.</span>
+            Trouve quoi regarder en{" "}
+            <span className="text-primary italic">30 secondes.</span>
           </motion.h1>
 
           <motion.p
@@ -132,7 +132,7 @@ const Landing = () => {
             transition={{ duration: 0.6, delay: 0.5 }}
             className="text-foreground/50 text-base md:text-lg font-sans font-light max-w-xl mx-auto mb-8 leading-relaxed"
           >
-            Pick learns your taste and finds the perfect movie or series for tonight.
+            Pick apprend tes goûts et trouve le film ou la série parfaite pour ce soir.
           </motion.p>
 
           <motion.div
@@ -147,7 +147,7 @@ const Landing = () => {
               onClick={() => navigate("/app")}
             >
               <Clapperboard className="w-4 h-4" />
-              Find my movie
+              Trouver mon film
             </Button>
             <Button
               size="lg"
@@ -156,7 +156,7 @@ const Landing = () => {
               onClick={() => navigate("/app")}
             >
               <Dice5 className="w-4 h-4" />
-              Surprise me
+              Surprise
             </Button>
           </motion.div>
 
@@ -167,7 +167,7 @@ const Landing = () => {
             transition={{ delay: 1.2 }}
             className="text-foreground/25 text-xs font-sans mt-5"
           >
-            No sign-up required · Create an account to save your taste
+            Aucune inscription requise · Crée un compte pour sauvegarder tes goûts
           </motion.p>
         </motion.div>
 
@@ -198,10 +198,10 @@ const Landing = () => {
             className="text-center mb-16"
           >
             <h2 className="text-3xl md:text-5xl font-serif mb-3">
-              How Pick works
+              Comment ça marche
             </h2>
             <p className="text-foreground/40 font-sans text-sm md:text-base max-w-md mx-auto">
-              Three steps. One perfect recommendation.
+              Trois étapes. Une recommandation parfaite.
             </p>
           </motion.div>
 
@@ -215,24 +215,24 @@ const Landing = () => {
             {[
               {
                 step: "01",
-                title: "Tell Pick how you feel",
-                desc: "Your mood, available time, and who you're watching with.",
+                title: "Dis à Pick comment tu te sens",
+                desc: "Ton humeur, le temps disponible et avec qui tu regardes.",
                 icon: "🎭",
-                label: "Ask Pick",
+                label: "Demande",
               },
               {
                 step: "02",
-                title: "Get the perfect movie",
-                desc: "One movie, perfectly matched for tonight. Not a list — the one.",
+                title: "Reçois le film parfait",
+                desc: "Un seul film, parfaitement adapté pour ce soir. Pas une liste — le bon.",
                 icon: "🎬",
-                label: "Get matched",
+                label: "Match",
               },
               {
                 step: "03",
-                title: "Watch with your AI companion",
-                desc: "Ask questions, get fun facts, and explore behind the scenes while watching.",
+                title: "Regarde avec ton compagnon IA",
+                desc: "Pose des questions, découvre des anecdotes et les coulisses pendant le film.",
                 icon: "🍿",
-                label: "Enjoy",
+                label: "Profite",
               },
             ].map((item, i) => (
               <motion.div
@@ -271,11 +271,11 @@ const Landing = () => {
             className="text-center mb-16"
           >
             <h2 className="text-3xl md:text-5xl font-serif mb-3">
-              Recommendations that actually{" "}
-              <span className="text-primary italic">understand</span> your taste
+              Des recommandations qui{" "}
+              <span className="text-primary italic">comprennent</span> tes goûts
             </h2>
             <p className="text-foreground/40 font-sans text-sm md:text-base max-w-lg mx-auto">
-              Create a free account to unlock personalized recommendations that get smarter over time.
+              Crée un compte gratuit pour débloquer des recommandations personnalisées qui s'améliorent avec le temps.
             </p>
           </motion.div>
 
@@ -287,10 +287,10 @@ const Landing = () => {
             className="grid md:grid-cols-2 gap-6 max-w-3xl mx-auto"
           >
             {[
-              { text: "Learns from the movies you love", tag: "Taste Profile" },
-              { text: "Remembers what you skip and what you save", tag: "Behavior" },
-              { text: "Adapts to your mood and context", tag: "Session" },
-              { text: "Gets smarter with every interaction", tag: "AI Learning" },
+              { text: "Apprend des films que tu aimes", tag: "Profil de goût" },
+              { text: "Retient ce que tu passes et ce que tu sauvegardes", tag: "Comportement" },
+              { text: "S'adapte à ton humeur et ton contexte", tag: "Session" },
+              { text: "Devient plus intelligent à chaque interaction", tag: "Apprentissage IA" },
             ].map((item, i) => (
               <motion.div
                 key={i}
@@ -319,7 +319,7 @@ const Landing = () => {
             transition={{ delay: 0.5, duration: 0.8 }}
             className="flex flex-wrap justify-center gap-2 mt-12"
           >
-            {["Thriller", "Feel Good", "Dark", "Mind Blowing", "Cozy", "Slow Burn", "Visually Stunning", "Twist Ending"].map((tag, i) => (
+            {["Thriller", "Feel Good", "Sombre", "Époustouflant", "Cosy", "Slow Burn", "Visuellement dingue", "Twist final"].map((tag, i) => (
               <motion.span
                 key={tag}
                 initial={{ opacity: 0, scale: 0.8 }}
@@ -346,10 +346,10 @@ const Landing = () => {
             className="text-center mb-16"
           >
             <h2 className="text-3xl md:text-5xl font-serif mb-3">
-              More than just a movie search
+              Bien plus qu'un moteur de recherche
             </h2>
             <p className="text-foreground/40 font-sans text-sm md:text-base max-w-md mx-auto">
-              Pick is your intelligent cinema companion.
+              Pick est ton compagnon cinéma intelligent.
             </p>
           </motion.div>
 
@@ -363,28 +363,28 @@ const Landing = () => {
             {[
               {
                 icon: <Target className="w-5 h-5" />,
-                title: "Smart recommendations",
-                desc: "Analyzes your taste and context to suggest the best movie.",
+                title: "Recommandations intelligentes",
+                desc: "Analyse tes goûts et ton contexte pour te proposer le meilleur film.",
               },
               {
                 icon: <Dice5 className="w-5 h-5" />,
-                title: "Surprise mode",
-                desc: "Let Pick choose the perfect movie for tonight.",
+                title: "Mode surprise",
+                desc: "Laisse Pick choisir le film parfait pour ce soir.",
               },
               {
                 icon: <Mic className="w-5 h-5" />,
-                title: "Talk to Pick",
-                desc: "Ask for a movie in natural language.",
+                title: "Parle à Pick",
+                desc: "Demande un film en langage naturel.",
               },
               {
                 icon: <Brain className="w-5 h-5" />,
-                title: "Learns over time",
-                desc: "The more you use Pick, the better it gets.",
+                title: "Apprend avec le temps",
+                desc: "Plus tu utilises Pick, meilleures sont les recommandations.",
               },
               {
                 icon: <MessageCircle className="w-5 h-5" />,
-                title: "Movie companion",
-                desc: "Ask questions while watching. Fun facts, cast info, no spoilers.",
+                title: "Compagnon de film",
+                desc: "Pose des questions pendant le film. Anecdotes, casting, sans spoilers.",
                 highlight: true,
               },
             ].map((f, i) => (
@@ -407,7 +407,7 @@ const Landing = () => {
                 <p className="text-foreground/40 text-sm font-sans leading-relaxed">{f.desc}</p>
                 {(f as any).highlight && (
                   <span className="inline-block mt-3 text-[10px] uppercase tracking-widest text-primary font-sans font-semibold">
-                    New ✨
+                    Nouveau ✨
                   </span>
                 )}
               </motion.div>
@@ -430,10 +430,10 @@ const Landing = () => {
             viewport={{ once: true, margin: "-100px" }}
           >
             <h2 className="text-3xl md:text-5xl font-serif mb-3">
-              Across all streaming platforms
+              Sur toutes les plateformes de streaming
             </h2>
             <p className="text-foreground/40 font-sans text-sm md:text-base max-w-lg mx-auto mb-12">
-              Discover movies available on your streaming services so you always know where to watch.
+              Découvre des films disponibles sur tes services de streaming pour toujours savoir où les regarder.
             </p>
           </motion.div>
 
@@ -473,10 +473,10 @@ const Landing = () => {
           className="max-w-3xl mx-auto text-center relative z-10"
         >
           <h2 className="text-3xl md:text-5xl lg:text-6xl font-serif mb-4">
-            Ready to find your next movie?
+            Prêt à trouver ton prochain film ?
           </h2>
           <p className="text-foreground/40 font-sans text-sm md:text-base max-w-md mx-auto mb-8">
-            Stop scrolling. Start watching.
+            Arrête de scroller. Commence à regarder.
           </p>
 
           <div className="flex items-center justify-center gap-3 flex-wrap">
@@ -486,7 +486,7 @@ const Landing = () => {
               onClick={() => navigate("/app")}
             >
               <Clapperboard className="w-4 h-4" />
-              Start picking
+              C'est parti
             </Button>
             <Button
               size="lg"
@@ -495,12 +495,12 @@ const Landing = () => {
               onClick={() => navigate("/app")}
             >
               <Dice5 className="w-4 h-4" />
-              Surprise me
+              Surprise
             </Button>
           </div>
 
           <p className="text-foreground/20 text-xs font-sans mt-4">
-            Free to use · No account required
+            Gratuit · Sans inscription
           </p>
         </motion.div>
       </section>
@@ -511,18 +511,18 @@ const Landing = () => {
           <div className="flex items-center gap-2">
             <span className="font-serif text-lg">Pick</span>
             <span className="text-foreground/20 text-xs font-sans">·</span>
-            <span className="text-foreground/30 text-xs font-sans">Your movie companion</span>
+            <span className="text-foreground/30 text-xs font-sans">Ton compagnon cinéma</span>
           </div>
 
           <div className="flex items-center gap-6 text-foreground/30 text-xs font-sans">
-            <a href="#" className="hover:text-foreground/60 transition-colors">About</a>
-            <a href="#" className="hover:text-foreground/60 transition-colors">Privacy</a>
-            <a href="#" className="hover:text-foreground/60 transition-colors">Terms</a>
+            <a href="#" className="hover:text-foreground/60 transition-colors">À propos</a>
+            <a href="#" className="hover:text-foreground/60 transition-colors">Confidentialité</a>
+            <a href="#" className="hover:text-foreground/60 transition-colors">Conditions</a>
             <a href="#" className="hover:text-foreground/60 transition-colors">Contact</a>
           </div>
 
           <p className="text-foreground/15 text-[10px] font-sans">
-            © {new Date().getFullYear()} Pick. All rights reserved.
+            © {new Date().getFullYear()} Pick. Tous droits réservés.
           </p>
         </div>
       </footer>
