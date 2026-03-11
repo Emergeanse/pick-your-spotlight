@@ -92,6 +92,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
     });
   }, [alternativeMovies]);
 
+  useEffect(() => {
     setMatchData(null);
     setMatchLoading(true);
     setShowOptions(false);
