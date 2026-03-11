@@ -40,8 +40,8 @@ const SoundWave = () => (
   </div>
 );
 
-const VoiceChat = ({ onClose, onMovieSuggested }: VoiceChatProps) => {
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+const VoiceChat = ({ onClose, onMovieSuggested, initialMessages }: VoiceChatProps) => {
+  const [messages, setMessages] = useState<ChatMessage[]>(initialMessages || []);
   const [isListening, setIsListening] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
