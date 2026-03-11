@@ -125,7 +125,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
         <div className="absolute inset-0 bg-gradient-to-r from-background/90 via-background/50 to-transparent" />
 
         {/* Content */}
-        <div className="relative z-10 flex flex-col justify-end min-h-screen p-5 pb-10 md:p-12 lg:p-16">
+        <div className="relative z-10 flex flex-col justify-end min-h-screen p-4 pb-[calc(2.5rem+env(safe-area-inset-bottom))] md:p-12 lg:p-16">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
