@@ -75,17 +75,6 @@ const VoiceChat = ({ onClose, onMovieSuggested, initialMessages }: VoiceChatProp
     }).catch(console.error);
   }, []);
 
-  // Auto-start listening when opened with initial messages (from "Affiner" button)
-  useEffect(() => {
-    if (initialMessages && initialMessages.length > 0 && scribeToken) {
-      // Small delay to ensure UI is mounted and ready
-      const timer = setTimeout(() => {
-        startListening();
-      }, 300);
-      return () => clearTimeout(timer);
-    }
-  }, [initialMessages, scribeToken, startListening]);
-
   // ElevenLabs Scribe for cross-browser STT
   const scribe = useScribe({
     modelId: "scribe_v2_realtime",
@@ -211,6 +200,16 @@ const VoiceChat = ({ onClose, onMovieSuggested, initialMessages }: VoiceChatProp
       setTimeout(() => inputRef.current?.focus(), 100);
     }
   }, [scribe, scribeToken]);
+
+  // Auto-start listening when opened with initial messages (from "Affiner" button)
+  useEffect(() => {
+    if (initialMessages && initialMessages.length > 0 && scribeToken) {
+      const timer = setTimeout(() => {
+        startListening();
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [initialMessages, scribeToken, startListening]);
 
   const stopListening = useCallback(() => {
     scribe.disconnect();
