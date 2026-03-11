@@ -118,6 +118,13 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
   const generateTonightPick = async () => {
     setTonightLoading(true);
     setTonightProviders([]);
+    let msgIndex = 0;
+    setTonightLoadingMsg(LOADING_MESSAGES[0]);
+    const msgInterval = setInterval(() => {
+      msgIndex = (msgIndex + 1) % LOADING_MESSAGES.length;
+      setTonightLoadingMsg(LOADING_MESSAGES[msgIndex]);
+    }, 2000);
+
     try {
       let movie: MovieDetail;
       if (user) {
@@ -135,6 +142,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
       } else {
         movie = await getSurpriseRecommendation();
       }
+      clearInterval(msgInterval);
       setTonightPick(movie);
       const mediaType = movie.first_air_date ? "tv" : "movie";
       getWatchProviders(movie.id, mediaType).then(setTonightProviders).catch(() => {});
@@ -142,12 +150,16 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
       console.error(e);
       try {
         const movie = await getSurpriseRecommendation();
+        clearInterval(msgInterval);
         setTonightPick(movie);
         const mediaType = movie.first_air_date ? "tv" : "movie";
         getWatchProviders(movie.id, mediaType).then(setTonightProviders).catch(() => {});
-      } catch {}
+      } catch {
+        clearInterval(msgInterval);
+      }
     } finally {
       setTonightLoading(false);
+      setTonightLoadingMsg("");
     }
   };
 
