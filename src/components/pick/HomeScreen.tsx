@@ -104,7 +104,47 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
     }
   };
 
-  return (
+  const generateTonightPick = async () => {
+    setTonightLoading(true);
+    setTonightProviders([]);
+    try {
+      let movie: MovieDetail;
+      if (user) {
+        const liked = await getLikedMovies();
+        if (liked.length >= 2) {
+          const userTasteVector = await computeUserTasteVector(user.id);
+          const { data, error } = await supabase.functions.invoke("surprise-personalized", {
+            body: { likedMovies: liked, userTasteVector },
+          });
+          if (error) throw error;
+          movie = data.movie as MovieDetail;
+        } else {
+          movie = await getSurpriseRecommendation();
+        }
+      } else {
+        movie = await getSurpriseRecommendation();
+      }
+      setTonightPick(movie);
+      const mediaType = movie.first_air_date ? "tv" : "movie";
+      getWatchProviders(movie.id, mediaType).then(setTonightProviders).catch(() => {});
+    } catch (e) {
+      console.error(e);
+      try {
+        const movie = await getSurpriseRecommendation();
+        setTonightPick(movie);
+        const mediaType = movie.first_air_date ? "tv" : "movie";
+        getWatchProviders(movie.id, mediaType).then(setTonightProviders).catch(() => {});
+      } catch {}
+    } finally {
+      setTonightLoading(false);
+    }
+  };
+
+  const handleTonightPick = () => {
+    setTonightPick(null);
+    generateTonightPick();
+  };
+
     <div className="relative w-full h-full overflow-hidden">
       <BrandHeader showDiscoveryToggle onToggleDiscovery={() => setShowDiscovery(v => !v)} discoveryOpen={showDiscovery} />
 
