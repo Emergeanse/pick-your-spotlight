@@ -35,6 +35,13 @@ const LOADING_MESSAGES = [
   "Laisse-moi réfléchir deux secondes…",
 ];
 
+const PROACTIVE_MESSAGES = [
+  "J'ai peut-être le film parfait pour ce soir.",
+  "Tiens, j'ai pensé à un truc qui devrait te plaire.",
+  "Avant que tu choisisses… regarde celui-là.",
+  "J'ai une idée pour toi ce soir.",
+];
+
 const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }: HomeScreenProps) => {
   const [isSurprising, setIsSurprising] = useState(false);
   const [surpriseMsg, setSurpriseMsg] = useState("");
@@ -45,6 +52,9 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
   const [tonightLoading, setTonightLoading] = useState(false);
   const [tonightLoadingMsg, setTonightLoadingMsg] = useState("");
   const [tonightProviders, setTonightProviders] = useState<{ name: string; logo_path: string }[]>([]);
+  const [proactivePick, setProactivePick] = useState<MovieDetail | null>(null);
+  const [proactiveMsg] = useState(() => PROACTIVE_MESSAGES[Math.floor(Math.random() * PROACTIVE_MESSAGES.length)]);
+  const [proactiveDismissed, setProactiveDismissed] = useState(false);
   const { user } = useAuth();
 
 
