@@ -113,24 +113,36 @@ const Landing = () => {
           style={{ opacity: heroOpacity }}
           className="relative z-10 max-w-3xl mx-auto px-5 text-center"
         >
-          {/* Pick mascot wave */}
+          {/* Pick mascot with speech bubble */}
           <motion.div
             initial={{ opacity: 0, y: 20, scale: 0.9 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             transition={{ duration: 0.6, delay: 0.1, type: "spring", stiffness: 200 }}
-            className="mb-6"
+            className="mb-6 flex flex-col items-center"
           >
-            <img src={pickWave} alt="Pick" className="w-20 h-20 md:w-24 md:h-24 object-contain mx-auto drop-shadow-xl pick-float" />
+            {/* Speech bubble */}
+            <motion.div
+              initial={{ opacity: 0, y: 8, scale: 0.9 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              transition={{ duration: 0.5, delay: 0.6 }}
+              className="relative max-w-[240px] px-4 py-2.5 rounded-2xl bg-card/80 backdrop-blur-sm border border-border/30 shadow-lg mb-3"
+            >
+              <p className="text-foreground/80 text-[13px] font-sans leading-relaxed text-center">
+                Alors… on regarde quoi ce soir ? 🍿
+              </p>
+              <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-3 h-3 rotate-45 bg-card/80 border-r border-b border-border/30" />
+            </motion.div>
+            <img src={pickWave} alt="Pick" className="w-24 h-24 md:w-32 md:h-32 object-contain drop-shadow-xl pick-float" />
           </motion.div>
 
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.5, delay: 0.2 }}
-            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20 mb-6"
+            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/8 border border-primary/15 mb-6"
           >
-            <Sparkles className="w-3.5 h-3.5 text-primary" />
-            <span className="text-primary text-xs font-sans font-medium">Ton expert cinéma personnel · Propulsé par l'IA</span>
+            <Sparkles className="w-3 h-3 text-primary/60" />
+            <span className="text-primary/60 text-[11px] font-sans font-medium">Propulsé par l'IA</span>
           </motion.div>
 
           <motion.h1
@@ -147,45 +159,59 @@ const Landing = () => {
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.5 }}
-            className="text-foreground/50 text-base md:text-lg font-sans font-light max-w-xl mx-auto mb-8 leading-relaxed"
+            className="text-foreground/50 text-base md:text-lg font-sans font-light max-w-md mx-auto mb-8 leading-relaxed"
           >
-            Pick est un petit écureuil cinéphile qui connaît les films mieux que personne. 
-            Dis-lui ton humeur, il te trouve <em>le</em> film parfait en quelques secondes.
+            Dis ton envie. Pick trouve ton film.
           </motion.p>
+
+          {/* Mini conversation example */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.65 }}
+            className="max-w-xs mx-auto mb-8 flex flex-col gap-2"
+          >
+            <div className="self-end px-3.5 py-2 rounded-2xl rounded-br-md bg-primary/15 border border-primary/20">
+              <p className="text-foreground/70 text-[13px] font-sans">Un film drôle ce soir 🎬</p>
+            </div>
+            <div className="self-start flex items-end gap-2">
+              <img src={pickDefault} alt="Pick" className="w-6 h-6 object-contain flex-shrink-0" />
+              <div className="px-3.5 py-2 rounded-2xl rounded-bl-md bg-card/60 border border-border/20">
+                <p className="text-foreground/70 text-[13px] font-sans">J'ai exactement ce qu'il te faut ! ✨</p>
+              </div>
+            </div>
+          </motion.div>
 
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.7 }}
-            className="flex items-center justify-center gap-3 flex-wrap"
+            className="flex flex-col items-center gap-3"
           >
-            <Button
-              size="lg"
-              className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90 font-sans font-semibold px-7 h-12 gap-2.5 text-base neon-glow transition-all active:scale-[0.97]"
-              onClick={() => navigate("/app")}
-            >
-              <Clapperboard className="w-4 h-4" />
-              Demander à Pick
-            </Button>
-            <Button
-              size="lg"
-              variant="ghost"
-              className="rounded-full text-foreground/60 hover:text-foreground font-sans font-medium px-6 h-12 gap-2 text-base border border-border/20 hover:border-border/40 transition-all"
-              onClick={() => navigate("/app")}
-            >
-              <Dice5 className="w-4 h-4" />
-              Surprise
-            </Button>
-          </motion.div>
+            <div className="flex items-center justify-center gap-3 flex-wrap">
+              <Button
+                size="lg"
+                className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90 font-sans font-semibold px-7 h-12 gap-2.5 text-base neon-glow transition-all active:scale-[0.97]"
+                onClick={() => navigate("/app")}
+              >
+                <Clapperboard className="w-4 h-4" />
+                Demander à Pick
+              </Button>
+              <Button
+                size="lg"
+                variant="ghost"
+                className="rounded-full text-foreground/60 hover:text-foreground font-sans font-medium px-6 h-12 gap-2 text-base border border-border/20 hover:border-border/40 transition-all"
+                onClick={() => navigate("/app")}
+              >
+                <Dice5 className="w-4 h-4" />
+                Surprends-moi
+              </Button>
+            </div>
 
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 1.2 }}
-            className="text-foreground/25 text-xs font-sans mt-5"
-          >
-            Gratuit · Sans inscription · Crée un compte pour des recommandations personnalisées
-          </motion.p>
+            <span className="text-foreground/40 text-xs font-sans font-medium tracking-wide">
+              Gratuit — aucune inscription
+            </span>
+          </motion.div>
         </motion.div>
 
         {/* Scroll indicator */}
