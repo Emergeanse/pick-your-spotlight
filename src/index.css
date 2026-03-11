@@ -128,3 +128,12 @@
 .animate-subtle-pulse {
   animation: subtle-pulse 1.5s ease-in-out infinite;
 }
+
+/* Hide scrollbar for discovery rows */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
