@@ -338,6 +338,18 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                 </Button>
               )}
 
+              {onRefineWithVoice && (
+                <Button
+                  variant="heroOutline"
+                  size="xl"
+                  className="text-sm md:text-base"
+                  onClick={onRefineWithVoice}
+                >
+                  <Mic className="w-4 h-4" />
+                  Affiner
+                </Button>
+              )}
+
               <Button
                 variant="ghost"
                 size="xl"
