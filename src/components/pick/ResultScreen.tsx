@@ -44,9 +44,10 @@ interface ResultScreenProps {
   onSelectAlternative?: (movie: MovieDetail) => void;
   searchTags?: string[];
   onRemoveTag?: (tag: string) => void;
+  refining?: boolean;
 }
 
-const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onShowAnother, onRestart, onRefineWithVoice, onRefineWithMessage, onStartCompanion, hasMore, userCriteria, alternativeMovies, onSelectAlternative, searchTags, onRemoveTag }, ref) => {
+const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onShowAnother, onRestart, onRefineWithVoice, onRefineWithMessage, onStartCompanion, hasMore, userCriteria, alternativeMovies, onSelectAlternative, searchTags, onRemoveTag, refining }, ref) => {
   const [providers, setProviders] = useState<{ name: string; logo_path: string }[]>([]);
   const [trailerUrl, setTrailerUrl] = useState<string | null>(null);
   const [matchData, setMatchData] = useState<MatchData | null>(null);
