@@ -2,7 +2,11 @@ import { motion, useScroll, useTransform } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Target, Dice5, Mic, Brain, Tv, ArrowRight, ChevronDown, Clapperboard, MessageCircle } from "lucide-react";
+import { Sparkles, Target, Dice5, Mic, Brain, Tv, ChevronDown, Clapperboard, MessageCircle, Volume2, Zap, SlidersHorizontal } from "lucide-react";
+import pickLogo from "@/assets/pick-logo.png";
+import pickWave from "@/assets/pick-squirrel-wave.png";
+import pickThink from "@/assets/pick-squirrel-think.png";
+import pickDefault from "@/assets/pick-squirrel.png";
 
 const POSTER_URLS = [
   "https://image.tmdb.org/t/p/w342/qJ2tW6WMUDux911BTUgMe1cEgGR.jpg",
@@ -54,7 +58,10 @@ const Landing = () => {
       {/* ── NAV ── */}
       <nav className="fixed top-0 left-0 right-0 z-50 bg-background/60 backdrop-blur-xl border-b border-border/10">
         <div className="max-w-6xl mx-auto flex items-center justify-between px-5 h-14">
-          <span className="font-serif text-xl tracking-wide">Pick</span>
+          <div className="flex items-center gap-2">
+            <img src={pickLogo} alt="Pick" className="w-6 h-6 object-contain invert brightness-200" />
+            <span className="font-serif text-xl tracking-wide">Pick</span>
+          </div>
           <div className="flex items-center gap-3">
             <Button
               variant="ghost"
@@ -70,7 +77,7 @@ const Landing = () => {
               onClick={() => navigate("/app")}
             >
               <Clapperboard className="w-3.5 h-3.5 mr-1.5" />
-              Trouver mon film
+              Essayer Pick
             </Button>
           </div>
         </div>
@@ -80,7 +87,7 @@ const Landing = () => {
       <section ref={heroRef} className="relative min-h-screen flex items-center justify-center overflow-hidden">
         {/* Poster grid background */}
         <motion.div style={{ scale: heroScale }} className="absolute inset-0">
-          <div className="absolute inset-0 grid grid-cols-4 md:grid-cols-6 gap-1 opacity-[0.12]">
+          <div className="absolute inset-0 grid grid-cols-4 md:grid-cols-6 gap-1 opacity-[0.08]">
             {POSTER_URLS.map((url, i) => (
               <motion.img
                 key={i}
@@ -106,6 +113,16 @@ const Landing = () => {
           style={{ opacity: heroOpacity }}
           className="relative z-10 max-w-3xl mx-auto px-5 text-center"
         >
+          {/* Pick mascot wave */}
+          <motion.div
+            initial={{ opacity: 0, y: 20, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ duration: 0.6, delay: 0.1, type: "spring", stiffness: 200 }}
+            className="mb-6"
+          >
+            <img src={pickWave} alt="Pick" className="w-20 h-20 md:w-24 md:h-24 object-contain mx-auto drop-shadow-xl pick-float" />
+          </motion.div>
+
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -113,7 +130,7 @@ const Landing = () => {
             className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20 mb-6"
           >
             <Sparkles className="w-3.5 h-3.5 text-primary" />
-            <span className="text-primary text-xs font-sans font-medium">Propulsé par l'IA · Sans inscription</span>
+            <span className="text-primary text-xs font-sans font-medium">Ton expert cinéma personnel · Propulsé par l'IA</span>
           </motion.div>
 
           <motion.h1
@@ -122,8 +139,8 @@ const Landing = () => {
             transition={{ duration: 0.7, delay: 0.3 }}
             className="text-4xl md:text-6xl lg:text-7xl font-serif leading-[1.05] mb-5"
           >
-            Trouve quoi regarder en{" "}
-            <span className="text-primary italic">30 secondes.</span>
+            Le bon film.{" "}
+            <span className="text-primary italic">Ce soir.</span>
           </motion.h1>
 
           <motion.p
@@ -132,7 +149,8 @@ const Landing = () => {
             transition={{ duration: 0.6, delay: 0.5 }}
             className="text-foreground/50 text-base md:text-lg font-sans font-light max-w-xl mx-auto mb-8 leading-relaxed"
           >
-            Pick apprend tes goûts et trouve le film ou la série parfaite pour ce soir.
+            Pick est un petit écureuil cinéphile qui connaît les films mieux que personne. 
+            Dis-lui ton humeur, il te trouve <em>le</em> film parfait en quelques secondes.
           </motion.p>
 
           <motion.div
@@ -147,7 +165,7 @@ const Landing = () => {
               onClick={() => navigate("/app")}
             >
               <Clapperboard className="w-4 h-4" />
-              Trouver mon film
+              Demander à Pick
             </Button>
             <Button
               size="lg"
@@ -160,14 +178,13 @@ const Landing = () => {
             </Button>
           </motion.div>
 
-          {/* No account needed hint */}
           <motion.p
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 1.2 }}
             className="text-foreground/25 text-xs font-sans mt-5"
           >
-            Aucune inscription requise · Crée un compte pour sauvegarder tes goûts
+            Gratuit · Sans inscription · Crée un compte pour des recommandations personnalisées
           </motion.p>
         </motion.div>
 
@@ -187,6 +204,79 @@ const Landing = () => {
         </motion.div>
       </section>
 
+      {/* ── MEET PICK ── */}
+      <section className="py-24 md:py-32 px-5 relative overflow-hidden">
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div className="w-[500px] h-[500px] rounded-full bg-primary/4 blur-[100px]" />
+        </div>
+
+        <div className="max-w-4xl mx-auto relative z-10">
+          <motion.div
+            variants={fadeUp}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-100px" }}
+            className="text-center mb-16"
+          >
+            <h2 className="text-3xl md:text-5xl font-serif mb-4">
+              Rencontre <span className="text-primary italic">Pick</span>
+            </h2>
+            <p className="text-foreground/40 font-sans text-sm md:text-base max-w-lg mx-auto">
+              Un cinéphile passionné avec béret et lunettes rondes, 
+              qui a vu plus de films que tu ne pourras jamais en regarder.
+            </p>
+          </motion.div>
+
+          {/* Pick showcase — 3 moods */}
+          <motion.div
+            variants={stagger}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-80px" }}
+            className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-3xl mx-auto"
+          >
+            {[
+              {
+                img: pickWave,
+                title: "Il t'accueille",
+                desc: "Pick te demande ton humeur, avec qui tu regardes et combien de temps tu as.",
+                mood: "Accueil",
+              },
+              {
+                img: pickThink,
+                title: "Il réfléchit",
+                desc: "Il fouille dans sa mémoire cinématographique pour trouver le film parfait.",
+                mood: "Réflexion",
+              },
+              {
+                img: pickDefault,
+                title: "Il te présente",
+                desc: "Il t'explique pourquoi ce film est fait pour toi, et peut même te le raconter à voix haute.",
+                mood: "Présentation",
+              },
+            ].map((item, i) => (
+              <motion.div
+                key={item.mood}
+                variants={fadeUp}
+                custom={i}
+                className="text-center p-6 md:p-8 rounded-2xl bg-card/40 border border-border/15 hover:border-primary/20 transition-all duration-300"
+              >
+                <img
+                  src={item.img}
+                  alt={item.mood}
+                  className="w-20 h-20 md:w-24 md:h-24 object-contain mx-auto mb-4 drop-shadow-lg"
+                />
+                <span className="text-[10px] uppercase tracking-widest text-primary/60 font-sans font-semibold">
+                  {item.mood}
+                </span>
+                <h3 className="text-lg font-serif mt-1 mb-2">{item.title}</h3>
+                <p className="text-foreground/40 text-sm font-sans leading-relaxed">{item.desc}</p>
+              </motion.div>
+            ))}
+          </motion.div>
+        </div>
+      </section>
+
       {/* ── HOW IT WORKS ── */}
       <section className="py-24 md:py-32 px-5">
         <div className="max-w-5xl mx-auto">
@@ -201,7 +291,7 @@ const Landing = () => {
               Comment ça marche
             </h2>
             <p className="text-foreground/40 font-sans text-sm md:text-base max-w-md mx-auto">
-              Trois étapes. Une recommandation parfaite.
+              Trois façons de trouver ton film. Zéro prise de tête.
             </p>
           </motion.div>
 
@@ -214,37 +304,33 @@ const Landing = () => {
           >
             {[
               {
-                step: "01",
-                title: "Dis à Pick comment tu te sens",
-                desc: "Ton humeur, le temps disponible et avec qui tu regardes.",
-                icon: "🎭",
-                label: "Demande",
+                icon: <Zap className="w-5 h-5" />,
+                title: "⚡ Pick pour ce soir",
+                desc: "Un seul tap et Pick te trouve le film parfait immédiatement. Pas de questions, pas de listes.",
+                label: "Instant",
               },
               {
-                step: "02",
-                title: "Reçois le film parfait",
-                desc: "Un seul film, parfaitement adapté pour ce soir. Pas une liste — le bon.",
-                icon: "🎬",
-                label: "Match",
+                icon: <Mic className="w-5 h-5" />,
+                title: "🎙 Parle à Pick",
+                desc: "Dis-lui ce que tu veux en langage naturel : « un truc qui fait peur mais pas trop ». Il comprend.",
+                label: "Vocal",
               },
               {
-                step: "03",
-                title: "Regarde avec ton compagnon IA",
-                desc: "Pose des questions, découvre des anecdotes et les coulisses pendant le film.",
-                icon: "🍿",
-                label: "Profite",
+                icon: <SlidersHorizontal className="w-5 h-5" />,
+                title: "🎬 Choisis toi-même",
+                desc: "Quelques questions rapides sur ton humeur, le temps disponible et avec qui tu regardes.",
+                label: "Guidé",
               },
             ].map((item, i) => (
               <motion.div
-                key={item.step}
+                key={item.label}
                 variants={fadeUp}
                 custom={i}
                 className="relative group bg-card/50 border border-border/15 rounded-2xl p-6 md:p-8 hover:border-primary/20 transition-all duration-300"
               >
-                <div className="absolute top-6 right-6 text-[10px] font-sans font-semibold text-foreground/15 tracking-widest">
-                  {item.step}
+                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center mb-4 text-primary group-hover:bg-primary/15 transition-colors">
+                  {item.icon}
                 </div>
-                <div className="text-3xl mb-4">{item.icon}</div>
                 <span className="text-[10px] uppercase tracking-widest text-primary/60 font-sans font-semibold">
                   {item.label}
                 </span>
@@ -256,13 +342,58 @@ const Landing = () => {
         </div>
       </section>
 
-      {/* ── PERSONALIZATION ── */}
+      {/* ── PICK VOICE ── */}
       <section className="py-24 md:py-32 px-5 relative overflow-hidden">
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div className="w-[500px] h-[500px] rounded-full bg-primary/3 blur-[100px]" />
+          <div className="w-[500px] h-[400px] rounded-full bg-primary/3 blur-[100px]" />
         </div>
 
-        <div className="max-w-5xl mx-auto relative z-10">
+        <div className="max-w-4xl mx-auto relative z-10">
+          <motion.div
+            variants={fadeUp}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-100px" }}
+            className="flex flex-col md:flex-row items-center gap-10 md:gap-16"
+          >
+            {/* Pick mascot with film reel */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
+              className="flex-shrink-0"
+            >
+              <div className="relative">
+                <img src={pickDefault} alt="Pick" className="w-32 h-32 md:w-40 md:h-40 object-contain drop-shadow-xl pick-float" />
+                {/* Speech bubble */}
+                <div className="absolute -top-4 -right-4 md:-right-8 px-3 py-2 rounded-xl bg-primary/15 border border-primary/25 backdrop-blur-sm">
+                  <Volume2 className="w-4 h-4 text-primary" />
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Text */}
+            <div className="text-center md:text-left">
+              <h2 className="text-3xl md:text-4xl font-serif mb-4">
+                Pick peut te <span className="text-primary italic">raconter</span> le film
+              </h2>
+              <p className="text-foreground/45 font-sans text-sm md:text-base leading-relaxed mb-4">
+                Écoute Pick te présenter le film à voix haute. Il t'explique pourquoi c'est le bon choix pour toi, 
+                avec sa voix unique. Comme un ami cinéphile qui partage ses coups de cœur.
+              </p>
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary/10 border border-primary/25">
+                <Volume2 className="w-4 h-4 text-primary" />
+                <span className="text-foreground/60 text-sm font-sans">« Je peux te présenter ce film si tu veux »</span>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ── PERSONALIZATION ── */}
+      <section className="py-24 md:py-32 px-5">
+        <div className="max-w-5xl mx-auto">
           <motion.div
             variants={fadeUp}
             initial="hidden"
@@ -271,11 +402,11 @@ const Landing = () => {
             className="text-center mb-16"
           >
             <h2 className="text-3xl md:text-5xl font-serif mb-3">
-              Des recommandations qui{" "}
-              <span className="text-primary italic">comprennent</span> tes goûts
+              Plus tu l'utilises, plus il te{" "}
+              <span className="text-primary italic">connaît</span>
             </h2>
             <p className="text-foreground/40 font-sans text-sm md:text-base max-w-lg mx-auto">
-              Crée un compte gratuit pour débloquer des recommandations personnalisées qui s'améliorent avec le temps.
+              Pick apprend tes goûts et affine ses recommandations au fil du temps.
             </p>
           </motion.div>
 
@@ -284,34 +415,34 @@ const Landing = () => {
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true, margin: "-80px" }}
-            className="grid md:grid-cols-2 gap-6 max-w-3xl mx-auto"
+            className="grid sm:grid-cols-2 gap-4 max-w-3xl mx-auto"
           >
             {[
-              { text: "Apprend des films que tu aimes", tag: "Profil de goût" },
-              { text: "Retient ce que tu passes et ce que tu sauvegardes", tag: "Comportement" },
-              { text: "S'adapte à ton humeur et ton contexte", tag: "Session" },
-              { text: "Devient plus intelligent à chaque interaction", tag: "Apprentissage IA" },
+              { icon: <Target className="w-4 h-4" />, text: "Analyse les films que tu aimes et ceux que tu passes", tag: "Profil de goût" },
+              { icon: <Brain className="w-4 h-4" />, text: "S'adapte à ton humeur et ton contexte en temps réel", tag: "Contexte" },
+              { icon: <Sparkles className="w-4 h-4" />, text: "Utilise l'IA pour trouver des connexions entre tes films préférés", tag: "IA" },
+              { icon: <MessageCircle className="w-4 h-4" />, text: "Compagnon de visionnage : pose des questions pendant le film", tag: "Compagnon" },
             ].map((item, i) => (
               <motion.div
                 key={i}
                 variants={fadeUp}
                 custom={i}
-                className="flex items-start gap-4 p-5 rounded-xl bg-card/30 border border-border/10"
+                className="flex items-start gap-4 p-5 rounded-xl bg-card/30 border border-border/10 hover:border-primary/15 transition-all"
               >
-                <div className="mt-0.5 w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                  <Sparkles className="w-4 h-4 text-primary" />
+                <div className="mt-0.5 w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0 text-primary">
+                  {item.icon}
                 </div>
                 <div>
                   <span className="text-[10px] uppercase tracking-widest text-primary/60 font-sans font-semibold">
                     {item.tag}
                   </span>
-                  <p className="text-foreground/70 font-sans text-sm mt-1">{item.text}</p>
+                  <p className="text-foreground/60 font-sans text-sm mt-1">{item.text}</p>
                 </div>
               </motion.div>
             ))}
           </motion.div>
 
-          {/* Floating taste tags */}
+          {/* Taste tags */}
           <motion.div
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
@@ -335,87 +466,6 @@ const Landing = () => {
         </div>
       </section>
 
-      {/* ── SMART FEATURES ── */}
-      <section className="py-24 md:py-32 px-5">
-        <div className="max-w-5xl mx-auto">
-          <motion.div
-            variants={fadeUp}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: "-100px" }}
-            className="text-center mb-16"
-          >
-            <h2 className="text-3xl md:text-5xl font-serif mb-3">
-              Bien plus qu'un moteur de recherche
-            </h2>
-            <p className="text-foreground/40 font-sans text-sm md:text-base max-w-md mx-auto">
-              Pick est ton compagnon cinéma intelligent.
-            </p>
-          </motion.div>
-
-          <motion.div
-            variants={stagger}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: "-80px" }}
-            className="grid sm:grid-cols-2 lg:grid-cols-5 gap-4"
-          >
-            {[
-              {
-                icon: <Target className="w-5 h-5" />,
-                title: "Recommandations intelligentes",
-                desc: "Analyse tes goûts et ton contexte pour te proposer le meilleur film.",
-              },
-              {
-                icon: <Dice5 className="w-5 h-5" />,
-                title: "Mode surprise",
-                desc: "Laisse Pick choisir le film parfait pour ce soir.",
-              },
-              {
-                icon: <Mic className="w-5 h-5" />,
-                title: "Parle à Pick",
-                desc: "Demande un film en langage naturel.",
-              },
-              {
-                icon: <Brain className="w-5 h-5" />,
-                title: "Apprend avec le temps",
-                desc: "Plus tu utilises Pick, meilleures sont les recommandations.",
-              },
-              {
-                icon: <MessageCircle className="w-5 h-5" />,
-                title: "Compagnon de film",
-                desc: "Pose des questions pendant le film. Anecdotes, casting, sans spoilers.",
-                highlight: true,
-              },
-            ].map((f, i) => (
-              <motion.div
-                key={f.title}
-                variants={fadeUp}
-                custom={i}
-                className={`group border rounded-2xl p-6 hover:border-primary/20 transition-all duration-300 ${
-                  (f as any).highlight
-                    ? "bg-primary/5 border-primary/15 sm:col-span-2 lg:col-span-1"
-                    : "bg-card/40 border-border/15"
-                }`}
-              >
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-4 group-hover:bg-primary/15 transition-colors ${
-                  (f as any).highlight ? "bg-primary/15 text-primary" : "bg-primary/10 text-primary"
-                }`}>
-                  {f.icon}
-                </div>
-                <h3 className="text-base font-serif mb-1.5">{f.title}</h3>
-                <p className="text-foreground/40 text-sm font-sans leading-relaxed">{f.desc}</p>
-                {(f as any).highlight && (
-                  <span className="inline-block mt-3 text-[10px] uppercase tracking-widest text-primary font-sans font-semibold">
-                    Nouveau ✨
-                  </span>
-                )}
-              </motion.div>
-            ))}
-          </motion.div>
-        </div>
-      </section>
-
       {/* ── PLATFORMS ── */}
       <section className="py-24 md:py-32 px-5 relative">
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
@@ -430,10 +480,10 @@ const Landing = () => {
             viewport={{ once: true, margin: "-100px" }}
           >
             <h2 className="text-3xl md:text-5xl font-serif mb-3">
-              Sur toutes les plateformes de streaming
+              Tous tes services de streaming
             </h2>
             <p className="text-foreground/40 font-sans text-sm md:text-base max-w-lg mx-auto mb-12">
-              Découvre des films disponibles sur tes services de streaming pour toujours savoir où les regarder.
+              Pick sait où regarder chaque film. Netflix, Disney+, Amazon… il te dit tout.
             </p>
           </motion.div>
 
@@ -472,11 +522,22 @@ const Landing = () => {
           viewport={{ once: true, margin: "-100px" }}
           className="max-w-3xl mx-auto text-center relative z-10"
         >
+          {/* Pick thinking */}
+          <motion.img
+            src={pickThink}
+            alt="Pick réfléchit"
+            className="w-16 h-16 md:w-20 md:h-20 object-contain mx-auto mb-6 drop-shadow-lg"
+            initial={{ opacity: 0, y: 10 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+          />
+
           <h2 className="text-3xl md:text-5xl lg:text-6xl font-serif mb-4">
-            Prêt à trouver ton prochain film ?
+            Arrête de scroller.{" "}
+            <span className="text-primary italic">Regarde.</span>
           </h2>
           <p className="text-foreground/40 font-sans text-sm md:text-base max-w-md mx-auto mb-8">
-            Arrête de scroller. Commence à regarder.
+            Pick est prêt à trouver ton prochain coup de cœur.
           </p>
 
           <div className="flex items-center justify-center gap-3 flex-wrap">
@@ -486,7 +547,7 @@ const Landing = () => {
               onClick={() => navigate("/app")}
             >
               <Clapperboard className="w-4 h-4" />
-              C'est parti
+              Demander à Pick
             </Button>
             <Button
               size="lg"
@@ -509,9 +570,10 @@ const Landing = () => {
       <footer className="border-t border-border/10 py-10 px-5">
         <div className="max-w-5xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-2">
+            <img src={pickLogo} alt="Pick" className="w-5 h-5 object-contain invert brightness-200" />
             <span className="font-serif text-lg">Pick</span>
             <span className="text-foreground/20 text-xs font-sans">·</span>
-            <span className="text-foreground/30 text-xs font-sans">Ton compagnon cinéma</span>
+            <span className="text-foreground/30 text-xs font-sans">Ton expert cinéma</span>
           </div>
 
           <div className="flex items-center gap-6 text-foreground/30 text-xs font-sans">
