@@ -145,28 +145,56 @@ const VoiceChat = ({ onClose, onMovieSuggested, initialMessages }: VoiceChatProp
   const startListening = useCallback(async () => {
     setMicError(null);
     try {
-      if (!scribeToken) {
-        const { data } = await supabase.functions.invoke("scribe-token");
-        if (!data?.token) throw new Error("Failed to get voice token");
-        setScribeToken(data.token);
-        await scribe.connect({
-          token: data.token,
-          microphone: { echoCancellation: true, noiseSuppression: true },
+      // CRITICAL: Request mic permission FIRST, directly in click handler
+      // Safari/iOS requires getUserMedia in the immediate user gesture chain
+      let stream: MediaStream;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ 
+          audio: { echoCancellation: true, noiseSuppression: true } 
         });
-      } else {
-        await scribe.connect({
-          token: scribeToken,
-          microphone: { echoCancellation: true, noiseSuppression: true },
-        });
+      } catch (micErr: any) {
+        console.error("Mic permission error:", micErr);
+        if (micErr?.name === "NotAllowedError" || micErr?.name === "PermissionDeniedError") {
+          setMicError("Accès au micro refusé. Autorise le micro dans les paramètres de ton navigateur.");
+        } else if (micErr?.name === "NotFoundError") {
+          setMicError("Aucun micro détecté sur cet appareil.");
+        } else {
+          setMicError("Impossible d'accéder au micro. Tape ton message ci-dessous 👇");
+        }
+        inputRef.current?.focus();
+        return;
       }
+
+      // Stop the stream we used for permission - scribe will create its own
+      stream.getTracks().forEach(t => t.stop());
+
+      // Now fetch token (always get a fresh one to avoid expiry issues)
+      let token = scribeToken;
+      try {
+        const { data } = await supabase.functions.invoke("scribe-token");
+        if (data?.token) {
+          token = data.token;
+          setScribeToken(data.token);
+        }
+      } catch (tokenErr) {
+        console.error("Token fetch error:", tokenErr);
+      }
+
+      if (!token) {
+        setMicError("Erreur de connexion. Tape ton message ci-dessous 👇");
+        inputRef.current?.focus();
+        return;
+      }
+
+      // Connect scribe with the token
+      await scribe.connect({
+        token,
+        microphone: { echoCancellation: true, noiseSuppression: true },
+      });
       setPhase("listening");
     } catch (e: any) {
-      console.error("Mic error:", e);
-      if (e?.name === "NotAllowedError" || e?.message?.includes("Permission")) {
-        setMicError("Accès au micro refusé. Autorise le micro dans les paramètres.");
-      } else {
-        setMicError("Erreur micro. Tape ton message ci-dessous 👇");
-      }
+      console.error("Start listening error:", e);
+      setMicError("Erreur micro. Tape ton message ci-dessous 👇");
       inputRef.current?.focus();
     }
   }, [scribe, scribeToken]);
