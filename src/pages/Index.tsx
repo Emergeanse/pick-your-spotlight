@@ -8,12 +8,13 @@ import TimeStep from "@/components/pick/TimeStep";
 import PlatformStep from "@/components/pick/PlatformStep";
 import ResultScreen from "@/components/pick/ResultScreen";
 import VoiceChat from "@/components/pick/VoiceChat";
+import type { ChatMessage } from "@/components/pick/VoiceChat";
 import StepLayout from "@/components/pick/StepLayout";
 import BrandHeader from "@/components/pick/BrandHeader";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import type { Mood, Context, TimeAvailable, MovieDetail } from "@/lib/tmdb";
-import { getRecommendations } from "@/lib/tmdb";
+import { getRecommendations, getDisplayTitle } from "@/lib/tmdb";
 
 type Step = "home" | "mood" | "context" | "time" | "platforms" | "result";
 
