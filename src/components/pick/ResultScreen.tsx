@@ -1,7 +1,7 @@
 import { useState, useEffect, forwardRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Play, RotateCcw, ChevronRight, Star, Clock, Sparkles, Heart, Lightbulb, PartyPopper, Loader2, Bookmark } from "lucide-react";
+import { Play, RotateCcw, ChevronRight, Star, Clock, Sparkles, Heart, Lightbulb, PartyPopper, Loader2, Bookmark, Mic } from "lucide-react";
 import type { MovieDetail } from "@/lib/tmdb";
 import { getDisplayTitle, getYear, getBackdropUrl, getPosterUrl, getWatchProviders, getMovieTrailerUrl } from "@/lib/tmdb";
 import type { Mood, Context, TimeAvailable } from "@/lib/tmdb";
