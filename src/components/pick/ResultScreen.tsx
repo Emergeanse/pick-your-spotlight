@@ -54,6 +54,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
   const [bookmarkLoading, setBookmarkLoading] = useState(false);
   const [synopsisExpanded, setSynopsisExpanded] = useState(false);
   const [showOptions, setShowOptions] = useState(false);
+  const [altProviders, setAltProviders] = useState<Record<number, { name: string; logo_path: string }[]>>({});
   const { user } = useAuth();
 
   const title = getDisplayTitle(movie);
