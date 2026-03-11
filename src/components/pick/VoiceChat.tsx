@@ -245,10 +245,12 @@ const VoiceChat = ({ onClose, onMovieSuggested }: VoiceChatProps) => {
               className="flex flex-col items-center justify-center h-full text-center py-8"
             >
               <button
-                onClick={startListening}
-                className="group w-24 h-24 rounded-full bg-primary/10 border-2 border-primary/30 flex items-center justify-center mb-5 transition-all duration-300 hover:bg-primary/20 hover:border-primary/50 hover:scale-110 hover:shadow-lg hover:shadow-primary/20 active:scale-95 cursor-pointer"
+                type="button"
+                onClick={(e) => { e.stopPropagation(); startListening(); }}
+                onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); startListening(); }}
+                className="group w-24 h-24 rounded-full bg-primary/10 border-2 border-primary/30 flex items-center justify-center mb-5 transition-all duration-200 active:scale-95 active:bg-primary/20 cursor-pointer touch-manipulation"
               >
-                <Mic className="w-10 h-10 text-primary transition-transform group-hover:scale-110" />
+                <Mic className="w-10 h-10 text-primary pointer-events-none" />
               </button>
               <p className="text-foreground/70 text-base font-serif mb-2">
                 Dis-moi ce que tu veux regarder
