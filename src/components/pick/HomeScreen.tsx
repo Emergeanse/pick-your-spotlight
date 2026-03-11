@@ -168,17 +168,27 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
       <div className="relative z-10 h-full overflow-y-auto">
         {/* Hero section */}
         <div className="min-h-[85vh] md:min-h-[80vh] flex flex-col items-center justify-center text-center px-5 pt-16">
+          {/* Pick character + greeting */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3, duration: 0.6 }}
+            transition={{ delay: 0.2, duration: 0.5 }}
+            className="mb-6 md:mb-8"
+          >
+            <PickCharacter mood="wave" showGreeting size="md" />
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4, duration: 0.6 }}
             className="max-w-md mb-8 md:mb-10"
           >
-            <h1 className="text-3xl md:text-6xl lg:text-7xl font-serif mb-3 md:mb-4">
+            <h1 className="text-3xl md:text-5xl lg:text-6xl font-serif mb-3 md:mb-4">
               Tu ne sais pas quoi regarder ?
             </h1>
             <p className="text-foreground/50 text-sm md:text-base font-sans font-light max-w-sm mx-auto">
-              Décris ton envie, on trouve le film ou la série parfaite en quelques secondes.
+              Pick trouve le film ou la série parfaite en quelques secondes.
             </p>
           </motion.div>
 
@@ -188,103 +198,99 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
               animate={{ opacity: 1, scale: 1 }}
               className="flex flex-col items-center gap-3"
             >
-              <div className="w-16 h-16 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center">
-                <Wand2 className="w-7 h-7 text-primary animate-pulse" />
-              </div>
-              <p className="text-foreground/60 text-sm font-sans animate-pulse">{surpriseMsg}</p>
+              <PickCharacter mood="think" message={surpriseMsg} size="md" animate={false} />
             </motion.div>
           ) : (
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5, duration: 0.4 }}
+              transition={{ delay: 0.6, duration: 0.4 }}
               className="w-full max-w-lg px-2"
             >
-              {/* Instant pick button */}
-              <motion.button
-                whileTap={{ scale: 0.98 }}
-                onClick={handleTonightPick}
-                disabled={loading || tonightLoading}
-                className="w-full mb-4 rounded-2xl p-4 bg-gradient-to-r from-primary/15 to-primary/5 border border-primary/25 hover:border-primary/40 hover:from-primary/20 transition-all flex items-center gap-3"
-              >
-                <div className="w-10 h-10 rounded-xl bg-primary/20 border border-primary/30 flex items-center justify-center flex-shrink-0">
-                  <Zap className="w-5 h-5 text-primary" />
-                </div>
-                <div className="text-left flex-1">
-                  <h3 className="text-sm font-sans font-semibold text-foreground">Pick pour ce soir</h3>
-                  <p className="text-foreground/40 text-[11px] font-sans">Un film instantané, sans questions.</p>
-                </div>
-                {tonightLoading && <Loader2 className="w-4 h-4 text-primary animate-spin flex-shrink-0" />}
-              </motion.button>
-
-              {/* Three mode cards */}
-              <div className="flex flex-col gap-3 mb-6">
-                {/* Primary: Parle à Pick */}
+              {/* Two primary actions side by side */}
+              <div className="grid grid-cols-2 gap-3 mb-4">
+                {/* Pick pour ce soir — instant */}
                 <motion.button
-                  whileTap={{ scale: 0.98 }}
-                  onClick={onOpenChat}
-                  disabled={loading}
-                  className="group relative w-full text-left rounded-2xl p-5 bg-primary/10 border-2 border-primary/30 hover:border-primary/50 hover:bg-primary/15 transition-all"
+                  whileTap={{ scale: 0.97 }}
+                  onClick={handleTonightPick}
+                  disabled={loading || tonightLoading}
+                  className="group relative text-left rounded-2xl p-5 bg-gradient-to-br from-primary/15 to-primary/5 border-2 border-primary/30 hover:border-primary/50 hover:from-primary/20 transition-all"
                 >
-                  <div className="flex items-start gap-4">
-                    <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-primary/20 border border-primary/30 flex items-center justify-center group-hover:bg-primary/30 transition-colors">
-                      <Mic className="w-5 h-5 text-primary" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h3 className="text-base font-sans font-semibold text-foreground">Parle à Pick</h3>
-                        <span className="px-1.5 py-0.5 rounded-full bg-primary/20 text-primary text-[9px] font-sans font-bold uppercase tracking-wider">Recommandé</span>
-                      </div>
-                      <p className="text-foreground/45 text-[12px] md:text-[13px] font-sans leading-relaxed">
-                        Dis-moi ce que tu veux regarder.
-                      </p>
-                      <p className="text-foreground/30 text-[11px] font-sans italic mt-1">
-                        Ex : « Un thriller sur Netflix ce soir avec ma copine »
-                      </p>
-                    </div>
+                  <div className="w-11 h-11 rounded-xl bg-primary/20 border border-primary/30 flex items-center justify-center mb-3 group-hover:bg-primary/30 transition-colors">
+                    {tonightLoading ? (
+                      <Loader2 className="w-5 h-5 text-primary animate-spin" />
+                    ) : (
+                      <Zap className="w-5 h-5 text-primary" />
+                    )}
                   </div>
+                  <h3 className="text-sm font-sans font-semibold text-foreground mb-1">Pick pour ce soir</h3>
+                  <p className="text-foreground/40 text-[11px] md:text-[12px] font-sans leading-relaxed">
+                    Un film instantané, sans questions.
+                  </p>
                 </motion.button>
 
-                <div className="grid grid-cols-2 gap-3">
-                  {/* Guidé */}
-                  <motion.button
-                    whileTap={{ scale: 0.97 }}
-                    onClick={onStart}
-                    disabled={loading}
-                    className="group text-left rounded-2xl p-4 bg-foreground/[0.04] border border-border/30 hover:border-primary/30 hover:bg-foreground/[0.07] transition-all"
-                  >
-                    <div className="w-10 h-10 rounded-xl bg-foreground/[0.06] border border-border/20 flex items-center justify-center mb-3 group-hover:border-primary/25 transition-colors">
-                      <SlidersHorizontal className="w-4.5 h-4.5 text-foreground/50 group-hover:text-primary transition-colors" />
-                    </div>
-                    <h3 className="text-sm font-sans font-semibold text-foreground mb-1">Guidé</h3>
-                    <p className="text-foreground/40 text-[11px] md:text-[12px] font-sans leading-relaxed">
-                      Réponds à quelques questions rapides pour trouver le film parfait.
-                    </p>
-                  </motion.button>
+                {/* Parle à Pick */}
+                <motion.button
+                  whileTap={{ scale: 0.97 }}
+                  onClick={onOpenChat}
+                  disabled={loading}
+                  className="group relative text-left rounded-2xl p-5 bg-gradient-to-br from-primary/10 to-transparent border-2 border-primary/25 hover:border-primary/45 hover:from-primary/15 transition-all"
+                >
+                  <div className="w-11 h-11 rounded-xl bg-primary/20 border border-primary/30 flex items-center justify-center mb-3 group-hover:bg-primary/30 transition-colors">
+                    <Mic className="w-5 h-5 text-primary" />
+                  </div>
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <h3 className="text-sm font-sans font-semibold text-foreground">Parle à Pick</h3>
+                  </div>
+                  <p className="text-foreground/40 text-[11px] md:text-[12px] font-sans leading-relaxed">
+                    Dis-moi ce que tu veux regarder.
+                  </p>
+                  <p className="text-foreground/25 text-[10px] font-sans italic mt-1.5 hidden md:block">
+                    Ex : « Un thriller ce soir avec ma copine »
+                  </p>
+                </motion.button>
+              </div>
 
-                  {/* Surprise */}
-                  <motion.button
-                    whileTap={{ scale: 0.97 }}
-                    onClick={handleSurprise}
-                    disabled={loading}
-                    className="group text-left rounded-2xl p-4 bg-foreground/[0.04] border border-border/30 hover:border-primary/30 hover:bg-foreground/[0.07] transition-all"
-                  >
-                    <div className="w-10 h-10 rounded-xl bg-foreground/[0.06] border border-border/20 flex items-center justify-center mb-3 group-hover:border-primary/25 transition-colors">
-                      <Dices className="w-4.5 h-4.5 text-foreground/50 group-hover:text-primary transition-colors" />
-                    </div>
-                    <h3 className="text-sm font-sans font-semibold text-foreground mb-1">Surprise</h3>
-                    <p className="text-foreground/40 text-[11px] md:text-[12px] font-sans leading-relaxed">
-                      Laisse Pick choisir pour toi.
-                    </p>
-                  </motion.button>
-                </div>
+              {/* Secondary actions */}
+              <div className="grid grid-cols-2 gap-3 mb-6">
+                {/* Guidé */}
+                <motion.button
+                  whileTap={{ scale: 0.97 }}
+                  onClick={onStart}
+                  disabled={loading}
+                  className="group text-left rounded-2xl p-4 bg-foreground/[0.04] border border-border/30 hover:border-primary/30 hover:bg-foreground/[0.07] transition-all"
+                >
+                  <div className="w-10 h-10 rounded-xl bg-foreground/[0.06] border border-border/20 flex items-center justify-center mb-3 group-hover:border-primary/25 transition-colors">
+                    <SlidersHorizontal className="w-4 h-4 text-foreground/50 group-hover:text-primary transition-colors" />
+                  </div>
+                  <h3 className="text-sm font-sans font-semibold text-foreground mb-1">Guidé</h3>
+                  <p className="text-foreground/40 text-[11px] md:text-[12px] font-sans leading-relaxed">
+                    Réponds à quelques questions rapides pour trouver le film parfait.
+                  </p>
+                </motion.button>
+
+                {/* Surprise */}
+                <motion.button
+                  whileTap={{ scale: 0.97 }}
+                  onClick={handleSurprise}
+                  disabled={loading}
+                  className="group text-left rounded-2xl p-4 bg-foreground/[0.04] border border-border/30 hover:border-primary/30 hover:bg-foreground/[0.07] transition-all"
+                >
+                  <div className="w-10 h-10 rounded-xl bg-foreground/[0.06] border border-border/20 flex items-center justify-center mb-3 group-hover:border-primary/25 transition-colors">
+                    <Dices className="w-4 h-4 text-foreground/50 group-hover:text-primary transition-colors" />
+                  </div>
+                  <h3 className="text-sm font-sans font-semibold text-foreground mb-1">Surprise</h3>
+                  <p className="text-foreground/40 text-[11px] md:text-[12px] font-sans leading-relaxed">
+                    Laisse Pick choisir pour toi.
+                  </p>
+                </motion.button>
               </div>
 
               {/* Platform logos */}
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                transition={{ delay: 0.8 }}
+                transition={{ delay: 0.9 }}
                 className="flex flex-col items-center gap-2.5"
               >
                 <div className="flex items-center gap-2">
