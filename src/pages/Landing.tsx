@@ -446,7 +446,7 @@ const Landing = () => {
             <Button
               size="lg"
               className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90 font-sans font-semibold px-7 h-12 gap-2.5 text-base neon-glow transition-all active:scale-[0.97]"
-              onClick={() => navigate("/auth")}}
+              onClick={() => navigate("/auth")}
             >
               Start discovering
               <ArrowRight className="w-4 h-4" />
