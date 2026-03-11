@@ -131,7 +131,7 @@ const Profile = () => {
       <div className="sticky top-0 z-30 bg-background/80 backdrop-blur-xl border-b border-border/10 px-5 py-3 pt-[calc(0.75rem+env(safe-area-inset-top))]">
         <div className="max-w-2xl mx-auto flex items-center justify-between">
           <button
-            onClick={() => navigate("/")}
+            onClick={() => navigate("/app")}}
             className="flex items-center gap-2 text-foreground/60 hover:text-foreground transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
