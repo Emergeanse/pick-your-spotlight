@@ -1,7 +1,7 @@
 import { useState, useEffect, forwardRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Play, RotateCcw, ChevronRight, Star, Clock, Sparkles, Heart, Lightbulb, PartyPopper, Loader2, Bookmark, Mic, Tv, ChevronDown, ChevronUp } from "lucide-react";
+import { Play, Star, Clock, Sparkles, Heart, Loader2, Bookmark, Tv, ChevronDown, ChevronUp, MoreHorizontal, RefreshCw, Mic, X } from "lucide-react";
 import type { MovieDetail } from "@/lib/tmdb";
 import { getDisplayTitle, getYear, getBackdropUrl, getPosterUrl, getWatchProviders, getMovieTrailerUrl } from "@/lib/tmdb";
 import type { Mood, Context, TimeAvailable } from "@/lib/tmdb";
@@ -47,7 +47,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
   const [bookmarked, setBookmarked] = useState(false);
   const [bookmarkLoading, setBookmarkLoading] = useState(false);
   const [synopsisExpanded, setSynopsisExpanded] = useState(false);
-  const [matchExpanded, setMatchExpanded] = useState(false);
+  const [showOptions, setShowOptions] = useState(false);
   const { user } = useAuth();
 
   const title = getDisplayTitle(movie);
@@ -68,15 +68,11 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
   useEffect(() => {
     setMatchData(null);
     setMatchLoading(true);
-    setMatchExpanded(false);
+    setShowOptions(false);
     supabase.functions.invoke("movie-match", {
       body: { movie, userCriteria },
     }).then(({ data, error }) => {
-      if (error) {
-        console.error("Match error:", error);
-        setMatchLoading(false);
-        return;
-      }
+      if (error) { console.error("Match error:", error); setMatchLoading(false); return; }
       setMatchData(data as MatchData);
       setMatchLoading(false);
     });
@@ -114,7 +110,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
       <BrandHeader showBack onBack={onRestart} />
 
       <div className="relative min-h-screen w-full">
-        {/* Background image */}
+        {/* Background */}
         {bgImage && (
           <motion.div
             initial={{ opacity: 0, scale: 1.05 }}
@@ -150,26 +146,15 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
               </motion.div>
             )}
 
-            {/* Genres */}
-            {genres && (
-              <motion.p
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.3 }}
-                className="text-primary/70 text-[10px] md:text-xs mb-1.5 tracking-[0.15em] uppercase font-sans font-medium"
-              >
-                {genres}
-              </motion.p>
-            )}
-
             {/* Title */}
-            <h1 className="text-2xl md:text-5xl lg:text-7xl font-serif mb-2 md:mb-3 leading-[1.05]">
+            <h1 className="text-2xl md:text-5xl lg:text-7xl font-serif mb-2 leading-[1.05]">
               {title}
             </h1>
 
-            {/* Meta info */}
-            <div className="flex items-center gap-3 text-foreground/50 text-xs mb-3 font-sans flex-wrap">
+            {/* Meta: Year • Runtime • Rating */}
+            <div className="flex items-center gap-2 text-foreground/50 text-xs font-sans mb-1.5 flex-wrap">
               {year && <span className="font-medium text-foreground/70">{year}</span>}
+              {year && runtime > 0 && <span className="text-foreground/20">•</span>}
               {runtime > 0 && (
                 <span className="flex items-center gap-1">
                   <Clock className="w-3 h-3" />
@@ -177,12 +162,22 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                 </span>
               )}
               {movie.vote_average > 0 && (
-                <span className="flex items-center gap-1 text-primary font-medium">
-                  <Star className="w-3 h-3 fill-primary" />
-                  {movie.vote_average.toFixed(1)}
-                </span>
+                <>
+                  <span className="text-foreground/20">•</span>
+                  <span className="flex items-center gap-1 text-primary font-medium">
+                    <Star className="w-3 h-3 fill-primary" />
+                    {movie.vote_average.toFixed(1)}
+                  </span>
+                </>
               )}
             </div>
+
+            {/* Genres */}
+            {genres && (
+              <p className="text-primary/60 text-[10px] md:text-xs tracking-[0.12em] uppercase font-sans font-medium mb-3">
+                {genres}
+              </p>
+            )}
 
             {/* Synopsis — expandable */}
             <div className="mb-3">
@@ -223,7 +218,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
               </motion.div>
             )}
 
-            {/* AI Match — collapsible card */}
+            {/* "Pourquoi ce film ?" section */}
             <AnimatePresence>
               {matchLoading && (
                 <motion.div
@@ -242,151 +237,157 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.1, duration: 0.4 }}
-                  className="mb-4 max-w-md"
+                  className="mb-5 max-w-md"
                 >
-                  {/* Collapsed: just headline */}
-                  <button
-                    onClick={() => setMatchExpanded(!matchExpanded)}
-                    className="w-full text-left bg-foreground/[0.04] backdrop-blur-md border border-primary/15 rounded-xl px-4 py-3 group hover:border-primary/30 transition-colors"
-                  >
-                    <div className="flex items-start justify-between gap-2">
-                      <p className="text-[13px] md:text-sm font-serif text-primary/90 leading-snug">
-                        {matchData.headline}
-                      </p>
-                      <ChevronDown className={`w-4 h-4 text-primary/40 flex-shrink-0 mt-0.5 transition-transform ${matchExpanded ? "rotate-180" : ""}`} />
-                    </div>
-                  </button>
-
-                  {/* Expanded details */}
-                  <AnimatePresence>
-                    {matchExpanded && (
-                      <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: "auto", opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        transition={{ duration: 0.3 }}
-                        className="overflow-hidden"
-                      >
-                        <div className="bg-foreground/[0.04] backdrop-blur-md border border-t-0 border-primary/15 rounded-b-xl px-4 py-3 space-y-3 -mt-px">
-                          {[
-                            { icon: Lightbulb, label: "Pourquoi ça matche", text: matchData.whyItMatches },
-                            { icon: Heart, label: "Ce que tu vas ressentir", text: matchData.emotionalJourney },
-                            { icon: PartyPopper, label: "Moment idéal", text: matchData.perfectFor },
-                            { icon: Sparkles, label: "Le savais-tu ?", text: matchData.funFact },
-                          ].map(({ icon: Icon, label, text }) => (
-                            <div key={label} className="flex gap-2.5">
-                              <div className="mt-0.5 w-6 h-6 rounded-md bg-primary/10 flex items-center justify-center flex-shrink-0">
-                                <Icon className="w-3 h-3 text-primary" />
-                              </div>
-                              <div>
-                                <p className="text-[9px] uppercase tracking-widest text-primary/60 font-sans font-semibold mb-0.5">{label}</p>
-                                <p className="text-foreground/60 text-xs font-sans font-light leading-relaxed">{text}</p>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
+                  <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-sans font-semibold mb-1.5">Pourquoi ce film ?</p>
+                  <p className="text-foreground/70 text-[13px] font-sans leading-relaxed">
+                    {matchData.headline}
+                  </p>
                 </motion.div>
               )}
             </AnimatePresence>
 
-            {/* Action buttons — compact row */}
+            {/* Primary Actions */}
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.6 }}
-              className="flex items-center gap-2 flex-wrap"
+              className="space-y-3"
             >
-              {/* Icon buttons: like & bookmark */}
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={handleToggleLike}
-                disabled={likeLoading}
-                className={`rounded-full w-9 h-9 border transition-all ${
-                  liked
-                    ? "bg-primary/20 border-primary/40 text-primary"
-                    : "border-border/30 text-foreground/40 hover:text-primary hover:border-primary/30"
-                }`}
-              >
-                <Heart className={`w-4 h-4 ${liked ? "fill-primary" : ""}`} />
-              </Button>
+              {/* Main buttons row */}
+              <div className="flex items-center gap-2.5">
+                {onStartCompanion && (
+                  <Button
+                    size="lg"
+                    className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90 font-sans font-semibold px-6 h-11 gap-2 text-sm neon-glow transition-all active:scale-[0.97]"
+                    onClick={onStartCompanion}
+                  >
+                    <Tv className="w-4 h-4" />
+                    Je regarde
+                  </Button>
+                )}
 
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={handleToggleBookmark}
-                disabled={bookmarkLoading}
-                className={`rounded-full w-9 h-9 border transition-all ${
-                  bookmarked
-                    ? "bg-accent/20 border-accent/40 text-accent"
-                    : "border-border/30 text-foreground/40 hover:text-accent hover:border-accent/30"
-                }`}
-              >
-                <Bookmark className={`w-4 h-4 ${bookmarked ? "fill-accent" : ""}`} />
-              </Button>
+                {trailerUrl && (
+                  <Button
+                    size="lg"
+                    className="rounded-full bg-foreground/8 text-foreground/70 hover:bg-foreground/12 hover:text-foreground font-sans font-medium px-5 h-11 gap-2 text-sm border border-border/20 transition-all active:scale-[0.97]"
+                    onClick={() => window.open(trailerUrl, "_blank")}
+                  >
+                    <Play className="w-4 h-4 fill-current" />
+                    Trailer
+                  </Button>
+                )}
+              </div>
 
-              {/* Divider */}
-              <div className="w-px h-5 bg-border/20 mx-0.5" />
-
-              {/* Primary actions */}
-              {onStartCompanion && (
-                <Button
-                  size="sm"
-                  className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90 text-xs font-sans font-medium px-4 h-9 gap-1.5"
-                  onClick={onStartCompanion}
+              {/* Bottom row: icons + more */}
+              <div className="flex items-center gap-2">
+                {/* Like */}
+                <button
+                  onClick={handleToggleLike}
+                  disabled={likeLoading}
+                  className={`w-9 h-9 rounded-full flex items-center justify-center border transition-all active:scale-90 ${
+                    liked
+                      ? "bg-primary/15 border-primary/30 text-primary"
+                      : "border-border/25 text-foreground/35 hover:text-primary hover:border-primary/25"
+                  }`}
                 >
-                  <Tv className="w-3.5 h-3.5" />
-                  Je regarde
-                </Button>
-              )}
+                  <Heart className={`w-4 h-4 ${liked ? "fill-primary" : ""}`} />
+                </button>
 
-              {trailerUrl && (
-                <Button
-                  size="sm"
-                  className="rounded-full bg-foreground/10 text-foreground/80 hover:bg-foreground/15 text-xs font-sans font-medium px-4 h-9 gap-1.5 border border-border/20"
-                  onClick={() => window.open(trailerUrl, "_blank")}
+                {/* Bookmark */}
+                <button
+                  onClick={handleToggleBookmark}
+                  disabled={bookmarkLoading}
+                  className={`w-9 h-9 rounded-full flex items-center justify-center border transition-all active:scale-90 ${
+                    bookmarked
+                      ? "bg-primary/15 border-primary/30 text-primary"
+                      : "border-border/25 text-foreground/35 hover:text-primary hover:border-primary/25"
+                  }`}
                 >
-                  <Play className="w-3.5 h-3.5 fill-current" />
-                  Trailer
-                </Button>
-              )}
+                  <Bookmark className={`w-4 h-4 ${bookmarked ? "fill-primary" : ""}`} />
+                </button>
 
-              <Button
-                size="sm"
-                className="rounded-full bg-foreground/10 text-foreground/80 hover:bg-foreground/15 text-xs font-sans font-medium px-4 h-9 gap-1.5 border border-border/20"
-                onClick={onShowAnother}
-              >
-                <ChevronRight className="w-3.5 h-3.5" />
-                Autre
-              </Button>
+                {/* Spacer */}
+                <div className="flex-1" />
 
-              {onRefineWithVoice && (
-                <Button
-                  size="sm"
-                  className="rounded-full bg-foreground/10 text-foreground/80 hover:bg-foreground/15 text-xs font-sans font-medium px-3.5 h-9 gap-1.5 border border-border/20"
-                  onClick={onRefineWithVoice}
+                {/* More options */}
+                <button
+                  onClick={() => setShowOptions(true)}
+                  className="flex items-center gap-1.5 px-3 h-9 rounded-full text-foreground/35 hover:text-foreground/60 text-xs font-sans transition-all"
                 >
-                  <Mic className="w-3.5 h-3.5" />
-                  Affiner
-                </Button>
-              )}
-
-              <Button
-                variant="ghost"
-                size="sm"
-                className="rounded-full text-foreground/30 hover:text-foreground/60 text-xs font-sans h-9 px-3 gap-1"
-                onClick={onRestart}
-              >
-                <RotateCcw className="w-3 h-3" />
-                Relancer
-              </Button>
+                  <MoreHorizontal className="w-4 h-4" />
+                  <span>Plus d'options</span>
+                </button>
+              </div>
             </motion.div>
           </motion.div>
         </div>
       </div>
+
+      {/* Bottom Sheet: Plus d'options */}
+      <AnimatePresence>
+        {showOptions && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-50 bg-background/60 backdrop-blur-sm"
+              onClick={() => setShowOptions(false)}
+            />
+
+            {/* Sheet */}
+            <motion.div
+              initial={{ y: "100%" }}
+              animate={{ y: 0 }}
+              exit={{ y: "100%" }}
+              transition={{ type: "spring", damping: 28, stiffness: 300 }}
+              className="fixed bottom-0 left-0 right-0 z-50 bg-card border-t border-border/20 rounded-t-2xl pb-[env(safe-area-inset-bottom)]"
+            >
+              {/* Handle */}
+              <div className="flex justify-center pt-3 pb-1">
+                <div className="w-10 h-1 rounded-full bg-foreground/15" />
+              </div>
+
+              <div className="px-5 pb-5 pt-2 space-y-1">
+                <button
+                  onClick={() => { setShowOptions(false); onShowAnother(); }}
+                  className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl hover:bg-secondary/60 transition-colors active:scale-[0.98]"
+                >
+                  <RefreshCw className="w-4.5 h-4.5 text-primary" />
+                  <div className="text-left">
+                    <p className="text-sm font-sans font-medium text-foreground">Autre suggestion</p>
+                    <p className="text-[11px] font-sans text-muted-foreground">Voir un autre film qui correspond</p>
+                  </div>
+                </button>
+
+                {onRefineWithVoice && (
+                  <button
+                    onClick={() => { setShowOptions(false); onRefineWithVoice(); }}
+                    className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl hover:bg-secondary/60 transition-colors active:scale-[0.98]"
+                  >
+                    <Mic className="w-4.5 h-4.5 text-primary" />
+                    <div className="text-left">
+                      <p className="text-sm font-sans font-medium text-foreground">Affiner la recherche</p>
+                      <p className="text-[11px] font-sans text-muted-foreground">Préciser tes envies avec ta voix</p>
+                    </div>
+                  </button>
+                )}
+
+                {/* Cancel */}
+                <button
+                  onClick={() => setShowOptions(false)}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-muted-foreground hover:text-foreground text-sm font-sans transition-colors mt-2"
+                >
+                  <X className="w-4 h-4" />
+                  Fermer
+                </button>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   );
 });
