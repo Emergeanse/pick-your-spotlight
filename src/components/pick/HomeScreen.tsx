@@ -27,6 +27,14 @@ const SURPRISE_MESSAGES = [
   "Presque prêt…",
 ];
 
+const LOADING_MESSAGES = [
+  "Je cherche le film parfait…",
+  "Voyons voir…",
+  "J'ai peut-être quelque chose pour toi.",
+  "Analyse de tes goûts…",
+  "Encore un instant…",
+];
+
 const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }: HomeScreenProps) => {
   const [isSurprising, setIsSurprising] = useState(false);
   const [surpriseMsg, setSurpriseMsg] = useState("");
@@ -35,8 +43,10 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
   const [showDiscovery, setShowDiscovery] = useState(false);
   const [tonightPick, setTonightPick] = useState<MovieDetail | null>(null);
   const [tonightLoading, setTonightLoading] = useState(false);
+  const [tonightLoadingMsg, setTonightLoadingMsg] = useState("");
   const [tonightProviders, setTonightProviders] = useState<{ name: string; logo_path: string }[]>([]);
   const { user } = useAuth();
+
 
   useEffect(() => {
     getTrendingMovies(20).then((movies: Movie[]) => {
@@ -108,6 +118,13 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
   const generateTonightPick = async () => {
     setTonightLoading(true);
     setTonightProviders([]);
+    let msgIndex = 0;
+    setTonightLoadingMsg(LOADING_MESSAGES[0]);
+    const msgInterval = setInterval(() => {
+      msgIndex = (msgIndex + 1) % LOADING_MESSAGES.length;
+      setTonightLoadingMsg(LOADING_MESSAGES[msgIndex]);
+    }, 2000);
+
     try {
       let movie: MovieDetail;
       if (user) {
@@ -125,6 +142,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
       } else {
         movie = await getSurpriseRecommendation();
       }
+      clearInterval(msgInterval);
       setTonightPick(movie);
       const mediaType = movie.first_air_date ? "tv" : "movie";
       getWatchProviders(movie.id, mediaType).then(setTonightProviders).catch(() => {});
@@ -132,12 +150,16 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
       console.error(e);
       try {
         const movie = await getSurpriseRecommendation();
+        clearInterval(msgInterval);
         setTonightPick(movie);
         const mediaType = movie.first_air_date ? "tv" : "movie";
         getWatchProviders(movie.id, mediaType).then(setTonightProviders).catch(() => {});
-      } catch {}
+      } catch {
+        clearInterval(msgInterval);
+      }
     } finally {
       setTonightLoading(false);
+      setTonightLoadingMsg("");
     }
   };
 
@@ -327,6 +349,24 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
           )}
         </AnimatePresence>
       </div>
+
+      {/* Tonight loading overlay with Pick */}
+      <AnimatePresence>
+        {tonightLoading && !tonightPick && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="absolute inset-0 z-30 flex flex-col items-center justify-center"
+          >
+            <div className="absolute inset-0 bg-background/90 backdrop-blur-md" />
+            <div className="relative z-10 flex flex-col items-center">
+              <PickCharacter mood="think" message={tonightLoadingMsg} size="md" animate />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Tonight's Pick overlay */}
       <AnimatePresence>
