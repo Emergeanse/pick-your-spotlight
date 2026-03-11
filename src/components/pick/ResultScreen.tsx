@@ -539,11 +539,11 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                   </div>
                   <div className="flex flex-wrap gap-1.5">
                     {[
-                      { label: "🔥 Plus intense", message: "Je veux quelque chose de plus intense" },
-                      { label: "💛 Plus émouvant", message: "Je veux quelque chose de plus émouvant et touchant" },
-                      { label: "⏱ Plus court", message: "Je préfère un film plus court" },
-                      { label: "😂 Plus drôle", message: "Je veux un truc plus drôle et léger" },
-                      { label: "🔄 Autre suggestion", message: "Montre-moi une autre suggestion dans le même style" },
+                      { label: "Plus intense", message: "Je veux quelque chose de plus intense" },
+                      { label: "Plus émouvant", message: "Je veux quelque chose de plus émouvant et touchant" },
+                      { label: "Plus court", message: "Je préfère un film plus court" },
+                      { label: "Plus drôle", message: "Je veux un truc plus drôle et léger" },
+                      { label: "Autre suggestion", message: "Montre-moi une autre suggestion dans le même style" },
                     ].map((chip) => (
                       <button
                         key={chip.label}
