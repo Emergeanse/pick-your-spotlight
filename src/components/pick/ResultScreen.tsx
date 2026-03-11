@@ -97,20 +97,6 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
   const [whyAudioLoading, setWhyAudioLoading] = useState(false);
   const { user } = useAuth();
 
-  const playBrowserWhyFallback = useCallback((text: string) => {
-    if (typeof window === "undefined" || !("speechSynthesis" in window)) return false;
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = "fr-FR";
-    utterance.rate = 1;
-    utterance.pitch = 1;
-    utterance.onstart = () => setWhySpeaking(true);
-    utterance.onend = () => setWhySpeaking(false);
-    utterance.onerror = () => setWhySpeaking(false);
-    window.speechSynthesis.cancel();
-    window.speechSynthesis.speak(utterance);
-    return true;
-  }, []);
-
   const handleReadWhy = useCallback(async () => {
     if (!matchData || whyAudioLoading || whySpeaking) return;
     const textToRead = [
@@ -120,6 +106,14 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
       matchData.perfectFor,
     ].filter(Boolean).join(". ");
     if (!textToRead) return;
+
+    // Create audio element immediately on user gesture to preserve playback permission
+    const audio = new Audio();
+    // Play a tiny silent WAV to unlock the audio context on this gesture
+    audio.src = "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAIA+AAACABAAZGF0YQAAAAA=";
+    try { await audio.play(); } catch { /* ignore */ }
+    audio.pause();
+
     setWhyAudioLoading(true);
     try {
       const response = await fetch(
@@ -140,64 +134,19 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
       }
       const blob = await response.blob();
       const url = URL.createObjectURL(blob);
-      const audio = new Audio(url);
+      audio.src = url;
       setWhySpeaking(true);
       audio.onended = () => { setWhySpeaking(false); URL.revokeObjectURL(url); };
       audio.onerror = () => { setWhySpeaking(false); URL.revokeObjectURL(url); };
       await audio.play();
     } catch (e) {
       console.error("Why TTS error:", e);
-      const fallbackStarted = playBrowserWhyFallback(textToRead);
-      if (!fallbackStarted) {
-        setWhySpeaking(false);
-      }
+      setWhySpeaking(false);
     } finally {
       setWhyAudioLoading(false);
     }
-  }, [matchData, whyAudioLoading, whySpeaking, playBrowserWhyFallback]);
+  }, [matchData, whyAudioLoading, whySpeaking]);
 
-  // Auto-play intro TTS when result loads
-  const autoPlayTts = useCallback(async (movieObj: MovieDetail) => {
-    const autoPlayEnabled = localStorage.getItem("pick-autoplay-tts") !== "false";
-    if (!autoPlayEnabled) return;
-    try {
-      const introText = `Je pense que ${getDisplayTitle(movieObj)} pourrait vraiment te plaire.`;
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/pick-tts`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-          },
-          body: JSON.stringify({ text: introText }),
-        }
-      );
-      if (!response.ok) return;
-      const blob = await response.blob();
-      const url = URL.createObjectURL(blob);
-      const audio = new Audio(url);
-      audio.onended = () => URL.revokeObjectURL(url);
-      audio.onerror = () => URL.revokeObjectURL(url);
-      await audio.play();
-    } catch (e) {
-      console.error("Auto-play TTS error:", e);
-    }
-  }, []);
-
-  // Trigger auto-play once when matchData arrives
-  useEffect(() => {
-    if (matchData && !autoPlayDone) {
-      setAutoPlayDone(true);
-      autoPlayTts(movie);
-    }
-  }, [matchData, autoPlayDone, autoPlayTts, movie]);
-
-  // Reset autoPlayDone when movie changes
-  useEffect(() => {
-    setAutoPlayDone(false);
-  }, [movie.id]);
 
   const title = getDisplayTitle(movie);
   const year = getYear(movie);
