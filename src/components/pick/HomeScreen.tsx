@@ -6,6 +6,7 @@ import { getTrendingMovies, getBackdropUrl, getSurpriseRecommendation } from "@/
 import { getLikedMovies } from "@/lib/liked-movies";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
+import { computeUserTasteVector } from "@/lib/taste-engine";
 import type { Movie, MovieDetail } from "@/lib/tmdb";
 import BrandHeader from "./BrandHeader";
 import DiscoverySection from "./DiscoverySection";
