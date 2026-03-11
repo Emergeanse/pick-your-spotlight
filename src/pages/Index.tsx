@@ -146,6 +146,7 @@ const Index = () => {
 
   const handlePlatformSelect = async (platformIds: number[]) => {
     setSelectedPlatformIds(platformIds);
+    setSearchTags(buildSearchTags(mood, context, time));
     setLoading(true);
     setLoadingMessage("Analyse de vos préférences…");
     try {
