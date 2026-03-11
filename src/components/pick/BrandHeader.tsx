@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { ArrowLeft, User, LogOut, ChevronUp, ChevronDown } from "lucide-react";
+import pickLogo from "@/assets/pick-logo.png";
 import { useAuth } from "@/hooks/use-auth";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
