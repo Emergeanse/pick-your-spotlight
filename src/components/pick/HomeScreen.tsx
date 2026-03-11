@@ -27,6 +27,14 @@ const SURPRISE_MESSAGES = [
   "Presque prêt…",
 ];
 
+const LOADING_MESSAGES = [
+  "Je cherche le film parfait…",
+  "Voyons voir…",
+  "J'ai peut-être quelque chose pour toi.",
+  "Analyse de tes goûts…",
+  "Encore un instant…",
+];
+
 const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }: HomeScreenProps) => {
   const [isSurprising, setIsSurprising] = useState(false);
   const [surpriseMsg, setSurpriseMsg] = useState("");
@@ -35,8 +43,10 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
   const [showDiscovery, setShowDiscovery] = useState(false);
   const [tonightPick, setTonightPick] = useState<MovieDetail | null>(null);
   const [tonightLoading, setTonightLoading] = useState(false);
+  const [tonightLoadingMsg, setTonightLoadingMsg] = useState("");
   const [tonightProviders, setTonightProviders] = useState<{ name: string; logo_path: string }[]>([]);
   const { user } = useAuth();
+
 
   useEffect(() => {
     getTrendingMovies(20).then((movies: Movie[]) => {
