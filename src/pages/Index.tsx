@@ -257,6 +257,16 @@ const Index = () => {
               onShowAnother={handleShowAnother}
               onRestart={handleRestart}
               onRefineWithVoice={handleRefineWithVoice}
+              onRefineWithMessage={(message) => {
+                const currentMovie = results[currentResultIndex];
+                if (!currentMovie) return;
+                const contextMessages: ChatMessage[] = [
+                  { role: "assistant", content: `Je t'ai recommandé **${getDisplayTitle(currentMovie)}**. Dis-moi ce qui ne te convient pas et je te trouverai quelque chose de mieux !` },
+                  { role: "user", content: message },
+                ];
+                setChatInitialMessages(contextMessages);
+                setShowChat(true);
+              }}
               onStartCompanion={handleStartCompanion}
               hasMore={currentResultIndex < results.length - 1}
               userCriteria={{ mood, context, time }}
