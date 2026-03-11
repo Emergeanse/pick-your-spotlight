@@ -57,6 +57,26 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
   const [proactiveDismissed, setProactiveDismissed] = useState(false);
   const { user } = useAuth();
 
+  // Proactive recommendation — silently fetch for users with taste data
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const liked = await getLikedMovies();
+        if (liked.length < 3) return; // Need enough taste data
+        const userTasteVector = await computeUserTasteVector(user.id);
+        const { data, error } = await supabase.functions.invoke("surprise-personalized", {
+          body: { likedMovies: liked, userTasteVector },
+        });
+        if (error || cancelled) return;
+        setProactivePick(data.movie as MovieDetail);
+      } catch {
+        // Silently fail — proactive is optional
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [user]);
 
   useEffect(() => {
     getTrendingMovies(20).then((movies: Movie[]) => {
