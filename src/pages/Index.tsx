@@ -72,8 +72,21 @@ const Index = () => {
     setStep("result");
   };
 
-  const handleOpenChat = () => setShowChat(true);
+  const handleOpenChat = () => {
+    setChatInitialMessages(undefined);
+    setShowChat(true);
+  };
   const handleCloseChat = () => setShowChat(false);
+
+  const handleRefineWithVoice = () => {
+    const currentMovie = results[currentResultIndex];
+    if (!currentMovie) return;
+    const contextMessages: ChatMessage[] = [
+      { role: "assistant", content: `Je t'ai recommandé **${getDisplayTitle(currentMovie)}**. Dis-moi ce qui ne te convient pas et je te trouverai quelque chose de mieux !` },
+    ];
+    setChatInitialMessages(contextMessages);
+    setShowChat(true);
+  };
 
   const handleMovieSuggested = (movie: MovieDetail) => {
     setResults([movie]);
