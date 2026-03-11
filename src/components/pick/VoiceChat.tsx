@@ -412,7 +412,7 @@ const VoiceChat = ({ onClose, onMovieSuggested }: VoiceChatProps) => {
         </div>
 
         {/* Input area */}
-        <div className="border-t border-border/10 px-5 py-3 flex items-center gap-2">
+        <div className="border-t border-border/10 px-5 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] flex items-center gap-2">
           {/* Mic button in input when messages exist */}
           {messages.length > 0 && (
             <Button

@@ -286,7 +286,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.7 }}
-              className="flex flex-wrap gap-3 items-center"
+              className="flex flex-wrap gap-2 md:gap-3 items-center"
             >
               {/* Like button */}
               <Button
