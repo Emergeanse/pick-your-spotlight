@@ -137,13 +137,22 @@ const Index = () => {
   };
 
   const handleShowAnother = async () => {
+    // Track skip on current movie
+    const currentMovie = results[currentResultIndex];
+    if (currentMovie) {
+      trackInteraction(currentMovie.id, "skipped", { mood, context, time });
+    }
+
     if (currentResultIndex < results.length - 1) {
       setCurrentResultIndex(i => i + 1);
     } else {
-      // Fetch new recommendations excluding already shown movies
       setLoading(true);
       try {
-        const excludeIds = results.map(r => r.id);
+        const tasteProfile = await getUserTasteProfile();
+        const excludeIds = [
+          ...results.map(r => r.id),
+          ...(tasteProfile?.excludeIds || []),
+        ];
         const recs = await getRecommendations(
           mood || "easy-watch", context || "alone", time || "movie-night", selectedPlatformIds, excludeIds
         );
@@ -157,6 +166,14 @@ const Index = () => {
         setLoading(false);
       }
     }
+  };
+
+  const handleStartCompanion = () => {
+    const currentMovie = results[currentResultIndex];
+    if (currentMovie) {
+      trackInteraction(currentMovie.id, "watched", { mood, context, time });
+    }
+    setShowCompanion(true);
   };
 
   const handleRestart = () => {
