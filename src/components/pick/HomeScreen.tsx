@@ -10,6 +10,7 @@ import { computeUserTasteVector } from "@/lib/taste-engine";
 import type { Movie, MovieDetail } from "@/lib/tmdb";
 import BrandHeader from "./BrandHeader";
 import DiscoverySection from "./DiscoverySection";
+import PickCharacter from "./PickCharacter";
 
 interface HomeScreenProps {
   onStart: () => void;
