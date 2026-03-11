@@ -194,12 +194,27 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
             transition={{ duration: 0.6, delay: 0.2 }}
             className="max-w-xl"
           >
+            {/* Pick delivers the recommendation */}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.15, duration: 0.4 }}
+              className="mb-3"
+            >
+              <PickCharacter
+                mood="default"
+                message={matchData ? matchData.headline : "Je pense que celui-ci est parfait pour ce soir."}
+                size="sm"
+                animate={false}
+              />
+            </motion.div>
+
             {/* Match badge */}
             {matchData && (
               <motion.div
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+                transition={{ delay: 0.3, type: "spring", stiffness: 200 }}
                 className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary/15 border border-primary/25 mb-3"
               >
                 <Sparkles className="w-3 h-3 text-primary" />
