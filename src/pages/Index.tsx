@@ -216,6 +216,7 @@ const Index = () => {
     setSelectedPlatformIds([]);
     setResults([]);
     setCurrentResultIndex(0);
+    setSearchTags([]);
   };
 
   const currentStepNumber = getStepNumber(step);
