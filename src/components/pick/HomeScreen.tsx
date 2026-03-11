@@ -32,6 +32,9 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
   const [bgImages, setBgImages] = useState<string[]>([]);
   const [currentBgIndex, setCurrentBgIndex] = useState(0);
   const [showDiscovery, setShowDiscovery] = useState(false);
+  const [tonightPick, setTonightPick] = useState<MovieDetail | null>(null);
+  const [tonightLoading, setTonightLoading] = useState(false);
+  const [tonightProviders, setTonightProviders] = useState<{ name: string; logo_path: string }[]>([]);
   const { user } = useAuth();
 
   useEffect(() => {
