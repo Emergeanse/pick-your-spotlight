@@ -81,7 +81,17 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
     getMovieTrailerUrl(movie.id, mediaType).then(setTrailerUrl).catch(() => setTrailerUrl(null));
   }, [movie.id, mediaType]);
 
+  // Fetch providers for alternative movies
   useEffect(() => {
+    if (!alternativeMovies || alternativeMovies.length === 0) return;
+    alternativeMovies.forEach((alt) => {
+      const altMedia = alt.first_air_date ? "tv" : "movie";
+      getWatchProviders(alt.id, altMedia).then((p) => {
+        setAltProviders((prev) => ({ ...prev, [alt.id]: p }));
+      }).catch(() => {});
+    });
+  }, [alternativeMovies]);
+
     setMatchData(null);
     setMatchLoading(true);
     setShowOptions(false);
