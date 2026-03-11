@@ -154,6 +154,7 @@ RÈGLES :
 {
   "matchScore": <number 40-99>,
   "headline": "<accroche naturelle et chaleureuse, 10 mots max>",
+  "pickNote": "<1 phrase courte qui montre que Pick connaît les goûts de l'utilisateur en les citant explicitement. Ex: 'Je sais que t'es fan de thrillers psychologiques, celui-là est taillé pour toi.' ou 'Vu ton amour pour les films à twist, tu vas kiffer.' Si aucun profil connu, null.>",
   "whyItMatches": "<1 phrase perso, ton conversationnel, tutoiement>",
   "detailedExplanation": "<3-5 phrases détaillées reprenant les mots de l'utilisateur, expliquant pourquoi CE film pour LUI>",
   "emotionalJourney": "<2-3 phrases sur l'expérience émotionnelle>",
@@ -170,6 +171,7 @@ RÈGLES :
     "novelty": <0-100>
   }
 }
+- "pickNote" : DOIT citer un genre, micro-genre ou film aimé spécifique de l'utilisateur. JAMAIS générique. Si le profil est vide, mettre null.
 - "similarLikedMovies" : films aimés les plus similaires. Tableau vide si aucun.
 - "matchingReasons" : raisons courtes (ex: "thriller sombre", "soirée solo")
 - Score calibré : session pas alignée → 40-60 max. Match parfait → 85-99.
