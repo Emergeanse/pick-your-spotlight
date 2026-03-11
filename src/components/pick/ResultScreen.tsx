@@ -120,7 +120,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
     ]).then(([tasteProfile, userTasteVector, likedMovies]) => {
       const likedMovieTitles = (likedMovies || []).map((m: any) => m.title);
       supabase.functions.invoke("movie-match", {
-        body: { movie, userCriteria, tasteProfile, userTasteVector, likedMovieTitles },
+        body: { movie, userCriteria, tasteProfile, userTasteVector, likedMovieTitles, searchTags },
       }).then(({ data, error }) => {
         if (error) { console.error("Match error:", error); setMatchLoading(false); return; }
         setMatchData(data as MatchData);
