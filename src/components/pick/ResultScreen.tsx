@@ -42,6 +42,8 @@ interface ResultScreenProps {
   };
   alternativeMovies?: MovieDetail[];
   onSelectAlternative?: (movie: MovieDetail) => void;
+  searchTags?: string[];
+  onRemoveTag?: (tag: string) => void;
 }
 
 const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onShowAnother, onRestart, onRefineWithVoice, onRefineWithMessage, onStartCompanion, hasMore, userCriteria, alternativeMovies, onSelectAlternative }, ref) => {
