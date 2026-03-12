@@ -547,14 +547,14 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
             >
               {/* Main buttons row */}
               <div className="flex items-center gap-2.5">
-                {onStartCompanion && (
+                  {onStartCompanion && (
                   <Button
                     size="lg"
                     className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90 font-sans font-semibold px-6 h-11 gap-2 text-sm neon-glow transition-all active:scale-[0.97]"
                     onClick={onStartCompanion}
                   >
                     <Tv className="w-4 h-4" />
-                    Je regarde
+                    Pick m'accompagne
                   </Button>
                 )}
 
