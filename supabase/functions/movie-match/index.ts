@@ -128,7 +128,8 @@ Le match score doit refléter ces poids :
 - behaviour_match (${scoringWeights.behaviour_match || 0.10}) : patterns comportementaux
 - rating_score (${scoringWeights.rating_score || 0.10}) : note critique
 - availability (${scoringWeights.availability || 0.05}) : plateforme
-- novelty (${scoringWeights.novelty || 0.05}) : découverte` : "";
+- novelty (${scoringWeights.novelty || 0.05}) : découverte
+${cinematicProfile ? `\nPROFIL CINÉMATOGRAPHIQUE DE L'UTILISATEUR :\n- Personnalité : "${cinematicProfile.personality_title}"\n- Description : ${cinematicProfile.narrative}\n- Traits : ${(cinematicProfile.taste_traits || []).join(", ")}\nUtilise ce profil pour enrichir tes explications. Par exemple : "Avec ton profil de ${cinematicProfile.personality_title}, ce film va résonner avec ta sensibilité pour..."` : ""}` : "";
 
     const systemPrompt = `Tu es Pick, un ami cinéphile passionné qui calcule un match score. On te donne un film, le profil de goûts d'un utilisateur, et sa session actuelle.
 
