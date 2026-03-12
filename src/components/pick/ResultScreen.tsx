@@ -310,12 +310,27 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
               )}
             </div>
 
-            {/* Genres */}
-            {genres && (
-              <p className="text-primary/60 text-[10px] md:text-xs tracking-[0.12em] uppercase font-sans font-medium mb-3">
-                {genres}
-              </p>
-            )}
+            {/* Genres + Match badge inline */}
+            <div className="flex items-center gap-2.5 mb-3 flex-wrap">
+              {genres && (
+                <p className="text-primary/60 text-[10px] md:text-xs tracking-[0.12em] uppercase font-sans font-medium">
+                  {genres}
+                </p>
+              )}
+              {matchData && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.3, type: "spring", stiffness: 200 }}
+                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary/15 border border-primary/25"
+                >
+                  <Sparkles className="w-2.5 h-2.5 text-primary" />
+                  <span className="text-primary text-[10px] font-sans font-semibold">
+                    Match {matchData.matchScore}%
+                  </span>
+                </motion.div>
+              )}
+            </div>
 
             {/* Synopsis — expandable */}
             <div className="mb-3">
