@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { getLikedMovies } from "@/lib/liked-movies";
 import { getWatchlist } from "@/lib/watchlist";
 import { getPosterUrl } from "@/lib/tmdb";
+import CinemaDNA from "@/components/pick/CinemaDNA";
 
 const ALL_PLATFORMS = [
   { id: 8, label: "Netflix", logo: "https://image.tmdb.org/t/p/original/pbpMk2JmcoNnQwx5JGpXngfoWtp.jpg" },
