@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { getLikedMovies } from "@/lib/liked-movies";
 import { getWatchlist } from "@/lib/watchlist";
 import { getPosterUrl } from "@/lib/tmdb";
+import CinemaDNA from "@/components/pick/CinemaDNA";
 
 const ALL_PLATFORMS = [
   { id: 8, label: "Netflix", logo: "https://image.tmdb.org/t/p/original/pbpMk2JmcoNnQwx5JGpXngfoWtp.jpg" },
@@ -157,6 +158,11 @@ const Profile = () => {
           </div>
           <h1 className="text-2xl md:text-3xl font-serif mb-1">{displayName}</h1>
           <p className="text-muted-foreground text-sm font-sans">{user.email}</p>
+        </motion.div>
+
+        {/* Cinema DNA */}
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="mb-8">
+          <CinemaDNA userId={user.id} />
         </motion.div>
 
         {/* Platforms */}

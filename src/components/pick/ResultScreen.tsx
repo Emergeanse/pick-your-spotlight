@@ -204,15 +204,16 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
       (movie.genres || []).map(g => g.name)
     );
 
-    // Load taste profile + user taste vector + liked movies and pass to match function
+    // Load taste profile + user taste vector + liked movies + cinematic profile and pass to match function
     Promise.all([
       getUserTasteProfile(),
       user ? computeUserTasteVector(user.id) : Promise.resolve(null),
       user ? getLikedMovies().catch(() => []) : Promise.resolve([]),
-    ]).then(([tasteProfile, userTasteVector, likedMovies]) => {
+      user ? supabase.from("cinematic_profiles" as any).select("personality_title, narrative, taste_traits").eq("user_id", user.id).maybeSingle().then(r => r.data) : Promise.resolve(null),
+    ]).then(([tasteProfile, userTasteVector, likedMovies, cinematicProfile]) => {
       const likedMovieTitles = (likedMovies || []).map((m: any) => m.title);
       supabase.functions.invoke("movie-match", {
-        body: { movie, userCriteria, tasteProfile, userTasteVector, likedMovieTitles, searchTags },
+        body: { movie, userCriteria, tasteProfile, userTasteVector, likedMovieTitles, searchTags, cinematicProfile },
       }).then(({ data, error }) => {
         if (error) { console.error("Match error:", error); setMatchLoading(false); return; }
         setMatchData(data as MatchData);
@@ -284,33 +285,6 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
             transition={{ duration: 0.6, delay: 0.2 }}
             className="max-w-xl"
           >
-            {/* PickNote as styled text (no character) */}
-            {matchData?.pickNote && (
-              <motion.p
-                initial={{ opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.15, duration: 0.4 }}
-                className="text-foreground/50 text-[12px] font-sans italic mb-3 leading-relaxed"
-              >
-                « {matchData.pickNote} »
-              </motion.p>
-            )}
-
-            {/* Match badge */}
-            {matchData && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.3, type: "spring", stiffness: 200 }}
-                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary/15 border border-primary/25 mb-3"
-              >
-                <Sparkles className="w-3 h-3 text-primary" />
-                <span className="text-primary text-[11px] font-sans font-semibold">
-                  Match {matchData.matchScore}%
-                </span>
-              </motion.div>
-            )}
-
             {/* Title */}
             <h1 className="text-2xl md:text-5xl lg:text-7xl font-serif mb-2 leading-[1.05]">
               {title}
@@ -337,12 +311,27 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
               )}
             </div>
 
-            {/* Genres */}
-            {genres && (
-              <p className="text-primary/60 text-[10px] md:text-xs tracking-[0.12em] uppercase font-sans font-medium mb-3">
-                {genres}
-              </p>
-            )}
+            {/* Genres + Match badge inline */}
+            <div className="flex items-center gap-2.5 mb-3 flex-wrap">
+              {genres && (
+                <p className="text-primary/60 text-[10px] md:text-xs tracking-[0.12em] uppercase font-sans font-medium">
+                  {genres}
+                </p>
+              )}
+              {matchData && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.3, type: "spring", stiffness: 200 }}
+                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary/15 border border-primary/25"
+                >
+                  <Sparkles className="w-2.5 h-2.5 text-primary" />
+                  <span className="text-primary text-[10px] font-sans font-semibold">
+                    Match {matchData.matchScore}%
+                  </span>
+                </motion.div>
+              )}
+            </div>
 
             {/* Synopsis — expandable */}
             <div className="mb-3">
@@ -559,14 +548,14 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
             >
               {/* Main buttons row */}
               <div className="flex items-center gap-2.5">
-                {onStartCompanion && (
+                  {onStartCompanion && (
                   <Button
                     size="lg"
                     className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90 font-sans font-semibold px-6 h-11 gap-2 text-sm neon-glow transition-all active:scale-[0.97]"
                     onClick={onStartCompanion}
                   >
                     <Tv className="w-4 h-4" />
-                    Je regarde
+                    Pick m'accompagne
                   </Button>
                 )}
 
