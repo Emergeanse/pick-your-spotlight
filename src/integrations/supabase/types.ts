@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      cinematic_profiles: {
+        Row: {
+          evolution_note: string | null
+          generated_at: string
+          id: string
+          narrative: string
+          personality_title: string
+          representative_films: string[]
+          taste_traits: string[]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          evolution_note?: string | null
+          generated_at?: string
+          id?: string
+          narrative?: string
+          personality_title?: string
+          representative_films?: string[]
+          taste_traits?: string[]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          evolution_note?: string | null
+          generated_at?: string
+          id?: string
+          narrative?: string
+          personality_title?: string
+          representative_films?: string[]
+          taste_traits?: string[]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       liked_movies: {
         Row: {
           genres: string[] | null
