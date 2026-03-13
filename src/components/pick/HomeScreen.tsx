@@ -590,11 +590,14 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
                     Je regarde
                   </Button>
 
-                  <Button
+                   <Button
                     variant="ghost"
                     size="lg"
                     className="rounded-full border border-border/30 text-foreground/50 hover:text-foreground hover:border-border/50 font-sans font-medium px-5 h-11 gap-2 text-sm transition-all active:scale-[0.97]"
                     onClick={() => {
+                      if (tonightPick) {
+                        setRejectedIds(prev => [...prev, tonightPick.id]);
+                      }
                       setTonightPick(null);
                       generateTonightPick();
                     }}
@@ -603,9 +606,9 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
                     {tonightLoading ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
                     ) : (
-                      <ThumbsDown className="w-4 h-4" />
+                      <Dices className="w-4 h-4" />
                     )}
-                    Pas pour moi
+                    Autre suggestion
                   </Button>
                 </div>
               </motion.div>
