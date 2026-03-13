@@ -283,12 +283,15 @@ export async function getMovieTrailerUrl(id: number, mediaType: string = "movie"
 
 // Get popular movies AND TV shows for onboarding grid
 export async function getPopularMoviesForOnboarding(page: number = 1): Promise<Movie[]> {
-  const [movieData, tvData] = await Promise.all([
+  // Fetch independently so one failure doesn't kill both
+  const [movieData, tvData] = await Promise.allSettled([
     fetchFromTMDB("/movie/popular", { page: String(page) }),
     fetchFromTMDB("/tv/popular", { page: String(page) }),
   ]);
-  const movies: Movie[] = (movieData.results || []).map((m: Movie) => ({ ...m, media_type: "movie" }));
-  const tvShows: Movie[] = (tvData.results || []).map((m: Movie) => ({ ...m, media_type: "tv" }));
+  const movieResults = movieData.status === "fulfilled" ? (movieData.value.results || []) : [];
+  const tvResults = tvData.status === "fulfilled" ? (tvData.value.results || []) : [];
+  const movies: Movie[] = movieResults.map((m: any) => ({ ...m, media_type: "movie" }));
+  const tvShows: Movie[] = tvResults.map((m: any) => ({ ...m, media_type: "tv", title: m.name || m.title }));
   // Interleave movies and TV shows
   const combined: Movie[] = [];
   const maxLen = Math.max(movies.length, tvShows.length);
