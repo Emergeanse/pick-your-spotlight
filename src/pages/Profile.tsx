@@ -78,6 +78,7 @@ const Profile = () => {
         setSelectedGenres(data?.favorite_genres || []);
         setExcludedGenres(data?.excluded_genres || []);
         setMinRating((data as any)?.min_rating || 0);
+        setMediaPreference((data as any)?.media_preference || "both");
 
         const [liked, wl] = await Promise.all([
           getLikedMovies().catch(() => []),
