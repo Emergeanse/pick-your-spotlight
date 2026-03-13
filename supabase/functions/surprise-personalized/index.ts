@@ -108,7 +108,7 @@ ${embeddingSection}
 RÈGLES :
 - Réponds UNIQUEMENT avec un JSON valide sans backticks
 - Structure : {"title": "<titre exact>", "reason": "<2-3 phrases>", "confidence": <0-100>, "scores": {"taste": <0-100>, "context": <0-100>, "embedding": <0-100>, "behaviour": <0-100>, "rating": <0-100>, "novelty": <0-100>}}
-- Ne recommande JAMAIS un film déjà dans la liste ni un film avec l'un de ces IDs TMDB : ${[...(likedMovies || []).map((m: any) => m.tmdb_id || m.id), ...(excludeIds || [])].join(", ")}
+- Ne recommande JAMAIS un film déjà dans la liste ni un film avec l'un de ces IDs TMDB : ${normalizedExcludeIds.length > 0 ? normalizedExcludeIds.join(", ") : "aucun"}
 - ${shouldDiscover ? "MODE DÉCOUVERTE : propose une pépite inattendue, un micro-genre adjacent, ou un film sous-estimé. Surprends." : "MODE PRÉCISION : colle au plus près des micro-genres et clusters identifiés. Si des candidats par embedding sont disponibles, privilégie-les."}
 - Calibre le score de confiance selon la qualité du match`;
 
