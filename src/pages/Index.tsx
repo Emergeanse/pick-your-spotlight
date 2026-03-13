@@ -48,16 +48,25 @@ const Index = () => {
   const [showCompanion, setShowCompanion] = useState(false);
   const [chatInitialMessages, setChatInitialMessages] = useState<ChatMessage[] | undefined>(undefined);
   const [searchTags, setSearchTags] = useState<string[]>([]);
+  const [profilePrefs, setProfilePrefs] = useState<{ excludedGenres: string[]; excludedPlatforms: number[]; minRating: number; preferredPlatforms: number[] }>({ excludedGenres: [], excludedPlatforms: [], minRating: 0, preferredPlatforms: [] });
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  // Check if user needs onboarding (only for authenticated users)
+  // Load profile preferences
   useEffect(() => {
     if (!user) return;
-    supabase.from("profiles").select("onboarding_completed").eq("id", user.id).single()
+    supabase.from("profiles").select("onboarding_completed, preferred_platforms, excluded_platforms, favorite_genres, excluded_genres, min_rating").eq("id", user.id).single()
       .then(({ data }) => {
         if (data && !data.onboarding_completed) {
           navigate("/onboarding");
+        }
+        if (data) {
+          setProfilePrefs({
+            excludedGenres: (data as any).excluded_genres || [],
+            excludedPlatforms: (data as any).excluded_platforms || [],
+            minRating: (data as any).min_rating || 0,
+            preferredPlatforms: data.preferred_platforms || [],
+          });
         }
       });
   }, [user, navigate]);
@@ -155,8 +164,11 @@ const Index = () => {
     try {
       await new Promise(r => setTimeout(r, 400));
       setLoadingMessage("Recherche du film idéal…");
+      // Merge user-selected platforms with profile preferred platforms
+      const mergedPlatforms = platformIds.length > 0 ? platformIds : profilePrefs.preferredPlatforms;
       const recs = await getRecommendations(
-        mood || "easy-watch", context || "alone", time || "movie-night", platformIds
+        mood || "easy-watch", context || "alone", time || "movie-night", mergedPlatforms, [],
+        { excludedGenres: profilePrefs.excludedGenres, minRating: profilePrefs.minRating }
       );
       setLoadingMessage("Presque prêt…");
       await new Promise(r => setTimeout(r, 300));
@@ -188,8 +200,10 @@ const Index = () => {
           ...results.map(r => r.id),
           ...(tasteProfile?.excludeIds || []),
         ];
+        const mergedPlatforms = selectedPlatformIds.length > 0 ? selectedPlatformIds : profilePrefs.preferredPlatforms;
         const recs = await getRecommendations(
-          mood || "easy-watch", context || "alone", time || "movie-night", selectedPlatformIds, excludeIds
+          mood || "easy-watch", context || "alone", time || "movie-night", mergedPlatforms, excludeIds,
+          { excludedGenres: profilePrefs.excludedGenres, minRating: profilePrefs.minRating }
         );
         if (recs.length > 0) {
           setResults(prev => [...prev, ...recs]);
