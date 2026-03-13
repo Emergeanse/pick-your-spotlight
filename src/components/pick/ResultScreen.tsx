@@ -731,21 +731,22 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                             stream.getTracks().forEach(t => t.stop());
                             setVoiceListening(false);
                             setVoiceProcessing(true);
-                            try {
+                          try {
                               const blob = new Blob(voiceChunksRef.current, { type: recorder.mimeType });
-                              // Get scribe token
-                              const { data: tokenData } = await supabase.functions.invoke("scribe-token");
-                              if (!tokenData?.token) throw new Error("No token");
-                              // Use ElevenLabs batch STT
+                              // Send to edge function for server-side STT
                               const formData = new FormData();
-                              formData.append("file", blob, "audio.webm");
-                              formData.append("model_id", "scribe_v2");
-                              formData.append("language_code", "fra");
-                              const sttResp = await fetch("https://api.elevenlabs.io/v1/speech-to-text", {
-                                method: "POST",
-                                headers: { "xi-api-key": tokenData.token },
-                                body: formData,
-                              });
+                              formData.append("audio", blob, "audio.webm");
+                              const sttResp = await fetch(
+                                `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/voice-refine`,
+                                {
+                                  method: "POST",
+                                  headers: {
+                                    apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+                                    Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+                                  },
+                                  body: formData,
+                                }
+                              );
                               if (!sttResp.ok) throw new Error("STT failed");
                               const sttData = await sttResp.json();
                               const transcript = sttData.text?.trim();
