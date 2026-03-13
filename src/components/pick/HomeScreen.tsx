@@ -475,7 +475,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
               transition={{ duration: 0.4 }}
               className="px-5 pb-12"
             >
-              <DiscoverySection onMovieSelect={onMovieSelect} />
+              <DiscoverySection onMovieSelect={onMovieSelect} platformIds={userPlatformIds} />
             </motion.div>
           )}
         </AnimatePresence>
