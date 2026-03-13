@@ -131,15 +131,27 @@ const Profile = () => {
     if (!user) return;
     setSaving(true);
     try {
-      await supabase.from("profiles").update({
+      const { error } = await supabase.from("profiles").update({
         preferred_platforms: selectedPlatforms,
         favorite_genres: selectedGenres,
         excluded_genres: excludedGenres,
         excluded_platforms: excludedPlatforms,
         min_rating: minRating,
       } as any).eq("id", user.id);
+      if (error) throw error;
+      // Update local profile reference so hasChanges resets
+      setProfile((prev: any) => ({
+        ...prev,
+        preferred_platforms: [...selectedPlatforms],
+        favorite_genres: [...selectedGenres],
+        excluded_genres: [...excludedGenres],
+        excluded_platforms: [...excludedPlatforms],
+        min_rating: minRating,
+      }));
+      toast({ title: "Préférences enregistrées ✓", description: "Tes prochaines suggestions en tiendront compte." });
     } catch (e) {
       console.error(e);
+      toast({ title: "Erreur", description: "Impossible de sauvegarder. Réessaie.", variant: "destructive" });
     } finally {
       setSaving(false);
     }
