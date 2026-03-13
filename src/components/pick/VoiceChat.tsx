@@ -1,9 +1,11 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Mic, MicOff, X, Send, Loader2, Sparkles, Check } from "lucide-react";
+import { Mic, MicOff, X, Send, Loader2, Sparkles, Check, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useScribe, CommitStrategy } from "@elevenlabs/react";
+import { useAuth } from "@/hooks/use-auth";
+import { getLikedMovies } from "@/lib/liked-movies";
 import type { MovieDetail } from "@/lib/tmdb";
 import PickCharacter from "./PickCharacter";
 
@@ -30,7 +32,7 @@ const EXAMPLE_PROMPTS = [
   "Je suis fatigué, un truc léger",
 ];
 
-type Phase = "idle" | "listening" | "processing" | "recap";
+type Phase = "idle" | "listening" | "processing" | "recap" | "conversation";
 
 // Sound wave bars animation
 const SoundWave = () => (
@@ -54,9 +56,13 @@ const VoiceChat = ({ onClose, onMovieSuggested, initialMessages }: VoiceChatProp
   const [micError, setMicError] = useState<string | null>(null);
   const [partialText, setPartialText] = useState("");
   const [scribeToken, setScribeToken] = useState<string | null>(null);
+  const [conversationHistory, setConversationHistory] = useState<ChatMessage[]>([]);
+  const [pickReply, setPickReply] = useState("");
+  const [userTasteContext, setUserTasteContext] = useState<any>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const pendingSendRef = useRef(false);
   const committedTextRef = useRef("");
+  const { user } = useAuth();
 
   // Pick 4 random non-repeating examples
   const [randomExamples] = useState(() => {
@@ -64,12 +70,26 @@ const VoiceChat = ({ onClose, onMovieSuggested, initialMessages }: VoiceChatProp
     return shuffled.slice(0, 4);
   });
 
-  // Pre-fetch scribe token on mount
+  // Pre-fetch scribe token and user taste context on mount
   useEffect(() => {
     supabase.functions.invoke("scribe-token").then(({ data }) => {
       if (data?.token) setScribeToken(data.token);
     }).catch(console.error);
-  }, []);
+
+    // Fetch user taste context for personalized conversations
+    if (user) {
+      Promise.all([
+        getLikedMovies(),
+        supabase.from("profiles").select("favorite_genres, excluded_genres").eq("id", user.id).single(),
+      ]).then(([likedMovies, { data: profile }]) => {
+        setUserTasteContext({
+          likedMovies: likedMovies?.map((m: any) => ({ title: m.title, genres: m.genres })) || [],
+          favoriteGenres: profile?.favorite_genres || [],
+          excludedGenres: profile?.excluded_genres || [],
+        });
+      }).catch(console.error);
+    }
+  }, [user]);
 
   // ElevenLabs Scribe for cross-browser STT
   const scribe = useScribe({
@@ -103,12 +123,16 @@ const VoiceChat = ({ onClose, onMovieSuggested, initialMessages }: VoiceChatProp
     setUserText(text);
 
     try {
+      // Build full conversation history
+      const newUserMsg: ChatMessage = { role: "user", content: text };
+      const fullHistory = [...conversationHistory, newUserMsg];
+      
       const messages: ChatMessage[] = initialMessages
-        ? [...initialMessages, { role: "user" as const, content: text }]
-        : [{ role: "user" as const, content: text }];
+        ? [...initialMessages, ...fullHistory]
+        : fullHistory;
 
       const { data, error } = await supabase.functions.invoke("movie-chat", {
-        body: { messages },
+        body: { messages, userTasteContext },
       });
 
       if (error) throw error;
@@ -116,22 +140,24 @@ const VoiceChat = ({ onClose, onMovieSuggested, initialMessages }: VoiceChatProp
       if (data?.movie) {
         const recap: string[] = data.recap || [];
         setRecapTags(recap);
+        setConversationHistory(fullHistory);
         setPhase("recap");
 
-        // Show recap for a moment, then transition to result
         setTimeout(() => {
           onMovieSuggested(data.movie as MovieDetail, recap);
         }, recap.length > 0 ? 1800 : 800);
       } else if (data?.reply) {
-        // AI asked a follow-up question — for now just close and let them retry
-        // Could be enhanced later with multi-turn voice
-        setPhase("idle");
+        // Pick asked a follow-up question — show it and let user respond
+        const assistantMsg: ChatMessage = { role: "assistant", content: data.reply };
+        setConversationHistory([...fullHistory, assistantMsg]);
+        setPickReply(data.reply);
+        setPhase("conversation");
       }
     } catch (e) {
       console.error("Chat error:", e);
       setPhase("idle");
     }
-  }, [onMovieSuggested, initialMessages]);
+  }, [onMovieSuggested, initialMessages, conversationHistory, userTasteContext]);
 
   const handleSend = useCallback(async (text: string) => {
     if (!text.trim()) return;
@@ -467,11 +493,47 @@ const VoiceChat = ({ onClose, onMovieSuggested, initialMessages }: VoiceChatProp
               </motion.div>
             </motion.div>
           )}
+
+          {/* CONVERSATION — Pick asked a follow-up question */}
+          {phase === "conversation" && (
+            <motion.div
+              key="conversation"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.3 }}
+              className="flex flex-col items-center text-center"
+            >
+              <PickCharacter mood="default" message={pickReply} size="md" animate={false} />
+
+              {/* Mic button to reply by voice */}
+              <motion.button
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4 }}
+                type="button"
+                onClick={startListening}
+                className="mt-6 w-16 h-16 rounded-full bg-primary/10 border-2 border-primary/30 flex items-center justify-center transition-all duration-200 active:scale-95 cursor-pointer hover:bg-primary/15 hover:border-primary/40"
+                style={{ WebkitTapHighlightColor: "transparent", touchAction: "manipulation" }}
+              >
+                <Mic className="w-7 h-7 text-primary pointer-events-none" />
+              </motion.button>
+
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.5 }}
+                className="text-muted-foreground text-xs font-sans mt-3"
+              >
+                Réponds par la voix ou en tapant ci-dessous
+              </motion.p>
+            </motion.div>
+          )}
         </AnimatePresence>
       </div>
 
-      {/* Bottom text input (always visible for fallback) */}
-      {(phase === "idle" || phase === "listening") && (
+      {/* Bottom text input (visible in idle, listening, and conversation phases) */}
+      {(phase === "idle" || phase === "listening" || phase === "conversation") && (
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
