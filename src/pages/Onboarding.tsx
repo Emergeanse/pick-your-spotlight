@@ -109,9 +109,10 @@ const Onboarding = () => {
   };
 
   const toggleSelect = (movie: Movie) => {
+    const movieKey = getMovieKey(movie);
     setSelectedIds(prev => {
       const next = new Set(prev);
-      if (next.has(movie.id)) next.delete(movie.id); else next.add(movie.id);
+      if (next.has(movieKey)) next.delete(movieKey); else next.add(movieKey);
       return next;
     });
   };
@@ -124,9 +125,9 @@ const Onboarding = () => {
     setSaving(true);
     try {
       const allMovies = searchResults || movies;
-      const selectedMovies = allMovies.filter(m => selectedIds.has(m.id));
-      const selectedFromGrid = movies.filter(m => selectedIds.has(m.id));
-      const allSelected = [...new Map([...selectedMovies, ...selectedFromGrid].map(m => [m.id, m])).values()];
+      const selectedMovies = allMovies.filter(m => selectedIds.has(getMovieKey(m)));
+      const selectedFromGrid = movies.filter(m => selectedIds.has(getMovieKey(m)));
+      const allSelected = [...new Map([...selectedMovies, ...selectedFromGrid].map(m => [getMovieKey(m), m])).values()];
 
       for (const movie of allSelected) {
         try {
@@ -150,7 +151,7 @@ const Onboarding = () => {
     finally { setSaving(false); }
   };
 
-  const displayMovies = searchResults || movies;
+  const displayMovies = (searchResults || movies).filter((movie): movie is Movie => Boolean(movie && typeof movie.id === "number"));
   const canContinueGenres = selectedGenres.size >= 2;
   const canContinueMovies = selectedIds.size >= MIN_MOVIE_SELECTIONS;
 
