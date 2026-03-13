@@ -57,6 +57,7 @@ const Profile = () => {
   const [excludedGenres, setExcludedGenres] = useState<string[]>([]);
   const [selectedEras, setSelectedEras] = useState<string[]>([]);
   const [minRating, setMinRating] = useState<number>(0);
+  const [mediaPreference, setMediaPreference] = useState<string>("both");
   const [saving, setSaving] = useState(false);
   const [profileLoading, setProfileLoading] = useState(true);
 
