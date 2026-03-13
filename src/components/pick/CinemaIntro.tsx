@@ -129,13 +129,9 @@ export default function CinemaIntro({ movie, onComplete }: CinemaIntroProps) {
                 className="absolute -top-2 left-1/2 -translate-x-1/2"
               >
                 <img
-                  src="/lovable-uploads/pick-squirrel.png"
+                  src={pickSquirrel}
                   alt="Pick"
                   className="w-10 h-10 sm:w-12 sm:h-12 object-contain"
-                  onError={(e) => {
-                    // Fallback to assets version
-                    (e.target as HTMLImageElement).src = "/src/assets/pick-squirrel.png";
-                  }}
                 />
               </motion.div>
             )}
