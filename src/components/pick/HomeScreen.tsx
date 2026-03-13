@@ -91,6 +91,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
   const [userPlatformIds, setUserPlatformIds] = useState<number[]>([]);
   const [userGenres, setUserGenres] = useState<string[]>([]);
   const [showDNA, setShowDNA] = useState(false);
+  const [rejectedIds, setRejectedIds] = useState<number[]>([]);
   const { user } = useAuth();
 
   // Load user's preferred platforms and genres
