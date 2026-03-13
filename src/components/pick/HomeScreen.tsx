@@ -61,6 +61,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
   const [watchlistItems, setWatchlistItems] = useState<any[]>([]);
   const [watchlistLoading, setWatchlistLoading] = useState(false);
   const [userPlatformIds, setUserPlatformIds] = useState<number[]>([]);
+  const [userGenres, setUserGenres] = useState<string[]>([]);
   const [showDNA, setShowDNA] = useState(false);
   const { user } = useAuth();
 
