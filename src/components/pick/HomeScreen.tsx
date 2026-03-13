@@ -349,34 +349,24 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
               className="w-full max-w-lg px-2"
             >
               {/* Three main actions - full width cards */}
-              <div className="flex flex-col gap-3">
+              <div className="flex flex-col items-center gap-4">
 
-                {/* 1. Pick pour ce soir */}
-                <motion.button
-                  whileTap={{ scale: 0.98 }}
+                {/* 1. Pick pour ce soir - small pill */}
+                <button
                   onClick={handleTonightPick}
                   disabled={loading || tonightLoading}
-                  className="group relative text-left rounded-2xl p-5 bg-gradient-to-r from-primary/10 to-transparent border-2 border-primary/30 hover:border-primary/50 hover:from-primary/15 transition-all"
+                  className="group flex items-center gap-2 px-4 py-2.5 rounded-full bg-foreground/[0.03] border border-border/30 hover:border-primary/30 hover:bg-foreground/[0.06] transition-all text-sm font-sans text-foreground/60 hover:text-foreground"
                 >
-                  <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-primary/20 border border-primary/30 flex items-center justify-center shrink-0 group-hover:bg-primary/30 transition-colors">
-                      <Zap className="w-5 h-5 text-yellow-400" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="text-base font-sans font-semibold text-foreground mb-1">⚡ Pick pour ce soir</h3>
-                      <p className="text-foreground/50 text-[13px] font-sans leading-relaxed">
-                        Je te trouve un film immédiatement.
-                      </p>
-                    </div>
-                  </div>
-                </motion.button>
+                  <Zap className="w-4 h-4 text-yellow-400" />
+                  <span>Pick pour ce soir</span>
+                </button>
 
                 {/* 2. Parle à Pick - natural language */}
                 <motion.button
                   whileTap={{ scale: 0.98 }}
                   onClick={onOpenChat}
                   disabled={loading}
-                  className="group relative text-left rounded-2xl p-5 bg-gradient-to-r from-primary/10 to-transparent border-2 border-primary/30 hover:border-primary/50 hover:from-primary/15 transition-all"
+                  className="group relative w-full text-left rounded-2xl p-5 bg-gradient-to-r from-primary/10 to-transparent border-2 border-primary/30 hover:border-primary/50 hover:from-primary/15 transition-all"
                 >
                   <div className="flex items-start gap-4">
                     <div className="w-12 h-12 rounded-xl bg-primary/20 border border-primary/30 flex items-center justify-center shrink-0 group-hover:bg-primary/30 transition-colors">
