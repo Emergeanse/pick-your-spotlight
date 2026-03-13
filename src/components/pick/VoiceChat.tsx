@@ -56,9 +56,13 @@ const VoiceChat = ({ onClose, onMovieSuggested, initialMessages }: VoiceChatProp
   const [micError, setMicError] = useState<string | null>(null);
   const [partialText, setPartialText] = useState("");
   const [scribeToken, setScribeToken] = useState<string | null>(null);
+  const [conversationHistory, setConversationHistory] = useState<ChatMessage[]>([]);
+  const [pickReply, setPickReply] = useState("");
+  const [userTasteContext, setUserTasteContext] = useState<any>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const pendingSendRef = useRef(false);
   const committedTextRef = useRef("");
+  const { user } = useAuth();
 
   // Pick 4 random non-repeating examples
   const [randomExamples] = useState(() => {
