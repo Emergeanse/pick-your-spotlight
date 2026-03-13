@@ -164,8 +164,11 @@ const Index = () => {
     try {
       await new Promise(r => setTimeout(r, 400));
       setLoadingMessage("Recherche du film idéal…");
+      // Merge user-selected platforms with profile preferred platforms
+      const mergedPlatforms = platformIds.length > 0 ? platformIds : profilePrefs.preferredPlatforms;
       const recs = await getRecommendations(
-        mood || "easy-watch", context || "alone", time || "movie-night", platformIds
+        mood || "easy-watch", context || "alone", time || "movie-night", mergedPlatforms, [],
+        { excludedGenres: profilePrefs.excludedGenres, minRating: profilePrefs.minRating }
       );
       setLoadingMessage("Presque prêt…");
       await new Promise(r => setTimeout(r, 300));
