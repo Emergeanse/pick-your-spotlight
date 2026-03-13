@@ -139,6 +139,7 @@ const Profile = () => {
         excluded_genres: excludedGenres,
         excluded_platforms: excludedPlatforms,
         min_rating: minRating,
+        media_preference: mediaPreference,
       } as any).eq("id", user.id);
       if (error) throw error;
       // Update local profile reference so hasChanges resets
