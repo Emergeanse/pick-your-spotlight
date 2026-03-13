@@ -54,12 +54,6 @@ const VoiceChat = ({ onClose, onMovieSuggested, initialMessages }: VoiceChatProp
   const committedTextRef = useRef("");
   const { user } = useAuth();
 
-  // Pick 4 random non-repeating examples
-  const [randomExamples] = useState(() => {
-    const shuffled = [...EXAMPLE_PROMPTS].sort(() => Math.random() - 0.5);
-    return shuffled.slice(0, 4);
-  });
-
   // Pre-fetch scribe token and user taste context on mount
   useEffect(() => {
     supabase.functions.invoke("scribe-token").then(({ data }) => {
