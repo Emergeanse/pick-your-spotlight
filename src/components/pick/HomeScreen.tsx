@@ -56,7 +56,22 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
   const [proactivePick, setProactivePick] = useState<MovieDetail | null>(null);
   const [proactiveMsg] = useState(() => PROACTIVE_MESSAGES[Math.floor(Math.random() * PROACTIVE_MESSAGES.length)]);
   const [proactiveDismissed, setProactiveDismissed] = useState(false);
+  const [showWatchlist, setShowWatchlist] = useState(false);
+  const [watchlistItems, setWatchlistItems] = useState<any[]>([]);
+  const [watchlistLoading, setWatchlistLoading] = useState(false);
+  const [userPlatformIds, setUserPlatformIds] = useState<number[]>([]);
   const { user } = useAuth();
+
+  // Load user's preferred platforms
+  useEffect(() => {
+    if (!user) return;
+    supabase.from("profiles").select("preferred_platforms").eq("id", user.id).single()
+      .then(({ data }) => {
+        if (data?.preferred_platforms) {
+          setUserPlatformIds(data.preferred_platforms);
+        }
+      });
+  }, [user]);
 
   // Proactive recommendation — silently fetch for users with taste data
   useEffect(() => {
