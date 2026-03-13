@@ -44,7 +44,7 @@ const Onboarding = () => {
   const [selectedGenres, setSelectedGenres] = useState<Set<string>>(new Set());
   const [selectedHabits, setSelectedHabits] = useState<Set<string>>(new Set());
   const [movies, setMovies] = useState<Movie[]>([]);
-  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<Movie[] | null>(null);
   const [page, setPage] = useState(1);
@@ -55,6 +55,11 @@ const Onboarding = () => {
 
   const stepIndex = STEPS.indexOf(step) + 1;
   const totalSteps = STEPS.length;
+
+  const getMovieKey = (movie: Pick<Movie, "id" | "media_type" | "first_air_date">) => {
+    const mediaType = movie.media_type || (movie.first_air_date ? "tv" : "movie");
+    return `${mediaType}-${movie.id}`;
+  };
 
   useEffect(() => {
     getPopularMoviesForOnboarding(1).then(setMovies).catch(console.error);
@@ -68,6 +73,10 @@ const Onboarding = () => {
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [step]);
+
   const loadMore = useCallback(async () => {
     if (loadingMore) return;
     setLoadingMore(true);
@@ -75,8 +84,8 @@ const Onboarding = () => {
       const nextPage = page + 1;
       const more = await getPopularMoviesForOnboarding(nextPage);
       setMovies(prev => {
-        const existingKeys = new Set(prev.map(m => `${m.media_type || "movie"}-${m.id}`));
-        return [...prev, ...more.filter(m => !existingKeys.has(`${m.media_type || "movie"}-${m.id}`))];
+        const existingKeys = new Set(prev.map(getMovieKey));
+        return [...prev, ...more.filter(m => !existingKeys.has(getMovieKey(m)))];
       });
       setPage(nextPage);
     } catch (e) { console.error("loadMore error:", e); }
