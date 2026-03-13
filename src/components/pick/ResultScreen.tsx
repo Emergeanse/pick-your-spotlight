@@ -584,7 +584,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                     onClick={onStartCompanion}
                   >
                     <Tv className="w-4 h-4" />
-                    Pick m'accompagne
+                    Regarder avec Pick
                   </Button>
                 )}
 
