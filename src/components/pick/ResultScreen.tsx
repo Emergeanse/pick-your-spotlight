@@ -1,4 +1,4 @@
-import { useState, useEffect, forwardRef, useCallback } from "react";
+import { useState, useEffect, forwardRef, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Mic, MicOff, X, Send, Loader2, Sparkles, Check, Play, Star, Clock, Heart, Bookmark, Tv, ChevronDown, ChevronUp, MoreHorizontal, RefreshCw, ThumbsUp, ThumbsDown, MessageCircle, Volume2, Eye } from "lucide-react";
@@ -97,6 +97,10 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
   const [whySpeaking, setWhySpeaking] = useState(false);
   const [whyAudioLoading, setWhyAudioLoading] = useState(false);
   const { user } = useAuth();
+  const [voiceListening, setVoiceListening] = useState(false);
+  const [voiceProcessing, setVoiceProcessing] = useState(false);
+  const voiceRecorderRef = useRef<MediaRecorder | null>(null);
+  const voiceChunksRef = useRef<Blob[]>([]);
 
   const playBrowserWhyFallback = useCallback((text: string) => {
     if (typeof window === "undefined" || !("speechSynthesis" in window)) return false;
@@ -688,7 +692,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                 >
                   <PickCharacter mood="default" message="Alors, ça te tente ? Sinon dis-moi ce que tu veux." size="sm" animate={false} />
 
-                  {/* Free-text input to chat with Pick */}
+                  {/* Free-text + voice input to chat with Pick */}
                   <form
                     onSubmit={(e) => {
                       e.preventDefault();
@@ -707,6 +711,80 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                       placeholder="Dis à Pick ce que tu veux…"
                       className="flex-1 px-4 py-2.5 rounded-full bg-foreground/[0.05] border border-border/30 text-foreground text-[13px] font-sans placeholder:text-foreground/30 focus:outline-none focus:border-primary/40 focus:bg-foreground/[0.08] transition-all"
                     />
+                    {/* Voice input button */}
+                    <button
+                      type="button"
+                      disabled={voiceProcessing}
+                      onClick={async () => {
+                        if (voiceListening) {
+                          // Stop recording
+                          voiceRecorderRef.current?.stop();
+                          setVoiceListening(false);
+                          return;
+                        }
+                        try {
+                          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                          const recorder = new MediaRecorder(stream, { mimeType: MediaRecorder.isTypeSupported("audio/webm") ? "audio/webm" : "audio/mp4" });
+                          voiceChunksRef.current = [];
+                          recorder.ondataavailable = (e) => { if (e.data.size > 0) voiceChunksRef.current.push(e.data); };
+                          recorder.onstop = async () => {
+                            stream.getTracks().forEach(t => t.stop());
+                            setVoiceListening(false);
+                            setVoiceProcessing(true);
+                          try {
+                              const blob = new Blob(voiceChunksRef.current, { type: recorder.mimeType });
+                              // Send to edge function for server-side STT
+                              const formData = new FormData();
+                              formData.append("audio", blob, "audio.webm");
+                              const sttResp = await fetch(
+                                `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/voice-refine`,
+                                {
+                                  method: "POST",
+                                  headers: {
+                                    apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+                                    Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+                                  },
+                                  body: formData,
+                                }
+                              );
+                              if (!sttResp.ok) throw new Error("STT failed");
+                              const sttData = await sttResp.json();
+                              const transcript = sttData.text?.trim();
+                              if (transcript) {
+                                onRefineWithMessage?.(transcript);
+                              } else {
+                                toast.error("Je n'ai rien entendu, réessaie.");
+                              }
+                            } catch (e) {
+                              console.error("Voice refine error:", e);
+                              toast.error("Erreur de reconnaissance vocale");
+                            } finally {
+                              setVoiceProcessing(false);
+                            }
+                          };
+                          voiceRecorderRef.current = recorder;
+                          recorder.start();
+                          setVoiceListening(true);
+                        } catch {
+                          toast.error("Impossible d'accéder au micro");
+                        }
+                      }}
+                      className={`flex-shrink-0 w-9 h-9 rounded-full border flex items-center justify-center transition-all active:scale-95 ${
+                        voiceListening
+                          ? "bg-destructive/20 border-destructive/40 text-destructive animate-pulse"
+                          : voiceProcessing
+                            ? "bg-primary/10 border-primary/20 text-primary/50"
+                            : "bg-primary/20 border-primary/30 text-primary hover:bg-primary/30"
+                      }`}
+                    >
+                      {voiceProcessing ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : voiceListening ? (
+                        <MicOff className="w-4 h-4" />
+                      ) : (
+                        <Mic className="w-4 h-4" />
+                      )}
+                    </button>
                     <button
                       type="submit"
                       className="flex-shrink-0 w-9 h-9 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center text-primary hover:bg-primary/30 transition-all active:scale-95"
