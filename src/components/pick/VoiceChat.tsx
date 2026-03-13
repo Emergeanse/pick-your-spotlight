@@ -20,17 +20,7 @@ export type ChatMessage = {
   content: string;
 };
 
-const EXAMPLE_PROMPTS = [
-  "Un film drôle sur Netflix ce soir",
-  "Un thriller sombre comme Gone Girl",
-  "Un film pas trop long pour ce soir",
-  "Un film à regarder en couple",
-  "Un documentaire sur la musique",
-  "Un film d'animation japonais poétique",
-  "Une série courte qu'on finit en un week-end",
-  "Un film de science-fiction sous-estimé",
-  "Je suis fatigué, un truc léger",
-];
+
 
 type Phase = "idle" | "listening" | "processing" | "recap" | "conversation";
 
@@ -63,12 +53,6 @@ const VoiceChat = ({ onClose, onMovieSuggested, initialMessages }: VoiceChatProp
   const pendingSendRef = useRef(false);
   const committedTextRef = useRef("");
   const { user } = useAuth();
-
-  // Pick 4 random non-repeating examples
-  const [randomExamples] = useState(() => {
-    const shuffled = [...EXAMPLE_PROMPTS].sort(() => Math.random() - 0.5);
-    return shuffled.slice(0, 4);
-  });
 
   // Pre-fetch scribe token and user taste context on mount
   useEffect(() => {
@@ -318,7 +302,7 @@ const VoiceChat = ({ onClose, onMovieSuggested, initialMessages }: VoiceChatProp
                 transition={{ delay: 0.1 }}
                 className="mb-6"
               >
-                <PickCharacter mood="wave" message="Raconte-moi ce que t'as envie de mater." size="md" />
+                <PickCharacter mood="wave" message="Salut ! Dis-moi comment tu te sens, je m'occupe du reste 😊" size="md" />
               </motion.div>
 
               {/* Mic button */}
@@ -334,26 +318,6 @@ const VoiceChat = ({ onClose, onMovieSuggested, initialMessages }: VoiceChatProp
               <p className="text-muted-foreground text-xs font-sans mb-6">
                 Appuie et parle naturellement
               </p>
-
-              <div className="flex flex-wrap gap-2 justify-center w-full max-w-sm">
-                {randomExamples.map((example, i) => (
-                  <motion.button
-                    key={example}
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.3 + i * 0.08 }}
-                    onClick={() => {
-                      setInputText(example);
-                      inputRef.current?.focus();
-                    }}
-                    className="px-3.5 py-2 rounded-full bg-foreground/[0.04] border border-border/30 hover:bg-primary/10 hover:border-primary/20 transition-all cursor-pointer"
-                  >
-                    <span className="text-foreground/50 text-[11px] font-sans">
-                      {example}
-                    </span>
-                  </motion.button>
-                ))}
-              </div>
 
               {micError && (
                 <motion.p
