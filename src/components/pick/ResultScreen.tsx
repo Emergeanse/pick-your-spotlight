@@ -55,20 +55,38 @@ const REJECT_REACTIONS: Record<string, string[]> = {
   already_seen: [
     "Ah t'as déjà vu celui-là ! Attends, j'en ai un autre.",
     "Noté ! Voyons ce que j'ai d'autre dans ma collection.",
+    "OK, on raye celui-là. J'ai mieux, promis.",
+    "Déjà vu ? T'es rapide. Allez, suivant !",
+    "Pas de souci, j'en ai plein d'autres en stock.",
+    "Tu connais déjà ? Bon goût ! Allez, un autre.",
   ],
   not_my_style: [
     "Pas ton délire ? OK, je change de direction.",
     "Hmm, je vois. Laisse-moi fouiller dans un autre registre.",
     "OK, changeons d'ambiance.",
+    "Compris, c'est pas ton truc. J'ajuste !",
+    "Reçu 5 sur 5. Je vais chercher ailleurs.",
+    "OK, oublie celui-là. Je reviens avec mieux.",
+    "Pas convaincu ? Moi non plus finalement. Suivant !",
+    "C'est noté dans mon carnet de tes goûts.",
   ],
   too_long: [
     "Trop long ? J'ai un truc plus court en réserve.",
     "OK, on part sur quelque chose de plus rapide.",
+    "Compris, pas le temps pour un marathon. J'adapte.",
+    "Plus court, plus punchy. Ça marche !",
+    "T'inquiète, j'ai des films express aussi.",
   ],
   not_tonight: [
     "Pas ce soir ? Pas de souci, j'ai mieux pour l'instant.",
     "Attends, celui-ci pourrait mieux te plaire.",
     "Pas convaincu ? J'en ai un autre.",
+    "Ça matche pas ? Allez, on repart de zéro.",
+    "T'as raison, on peut faire mieux. Regarde ça.",
+    "OK, je pioche dans mon autre poche.",
+    "Hmm, je comprends. Laisse-moi réfléchir…",
+    "Pas grave ! C'est ça le jeu, on cherche ensemble.",
+    "Allez hop, on passe au suivant !",
   ],
 };
 

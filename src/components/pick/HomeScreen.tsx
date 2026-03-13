@@ -27,6 +27,14 @@ const SURPRISE_MESSAGES = [
   "Attends, j'ai un truc en tête…",
   "Tu vas voir, celui-là est dingue.",
   "Presque… je peaufine mon choix.",
+  "Hmm, voyons voir…",
+  "Laisse-moi une seconde, je tiens quelque chose.",
+  "Ooh, j'ai peut-être LA pépite.",
+  "Je fais le tri dans mes coups de cœur…",
+  "Celui-ci pourrait bien te scotcher.",
+  "Patience, la magie opère…",
+  "Je consulte ma mémoire cinématographique…",
+  "Accroche-toi, ça arrive !",
 ];
 
 const LOADING_MESSAGES = [
@@ -35,6 +43,15 @@ const LOADING_MESSAGES = [
   "Attends, j'ai peut-être le film parfait.",
   "Je parcours mes favoris…",
   "Laisse-moi réfléchir deux secondes…",
+  "Je fouille dans ma cinémathèque…",
+  "Un instant, je fais chauffer mes neurones.",
+  "C'est presque prêt, promis !",
+  "Je compare quelques options pour toi…",
+  "Hmm, difficile de choisir, t'as bon goût !",
+  "J'affine ma sélection…",
+  "Encore un petit moment, ça va valoir le coup.",
+  "Je suis en train de te concocter un truc sympa.",
+  "Ça cogite sévère de mon côté !",
 ];
 
 const PROACTIVE_MESSAGES = [
@@ -42,6 +59,17 @@ const PROACTIVE_MESSAGES = [
   "Tiens, j'ai pensé à un truc qui devrait te plaire.",
   "Avant que tu choisisses… regarde celui-là.",
   "J'ai une idée pour toi ce soir.",
+  "Psst… j'ai trouvé quelque chose.",
+  "Tu vas me remercier pour celui-là.",
+  "J'ai une suggestion qui te correspond bien.",
+  "Celui-ci a ton nom écrit dessus.",
+  "Je crois que j'ai trouvé ta soirée.",
+  "Attends de voir ce que j'ai déniché…",
+  "Je parie que tu vas adorer celui-là.",
+  "J'ai un petit pressentiment sur ce film…",
+  "Regarde ce que j'ai trouvé en fouillant pour toi.",
+  "Ce film-là, c'est du sur-mesure pour toi.",
+  "Un petit bijou juste pour toi ce soir.",
 ];
 
 const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }: HomeScreenProps) => {
