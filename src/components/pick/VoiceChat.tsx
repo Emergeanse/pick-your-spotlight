@@ -325,26 +325,6 @@ const VoiceChat = ({ onClose, onMovieSuggested, initialMessages }: VoiceChatProp
                 Appuie et parle naturellement
               </p>
 
-              <div className="flex flex-wrap gap-2 justify-center w-full max-w-sm">
-                {randomExamples.map((example, i) => (
-                  <motion.button
-                    key={example}
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.3 + i * 0.08 }}
-                    onClick={() => {
-                      setInputText(example);
-                      inputRef.current?.focus();
-                    }}
-                    className="px-3.5 py-2 rounded-full bg-foreground/[0.04] border border-border/30 hover:bg-primary/10 hover:border-primary/20 transition-all cursor-pointer"
-                  >
-                    <span className="text-foreground/50 text-[11px] font-sans">
-                      {example}
-                    </span>
-                  </motion.button>
-                ))}
-              </div>
-
               {micError && (
                 <motion.p
                   initial={{ opacity: 0 }}
