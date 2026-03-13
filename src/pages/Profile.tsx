@@ -148,8 +148,9 @@ const Profile = () => {
   const hasChanges = profile && (
     JSON.stringify([...selectedPlatforms].sort()) !== JSON.stringify([...(profile.preferred_platforms || [])].sort()) ||
     JSON.stringify([...selectedGenres].sort()) !== JSON.stringify([...(profile.favorite_genres || [])].sort()) ||
-    JSON.stringify([...excludedPlatforms].sort()) !== JSON.stringify([...((profile as any).excluded_platforms || [])].sort()) ||
-    JSON.stringify([...excludedGenres].sort()) !== JSON.stringify([...((profile as any).excluded_genres || [])].sort())
+    JSON.stringify([...excludedPlatforms].sort()) !== JSON.stringify([...(profile.excluded_platforms || [])].sort()) ||
+    JSON.stringify([...excludedGenres].sort()) !== JSON.stringify([...(profile.excluded_genres || [])].sort()) ||
+    minRating !== ((profile as any)?.min_rating || 0)
   );
 
   if (!isReady || profileLoading) {
