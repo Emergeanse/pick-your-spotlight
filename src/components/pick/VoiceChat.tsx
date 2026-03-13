@@ -79,7 +79,7 @@ const VoiceChat = ({ onClose, onMovieSuggested, initialMessages }: VoiceChatProp
     // Fetch user taste context for personalized conversations
     if (user) {
       Promise.all([
-        getLikedMovies(user.id),
+        getLikedMovies(),
         supabase.from("profiles").select("favorite_genres, excluded_genres").eq("id", user.id).single(),
       ]).then(([likedMovies, { data: profile }]) => {
         setUserTasteContext({
