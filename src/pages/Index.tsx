@@ -200,8 +200,10 @@ const Index = () => {
           ...results.map(r => r.id),
           ...(tasteProfile?.excludeIds || []),
         ];
+        const mergedPlatforms = selectedPlatformIds.length > 0 ? selectedPlatformIds : profilePrefs.preferredPlatforms;
         const recs = await getRecommendations(
-          mood || "easy-watch", context || "alone", time || "movie-night", selectedPlatformIds, excludeIds
+          mood || "easy-watch", context || "alone", time || "movie-night", mergedPlatforms, excludeIds,
+          { excludedGenres: profilePrefs.excludedGenres, minRating: profilePrefs.minRating }
         );
         if (recs.length > 0) {
           setResults(prev => [...prev, ...recs]);
