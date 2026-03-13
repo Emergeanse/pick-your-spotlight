@@ -123,12 +123,16 @@ const VoiceChat = ({ onClose, onMovieSuggested, initialMessages }: VoiceChatProp
     setUserText(text);
 
     try {
+      // Build full conversation history
+      const newUserMsg: ChatMessage = { role: "user", content: text };
+      const fullHistory = [...conversationHistory, newUserMsg];
+      
       const messages: ChatMessage[] = initialMessages
-        ? [...initialMessages, { role: "user" as const, content: text }]
-        : [{ role: "user" as const, content: text }];
+        ? [...initialMessages, ...fullHistory]
+        : fullHistory;
 
       const { data, error } = await supabase.functions.invoke("movie-chat", {
-        body: { messages },
+        body: { messages, userTasteContext },
       });
 
       if (error) throw error;
@@ -136,22 +140,24 @@ const VoiceChat = ({ onClose, onMovieSuggested, initialMessages }: VoiceChatProp
       if (data?.movie) {
         const recap: string[] = data.recap || [];
         setRecapTags(recap);
+        setConversationHistory(fullHistory);
         setPhase("recap");
 
-        // Show recap for a moment, then transition to result
         setTimeout(() => {
           onMovieSuggested(data.movie as MovieDetail, recap);
         }, recap.length > 0 ? 1800 : 800);
       } else if (data?.reply) {
-        // AI asked a follow-up question — for now just close and let them retry
-        // Could be enhanced later with multi-turn voice
-        setPhase("idle");
+        // Pick asked a follow-up question — show it and let user respond
+        const assistantMsg: ChatMessage = { role: "assistant", content: data.reply };
+        setConversationHistory([...fullHistory, assistantMsg]);
+        setPickReply(data.reply);
+        setPhase("conversation");
       }
     } catch (e) {
       console.error("Chat error:", e);
       setPhase("idle");
     }
-  }, [onMovieSuggested, initialMessages]);
+  }, [onMovieSuggested, initialMessages, conversationHistory, userTasteContext]);
 
   const handleSend = useCallback(async (text: string) => {
     if (!text.trim()) return;
