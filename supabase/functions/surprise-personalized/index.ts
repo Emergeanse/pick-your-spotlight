@@ -28,6 +28,10 @@ serve(async (req) => {
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
     const titles = (likedMovies || []).map((m: any) => m.title).slice(0, 20);
+    const normalizedExcludeIds = [...new Set([
+      ...(likedMovies || []).map((m: any) => Number(m.tmdb_id || m.id)).filter((id: number) => Number.isFinite(id)),
+      ...((excludeIds || []).map((id: any) => Number(id)).filter((id: number) => Number.isFinite(id))),
+    ])];
     const allGenres = (likedMovies || []).flatMap((m: any) => m.genres || []);
     const genreCounts: Record<string, number> = {};
     allGenres.forEach((g: string) => { genreCounts[g] = (genreCounts[g] || 0) + 1; });
