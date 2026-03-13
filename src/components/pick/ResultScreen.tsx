@@ -33,7 +33,7 @@ interface MatchData {
 
 interface ResultScreenProps {
   movie: MovieDetail;
-  onShowAnother: () => void;
+  onShowAnother: (rejectReason?: string, rejectedMovie?: MovieDetail) => void;
   onRestart: () => void;
   onRefineWithVoice?: () => void;
   onRefineWithMessage?: (message: string) => void;
