@@ -20,17 +20,7 @@ export type ChatMessage = {
   content: string;
 };
 
-const EXAMPLE_PROMPTS = [
-  "Un film drôle sur Netflix ce soir",
-  "Un thriller sombre comme Gone Girl",
-  "Un film pas trop long pour ce soir",
-  "Un film à regarder en couple",
-  "Un documentaire sur la musique",
-  "Un film d'animation japonais poétique",
-  "Une série courte qu'on finit en un week-end",
-  "Un film de science-fiction sous-estimé",
-  "Je suis fatigué, un truc léger",
-];
+const EXAMPLE_PROMPTS: string[] = [];
 
 type Phase = "idle" | "listening" | "processing" | "recap" | "conversation";
 
