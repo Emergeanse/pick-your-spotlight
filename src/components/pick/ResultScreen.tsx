@@ -607,6 +607,23 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                 </button>
 
                 <button
+                  onClick={() => {
+                    if (markedSeen) return;
+                    setMarkedSeen(true);
+                    trackInteraction(movie.id, "already_seen", { mood: userCriteria?.mood, context: userCriteria?.context, time: userCriteria?.time });
+                    toast.success("Noté ! Pick évitera ce film.");
+                  }}
+                  className={`flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3.5 h-8 sm:h-9 rounded-full border text-[11px] sm:text-xs font-sans font-medium transition-all active:scale-95 ${
+                    markedSeen
+                      ? "bg-muted border-border/40 text-foreground/60"
+                      : "border-border/25 text-foreground/40 hover:text-foreground/60 hover:border-border/40"
+                  }`}
+                >
+                  <Eye className={`w-3 h-3 sm:w-3.5 sm:h-3.5 ${markedSeen ? "text-foreground/60" : ""}`} />
+                  Déjà vu
+                </button>
+
+                <button
                   onClick={handleToggleBookmark}
                   disabled={bookmarkLoading}
                   className={`flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3.5 h-8 sm:h-9 rounded-full border text-[11px] sm:text-xs font-sans font-medium transition-all active:scale-95 ${
