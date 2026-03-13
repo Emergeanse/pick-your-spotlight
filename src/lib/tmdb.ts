@@ -164,22 +164,38 @@ export async function getTrendingMovie(): Promise<MovieDetail> {
   return getMovieDetails(pick.id, "movie");
 }
 
-export async function getTrendingMovies(count: number = 10): Promise<Movie[]> {
+export async function getTrendingMovies(count: number = 10, platformIds: number[] = []): Promise<Movie[]> {
+  if (platformIds.length > 0) {
+    // Use discover endpoint with platform filter for filtered trending
+    const data = await fetchFromTMDB("/discover/movie", {
+      sort_by: "popularity.desc",
+      "vote_count.gte": "100",
+      with_watch_providers: platformIds.join("|"),
+      watch_region: "FR",
+    });
+    const results: Movie[] = data.results || [];
+    return results.slice(0, count);
+  }
   const data = await fetchFromTMDB("/trending/movie/day");
   const results: Movie[] = data.results || [];
   return results.slice(0, count);
 }
 
-export async function getHiddenGems(count: number = 10): Promise<Movie[]> {
+export async function getHiddenGems(count: number = 10, platformIds: number[] = []): Promise<Movie[]> {
   const page = Math.floor(Math.random() * 3) + 1;
-  const data = await fetchFromTMDB("/discover/movie", {
+  const params: Record<string, string> = {
     sort_by: "vote_average.desc",
     "vote_average.gte": "7.5",
     "vote_count.gte": "200",
     "vote_count.lte": "2000",
     "with_runtime.gte": "70",
     page: String(page),
-  });
+  };
+  if (platformIds.length > 0) {
+    params.with_watch_providers = platformIds.join("|");
+    params.watch_region = "FR";
+  }
+  const data = await fetchFromTMDB("/discover/movie", params);
   const results: Movie[] = data.results || [];
   return results.sort(() => Math.random() - 0.5).slice(0, count);
 }
@@ -217,10 +233,21 @@ export async function searchMovies(query: string): Promise<Movie[]> {
 }
 
 // New: get tonight's pick (single trending movie with details)
-export async function getTonightsPick(): Promise<MovieDetail> {
-  const data = await fetchFromTMDB("/trending/movie/day");
-  const results: Movie[] = data.results || [];
-  // Use a seed based on date for consistent daily pick
+export async function getTonightsPick(platformIds: number[] = []): Promise<MovieDetail> {
+  let results: Movie[];
+  if (platformIds.length > 0) {
+    const data = await fetchFromTMDB("/discover/movie", {
+      sort_by: "popularity.desc",
+      "vote_count.gte": "100",
+      "vote_average.gte": "6.5",
+      with_watch_providers: platformIds.join("|"),
+      watch_region: "FR",
+    });
+    results = data.results || [];
+  } else {
+    const data = await fetchFromTMDB("/trending/movie/day");
+    results = data.results || [];
+  }
   const today = new Date().toDateString();
   const seed = today.split("").reduce((a, c) => a + c.charCodeAt(0), 0);
   const idx = seed % Math.min(5, results.length);

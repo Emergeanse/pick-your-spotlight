@@ -6,6 +6,7 @@ import type { Movie, MovieDetail } from "@/lib/tmdb";
 
 interface DiscoverySectionProps {
   onMovieSelect: (movie: MovieDetail) => void;
+  platformIds?: number[];
 }
 
 const MovieRow = ({ 
@@ -57,16 +58,16 @@ const MovieRow = ({
   </div>
 );
 
-const DiscoverySection = ({ onMovieSelect }: DiscoverySectionProps) => {
+const DiscoverySection = ({ onMovieSelect, platformIds = [] }: DiscoverySectionProps) => {
   const [trending, setTrending] = useState<Movie[]>([]);
   const [gems, setGems] = useState<Movie[]>([]);
   const [tonightsPick, setTonightsPick] = useState<MovieDetail | null>(null);
 
   useEffect(() => {
-    getTrendingMovies(10).then(setTrending).catch(console.error);
-    getHiddenGems(10).then(setGems).catch(console.error);
-    getTonightsPick().then(setTonightsPick).catch(console.error);
-  }, []);
+    getTrendingMovies(10, platformIds).then(setTrending).catch(console.error);
+    getHiddenGems(10, platformIds).then(setGems).catch(console.error);
+    getTonightsPick(platformIds).then(setTonightsPick).catch(console.error);
+  }, [platformIds.join(",")]);
 
   const handleSelect = async (movie: Movie) => {
     try {
