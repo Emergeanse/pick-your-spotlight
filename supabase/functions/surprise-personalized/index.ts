@@ -28,6 +28,10 @@ serve(async (req) => {
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
     const titles = (likedMovies || []).map((m: any) => m.title).slice(0, 20);
+    const normalizedExcludeIds = [...new Set([
+      ...(likedMovies || []).map((m: any) => Number(m.tmdb_id || m.id)).filter((id: number) => Number.isFinite(id)),
+      ...((excludeIds || []).map((id: any) => Number(id)).filter((id: number) => Number.isFinite(id))),
+    ])];
     const allGenres = (likedMovies || []).flatMap((m: any) => m.genres || []);
     const genreCounts: Record<string, number> = {};
     allGenres.forEach((g: string) => { genreCounts[g] = (genreCounts[g] || 0) + 1; });
@@ -41,7 +45,7 @@ serve(async (req) => {
     if (userTasteVector && SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) {
       try {
         const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-        const allExcludeIds = [...(likedMovies || []).map((m: any) => m.tmdb_id || m.id), ...(excludeIds || [])];
+        const allExcludeIds = normalizedExcludeIds;
         const vectorStr = `[${userTasteVector.join(",")}]`;
         
         const { data: matches } = await supabase.rpc("match_movies_by_taste", {
@@ -104,7 +108,7 @@ ${embeddingSection}
 RÈGLES :
 - Réponds UNIQUEMENT avec un JSON valide sans backticks
 - Structure : {"title": "<titre exact>", "reason": "<2-3 phrases>", "confidence": <0-100>, "scores": {"taste": <0-100>, "context": <0-100>, "embedding": <0-100>, "behaviour": <0-100>, "rating": <0-100>, "novelty": <0-100>}}
-- Ne recommande JAMAIS un film déjà dans la liste ni un film avec l'un de ces IDs TMDB : ${[...(likedMovies || []).map((m: any) => m.tmdb_id || m.id), ...(excludeIds || [])].join(", ")}
+- Ne recommande JAMAIS un film déjà dans la liste ni un film avec l'un de ces IDs TMDB : ${normalizedExcludeIds.length > 0 ? normalizedExcludeIds.join(", ") : "aucun"}
 - ${shouldDiscover ? "MODE DÉCOUVERTE : propose une pépite inattendue, un micro-genre adjacent, ou un film sous-estimé. Surprends." : "MODE PRÉCISION : colle au plus près des micro-genres et clusters identifiés. Si des candidats par embedding sont disponibles, privilégie-les."}
 - Calibre le score de confiance selon la qualité du match`;
 
@@ -152,11 +156,22 @@ Recommande UN film avec les scores détaillés.`;
     const searchData = await searchRes.json();
     const results = searchData.results || [];
 
-    if (results.length === 0) {
-      throw new Error("Movie not found on TMDB");
+    const excludedSet = new Set(normalizedExcludeIds);
+    let selectedMovie = results.find((r: any) => !excludedSet.has(r.id));
+
+    if (!selectedMovie) {
+      const fallbackPage = String(Math.floor(Math.random() * 5) + 1);
+      const fallbackUrl = `https://api.themoviedb.org/3/movie/top_rated?api_key=${TMDB_API_KEY}&language=fr-FR&page=${fallbackPage}`;
+      const fallbackRes = await fetch(fallbackUrl);
+      const fallbackData = await fallbackRes.json();
+      selectedMovie = (fallbackData.results || []).find((r: any) => !excludedSet.has(r.id));
     }
 
-    const movieDetail = await getMovieDetails(results[0].id);
+    if (!selectedMovie) {
+      throw new Error("No non-excluded movie found on TMDB");
+    }
+
+    const movieDetail = await getMovieDetails(selectedMovie.id);
 
     // Generate embedding for the recommended movie (fire & forget)
     if (SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) {
