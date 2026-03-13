@@ -124,6 +124,7 @@ export type Database = {
           excluded_platforms: number[] | null
           favorite_genres: string[] | null
           id: string
+          media_preference: string
           min_rating: number | null
           onboarding_completed: boolean
           preferred_platforms: number[] | null
@@ -136,6 +137,7 @@ export type Database = {
           excluded_platforms?: number[] | null
           favorite_genres?: string[] | null
           id: string
+          media_preference?: string
           min_rating?: number | null
           onboarding_completed?: boolean
           preferred_platforms?: number[] | null
@@ -148,6 +150,7 @@ export type Database = {
           excluded_platforms?: number[] | null
           favorite_genres?: string[] | null
           id?: string
+          media_preference?: string
           min_rating?: number | null
           onboarding_completed?: boolean
           preferred_platforms?: number[] | null
