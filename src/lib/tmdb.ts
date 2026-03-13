@@ -164,7 +164,18 @@ export async function getTrendingMovie(): Promise<MovieDetail> {
   return getMovieDetails(pick.id, "movie");
 }
 
-export async function getTrendingMovies(count: number = 10): Promise<Movie[]> {
+export async function getTrendingMovies(count: number = 10, platformIds: number[] = []): Promise<Movie[]> {
+  if (platformIds.length > 0) {
+    // Use discover endpoint with platform filter for filtered trending
+    const data = await fetchFromTMDB("/discover/movie", {
+      sort_by: "popularity.desc",
+      "vote_count.gte": "100",
+      with_watch_providers: platformIds.join("|"),
+      watch_region: "FR",
+    });
+    const results: Movie[] = data.results || [];
+    return results.slice(0, count);
+  }
   const data = await fetchFromTMDB("/trending/movie/day");
   const results: Movie[] = data.results || [];
   return results.slice(0, count);
