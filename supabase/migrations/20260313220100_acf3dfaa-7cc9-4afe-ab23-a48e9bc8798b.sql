@@ -1,0 +1,1 @@
+ALTER TABLE public.profiles ADD COLUMN media_preference text NOT NULL DEFAULT 'both';

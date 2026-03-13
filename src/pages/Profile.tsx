@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { toast } from "@/hooks/use-toast";
-import { ArrowLeft, Heart, Bookmark, Check, LogOut, Loader2, X, Ban, Star, Info } from "lucide-react";
+import { ArrowLeft, Heart, Bookmark, Check, LogOut, Loader2, X, Ban, Star, Info, Film, Tv, Layers } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
@@ -57,6 +57,7 @@ const Profile = () => {
   const [excludedGenres, setExcludedGenres] = useState<string[]>([]);
   const [selectedEras, setSelectedEras] = useState<string[]>([]);
   const [minRating, setMinRating] = useState<number>(0);
+  const [mediaPreference, setMediaPreference] = useState<string>("both");
   const [saving, setSaving] = useState(false);
   const [profileLoading, setProfileLoading] = useState(true);
 
@@ -77,6 +78,7 @@ const Profile = () => {
         setSelectedGenres(data?.favorite_genres || []);
         setExcludedGenres(data?.excluded_genres || []);
         setMinRating((data as any)?.min_rating || 0);
+        setMediaPreference((data as any)?.media_preference || "both");
 
         const [liked, wl] = await Promise.all([
           getLikedMovies().catch(() => []),
@@ -137,6 +139,7 @@ const Profile = () => {
         excluded_genres: excludedGenres,
         excluded_platforms: excludedPlatforms,
         min_rating: minRating,
+        media_preference: mediaPreference,
       } as any).eq("id", user.id);
       if (error) throw error;
       // Update local profile reference so hasChanges resets
@@ -147,6 +150,7 @@ const Profile = () => {
         excluded_genres: [...excludedGenres],
         excluded_platforms: [...excludedPlatforms],
         min_rating: minRating,
+        media_preference: mediaPreference,
       }));
       toast({ title: "Préférences enregistrées ✓", description: "Tes prochaines suggestions en tiendront compte." });
     } catch (e) {
@@ -163,7 +167,8 @@ const Profile = () => {
     JSON.stringify([...selectedGenres].sort()) !== JSON.stringify([...(profile.favorite_genres || [])].sort()) ||
     JSON.stringify([...excludedPlatforms].sort()) !== JSON.stringify([...(profile.excluded_platforms || [])].sort()) ||
     JSON.stringify([...excludedGenres].sort()) !== JSON.stringify([...(profile.excluded_genres || [])].sort()) ||
-    minRating !== ((profile as any)?.min_rating || 0)
+    minRating !== ((profile as any)?.min_rating || 0) ||
+    mediaPreference !== ((profile as any)?.media_preference || "both")
   );
 
   if (!isReady || profileLoading) {
@@ -280,6 +285,35 @@ const Profile = () => {
                 >
                   {isExcluded && <Ban className="w-3 h-3" />}
                   {genre}
+                </button>
+              );
+            })}
+          </div>
+        </motion.div>
+
+        {/* Media Preference */}
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.17 }} className="mb-8">
+          <h2 className="text-lg font-serif mb-3">Tu préfères regarder…</h2>
+          <div className="grid grid-cols-3 gap-2">
+            {[
+              { id: "movies", label: "Films", icon: Film },
+              { id: "tv", label: "Séries", icon: Tv },
+              { id: "both", label: "Les deux", icon: Layers },
+            ].map((opt) => {
+              const isSelected = mediaPreference === opt.id;
+              const Icon = opt.icon;
+              return (
+                <button
+                  key={opt.id}
+                  onClick={() => setMediaPreference(opt.id)}
+                  className={`rounded-xl p-3 flex flex-col items-center gap-1.5 transition-all duration-200 cursor-pointer border ${
+                    isSelected
+                      ? "bg-primary/10 border-primary/30"
+                      : "bg-card border-transparent hover:border-primary/20"
+                  }`}
+                >
+                  <Icon className={`w-5 h-5 ${isSelected ? "text-primary" : "text-foreground/50"}`} />
+                  <span className={`font-sans text-sm font-medium ${isSelected ? "text-primary" : "text-foreground/80"}`}>{opt.label}</span>
                 </button>
               );
             })}

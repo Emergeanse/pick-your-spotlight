@@ -121,7 +121,8 @@ const Onboarding = () => {
 
       for (const movie of allSelected) {
         try {
-          const detail = await getMovieDetails(movie.id, "movie");
+          const mediaType = movie.media_type || (movie.first_air_date ? "tv" : "movie");
+          const detail = await getMovieDetails(movie.id, mediaType);
           await likeMovie(detail);
         } catch (e) { console.error("Failed to like movie:", movie.id, e); }
       }
@@ -287,9 +288,9 @@ const Onboarding = () => {
 
             <div className="flex-shrink-0 px-5 pt-3 pb-4">
               <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="max-w-2xl mx-auto">
-                <h1 className="text-2xl md:text-4xl font-serif mb-2">Quels films as-tu aimés ?</h1>
+                <h1 className="text-2xl md:text-4xl font-serif mb-2">Qu'est-ce que tu as aimé ?</h1>
                 <p className="text-muted-foreground text-sm font-sans mb-4">
-                  Choisis au moins {MIN_MOVIE_SELECTIONS} films pour qu'on apprenne tes goûts
+                  Choisis au moins {MIN_MOVIE_SELECTIONS} films ou séries pour qu'on apprenne tes goûts
                 </p>
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -297,7 +298,7 @@ const Onboarding = () => {
                     type="text"
                     value={searchQuery}
                     onChange={e => setSearchQuery(e.target.value)}
-                    placeholder="Rechercher un film…"
+                    placeholder="Rechercher un film ou une série…"
                     className="w-full bg-card border border-border/30 rounded-xl px-10 py-2.5 text-sm font-sans text-foreground placeholder:text-muted-foreground/50 outline-none focus:border-primary/50 transition-colors"
                   />
                 </div>
@@ -345,7 +346,7 @@ const Onboarding = () => {
                   <div className="flex justify-center py-6">
                     <Button variant="ghost" onClick={loadMore} disabled={loadingMore} className="text-muted-foreground text-sm font-sans">
                       {loadingMore && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
-                      Voir plus de films
+                      Voir plus
                     </Button>
                   </div>
                 )}

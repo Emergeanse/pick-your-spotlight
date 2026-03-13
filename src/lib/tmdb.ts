@@ -281,17 +281,31 @@ export async function getMovieTrailerUrl(id: number, mediaType: string = "movie"
   }
 }
 
-// New: get popular movies for onboarding grid
+// Get popular movies AND TV shows for onboarding grid
 export async function getPopularMoviesForOnboarding(page: number = 1): Promise<Movie[]> {
-  const data = await fetchFromTMDB("/movie/popular", { page: String(page) });
-  return (data.results || []).filter((m: Movie) => m.poster_path);
+  const [movieData, tvData] = await Promise.all([
+    fetchFromTMDB("/movie/popular", { page: String(page) }),
+    fetchFromTMDB("/tv/popular", { page: String(page) }),
+  ]);
+  const movies: Movie[] = (movieData.results || []).map((m: Movie) => ({ ...m, media_type: "movie" }));
+  const tvShows: Movie[] = (tvData.results || []).map((m: Movie) => ({ ...m, media_type: "tv" }));
+  // Interleave movies and TV shows
+  const combined: Movie[] = [];
+  const maxLen = Math.max(movies.length, tvShows.length);
+  for (let i = 0; i < maxLen; i++) {
+    if (i < movies.length && movies[i].poster_path) combined.push(movies[i]);
+    if (i < tvShows.length && tvShows[i].poster_path) combined.push(tvShows[i]);
+  }
+  return combined;
 }
 
-// New: search movies for onboarding
+// Search movies AND TV shows for onboarding
 export async function searchMovies(query: string): Promise<Movie[]> {
   if (!query.trim()) return [];
-  const data = await fetchFromTMDB("/search/movie", { query });
-  return (data.results || []).filter((m: Movie) => m.poster_path);
+  const data = await fetchFromTMDB("/search/multi", { query });
+  return (data.results || [])
+    .filter((m: any) => (m.media_type === "movie" || m.media_type === "tv") && m.poster_path)
+    .map((m: any) => ({ ...m, media_type: m.media_type }));
 }
 
 // New: get tonight's pick (single trending movie with details)
