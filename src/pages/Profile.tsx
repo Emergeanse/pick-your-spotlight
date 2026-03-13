@@ -135,6 +135,7 @@ const Profile = () => {
         favorite_genres: selectedGenres,
         excluded_genres: excludedGenres,
         excluded_platforms: excludedPlatforms,
+        min_rating: minRating,
       } as any).eq("id", user.id);
     } catch (e) {
       console.error(e);
