@@ -287,9 +287,9 @@ const Onboarding = () => {
 
             <div className="flex-shrink-0 px-5 pt-3 pb-4">
               <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="max-w-2xl mx-auto">
-                <h1 className="text-2xl md:text-4xl font-serif mb-2">Quels films as-tu aimés ?</h1>
+                <h1 className="text-2xl md:text-4xl font-serif mb-2">Qu'est-ce que tu as aimé ?</h1>
                 <p className="text-muted-foreground text-sm font-sans mb-4">
-                  Choisis au moins {MIN_MOVIE_SELECTIONS} films pour qu'on apprenne tes goûts
+                  Choisis au moins {MIN_MOVIE_SELECTIONS} films ou séries pour qu'on apprenne tes goûts
                 </p>
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
