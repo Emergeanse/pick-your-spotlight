@@ -21,7 +21,7 @@ serve(async (req) => {
   }
 
   try {
-    const { likedMovies, tasteProfile, userTasteVector, platformIds, excludeIds, excludedPlatformIds, excludedGenres, minRating } = await req.json();
+    const { likedMovies, tasteProfile, userTasteVector, platformIds, excludeIds, excludedPlatformIds, excludedGenres, minRating, rejectionContext } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
@@ -115,11 +115,18 @@ RÈGLES :
 - ${shouldDiscover ? "MODE DÉCOUVERTE : propose une pépite inattendue, un micro-genre adjacent, ou un film sous-estimé. Surprends." : "MODE PRÉCISION : colle au plus près des micro-genres et clusters identifiés. Si des candidats par embedding sont disponibles, privilégie-les."}
 - Calibre le score de confiance selon la qualité du match`;
 
+    const rejectionSection = rejectionContext ? `
+CONTEXTE DE REJET :
+L'utilisateur vient de rejeter "${rejectionContext.rejectedTitle}" (genres: ${(rejectionContext.rejectedGenres || []).join(", ")}).
+Raison : ${rejectionContext.reason === "not_my_style" ? "Pas son style — propose un STYLE TRÈS DIFFÉRENT. Change de genre, de ton, d'époque. Évite les genres du film rejeté." : rejectionContext.reason === "too_long" ? "Trop long — propose quelque chose de plus court (< 100 min)." : rejectionContext.reason === "not_tonight" ? "Pas ce soir — propose quelque chose de plus léger, accessible, feel-good." : rejectionContext.reason === "already_seen" ? "Déjà vu — propose un film similaire en style mais différent." : "Raison inconnue — change de direction."}
+IMPORTANT : NE recommande PAS un film des mêmes genres principaux que "${rejectionContext.rejectedTitle}".` : "";
+
     const userPrompt = `Films aimés (${titles.length}, pondérés par récence) : ${titles.join(", ")}
 Genres préférés (pondérés) : ${topGenres.join(", ")}
 Micro-genres : ${tasteClusters.join(", ") || "à déduire des films aimés"}
 Films regardés : ${stats.watchCount || 0} | Films skippés : ${stats.skipCount || 0}
 ${shouldDiscover ? "→ MODE DÉCOUVERTE" : "→ MODE PRÉCISION"}
+${rejectionSection}
 
 Recommande UN film avec les scores détaillés.`;
 

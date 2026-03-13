@@ -198,7 +198,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
     }
   };
 
-  const generateTonightPick = async (excludeList: number[] = rejectedIds) => {
+  const generateTonightPick = async (excludeList: number[] = rejectedIds, rejectionContext?: { reason: string; rejectedGenres: string[]; rejectedTitle: string }) => {
     setTonightLoading(true);
     setTonightProviders([]);
     let msgIndex = 0;
@@ -215,7 +215,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
         if (liked.length >= 2) {
           const userTasteVector = await computeUserTasteVector(user.id);
           const { data, error } = await supabase.functions.invoke("surprise-personalized", {
-            body: { likedMovies: liked, userTasteVector, platformIds: userPlatformIds, excludedPlatformIds: userExcludedPlatformIds, excludedGenres: userExcludedGenres, minRating: userMinRating, excludeIds: excludeList },
+            body: { likedMovies: liked, userTasteVector, platformIds: userPlatformIds, excludedPlatformIds: userExcludedPlatformIds, excludedGenres: userExcludedGenres, minRating: userMinRating, excludeIds: excludeList, rejectionContext },
           });
           if (error) throw error;
           movie = data.movie as MovieDetail;
@@ -603,9 +603,14 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
                     className="rounded-full border border-border/30 text-foreground/50 hover:text-foreground hover:border-border/50 font-sans font-medium px-5 h-11 gap-2 text-sm transition-all active:scale-[0.97]"
                     onClick={() => {
                       const nextRejected = tonightPick ? [...rejectedIds, tonightPick.id] : rejectedIds;
+                      const rejContext = tonightPick ? {
+                        reason: "not_my_style" as const,
+                        rejectedGenres: (tonightPick.genres || []).map(g => g.name),
+                        rejectedTitle: getDisplayTitle(tonightPick),
+                      } : undefined;
                       setRejectedIds(nextRejected);
                       setTonightPick(null);
-                      generateTonightPick(nextRejected);
+                      generateTonightPick(nextRejected, rejContext);
                     }}
                     disabled={tonightLoading}
                   >

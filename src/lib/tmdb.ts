@@ -96,16 +96,31 @@ export async function getRecommendations(
   time: TimeAvailable,
   platformIds: number[] = [],
   excludeIds: number[] = [],
-  options: { excludedGenres?: string[]; minRating?: number; excludedPlatformIds?: number[] } = {},
+  options: { excludedGenres?: string[]; minRating?: number; excludedPlatformIds?: number[]; rejectionContext?: { reason: string; rejectedGenres: string[]; rejectedTitle: string; rejectedRating: number; rejectedRuntime: number } } = {},
 ): Promise<MovieDetail[]> {
   const moodGenres = moodToGenres[mood];
   const contextGenres = contextModifiers[context];
   
   const combined = moodGenres.filter(g => contextGenres.includes(g));
-  const genres = combined.length > 0 ? combined : moodGenres.slice(0, 2);
+  let genres = combined.length > 0 ? combined : moodGenres.slice(0, 2);
 
   // Build excluded genre IDs
   const excludedGenreIds = (options.excludedGenres || []).map(n => genreNameToId[n]).filter(Boolean);
+
+  // If rejected for "not_my_style", also exclude the rejected movie's genres for this search
+  if (options.rejectionContext?.reason === "not_my_style") {
+    const rejectedGenreIds = options.rejectionContext.rejectedGenres.map(n => genreNameToId[n]).filter(Boolean);
+    excludedGenreIds.push(...rejectedGenreIds);
+    // Try to pick different genres from mood/context that weren't in the rejected movie
+    const alternativeGenres = [...moodGenres, ...contextGenres].filter(g => !rejectedGenreIds.includes(g) && !excludedGenreIds.includes(g));
+    if (alternativeGenres.length > 0) {
+      genres = [...new Set(alternativeGenres)].slice(0, 3);
+    }
+  }
+
+  // If rejected for "too_long", prefer shorter content
+  const maxRuntime = options.rejectionContext?.reason === "too_long" ? "100" : undefined;
+
   // Filter out excluded genres from selection
   const filteredGenres = genres.filter(g => !excludedGenreIds.includes(g));
   const finalGenres = filteredGenres.length > 0 ? filteredGenres : genres;
@@ -132,8 +147,8 @@ export async function getRecommendations(
       page: String(Math.floor(Math.random() * 3) + 1),
     };
 
-    if (!isTV && time === "short") {
-      params["with_runtime.lte"] = "90";
+    if (!isTV && (time === "short" || maxRuntime)) {
+      params["with_runtime.lte"] = maxRuntime || "90";
     }
 
     if (platformIds.length > 0) {
