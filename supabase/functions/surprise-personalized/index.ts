@@ -146,7 +146,20 @@ Recommande UN film avec les scores détaillés.`;
     });
 
     if (!response.ok) {
-      throw new Error(`AI error: ${response.status}`);
+      const status = response.status;
+      if (status === 429) {
+        return new Response(JSON.stringify({ error: "Trop de requêtes, réessaie dans un instant." }), {
+          status: 429,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      if (status === 402) {
+        return new Response(JSON.stringify({ error: "Crédits épuisés." }), {
+          status: 402,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      throw new Error(`AI error: ${status}`);
     }
 
     const aiData = await response.json();
