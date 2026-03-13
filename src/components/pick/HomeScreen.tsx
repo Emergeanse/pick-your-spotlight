@@ -395,28 +395,9 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
                   </div>
                 </motion.button>
 
-                {/* 3. Je veux choisir - guided */}
-                <motion.button
-                  whileTap={{ scale: 0.98 }}
-                  onClick={onStart}
-                  disabled={loading}
-                  className="group relative text-left rounded-2xl p-5 bg-foreground/[0.03] border-2 border-border/40 hover:border-primary/40 hover:bg-foreground/[0.06] transition-all"
-                >
-                  <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-foreground/[0.08] border border-border/30 flex items-center justify-center shrink-0 group-hover:border-primary/30 transition-colors">
-                      <SlidersHorizontal className="w-5 h-5 text-foreground/60 group-hover:text-primary transition-colors" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="text-base font-sans font-semibold text-foreground mb-1">🎬 Je veux choisir</h3>
-                      <p className="text-foreground/50 text-[13px] font-sans leading-relaxed">
-                        Je te pose quelques questions rapides.
-                      </p>
-                    </div>
-                  </div>
-                </motion.button>
               </div>
 
-              {/* Surprise option - more subtle, below */}
+              {/* Pick pour ce soir */}
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -424,12 +405,12 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
                 className="mt-6 flex justify-center"
               >
                 <button
-                  onClick={handleSurprise}
+                  onClick={handleTonightPick}
                   disabled={loading}
                   className="group flex items-center gap-2 px-4 py-2.5 rounded-full bg-foreground/[0.03] border border-border/30 hover:border-primary/30 hover:bg-foreground/[0.06] transition-all text-sm font-sans text-foreground/60 hover:text-foreground"
                 >
-                  <Dices className="w-4 h-4 text-foreground/40 group-hover:text-primary transition-colors" />
-                  <span>Surprise-moi</span>
+                  <Tv className="w-4 h-4 text-foreground/40 group-hover:text-primary transition-colors" />
+                  <span>Pick pour ce soir</span>
                 </button>
               </motion.div>
 
