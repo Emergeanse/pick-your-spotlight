@@ -423,11 +423,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                     {/* Top row: Pick mascot + text + listen button */}
                     <div className="flex items-center gap-2.5 sm:gap-3 mb-3">
                       <div className="flex-shrink-0">
-                        <img
-                          src={pickLogo}
-                          alt="Pick"
-                          className="w-8 h-8 sm:w-10 sm:h-10 object-contain drop-shadow-md"
-                        />
+                        <PickCharacter mood="default" size="sm" animate={false} />
                       </div>
                       <p className="flex-1 min-w-0 text-foreground/60 text-[11px] sm:text-[12px] font-sans leading-relaxed">
                         Je peux te présenter ce film si tu veux
