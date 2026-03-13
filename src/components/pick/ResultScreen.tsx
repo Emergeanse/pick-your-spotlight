@@ -692,7 +692,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                 >
                   <PickCharacter mood="default" message="Alors, ça te tente ? Sinon dis-moi ce que tu veux." size="sm" animate={false} />
 
-                  {/* Free-text input to chat with Pick */}
+                  {/* Free-text + voice input to chat with Pick */}
                   <form
                     onSubmit={(e) => {
                       e.preventDefault();
@@ -711,6 +711,79 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                       placeholder="Dis à Pick ce que tu veux…"
                       className="flex-1 px-4 py-2.5 rounded-full bg-foreground/[0.05] border border-border/30 text-foreground text-[13px] font-sans placeholder:text-foreground/30 focus:outline-none focus:border-primary/40 focus:bg-foreground/[0.08] transition-all"
                     />
+                    {/* Voice input button */}
+                    <button
+                      type="button"
+                      disabled={voiceProcessing}
+                      onClick={async () => {
+                        if (voiceListening) {
+                          // Stop recording
+                          voiceRecorderRef.current?.stop();
+                          setVoiceListening(false);
+                          return;
+                        }
+                        try {
+                          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                          const recorder = new MediaRecorder(stream, { mimeType: MediaRecorder.isTypeSupported("audio/webm") ? "audio/webm" : "audio/mp4" });
+                          voiceChunksRef.current = [];
+                          recorder.ondataavailable = (e) => { if (e.data.size > 0) voiceChunksRef.current.push(e.data); };
+                          recorder.onstop = async () => {
+                            stream.getTracks().forEach(t => t.stop());
+                            setVoiceListening(false);
+                            setVoiceProcessing(true);
+                            try {
+                              const blob = new Blob(voiceChunksRef.current, { type: recorder.mimeType });
+                              // Get scribe token
+                              const { data: tokenData } = await supabase.functions.invoke("scribe-token");
+                              if (!tokenData?.token) throw new Error("No token");
+                              // Use ElevenLabs batch STT
+                              const formData = new FormData();
+                              formData.append("file", blob, "audio.webm");
+                              formData.append("model_id", "scribe_v2");
+                              formData.append("language_code", "fra");
+                              const sttResp = await fetch("https://api.elevenlabs.io/v1/speech-to-text", {
+                                method: "POST",
+                                headers: { "xi-api-key": tokenData.token },
+                                body: formData,
+                              });
+                              if (!sttResp.ok) throw new Error("STT failed");
+                              const sttData = await sttResp.json();
+                              const transcript = sttData.text?.trim();
+                              if (transcript) {
+                                onRefineWithMessage?.(transcript);
+                              } else {
+                                toast.error("Je n'ai rien entendu, réessaie.");
+                              }
+                            } catch (e) {
+                              console.error("Voice refine error:", e);
+                              toast.error("Erreur de reconnaissance vocale");
+                            } finally {
+                              setVoiceProcessing(false);
+                            }
+                          };
+                          voiceRecorderRef.current = recorder;
+                          recorder.start();
+                          setVoiceListening(true);
+                        } catch {
+                          toast.error("Impossible d'accéder au micro");
+                        }
+                      }}
+                      className={`flex-shrink-0 w-9 h-9 rounded-full border flex items-center justify-center transition-all active:scale-95 ${
+                        voiceListening
+                          ? "bg-destructive/20 border-destructive/40 text-destructive animate-pulse"
+                          : voiceProcessing
+                            ? "bg-primary/10 border-primary/20 text-primary/50"
+                            : "bg-primary/20 border-primary/30 text-primary hover:bg-primary/30"
+                      }`}
+                    >
+                      {voiceProcessing ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : voiceListening ? (
+                        <MicOff className="w-4 h-4" />
+                      ) : (
+                        <Mic className="w-4 h-4" />
+                      )}
+                    </button>
                     <button
                       type="submit"
                       className="flex-shrink-0 w-9 h-9 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center text-primary hover:bg-primary/30 transition-all active:scale-95"
