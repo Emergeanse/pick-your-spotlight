@@ -91,6 +91,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
   const [showOptions, setShowOptions] = useState(false);
   const [showRejectReasons, setShowRejectReasons] = useState(false);
   const [feedbackGiven, setFeedbackGiven] = useState<"good" | "bad" | null>(null);
+  const [markedSeen, setMarkedSeen] = useState(false);
   const [rejectReaction, setRejectReaction] = useState<string | null>(null);
   const [altProviders, setAltProviders] = useState<Record<number, { name: string; logo_path: string }[]>>({});
   const [whySpeaking, setWhySpeaking] = useState(false);
