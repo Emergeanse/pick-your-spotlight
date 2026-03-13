@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { getBackdropUrl } from "@/lib/tmdb";
 import type { MovieDetail } from "@/lib/tmdb";
+import pickSquirrel from "@/assets/pick-squirrel.png";
 
 interface CinemaIntroProps {
   movie: MovieDetail;
