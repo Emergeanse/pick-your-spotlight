@@ -186,7 +186,7 @@ export async function getTrendingMovies(count: number = 10, platformIds: number[
   return results.slice(0, count);
 }
 
-export async function getHiddenGems(count: number = 10, platformIds: number[] = []): Promise<Movie[]> {
+export async function getHiddenGems(count: number = 10, platformIds: number[] = [], favoriteGenres: string[] = []): Promise<Movie[]> {
   const page = Math.floor(Math.random() * 3) + 1;
   const params: Record<string, string> = {
     sort_by: "vote_average.desc",
@@ -199,6 +199,9 @@ export async function getHiddenGems(count: number = 10, platformIds: number[] = 
   if (platformIds.length > 0) {
     params.with_watch_providers = platformIds.join("|");
     params.watch_region = "FR";
+  }
+  if (favoriteGenres.length > 0) {
+    params.with_genres = genreNamesToIds(favoriteGenres).join("|");
   }
   const data = await fetchFromTMDB("/discover/movie", params);
   const results: Movie[] = data.results || [];
