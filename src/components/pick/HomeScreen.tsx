@@ -192,7 +192,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
     }
   };
 
-  const generateTonightPick = async () => {
+  const generateTonightPick = async (excludeList: number[] = rejectedIds) => {
     setTonightLoading(true);
     setTonightProviders([]);
     let msgIndex = 0;
@@ -209,15 +209,15 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
         if (liked.length >= 2) {
           const userTasteVector = await computeUserTasteVector(user.id);
           const { data, error } = await supabase.functions.invoke("surprise-personalized", {
-            body: { likedMovies: liked, userTasteVector, platformIds: userPlatformIds, excludeIds: rejectedIds },
+            body: { likedMovies: liked, userTasteVector, platformIds: userPlatformIds, excludeIds: excludeList },
           });
           if (error) throw error;
           movie = data.movie as MovieDetail;
         } else {
-          movie = await getSurpriseRecommendation();
+          movie = await getSurpriseRecommendation(excludeList);
         }
       } else {
-        movie = await getSurpriseRecommendation();
+        movie = await getSurpriseRecommendation(excludeList);
       }
       clearInterval(msgInterval);
       setTonightPick(movie);
@@ -226,7 +226,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
     } catch (e) {
       console.error(e);
       try {
-        const movie = await getSurpriseRecommendation();
+        const movie = await getSurpriseRecommendation(excludeList);
         clearInterval(msgInterval);
         setTonightPick(movie);
         const mediaType = movie.first_air_date ? "tv" : "movie";
@@ -241,8 +241,9 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
   };
 
   const handleTonightPick = () => {
+    setRejectedIds([]);
     setTonightPick(null);
-    generateTonightPick();
+    generateTonightPick([]);
   };
 
   return (
