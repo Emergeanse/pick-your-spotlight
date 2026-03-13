@@ -1,8 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Check } from "lucide-react";
 import PickCharacter from "./PickCharacter";
+import { useAuth } from "@/hooks/use-auth";
+import { supabase } from "@/integrations/supabase/client";
 
 export interface StreamingPlatform {
   id: number;
@@ -29,6 +31,18 @@ interface PlatformStepProps {
 
 const PlatformStep = ({ onSelect, loading, loadingMessage }: PlatformStepProps) => {
   const [selected, setSelected] = useState<number[]>([]);
+  const { user } = useAuth();
+
+  // Preload user's saved platforms
+  useEffect(() => {
+    if (!user) return;
+    supabase.from("profiles").select("preferred_platforms").eq("id", user.id).single()
+      .then(({ data }) => {
+        if (data?.preferred_platforms && data.preferred_platforms.length > 0) {
+          setSelected(data.preferred_platforms);
+        }
+      });
+  }, [user]);
 
   const toggle = (id: number) => {
     setSelected((prev) =>
