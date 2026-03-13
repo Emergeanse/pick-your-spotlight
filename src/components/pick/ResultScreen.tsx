@@ -1006,7 +1006,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                   ].map((reason) => (
                     <button
                       key={reason.value}
-                      onClick={() => {
+                    onClick={() => {
                         setFeedbackGiven("bad");
                         setShowRejectReasons(false);
                         trackInteraction(movie.id, "skipped", {
@@ -1018,10 +1018,10 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                         });
                         const reaction = getRejectReaction(reason.value);
                         setRejectReaction(reaction);
-                        // Show Pick's reaction briefly, then trigger next movie
+                        // Show Pick's reaction briefly, then trigger next movie with rejection context
                         setTimeout(() => {
                           setRejectReaction(null);
-                          onShowAnother();
+                          onShowAnother(reason.value, movie);
                         }, 1800);
                       }}
                       className="px-4 py-3 rounded-xl border border-border/30 bg-foreground/[0.03] hover:bg-primary/10 hover:border-primary/20 text-foreground/60 hover:text-foreground text-sm font-sans font-medium transition-all active:scale-[0.97]"
