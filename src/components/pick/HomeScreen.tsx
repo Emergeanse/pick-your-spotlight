@@ -594,7 +594,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
                     }}
                   >
                     <Tv className="w-4 h-4" />
-                    Je regarde
+                    Je découvre
                   </Button>
 
                    <Button
