@@ -120,7 +120,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
         if (liked.length < 3) return; // Need enough taste data
         const userTasteVector = await computeUserTasteVector(user.id);
         const { data, error } = await supabase.functions.invoke("surprise-personalized", {
-          body: { likedMovies: liked, userTasteVector, platformIds: userPlatformIds },
+          body: { likedMovies: liked, userTasteVector, platformIds: userPlatformIds, excludedPlatformIds: userExcludedPlatformIds, excludedGenres: userExcludedGenres, minRating: userMinRating },
         });
         if (error || cancelled) return;
         setProactivePick(data.movie as MovieDetail);
