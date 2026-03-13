@@ -467,7 +467,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
 
         {/* Discovery sections — always visible */}
         <div className="px-5 pb-12">
-          <DiscoverySection onMovieSelect={onMovieSelect} platformIds={userPlatformIds} />
+          <DiscoverySection onMovieSelect={onMovieSelect} platformIds={userPlatformIds} favoriteGenres={userGenres} />
         </div>
       </div>
 
