@@ -115,8 +115,6 @@ const DiscoverySection = ({ onMovieSelect, platformIds = [], favoriteGenres = []
         </motion.button>
       )}
 
-      <MovieRow title="Tendances" icon={TrendingUp} movies={trending} onSelect={handleSelect} />
-      <MovieRow title="Pépites cachées" icon={Gem} movies={gems} onSelect={handleSelect} />
     </motion.div>
   );
 };
