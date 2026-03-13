@@ -345,7 +345,7 @@ const Onboarding = () => {
                   <div className="flex justify-center py-6">
                     <Button variant="ghost" onClick={loadMore} disabled={loadingMore} className="text-muted-foreground text-sm font-sans">
                       {loadingMore && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
-                      Voir plus de films
+                      Voir plus
                     </Button>
                   </div>
                 )}
