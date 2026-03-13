@@ -183,14 +183,14 @@ const Index = () => {
     }
   };
 
-  const handleShowAnother = async () => {
+  const handleShowAnother = async (rejectReason?: string, rejectedMovie?: MovieDetail) => {
     // Track skip on current movie
     const currentMovie = results[currentResultIndex];
     if (currentMovie) {
       trackInteraction(currentMovie.id, "skipped", { mood, context, time });
     }
 
-    if (currentResultIndex < results.length - 1) {
+    if (currentResultIndex < results.length - 1 && !rejectReason) {
       setCurrentResultIndex(i => i + 1);
     } else {
       setLoading(true);
@@ -201,9 +201,19 @@ const Index = () => {
           ...(tasteProfile?.excludeIds || []),
         ];
         const mergedPlatforms = selectedPlatformIds.length > 0 ? selectedPlatformIds : profilePrefs.preferredPlatforms;
+
+        // Build rejection context for smarter next pick
+        const rejectionContext = rejectReason && rejectedMovie ? {
+          reason: rejectReason,
+          rejectedGenres: (rejectedMovie.genres || []).map(g => g.name),
+          rejectedTitle: getDisplayTitle(rejectedMovie),
+          rejectedRating: rejectedMovie.vote_average,
+          rejectedRuntime: rejectedMovie.runtime,
+        } : undefined;
+
         const recs = await getRecommendations(
           mood || "easy-watch", context || "alone", time || "movie-night", mergedPlatforms, excludeIds,
-          { excludedGenres: profilePrefs.excludedGenres, minRating: profilePrefs.minRating }
+          { excludedGenres: profilePrefs.excludedGenres, minRating: profilePrefs.minRating, rejectionContext }
         );
         if (recs.length > 0) {
           setResults(prev => [...prev, ...recs]);
