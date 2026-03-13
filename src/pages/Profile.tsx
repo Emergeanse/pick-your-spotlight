@@ -72,9 +72,10 @@ const Profile = () => {
         const { data } = await supabase.from("profiles").select("*").eq("id", user.id).single();
         setProfile(data);
         setSelectedPlatforms(data?.preferred_platforms || []);
-        setExcludedPlatforms((data as any)?.excluded_platforms || []);
+        setExcludedPlatforms(data?.excluded_platforms || []);
         setSelectedGenres(data?.favorite_genres || []);
-        setExcludedGenres((data as any)?.excluded_genres || []);
+        setExcludedGenres(data?.excluded_genres || []);
+        setMinRating((data as any)?.min_rating || 0);
 
         const [liked, wl] = await Promise.all([
           getLikedMovies().catch(() => []),
