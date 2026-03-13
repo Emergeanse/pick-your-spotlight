@@ -75,11 +75,11 @@ const Onboarding = () => {
       const nextPage = page + 1;
       const more = await getPopularMoviesForOnboarding(nextPage);
       setMovies(prev => {
-        const existingIds = new Set(prev.map(m => m.id));
-        return [...prev, ...more.filter(m => !existingIds.has(m.id))];
+        const existingKeys = new Set(prev.map(m => `${m.media_type || "movie"}-${m.id}`));
+        return [...prev, ...more.filter(m => !existingKeys.has(`${m.media_type || "movie"}-${m.id}`))];
       });
       setPage(nextPage);
-    } catch (e) { console.error(e); }
+    } catch (e) { console.error("loadMore error:", e); }
     finally { setLoadingMore(false); }
   }, [page, loadingMore]);
 
