@@ -44,7 +44,7 @@ const Onboarding = () => {
   const [selectedGenres, setSelectedGenres] = useState<Set<string>>(new Set());
   const [selectedHabits, setSelectedHabits] = useState<Set<string>>(new Set());
   const [movies, setMovies] = useState<Movie[]>([]);
-  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<Movie[] | null>(null);
   const [page, setPage] = useState(1);
@@ -55,6 +55,11 @@ const Onboarding = () => {
 
   const stepIndex = STEPS.indexOf(step) + 1;
   const totalSteps = STEPS.length;
+
+  const getMovieKey = (movie: Pick<Movie, "id" | "media_type" | "first_air_date">) => {
+    const mediaType = movie.media_type || (movie.first_air_date ? "tv" : "movie");
+    return `${mediaType}-${movie.id}`;
+  };
 
   useEffect(() => {
     getPopularMoviesForOnboarding(1).then(setMovies).catch(console.error);
@@ -68,6 +73,10 @@ const Onboarding = () => {
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [step]);
+
   const loadMore = useCallback(async () => {
     if (loadingMore) return;
     setLoadingMore(true);
@@ -75,8 +84,8 @@ const Onboarding = () => {
       const nextPage = page + 1;
       const more = await getPopularMoviesForOnboarding(nextPage);
       setMovies(prev => {
-        const existingKeys = new Set(prev.map(m => `${m.media_type || "movie"}-${m.id}`));
-        return [...prev, ...more.filter(m => !existingKeys.has(`${m.media_type || "movie"}-${m.id}`))];
+        const existingKeys = new Set(prev.map(getMovieKey));
+        return [...prev, ...more.filter(m => !existingKeys.has(getMovieKey(m)))];
       });
       setPage(nextPage);
     } catch (e) { console.error("loadMore error:", e); }
@@ -100,9 +109,10 @@ const Onboarding = () => {
   };
 
   const toggleSelect = (movie: Movie) => {
+    const movieKey = getMovieKey(movie);
     setSelectedIds(prev => {
       const next = new Set(prev);
-      if (next.has(movie.id)) next.delete(movie.id); else next.add(movie.id);
+      if (next.has(movieKey)) next.delete(movieKey); else next.add(movieKey);
       return next;
     });
   };
@@ -115,9 +125,9 @@ const Onboarding = () => {
     setSaving(true);
     try {
       const allMovies = searchResults || movies;
-      const selectedMovies = allMovies.filter(m => selectedIds.has(m.id));
-      const selectedFromGrid = movies.filter(m => selectedIds.has(m.id));
-      const allSelected = [...new Map([...selectedMovies, ...selectedFromGrid].map(m => [m.id, m])).values()];
+      const selectedMovies = allMovies.filter(m => selectedIds.has(getMovieKey(m)));
+      const selectedFromGrid = movies.filter(m => selectedIds.has(getMovieKey(m)));
+      const allSelected = [...new Map([...selectedMovies, ...selectedFromGrid].map(m => [getMovieKey(m), m])).values()];
 
       for (const movie of allSelected) {
         try {
@@ -141,7 +151,7 @@ const Onboarding = () => {
     finally { setSaving(false); }
   };
 
-  const displayMovies = searchResults || movies;
+  const displayMovies = (searchResults || movies).filter((movie): movie is Movie => Boolean(movie && typeof movie.id === "number"));
   const canContinueGenres = selectedGenres.size >= 2;
   const canContinueMovies = selectedIds.size >= MIN_MOVIE_SELECTIONS;
 
@@ -309,10 +319,11 @@ const Onboarding = () => {
               <div className="max-w-2xl mx-auto">
                 <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2 md:gap-3">
                   {displayMovies.map((movie, i) => {
-                    const isSelected = selectedIds.has(movie.id);
+                    const movieKey = getMovieKey(movie);
+                    const isSelected = selectedIds.has(movieKey);
                     return (
                       <motion.button
-                        key={movie.id}
+                        key={movieKey}
                         initial={{ opacity: 0, scale: 0.9 }}
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ delay: Math.min(i * 0.02, 0.5) }}
