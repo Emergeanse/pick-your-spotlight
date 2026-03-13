@@ -9,7 +9,6 @@ import PlatformStep from "@/components/pick/PlatformStep";
 import ResultScreen from "@/components/pick/ResultScreen";
 import VoiceChat from "@/components/pick/VoiceChat";
 import CompanionMode from "@/components/pick/CompanionMode";
-import CinemaIntro from "@/components/pick/CinemaIntro";
 import type { ChatMessage } from "@/components/pick/VoiceChat";
 import StepLayout from "@/components/pick/StepLayout";
 import BrandHeader from "@/components/pick/BrandHeader";
@@ -228,18 +227,11 @@ const Index = () => {
     }
   };
 
-  const [showCinemaIntro, setShowCinemaIntro] = useState(false);
-
   const handleStartCompanion = () => {
     const currentMovie = results[currentResultIndex];
     if (currentMovie) {
       trackInteraction(currentMovie.id, "watched", { mood, context, time });
     }
-    setShowCinemaIntro(true);
-  };
-
-  const handleCinemaIntroComplete = () => {
-    setShowCinemaIntro(false);
     setShowCompanion(true);
   };
 
@@ -383,15 +375,6 @@ const Index = () => {
             onClose={handleCloseChat}
             onMovieSuggested={handleMovieSuggested}
             initialMessages={chatInitialMessages}
-          />
-        )}
-      </AnimatePresence>
-
-      <AnimatePresence>
-        {showCinemaIntro && results[currentResultIndex] && (
-          <CinemaIntro
-            movie={results[currentResultIndex]}
-            onComplete={handleCinemaIntroComplete}
           />
         )}
       </AnimatePresence>
