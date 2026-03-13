@@ -218,9 +218,6 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
   return (
     <div className="relative w-full h-full overflow-hidden">
       <BrandHeader
-        showDiscoveryToggle
-        onToggleDiscovery={() => setShowDiscovery(v => !v)}
-        discoveryOpen={showDiscovery}
         onOpenWatchlist={async () => {
           setShowWatchlist(true);
           setWatchlistLoading(true);
@@ -230,6 +227,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
           } catch { setWatchlistItems([]); }
           finally { setWatchlistLoading(false); }
         }}
+        onOpenDNA={() => setShowDNA(true)}
       />
 
       {/* Background slideshow */}
