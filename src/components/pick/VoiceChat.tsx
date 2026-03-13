@@ -493,11 +493,47 @@ const VoiceChat = ({ onClose, onMovieSuggested, initialMessages }: VoiceChatProp
               </motion.div>
             </motion.div>
           )}
+
+          {/* CONVERSATION — Pick asked a follow-up question */}
+          {phase === "conversation" && (
+            <motion.div
+              key="conversation"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.3 }}
+              className="flex flex-col items-center text-center"
+            >
+              <PickCharacter mood="default" message={pickReply} size="md" animate={false} />
+
+              {/* Mic button to reply by voice */}
+              <motion.button
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4 }}
+                type="button"
+                onClick={startListening}
+                className="mt-6 w-16 h-16 rounded-full bg-primary/10 border-2 border-primary/30 flex items-center justify-center transition-all duration-200 active:scale-95 cursor-pointer hover:bg-primary/15 hover:border-primary/40"
+                style={{ WebkitTapHighlightColor: "transparent", touchAction: "manipulation" }}
+              >
+                <Mic className="w-7 h-7 text-primary pointer-events-none" />
+              </motion.button>
+
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.5 }}
+                className="text-muted-foreground text-xs font-sans mt-3"
+              >
+                Réponds par la voix ou en tapant ci-dessous
+              </motion.p>
+            </motion.div>
+          )}
         </AnimatePresence>
       </div>
 
-      {/* Bottom text input (always visible for fallback) */}
-      {(phase === "idle" || phase === "listening") && (
+      {/* Bottom text input (visible in idle, listening, and conversation phases) */}
+      {(phase === "idle" || phase === "listening" || phase === "conversation") && (
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
