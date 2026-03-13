@@ -162,6 +162,8 @@ Recommande UN film avec les scores détaillés.`;
     };
     const excludedGenreIds = new Set((excludedGenres || []).map((g: string) => genreNameToId[g]).filter(Boolean));
 
+    const excludedSet = new Set(normalizedExcludeIds);
+
     const isMovieAllowed = (movie: any): boolean => {
       if (excludedSet.has(movie.id)) return false;
       if (minRating && minRating > 0 && (movie.vote_average || 0) < minRating) return false;
@@ -177,7 +179,6 @@ Recommande UN film avec les scores détaillés.`;
     const searchData = await searchRes.json();
     const results = searchData.results || [];
 
-    const excludedSet = new Set(normalizedExcludeIds);
     let selectedMovie = results.find((r: any) => isMovieAllowed(r));
 
     if (!selectedMovie) {
