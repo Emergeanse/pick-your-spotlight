@@ -6,6 +6,7 @@ import type { Movie, MovieDetail } from "@/lib/tmdb";
 
 interface DiscoverySectionProps {
   onMovieSelect: (movie: MovieDetail) => void;
+  platformIds?: number[];
 }
 
 const MovieRow = ({ 
