@@ -1,7 +1,7 @@
 import { useState, useEffect, forwardRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Mic, MicOff, X, Send, Loader2, Sparkles, Check, Play, Star, Clock, Heart, Bookmark, Tv, ChevronDown, ChevronUp, MoreHorizontal, RefreshCw, ThumbsUp, ThumbsDown, MessageCircle, Volume2 } from "lucide-react";
+import { Mic, MicOff, X, Send, Loader2, Sparkles, Check, Play, Star, Clock, Heart, Bookmark, Tv, ChevronDown, ChevronUp, MoreHorizontal, RefreshCw, ThumbsUp, ThumbsDown, MessageCircle, Volume2, Eye } from "lucide-react";
 import type { MovieDetail } from "@/lib/tmdb";
 import { getDisplayTitle, getYear, getBackdropUrl, getPosterUrl, getWatchProviders, getMovieTrailerUrl } from "@/lib/tmdb";
 import type { Mood, Context, TimeAvailable } from "@/lib/tmdb";
@@ -91,6 +91,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
   const [showOptions, setShowOptions] = useState(false);
   const [showRejectReasons, setShowRejectReasons] = useState(false);
   const [feedbackGiven, setFeedbackGiven] = useState<"good" | "bad" | null>(null);
+  const [markedSeen, setMarkedSeen] = useState(false);
   const [rejectReaction, setRejectReaction] = useState<string | null>(null);
   const [altProviders, setAltProviders] = useState<Record<number, { name: string; logo_path: string }[]>>({});
   const [whySpeaking, setWhySpeaking] = useState(false);
@@ -195,6 +196,8 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
     setMatchData(null);
     setMatchLoading(true);
     setShowOptions(false);
+    setMarkedSeen(false);
+    setFeedbackGiven(null);
 
     // Pre-generate embedding for this movie (fire & forget)
     ensureMovieEmbedding(
@@ -603,6 +606,23 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                 >
                   <ThumbsDown className={`w-3 h-3 sm:w-3.5 sm:h-3.5 ${feedbackGiven === "bad" ? "fill-destructive" : ""}`} />
                   Pas pour moi
+                </button>
+
+                <button
+                  onClick={() => {
+                    if (markedSeen) return;
+                    setMarkedSeen(true);
+                    trackInteraction(movie.id, "already_seen", { mood: userCriteria?.mood, context: userCriteria?.context, time: userCriteria?.time });
+                    toast.success("Noté ! Pick évitera ce film.");
+                  }}
+                  className={`flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3.5 h-8 sm:h-9 rounded-full border text-[11px] sm:text-xs font-sans font-medium transition-all active:scale-95 ${
+                    markedSeen
+                      ? "bg-muted border-border/40 text-foreground/60"
+                      : "border-border/25 text-foreground/40 hover:text-foreground/60 hover:border-border/40"
+                  }`}
+                >
+                  <Eye className={`w-3 h-3 sm:w-3.5 sm:h-3.5 ${markedSeen ? "text-foreground/60" : ""}`} />
+                  Déjà vu
                 </button>
 
                 <button
