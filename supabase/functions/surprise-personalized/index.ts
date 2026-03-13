@@ -47,7 +47,7 @@ serve(async (req) => {
         const { data: matches } = await supabase.rpc("match_movies_by_taste", {
           query_vector: vectorStr,
           match_count: 10,
-          exclude_ids: excludeIds,
+          exclude_ids: allExcludeIds,
         });
 
         if (matches && matches.length > 0) {
