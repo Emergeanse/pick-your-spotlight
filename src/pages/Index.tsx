@@ -228,11 +228,18 @@ const Index = () => {
     }
   };
 
+  const [showCinemaIntro, setShowCinemaIntro] = useState(false);
+
   const handleStartCompanion = () => {
     const currentMovie = results[currentResultIndex];
     if (currentMovie) {
       trackInteraction(currentMovie.id, "watched", { mood, context, time });
     }
+    setShowCinemaIntro(true);
+  };
+
+  const handleCinemaIntroComplete = () => {
+    setShowCinemaIntro(false);
     setShowCompanion(true);
   };
 
