@@ -65,14 +65,13 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
   const [showDNA, setShowDNA] = useState(false);
   const { user } = useAuth();
 
-  // Load user's preferred platforms
+  // Load user's preferred platforms and genres
   useEffect(() => {
     if (!user) return;
-    supabase.from("profiles").select("preferred_platforms").eq("id", user.id).single()
+    supabase.from("profiles").select("preferred_platforms, favorite_genres").eq("id", user.id).single()
       .then(({ data }) => {
-        if (data?.preferred_platforms) {
-          setUserPlatformIds(data.preferred_platforms);
-        }
+        if (data?.preferred_platforms) setUserPlatformIds(data.preferred_platforms);
+        if (data?.favorite_genres) setUserGenres(data.favorite_genres);
       });
   }, [user]);
 
