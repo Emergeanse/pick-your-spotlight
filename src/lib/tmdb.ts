@@ -164,15 +164,20 @@ export async function getTrendingMovie(): Promise<MovieDetail> {
   return getMovieDetails(pick.id, "movie");
 }
 
-export async function getTrendingMovies(count: number = 10, platformIds: number[] = []): Promise<Movie[]> {
-  if (platformIds.length > 0) {
-    // Use discover endpoint with platform filter for filtered trending
-    const data = await fetchFromTMDB("/discover/movie", {
+export async function getTrendingMovies(count: number = 10, platformIds: number[] = [], favoriteGenres: string[] = []): Promise<Movie[]> {
+  if (platformIds.length > 0 || favoriteGenres.length > 0) {
+    const params: Record<string, string> = {
       sort_by: "popularity.desc",
       "vote_count.gte": "100",
-      with_watch_providers: platformIds.join("|"),
-      watch_region: "FR",
-    });
+    };
+    if (platformIds.length > 0) {
+      params.with_watch_providers = platformIds.join("|");
+      params.watch_region = "FR";
+    }
+    if (favoriteGenres.length > 0) {
+      params.with_genres = genreNamesToIds(favoriteGenres).join("|");
+    }
+    const data = await fetchFromTMDB("/discover/movie", params);
     const results: Movie[] = data.results || [];
     return results.slice(0, count);
   }
