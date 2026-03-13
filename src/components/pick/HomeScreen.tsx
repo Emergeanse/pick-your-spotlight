@@ -89,18 +89,24 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
   const [watchlistItems, setWatchlistItems] = useState<any[]>([]);
   const [watchlistLoading, setWatchlistLoading] = useState(false);
   const [userPlatformIds, setUserPlatformIds] = useState<number[]>([]);
+  const [userExcludedPlatformIds, setUserExcludedPlatformIds] = useState<number[]>([]);
   const [userGenres, setUserGenres] = useState<string[]>([]);
+  const [userExcludedGenres, setUserExcludedGenres] = useState<string[]>([]);
+  const [userMinRating, setUserMinRating] = useState<number>(0);
   const [showDNA, setShowDNA] = useState(false);
   const [rejectedIds, setRejectedIds] = useState<number[]>([]);
   const { user } = useAuth();
 
-  // Load user's preferred platforms and genres
+  // Load user's full profile preferences
   useEffect(() => {
     if (!user) return;
-    supabase.from("profiles").select("preferred_platforms, favorite_genres").eq("id", user.id).single()
+    supabase.from("profiles").select("preferred_platforms, excluded_platforms, favorite_genres, excluded_genres, min_rating").eq("id", user.id).single()
       .then(({ data }) => {
         if (data?.preferred_platforms) setUserPlatformIds(data.preferred_platforms);
+        if ((data as any)?.excluded_platforms) setUserExcludedPlatformIds((data as any).excluded_platforms);
         if (data?.favorite_genres) setUserGenres(data.favorite_genres);
+        if ((data as any)?.excluded_genres) setUserExcludedGenres((data as any).excluded_genres);
+        if ((data as any)?.min_rating) setUserMinRating((data as any).min_rating);
       });
   }, [user]);
 
