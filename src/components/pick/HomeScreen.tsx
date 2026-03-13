@@ -110,25 +110,39 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
       });
   }, [user]);
 
-  // Proactive recommendation — silently fetch for users with taste data
+  // Helper: invoke surprise-personalized with retry on 429
+  const invokeSurprisePersonalized = async (body: any, retries = 2): Promise<any> => {
+    const { data, error } = await supabase.functions.invoke("surprise-personalized", { body });
+    if (error) {
+      // Check if it's a rate limit (429) - retry after delay
+      const errMsg = typeof error === "object" && error?.message ? error.message : String(error);
+      if (retries > 0 && (errMsg.includes("429") || errMsg.includes("Trop de requêtes"))) {
+        await new Promise(r => setTimeout(r, 2000 + Math.random() * 1000));
+        return invokeSurprisePersonalized(body, retries - 1);
+      }
+      throw error;
+    }
+    return data;
+  };
+
+  // Proactive recommendation — silently fetch for users with taste data (delayed to avoid rate limits)
   useEffect(() => {
     if (!user) return;
     let cancelled = false;
-    (async () => {
+    const timer = setTimeout(async () => {
       try {
         const liked = await getLikedMovies();
-        if (liked.length < 3) return; // Need enough taste data
+        if (liked.length < 3) return;
         const userTasteVector = await computeUserTasteVector(user.id);
-        const { data, error } = await supabase.functions.invoke("surprise-personalized", {
-          body: { likedMovies: liked, userTasteVector, platformIds: userPlatformIds, excludedPlatformIds: userExcludedPlatformIds, excludedGenres: userExcludedGenres, minRating: userMinRating },
+        const data = await invokeSurprisePersonalized({
+          likedMovies: liked, userTasteVector, platformIds: userPlatformIds, excludedPlatformIds: userExcludedPlatformIds, excludedGenres: userExcludedGenres, minRating: userMinRating,
         });
-        if (error || cancelled) return;
-        setProactivePick(data.movie as MovieDetail);
+        if (!cancelled) setProactivePick(data.movie as MovieDetail);
       } catch {
         // Silently fail — proactive is optional
       }
-    })();
-    return () => { cancelled = true; };
+    }, 3000); // 3s delay to avoid competing with other AI calls
+    return () => { cancelled = true; clearTimeout(timer); };
   }, [user]);
 
   useEffect(() => {
