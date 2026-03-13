@@ -97,6 +97,10 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
   const [whySpeaking, setWhySpeaking] = useState(false);
   const [whyAudioLoading, setWhyAudioLoading] = useState(false);
   const { user } = useAuth();
+  const [voiceListening, setVoiceListening] = useState(false);
+  const [voiceProcessing, setVoiceProcessing] = useState(false);
+  const voiceRecorderRef = useRef<MediaRecorder | null>(null);
+  const voiceChunksRef = useRef<Blob[]>([]);
 
   const playBrowserWhyFallback = useCallback((text: string) => {
     if (typeof window === "undefined" || !("speechSynthesis" in window)) return false;
