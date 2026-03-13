@@ -41,7 +41,7 @@ serve(async (req) => {
     if (userTasteVector && SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) {
       try {
         const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-        const excludeIds = (likedMovies || []).map((m: any) => m.tmdb_id || m.id);
+        const allExcludeIds = [...(likedMovies || []).map((m: any) => m.tmdb_id || m.id), ...(excludeIds || [])];
         const vectorStr = `[${userTasteVector.join(",")}]`;
         
         const { data: matches } = await supabase.rpc("match_movies_by_taste", {
