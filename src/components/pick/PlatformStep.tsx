@@ -21,6 +21,14 @@ const platforms: StreamingPlatform[] = [
   { id: 56, label: "OCS", logo: "https://image.tmdb.org/t/p/original/3E0RkIEQrrGYazs63NMsn3XONT6.jpg" },
   { id: 236, label: "Paramount+", logo: "https://image.tmdb.org/t/p/original/fi83B1ozBIOCEo7cWoevSYS0tXi.jpg" },
   { id: 1899, label: "Max", logo: "https://image.tmdb.org/t/p/original/6Q3YKUNA60A4DxOrPaUTDOE4BrU.jpg" },
+  { id: 35, label: "Rakuten TV", logo: "https://image.tmdb.org/t/p/original/bKy4Scd3WQ9GJshE1eXEYbX6nOb.jpg" },
+  { id: 68, label: "Microsoft Store", logo: "https://image.tmdb.org/t/p/original/shq88b09gTBYC4hA7K7MUL8Q4zP.jpg" },
+  { id: 192, label: "YouTube", logo: "https://image.tmdb.org/t/p/original/oIkQkEkwfmcG7IGpRR1NB8frZZM.jpg" },
+  { id: 10, label: "Google Play", logo: "https://image.tmdb.org/t/p/original/tbEdFQDwx5LEVr8WpSeXQSIirVq.jpg" },
+  { id: 234, label: "Crunchyroll", logo: "https://image.tmdb.org/t/p/original/8Gt1iClBlzTeQs8WQm8UrCoIxnQ.jpg" },
+  { id: 188, label: "YouTube Premium", logo: "https://image.tmdb.org/t/p/original/6IPjvnYl6WWkIwN158qBFXCr2Ne.jpg" },
+  { id: 2, label: "Apple TV", logo: "https://image.tmdb.org/t/p/original/9ghgSC0MA082EL6HLCW3GalykFD.jpg" },
+  { id: 1967, label: "Molotov TV", logo: "https://image.tmdb.org/t/p/original/fSiNKaG0KEvsNOIttexKJG9uqRx.jpg" },
 ];
 
 interface PlatformStepProps {
