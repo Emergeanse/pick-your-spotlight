@@ -121,7 +121,8 @@ const Onboarding = () => {
 
       for (const movie of allSelected) {
         try {
-          const detail = await getMovieDetails(movie.id, "movie");
+          const mediaType = movie.media_type || (movie.first_air_date ? "tv" : "movie");
+          const detail = await getMovieDetails(movie.id, mediaType);
           await likeMovie(detail);
         } catch (e) { console.error("Failed to like movie:", movie.id, e); }
       }
