@@ -20,7 +20,7 @@ export type ChatMessage = {
   content: string;
 };
 
-const EXAMPLE_PROMPTS: string[] = [];
+
 
 type Phase = "idle" | "listening" | "processing" | "recap" | "conversation";
 
