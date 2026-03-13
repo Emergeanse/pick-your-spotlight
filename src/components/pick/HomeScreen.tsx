@@ -603,9 +603,14 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
                     className="rounded-full border border-border/30 text-foreground/50 hover:text-foreground hover:border-border/50 font-sans font-medium px-5 h-11 gap-2 text-sm transition-all active:scale-[0.97]"
                     onClick={() => {
                       const nextRejected = tonightPick ? [...rejectedIds, tonightPick.id] : rejectedIds;
+                      const rejContext = tonightPick ? {
+                        reason: "not_my_style" as const,
+                        rejectedGenres: (tonightPick.genres || []).map(g => g.name),
+                        rejectedTitle: getDisplayTitle(tonightPick),
+                      } : undefined;
                       setRejectedIds(nextRejected);
                       setTonightPick(null);
-                      generateTonightPick(nextRejected);
+                      generateTonightPick(nextRejected, rejContext);
                     }}
                     disabled={tonightLoading}
                   >
