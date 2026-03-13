@@ -30,7 +30,7 @@ const EXAMPLE_PROMPTS = [
   "Je suis fatigué, un truc léger",
 ];
 
-type Phase = "idle" | "listening" | "processing" | "recap";
+type Phase = "idle" | "listening" | "processing" | "recap" | "conversation";
 
 // Sound wave bars animation
 const SoundWave = () => (
