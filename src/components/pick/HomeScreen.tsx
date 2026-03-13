@@ -445,11 +445,6 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
             </motion.div>
           )}
         </div>
-
-        {/* Discovery sections — always visible */}
-        <div className="px-5 pb-12">
-          <DiscoverySection onMovieSelect={onMovieSelect} platformIds={userPlatformIds} favoriteGenres={userGenres} />
-        </div>
       </div>
 
       {/* ADN Cinéma sliding panel */}
