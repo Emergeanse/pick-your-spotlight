@@ -319,10 +319,11 @@ const Onboarding = () => {
               <div className="max-w-2xl mx-auto">
                 <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2 md:gap-3">
                   {displayMovies.map((movie, i) => {
-                    const isSelected = selectedIds.has(movie.id);
+                    const movieKey = getMovieKey(movie);
+                    const isSelected = selectedIds.has(movieKey);
                     return (
                       <motion.button
-                        key={movie.id}
+                        key={movieKey}
                         initial={{ opacity: 0, scale: 0.9 }}
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ delay: Math.min(i * 0.02, 0.5) }}
