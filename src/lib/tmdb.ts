@@ -28,6 +28,17 @@ export type Mood = "relax" | "excited" | "romantic" | "mind-blowing" | "easy-wat
 export type Context = "alone" | "couple" | "friends" | "family";
 export type TimeAvailable = "short" | "movie-night" | "episode";
 
+const genreNameToId: Record<string, number> = {
+  "Action": 28, "Aventure": 12, "Animation": 16, "Comédie": 35, "Crime": 80,
+  "Documentaire": 99, "Drame": 18, "Famille": 10751, "Fantastique": 14,
+  "Histoire": 36, "Horreur": 27, "Musique": 10402, "Mystère": 9648,
+  "Romance": 10749, "Science-Fiction": 878, "Thriller": 53, "Guerre": 10752, "Western": 37,
+};
+
+function genreNamesToIds(names: string[]): number[] {
+  return names.map(n => genreNameToId[n]).filter(Boolean);
+}
+
 const moodToGenres: Record<Mood, number[]> = {
   "relax": [18, 10749, 99],
   "excited": [28, 53, 878],
