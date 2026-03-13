@@ -209,7 +209,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
         if (liked.length >= 2) {
           const userTasteVector = await computeUserTasteVector(user.id);
           const { data, error } = await supabase.functions.invoke("surprise-personalized", {
-            body: { likedMovies: liked, userTasteVector, platformIds: userPlatformIds },
+            body: { likedMovies: liked, userTasteVector, platformIds: userPlatformIds, excludeIds: rejectedIds },
           });
           if (error) throw error;
           movie = data.movie as MovieDetail;
