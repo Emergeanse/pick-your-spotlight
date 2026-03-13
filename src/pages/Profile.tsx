@@ -150,6 +150,7 @@ const Profile = () => {
         excluded_genres: [...excludedGenres],
         excluded_platforms: [...excludedPlatforms],
         min_rating: minRating,
+        media_preference: mediaPreference,
       }));
       toast({ title: "Préférences enregistrées ✓", description: "Tes prochaines suggestions en tiendront compte." });
     } catch (e) {
