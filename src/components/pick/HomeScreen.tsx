@@ -465,21 +465,40 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
           )}
         </div>
 
-        {/* Discovery sections — hidden by default, toggled via header */}
-        <AnimatePresence>
-          {showDiscovery && (
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 30 }}
-              transition={{ duration: 0.4 }}
-              className="px-5 pb-12"
-            >
-              <DiscoverySection onMovieSelect={onMovieSelect} platformIds={userPlatformIds} />
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {/* Discovery sections — always visible */}
+        <div className="px-5 pb-12">
+          <DiscoverySection onMovieSelect={onMovieSelect} platformIds={userPlatformIds} />
+        </div>
       </div>
+
+      {/* ADN Cinéma sliding panel */}
+      <AnimatePresence>
+        {showDNA && user && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50"
+          >
+            <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" onClick={() => setShowDNA(false)} />
+            <motion.div
+              initial={{ x: "100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "100%" }}
+              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              className="absolute right-0 top-0 bottom-0 w-full max-w-md bg-background border-l border-border/20 overflow-y-auto p-5 pt-8"
+            >
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="font-serif text-xl">Mon ADN Cinéma</h2>
+                <button onClick={() => setShowDNA(false)} className="text-foreground/40 hover:text-foreground transition-colors">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <CinemaDNA userId={user.id} />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Tonight loading overlay with Pick */}
       <AnimatePresence>
