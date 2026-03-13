@@ -273,8 +273,57 @@ const Profile = () => {
           </div>
         </motion.div>
 
-        {/* Eras */}
+        {/* Min Rating */}
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="mb-8">
+          <div className="flex items-center gap-2 mb-1">
+            <h2 className="text-lg font-serif">Note minimale</h2>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button className="text-muted-foreground hover:text-foreground transition-colors">
+                    <Info className="w-3.5 h-3.5" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="max-w-[260px] text-xs">
+                  <p>Les notes proviennent de <strong>TMDB</strong> (The Movie Database), une base communautaire où des millions d'utilisateurs notent films et séries sur 10.</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+          <p className="text-[11px] text-muted-foreground font-sans mb-4">
+            Filtre les recommandations en dessous de cette note
+          </p>
+          <div className="bg-card rounded-2xl p-4">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <Star className={`w-4 h-4 ${minRating > 0 ? "text-yellow-500" : "text-muted-foreground/40"}`} />
+                <span className="font-sans text-sm font-medium">
+                  {minRating === 0 ? "Peu importe" : `${minRating}+ / 10`}
+                </span>
+              </div>
+              {minRating > 0 && (
+                <span className="text-[10px] text-muted-foreground font-sans">
+                  {minRating >= 8 ? "Excellents uniquement" : minRating >= 7 ? "Bien notés" : minRating >= 6 ? "Corrects et +" : "Tous"}
+                </span>
+              )}
+            </div>
+            <Slider
+              value={[minRating]}
+              onValueChange={([v]) => setMinRating(v)}
+              min={0}
+              max={9}
+              step={1}
+              className="w-full"
+            />
+            <div className="flex justify-between mt-1.5">
+              <span className="text-[9px] text-muted-foreground/50 font-sans">Tous</span>
+              <span className="text-[9px] text-muted-foreground/50 font-sans">9+</span>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Eras */}
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }} className="mb-8">
           <h2 className="text-lg font-serif mb-3">Tes époques préférées</h2>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
             {ALL_ERAS.map((era) => {
