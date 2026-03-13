@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { ArrowLeft, User, LogOut, ChevronUp, ChevronDown } from "lucide-react";
+import { ArrowLeft, User, LogOut, ChevronUp, ChevronDown, Bookmark } from "lucide-react";
 import pickLogo from "@/assets/pick-logo.png";
 import { useAuth } from "@/hooks/use-auth";
 import { useNavigate } from "react-router-dom";
@@ -11,9 +11,10 @@ interface BrandHeaderProps {
   showDiscoveryToggle?: boolean;
   onToggleDiscovery?: () => void;
   discoveryOpen?: boolean;
+  onOpenWatchlist?: () => void;
 }
 
-const BrandHeader = ({ showBack, onBack, showDiscoveryToggle, onToggleDiscovery, discoveryOpen }: BrandHeaderProps) => {
+const BrandHeader = ({ showBack, onBack, showDiscoveryToggle, onToggleDiscovery, discoveryOpen, onOpenWatchlist }: BrandHeaderProps) => {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
 
@@ -43,6 +44,18 @@ const BrandHeader = ({ showBack, onBack, showDiscoveryToggle, onToggleDiscovery,
       )}
 
       <div className="flex items-center gap-1">
+        {onOpenWatchlist && user && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onOpenWatchlist}
+            className="text-foreground/50 hover:text-primary text-xs font-sans gap-1.5"
+            title="Ma watchlist"
+          >
+            <Bookmark className="w-3.5 h-3.5" />
+          </Button>
+        )}
+
         {showDiscoveryToggle && (
           <Button
             variant="ghost"

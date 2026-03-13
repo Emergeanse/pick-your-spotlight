@@ -216,7 +216,20 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
 
   return (
     <div className="relative w-full h-full overflow-hidden">
-      <BrandHeader showDiscoveryToggle onToggleDiscovery={() => setShowDiscovery(v => !v)} discoveryOpen={showDiscovery} />
+      <BrandHeader
+        showDiscoveryToggle
+        onToggleDiscovery={() => setShowDiscovery(v => !v)}
+        discoveryOpen={showDiscovery}
+        onOpenWatchlist={async () => {
+          setShowWatchlist(true);
+          setWatchlistLoading(true);
+          try {
+            const items = await getWatchlist();
+            setWatchlistItems(items);
+          } catch { setWatchlistItems([]); }
+          finally { setWatchlistLoading(false); }
+        }}
+      />
 
       {/* Background slideshow */}
       {bgImages.map((bg, i) => (
