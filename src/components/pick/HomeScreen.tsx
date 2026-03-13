@@ -12,6 +12,7 @@ import type { Movie, MovieDetail } from "@/lib/tmdb";
 import BrandHeader from "./BrandHeader";
 import DiscoverySection from "./DiscoverySection";
 import PickCharacter from "./PickCharacter";
+import CinemaDNA from "./CinemaDNA";
 
 interface HomeScreenProps {
   onStart: () => void;
@@ -48,7 +49,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
   const [surpriseMsg, setSurpriseMsg] = useState("");
   const [bgImages, setBgImages] = useState<string[]>([]);
   const [currentBgIndex, setCurrentBgIndex] = useState(0);
-  const [showDiscovery, setShowDiscovery] = useState(false);
+  
   const [tonightPick, setTonightPick] = useState<MovieDetail | null>(null);
   const [tonightLoading, setTonightLoading] = useState(false);
   const [tonightLoadingMsg, setTonightLoadingMsg] = useState("");
@@ -60,16 +61,17 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
   const [watchlistItems, setWatchlistItems] = useState<any[]>([]);
   const [watchlistLoading, setWatchlistLoading] = useState(false);
   const [userPlatformIds, setUserPlatformIds] = useState<number[]>([]);
+  const [userGenres, setUserGenres] = useState<string[]>([]);
+  const [showDNA, setShowDNA] = useState(false);
   const { user } = useAuth();
 
-  // Load user's preferred platforms
+  // Load user's preferred platforms and genres
   useEffect(() => {
     if (!user) return;
-    supabase.from("profiles").select("preferred_platforms").eq("id", user.id).single()
+    supabase.from("profiles").select("preferred_platforms, favorite_genres").eq("id", user.id).single()
       .then(({ data }) => {
-        if (data?.preferred_platforms) {
-          setUserPlatformIds(data.preferred_platforms);
-        }
+        if (data?.preferred_platforms) setUserPlatformIds(data.preferred_platforms);
+        if (data?.favorite_genres) setUserGenres(data.favorite_genres);
       });
   }, [user]);
 
@@ -217,9 +219,6 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
   return (
     <div className="relative w-full h-full overflow-hidden">
       <BrandHeader
-        showDiscoveryToggle
-        onToggleDiscovery={() => setShowDiscovery(v => !v)}
-        discoveryOpen={showDiscovery}
         onOpenWatchlist={async () => {
           setShowWatchlist(true);
           setWatchlistLoading(true);
@@ -229,6 +228,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
           } catch { setWatchlistItems([]); }
           finally { setWatchlistLoading(false); }
         }}
+        onOpenDNA={() => setShowDNA(true)}
       />
 
       {/* Background slideshow */}
@@ -465,21 +465,40 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
           )}
         </div>
 
-        {/* Discovery sections — hidden by default, toggled via header */}
-        <AnimatePresence>
-          {showDiscovery && (
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 30 }}
-              transition={{ duration: 0.4 }}
-              className="px-5 pb-12"
-            >
-              <DiscoverySection onMovieSelect={onMovieSelect} platformIds={userPlatformIds} />
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {/* Discovery sections — always visible */}
+        <div className="px-5 pb-12">
+          <DiscoverySection onMovieSelect={onMovieSelect} platformIds={userPlatformIds} favoriteGenres={userGenres} />
+        </div>
       </div>
+
+      {/* ADN Cinéma sliding panel */}
+      <AnimatePresence>
+        {showDNA && user && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50"
+          >
+            <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" onClick={() => setShowDNA(false)} />
+            <motion.div
+              initial={{ x: "100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "100%" }}
+              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              className="absolute right-0 top-0 bottom-0 w-full max-w-md bg-background border-l border-border/20 overflow-y-auto p-5 pt-8"
+            >
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="font-serif text-xl">Mon ADN Cinéma</h2>
+                <button onClick={() => setShowDNA(false)} className="text-foreground/40 hover:text-foreground transition-colors">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <CinemaDNA userId={user.id} />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Tonight loading overlay with Pick */}
       <AnimatePresence>

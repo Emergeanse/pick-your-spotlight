@@ -28,6 +28,17 @@ export type Mood = "relax" | "excited" | "romantic" | "mind-blowing" | "easy-wat
 export type Context = "alone" | "couple" | "friends" | "family";
 export type TimeAvailable = "short" | "movie-night" | "episode";
 
+const genreNameToId: Record<string, number> = {
+  "Action": 28, "Aventure": 12, "Animation": 16, "Comédie": 35, "Crime": 80,
+  "Documentaire": 99, "Drame": 18, "Famille": 10751, "Fantastique": 14,
+  "Histoire": 36, "Horreur": 27, "Musique": 10402, "Mystère": 9648,
+  "Romance": 10749, "Science-Fiction": 878, "Thriller": 53, "Guerre": 10752, "Western": 37,
+};
+
+function genreNamesToIds(names: string[]): number[] {
+  return names.map(n => genreNameToId[n]).filter(Boolean);
+}
+
 const moodToGenres: Record<Mood, number[]> = {
   "relax": [18, 10749, 99],
   "excited": [28, 53, 878],
@@ -164,15 +175,20 @@ export async function getTrendingMovie(): Promise<MovieDetail> {
   return getMovieDetails(pick.id, "movie");
 }
 
-export async function getTrendingMovies(count: number = 10, platformIds: number[] = []): Promise<Movie[]> {
-  if (platformIds.length > 0) {
-    // Use discover endpoint with platform filter for filtered trending
-    const data = await fetchFromTMDB("/discover/movie", {
+export async function getTrendingMovies(count: number = 10, platformIds: number[] = [], favoriteGenres: string[] = []): Promise<Movie[]> {
+  if (platformIds.length > 0 || favoriteGenres.length > 0) {
+    const params: Record<string, string> = {
       sort_by: "popularity.desc",
       "vote_count.gte": "100",
-      with_watch_providers: platformIds.join("|"),
-      watch_region: "FR",
-    });
+    };
+    if (platformIds.length > 0) {
+      params.with_watch_providers = platformIds.join("|");
+      params.watch_region = "FR";
+    }
+    if (favoriteGenres.length > 0) {
+      params.with_genres = genreNamesToIds(favoriteGenres).join("|");
+    }
+    const data = await fetchFromTMDB("/discover/movie", params);
     const results: Movie[] = data.results || [];
     return results.slice(0, count);
   }
@@ -181,7 +197,7 @@ export async function getTrendingMovies(count: number = 10, platformIds: number[
   return results.slice(0, count);
 }
 
-export async function getHiddenGems(count: number = 10, platformIds: number[] = []): Promise<Movie[]> {
+export async function getHiddenGems(count: number = 10, platformIds: number[] = [], favoriteGenres: string[] = []): Promise<Movie[]> {
   const page = Math.floor(Math.random() * 3) + 1;
   const params: Record<string, string> = {
     sort_by: "vote_average.desc",
@@ -194,6 +210,9 @@ export async function getHiddenGems(count: number = 10, platformIds: number[] = 
   if (platformIds.length > 0) {
     params.with_watch_providers = platformIds.join("|");
     params.watch_region = "FR";
+  }
+  if (favoriteGenres.length > 0) {
+    params.with_genres = genreNamesToIds(favoriteGenres).join("|");
   }
   const data = await fetchFromTMDB("/discover/movie", params);
   const results: Movie[] = data.results || [];
@@ -233,16 +252,22 @@ export async function searchMovies(query: string): Promise<Movie[]> {
 }
 
 // New: get tonight's pick (single trending movie with details)
-export async function getTonightsPick(platformIds: number[] = []): Promise<MovieDetail> {
+export async function getTonightsPick(platformIds: number[] = [], favoriteGenres: string[] = []): Promise<MovieDetail> {
   let results: Movie[];
-  if (platformIds.length > 0) {
-    const data = await fetchFromTMDB("/discover/movie", {
+  if (platformIds.length > 0 || favoriteGenres.length > 0) {
+    const params: Record<string, string> = {
       sort_by: "popularity.desc",
       "vote_count.gte": "100",
       "vote_average.gte": "6.5",
-      with_watch_providers: platformIds.join("|"),
-      watch_region: "FR",
-    });
+    };
+    if (platformIds.length > 0) {
+      params.with_watch_providers = platformIds.join("|");
+      params.watch_region = "FR";
+    }
+    if (favoriteGenres.length > 0) {
+      params.with_genres = genreNamesToIds(favoriteGenres).join("|");
+    }
+    const data = await fetchFromTMDB("/discover/movie", params);
     results = data.results || [];
   } else {
     const data = await fetchFromTMDB("/trending/movie/day");

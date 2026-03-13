@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { ArrowLeft, User, LogOut, ChevronUp, ChevronDown, Bookmark } from "lucide-react";
+import { ArrowLeft, User, LogOut, Bookmark, Dna } from "lucide-react";
 import pickLogo from "@/assets/pick-logo.png";
 import { useAuth } from "@/hooks/use-auth";
 import { useNavigate } from "react-router-dom";
@@ -8,13 +8,11 @@ import { Button } from "@/components/ui/button";
 interface BrandHeaderProps {
   showBack?: boolean;
   onBack?: () => void;
-  showDiscoveryToggle?: boolean;
-  onToggleDiscovery?: () => void;
-  discoveryOpen?: boolean;
   onOpenWatchlist?: () => void;
+  onOpenDNA?: () => void;
 }
 
-const BrandHeader = ({ showBack, onBack, showDiscoveryToggle, onToggleDiscovery, discoveryOpen, onOpenWatchlist }: BrandHeaderProps) => {
+const BrandHeader = ({ showBack, onBack, onOpenWatchlist, onOpenDNA }: BrandHeaderProps) => {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
 
@@ -44,6 +42,18 @@ const BrandHeader = ({ showBack, onBack, showDiscoveryToggle, onToggleDiscovery,
       )}
 
       <div className="flex items-center gap-1">
+        {onOpenDNA && user && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onOpenDNA}
+            className="text-foreground/50 hover:text-primary text-xs font-sans gap-1.5"
+            title="Mon ADN Cinéma"
+          >
+            <Dna className="w-3.5 h-3.5" />
+          </Button>
+        )}
+
         {onOpenWatchlist && user && (
           <Button
             variant="ghost"
@@ -53,18 +63,6 @@ const BrandHeader = ({ showBack, onBack, showDiscoveryToggle, onToggleDiscovery,
             title="Ma watchlist"
           >
             <Bookmark className="w-3.5 h-3.5" />
-          </Button>
-        )}
-
-        {showDiscoveryToggle && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onToggleDiscovery}
-            className="text-foreground/50 hover:text-foreground text-xs font-sans gap-1"
-            title={discoveryOpen ? "Masquer découvertes" : "Voir découvertes"}
-          >
-            {discoveryOpen ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronUp className="w-3.5 h-3.5" />}
           </Button>
         )}
 
