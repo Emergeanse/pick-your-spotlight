@@ -196,6 +196,8 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
     setMatchData(null);
     setMatchLoading(true);
     setShowOptions(false);
+    setMarkedSeen(false);
+    setFeedbackGiven(null);
 
     // Pre-generate embedding for this movie (fire & forget)
     ensureMovieEmbedding(
