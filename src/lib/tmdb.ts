@@ -241,16 +241,22 @@ export async function searchMovies(query: string): Promise<Movie[]> {
 }
 
 // New: get tonight's pick (single trending movie with details)
-export async function getTonightsPick(platformIds: number[] = []): Promise<MovieDetail> {
+export async function getTonightsPick(platformIds: number[] = [], favoriteGenres: string[] = []): Promise<MovieDetail> {
   let results: Movie[];
-  if (platformIds.length > 0) {
-    const data = await fetchFromTMDB("/discover/movie", {
+  if (platformIds.length > 0 || favoriteGenres.length > 0) {
+    const params: Record<string, string> = {
       sort_by: "popularity.desc",
       "vote_count.gte": "100",
       "vote_average.gte": "6.5",
-      with_watch_providers: platformIds.join("|"),
-      watch_region: "FR",
-    });
+    };
+    if (platformIds.length > 0) {
+      params.with_watch_providers = platformIds.join("|");
+      params.watch_region = "FR";
+    }
+    if (favoriteGenres.length > 0) {
+      params.with_genres = genreNamesToIds(favoriteGenres).join("|");
+    }
+    const data = await fetchFromTMDB("/discover/movie", params);
     results = data.results || [];
   } else {
     const data = await fetchFromTMDB("/trending/movie/day");
