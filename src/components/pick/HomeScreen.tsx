@@ -198,7 +198,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
     }
   };
 
-  const generateTonightPick = async (excludeList: number[] = rejectedIds) => {
+  const generateTonightPick = async (excludeList: number[] = rejectedIds, rejectionContext?: { reason: string; rejectedGenres: string[]; rejectedTitle: string }) => {
     setTonightLoading(true);
     setTonightProviders([]);
     let msgIndex = 0;
@@ -215,7 +215,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
         if (liked.length >= 2) {
           const userTasteVector = await computeUserTasteVector(user.id);
           const { data, error } = await supabase.functions.invoke("surprise-personalized", {
-            body: { likedMovies: liked, userTasteVector, platformIds: userPlatformIds, excludedPlatformIds: userExcludedPlatformIds, excludedGenres: userExcludedGenres, minRating: userMinRating, excludeIds: excludeList },
+            body: { likedMovies: liked, userTasteVector, platformIds: userPlatformIds, excludedPlatformIds: userExcludedPlatformIds, excludedGenres: userExcludedGenres, minRating: userMinRating, excludeIds: excludeList, rejectionContext },
           });
           if (error) throw error;
           movie = data.movie as MovieDetail;
