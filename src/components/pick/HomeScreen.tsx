@@ -347,7 +347,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
                           onClick={() => { onSurprise(proactivePick); setProactiveDismissed(true); }}
                           className="px-3 py-1.5 rounded-full bg-primary text-primary-foreground text-[11px] font-sans font-semibold hover:bg-primary/90 transition-colors active:scale-95"
                         >
-                          Je regarde
+                          Je découvre
                         </button>
                         <button
                           onClick={() => { setProactiveDismissed(true); handleTonightPick(); }}
