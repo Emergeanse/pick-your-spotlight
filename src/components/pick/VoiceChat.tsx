@@ -70,12 +70,26 @@ const VoiceChat = ({ onClose, onMovieSuggested, initialMessages }: VoiceChatProp
     return shuffled.slice(0, 4);
   });
 
-  // Pre-fetch scribe token on mount
+  // Pre-fetch scribe token and user taste context on mount
   useEffect(() => {
     supabase.functions.invoke("scribe-token").then(({ data }) => {
       if (data?.token) setScribeToken(data.token);
     }).catch(console.error);
-  }, []);
+
+    // Fetch user taste context for personalized conversations
+    if (user) {
+      Promise.all([
+        getLikedMovies(user.id),
+        supabase.from("profiles").select("favorite_genres, excluded_genres").eq("id", user.id).single(),
+      ]).then(([likedMovies, { data: profile }]) => {
+        setUserTasteContext({
+          likedMovies: likedMovies?.map((m: any) => ({ title: m.title, genres: m.genres })) || [],
+          favoriteGenres: profile?.favorite_genres || [],
+          excludedGenres: profile?.excluded_genres || [],
+        });
+      }).catch(console.error);
+    }
+  }, [user]);
 
   // ElevenLabs Scribe for cross-browser STT
   const scribe = useScribe({
