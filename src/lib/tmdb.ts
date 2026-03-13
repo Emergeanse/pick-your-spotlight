@@ -160,12 +160,29 @@ export async function getWatchProviders(id: number, mediaType: string): Promise<
   return fr.flatrate || [];
 }
 
-export async function getSurpriseRecommendation(): Promise<MovieDetail> {
-  const page = Math.floor(Math.random() * 5) + 1;
-  const data = await fetchFromTMDB("/movie/top_rated", { page: String(page) });
-  const results: Movie[] = data.results || [];
-  const pick = results[Math.floor(Math.random() * results.length)];
-  return getMovieDetails(pick.id, "movie");
+export async function getSurpriseRecommendation(excludeIds: number[] = []): Promise<MovieDetail> {
+  const excluded = new Set(excludeIds);
+
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const page = Math.floor(Math.random() * 5) + 1;
+    const data = await fetchFromTMDB("/movie/top_rated", { page: String(page) });
+    const results: Movie[] = (data.results || []).filter((m: Movie) => !excluded.has(m.id));
+
+    if (results.length > 0) {
+      const pick = results[Math.floor(Math.random() * results.length)];
+      return getMovieDetails(pick.id, "movie");
+    }
+  }
+
+  const fallbackData = await fetchFromTMDB("/movie/popular", { page: "1" });
+  const fallbackResults: Movie[] = (fallbackData.results || []).filter((m: Movie) => !excluded.has(m.id));
+  const fallbackPick = fallbackResults[0] || (fallbackData.results || [])[0];
+
+  if (!fallbackPick) {
+    throw new Error("No movie available for surprise recommendation");
+  }
+
+  return getMovieDetails(fallbackPick.id, "movie");
 }
 
 export async function getTrendingMovie(): Promise<MovieDetail> {

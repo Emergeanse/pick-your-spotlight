@@ -596,11 +596,10 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
                     size="lg"
                     className="rounded-full border border-border/30 text-foreground/50 hover:text-foreground hover:border-border/50 font-sans font-medium px-5 h-11 gap-2 text-sm transition-all active:scale-[0.97]"
                     onClick={() => {
-                      if (tonightPick) {
-                        setRejectedIds(prev => [...prev, tonightPick.id]);
-                      }
+                      const nextRejected = tonightPick ? [...rejectedIds, tonightPick.id] : rejectedIds;
+                      setRejectedIds(nextRejected);
                       setTonightPick(null);
-                      generateTonightPick();
+                      generateTonightPick(nextRejected);
                     }}
                     disabled={tonightLoading}
                   >
