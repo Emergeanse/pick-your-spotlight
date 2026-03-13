@@ -96,12 +96,19 @@ export async function getRecommendations(
   time: TimeAvailable,
   platformIds: number[] = [],
   excludeIds: number[] = [],
+  options: { excludedGenres?: string[]; minRating?: number; excludedPlatformIds?: number[] } = {},
 ): Promise<MovieDetail[]> {
   const moodGenres = moodToGenres[mood];
   const contextGenres = contextModifiers[context];
   
   const combined = moodGenres.filter(g => contextGenres.includes(g));
   const genres = combined.length > 0 ? combined : moodGenres.slice(0, 2);
+
+  // Build excluded genre IDs
+  const excludedGenreIds = (options.excludedGenres || []).map(n => genreNameToId[n]).filter(Boolean);
+  // Filter out excluded genres from selection
+  const filteredGenres = genres.filter(g => !excludedGenreIds.includes(g));
+  const finalGenres = filteredGenres.length > 0 ? filteredGenres : genres;
   
   const searchTypes: string[] = [];
   if (time === "episode") {
@@ -118,9 +125,9 @@ export async function getRecommendations(
     const endpoint = isTV ? "/discover/tv" : "/discover/movie";
     
     const params: Record<string, string> = {
-      with_genres: genres.join(","),
+      with_genres: finalGenres.join(","),
       sort_by: "popularity.desc",
-      "vote_average.gte": "6",
+      "vote_average.gte": String(Math.max(options.minRating || 0, 6)),
       "vote_count.gte": "100",
       page: String(Math.floor(Math.random() * 3) + 1),
     };
@@ -132,6 +139,10 @@ export async function getRecommendations(
     if (platformIds.length > 0) {
       params["with_watch_providers"] = platformIds.join("|");
       params["watch_region"] = "FR";
+    }
+
+    if (excludedGenreIds.length > 0) {
+      params["without_genres"] = excludedGenreIds.join(",");
     }
 
     try {
