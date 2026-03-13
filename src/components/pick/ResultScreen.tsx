@@ -14,7 +14,7 @@ import { toast } from "sonner";
 import { computeUserTasteVector, ensureMovieEmbedding } from "@/lib/taste-engine";
 import BrandHeader from "./BrandHeader";
 import PickCharacter from "./PickCharacter";
-import pickLogo from "@/assets/pick-logo.png";
+
 
 const IMG_BASE = "https://image.tmdb.org/t/p";
 
@@ -423,11 +423,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                     {/* Top row: Pick mascot + text + listen button */}
                     <div className="flex items-center gap-2.5 sm:gap-3 mb-3">
                       <div className="flex-shrink-0">
-                        <img
-                          src={pickLogo}
-                          alt="Pick"
-                          className="w-8 h-8 sm:w-10 sm:h-10 object-contain drop-shadow-md"
-                        />
+                        <PickCharacter mood="default" size="sm" animate={false} />
                       </div>
                       <p className="flex-1 min-w-0 text-foreground/60 text-[11px] sm:text-[12px] font-sans leading-relaxed">
                         Je peux te présenter ce film si tu veux
@@ -460,11 +456,19 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                     {/* Pourquoi ce film — expandable */}
                     <button
                       onClick={() => setWhyExpanded(prev => !prev)}
-                      className="w-full text-left group"
+                      className="w-full text-left group p-2 -m-2 rounded-lg hover:bg-primary/5 transition-colors"
                     >
                       <p className="text-[10px] uppercase tracking-widest text-primary/60 font-sans font-semibold mb-1.5 flex items-center gap-1.5">
                         Pourquoi ce film ?
-                        <ChevronDown className={`w-3 h-3 text-primary/40 transition-transform duration-200 ${whyExpanded ? "rotate-180" : ""}`} />
+                        <motion.span
+                          animate={{ rotate: whyExpanded ? 180 : 0 }}
+                          transition={{ duration: 0.2 }}
+                        >
+                          <ChevronDown className="w-3 h-3 text-primary/40" />
+                        </motion.span>
+                        {!whyExpanded && (
+                          <span className="text-[9px] normal-case tracking-normal text-primary/40 font-normal ml-auto">Tap pour voir</span>
+                        )}
                       </p>
                       <p className="text-foreground/70 text-[12px] sm:text-[13px] font-sans leading-relaxed">
                         {matchData.headline}
@@ -580,7 +584,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                     onClick={onStartCompanion}
                   >
                     <Tv className="w-4 h-4" />
-                    Pick m'accompagne
+                    Regarder avec Pick
                   </Button>
                 )}
 
