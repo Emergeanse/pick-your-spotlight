@@ -168,10 +168,6 @@ const Profile = () => {
           <p className="text-muted-foreground text-sm font-sans">{user.email}</p>
         </motion.div>
 
-        {/* Cinema DNA */}
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="mb-8">
-          <CinemaDNA userId={user.id} />
-        </motion.div>
 
         {/* Platforms */}
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="mb-8">
