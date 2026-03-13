@@ -8,7 +8,8 @@ export type ActionType =
   | "watched" 
   | "skipped" 
   | "opened" 
-  | "searched";
+  | "searched"
+  | "already_seen";
 
 interface InteractionContext {
   mood?: string;
