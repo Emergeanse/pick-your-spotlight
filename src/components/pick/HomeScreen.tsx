@@ -259,9 +259,9 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
             className="mb-6 md:mb-8"
           >
             {proactivePick && !proactiveDismissed ? (
-              <PickCharacter mood="default" message={proactiveMsg} size="md" animate speakable />
+              <PickCharacter mood="default" message={proactiveMsg} size="md" animate />
             ) : (
-              <PickCharacter mood="wave" showGreeting size="md" animate speakable />
+              <PickCharacter mood="wave" showGreeting size="md" animate />
             )}
           </motion.div>
 
