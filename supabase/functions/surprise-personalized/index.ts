@@ -156,11 +156,22 @@ Recommande UN film avec les scores détaillés.`;
     const searchData = await searchRes.json();
     const results = searchData.results || [];
 
-    if (results.length === 0) {
-      throw new Error("Movie not found on TMDB");
+    const excludedSet = new Set(normalizedExcludeIds);
+    let selectedMovie = results.find((r: any) => !excludedSet.has(r.id));
+
+    if (!selectedMovie) {
+      const fallbackPage = String(Math.floor(Math.random() * 5) + 1);
+      const fallbackUrl = `https://api.themoviedb.org/3/movie/top_rated?api_key=${TMDB_API_KEY}&language=fr-FR&page=${fallbackPage}`;
+      const fallbackRes = await fetch(fallbackUrl);
+      const fallbackData = await fallbackRes.json();
+      selectedMovie = (fallbackData.results || []).find((r: any) => !excludedSet.has(r.id));
     }
 
-    const movieDetail = await getMovieDetails(results[0].id);
+    if (!selectedMovie) {
+      throw new Error("No non-excluded movie found on TMDB");
+    }
+
+    const movieDetail = await getMovieDetails(selectedMovie.id);
 
     // Generate embedding for the recommended movie (fire & forget)
     if (SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) {
