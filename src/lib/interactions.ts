@@ -225,6 +225,10 @@ export async function getUserTasteProfile() {
     .filter((i: any) => i.action_type === "watched")
     .map((i: any) => i.tmdb_id);
 
+  const alreadySeenIds = allInteractions
+    .filter((i: any) => i.action_type === "already_seen")
+    .map((i: any) => i.tmdb_id);
+
   const likedIds = (likedMovies || []).map(m => m.tmdb_id);
 
   const topGenres = Object.entries(roundedGenreCounts)
@@ -261,7 +265,8 @@ export async function getUserTasteProfile() {
     likedIds,
     skippedIds,
     watchedIds,
-    excludeIds: [...new Set([...skippedIds, ...watchedIds, ...likedIds])],
+    alreadySeenIds,
+    excludeIds: [...new Set([...skippedIds, ...watchedIds, ...likedIds, ...alreadySeenIds])],
 
     // Preferences
     preferredPlatforms: profile?.preferred_platforms || [],
