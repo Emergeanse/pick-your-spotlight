@@ -631,7 +631,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                   }`}
                 >
                   <ThumbsDown className={`w-3 h-3 sm:w-3.5 sm:h-3.5 ${feedbackGiven === "bad" ? "fill-destructive" : ""}`} />
-                  Pas pour moi
+                  Autre suggestion
                 </button>
 
                 <button

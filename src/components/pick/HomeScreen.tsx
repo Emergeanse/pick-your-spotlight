@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Mic, SlidersHorizontal, Dices, Tv, ThumbsDown, Sparkles, Loader2, Zap, X, Bookmark } from "lucide-react";
+import { Mic, SlidersHorizontal, Dices, Tv, Sparkles, Loader2, Zap, X, Bookmark } from "lucide-react";
 import { getTrendingMovies, getBackdropUrl, getSurpriseRecommendation, getPosterUrl, getDisplayTitle, getWatchProviders } from "@/lib/tmdb";
 import { getLikedMovies } from "@/lib/liked-movies";
 import { getWatchlist } from "@/lib/watchlist";
@@ -91,6 +91,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
   const [userPlatformIds, setUserPlatformIds] = useState<number[]>([]);
   const [userGenres, setUserGenres] = useState<string[]>([]);
   const [showDNA, setShowDNA] = useState(false);
+  const [rejectedIds, setRejectedIds] = useState<number[]>([]);
   const { user } = useAuth();
 
   // Load user's preferred platforms and genres
@@ -208,7 +209,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
         if (liked.length >= 2) {
           const userTasteVector = await computeUserTasteVector(user.id);
           const { data, error } = await supabase.functions.invoke("surprise-personalized", {
-            body: { likedMovies: liked, userTasteVector, platformIds: userPlatformIds },
+            body: { likedMovies: liked, userTasteVector, platformIds: userPlatformIds, excludeIds: rejectedIds },
           });
           if (error) throw error;
           movie = data.movie as MovieDetail;
@@ -589,11 +590,14 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
                     Je regarde
                   </Button>
 
-                  <Button
+                   <Button
                     variant="ghost"
                     size="lg"
                     className="rounded-full border border-border/30 text-foreground/50 hover:text-foreground hover:border-border/50 font-sans font-medium px-5 h-11 gap-2 text-sm transition-all active:scale-[0.97]"
                     onClick={() => {
+                      if (tonightPick) {
+                        setRejectedIds(prev => [...prev, tonightPick.id]);
+                      }
                       setTonightPick(null);
                       generateTonightPick();
                     }}
@@ -602,9 +606,9 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
                     {tonightLoading ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
                     ) : (
-                      <ThumbsDown className="w-4 h-4" />
+                      <Dices className="w-4 h-4" />
                     )}
-                    Pas pour moi
+                    Autre suggestion
                   </Button>
                 </div>
               </motion.div>
