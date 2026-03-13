@@ -297,7 +297,7 @@ const Onboarding = () => {
                     type="text"
                     value={searchQuery}
                     onChange={e => setSearchQuery(e.target.value)}
-                    placeholder="Rechercher un film…"
+                    placeholder="Rechercher un film ou une série…"
                     className="w-full bg-card border border-border/30 rounded-xl px-10 py-2.5 text-sm font-sans text-foreground placeholder:text-muted-foreground/50 outline-none focus:border-primary/50 transition-colors"
                   />
                 </div>
