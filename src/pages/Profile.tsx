@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { ArrowLeft, Heart, Bookmark, Check, LogOut, Loader2 } from "lucide-react";
+import { ArrowLeft, Heart, Bookmark, Check, LogOut, Loader2, X, Ban } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/use-auth";
@@ -8,25 +8,22 @@ import { supabase } from "@/integrations/supabase/client";
 import { getLikedMovies } from "@/lib/liked-movies";
 import { getWatchlist } from "@/lib/watchlist";
 import { getPosterUrl } from "@/lib/tmdb";
-import CinemaDNA from "@/components/pick/CinemaDNA";
 
 const ALL_PLATFORMS = [
   { id: 8, label: "Netflix", logo: "https://image.tmdb.org/t/p/original/pbpMk2JmcoNnQwx5JGpXngfoWtp.jpg" },
-  { id: 337, label: "Disney+", logo: "https://image.tmdb.org/t/p/original/7rwgEs15tFwyR9NPQ5vpzxTj19Q.jpg" },
-  { id: 119, label: "Amazon Prime", logo: "https://image.tmdb.org/t/p/original/dQeAar5H991VYporEjUspolDarG.jpg" },
-  { id: 350, label: "Apple TV+", logo: "https://image.tmdb.org/t/p/original/6uhKBfmtzFqOcLousHwZuzcrScK.jpg" },
-  { id: 381, label: "Canal+", logo: "https://image.tmdb.org/t/p/original/dVMVBMOlOUPFfbkSKNnTGg3JX5b.jpg" },
-  { id: 56, label: "OCS", logo: "https://image.tmdb.org/t/p/original/3E0RkIEQrrGYazs63NMsn3XONT6.jpg" },
+  { id: 337, label: "Disney+", logo: "https://image.tmdb.org/t/p/original/97yvRBw1GzX7fXprcF80er19ot.jpg" },
+  { id: 119, label: "Amazon Prime", logo: "https://image.tmdb.org/t/p/original/pvske1MyAoymrs5bguRfVqYiM9a.jpg" },
+  { id: 350, label: "Apple TV+", logo: "https://image.tmdb.org/t/p/original/mcbz1LgtErU9p4UdbZ0rG6RTWHX.jpg" },
+  { id: 381, label: "Canal+", logo: "https://image.tmdb.org/t/p/original/geOzgeKZWpZC3lymAVEHVIk3X0q.jpg" },
   { id: 236, label: "Paramount+", logo: "https://image.tmdb.org/t/p/original/fi83B1ozBIOCEo7cWoevSYS0tXi.jpg" },
   { id: 1899, label: "Max", logo: "https://image.tmdb.org/t/p/original/6Q3YKUNA60A4DxOrPaUTDOE4BrU.jpg" },
-  { id: 35, label: "Rakuten TV", logo: "https://image.tmdb.org/t/p/original/bKy4Scd3WQ9GJshE1eXEYbX6nOb.jpg" },
-  { id: 68, label: "Microsoft Store", logo: "https://image.tmdb.org/t/p/original/shq88b09gTBYC4hA7K7MUL8Q4zP.jpg" },
-  { id: 192, label: "YouTube", logo: "https://image.tmdb.org/t/p/original/oIkQkEkwfmcG7IGpRR1NB8frZZM.jpg" },
-  { id: 10, label: "Google Play", logo: "https://image.tmdb.org/t/p/original/tbEdFQDwx5LEVr8WpSeXQSIirVq.jpg" },
-  { id: 234, label: "Crunchyroll", logo: "https://image.tmdb.org/t/p/original/8Gt1iClBlzTeQs8WQm8UrCoIxnQ.jpg" },
-  { id: 188, label: "YouTube Premium", logo: "https://image.tmdb.org/t/p/original/6IPjvnYl6WWkIwN158qBFXCr2Ne.jpg" },
-  { id: 2, label: "Apple TV", logo: "https://image.tmdb.org/t/p/original/9ghgSC0MA082EL6HLCW3GalykFD.jpg" },
-  { id: 1967, label: "Molotov TV", logo: "https://image.tmdb.org/t/p/original/fSiNKaG0KEvsNOIttexKJG9uqRx.jpg" },
+  { id: 35, label: "Rakuten TV", logo: "https://image.tmdb.org/t/p/original/bZvc9dXrXNly7cA0V4D9pR8yJwm.jpg" },
+  { id: 192, label: "YouTube", logo: "https://image.tmdb.org/t/p/original/pTnn5JwWr4p3pG8H6VrpiQo7Vs0.jpg" },
+  { id: 283, label: "Crunchyroll", logo: "https://image.tmdb.org/t/p/original/fzN5Jok5Ig1eJ7gyNGoMhnLSCfh.jpg" },
+  { id: 188, label: "YouTube Premium", logo: "https://image.tmdb.org/t/p/original/rMb93u1tBeErSYLv79zSTR07UdO.jpg" },
+  { id: 2, label: "Apple TV", logo: "https://image.tmdb.org/t/p/original/SPnB1qiCkYfirS2it3hZORwGVn.jpg" },
+  { id: 3, label: "Google Play", logo: "https://image.tmdb.org/t/p/original/8z7rC8uIDaTM91X0ZfkRf04ydj2.jpg" },
+  { id: 1967, label: "Molotov TV", logo: "https://image.tmdb.org/t/p/original/8qSG9LtUhBQIWy2Fr6fzeW7gBdd.jpg" },
 ];
 
 const ALL_GENRES = [
@@ -52,7 +49,9 @@ const Profile = () => {
   const [watchlist, setWatchlist] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState<Tab>("liked");
   const [selectedPlatforms, setSelectedPlatforms] = useState<number[]>([]);
+  const [excludedPlatforms, setExcludedPlatforms] = useState<number[]>([]);
   const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
+  const [excludedGenres, setExcludedGenres] = useState<string[]>([]);
   const [selectedEras, setSelectedEras] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
   const [profileLoading, setProfileLoading] = useState(true);
@@ -70,8 +69,9 @@ const Profile = () => {
         const { data } = await supabase.from("profiles").select("*").eq("id", user.id).single();
         setProfile(data);
         setSelectedPlatforms(data?.preferred_platforms || []);
+        setExcludedPlatforms((data as any)?.excluded_platforms || []);
         setSelectedGenres(data?.favorite_genres || []);
-        // Eras not yet persisted in DB — keep local only
+        setExcludedGenres((data as any)?.excluded_genres || []);
 
         const [liked, wl] = await Promise.all([
           getLikedMovies().catch(() => []),
@@ -89,12 +89,33 @@ const Profile = () => {
     loadData();
   }, [user, isReady, navigate]);
 
+  // Tri-state toggle: unselected → selected → excluded → unselected
   const togglePlatform = (id: number) => {
-    setSelectedPlatforms(prev => prev.includes(id) ? prev.filter(p => p !== id) : [...prev, id]);
+    if (selectedPlatforms.includes(id)) {
+      // selected → excluded
+      setSelectedPlatforms(prev => prev.filter(p => p !== id));
+      setExcludedPlatforms(prev => [...prev, id]);
+    } else if (excludedPlatforms.includes(id)) {
+      // excluded → unselected
+      setExcludedPlatforms(prev => prev.filter(p => p !== id));
+    } else {
+      // unselected → selected
+      setSelectedPlatforms(prev => [...prev, id]);
+    }
   };
 
   const toggleGenre = (g: string) => {
-    setSelectedGenres(prev => prev.includes(g) ? prev.filter(x => x !== g) : [...prev, g]);
+    if (selectedGenres.includes(g)) {
+      // selected → excluded
+      setSelectedGenres(prev => prev.filter(x => x !== g));
+      setExcludedGenres(prev => [...prev, g]);
+    } else if (excludedGenres.includes(g)) {
+      // excluded → unselected
+      setExcludedGenres(prev => prev.filter(x => x !== g));
+    } else {
+      // unselected → selected
+      setSelectedGenres(prev => [...prev, g]);
+    }
   };
 
   const toggleEra = (id: string) => {
@@ -108,7 +129,9 @@ const Profile = () => {
       await supabase.from("profiles").update({
         preferred_platforms: selectedPlatforms,
         favorite_genres: selectedGenres,
-      }).eq("id", user.id);
+        excluded_genres: excludedGenres,
+        excluded_platforms: excludedPlatforms,
+      } as any).eq("id", user.id);
     } catch (e) {
       console.error(e);
     } finally {
@@ -118,8 +141,10 @@ const Profile = () => {
 
   // Detect unsaved changes
   const hasChanges = profile && (
-    JSON.stringify(selectedPlatforms.sort()) !== JSON.stringify((profile.preferred_platforms || []).sort()) ||
-    JSON.stringify(selectedGenres.sort()) !== JSON.stringify((profile.favorite_genres || []).sort())
+    JSON.stringify([...selectedPlatforms].sort()) !== JSON.stringify([...(profile.preferred_platforms || [])].sort()) ||
+    JSON.stringify([...selectedGenres].sort()) !== JSON.stringify([...(profile.favorite_genres || [])].sort()) ||
+    JSON.stringify([...excludedPlatforms].sort()) !== JSON.stringify([...((profile as any).excluded_platforms || [])].sort()) ||
+    JSON.stringify([...excludedGenres].sort()) !== JSON.stringify([...((profile as any).excluded_genres || [])].sort())
   );
 
   if (!isReady || profileLoading) {
@@ -168,19 +193,28 @@ const Profile = () => {
           <p className="text-muted-foreground text-sm font-sans">{user.email}</p>
         </motion.div>
 
-
         {/* Platforms */}
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="mb-8">
-          <h2 className="text-lg font-serif mb-3">Tes plateformes</h2>
+          <div className="flex items-center justify-between mb-1">
+            <h2 className="text-lg font-serif">Tes plateformes</h2>
+          </div>
+          <p className="text-[11px] text-muted-foreground font-sans mb-3">
+            Clique une fois pour <span className="text-primary font-medium">sélectionner</span>, deux fois pour <span className="text-destructive font-medium">exclure</span>
+          </p>
           <div className="grid grid-cols-4 gap-2">
             {ALL_PLATFORMS.map((platform) => {
               const isSelected = selectedPlatforms.includes(platform.id);
+              const isExcluded = excludedPlatforms.includes(platform.id);
               return (
                 <button
                   key={platform.id}
                   onClick={() => togglePlatform(platform.id)}
                   className={`relative bg-card rounded-xl p-2.5 flex flex-col items-center gap-1.5 transition-all duration-200 hover:scale-[1.02] cursor-pointer border ${
-                    isSelected ? "border-primary neon-glow" : "border-transparent hover:border-primary/30"
+                    isSelected
+                      ? "border-primary neon-glow"
+                      : isExcluded
+                        ? "border-destructive/40 opacity-60"
+                        : "border-transparent hover:border-primary/30"
                   }`}
                 >
                   {isSelected && (
@@ -188,7 +222,12 @@ const Profile = () => {
                       <Check className="w-2.5 h-2.5 text-primary-foreground" />
                     </div>
                   )}
-                  <img src={platform.logo} alt={platform.label} className="w-8 h-8 rounded-lg object-cover" />
+                  {isExcluded && (
+                    <div className="absolute top-1 right-1 w-4 h-4 rounded-full bg-destructive flex items-center justify-center">
+                      <Ban className="w-2.5 h-2.5 text-destructive-foreground" />
+                    </div>
+                  )}
+                  <img src={platform.logo} alt={platform.label} className={`w-8 h-8 rounded-lg object-cover ${isExcluded ? "grayscale" : ""}`} />
                   <span className="font-sans text-[10px] tracking-wide text-foreground/90 leading-tight text-center">{platform.label}</span>
                 </button>
               );
@@ -198,20 +237,29 @@ const Profile = () => {
 
         {/* Genres */}
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="mb-8">
-          <h2 className="text-lg font-serif mb-3">Tes genres préférés</h2>
+          <div className="flex items-center justify-between mb-1">
+            <h2 className="text-lg font-serif">Tes genres</h2>
+          </div>
+          <p className="text-[11px] text-muted-foreground font-sans mb-3">
+            Clique une fois pour <span className="text-primary font-medium">aimer</span>, deux fois pour <span className="text-destructive font-medium">exclure</span>
+          </p>
           <div className="flex flex-wrap gap-2">
             {ALL_GENRES.map((genre) => {
               const isSelected = selectedGenres.includes(genre);
+              const isExcluded = excludedGenres.includes(genre);
               return (
                 <button
                   key={genre}
                   onClick={() => toggleGenre(genre)}
-                  className={`px-3 py-1.5 rounded-full text-xs font-sans font-medium transition-all duration-200 cursor-pointer border ${
+                  className={`px-3 py-1.5 rounded-full text-xs font-sans font-medium transition-all duration-200 cursor-pointer border flex items-center gap-1.5 ${
                     isSelected
                       ? "bg-primary/15 border-primary/30 text-primary"
-                      : "bg-card border-transparent text-foreground/60 hover:border-primary/20 hover:text-foreground"
+                      : isExcluded
+                        ? "bg-destructive/10 border-destructive/30 text-destructive line-through"
+                        : "bg-card border-transparent text-foreground/60 hover:border-primary/20 hover:text-foreground"
                   }`}
                 >
+                  {isExcluded && <Ban className="w-3 h-3" />}
                   {genre}
                 </button>
               );
