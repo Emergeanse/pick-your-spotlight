@@ -1,9 +1,11 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Mic, MicOff, X, Send, Loader2, Sparkles, Check } from "lucide-react";
+import { Mic, MicOff, X, Send, Loader2, Sparkles, Check, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useScribe, CommitStrategy } from "@elevenlabs/react";
+import { useAuth } from "@/hooks/use-auth";
+import { getLikedMovies } from "@/lib/liked-movies";
 import type { MovieDetail } from "@/lib/tmdb";
 import PickCharacter from "./PickCharacter";
 
