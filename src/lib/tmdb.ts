@@ -147,8 +147,8 @@ export async function getRecommendations(
       page: String(Math.floor(Math.random() * 3) + 1),
     };
 
-    if (!isTV && time === "short") {
-      params["with_runtime.lte"] = "90";
+    if (!isTV && (time === "short" || maxRuntime)) {
+      params["with_runtime.lte"] = maxRuntime || "90";
     }
 
     if (platformIds.length > 0) {
