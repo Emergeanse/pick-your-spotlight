@@ -201,15 +201,6 @@ const Landing = () => {
             <img src={pickWave} alt="Pick" className="w-24 h-24 md:w-32 md:h-32 object-contain drop-shadow-xl pick-float" />
           </motion.div>
 
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/8 border border-primary/15 mb-6"
-          >
-            <Sparkles className="w-3 h-3 text-primary/60" />
-            <span className="text-primary/60 text-[11px] font-sans font-medium">Propulsé par l'IA</span>
-          </motion.div>
 
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
