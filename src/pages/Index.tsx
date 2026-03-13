@@ -388,6 +388,15 @@ const Index = () => {
       </AnimatePresence>
 
       <AnimatePresence>
+        {showCinemaIntro && results[currentResultIndex] && (
+          <CinemaIntro
+            movie={results[currentResultIndex]}
+            onComplete={handleCinemaIntroComplete}
+          />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
         {showCompanion && results[currentResultIndex] && (
           <CompanionMode
             movie={results[currentResultIndex]}
