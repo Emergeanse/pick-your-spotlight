@@ -21,7 +21,7 @@ serve(async (req) => {
   }
 
   try {
-    const { likedMovies, tasteProfile, userTasteVector } = await req.json();
+    const { likedMovies, tasteProfile, userTasteVector, platformIds } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
@@ -98,6 +98,7 @@ PROFIL ENRICHI :
 - Micro-genres favoris : ${tasteClusters.join(", ") || "non déterminés"}
 ${skipInsights ? `- Insight skip : ${skipInsights}` : ""}
 ${session.mood ? `- Session actuelle : humeur "${session.mood}", contexte "${session.context || "?"}", temps "${session.time || "?"}"` : ""}
+${platformIds && platformIds.length > 0 ? `- IMPORTANT : L'utilisateur a UNIQUEMENT accès aux plateformes de streaming suivantes (IDs TMDB: ${platformIds.join(", ")}). Le film recommandé DOIT être disponible sur l'une de ces plateformes en France.` : ""}
 ${embeddingSection}
 
 RÈGLES :

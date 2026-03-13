@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Mic, SlidersHorizontal, Dices, Tv, ThumbsDown, Sparkles, Loader2, Zap, X } from "lucide-react";
+import { Mic, SlidersHorizontal, Dices, Tv, ThumbsDown, Sparkles, Loader2, Zap, X, Bookmark } from "lucide-react";
 import { getTrendingMovies, getBackdropUrl, getSurpriseRecommendation, getPosterUrl, getDisplayTitle, getWatchProviders } from "@/lib/tmdb";
 import { getLikedMovies } from "@/lib/liked-movies";
+import { getWatchlist } from "@/lib/watchlist";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { computeUserTasteVector } from "@/lib/taste-engine";
@@ -55,7 +56,22 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
   const [proactivePick, setProactivePick] = useState<MovieDetail | null>(null);
   const [proactiveMsg] = useState(() => PROACTIVE_MESSAGES[Math.floor(Math.random() * PROACTIVE_MESSAGES.length)]);
   const [proactiveDismissed, setProactiveDismissed] = useState(false);
+  const [showWatchlist, setShowWatchlist] = useState(false);
+  const [watchlistItems, setWatchlistItems] = useState<any[]>([]);
+  const [watchlistLoading, setWatchlistLoading] = useState(false);
+  const [userPlatformIds, setUserPlatformIds] = useState<number[]>([]);
   const { user } = useAuth();
+
+  // Load user's preferred platforms
+  useEffect(() => {
+    if (!user) return;
+    supabase.from("profiles").select("preferred_platforms").eq("id", user.id).single()
+      .then(({ data }) => {
+        if (data?.preferred_platforms) {
+          setUserPlatformIds(data.preferred_platforms);
+        }
+      });
+  }, [user]);
 
   // Proactive recommendation — silently fetch for users with taste data
   useEffect(() => {
@@ -67,7 +83,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
         if (liked.length < 3) return; // Need enough taste data
         const userTasteVector = await computeUserTasteVector(user.id);
         const { data, error } = await supabase.functions.invoke("surprise-personalized", {
-          body: { likedMovies: liked, userTasteVector },
+          body: { likedMovies: liked, userTasteVector, platformIds: userPlatformIds },
         });
         if (error || cancelled) return;
         setProactivePick(data.movie as MovieDetail);
@@ -115,7 +131,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
         if (liked.length >= 2) {
           const userTasteVector = await computeUserTasteVector(user.id);
           const { data, error } = await supabase.functions.invoke("surprise-personalized", {
-            body: { likedMovies: liked, userTasteVector },
+            body: { likedMovies: liked, userTasteVector, platformIds: userPlatformIds },
           });
           if (error) throw error;
           movie = data.movie as MovieDetail;
@@ -162,7 +178,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
         if (liked.length >= 2) {
           const userTasteVector = await computeUserTasteVector(user.id);
           const { data, error } = await supabase.functions.invoke("surprise-personalized", {
-            body: { likedMovies: liked, userTasteVector },
+            body: { likedMovies: liked, userTasteVector, platformIds: userPlatformIds },
           });
           if (error) throw error;
           movie = data.movie as MovieDetail;
@@ -200,7 +216,20 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
 
   return (
     <div className="relative w-full h-full overflow-hidden">
-      <BrandHeader showDiscoveryToggle onToggleDiscovery={() => setShowDiscovery(v => !v)} discoveryOpen={showDiscovery} />
+      <BrandHeader
+        showDiscoveryToggle
+        onToggleDiscovery={() => setShowDiscovery(v => !v)}
+        discoveryOpen={showDiscovery}
+        onOpenWatchlist={async () => {
+          setShowWatchlist(true);
+          setWatchlistLoading(true);
+          try {
+            const items = await getWatchlist();
+            setWatchlistItems(items);
+          } catch { setWatchlistItems([]); }
+          finally { setWatchlistLoading(false); }
+        }}
+      />
 
       {/* Background slideshow */}
       {bgImages.map((bg, i) => (
@@ -589,6 +618,89 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
               </motion.div>
             </div>
           </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Watchlist Sheet */}
+      <AnimatePresence>
+        {showWatchlist && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 z-50 bg-background/60 backdrop-blur-sm"
+              onClick={() => setShowWatchlist(false)}
+            />
+            <motion.div
+              initial={{ x: "100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "100%" }}
+              transition={{ type: "spring", damping: 28, stiffness: 300 }}
+              className="absolute top-0 right-0 bottom-0 z-50 w-full max-w-sm bg-card border-l border-border/20 overflow-y-auto"
+            >
+              <div className="p-5 pt-[calc(1rem+env(safe-area-inset-top))]">
+                <div className="flex items-center justify-between mb-5">
+                  <h2 className="text-lg font-serif text-foreground">Ma watchlist</h2>
+                  <button
+                    onClick={() => setShowWatchlist(false)}
+                    className="text-foreground/40 hover:text-foreground transition-colors"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                {watchlistLoading ? (
+                  <div className="flex items-center justify-center py-12">
+                    <Loader2 className="w-5 h-5 animate-spin text-primary/60" />
+                  </div>
+                ) : watchlistItems.length === 0 ? (
+                  <div className="text-center py-12">
+                    <Bookmark className="w-8 h-8 text-foreground/20 mx-auto mb-3" />
+                    <p className="text-foreground/40 text-sm font-sans">Aucun film sauvegardé</p>
+                    <p className="text-foreground/25 text-xs font-sans mt-1">Sauvegarde des films pour les retrouver ici</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {watchlistItems.map((item) => (
+                      <motion.button
+                        key={item.id}
+                        initial={{ opacity: 0, y: 5 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        onClick={async () => {
+                          setShowWatchlist(false);
+                          try {
+                            const { getMovieDetails } = await import("@/lib/tmdb");
+                            const movie = await getMovieDetails(item.tmdb_id, item.media_type || "movie");
+                            onMovieSelect(movie);
+                          } catch (e) { console.error(e); }
+                        }}
+                        className="flex items-center gap-3 w-full text-left p-2 rounded-xl hover:bg-foreground/[0.04] transition-colors group"
+                      >
+                        {item.poster_path ? (
+                          <img
+                            src={`https://image.tmdb.org/t/p/w185${item.poster_path}`}
+                            alt={item.title}
+                            className="w-12 h-18 rounded-lg object-cover border border-border/20 shrink-0"
+                          />
+                        ) : (
+                          <div className="w-12 h-18 rounded-lg bg-foreground/5 shrink-0" />
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-sans font-medium text-foreground line-clamp-1 group-hover:text-primary transition-colors">
+                            {item.title}
+                          </p>
+                          <p className="text-[11px] text-foreground/40 font-sans capitalize">
+                            {item.media_type === "tv" ? "Série" : "Film"}
+                          </p>
+                        </div>
+                      </motion.button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </>
         )}
       </AnimatePresence>
     </div>

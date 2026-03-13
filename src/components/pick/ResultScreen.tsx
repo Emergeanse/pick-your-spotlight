@@ -666,15 +666,41 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                   transition={{ delay: 1.2, duration: 0.4 }}
                   className="pt-3"
                 >
-                  <PickCharacter mood="default" message="Alors, ça te tente ? Sinon j'ai d'autres idées." size="sm" animate={false} />
+                  <PickCharacter mood="default" message="Alors, ça te tente ? Sinon dis-moi ce que tu veux." size="sm" animate={false} />
 
-                  <div className="flex flex-wrap gap-1.5 mt-3 ml-1">
+                  {/* Free-text input to chat with Pick */}
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      const input = e.currentTarget.elements.namedItem("refineInput") as HTMLInputElement;
+                      const msg = input?.value?.trim();
+                      if (msg) {
+                        onRefineWithMessage?.(msg);
+                        input.value = "";
+                      }
+                    }}
+                    className="mt-3 ml-1 flex items-center gap-2 max-w-md"
+                  >
+                    <input
+                      name="refineInput"
+                      type="text"
+                      placeholder="Dis à Pick ce que tu veux…"
+                      className="flex-1 px-4 py-2.5 rounded-full bg-foreground/[0.05] border border-border/30 text-foreground text-[13px] font-sans placeholder:text-foreground/30 focus:outline-none focus:border-primary/40 focus:bg-foreground/[0.08] transition-all"
+                    />
+                    <button
+                      type="submit"
+                      className="flex-shrink-0 w-9 h-9 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center text-primary hover:bg-primary/30 transition-all active:scale-95"
+                    >
+                      <Send className="w-4 h-4" />
+                    </button>
+                  </form>
+
+                  <div className="flex flex-wrap gap-1.5 mt-2.5 ml-1">
                     {[
                       { label: "Plus intense", message: "Je veux quelque chose de plus intense" },
                       { label: "Plus émouvant", message: "Je veux quelque chose de plus émouvant et touchant" },
                       { label: "Plus court", message: "Je préfère un film plus court" },
                       { label: "Plus drôle", message: "Je veux un truc plus drôle et léger" },
-                      { label: "Autre suggestion", message: "Montre-moi une autre suggestion dans le même style" },
                     ].map((chip, i) => (
                       <motion.button
                         key={chip.label}
@@ -682,7 +708,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 1.4 + i * 0.06 }}
                         onClick={() => onRefineWithMessage?.(chip.message)}
-                        className="px-3.5 py-2 rounded-full bg-foreground/[0.04] border border-border/25 text-foreground/50 hover:text-primary hover:border-primary/30 hover:bg-primary/5 text-[12px] font-sans transition-all active:scale-95"
+                        className="px-3 py-1.5 rounded-full bg-foreground/[0.04] border border-border/25 text-foreground/50 hover:text-primary hover:border-primary/30 hover:bg-primary/5 text-[11px] font-sans transition-all active:scale-95"
                       >
                         {chip.label}
                       </motion.button>
