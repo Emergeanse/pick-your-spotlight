@@ -46,7 +46,6 @@ const stagger = {
   visible: { transition: { staggerChildren: 0.1 } },
 };
 
-// Messages qui défilent pour montrer les capacités de Pick
 const SCROLLING_MESSAGES = [
   "Un thriller sous-estimé des années 2000",
   "Une série aussi addictive que Breaking Bad",
@@ -55,7 +54,6 @@ const SCROLLING_MESSAGES = [
   "Un film qui retourne le cerveau",
 ];
 
-// Composant pour les messages défilants
 const ScrollingRequests = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
 
@@ -68,7 +66,6 @@ const ScrollingRequests = () => {
 
   return (
     <div className="flex flex-col items-center gap-3">
-      {/* Message utilisateur qui change */}
       <div className="self-end overflow-hidden">
         <AnimatePresence mode="wait">
           <motion.div
@@ -86,7 +83,6 @@ const ScrollingRequests = () => {
         </AnimatePresence>
       </div>
 
-      {/* Réponse fixe de Pick */}
       <div className="self-start flex items-end gap-2">
         <img src={pickDefault} alt="Pick" className="w-7 h-7 object-contain flex-shrink-0" />
         <div className="px-4 py-2.5 rounded-2xl rounded-bl-md bg-card/60 border border-border/20">
@@ -94,7 +90,6 @@ const ScrollingRequests = () => {
         </div>
       </div>
 
-      {/* Indicateurs de progression */}
       <div className="flex gap-1.5 mt-1">
         {SCROLLING_MESSAGES.map((_, index) => (
           <motion.div
@@ -112,19 +107,46 @@ const ScrollingRequests = () => {
   );
 };
 
+// Poster columns for cinematic background
+const PosterColumn = ({ posters, reverse = false, className = "" }: { posters: string[]; reverse?: boolean; className?: string }) => {
+  // Double the posters for seamless loop
+  const doubled = [...posters, ...posters];
+  return (
+    <div className={`flex flex-col gap-2 overflow-hidden ${className}`}>
+      <div className={reverse ? "poster-scroll-reverse" : "poster-scroll"}>
+        <div className="flex flex-col gap-2">
+          {doubled.map((url, i) => (
+            <img
+              key={i}
+              src={url}
+              alt=""
+              className="w-full aspect-[2/3] object-cover rounded-lg"
+              loading="lazy"
+            />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const Landing = () => {
   const navigate = useNavigate();
   const heroRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
   const heroOpacity = useTransform(scrollYProgress, [0, 1], [1, 0]);
-  const heroScale = useTransform(scrollYProgress, [0, 1], [1, 1.1]);
+
+  // Split posters into columns
+  const col1 = POSTER_URLS.slice(0, 4);
+  const col2 = POSTER_URLS.slice(4, 8);
+  const col3 = POSTER_URLS.slice(8, 12);
 
   return (
     <div className="min-h-screen bg-background text-foreground overflow-x-hidden">
       {/* ── NAV ── */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-background/60 backdrop-blur-xl border-b border-border/10">
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border/8">
         <div className="max-w-6xl mx-auto flex items-center justify-between px-5 h-14">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2.5">
             <img src={pickLogo} alt="Pick" className="w-6 h-6 object-contain invert brightness-200" />
             <span className="font-serif text-xl tracking-wide">Pick</span>
           </div>
@@ -132,17 +154,16 @@ const Landing = () => {
             <Button
               variant="ghost"
               size="sm"
-              className="text-foreground/60 hover:text-foreground font-sans text-sm"
+              className="text-foreground/50 hover:text-foreground font-sans text-sm"
               onClick={() => navigate("/auth")}
             >
               Connexion
             </Button>
             <Button
               size="sm"
-              className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90 font-sans text-sm px-4 neon-glow"
+              className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90 font-sans text-sm px-5 neon-glow transition-all active:scale-[0.97]"
               onClick={() => navigate("/app")}
             >
-              <Clapperboard className="w-3.5 h-3.5 mr-1.5" />
               Essayer Pick
             </Button>
           </div>
@@ -151,28 +172,34 @@ const Landing = () => {
 
       {/* ── HERO ── */}
       <section ref={heroRef} className="relative min-h-screen flex items-center justify-center overflow-hidden">
-        {/* Poster grid background */}
-        <motion.div style={{ scale: heroScale }} className="absolute inset-0">
-          <div className="absolute inset-0 grid grid-cols-4 md:grid-cols-6 gap-1 opacity-[0.08]">
-            {POSTER_URLS.map((url, i) => (
-              <motion.img
-                key={i}
-                src={url}
-                alt=""
-                className="w-full aspect-[2/3] object-cover"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: i * 0.08, duration: 0.6 }}
-              />
-            ))}
+        {/* Scrolling poster columns background */}
+        <div className="absolute inset-0 flex justify-center gap-2 opacity-[0.15]">
+          <div className="hidden md:flex gap-2 w-full max-w-[1400px] px-4">
+            <PosterColumn posters={col1} className="w-1/5 -mt-20" />
+            <PosterColumn posters={col2} reverse className="w-1/5 mt-10" />
+            <PosterColumn posters={col3} className="w-1/5 -mt-32 hidden lg:flex" />
+            <PosterColumn posters={[...col1].reverse()} reverse className="w-1/5 mt-5" />
+            <PosterColumn posters={[...col2].reverse()} className="w-1/5 -mt-16 hidden lg:flex" />
           </div>
-          <div className="absolute inset-0 bg-gradient-to-b from-background via-background/80 to-background" />
-          <div className="absolute inset-0 bg-gradient-to-r from-background via-transparent to-background" />
-        </motion.div>
+          {/* Mobile: fewer columns */}
+          <div className="flex md:hidden gap-2 w-full px-2">
+            <PosterColumn posters={col1} className="w-1/3 -mt-10" />
+            <PosterColumn posters={col2} reverse className="w-1/3 mt-8" />
+            <PosterColumn posters={col3} className="w-1/3 -mt-20" />
+          </div>
+        </div>
 
-        {/* Radial glow */}
+        {/* Cinematic overlays */}
+        <div className="absolute inset-0 bg-gradient-to-b from-background via-background/70 to-background" />
+        <div className="absolute inset-0 bg-gradient-to-r from-background via-transparent to-background" />
+        <div className="absolute inset-0 hero-cinematic" />
+
+        {/* Radial glow - gold + purple */}
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div className="w-[600px] h-[600px] rounded-full bg-primary/5 blur-[120px]" />
+          <div className="w-[500px] h-[500px] rounded-full bg-primary/6 blur-[120px]" />
+        </div>
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none translate-x-32 translate-y-20">
+          <div className="w-[300px] h-[300px] rounded-full bg-gold/4 blur-[100px]" />
         </div>
 
         <motion.div
@@ -186,7 +213,6 @@ const Landing = () => {
             transition={{ duration: 0.6, delay: 0.1, type: "spring", stiffness: 200 }}
             className="mb-6 flex flex-col items-center"
           >
-            {/* Speech bubble */}
             <motion.div
               initial={{ opacity: 0, y: 8, scale: 0.9 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -201,27 +227,44 @@ const Landing = () => {
             <img src={pickWave} alt="Pick" className="w-24 h-24 md:w-32 md:h-32 object-contain drop-shadow-xl pick-float" />
           </motion.div>
 
-
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.3 }}
-            className="text-4xl md:text-6xl lg:text-7xl font-serif leading-[1.05] mb-5"
+            className="text-5xl md:text-7xl lg:text-8xl font-serif leading-[1.0] mb-5"
           >
             Le bon film.{" "}
-            <span className="text-primary italic">Ce soir.</span>
+            <span className="text-gold italic">Ce soir.</span>
           </motion.h1>
 
           <motion.p
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.5 }}
-            className="text-foreground/50 text-base md:text-lg font-sans font-light max-w-md mx-auto mb-8 leading-relaxed"
+            className="text-foreground/45 text-base md:text-lg font-sans font-light max-w-md mx-auto mb-6 leading-relaxed"
           >
             Dis ton envie. Pick trouve ton film.
           </motion.p>
 
-          {/* Mini conversation avec messages défilants */}
+          {/* Platform logos inline in hero */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.6, delay: 0.55 }}
+            className="flex items-center justify-center gap-3 mb-8"
+          >
+            {PLATFORM_LOGOS.slice(0, 5).map((p) => (
+              <div
+                key={p.name}
+                className="w-8 h-8 md:w-9 md:h-9 rounded-lg overflow-hidden border border-border/10 opacity-50 hover:opacity-80 transition-opacity"
+              >
+                <img src={p.logo} alt={p.name} className="w-full h-full object-cover" />
+              </div>
+            ))}
+            <span className="text-foreground/25 text-xs font-sans ml-1">+2</span>
+          </motion.div>
+
+          {/* Mini conversation */}
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -257,7 +300,7 @@ const Landing = () => {
               </Button>
             </div>
 
-            <span className="text-foreground/40 text-xs font-sans font-medium tracking-wide">
+            <span className="text-foreground/30 text-xs font-sans font-medium tracking-wide">
               Gratuit — aucune inscription
             </span>
           </motion.div>
@@ -294,7 +337,7 @@ const Landing = () => {
             className="text-center mb-16"
           >
             <h2 className="text-3xl md:text-5xl font-serif mb-4">
-              Rencontre <span className="text-primary italic">Pick</span>
+              Rencontre <span className="text-gold italic">Pick</span>
             </h2>
             <p className="text-foreground/40 font-sans text-sm md:text-base max-w-lg mx-auto">
               Un cinéphile passionné avec béret et lunettes rondes, 
@@ -302,7 +345,6 @@ const Landing = () => {
             </p>
           </motion.div>
 
-          {/* Pick showcase — 3 moods */}
           <motion.div
             variants={stagger}
             initial="hidden"
@@ -334,14 +376,14 @@ const Landing = () => {
                 key={item.mood}
                 variants={fadeUp}
                 custom={i}
-                className="text-center p-6 md:p-8 rounded-2xl bg-card/40 border border-border/15 hover:border-primary/20 transition-all duration-300"
+                className="text-center p-6 md:p-8 rounded-2xl bg-card/40 border border-border/15 hover:border-gold/20 transition-all duration-300"
               >
                 <img
                   src={item.img}
                   alt={item.mood}
                   className="w-20 h-20 md:w-24 md:h-24 object-contain mx-auto mb-4 drop-shadow-lg"
                 />
-                <span className="text-[10px] uppercase tracking-widest text-primary/60 font-sans font-semibold">
+                <span className="text-[10px] uppercase tracking-widest text-gold/60 font-sans font-semibold">
                   {item.mood}
                 </span>
                 <h3 className="text-lg font-serif mt-1 mb-2">{item.title}</h3>
@@ -431,7 +473,6 @@ const Landing = () => {
             viewport={{ once: true, margin: "-100px" }}
             className="flex flex-col md:flex-row items-center gap-10 md:gap-16"
           >
-            {/* Pick mascot with film reel */}
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               whileInView={{ opacity: 1, scale: 1 }}
@@ -441,24 +482,22 @@ const Landing = () => {
             >
               <div className="relative">
                 <img src={pickDefault} alt="Pick" className="w-32 h-32 md:w-40 md:h-40 object-contain drop-shadow-xl pick-float" />
-                {/* Speech bubble */}
-                <div className="absolute -top-4 -right-4 md:-right-8 px-3 py-2 rounded-xl bg-primary/15 border border-primary/25 backdrop-blur-sm">
-                  <Volume2 className="w-4 h-4 text-primary" />
+                <div className="absolute -top-4 -right-4 md:-right-8 px-3 py-2 rounded-xl bg-gold/15 border border-gold/25 backdrop-blur-sm">
+                  <Volume2 className="w-4 h-4 text-gold" />
                 </div>
               </div>
             </motion.div>
 
-            {/* Text */}
             <div className="text-center md:text-left">
               <h2 className="text-3xl md:text-4xl font-serif mb-4">
-                Pick peut te <span className="text-primary italic">raconter</span> le film
+                Pick peut te <span className="text-gold italic">raconter</span> le film
               </h2>
               <p className="text-foreground/45 font-sans text-sm md:text-base leading-relaxed mb-4">
                 Écoute Pick te présenter le film à voix haute. Il t'explique pourquoi c'est le bon choix pour toi, 
                 avec sa voix unique. Comme un ami cinéphile qui partage ses coups de cœur.
               </p>
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary/10 border border-primary/25">
-                <Volume2 className="w-4 h-4 text-primary" />
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gold/10 border border-gold/25">
+                <Volume2 className="w-4 h-4 text-gold" />
                 <span className="text-foreground/60 text-sm font-sans">« Je peux te présenter ce film si tu veux »</span>
               </div>
             </div>
@@ -544,7 +583,7 @@ const Landing = () => {
       {/* ── PLATFORMS ── */}
       <section className="py-24 md:py-32 px-5 relative">
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div className="w-[400px] h-[300px] rounded-full bg-primary/3 blur-[100px]" />
+          <div className="w-[400px] h-[300px] rounded-full bg-gold/3 blur-[100px]" />
         </div>
 
         <div className="max-w-4xl mx-auto relative z-10 text-center">
@@ -555,7 +594,7 @@ const Landing = () => {
             viewport={{ once: true, margin: "-100px" }}
           >
             <h2 className="text-3xl md:text-5xl font-serif mb-3">
-              Tous tes services de streaming
+              Tous tes <span className="text-gold italic">services</span> de streaming
             </h2>
             <p className="text-foreground/40 font-sans text-sm md:text-base max-w-lg mx-auto mb-12">
               Pick sait où regarder chaque film. Netflix, Disney+, Amazon… il te dit tout.
@@ -567,7 +606,7 @@ const Landing = () => {
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true, margin: "-60px" }}
-            className="flex items-center justify-center gap-4 md:gap-6 flex-wrap"
+            className="flex items-center justify-center gap-5 md:gap-8 flex-wrap"
           >
             {PLATFORM_LOGOS.map((p, i) => (
               <motion.div
@@ -576,7 +615,7 @@ const Landing = () => {
                 custom={i}
                 className="flex flex-col items-center gap-2"
               >
-                <div className="w-14 h-14 md:w-16 md:h-16 rounded-2xl overflow-hidden border border-border/15 hover:border-primary/25 transition-all duration-300 hover:scale-105">
+                <div className="w-16 h-16 md:w-20 md:h-20 rounded-2xl overflow-hidden border border-border/15 hover:border-gold/30 transition-all duration-300 hover:scale-105 shadow-lg">
                   <img src={p.logo} alt={p.name} className="w-full h-full object-cover" />
                 </div>
                 <span className="text-[10px] font-sans text-foreground/30">{p.name}</span>
@@ -589,6 +628,7 @@ const Landing = () => {
       {/* ── FINAL CTA ── */}
       <section className="py-24 md:py-32 px-5 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-primary/3 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-transparent via-gold/2 to-transparent" />
 
         <motion.div
           variants={fadeUp}
@@ -597,7 +637,6 @@ const Landing = () => {
           viewport={{ once: true, margin: "-100px" }}
           className="max-w-3xl mx-auto text-center relative z-10"
         >
-          {/* Pick thinking */}
           <motion.img
             src={pickThink}
             alt="Pick réfléchit"
@@ -609,7 +648,7 @@ const Landing = () => {
 
           <h2 className="text-3xl md:text-5xl lg:text-6xl font-serif mb-4">
             Arrête de scroller.{" "}
-            <span className="text-primary italic">Regarde.</span>
+            <span className="text-gold italic">Regarde.</span>
           </h2>
           <p className="text-foreground/40 font-sans text-sm md:text-base max-w-md mx-auto mb-8">
             Pick est prêt à trouver ton prochain coup de cœur.
