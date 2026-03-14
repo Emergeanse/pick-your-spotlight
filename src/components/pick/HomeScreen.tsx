@@ -290,9 +290,9 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
           style={{ backgroundImage: `url(${bg})` }}
         />
       ))}
-      <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-background/40" />
-      <div className="absolute inset-0 bg-gradient-to-r from-background/60 via-transparent to-background/60" />
-      <div className="absolute inset-0 bg-background/30" />
+      <div className="absolute inset-0 bg-gradient-to-t from-background via-background/70 to-background/30" />
+      <div className="absolute inset-0 bg-gradient-to-r from-background/40 via-transparent to-background/40" />
+      <div className="absolute inset-0 bg-background/15" />
 
       {/* Scrollable content */}
       <div className="relative z-10 h-full overflow-y-auto">
