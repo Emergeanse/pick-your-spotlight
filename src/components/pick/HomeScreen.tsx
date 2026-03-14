@@ -290,9 +290,9 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
           style={{ backgroundImage: `url(${bg})` }}
         />
       ))}
-      <div className="absolute inset-0 bg-gradient-to-t from-background via-background/70 to-background/30" />
-      <div className="absolute inset-0 bg-gradient-to-r from-background/40 via-transparent to-background/40" />
-      <div className="absolute inset-0 bg-background/15" />
+      <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-background/50" />
+      <div className="absolute inset-0 bg-gradient-to-r from-background/50 via-transparent to-background/50" />
+      <div className="absolute inset-0 bg-background/30" />
 
       {/* Scrollable content */}
       <div className="relative z-10 h-full overflow-y-auto">
@@ -405,9 +405,9 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
                   whileTap={{ scale: 0.97 }}
                   onClick={handleTonightPick}
                   disabled={loading || tonightLoading}
-                  className="group flex items-center gap-3 px-7 py-4 rounded-full bg-gradient-to-r from-gold/90 to-gold/70 text-gold-foreground font-sans font-bold text-base shadow-lg gold-glow hover:from-gold hover:to-gold/80 transition-all disabled:opacity-50"
+                  className="group flex items-center gap-3 px-10 py-5 rounded-full bg-primary text-primary-foreground font-sans font-bold text-lg shadow-lg neon-glow-strong hover:bg-primary/90 transition-all disabled:opacity-50"
                 >
-                  <Zap className="w-5 h-5" />
+                  <Zap className="w-6 h-6" />
                   <span>Pick pour ce soir</span>
                 </motion.button>
 
