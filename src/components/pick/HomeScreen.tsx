@@ -399,15 +399,17 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
               {/* Three main actions - full width cards */}
               <div className="flex flex-col items-center gap-4">
 
-                {/* 1. Pick pour ce soir - small pill */}
-                <button
+                {/* 1. Pick pour ce soir - PRIMARY CTA */}
+                <motion.button
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
                   onClick={handleTonightPick}
                   disabled={loading || tonightLoading}
-                  className="group flex items-center gap-2 px-4 py-2.5 rounded-full bg-foreground/[0.03] border border-border/30 hover:border-primary/30 hover:bg-foreground/[0.06] transition-all text-sm font-sans text-foreground/60 hover:text-foreground"
+                  className="group flex items-center gap-3 px-7 py-4 rounded-full bg-gradient-to-r from-gold/90 to-gold/70 text-gold-foreground font-sans font-bold text-base shadow-lg gold-glow hover:from-gold hover:to-gold/80 transition-all disabled:opacity-50"
                 >
-                  <Zap className="w-4 h-4 text-yellow-400" />
+                  <Zap className="w-5 h-5" />
                   <span>Pick pour ce soir</span>
-                </button>
+                </motion.button>
 
                 {/* 2. Parle à Pick - natural language */}
                 <motion.button
