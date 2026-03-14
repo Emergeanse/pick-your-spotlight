@@ -343,8 +343,8 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
                       />
                     )}
                     <div className="flex-1 min-w-0 text-left">
-                      <p className="text-[10px] uppercase tracking-widest text-primary/60 font-sans font-semibold mb-1">
-                        Pick du soir
+                      <p className="text-[10px] uppercase tracking-widest text-gold/70 font-sans font-semibold mb-1">
+                        ✨ Pick du soir
                       </p>
                       <h3 className="text-sm font-serif text-foreground mb-0.5 line-clamp-1">
                         {getDisplayTitle(proactivePick)}
