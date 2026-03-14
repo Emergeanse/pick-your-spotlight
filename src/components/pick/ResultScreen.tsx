@@ -284,6 +284,8 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
     finally { setBookmarkLoading(false); }
   };
 
+  const [showRefineSheet, setShowRefineSheet] = useState(false);
+
   return (
     <div ref={ref} className="h-full w-full overflow-y-auto">
       <BrandHeader showBack onBack={onRestart} />
@@ -310,68 +312,67 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
             transition={{ duration: 0.6, delay: 0.2 }}
             className="max-w-xl"
           >
-            {/* Title */}
-            <h1 className="text-2xl md:text-5xl lg:text-7xl font-serif mb-2 leading-[1.05]">
-              {title}
-            </h1>
-
-            {/* Meta: Year • Runtime • Rating */}
-            <div className="flex items-center gap-2 text-foreground/50 text-xs font-sans mb-1.5 flex-wrap">
-              {year && <span className="font-medium text-foreground/70">{year}</span>}
-              {year && runtime > 0 && <span className="text-foreground/20">•</span>}
-              {runtime > 0 && (
-                <span className="flex items-center gap-1">
-                  <Clock className="w-3 h-3" />
-                  {runtime} min
-                </span>
-              )}
-              {movie.vote_average > 0 && (
-                <>
-                  <span className="text-foreground/20">•</span>
-                  <span className="flex items-center gap-1 text-primary font-medium">
-                    <Star className="w-3 h-3 fill-primary" />
-                    {movie.vote_average.toFixed(1)}
-                  </span>
-                </>
-              )}
-            </div>
-
-            {/* Genres + Match badge inline */}
-            <div className="flex items-center gap-2.5 mb-3 flex-wrap">
-              {genres && (
-                <p className="text-primary/60 text-[10px] md:text-xs tracking-[0.12em] uppercase font-sans font-medium">
-                  {genres}
-                </p>
-              )}
-              {matchData && (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.8 }}
+            {/* Poster + Title block */}
+            <div className="flex items-end gap-4 mb-3">
+              {/* Mini poster */}
+              {movie.poster_path && (
+                <motion.img
+                  initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: 0.3, type: "spring", stiffness: 200 }}
-                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary/15 border border-primary/25"
-                >
-                  <Sparkles className="w-2.5 h-2.5 text-primary" />
-                  <span className="text-primary text-[10px] font-sans font-semibold">
-                    Match {matchData.matchScore}%
-                  </span>
-                </motion.div>
+                  src={getPosterUrl(movie.poster_path, "w342") || ""}
+                  alt={title}
+                  className="w-20 h-[120px] md:w-28 md:h-[168px] rounded-xl object-cover shadow-2xl border border-border/20 shrink-0"
+                />
               )}
-            </div>
+              <div className="flex-1 min-w-0">
+                <h1 className="text-2xl md:text-4xl lg:text-5xl font-serif mb-1.5 leading-[1.05]">
+                  {title}
+                </h1>
 
-            {/* Synopsis — expandable */}
-            <div className="mb-3">
-              <p className={`text-foreground/60 text-[13px] md:text-sm leading-relaxed font-sans font-light ${!synopsisExpanded ? "line-clamp-2" : ""}`}>
-                {overview}
-              </p>
-              {overview.length > 120 && (
-                <button
-                  onClick={() => setSynopsisExpanded(!synopsisExpanded)}
-                  className="text-primary/70 text-[11px] font-sans font-medium mt-1 flex items-center gap-0.5 hover:text-primary transition-colors"
-                >
-                  {synopsisExpanded ? "Moins" : "Lire plus"}
-                  {synopsisExpanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-                </button>
-              )}
+                {/* Meta: Year • Runtime • Rating */}
+                <div className="flex items-center gap-2 text-foreground/50 text-xs font-sans mb-1 flex-wrap">
+                  {year && <span className="font-medium text-foreground/70">{year}</span>}
+                  {year && runtime > 0 && <span className="text-foreground/20">•</span>}
+                  {runtime > 0 && (
+                    <span className="flex items-center gap-1">
+                      <Clock className="w-3 h-3" />
+                      {runtime} min
+                    </span>
+                  )}
+                  {movie.vote_average > 0 && (
+                    <>
+                      <span className="text-foreground/20">•</span>
+                      <span className="flex items-center gap-1 text-primary font-medium">
+                        <Star className="w-3 h-3 fill-primary" />
+                        {movie.vote_average.toFixed(1)}
+                      </span>
+                    </>
+                  )}
+                </div>
+
+                {/* Genres + Match badge */}
+                <div className="flex items-center gap-2 flex-wrap">
+                  {genres && (
+                    <p className="text-primary/60 text-[10px] md:text-xs tracking-[0.12em] uppercase font-sans font-medium">
+                      {genres}
+                    </p>
+                  )}
+                  {matchData && (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: 0.3, type: "spring", stiffness: 200 }}
+                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary/15 border border-primary/25"
+                    >
+                      <Sparkles className="w-2.5 h-2.5 text-primary" />
+                      <span className="text-primary text-[10px] font-sans font-semibold">
+                        Match {matchData.matchScore}%
+                      </span>
+                    </motion.div>
+                  )}
+                </div>
+              </div>
             </div>
 
             {/* Platforms */}
@@ -380,7 +381,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.5 }}
-                className="flex items-center gap-2 mb-4"
+                className="flex items-center gap-2 mb-3"
               >
                 <span className="text-foreground/30 text-[10px] font-sans">Dispo sur</span>
                 <div className="flex gap-1.5">
@@ -397,7 +398,23 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
               </motion.div>
             )}
 
-            {/* "Pourquoi ce film ?" section */}
+            {/* Synopsis — expandable */}
+            <div className="mb-4">
+              <p className={`text-foreground/60 text-[13px] md:text-sm leading-relaxed font-sans font-light ${!synopsisExpanded ? "line-clamp-2" : ""}`}>
+                {overview}
+              </p>
+              {overview.length > 120 && (
+                <button
+                  onClick={() => setSynopsisExpanded(!synopsisExpanded)}
+                  className="text-primary/70 text-[11px] font-sans font-medium mt-1 flex items-center gap-0.5 hover:text-primary transition-colors"
+                >
+                  {synopsisExpanded ? "Moins" : "Lire plus"}
+                  {synopsisExpanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                </button>
+              )}
+            </div>
+
+            {/* "Pourquoi ce film ?" section — includes fun fact */}
             <AnimatePresence>
               {matchLoading && (
                 <motion.div
@@ -418,15 +435,14 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                   transition={{ delay: 0.1, duration: 0.4 }}
                   className="mb-5 max-w-md"
                 >
-                  {/* Purple card — Pourquoi ce film + Pick + Écouter */}
                   <div className="p-3 sm:p-4 rounded-xl bg-primary/10 border border-primary/30 backdrop-blur-sm">
-                    {/* Top row: Pick mascot + text + listen button */}
-                    <div className="flex items-center gap-2.5 sm:gap-3 mb-3">
+                    {/* Top row: Pick mascot + listen button */}
+                    <div className="flex items-center gap-2.5 mb-3">
                       <div className="flex-shrink-0">
                         <PickCharacter mood="default" size="sm" animate={false} />
                       </div>
                       <p className="flex-1 min-w-0 text-foreground/60 text-[11px] sm:text-[12px] font-sans leading-relaxed">
-                        Je peux te présenter ce film si tu veux
+                        {matchData.headline}
                       </p>
                       <motion.button
                         initial={{ opacity: 0, scale: 0.95 }}
@@ -434,48 +450,36 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                         transition={{ delay: 0.2, duration: 0.3 }}
                         onClick={(e) => { e.stopPropagation(); handleReadWhy(); }}
                         disabled={whyAudioLoading || whySpeaking}
-                        className={`flex-shrink-0 inline-flex items-center gap-1.5 px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-lg border transition-all active:scale-95 text-[11px] sm:text-[12px] font-sans font-medium shadow-sm ${
+                        className={`flex-shrink-0 inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border transition-all active:scale-95 text-[11px] font-sans font-medium ${
                           whySpeaking
                             ? "bg-primary/25 border-primary/50 text-primary"
-                            : "bg-primary/20 backdrop-blur-sm border-primary/35 text-foreground/80 hover:text-primary hover:bg-primary/30"
+                            : "bg-primary/20 border-primary/35 text-foreground/80 hover:text-primary hover:bg-primary/30"
                         }`}
-                        title="Écouter Pick"
                       >
                         {whyAudioLoading ? (
                           <Loader2 className="w-3.5 h-3.5 animate-spin" />
                         ) : (
                           <Volume2 className={`w-3.5 h-3.5 ${whySpeaking ? "text-primary animate-pulse" : ""}`} />
                         )}
-                        <span className="hidden xs:inline">{whySpeaking ? "Pick parle…" : "Écouter"}</span>
                       </motion.button>
                     </div>
 
-                    {/* Separator */}
-                    <div className="border-t border-primary/15 mb-3" />
-
-                    {/* Pourquoi ce film — expandable */}
+                    {/* Expandable details */}
                     <button
                       onClick={() => setWhyExpanded(prev => !prev)}
                       className="w-full text-left group p-2 -m-2 rounded-lg hover:bg-primary/5 transition-colors"
                     >
-                      <p className="text-[10px] uppercase tracking-widest text-primary/60 font-sans font-semibold mb-1.5 flex items-center gap-1.5">
+                      <p className="text-[10px] uppercase tracking-widest text-primary/60 font-sans font-semibold flex items-center gap-1.5">
                         Pourquoi ce film ?
-                        <motion.span
-                          animate={{ rotate: whyExpanded ? 180 : 0 }}
-                          transition={{ duration: 0.2 }}
-                        >
+                        <motion.span animate={{ rotate: whyExpanded ? 180 : 0 }} transition={{ duration: 0.2 }}>
                           <ChevronDown className="w-3 h-3 text-primary/40" />
                         </motion.span>
                         {!whyExpanded && (
                           <span className="text-[9px] normal-case tracking-normal text-primary/40 font-normal ml-auto">Tap pour voir</span>
                         )}
                       </p>
-                      <p className="text-foreground/70 text-[12px] sm:text-[13px] font-sans leading-relaxed">
-                        {matchData.headline}
-                      </p>
                     </button>
 
-                    {/* Expanded detailed explanation */}
                     <AnimatePresence>
                       {whyExpanded && (
                         <motion.div
@@ -511,13 +515,9 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                               <div>
                                 <p className="text-[10px] text-primary/50 font-sans font-medium mb-1.5">Parce que tu as aimé</p>
                                 <div className="flex flex-wrap gap-1.5">
-                                  {matchData.similarLikedMovies.map((title) => (
-                                    <span
-                                      key={title}
-                                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-[11px] font-sans font-medium"
-                                    >
-                                      <Heart className="w-2.5 h-2.5 fill-primary" />
-                                      {title}
+                                  {matchData.similarLikedMovies.map((t) => (
+                                    <span key={t} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-[11px] font-sans font-medium">
+                                      <Heart className="w-2.5 h-2.5 fill-primary" />{t}
                                     </span>
                                   ))}
                                 </div>
@@ -528,13 +528,20 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                                 <p className="text-[10px] text-primary/50 font-sans font-medium mb-1.5">Ce qui correspond</p>
                                 <div className="flex flex-wrap gap-1.5">
                                   {matchData.matchingReasons.map((reason) => (
-                                    <span
-                                      key={reason}
-                                      className="inline-flex items-center px-2.5 py-1 rounded-full bg-foreground/5 border border-border/30 text-foreground/60 text-[11px] font-sans font-medium"
-                                    >
+                                    <span key={reason} className="inline-flex items-center px-2.5 py-1 rounded-full bg-foreground/5 border border-border/30 text-foreground/60 text-[11px] font-sans font-medium">
                                       {reason}
                                     </span>
                                   ))}
+                                </div>
+                              </div>
+                            )}
+                            {/* Fun fact integrated */}
+                            {matchData.funFact && (
+                              <div className="flex items-start gap-2 pt-1 border-t border-primary/10">
+                                <span className="text-sm mt-0.5 flex-shrink-0">🎬</span>
+                                <div>
+                                  <p className="text-[10px] text-primary/50 font-sans font-semibold tracking-wide uppercase mb-0.5">Fun fact</p>
+                                  <p className="text-foreground/50 text-[12px] font-sans leading-relaxed">{matchData.funFact}</p>
                                 </div>
                               </div>
                             )}
@@ -547,27 +554,6 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
               )}
             </AnimatePresence>
 
-            {/* Fun fact — standalone subtle block */}
-            <AnimatePresence>
-              {matchData && matchData.funFact && !matchLoading && (
-                <motion.div
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ delay: 0.8, duration: 0.5 }}
-                  className="mb-4 max-w-md flex items-start gap-2.5 px-3.5 py-2.5 rounded-xl bg-foreground/[0.04] border border-border/15"
-                >
-                  <span className="text-base mt-0.5 flex-shrink-0">🎬</span>
-                  <div>
-                    <p className="text-[10px] text-primary/60 font-sans font-semibold tracking-wide uppercase mb-0.5">Fun fact</p>
-                    <p className="text-foreground/55 text-[12px] font-sans leading-relaxed">
-                      {matchData.funFact}
-                    </p>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-
             {/* Primary Actions */}
             <motion.div
               initial={{ opacity: 0, y: 10 }}
@@ -575,15 +561,15 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
               transition={{ delay: 0.6 }}
               className="space-y-3"
             >
-              {/* Main buttons row */}
+              {/* Main CTA row */}
               <div className="flex items-center gap-2.5">
-                  {onStartCompanion && (
+                {onStartCompanion && (
                   <Button
                     size="lg"
-                    className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90 font-sans font-semibold px-6 h-11 gap-2 text-sm neon-glow transition-all active:scale-[0.97]"
+                    className="flex-1 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 font-sans font-semibold h-12 gap-2 text-[15px] neon-glow-strong transition-all active:scale-[0.97]"
                     onClick={onStartCompanion}
                   >
-                    <Tv className="w-4 h-4" />
+                    <Tv className="w-5 h-5" />
                     On le regarde ensemble ?
                   </Button>
                 )}
@@ -591,7 +577,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                 {trailerUrl && (
                   <Button
                     size="lg"
-                    className="rounded-full bg-foreground/8 text-foreground/70 hover:bg-foreground/12 hover:text-foreground font-sans font-medium px-5 h-11 gap-2 text-sm border border-border/20 transition-all active:scale-[0.97]"
+                    className="rounded-full bg-foreground/8 text-foreground/70 hover:bg-foreground/12 hover:text-foreground font-sans font-medium px-5 h-12 gap-2 text-sm border border-border/20 transition-all active:scale-[0.97]"
                     onClick={() => window.open(trailerUrl, "_blank")}
                   >
                     <Play className="w-4 h-4 fill-current" />
@@ -600,8 +586,54 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                 )}
               </div>
 
-              {/* Feedback actions */}
-              <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+              {/* Compact secondary actions — icon row */}
+              <div className="flex items-center gap-2">
+                {/* Bookmark */}
+                <button
+                  onClick={handleToggleBookmark}
+                  disabled={bookmarkLoading}
+                  className={`flex items-center gap-1.5 px-3.5 h-9 rounded-full border text-xs font-sans font-medium transition-all active:scale-95 ${
+                    bookmarked
+                      ? "bg-primary/15 border-primary/30 text-primary"
+                      : "border-border/25 text-foreground/40 hover:text-primary hover:border-primary/25"
+                  }`}
+                >
+                  <Bookmark className={`w-3.5 h-3.5 ${bookmarked ? "fill-primary" : ""}`} />
+                  {bookmarked ? "Sauvegardé" : "Sauvegarder"}
+                </button>
+
+                {/* Like */}
+                <button
+                  onClick={handleToggleLike}
+                  disabled={likeLoading}
+                  className={`w-9 h-9 rounded-full border flex items-center justify-center transition-all active:scale-95 ${
+                    liked
+                      ? "bg-primary/15 border-primary/30 text-primary"
+                      : "border-border/25 text-foreground/40 hover:text-primary hover:border-primary/25"
+                  }`}
+                >
+                  <Heart className={`w-3.5 h-3.5 ${liked ? "fill-primary" : ""}`} />
+                </button>
+
+                {/* Seen */}
+                <button
+                  onClick={() => {
+                    if (markedSeen) return;
+                    setMarkedSeen(true);
+                    trackInteraction(movie.id, "already_seen", { mood: userCriteria?.mood, context: userCriteria?.context, time: userCriteria?.time });
+                    toast.success("Noté ! Pick évitera ce film.");
+                  }}
+                  className={`w-9 h-9 rounded-full border flex items-center justify-center transition-all active:scale-95 ${
+                    markedSeen
+                      ? "bg-muted border-border/40 text-foreground/60"
+                      : "border-border/25 text-foreground/40 hover:text-foreground/60 hover:border-border/40"
+                  }`}
+                  title="Déjà vu"
+                >
+                  <Eye className="w-3.5 h-3.5" />
+                </button>
+
+                {/* Feedback: good */}
                 <button
                   onClick={() => {
                     if (feedbackGiven === "good") return;
@@ -610,69 +642,48 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                     if (!liked && user) { likeMovie(movie).then(() => setLiked(true)).catch(() => {}); }
                     toast.success("Merci pour ton retour !");
                   }}
-                  className={`flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3.5 h-8 sm:h-9 rounded-full border text-[11px] sm:text-xs font-sans font-medium transition-all active:scale-95 ${
+                  className={`w-9 h-9 rounded-full border flex items-center justify-center transition-all active:scale-95 ${
                     feedbackGiven === "good"
                       ? "bg-primary/15 border-primary/30 text-primary"
                       : "border-border/25 text-foreground/40 hover:text-primary hover:border-primary/25"
                   }`}
+                  title="Bonne reco"
                 >
-                  <ThumbsUp className={`w-3 h-3 sm:w-3.5 sm:h-3.5 ${feedbackGiven === "good" ? "fill-primary" : ""}`} />
-                  Bonne reco
+                  <ThumbsUp className={`w-3.5 h-3.5 ${feedbackGiven === "good" ? "fill-primary" : ""}`} />
                 </button>
 
+                {/* Feedback: bad → reject sheet */}
                 <button
-                  onClick={() => {
-                    setShowRejectReasons(true);
-                  }}
-                  className={`flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3.5 h-8 sm:h-9 rounded-full border text-[11px] sm:text-xs font-sans font-medium transition-all active:scale-95 ${
+                  onClick={() => setShowRejectReasons(true)}
+                  className={`w-9 h-9 rounded-full border flex items-center justify-center transition-all active:scale-95 ${
                     feedbackGiven === "bad"
                       ? "bg-destructive/10 border-destructive/30 text-destructive"
                       : "border-border/25 text-foreground/40 hover:text-foreground/60 hover:border-border/40"
                   }`}
+                  title="Autre suggestion"
                 >
-                  <ThumbsDown className={`w-3 h-3 sm:w-3.5 sm:h-3.5 ${feedbackGiven === "bad" ? "fill-destructive" : ""}`} />
-                  Autre suggestion
+                  <ThumbsDown className={`w-3.5 h-3.5 ${feedbackGiven === "bad" ? "fill-destructive" : ""}`} />
                 </button>
 
-                <button
-                  onClick={() => {
-                    if (markedSeen) return;
-                    setMarkedSeen(true);
-                    trackInteraction(movie.id, "already_seen", { mood: userCriteria?.mood, context: userCriteria?.context, time: userCriteria?.time });
-                    toast.success("Noté ! Pick évitera ce film.");
-                  }}
-                  className={`flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3.5 h-8 sm:h-9 rounded-full border text-[11px] sm:text-xs font-sans font-medium transition-all active:scale-95 ${
-                    markedSeen
-                      ? "bg-muted border-border/40 text-foreground/60"
-                      : "border-border/25 text-foreground/40 hover:text-foreground/60 hover:border-border/40"
-                  }`}
-                >
-                  <Eye className={`w-3 h-3 sm:w-3.5 sm:h-3.5 ${markedSeen ? "text-foreground/60" : ""}`} />
-                  Déjà vu
-                </button>
-
-                <button
-                  onClick={handleToggleBookmark}
-                  disabled={bookmarkLoading}
-                  className={`flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3.5 h-8 sm:h-9 rounded-full border text-[11px] sm:text-xs font-sans font-medium transition-all active:scale-95 ${
-                    bookmarked
-                      ? "bg-primary/15 border-primary/30 text-primary"
-                      : "border-border/25 text-foreground/40 hover:text-primary hover:border-primary/25"
-                  }`}
-                >
-                  <Bookmark className={`w-3 h-3 sm:w-3.5 sm:h-3.5 ${bookmarked ? "fill-primary" : ""}`} />
-                  <span className="hidden sm:inline">Sauvegarder</span>
-                  <span className="sm:hidden">Sauver</span>
-                </button>
+                {/* Spacer + Refine with Pick button */}
+                <div className="flex-1" />
+                {matchData && !refining && (
+                  <button
+                    onClick={() => setShowRefineSheet(true)}
+                    className="flex items-center gap-1.5 px-3.5 h-9 rounded-full border border-primary/25 bg-primary/10 text-primary text-xs font-sans font-medium hover:bg-primary/15 transition-all active:scale-95"
+                  >
+                    <MessageCircle className="w-3.5 h-3.5" />
+                    Affiner
+                  </button>
+                )}
               </div>
 
-              {/* Pick understood your mood — search context tags */}
+              {/* Search context tags */}
               {searchTags && searchTags.length > 0 && (
                 <motion.div
                   initial={{ opacity: 0, y: 6 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.8, duration: 0.4 }}
-                  className="pt-0.5"
                 >
                   <div className="flex items-center gap-1.5 mb-2">
                     <Check className="w-3 h-3 text-primary/60" />
@@ -704,146 +715,9 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                 </motion.div>
               )}
 
-              {/* Conversational follow-up with Pick */}
-              {matchData && !refining && (
-                <motion.div
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 1.2, duration: 0.4 }}
-                  className="pt-3"
-                >
-                  <PickCharacter mood="default" message="Alors, ça te tente ? Sinon dis-moi ce que tu veux." size="sm" animate={false} />
-
-                  {/* Free-text + voice input to chat with Pick */}
-                  <form
-                    onSubmit={(e) => {
-                      e.preventDefault();
-                      const input = e.currentTarget.elements.namedItem("refineInput") as HTMLInputElement;
-                      const msg = input?.value?.trim();
-                      if (msg) {
-                        onRefineWithMessage?.(msg);
-                        input.value = "";
-                      }
-                    }}
-                    className="mt-3 ml-1 flex items-center gap-2 max-w-md"
-                  >
-                    <input
-                      name="refineInput"
-                      type="text"
-                      placeholder="Dis à Pick ce que tu veux…"
-                      className="flex-1 px-4 py-2.5 rounded-full bg-foreground/[0.05] border border-border/30 text-foreground text-[13px] font-sans placeholder:text-foreground/30 focus:outline-none focus:border-primary/40 focus:bg-foreground/[0.08] transition-all"
-                    />
-                    {/* Voice input button */}
-                    <button
-                      type="button"
-                      disabled={voiceProcessing}
-                      onClick={async () => {
-                        if (voiceListening) {
-                          // Stop recording
-                          voiceRecorderRef.current?.stop();
-                          setVoiceListening(false);
-                          return;
-                        }
-                        try {
-                          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                          const recorder = new MediaRecorder(stream, { mimeType: MediaRecorder.isTypeSupported("audio/webm") ? "audio/webm" : "audio/mp4" });
-                          voiceChunksRef.current = [];
-                          recorder.ondataavailable = (e) => { if (e.data.size > 0) voiceChunksRef.current.push(e.data); };
-                          recorder.onstop = async () => {
-                            stream.getTracks().forEach(t => t.stop());
-                            setVoiceListening(false);
-                            setVoiceProcessing(true);
-                          try {
-                              const blob = new Blob(voiceChunksRef.current, { type: recorder.mimeType });
-                              // Send to edge function for server-side STT
-                              const formData = new FormData();
-                              formData.append("audio", blob, "audio.webm");
-                              const sttResp = await fetch(
-                                `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/voice-refine`,
-                                {
-                                  method: "POST",
-                                  headers: {
-                                    apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-                                    Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-                                  },
-                                  body: formData,
-                                }
-                              );
-                              if (!sttResp.ok) throw new Error("STT failed");
-                              const sttData = await sttResp.json();
-                              const transcript = sttData.text?.trim();
-                              if (transcript) {
-                                onRefineWithMessage?.(transcript);
-                              } else {
-                                toast.error("Je n'ai rien entendu, réessaie.");
-                              }
-                            } catch (e) {
-                              console.error("Voice refine error:", e);
-                              toast.error("Erreur de reconnaissance vocale");
-                            } finally {
-                              setVoiceProcessing(false);
-                            }
-                          };
-                          voiceRecorderRef.current = recorder;
-                          recorder.start();
-                          setVoiceListening(true);
-                        } catch {
-                          toast.error("Impossible d'accéder au micro");
-                        }
-                      }}
-                      className={`flex-shrink-0 w-9 h-9 rounded-full border flex items-center justify-center transition-all active:scale-95 ${
-                        voiceListening
-                          ? "bg-destructive/20 border-destructive/40 text-destructive animate-pulse"
-                          : voiceProcessing
-                            ? "bg-primary/10 border-primary/20 text-primary/50"
-                            : "bg-primary/20 border-primary/30 text-primary hover:bg-primary/30"
-                      }`}
-                    >
-                      {voiceProcessing ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      ) : voiceListening ? (
-                        <MicOff className="w-4 h-4" />
-                      ) : (
-                        <Mic className="w-4 h-4" />
-                      )}
-                    </button>
-                    <button
-                      type="submit"
-                      className="flex-shrink-0 w-9 h-9 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center text-primary hover:bg-primary/30 transition-all active:scale-95"
-                    >
-                      <Send className="w-4 h-4" />
-                    </button>
-                  </form>
-
-                  <div className="flex flex-wrap gap-1.5 mt-2.5 ml-1">
-                    {[
-                      { label: "Plus intense", message: "Je veux quelque chose de plus intense" },
-                      { label: "Plus émouvant", message: "Je veux quelque chose de plus émouvant et touchant" },
-                      { label: "Plus court", message: "Je préfère un film plus court" },
-                      { label: "Plus drôle", message: "Je veux un truc plus drôle et léger" },
-                    ].map((chip, i) => (
-                      <motion.button
-                        key={chip.label}
-                        initial={{ opacity: 0, y: 4 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 1.4 + i * 0.06 }}
-                        onClick={() => onRefineWithMessage?.(chip.message)}
-                        className="px-3 py-1.5 rounded-full bg-foreground/[0.04] border border-border/25 text-foreground/50 hover:text-primary hover:border-primary/30 hover:bg-primary/5 text-[11px] font-sans transition-all active:scale-95"
-                      >
-                        {chip.label}
-                      </motion.button>
-                    ))}
-                  </div>
-                </motion.div>
-              )}
-
-              {/* Refining loading state with Pick */}
+              {/* Refining loading state */}
               {refining && (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className="pt-3"
-                >
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="pt-3">
                   <PickCharacter mood="think" message="Attends, je cherche mieux…" size="sm" animate={false} />
                 </motion.div>
               )}
@@ -908,6 +782,160 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
           </div>
         </div>
       )}
+
+      {/* Bottom Sheet: Affiner avec Pick */}
+      <AnimatePresence>
+        {showRefineSheet && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-50 bg-background/60 backdrop-blur-sm"
+              onClick={() => setShowRefineSheet(false)}
+            />
+            <motion.div
+              initial={{ y: "100%" }}
+              animate={{ y: 0 }}
+              exit={{ y: "100%" }}
+              transition={{ type: "spring", damping: 28, stiffness: 300 }}
+              className="fixed bottom-0 left-0 right-0 z-50 bg-card border-t border-border/20 rounded-t-2xl pb-[env(safe-area-inset-bottom)]"
+            >
+              <div className="flex justify-center pt-3 pb-1">
+                <div className="w-10 h-1 rounded-full bg-foreground/15" />
+              </div>
+              <div className="px-5 pb-5 pt-2">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <PickCharacter mood="default" size="sm" animate={false} />
+                    <p className="text-foreground/60 text-[13px] font-sans">Dis-moi ce que tu veux d'autre</p>
+                  </div>
+                  <button onClick={() => setShowRefineSheet(false)} className="text-foreground/30 hover:text-foreground transition-colors">
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    const input = e.currentTarget.elements.namedItem("refineInput") as HTMLInputElement;
+                    const msg = input?.value?.trim();
+                    if (msg) {
+                      onRefineWithMessage?.(msg);
+                      input.value = "";
+                      setShowRefineSheet(false);
+                    }
+                  }}
+                  className="flex items-center gap-2 mb-3"
+                >
+                  <input
+                    name="refineInput"
+                    type="text"
+                    placeholder="Dis à Pick ce que tu veux…"
+                    className="flex-1 px-4 py-2.5 rounded-full bg-foreground/[0.05] border border-border/30 text-foreground text-[13px] font-sans placeholder:text-foreground/30 focus:outline-none focus:border-primary/40 focus:bg-foreground/[0.08] transition-all"
+                    autoFocus
+                  />
+                  <button
+                    type="button"
+                    disabled={voiceProcessing}
+                    onClick={async () => {
+                      if (voiceListening) {
+                        voiceRecorderRef.current?.stop();
+                        setVoiceListening(false);
+                        return;
+                      }
+                      try {
+                        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                        const recorder = new MediaRecorder(stream, { mimeType: MediaRecorder.isTypeSupported("audio/webm") ? "audio/webm" : "audio/mp4" });
+                        voiceChunksRef.current = [];
+                        recorder.ondataavailable = (e) => { if (e.data.size > 0) voiceChunksRef.current.push(e.data); };
+                        recorder.onstop = async () => {
+                          stream.getTracks().forEach(t => t.stop());
+                          setVoiceListening(false);
+                          setVoiceProcessing(true);
+                          try {
+                            const blob = new Blob(voiceChunksRef.current, { type: recorder.mimeType });
+                            const formData = new FormData();
+                            formData.append("audio", blob, "audio.webm");
+                            const sttResp = await fetch(
+                              `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/voice-refine`,
+                              {
+                                method: "POST",
+                                headers: {
+                                  apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+                                  Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+                                },
+                                body: formData,
+                              }
+                            );
+                            if (!sttResp.ok) throw new Error("STT failed");
+                            const sttData = await sttResp.json();
+                            const transcript = sttData.text?.trim();
+                            if (transcript) {
+                              onRefineWithMessage?.(transcript);
+                              setShowRefineSheet(false);
+                            } else {
+                              toast.error("Je n'ai rien entendu, réessaie.");
+                            }
+                          } catch (err) {
+                            console.error("Voice refine error:", err);
+                            toast.error("Erreur de reconnaissance vocale");
+                          } finally {
+                            setVoiceProcessing(false);
+                          }
+                        };
+                        voiceRecorderRef.current = recorder;
+                        recorder.start();
+                        setVoiceListening(true);
+                      } catch {
+                        toast.error("Impossible d'accéder au micro");
+                      }
+                    }}
+                    className={`flex-shrink-0 w-9 h-9 rounded-full border flex items-center justify-center transition-all active:scale-95 ${
+                      voiceListening
+                        ? "bg-destructive/20 border-destructive/40 text-destructive animate-pulse"
+                        : voiceProcessing
+                          ? "bg-primary/10 border-primary/20 text-primary/50"
+                          : "bg-primary/20 border-primary/30 text-primary hover:bg-primary/30"
+                    }`}
+                  >
+                    {voiceProcessing ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : voiceListening ? (
+                      <MicOff className="w-4 h-4" />
+                    ) : (
+                      <Mic className="w-4 h-4" />
+                    )}
+                  </button>
+                  <button
+                    type="submit"
+                    className="flex-shrink-0 w-9 h-9 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center text-primary hover:bg-primary/30 transition-all active:scale-95"
+                  >
+                    <Send className="w-4 h-4" />
+                  </button>
+                </form>
+
+                <div className="flex flex-wrap gap-1.5">
+                  {[
+                    { label: "Plus intense", message: "Je veux quelque chose de plus intense" },
+                    { label: "Plus émouvant", message: "Je veux quelque chose de plus émouvant et touchant" },
+                    { label: "Plus court", message: "Je préfère un film plus court" },
+                    { label: "Plus drôle", message: "Je veux un truc plus drôle et léger" },
+                  ].map((chip) => (
+                    <button
+                      key={chip.label}
+                      onClick={() => { onRefineWithMessage?.(chip.message); setShowRefineSheet(false); }}
+                      className="px-3 py-1.5 rounded-full bg-foreground/[0.04] border border-border/25 text-foreground/50 hover:text-primary hover:border-primary/30 hover:bg-primary/5 text-[11px] font-sans transition-all active:scale-95"
+                    >
+                      {chip.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
 
       {/* Bottom Sheet: Plus d'options */}
       <AnimatePresence>
