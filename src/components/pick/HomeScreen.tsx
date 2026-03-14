@@ -290,9 +290,9 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
           style={{ backgroundImage: `url(${bg})` }}
         />
       ))}
-      <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-background/40" />
-      <div className="absolute inset-0 bg-gradient-to-r from-background/60 via-transparent to-background/60" />
-      <div className="absolute inset-0 bg-background/30" />
+      <div className="absolute inset-0 bg-gradient-to-t from-background via-background/70 to-background/30" />
+      <div className="absolute inset-0 bg-gradient-to-r from-background/40 via-transparent to-background/40" />
+      <div className="absolute inset-0 bg-background/15" />
 
       {/* Scrollable content */}
       <div className="relative z-10 h-full overflow-y-auto">
@@ -317,13 +317,13 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
           <AnimatePresence>
             {proactivePick && !proactiveDismissed && !isSurprising && (
               <motion.div
-                initial={{ opacity: 0, y: 15, scale: 0.97 }}
+                initial={{ opacity: 0, y: 20, scale: 0.95 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: -10, scale: 0.95 }}
-                transition={{ delay: 0.3, duration: 0.4, type: "spring", stiffness: 200 }}
+                transition={{ delay: 0.3, duration: 0.5, type: "spring", stiffness: 180 }}
                 className="w-full max-w-md px-2 mb-6"
               >
-                <div className="relative rounded-2xl overflow-hidden border border-primary/25 bg-card/60 backdrop-blur-sm">
+                <div className="relative rounded-2xl overflow-hidden border border-gold/25 bg-card/70 backdrop-blur-md shadow-xl">
                   {/* Mini backdrop */}
                   {proactivePick.backdrop_path && (
                     <div
@@ -343,8 +343,8 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
                       />
                     )}
                     <div className="flex-1 min-w-0 text-left">
-                      <p className="text-[10px] uppercase tracking-widest text-primary/60 font-sans font-semibold mb-1">
-                        Pick du soir
+                      <p className="text-[10px] uppercase tracking-widest text-gold/70 font-sans font-semibold mb-1">
+                        ✨ Pick du soir
                       </p>
                       <h3 className="text-sm font-serif text-foreground mb-0.5 line-clamp-1">
                         {getDisplayTitle(proactivePick)}
@@ -399,15 +399,17 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
               {/* Three main actions - full width cards */}
               <div className="flex flex-col items-center gap-4">
 
-                {/* 1. Pick pour ce soir - small pill */}
-                <button
+                {/* 1. Pick pour ce soir - PRIMARY CTA */}
+                <motion.button
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
                   onClick={handleTonightPick}
                   disabled={loading || tonightLoading}
-                  className="group flex items-center gap-2 px-4 py-2.5 rounded-full bg-foreground/[0.03] border border-border/30 hover:border-primary/30 hover:bg-foreground/[0.06] transition-all text-sm font-sans text-foreground/60 hover:text-foreground"
+                  className="group flex items-center gap-3 px-7 py-4 rounded-full bg-gradient-to-r from-gold/90 to-gold/70 text-gold-foreground font-sans font-bold text-base shadow-lg gold-glow hover:from-gold hover:to-gold/80 transition-all disabled:opacity-50"
                 >
-                  <Zap className="w-4 h-4 text-yellow-400" />
+                  <Zap className="w-5 h-5" />
                   <span>Pick pour ce soir</span>
-                </button>
+                </motion.button>
 
                 {/* 2. Parle à Pick - natural language */}
                 <motion.button
