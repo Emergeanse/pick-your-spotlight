@@ -433,12 +433,24 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
 
               </div>
 
+              {/* DNA Teaser Card */}
+              {user && (
+                <motion.div
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.6 }}
+                  className="w-full flex justify-center mt-2"
+                >
+                  <CinemaDNA userId={user.id} teaser onOpenFull={() => setShowDNA(true)} />
+                </motion.div>
+              )}
+
               {/* Platform logos */}
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.8 }}
-                className="mt-8 flex flex-col items-center gap-2.5"
+                className="mt-6 flex flex-col items-center gap-2.5"
               >
                 <div className="flex items-center gap-2">
                   {[
