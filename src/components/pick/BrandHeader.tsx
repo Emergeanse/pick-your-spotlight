@@ -49,6 +49,7 @@ const BrandHeader = ({ showBack, onBack, onOpenWatchlist, onOpenDNA }: BrandHead
             title="Mon ADN Cinéma"
           >
             <Dna className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">ADN</span>
           </Button>
         )}
 
