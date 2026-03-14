@@ -323,7 +323,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
                 transition={{ delay: 0.3, duration: 0.5, type: "spring", stiffness: 180 }}
                 className="w-full max-w-md px-2 mb-6"
               >
-                <div className="relative rounded-2xl overflow-hidden border border-primary/25 bg-card/60 backdrop-blur-sm">
+                <div className="relative rounded-2xl overflow-hidden border border-gold/25 bg-card/70 backdrop-blur-md shadow-xl">
                   {/* Mini backdrop */}
                   {proactivePick.backdrop_path && (
                     <div
