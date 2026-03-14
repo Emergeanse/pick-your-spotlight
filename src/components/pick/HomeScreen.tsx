@@ -317,10 +317,10 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
           <AnimatePresence>
             {proactivePick && !proactiveDismissed && !isSurprising && (
               <motion.div
-                initial={{ opacity: 0, y: 15, scale: 0.97 }}
+                initial={{ opacity: 0, y: 20, scale: 0.95 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: -10, scale: 0.95 }}
-                transition={{ delay: 0.3, duration: 0.4, type: "spring", stiffness: 200 }}
+                transition={{ delay: 0.3, duration: 0.5, type: "spring", stiffness: 180 }}
                 className="w-full max-w-md px-2 mb-6"
               >
                 <div className="relative rounded-2xl overflow-hidden border border-primary/25 bg-card/60 backdrop-blur-sm">
