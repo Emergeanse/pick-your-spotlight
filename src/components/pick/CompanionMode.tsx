@@ -156,7 +156,7 @@ export default function CompanionMode({ movie, onClose }: CompanionModeProps) {
   };
 
   const currentSpoilerConfig = SPOILER_MODES.find(s => s.value === spoilerMode)!;
-  const hasMessages = messages.length > 0;
+  const hasUserMessages = messages.some(m => m.role === "user");
 
   return (
     <motion.div
