@@ -401,14 +401,23 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
 
                 {/* 1. Pick pour ce soir - PRIMARY CTA */}
                 <motion.button
-                  whileHover={{ scale: 1.03 }}
-                  whileTap={{ scale: 0.97 }}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
                   onClick={handleTonightPick}
                   disabled={loading || tonightLoading}
-                  className="group flex items-center gap-3 px-10 py-5 rounded-full bg-primary text-primary-foreground font-sans font-bold text-lg shadow-lg neon-glow-strong hover:bg-primary/90 transition-all disabled:opacity-50"
+                  className="group w-full text-left rounded-2xl p-5 bg-gradient-to-r from-primary/15 via-primary/10 to-transparent border-2 border-primary/40 hover:border-primary/60 hover:from-primary/20 transition-all disabled:opacity-50 relative overflow-hidden"
                 >
-                  <Zap className="w-6 h-6" />
-                  <span>Pick pour ce soir</span>
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-xl bg-primary/25 border border-primary/40 flex items-center justify-center shrink-0 group-hover:bg-primary/35 transition-colors shadow-[0_0_20px_-5px_hsl(var(--primary)/0.3)]">
+                      <Zap className="w-5 h-5 text-primary fill-primary" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-base font-sans font-semibold text-foreground mb-0.5">Pick pour ce soir</h3>
+                      <p className="text-foreground/50 text-[13px] font-sans leading-relaxed">
+                        Une suggestion sur-mesure pour ta soirée.
+                      </p>
+                    </div>
+                  </div>
                 </motion.button>
 
                 {/* 2. Parle à Pick - natural language */}
