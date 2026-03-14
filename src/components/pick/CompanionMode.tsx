@@ -47,7 +47,13 @@ interface CompanionModeProps {
 }
 
 export default function CompanionMode({ movie, onClose }: CompanionModeProps) {
-  const [messages, setMessages] = useState<ChatMsg[]>([]);
+  const [messages, setMessages] = useState<ChatMsg[]>(() => {
+    // Auto welcome message from Pick
+    return [{
+      role: "assistant" as const,
+      content: `C'est parti pour **${getDisplayTitle(movie)}** ! 🍿\nPose-moi une question quand tu veux, je suis là tout le long.`
+    }];
+  });
   const [input, setInput] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
   const [spoilerMode, setSpoilerMode] = useState<SpoilerMode>("no-spoilers");
@@ -150,7 +156,7 @@ export default function CompanionMode({ movie, onClose }: CompanionModeProps) {
   };
 
   const currentSpoilerConfig = SPOILER_MODES.find(s => s.value === spoilerMode)!;
-  const hasMessages = messages.length > 0;
+  const hasUserMessages = messages.some(m => m.role === "user");
 
   return (
     <motion.div
@@ -263,123 +269,51 @@ export default function CompanionMode({ movie, onClose }: CompanionModeProps) {
 
       {/* Main Content Area */}
       <div ref={scrollRef} className="relative z-10 flex-1 overflow-y-auto">
-        {!hasMessages ? (
-          /* ===== EMPTY STATE ===== */
-          <div className="flex flex-col items-center justify-center min-h-full px-6 py-8">
-            {/* Movie card */}
+        {/* ===== CHAT MESSAGES ===== */}
+        <div className="px-4 py-4 space-y-3">
+          {messages.map((msg, i) => (
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
+              key={i}
+              initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-              className="flex flex-col items-center text-center mb-8"
+              transition={{ duration: 0.2 }}
+              className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
             >
-              <div className="w-24 h-36 rounded-xl overflow-hidden shadow-2xl border border-border/20 mb-5 neon-glow">
-                <img src={poster} alt={title} className="w-full h-full object-cover" />
-              </div>
-
-              <h3 className="font-serif text-xl mb-1.5">Ton compagnon de film est prêt 🍿</h3>
-              <p className="text-muted-foreground text-sm font-sans max-w-[280px] leading-relaxed">
-                Pose-moi des questions pendant le film.
-              </p>
-            </motion.div>
-
-            {/* What I can help with */}
-            <motion.div
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.15 }}
-              className="w-full max-w-sm mb-6"
-            >
-              <div className="bg-card/40 backdrop-blur-sm border border-border/15 rounded-2xl px-5 py-4">
-                <p className="text-foreground/80 text-sm font-sans mb-3 font-medium">Je suis là si tu veux :</p>
-                <ul className="space-y-2.5 text-muted-foreground text-[13px] font-sans">
-                  {[
-                    { icon: Eye, text: "comprendre une scène" },
-                    { icon: Clapperboard, text: "découvrir une anecdote" },
-                    { icon: User, text: "en savoir plus sur les acteurs" },
-                    { icon: Music, text: "connaître la musique du film" },
-                  ].map(item => (
-                    <li key={item.text} className="flex items-center gap-2.5">
-                      <div className="w-6 h-6 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                        <item.icon className="w-3 h-3 text-primary" />
-                      </div>
-                      <span>{item.text}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </motion.div>
-
-            {/* Quick Actions */}
-            <motion.div
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.3 }}
-              className="w-full max-w-sm"
-            >
-              <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-sans font-semibold mb-2.5 px-1">Actions rapides</p>
-              <div className="grid grid-cols-2 gap-2">
-                {QUICK_ACTIONS.map(action => (
-                  <button
-                    key={action.label}
-                    onClick={() => sendMessage(action.message)}
-                    disabled={isStreaming}
-                    className="flex items-center gap-2 px-3.5 py-3 rounded-xl bg-secondary/60 border border-border/20 text-[13px] font-sans text-foreground/70 hover:text-primary hover:border-primary/25 hover:bg-primary/5 transition-all disabled:opacity-50 active:scale-[0.97]"
-                  >
-                    <action.icon className="w-3.5 h-3.5 flex-shrink-0" />
-                    <span className="truncate">{action.label}</span>
-                  </button>
-                ))}
-              </div>
-            </motion.div>
-          </div>
-        ) : (
-          /* ===== CHAT MESSAGES ===== */
-          <div className="px-4 py-4 space-y-3">
-            {messages.map((msg, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.2 }}
-                className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
+              <div
+                className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-sm font-sans leading-relaxed ${
+                  msg.role === "user"
+                    ? "bg-primary text-primary-foreground rounded-br-md"
+                    : "bg-card/60 backdrop-blur-sm border border-border/20 rounded-bl-md"
+                }`}
               >
-                <div
-                  className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-sm font-sans leading-relaxed ${
-                    msg.role === "user"
-                      ? "bg-primary text-primary-foreground rounded-br-md"
-                      : "bg-card/60 backdrop-blur-sm border border-border/20 rounded-bl-md"
-                  }`}
-                >
-                  {msg.role === "assistant" ? (
-                    <div className="prose prose-sm prose-invert max-w-none [&>p]:mb-1 [&>p:last-child]:mb-0 [&_strong]:text-primary/90">
-                      <ReactMarkdown>{msg.content}</ReactMarkdown>
-                    </div>
-                  ) : (
-                    msg.content
-                  )}
-                </div>
-              </motion.div>
-            ))}
-
-            {/* Streaming dots */}
-            {isStreaming && messages[messages.length - 1]?.role !== "assistant" && (
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex justify-start">
-                <div className="bg-card/60 backdrop-blur-sm border border-border/20 rounded-2xl rounded-bl-md px-4 py-3">
-                  <div className="flex gap-1.5">
-                    <span className="w-1.5 h-1.5 bg-primary/60 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
-                    <span className="w-1.5 h-1.5 bg-primary/60 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
-                    <span className="w-1.5 h-1.5 bg-primary/60 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
+                {msg.role === "assistant" ? (
+                  <div className="prose prose-sm prose-invert max-w-none [&>p]:mb-1 [&>p:last-child]:mb-0 [&_strong]:text-primary/90">
+                    <ReactMarkdown>{msg.content}</ReactMarkdown>
                   </div>
+                ) : (
+                  msg.content
+                )}
+              </div>
+            </motion.div>
+          ))}
+
+          {/* Streaming dots */}
+          {isStreaming && messages[messages.length - 1]?.role !== "assistant" && (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex justify-start">
+              <div className="bg-card/60 backdrop-blur-sm border border-border/20 rounded-2xl rounded-bl-md px-4 py-3">
+                <div className="flex gap-1.5">
+                  <span className="w-1.5 h-1.5 bg-primary/60 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
+                  <span className="w-1.5 h-1.5 bg-primary/60 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
+                  <span className="w-1.5 h-1.5 bg-primary/60 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
                 </div>
-              </motion.div>
-            )}
-          </div>
-        )}
+              </div>
+            </motion.div>
+          )}
+        </div>
       </div>
 
-      {/* Quick actions row — visible when chat has started but few messages */}
-      {hasMessages && messages.length < 4 && (
+      {/* Quick actions — horizontal scrollable chips */}
+      {!hasUserMessages && (
         <div className="relative z-10 flex-shrink-0 px-4 pb-2">
           <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
             {QUICK_ACTIONS.map(action => (
@@ -387,7 +321,7 @@ export default function CompanionMode({ movie, onClose }: CompanionModeProps) {
                 key={action.label}
                 onClick={() => sendMessage(action.message)}
                 disabled={isStreaming}
-                className="flex-shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-full bg-secondary/60 border border-border/20 text-xs font-sans text-foreground/60 hover:text-primary hover:border-primary/25 transition-all disabled:opacity-50"
+                className="flex-shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-full bg-secondary/60 border border-border/20 text-xs font-sans text-foreground/60 hover:text-primary hover:border-primary/25 transition-all disabled:opacity-50 active:scale-[0.97]"
               >
                 <action.icon className="w-3 h-3" />
                 {action.label}
@@ -397,8 +331,8 @@ export default function CompanionMode({ movie, onClose }: CompanionModeProps) {
         </div>
       )}
 
-      {/* Contextual prompt suggestions */}
-      {hasMessages && messages.length >= 2 && messages.length < 6 && (
+      {/* Contextual prompts after a few exchanges */}
+      {hasUserMessages && messages.length >= 3 && messages.length < 8 && (
         <div className="relative z-10 flex-shrink-0 px-4 pb-2">
           <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
             {CONTEXTUAL_PROMPTS.map(prompt => (
