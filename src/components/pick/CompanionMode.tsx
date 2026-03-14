@@ -47,7 +47,13 @@ interface CompanionModeProps {
 }
 
 export default function CompanionMode({ movie, onClose }: CompanionModeProps) {
-  const [messages, setMessages] = useState<ChatMsg[]>([]);
+  const [messages, setMessages] = useState<ChatMsg[]>(() => {
+    // Auto welcome message from Pick
+    return [{
+      role: "assistant" as const,
+      content: `C'est parti pour **${getDisplayTitle(movie)}** ! 🍿\nPose-moi une question quand tu veux, je suis là tout le long.`
+    }];
+  });
   const [input, setInput] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
   const [spoilerMode, setSpoilerMode] = useState<SpoilerMode>("no-spoilers");
