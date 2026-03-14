@@ -433,12 +433,24 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
 
               </div>
 
+              {/* DNA Teaser Card */}
+              {user && (
+                <motion.div
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.6 }}
+                  className="w-full flex justify-center mt-2"
+                >
+                  <CinemaDNA userId={user.id} teaser onOpenFull={() => setShowDNA(true)} />
+                </motion.div>
+              )}
+
               {/* Platform logos */}
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.8 }}
-                className="mt-8 flex flex-col items-center gap-2.5"
+                className="mt-6 flex flex-col items-center gap-2.5"
               >
                 <div className="flex items-center gap-2">
                   {[
@@ -466,7 +478,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
         </div>
       </div>
 
-      {/* ADN Cinéma sliding panel */}
+      {/* ADN Cinéma — immersive full-screen overlay */}
       <AnimatePresence>
         {showDNA && user && (
           <motion.div
@@ -475,18 +487,21 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-50"
           >
-            <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" onClick={() => setShowDNA(false)} />
+            <div className="absolute inset-0 bg-background/95 backdrop-blur-xl" />
             <motion.div
-              initial={{ x: "100%" }}
-              animate={{ x: 0 }}
-              exit={{ x: "100%" }}
-              transition={{ type: "spring", damping: 25, stiffness: 200 }}
-              className="absolute right-0 top-0 bottom-0 w-full max-w-md bg-background border-l border-border/20 overflow-y-auto p-5 pt-8"
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 20 }}
+              transition={{ type: "spring", damping: 25, stiffness: 180 }}
+              className="relative z-10 h-full overflow-y-auto"
             >
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="font-serif text-xl">Mon ADN Cinéma</h2>
-                <button onClick={() => setShowDNA(false)} className="text-foreground/40 hover:text-foreground transition-colors">
-                  <X className="w-5 h-5" />
+              {/* Close button */}
+              <div className="sticky top-0 z-20 flex justify-end p-4 pt-[calc(0.5rem+env(safe-area-inset-top))]">
+                <button
+                  onClick={() => setShowDNA(false)}
+                  className="w-9 h-9 rounded-full bg-foreground/[0.06] border border-border/20 flex items-center justify-center text-foreground/40 hover:text-foreground hover:bg-foreground/10 transition-all"
+                >
+                  <X className="w-4 h-4" />
                 </button>
               </div>
               <CinemaDNA userId={user.id} />
