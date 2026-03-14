@@ -37,6 +37,8 @@
     --radius: 0.75rem;
 
     --glow: 265 100% 65%;
+    --gold: 38 92% 55%;
+    --gold-foreground: 38 10% 10%;
 
     --sidebar-background: 260 20% 5%;
     --sidebar-foreground: 0 0% 100%;
@@ -96,6 +98,36 @@
 
 .neon-glow-strong {
   box-shadow: 0 0 20px hsl(265 90% 62% / 0.3), 0 0 60px hsl(265 90% 62% / 0.1);
+}
+
+/* Gold glow for cinema accent */
+.gold-glow {
+  box-shadow: 0 0 30px hsl(38 92% 55% / 0.15), 0 0 80px hsl(38 92% 55% / 0.05);
+}
+
+/* Hero cinematic gradient */
+.hero-cinematic {
+  background: radial-gradient(ellipse 80% 60% at 50% 40%, hsl(265 90% 62% / 0.08) 0%, transparent 60%),
+              radial-gradient(ellipse 60% 50% at 30% 60%, hsl(38 92% 55% / 0.04) 0%, transparent 50%);
+}
+
+/* Poster marquee animation */
+@keyframes posterScroll {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-50%); }
+}
+
+@keyframes posterScrollReverse {
+  0% { transform: translateY(-50%); }
+  100% { transform: translateY(0); }
+}
+
+.poster-scroll {
+  animation: posterScroll 30s linear infinite;
+}
+
+.poster-scroll-reverse {
+  animation: posterScrollReverse 30s linear infinite;
 }
 
 /* Poster gradient overlay */
