@@ -570,7 +570,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                     onClick={onStartCompanion}
                   >
                     <Tv className="w-5 h-5" />
-                    On le regarde ensemble ?
+                    Lancer le compagnon 🍿
                   </Button>
                 )}
 
