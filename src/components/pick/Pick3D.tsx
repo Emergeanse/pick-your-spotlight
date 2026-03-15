@@ -1,7 +1,5 @@
-import { Suspense, useRef, Component, ReactNode } from "react";
-import { Canvas, useFrame } from "@react-three/fiber";
-import { OrbitControls, useGLTF } from "@react-three/drei";
-import * as THREE from "three";
+import { createElement, useEffect } from "react";
+import { cn } from "@/lib/utils";
 
 interface Pick3DProps {
   size?: "sm" | "md" | "lg";
@@ -9,64 +7,34 @@ interface Pick3DProps {
   animate?: boolean;
 }
 
-const SIZE_PX = {
-  sm: { width: 96, height: 96 },
-  md: { width: 160, height: 160 },
-  lg: { width: 224, height: 224 },
+const SIZE_MAP = {
+  sm: "w-24 h-24",
+  md: "w-40 h-40",
+  lg: "w-56 h-56",
 };
-
-function PickModel({ animate = true }: { animate?: boolean }) {
-  const { scene } = useGLTF("/models/pick-character.glb");
-  const ref = useRef<THREE.Group>(null);
-
-  useFrame((state) => {
-    if (!ref.current || !animate) return;
-    ref.current.position.y = Math.sin(state.clock.elapsedTime * 1.2) * 0.08;
-    ref.current.rotation.y = Math.sin(state.clock.elapsedTime * 0.5) * 0.15;
-  });
-
-  return (
-    <group ref={ref}>
-      <primitive object={scene} scale={1.5} position={[0, -0.5, 0]} />
-    </group>
-  );
-}
-
-class Canvas3DErrorBoundary extends Component<{ children: ReactNode; fallback: ReactNode }, { hasError: boolean }> {
-  state = { hasError: false };
-  static getDerivedStateFromError() { return { hasError: true }; }
-  render() { return this.state.hasError ? this.props.fallback : this.props.children; }
-}
 
 const Pick3D = ({ size = "md", className = "", animate = true }: Pick3DProps) => {
-  const dims = SIZE_PX[size];
+  useEffect(() => {
+    void import("@google/model-viewer");
+  }, []);
 
   return (
-    <Canvas3DErrorBoundary fallback={<div style={{ width: dims.width, height: dims.height }} />}>
-      <div style={{ width: dims.width, height: dims.height }} className={className}>
-        <Canvas
-          camera={{ position: [0, 0.5, 2.5], fov: 40 }}
-          gl={{ alpha: true, antialias: true }}
-          style={{ background: "transparent", width: "100%", height: "100%" }}
-        >
-          <ambientLight intensity={0.6} />
-          <directionalLight position={[3, 3, 3]} intensity={1} />
-          <directionalLight position={[-2, 1, -1]} intensity={0.3} />
-          <Suspense fallback={null}>
-            <PickModel animate={animate} />
-          </Suspense>
-          <OrbitControls
-            enableZoom={false}
-            enablePan={false}
-            minPolarAngle={Math.PI / 3}
-            maxPolarAngle={Math.PI / 2}
-          />
-        </Canvas>
-      </div>
-    </Canvas3DErrorBoundary>
+    <div className={cn("relative overflow-hidden", SIZE_MAP[size], className)}>
+      {createElement("model-viewer", {
+        src: "/models/pick-character.glb",
+        alt: "Pick en 3D",
+        style: { width: "100%", height: "100%", backgroundColor: "transparent" },
+        "camera-controls": true,
+        "interaction-prompt": "none",
+        "shadow-intensity": "0.6",
+        "exposure": "1",
+        "auto-rotate": animate,
+        "auto-rotate-delay": "0",
+        "rotation-per-second": "18deg",
+        "disable-pan": true,
+      })}
+    </div>
   );
 };
-
-useGLTF.preload("/models/pick-character.glb");
 
 export default Pick3D;
