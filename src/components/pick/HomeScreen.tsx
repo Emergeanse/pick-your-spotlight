@@ -12,6 +12,7 @@ import type { Movie, MovieDetail } from "@/lib/tmdb";
 import BrandHeader from "./BrandHeader";
 import DiscoverySection from "./DiscoverySection";
 import PickCharacter from "./PickCharacter";
+import Pick3D from "./Pick3D";
 import CinemaDNA from "./CinemaDNA";
 
 interface HomeScreenProps {
