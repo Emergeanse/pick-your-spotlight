@@ -1,6 +1,6 @@
-import { Suspense, useRef } from "react";
+import { Suspense, useRef, Component, ReactNode } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
-import { OrbitControls, useGLTF, Environment } from "@react-three/drei";
+import { OrbitControls, useGLTF } from "@react-three/drei";
 import * as THREE from "three";
 
 interface Pick3DProps {
@@ -9,10 +9,10 @@ interface Pick3DProps {
   animate?: boolean;
 }
 
-const SIZE_MAP = {
-  sm: "w-24 h-24",
-  md: "w-40 h-40",
-  lg: "w-56 h-56",
+const SIZE_PX = {
+  sm: { width: 96, height: 96 },
+  md: { width: 160, height: 160 },
+  lg: { width: 224, height: 224 },
 };
 
 function PickModel({ animate = true }: { animate?: boolean }) {
@@ -21,9 +21,7 @@ function PickModel({ animate = true }: { animate?: boolean }) {
 
   useFrame((state) => {
     if (!ref.current || !animate) return;
-    // Gentle floating animation
     ref.current.position.y = Math.sin(state.clock.elapsedTime * 1.2) * 0.08;
-    // Subtle rotation
     ref.current.rotation.y = Math.sin(state.clock.elapsedTime * 0.5) * 0.15;
   });
 
@@ -34,29 +32,38 @@ function PickModel({ animate = true }: { animate?: boolean }) {
   );
 }
 
+class Canvas3DErrorBoundary extends Component<{ children: ReactNode; fallback: ReactNode }, { hasError: boolean }> {
+  state = { hasError: false };
+  static getDerivedStateFromError() { return { hasError: true }; }
+  render() { return this.state.hasError ? this.props.fallback : this.props.children; }
+}
+
 const Pick3D = ({ size = "md", className = "", animate = true }: Pick3DProps) => {
+  const dims = SIZE_PX[size];
+
   return (
-    <div className={`${SIZE_MAP[size]} ${className}`}>
-      <Canvas
-        camera={{ position: [0, 0.5, 2.5], fov: 40 }}
-        gl={{ alpha: true, antialias: true }}
-        style={{ background: "transparent" }}
-      >
-        <ambientLight intensity={0.6} />
-        <directionalLight position={[3, 3, 3]} intensity={1} />
-        <directionalLight position={[-2, 1, -1]} intensity={0.3} />
-        <Suspense fallback={null}>
-          <PickModel animate={animate} />
-          <Environment preset="city" />
-        </Suspense>
-        <OrbitControls
-          enableZoom={false}
-          enablePan={false}
-          minPolarAngle={Math.PI / 3}
-          maxPolarAngle={Math.PI / 2}
-        />
-      </Canvas>
-    </div>
+    <Canvas3DErrorBoundary fallback={<div style={{ width: dims.width, height: dims.height }} />}>
+      <div style={{ width: dims.width, height: dims.height }} className={className}>
+        <Canvas
+          camera={{ position: [0, 0.5, 2.5], fov: 40 }}
+          gl={{ alpha: true, antialias: true }}
+          style={{ background: "transparent", width: "100%", height: "100%" }}
+        >
+          <ambientLight intensity={0.6} />
+          <directionalLight position={[3, 3, 3]} intensity={1} />
+          <directionalLight position={[-2, 1, -1]} intensity={0.3} />
+          <Suspense fallback={null}>
+            <PickModel animate={animate} />
+          </Suspense>
+          <OrbitControls
+            enableZoom={false}
+            enablePan={false}
+            minPolarAngle={Math.PI / 3}
+            maxPolarAngle={Math.PI / 2}
+          />
+        </Canvas>
+      </div>
+    </Canvas3DErrorBoundary>
   );
 };
 
