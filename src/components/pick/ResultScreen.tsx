@@ -97,7 +97,9 @@ function getRejectReaction(reason: string): string {
   return messages[Math.floor(Math.random() * messages.length)];
 }
 
-const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onShowAnother, onRestart, onRefineWithVoice, onRefineWithMessage, onStartCompanion, hasMore, userCriteria, alternativeMovies, onSelectAlternative, searchTags, onRemoveTag, refining }, ref) => {
+const CONFIDENCE_THRESHOLD = 30;
+
+const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onShowAnother, onRestart, onRefineWithVoice, onRefineWithMessage, onStartCompanion, hasMore, userCriteria, alternativeMovies, onSelectAlternative, searchTags, onRemoveTag, refining, profileConfidence = 0 }, ref) => {
   const [providers, setProviders] = useState<{ name: string; logo_path: string; provider_id: number }[]>([]);
   const [streamingLinks, setStreamingLinks] = useState<StreamingLink[]>([]);
   const [trailerUrl, setTrailerUrl] = useState<string | null>(null);
