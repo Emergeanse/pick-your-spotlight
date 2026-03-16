@@ -288,11 +288,18 @@ export async function getTrendingMovies(
   return results.slice(0, count);
 }
 
-export async function getHiddenGems(count: number = 10, platformIds: number[] = [], favoriteGenres: string[] = []): Promise<Movie[]> {
+export async function getHiddenGems(
+  count: number = 10,
+  platformIds: number[] = [],
+  favoriteGenres: string[] = [],
+  options: { minRating?: number; excludedGenres?: string[] } = {}
+): Promise<Movie[]> {
   const page = Math.floor(Math.random() * 3) + 1;
+  const excludedGenreIds = (options.excludedGenres || []).map(n => genreNameToId[n]).filter(Boolean);
+  const minRating = Math.max(options.minRating || 0, 7.5);
   const params: Record<string, string> = {
     sort_by: "vote_average.desc",
-    "vote_average.gte": "7.5",
+    "vote_average.gte": String(minRating),
     "vote_count.gte": "200",
     "vote_count.lte": "2000",
     "with_runtime.gte": "70",
@@ -304,6 +311,9 @@ export async function getHiddenGems(count: number = 10, platformIds: number[] = 
   }
   if (favoriteGenres.length > 0) {
     params.with_genres = genreNamesToIds(favoriteGenres).join("|");
+  }
+  if (excludedGenreIds.length > 0) {
+    params.without_genres = excludedGenreIds.join(",");
   }
   const data = await fetchFromTMDB("/discover/movie", params);
   const results: Movie[] = data.results || [];
