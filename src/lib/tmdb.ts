@@ -78,6 +78,8 @@ async function fetchFromTMDB(endpoint: string, params: Record<string, string> = 
   const url = new URL(`${BASE_URL}${endpoint}`);
   url.searchParams.set("api_key", TMDB_API_KEY);
   url.searchParams.set("language", "fr-FR");
+  url.searchParams.set("region", "FR");
+  url.searchParams.set("watch_region", "FR");
   Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
   
   const res = await fetch(url.toString());
