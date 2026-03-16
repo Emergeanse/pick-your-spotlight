@@ -1,7 +1,7 @@
 import { useState, useEffect, forwardRef, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Mic, MicOff, X, Send, Loader2, Sparkles, Check, Play, Star, Clock, Heart, Bookmark, Tv, ChevronDown, ChevronUp, MoreHorizontal, RefreshCw, ThumbsUp, ThumbsDown, MessageCircle, Volume2, Eye, ExternalLink } from "lucide-react";
+import { Mic, MicOff, X, Send, Loader2, Sparkles, Check, Play, Star, Clock, Heart, Bookmark, Tv, ChevronDown, ChevronUp, MoreHorizontal, RefreshCw, ThumbsUp, ThumbsDown, MessageCircle, Volume2, Eye, ExternalLink, Share2, Zap } from "lucide-react";
 import type { MovieDetail } from "@/lib/tmdb";
 import { getDisplayTitle, getYear, getBackdropUrl, getPosterUrl, getWatchProviders, getMovieTrailerUrl } from "@/lib/tmdb";
 import { buildStreamingLinks, openStreamingLink, type StreamingLink } from "@/lib/streaming-links";
@@ -356,12 +356,25 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                   )}
                 </div>
 
-                {/* Genres + Match badge */}
+                {/* Genres + Match badge + Comfort zone badge */}
                 <div className="flex items-center gap-2 flex-wrap">
                   {genres && (
                     <p className="text-primary/60 text-[10px] md:text-xs tracking-[0.12em] uppercase font-sans font-medium">
                       {genres}
                     </p>
+                  )}
+                  {(movie as any)._surpriseComfortZone && (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30"
+                    >
+                      <Zap className="w-2.5 h-2.5 text-amber-400" />
+                      <span className="text-amber-400 text-[10px] font-sans font-semibold">
+                        Hors de ta zone
+                      </span>
+                    </motion.div>
                   )}
                   {matchData && (
                     <motion.div
@@ -691,6 +704,25 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                   title="Autre suggestion"
                 >
                   <ThumbsDown className={`w-3.5 h-3.5 ${feedbackGiven === "bad" ? "fill-destructive" : ""}`} />
+                </button>
+
+                {/* Share */}
+                <button
+                  onClick={() => {
+                    const shareText = `Pick me suggère "${title}" ce soir — tu veux qu'on le regarde ensemble ? 🍿`;
+                    const shareUrl = window.location.origin;
+                    if (navigator.share) {
+                      navigator.share({ title: `Pick — ${title}`, text: shareText, url: shareUrl }).catch(() => {});
+                    } else {
+                      navigator.clipboard.writeText(`${shareText}\n${shareUrl}`).then(() => {
+                        toast.success("Lien copié !");
+                      }).catch(() => {});
+                    }
+                  }}
+                  className="w-9 h-9 rounded-full border border-border/25 text-foreground/40 hover:text-primary hover:border-primary/25 flex items-center justify-center transition-all active:scale-95"
+                  title="Partager"
+                >
+                  <Share2 className="w-3.5 h-3.5" />
                 </button>
 
                 {/* Spacer + Refine with Pick button */}
