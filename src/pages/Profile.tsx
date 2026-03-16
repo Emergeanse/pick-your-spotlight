@@ -61,9 +61,6 @@ const Profile = () => {
   const [mediaPreference, setMediaPreference] = useState<string>("both");
   const [saving, setSaving] = useState(false);
   const [profileLoading, setProfileLoading] = useState(true);
-  const [engagement, setEngagement] = useState<EngagementData | null>(null);
-  const [ritualTime, setRitualTime] = useState<string>("20:30");
-  const [ritualEnabled, setRitualEnabled] = useState(false);
 
   useEffect(() => {
     if (!isReady) return;
