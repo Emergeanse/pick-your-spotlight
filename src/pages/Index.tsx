@@ -194,6 +194,8 @@ const Index = () => {
     const currentMovie = results[currentResultIndex];
     if (currentMovie) {
       trackInteraction(currentMovie.id, "skipped", { mood, context, time });
+      // Record as skipped for engagement tracking
+      if (user) recordSkippedRecommendation(user.id);
     }
 
     if (currentResultIndex < results.length - 1 && !rejectReason) {
