@@ -44,6 +44,14 @@ const PROGRESS_OPTIONS: { value: MovieProgress; label: string }[] = [
 interface CompanionModeProps {
   movie: MovieDetail;
   onClose: () => void;
+  pickPlus?: {
+    canAskCompanion: (movieId: number) => boolean;
+    recordCompanionQuestion: (movieId: number) => Promise<boolean>;
+    getCompanionUsed: (movieId: number) => number;
+    companionLimit: number;
+    isPremium: boolean;
+    showPaywall: () => void;
+  };
 }
 
 // Proactive suggestions that Pick surfaces periodically
