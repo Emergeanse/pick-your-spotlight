@@ -48,7 +48,7 @@ export default function PickChatOverlay() {
 
   const scribe = useScribe({
     modelId: "scribe_v2_realtime",
-    commitStrategy: "vad",
+    commitStrategy: "vad" as any,
     onPartialTranscript: (data) => {
       if (data.text) {
         setInput(data.text);
