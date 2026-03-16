@@ -124,6 +124,16 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
   const [voiceProcessing, setVoiceProcessing] = useState(false);
   const voiceRecorderRef = useRef<MediaRecorder | null>(null);
   const voiceChunksRef = useRef<Blob[]>([]);
+  const [showReviewSheet, setShowReviewSheet] = useState(false);
+  const [reviewText, setReviewText] = useState("");
+  const [reviewSubmitting, setReviewSubmitting] = useState(false);
+  const [reviewVoiceListening, setReviewVoiceListening] = useState(false);
+  const [reviewVoiceProcessing, setReviewVoiceProcessing] = useState(false);
+  const reviewRecorderRef = useRef<MediaRecorder | null>(null);
+  const reviewChunksRef = useRef<Blob[]>([]);
+  const [reviewSubmitted, setReviewSubmitted] = useState(false);
+
+  const isWhyUnlocked = profileConfidence >= CONFIDENCE_THRESHOLD;
 
   const playBrowserWhyFallback = useCallback((text: string) => {
     if (typeof window === "undefined" || !("speechSynthesis" in window)) return false;
