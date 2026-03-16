@@ -60,7 +60,25 @@ const Index = () => {
   const navigate = useNavigate();
   const pickPlus = usePickPlus();
 
+  // Handle movie from Pick FAB chat
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("from") === "pick-chat") {
+      const stored = sessionStorage.getItem("pick-fab-movie");
+      if (stored) {
+        try {
+          const movie = JSON.parse(stored) as MovieDetail;
+          setResults([movie]);
+          setCurrentResultIndex(0);
+          setStep("result");
+        } catch { /* ignore */ }
+        sessionStorage.removeItem("pick-fab-movie");
+      }
+      // Clean URL
+      window.history.replaceState({}, "", "/app");
+    }
+  }, []);
+
     if (!user) return;
     supabase.from("profiles").select("onboarding_completed, preferred_platforms, excluded_platforms, favorite_genres, excluded_genres, min_rating, profile_confidence").eq("id", user.id).single()
       .then(({ data }) => {
