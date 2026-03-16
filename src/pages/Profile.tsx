@@ -1,17 +1,15 @@
 import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { toast } from "@/hooks/use-toast";
-import { ArrowLeft, Heart, Bookmark, Check, LogOut, Loader2, X, Ban, Star, Info, Film, Tv, Layers, Trash2 } from "lucide-react";
+import { Check, LogOut, Loader2, Ban, Star, Info, Film, Tv, Layers, Clock, Bell } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
-import { getLikedMovies } from "@/lib/liked-movies";
-import { getWatchlist } from "@/lib/watchlist";
-import { getPosterUrl } from "@/lib/tmdb";
-import PickCharacter from "@/components/pick/PickCharacter";
+import { getEngagementData, type EngagementData } from "@/lib/engagement";
+import BottomTabBar from "@/components/pick/BottomTabBar";
 
 const ALL_PLATFORMS = [
   { id: 8, label: "Netflix", logo: "https://image.tmdb.org/t/p/original/pbpMk2JmcoNnQwx5JGpXngfoWtp.jpg" },
@@ -22,112 +20,73 @@ const ALL_PLATFORMS = [
   { id: 236, label: "Paramount+", logo: "/logos/paramount-plus.png" },
   { id: 384, label: "HBO", logo: "/logos/hbo.png" },
   { id: 35, label: "Rakuten TV", logo: "https://image.tmdb.org/t/p/original/bZvc9dXrXNly7cA0V4D9pR8yJwm.jpg" },
-  { id: 192, label: "YouTube", logo: "https://image.tmdb.org/t/p/original/pTnn5JwWr4p3pG8H6VrpiQo7Vs0.jpg" },
-  { id: 283, label: "Crunchyroll", logo: "https://image.tmdb.org/t/p/original/fzN5Jok5Ig1eJ7gyNGoMhnLSCfh.jpg" },
-  
-  { id: 2, label: "Apple TV", logo: "https://image.tmdb.org/t/p/original/SPnB1qiCkYfirS2it3hZORwGVn.jpg" },
-  { id: 3, label: "Google Play", logo: "https://image.tmdb.org/t/p/original/8z7rC8uIDaTM91X0ZfkRf04ydj2.jpg" },
-  { id: 1967, label: "Molotov TV", logo: "https://image.tmdb.org/t/p/original/8qSG9LtUhBQIWy2Fr6fzeW7gBdd.jpg" },
 ];
 
-const ALL_GENRES = [
-  "Action", "Aventure", "Animation", "Comédie", "Crime", "Documentaire",
-  "Drame", "Famille", "Fantastique", "Histoire", "Horreur", "Musique",
-  "Mystère", "Romance", "Science-Fiction", "Thriller", "Guerre", "Western",
+const MILESTONES = [
+  { count: 1, label: "Premier film", emoji: "🎬" },
+  { count: 5, label: "Cinéphile débutant", emoji: "🍿" },
+  { count: 10, label: "Fidèle spectateur", emoji: "📽️" },
+  { count: 20, label: "Explorateur", emoji: "🧭" },
+  { count: 50, label: "Connaisseur", emoji: "🎪" },
+  { count: 100, label: "Maître cinéphile", emoji: "👑" },
 ];
-
-const ALL_ERAS = [
-  { id: "classic", label: "Classiques", desc: "Avant 1980" },
-  { id: "80s90s", label: "80s–90s", desc: "1980–1999" },
-  { id: "2000s", label: "2000s", desc: "2000–2015" },
-  { id: "recent", label: "Récents", desc: "2016+" },
-];
-
-type Tab = "liked" | "watchlist";
 
 const Profile = () => {
   const { user, isReady, signOut } = useAuth();
   const navigate = useNavigate();
   const [profile, setProfile] = useState<any>(null);
-  const [likedMovies, setLikedMovies] = useState<any[]>([]);
-  const [watchlist, setWatchlist] = useState<any[]>([]);
-  const [activeTab, setActiveTab] = useState<Tab>("liked");
+  const [engagement, setEngagement] = useState<EngagementData | null>(null);
   const [selectedPlatforms, setSelectedPlatforms] = useState<number[]>([]);
   const [excludedPlatforms, setExcludedPlatforms] = useState<number[]>([]);
-  const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
-  const [excludedGenres, setExcludedGenres] = useState<string[]>([]);
-  const [selectedEras, setSelectedEras] = useState<string[]>([]);
   const [minRating, setMinRating] = useState<number>(0);
   const [mediaPreference, setMediaPreference] = useState<string>("both");
   const [saving, setSaving] = useState(false);
   const [profileLoading, setProfileLoading] = useState(true);
+  const [dnaTitle, setDnaTitle] = useState<string | null>(null);
+  const [ritualEnabled, setRitualEnabled] = useState(false);
+  const [ritualTime, setRitualTime] = useState("20:00");
 
   useEffect(() => {
     if (!isReady) return;
-    if (!user) {
-      navigate("/auth");
-      return;
-    }
-
-    const loadData = async () => {
-      setProfileLoading(true);
-      try {
-        const { data } = await supabase.from("profiles").select("*").eq("id", user.id).single();
-        setProfile(data);
-        setSelectedPlatforms(data?.preferred_platforms || []);
-        setExcludedPlatforms(data?.excluded_platforms || []);
-        setSelectedGenres(data?.favorite_genres || []);
-        setExcludedGenres(data?.excluded_genres || []);
-        setMinRating((data as any)?.min_rating || 0);
-        setMediaPreference((data as any)?.media_preference || "both");
-
-        const [liked, wl] = await Promise.all([
-          getLikedMovies().catch(() => []),
-          getWatchlist().catch(() => []),
-        ]);
-        setLikedMovies(liked);
-        setWatchlist(wl);
-      } catch (e) {
-        console.error(e);
-      } finally {
-        setProfileLoading(false);
-      }
-    };
-
+    if (!user) { navigate("/auth"); return; }
     loadData();
   }, [user, isReady, navigate]);
 
-  // Tri-state toggle: unselected → selected → excluded → unselected
+  const loadData = async () => {
+    if (!user) return;
+    setProfileLoading(true);
+    try {
+      const [profileRes, engData, dnaRes] = await Promise.all([
+        supabase.from("profiles").select("*").eq("id", user.id).single(),
+        getEngagementData(user.id),
+        supabase.from("cinematic_profiles" as any).select("personality_title").eq("user_id", user.id).maybeSingle(),
+      ]);
+      const data = profileRes.data;
+      setProfile(data);
+      setSelectedPlatforms(data?.preferred_platforms || []);
+      setExcludedPlatforms(data?.excluded_platforms || []);
+      setMinRating((data as any)?.min_rating || 0);
+      setMediaPreference((data as any)?.media_preference || "both");
+      setRitualEnabled(data?.ritual_enabled || false);
+      setRitualTime(data?.ritual_time || "20:00");
+      setEngagement(engData);
+      if (dnaRes.data) setDnaTitle((dnaRes.data as any).personality_title || null);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setProfileLoading(false);
+    }
+  };
+
   const togglePlatform = (id: number) => {
     if (selectedPlatforms.includes(id)) {
-      // selected → excluded
       setSelectedPlatforms(prev => prev.filter(p => p !== id));
       setExcludedPlatforms(prev => [...prev, id]);
     } else if (excludedPlatforms.includes(id)) {
-      // excluded → unselected
       setExcludedPlatforms(prev => prev.filter(p => p !== id));
     } else {
-      // unselected → selected
       setSelectedPlatforms(prev => [...prev, id]);
     }
-  };
-
-  const toggleGenre = (g: string) => {
-    if (selectedGenres.includes(g)) {
-      // selected → excluded
-      setSelectedGenres(prev => prev.filter(x => x !== g));
-      setExcludedGenres(prev => [...prev, g]);
-    } else if (excludedGenres.includes(g)) {
-      // excluded → unselected
-      setExcludedGenres(prev => prev.filter(x => x !== g));
-    } else {
-      // unselected → selected
-      setSelectedGenres(prev => [...prev, g]);
-    }
-  };
-
-  const toggleEra = (id: string) => {
-    setSelectedEras(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
   };
 
   const handleSave = async () => {
@@ -136,40 +95,38 @@ const Profile = () => {
     try {
       const { error } = await supabase.from("profiles").update({
         preferred_platforms: selectedPlatforms,
-        favorite_genres: selectedGenres,
-        excluded_genres: excludedGenres,
         excluded_platforms: excludedPlatforms,
         min_rating: minRating,
         media_preference: mediaPreference,
+        ritual_enabled: ritualEnabled,
+        ritual_time: ritualTime,
       } as any).eq("id", user.id);
       if (error) throw error;
-      // Update local profile reference so hasChanges resets
       setProfile((prev: any) => ({
         ...prev,
         preferred_platforms: [...selectedPlatforms],
-        favorite_genres: [...selectedGenres],
-        excluded_genres: [...excludedGenres],
         excluded_platforms: [...excludedPlatforms],
         min_rating: minRating,
         media_preference: mediaPreference,
+        ritual_enabled: ritualEnabled,
+        ritual_time: ritualTime,
       }));
-      toast({ title: "Préférences enregistrées ✓", description: "Tes prochaines suggestions en tiendront compte." });
+      toast({ title: "Préférences enregistrées ✓" });
     } catch (e) {
       console.error(e);
-      toast({ title: "Erreur", description: "Impossible de sauvegarder. Réessaie.", variant: "destructive" });
+      toast({ title: "Erreur", variant: "destructive" });
     } finally {
       setSaving(false);
     }
   };
 
-  // Detect unsaved changes
   const hasChanges = profile && (
     JSON.stringify([...selectedPlatforms].sort()) !== JSON.stringify([...(profile.preferred_platforms || [])].sort()) ||
-    JSON.stringify([...selectedGenres].sort()) !== JSON.stringify([...(profile.favorite_genres || [])].sort()) ||
     JSON.stringify([...excludedPlatforms].sort()) !== JSON.stringify([...(profile.excluded_platforms || [])].sort()) ||
-    JSON.stringify([...excludedGenres].sort()) !== JSON.stringify([...(profile.excluded_genres || [])].sort()) ||
     minRating !== ((profile as any)?.min_rating || 0) ||
-    mediaPreference !== ((profile as any)?.media_preference || "both")
+    mediaPreference !== ((profile as any)?.media_preference || "both") ||
+    ritualEnabled !== (profile?.ritual_enabled || false) ||
+    ritualTime !== (profile?.ritual_time || "20:00")
   );
 
   if (!isReady || profileLoading) {
@@ -183,47 +140,39 @@ const Profile = () => {
   if (!user) return null;
 
   const displayName = profile?.display_name || user.email?.split("@")[0] || "Cinéphile";
+  const totalRecos = engagement?.totalRecommendations || 0;
+  const reachedMilestones = MILESTONES.filter(m => totalRecos >= m.count);
+  const memberSince = profile?.created_at ? new Date(profile.created_at).toLocaleDateString("fr-FR", { month: "long", year: "numeric" }) : null;
 
   return (
     <div className="fixed inset-0 bg-background overflow-y-auto">
-      {/* Header */}
-      <div className="sticky top-0 z-30 bg-background/80 backdrop-blur-xl border-b border-border/10 px-5 py-3 pt-[calc(0.75rem+env(safe-area-inset-top))]">
-        <div className="max-w-2xl mx-auto flex items-center justify-between">
-          <button
-            onClick={() => navigate("/")}
-            className="flex items-center gap-2 text-foreground/60 hover:text-foreground transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            <span className="font-serif text-lg">Pick</span>
-          </button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={signOut}
-            className="text-foreground/50 hover:text-foreground text-xs font-sans gap-1.5"
-          >
-            <LogOut className="w-3.5 h-3.5" />
-            Déconnexion
-          </Button>
-        </div>
-      </div>
+      <div className="max-w-2xl mx-auto px-5 pt-[calc(1.5rem+env(safe-area-inset-top))] pb-32">
 
-      <div className="max-w-2xl mx-auto px-5 py-8 pb-32">
-        {/* User info */}
+        {/* ─── User Identity Block ─── */}
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
-          <div className="w-16 h-16 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center mb-4">
-            <span className="text-2xl font-serif text-primary">{displayName.charAt(0).toUpperCase()}</span>
+          <div className="flex items-center gap-4">
+            <div className="w-16 h-16 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center">
+              <span className="text-2xl font-serif text-primary">{displayName.charAt(0).toUpperCase()}</span>
+            </div>
+            <div className="flex-1 min-w-0">
+              <h1 className="text-2xl font-serif mb-0.5">{displayName}</h1>
+              {memberSince && (
+                <p className="text-muted-foreground text-[11px] font-sans">Membre depuis {memberSince}</p>
+              )}
+              {dnaTitle && (
+                <span className="inline-flex items-center gap-1 mt-1.5 px-2.5 py-0.5 rounded-full bg-gold/10 border border-gold/20 text-gold/70 text-[10px] font-sans font-medium">
+                  🧬 {dnaTitle}
+                </span>
+              )}
+            </div>
           </div>
-          <h1 className="text-2xl md:text-3xl font-serif mb-1">{displayName}</h1>
-          <p className="text-muted-foreground text-sm font-sans">{user.email}</p>
         </motion.div>
 
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="mb-8">
-          <div className="flex items-center justify-between mb-1">
-            <h2 className="text-lg font-serif">Tes plateformes</h2>
-          </div>
+        {/* ─── Connected Platforms ─── */}
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="mb-8">
+          <h2 className="text-lg font-serif mb-1">Tes plateformes</h2>
           <p className="text-[11px] text-muted-foreground font-sans mb-3">
-            Clique une fois pour <span className="text-primary font-medium">sélectionner</span>, deux fois pour <span className="text-destructive font-medium">exclure</span>
+            Clique une fois pour <span className="text-primary font-medium">activer</span>, deux fois pour <span className="text-destructive font-medium">exclure</span>
           </p>
           <div className="grid grid-cols-4 gap-2">
             {ALL_PLATFORMS.map((platform) => {
@@ -259,40 +208,8 @@ const Profile = () => {
           </div>
         </motion.div>
 
-        {/* Genres */}
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="mb-8">
-          <div className="flex items-center justify-between mb-1">
-            <h2 className="text-lg font-serif">Tes genres</h2>
-          </div>
-          <p className="text-[11px] text-muted-foreground font-sans mb-3">
-            Clique une fois pour <span className="text-primary font-medium">aimer</span>, deux fois pour <span className="text-destructive font-medium">exclure</span>
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {ALL_GENRES.map((genre) => {
-              const isSelected = selectedGenres.includes(genre);
-              const isExcluded = excludedGenres.includes(genre);
-              return (
-                <button
-                  key={genre}
-                  onClick={() => toggleGenre(genre)}
-                  className={`px-3 py-1.5 rounded-full text-xs font-sans font-medium transition-all duration-200 cursor-pointer border flex items-center gap-1.5 ${
-                    isSelected
-                      ? "bg-primary/15 border-primary/30 text-primary"
-                      : isExcluded
-                        ? "bg-destructive/10 border-destructive/30 text-destructive line-through"
-                        : "bg-card border-transparent text-foreground/60 hover:border-primary/20 hover:text-foreground"
-                  }`}
-                >
-                  {isExcluded && <Ban className="w-3 h-3" />}
-                  {genre}
-                </button>
-              );
-            })}
-          </div>
-        </motion.div>
-
-        {/* Media Preference */}
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.17 }} className="mb-8">
+        {/* ─── Media Preference ─── */}
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="mb-8">
           <h2 className="text-lg font-serif mb-3">Tu préfères regarder…</h2>
           <div className="grid grid-cols-3 gap-2">
             {[
@@ -307,9 +224,7 @@ const Profile = () => {
                   key={opt.id}
                   onClick={() => setMediaPreference(opt.id)}
                   className={`rounded-xl p-3 flex flex-col items-center gap-1.5 transition-all duration-200 cursor-pointer border ${
-                    isSelected
-                      ? "bg-primary/10 border-primary/30"
-                      : "bg-card border-transparent hover:border-primary/20"
+                    isSelected ? "bg-primary/10 border-primary/30" : "bg-card border-transparent hover:border-primary/20"
                   }`}
                 >
                   <Icon className={`w-5 h-5 ${isSelected ? "text-primary" : "text-foreground/50"}`} />
@@ -320,8 +235,8 @@ const Profile = () => {
           </div>
         </motion.div>
 
-        {/* Min Rating */}
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="mb-8">
+        {/* ─── Min Rating ─── */}
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="mb-8">
           <div className="flex items-center gap-2 mb-1">
             <h2 className="text-lg font-serif">Note minimale</h2>
             <TooltipProvider>
@@ -332,14 +247,11 @@ const Profile = () => {
                   </button>
                 </TooltipTrigger>
                 <TooltipContent side="top" className="max-w-[260px] text-xs">
-                  <p>Les notes proviennent de <strong>TMDB</strong> (The Movie Database), une base communautaire où des millions d'utilisateurs notent films et séries sur 10.</p>
+                  <p>Notes TMDB — communauté de millions d'utilisateurs.</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
           </div>
-          <p className="text-[11px] text-muted-foreground font-sans mb-4">
-            Filtre les recommandations en dessous de cette note
-          </p>
           <div className="bg-card rounded-2xl p-4">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
@@ -348,91 +260,74 @@ const Profile = () => {
                   {minRating === 0 ? "Peu importe" : `${minRating}+ / 10`}
                 </span>
               </div>
-              {minRating > 0 && (
-                <span className="text-[10px] text-muted-foreground font-sans">
-                  {minRating >= 8 ? "Excellents uniquement" : minRating >= 7 ? "Bien notés" : minRating >= 6 ? "Corrects et +" : "Tous"}
-                </span>
-              )}
             </div>
-            <Slider
-              value={[minRating]}
-              onValueChange={([v]) => setMinRating(v)}
-              min={0}
-              max={9}
-              step={1}
-              className="w-full"
-            />
-            <div className="flex justify-between mt-1.5">
-              <span className="text-[9px] text-muted-foreground/50 font-sans">Tous</span>
-              <span className="text-[9px] text-muted-foreground/50 font-sans">9+</span>
-            </div>
+            <Slider value={[minRating]} onValueChange={([v]) => setMinRating(v)} min={0} max={9} step={1} className="w-full" />
           </div>
         </motion.div>
 
-        {/* Eras */}
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }} className="mb-8">
-          <h2 className="text-lg font-serif mb-3">Tes époques préférées</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-            {ALL_ERAS.map((era) => {
-              const isSelected = selectedEras.includes(era.id);
+        {/* ─── Milestones — Visual Badges ─── */}
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="mb-8">
+          <h2 className="text-lg font-serif mb-3">Tes jalons</h2>
+          <div className="flex flex-wrap gap-2">
+            {MILESTONES.map(m => {
+              const reached = totalRecos >= m.count;
               return (
-                <button
-                  key={era.id}
-                  onClick={() => toggleEra(era.id)}
-                  className={`rounded-xl p-3 flex flex-col items-center gap-0.5 transition-all duration-200 cursor-pointer border ${
-                    isSelected
-                      ? "bg-primary/10 border-primary/30"
-                      : "bg-card border-transparent hover:border-primary/20"
+                <div
+                  key={m.count}
+                  className={`flex items-center gap-2 px-3.5 py-2 rounded-full border text-sm font-sans ${
+                    reached
+                      ? "bg-primary/[0.08] border-primary/20 text-foreground"
+                      : "bg-card/30 border-border/10 text-foreground/20"
                   }`}
                 >
-                  <span className={`font-sans text-sm font-semibold ${isSelected ? "text-primary" : "text-foreground/80"}`}>{era.label}</span>
-                  <span className="text-[10px] text-muted-foreground font-sans">{era.desc}</span>
-                </button>
+                  <span className={reached ? "" : "grayscale opacity-40"}>{m.emoji}</span>
+                  <span className="font-medium">{reached ? m.label : "???"}</span>
+                </div>
               );
             })}
           </div>
         </motion.div>
 
-        {/* Tabs — Liked / Watchlist */}
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}>
-          <div className="flex gap-1 mb-5 bg-card rounded-xl p-1">
-            <button
-              onClick={() => setActiveTab("liked")}
-              className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-sans transition-all ${
-                activeTab === "liked" ? "bg-primary/10 text-primary font-medium" : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              <Heart className="w-4 h-4" />
-              Aimés ({likedMovies.length})
-            </button>
-            <button
-              onClick={() => setActiveTab("watchlist")}
-              className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-sans transition-all ${
-                activeTab === "watchlist" ? "bg-primary/10 text-primary font-medium" : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              <Bookmark className="w-4 h-4" />
-              À voir ({watchlist.length})
-            </button>
-          </div>
-
-          <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 md:gap-3 pb-8">
-            {(activeTab === "liked" ? likedMovies : watchlist).map((item: any) => (
-              <motion.div key={item.id} initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="aspect-[2/3] rounded-xl overflow-hidden group relative">
-                <img src={getPosterUrl(item.poster_path, "w342")} alt={item.title} className="w-full h-full object-cover" loading="lazy" />
-                <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-background/90 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
-                  <p className="text-[10px] font-sans text-foreground/90 line-clamp-2 leading-tight">{item.title}</p>
-                </div>
-              </motion.div>
-            ))}
-            {(activeTab === "liked" ? likedMovies : watchlist).length === 0 && (
-              <div className="col-span-full text-center py-12">
-                <p className="text-muted-foreground text-sm font-sans">
-                  {activeTab === "liked" ? "Aucun film aimé pour le moment" : "Ta watchlist est vide"}
-                </p>
+        {/* ─── Evening Ritual ─── */}
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }} className="mb-8">
+          <h2 className="text-lg font-serif mb-3">Rituel du soir</h2>
+          <div className="bg-card rounded-2xl p-4 border border-border/10">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <Bell className="w-4 h-4 text-primary/60" />
+                <span className="font-sans text-sm">Rappel quotidien</span>
+              </div>
+              <button
+                onClick={() => setRitualEnabled(!ritualEnabled)}
+                className={`w-11 h-6 rounded-full transition-colors ${ritualEnabled ? "bg-primary" : "bg-foreground/15"}`}
+              >
+                <div className={`w-5 h-5 rounded-full bg-white shadow-sm transition-transform ${ritualEnabled ? "translate-x-5.5" : "translate-x-0.5"}`} />
+              </button>
+            </div>
+            {ritualEnabled && (
+              <div className="flex items-center gap-2">
+                <Clock className="w-3.5 h-3.5 text-foreground/40" />
+                <input
+                  type="time"
+                  value={ritualTime}
+                  onChange={(e) => setRitualTime(e.target.value)}
+                  className="bg-transparent text-foreground text-sm font-sans border border-border/20 rounded-lg px-3 py-1.5 focus:outline-none focus:border-primary/40"
+                />
               </div>
             )}
           </div>
+        </motion.div>
+
+        {/* ─── Logout ─── */}
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}>
+          <Button
+            variant="ghost"
+            onClick={signOut}
+            className="text-foreground/40 hover:text-foreground text-xs font-sans gap-1.5"
+          >
+            <LogOut className="w-3.5 h-3.5" />
+            Déconnexion
+          </Button>
         </motion.div>
       </div>
 
@@ -441,7 +336,7 @@ const Profile = () => {
         <motion.div
           initial={{ y: 100 }}
           animate={{ y: 0 }}
-          className="fixed bottom-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-xl border-t border-border/20 px-5 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))]"
+          className="fixed bottom-14 left-0 right-0 z-50 bg-background/80 backdrop-blur-xl border-t border-border/20 px-5 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))]"
         >
           <div className="max-w-2xl mx-auto flex justify-end">
             <Button variant="hero" size="xl" onClick={handleSave} disabled={saving}>
@@ -450,6 +345,8 @@ const Profile = () => {
           </div>
         </motion.div>
       )}
+
+      <BottomTabBar />
     </div>
   );
 };

@@ -1,26 +1,21 @@
-import { Home, Dna, Bookmark, User } from "lucide-react";
+import { Home, Bookmark, Clapperboard, User } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 
-export type TabId = "home" | "discover" | "watchlist" | "profile";
-
-interface BottomTabBarProps {
-  activeTab?: TabId;
-  onTabChange?: (tab: TabId) => void;
-}
+export type TabId = "home" | "watchlist" | "cinema" | "profile";
 
 const tabs: { id: TabId; label: string; icon: typeof Home; path: string }[] = [
   { id: "home", label: "Accueil", icon: Home, path: "/app" },
-  { id: "discover", label: "Mon Cinéma", icon: Dna, path: "/app/my-cinema" },
   { id: "watchlist", label: "Watchlist", icon: Bookmark, path: "/app/watchlist" },
+  { id: "cinema", label: "Mon Cinéma", icon: Clapperboard, path: "/app/my-cinema" },
   { id: "profile", label: "Profil", icon: User, path: "/app/profile" },
 ];
 
-const BottomTabBar = ({ activeTab, onTabChange }: BottomTabBarProps) => {
+const BottomTabBar = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const currentTab = activeTab || tabs.find(t => location.pathname === t.path)?.id || "home";
+  const currentTab = tabs.find(t => location.pathname === t.path)?.id || "home";
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-40 bg-background/80 backdrop-blur-xl border-t border-border/10 pb-[env(safe-area-inset-bottom)]">
@@ -31,13 +26,7 @@ const BottomTabBar = ({ activeTab, onTabChange }: BottomTabBarProps) => {
           return (
             <button
               key={tab.id}
-              onClick={() => {
-                if (onTabChange) {
-                  onTabChange(tab.id);
-                } else {
-                  navigate(tab.path);
-                }
-              }}
+              onClick={() => navigate(tab.path)}
               className="relative flex flex-col items-center justify-center gap-0.5 w-16 h-full transition-colors"
               style={{ WebkitTapHighlightColor: "transparent" }}
             >

@@ -1,28 +1,15 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { ArrowLeft, Flame, Target, Trophy, TrendingUp, Sparkles, Loader2, Dna, BookOpen, Lock, Unlock, Brain, MessageSquareText, Shuffle, Star } from "lucide-react";
+import { ArrowLeft, Loader2, Sparkles, RefreshCw, ChevronRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
-import { getEngagementData, getProgressionMessage, getStreakLabel, type EngagementData } from "@/lib/engagement";
-import { Progress } from "@/components/ui/progress";
+import { getEngagementData, type EngagementData } from "@/lib/engagement";
+import { getLikedMovies } from "@/lib/liked-movies";
+import { getPosterUrl } from "@/lib/tmdb";
 import CinemaDNA from "@/components/pick/CinemaDNA";
-
-const MILESTONES = [
-  { count: 1, label: "Premier film", emoji: "🎬", desc: "Ta première recommandation Pick" },
-  { count: 5, label: "Cinéphile débutant", emoji: "🍿", desc: "5 films découverts ensemble" },
-  { count: 10, label: "Fidèle spectateur", emoji: "📽️", desc: "10 recommandations" },
-  { count: 20, label: "Explorateur", emoji: "🧭", desc: "20 films — Pick te connaît bien" },
-  { count: 50, label: "Connaisseur", emoji: "🎪", desc: "50 films — goûts bien affûtés" },
-  { count: 100, label: "Maître cinéphile", emoji: "👑", desc: "100 films — légende vivante" },
-];
-
-const STREAK_MILESTONES = [
-  { count: 3, label: "Coup triple", emoji: "🔥" },
-  { count: 5, label: "Sniper", emoji: "🎯" },
-  { count: 10, label: "Inarrêtable", emoji: "🏆" },
-  { count: 20, label: "Légendaire", emoji: "💎" },
-];
+import PickCharacter from "@/components/pick/PickCharacter";
+import BottomTabBar from "@/components/pick/BottomTabBar";
 
 const MyCinema = () => {
   const { user, isReady } = useAuth();
@@ -31,6 +18,8 @@ const MyCinema = () => {
   const [loading, setLoading] = useState(true);
   const [showDNA, setShowDNA] = useState(false);
   const [likedCount, setLikedCount] = useState(0);
+  const [recentPosters, setRecentPosters] = useState<{ poster: string; title: string }[]>([]);
+  const [dnaTitle, setDnaTitle] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isReady) return;
@@ -42,12 +31,25 @@ const MyCinema = () => {
     if (!user) return;
     setLoading(true);
     try {
-      const [engData, likedData] = await Promise.all([
+      const [engData, likedData, dnaData] = await Promise.all([
         getEngagementData(user.id),
-        supabase.from("liked_movies").select("id", { count: "exact", head: true }).eq("user_id", user.id),
+        getLikedMovies().catch(() => []),
+        supabase.from("cinematic_profiles" as any)
+          .select("personality_title")
+          .eq("user_id", user.id)
+          .maybeSingle(),
       ]);
       setEngagement(engData);
-      setLikedCount(likedData.count || 0);
+      setLikedCount(likedData.length);
+      setRecentPosters(
+        likedData.slice(0, 6).map((m: any) => ({
+          poster: m.poster_path,
+          title: m.title,
+        })).filter((m: any) => m.poster)
+      );
+      if (dnaData.data) {
+        setDnaTitle((dnaData.data as any).personality_title || null);
+      }
     } catch (e) {
       console.error(e);
     } finally {
@@ -65,13 +67,7 @@ const MyCinema = () => {
 
   if (!user) return null;
 
-  const progressionMessage = engagement ? getProgressionMessage(engagement) : null;
-  const streakLabel = engagement ? getStreakLabel(engagement.streakCount) : "";
-  const nextMilestone = MILESTONES.find(m => (engagement?.totalRecommendations || 0) < m.count);
-  const reachedMilestones = MILESTONES.filter(m => (engagement?.totalRecommendations || 0) >= m.count);
-  const bestStreakMilestone = STREAK_MILESTONES.filter(m => (engagement?.bestStreak || 0) >= m.count).pop();
-
-  // If DNA full screen overlay
+  // DNA full screen overlay
   if (showDNA) {
     return (
       <div className="fixed inset-0 bg-background overflow-y-auto z-50">
@@ -89,360 +85,158 @@ const MyCinema = () => {
     );
   }
 
+  const totalRecos = engagement?.totalRecommendations || 0;
+  const confidence = engagement?.profileConfidence || 0;
+
+  // Narrative summary
+  const getWeeklyNarrative = () => {
+    if (totalRecos === 0) {
+      return "Commence à explorer et Pick apprendra à te connaître.";
+    }
+    if (totalRecos === 1) {
+      return "Tu as découvert ton premier film avec Pick. C'est le début d'une belle aventure !";
+    }
+    if (totalRecos <= 5) {
+      return `Pick t'a fait découvrir ${totalRecos} films. Continue pour affiner tes recommandations.`;
+    }
+    return `Pick t'a déjà recommandé ${totalRecos} films. Tes goûts se précisent !`;
+  };
+
+  // Learning progress sentence
+  const getLearningMessage = () => {
+    if (confidence === 0 && totalRecos === 0) {
+      return "Pick ne te connaît pas encore — note tes premiers films pour commencer.";
+    }
+    if (confidence < 30) {
+      return "Pick te connaît de mieux en mieux — continue à noter tes films.";
+    }
+    return `Pick est sûr à ${confidence}% de ses recommandations pour toi.`;
+  };
+
   return (
     <div className="fixed inset-0 bg-background overflow-y-auto">
       {/* Header */}
-      <div className="sticky top-0 z-30 bg-background/80 backdrop-blur-xl border-b border-border/10 px-5 py-3 pt-[calc(0.75rem+env(safe-area-inset-top))]">
-        <div className="max-w-2xl mx-auto flex items-center gap-2">
-          <button
-            onClick={() => navigate("/app")}
-            className="flex items-center gap-2 text-foreground/60 hover:text-foreground transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4" />
-          </button>
-          <h1 className="font-serif text-lg">Mon Cinéma</h1>
-        </div>
+      <div className="px-5 pt-[calc(1rem+env(safe-area-inset-top))] pb-2">
+        <h1 className="text-2xl font-serif">Mon Cinéma</h1>
       </div>
 
-      <div className="max-w-2xl mx-auto px-5 py-6 pb-32">
-        {/* Progression Message */}
-        {progressionMessage && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mb-6 px-4 py-3 rounded-2xl bg-primary/[0.06] border border-primary/15 text-center"
-          >
-            <p className="text-sm font-sans text-foreground/80">{progressionMessage}</p>
-          </motion.div>
-        )}
+      <div className="max-w-2xl mx-auto px-5 py-4 pb-32">
 
-        {/* ─── Stats Hero ─── */}
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
-          <div className="grid grid-cols-3 gap-2.5">
-            {/* Streak */}
-            <div className="bg-card rounded-2xl p-4 text-center border border-border/10 relative overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-b from-primary/[0.04] to-transparent" />
-              <div className="relative">
-                <div className="flex items-center justify-center gap-1 mb-2">
-                  {(engagement?.streakCount || 0) >= 5
-                    ? <Target className="w-5 h-5 text-primary" />
-                    : <Flame className="w-5 h-5 text-primary" />
-                  }
-                </div>
-                <p className="text-3xl font-serif text-foreground">{engagement?.streakCount || 0}</p>
-                <p className="text-[10px] text-muted-foreground font-sans mt-1">Série en cours</p>
-                {streakLabel && (
-                  <p className="text-[10px] text-primary font-sans font-medium mt-0.5">{streakLabel}</p>
-                )}
-              </div>
-            </div>
-
-            {/* Total Recos */}
-            <div className="bg-card rounded-2xl p-4 text-center border border-border/10 relative overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-b from-primary/[0.04] to-transparent" />
-              <div className="relative">
-                <div className="flex items-center justify-center mb-2">
-                  <TrendingUp className="w-5 h-5 text-primary/60" />
-                </div>
-                <p className="text-3xl font-serif text-foreground">{engagement?.totalRecommendations || 0}</p>
-                <p className="text-[10px] text-muted-foreground font-sans mt-1">Recommandations</p>
-              </div>
-            </div>
-
-            {/* Profile Confidence */}
-            <div className="bg-card rounded-2xl p-4 text-center border border-border/10 relative overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-b from-primary/[0.04] to-transparent" />
-              <div className="relative">
-                <div className="flex items-center justify-center mb-2">
-                  <Sparkles className="w-5 h-5 text-primary/60" />
-                </div>
-                <p className="text-3xl font-serif text-primary">{engagement?.profileConfidence || 0}%</p>
-                <p className="text-[10px] text-muted-foreground font-sans mt-1">Confiance</p>
-                <div className="w-full h-1.5 rounded-full bg-foreground/10 mt-2 overflow-hidden">
-                  <motion.div
-                    initial={{ width: 0 }}
-                    animate={{ width: `${engagement?.profileConfidence || 0}%` }}
-                    transition={{ delay: 0.3, duration: 0.8, ease: "easeOut" }}
-                    className="h-full rounded-full bg-gradient-to-r from-primary/60 to-primary"
-                  />
-                </div>
-              </div>
+        {/* ─── ADN Cinéma Card ─── */}
+        <motion.button
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          onClick={() => setShowDNA(true)}
+          className="w-full text-left rounded-2xl p-5 mb-6 border border-gold/20 bg-gradient-to-br from-card/80 via-card/60 to-gold/[0.03] hover:border-gold/35 transition-all group relative overflow-hidden"
+        >
+          {/* Subtle gold glow */}
+          <div className="absolute inset-0 bg-gradient-to-br from-gold/[0.04] to-transparent pointer-events-none" />
+          <div className="relative z-10">
+            <p className="text-[10px] uppercase tracking-[0.2em] text-gold/50 font-sans font-semibold mb-2">
+              🧬 Ton ADN Cinéma
+            </p>
+            {dnaTitle ? (
+              <>
+                <h2 className="text-xl font-serif text-foreground mb-2 group-hover:text-gold/90 transition-colors">
+                  {dnaTitle}
+                </h2>
+                {/* Show taste traits if available via CinemaDNA teaser */}
+              </>
+            ) : (
+              <h2 className="text-lg font-serif text-foreground/60 mb-1">
+                Découvre ton profil cinématographique
+              </h2>
+            )}
+            <div className="flex items-center gap-1.5 mt-2 text-gold/40 group-hover:text-gold/60 transition-colors">
+              <span className="text-[11px] font-sans">Explorer</span>
+              <ChevronRight className="w-3.5 h-3.5" />
             </div>
           </div>
+        </motion.button>
 
-          {/* Best Streak */}
-          {(engagement?.bestStreak || 0) > 0 && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.2 }}
-              className="flex items-center justify-center gap-2 mt-3"
-            >
-              <Trophy className="w-3.5 h-3.5 text-primary/50" />
-              <p className="text-[11px] text-muted-foreground font-sans">
-                Record : <span className="text-foreground font-medium">{engagement?.bestStreak}</span> recos validées d'affilée
-                {bestStreakMilestone && ` ${bestStreakMilestone.emoji}`}
-              </p>
-            </motion.div>
-          )}
-        </motion.div>
-
-        {/* ─── Fonctionnalités à débloquer ─── */}
+        {/* ─── Weekly Narrative ─── */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="mb-8"
+          className="mb-6"
         >
-          <h2 className="text-[11px] uppercase tracking-[0.15em] text-foreground/30 font-sans font-semibold mb-4">
-            Fonctionnalités
-          </h2>
-          <div className="space-y-2.5">
-            {(() => {
-              const confidence = engagement?.profileConfidence || 0;
-              const totalRecos = engagement?.totalRecommendations || 0;
-
-              const features = [
-                {
-                  id: "why",
-                  icon: Brain,
-                  label: "Pourquoi ce film",
-                  desc: "Analyse personnalisée de chaque recommandation",
-                  unlocked: confidence >= 30,
-                  progress: Math.min((confidence / 30) * 100, 100),
-                  requirement: "30% de confiance",
-                },
-                {
-                  id: "dna",
-                  icon: Dna,
-                  label: "ADN Cinéma",
-                  desc: "Ton profil cinématographique unique",
-                  unlocked: likedCount >= 5,
-                  progress: Math.min((likedCount / 5) * 100, 100),
-                  requirement: "5 films aimés",
-                },
-                {
-                  id: "reviews",
-                  icon: MessageSquareText,
-                  label: "Avis post-visionnage",
-                  desc: "Partage ton ressenti pour affiner les recos",
-                  unlocked: totalRecos >= 1,
-                  progress: totalRecos >= 1 ? 100 : 0,
-                  requirement: "1 recommandation",
-                },
-                {
-                  id: "surprise",
-                  icon: Shuffle,
-                  label: "Surprends-moi",
-                  desc: "Films hors de ta zone de confort",
-                  unlocked: likedCount >= 3,
-                  progress: Math.min((likedCount / 3) * 100, 100),
-                  requirement: "3 films aimés",
-                },
-              ];
-
-              const unlockedCount = features.filter(f => f.unlocked).length;
-
-              return (
-                <>
-                  {/* Summary */}
-                  <div className="flex items-center gap-2 mb-3">
-                    <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/[0.08] border border-primary/15">
-                      <Unlock className="w-3 h-3 text-primary" />
-                      <span className="text-[11px] font-sans font-semibold text-primary">
-                        {unlockedCount}/{features.length}
-                      </span>
-                    </div>
-                    <span className="text-[11px] text-muted-foreground font-sans">
-                      {unlockedCount === features.length ? "Tout débloqué !" : "débloquées"}
-                    </span>
-                  </div>
-
-                  {features.map((feature, i) => {
-                    const Icon = feature.icon;
-                    return (
-                      <motion.div
-                        key={feature.id}
-                        initial={{ opacity: 0, x: -10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: 0.15 + i * 0.05 }}
-                        className={`flex items-center gap-3 px-4 py-3.5 rounded-xl border transition-all ${
-                          feature.unlocked
-                            ? "bg-primary/[0.06] border-primary/15"
-                            : "bg-card border-border/15"
-                        }`}
-                        onClick={() => {
-                          if (feature.id === "dna" && feature.unlocked) setShowDNA(true);
-                        }}
-                        style={{ cursor: feature.id === "dna" && feature.unlocked ? "pointer" : "default" }}
-                      >
-                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
-                          feature.unlocked
-                            ? "bg-primary/15"
-                            : "bg-muted"
-                        }`}>
-                          {feature.unlocked ? (
-                            <Icon className="w-5 h-5 text-primary" />
-                          ) : (
-                            <Lock className="w-4 h-4 text-muted-foreground" />
-                          )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <p className={`text-sm font-sans font-medium ${feature.unlocked ? "text-foreground" : "text-foreground/50"}`}>
-                              {feature.label}
-                            </p>
-                            {feature.unlocked && (
-                              <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-primary/15 text-primary font-sans font-semibold">
-                                DÉBLOQUÉ
-                              </span>
-                            )}
-                          </div>
-                          <p className="text-[11px] text-muted-foreground font-sans">{feature.desc}</p>
-                          {!feature.unlocked && (
-                            <div className="mt-1.5">
-                              <div className="h-1 rounded-full bg-muted overflow-hidden">
-                                <motion.div
-                                  initial={{ width: 0 }}
-                                  animate={{ width: `${feature.progress}%` }}
-                                  transition={{ delay: 0.3 + i * 0.05, duration: 0.8, ease: "easeOut" }}
-                                  className="h-full rounded-full bg-primary/40"
-                                />
-                              </div>
-                              <p className="text-[9px] text-muted-foreground/60 font-sans mt-0.5">
-                                Objectif : {feature.requirement}
-                              </p>
-                            </div>
-                          )}
-                        </div>
-                      </motion.div>
-                    );
-                  })}
-                </>
-              );
-            })()}
+          <div className="flex items-start gap-3">
+            <div className="shrink-0 w-8 h-8 mt-0.5">
+              <PickCharacter mood="default" size="sm" animate={false} />
+            </div>
+            <div className="flex-1 px-4 py-3 rounded-2xl bg-card/50 border border-border/10">
+              <p className="text-foreground/60 text-[13px] font-sans leading-relaxed">
+                {getWeeklyNarrative()}
+              </p>
+            </div>
           </div>
         </motion.div>
 
-        {/* ─── ADN Cinéma Teaser ─── */}
-        {likedCount >= 5 && (
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
-            <CinemaDNA userId={user.id} teaser onOpenFull={() => setShowDNA(true)} />
-          </motion.div>
-        )}
-
-        {/* ─── Milestones ─── */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.15 }}
-          className="mt-8"
-        >
-          <h2 className="text-[11px] uppercase tracking-[0.15em] text-foreground/30 font-sans font-semibold mb-4">
-            Tes jalons
-          </h2>
-          <div className="space-y-2">
-            {MILESTONES.map((milestone, i) => {
-              const reached = (engagement?.totalRecommendations || 0) >= milestone.count;
-              const isNext = milestone === nextMilestone;
-              const progress = isNext
-                ? Math.min(((engagement?.totalRecommendations || 0) / milestone.count) * 100, 100)
-                : reached ? 100 : 0;
-
-              return (
-                <motion.div
-                  key={milestone.count}
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.2 + i * 0.04 }}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-xl border transition-all ${
-                    reached
-                      ? "bg-primary/[0.06] border-primary/15"
-                      : isNext
-                        ? "bg-card border-border/20"
-                        : "bg-card/50 border-border/10 opacity-50"
-                  }`}
-                >
-                  <span className="text-xl w-8 text-center">{milestone.emoji}</span>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between">
-                      <p className={`text-sm font-sans font-medium ${reached ? "text-foreground" : "text-foreground/60"}`}>
-                        {milestone.label}
-                      </p>
-                      <span className="text-[10px] text-muted-foreground font-sans">
-                        {milestone.count} films
-                      </span>
-                    </div>
-                    <p className="text-[11px] text-muted-foreground font-sans">{milestone.desc}</p>
-                    {isNext && (
-                      <div className="mt-1.5">
-                        <Progress value={progress} className="h-1" />
-                        <p className="text-[9px] text-muted-foreground font-sans mt-0.5">
-                          {engagement?.totalRecommendations || 0}/{milestone.count}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                  {reached && (
-                    <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center">
-                      <Sparkles className="w-3 h-3 text-primary" />
-                    </div>
-                  )}
-                </motion.div>
-              );
-            })}
-          </div>
-        </motion.div>
-
-        {/* ─── Streak Milestones ─── */}
-        {(engagement?.bestStreak || 0) >= 3 && (
+        {/* ─── Recent Activity — Poster Scroll ─── */}
+        {recentPosters.length > 0 && (
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.25 }}
-            className="mt-8"
+            transition={{ delay: 0.15 }}
+            className="mb-6"
           >
-            <h2 className="text-[11px] uppercase tracking-[0.15em] text-foreground/30 font-sans font-semibold mb-4">
-              Séries record
-            </h2>
-            <div className="flex gap-2 flex-wrap">
-              {STREAK_MILESTONES.map((sm) => {
-                const reached = (engagement?.bestStreak || 0) >= sm.count;
-                return (
-                  <div
-                    key={sm.count}
-                    className={`flex items-center gap-2 px-3.5 py-2 rounded-full border text-sm font-sans ${
-                      reached
-                        ? "bg-primary/[0.08] border-primary/20 text-foreground"
-                        : "bg-card/50 border-border/10 text-foreground/30"
-                    }`}
-                  >
-                    <span>{sm.emoji}</span>
-                    <span className="font-medium">{sm.label}</span>
-                    <span className="text-[10px] text-muted-foreground">{sm.count}+</span>
-                  </div>
-                );
-              })}
+            <p className="text-[11px] uppercase tracking-[0.15em] text-foreground/25 font-sans font-semibold mb-3">
+              Tes derniers films
+            </p>
+            <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
+              {recentPosters.map((m, i) => (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.2 + i * 0.04 }}
+                  className="shrink-0 w-20 rounded-xl overflow-hidden border border-border/10"
+                >
+                  <img
+                    src={getPosterUrl(m.poster, "w185")}
+                    alt={m.title}
+                    className="w-full aspect-[2/3] object-cover"
+                    loading="lazy"
+                  />
+                </motion.div>
+              ))}
             </div>
           </motion.div>
         )}
 
-        {/* ─── Lexique link ─── */}
+        {/* ─── Pick's Learning Progress ─── */}
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.3 }}
-          className="mt-10 flex justify-center"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="mb-6"
         >
-          <button
-            onClick={() => navigate("/glossary")}
-            className="flex items-center gap-2 text-[12px] text-primary/50 hover:text-primary font-sans font-medium transition-colors"
-          >
-            <BookOpen className="w-3.5 h-3.5" />
-            Lexique Cinéma
-          </button>
+          <div className="px-4 py-3.5 rounded-2xl bg-primary/[0.04] border border-primary/10">
+            <div className="flex items-center gap-2 mb-1.5">
+              <Sparkles className="w-3.5 h-3.5 text-primary/50" />
+              <span className="text-[10px] uppercase tracking-wider text-primary/40 font-sans font-semibold">
+                Apprentissage
+              </span>
+            </div>
+            <p className="text-foreground/60 text-[13px] font-sans leading-relaxed">
+              {getLearningMessage()}
+            </p>
+            {confidence >= 30 && (
+              <div className="mt-2.5 h-1.5 rounded-full bg-foreground/10 overflow-hidden">
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: `${confidence}%` }}
+                  transition={{ delay: 0.4, duration: 0.8, ease: "easeOut" }}
+                  className="h-full rounded-full bg-gradient-to-r from-primary/60 to-primary"
+                />
+              </div>
+            )}
+          </div>
         </motion.div>
       </div>
+
+      <BottomTabBar />
     </div>
   );
 };
