@@ -236,6 +236,8 @@ const Index = () => {
     const currentMovie = results[currentResultIndex];
     if (currentMovie) {
       trackInteraction(currentMovie.id, "watched", { mood, context, time });
+      // Record as accepted recommendation for engagement tracking
+      if (user) recordAcceptedRecommendation(user.id);
     }
     setShowCompanion(true);
   };
