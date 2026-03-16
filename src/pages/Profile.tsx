@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "@/hooks/use-toast";
-import { ArrowLeft, Heart, Bookmark, Check, LogOut, Loader2, X, Ban, Star, Info, Film, Tv, Layers, Trash2, Sparkles, Clock, Bell, BellOff, Flame, Target } from "lucide-react";
+import { ArrowLeft, Heart, Bookmark, Check, LogOut, Loader2, X, Ban, Star, Info, Film, Tv, Layers, Trash2 } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
@@ -11,8 +11,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { getLikedMovies } from "@/lib/liked-movies";
 import { getWatchlist } from "@/lib/watchlist";
 import { getPosterUrl } from "@/lib/tmdb";
-import { getEngagementData, saveRitualPreferences, type EngagementData } from "@/lib/engagement";
-
 import PickCharacter from "@/components/pick/PickCharacter";
 
 const ALL_PLATFORMS = [
@@ -63,9 +61,6 @@ const Profile = () => {
   const [mediaPreference, setMediaPreference] = useState<string>("both");
   const [saving, setSaving] = useState(false);
   const [profileLoading, setProfileLoading] = useState(true);
-  const [engagement, setEngagement] = useState<EngagementData | null>(null);
-  const [ritualTime, setRitualTime] = useState<string>("20:30");
-  const [ritualEnabled, setRitualEnabled] = useState(false);
 
   useEffect(() => {
     if (!isReady) return;
@@ -92,15 +87,6 @@ const Profile = () => {
         ]);
         setLikedMovies(liked);
         setWatchlist(wl);
-
-        // Load engagement data
-        const engData = await getEngagementData(user.id);
-        if (engData) {
-          setEngagement(engData);
-          setRitualTime(engData.ritualTime || "20:30");
-          setRitualEnabled(engData.ritualEnabled);
-        }
-
       } catch (e) {
         console.error(e);
       } finally {
@@ -230,84 +216,6 @@ const Profile = () => {
           </div>
           <h1 className="text-2xl md:text-3xl font-serif mb-1">{displayName}</h1>
           <p className="text-muted-foreground text-sm font-sans">{user.email}</p>
-        </motion.div>
-
-        {/* Engagement Stats */}
-        {engagement && engagement.totalRecommendations > 0 && (
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="mb-8">
-            <h2 className="text-lg font-serif mb-3">Ton activité Pick</h2>
-            <div className="grid grid-cols-3 gap-2">
-              <div className="bg-card rounded-xl p-3 text-center border border-border/10">
-                <div className="flex items-center justify-center gap-1 mb-1">
-                  {engagement.streakCount >= 5 ? <Target className="w-4 h-4 text-primary" /> : <Flame className="w-4 h-4 text-primary" />}
-                </div>
-                <p className="text-xl font-serif text-foreground">{engagement.streakCount}</p>
-                <p className="text-[10px] text-muted-foreground font-sans">Série en cours</p>
-              </div>
-              <div className="bg-card rounded-xl p-3 text-center border border-border/10">
-                <p className="text-xl font-serif text-foreground">{engagement.totalRecommendations}</p>
-                <p className="text-[10px] text-muted-foreground font-sans">Recommandations</p>
-              </div>
-              <div className="bg-card rounded-xl p-3 text-center border border-border/10">
-                <p className="text-xl font-serif text-primary">{engagement.profileConfidence}%</p>
-                <p className="text-[10px] text-muted-foreground font-sans">Confiance profil</p>
-                <div className="w-full h-1 rounded-full bg-foreground/10 mt-1.5 overflow-hidden">
-                  <div className="h-full rounded-full bg-primary/60" style={{ width: `${engagement.profileConfidence}%` }} />
-                </div>
-              </div>
-            </div>
-            {engagement.bestStreak > 0 && (
-              <p className="text-[11px] text-muted-foreground font-sans mt-2 text-center">
-                🏆 Record : {engagement.bestStreak} recos validées d'affilée
-              </p>
-            )}
-          </motion.div>
-        )}
-
-        {/* Ritual du soir */}
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.07 }} className="mb-8">
-          <h2 className="text-lg font-serif mb-1">Rituel du soir</h2>
-          <p className="text-[11px] text-muted-foreground font-sans mb-3">
-            Pick te propose un film chaque soir à l'heure de ton choix
-          </p>
-          <div className="bg-card rounded-2xl p-4 border border-border/10">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <Clock className="w-4 h-4 text-primary" />
-                <span className="font-sans text-sm font-medium">Notification quotidienne</span>
-              </div>
-              <button
-                onClick={() => {
-                  const newState = !ritualEnabled;
-                  setRitualEnabled(newState);
-                  if (user) saveRitualPreferences(user.id, ritualTime, newState);
-                  toast({ title: newState ? "Rituel activé ✓" : "Rituel désactivé" });
-                }}
-                className={`w-10 h-6 rounded-full transition-colors relative ${ritualEnabled ? "bg-primary" : "bg-foreground/15"}`}
-              >
-                <div className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${ritualEnabled ? "left-[18px]" : "left-0.5"}`} />
-              </button>
-            </div>
-            {ritualEnabled && (
-              <div className="flex items-center gap-3">
-                <input
-                  type="time"
-                  value={ritualTime}
-                  onChange={(e) => {
-                    setRitualTime(e.target.value);
-                    if (user) saveRitualPreferences(user.id, e.target.value, ritualEnabled);
-                  }}
-                  className="flex-1 px-3 py-2 rounded-xl bg-foreground/[0.05] border border-border/20 text-foreground text-sm font-sans focus:outline-none focus:border-primary/40"
-                />
-                <Bell className="w-4 h-4 text-primary/60" />
-              </div>
-            )}
-            <p className="text-[10px] text-muted-foreground font-sans mt-2">
-              {ritualEnabled
-                ? `📱 Chaque soir à ${ritualTime}, Pick te suggère un film`
-                : "Active pour recevoir une suggestion personnalisée chaque soir"}
-            </p>
-          </div>
         </motion.div>
 
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="mb-8">

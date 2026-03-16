@@ -1,4 +1,4 @@
-import { Home, Compass, Bookmark, User } from "lucide-react";
+import { Home, Dna, Bookmark, User } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 
@@ -11,7 +11,7 @@ interface BottomTabBarProps {
 
 const tabs: { id: TabId; label: string; icon: typeof Home; path: string }[] = [
   { id: "home", label: "Accueil", icon: Home, path: "/app" },
-  { id: "discover", label: "Découvrir", icon: Compass, path: "/app/discover" },
+  { id: "discover", label: "Mon Cinéma", icon: Dna, path: "/app/my-cinema" },
   { id: "watchlist", label: "Watchlist", icon: Bookmark, path: "/app/watchlist" },
   { id: "profile", label: "Profil", icon: User, path: "/app/profile" },
 ];
