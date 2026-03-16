@@ -6,6 +6,8 @@ import ReactMarkdown from "react-markdown";
 import { useCompanion } from "@/contexts/CompanionContext";
 import { getDisplayTitle, getPosterUrl } from "@/lib/tmdb";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/use-auth";
+import { supabase } from "@/integrations/supabase/client";
 import squirrelImg from "@/assets/pick-squirrel.png";
 
 interface ChatMsg {
