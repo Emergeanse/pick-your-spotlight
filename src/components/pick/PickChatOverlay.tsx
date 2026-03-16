@@ -479,12 +479,14 @@ export default function PickChatOverlay() {
                 >
                   <Send className="w-4 h-4" />
                 </Button>
-              {/* Chat remaining indicator for free users */}
-              {!pickPlus.isPremium && (
+              {/* Status indicator for free users */}
+              {!pickPlus.isPremium && mode !== "companion" && (
                 <p className="text-center text-[10px] text-muted-foreground/40 font-sans mt-1.5">
-                  {pickPlus.chatRemaining > 0
-                    ? `${pickPlus.chatRemaining} message${pickPlus.chatRemaining > 1 ? "s" : ""} restant${pickPlus.chatRemaining > 1 ? "s" : ""} aujourd'hui`
-                    : "Limite atteinte — Passe à Pick+ 👑"
+                  {pickPlus.discoveryConvoLocked
+                    ? "Film trouvé ! Passe à Pick+ pour le chatbot complet 👑"
+                    : !pickPlus.canDiscoveryChat
+                      ? "Conversation du jour utilisée — Reviens demain ou passe à Pick+ 👑"
+                      : "1 conversation découverte par jour"
                   }
                 </p>
               )}
@@ -498,7 +500,7 @@ export default function PickChatOverlay() {
       <PickPlusPaywall
         open={pickPlus.shouldShowPaywall}
         onClose={pickPlus.hidePaywall}
-        trigger="chat_limit"
+        trigger={pickPlus.paywallTrigger as any}
       />
     </AnimatePresence>
   );
