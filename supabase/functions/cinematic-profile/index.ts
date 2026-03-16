@@ -41,7 +41,7 @@ serve(async (req) => {
       });
     }
 
-    const userId = user.id;
+    const userId = claimsData.claims.sub as string;
 
     // Gather user data
     const [likedRes, interactionsRes, profileRes] = await Promise.all([
