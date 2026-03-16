@@ -315,85 +315,15 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
             </motion.div>
           )}
 
-          {/* Pick character + greeting or proactive suggestion */}
+          {/* Pick character + greeting */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2, duration: 0.5 }}
             className="mb-6 md:mb-8"
           >
-            {proactivePick && !proactiveDismissed ? (
-              <PickCharacter mood="default" message={proactiveMsg} size="md" animate />
-            ) : (
-              <PickCharacter mood="wave" showGreeting size="md" animate />
-            )}
+            <PickCharacter mood="wave" showGreeting size="md" animate />
           </motion.div>
-
-          {/* Proactive recommendation card */}
-          <AnimatePresence>
-            {proactivePick && !proactiveDismissed && !isSurprising && (
-              <motion.div
-                initial={{ opacity: 0, y: 20, scale: 0.95 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: -10, scale: 0.95 }}
-                transition={{ delay: 0.3, duration: 0.5, type: "spring", stiffness: 180 }}
-                className="w-full max-w-md px-2 mb-6"
-              >
-                <div className="relative rounded-2xl overflow-hidden border border-gold/25 bg-card/70 backdrop-blur-md shadow-xl">
-                  {proactivePick.backdrop_path && (
-                    <div
-                      className="absolute inset-0 bg-cover bg-center opacity-20"
-                      style={{ backgroundImage: `url(${getBackdropUrl(proactivePick.backdrop_path)})` }}
-                    />
-                  )}
-                  <div className="absolute inset-0 bg-gradient-to-r from-card/90 via-card/70 to-card/50" />
-
-                  <div className="relative z-10 flex items-center gap-4 p-4">
-                    {proactivePick.poster_path && (
-                      <img
-                        src={getPosterUrl(proactivePick.poster_path, "w185") || ""}
-                        alt={getDisplayTitle(proactivePick)}
-                        className="w-16 h-24 rounded-lg object-cover shadow-lg border border-border/20 shrink-0"
-                      />
-                    )}
-                    <div className="flex-1 min-w-0 text-left">
-                      <p className="text-[10px] uppercase tracking-widest text-gold/70 font-sans font-semibold mb-1">
-                        ✨ Pick du soir
-                      </p>
-                      <h3 className="text-sm font-serif text-foreground mb-0.5 line-clamp-1">
-                        {getDisplayTitle(proactivePick)}
-                      </h3>
-                      {proactivePick.genres && (
-                        <p className="text-foreground/40 text-[10px] font-sans line-clamp-1">
-                          {proactivePick.genres.map(g => g.name).join(" · ")}
-                        </p>
-                      )}
-                      <div className="flex items-center gap-2 mt-2.5">
-                        <button
-                          onClick={() => { onSurprise(proactivePick); setProactiveDismissed(true); }}
-                          className="px-3 py-1.5 rounded-full bg-primary text-primary-foreground text-[11px] font-sans font-semibold hover:bg-primary/90 transition-colors active:scale-95"
-                        >
-                          Je découvre
-                        </button>
-                        <button
-                          onClick={() => { setProactiveDismissed(true); handleTonightPick(); }}
-                          className="px-3 py-1.5 rounded-full bg-foreground/[0.06] border border-border/25 text-foreground/50 text-[11px] font-sans hover:text-foreground hover:border-border/40 transition-all active:scale-95"
-                        >
-                          Autre chose
-                        </button>
-                        <button
-                          onClick={() => setProactiveDismissed(true)}
-                          className="ml-auto text-foreground/25 hover:text-foreground/50 transition-colors"
-                        >
-                          <X className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
 
           {isSurprising ? (
             <motion.div
