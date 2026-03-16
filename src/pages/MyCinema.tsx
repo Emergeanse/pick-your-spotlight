@@ -30,6 +30,7 @@ const MyCinema = () => {
   const [engagement, setEngagement] = useState<EngagementData | null>(null);
   const [loading, setLoading] = useState(true);
   const [showDNA, setShowDNA] = useState(false);
+  const [likedCount, setLikedCount] = useState(0);
 
   useEffect(() => {
     if (!isReady) return;
