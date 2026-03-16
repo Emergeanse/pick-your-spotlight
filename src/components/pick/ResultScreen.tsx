@@ -444,27 +444,29 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                   <ExternalLink className="w-3.5 h-3.5 opacity-70" />
                 </motion.button>
               ) : (
-                /* Multiple platforms — horizontal scrollable row */
-                <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-1 -mx-1 px-1">
+                /* Multiple platforms — list with open buttons */
+                <div className="flex flex-col gap-2">
                   {streamingLinks.slice(0, 6).map((link) => (
                     <motion.button
                       key={link.providerId + link.name}
-                      whileTap={{ scale: 0.93 }}
+                      whileTap={{ scale: 0.98 }}
                       onClick={() => {
                         trackInteraction(movie.id, "watch_clicked", { platform: link.name });
                         openStreamingLink(link);
                       }}
-                      className="flex flex-col items-center gap-1.5 shrink-0 group"
+                      className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-foreground/[0.05] border border-border/20 hover:border-primary/30 hover:bg-foreground/[0.08] transition-all active:scale-[0.98] group"
                     >
-                      <div className="w-[36px] h-[36px] rounded-full bg-foreground/8 border border-border/20 group-hover:border-primary/40 flex items-center justify-center overflow-hidden transition-all group-active:scale-95">
-                        <img
-                          src={`${IMG_BASE}/w92${link.logo_path}`}
-                          alt={link.name}
-                          className="w-[36px] h-[36px] rounded-full object-cover"
-                        />
-                      </div>
-                      <span className="text-foreground/50 text-[9px] font-sans font-medium group-hover:text-foreground transition-colors text-center max-w-[52px] leading-tight">
+                      <img
+                        src={`${IMG_BASE}/w92${link.logo_path}`}
+                        alt={link.name}
+                        className="w-8 h-8 rounded-lg object-cover shrink-0"
+                      />
+                      <span className="text-foreground/70 text-[13px] font-sans font-medium flex-1 text-left group-hover:text-foreground transition-colors">
                         {link.name}
+                      </span>
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary/15 text-primary text-[11px] font-sans font-semibold group-hover:bg-primary/25 transition-colors">
+                        Ouvrir
+                        <ExternalLink className="w-3 h-3" />
                       </span>
                     </motion.button>
                   ))}
