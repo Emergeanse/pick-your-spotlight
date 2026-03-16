@@ -8,6 +8,8 @@ interface DiscoverySectionProps {
   onMovieSelect: (movie: MovieDetail) => void;
   platformIds?: number[];
   favoriteGenres?: string[];
+  minRating?: number;
+  excludedGenres?: string[];
 }
 
 const MovieRow = ({ 
