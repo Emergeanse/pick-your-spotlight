@@ -248,7 +248,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
     } catch (e) {
       console.error(e);
       try {
-        const movie = await getSurpriseRecommendation(excludeList);
+        const movie = await getSurpriseRecommendation(excludeList, { platformIds: userPlatformIds, minRating: userMinRating, excludedGenres: userExcludedGenres });
         clearInterval(msgInterval);
         setTonightPick(movie);
         const mediaType = movie.first_air_date ? "tv" : "movie";
