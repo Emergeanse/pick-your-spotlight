@@ -97,7 +97,8 @@ function getRejectReaction(reason: string): string {
 }
 
 const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onShowAnother, onRestart, onRefineWithVoice, onRefineWithMessage, onStartCompanion, hasMore, userCriteria, alternativeMovies, onSelectAlternative, searchTags, onRemoveTag, refining }, ref) => {
-  const [providers, setProviders] = useState<{ name: string; logo_path: string }[]>([]);
+  const [providers, setProviders] = useState<{ name: string; logo_path: string; provider_id: number }[]>([]);
+  const [streamingLinks, setStreamingLinks] = useState<StreamingLink[]>([]);
   const [trailerUrl, setTrailerUrl] = useState<string | null>(null);
   const [matchData, setMatchData] = useState<MatchData | null>(null);
   const [matchLoading, setMatchLoading] = useState(false);
