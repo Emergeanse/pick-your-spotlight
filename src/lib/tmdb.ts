@@ -191,14 +191,49 @@ export async function getWatchProviders(id: number, mediaType: string): Promise<
   }));
 }
 
-export async function getSurpriseRecommendation(excludeIds: number[] = []): Promise<MovieDetail> {
+export async function getSurpriseRecommendation(
+  excludeIds: number[] = [],
+  options: { platformIds?: number[]; minRating?: number; excludedGenres?: string[] } = {}
+): Promise<MovieDetail> {
   const excluded = new Set(excludeIds);
+  const excludedGenreIds = (options.excludedGenres || []).map(n => genreNameToId[n]).filter(Boolean);
+  const minRating = options.minRating || 0;
 
+  const isAllowed = (m: Movie) => {
+    if (excluded.has(m.id)) return false;
+    if (minRating > 0 && (m.vote_average || 0) < minRating) return false;
+    if (excludedGenreIds.length > 0 && m.genre_ids?.some(gid => excludedGenreIds.includes(gid))) return false;
+    return true;
+  };
+
+  // Try discover with filters for best results
+  if (options.platformIds?.length || minRating > 0 || excludedGenreIds.length > 0) {
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const params: Record<string, string> = {
+        sort_by: "vote_average.desc",
+        "vote_count.gte": "200",
+        page: String(Math.floor(Math.random() * 5) + 1),
+      };
+      if (minRating > 0) params["vote_average.gte"] = String(minRating);
+      if (options.platformIds?.length) {
+        params.with_watch_providers = options.platformIds.join("|");
+        params.watch_region = "FR";
+      }
+      if (excludedGenreIds.length > 0) params.without_genres = excludedGenreIds.join(",");
+      const data = await fetchFromTMDB("/discover/movie", params);
+      const results: Movie[] = (data.results || []).filter(isAllowed);
+      if (results.length > 0) {
+        const pick = results[Math.floor(Math.random() * results.length)];
+        return getMovieDetails(pick.id, "movie");
+      }
+    }
+  }
+
+  // Fallback to top_rated with client-side filtering
   for (let attempt = 0; attempt < 5; attempt++) {
     const page = Math.floor(Math.random() * 5) + 1;
     const data = await fetchFromTMDB("/movie/top_rated", { page: String(page) });
-    const results: Movie[] = (data.results || []).filter((m: Movie) => !excluded.has(m.id));
-
+    const results: Movie[] = (data.results || []).filter(isAllowed);
     if (results.length > 0) {
       const pick = results[Math.floor(Math.random() * results.length)];
       return getMovieDetails(pick.id, "movie");
@@ -206,13 +241,9 @@ export async function getSurpriseRecommendation(excludeIds: number[] = []): Prom
   }
 
   const fallbackData = await fetchFromTMDB("/movie/popular", { page: "1" });
-  const fallbackResults: Movie[] = (fallbackData.results || []).filter((m: Movie) => !excluded.has(m.id));
+  const fallbackResults: Movie[] = (fallbackData.results || []).filter(isAllowed);
   const fallbackPick = fallbackResults[0] || (fallbackData.results || [])[0];
-
-  if (!fallbackPick) {
-    throw new Error("No movie available for surprise recommendation");
-  }
-
+  if (!fallbackPick) throw new Error("No movie available for surprise recommendation");
   return getMovieDetails(fallbackPick.id, "movie");
 }
 
@@ -223,8 +254,14 @@ export async function getTrendingMovie(): Promise<MovieDetail> {
   return getMovieDetails(pick.id, "movie");
 }
 
-export async function getTrendingMovies(count: number = 10, platformIds: number[] = [], favoriteGenres: string[] = []): Promise<Movie[]> {
-  if (platformIds.length > 0 || favoriteGenres.length > 0) {
+export async function getTrendingMovies(
+  count: number = 10,
+  platformIds: number[] = [],
+  favoriteGenres: string[] = [],
+  options: { minRating?: number; excludedGenres?: string[] } = {}
+): Promise<Movie[]> {
+  const excludedGenreIds = (options.excludedGenres || []).map(n => genreNameToId[n]).filter(Boolean);
+  if (platformIds.length > 0 || favoriteGenres.length > 0 || (options.minRating && options.minRating > 0) || excludedGenreIds.length > 0) {
     const params: Record<string, string> = {
       sort_by: "popularity.desc",
       "vote_count.gte": "100",
@@ -236,6 +273,12 @@ export async function getTrendingMovies(count: number = 10, platformIds: number[
     if (favoriteGenres.length > 0) {
       params.with_genres = genreNamesToIds(favoriteGenres).join("|");
     }
+    if (options.minRating && options.minRating > 0) {
+      params["vote_average.gte"] = String(options.minRating);
+    }
+    if (excludedGenreIds.length > 0) {
+      params.without_genres = excludedGenreIds.join(",");
+    }
     const data = await fetchFromTMDB("/discover/movie", params);
     const results: Movie[] = data.results || [];
     return results.slice(0, count);
@@ -245,11 +288,18 @@ export async function getTrendingMovies(count: number = 10, platformIds: number[
   return results.slice(0, count);
 }
 
-export async function getHiddenGems(count: number = 10, platformIds: number[] = [], favoriteGenres: string[] = []): Promise<Movie[]> {
+export async function getHiddenGems(
+  count: number = 10,
+  platformIds: number[] = [],
+  favoriteGenres: string[] = [],
+  options: { minRating?: number; excludedGenres?: string[] } = {}
+): Promise<Movie[]> {
   const page = Math.floor(Math.random() * 3) + 1;
+  const excludedGenreIds = (options.excludedGenres || []).map(n => genreNameToId[n]).filter(Boolean);
+  const minRating = Math.max(options.minRating || 0, 7.5);
   const params: Record<string, string> = {
     sort_by: "vote_average.desc",
-    "vote_average.gte": "7.5",
+    "vote_average.gte": String(minRating),
     "vote_count.gte": "200",
     "vote_count.lte": "2000",
     "with_runtime.gte": "70",
@@ -261,6 +311,9 @@ export async function getHiddenGems(count: number = 10, platformIds: number[] = 
   }
   if (favoriteGenres.length > 0) {
     params.with_genres = genreNamesToIds(favoriteGenres).join("|");
+  }
+  if (excludedGenreIds.length > 0) {
+    params.without_genres = excludedGenreIds.join(",");
   }
   const data = await fetchFromTMDB("/discover/movie", params);
   const results: Movie[] = data.results || [];
@@ -317,13 +370,18 @@ export async function searchMovies(query: string): Promise<Movie[]> {
 }
 
 // New: get tonight's pick (single trending movie with details)
-export async function getTonightsPick(platformIds: number[] = [], favoriteGenres: string[] = []): Promise<MovieDetail> {
+export async function getTonightsPick(
+  platformIds: number[] = [],
+  favoriteGenres: string[] = [],
+  options: { minRating?: number; excludedGenres?: string[] } = {}
+): Promise<MovieDetail> {
+  const excludedGenreIds = (options.excludedGenres || []).map(n => genreNameToId[n]).filter(Boolean);
   let results: Movie[];
-  if (platformIds.length > 0 || favoriteGenres.length > 0) {
+  if (platformIds.length > 0 || favoriteGenres.length > 0 || (options.minRating && options.minRating > 0) || excludedGenreIds.length > 0) {
     const params: Record<string, string> = {
       sort_by: "popularity.desc",
       "vote_count.gte": "100",
-      "vote_average.gte": "6.5",
+      "vote_average.gte": String(Math.max(options.minRating || 0, 6.5)),
     };
     if (platformIds.length > 0) {
       params.with_watch_providers = platformIds.join("|");
@@ -331,6 +389,9 @@ export async function getTonightsPick(platformIds: number[] = [], favoriteGenres
     }
     if (favoriteGenres.length > 0) {
       params.with_genres = genreNamesToIds(favoriteGenres).join("|");
+    }
+    if (excludedGenreIds.length > 0) {
+      params.without_genres = excludedGenreIds.join(",");
     }
     const data = await fetchFromTMDB("/discover/movie", params);
     results = data.results || [];

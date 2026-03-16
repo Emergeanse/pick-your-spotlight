@@ -190,10 +190,10 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
           // Tag as comfort zone exit
           (movie as any)._surpriseComfortZone = true;
         } else {
-          movie = await getSurpriseRecommendation();
+          movie = await getSurpriseRecommendation([], { platformIds: userPlatformIds, minRating: userMinRating, excludedGenres: userExcludedGenres });
         }
       } else {
-        movie = await getSurpriseRecommendation();
+        movie = await getSurpriseRecommendation([], { platformIds: userPlatformIds, minRating: userMinRating, excludedGenres: userExcludedGenres });
       }
 
       clearInterval(msgInterval);
@@ -203,7 +203,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
     } catch (e) {
       console.error(e);
       try {
-        const movie = await getSurpriseRecommendation();
+        const movie = await getSurpriseRecommendation([], { platformIds: userPlatformIds, minRating: userMinRating, excludedGenres: userExcludedGenres });
         clearInterval(msgInterval);
         onSurprise(movie);
       } catch {
@@ -236,10 +236,10 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
           });
           movie = data.movie as MovieDetail;
         } else {
-          movie = await getSurpriseRecommendation(excludeList);
+          movie = await getSurpriseRecommendation(excludeList, { platformIds: userPlatformIds, minRating: userMinRating, excludedGenres: userExcludedGenres });
         }
       } else {
-        movie = await getSurpriseRecommendation(excludeList);
+        movie = await getSurpriseRecommendation(excludeList, { platformIds: userPlatformIds, minRating: userMinRating, excludedGenres: userExcludedGenres });
       }
       clearInterval(msgInterval);
       setTonightPick(movie);
@@ -248,7 +248,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
     } catch (e) {
       console.error(e);
       try {
-        const movie = await getSurpriseRecommendation(excludeList);
+        const movie = await getSurpriseRecommendation(excludeList, { platformIds: userPlatformIds, minRating: userMinRating, excludedGenres: userExcludedGenres });
         clearInterval(msgInterval);
         setTonightPick(movie);
         const mediaType = movie.first_air_date ? "tv" : "movie";
