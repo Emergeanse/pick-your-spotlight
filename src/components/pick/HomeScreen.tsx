@@ -191,6 +191,9 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
           (movie as any)._surpriseComfortZone = true;
         } else {
           movie = await getSurpriseRecommendation([], { platformIds: userPlatformIds, minRating: userMinRating, excludedGenres: userExcludedGenres });
+        }
+      } else {
+        movie = await getSurpriseRecommendation([], { platformIds: userPlatformIds, minRating: userMinRating, excludedGenres: userExcludedGenres });
       }
 
       clearInterval(msgInterval);
@@ -200,7 +203,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
     } catch (e) {
       console.error(e);
       try {
-        const movie = await getSurpriseRecommendation();
+        const movie = await getSurpriseRecommendation([], { platformIds: userPlatformIds, minRating: userMinRating, excludedGenres: userExcludedGenres });
         clearInterval(msgInterval);
         onSurprise(movie);
       } catch {
