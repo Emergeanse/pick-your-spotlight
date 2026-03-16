@@ -21,6 +21,55 @@ export type ChatMessage = {
 };
 
 
+// Contextual suggestion chips based on time of day, day of week, and behavior
+function getContextualSuggestions(): { label: string; message: string }[] {
+  const hour = new Date().getHours();
+  const day = new Date().getDay(); // 0=Sun, 6=Sat
+  const isWeekend = day === 0 || day === 5 || day === 6;
+  const isEvening = hour >= 18 || hour < 2;
+  const isLateNight = hour >= 22 || hour < 2;
+
+  const suggestions: { label: string; message: string; weight: number }[] = [];
+
+  // Time-based
+  if (isLateNight) {
+    suggestions.push(
+      { label: "Un film court ce soir", message: "Propose-moi un film court, il est tard et j'ai pas beaucoup de temps", weight: 10 },
+      { label: "Quelque chose de doux", message: "Je veux un truc doux et réconfortant pour finir la soirée", weight: 8 },
+    );
+  } else if (isEvening) {
+    suggestions.push(
+      { label: "Soirée détente", message: "Je veux un film feel-good pour me détendre ce soir", weight: 9 },
+      { label: "Un film qui surprend", message: "Surprends-moi avec un film que je n'aurais jamais choisi tout seul", weight: 7 },
+    );
+  } else {
+    suggestions.push(
+      { label: "Un classique", message: "Propose-moi un classique incontournable que je devrais voir", weight: 6 },
+      { label: "Un film léger", message: "Je veux un film léger et facile à regarder", weight: 7 },
+    );
+  }
+
+  // Weekend = more ambitious
+  if (isWeekend) {
+    suggestions.push(
+      { label: "Un chef-d'œuvre", message: "J'ai du temps, propose-moi un chef-d'œuvre ambitieux", weight: 9 },
+      { label: "Marathon série", message: "Je veux commencer une série captivante ce weekend", weight: 8 },
+    );
+  } else {
+    suggestions.push(
+      { label: "Épisode rapide", message: "Propose-moi un épisode de série à regarder vite fait", weight: 6 },
+    );
+  }
+
+  // Generic always-relevant
+  suggestions.push(
+    { label: "Comme la dernière fois", message: "Propose-moi quelque chose dans le même style que ma dernière recommandation", weight: 5 },
+    { label: "Hors de ma zone", message: "Fais-moi sortir de ma zone de confort avec un film inattendu", weight: 4 },
+  );
+
+  // Sort by weight, pick top 3
+  return suggestions.sort((a, b) => b.weight - a.weight).slice(0, 3);
+}
 
 type Phase = "idle" | "listening" | "processing" | "recap" | "conversation";
 
