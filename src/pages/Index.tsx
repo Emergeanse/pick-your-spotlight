@@ -389,6 +389,7 @@ const Index = () => {
               searchTags={searchTags}
               onRemoveTag={handleRemoveTag}
               refining={loading}
+              profileConfidence={profilePrefs.profileConfidence}
               alternativeMovies={results.filter((_, i) => i !== currentResultIndex).slice(0, 2)}
               onSelectAlternative={(movie) => {
                 const idx = results.findIndex(r => r.id === movie.id);
