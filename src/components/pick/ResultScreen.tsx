@@ -201,7 +201,10 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
   }, [movie.id]);
 
   useEffect(() => {
-    getWatchProviders(movie.id, mediaType).then(setProviders).catch(() => setProviders([]));
+    getWatchProviders(movie.id, mediaType).then((p) => {
+      setProviders(p);
+      setStreamingLinks(buildStreamingLinks(p, title));
+    }).catch(() => { setProviders([]); setStreamingLinks([]); });
     getMovieTrailerUrl(movie.id, mediaType).then(setTrailerUrl).catch(() => setTrailerUrl(null));
   }, [movie.id, mediaType]);
 
