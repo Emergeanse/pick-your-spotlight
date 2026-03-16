@@ -50,8 +50,13 @@ const SCROLLING_MESSAGES = [
   "Un thriller sous-estimé des années 2000",
   "Une série aussi addictive que Breaking Bad",
   "Un film comme Gone Girl mais moins connu",
-  "Une mini-série parfaite pour un week-end",
+  "Je suis fatigué, un truc réconfortant",
   "Un film qui retourne le cerveau",
+  "Soirée en couple, un truc romantique mais pas cliché",
+  "Un anime pour quelqu'un qui n'en regarde jamais",
+  "Un film court, j'ai 1h30 max",
+  "Un documentaire qui donne des frissons",
+  "Un classique que tout le monde devrait voir",
 ];
 
 const ScrollingRequests = () => {
@@ -60,7 +65,7 @@ const ScrollingRequests = () => {
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentIndex((prev) => (prev + 1) % SCROLLING_MESSAGES.length);
-    }, 2000);
+    }, 3500);
     return () => clearInterval(interval);
   }, []);
 
