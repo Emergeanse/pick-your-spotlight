@@ -481,6 +481,26 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
                   </div>
                 </motion.button>
 
+                {/* 3. Surprends-moi — out of comfort zone */}
+                <motion.button
+                  whileTap={{ scale: 0.98 }}
+                  onClick={handleSurprise}
+                  disabled={loading || isSurprising}
+                  className="group relative w-full text-left rounded-2xl p-4 bg-foreground/[0.03] border border-border/20 hover:border-primary/30 hover:bg-primary/[0.04] transition-all"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-xl bg-foreground/[0.06] border border-border/15 flex items-center justify-center shrink-0 group-hover:bg-primary/15 group-hover:border-primary/25 transition-colors">
+                      <Shuffle className="w-4 h-4 text-foreground/50 group-hover:text-primary transition-colors" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-sm font-sans font-semibold text-foreground mb-0.5">Surprends-moi</h3>
+                      <p className="text-foreground/40 text-[12px] font-sans leading-relaxed">
+                        Un film hors de tes habitudes, mais qui pourrait te plaire.
+                      </p>
+                    </div>
+                  </div>
+                </motion.button>
+
               </div>
 
 
