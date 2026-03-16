@@ -162,7 +162,12 @@ export default function CompanionMode({ movie, onClose, pickPlus }: CompanionMod
         }
       );
 
-      if (!resp.ok || !resp.body) throw new Error("Stream failed");
+      if (!resp.ok) {
+        const errorData = await resp.json().catch(() => ({}));
+        throw new Error(errorData.error || `Erreur ${resp.status}`);
+      }
+
+      if (!resp.body) throw new Error("Pas de réponse du serveur");
 
       const reader = resp.body.getReader();
       const decoder = new TextDecoder();
@@ -193,9 +198,15 @@ export default function CompanionMode({ movie, onClose, pickPlus }: CompanionMod
           }
         }
       }
-    } catch (e) {
+
+      // If no content was streamed, show fallback
+      if (!assistantContent) {
+        assistantContent = "Hmm, je n'ai pas réussi à répondre. Réessaie ! 🎬";
+        setMessages([...newMessages, { role: "assistant", content: assistantContent }]);
+      }
+    } catch (e: any) {
       console.error("Companion chat error:", e);
-      assistantContent = "Oups, une erreur est survenue. Réessaie ! 🎬";
+      assistantContent = `Oups, ${e.message || "une erreur est survenue"}. Réessaie ! 🎬`;
       setMessages([...newMessages, { role: "assistant", content: assistantContent }]);
     } finally {
       setIsStreaming(false);
