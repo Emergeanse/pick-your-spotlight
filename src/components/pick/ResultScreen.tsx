@@ -50,6 +50,7 @@ interface ResultScreenProps {
   searchTags?: string[];
   onRemoveTag?: (tag: string) => void;
   refining?: boolean;
+  profileConfidence?: number;
 }
 
 const REJECT_REACTIONS: Record<string, string[]> = {
