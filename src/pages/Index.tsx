@@ -11,6 +11,8 @@ import VoiceChat from "@/components/pick/VoiceChat";
 import CompanionMode from "@/components/pick/CompanionMode";
 import BottomTabBar from "@/components/pick/BottomTabBar";
 import RevealAnimation from "@/components/pick/RevealAnimation";
+import { useCompanion } from "@/contexts/CompanionContext";
+import RevealAnimation from "@/components/pick/RevealAnimation";
 import type { ChatMessage } from "@/components/pick/VoiceChat";
 import StepLayout from "@/components/pick/StepLayout";
 import BrandHeader from "@/components/pick/BrandHeader";
