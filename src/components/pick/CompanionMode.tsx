@@ -125,6 +125,15 @@ export default function CompanionMode({ movie, onClose, pickPlus }: CompanionMod
   const sendMessage = async (text: string) => {
     if (!text.trim() || isStreaming) return;
 
+    // Check companion limit
+    if (pickPlus && !pickPlus.canAskCompanion(movie.id)) {
+      pickPlus.showPaywall();
+      return;
+    }
+    if (pickPlus) {
+      await pickPlus.recordCompanionQuestion(movie.id);
+    }
+
     const userMsg: ChatMsg = { role: "user", content: text.trim() };
     const newMessages = [...messages, userMsg];
     setMessages(newMessages);

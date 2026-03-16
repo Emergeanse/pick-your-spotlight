@@ -51,6 +51,7 @@ const App = () => (
           <Route path="/app/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
           <Route path="/app/my-cinema" element={<ProtectedRoute><MyCinema /></ProtectedRoute>} />
           <Route path="/app/watchlist" element={<ProtectedRoute><WatchlistPageRoute /></ProtectedRoute>} />
+          <Route path="/app/pick-plus" element={<ProtectedRoute><PickPlusPage /></ProtectedRoute>} />
           <Route path="/glossary" element={<ProtectedRoute><Glossary /></ProtectedRoute>} />
           {/* Legacy redirects */}
           <Route path="/profile" element={<Navigate to="/app/profile" replace />} />
