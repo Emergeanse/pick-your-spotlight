@@ -425,15 +425,30 @@ export default function PickChatOverlay() {
 
             {/* Input bar */}
             <div className="relative z-10 px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-2 border-t border-border/10">
-              <form onSubmit={handleSubmit} className="flex gap-2">
+              <form onSubmit={handleSubmit} className="flex items-center gap-2">
+                <Button
+                  type="button"
+                  size="icon"
+                  onClick={toggleMic}
+                  disabled={isStreaming}
+                  className={`rounded-full w-10 h-10 flex-shrink-0 transition-all ${
+                    isListening
+                      ? "bg-primary text-primary-foreground animate-pulse"
+                      : "bg-secondary/50 text-muted-foreground hover:text-foreground hover:bg-secondary"
+                  }`}
+                >
+                  {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+                </Button>
                 <input
                   ref={inputRef}
                   type="text"
                   value={input}
                   onChange={e => setInput(e.target.value)}
-                  placeholder={mode === "companion"
-                    ? "Pose-moi une question sur le film…"
-                    : "Dis-moi ce que tu veux regarder…"
+                  placeholder={isListening
+                    ? "Écoute en cours…"
+                    : mode === "companion"
+                      ? "Pose-moi une question sur le film…"
+                      : "Dis-moi ce que tu veux regarder…"
                   }
                   disabled={isStreaming}
                   className="flex-1 bg-secondary/50 border border-border/20 rounded-full px-4 py-2.5 text-sm font-sans placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/40 disabled:opacity-50 transition-all"
