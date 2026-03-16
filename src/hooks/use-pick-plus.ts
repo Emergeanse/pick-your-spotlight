@@ -30,6 +30,12 @@ export interface PickPlusState {
   companionLimit: number;
   canAskCompanion: (movieId: number) => boolean;
   recordCompanionQuestion: (movieId: number) => Promise<boolean>;
+  // Chat limits
+  chatUsed: number;
+  chatLimit: number;
+  chatRemaining: number;
+  canChat: boolean;
+  recordChatMessage: () => Promise<boolean>;
   // Paywall
   shouldShowPaywall: boolean;
   showPaywall: () => void;
