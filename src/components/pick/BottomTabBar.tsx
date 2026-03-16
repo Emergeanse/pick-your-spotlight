@@ -1,4 +1,4 @@
-import { Home, Compass, Bookmark, User } from "lucide-react";
+import { Home, Dna, Bookmark, User } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 
