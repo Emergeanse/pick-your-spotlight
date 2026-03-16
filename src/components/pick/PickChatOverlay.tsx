@@ -246,12 +246,16 @@ export default function PickChatOverlay() {
         const data = await resp.json();
 
         if (data.type === "recommendation" && data.movie) {
-          // Add movie card as a special message
           addMessage({
             role: "assistant",
             content: data.reply,
             movie: data.movie,
           } as any);
+          // Lock discovery chat for free users after receiving a recommendation
+          if (!pickPlus.isPremium) {
+            pickPlus.lockDiscoveryChat();
+            await pickPlus.recordDiscoveryConvo();
+          }
         } else {
           addMessage({ role: "assistant", content: data.reply || "Hmm, dis-moi en plus !" });
         }
