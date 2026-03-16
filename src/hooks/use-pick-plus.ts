@@ -77,6 +77,7 @@ export function usePickPlus(): PickPlusState {
 
       if (usageRes.data) {
         setRecoUsed((usageRes.data as any).recommendation_count || 0);
+        setChatUsed((usageRes.data as any).chat_count || 0);
         setCompanionUsage((usageRes.data as any).companion_questions || {});
       }
     } catch (e) {
