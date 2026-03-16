@@ -711,7 +711,8 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                     if (markedSeen) return;
                     setMarkedSeen(true);
                     trackInteraction(movie.id, "already_seen", { mood: userCriteria?.mood, context: userCriteria?.context, time: userCriteria?.time });
-                    toast.success("Noté ! Pick évitera ce film.");
+                    toast.success("Noté ! Tu peux aussi partager ton avis.");
+                    setShowReviewSheet(true);
                   }}
                   className={`w-9 h-9 rounded-full border flex items-center justify-center transition-all active:scale-95 ${
                     markedSeen
