@@ -184,10 +184,10 @@ export default function PickChatOverlay() {
   };
 
   const handleMovieClick = (movie: any) => {
-    // Navigate to the result page with this movie
     closeOverlay();
-    // Store movie in sessionStorage for the result page to pick up
+    // Dispatch a custom event so Index.tsx can pick it up even without remount
     sessionStorage.setItem("pick-fab-movie", JSON.stringify(movie));
+    window.dispatchEvent(new CustomEvent("pick-chat-movie"));
     navigate("/app?from=pick-chat");
   };
 
