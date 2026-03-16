@@ -91,6 +91,49 @@ const Profile = () => {
         ]);
         setLikedMovies(liked);
         setWatchlist(wl);
+
+        // Load cinematic profile title
+        const { data: cinematicData } = await supabase.from("cinematic_profiles").select("personality_title").eq("user_id", user.id).maybeSingle();
+        if (cinematicData?.personality_title) setCinematicTitle(cinematicData.personality_title);
+
+        // Build learned preferences from taste profile
+        const taste = await getUserTasteProfile();
+        if (taste) {
+          const prefs: string[] = [];
+          // Top genres
+          if (taste.topGenres.length > 0) {
+            prefs.push(`Tu adores les films de ${taste.topGenres.slice(0, 3).join(", ").toLowerCase()}`);
+          }
+          // Taste clusters
+          if (taste.tasteClusters.length > 0) {
+            const clusters = taste.tasteClusters.slice(0, 2).join(" et ");
+            prefs.push(`Tu aimes les ambiances ${clusters}`);
+          }
+          // Skip patterns
+          if (taste.skipPatterns.avgSkipRate > 0.6) {
+            prefs.push("Tu es exigeant·e — tu sais ce que tu veux");
+          }
+          // Acceptance rate
+          if (taste.stats.acceptanceRate > 70) {
+            prefs.push("Tu fais confiance aux suggestions de Pick 💜");
+          }
+          // Session context
+          if (taste.session.mood) {
+            const moodLabels: Record<string, string> = { relax: "détente", excited: "intensité", romantic: "romance", "mind-blowing": "films qui surprennent", "easy-watch": "films faciles", fun: "fun" };
+            prefs.push(`Dernièrement, tu cherches de la ${moodLabels[taste.session.mood] || taste.session.mood}`);
+          }
+          // Like count
+          if (taste.stats.likeCount > 10) {
+            prefs.push(`Tu as aimé ${taste.stats.likeCount} films — Pick te connaît bien`);
+          } else if (taste.stats.likeCount > 0) {
+            prefs.push(`${taste.stats.likeCount} films aimés — Pick apprend encore`);
+          }
+          // Short films preference (from time sessions)
+          if (taste.session.time === "short") {
+            prefs.push("Tu préfères les films courts en ce moment");
+          }
+          setLearnedPrefs(prefs);
+        }
       } catch (e) {
         console.error(e);
       } finally {
