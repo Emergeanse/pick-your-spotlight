@@ -9,6 +9,8 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { useScribe } from "@elevenlabs/react";
+import { usePickPlus } from "@/hooks/use-pick-plus";
+import PickPlusPaywall from "@/components/pick/PickPlusPaywall";
 import squirrelImg from "@/assets/pick-squirrel.png";
 
 interface ChatMsg {
