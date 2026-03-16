@@ -71,7 +71,7 @@ export default function PickChatOverlay() {
   });
 
   const currentMessages = mode === "companion" ? companionMessages : messages;
-  const chips = mode === "companion" ? COMPANION_CHIPS : DISCOVERY_CHIPS;
+  const discoveryChips = DISCOVERY_CHIPS_FREE; // will be updated after pickPlus init
   const title = activeMovie ? getDisplayTitle(activeMovie) : "";
   const poster = activeMovie?.poster_path ? getPosterUrl(activeMovie.poster_path, "w92") : null;
 
