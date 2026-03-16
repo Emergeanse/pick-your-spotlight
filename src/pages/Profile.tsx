@@ -218,51 +218,7 @@ const Profile = () => {
           </div>
           <h1 className="text-2xl md:text-3xl font-serif mb-1">{displayName}</h1>
           <p className="text-muted-foreground text-sm font-sans">{user.email}</p>
-          {cinematicTitle && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.2 }}
-              className="mt-3 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[hsl(var(--gold))/0.1] border border-[hsl(var(--gold))/0.25]"
-            >
-              <Sparkles className="w-3.5 h-3.5 text-[hsl(var(--gold))]" />
-              <span className="text-sm font-serif text-[hsl(var(--gold))]">{cinematicTitle}</span>
-            </motion.div>
-          )}
         </motion.div>
-
-        {/* "Pick se souvient" section */}
-        {learnedPrefs.filter(p => !dismissedPrefs.has(p)).length > 0 && (
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="mb-8">
-            <div className="flex items-center gap-2.5 mb-3">
-              <Brain className="w-4 h-4 text-primary" />
-              <h2 className="text-lg font-serif">Ce que Pick sait de toi</h2>
-            </div>
-            <div className="space-y-2">
-              <AnimatePresence>
-                {learnedPrefs.filter(p => !dismissedPrefs.has(p)).map((pref, i) => (
-                  <motion.div
-                    key={pref}
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 10, height: 0 }}
-                    transition={{ delay: i * 0.05 }}
-                    className="flex items-center gap-3 px-4 py-3 rounded-xl bg-card border border-border/20 group"
-                  >
-                    <div className="w-1.5 h-1.5 rounded-full bg-primary/60 flex-shrink-0" />
-                    <p className="text-foreground/70 text-[13px] font-sans flex-1">{pref}</p>
-                    <button
-                      onClick={() => setDismissedPrefs(prev => new Set([...prev, pref]))}
-                      className="text-foreground/20 hover:text-destructive/60 transition-colors opacity-0 group-hover:opacity-100 flex-shrink-0"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  </motion.div>
-                ))}
-              </AnimatePresence>
-            </div>
-          </motion.div>
-        )}
 
         {/* Platforms */}
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="mb-8">
