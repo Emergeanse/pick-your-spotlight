@@ -236,10 +236,10 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
           });
           movie = data.movie as MovieDetail;
         } else {
-          movie = await getSurpriseRecommendation(excludeList);
+          movie = await getSurpriseRecommendation(excludeList, { platformIds: userPlatformIds, minRating: userMinRating, excludedGenres: userExcludedGenres });
         }
       } else {
-        movie = await getSurpriseRecommendation(excludeList);
+        movie = await getSurpriseRecommendation(excludeList, { platformIds: userPlatformIds, minRating: userMinRating, excludedGenres: userExcludedGenres });
       }
       clearInterval(msgInterval);
       setTonightPick(movie);
