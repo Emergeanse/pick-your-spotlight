@@ -1,9 +1,10 @@
 import { useState, useEffect, forwardRef, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Mic, MicOff, X, Send, Loader2, Sparkles, Check, Play, Star, Clock, Heart, Bookmark, Tv, ChevronDown, ChevronUp, MoreHorizontal, RefreshCw, ThumbsUp, ThumbsDown, MessageCircle, Volume2, Eye } from "lucide-react";
+import { Mic, MicOff, X, Send, Loader2, Sparkles, Check, Play, Star, Clock, Heart, Bookmark, Tv, ChevronDown, ChevronUp, MoreHorizontal, RefreshCw, ThumbsUp, ThumbsDown, MessageCircle, Volume2, Eye, ExternalLink } from "lucide-react";
 import type { MovieDetail } from "@/lib/tmdb";
 import { getDisplayTitle, getYear, getBackdropUrl, getPosterUrl, getWatchProviders, getMovieTrailerUrl } from "@/lib/tmdb";
+import { buildStreamingLinks, openStreamingLink, type StreamingLink } from "@/lib/streaming-links";
 import type { Mood, Context, TimeAvailable } from "@/lib/tmdb";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -96,7 +97,8 @@ function getRejectReaction(reason: string): string {
 }
 
 const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onShowAnother, onRestart, onRefineWithVoice, onRefineWithMessage, onStartCompanion, hasMore, userCriteria, alternativeMovies, onSelectAlternative, searchTags, onRemoveTag, refining }, ref) => {
-  const [providers, setProviders] = useState<{ name: string; logo_path: string }[]>([]);
+  const [providers, setProviders] = useState<{ name: string; logo_path: string; provider_id: number }[]>([]);
+  const [streamingLinks, setStreamingLinks] = useState<StreamingLink[]>([]);
   const [trailerUrl, setTrailerUrl] = useState<string | null>(null);
   const [matchData, setMatchData] = useState<MatchData | null>(null);
   const [matchLoading, setMatchLoading] = useState(false);
@@ -199,7 +201,10 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
   }, [movie.id]);
 
   useEffect(() => {
-    getWatchProviders(movie.id, mediaType).then(setProviders).catch(() => setProviders([]));
+    getWatchProviders(movie.id, mediaType).then((p) => {
+      setProviders(p);
+      setStreamingLinks(buildStreamingLinks(p, title));
+    }).catch(() => { setProviders([]); setStreamingLinks([]); });
     getMovieTrailerUrl(movie.id, mediaType).then(setTrailerUrl).catch(() => setTrailerUrl(null));
   }, [movie.id, mediaType]);
 
@@ -375,24 +380,38 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
               </div>
             </div>
 
-            {/* Platforms */}
-            {providers.length > 0 && (
+            {/* Where to watch — streaming CTA buttons */}
+            {streamingLinks.length > 0 && (
               <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.5 }}
-                className="flex items-center gap-2 mb-3"
+                className="mb-4"
               >
-                <span className="text-foreground/30 text-[10px] font-sans">Dispo sur</span>
-                <div className="flex gap-1.5">
-                  {providers.map((p) => (
-                    <img
-                      key={p.name}
-                      src={`${IMG_BASE}/w92${p.logo_path}`}
-                      alt={p.name}
-                      title={p.name}
-                      className="w-6 h-6 md:w-7 md:h-7 rounded-md object-cover border border-border/20"
-                    />
+                <p className="text-[10px] uppercase tracking-widest text-foreground/30 font-sans font-semibold mb-2">
+                  Où regarder
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {streamingLinks.slice(0, 4).map((link) => (
+                    <motion.button
+                      key={link.name}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => {
+                        trackInteraction(movie.id, "watch_clicked", { platform: link.name });
+                        openStreamingLink(link);
+                      }}
+                      className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-foreground/8 border border-border/20 hover:bg-foreground/12 hover:border-primary/30 transition-all active:scale-[0.97] group"
+                    >
+                      <img
+                        src={`${IMG_BASE}/w92${link.logo_path}`}
+                        alt={link.name}
+                        className="w-5 h-5 rounded-md object-cover"
+                      />
+                      <span className="text-foreground/70 text-[12px] font-sans font-medium group-hover:text-foreground transition-colors">
+                        {link.name}
+                      </span>
+                      <ExternalLink className="w-3 h-3 text-foreground/30 group-hover:text-primary transition-colors" />
+                    </motion.button>
                   ))}
                 </div>
               </motion.div>
