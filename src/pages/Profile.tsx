@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "@/hooks/use-toast";
-import { ArrowLeft, Heart, Bookmark, Check, LogOut, Loader2, X, Ban, Star, Info, Film, Tv, Layers, Brain, Trash2, Sparkles } from "lucide-react";
+import { ArrowLeft, Heart, Bookmark, Check, LogOut, Loader2, X, Ban, Star, Info, Film, Tv, Layers, Trash2, Sparkles } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { getLikedMovies } from "@/lib/liked-movies";
 import { getWatchlist } from "@/lib/watchlist";
 import { getPosterUrl } from "@/lib/tmdb";
-import { getUserTasteProfile } from "@/lib/interactions";
+
 import PickCharacter from "@/components/pick/PickCharacter";
 
 const ALL_PLATFORMS = [
@@ -25,7 +25,7 @@ const ALL_PLATFORMS = [
   { id: 35, label: "Rakuten TV", logo: "https://image.tmdb.org/t/p/original/bZvc9dXrXNly7cA0V4D9pR8yJwm.jpg" },
   { id: 192, label: "YouTube", logo: "https://image.tmdb.org/t/p/original/pTnn5JwWr4p3pG8H6VrpiQo7Vs0.jpg" },
   { id: 283, label: "Crunchyroll", logo: "https://image.tmdb.org/t/p/original/fzN5Jok5Ig1eJ7gyNGoMhnLSCfh.jpg" },
-  { id: 188, label: "YouTube Premium", logo: "https://image.tmdb.org/t/p/original/rMb93u1tBeErSYLv79zSTR07UdO.jpg" },
+  
   { id: 2, label: "Apple TV", logo: "https://image.tmdb.org/t/p/original/SPnB1qiCkYfirS2it3hZORwGVn.jpg" },
   { id: 3, label: "Google Play", logo: "https://image.tmdb.org/t/p/original/8z7rC8uIDaTM91X0ZfkRf04ydj2.jpg" },
   { id: 1967, label: "Molotov TV", logo: "https://image.tmdb.org/t/p/original/8qSG9LtUhBQIWy2Fr6fzeW7gBdd.jpg" },
@@ -62,9 +62,6 @@ const Profile = () => {
   const [mediaPreference, setMediaPreference] = useState<string>("both");
   const [saving, setSaving] = useState(false);
   const [profileLoading, setProfileLoading] = useState(true);
-  const [learnedPrefs, setLearnedPrefs] = useState<string[]>([]);
-  const [cinematicTitle, setCinematicTitle] = useState<string | null>(null);
-  const [dismissedPrefs, setDismissedPrefs] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (!isReady) return;
@@ -92,48 +89,6 @@ const Profile = () => {
         setLikedMovies(liked);
         setWatchlist(wl);
 
-        // Load cinematic profile title
-        const { data: cinematicData } = await supabase.from("cinematic_profiles").select("personality_title").eq("user_id", user.id).maybeSingle();
-        if (cinematicData?.personality_title) setCinematicTitle(cinematicData.personality_title);
-
-        // Build learned preferences from taste profile
-        const taste = await getUserTasteProfile();
-        if (taste) {
-          const prefs: string[] = [];
-          // Top genres
-          if (taste.topGenres.length > 0) {
-            prefs.push(`Tu adores les films de ${taste.topGenres.slice(0, 3).join(", ").toLowerCase()}`);
-          }
-          // Taste clusters
-          if (taste.tasteClusters.length > 0) {
-            const clusters = taste.tasteClusters.slice(0, 2).join(" et ");
-            prefs.push(`Tu aimes les ambiances ${clusters}`);
-          }
-          // Skip patterns
-          if (taste.skipPatterns.avgSkipRate > 0.6) {
-            prefs.push("Tu es exigeant·e — tu sais ce que tu veux");
-          }
-          // Acceptance rate
-          if (taste.stats.acceptanceRate > 70) {
-            prefs.push("Tu fais confiance aux suggestions de Pick 💜");
-          }
-          // Session context
-          if (taste.session.mood) {
-            const moodLabels: Record<string, string> = { relax: "détente", excited: "intensité", romantic: "romance", "mind-blowing": "films qui surprennent", "easy-watch": "films faciles", fun: "fun" };
-            prefs.push(`Dernièrement, tu cherches de la ${moodLabels[taste.session.mood] || taste.session.mood}`);
-          }
-          // Like count
-          if (taste.stats.likeCount > 10) {
-            prefs.push(`Tu as aimé ${taste.stats.likeCount} films — Pick te connaît bien`);
-          } else if (taste.stats.likeCount > 0) {
-            prefs.push(`${taste.stats.likeCount} films aimés — Pick apprend encore`);
-          }
-          // Short films preference (from time sessions)
-          if (taste.session.time === "short") {
-            prefs.push("Tu préfères les films courts en ce moment");
-          }
-          setLearnedPrefs(prefs);
-        }
       } catch (e) {
         console.error(e);
       } finally {
@@ -263,51 +218,7 @@ const Profile = () => {
           </div>
           <h1 className="text-2xl md:text-3xl font-serif mb-1">{displayName}</h1>
           <p className="text-muted-foreground text-sm font-sans">{user.email}</p>
-          {cinematicTitle && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.2 }}
-              className="mt-3 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[hsl(var(--gold))/0.1] border border-[hsl(var(--gold))/0.25]"
-            >
-              <Sparkles className="w-3.5 h-3.5 text-[hsl(var(--gold))]" />
-              <span className="text-sm font-serif text-[hsl(var(--gold))]">{cinematicTitle}</span>
-            </motion.div>
-          )}
         </motion.div>
-
-        {/* "Pick se souvient" section */}
-        {learnedPrefs.filter(p => !dismissedPrefs.has(p)).length > 0 && (
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="mb-8">
-            <div className="flex items-center gap-2.5 mb-3">
-              <Brain className="w-4 h-4 text-primary" />
-              <h2 className="text-lg font-serif">Ce que Pick sait de toi</h2>
-            </div>
-            <div className="space-y-2">
-              <AnimatePresence>
-                {learnedPrefs.filter(p => !dismissedPrefs.has(p)).map((pref, i) => (
-                  <motion.div
-                    key={pref}
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 10, height: 0 }}
-                    transition={{ delay: i * 0.05 }}
-                    className="flex items-center gap-3 px-4 py-3 rounded-xl bg-card border border-border/20 group"
-                  >
-                    <div className="w-1.5 h-1.5 rounded-full bg-primary/60 flex-shrink-0" />
-                    <p className="text-foreground/70 text-[13px] font-sans flex-1">{pref}</p>
-                    <button
-                      onClick={() => setDismissedPrefs(prev => new Set([...prev, pref]))}
-                      className="text-foreground/20 hover:text-destructive/60 transition-colors opacity-0 group-hover:opacity-100 flex-shrink-0"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  </motion.div>
-                ))}
-              </AnimatePresence>
-            </div>
-          </motion.div>
-        )}
 
         {/* Platforms */}
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="mb-8">
