@@ -33,7 +33,7 @@ const MoodStep = ({ onSelect, onSkip }: MoodStepProps) => {
         transition={{ duration: 0.4 }}
         className="text-2xl md:text-5xl font-serif mb-6 md:mb-12 text-center"
       >
-        Comment vous sentez-vous ce soir ?
+        Comment tu te sens ce soir ?
       </motion.h2>
 
       <div className="grid grid-cols-2 md:grid-cols-3 gap-2.5 md:gap-4 max-w-xl w-full">

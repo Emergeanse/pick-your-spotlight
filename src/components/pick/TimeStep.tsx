@@ -32,7 +32,7 @@ const TimeStep = ({ onSelect, onSkip, loading }: TimeStepProps) => {
         transition={{ duration: 0.4 }}
         className="text-2xl md:text-5xl font-serif mb-6 md:mb-12 text-center"
       >
-        Vous avez combien de temps ?
+        T'as combien de temps ?
       </motion.h2>
 
       <div className="flex flex-col gap-2.5 md:gap-3 max-w-md w-full">

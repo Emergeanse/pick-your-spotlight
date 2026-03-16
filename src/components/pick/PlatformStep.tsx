@@ -83,7 +83,7 @@ const PlatformStep = ({ onSelect, loading, loadingMessage }: PlatformStepProps) 
               transition={{ duration: 0.4 }}
               className="text-2xl md:text-5xl font-serif mb-3 md:mb-4 text-center"
             >
-              Où regardez-vous ?
+              Où tu regardes ?
             </motion.h2>
 
             <motion.p
@@ -92,7 +92,7 @@ const PlatformStep = ({ onSelect, loading, loadingMessage }: PlatformStepProps) 
               transition={{ delay: 0.15, duration: 0.3 }}
               className="text-muted-foreground text-xs md:text-sm font-sans mb-6 md:mb-10 text-center"
             >
-              Sélectionnez vos abonnements pour des suggestions adaptées
+              Sélectionne tes abonnements pour des suggestions adaptées
             </motion.p>
 
             <div className="grid grid-cols-4 gap-2 md:gap-4 max-w-xl w-full mb-6 md:mb-10">
