@@ -385,6 +385,36 @@ export default function CompanionMode({ movie, onClose }: CompanionModeProps) {
         </div>
       )}
 
+      {/* Proactive suggestion bubble */}
+      <AnimatePresence>
+        {proactiveSuggestion && (
+          <motion.div
+            initial={{ opacity: 0, y: 10, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 10, scale: 0.95 }}
+            transition={{ type: "spring", damping: 20, stiffness: 300 }}
+            className="relative z-10 flex-shrink-0 px-4 pb-2"
+          >
+            <button
+              onClick={() => {
+                sendMessage(proactiveSuggestion);
+                setProactiveSuggestion(null);
+              }}
+              className="w-full flex items-center gap-2.5 px-4 py-2.5 rounded-2xl bg-primary/10 border border-primary/25 text-left transition-all hover:bg-primary/15 active:scale-[0.98]"
+            >
+              <Sparkles className="w-4 h-4 text-primary flex-shrink-0" />
+              <span className="text-foreground/70 text-[13px] font-sans leading-snug flex-1">{proactiveSuggestion}</span>
+              <button
+                onClick={(e) => { e.stopPropagation(); setProactiveSuggestion(null); }}
+                className="text-foreground/30 hover:text-foreground/60 transition-colors flex-shrink-0"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Input */}
       <div className="relative z-10 flex-shrink-0 p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] border-t border-border/10 bg-background/80 backdrop-blur-xl">
         <form onSubmit={handleSubmit} className="flex gap-2">
