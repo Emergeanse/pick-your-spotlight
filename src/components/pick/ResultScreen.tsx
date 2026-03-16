@@ -356,12 +356,25 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                   )}
                 </div>
 
-                {/* Genres + Match badge */}
+                {/* Genres + Match badge + Comfort zone badge */}
                 <div className="flex items-center gap-2 flex-wrap">
                   {genres && (
                     <p className="text-primary/60 text-[10px] md:text-xs tracking-[0.12em] uppercase font-sans font-medium">
                       {genres}
                     </p>
+                  )}
+                  {(movie as any)._surpriseComfortZone && (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30"
+                    >
+                      <Zap className="w-2.5 h-2.5 text-amber-400" />
+                      <span className="text-amber-400 text-[10px] font-sans font-semibold">
+                        Hors de ta zone
+                      </span>
+                    </motion.div>
                   )}
                   {matchData && (
                     <motion.div
