@@ -3,13 +3,13 @@
  * Shows when a free user hits a limit.
  */
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Sparkles, Zap, Brain, Bell, Wifi, Users, Crown, Check } from "lucide-react";
+import { X, Sparkles, Zap, Brain, Bell, Wifi, Users, Crown, Check, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface PickPlusPaywallProps {
   open: boolean;
   onClose: () => void;
-  trigger?: "reco_limit" | "companion_limit" | "dna_advanced" | "general";
+  trigger?: "reco_limit" | "companion_limit" | "dna_advanced" | "chat_limit" | "general";
 }
 
 const BENEFITS = [
