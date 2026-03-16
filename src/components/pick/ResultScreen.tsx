@@ -356,7 +356,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                   )}
                 </div>
 
-                {/* Genres + Match badge + Comfort zone badge */}
+                {/* Genres + Comfort zone badge */}
                 <div className="flex items-center gap-2 flex-wrap">
                   {genres && (
                     <p className="text-primary/60 text-[10px] md:text-xs tracking-[0.12em] uppercase font-sans font-medium">
@@ -373,19 +373,6 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                       <Zap className="w-2.5 h-2.5 text-amber-400" />
                       <span className="text-amber-400 text-[10px] font-sans font-semibold">
                         Hors de ta zone
-                      </span>
-                    </motion.div>
-                  )}
-                  {matchData && (
-                    <motion.div
-                      initial={{ opacity: 0, scale: 0.8 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ delay: 0.3, type: "spring", stiffness: 200 }}
-                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary/15 border border-primary/25"
-                    >
-                      <Sparkles className="w-2.5 h-2.5 text-primary" />
-                      <span className="text-primary text-[10px] font-sans font-semibold">
-                        Match {matchData.matchScore}%
                       </span>
                     </motion.div>
                   )}
@@ -446,7 +433,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
               )}
             </div>
 
-            {/* "Pourquoi ce film ?" section — includes fun fact */}
+            {/* "Pourquoi ce film" — combined match score + explanation */}
             <AnimatePresence>
               {matchLoading && (
                 <motion.div
@@ -468,21 +455,29 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                   className="mb-5 max-w-md"
                 >
                   <div className="p-3 sm:p-4 rounded-xl bg-primary/10 border border-primary/30 backdrop-blur-sm">
-                    {/* Top row: Pick mascot + listen button */}
-                    <div className="flex items-center gap-2.5 mb-3">
-                      <div className="flex-shrink-0">
-                        <PickCharacter mood="default" size="sm" animate={false} />
+                    {/* Match score hero + headline */}
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="relative flex-shrink-0">
+                        <div className="w-14 h-14 rounded-full bg-primary/20 border-2 border-primary/40 flex items-center justify-center">
+                          <span className="text-primary text-lg font-serif font-bold leading-none">{matchData.matchScore}%</span>
+                        </div>
+                        <Sparkles className="absolute -top-1 -right-1 w-4 h-4 text-primary" />
                       </div>
-                      <p className="flex-1 min-w-0 text-foreground/60 text-[11px] sm:text-[12px] font-sans leading-relaxed">
-                        {matchData.headline}
-                      </p>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[10px] uppercase tracking-widest text-primary/60 font-sans font-semibold mb-0.5">
+                          Pourquoi ce film
+                        </p>
+                        <p className="text-foreground/70 text-[12px] sm:text-[13px] font-sans leading-snug">
+                          {matchData.headline}
+                        </p>
+                      </div>
                       <motion.button
                         initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ delay: 0.2, duration: 0.3 }}
                         onClick={(e) => { e.stopPropagation(); handleReadWhy(); }}
                         disabled={whyAudioLoading || whySpeaking}
-                        className={`flex-shrink-0 inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border transition-all active:scale-95 text-[11px] font-sans font-medium ${
+                        className={`flex-shrink-0 w-9 h-9 rounded-full border flex items-center justify-center transition-all active:scale-95 ${
                           whySpeaking
                             ? "bg-primary/25 border-primary/50 text-primary"
                             : "bg-primary/20 border-primary/35 text-foreground/80 hover:text-primary hover:bg-primary/30"
@@ -496,12 +491,9 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                       </motion.button>
                     </div>
 
-                    {/* "Pourquoi ce film ?" — first 2 lines always visible */}
+                    {/* Detailed explanation */}
                     {matchData.detailedExplanation && (
-                      <div className="mt-2">
-                        <p className="text-[10px] uppercase tracking-widest text-primary/60 font-sans font-semibold mb-1.5">
-                          Pourquoi ce film ?
-                        </p>
+                      <div>
                         <p className={`text-foreground/55 text-[12px] font-sans leading-relaxed ${!whyExpanded ? "line-clamp-2" : ""}`}>
                           {matchData.detailedExplanation}
                         </p>
@@ -567,7 +559,6 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                                 </div>
                               </div>
                             )}
-                            {/* Fun fact integrated */}
                             {matchData.funFact && (
                               <div className="flex items-start gap-2 pt-1 border-t border-primary/10">
                                 <span className="text-sm mt-0.5 flex-shrink-0">🎬</span>
@@ -577,15 +568,13 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                                 </div>
                               </div>
                             )}
-                            {whyExpanded && (
-                              <button
-                                onClick={() => setWhyExpanded(false)}
-                                className="text-primary/60 text-[11px] font-sans font-medium mt-1 flex items-center gap-0.5 hover:text-primary transition-colors"
-                              >
-                                Réduire
-                                <ChevronUp className="w-3 h-3" />
-                              </button>
-                            )}
+                            <button
+                              onClick={() => setWhyExpanded(false)}
+                              className="text-primary/60 text-[11px] font-sans font-medium mt-1 flex items-center gap-0.5 hover:text-primary transition-colors"
+                            >
+                              Réduire
+                              <ChevronUp className="w-3 h-3" />
+                            </button>
                           </div>
                         </motion.div>
                       )}
