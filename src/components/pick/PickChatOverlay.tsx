@@ -65,7 +65,10 @@ export default function PickChatOverlay() {
     },
     onCommittedTranscript: (data) => {
       if (data.text?.trim()) {
-        pendingSendRef.current = data.text.trim();
+        // Set the final text in input and stop mic — let user review & send manually
+        setInput(data.text.trim());
+        scribe.disconnect();
+        setIsListening(false);
       }
     },
   });
