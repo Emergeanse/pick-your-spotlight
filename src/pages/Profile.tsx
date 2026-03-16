@@ -220,6 +220,7 @@ const Profile = () => {
 
 
 
+
         {engagement && engagement.totalRecommendations > 0 && (
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="mb-8">
             <h2 className="text-lg font-serif mb-3">Ton activité Pick</h2>
