@@ -356,7 +356,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                   )}
                 </div>
 
-                {/* Genres + Match badge + Comfort zone badge */}
+                {/* Genres + Comfort zone badge */}
                 <div className="flex items-center gap-2 flex-wrap">
                   {genres && (
                     <p className="text-primary/60 text-[10px] md:text-xs tracking-[0.12em] uppercase font-sans font-medium">
@@ -373,19 +373,6 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                       <Zap className="w-2.5 h-2.5 text-amber-400" />
                       <span className="text-amber-400 text-[10px] font-sans font-semibold">
                         Hors de ta zone
-                      </span>
-                    </motion.div>
-                  )}
-                  {matchData && (
-                    <motion.div
-                      initial={{ opacity: 0, scale: 0.8 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ delay: 0.3, type: "spring", stiffness: 200 }}
-                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary/15 border border-primary/25"
-                    >
-                      <Sparkles className="w-2.5 h-2.5 text-primary" />
-                      <span className="text-primary text-[10px] font-sans font-semibold">
-                        Match {matchData.matchScore}%
                       </span>
                     </motion.div>
                   )}
