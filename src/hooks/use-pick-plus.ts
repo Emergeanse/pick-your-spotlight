@@ -141,6 +141,30 @@ export function usePickPlus(): PickPlusState {
     return !error;
   }, [user, isPremium, companionUsage]);
 
+  // Chat limits
+  const chatLimit = isPremium ? Infinity : FREE_CHAT_LIMIT;
+  const chatRemaining = isPremium ? Infinity : Math.max(0, FREE_CHAT_LIMIT - chatUsed);
+  const canChat = isPremium || chatUsed < FREE_CHAT_LIMIT;
+
+  const recordChatMessage = useCallback(async (): Promise<boolean> => {
+    if (!user) return false;
+    if (!isPremium && chatUsed >= FREE_CHAT_LIMIT) {
+      setShouldShowPaywall(true);
+      return false;
+    }
+
+    const today = new Date().toISOString().split("T")[0];
+    const newCount = chatUsed + 1;
+
+    const { error } = await supabase.from("daily_usage" as any).upsert(
+      { user_id: user.id, usage_date: today, chat_count: newCount },
+      { onConflict: "user_id,usage_date" }
+    );
+
+    if (!error) setChatUsed(newCount);
+    return !error;
+  }, [user, isPremium, chatUsed]);
+
   return {
     plan,
     isPremium,
@@ -154,6 +178,11 @@ export function usePickPlus(): PickPlusState {
     companionLimit: isPremium ? Infinity : FREE_COMPANION_LIMIT,
     canAskCompanion,
     recordCompanionQuestion,
+    chatUsed,
+    chatLimit,
+    chatRemaining,
+    canChat,
+    recordChatMessage,
     shouldShowPaywall,
     showPaywall: () => setShouldShowPaywall(true),
     hidePaywall: () => setShouldShowPaywall(false),
