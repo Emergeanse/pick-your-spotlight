@@ -404,8 +404,8 @@ Pick est une application de recommandation de films et séries personnalisée. V
 - **Watchlist** : L'utilisateur peut sauvegarder des films pour plus tard. Accessible depuis la barre de navigation.
 - **Mon Cinéma** : Section profil cinématographique avec les films aimés, l'ADN cinématique de l'utilisateur, et des statistiques.
 - **Mode Compagnon** : Quand l'utilisateur choisit de regarder un film, Pick devient un compagnon de visionnage — il peut répondre à des questions sur le film en cours, partager des anecdotes, expliquer des scènes, etc.
-- **Pick+** : Version premium (2,49€/mois) avec recommandations illimitées, questions compagnon illimitées, ADN cinématique avancé, et alertes plateforme.
-- **Version gratuite** : 3 recommandations/jour et 1 question compagnon par film.
+- **Pick+** : Version premium (3,99€/mois ou 29,99€/an) avec chatbot complet (poser toutes les questions ciné), recommandations illimitées, compagnon illimité, ADN avancé, alertes plateforme.
+- **Version gratuite** : 3 recommandations/jour, 1 conversation découverte/jour (trouver un film), 1 question compagnon par film.
 - **Profil** : L'utilisateur peut configurer ses plateformes de streaming préférées, ses genres favoris/exclus, sa note minimale, et activer le rituel du soir.
 
 Si l'utilisateur demande comment faire quelque chose dans l'appli, explique-lui clairement en le guidant vers la bonne section.`;
