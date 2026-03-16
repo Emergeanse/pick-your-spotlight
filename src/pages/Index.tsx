@@ -424,6 +424,7 @@ const Index = () => {
         )}
       </AnimatePresence>
 
+      <AnimatePresence>
         {showChat && (
           <VoiceChat
             onClose={handleCloseChat}
