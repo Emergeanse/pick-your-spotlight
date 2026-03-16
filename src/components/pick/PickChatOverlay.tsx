@@ -53,7 +53,7 @@ export default function PickChatOverlay() {
   const y = useMotionValue(0);
   const navigate = useNavigate();
   const { user } = useAuth();
-  const pendingSendRef = useRef<string | null>(null);
+  
 
   const scribe = useScribe({
     modelId: "scribe_v2_realtime",
@@ -65,7 +65,10 @@ export default function PickChatOverlay() {
     },
     onCommittedTranscript: (data) => {
       if (data.text?.trim()) {
-        pendingSendRef.current = data.text.trim();
+        // Set the final text in input and stop mic — let user review & send manually
+        setInput(data.text.trim());
+        scribe.disconnect();
+        setIsListening(false);
       }
     },
   });
@@ -107,20 +110,12 @@ export default function PickChatOverlay() {
     }
   }, [isOverlayOpen]);
 
-  // Auto-send when committed transcript arrives
+  // Focus input after mic stops so user can send
   useEffect(() => {
-    if (pendingSendRef.current && !isStreaming) {
-      const text = pendingSendRef.current;
-      pendingSendRef.current = null;
-      setInput("");
-      // Disconnect mic before sending
-      if (scribe.isConnected) {
-        scribe.disconnect();
-        setIsListening(false);
-      }
-      sendMessage(text);
+    if (!isListening && input.trim()) {
+      inputRef.current?.focus();
     }
-  });
+  }, [isListening]);
 
   const toggleMic = useCallback(async () => {
     if (scribe.isConnected) {
