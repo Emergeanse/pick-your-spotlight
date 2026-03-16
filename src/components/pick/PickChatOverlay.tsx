@@ -36,15 +36,31 @@ export default function PickChatOverlay() {
   const [isStreaming, setIsStreaming] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [streamingContent, setStreamingContent] = useState("");
+  const [userPrefs, setUserPrefs] = useState<{ minRating: number; excludedGenres: string[] }>({ minRating: 0, excludedGenres: [] });
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const y = useMotionValue(0);
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const currentMessages = mode === "companion" ? companionMessages : messages;
   const chips = mode === "companion" ? COMPANION_CHIPS : DISCOVERY_CHIPS;
   const title = activeMovie ? getDisplayTitle(activeMovie) : "";
   const poster = activeMovie?.poster_path ? getPosterUrl(activeMovie.poster_path, "w92") : null;
+
+  // Load user preferences (minRating, excludedGenres)
+  useEffect(() => {
+    if (!user) return;
+    supabase.from("profiles").select("min_rating, excluded_genres").eq("id", user.id).single()
+      .then(({ data }) => {
+        if (data) {
+          setUserPrefs({
+            minRating: (data as any).min_rating || 0,
+            excludedGenres: (data as any).excluded_genres || [],
+          });
+        }
+      });
+  }, [user]);
 
   useEffect(() => {
     if (scrollRef.current) {
