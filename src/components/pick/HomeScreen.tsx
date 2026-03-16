@@ -85,8 +85,6 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
   const [proactivePick, setProactivePick] = useState<MovieDetail | null>(null);
   const [proactiveMsg] = useState(() => PROACTIVE_MESSAGES[Math.floor(Math.random() * PROACTIVE_MESSAGES.length)]);
   const [proactiveDismissed, setProactiveDismissed] = useState(false);
-  const [showWatchlist, setShowWatchlist] = useState(false);
-  const [watchlistItems, setWatchlistItems] = useState<any[]>([]);
   const [watchlistLoading, setWatchlistLoading] = useState(false);
   const [userPlatformIds, setUserPlatformIds] = useState<number[]>([]);
   const [userExcludedPlatformIds, setUserExcludedPlatformIds] = useState<number[]>([]);
