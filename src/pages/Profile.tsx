@@ -11,8 +11,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { getLikedMovies } from "@/lib/liked-movies";
 import { getWatchlist } from "@/lib/watchlist";
 import { getPosterUrl } from "@/lib/tmdb";
-import { getEngagementData, saveRitualPreferences, type EngagementData } from "@/lib/engagement";
-
 import PickCharacter from "@/components/pick/PickCharacter";
 
 const ALL_PLATFORMS = [
