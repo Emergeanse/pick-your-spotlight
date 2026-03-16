@@ -4,6 +4,9 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/use-auth";
+import { CompanionProvider } from "@/contexts/CompanionContext";
+import PickFAB from "@/components/pick/PickFAB";
+import PickChatOverlay from "@/components/pick/PickChatOverlay";
 import Landing from "./pages/Landing.tsx";
 import Index from "./pages/Index.tsx";
 import Auth from "./pages/Auth.tsx";
@@ -40,24 +43,27 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/app" element={<AppRoute />} />
-          <Route path="/auth" element={<Auth />} />
-          <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
-          <Route path="/app/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-          <Route path="/app/my-cinema" element={<ProtectedRoute><MyCinema /></ProtectedRoute>} />
-          <Route path="/app/watchlist" element={<ProtectedRoute><WatchlistPageRoute /></ProtectedRoute>} />
-          <Route path="/app/pick-plus" element={<ProtectedRoute><PickPlusPage /></ProtectedRoute>} />
-          <Route path="/glossary" element={<ProtectedRoute><Glossary /></ProtectedRoute>} />
-          {/* Legacy redirects */}
-          <Route path="/profile" element={<Navigate to="/app/profile" replace />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
+      <CompanionProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/app" element={<AppRoute />} />
+            <Route path="/auth" element={<Auth />} />
+            <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
+            <Route path="/app/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+            <Route path="/app/my-cinema" element={<ProtectedRoute><MyCinema /></ProtectedRoute>} />
+            <Route path="/app/watchlist" element={<ProtectedRoute><WatchlistPageRoute /></ProtectedRoute>} />
+            <Route path="/app/pick-plus" element={<ProtectedRoute><PickPlusPage /></ProtectedRoute>} />
+            <Route path="/glossary" element={<ProtectedRoute><Glossary /></ProtectedRoute>} />
+            <Route path="/profile" element={<Navigate to="/app/profile" replace />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+          <PickFAB />
+          <PickChatOverlay />
+        </BrowserRouter>
+      </CompanionProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );
