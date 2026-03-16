@@ -1,8 +1,11 @@
 import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
-import { Sparkles, RefreshCw, Loader2, Film, X } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Sparkles, RefreshCw, Loader2, Film, Brain, TrendingUp, Heart, BarChart3, Zap } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { getUserTasteProfile } from "@/lib/interactions";
+import { getLikedMovies } from "@/lib/liked-movies";
+import { getPosterUrl } from "@/lib/tmdb";
 import pickLogo from "@/assets/pick-logo.png";
 
 interface CinematicProfile {
@@ -13,9 +16,15 @@ interface CinematicProfile {
   evolution_note?: string | null;
 }
 
+interface LearnedInsight {
+  icon: React.ElementType;
+  label: string;
+  value: string;
+  color?: string;
+}
+
 interface CinemaDNAProps {
   userId: string;
-  /** If true, renders as a compact teaser card (for homepage) */
   teaser?: boolean;
   onOpenFull?: () => void;
 }
@@ -24,10 +33,17 @@ const CinemaDNA = ({ userId, teaser, onOpenFull }: CinemaDNAProps) => {
   const [profile, setProfile] = useState<CinematicProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
+  const [insights, setInsights] = useState<LearnedInsight[]>([]);
+  const [likedPosters, setLikedPosters] = useState<string[]>([]);
+  const [likeCount, setLikeCount] = useState(0);
 
   useEffect(() => {
     loadProfile();
-  }, [userId]);
+    if (!teaser) {
+      loadInsights();
+      loadLikedPosters();
+    }
+  }, [userId, teaser]);
 
   const loadProfile = async () => {
     setLoading(true);
@@ -37,15 +53,78 @@ const CinemaDNA = ({ userId, teaser, onOpenFull }: CinemaDNAProps) => {
         .select("personality_title, narrative, taste_traits, representative_films, evolution_note")
         .eq("user_id", userId)
         .maybeSingle();
-
-      if (data) {
-        setProfile(data as any);
-      }
+      if (data) setProfile(data as any);
     } catch (e) {
       console.error(e);
     } finally {
       setLoading(false);
     }
+  };
+
+  const loadLikedPosters = async () => {
+    try {
+      const liked = await getLikedMovies();
+      setLikeCount(liked.length);
+      setLikedPosters(liked.slice(0, 8).map((m: any) => m.poster_path).filter(Boolean));
+    } catch {}
+  };
+
+  const loadInsights = async () => {
+    try {
+      const taste = await getUserTasteProfile();
+      if (!taste) return;
+      const items: LearnedInsight[] = [];
+
+      if (taste.topGenres.length > 0) {
+        items.push({
+          icon: Heart,
+          label: "Genres favoris",
+          value: taste.topGenres.slice(0, 4).join(", "),
+        });
+      }
+      if (taste.tasteClusters.length > 0) {
+        items.push({
+          icon: Zap,
+          label: "Ambiances préférées",
+          value: taste.tasteClusters.slice(0, 3).join(", "),
+        });
+      }
+      if (taste.stats.likeCount > 0) {
+        items.push({
+          icon: BarChart3,
+          label: "Films aimés",
+          value: `${taste.stats.likeCount} films`,
+          color: taste.stats.likeCount > 10 ? "text-primary" : undefined,
+        });
+      }
+      if (taste.stats.acceptanceRate > 0) {
+        items.push({
+          icon: TrendingUp,
+          label: "Taux de confiance",
+          value: `${taste.stats.acceptanceRate}%`,
+          color: taste.stats.acceptanceRate > 70 ? "text-green-400" : undefined,
+        });
+      }
+      if (taste.skipPatterns.avgSkipRate > 0.5) {
+        items.push({
+          icon: Brain,
+          label: "Exigence",
+          value: "Sélectif·ve — tu sais ce que tu veux",
+        });
+      }
+      if (taste.session.mood) {
+        const moodLabels: Record<string, string> = {
+          relax: "Détente", excited: "Intensité", romantic: "Romance",
+          "mind-blowing": "Surprises", "easy-watch": "Films faciles", fun: "Fun",
+        };
+        items.push({
+          icon: Sparkles,
+          label: "Humeur récente",
+          value: moodLabels[taste.session.mood] || taste.session.mood,
+        });
+      }
+      setInsights(items);
+    } catch {}
   };
 
   const generateProfile = async () => {
@@ -122,9 +201,8 @@ const CinemaDNA = ({ userId, teaser, onOpenFull }: CinemaDNAProps) => {
   // --- FULL MODE ---
   if (loading) {
     return (
-      <div className="flex items-center gap-2 py-8">
-        <Loader2 className="w-4 h-4 text-primary animate-spin" />
-        <span className="text-muted-foreground text-sm font-sans">Chargement du profil…</span>
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="w-5 h-5 text-primary animate-spin" />
       </div>
     );
   }
@@ -149,11 +227,7 @@ const CinemaDNA = ({ userId, teaser, onOpenFull }: CinemaDNAProps) => {
           className="rounded-full gap-2 font-sans px-8 h-12"
           variant="hero"
         >
-          {generating ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
-          ) : (
-            <Sparkles className="w-4 h-4" />
-          )}
+          {generating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
           {generating ? "Pick analyse…" : "Découvrir mon profil"}
         </Button>
       </motion.div>
@@ -161,64 +235,92 @@ const CinemaDNA = ({ userId, teaser, onOpenFull }: CinemaDNAProps) => {
   }
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      className="px-6 py-8"
-    >
-      {/* Personality Title — hero treatment */}
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="px-5 py-6 pb-16">
+      {/* ─── Hero: Personality Title ─── */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
-        className="text-center mb-8"
+        className="text-center mb-10"
       >
-        <p className="text-[10px] uppercase tracking-[0.2em] text-primary/50 font-sans font-semibold mb-3">
-          🧬 Ton profil cinématographique
+        <p className="text-[10px] uppercase tracking-[0.25em] text-gold/50 font-sans font-semibold mb-4">
+          🧬 Ton ADN Cinéma
         </p>
-        <h2 className="font-serif text-3xl md:text-4xl text-foreground mb-1 leading-tight">
+        <h2 className="font-serif text-3xl md:text-4xl text-foreground leading-tight mb-2">
           {profile.personality_title}
         </h2>
-        <div className="w-12 h-[2px] bg-gradient-to-r from-transparent via-primary/40 to-transparent mx-auto mt-4" />
+        <div className="w-16 h-[2px] bg-gradient-to-r from-transparent via-gold/40 to-transparent mx-auto mt-4 mb-6" />
+        <p className="text-foreground/50 text-[14px] font-sans leading-[1.9] max-w-sm mx-auto">
+          {profile.narrative}
+        </p>
       </motion.div>
 
-      {/* Narrative */}
-      <motion.p
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.2 }}
-        className="text-foreground/60 text-[14px] font-sans leading-[1.8] text-center max-w-sm mx-auto mb-8"
-      >
-        {profile.narrative}
-      </motion.p>
-
-      {/* Taste traits */}
+      {/* ─── Taste Traits ─── */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ delay: 0.3 }}
-        className="flex flex-wrap justify-center gap-2 mb-8"
+        transition={{ delay: 0.2 }}
+        className="flex flex-wrap justify-center gap-2 mb-10"
       >
         {profile.taste_traits.map((trait, i) => (
           <motion.span
             key={trait}
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.3 + i * 0.05 }}
-            className="px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-[12px] font-sans font-medium"
+            transition={{ delay: 0.2 + i * 0.04 }}
+            className="px-3.5 py-1.5 rounded-full bg-primary/8 border border-primary/15 text-primary/80 text-[12px] font-sans font-medium"
           >
             {trait}
           </motion.span>
         ))}
       </motion.div>
 
-      {/* Representative films */}
+      {/* ─── Pick te connaît — Insights Grid ─── */}
+      {insights.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="mb-10"
+        >
+          <div className="flex items-center gap-2 mb-4">
+            <Brain className="w-4 h-4 text-primary/60" />
+            <h3 className="text-[13px] font-sans font-semibold text-foreground/60 uppercase tracking-wide">
+              Ce que Pick sait de toi
+            </h3>
+          </div>
+          <div className="grid grid-cols-2 gap-2.5">
+            {insights.map((insight, i) => {
+              const Icon = insight.icon;
+              return (
+                <motion.div
+                  key={insight.label}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.35 + i * 0.05 }}
+                  className="rounded-xl bg-card/60 border border-border/15 p-3.5 backdrop-blur-sm"
+                >
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <Icon className={`w-3.5 h-3.5 ${insight.color || "text-primary/50"}`} />
+                    <span className="text-[10px] text-foreground/35 font-sans uppercase tracking-wider">{insight.label}</span>
+                  </div>
+                  <p className={`text-[13px] font-sans font-medium ${insight.color || "text-foreground/80"} leading-snug`}>
+                    {insight.value}
+                  </p>
+                </motion.div>
+              );
+            })}
+          </div>
+        </motion.div>
+      )}
+
+      {/* ─── Films qui te définissent ─── */}
       {profile.representative_films.length > 0 && (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.4 }}
-          className="mb-8"
+          className="mb-10"
         >
           <p className="text-[10px] uppercase tracking-[0.15em] text-foreground/25 font-sans font-semibold mb-3 text-center">
             Films qui te définissent
@@ -227,7 +329,7 @@ const CinemaDNA = ({ userId, teaser, onOpenFull }: CinemaDNAProps) => {
             {profile.representative_films.map((film) => (
               <span
                 key={film}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-foreground/[0.04] border border-border/20 text-foreground/50 text-[12px] font-sans font-medium"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-foreground/[0.04] border border-border/15 text-foreground/50 text-[12px] font-sans font-medium"
               >
                 <Film className="w-3 h-3" />
                 {film}
@@ -237,33 +339,61 @@ const CinemaDNA = ({ userId, teaser, onOpenFull }: CinemaDNAProps) => {
         </motion.div>
       )}
 
-      {/* Evolution note */}
-      {profile.evolution_note && (
+      {/* ─── Liked Movies Mosaic ─── */}
+      {likedPosters.length > 0 && (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.5 }}
-          className="flex items-start gap-2.5 px-4 py-3 rounded-xl bg-primary/[0.06] border border-primary/10 max-w-sm mx-auto"
+          className="mb-10"
         >
-          <Sparkles className="w-3.5 h-3.5 text-primary/50 mt-0.5 flex-shrink-0" />
-          <p className="text-foreground/45 text-[12px] font-sans leading-relaxed italic">
+          <p className="text-[10px] uppercase tracking-[0.15em] text-foreground/25 font-sans font-semibold mb-3 text-center">
+            Tes coups de cœur ({likeCount})
+          </p>
+          <div className="flex justify-center gap-1.5 overflow-hidden">
+            {likedPosters.map((poster, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.5 + i * 0.04 }}
+                className="w-14 h-20 rounded-lg overflow-hidden flex-shrink-0"
+              >
+                <img
+                  src={getPosterUrl(poster, "w185")}
+                  alt=""
+                  className="w-full h-full object-cover"
+                  loading="lazy"
+                />
+              </motion.div>
+            ))}
+          </div>
+        </motion.div>
+      )}
+
+      {/* ─── Evolution Note ─── */}
+      {profile.evolution_note && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.55 }}
+          className="flex items-start gap-2.5 px-4 py-3 rounded-xl bg-primary/[0.05] border border-primary/10 max-w-sm mx-auto mb-8"
+        >
+          <Sparkles className="w-3.5 h-3.5 text-primary/40 mt-0.5 flex-shrink-0" />
+          <p className="text-foreground/40 text-[12px] font-sans leading-relaxed italic">
             {profile.evolution_note}
           </p>
         </motion.div>
       )}
 
-      {/* Refresh */}
-      <div className="flex justify-center mt-8">
+      {/* ─── Refresh ─── */}
+      <div className="flex justify-center">
         <button
           onClick={generateProfile}
           disabled={generating}
-          className="flex items-center gap-1.5 text-[11px] text-primary/40 hover:text-primary font-sans font-medium transition-colors"
+          className="flex items-center gap-1.5 text-[11px] text-primary/35 hover:text-primary font-sans font-medium transition-colors"
         >
-          {generating ? (
-            <Loader2 className="w-3 h-3 animate-spin" />
-          ) : (
-            <RefreshCw className="w-3 h-3" />
-          )}
+          {generating ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
           Actualiser mon profil
         </button>
       </div>
