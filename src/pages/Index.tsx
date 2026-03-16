@@ -54,14 +54,14 @@ const Index = () => {
   const [showCompanion, setShowCompanion] = useState(false);
   const [chatInitialMessages, setChatInitialMessages] = useState<ChatMessage[] | undefined>(undefined);
   const [searchTags, setSearchTags] = useState<string[]>([]);
-  const [profilePrefs, setProfilePrefs] = useState<{ excludedGenres: string[]; excludedPlatforms: number[]; minRating: number; preferredPlatforms: number[] }>({ excludedGenres: [], excludedPlatforms: [], minRating: 0, preferredPlatforms: [] });
+  const [profilePrefs, setProfilePrefs] = useState<{ excludedGenres: string[]; excludedPlatforms: number[]; minRating: number; preferredPlatforms: number[]; profileConfidence: number }>({ excludedGenres: [], excludedPlatforms: [], minRating: 0, preferredPlatforms: [], profileConfidence: 0 });
   const { user } = useAuth();
   const navigate = useNavigate();
 
   // Load profile preferences
   useEffect(() => {
     if (!user) return;
-    supabase.from("profiles").select("onboarding_completed, preferred_platforms, excluded_platforms, favorite_genres, excluded_genres, min_rating").eq("id", user.id).single()
+    supabase.from("profiles").select("onboarding_completed, preferred_platforms, excluded_platforms, favorite_genres, excluded_genres, min_rating, profile_confidence").eq("id", user.id).single()
       .then(({ data }) => {
         if (data && !data.onboarding_completed) {
           navigate("/onboarding");
@@ -72,6 +72,7 @@ const Index = () => {
             excludedPlatforms: (data as any).excluded_platforms || [],
             minRating: (data as any).min_rating || 0,
             preferredPlatforms: data.preferred_platforms || [],
+            profileConfidence: (data as any).profile_confidence || 0,
           });
         }
       });
@@ -388,6 +389,7 @@ const Index = () => {
               searchTags={searchTags}
               onRemoveTag={handleRemoveTag}
               refining={loading}
+              profileConfidence={profilePrefs.profileConfidence}
               alternativeMovies={results.filter((_, i) => i !== currentResultIndex).slice(0, 2)}
               onSelectAlternative={(movie) => {
                 const idx = results.findIndex(r => r.id === movie.id);

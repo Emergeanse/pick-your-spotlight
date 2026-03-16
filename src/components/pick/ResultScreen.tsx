@@ -1,7 +1,7 @@
 import { useState, useEffect, forwardRef, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Mic, MicOff, X, Send, Loader2, Sparkles, Check, Play, Star, Clock, Heart, Bookmark, Tv, ChevronDown, ChevronUp, MoreHorizontal, RefreshCw, ThumbsUp, ThumbsDown, MessageCircle, Volume2, Eye, ExternalLink, Share2, Zap } from "lucide-react";
+import { Mic, MicOff, X, Send, Loader2, Sparkles, Check, Play, Star, Clock, Heart, Bookmark, Tv, ChevronDown, ChevronUp, MoreHorizontal, RefreshCw, ThumbsUp, ThumbsDown, MessageCircle, Volume2, Eye, ExternalLink, Share2, Zap, Lock, PenLine } from "lucide-react";
 import type { MovieDetail } from "@/lib/tmdb";
 import { getDisplayTitle, getYear, getBackdropUrl, getPosterUrl, getWatchProviders, getMovieTrailerUrl } from "@/lib/tmdb";
 import { buildStreamingLinks, openStreamingLink, type StreamingLink } from "@/lib/streaming-links";
@@ -50,6 +50,7 @@ interface ResultScreenProps {
   searchTags?: string[];
   onRemoveTag?: (tag: string) => void;
   refining?: boolean;
+  profileConfidence?: number;
 }
 
 const REJECT_REACTIONS: Record<string, string[]> = {
@@ -96,7 +97,9 @@ function getRejectReaction(reason: string): string {
   return messages[Math.floor(Math.random() * messages.length)];
 }
 
-const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onShowAnother, onRestart, onRefineWithVoice, onRefineWithMessage, onStartCompanion, hasMore, userCriteria, alternativeMovies, onSelectAlternative, searchTags, onRemoveTag, refining }, ref) => {
+const CONFIDENCE_THRESHOLD = 30;
+
+const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onShowAnother, onRestart, onRefineWithVoice, onRefineWithMessage, onStartCompanion, hasMore, userCriteria, alternativeMovies, onSelectAlternative, searchTags, onRemoveTag, refining, profileConfidence = 0 }, ref) => {
   const [providers, setProviders] = useState<{ name: string; logo_path: string; provider_id: number }[]>([]);
   const [streamingLinks, setStreamingLinks] = useState<StreamingLink[]>([]);
   const [trailerUrl, setTrailerUrl] = useState<string | null>(null);
@@ -121,6 +124,16 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
   const [voiceProcessing, setVoiceProcessing] = useState(false);
   const voiceRecorderRef = useRef<MediaRecorder | null>(null);
   const voiceChunksRef = useRef<Blob[]>([]);
+  const [showReviewSheet, setShowReviewSheet] = useState(false);
+  const [reviewText, setReviewText] = useState("");
+  const [reviewSubmitting, setReviewSubmitting] = useState(false);
+  const [reviewVoiceListening, setReviewVoiceListening] = useState(false);
+  const [reviewVoiceProcessing, setReviewVoiceProcessing] = useState(false);
+  const reviewRecorderRef = useRef<MediaRecorder | null>(null);
+  const reviewChunksRef = useRef<Blob[]>([]);
+  const [reviewSubmitted, setReviewSubmitted] = useState(false);
+
+  const isWhyUnlocked = profileConfidence >= CONFIDENCE_THRESHOLD;
 
   const playBrowserWhyFallback = useCallback((text: string) => {
     if (typeof window === "undefined" || !("speechSynthesis" in window)) return false;
@@ -225,6 +238,9 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
     setShowOptions(false);
     setMarkedSeen(false);
     setFeedbackGiven(null);
+    setReviewSubmitted(false);
+    setReviewText("");
+    setShowReviewSheet(false);
 
     // Pre-generate embedding for this movie (fire & forget)
     ensureMovieEmbedding(
@@ -447,7 +463,51 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                 </motion.div>
               )}
 
-              {matchData && !matchLoading && (
+              {/* Locked state — not enough data */}
+              {!matchLoading && !isWhyUnlocked && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1, duration: 0.4 }}
+                  className="mb-5 max-w-md"
+                >
+                  <div className="p-3 sm:p-4 rounded-xl bg-muted/40 border border-border/30 backdrop-blur-sm">
+                    <div className="flex items-center gap-3">
+                      <div className="relative flex-shrink-0">
+                        <div className="w-14 h-14 rounded-full bg-muted border-2 border-border/40 flex items-center justify-center">
+                          <Lock className="w-5 h-5 text-muted-foreground" />
+                        </div>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[10px] uppercase tracking-widest text-muted-foreground/80 font-sans font-semibold mb-0.5">
+                          Pourquoi ce film
+                        </p>
+                        <p className="text-muted-foreground text-[12px] sm:text-[13px] font-sans leading-snug">
+                          Utilise Pick un peu plus pour débloquer l'analyse personnalisée de tes recommandations.
+                        </p>
+                      </div>
+                    </div>
+                    {/* Progress bar */}
+                    <div className="mt-3">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-[10px] text-muted-foreground/60 font-sans">Confiance du profil</span>
+                        <span className="text-[10px] text-muted-foreground/60 font-sans font-medium">{profileConfidence}%</span>
+                      </div>
+                      <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                        <motion.div
+                          initial={{ width: 0 }}
+                          animate={{ width: `${Math.min((profileConfidence / CONFIDENCE_THRESHOLD) * 100, 100)}%` }}
+                          transition={{ delay: 0.3, duration: 0.8, ease: "easeOut" }}
+                          className="h-full rounded-full bg-primary/40"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+
+              {/* Unlocked "Pourquoi ce film" */}
+              {matchData && !matchLoading && isWhyUnlocked && (
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -651,7 +711,8 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                     if (markedSeen) return;
                     setMarkedSeen(true);
                     trackInteraction(movie.id, "already_seen", { mood: userCriteria?.mood, context: userCriteria?.context, time: userCriteria?.time });
-                    toast.success("Noté ! Pick évitera ce film.");
+                    toast.success("Noté ! Tu peux aussi partager ton avis.");
+                    setShowReviewSheet(true);
                   }}
                   className={`w-9 h-9 rounded-full border flex items-center justify-center transition-all active:scale-95 ${
                     markedSeen
@@ -1132,6 +1193,174 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
               <PickCharacter mood="think" message={rejectReaction} size="lg" />
             </motion.div>
           </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Bottom Sheet: Post-watch review */}
+      <AnimatePresence>
+        {showReviewSheet && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-50 bg-background/60 backdrop-blur-sm"
+              onClick={() => setShowReviewSheet(false)}
+            />
+            <motion.div
+              initial={{ y: "100%" }}
+              animate={{ y: 0 }}
+              exit={{ y: "100%" }}
+              transition={{ type: "spring", damping: 28, stiffness: 300 }}
+              className="fixed bottom-0 left-0 right-0 z-50 bg-card border-t border-border/20 rounded-t-2xl pb-[env(safe-area-inset-bottom)]"
+            >
+              <div className="flex justify-center pt-3 pb-1">
+                <div className="w-10 h-1 rounded-full bg-foreground/15" />
+              </div>
+              <div className="px-5 pb-5 pt-2">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <PickCharacter mood="default" size="sm" animate={false} />
+                    <div>
+                      <p className="text-sm font-sans font-semibold text-foreground">T'en as pensé quoi ?</p>
+                      <p className="text-foreground/40 text-[11px] font-sans">Tes retours aident Pick à mieux te connaître</p>
+                    </div>
+                  </div>
+                  <button onClick={() => setShowReviewSheet(false)} className="text-foreground/30 hover:text-foreground transition-colors">
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+
+                {reviewSubmitted ? (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="flex items-center gap-2 py-4 justify-center"
+                  >
+                    <Check className="w-5 h-5 text-primary" />
+                    <p className="text-foreground/60 text-sm font-sans">Merci ! Pick en prend note 🧠</p>
+                  </motion.div>
+                ) : (
+                  <>
+                    <form
+                      onSubmit={async (e) => {
+                        e.preventDefault();
+                        const text = reviewText.trim();
+                        if (!text) return;
+                        setReviewSubmitting(true);
+                        try {
+                          await trackInteraction(movie.id, "reviewed", {
+                            mood: userCriteria?.mood,
+                            context: userCriteria?.context,
+                            time: userCriteria?.time,
+                            review: text,
+                          });
+                          setReviewSubmitted(true);
+                          toast.success("Avis enregistré !");
+                        } catch {
+                          toast.error("Erreur lors de l'envoi");
+                        } finally {
+                          setReviewSubmitting(false);
+                        }
+                      }}
+                      className="space-y-3"
+                    >
+                      <textarea
+                        value={reviewText}
+                        onChange={(e) => setReviewText(e.target.value)}
+                        placeholder="Dis ce que tu as aimé ou pas, ce que tu as ressenti…"
+                        className="w-full px-4 py-3 rounded-xl bg-foreground/[0.05] border border-border/30 text-foreground text-[13px] font-sans placeholder:text-foreground/30 focus:outline-none focus:border-primary/40 focus:bg-foreground/[0.08] transition-all resize-none min-h-[80px]"
+                        autoFocus
+                      />
+                      <div className="flex items-center gap-2">
+                        {/* Voice input */}
+                        <button
+                          type="button"
+                          disabled={reviewVoiceProcessing}
+                          onClick={async () => {
+                            if (reviewVoiceListening) {
+                              reviewRecorderRef.current?.stop();
+                              setReviewVoiceListening(false);
+                              return;
+                            }
+                            try {
+                              const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                              const recorder = new MediaRecorder(stream, { mimeType: MediaRecorder.isTypeSupported("audio/webm") ? "audio/webm" : "audio/mp4" });
+                              reviewChunksRef.current = [];
+                              recorder.ondataavailable = (ev) => { if (ev.data.size > 0) reviewChunksRef.current.push(ev.data); };
+                              recorder.onstop = async () => {
+                                stream.getTracks().forEach(t => t.stop());
+                                setReviewVoiceListening(false);
+                                setReviewVoiceProcessing(true);
+                                try {
+                                  const blob = new Blob(reviewChunksRef.current, { type: recorder.mimeType });
+                                  const formData = new FormData();
+                                  formData.append("audio", blob, "audio.webm");
+                                  const sttResp = await fetch(
+                                    `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/voice-refine`,
+                                    {
+                                      method: "POST",
+                                      headers: {
+                                        apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+                                        Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+                                      },
+                                      body: formData,
+                                    }
+                                  );
+                                  if (!sttResp.ok) throw new Error("STT failed");
+                                  const sttData = await sttResp.json();
+                                  const transcript = sttData.text?.trim();
+                                  if (transcript) {
+                                    setReviewText(prev => prev ? `${prev} ${transcript}` : transcript);
+                                  } else {
+                                    toast.error("Je n'ai rien entendu, réessaie.");
+                                  }
+                                } catch {
+                                  toast.error("Erreur de reconnaissance vocale");
+                                } finally {
+                                  setReviewVoiceProcessing(false);
+                                }
+                              };
+                              reviewRecorderRef.current = recorder;
+                              recorder.start();
+                              setReviewVoiceListening(true);
+                            } catch {
+                              toast.error("Impossible d'accéder au micro");
+                            }
+                          }}
+                          className={`flex-shrink-0 w-10 h-10 rounded-full border flex items-center justify-center transition-all active:scale-95 ${
+                            reviewVoiceListening
+                              ? "bg-destructive/20 border-destructive/40 text-destructive animate-pulse"
+                              : reviewVoiceProcessing
+                                ? "bg-primary/10 border-primary/20 text-primary/50"
+                                : "bg-primary/20 border-primary/30 text-primary hover:bg-primary/30"
+                          }`}
+                        >
+                          {reviewVoiceProcessing ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : reviewVoiceListening ? (
+                            <MicOff className="w-4 h-4" />
+                          ) : (
+                            <Mic className="w-4 h-4" />
+                          )}
+                        </button>
+                        <span className="text-[11px] text-foreground/30 font-sans">ou dicte ton avis</span>
+                        <div className="flex-1" />
+                        <button
+                          type="submit"
+                          disabled={!reviewText.trim() || reviewSubmitting}
+                          className="flex items-center gap-1.5 px-4 h-10 rounded-full bg-primary text-primary-foreground text-sm font-sans font-medium disabled:opacity-50 transition-all active:scale-95"
+                        >
+                          {reviewSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                          Envoyer
+                        </button>
+                      </div>
+                    </form>
+                  </>
+                )}
+              </div>
+            </motion.div>
+          </>
         )}
       </AnimatePresence>
     </div>
