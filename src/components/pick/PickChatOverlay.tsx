@@ -9,6 +9,8 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { useScribe } from "@elevenlabs/react";
+import { usePickPlus } from "@/hooks/use-pick-plus";
+import PickPlusPaywall from "@/components/pick/PickPlusPaywall";
 import squirrelImg from "@/assets/pick-squirrel.png";
 
 interface ChatMsg {
@@ -147,13 +149,25 @@ export default function PickChatOverlay() {
     }
   }, [scribe]);
 
+  const pickPlus = usePickPlus();
+
   const sendMessage = useCallback(async (text: string) => {
     if (!text.trim() || isStreaming) return;
+
+    // Check chat limit for free users
+    if (!pickPlus.canChat) {
+      pickPlus.showPaywall();
+      return;
+    }
+
     const userMsg: ChatMsg = { role: "user", content: text.trim() };
     addMessage(userMsg);
     setInput("");
     setIsStreaming(true);
     setStreamingContent("");
+
+    // Record usage
+    await pickPlus.recordChatMessage();
 
     const allMessages = [...currentMessages, userMsg].map(m => ({ role: m.role, content: m.content }));
 
@@ -461,11 +475,27 @@ export default function PickChatOverlay() {
                 >
                   <Send className="w-4 h-4" />
                 </Button>
+              {/* Chat remaining indicator for free users */}
+              {!pickPlus.isPremium && (
+                <p className="text-center text-[10px] text-muted-foreground/40 font-sans mt-1.5">
+                  {pickPlus.chatRemaining > 0
+                    ? `${pickPlus.chatRemaining} message${pickPlus.chatRemaining > 1 ? "s" : ""} restant${pickPlus.chatRemaining > 1 ? "s" : ""} aujourd'hui`
+                    : "Limite atteinte — Passe à Pick+ 👑"
+                  }
+                </p>
+              )}
               </form>
             </div>
           </motion.div>
         </>
       )}
+
+      {/* Pick+ Paywall */}
+      <PickPlusPaywall
+        open={pickPlus.shouldShowPaywall}
+        onClose={pickPlus.hidePaywall}
+        trigger="chat_limit"
+      />
     </AnimatePresence>
   );
 }

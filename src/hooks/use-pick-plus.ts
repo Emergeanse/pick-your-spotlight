@@ -13,6 +13,7 @@ import { useAuth } from "@/hooks/use-auth";
 
 const FREE_RECO_LIMIT = 3;
 const FREE_COMPANION_LIMIT = 1;
+const FREE_CHAT_LIMIT = 5;
 
 export interface PickPlusState {
   plan: "free" | "pick_plus";
@@ -29,6 +30,12 @@ export interface PickPlusState {
   companionLimit: number;
   canAskCompanion: (movieId: number) => boolean;
   recordCompanionQuestion: (movieId: number) => Promise<boolean>;
+  // Chat limits
+  chatUsed: number;
+  chatLimit: number;
+  chatRemaining: number;
+  canChat: boolean;
+  recordChatMessage: () => Promise<boolean>;
   // Paywall
   shouldShowPaywall: boolean;
   showPaywall: () => void;
@@ -40,6 +47,7 @@ export function usePickPlus(): PickPlusState {
   const [plan, setPlan] = useState<"free" | "pick_plus">("free");
   const [loading, setLoading] = useState(true);
   const [recoUsed, setRecoUsed] = useState(0);
+  const [chatUsed, setChatUsed] = useState(0);
   const [companionUsage, setCompanionUsage] = useState<Record<string, number>>({});
   const [shouldShowPaywall, setShouldShowPaywall] = useState(false);
 
@@ -59,7 +67,7 @@ export function usePickPlus(): PickPlusState {
 
       const [subRes, usageRes] = await Promise.all([
         supabase.from("subscriptions" as any).select("plan, status").eq("user_id", user.id).maybeSingle(),
-        supabase.from("daily_usage" as any).select("recommendation_count, companion_questions").eq("user_id", user.id).eq("usage_date", today).maybeSingle(),
+        supabase.from("daily_usage" as any).select("recommendation_count, companion_questions, chat_count").eq("user_id", user.id).eq("usage_date", today).maybeSingle(),
       ]);
 
       if (subRes.data && (subRes.data as any).status === "active") {
@@ -69,6 +77,7 @@ export function usePickPlus(): PickPlusState {
 
       if (usageRes.data) {
         setRecoUsed((usageRes.data as any).recommendation_count || 0);
+        setChatUsed((usageRes.data as any).chat_count || 0);
         setCompanionUsage((usageRes.data as any).companion_questions || {});
       }
     } catch (e) {
@@ -132,6 +141,30 @@ export function usePickPlus(): PickPlusState {
     return !error;
   }, [user, isPremium, companionUsage]);
 
+  // Chat limits
+  const chatLimit = isPremium ? Infinity : FREE_CHAT_LIMIT;
+  const chatRemaining = isPremium ? Infinity : Math.max(0, FREE_CHAT_LIMIT - chatUsed);
+  const canChat = isPremium || chatUsed < FREE_CHAT_LIMIT;
+
+  const recordChatMessage = useCallback(async (): Promise<boolean> => {
+    if (!user) return false;
+    if (!isPremium && chatUsed >= FREE_CHAT_LIMIT) {
+      setShouldShowPaywall(true);
+      return false;
+    }
+
+    const today = new Date().toISOString().split("T")[0];
+    const newCount = chatUsed + 1;
+
+    const { error } = await supabase.from("daily_usage" as any).upsert(
+      { user_id: user.id, usage_date: today, chat_count: newCount },
+      { onConflict: "user_id,usage_date" }
+    );
+
+    if (!error) setChatUsed(newCount);
+    return !error;
+  }, [user, isPremium, chatUsed]);
+
   return {
     plan,
     isPremium,
@@ -145,6 +178,11 @@ export function usePickPlus(): PickPlusState {
     companionLimit: isPremium ? Infinity : FREE_COMPANION_LIMIT,
     canAskCompanion,
     recordCompanionQuestion,
+    chatUsed,
+    chatLimit,
+    chatRemaining,
+    canChat,
+    recordChatMessage,
     shouldShowPaywall,
     showPaywall: () => setShouldShowPaywall(true),
     hidePaywall: () => setShouldShowPaywall(false),

@@ -52,6 +52,7 @@ export type Database = {
       }
       daily_usage: {
         Row: {
+          chat_count: number
           companion_questions: Json
           created_at: string
           id: string
@@ -60,6 +61,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          chat_count?: number
           companion_questions?: Json
           created_at?: string
           id?: string
@@ -68,6 +70,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          chat_count?: number
           companion_questions?: Json
           created_at?: string
           id?: string

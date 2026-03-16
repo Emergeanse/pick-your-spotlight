@@ -3,16 +3,17 @@
  * Shows when a free user hits a limit.
  */
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Sparkles, Zap, Brain, Bell, Wifi, Users, Crown, Check } from "lucide-react";
+import { X, Sparkles, Zap, Brain, Bell, Wifi, Users, Crown, Check, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface PickPlusPaywallProps {
   open: boolean;
   onClose: () => void;
-  trigger?: "reco_limit" | "companion_limit" | "dna_advanced" | "general";
+  trigger?: "reco_limit" | "companion_limit" | "dna_advanced" | "chat_limit" | "general";
 }
 
 const BENEFITS = [
+  { icon: MessageCircle, label: "Pick partout, tout le temps", desc: "Chat illimité — ton assistant ciné toujours avec toi" },
   { icon: Zap, label: "Recommandations illimitées", desc: "Plus de limite de 3 par jour" },
   { icon: Brain, label: "Companion Mode complet", desc: "Questions illimitées + analyses approfondies" },
   { icon: Sparkles, label: "ADN Cinéma avancé", desc: "Évolution, comparaisons et rapport mensuel" },
@@ -25,6 +26,7 @@ const TRIGGER_MESSAGES: Record<string, string> = {
   reco_limit: "Tu as utilisé tes 3 recommandations du jour.",
   companion_limit: "Tu as utilisé ta question gratuite pour ce film.",
   dna_advanced: "L'évolution de ton profil est une fonctionnalité Pick+.",
+  chat_limit: "Tu as utilisé tes 5 messages du jour. Passe à Pick+ pour un chat illimité !",
   general: "Passe à Pick+ pour débloquer tout le potentiel de Pick.",
 };
 
