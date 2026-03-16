@@ -46,9 +46,20 @@ interface CompanionModeProps {
   onClose: () => void;
 }
 
+// Proactive suggestions that Pick surfaces periodically
+const PROACTIVE_SUGGESTIONS = [
+  "Tu veux un fun fact sur cette scène ? 🎬",
+  "Je connais une anecdote sur cet acteur 👀",
+  "Tu savais que ce film a failli ne jamais sortir ?",
+  "Envie d'en savoir plus sur la musique de cette scène ? 🎵",
+  "Le réalisateur a caché un easter egg ici…",
+  "Ce plan est une référence à un autre film, tu veux savoir lequel ?",
+  "L'acteur a improvisé cette réplique !",
+  "Fun fact : ce lieu de tournage est réel 🗺️",
+];
+
 export default function CompanionMode({ movie, onClose }: CompanionModeProps) {
   const [messages, setMessages] = useState<ChatMsg[]>(() => {
-    // Auto welcome message from Pick
     return [{
       role: "assistant" as const,
       content: `C'est parti pour **${getDisplayTitle(movie)}** ! 🍿\nPose-moi une question quand tu veux, je suis là tout le long.`
@@ -59,6 +70,9 @@ export default function CompanionMode({ movie, onClose }: CompanionModeProps) {
   const [spoilerMode, setSpoilerMode] = useState<SpoilerMode>("no-spoilers");
   const [movieProgress, setMovieProgress] = useState<MovieProgress>("beginning");
   const [showSettings, setShowSettings] = useState(false);
+  const [proactiveSuggestion, setProactiveSuggestion] = useState<string | null>(null);
+  const proactiveIndexRef = useRef(0);
+  const proactiveTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
