@@ -110,20 +110,12 @@ export default function PickChatOverlay() {
     }
   }, [isOverlayOpen]);
 
-  // Auto-send when committed transcript arrives
+  // Focus input after mic stops so user can send
   useEffect(() => {
-    if (pendingSendRef.current && !isStreaming) {
-      const text = pendingSendRef.current;
-      pendingSendRef.current = null;
-      setInput("");
-      // Disconnect mic before sending
-      if (scribe.isConnected) {
-        scribe.disconnect();
-        setIsListening(false);
-      }
-      sendMessage(text);
+    if (!isListening && input.trim()) {
+      inputRef.current?.focus();
     }
-  });
+  }, [isListening]);
 
   const toggleMic = useCallback(async () => {
     if (scribe.isConnected) {
