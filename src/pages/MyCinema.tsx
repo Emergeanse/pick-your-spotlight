@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { ArrowLeft, Loader2, Sparkles, RefreshCw, ChevronRight } from "lucide-react";
+import { ArrowLeft, Loader2, Sparkles, RefreshCw, ChevronRight, Crown, TrendingUp, Calendar } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/use-auth";
+import { usePickPlus } from "@/hooks/use-pick-plus";
 import { supabase } from "@/integrations/supabase/client";
 import { getEngagementData, type EngagementData } from "@/lib/engagement";
 import { getLikedMovies } from "@/lib/liked-movies";
@@ -10,10 +11,12 @@ import { getPosterUrl } from "@/lib/tmdb";
 import CinemaDNA from "@/components/pick/CinemaDNA";
 import PickCharacter from "@/components/pick/PickCharacter";
 import BottomTabBar from "@/components/pick/BottomTabBar";
+import PickPlusPaywall from "@/components/pick/PickPlusPaywall";
 
 const MyCinema = () => {
   const { user, isReady } = useAuth();
   const navigate = useNavigate();
+  const { isPremium, shouldShowPaywall, showPaywall, hidePaywall } = usePickPlus();
   const [engagement, setEngagement] = useState<EngagementData | null>(null);
   const [loading, setLoading] = useState(true);
   const [showDNA, setShowDNA] = useState(false);
@@ -67,7 +70,6 @@ const MyCinema = () => {
 
   if (!user) return null;
 
-  // DNA full screen overlay
   if (showDNA) {
     return (
       <div className="fixed inset-0 bg-background overflow-y-auto z-50">
@@ -88,36 +90,33 @@ const MyCinema = () => {
   const totalRecos = engagement?.totalRecommendations || 0;
   const confidence = engagement?.profileConfidence || 0;
 
-  // Narrative summary
   const getWeeklyNarrative = () => {
-    if (totalRecos === 0) {
-      return "Commence à explorer et Pick apprendra à te connaître.";
-    }
-    if (totalRecos === 1) {
-      return "Tu as découvert ton premier film avec Pick. C'est le début d'une belle aventure !";
-    }
-    if (totalRecos <= 5) {
-      return `Pick t'a fait découvrir ${totalRecos} films. Continue pour affiner tes recommandations.`;
-    }
+    if (totalRecos === 0) return "Commence à explorer et Pick apprendra à te connaître.";
+    if (totalRecos === 1) return "Tu as découvert ton premier film avec Pick. C'est le début d'une belle aventure !";
+    if (totalRecos <= 5) return `Pick t'a fait découvrir ${totalRecos} films. Continue pour affiner tes recommandations.`;
     return `Pick t'a déjà recommandé ${totalRecos} films. Tes goûts se précisent !`;
   };
 
-  // Learning progress sentence
   const getLearningMessage = () => {
-    if (confidence === 0 && totalRecos === 0) {
-      return "Pick ne te connaît pas encore — note tes premiers films pour commencer.";
-    }
-    if (confidence < 30) {
-      return "Pick te connaît de mieux en mieux — continue à noter tes films.";
-    }
+    if (confidence === 0 && totalRecos === 0) return "Pick ne te connaît pas encore — note tes premiers films pour commencer.";
+    if (confidence < 30) return "Pick te connaît de mieux en mieux — continue à noter tes films.";
     return `Pick est sûr à ${confidence}% de ses recommandations pour toi.`;
   };
 
   return (
     <div className="fixed inset-0 bg-background overflow-y-auto">
       {/* Header */}
-      <div className="px-5 pt-[calc(1rem+env(safe-area-inset-top))] pb-2">
+      <div className="px-5 pt-[calc(1rem+env(safe-area-inset-top))] pb-2 flex items-center justify-between">
         <h1 className="text-2xl font-serif">Mon Cinéma</h1>
+        {!isPremium && (
+          <button
+            onClick={() => navigate("/app/pick-plus")}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gold/10 border border-gold/20 text-gold text-[11px] font-sans font-semibold hover:bg-gold/15 transition-colors"
+          >
+            <Crown className="w-3 h-3" />
+            Pick+
+          </button>
+        )}
       </div>
 
       <div className="max-w-2xl mx-auto px-5 py-4 pb-32">
@@ -129,19 +128,15 @@ const MyCinema = () => {
           onClick={() => setShowDNA(true)}
           className="w-full text-left rounded-2xl p-5 mb-6 border border-gold/20 bg-gradient-to-br from-card/80 via-card/60 to-gold/[0.03] hover:border-gold/35 transition-all group relative overflow-hidden"
         >
-          {/* Subtle gold glow */}
           <div className="absolute inset-0 bg-gradient-to-br from-gold/[0.04] to-transparent pointer-events-none" />
           <div className="relative z-10">
             <p className="text-[10px] uppercase tracking-[0.2em] text-gold/50 font-sans font-semibold mb-2">
               🧬 Ton ADN Cinéma
             </p>
             {dnaTitle ? (
-              <>
-                <h2 className="text-xl font-serif text-foreground mb-2 group-hover:text-gold/90 transition-colors">
-                  {dnaTitle}
-                </h2>
-                {/* Show taste traits if available via CinemaDNA teaser */}
-              </>
+              <h2 className="text-xl font-serif text-foreground mb-2 group-hover:text-gold/90 transition-colors">
+                {dnaTitle}
+              </h2>
             ) : (
               <h2 className="text-lg font-serif text-foreground/60 mb-1">
                 Découvre ton profil cinématographique
@@ -153,6 +148,42 @@ const MyCinema = () => {
             </div>
           </div>
         </motion.button>
+
+        {/* ─── Pick+ Advanced DNA Teaser ─── */}
+        {!isPremium && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.05 }}
+            className="mb-6 relative"
+          >
+            <div className="rounded-2xl border border-gold/10 bg-card/30 p-4 relative overflow-hidden">
+              {/* Blur overlay */}
+              <div className="absolute inset-0 backdrop-blur-[2px] bg-background/20 z-10 rounded-2xl flex flex-col items-center justify-center">
+                <button
+                  onClick={() => showPaywall()}
+                  className="flex items-center gap-2 px-4 py-2 rounded-full bg-gold/15 border border-gold/25 text-gold text-xs font-sans font-semibold hover:bg-gold/20 transition-all"
+                >
+                  <Crown className="w-3.5 h-3.5" />
+                  Débloquer avec Pick+
+                </button>
+              </div>
+              {/* Fake content behind blur */}
+              <div className="space-y-3 opacity-40">
+                <div className="flex items-center gap-2">
+                  <TrendingUp className="w-4 h-4 text-primary/40" />
+                  <span className="text-xs font-sans text-foreground/40">Évolution de tes goûts</span>
+                </div>
+                <div className="h-16 rounded-xl bg-foreground/5" />
+                <div className="flex items-center gap-2">
+                  <Calendar className="w-4 h-4 text-primary/40" />
+                  <span className="text-xs font-sans text-foreground/40">Rapport mensuel cinéma</span>
+                </div>
+                <div className="h-10 rounded-xl bg-foreground/5" />
+              </div>
+            </div>
+          </motion.div>
+        )}
 
         {/* ─── Weekly Narrative ─── */}
         <motion.div
@@ -237,6 +268,12 @@ const MyCinema = () => {
       </div>
 
       <BottomTabBar />
+
+      <PickPlusPaywall
+        open={shouldShowPaywall}
+        onClose={hidePaywall}
+        trigger="dna_advanced"
+      />
     </div>
   );
 };
