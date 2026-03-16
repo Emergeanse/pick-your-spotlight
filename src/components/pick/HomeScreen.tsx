@@ -343,20 +343,53 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
               {/* Three main actions */}
               <div className="flex flex-col items-center gap-4">
 
-                {/* 1. Pick pour ce soir */}
+                {/* 1. Pick pour ce soir — with popcorn animation */}
                 <motion.button
                   whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={handleTonightPick}
+                  whileTap={{ scale: 0.96 }}
+                  onClick={() => {
+                    setPickAnimating(true);
+                    setTimeout(() => setPickAnimating(false), 900);
+                    handleTonightPick();
+                  }}
                   disabled={loading || tonightLoading}
-                  className="group w-full text-left rounded-2xl p-5 bg-gradient-to-r from-primary/15 via-primary/10 to-transparent border-2 border-primary/40 hover:border-primary/60 hover:from-primary/20 transition-all disabled:opacity-50 relative overflow-hidden"
+                  className="group w-full text-left rounded-2xl p-5 bg-gradient-to-br from-primary/20 via-primary/15 to-accent/10 border-2 border-primary/50 hover:border-primary/70 hover:from-primary/25 transition-all disabled:opacity-50 relative overflow-hidden shadow-[0_0_30px_-8px_hsl(var(--primary)/0.35)]"
                 >
+                  {/* Popcorn burst animation on click */}
+                  <AnimatePresence>
+                    {pickAnimating && (
+                      <>
+                        {["🍿", "🎬", "🎥", "✨", "🍿"].map((emoji, i) => (
+                          <motion.span
+                            key={i}
+                            initial={{ opacity: 1, scale: 0.5, x: 0, y: 0 }}
+                            animate={{
+                              opacity: 0,
+                              scale: 1.2,
+                              x: (i - 2) * 40 + (Math.random() - 0.5) * 30,
+                              y: -60 - Math.random() * 40,
+                            }}
+                            exit={{ opacity: 0 }}
+                            transition={{ duration: 0.7, delay: i * 0.06, ease: "easeOut" }}
+                            className="absolute left-1/2 top-1/2 text-lg pointer-events-none z-20"
+                          >
+                            {emoji}
+                          </motion.span>
+                        ))}
+                      </>
+                    )}
+                  </AnimatePresence>
+
                   <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-primary/25 border border-primary/40 flex items-center justify-center shrink-0 group-hover:bg-primary/35 transition-colors shadow-[0_0_20px_-5px_hsl(var(--primary)/0.3)]">
-                      <Zap className="w-5 h-5 text-primary fill-primary" />
-                    </div>
+                    <motion.div
+                      animate={pickAnimating ? { rotate: [0, -10, 10, -5, 0], scale: [1, 1.15, 1] } : {}}
+                      transition={{ duration: 0.5 }}
+                      className="w-12 h-12 rounded-xl bg-primary/30 border border-primary/50 flex items-center justify-center shrink-0 group-hover:bg-primary/40 transition-colors shadow-[0_0_25px_-5px_hsl(var(--primary)/0.4)]"
+                    >
+                      <span className="text-xl">🍿</span>
+                    </motion.div>
                     <div className="flex-1 min-w-0">
-                      <h3 className="text-base font-sans font-semibold text-foreground mb-0.5">Pick pour ce soir</h3>
+                      <h3 className="text-base font-sans font-bold text-foreground mb-0.5">Pick pour ce soir</h3>
                       <p className="text-foreground/50 text-[13px] font-sans leading-relaxed">
                         Une suggestion sur-mesure pour ta soirée.
                       </p>
