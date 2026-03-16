@@ -19,7 +19,14 @@ interface ChatMsg {
   movie?: any; // embedded movie recommendation
 }
 
-const DISCOVERY_CHIPS = [
+const DISCOVERY_CHIPS_FREE = [
+  { label: "Un film ce soir 🍿", msg: "Trouve-moi un bon film pour ce soir !" },
+  { label: "Envie de rire 😂", msg: "J'ai envie de rigoler, trouve-moi une bonne comédie !" },
+  { label: "Soirée en couple 💕", msg: "Soirée en couple ce soir, trouve-nous le film parfait !" },
+  { label: "Film intense 🔥", msg: "J'ai envie d'un truc intense et puissant ce soir !" },
+];
+
+const DISCOVERY_CHIPS_PREMIUM = [
   { label: "Un film ce soir 🍿", msg: "Trouve-moi un bon film pour ce soir !" },
   { label: "Comment ça marche ?", msg: "Explique-moi comment fonctionne l'appli Pick." },
   { label: "Recommande-moi", msg: "Qu'est-ce que tu me recommandes en ce moment ?" },
