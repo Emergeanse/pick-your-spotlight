@@ -29,6 +29,15 @@ async function getTVDetails(id: number): Promise<any> {
   return res.json();
 }
 
+// Discover high-rated movies from TMDB as fallback
+async function discoverHighRated(minRating: number, mediaType: string = "movie"): Promise<any[]> {
+  const endpoint = mediaType === "tv" ? "tv" : "movie";
+  const url = `https://api.themoviedb.org/3/discover/${endpoint}?api_key=${TMDB_API_KEY}&language=fr-FR&sort_by=popularity.desc&vote_average.gte=${minRating}&vote_count.gte=200&page=${Math.floor(Math.random() * 3) + 1}&watch_region=FR`;
+  const res = await fetch(url);
+  const data = await res.json();
+  return data.results || [];
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -36,12 +45,30 @@ serve(async (req) => {
 
   try {
     const body = await req.json();
-    const { messages, mode, movieTitle, movieYear, movieOverview, spoilerMode, movieProgress } = body;
+    const { messages, mode, movieTitle, movieYear, movieOverview, spoilerMode, movieProgress, minRating: userMinRating, excludedGenres } = body;
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
     const currentYear = new Date().getFullYear();
+    const effectiveMinRating = userMinRating || 0;
+    const RATING_TOLERANCE = 0.5;
+
+    // Build rating instruction for the prompt
+    let ratingInstruction = "";
+    if (effectiveMinRating > 0) {
+      ratingInstruction = `\n\nRÈGLE NOTE MINIMALE — TRÈS IMPORTANT :
+L'utilisateur a configuré une note minimale de ${effectiveMinRating}/10 dans ses préférences.
+Tu DOIS recommander UNIQUEMENT des films/séries ayant une note TMDB d'au moins ${effectiveMinRating}/10.
+Si l'utilisateur demande explicitement une note dans son message (ex: "au moins 8/10"), utilise la note la plus élevée entre sa demande et ses préférences.
+Ne propose JAMAIS un film en dessous de cette note. C'est une règle stricte.`;
+    }
+
+    // Build excluded genres instruction
+    let genreInstruction = "";
+    if (excludedGenres && excludedGenres.length > 0) {
+      genreInstruction = `\nGENRES À ÉVITER ABSOLUMENT : ${excludedGenres.join(", ")}. Ne recommande JAMAIS de films de ces genres.`;
+    }
 
     // Build system prompt based on mode
     let systemPrompt: string;
@@ -97,6 +124,8 @@ TU SAIS TOUT FAIRE (dans ton domaine) :
 4. COMPARER des films, donner ton avis, discuter de cinéma en général.
 
 ${getAppKnowledgeSection()}
+${ratingInstruction}
+${genreInstruction}
 
 RÈGLE CRITIQUE — RECOMMANDATION :
 Recommande immédiatement (appelle suggest_movie) si l'utilisateur donne AU MOINS UN signal :
@@ -122,8 +151,6 @@ L'humeur FILTRE les genres. "Fatigué" + "bon film" ≠ thriller intense.
 
 HORS SUJET :
 - Si l'utilisateur parle de quelque chose qui n'a AUCUN rapport avec le cinéma, les séries, la culture audiovisuelle ou l'application Pick → refuse poliment : "Hé, moi c'est le ciné et Pick, mon domaine ! 🎬 Dis-moi plutôt ce que t'as envie de regarder."
-- Exemples de hors sujet : maths, cuisine, sport, politique, code, météo, etc.
-- Exemples OK : acteurs, réalisateurs, oscars, anecdotes de films, techniques cinéma, son Dolby, IMAX, plateformes de streaming, etc.
 
 STYLE :
 - Tutoie toujours
@@ -141,7 +168,7 @@ ANNÉE EN COURS : ${currentYear}`;
         type: "function",
         function: {
           name: "suggest_movie",
-          description: "Suggest a movie or TV show to the user.",
+          description: "Suggest a movie or TV show to the user. IMPORTANT: only suggest titles rated above the user's minimum rating preference.",
           parameters: {
             type: "object",
             properties: {
@@ -230,6 +257,22 @@ ANNÉE EN COURS : ${currentYear}`;
             : await getMovieDetails(bestMatch.id);
         }
 
+        // SERVER-SIDE RATING CHECK — enforce min rating with 0.5 tolerance
+        if (detail && effectiveMinRating > 0) {
+          const movieRating = detail.vote_average || 0;
+          if (movieRating < effectiveMinRating - RATING_TOLERANCE) {
+            console.log(`Rating check failed: ${detail.title || detail.name} has ${movieRating}, min is ${effectiveMinRating}. Retrying...`);
+            // The AI suggested a movie below the threshold — return a message asking to try again
+            return new Response(JSON.stringify({
+              type: "text",
+              reply: `Hmm, **${detail.title || detail.name}** n'a que ${movieRating.toFixed(1)}/10 et tu veux au moins ${effectiveMinRating}/10. Laisse-moi te trouver mieux… 🎬\n\nDis-moi un peu plus ce que tu cherches et je te trouverai un film qui dépasse les ${effectiveMinRating}/10 !`,
+              movie: null,
+            }), {
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
+            });
+          }
+        }
+
         return new Response(JSON.stringify({
           type: "recommendation",
           reply: args.reason,
@@ -268,7 +311,7 @@ Pick est une application de recommandation de films et séries personnalisée. V
 - **Mode Compagnon** : Quand l'utilisateur choisit de regarder un film, Pick devient un compagnon de visionnage — il peut répondre à des questions sur le film en cours, partager des anecdotes, expliquer des scènes, etc.
 - **Pick+** : Version premium (2,49€/mois) avec recommandations illimitées, questions compagnon illimitées, ADN cinématique avancé, et alertes plateforme.
 - **Version gratuite** : 3 recommandations/jour et 1 question compagnon par film.
-- **Profil** : L'utilisateur peut configurer ses plateformes de streaming préférées, ses genres favoris/exclus, et activer le rituel du soir.
+- **Profil** : L'utilisateur peut configurer ses plateformes de streaming préférées, ses genres favoris/exclus, sa note minimale, et activer le rituel du soir.
 
 Si l'utilisateur demande comment faire quelque chose dans l'appli, explique-lui clairement en le guidant vers la bonne section.`;
 }
