@@ -94,7 +94,20 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
   const [userMinRating, setUserMinRating] = useState<number>(0);
   const [showDNA, setShowDNA] = useState(false);
   const [rejectedIds, setRejectedIds] = useState<number[]>([]);
+  const [engagement, setEngagement] = useState<EngagementData | null>(null);
+  const [progressionMsg, setProgressionMsg] = useState<string | null>(null);
   const { user } = useAuth();
+
+  // Load engagement data
+  useEffect(() => {
+    if (!user) return;
+    getEngagementData(user.id).then(data => {
+      if (data) {
+        setEngagement(data);
+        setProgressionMsg(getProgressionMessage(data));
+      }
+    });
+  }, [user]);
 
   // Load user's full profile preferences
   useEffect(() => {
