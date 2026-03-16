@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, Heart, Check, ArrowRight, Loader2, Sun, Moon, User, Users } from "lucide-react";
+import { Search, Heart, Check, ArrowRight, Loader2, Sun, Moon, User, Users, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -51,6 +51,7 @@ const Onboarding = () => {
   const [loadingMore, setLoadingMore] = useState(false);
   const [saving, setSaving] = useState(false);
   const [selectedPlatforms, setSelectedPlatforms] = useState<number[]>([]);
+  const [showSearch, setShowSearch] = useState(false);
   const navigate = useNavigate();
 
   const stepIndex = STEPS.indexOf(step) + 1;
@@ -298,20 +299,38 @@ const Onboarding = () => {
 
             <div className="flex-shrink-0 px-5 pt-3 pb-4">
               <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="max-w-2xl mx-auto">
-                <h1 className="text-2xl md:text-4xl font-serif mb-2">Qu'est-ce que tu as aimé ?</h1>
+                <h1 className="text-2xl md:text-4xl font-serif mb-2">Qu'as-tu apprécié récemment ?</h1>
                 <p className="text-muted-foreground text-sm font-sans mb-4">
-                  Choisis au moins {MIN_MOVIE_SELECTIONS} films ou séries pour qu'on apprenne tes goûts
+                  Sélectionne au moins {MIN_MOVIE_SELECTIONS} films ou séries — on apprend vite !
                 </p>
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={e => setSearchQuery(e.target.value)}
-                    placeholder="Rechercher un film ou une série…"
-                    className="w-full bg-card border border-border/30 rounded-xl px-10 py-2.5 text-sm font-sans text-foreground placeholder:text-muted-foreground/50 outline-none focus:border-primary/50 transition-colors"
-                  />
-                </div>
+                {/* Search — secondary, collapsed by default */}
+                {!showSearch ? (
+                  <button
+                    onClick={() => setShowSearch(true)}
+                    className="flex items-center gap-2 text-muted-foreground/60 text-xs font-sans hover:text-primary transition-colors"
+                  >
+                    <Search className="w-3.5 h-3.5" />
+                    Tu ne trouves pas ? Rechercher un titre
+                  </button>
+                ) : (
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <input
+                      type="text"
+                      value={searchQuery}
+                      onChange={e => setSearchQuery(e.target.value)}
+                      placeholder="Rechercher un film ou une série…"
+                      className="w-full bg-card border border-border/30 rounded-xl px-10 py-2.5 text-sm font-sans text-foreground placeholder:text-muted-foreground/50 outline-none focus:border-primary/50 transition-colors"
+                      autoFocus
+                    />
+                    <button
+                      onClick={() => { setSearchQuery(""); setShowSearch(false); }}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/40 hover:text-foreground transition-colors"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                )}
               </motion.div>
             </div>
 
