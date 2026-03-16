@@ -1,8 +1,6 @@
 import { motion } from "framer-motion";
-import { ArrowLeft, User, LogOut, Bookmark, Dna } from "lucide-react";
-import pickLogo from "@/assets/pick-logo.png";
+import { ArrowLeft, Dna } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
-import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 
 interface BrandHeaderProps {
@@ -12,16 +10,15 @@ interface BrandHeaderProps {
   onOpenDNA?: () => void;
 }
 
-const BrandHeader = ({ showBack, onBack, onOpenWatchlist, onOpenDNA }: BrandHeaderProps) => {
-  const { user, signOut } = useAuth();
-  const navigate = useNavigate();
+const BrandHeader = ({ showBack, onBack, onOpenDNA }: BrandHeaderProps) => {
+  const { user } = useAuth();
 
   return (
     <motion.div
       initial={{ opacity: 0, y: -8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay: 0.1 }}
-      className="absolute top-0 left-0 right-0 z-30 p-3 md:p-6 flex items-center justify-between"
+      className="absolute top-0 left-0 right-0 z-30 p-3 pt-[calc(0.75rem+env(safe-area-inset-top))] md:p-6 flex items-center justify-between"
     >
       {showBack ? (
         <button
@@ -50,50 +47,6 @@ const BrandHeader = ({ showBack, onBack, onOpenWatchlist, onOpenDNA }: BrandHead
           >
             <Dna className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">ADN</span>
-          </Button>
-        )}
-
-        {onOpenWatchlist && user && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onOpenWatchlist}
-            className="text-foreground/50 hover:text-primary text-xs font-sans gap-1.5"
-            title="Ma watchlist"
-          >
-            <Bookmark className="w-3.5 h-3.5" />
-          </Button>
-        )}
-
-        {user ? (
-          <>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigate("/profile")}
-              className="text-foreground/50 hover:text-foreground text-xs font-sans gap-1.5"
-            >
-              <User className="w-3.5 h-3.5" />
-              Profil
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={async () => { await signOut(); navigate("/"); }}
-              className="text-foreground/50 hover:text-foreground text-xs font-sans gap-1.5"
-            >
-              <LogOut className="w-3.5 h-3.5" />
-            </Button>
-          </>
-        ) : (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => navigate("/auth")}
-            className="text-foreground/50 hover:text-foreground text-xs font-sans gap-1.5"
-          >
-            <User className="w-3.5 h-3.5" />
-            Connexion
           </Button>
         )}
       </div>
