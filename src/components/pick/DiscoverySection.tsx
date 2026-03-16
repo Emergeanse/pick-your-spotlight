@@ -61,16 +61,17 @@ const MovieRow = ({
   </div>
 );
 
-const DiscoverySection = ({ onMovieSelect, platformIds = [], favoriteGenres = [] }: DiscoverySectionProps) => {
+const DiscoverySection = ({ onMovieSelect, platformIds = [], favoriteGenres = [], minRating = 0, excludedGenres = [] }: DiscoverySectionProps) => {
   const [trending, setTrending] = useState<Movie[]>([]);
   const [gems, setGems] = useState<Movie[]>([]);
   const [tonightsPick, setTonightsPick] = useState<MovieDetail | null>(null);
+  const filterOpts = { minRating, excludedGenres };
 
   useEffect(() => {
-    getTrendingMovies(10, platformIds, favoriteGenres).then(setTrending).catch(console.error);
-    getHiddenGems(10, platformIds, favoriteGenres).then(setGems).catch(console.error);
-    getTonightsPick(platformIds, favoriteGenres).then(setTonightsPick).catch(console.error);
-  }, [platformIds.join(","), favoriteGenres.join(",")]);
+    getTrendingMovies(10, platformIds, favoriteGenres, filterOpts).then(setTrending).catch(console.error);
+    getHiddenGems(10, platformIds, favoriteGenres, filterOpts).then(setGems).catch(console.error);
+    getTonightsPick(platformIds, favoriteGenres, filterOpts).then(setTonightsPick).catch(console.error);
+  }, [platformIds.join(","), favoriteGenres.join(","), minRating, excludedGenres.join(",")]);
 
   const handleSelect = async (movie: Movie) => {
     try {
