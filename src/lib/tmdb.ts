@@ -185,13 +185,13 @@ export async function getWatchProviders(id: number, mediaType: string): Promise<
   const data = await fetchFromTMDB(endpoint);
   const fr = data.results?.FR;
   if (!fr) return [];
-  const tmdbLink = fr.link || null; // TMDB's link to the JustWatch page for this content
+  // fr.link points to themoviedb.org, not the actual platform — don't use it
   const providers = fr.flatrate || [];
   return providers.map((p: any) => ({
     name: p.provider_name || p.name,
     logo_path: p.logo_path,
     provider_id: p.provider_id,
-    tmdb_link: tmdbLink,
+    tmdb_link: undefined,
   }));
 }
 
