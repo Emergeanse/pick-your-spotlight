@@ -66,7 +66,7 @@ const PROACTIVE_SUGGESTIONS = [
   "Fun fact : ce lieu de tournage est réel 🗺️",
 ];
 
-export default function CompanionMode({ movie, onClose }: CompanionModeProps) {
+export default function CompanionMode({ movie, onClose, pickPlus }: CompanionModeProps) {
   const [messages, setMessages] = useState<ChatMsg[]>(() => {
     return [{
       role: "assistant" as const,
