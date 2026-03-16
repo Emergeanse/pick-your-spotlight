@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import HomeScreen from "@/components/pick/HomeScreen";
@@ -61,23 +61,30 @@ const Index = () => {
   const pickPlus = usePickPlus();
 
   // Handle movie from Pick FAB chat
+  const loadChatMovie = useCallback(() => {
+    const stored = sessionStorage.getItem("pick-fab-movie");
+    if (stored) {
+      try {
+        const movie = JSON.parse(stored) as MovieDetail;
+        setResults([movie]);
+        setCurrentResultIndex(0);
+        setStep("result");
+      } catch { /* ignore */ }
+      sessionStorage.removeItem("pick-fab-movie");
+    }
+    window.history.replaceState({}, "", "/app");
+  }, []);
+
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get("from") === "pick-chat") {
-      const stored = sessionStorage.getItem("pick-fab-movie");
-      if (stored) {
-        try {
-          const movie = JSON.parse(stored) as MovieDetail;
-          setResults([movie]);
-          setCurrentResultIndex(0);
-          setStep("result");
-        } catch { /* ignore */ }
-        sessionStorage.removeItem("pick-fab-movie");
-      }
-      // Clean URL
-      window.history.replaceState({}, "", "/app");
+      loadChatMovie();
     }
-  }, []);
+    // Also listen for custom event (when already on /app)
+    const handler = () => loadChatMovie();
+    window.addEventListener("pick-chat-movie", handler);
+    return () => window.removeEventListener("pick-chat-movie", handler);
+  }, [loadChatMovie]);
 
   useEffect(() => {
     if (!user) return;
