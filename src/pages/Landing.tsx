@@ -209,7 +209,7 @@ const Landing = () => {
 
         <motion.div
           style={{ opacity: heroOpacity }}
-          className="relative z-10 max-w-3xl mx-auto px-5 text-center"
+          className="relative z-10 max-w-3xl mx-auto px-5 pt-16 text-center"
         >
           {/* Pick mascot with speech bubble */}
           <motion.div
