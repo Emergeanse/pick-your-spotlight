@@ -190,10 +190,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
           // Tag as comfort zone exit
           (movie as any)._surpriseComfortZone = true;
         } else {
-          movie = await getSurpriseRecommendation();
-        }
-      } else {
-        movie = await getSurpriseRecommendation();
+          movie = await getSurpriseRecommendation([], { platformIds: userPlatformIds, minRating: userMinRating, excludedGenres: userExcludedGenres });
       }
 
       clearInterval(msgInterval);
