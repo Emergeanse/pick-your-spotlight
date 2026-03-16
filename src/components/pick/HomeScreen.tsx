@@ -80,9 +80,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
   const [tonightLoading, setTonightLoading] = useState(false);
   const [tonightLoadingMsg, setTonightLoadingMsg] = useState("");
   const [tonightProviders, setTonightProviders] = useState<{ name: string; logo_path: string }[]>([]);
-  const [proactivePick, setProactivePick] = useState<MovieDetail | null>(null);
-  const [proactiveMsg] = useState(() => PROACTIVE_MESSAGES[Math.floor(Math.random() * PROACTIVE_MESSAGES.length)]);
-  const [proactiveDismissed, setProactiveDismissed] = useState(false);
+  const [pickAnimating, setPickAnimating] = useState(false);
   
   const [userPlatformIds, setUserPlatformIds] = useState<number[]>([]);
   const [userExcludedPlatformIds, setUserExcludedPlatformIds] = useState<number[]>([]);
