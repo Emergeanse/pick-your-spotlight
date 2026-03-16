@@ -62,6 +62,9 @@ const Profile = () => {
   const [mediaPreference, setMediaPreference] = useState<string>("both");
   const [saving, setSaving] = useState(false);
   const [profileLoading, setProfileLoading] = useState(true);
+  const [learnedPrefs, setLearnedPrefs] = useState<string[]>([]);
+  const [cinematicTitle, setCinematicTitle] = useState<string | null>(null);
+  const [dismissedPrefs, setDismissedPrefs] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (!isReady) return;
