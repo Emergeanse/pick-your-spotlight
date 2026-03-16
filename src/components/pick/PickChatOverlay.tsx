@@ -19,7 +19,14 @@ interface ChatMsg {
   movie?: any; // embedded movie recommendation
 }
 
-const DISCOVERY_CHIPS = [
+const DISCOVERY_CHIPS_FREE = [
+  { label: "Un film ce soir 🍿", msg: "Trouve-moi un bon film pour ce soir !" },
+  { label: "Envie de rire 😂", msg: "J'ai envie de rigoler, trouve-moi une bonne comédie !" },
+  { label: "Soirée en couple 💕", msg: "Soirée en couple ce soir, trouve-nous le film parfait !" },
+  { label: "Film intense 🔥", msg: "J'ai envie d'un truc intense et puissant ce soir !" },
+];
+
+const DISCOVERY_CHIPS_PREMIUM = [
   { label: "Un film ce soir 🍿", msg: "Trouve-moi un bon film pour ce soir !" },
   { label: "Comment ça marche ?", msg: "Explique-moi comment fonctionne l'appli Pick." },
   { label: "Recommande-moi", msg: "Qu'est-ce que tu me recommandes en ce moment ?" },
@@ -64,7 +71,7 @@ export default function PickChatOverlay() {
   });
 
   const currentMessages = mode === "companion" ? companionMessages : messages;
-  const chips = mode === "companion" ? COMPANION_CHIPS : DISCOVERY_CHIPS;
+  
   const title = activeMovie ? getDisplayTitle(activeMovie) : "";
   const poster = activeMovie?.poster_path ? getPosterUrl(activeMovie.poster_path, "w92") : null;
 
@@ -150,14 +157,17 @@ export default function PickChatOverlay() {
   }, [scribe]);
 
   const pickPlus = usePickPlus();
+  const chips = mode === "companion" ? COMPANION_CHIPS : (pickPlus.isPremium ? DISCOVERY_CHIPS_PREMIUM : DISCOVERY_CHIPS_FREE);
 
   const sendMessage = useCallback(async (text: string) => {
     if (!text.trim() || isStreaming) return;
 
-    // Check chat limit for free users
-    if (!pickPlus.canChat) {
-      pickPlus.showPaywall();
-      return;
+    // Free users: check if discovery chat is still available
+    if (!pickPlus.isPremium && mode !== "companion") {
+      if (!pickPlus.canDiscoveryChat) {
+        pickPlus.showPaywall("chat_limit");
+        return;
+      }
     }
 
     const userMsg: ChatMsg = { role: "user", content: text.trim() };
@@ -166,15 +176,13 @@ export default function PickChatOverlay() {
     setIsStreaming(true);
     setStreamingContent("");
 
-    // Record usage
-    await pickPlus.recordChatMessage();
-
     const allMessages = [...currentMessages, userMsg].map(m => ({ role: m.role, content: m.content }));
 
     try {
       const body: any = {
         messages: allMessages,
         mode: mode === "companion" ? "companion" : "discovery",
+        isPremium: pickPlus.isPremium,
         minRating: userPrefs.minRating,
         excludedGenres: userPrefs.excludedGenres,
       };
@@ -246,12 +254,16 @@ export default function PickChatOverlay() {
         const data = await resp.json();
 
         if (data.type === "recommendation" && data.movie) {
-          // Add movie card as a special message
           addMessage({
             role: "assistant",
             content: data.reply,
             movie: data.movie,
           } as any);
+          // Lock discovery chat for free users after receiving a recommendation
+          if (!pickPlus.isPremium) {
+            pickPlus.lockDiscoveryChat();
+            await pickPlus.recordDiscoveryConvo();
+          }
         } else {
           addMessage({ role: "assistant", content: data.reply || "Hmm, dis-moi en plus !" });
         }
@@ -345,7 +357,9 @@ export default function PickChatOverlay() {
                 ) : (
                   <div>
                     <p className="text-sm font-serif font-medium">Parle à Pick</p>
-                    <p className="text-[10px] text-muted-foreground font-sans">Films, séries, appli — demande-moi tout</p>
+                    <p className="text-[10px] text-muted-foreground font-sans">
+                      {pickPlus.isPremium ? "Films, séries, appli — demande-moi tout" : "Trouve ton film du soir"}
+                    </p>
                   </div>
                 )}
               </div>
@@ -412,7 +426,9 @@ export default function PickChatOverlay() {
                   <p className="text-sm text-muted-foreground font-sans">
                     {mode === "companion"
                       ? "Pose-moi une question sur le film !"
-                      : "Films, séries, ou l'appli — demande-moi tout ! 🎬"
+                      : pickPlus.isPremium
+                        ? "Films, séries, ou l'appli — demande-moi tout ! 🎬"
+                        : "Dis-moi ton humeur, je trouve ton film du soir ! 🎬"
                     }
                   </p>
                 </div>
@@ -460,11 +476,15 @@ export default function PickChatOverlay() {
                   onChange={e => setInput(e.target.value)}
                   placeholder={isListening
                     ? "Écoute en cours…"
-                    : mode === "companion"
-                      ? "Pose-moi une question sur le film…"
-                      : "Dis-moi ce que tu veux regarder…"
+                    : pickPlus.discoveryConvoLocked && !pickPlus.isPremium
+                      ? "Conversation terminée pour aujourd'hui"
+                      : mode === "companion"
+                        ? "Pose-moi une question sur le film…"
+                        : pickPlus.isPremium
+                          ? "Demande-moi ce que tu veux…"
+                          : "Dis-moi ton humeur pour ce soir…"
                   }
-                  disabled={isStreaming}
+                  disabled={isStreaming || (pickPlus.discoveryConvoLocked && !pickPlus.isPremium && mode !== "companion")}
                   className="flex-1 bg-secondary/50 border border-border/20 rounded-full px-4 py-2.5 text-sm font-sans placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/40 disabled:opacity-50 transition-all"
                 />
                 <Button
@@ -475,12 +495,14 @@ export default function PickChatOverlay() {
                 >
                   <Send className="w-4 h-4" />
                 </Button>
-              {/* Chat remaining indicator for free users */}
-              {!pickPlus.isPremium && (
+              {/* Status indicator for free users */}
+              {!pickPlus.isPremium && mode !== "companion" && (
                 <p className="text-center text-[10px] text-muted-foreground/40 font-sans mt-1.5">
-                  {pickPlus.chatRemaining > 0
-                    ? `${pickPlus.chatRemaining} message${pickPlus.chatRemaining > 1 ? "s" : ""} restant${pickPlus.chatRemaining > 1 ? "s" : ""} aujourd'hui`
-                    : "Limite atteinte — Passe à Pick+ 👑"
+                  {pickPlus.discoveryConvoLocked
+                    ? "Film trouvé ! Passe à Pick+ pour le chatbot complet 👑"
+                    : !pickPlus.canDiscoveryChat
+                      ? "Conversation du jour utilisée — Reviens demain ou passe à Pick+ 👑"
+                      : "1 conversation découverte par jour"
                   }
                 </p>
               )}
@@ -494,7 +516,7 @@ export default function PickChatOverlay() {
       <PickPlusPaywall
         open={pickPlus.shouldShowPaywall}
         onClose={pickPlus.hidePaywall}
-        trigger="chat_limit"
+        trigger={pickPlus.paywallTrigger as any}
       />
     </AnimatePresence>
   );

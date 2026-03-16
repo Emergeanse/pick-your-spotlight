@@ -3,9 +3,11 @@
  * 
  * Free limits:
  * - 3 recommendations per day
- * - 5 companion questions per film
+ * - 1 companion question per film
+ * - 1 discovery conversation per day (chat locked after reco received)
+ * - No full chatbot access (Pick+ only)
  * 
- * Pick+ (plan !== 'free') → unlimited.
+ * Pick+ (plan !== 'free') → unlimited everything + full chatbot.
  */
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,7 +15,7 @@ import { useAuth } from "@/hooks/use-auth";
 
 const FREE_RECO_LIMIT = 3;
 const FREE_COMPANION_LIMIT = 1;
-const FREE_CHAT_LIMIT = 3;
+const FREE_DISCOVERY_CHAT_LIMIT = 1; // 1 conversation/day for free users
 
 export interface PickPlusState {
   plan: "free" | "pick_plus";
@@ -30,15 +32,16 @@ export interface PickPlusState {
   companionLimit: number;
   canAskCompanion: (movieId: number) => boolean;
   recordCompanionQuestion: (movieId: number) => Promise<boolean>;
-  // Chat limits
-  chatUsed: number;
-  chatLimit: number;
-  chatRemaining: number;
-  canChat: boolean;
-  recordChatMessage: () => Promise<boolean>;
+  // Discovery chat limits (free users only)
+  discoveryConvoUsed: number;
+  canDiscoveryChat: boolean;
+  discoveryConvoLocked: boolean;
+  lockDiscoveryChat: () => void;
+  recordDiscoveryConvo: () => Promise<boolean>;
   // Paywall
   shouldShowPaywall: boolean;
-  showPaywall: () => void;
+  paywallTrigger: string;
+  showPaywall: (trigger?: string) => void;
   hidePaywall: () => void;
 }
 
@@ -47,9 +50,11 @@ export function usePickPlus(): PickPlusState {
   const [plan, setPlan] = useState<"free" | "pick_plus">("free");
   const [loading, setLoading] = useState(true);
   const [recoUsed, setRecoUsed] = useState(0);
-  const [chatUsed, setChatUsed] = useState(0);
+  const [discoveryConvoUsed, setDiscoveryConvoUsed] = useState(0);
+  const [discoveryConvoLocked, setDiscoveryConvoLocked] = useState(false);
   const [companionUsage, setCompanionUsage] = useState<Record<string, number>>({});
   const [shouldShowPaywall, setShouldShowPaywall] = useState(false);
+  const [paywallTrigger, setPaywallTrigger] = useState("general");
 
   const isPremium = plan !== "free";
 
@@ -77,7 +82,7 @@ export function usePickPlus(): PickPlusState {
 
       if (usageRes.data) {
         setRecoUsed((usageRes.data as any).recommendation_count || 0);
-        setChatUsed((usageRes.data as any).chat_count || 0);
+        setDiscoveryConvoUsed((usageRes.data as any).chat_count || 0);
         setCompanionUsage((usageRes.data as any).companion_questions || {});
       }
     } catch (e) {
@@ -91,9 +96,13 @@ export function usePickPlus(): PickPlusState {
   const recoRemaining = isPremium ? Infinity : Math.max(0, FREE_RECO_LIMIT - recoUsed);
   const canRecommend = isPremium || recoUsed < FREE_RECO_LIMIT;
 
+  // Free users: can start a discovery chat if they haven't used their daily convo
+  const canDiscoveryChat = isPremium || (discoveryConvoUsed < FREE_DISCOVERY_CHAT_LIMIT && !discoveryConvoLocked);
+
   const recordRecommendation = useCallback(async (): Promise<boolean> => {
     if (!user) return false;
     if (!isPremium && recoUsed >= FREE_RECO_LIMIT) {
+      setPaywallTrigger("reco_limit");
       setShouldShowPaywall(true);
       return false;
     }
@@ -125,6 +134,7 @@ export function usePickPlus(): PickPlusState {
     const current = companionUsage[key] || 0;
 
     if (!isPremium && current >= FREE_COMPANION_LIMIT) {
+      setPaywallTrigger("companion_limit");
       setShouldShowPaywall(true);
       return false;
     }
@@ -141,29 +151,28 @@ export function usePickPlus(): PickPlusState {
     return !error;
   }, [user, isPremium, companionUsage]);
 
-  // Chat limits
-  const chatLimit = isPremium ? Infinity : FREE_CHAT_LIMIT;
-  const chatRemaining = isPremium ? Infinity : Math.max(0, FREE_CHAT_LIMIT - chatUsed);
-  const canChat = isPremium || chatUsed < FREE_CHAT_LIMIT;
-
-  const recordChatMessage = useCallback(async (): Promise<boolean> => {
-    if (!user) return false;
-    if (!isPremium && chatUsed >= FREE_CHAT_LIMIT) {
-      setShouldShowPaywall(true);
-      return false;
+  // Lock the discovery chat (called when free user receives a recommendation in chat)
+  const lockDiscoveryChat = useCallback(() => {
+    if (!isPremium) {
+      setDiscoveryConvoLocked(true);
     }
+  }, [isPremium]);
+
+  // Record that a discovery conversation was used
+  const recordDiscoveryConvo = useCallback(async (): Promise<boolean> => {
+    if (!user || isPremium) return true;
 
     const today = new Date().toISOString().split("T")[0];
-    const newCount = chatUsed + 1;
+    const newCount = discoveryConvoUsed + 1;
 
     const { error } = await supabase.from("daily_usage" as any).upsert(
       { user_id: user.id, usage_date: today, chat_count: newCount },
       { onConflict: "user_id,usage_date" }
     );
 
-    if (!error) setChatUsed(newCount);
+    if (!error) setDiscoveryConvoUsed(newCount);
     return !error;
-  }, [user, isPremium, chatUsed]);
+  }, [user, isPremium, discoveryConvoUsed]);
 
   return {
     plan,
@@ -178,13 +187,14 @@ export function usePickPlus(): PickPlusState {
     companionLimit: isPremium ? Infinity : FREE_COMPANION_LIMIT,
     canAskCompanion,
     recordCompanionQuestion,
-    chatUsed,
-    chatLimit,
-    chatRemaining,
-    canChat,
-    recordChatMessage,
+    discoveryConvoUsed,
+    canDiscoveryChat,
+    discoveryConvoLocked,
+    lockDiscoveryChat,
+    recordDiscoveryConvo,
     shouldShowPaywall,
-    showPaywall: () => setShouldShowPaywall(true),
+    paywallTrigger,
+    showPaywall: (trigger = "general") => { setPaywallTrigger(trigger); setShouldShowPaywall(true); },
     hidePaywall: () => setShouldShowPaywall(false),
   };
 }
