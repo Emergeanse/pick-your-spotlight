@@ -88,6 +88,8 @@ export default function PickChatOverlay() {
       const body: any = {
         messages: allMessages,
         mode: mode === "companion" ? "companion" : "discovery",
+        minRating: userPrefs.minRating,
+        excludedGenres: userPrefs.excludedGenres,
       };
 
       if (mode === "companion" && activeMovie) {
