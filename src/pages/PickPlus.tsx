@@ -9,7 +9,7 @@ import { usePickPlus } from "@/hooks/use-pick-plus";
 
 const FEATURES = [
   { label: "Recommandation du soir", free: true, plus: true },
-  { label: "Conversation avec Pick (5/jour)", free: true, plus: true },
+  { label: "Conversation avec Pick (3/jour)", free: true, plus: true },
   { label: "ADN Cinéma de base", free: true, plus: true },
   { label: "Watchlist", free: true, plus: true },
   { label: "Liens vers les plateformes", free: true, plus: true },
