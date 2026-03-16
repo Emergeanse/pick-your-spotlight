@@ -99,8 +99,6 @@ const VoiceChat = ({ onClose, onMovieSuggested, initialMessages }: VoiceChatProp
   const [pickReply, setPickReply] = useState("");
   const [userTasteContext, setUserTasteContext] = useState<any>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const pendingSendRef = useRef(false);
-  const committedTextRef = useRef("");
   const { user } = useAuth();
 
   // Pre-fetch scribe token and user taste context on mount
