@@ -545,32 +545,57 @@ const VoiceChat = ({ onClose, onMovieSuggested, initialMessages }: VoiceChatProp
         </AnimatePresence>
       </div>
 
-      {/* Bottom text input (visible in idle, listening, and conversation phases) */}
+      {/* Bottom area: suggestion chips + text input */}
       {(phase === "idle" || phase === "listening" || phase === "conversation") && (
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="relative z-10 border-t border-border/10 px-5 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] flex items-center gap-2 bg-background/80 backdrop-blur-md"
-        >
-          <input
-            ref={inputRef}
-            type="text"
-            value={inputText}
-            onChange={(e) => setInputText(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="Ou tape ta demande ici…"
-            className="flex-1 bg-secondary/50 border border-border/20 rounded-full px-4 py-2.5 text-sm font-sans text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary/30 focus:ring-1 focus:ring-primary/20 transition-all"
-          />
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => handleSend(inputText)}
-            disabled={!inputText.trim()}
-            className="rounded-full text-primary hover:bg-primary/10 disabled:opacity-30"
+        <div className="relative z-10 bg-background/80 backdrop-blur-md">
+          {/* Contextual suggestion chips — only in idle phase */}
+          {phase === "idle" && !initialMessages && (
+            <motion.div
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="px-5 pt-2 pb-1"
+            >
+              <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
+                {getContextualSuggestions().map((chip) => (
+                  <button
+                    key={chip.label}
+                    onClick={() => handleSend(chip.message)}
+                    className="flex-shrink-0 px-3.5 py-2 rounded-full bg-primary/8 border border-primary/20 text-primary/80 text-[12px] font-sans font-medium hover:bg-primary/15 hover:border-primary/30 hover:text-primary transition-all active:scale-[0.96]"
+                  >
+                    {chip.label}
+                  </button>
+                ))}
+              </div>
+            </motion.div>
+          )}
+
+          {/* Text input */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="border-t border-border/10 px-5 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] flex items-center gap-2"
           >
-            <Send className="w-4 h-4" />
-          </Button>
-        </motion.div>
+            <input
+              ref={inputRef}
+              type="text"
+              value={inputText}
+              onChange={(e) => setInputText(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Ou tape ta demande ici…"
+              className="flex-1 bg-secondary/50 border border-border/20 rounded-full px-4 py-2.5 text-sm font-sans text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary/30 focus:ring-1 focus:ring-primary/20 transition-all"
+            />
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => handleSend(inputText)}
+              disabled={!inputText.trim()}
+              className="rounded-full text-primary hover:bg-primary/10 disabled:opacity-30"
+            >
+              <Send className="w-4 h-4" />
+            </Button>
+          </motion.div>
+        </div>
       )}
     </motion.div>
   );

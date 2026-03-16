@@ -87,6 +87,27 @@ export default function CompanionMode({ movie, onClose }: CompanionModeProps) {
     scrollToBottom();
   }, [messages]);
 
+  // Proactive suggestions — surface one every 15-20 minutes
+  useEffect(() => {
+    const showNextSuggestion = () => {
+      if (isStreaming) return; // Don't interrupt active conversation
+      const idx = proactiveIndexRef.current % PROACTIVE_SUGGESTIONS.length;
+      setProactiveSuggestion(PROACTIVE_SUGGESTIONS[idx]);
+      proactiveIndexRef.current++;
+    };
+
+    // First suggestion after 15 min (900s), then every 18 min
+    const initialDelay = setTimeout(() => {
+      showNextSuggestion();
+      proactiveTimerRef.current = setInterval(showNextSuggestion, 18 * 60 * 1000);
+    }, 15 * 60 * 1000);
+
+    return () => {
+      clearTimeout(initialDelay);
+      if (proactiveTimerRef.current) clearInterval(proactiveTimerRef.current);
+    };
+  }, [isStreaming]);
+
   const scrollToBottom = () => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
