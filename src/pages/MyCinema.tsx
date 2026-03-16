@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { ArrowLeft, Flame, Target, Trophy, TrendingUp, Sparkles, Loader2, Dna } from "lucide-react";
+import { ArrowLeft, Flame, Target, Trophy, TrendingUp, Sparkles, Loader2, Dna, BookOpen } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
@@ -282,6 +282,22 @@ const MyCinema = () => {
             </div>
           </motion.div>
         )}
+
+        {/* ─── Lexique link ─── */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.3 }}
+          className="mt-10 flex justify-center"
+        >
+          <button
+            onClick={() => navigate("/glossary")}
+            className="flex items-center gap-2 text-[12px] text-primary/50 hover:text-primary font-sans font-medium transition-colors"
+          >
+            <BookOpen className="w-3.5 h-3.5" />
+            Lexique Cinéma
+          </button>
+        </motion.div>
       </div>
     </div>
   );
