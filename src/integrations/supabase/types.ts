@@ -50,6 +50,33 @@ export type Database = {
         }
         Relationships: []
       }
+      daily_usage: {
+        Row: {
+          companion_questions: Json
+          created_at: string
+          id: string
+          recommendation_count: number
+          usage_date: string
+          user_id: string
+        }
+        Insert: {
+          companion_questions?: Json
+          created_at?: string
+          id?: string
+          recommendation_count?: number
+          usage_date?: string
+          user_id: string
+        }
+        Update: {
+          companion_questions?: Json
+          created_at?: string
+          id?: string
+          recommendation_count?: number
+          usage_date?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       liked_movies: {
         Row: {
           genres: string[] | null
@@ -185,6 +212,45 @@ export type Database = {
           streak_count?: number
           total_recommendations?: number
           updated_at?: string
+        }
+        Relationships: []
+      }
+      subscriptions: {
+        Row: {
+          created_at: string
+          current_period_end: string | null
+          current_period_start: string | null
+          id: string
+          plan: string
+          status: string
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          plan?: string
+          status?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          plan?: string
+          status?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }

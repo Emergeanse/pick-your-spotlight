@@ -20,6 +20,8 @@ import { recordAcceptedRecommendation, recordSkippedRecommendation } from "@/lib
 import type { Mood, Context, TimeAvailable, MovieDetail } from "@/lib/tmdb";
 import { getRecommendations, getDisplayTitle } from "@/lib/tmdb";
 import { trackInteraction, getUserTasteProfile } from "@/lib/interactions";
+import { usePickPlus } from "@/hooks/use-pick-plus";
+import PickPlusPaywall from "@/components/pick/PickPlusPaywall";
 
 type Step = "home" | "mood" | "context" | "time" | "platforms" | "result";
 
@@ -54,6 +56,7 @@ const Index = () => {
   const [profilePrefs, setProfilePrefs] = useState<{ excludedGenres: string[]; excludedPlatforms: number[]; minRating: number; preferredPlatforms: number[]; profileConfidence: number }>({ excludedGenres: [], excludedPlatforms: [], minRating: 0, preferredPlatforms: [], profileConfidence: 0 });
   const { user } = useAuth();
   const navigate = useNavigate();
+  const pickPlus = usePickPlus();
 
   useEffect(() => {
     if (!user) return;
@@ -145,6 +148,11 @@ const Index = () => {
   const handlePlatformSelect = async (platformIds: number[]) => {
     setSelectedPlatformIds(platformIds);
     setSearchTags(buildSearchTags(mood, context, time));
+    
+    // Check freemium limit
+    const allowed = await pickPlus.recordRecommendation();
+    if (!allowed) return;
+    
     setLoading(true);
     setLoadingMessage("Analyse de vos préférences…");
     try {
@@ -300,8 +308,14 @@ const Index = () => {
       </AnimatePresence>
 
       <AnimatePresence>
-        {showCompanion && results[currentResultIndex] && <CompanionMode movie={results[currentResultIndex]} onClose={() => setShowCompanion(false)} />}
+      {showCompanion && results[currentResultIndex] && <CompanionMode movie={results[currentResultIndex]} onClose={() => setShowCompanion(false)} pickPlus={pickPlus} />}
       </AnimatePresence>
+
+      <PickPlusPaywall
+        open={pickPlus.shouldShowPaywall}
+        onClose={pickPlus.hidePaywall}
+        trigger="reco_limit"
+      />
     </div>
   );
 };

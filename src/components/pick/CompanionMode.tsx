@@ -44,6 +44,14 @@ const PROGRESS_OPTIONS: { value: MovieProgress; label: string }[] = [
 interface CompanionModeProps {
   movie: MovieDetail;
   onClose: () => void;
+  pickPlus?: {
+    canAskCompanion: (movieId: number) => boolean;
+    recordCompanionQuestion: (movieId: number) => Promise<boolean>;
+    getCompanionUsed: (movieId: number) => number;
+    companionLimit: number;
+    isPremium: boolean;
+    showPaywall: () => void;
+  };
 }
 
 // Proactive suggestions that Pick surfaces periodically
@@ -58,7 +66,7 @@ const PROACTIVE_SUGGESTIONS = [
   "Fun fact : ce lieu de tournage est réel 🗺️",
 ];
 
-export default function CompanionMode({ movie, onClose }: CompanionModeProps) {
+export default function CompanionMode({ movie, onClose, pickPlus }: CompanionModeProps) {
   const [messages, setMessages] = useState<ChatMsg[]>(() => {
     return [{
       role: "assistant" as const,
@@ -116,6 +124,15 @@ export default function CompanionMode({ movie, onClose }: CompanionModeProps) {
 
   const sendMessage = async (text: string) => {
     if (!text.trim() || isStreaming) return;
+
+    // Check companion limit
+    if (pickPlus && !pickPlus.canAskCompanion(movie.id)) {
+      pickPlus.showPaywall();
+      return;
+    }
+    if (pickPlus) {
+      await pickPlus.recordCompanionQuestion(movie.id);
+    }
 
     const userMsg: ChatMsg = { role: "user", content: text.trim() };
     const newMessages = [...messages, userMsg];
