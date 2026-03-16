@@ -54,7 +54,7 @@ const Index = () => {
   const [showCompanion, setShowCompanion] = useState(false);
   const [chatInitialMessages, setChatInitialMessages] = useState<ChatMessage[] | undefined>(undefined);
   const [searchTags, setSearchTags] = useState<string[]>([]);
-  const [profilePrefs, setProfilePrefs] = useState<{ excludedGenres: string[]; excludedPlatforms: number[]; minRating: number; preferredPlatforms: number[] }>({ excludedGenres: [], excludedPlatforms: [], minRating: 0, preferredPlatforms: [] });
+  const [profilePrefs, setProfilePrefs] = useState<{ excludedGenres: string[]; excludedPlatforms: number[]; minRating: number; preferredPlatforms: number[]; profileConfidence: number }>({ excludedGenres: [], excludedPlatforms: [], minRating: 0, preferredPlatforms: [], profileConfidence: 0 });
   const { user } = useAuth();
   const navigate = useNavigate();
 
