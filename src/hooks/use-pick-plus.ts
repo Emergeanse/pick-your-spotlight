@@ -47,6 +47,7 @@ export function usePickPlus(): PickPlusState {
   const [plan, setPlan] = useState<"free" | "pick_plus">("free");
   const [loading, setLoading] = useState(true);
   const [recoUsed, setRecoUsed] = useState(0);
+  const [chatUsed, setChatUsed] = useState(0);
   const [companionUsage, setCompanionUsage] = useState<Record<string, number>>({});
   const [shouldShowPaywall, setShouldShowPaywall] = useState(false);
 
