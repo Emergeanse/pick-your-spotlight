@@ -417,7 +417,13 @@ const Index = () => {
         <BottomTabBar activeTab={activeTab} onTabChange={handleTabChange} />
       )}
 
+      {/* Cinematic reveal animation */}
       <AnimatePresence>
+        {loading && step !== "result" && (
+          <RevealAnimation active={loading} message={loadingMessage || undefined} />
+        )}
+      </AnimatePresence>
+
         {showChat && (
           <VoiceChat
             onClose={handleCloseChat}
