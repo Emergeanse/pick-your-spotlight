@@ -21,6 +21,55 @@ export type ChatMessage = {
 };
 
 
+// Contextual suggestion chips based on time of day, day of week, and behavior
+function getContextualSuggestions(): { label: string; message: string }[] {
+  const hour = new Date().getHours();
+  const day = new Date().getDay(); // 0=Sun, 6=Sat
+  const isWeekend = day === 0 || day === 5 || day === 6;
+  const isEvening = hour >= 18 || hour < 2;
+  const isLateNight = hour >= 22 || hour < 2;
+
+  const suggestions: { label: string; message: string; weight: number }[] = [];
+
+  // Time-based
+  if (isLateNight) {
+    suggestions.push(
+      { label: "Un film court ce soir", message: "Propose-moi un film court, il est tard et j'ai pas beaucoup de temps", weight: 10 },
+      { label: "Quelque chose de doux", message: "Je veux un truc doux et réconfortant pour finir la soirée", weight: 8 },
+    );
+  } else if (isEvening) {
+    suggestions.push(
+      { label: "Soirée détente", message: "Je veux un film feel-good pour me détendre ce soir", weight: 9 },
+      { label: "Un film qui surprend", message: "Surprends-moi avec un film que je n'aurais jamais choisi tout seul", weight: 7 },
+    );
+  } else {
+    suggestions.push(
+      { label: "Un classique", message: "Propose-moi un classique incontournable que je devrais voir", weight: 6 },
+      { label: "Un film léger", message: "Je veux un film léger et facile à regarder", weight: 7 },
+    );
+  }
+
+  // Weekend = more ambitious
+  if (isWeekend) {
+    suggestions.push(
+      { label: "Un chef-d'œuvre", message: "J'ai du temps, propose-moi un chef-d'œuvre ambitieux", weight: 9 },
+      { label: "Marathon série", message: "Je veux commencer une série captivante ce weekend", weight: 8 },
+    );
+  } else {
+    suggestions.push(
+      { label: "Épisode rapide", message: "Propose-moi un épisode de série à regarder vite fait", weight: 6 },
+    );
+  }
+
+  // Generic always-relevant
+  suggestions.push(
+    { label: "Comme la dernière fois", message: "Propose-moi quelque chose dans le même style que ma dernière recommandation", weight: 5 },
+    { label: "Hors de ma zone", message: "Fais-moi sortir de ma zone de confort avec un film inattendu", weight: 4 },
+  );
+
+  // Sort by weight, pick top 3
+  return suggestions.sort((a, b) => b.weight - a.weight).slice(0, 3);
+}
 
 type Phase = "idle" | "listening" | "processing" | "recap" | "conversation";
 
@@ -496,32 +545,57 @@ const VoiceChat = ({ onClose, onMovieSuggested, initialMessages }: VoiceChatProp
         </AnimatePresence>
       </div>
 
-      {/* Bottom text input (visible in idle, listening, and conversation phases) */}
+      {/* Bottom area: suggestion chips + text input */}
       {(phase === "idle" || phase === "listening" || phase === "conversation") && (
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="relative z-10 border-t border-border/10 px-5 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] flex items-center gap-2 bg-background/80 backdrop-blur-md"
-        >
-          <input
-            ref={inputRef}
-            type="text"
-            value={inputText}
-            onChange={(e) => setInputText(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="Ou tape ta demande ici…"
-            className="flex-1 bg-secondary/50 border border-border/20 rounded-full px-4 py-2.5 text-sm font-sans text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary/30 focus:ring-1 focus:ring-primary/20 transition-all"
-          />
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => handleSend(inputText)}
-            disabled={!inputText.trim()}
-            className="rounded-full text-primary hover:bg-primary/10 disabled:opacity-30"
+        <div className="relative z-10 bg-background/80 backdrop-blur-md">
+          {/* Contextual suggestion chips — only in idle phase */}
+          {phase === "idle" && !initialMessages && (
+            <motion.div
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="px-5 pt-2 pb-1"
+            >
+              <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
+                {getContextualSuggestions().map((chip) => (
+                  <button
+                    key={chip.label}
+                    onClick={() => handleSend(chip.message)}
+                    className="flex-shrink-0 px-3.5 py-2 rounded-full bg-primary/8 border border-primary/20 text-primary/80 text-[12px] font-sans font-medium hover:bg-primary/15 hover:border-primary/30 hover:text-primary transition-all active:scale-[0.96]"
+                  >
+                    {chip.label}
+                  </button>
+                ))}
+              </div>
+            </motion.div>
+          )}
+
+          {/* Text input */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="border-t border-border/10 px-5 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] flex items-center gap-2"
           >
-            <Send className="w-4 h-4" />
-          </Button>
-        </motion.div>
+            <input
+              ref={inputRef}
+              type="text"
+              value={inputText}
+              onChange={(e) => setInputText(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Ou tape ta demande ici…"
+              className="flex-1 bg-secondary/50 border border-border/20 rounded-full px-4 py-2.5 text-sm font-sans text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary/30 focus:ring-1 focus:ring-primary/20 transition-all"
+            />
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => handleSend(inputText)}
+              disabled={!inputText.trim()}
+              className="rounded-full text-primary hover:bg-primary/10 disabled:opacity-30"
+            >
+              <Send className="w-4 h-4" />
+            </Button>
+          </motion.div>
+        </div>
       )}
     </motion.div>
   );

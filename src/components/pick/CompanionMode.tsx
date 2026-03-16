@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Send, Shield, ShieldAlert, ShieldOff, Clock, Sparkles, User, Clapperboard, Music, Eye, Star, ChevronDown, MessageCircle } from "lucide-react";
+import { ArrowLeft, Send, Shield, ShieldAlert, ShieldOff, Clock, Sparkles, User, Clapperboard, Music, Eye, Star, ChevronDown, MessageCircle, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ReactMarkdown from "react-markdown";
 import type { MovieDetail } from "@/lib/tmdb";
@@ -46,9 +46,20 @@ interface CompanionModeProps {
   onClose: () => void;
 }
 
+// Proactive suggestions that Pick surfaces periodically
+const PROACTIVE_SUGGESTIONS = [
+  "Tu veux un fun fact sur cette scène ? 🎬",
+  "Je connais une anecdote sur cet acteur 👀",
+  "Tu savais que ce film a failli ne jamais sortir ?",
+  "Envie d'en savoir plus sur la musique de cette scène ? 🎵",
+  "Le réalisateur a caché un easter egg ici…",
+  "Ce plan est une référence à un autre film, tu veux savoir lequel ?",
+  "L'acteur a improvisé cette réplique !",
+  "Fun fact : ce lieu de tournage est réel 🗺️",
+];
+
 export default function CompanionMode({ movie, onClose }: CompanionModeProps) {
   const [messages, setMessages] = useState<ChatMsg[]>(() => {
-    // Auto welcome message from Pick
     return [{
       role: "assistant" as const,
       content: `C'est parti pour **${getDisplayTitle(movie)}** ! 🍿\nPose-moi une question quand tu veux, je suis là tout le long.`
@@ -59,6 +70,9 @@ export default function CompanionMode({ movie, onClose }: CompanionModeProps) {
   const [spoilerMode, setSpoilerMode] = useState<SpoilerMode>("no-spoilers");
   const [movieProgress, setMovieProgress] = useState<MovieProgress>("beginning");
   const [showSettings, setShowSettings] = useState(false);
+  const [proactiveSuggestion, setProactiveSuggestion] = useState<string | null>(null);
+  const proactiveIndexRef = useRef(0);
+  const proactiveTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -72,6 +86,27 @@ export default function CompanionMode({ movie, onClose }: CompanionModeProps) {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // Proactive suggestions — surface one every 15-20 minutes
+  useEffect(() => {
+    const showNextSuggestion = () => {
+      if (isStreaming) return; // Don't interrupt active conversation
+      const idx = proactiveIndexRef.current % PROACTIVE_SUGGESTIONS.length;
+      setProactiveSuggestion(PROACTIVE_SUGGESTIONS[idx]);
+      proactiveIndexRef.current++;
+    };
+
+    // First suggestion after 15 min (900s), then every 18 min
+    const initialDelay = setTimeout(() => {
+      showNextSuggestion();
+      proactiveTimerRef.current = setInterval(showNextSuggestion, 18 * 60 * 1000);
+    }, 15 * 60 * 1000);
+
+    return () => {
+      clearTimeout(initialDelay);
+      if (proactiveTimerRef.current) clearInterval(proactiveTimerRef.current);
+    };
+  }, [isStreaming]);
 
   const scrollToBottom = () => {
     if (scrollRef.current) {
@@ -349,6 +384,36 @@ export default function CompanionMode({ movie, onClose }: CompanionModeProps) {
           </div>
         </div>
       )}
+
+      {/* Proactive suggestion bubble */}
+      <AnimatePresence>
+        {proactiveSuggestion && (
+          <motion.div
+            initial={{ opacity: 0, y: 10, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 10, scale: 0.95 }}
+            transition={{ type: "spring", damping: 20, stiffness: 300 }}
+            className="relative z-10 flex-shrink-0 px-4 pb-2"
+          >
+            <button
+              onClick={() => {
+                sendMessage(proactiveSuggestion);
+                setProactiveSuggestion(null);
+              }}
+              className="w-full flex items-center gap-2.5 px-4 py-2.5 rounded-2xl bg-primary/10 border border-primary/25 text-left transition-all hover:bg-primary/15 active:scale-[0.98]"
+            >
+              <Sparkles className="w-4 h-4 text-primary flex-shrink-0" />
+              <span className="text-foreground/70 text-[13px] font-sans leading-snug flex-1">{proactiveSuggestion}</span>
+              <button
+                onClick={(e) => { e.stopPropagation(); setProactiveSuggestion(null); }}
+                className="text-foreground/30 hover:text-foreground/60 transition-colors flex-shrink-0"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Input */}
       <div className="relative z-10 flex-shrink-0 p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] border-t border-border/10 bg-background/80 backdrop-blur-xl">
