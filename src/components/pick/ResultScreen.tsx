@@ -396,42 +396,81 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
               </div>
             </div>
 
-            {/* Where to watch — streaming CTA buttons */}
-            {streamingLinks.length > 0 && (
-              <motion.div
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.5 }}
-                className="mb-4"
-              >
-                <p className="text-[10px] uppercase tracking-widest text-foreground/30 font-sans font-semibold mb-2">
-                  Où regarder
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {streamingLinks.slice(0, 4).map((link) => (
+            {/* Where to watch — streaming platform buttons */}
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5 }}
+              className="mb-4"
+            >
+              <p className="text-[10px] uppercase tracking-widest text-foreground/30 font-sans font-semibold mb-2">
+                Où regarder
+              </p>
+
+              {streamingLinks.length === 0 ? (
+                /* No platform available */
+                <div className="rounded-xl bg-foreground/[0.04] border border-border/15 p-3.5">
+                  <p className="text-foreground/40 text-[12px] font-sans mb-2.5">
+                    Non disponible en streaming actuellement
+                  </p>
+                  {!bookmarked && (
                     <motion.button
-                      key={link.name}
-                      whileTap={{ scale: 0.95 }}
+                      whileTap={{ scale: 0.97 }}
+                      onClick={handleToggleBookmark}
+                      disabled={bookmarkLoading}
+                      className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary/10 border border-primary/25 text-primary text-[12px] font-sans font-semibold hover:bg-primary/15 transition-all"
+                    >
+                      <Bookmark className="w-3.5 h-3.5" />
+                      Sauvegarder pour plus tard
+                    </motion.button>
+                  )}
+                </div>
+              ) : streamingLinks.length === 1 ? (
+                /* Single platform — full-width prominent button */
+                <motion.button
+                  whileTap={{ scale: 0.97 }}
+                  onClick={() => {
+                    trackInteraction(movie.id, "watch_clicked", { platform: streamingLinks[0].name });
+                    openStreamingLink(streamingLinks[0]);
+                  }}
+                  className="w-full flex items-center justify-center gap-3 px-5 py-3.5 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 font-sans font-semibold text-sm neon-glow transition-all active:scale-[0.98]"
+                >
+                  <img
+                    src={`${IMG_BASE}/w92${streamingLinks[0].logo_path}`}
+                    alt={streamingLinks[0].name}
+                    className="w-6 h-6 rounded-md object-cover"
+                  />
+                  <span>Regarder sur {streamingLinks[0].name}</span>
+                  <ExternalLink className="w-3.5 h-3.5 opacity-70" />
+                </motion.button>
+              ) : (
+                /* Multiple platforms — horizontal scrollable row */
+                <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-1 -mx-1 px-1">
+                  {streamingLinks.slice(0, 6).map((link) => (
+                    <motion.button
+                      key={link.providerId + link.name}
+                      whileTap={{ scale: 0.93 }}
                       onClick={() => {
                         trackInteraction(movie.id, "watch_clicked", { platform: link.name });
                         openStreamingLink(link);
                       }}
-                      className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-foreground/8 border border-border/20 hover:bg-foreground/12 hover:border-primary/30 transition-all active:scale-[0.97] group"
+                      className="flex flex-col items-center gap-1.5 shrink-0 group"
                     >
-                      <img
-                        src={`${IMG_BASE}/w92${link.logo_path}`}
-                        alt={link.name}
-                        className="w-5 h-5 rounded-md object-cover"
-                      />
-                      <span className="text-foreground/70 text-[12px] font-sans font-medium group-hover:text-foreground transition-colors">
+                      <div className="w-[36px] h-[36px] rounded-full bg-foreground/8 border border-border/20 group-hover:border-primary/40 flex items-center justify-center overflow-hidden transition-all group-active:scale-95">
+                        <img
+                          src={`${IMG_BASE}/w92${link.logo_path}`}
+                          alt={link.name}
+                          className="w-[36px] h-[36px] rounded-full object-cover"
+                        />
+                      </div>
+                      <span className="text-foreground/50 text-[9px] font-sans font-medium group-hover:text-foreground transition-colors text-center max-w-[52px] leading-tight">
                         {link.name}
                       </span>
-                      <ExternalLink className="w-3 h-3 text-foreground/30 group-hover:text-primary transition-colors" />
                     </motion.button>
                   ))}
                 </div>
-              </motion.div>
-            )}
+              )}
+            </motion.div>
 
             {/* Synopsis — expandable */}
             <div className="mb-4">
