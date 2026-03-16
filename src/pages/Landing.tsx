@@ -2,7 +2,11 @@ import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion"
 import { useNavigate } from "react-router-dom";
 import { useRef, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Target, Dice5, Mic, Brain, Tv, ChevronDown, Clapperboard, MessageCircle, Volume2, Zap, SlidersHorizontal, Crown, Check, X as XIcon } from "lucide-react";
+import {
+  Sparkles, Target, Dice5, Mic, Brain, Tv, ChevronDown, Clapperboard,
+  MessageCircle, Volume2, Zap, SlidersHorizontal, Crown, Check, X as XIcon,
+  BookmarkPlus, Dna, Film, Popcorn, Star, ListVideo, Eye
+} from "lucide-react";
 import pickLogo from "@/assets/pick-logo.png";
 import pickWave from "@/assets/pick-squirrel-wave.png";
 import pickThink from "@/assets/pick-squirrel-think.png";
@@ -112,9 +116,7 @@ const ScrollingRequests = () => {
   );
 };
 
-// Poster columns for cinematic background
 const PosterColumn = ({ posters, reverse = false, className = "" }: { posters: string[]; reverse?: boolean; className?: string }) => {
-  // Double the posters for seamless loop
   const doubled = [...posters, ...posters];
   return (
     <div className={`flex flex-col gap-2 overflow-hidden ${className}`}>
@@ -141,7 +143,6 @@ const Landing = () => {
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
   const heroOpacity = useTransform(scrollYProgress, [0, 1], [1, 0]);
 
-  // Split posters into columns
   const col1 = POSTER_URLS.slice(0, 4);
   const col2 = POSTER_URLS.slice(4, 8);
   const col3 = POSTER_URLS.slice(8, 12);
@@ -177,7 +178,6 @@ const Landing = () => {
 
       {/* ── HERO ── */}
       <section ref={heroRef} className="relative min-h-screen flex items-center justify-center overflow-hidden">
-        {/* Scrolling poster columns background */}
         <div className="absolute inset-0 flex justify-center gap-2 opacity-[0.15]">
           <div className="hidden md:flex gap-2 w-full max-w-[1400px] px-4">
             <PosterColumn posters={col1} className="w-1/5 -mt-20" />
@@ -186,7 +186,6 @@ const Landing = () => {
             <PosterColumn posters={[...col1].reverse()} reverse className="w-1/5 mt-5" />
             <PosterColumn posters={[...col2].reverse()} className="w-1/5 -mt-16 hidden lg:flex" />
           </div>
-          {/* Mobile: fewer columns */}
           <div className="flex md:hidden gap-2 w-full px-2">
             <PosterColumn posters={col1} className="w-1/3 -mt-10" />
             <PosterColumn posters={col2} reverse className="w-1/3 mt-8" />
@@ -194,12 +193,10 @@ const Landing = () => {
           </div>
         </div>
 
-        {/* Cinematic overlays */}
         <div className="absolute inset-0 bg-gradient-to-b from-background via-background/70 to-background" />
         <div className="absolute inset-0 bg-gradient-to-r from-background via-transparent to-background" />
         <div className="absolute inset-0 hero-cinematic" />
 
-        {/* Radial glow - gold + purple */}
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <div className="w-[500px] h-[500px] rounded-full bg-primary/6 blur-[120px]" />
         </div>
@@ -211,7 +208,6 @@ const Landing = () => {
           style={{ opacity: heroOpacity }}
           className="relative z-10 max-w-3xl mx-auto px-5 pt-16 text-center"
         >
-          {/* Pick mascot with speech bubble */}
           <motion.div
             initial={{ opacity: 0, y: 20, scale: 0.9 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -251,7 +247,6 @@ const Landing = () => {
             Dis ton envie. Pick trouve ton film.
           </motion.p>
 
-          {/* Platform logos inline in hero */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -269,7 +264,6 @@ const Landing = () => {
             <span className="text-foreground/25 text-xs font-sans ml-1">+2</span>
           </motion.div>
 
-          {/* Mini conversation */}
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -304,14 +298,12 @@ const Landing = () => {
                 Surprends-moi
               </Button>
             </div>
-
             <span className="text-foreground/30 text-xs font-sans font-medium tracking-wide">
               Gratuit — aucune inscription
             </span>
           </motion.div>
         </motion.div>
 
-        {/* Scroll indicator */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -327,79 +319,7 @@ const Landing = () => {
         </motion.div>
       </section>
 
-      {/* ── MEET PICK ── */}
-      <section className="py-24 md:py-32 px-5 relative overflow-hidden">
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div className="w-[500px] h-[500px] rounded-full bg-primary/4 blur-[100px]" />
-        </div>
-
-        <div className="max-w-4xl mx-auto relative z-10">
-          <motion.div
-            variants={fadeUp}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: "-100px" }}
-            className="text-center mb-16"
-          >
-            <h2 className="text-3xl md:text-5xl font-serif mb-4">
-              Rencontre <span className="text-gold italic">Pick</span>
-            </h2>
-            <p className="text-foreground/40 font-sans text-sm md:text-base max-w-lg mx-auto">
-              Un cinéphile passionné avec béret et lunettes rondes, 
-              qui a vu plus de films que tu ne pourras jamais en regarder.
-            </p>
-          </motion.div>
-
-          <motion.div
-            variants={stagger}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: "-80px" }}
-            className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-3xl mx-auto"
-          >
-            {[
-              {
-                img: pickWave,
-                title: "Il t'accueille",
-                desc: "Pick te demande ton humeur, avec qui tu regardes et combien de temps tu as.",
-                mood: "Accueil",
-              },
-              {
-                img: pickThink,
-                title: "Il réfléchit",
-                desc: "Il fouille dans sa mémoire cinématographique pour trouver le film parfait.",
-                mood: "Réflexion",
-              },
-              {
-                img: pickDefault,
-                title: "Il te présente",
-                desc: "Il t'explique pourquoi ce film est fait pour toi, et peut même te le raconter à voix haute.",
-                mood: "Présentation",
-              },
-            ].map((item, i) => (
-              <motion.div
-                key={item.mood}
-                variants={fadeUp}
-                custom={i}
-                className="text-center p-6 md:p-8 rounded-2xl bg-card/40 border border-border/15 hover:border-gold/20 transition-all duration-300"
-              >
-                <img
-                  src={item.img}
-                  alt={item.mood}
-                  className="w-20 h-20 md:w-24 md:h-24 object-contain mx-auto mb-4 drop-shadow-lg"
-                />
-                <span className="text-[10px] uppercase tracking-widest text-gold/60 font-sans font-semibold">
-                  {item.mood}
-                </span>
-                <h3 className="text-lg font-serif mt-1 mb-2">{item.title}</h3>
-                <p className="text-foreground/40 text-sm font-sans leading-relaxed">{item.desc}</p>
-              </motion.div>
-            ))}
-          </motion.div>
-        </div>
-      </section>
-
-      {/* ── HOW IT WORKS ── */}
+      {/* ── 3 FAÇONS DE TROUVER TON FILM ── */}
       <section className="py-24 md:py-32 px-5">
         <div className="max-w-5xl mx-auto">
           <motion.div
@@ -410,10 +330,10 @@ const Landing = () => {
             className="text-center mb-16"
           >
             <h2 className="text-3xl md:text-5xl font-serif mb-3">
-              Comment ça marche
+              3 façons de trouver <span className="text-primary italic">ton film</span>
             </h2>
             <p className="text-foreground/40 font-sans text-sm md:text-base max-w-md mx-auto">
-              Trois façons de trouver ton film. Zéro prise de tête.
+              Tape, parle ou laisse-toi guider. Zéro prise de tête.
             </p>
           </motion.div>
 
@@ -434,13 +354,13 @@ const Landing = () => {
               {
                 icon: <Mic className="w-5 h-5" />,
                 title: "🎙 Parle à Pick",
-                desc: "Dis-lui ce que tu veux en langage naturel : « un truc qui fait peur mais pas trop ». Il comprend.",
+                desc: "Dis-lui ton humeur, avec qui tu regardes. Il comprend et te propose LE film idéal.",
                 label: "Vocal",
               },
               {
                 icon: <SlidersHorizontal className="w-5 h-5" />,
-                title: "🎬 Choisis toi-même",
-                desc: "Quelques questions rapides sur ton humeur, le temps disponible et avec qui tu regardes.",
+                title: "🎬 Recherche guidée",
+                desc: "Humeur, contexte, durée, plateforme. 4 questions rapides et c'est trouvé.",
                 label: "Guidé",
               },
             ].map((item, i) => (
@@ -464,55 +384,13 @@ const Landing = () => {
         </div>
       </section>
 
-      {/* ── PICK VOICE ── */}
+      {/* ── TON UNIVERS CINÉ ── */}
       <section className="py-24 md:py-32 px-5 relative overflow-hidden">
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div className="w-[500px] h-[400px] rounded-full bg-primary/3 blur-[100px]" />
+          <div className="w-[500px] h-[500px] rounded-full bg-primary/4 blur-[100px]" />
         </div>
 
-        <div className="max-w-4xl mx-auto relative z-10">
-          <motion.div
-            variants={fadeUp}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: "-100px" }}
-            className="flex flex-col md:flex-row items-center gap-10 md:gap-16"
-          >
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6 }}
-              className="flex-shrink-0"
-            >
-              <div className="relative">
-                <img src={pickDefault} alt="Pick" className="w-32 h-32 md:w-40 md:h-40 object-contain drop-shadow-xl pick-float" />
-                <div className="absolute -top-4 -right-4 md:-right-8 px-3 py-2 rounded-xl bg-gold/15 border border-gold/25 backdrop-blur-sm">
-                  <Volume2 className="w-4 h-4 text-gold" />
-                </div>
-              </div>
-            </motion.div>
-
-            <div className="text-center md:text-left">
-              <h2 className="text-3xl md:text-4xl font-serif mb-4">
-                Pick peut te <span className="text-gold italic">raconter</span> le film
-              </h2>
-              <p className="text-foreground/45 font-sans text-sm md:text-base leading-relaxed mb-4">
-                Écoute Pick te présenter le film à voix haute. Il t'explique pourquoi c'est le bon choix pour toi, 
-                avec sa voix unique. Comme un ami cinéphile qui partage ses coups de cœur.
-              </p>
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gold/10 border border-gold/25">
-                <Volume2 className="w-4 h-4 text-gold" />
-                <span className="text-foreground/60 text-sm font-sans">« Je peux te présenter ce film si tu veux »</span>
-              </div>
-            </div>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* ── PERSONALIZATION ── */}
-      <section className="py-24 md:py-32 px-5">
-        <div className="max-w-5xl mx-auto">
+        <div className="max-w-5xl mx-auto relative z-10">
           <motion.div
             variants={fadeUp}
             initial="hidden"
@@ -521,11 +399,10 @@ const Landing = () => {
             className="text-center mb-16"
           >
             <h2 className="text-3xl md:text-5xl font-serif mb-3">
-              Plus tu l'utilises, plus il te{" "}
-              <span className="text-primary italic">connaît</span>
+              Ton univers <span className="text-primary italic">ciné</span>
             </h2>
             <p className="text-foreground/40 font-sans text-sm md:text-base max-w-lg mx-auto">
-              Pick apprend tes goûts et affine ses recommandations au fil du temps.
+              Pick construit ton profil cinématographique et garde tout ce que tu aimes en un seul endroit.
             </p>
           </motion.div>
 
@@ -534,28 +411,67 @@ const Landing = () => {
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true, margin: "-80px" }}
-            className="grid sm:grid-cols-2 gap-4 max-w-3xl mx-auto"
+            className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 max-w-4xl mx-auto"
           >
             {[
-              { icon: <Target className="w-4 h-4" />, text: "Analyse les films que tu aimes et ceux que tu passes", tag: "Profil de goût" },
-              { icon: <Brain className="w-4 h-4" />, text: "S'adapte à ton humeur et ton contexte en temps réel", tag: "Contexte" },
-              { icon: <Sparkles className="w-4 h-4" />, text: "Utilise l'IA pour trouver des connexions entre tes films préférés", tag: "IA" },
-              { icon: <MessageCircle className="w-4 h-4" />, text: "Compagnon de visionnage : pose des questions pendant le film", tag: "Compagnon" },
+              {
+                icon: <Dna className="w-5 h-5" />,
+                title: "ADN Cinéma",
+                desc: "Découvre ta personnalité cinématographique unique, tes traits de goût et les films qui te définissent.",
+                tag: "Profil",
+                accent: "primary",
+              },
+              {
+                icon: <BookmarkPlus className="w-5 h-5" />,
+                title: "Watchlist",
+                desc: "Sauvegarde les films pour plus tard. Retrouve-les en un tap quand tu es prêt à regarder.",
+                tag: "Sauvegardes",
+                accent: "primary",
+              },
+              {
+                icon: <Star className="w-5 h-5" />,
+                title: "Films aimés",
+                desc: "Marque les films que tu adores. Plus tu likes, plus Pick te connaît et affine ses recommandations.",
+                tag: "Goûts",
+                accent: "primary",
+              },
+              {
+                icon: <Target className="w-5 h-5" />,
+                title: "Recommandations sur-mesure",
+                desc: "Pick analyse tes goûts, ton humeur, ton contexte. Chaque suggestion est unique, rien que pour toi.",
+                tag: "IA",
+                accent: "primary",
+              },
+              {
+                icon: <Tv className="w-5 h-5" />,
+                title: "Tes plateformes",
+                desc: "Dis à Pick tes abonnements. Il ne te recommande que des films disponibles chez toi.",
+                tag: "Streaming",
+                accent: "primary",
+              },
+              {
+                icon: <Sparkles className="w-5 h-5" />,
+                title: "Streaks & stats",
+                desc: "Suis ton activité cinéma, tes séries de jours consécutifs et ton évolution de cinéphile.",
+                tag: "Progrès",
+                accent: "primary",
+              },
             ].map((item, i) => (
               <motion.div
-                key={i}
+                key={item.title}
                 variants={fadeUp}
                 custom={i}
                 className="flex items-start gap-4 p-5 rounded-xl bg-card/30 border border-border/10 hover:border-primary/15 transition-all"
               >
-                <div className="mt-0.5 w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0 text-primary">
+                <div className="mt-0.5 w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0 text-primary">
                   {item.icon}
                 </div>
                 <div>
                   <span className="text-[10px] uppercase tracking-widest text-primary/60 font-sans font-semibold">
                     {item.tag}
                   </span>
-                  <p className="text-foreground/60 font-sans text-sm mt-1">{item.text}</p>
+                  <h3 className="text-base font-serif mt-0.5 mb-1">{item.title}</h3>
+                  <p className="text-foreground/40 font-sans text-sm leading-relaxed">{item.desc}</p>
                 </div>
               </motion.div>
             ))}
@@ -585,7 +501,109 @@ const Landing = () => {
         </div>
       </section>
 
-      {/* ── PLATFORMS ── */}
+      {/* ── MODE COMPAGNON ── */}
+      <section className="py-24 md:py-32 px-5 relative overflow-hidden">
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div className="w-[500px] h-[400px] rounded-full bg-gold/4 blur-[100px]" />
+        </div>
+
+        <div className="max-w-4xl mx-auto relative z-10">
+          <motion.div
+            variants={fadeUp}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-100px" }}
+            className="flex flex-col md:flex-row items-center gap-10 md:gap-16"
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
+              className="flex-shrink-0"
+            >
+              <div className="relative">
+                <img src={pickDefault} alt="Pick" className="w-32 h-32 md:w-40 md:h-40 object-contain drop-shadow-xl pick-float" />
+                <div className="absolute -top-4 -right-4 md:-right-8 px-3 py-2 rounded-xl bg-primary/15 border border-primary/25 backdrop-blur-sm">
+                  <Eye className="w-4 h-4 text-primary" />
+                </div>
+              </div>
+            </motion.div>
+
+            <div className="text-center md:text-left">
+              <span className="text-[10px] uppercase tracking-widest text-primary/60 font-sans font-semibold">
+                Pendant le film
+              </span>
+              <h2 className="text-3xl md:text-4xl font-serif mb-4 mt-1">
+                Pick regarde <span className="text-primary italic">avec toi</span>
+              </h2>
+              <p className="text-foreground/45 font-sans text-sm md:text-base leading-relaxed mb-5">
+                Active le Mode Compagnon et Pick devient ton copilote de visionnage. 
+                Anecdotes de tournage, contexte historique, infos sur les acteurs… 
+                Tout ça sans spoilers, à ton rythme.
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {["Fun facts 🎬", "Acteurs & casting", "Contexte historique", "Sans spoilers"].map(tag => (
+                  <span key={tag} className="px-3 py-1.5 rounded-full bg-card/60 border border-border/15 text-foreground/50 text-xs font-sans">
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ── PICK TE PARLE ── */}
+      <section className="py-24 md:py-32 px-5 relative overflow-hidden">
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div className="w-[500px] h-[400px] rounded-full bg-gold/3 blur-[100px]" />
+        </div>
+
+        <div className="max-w-4xl mx-auto relative z-10">
+          <motion.div
+            variants={fadeUp}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-100px" }}
+            className="flex flex-col md:flex-row-reverse items-center gap-10 md:gap-16"
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
+              className="flex-shrink-0"
+            >
+              <div className="relative">
+                <img src={pickThink} alt="Pick" className="w-32 h-32 md:w-40 md:h-40 object-contain drop-shadow-xl pick-float" />
+                <div className="absolute -top-4 -left-4 md:-left-8 px-3 py-2 rounded-xl bg-gold/15 border border-gold/25 backdrop-blur-sm">
+                  <Volume2 className="w-4 h-4 text-gold" />
+                </div>
+              </div>
+            </motion.div>
+
+            <div className="text-center md:text-left">
+              <span className="text-[10px] uppercase tracking-widest text-gold/60 font-sans font-semibold">
+                Voix
+              </span>
+              <h2 className="text-3xl md:text-4xl font-serif mb-4 mt-1">
+                Pick peut te <span className="text-gold italic">raconter</span> le film
+              </h2>
+              <p className="text-foreground/45 font-sans text-sm md:text-base leading-relaxed mb-4">
+                Écoute Pick te présenter le film à voix haute. Il t'explique pourquoi c'est le bon choix, 
+                avec sa voix unique. Comme un ami cinéphile qui partage ses coups de cœur.
+              </p>
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gold/10 border border-gold/25">
+                <Volume2 className="w-4 h-4 text-gold" />
+                <span className="text-foreground/60 text-sm font-sans">« Je peux te présenter ce film si tu veux »</span>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ── PLATEFORMES ── */}
       <section className="py-24 md:py-32 px-5 relative">
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <div className="w-[400px] h-[300px] rounded-full bg-gold/3 blur-[100px]" />
@@ -670,12 +688,12 @@ const Landing = () => {
               <p className="text-3xl font-serif text-foreground mb-5">0€</p>
               <div className="space-y-3">
                 {[
-                  "Recommandation du soir (3/jour)",
-                  "Conversation avec Pick",
+                  "3 recommandations / jour",
+                  "Parle à Pick (1 reco/jour)",
                   "ADN Cinéma de base",
-                  "Watchlist complète",
+                  "Watchlist & films aimés",
                   "Liens vers les plateformes",
-                  "Companion Mode (1 question/film)",
+                  "Mode Compagnon (1 question/film)",
                 ].map((f) => (
                   <div key={f} className="flex items-center gap-2.5">
                     <Check className="w-4 h-4 text-primary/60 shrink-0" />
@@ -698,14 +716,15 @@ const Landing = () => {
               <h3 className="text-xl font-serif mb-1 text-gold">Pick+</h3>
               <p className="text-foreground/40 text-sm font-sans mb-1">L'expérience complète</p>
               <div className="flex items-baseline gap-1 mb-5">
-                <p className="text-3xl font-serif text-foreground">2,49€</p>
+                <p className="text-3xl font-serif text-foreground">3,99€</p>
                 <span className="text-foreground/40 text-sm font-sans">/mois</span>
               </div>
               <div className="space-y-3">
                 {[
                   "Tout le plan Gratuit",
+                  "Chatbot complet — tout demander",
                   "Recommandations illimitées",
-                  "Companion Mode illimité",
+                  "Mode Compagnon illimité",
                   "ADN Cinéma avancé + rapports",
                   "Alertes plateforme",
                   "Mode hors-ligne",
@@ -739,7 +758,6 @@ const Landing = () => {
             </motion.div>
           </motion.div>
 
-          {/* Value prop */}
           <motion.p
             variants={fadeUp}
             initial="hidden"
