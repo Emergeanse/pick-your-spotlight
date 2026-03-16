@@ -146,6 +146,9 @@ Recommande UN film avec les scores détaillés.`;
       }),
     });
 
+    let aiFailed = false;
+    let suggestion: any = null;
+
     if (!response.ok) {
       const status = response.status;
       if (status === 429) {
@@ -155,23 +158,24 @@ Recommande UN film avec les scores détaillés.`;
         });
       }
       if (status === 402) {
-        return new Response(JSON.stringify({ error: "Crédits épuisés." }), {
-          status: 402,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        console.warn("AI credits exhausted, falling back to TMDB-only recommendation");
+        aiFailed = true;
+      } else {
+        console.error(`AI error: ${status}`);
+        aiFailed = true;
       }
-      throw new Error(`AI error: ${status}`);
     }
 
-    const aiData = await response.json();
-    const content = aiData.choices?.[0]?.message?.content || "";
-    
-    let suggestion;
-    try {
-      const jsonStr = content.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
-      suggestion = JSON.parse(jsonStr);
-    } catch {
-      throw new Error("Failed to parse AI suggestion");
+    if (!aiFailed) {
+      const aiData = await response.json();
+      const content = aiData.choices?.[0]?.message?.content || "";
+      try {
+        const jsonStr = content.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
+        suggestion = JSON.parse(jsonStr);
+      } catch {
+        console.warn("Failed to parse AI suggestion, falling back to TMDB");
+        aiFailed = true;
+      }
     }
 
     // Genre name to TMDB ID mapping for filtering
