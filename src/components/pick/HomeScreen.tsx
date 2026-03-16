@@ -317,14 +317,16 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
           )}
 
           {/* Pick character + greeting */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2, duration: 0.5 }}
-            className="mb-6 md:mb-8"
-          >
-            <PickCharacter mood="wave" showGreeting size="md" animate />
-          </motion.div>
+          {!isSurprising && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2, duration: 0.5 }}
+              className="mb-6 md:mb-8"
+            >
+              <PickCharacter mood="wave" showGreeting size="md" animate />
+            </motion.div>
+          )}
 
           {isSurprising ? (
             <motion.div
