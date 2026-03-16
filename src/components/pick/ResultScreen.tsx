@@ -706,6 +706,25 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                   <ThumbsDown className={`w-3.5 h-3.5 ${feedbackGiven === "bad" ? "fill-destructive" : ""}`} />
                 </button>
 
+                {/* Share */}
+                <button
+                  onClick={() => {
+                    const shareText = `Pick me suggère "${title}" ce soir — tu veux qu'on le regarde ensemble ? 🍿`;
+                    const shareUrl = window.location.origin;
+                    if (navigator.share) {
+                      navigator.share({ title: `Pick — ${title}`, text: shareText, url: shareUrl }).catch(() => {});
+                    } else {
+                      navigator.clipboard.writeText(`${shareText}\n${shareUrl}`).then(() => {
+                        toast.success("Lien copié !");
+                      }).catch(() => {});
+                    }
+                  }}
+                  className="w-9 h-9 rounded-full border border-border/25 text-foreground/40 hover:text-primary hover:border-primary/25 flex items-center justify-center transition-all active:scale-95"
+                  title="Partager"
+                >
+                  <Share2 className="w-3.5 h-3.5" />
+                </button>
+
                 {/* Spacer + Refine with Pick button */}
                 <div className="flex-1" />
                 {matchData && !refining && (
