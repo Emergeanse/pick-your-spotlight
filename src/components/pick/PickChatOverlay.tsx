@@ -162,12 +162,19 @@ export default function PickChatOverlay() {
       }
     }
 
+    const userMsg: ChatMsg = { role: "user", content: text.trim() };
+    addMessage(userMsg);
+    setInput("");
+    setIsStreaming(true);
+    setStreamingContent("");
+
     const allMessages = [...currentMessages, userMsg].map(m => ({ role: m.role, content: m.content }));
 
     try {
       const body: any = {
         messages: allMessages,
         mode: mode === "companion" ? "companion" : "discovery",
+        isPremium: pickPlus.isPremium,
         minRating: userPrefs.minRating,
         excludedGenres: userPrefs.excludedGenres,
       };
