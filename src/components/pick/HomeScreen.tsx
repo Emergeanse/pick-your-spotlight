@@ -131,25 +131,8 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
     return data;
   };
 
-  // Proactive recommendation — silently fetch for users with taste data (delayed to avoid rate limits)
-  useEffect(() => {
-    if (!user) return;
-    let cancelled = false;
-    const timer = setTimeout(async () => {
-      try {
-        const liked = await getLikedMovies();
-        if (liked.length < 3) return;
-        const userTasteVector = await computeUserTasteVector(user.id);
-        const data = await invokeSurprisePersonalized({
-          likedMovies: liked, userTasteVector, platformIds: userPlatformIds, excludedPlatformIds: userExcludedPlatformIds, excludedGenres: userExcludedGenres, minRating: userMinRating,
-        });
-        if (!cancelled) setProactivePick(data.movie as MovieDetail);
-      } catch {
-        // Silently fail — proactive is optional
-      }
-    }, 3000);
-    return () => { cancelled = true; clearTimeout(timer); };
-  }, [user]);
+
+
 
   useEffect(() => {
     getTrendingMovies(20).then((movies: Movie[]) => {
