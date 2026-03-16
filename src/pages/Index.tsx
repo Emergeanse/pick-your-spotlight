@@ -11,7 +11,9 @@ import VoiceChat from "@/components/pick/VoiceChat";
 import CompanionMode from "@/components/pick/CompanionMode";
 import BottomTabBar from "@/components/pick/BottomTabBar";
 import RevealAnimation from "@/components/pick/RevealAnimation";
+import { useCompanion } from "@/contexts/CompanionContext";
 import type { ChatMessage } from "@/components/pick/VoiceChat";
+import { toast } from "sonner";
 import StepLayout from "@/components/pick/StepLayout";
 import BrandHeader from "@/components/pick/BrandHeader";
 import { useAuth } from "@/hooks/use-auth";
@@ -203,11 +205,15 @@ const Index = () => {
     }
   };
 
+  const { activateCompanion } = useCompanion();
+
   const handleStartCompanion = () => {
     const currentMovie = results[currentResultIndex];
     if (currentMovie) {
       trackInteraction(currentMovie.id, "watched", { mood, context, time });
       if (user) recordAcceptedRecommendation(user.id);
+      activateCompanion(currentMovie);
+      toast("🎬 Companion activé — Pick est là pendant tout le film", { duration: 3000 });
     }
     setShowCompanion(true);
   };
