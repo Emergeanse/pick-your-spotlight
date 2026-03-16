@@ -67,7 +67,7 @@ export function usePickPlus(): PickPlusState {
 
       const [subRes, usageRes] = await Promise.all([
         supabase.from("subscriptions" as any).select("plan, status").eq("user_id", user.id).maybeSingle(),
-        supabase.from("daily_usage" as any).select("recommendation_count, companion_questions").eq("user_id", user.id).eq("usage_date", today).maybeSingle(),
+        supabase.from("daily_usage" as any).select("recommendation_count, companion_questions, chat_count").eq("user_id", user.id).eq("usage_date", today).maybeSingle(),
       ]);
 
       if (subRes.data && (subRes.data as any).status === "active") {
