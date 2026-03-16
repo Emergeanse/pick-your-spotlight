@@ -11,12 +11,14 @@ import VoiceChat from "@/components/pick/VoiceChat";
 import CompanionMode from "@/components/pick/CompanionMode";
 import WatchlistPage from "@/components/pick/WatchlistPage";
 import BottomTabBar from "@/components/pick/BottomTabBar";
+import RevealAnimation from "@/components/pick/RevealAnimation";
 import type { TabId } from "@/components/pick/BottomTabBar";
 import type { ChatMessage } from "@/components/pick/VoiceChat";
 import StepLayout from "@/components/pick/StepLayout";
 import BrandHeader from "@/components/pick/BrandHeader";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
+import { recordAcceptedRecommendation, recordSkippedRecommendation } from "@/lib/engagement";
 import type { Mood, Context, TimeAvailable, MovieDetail } from "@/lib/tmdb";
 import { getRecommendations, getDisplayTitle } from "@/lib/tmdb";
 import { trackInteraction, getUserTasteProfile } from "@/lib/interactions";
@@ -192,6 +194,8 @@ const Index = () => {
     const currentMovie = results[currentResultIndex];
     if (currentMovie) {
       trackInteraction(currentMovie.id, "skipped", { mood, context, time });
+      // Record as skipped for engagement tracking
+      if (user) recordSkippedRecommendation(user.id);
     }
 
     if (currentResultIndex < results.length - 1 && !rejectReason) {
@@ -234,6 +238,8 @@ const Index = () => {
     const currentMovie = results[currentResultIndex];
     if (currentMovie) {
       trackInteraction(currentMovie.id, "watched", { mood, context, time });
+      // Record as accepted recommendation for engagement tracking
+      if (user) recordAcceptedRecommendation(user.id);
     }
     setShowCompanion(true);
   };
@@ -410,6 +416,13 @@ const Index = () => {
       {showTabBar && (
         <BottomTabBar activeTab={activeTab} onTabChange={handleTabChange} />
       )}
+
+      {/* Cinematic reveal animation */}
+      <AnimatePresence>
+        {loading && step !== "result" && (
+          <RevealAnimation active={loading} message={loadingMessage || undefined} />
+        )}
+      </AnimatePresence>
 
       <AnimatePresence>
         {showChat && (

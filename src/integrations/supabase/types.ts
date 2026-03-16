@@ -118,42 +118,72 @@ export type Database = {
       }
       profiles: {
         Row: {
+          accepted_recommendations: number
+          best_streak: number
           created_at: string
           display_name: string | null
           excluded_genres: string[] | null
           excluded_platforms: number[] | null
           favorite_genres: string[] | null
+          first_use_date: string | null
+          hook_messages_seen: string[]
           id: string
+          last_recommendation_date: string | null
           media_preference: string
           min_rating: number | null
           onboarding_completed: boolean
           preferred_platforms: number[] | null
+          profile_confidence: number
+          ritual_enabled: boolean
+          ritual_time: string | null
+          streak_count: number
+          total_recommendations: number
           updated_at: string
         }
         Insert: {
+          accepted_recommendations?: number
+          best_streak?: number
           created_at?: string
           display_name?: string | null
           excluded_genres?: string[] | null
           excluded_platforms?: number[] | null
           favorite_genres?: string[] | null
+          first_use_date?: string | null
+          hook_messages_seen?: string[]
           id: string
+          last_recommendation_date?: string | null
           media_preference?: string
           min_rating?: number | null
           onboarding_completed?: boolean
           preferred_platforms?: number[] | null
+          profile_confidence?: number
+          ritual_enabled?: boolean
+          ritual_time?: string | null
+          streak_count?: number
+          total_recommendations?: number
           updated_at?: string
         }
         Update: {
+          accepted_recommendations?: number
+          best_streak?: number
           created_at?: string
           display_name?: string | null
           excluded_genres?: string[] | null
           excluded_platforms?: number[] | null
           favorite_genres?: string[] | null
+          first_use_date?: string | null
+          hook_messages_seen?: string[]
           id?: string
+          last_recommendation_date?: string | null
           media_preference?: string
           min_rating?: number | null
           onboarding_completed?: boolean
           preferred_platforms?: number[] | null
+          profile_confidence?: number
+          ritual_enabled?: boolean
+          ritual_time?: string | null
+          streak_count?: number
+          total_recommendations?: number
           updated_at?: string
         }
         Relationships: []

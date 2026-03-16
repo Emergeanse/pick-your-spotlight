@@ -1,12 +1,13 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Mic, Dices, Tv, Sparkles, Loader2, Zap, X } from "lucide-react";
+import { Mic, Dices, Tv, Sparkles, Loader2, Zap, X, Flame, Target, Trophy } from "lucide-react";
 import { getTrendingMovies, getBackdropUrl, getSurpriseRecommendation, getPosterUrl, getDisplayTitle, getWatchProviders } from "@/lib/tmdb";
 import { getLikedMovies } from "@/lib/liked-movies";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { computeUserTasteVector } from "@/lib/taste-engine";
+import { getEngagementData, getProgressionMessage, getStreakLabel, type EngagementData } from "@/lib/engagement";
 import type { Movie, MovieDetail } from "@/lib/tmdb";
 import BrandHeader from "./BrandHeader";
 import DiscoverySection from "./DiscoverySection";
@@ -93,7 +94,20 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
   const [userMinRating, setUserMinRating] = useState<number>(0);
   const [showDNA, setShowDNA] = useState(false);
   const [rejectedIds, setRejectedIds] = useState<number[]>([]);
+  const [engagement, setEngagement] = useState<EngagementData | null>(null);
+  const [progressionMsg, setProgressionMsg] = useState<string | null>(null);
   const { user } = useAuth();
+
+  // Load engagement data
+  useEffect(() => {
+    if (!user) return;
+    getEngagementData(user.id).then(data => {
+      if (data) {
+        setEngagement(data);
+        setProgressionMsg(getProgressionMessage(data));
+      }
+    });
+  }, [user]);
 
   // Load user's full profile preferences
   useEffect(() => {
@@ -291,6 +305,42 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
         {/* Hero section */}
         <div className="min-h-[85vh] md:min-h-[80vh] flex flex-col items-center justify-center text-center px-5 pt-16">
           
+          {/* Engagement banner — streaks & progression */}
+          {engagement && (engagement.streakCount >= 2 || progressionMsg) && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.15 }}
+              className="w-full max-w-md px-2 mb-4"
+            >
+              <div className="flex items-center justify-center gap-3 px-4 py-2.5 rounded-xl bg-primary/8 border border-primary/15">
+                {engagement.streakCount >= 2 && (
+                  <div className="flex items-center gap-1.5">
+                    {engagement.streakCount >= 10 ? <Trophy className="w-4 h-4 text-primary" /> :
+                     engagement.streakCount >= 5 ? <Target className="w-4 h-4 text-primary" /> :
+                     <Flame className="w-4 h-4 text-primary" />}
+                    <span className="text-primary text-[12px] font-sans font-semibold">
+                      {getStreakLabel(engagement.streakCount)}
+                    </span>
+                  </div>
+                )}
+                {engagement.profileConfidence > 0 && (
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-16 h-1.5 rounded-full bg-foreground/10 overflow-hidden">
+                      <div className="h-full rounded-full bg-primary/60" style={{ width: `${engagement.profileConfidence}%` }} />
+                    </div>
+                    <span className="text-foreground/40 text-[10px] font-sans">{engagement.profileConfidence}%</span>
+                  </div>
+                )}
+              </div>
+              {progressionMsg && (
+                <p className="text-center text-foreground/50 text-[11px] font-sans mt-1.5">
+                  {progressionMsg}
+                </p>
+              )}
+            </motion.div>
+          )}
+
           {/* Pick character + greeting or proactive suggestion */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
