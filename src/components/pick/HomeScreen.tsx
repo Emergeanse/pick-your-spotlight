@@ -1,12 +1,13 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Mic, Dices, Tv, Sparkles, Loader2, Zap, X } from "lucide-react";
+import { Mic, Dices, Tv, Sparkles, Loader2, Zap, X, Flame, Target, Trophy } from "lucide-react";
 import { getTrendingMovies, getBackdropUrl, getSurpriseRecommendation, getPosterUrl, getDisplayTitle, getWatchProviders } from "@/lib/tmdb";
 import { getLikedMovies } from "@/lib/liked-movies";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { computeUserTasteVector } from "@/lib/taste-engine";
+import { getEngagementData, getProgressionMessage, getStreakLabel, type EngagementData } from "@/lib/engagement";
 import type { Movie, MovieDetail } from "@/lib/tmdb";
 import BrandHeader from "./BrandHeader";
 import DiscoverySection from "./DiscoverySection";
