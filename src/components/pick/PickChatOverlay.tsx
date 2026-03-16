@@ -157,6 +157,7 @@ export default function PickChatOverlay() {
   }, [scribe]);
 
   const pickPlus = usePickPlus();
+  const chips = mode === "companion" ? COMPANION_CHIPS : (pickPlus.isPremium ? DISCOVERY_CHIPS_PREMIUM : DISCOVERY_CHIPS_FREE);
 
   const sendMessage = useCallback(async (text: string) => {
     if (!text.trim() || isStreaming) return;
