@@ -292,10 +292,10 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
   const [showRefineSheet, setShowRefineSheet] = useState(false);
 
   return (
-    <div ref={ref} className="h-full w-full overflow-y-auto">
+    <div ref={ref} className="h-full w-full overflow-x-hidden overflow-y-auto">
       <BrandHeader showBack onBack={onRestart} />
 
-      <div className="relative min-h-screen w-full">
+      <div className="relative min-h-screen w-full overflow-hidden">
         {/* Background */}
         {bgImage && (
           <motion.div
