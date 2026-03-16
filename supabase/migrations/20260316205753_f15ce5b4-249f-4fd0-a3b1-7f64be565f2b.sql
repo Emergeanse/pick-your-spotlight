@@ -1,0 +1,1 @@
+ALTER TABLE public.daily_usage ADD COLUMN IF NOT EXISTS chat_count integer NOT NULL DEFAULT 0;

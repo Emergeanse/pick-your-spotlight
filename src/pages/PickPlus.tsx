@@ -9,11 +9,12 @@ import { usePickPlus } from "@/hooks/use-pick-plus";
 
 const FEATURES = [
   { label: "Recommandation du soir", free: true, plus: true },
-  { label: "Conversation avec Pick", free: true, plus: true },
+  { label: "Conversation avec Pick (5/jour)", free: true, plus: true },
   { label: "ADN Cinéma de base", free: true, plus: true },
   { label: "Watchlist", free: true, plus: true },
   { label: "Liens vers les plateformes", free: true, plus: true },
   { label: "Companion Mode (1 question/film)", free: true, plus: true },
+  { label: "Chat illimité — Pick partout", free: false, plus: true },
   { label: "Recommandations illimitées", free: false, plus: true },
   { label: "Companion Mode illimité", free: false, plus: true },
   { label: "ADN Cinéma avancé", free: false, plus: true },
