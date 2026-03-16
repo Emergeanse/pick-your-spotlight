@@ -61,7 +61,7 @@ const Index = () => {
   // Load profile preferences
   useEffect(() => {
     if (!user) return;
-    supabase.from("profiles").select("onboarding_completed, preferred_platforms, excluded_platforms, favorite_genres, excluded_genres, min_rating").eq("id", user.id).single()
+    supabase.from("profiles").select("onboarding_completed, preferred_platforms, excluded_platforms, favorite_genres, excluded_genres, min_rating, profile_confidence").eq("id", user.id).single()
       .then(({ data }) => {
         if (data && !data.onboarding_completed) {
           navigate("/onboarding");
@@ -72,6 +72,7 @@ const Index = () => {
             excludedPlatforms: (data as any).excluded_platforms || [],
             minRating: (data as any).min_rating || 0,
             preferredPlatforms: data.preferred_platforms || [],
+            profileConfidence: (data as any).profile_confidence || 0,
           });
         }
       });
