@@ -235,58 +235,109 @@ ANNÉE EN COURS : ${currentYear}`;
       });
     }
 
-    // Non-streaming mode (discovery) — handle tool calls
-    const aiData = await response.json();
-    const choice = aiData.choices?.[0];
-    const message = choice?.message;
+    // Non-streaming mode (discovery) — handle tool calls with retry
+    const MAX_RETRIES = 3;
+    let retryMessages = [...messages];
+    let lastAiData = await response.json();
 
-    if (message?.tool_calls?.length > 0) {
+    for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+      const choice = lastAiData.choices?.[0];
+      const message = choice?.message;
+
+      if (!message?.tool_calls?.length) {
+        // No tool call — just a text reply
+        return new Response(JSON.stringify({
+          type: "text",
+          reply: message?.content || "Hmm, dis-moi en plus !",
+          movie: null,
+        }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
       const toolCall = message.tool_calls[0];
-      if (toolCall.function.name === "suggest_movie") {
-        const args = JSON.parse(toolCall.function.arguments);
-        const mediaType = args.type || "movie";
+      if (toolCall.function.name !== "suggest_movie") break;
 
-        const searchResults = await searchMulti(args.title);
-        const preferredResults = searchResults.filter((r: any) => r.media_type === mediaType);
-        const bestMatch = preferredResults.length > 0 ? preferredResults[0] : searchResults[0];
+      const args = JSON.parse(toolCall.function.arguments);
+      const mediaType = args.type || "movie";
 
-        let detail = null;
-        if (bestMatch) {
-          detail = bestMatch.media_type === "tv"
-            ? await getTVDetails(bestMatch.id)
-            : await getMovieDetails(bestMatch.id);
-        }
+      const searchResults = await searchMulti(args.title);
+      const preferredResults = searchResults.filter((r: any) => r.media_type === mediaType);
+      const bestMatch = preferredResults.length > 0 ? preferredResults[0] : searchResults[0];
 
-        // SERVER-SIDE RATING CHECK — enforce min rating with 0.5 tolerance
-        if (detail && effectiveMinRating > 0) {
-          const movieRating = detail.vote_average || 0;
-          if (movieRating < effectiveMinRating - RATING_TOLERANCE) {
-            console.log(`Rating check failed: ${detail.title || detail.name} has ${movieRating}, min is ${effectiveMinRating}. Retrying...`);
-            // The AI suggested a movie below the threshold — return a message asking to try again
+      let detail = null;
+      if (bestMatch) {
+        detail = bestMatch.media_type === "tv"
+          ? await getTVDetails(bestMatch.id)
+          : await getMovieDetails(bestMatch.id);
+      }
+
+      // SERVER-SIDE RATING CHECK
+      if (detail && effectiveMinRating > 0) {
+        const movieRating = detail.vote_average || 0;
+        if (movieRating < effectiveMinRating - RATING_TOLERANCE) {
+          console.log(`Rating check failed (attempt ${attempt + 1}): ${detail.title || detail.name} has ${movieRating}, min is ${effectiveMinRating}. Retrying...`);
+          
+          if (attempt >= MAX_RETRIES - 1) {
+            // Last attempt — give up gracefully
             return new Response(JSON.stringify({
               type: "text",
-              reply: `Hmm, **${detail.title || detail.name}** n'a que ${movieRating.toFixed(1)}/10 et tu veux au moins ${effectiveMinRating}/10. Laisse-moi te trouver mieux… 🎬\n\nDis-moi un peu plus ce que tu cherches et je te trouverai un film qui dépasse les ${effectiveMinRating}/10 !`,
+              reply: `J'ai du mal à trouver un film noté au-dessus de ${effectiveMinRating}/10 pour ce que tu cherches. Essaie de préciser un genre ou une ambiance et je réessaie ! 🎬`,
               movie: null,
             }), {
               headers: { ...corsHeaders, "Content-Type": "application/json" },
             });
           }
-        }
 
-        return new Response(JSON.stringify({
-          type: "recommendation",
-          reply: args.reason,
-          movie: detail,
-          recap: args.recap || [],
-        }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+          // Retry: feed the failed result back to the AI so it picks something else
+          const retrySystemMsg = {
+            role: "user" as const,
+            content: `[SYSTÈME] Le film "${detail.title || detail.name}" n'a que ${movieRating.toFixed(1)}/10 sur TMDB, c'est en dessous du minimum de ${effectiveMinRating}/10. Propose un AUTRE film DIFFÉRENT avec une note TMDB d'au moins ${effectiveMinRating}/10. Ne propose PAS "${detail.title || detail.name}".`,
+          };
+
+          const retryBody: any = {
+            model: "google/gemini-3-flash-preview",
+            messages: [
+              { role: "system", content: systemPrompt },
+              ...retryMessages,
+              { role: "assistant", content: null, tool_calls: message.tool_calls },
+              { role: "tool", tool_call_id: toolCall.id, content: JSON.stringify({ error: `Rating too low: ${movieRating.toFixed(1)}/10. Need >= ${effectiveMinRating}/10. Suggest a DIFFERENT movie.` }) },
+              retrySystemMsg,
+            ],
+            tools,
+            tool_choice: { type: "function", function: { name: "suggest_movie" } },
+          };
+
+          const retryResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${LOVABLE_API_KEY}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(retryBody),
+          });
+
+          if (!retryResp.ok) break;
+          lastAiData = await retryResp.json();
+          continue;
+        }
       }
+
+      // Rating check passed — return the recommendation
+      return new Response(JSON.stringify({
+        type: "recommendation",
+        reply: args.reason,
+        movie: detail,
+        recap: args.recap || [],
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
+    // Fallback
     return new Response(JSON.stringify({
       type: "text",
-      reply: message?.content || "Hmm, dis-moi en plus !",
+      reply: "Dis-moi un peu plus ce que tu cherches et je te trouve le film parfait ! 🎬",
       movie: null,
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
