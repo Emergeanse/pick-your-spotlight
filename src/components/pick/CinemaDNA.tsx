@@ -130,22 +130,19 @@ const CinemaDNA = ({ userId, teaser, onOpenFull }: CinemaDNAProps) => {
   const generateProfile = async () => {
     setGenerating(true);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/cinematic-profile`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-            Authorization: `Bearer ${session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-          },
-          body: JSON.stringify({}),
-        }
-      );
-      if (!response.ok) throw new Error("Failed to generate");
-      const result = await response.json();
-      setProfile(result);
+      const { data, error } = await supabase.functions.invoke("cinematic-profile", {
+        body: {},
+      });
+
+      if (error) {
+        throw new Error(error.message || "Failed to generate");
+      }
+
+      if (!data) {
+        throw new Error("Empty response");
+      }
+
+      setProfile(data as CinematicProfile);
     } catch (e) {
       console.error(e);
     } finally {
