@@ -9,10 +9,8 @@ import PlatformStep from "@/components/pick/PlatformStep";
 import ResultScreen from "@/components/pick/ResultScreen";
 import VoiceChat from "@/components/pick/VoiceChat";
 import CompanionMode from "@/components/pick/CompanionMode";
-import WatchlistPage from "@/components/pick/WatchlistPage";
 import BottomTabBar from "@/components/pick/BottomTabBar";
 import RevealAnimation from "@/components/pick/RevealAnimation";
-import type { TabId } from "@/components/pick/BottomTabBar";
 import type { ChatMessage } from "@/components/pick/VoiceChat";
 import StepLayout from "@/components/pick/StepLayout";
 import BrandHeader from "@/components/pick/BrandHeader";
@@ -40,7 +38,6 @@ const slideVariants = {
 };
 
 const Index = () => {
-  const [activeTab, setActiveTab] = useState<TabId>("home");
   const [step, setStep] = useState<Step>("home");
   const [mood, setMood] = useState<Mood | null>(null);
   const [context, setContext] = useState<Context | null>(null);
@@ -58,14 +55,11 @@ const Index = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  // Load profile preferences
   useEffect(() => {
     if (!user) return;
     supabase.from("profiles").select("onboarding_completed, preferred_platforms, excluded_platforms, favorite_genres, excluded_genres, min_rating, profile_confidence").eq("id", user.id).single()
       .then(({ data }) => {
-        if (data && !data.onboarding_completed) {
-          navigate("/onboarding");
-        }
+        if (data && !data.onboarding_completed) navigate("/onboarding");
         if (data) {
           setProfilePrefs({
             excludedGenres: (data as any).excluded_genres || [],
@@ -107,10 +101,7 @@ const Index = () => {
     if (timeEntry) setTime(null);
   };
 
-  const handleStart = () => {
-    setActiveTab("discover");
-    setStep("mood");
-  };
+  const handleStart = () => setStep("mood");
 
   const handleSurprise = (movie: MovieDetail) => {
     setResults([movie]);
@@ -133,37 +124,23 @@ const Index = () => {
   const handleRefineWithVoice = () => {
     const currentMovie = results[currentResultIndex];
     if (!currentMovie) return;
-    const contextMessages: ChatMessage[] = [
+    setChatInitialMessages([
       { role: "assistant", content: `Je t'ai recommandé **${getDisplayTitle(currentMovie)}**. Dis-moi ce qui ne te convient pas et je te trouverai quelque chose de mieux !` },
-    ];
-    setChatInitialMessages(contextMessages);
+    ]);
     setShowChat(true);
   };
 
   const handleMovieSuggested = (movie: MovieDetail, recapTags?: string[]) => {
     setResults([movie]);
     setCurrentResultIndex(0);
-    if (recapTags && recapTags.length > 0) {
-      setSearchTags(recapTags);
-    }
+    if (recapTags && recapTags.length > 0) setSearchTags(recapTags);
     setShowChat(false);
     setStep("result");
   };
 
-  const handleMoodSelect = (m: Mood | null) => {
-    if (m) setMood(m);
-    setStep("context");
-  };
-
-  const handleContextSelect = (c: Context | null) => {
-    if (c) setContext(c);
-    setStep("time");
-  };
-
-  const handleTimeSelect = (t: TimeAvailable | null) => {
-    if (t) setTime(t);
-    setStep("platforms");
-  };
+  const handleMoodSelect = (m: Mood | null) => { if (m) setMood(m); setStep("context"); };
+  const handleContextSelect = (c: Context | null) => { if (c) setContext(c); setStep("time"); };
+  const handleTimeSelect = (t: TimeAvailable | null) => { if (t) setTime(t); setStep("platforms"); };
 
   const handlePlatformSelect = async (platformIds: number[]) => {
     setSelectedPlatformIds(platformIds);
@@ -183,34 +160,24 @@ const Index = () => {
       setResults(recs);
       setCurrentResultIndex(0);
       setStep("result");
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoading(false);
-      setLoadingMessage("");
-    }
+    } catch (e) { console.error(e); }
+    finally { setLoading(false); setLoadingMessage(""); }
   };
 
   const handleShowAnother = async (rejectReason?: string, rejectedMovie?: MovieDetail) => {
     const currentMovie = results[currentResultIndex];
     if (currentMovie) {
       trackInteraction(currentMovie.id, "skipped", { mood, context, time });
-      // Record as skipped for engagement tracking
       if (user) recordSkippedRecommendation(user.id);
     }
-
     if (currentResultIndex < results.length - 1 && !rejectReason) {
       setCurrentResultIndex(i => i + 1);
     } else {
       setLoading(true);
       try {
         const tasteProfile = await getUserTasteProfile();
-        const excludeIds = [
-          ...results.map(r => r.id),
-          ...(tasteProfile?.excludeIds || []),
-        ];
+        const excludeIds = [...results.map(r => r.id), ...(tasteProfile?.excludeIds || [])];
         const mergedPlatforms = selectedPlatformIds.length > 0 ? selectedPlatformIds : profilePrefs.preferredPlatforms;
-
         const rejectionContext = rejectReason && rejectedMovie ? {
           reason: rejectReason,
           rejectedGenres: (rejectedMovie.genres || []).map(g => g.name),
@@ -218,20 +185,13 @@ const Index = () => {
           rejectedRating: rejectedMovie.vote_average,
           rejectedRuntime: rejectedMovie.runtime,
         } : undefined;
-
         const recs = await getRecommendations(
           mood || "easy-watch", context || "alone", time || "movie-night", mergedPlatforms, excludeIds,
           { excludedGenres: profilePrefs.excludedGenres, minRating: profilePrefs.minRating, rejectionContext }
         );
-        if (recs.length > 0) {
-          setResults(prev => [...prev, ...recs]);
-          setCurrentResultIndex(i => i + 1);
-        }
-      } catch (e) {
-        console.error(e);
-      } finally {
-        setLoading(false);
-      }
+        if (recs.length > 0) { setResults(prev => [...prev, ...recs]); setCurrentResultIndex(i => i + 1); }
+      } catch (e) { console.error(e); }
+      finally { setLoading(false); }
     }
   };
 
@@ -239,7 +199,6 @@ const Index = () => {
     const currentMovie = results[currentResultIndex];
     if (currentMovie) {
       trackInteraction(currentMovie.id, "watched", { mood, context, time });
-      // Record as accepted recommendation for engagement tracking
       if (user) recordAcceptedRecommendation(user.id);
     }
     setShowCompanion(true);
@@ -247,86 +206,37 @@ const Index = () => {
 
   const handleRestart = () => {
     setStep("home");
-    setActiveTab("home");
-    setMood(null);
-    setContext(null);
-    setTime(null);
-    setSelectedPlatformIds([]);
-    setResults([]);
-    setCurrentResultIndex(0);
-    setSearchTags([]);
-  };
-
-  const handleTabChange = (tab: TabId) => {
-    if (tab === "home") {
-      if (step === "result") {
-        // Don't reset results, just switch view
-      }
-      setActiveTab("home");
-      if (step !== "result") setStep("home");
-    } else if (tab === "discover") {
-      navigate("/app/my-cinema");
-      return;
-    } else if (tab === "watchlist") {
-      setActiveTab("watchlist");
-    } else if (tab === "profile") {
-      navigate("/profile");
-    }
+    setMood(null); setContext(null); setTime(null);
+    setSelectedPlatformIds([]); setResults([]); setCurrentResultIndex(0); setSearchTags([]);
   };
 
   const currentStepNumber = getStepNumber(step);
   const isQuestionStep = currentStepNumber > 0;
-  const showTabBar = step === "home" || activeTab === "watchlist";
+  const showTabBar = step === "home";
 
   const renderStep = () => {
     switch (step) {
-      case "mood":
-        return <MoodStep onSelect={handleMoodSelect} onSkip={() => handleMoodSelect(null)} />;
-      case "context":
-        return <ContextStep onSelect={handleContextSelect} onSkip={() => handleContextSelect(null)} />;
-      case "time":
-        return <TimeStep onSelect={handleTimeSelect} onSkip={() => handleTimeSelect(null)} loading={false} />;
-      case "platforms":
-        return <PlatformStep onSelect={handlePlatformSelect} loading={loading} loadingMessage={loadingMessage} />;
-      default:
-        return null;
+      case "mood": return <MoodStep onSelect={handleMoodSelect} onSkip={() => handleMoodSelect(null)} />;
+      case "context": return <ContextStep onSelect={handleContextSelect} onSkip={() => handleContextSelect(null)} />;
+      case "time": return <TimeStep onSelect={handleTimeSelect} onSkip={() => handleTimeSelect(null)} loading={false} />;
+      case "platforms": return <PlatformStep onSelect={handlePlatformSelect} loading={loading} loadingMessage={loadingMessage} />;
+      default: return null;
     }
   };
 
   return (
     <div className="fixed inset-0 bg-background overflow-hidden">
       <AnimatePresence mode="wait">
-        {/* HOME tab */}
-        {activeTab === "home" && step === "home" && (
-          <motion.div
-            key="home"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.4 }}
+        {step === "home" && (
+          <motion.div key="home" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.4 }}
             className="absolute inset-0 pb-[calc(3.5rem+env(safe-area-inset-bottom))]"
           >
-            <HomeScreen
-              onStart={handleStart}
-              onOpenChat={handleOpenChat}
-              onSurprise={handleSurprise}
-              onMovieSelect={handleMovieSelect}
-              loading={loading}
-            />
+            <HomeScreen onStart={handleStart} onOpenChat={handleOpenChat} onSurprise={handleSurprise} onMovieSelect={handleMovieSelect} loading={loading} />
           </motion.div>
         )}
 
-        {/* DISCOVER tab — questionnaire steps */}
         {isQuestionStep && step !== "result" && (
-          <motion.div
-            key={step}
-            variants={slideVariants}
-            initial="enter"
-            animate="center"
-            exit="exit"
-            transition={{ duration: 0.35, ease: "easeOut" }}
-            className="absolute inset-0"
-          >
+          <motion.div key={step} variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.35, ease: "easeOut" }} className="absolute inset-0">
             <BrandHeader showBack onBack={handleRestart} />
             <StepLayout currentStep={currentStepNumber} totalSteps={TOTAL_STEPS}>
               {renderStep()}
@@ -334,16 +244,8 @@ const Index = () => {
           </motion.div>
         )}
 
-        {/* RESULT screen */}
         {step === "result" && results.length > 0 && (
-          <motion.div
-            key="result"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.4 }}
-            className="absolute inset-0"
-          >
+          <motion.div key="result" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.4 }} className="absolute inset-0">
             <ResultScreen
               movie={results[currentResultIndex]}
               onShowAnother={handleShowAnother}
@@ -354,34 +256,21 @@ const Index = () => {
                 if (!currentMovie) return;
                 const shortLabel = message.replace(/^(Je veux |Je préfère |Montre-moi )/i, "").toLowerCase();
                 setSearchTags(prev => prev.includes(shortLabel) ? prev : [...prev, shortLabel]);
-                setLoading(true);
-                setLoadingMessage("Pick cherche mieux…");
+                setLoading(true); setLoadingMessage("Pick cherche mieux…");
                 try {
                   const contextMessages = [
                     { role: "assistant" as const, content: `Je t'ai recommandé **${getDisplayTitle(currentMovie)}**.` },
                     { role: "user" as const, content: message },
                   ];
-                  const { data, error } = await supabase.functions.invoke("movie-chat", {
-                    body: { messages: contextMessages },
-                  });
+                  const { data, error } = await supabase.functions.invoke("movie-chat", { body: { messages: contextMessages } });
                   if (error) throw error;
                   if (data?.movie) {
-                    if (data.recap && data.recap.length > 0) {
-                      setSearchTags(prev => {
-                        const merged = [...prev];
-                        data.recap.forEach((t: string) => { if (!merged.includes(t)) merged.push(t); });
-                        return merged;
-                      });
-                    }
+                    if (data.recap?.length > 0) setSearchTags(prev => { const merged = [...prev]; data.recap.forEach((t: string) => { if (!merged.includes(t)) merged.push(t); }); return merged; });
                     setResults(prev => [...prev, data.movie]);
                     setCurrentResultIndex(results.length);
                   }
-                } catch (e) {
-                  console.error("Refine error:", e);
-                } finally {
-                  setLoading(false);
-                  setLoadingMessage("");
-                }
+                } catch (e) { console.error("Refine error:", e); }
+                finally { setLoading(false); setLoadingMessage(""); }
               }}
               onStartCompanion={handleStartCompanion}
               hasMore={currentResultIndex < results.length - 1}
@@ -398,51 +287,20 @@ const Index = () => {
             />
           </motion.div>
         )}
-
-        {/* WATCHLIST tab */}
-        {activeTab === "watchlist" && step !== "result" && (
-          <motion.div
-            key="watchlist"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
-            className="absolute inset-0 pb-[calc(3.5rem+env(safe-area-inset-bottom))]"
-          >
-            <WatchlistPage onMovieSelect={handleMovieSelect} />
-          </motion.div>
-        )}
       </AnimatePresence>
 
-      {/* Bottom Tab Bar */}
-      {showTabBar && (
-        <BottomTabBar activeTab={activeTab} onTabChange={handleTabChange} />
-      )}
+      {showTabBar && <BottomTabBar />}
 
-      {/* Cinematic reveal animation */}
       <AnimatePresence>
-        {loading && step !== "result" && (
-          <RevealAnimation active={loading} message={loadingMessage || undefined} />
-        )}
+        {loading && step !== "result" && <RevealAnimation active={loading} message={loadingMessage || undefined} />}
       </AnimatePresence>
 
       <AnimatePresence>
-        {showChat && (
-          <VoiceChat
-            onClose={handleCloseChat}
-            onMovieSuggested={handleMovieSuggested}
-            initialMessages={chatInitialMessages}
-          />
-        )}
+        {showChat && <VoiceChat onClose={handleCloseChat} onMovieSuggested={handleMovieSuggested} initialMessages={chatInitialMessages} />}
       </AnimatePresence>
 
       <AnimatePresence>
-        {showCompanion && results[currentResultIndex] && (
-          <CompanionMode
-            movie={results[currentResultIndex]}
-            onClose={() => setShowCompanion(false)}
-          />
-        )}
+        {showCompanion && results[currentResultIndex] && <CompanionMode movie={results[currentResultIndex]} onClose={() => setShowCompanion(false)} />}
       </AnimatePresence>
     </div>
   );

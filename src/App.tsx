@@ -12,6 +12,7 @@ import Profile from "./pages/Profile.tsx";
 import MyCinema from "./pages/MyCinema.tsx";
 import Glossary from "./pages/Glossary.tsx";
 import NotFound from "./pages/NotFound.tsx";
+import WatchlistPageRoute from "./pages/WatchlistRoute.tsx";
 
 const queryClient = new QueryClient();
 
@@ -46,9 +47,12 @@ const App = () => (
           <Route path="/app" element={<AppRoute />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
-          <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+          <Route path="/app/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
           <Route path="/app/my-cinema" element={<ProtectedRoute><MyCinema /></ProtectedRoute>} />
+          <Route path="/app/watchlist" element={<ProtectedRoute><WatchlistPageRoute /></ProtectedRoute>} />
           <Route path="/glossary" element={<ProtectedRoute><Glossary /></ProtectedRoute>} />
+          {/* Legacy redirects */}
+          <Route path="/profile" element={<Navigate to="/app/profile" replace />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
