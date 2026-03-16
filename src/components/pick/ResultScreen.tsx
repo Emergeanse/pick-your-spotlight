@@ -1195,6 +1195,174 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Bottom Sheet: Post-watch review */}
+      <AnimatePresence>
+        {showReviewSheet && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-50 bg-background/60 backdrop-blur-sm"
+              onClick={() => setShowReviewSheet(false)}
+            />
+            <motion.div
+              initial={{ y: "100%" }}
+              animate={{ y: 0 }}
+              exit={{ y: "100%" }}
+              transition={{ type: "spring", damping: 28, stiffness: 300 }}
+              className="fixed bottom-0 left-0 right-0 z-50 bg-card border-t border-border/20 rounded-t-2xl pb-[env(safe-area-inset-bottom)]"
+            >
+              <div className="flex justify-center pt-3 pb-1">
+                <div className="w-10 h-1 rounded-full bg-foreground/15" />
+              </div>
+              <div className="px-5 pb-5 pt-2">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <PickCharacter mood="default" size="sm" animate={false} />
+                    <div>
+                      <p className="text-sm font-sans font-semibold text-foreground">T'en as pensé quoi ?</p>
+                      <p className="text-foreground/40 text-[11px] font-sans">Tes retours aident Pick à mieux te connaître</p>
+                    </div>
+                  </div>
+                  <button onClick={() => setShowReviewSheet(false)} className="text-foreground/30 hover:text-foreground transition-colors">
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+
+                {reviewSubmitted ? (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="flex items-center gap-2 py-4 justify-center"
+                  >
+                    <Check className="w-5 h-5 text-primary" />
+                    <p className="text-foreground/60 text-sm font-sans">Merci ! Pick en prend note 🧠</p>
+                  </motion.div>
+                ) : (
+                  <>
+                    <form
+                      onSubmit={async (e) => {
+                        e.preventDefault();
+                        const text = reviewText.trim();
+                        if (!text) return;
+                        setReviewSubmitting(true);
+                        try {
+                          await trackInteraction(movie.id, "reviewed", {
+                            mood: userCriteria?.mood,
+                            context: userCriteria?.context,
+                            time: userCriteria?.time,
+                            review: text,
+                          });
+                          setReviewSubmitted(true);
+                          toast.success("Avis enregistré !");
+                        } catch {
+                          toast.error("Erreur lors de l'envoi");
+                        } finally {
+                          setReviewSubmitting(false);
+                        }
+                      }}
+                      className="space-y-3"
+                    >
+                      <textarea
+                        value={reviewText}
+                        onChange={(e) => setReviewText(e.target.value)}
+                        placeholder="Dis ce que tu as aimé ou pas, ce que tu as ressenti…"
+                        className="w-full px-4 py-3 rounded-xl bg-foreground/[0.05] border border-border/30 text-foreground text-[13px] font-sans placeholder:text-foreground/30 focus:outline-none focus:border-primary/40 focus:bg-foreground/[0.08] transition-all resize-none min-h-[80px]"
+                        autoFocus
+                      />
+                      <div className="flex items-center gap-2">
+                        {/* Voice input */}
+                        <button
+                          type="button"
+                          disabled={reviewVoiceProcessing}
+                          onClick={async () => {
+                            if (reviewVoiceListening) {
+                              reviewRecorderRef.current?.stop();
+                              setReviewVoiceListening(false);
+                              return;
+                            }
+                            try {
+                              const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                              const recorder = new MediaRecorder(stream, { mimeType: MediaRecorder.isTypeSupported("audio/webm") ? "audio/webm" : "audio/mp4" });
+                              reviewChunksRef.current = [];
+                              recorder.ondataavailable = (ev) => { if (ev.data.size > 0) reviewChunksRef.current.push(ev.data); };
+                              recorder.onstop = async () => {
+                                stream.getTracks().forEach(t => t.stop());
+                                setReviewVoiceListening(false);
+                                setReviewVoiceProcessing(true);
+                                try {
+                                  const blob = new Blob(reviewChunksRef.current, { type: recorder.mimeType });
+                                  const formData = new FormData();
+                                  formData.append("audio", blob, "audio.webm");
+                                  const sttResp = await fetch(
+                                    `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/voice-refine`,
+                                    {
+                                      method: "POST",
+                                      headers: {
+                                        apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+                                        Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+                                      },
+                                      body: formData,
+                                    }
+                                  );
+                                  if (!sttResp.ok) throw new Error("STT failed");
+                                  const sttData = await sttResp.json();
+                                  const transcript = sttData.text?.trim();
+                                  if (transcript) {
+                                    setReviewText(prev => prev ? `${prev} ${transcript}` : transcript);
+                                  } else {
+                                    toast.error("Je n'ai rien entendu, réessaie.");
+                                  }
+                                } catch {
+                                  toast.error("Erreur de reconnaissance vocale");
+                                } finally {
+                                  setReviewVoiceProcessing(false);
+                                }
+                              };
+                              reviewRecorderRef.current = recorder;
+                              recorder.start();
+                              setReviewVoiceListening(true);
+                            } catch {
+                              toast.error("Impossible d'accéder au micro");
+                            }
+                          }}
+                          className={`flex-shrink-0 w-10 h-10 rounded-full border flex items-center justify-center transition-all active:scale-95 ${
+                            reviewVoiceListening
+                              ? "bg-destructive/20 border-destructive/40 text-destructive animate-pulse"
+                              : reviewVoiceProcessing
+                                ? "bg-primary/10 border-primary/20 text-primary/50"
+                                : "bg-primary/20 border-primary/30 text-primary hover:bg-primary/30"
+                          }`}
+                        >
+                          {reviewVoiceProcessing ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : reviewVoiceListening ? (
+                            <MicOff className="w-4 h-4" />
+                          ) : (
+                            <Mic className="w-4 h-4" />
+                          )}
+                        </button>
+                        <span className="text-[11px] text-foreground/30 font-sans">ou dicte ton avis</span>
+                        <div className="flex-1" />
+                        <button
+                          type="submit"
+                          disabled={!reviewText.trim() || reviewSubmitting}
+                          className="flex items-center gap-1.5 px-4 h-10 rounded-full bg-primary text-primary-foreground text-sm font-sans font-medium disabled:opacity-50 transition-all active:scale-95"
+                        >
+                          {reviewSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                          Envoyer
+                        </button>
+                      </div>
+                    </form>
+                  </>
+                )}
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   );
 });
