@@ -11,6 +11,7 @@ import Onboarding from "./pages/Onboarding.tsx";
 import Profile from "./pages/Profile.tsx";
 import MyCinema from "./pages/MyCinema.tsx";
 import Glossary from "./pages/Glossary.tsx";
+import PickPlusPage from "./pages/PickPlus.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import WatchlistPageRoute from "./pages/WatchlistRoute.tsx";
 
