@@ -159,6 +159,11 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
     ].filter(Boolean).join(". ");
     if (!textToRead) return;
     setWhyAudioLoading(true);
+
+    // Prime an Audio object WITHIN the user gesture to satisfy iOS Safari autoplay policy
+    const audio = new Audio();
+    audio.volume = 1;
+
     try {
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/pick-tts`,
@@ -178,7 +183,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
       }
       const blob = await response.blob();
       const url = URL.createObjectURL(blob);
-      const audio = new Audio(url);
+      audio.src = url;
       setWhySpeaking(true);
       audio.onended = () => { setWhySpeaking(false); URL.revokeObjectURL(url); };
       audio.onerror = () => { setWhySpeaking(false); URL.revokeObjectURL(url); };

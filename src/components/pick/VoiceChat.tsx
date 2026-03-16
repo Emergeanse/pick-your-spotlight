@@ -133,23 +133,19 @@ const VoiceChat = ({ onClose, onMovieSuggested, initialMessages }: VoiceChatProp
     },
     onCommittedTranscript: (data) => {
       if (data.text.trim()) {
-        committedTextRef.current = data.text.trim();
+        // Set final text in input field and stop mic — let user review & send manually
+        const finalText = data.text.trim();
+        setInputText(finalText);
         setPartialText("");
-        pendingSendRef.current = true;
+        scribe.disconnect();
+        setPhase("idle");
+        // Focus the text input so user can send or edit
+        setTimeout(() => inputRef.current?.focus(), 100);
       }
     },
   });
 
-  // Handle auto-send when committed text arrives
-  useEffect(() => {
-    if (pendingSendRef.current && committedTextRef.current) {
-      pendingSendRef.current = false;
-      const text = committedTextRef.current;
-      committedTextRef.current = "";
-      stopListening();
-      handleSend(text);
-    }
-  }, [partialText]);
+  // No auto-send — user presses Send or Enter after voice input
 
   const sendToAI = useCallback(async (text: string) => {
     setPhase("processing");
