@@ -2,7 +2,7 @@ import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion"
 import { useNavigate } from "react-router-dom";
 import { useRef, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Target, Dice5, Mic, Brain, Tv, ChevronDown, Clapperboard, MessageCircle, Volume2, Zap, SlidersHorizontal } from "lucide-react";
+import { Sparkles, Target, Dice5, Mic, Brain, Tv, ChevronDown, Clapperboard, MessageCircle, Volume2, Zap, SlidersHorizontal, Crown, Check, X as XIcon } from "lucide-react";
 import pickLogo from "@/assets/pick-logo.png";
 import pickWave from "@/assets/pick-squirrel-wave.png";
 import pickThink from "@/assets/pick-squirrel-think.png";
