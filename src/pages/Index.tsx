@@ -79,6 +79,7 @@ const Index = () => {
     }
   }, []);
 
+  useEffect(() => {
     if (!user) return;
     supabase.from("profiles").select("onboarding_completed, preferred_platforms, excluded_platforms, favorite_genres, excluded_genres, min_rating, profile_confidence").eq("id", user.id).single()
       .then(({ data }) => {
