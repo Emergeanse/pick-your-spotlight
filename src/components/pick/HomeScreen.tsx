@@ -92,7 +92,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
   const [userGenres, setUserGenres] = useState<string[]>([]);
   const [userExcludedGenres, setUserExcludedGenres] = useState<string[]>([]);
   const [userMinRating, setUserMinRating] = useState<number>(0);
-  const [showDNA, setShowDNA] = useState(false);
+  
   const [rejectedIds, setRejectedIds] = useState<number[]>([]);
   const [engagement, setEngagement] = useState<EngagementData | null>(null);
   const [progressionMsg, setProgressionMsg] = useState<string | null>(null);
