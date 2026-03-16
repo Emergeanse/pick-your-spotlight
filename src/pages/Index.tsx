@@ -264,8 +264,8 @@ const Index = () => {
       setActiveTab("home");
       if (step !== "result") setStep("home");
     } else if (tab === "discover") {
-      setActiveTab("discover");
-      if (step === "home") setStep("mood");
+      navigate("/app/my-cinema");
+      return;
     } else if (tab === "watchlist") {
       setActiveTab("watchlist");
     } else if (tab === "profile") {

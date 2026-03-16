@@ -13,7 +13,7 @@ import BrandHeader from "./BrandHeader";
 import DiscoverySection from "./DiscoverySection";
 import PickCharacter from "./PickCharacter";
 
-import CinemaDNA from "./CinemaDNA";
+
 
 interface HomeScreenProps {
   onStart: () => void;
@@ -92,7 +92,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
   const [userGenres, setUserGenres] = useState<string[]>([]);
   const [userExcludedGenres, setUserExcludedGenres] = useState<string[]>([]);
   const [userMinRating, setUserMinRating] = useState<number>(0);
-  const [showDNA, setShowDNA] = useState(false);
+  
   const [rejectedIds, setRejectedIds] = useState<number[]>([]);
   const [engagement, setEngagement] = useState<EngagementData | null>(null);
   const [progressionMsg, setProgressionMsg] = useState<string | null>(null);
@@ -281,9 +281,8 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
 
   return (
     <div className="relative w-full h-full overflow-hidden">
-      <BrandHeader
-        onOpenDNA={() => setShowDNA(true)}
-      />
+      <BrandHeader />
+
 
       {/* Background slideshow */}
       {bgImages.map((bg, i) => (
@@ -484,17 +483,8 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
 
               </div>
 
-              {/* DNA Teaser Card */}
-              {user && (
-                <motion.div
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.6 }}
-                  className="w-full flex justify-center mt-2"
-                >
-                  <CinemaDNA userId={user.id} teaser onOpenFull={() => setShowDNA(true)} />
-                </motion.div>
-              )}
+
+
 
               {/* Platform logos */}
               <motion.div
@@ -529,37 +519,8 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
         </div>
       </div>
 
-      {/* ADN Cinéma — immersive full-screen overlay */}
-      <AnimatePresence>
-        {showDNA && user && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50"
-          >
-            <div className="absolute inset-0 bg-background/95 backdrop-blur-xl" />
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 20 }}
-              transition={{ type: "spring", damping: 25, stiffness: 180 }}
-              className="relative z-10 h-full overflow-y-auto"
-            >
-              {/* Close button */}
-              <div className="sticky top-0 z-20 flex justify-end p-4 pt-[calc(0.5rem+env(safe-area-inset-top))]">
-                <button
-                  onClick={() => setShowDNA(false)}
-                  className="w-9 h-9 rounded-full bg-foreground/[0.06] border border-border/20 flex items-center justify-center text-foreground/40 hover:text-foreground hover:bg-foreground/10 transition-all"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-              <CinemaDNA userId={user.id} />
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+
+
 
       {/* Tonight loading overlay with Pick */}
       <AnimatePresence>
