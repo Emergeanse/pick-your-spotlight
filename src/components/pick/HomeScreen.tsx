@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Mic, Dices, Tv, Sparkles, Loader2, Zap, Flame, Target, Trophy, Shuffle } from "lucide-react";
 import { getTrendingMovies, getBackdropUrl, getSurpriseRecommendation, getPosterUrl, getDisplayTitle, getWatchProviders } from "@/lib/tmdb";
 import { getLikedMovies } from "@/lib/liked-movies";
+import { trackInteraction } from "@/lib/interactions";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { computeUserTasteVector } from "@/lib/taste-engine";
