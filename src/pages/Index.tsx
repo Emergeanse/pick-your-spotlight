@@ -9,6 +9,9 @@ import PlatformStep from "@/components/pick/PlatformStep";
 import ResultScreen from "@/components/pick/ResultScreen";
 import VoiceChat from "@/components/pick/VoiceChat";
 import CompanionMode from "@/components/pick/CompanionMode";
+import WatchlistPage from "@/components/pick/WatchlistPage";
+import BottomTabBar from "@/components/pick/BottomTabBar";
+import type { TabId } from "@/components/pick/BottomTabBar";
 import type { ChatMessage } from "@/components/pick/VoiceChat";
 import StepLayout from "@/components/pick/StepLayout";
 import BrandHeader from "@/components/pick/BrandHeader";
@@ -35,6 +38,7 @@ const slideVariants = {
 };
 
 const Index = () => {
+  const [activeTab, setActiveTab] = useState<TabId>("home");
   const [step, setStep] = useState<Step>("home");
   const [mood, setMood] = useState<Mood | null>(null);
   const [context, setContext] = useState<Context | null>(null);
@@ -92,7 +96,6 @@ const Index = () => {
 
   const handleRemoveTag = (tag: string) => {
     setSearchTags(prev => prev.filter(t => t !== tag));
-    // Reset the corresponding criteria
     const moodEntry = Object.entries(MOOD_LABELS).find(([, v]) => v === tag);
     if (moodEntry) setMood(null);
     const ctxEntry = Object.entries(CONTEXT_LABELS).find(([, v]) => v === tag);
@@ -101,7 +104,10 @@ const Index = () => {
     if (timeEntry) setTime(null);
   };
 
-  const handleStart = () => setStep("mood");
+  const handleStart = () => {
+    setActiveTab("discover");
+    setStep("mood");
+  };
 
   const handleSurprise = (movie: MovieDetail) => {
     setResults([movie]);
@@ -164,7 +170,6 @@ const Index = () => {
     try {
       await new Promise(r => setTimeout(r, 400));
       setLoadingMessage("Recherche du film idéal…");
-      // Merge user-selected platforms with profile preferred platforms
       const mergedPlatforms = platformIds.length > 0 ? platformIds : profilePrefs.preferredPlatforms;
       const recs = await getRecommendations(
         mood || "easy-watch", context || "alone", time || "movie-night", mergedPlatforms, [],
@@ -184,7 +189,6 @@ const Index = () => {
   };
 
   const handleShowAnother = async (rejectReason?: string, rejectedMovie?: MovieDetail) => {
-    // Track skip on current movie
     const currentMovie = results[currentResultIndex];
     if (currentMovie) {
       trackInteraction(currentMovie.id, "skipped", { mood, context, time });
@@ -202,7 +206,6 @@ const Index = () => {
         ];
         const mergedPlatforms = selectedPlatformIds.length > 0 ? selectedPlatformIds : profilePrefs.preferredPlatforms;
 
-        // Build rejection context for smarter next pick
         const rejectionContext = rejectReason && rejectedMovie ? {
           reason: rejectReason,
           rejectedGenres: (rejectedMovie.genres || []).map(g => g.name),
@@ -237,6 +240,7 @@ const Index = () => {
 
   const handleRestart = () => {
     setStep("home");
+    setActiveTab("home");
     setMood(null);
     setContext(null);
     setTime(null);
@@ -246,8 +250,26 @@ const Index = () => {
     setSearchTags([]);
   };
 
+  const handleTabChange = (tab: TabId) => {
+    if (tab === "home") {
+      if (step === "result") {
+        // Don't reset results, just switch view
+      }
+      setActiveTab("home");
+      if (step !== "result") setStep("home");
+    } else if (tab === "discover") {
+      setActiveTab("discover");
+      if (step === "home") setStep("mood");
+    } else if (tab === "watchlist") {
+      setActiveTab("watchlist");
+    } else if (tab === "profile") {
+      navigate("/profile");
+    }
+  };
+
   const currentStepNumber = getStepNumber(step);
   const isQuestionStep = currentStepNumber > 0;
+  const showTabBar = step === "home" || activeTab === "watchlist";
 
   const renderStep = () => {
     switch (step) {
@@ -267,14 +289,15 @@ const Index = () => {
   return (
     <div className="fixed inset-0 bg-background overflow-hidden">
       <AnimatePresence mode="wait">
-        {step === "home" && (
+        {/* HOME tab */}
+        {activeTab === "home" && step === "home" && (
           <motion.div
             key="home"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.4 }}
-            className="absolute inset-0"
+            className="absolute inset-0 pb-[calc(3.5rem+env(safe-area-inset-bottom))]"
           >
             <HomeScreen
               onStart={handleStart}
@@ -286,7 +309,8 @@ const Index = () => {
           </motion.div>
         )}
 
-        {isQuestionStep && (
+        {/* DISCOVER tab — questionnaire steps */}
+        {isQuestionStep && step !== "result" && (
           <motion.div
             key={step}
             variants={slideVariants}
@@ -303,6 +327,7 @@ const Index = () => {
           </motion.div>
         )}
 
+        {/* RESULT screen */}
         {step === "result" && results.length > 0 && (
           <motion.div
             key="result"
@@ -320,10 +345,8 @@ const Index = () => {
               onRefineWithMessage={async (message) => {
                 const currentMovie = results[currentResultIndex];
                 if (!currentMovie) return;
-                // Add refinement as a search tag
                 const shortLabel = message.replace(/^(Je veux |Je préfère |Montre-moi )/i, "").toLowerCase();
                 setSearchTags(prev => prev.includes(shortLabel) ? prev : [...prev, shortLabel]);
-                // Call AI directly to get a new suggestion
                 setLoading(true);
                 setLoadingMessage("Pick cherche mieux…");
                 try {
@@ -367,7 +390,26 @@ const Index = () => {
             />
           </motion.div>
         )}
+
+        {/* WATCHLIST tab */}
+        {activeTab === "watchlist" && step !== "result" && (
+          <motion.div
+            key="watchlist"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="absolute inset-0 pb-[calc(3.5rem+env(safe-area-inset-bottom))]"
+          >
+            <WatchlistPage onMovieSelect={handleMovieSelect} />
+          </motion.div>
+        )}
       </AnimatePresence>
+
+      {/* Bottom Tab Bar */}
+      {showTabBar && (
+        <BottomTabBar activeTab={activeTab} onTabChange={handleTabChange} />
+      )}
 
       <AnimatePresence>
         {showChat && (
