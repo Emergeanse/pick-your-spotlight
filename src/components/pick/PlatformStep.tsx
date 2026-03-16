@@ -38,7 +38,6 @@ const PlatformStep = ({ onSelect, loading, loadingMessage }: PlatformStepProps) 
   const [selected, setSelected] = useState<number[]>([]);
   const { user } = useAuth();
 
-  // Preload user's saved platforms
   useEffect(() => {
     if (!user) return;
     supabase.from("profiles").select("preferred_platforms").eq("id", user.id).single()
@@ -95,7 +94,8 @@ const PlatformStep = ({ onSelect, loading, loadingMessage }: PlatformStepProps) 
               Sélectionne tes abonnements pour des suggestions adaptées
             </motion.p>
 
-            <div className="grid grid-cols-4 gap-2 md:gap-4 max-w-xl w-full mb-6 md:mb-10">
+            {/* 3 columns on mobile (44px+ touch targets), 4 on md+ */}
+            <div className="grid grid-cols-3 md:grid-cols-4 gap-2.5 md:gap-4 max-w-xl w-full mb-6 md:mb-10">
               {platforms.map((platform, i) => {
                 const isSelected = selected.includes(platform.id);
                 return (
@@ -106,7 +106,7 @@ const PlatformStep = ({ onSelect, loading, loadingMessage }: PlatformStepProps) 
                     whileTap={{ scale: 0.95 }}
                     transition={{ delay: i * 0.04, duration: 0.3, ease: "easeOut" }}
                     onClick={() => toggle(platform.id)}
-                    className={`relative bg-card rounded-xl md:rounded-2xl p-2.5 md:p-5 flex flex-col items-center gap-1.5 md:gap-2.5 transition-all duration-200 hover:scale-[1.02] cursor-pointer border ${
+                    className={`relative bg-card rounded-xl md:rounded-2xl p-3 md:p-5 flex flex-col items-center gap-2 md:gap-2.5 transition-all duration-200 hover:scale-[1.02] cursor-pointer border min-h-[72px] ${
                       isSelected
                         ? "border-primary neon-glow"
                         : "border-transparent hover:border-primary/30"
@@ -116,7 +116,7 @@ const PlatformStep = ({ onSelect, loading, loadingMessage }: PlatformStepProps) 
                       <motion.div
                         initial={{ scale: 0 }}
                         animate={{ scale: 1 }}
-                        className="absolute top-1 right-1 md:top-2 md:right-2 w-4 h-4 md:w-5 md:h-5 rounded-full bg-primary flex items-center justify-center"
+                        className="absolute top-1.5 right-1.5 md:top-2 md:right-2 w-4 h-4 md:w-5 md:h-5 rounded-full bg-primary flex items-center justify-center"
                       >
                         <Check className="w-2.5 h-2.5 md:w-3 md:h-3 text-primary-foreground" />
                       </motion.div>
@@ -124,7 +124,7 @@ const PlatformStep = ({ onSelect, loading, loadingMessage }: PlatformStepProps) 
                     <img
                       src={platform.logo}
                       alt={platform.label}
-                      className="w-8 h-8 md:w-12 md:h-12 rounded-lg object-cover"
+                      className="w-10 h-10 md:w-12 md:h-12 rounded-lg object-cover"
                     />
                     <span className="font-sans text-[10px] md:text-sm tracking-wide text-foreground/90 leading-tight text-center">
                       {platform.label}
