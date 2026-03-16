@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Send, Shield, ShieldAlert, ShieldOff, Clock, Sparkles, User, Clapperboard, Music, Eye, Star, ChevronDown, MessageCircle } from "lucide-react";
+import { ArrowLeft, Send, Shield, ShieldAlert, ShieldOff, Clock, Sparkles, User, Clapperboard, Music, Eye, Star, ChevronDown, MessageCircle, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ReactMarkdown from "react-markdown";
 import type { MovieDetail } from "@/lib/tmdb";
