@@ -93,6 +93,14 @@ const Profile = () => {
         setLikedMovies(liked);
         setWatchlist(wl);
 
+        // Load engagement data
+        const engData = await getEngagementData(user.id);
+        if (engData) {
+          setEngagement(engData);
+          setRitualTime(engData.ritualTime || "20:30");
+          setRitualEnabled(engData.ritualEnabled);
+        }
+
       } catch (e) {
         console.error(e);
       } finally {
