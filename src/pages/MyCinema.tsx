@@ -42,8 +42,12 @@ const MyCinema = () => {
     if (!user) return;
     setLoading(true);
     try {
-      const data = await getEngagementData(user.id);
-      setEngagement(data);
+      const [engData, likedData] = await Promise.all([
+        getEngagementData(user.id),
+        supabase.from("liked_movies").select("id", { count: "exact", head: true }).eq("user_id", user.id),
+      ]);
+      setEngagement(engData);
+      setLikedCount(likedData.count || 0);
     } catch (e) {
       console.error(e);
     } finally {
