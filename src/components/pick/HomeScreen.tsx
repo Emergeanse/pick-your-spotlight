@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Mic, Dices, Tv, Sparkles, Loader2, Zap, Flame, Target, Trophy, Shuffle } from "lucide-react";
 import { getTrendingMovies, getBackdropUrl, getSurpriseRecommendation, getPosterUrl, getDisplayTitle, getWatchProviders } from "@/lib/tmdb";
 import { getLikedMovies } from "@/lib/liked-movies";
+import { trackInteraction } from "@/lib/interactions";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { computeUserTasteVector } from "@/lib/taste-engine";
@@ -560,43 +561,65 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
                   </p>
                 )}
 
-                <div className="flex items-center gap-3 w-full justify-center">
-                  <Button
-                    size="lg"
-                    className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90 font-sans font-semibold px-6 h-11 gap-2 text-sm neon-glow transition-all active:scale-[0.97]"
-                    onClick={() => {
-                      onSurprise(tonightPick);
-                      setTonightPick(null);
-                    }}
-                  >
-                    <Tv className="w-4 h-4" />
-                    Je découvre
-                  </Button>
+                <div className="flex flex-col items-center gap-2.5 w-full">
+                  <div className="flex items-center gap-3 justify-center">
+                    <Button
+                      size="lg"
+                      className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90 font-sans font-semibold px-6 h-11 gap-2 text-sm neon-glow transition-all active:scale-[0.97]"
+                      onClick={() => {
+                        onSurprise(tonightPick);
+                        setTonightPick(null);
+                      }}
+                    >
+                      <Tv className="w-4 h-4" />
+                      Je découvre
+                    </Button>
 
-                   <Button
-                    variant="ghost"
-                    size="lg"
-                    className="rounded-full border border-border/30 text-foreground/50 hover:text-foreground hover:border-border/50 font-sans font-medium px-5 h-11 gap-2 text-sm transition-all active:scale-[0.97]"
+                     <Button
+                      variant="ghost"
+                      size="lg"
+                      className="rounded-full border border-border/30 text-foreground/50 hover:text-foreground hover:border-border/50 font-sans font-medium px-5 h-11 gap-2 text-sm transition-all active:scale-[0.97]"
+                      onClick={() => {
+                        const nextRejected = tonightPick ? [...rejectedIds, tonightPick.id] : rejectedIds;
+                        const rejContext = tonightPick ? {
+                          reason: "not_my_style" as const,
+                          rejectedGenres: (tonightPick.genres || []).map(g => g.name),
+                          rejectedTitle: getDisplayTitle(tonightPick),
+                        } : undefined;
+                        setRejectedIds(nextRejected);
+                        setTonightPick(null);
+                        generateTonightPick(nextRejected, rejContext);
+                      }}
+                      disabled={tonightLoading}
+                    >
+                      {tonightLoading ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Dices className="w-4 h-4" />
+                      )}
+                      Autre
+                    </Button>
+                  </div>
+
+                  <button
                     onClick={() => {
-                      const nextRejected = tonightPick ? [...rejectedIds, tonightPick.id] : rejectedIds;
-                      const rejContext = tonightPick ? {
-                        reason: "not_my_style" as const,
-                        rejectedGenres: (tonightPick.genres || []).map(g => g.name),
-                        rejectedTitle: getDisplayTitle(tonightPick),
-                      } : undefined;
+                      if (!tonightPick) return;
+                      // Mark as seen and get another suggestion
+                      trackInteraction(tonightPick.id, "already_seen", {});
+                      const nextRejected = [...rejectedIds, tonightPick.id];
                       setRejectedIds(nextRejected);
                       setTonightPick(null);
-                      generateTonightPick(nextRejected, rejContext);
+                      generateTonightPick(nextRejected, {
+                        reason: "already_seen",
+                        rejectedGenres: (tonightPick.genres || []).map(g => g.name),
+                        rejectedTitle: getDisplayTitle(tonightPick),
+                      });
                     }}
                     disabled={tonightLoading}
+                    className="text-foreground/35 text-[12px] font-sans hover:text-foreground/60 transition-colors disabled:opacity-50"
                   >
-                    {tonightLoading ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <Dices className="w-4 h-4" />
-                    )}
-                    Autre suggestion
-                  </Button>
+                    Déjà vu ce film
+                  </button>
                 </div>
               </motion.div>
             </div>
