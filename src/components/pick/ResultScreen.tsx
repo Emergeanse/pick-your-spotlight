@@ -1,7 +1,7 @@
 import { useState, useEffect, forwardRef, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Mic, MicOff, X, Send, Loader2, Sparkles, Check, Play, Star, Clock, Heart, Bookmark, Tv, ChevronDown, ChevronUp, MoreHorizontal, RefreshCw, ThumbsUp, ThumbsDown, MessageCircle, Volume2, Eye, ExternalLink, Share2, Zap, Lock, PenLine } from "lucide-react";
+import { Mic, MicOff, X, Send, Loader2, Sparkles, Check, Play, Star, Clock, Heart, Bookmark, Tv, ChevronDown, ChevronUp, MoreHorizontal, RefreshCw, MessageCircle, Volume2, ExternalLink, Share2, Zap, Lock, PenLine } from "lucide-react";
 import type { MovieDetail } from "@/lib/tmdb";
 import { getDisplayTitle, getYear, getBackdropUrl, getPosterUrl, getWatchProviders, getMovieTrailerUrl } from "@/lib/tmdb";
 import { buildStreamingLinks, openStreamingLink, type StreamingLink } from "@/lib/streaming-links";
@@ -719,7 +719,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
 
               {/* Compact secondary actions — icon row */}
               <div className="flex items-center gap-2">
-                {/* Bookmark */}
+                {/* Bookmark / Sauvegarder */}
                 <button
                   onClick={handleToggleBookmark}
                   disabled={bookmarkLoading}
@@ -730,7 +730,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                   }`}
                 >
                   <Bookmark className={`w-3.5 h-3.5 ${bookmarked ? "fill-primary" : ""}`} />
-                  {bookmarked ? "Sauvegardé" : "Sauvegarder"}
+                  Sauvegarder
                 </button>
 
                 {/* Like */}
@@ -744,57 +744,6 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                   }`}
                 >
                   <Heart className={`w-3.5 h-3.5 ${liked ? "fill-primary" : ""}`} />
-                </button>
-
-                {/* Seen */}
-                <button
-                  onClick={() => {
-                    if (markedSeen) return;
-                    setMarkedSeen(true);
-                    trackInteraction(movie.id, "already_seen", { mood: userCriteria?.mood, context: userCriteria?.context, time: userCriteria?.time });
-                    toast.success("Noté ! Tu peux aussi partager ton avis.");
-                    setShowReviewSheet(true);
-                  }}
-                  className={`w-9 h-9 rounded-full border flex items-center justify-center transition-all active:scale-95 ${
-                    markedSeen
-                      ? "bg-muted border-border/40 text-foreground/60"
-                      : "border-border/25 text-foreground/40 hover:text-foreground/60 hover:border-border/40"
-                  }`}
-                  title="Déjà vu"
-                >
-                  <Eye className="w-3.5 h-3.5" />
-                </button>
-
-                {/* Feedback: good */}
-                <button
-                  onClick={() => {
-                    if (feedbackGiven === "good") return;
-                    setFeedbackGiven("good");
-                    trackInteraction(movie.id, "liked", { mood: userCriteria?.mood, context: userCriteria?.context, time: userCriteria?.time, feedback: "good_reco" });
-                    if (!liked && user) { likeMovie(movie).then(() => setLiked(true)).catch(() => {}); }
-                    toast.success("Merci pour ton retour !");
-                  }}
-                  className={`w-9 h-9 rounded-full border flex items-center justify-center transition-all active:scale-95 ${
-                    feedbackGiven === "good"
-                      ? "bg-primary/15 border-primary/30 text-primary"
-                      : "border-border/25 text-foreground/40 hover:text-primary hover:border-primary/25"
-                  }`}
-                  title="Bonne reco"
-                >
-                  <ThumbsUp className={`w-3.5 h-3.5 ${feedbackGiven === "good" ? "fill-primary" : ""}`} />
-                </button>
-
-                {/* Feedback: bad → reject sheet */}
-                <button
-                  onClick={() => setShowRejectReasons(true)}
-                  className={`w-9 h-9 rounded-full border flex items-center justify-center transition-all active:scale-95 ${
-                    feedbackGiven === "bad"
-                      ? "bg-destructive/10 border-destructive/30 text-destructive"
-                      : "border-border/25 text-foreground/40 hover:text-foreground/60 hover:border-border/40"
-                  }`}
-                  title="Autre suggestion"
-                >
-                  <ThumbsDown className={`w-3.5 h-3.5 ${feedbackGiven === "bad" ? "fill-destructive" : ""}`} />
                 </button>
 
                 {/* Share */}

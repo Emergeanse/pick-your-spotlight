@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Mic, Dices, Tv, Sparkles, Loader2, Zap, X, Flame, Target, Trophy, Shuffle } from "lucide-react";
+import { Mic, Dices, Tv, Sparkles, Loader2, Zap, Flame, Target, Trophy, Shuffle } from "lucide-react";
 import { getTrendingMovies, getBackdropUrl, getSurpriseRecommendation, getPosterUrl, getDisplayTitle, getWatchProviders } from "@/lib/tmdb";
 import { getLikedMovies } from "@/lib/liked-movies";
 import { useAuth } from "@/hooks/use-auth";
@@ -80,9 +80,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
   const [tonightLoading, setTonightLoading] = useState(false);
   const [tonightLoadingMsg, setTonightLoadingMsg] = useState("");
   const [tonightProviders, setTonightProviders] = useState<{ name: string; logo_path: string }[]>([]);
-  const [proactivePick, setProactivePick] = useState<MovieDetail | null>(null);
-  const [proactiveMsg] = useState(() => PROACTIVE_MESSAGES[Math.floor(Math.random() * PROACTIVE_MESSAGES.length)]);
-  const [proactiveDismissed, setProactiveDismissed] = useState(false);
+  const [pickAnimating, setPickAnimating] = useState(false);
   
   const [userPlatformIds, setUserPlatformIds] = useState<number[]>([]);
   const [userExcludedPlatformIds, setUserExcludedPlatformIds] = useState<number[]>([]);
@@ -133,25 +131,8 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
     return data;
   };
 
-  // Proactive recommendation — silently fetch for users with taste data (delayed to avoid rate limits)
-  useEffect(() => {
-    if (!user) return;
-    let cancelled = false;
-    const timer = setTimeout(async () => {
-      try {
-        const liked = await getLikedMovies();
-        if (liked.length < 3) return;
-        const userTasteVector = await computeUserTasteVector(user.id);
-        const data = await invokeSurprisePersonalized({
-          likedMovies: liked, userTasteVector, platformIds: userPlatformIds, excludedPlatformIds: userExcludedPlatformIds, excludedGenres: userExcludedGenres, minRating: userMinRating,
-        });
-        if (!cancelled) setProactivePick(data.movie as MovieDetail);
-      } catch {
-        // Silently fail — proactive is optional
-      }
-    }, 3000);
-    return () => { cancelled = true; clearTimeout(timer); };
-  }, [user]);
+
+
 
   useEffect(() => {
     getTrendingMovies(20).then((movies: Movie[]) => {
@@ -334,85 +315,15 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
             </motion.div>
           )}
 
-          {/* Pick character + greeting or proactive suggestion */}
+          {/* Pick character + greeting */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2, duration: 0.5 }}
             className="mb-6 md:mb-8"
           >
-            {proactivePick && !proactiveDismissed ? (
-              <PickCharacter mood="default" message={proactiveMsg} size="md" animate />
-            ) : (
-              <PickCharacter mood="wave" showGreeting size="md" animate />
-            )}
+            <PickCharacter mood="wave" showGreeting size="md" animate />
           </motion.div>
-
-          {/* Proactive recommendation card */}
-          <AnimatePresence>
-            {proactivePick && !proactiveDismissed && !isSurprising && (
-              <motion.div
-                initial={{ opacity: 0, y: 20, scale: 0.95 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: -10, scale: 0.95 }}
-                transition={{ delay: 0.3, duration: 0.5, type: "spring", stiffness: 180 }}
-                className="w-full max-w-md px-2 mb-6"
-              >
-                <div className="relative rounded-2xl overflow-hidden border border-gold/25 bg-card/70 backdrop-blur-md shadow-xl">
-                  {proactivePick.backdrop_path && (
-                    <div
-                      className="absolute inset-0 bg-cover bg-center opacity-20"
-                      style={{ backgroundImage: `url(${getBackdropUrl(proactivePick.backdrop_path)})` }}
-                    />
-                  )}
-                  <div className="absolute inset-0 bg-gradient-to-r from-card/90 via-card/70 to-card/50" />
-
-                  <div className="relative z-10 flex items-center gap-4 p-4">
-                    {proactivePick.poster_path && (
-                      <img
-                        src={getPosterUrl(proactivePick.poster_path, "w185") || ""}
-                        alt={getDisplayTitle(proactivePick)}
-                        className="w-16 h-24 rounded-lg object-cover shadow-lg border border-border/20 shrink-0"
-                      />
-                    )}
-                    <div className="flex-1 min-w-0 text-left">
-                      <p className="text-[10px] uppercase tracking-widest text-gold/70 font-sans font-semibold mb-1">
-                        ✨ Pick du soir
-                      </p>
-                      <h3 className="text-sm font-serif text-foreground mb-0.5 line-clamp-1">
-                        {getDisplayTitle(proactivePick)}
-                      </h3>
-                      {proactivePick.genres && (
-                        <p className="text-foreground/40 text-[10px] font-sans line-clamp-1">
-                          {proactivePick.genres.map(g => g.name).join(" · ")}
-                        </p>
-                      )}
-                      <div className="flex items-center gap-2 mt-2.5">
-                        <button
-                          onClick={() => { onSurprise(proactivePick); setProactiveDismissed(true); }}
-                          className="px-3 py-1.5 rounded-full bg-primary text-primary-foreground text-[11px] font-sans font-semibold hover:bg-primary/90 transition-colors active:scale-95"
-                        >
-                          Je découvre
-                        </button>
-                        <button
-                          onClick={() => { setProactiveDismissed(true); handleTonightPick(); }}
-                          className="px-3 py-1.5 rounded-full bg-foreground/[0.06] border border-border/25 text-foreground/50 text-[11px] font-sans hover:text-foreground hover:border-border/40 transition-all active:scale-95"
-                        >
-                          Autre chose
-                        </button>
-                        <button
-                          onClick={() => setProactiveDismissed(true)}
-                          className="ml-auto text-foreground/25 hover:text-foreground/50 transition-colors"
-                        >
-                          <X className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
 
           {isSurprising ? (
             <motion.div
@@ -432,20 +343,53 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
               {/* Three main actions */}
               <div className="flex flex-col items-center gap-4">
 
-                {/* 1. Pick pour ce soir */}
+                {/* 1. Pick pour ce soir — with popcorn animation */}
                 <motion.button
                   whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={handleTonightPick}
+                  whileTap={{ scale: 0.96 }}
+                  onClick={() => {
+                    setPickAnimating(true);
+                    setTimeout(() => setPickAnimating(false), 900);
+                    handleTonightPick();
+                  }}
                   disabled={loading || tonightLoading}
-                  className="group w-full text-left rounded-2xl p-5 bg-gradient-to-r from-primary/15 via-primary/10 to-transparent border-2 border-primary/40 hover:border-primary/60 hover:from-primary/20 transition-all disabled:opacity-50 relative overflow-hidden"
+                  className="group w-full text-left rounded-2xl p-5 bg-gradient-to-br from-primary/20 via-primary/15 to-accent/10 border-2 border-primary/50 hover:border-primary/70 hover:from-primary/25 transition-all disabled:opacity-50 relative overflow-hidden shadow-[0_0_30px_-8px_hsl(var(--primary)/0.35)]"
                 >
+                  {/* Popcorn burst animation on click */}
+                  <AnimatePresence>
+                    {pickAnimating && (
+                      <>
+                        {["🍿", "🎬", "🎥", "✨", "🍿"].map((emoji, i) => (
+                          <motion.span
+                            key={i}
+                            initial={{ opacity: 1, scale: 0.5, x: 0, y: 0 }}
+                            animate={{
+                              opacity: 0,
+                              scale: 1.2,
+                              x: (i - 2) * 40 + (Math.random() - 0.5) * 30,
+                              y: -60 - Math.random() * 40,
+                            }}
+                            exit={{ opacity: 0 }}
+                            transition={{ duration: 0.7, delay: i * 0.06, ease: "easeOut" }}
+                            className="absolute left-1/2 top-1/2 text-lg pointer-events-none z-20"
+                          >
+                            {emoji}
+                          </motion.span>
+                        ))}
+                      </>
+                    )}
+                  </AnimatePresence>
+
                   <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-primary/25 border border-primary/40 flex items-center justify-center shrink-0 group-hover:bg-primary/35 transition-colors shadow-[0_0_20px_-5px_hsl(var(--primary)/0.3)]">
-                      <Zap className="w-5 h-5 text-primary fill-primary" />
-                    </div>
+                    <motion.div
+                      animate={pickAnimating ? { rotate: [0, -10, 10, -5, 0], scale: [1, 1.15, 1] } : {}}
+                      transition={{ duration: 0.5 }}
+                      className="w-12 h-12 rounded-xl bg-primary/30 border border-primary/50 flex items-center justify-center shrink-0 group-hover:bg-primary/40 transition-colors shadow-[0_0_25px_-5px_hsl(var(--primary)/0.4)]"
+                    >
+                      <span className="text-xl">🍿</span>
+                    </motion.div>
                     <div className="flex-1 min-w-0">
-                      <h3 className="text-base font-sans font-semibold text-foreground mb-0.5">Pick pour ce soir</h3>
+                      <h3 className="text-base font-sans font-bold text-foreground mb-0.5">Pick pour ce soir</h3>
                       <p className="text-foreground/50 text-[13px] font-sans leading-relaxed">
                         Une suggestion sur-mesure pour ta soirée.
                       </p>
