@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence, useMotionValue, PanInfo } from "framer-motion";
-import { X, Send, Star, Clock, ExternalLink } from "lucide-react";
+import { X, Send, Star, ExternalLink, Mic, MicOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ReactMarkdown from "react-markdown";
 import { useCompanion } from "@/contexts/CompanionContext";
@@ -8,6 +8,7 @@ import { getDisplayTitle, getPosterUrl } from "@/lib/tmdb";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
+import { useScribe } from "@elevenlabs/react";
 import squirrelImg from "@/assets/pick-squirrel.png";
 
 interface ChatMsg {
@@ -37,11 +38,28 @@ export default function PickChatOverlay() {
   const [isExpanded, setIsExpanded] = useState(false);
   const [streamingContent, setStreamingContent] = useState("");
   const [userPrefs, setUserPrefs] = useState<{ minRating: number; excludedGenres: string[] }>({ minRating: 0, excludedGenres: [] });
+  const [isListening, setIsListening] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const y = useMotionValue(0);
   const navigate = useNavigate();
   const { user } = useAuth();
+  const pendingSendRef = useRef<string | null>(null);
+
+  const scribe = useScribe({
+    modelId: "scribe_v2_realtime",
+    commitStrategy: "vad" as any,
+    onPartialTranscript: (data) => {
+      if (data.text) {
+        setInput(data.text);
+      }
+    },
+    onCommittedTranscript: (data) => {
+      if (data.text?.trim()) {
+        pendingSendRef.current = data.text.trim();
+      }
+    },
+  });
 
   const currentMessages = mode === "companion" ? companionMessages : messages;
   const chips = mode === "companion" ? COMPANION_CHIPS : DISCOVERY_CHIPS;
@@ -71,8 +89,63 @@ export default function PickChatOverlay() {
   useEffect(() => {
     if (isOverlayOpen) {
       setTimeout(() => inputRef.current?.focus(), 400);
+    } else {
+      // Disconnect mic when overlay closes
+      if (scribe.isConnected) {
+        scribe.disconnect();
+        setIsListening(false);
+      }
     }
   }, [isOverlayOpen]);
+
+  // Auto-send when committed transcript arrives
+  useEffect(() => {
+    if (pendingSendRef.current && !isStreaming) {
+      const text = pendingSendRef.current;
+      pendingSendRef.current = null;
+      setInput("");
+      // Disconnect mic before sending
+      if (scribe.isConnected) {
+        scribe.disconnect();
+        setIsListening(false);
+      }
+      sendMessage(text);
+    }
+  });
+
+  const toggleMic = useCallback(async () => {
+    if (scribe.isConnected) {
+      scribe.disconnect();
+      setIsListening(false);
+      return;
+    }
+    try {
+      const resp = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/scribe-token`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          },
+        }
+      );
+      const { token } = await resp.json();
+      if (!token) throw new Error("No token");
+      await scribe.connect({
+        token,
+        microphone: {
+          echoCancellation: true,
+          noiseSuppression: true,
+        },
+      });
+      setIsListening(true);
+      setInput("");
+    } catch (e) {
+      console.error("Mic error:", e);
+      setIsListening(false);
+    }
+  }, [scribe]);
 
   const sendMessage = useCallback(async (text: string) => {
     if (!text.trim() || isStreaming) return;
@@ -352,15 +425,30 @@ export default function PickChatOverlay() {
 
             {/* Input bar */}
             <div className="relative z-10 px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-2 border-t border-border/10">
-              <form onSubmit={handleSubmit} className="flex gap-2">
+              <form onSubmit={handleSubmit} className="flex items-center gap-2">
+                <Button
+                  type="button"
+                  size="icon"
+                  onClick={toggleMic}
+                  disabled={isStreaming}
+                  className={`rounded-full w-10 h-10 flex-shrink-0 transition-all ${
+                    isListening
+                      ? "bg-primary text-primary-foreground animate-pulse"
+                      : "bg-secondary/50 text-muted-foreground hover:text-foreground hover:bg-secondary"
+                  }`}
+                >
+                  {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+                </Button>
                 <input
                   ref={inputRef}
                   type="text"
                   value={input}
                   onChange={e => setInput(e.target.value)}
-                  placeholder={mode === "companion"
-                    ? "Pose-moi une question sur le film…"
-                    : "Dis-moi ce que tu veux regarder…"
+                  placeholder={isListening
+                    ? "Écoute en cours…"
+                    : mode === "companion"
+                      ? "Pose-moi une question sur le film…"
+                      : "Dis-moi ce que tu veux regarder…"
                   }
                   disabled={isStreaming}
                   className="flex-1 bg-secondary/50 border border-border/20 rounded-full px-4 py-2.5 text-sm font-sans placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/40 disabled:opacity-50 transition-all"
