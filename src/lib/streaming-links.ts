@@ -171,10 +171,18 @@ export function buildStreamingLinks(
   providers: { name: string; logo_path: string; provider_id?: number; tmdb_link?: string }[],
   movieTitle: string,
 ): StreamingLink[] {
-  return providers.map((p) => {
+  const seen = new Set<string>();
+
+  return providers.reduce<StreamingLink[]>((links, p) => {
     const pid = p.provider_id || guessProviderId(p.name);
     const config = pid ? PLATFORM_MAP[pid] : null;
     const tmdbLink = p.tmdb_link || null;
+    const canonicalName = config?.name || p.name;
+    const dedupeKey = canonicalName.trim().toLowerCase();
+
+    if (seen.has(dedupeKey)) {
+      return links;
+    }
 
     const url = config
       ? config.webUrl(tmdbLink, movieTitle)
@@ -182,15 +190,18 @@ export function buildStreamingLinks(
 
     const deepLink = config?.deepLink?.(tmdbLink, movieTitle) || undefined;
 
-    return {
-      name: config?.name || p.name,
+    seen.add(dedupeKey);
+    links.push({
+      name: canonicalName,
       logo_path: p.logo_path,
       url,
       deepLink,
       providerId: pid || 0,
       color: config?.color || "#333333",
-    };
-  });
+    });
+
+    return links;
+  }, []);
 }
 
 /**
