@@ -38,11 +38,28 @@ export default function PickChatOverlay() {
   const [isExpanded, setIsExpanded] = useState(false);
   const [streamingContent, setStreamingContent] = useState("");
   const [userPrefs, setUserPrefs] = useState<{ minRating: number; excludedGenres: string[] }>({ minRating: 0, excludedGenres: [] });
+  const [isListening, setIsListening] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const y = useMotionValue(0);
   const navigate = useNavigate();
   const { user } = useAuth();
+  const pendingSendRef = useRef<string | null>(null);
+
+  const scribe = useScribe({
+    modelId: "scribe_v2_realtime",
+    commitStrategy: "vad",
+    onPartialTranscript: (data) => {
+      if (data.text) {
+        setInput(data.text);
+      }
+    },
+    onCommittedTranscript: (data) => {
+      if (data.text?.trim()) {
+        pendingSendRef.current = data.text.trim();
+      }
+    },
+  });
 
   const currentMessages = mode === "companion" ? companionMessages : messages;
   const chips = mode === "companion" ? COMPANION_CHIPS : DISCOVERY_CHIPS;
