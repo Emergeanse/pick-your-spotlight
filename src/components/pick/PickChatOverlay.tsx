@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence, useMotionValue, PanInfo } from "framer-motion";
-import { X, Send, Star, Clock, ExternalLink } from "lucide-react";
+import { X, Send, Star, ExternalLink, Mic, MicOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ReactMarkdown from "react-markdown";
 import { useCompanion } from "@/contexts/CompanionContext";
@@ -8,6 +8,7 @@ import { getDisplayTitle, getPosterUrl } from "@/lib/tmdb";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
+import { useScribe } from "@elevenlabs/react";
 import squirrelImg from "@/assets/pick-squirrel.png";
 
 interface ChatMsg {
