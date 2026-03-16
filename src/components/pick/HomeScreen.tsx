@@ -520,37 +520,8 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
         </div>
       </div>
 
-      {/* ADN Cinéma — immersive full-screen overlay */}
-      <AnimatePresence>
-        {showDNA && user && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50"
-          >
-            <div className="absolute inset-0 bg-background/95 backdrop-blur-xl" />
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 20 }}
-              transition={{ type: "spring", damping: 25, stiffness: 180 }}
-              className="relative z-10 h-full overflow-y-auto"
-            >
-              {/* Close button */}
-              <div className="sticky top-0 z-20 flex justify-end p-4 pt-[calc(0.5rem+env(safe-area-inset-top))]">
-                <button
-                  onClick={() => setShowDNA(false)}
-                  className="w-9 h-9 rounded-full bg-foreground/[0.06] border border-border/20 flex items-center justify-center text-foreground/40 hover:text-foreground hover:bg-foreground/10 transition-all"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-              <CinemaDNA userId={user.id} />
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+
+
 
       {/* Tonight loading overlay with Pick */}
       <AnimatePresence>
