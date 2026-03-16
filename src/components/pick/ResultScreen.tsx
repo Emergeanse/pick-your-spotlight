@@ -460,7 +460,51 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                 </motion.div>
               )}
 
-              {matchData && !matchLoading && (
+              {/* Locked state — not enough data */}
+              {!matchLoading && !isWhyUnlocked && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1, duration: 0.4 }}
+                  className="mb-5 max-w-md"
+                >
+                  <div className="p-3 sm:p-4 rounded-xl bg-muted/40 border border-border/30 backdrop-blur-sm">
+                    <div className="flex items-center gap-3">
+                      <div className="relative flex-shrink-0">
+                        <div className="w-14 h-14 rounded-full bg-muted border-2 border-border/40 flex items-center justify-center">
+                          <Lock className="w-5 h-5 text-muted-foreground" />
+                        </div>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[10px] uppercase tracking-widest text-muted-foreground/80 font-sans font-semibold mb-0.5">
+                          Pourquoi ce film
+                        </p>
+                        <p className="text-muted-foreground text-[12px] sm:text-[13px] font-sans leading-snug">
+                          Utilise Pick un peu plus pour débloquer l'analyse personnalisée de tes recommandations.
+                        </p>
+                      </div>
+                    </div>
+                    {/* Progress bar */}
+                    <div className="mt-3">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-[10px] text-muted-foreground/60 font-sans">Confiance du profil</span>
+                        <span className="text-[10px] text-muted-foreground/60 font-sans font-medium">{profileConfidence}%</span>
+                      </div>
+                      <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                        <motion.div
+                          initial={{ width: 0 }}
+                          animate={{ width: `${Math.min((profileConfidence / CONFIDENCE_THRESHOLD) * 100, 100)}%` }}
+                          transition={{ delay: 0.3, duration: 0.8, ease: "easeOut" }}
+                          className="h-full rounded-full bg-primary/40"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+
+              {/* Unlocked "Pourquoi ce film" */}
+              {matchData && !matchLoading && isWhyUnlocked && (
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
