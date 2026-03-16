@@ -26,7 +26,7 @@ const TRIGGER_MESSAGES: Record<string, string> = {
   reco_limit: "Tu as utilisé tes 3 recommandations du jour.",
   companion_limit: "Tu as utilisé ta question gratuite pour ce film.",
   dna_advanced: "L'évolution de ton profil est une fonctionnalité Pick+.",
-  chat_limit: "Tu as utilisé tes 5 messages du jour. Passe à Pick+ pour un chat illimité !",
+  chat_limit: "Tu as utilisé tes 3 messages du jour. Passe à Pick+ pour un chat illimité !",
   general: "Passe à Pick+ pour débloquer tout le potentiel de Pick.",
 };
 

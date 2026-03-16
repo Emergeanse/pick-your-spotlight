@@ -13,7 +13,7 @@ import { useAuth } from "@/hooks/use-auth";
 
 const FREE_RECO_LIMIT = 3;
 const FREE_COMPANION_LIMIT = 1;
-const FREE_CHAT_LIMIT = 5;
+const FREE_CHAT_LIMIT = 3;
 
 export interface PickPlusState {
   plan: "free" | "pick_plus";
