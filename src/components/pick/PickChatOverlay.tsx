@@ -357,7 +357,9 @@ export default function PickChatOverlay() {
                 ) : (
                   <div>
                     <p className="text-sm font-serif font-medium">Parle à Pick</p>
-                    <p className="text-[10px] text-muted-foreground font-sans">Films, séries, appli — demande-moi tout</p>
+                    <p className="text-[10px] text-muted-foreground font-sans">
+                      {pickPlus.isPremium ? "Films, séries, appli — demande-moi tout" : "Trouve ton film du soir"}
+                    </p>
                   </div>
                 )}
               </div>
