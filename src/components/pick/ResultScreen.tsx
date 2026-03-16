@@ -483,21 +483,26 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                       </motion.button>
                     </div>
 
-                    {/* Expandable details */}
-                    <button
-                      onClick={() => setWhyExpanded(prev => !prev)}
-                      className="w-full text-left group p-2 -m-2 rounded-lg hover:bg-primary/5 transition-colors"
-                    >
-                      <p className="text-[10px] uppercase tracking-widest text-primary/60 font-sans font-semibold flex items-center gap-1.5">
-                        Pourquoi ce film ?
-                        <motion.span animate={{ rotate: whyExpanded ? 180 : 0 }} transition={{ duration: 0.2 }}>
-                          <ChevronDown className="w-3 h-3 text-primary/40" />
-                        </motion.span>
-                        {!whyExpanded && (
-                          <span className="text-[9px] normal-case tracking-normal text-primary/40 font-normal ml-auto">Tap pour voir</span>
+                    {/* "Pourquoi ce film ?" — first 2 lines always visible */}
+                    {matchData.detailedExplanation && (
+                      <div className="mt-2">
+                        <p className="text-[10px] uppercase tracking-widest text-primary/60 font-sans font-semibold mb-1.5">
+                          Pourquoi ce film ?
+                        </p>
+                        <p className={`text-foreground/55 text-[12px] font-sans leading-relaxed ${!whyExpanded ? "line-clamp-2" : ""}`}>
+                          {matchData.detailedExplanation}
+                        </p>
+                        {matchData.detailedExplanation.length > 100 && !whyExpanded && (
+                          <button
+                            onClick={() => setWhyExpanded(true)}
+                            className="text-primary/60 text-[11px] font-sans font-medium mt-1 flex items-center gap-0.5 hover:text-primary transition-colors"
+                          >
+                            Voir plus
+                            <ChevronDown className="w-3 h-3" />
+                          </button>
                         )}
-                      </p>
-                    </button>
+                      </div>
+                    )}
 
                     <AnimatePresence>
                       {whyExpanded && (
@@ -508,12 +513,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                           transition={{ duration: 0.25, ease: "easeOut" }}
                           className="overflow-hidden"
                         >
-                          <div className="pt-3 space-y-3">
-                            {matchData.detailedExplanation && (
-                              <p className="text-foreground/55 text-[12px] font-sans leading-relaxed">
-                                {matchData.detailedExplanation}
-                              </p>
-                            )}
+                          <div className="pt-2 space-y-3">
                             {matchData.emotionalJourney && (
                               <div>
                                 <p className="text-[10px] text-primary/50 font-sans font-medium mb-1">L'expérience</p>
