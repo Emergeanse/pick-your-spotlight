@@ -1,20 +1,24 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { motion, AnimatePresence, useMotionValue, useTransform, PanInfo } from "framer-motion";
-import { X, Send, Mic, Sparkles, User, Eye, Clapperboard } from "lucide-react";
+import { motion, AnimatePresence, useMotionValue, PanInfo } from "framer-motion";
+import { X, Send, Star, Clock, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ReactMarkdown from "react-markdown";
 import { useCompanion } from "@/contexts/CompanionContext";
 import { getDisplayTitle, getPosterUrl } from "@/lib/tmdb";
+import { useNavigate } from "react-router-dom";
 import squirrelImg from "@/assets/pick-squirrel.png";
 
 interface ChatMsg {
   role: "user" | "assistant";
   content: string;
+  movie?: any; // embedded movie recommendation
 }
 
 const DISCOVERY_CHIPS = [
-  { label: "Un film ce soir", icon: Sparkles, msg: "Trouve-moi un bon film pour ce soir !" },
-  { label: "Recommandation", icon: Eye, msg: "Qu'est-ce que tu me recommandes en ce moment ?" },
+  { label: "Un film ce soir 🍿", msg: "Trouve-moi un bon film pour ce soir !" },
+  { label: "Comment ça marche ?", msg: "Explique-moi comment fonctionne l'appli Pick." },
+  { label: "Recommande-moi", msg: "Qu'est-ce que tu me recommandes en ce moment ?" },
+  { label: "C'est quoi Pick+ ?", msg: "C'est quoi Pick+ et qu'est-ce que ça apporte ?" },
 ];
 
 const COMPANION_CHIPS = [
@@ -29,9 +33,11 @@ export default function PickChatOverlay() {
   const [input, setInput] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [streamingContent, setStreamingContent] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const y = useMotionValue(0);
+  const navigate = useNavigate();
 
   const currentMessages = mode === "companion" ? companionMessages : messages;
   const chips = mode === "companion" ? COMPANION_CHIPS : DISCOVERY_CHIPS;
@@ -42,7 +48,7 @@ export default function PickChatOverlay() {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [currentMessages]);
+  }, [currentMessages, streamingContent]);
 
   useEffect(() => {
     if (isOverlayOpen) {
@@ -56,24 +62,26 @@ export default function PickChatOverlay() {
     addMessage(userMsg);
     setInput("");
     setIsStreaming(true);
+    setStreamingContent("");
 
-    const allMessages = [...currentMessages, userMsg];
+    const allMessages = [...currentMessages, userMsg].map(m => ({ role: m.role, content: m.content }));
 
     try {
-      const endpoint = mode === "companion" ? "companion-chat" : "movie-chat";
-      const body = mode === "companion" && activeMovie
-        ? {
-            messages: allMessages,
-            movieTitle: title,
-            movieYear: activeMovie.release_date?.slice(0, 4) || "",
-            movieOverview: activeMovie.overview || "",
-            spoilerMode: "no-spoilers",
-            movieProgress: "beginning",
-          }
-        : { messages: allMessages };
+      const body: any = {
+        messages: allMessages,
+        mode: mode === "companion" ? "companion" : "discovery",
+      };
+
+      if (mode === "companion" && activeMovie) {
+        body.movieTitle = title;
+        body.movieYear = activeMovie.release_date?.slice(0, 4) || activeMovie.first_air_date?.slice(0, 4) || "";
+        body.movieOverview = activeMovie.overview || "";
+        body.spoilerMode = "no-spoilers";
+        body.movieProgress = "beginning";
+      }
 
       const resp = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/${endpoint}`,
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/pick-chat`,
         {
           method: "POST",
           headers: {
@@ -84,51 +92,83 @@ export default function PickChatOverlay() {
         }
       );
 
-      if (!resp.ok || !resp.body) throw new Error("Stream failed");
+      if (!resp.ok) {
+        const errorData = await resp.json().catch(() => ({}));
+        throw new Error(errorData.error || "Erreur réseau");
+      }
 
-      const reader = resp.body.getReader();
-      const decoder = new TextDecoder();
-      let buffer = "";
-      let assistantContent = "";
+      const contentType = resp.headers.get("content-type") || "";
 
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        buffer += decoder.decode(value, { stream: true });
+      if (contentType.includes("text/event-stream") && resp.body) {
+        // Streaming response (companion mode)
+        const reader = resp.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = "";
+        let assistantContent = "";
 
-        let newlineIdx: number;
-        while ((newlineIdx = buffer.indexOf("\n")) !== -1) {
-          let line = buffer.slice(0, newlineIdx);
-          buffer = buffer.slice(newlineIdx + 1);
-          if (line.endsWith("\r")) line = line.slice(0, -1);
-          if (!line.startsWith("data: ")) continue;
-          const jsonStr = line.slice(6).trim();
-          if (jsonStr === "[DONE]") break;
-          try {
-            const parsed = JSON.parse(jsonStr);
-            const content = parsed.choices?.[0]?.delta?.content;
-            if (content) {
-              assistantContent += content;
-              // We need to update messages through context - use a temp approach
-            }
-          } catch { /* partial JSON */ }
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+
+          let newlineIdx: number;
+          while ((newlineIdx = buffer.indexOf("\n")) !== -1) {
+            let line = buffer.slice(0, newlineIdx);
+            buffer = buffer.slice(newlineIdx + 1);
+            if (line.endsWith("\r")) line = line.slice(0, -1);
+            if (!line.startsWith("data: ")) continue;
+            const jsonStr = line.slice(6).trim();
+            if (jsonStr === "[DONE]") break;
+            try {
+              const parsed = JSON.parse(jsonStr);
+              const content = parsed.choices?.[0]?.delta?.content;
+              if (content) {
+                assistantContent += content;
+                setStreamingContent(assistantContent);
+              }
+            } catch { /* partial JSON */ }
+          }
+        }
+
+        if (assistantContent) {
+          addMessage({ role: "assistant", content: assistantContent });
+        }
+        setStreamingContent("");
+      } else {
+        // JSON response (discovery mode)
+        const data = await resp.json();
+
+        if (data.type === "recommendation" && data.movie) {
+          // Add movie card as a special message
+          addMessage({
+            role: "assistant",
+            content: data.reply,
+            movie: data.movie,
+          } as any);
+        } else {
+          addMessage({ role: "assistant", content: data.reply || "Hmm, dis-moi en plus !" });
         }
       }
-
-      if (assistantContent) {
-        addMessage({ role: "assistant", content: assistantContent });
-      }
-    } catch (e) {
+    } catch (e: any) {
       console.error("Chat error:", e);
-      addMessage({ role: "assistant", content: "Oups, une erreur est survenue. Réessaie ! 🎬" });
+      addMessage({ role: "assistant", content: `Oups, ${e.message || "une erreur est survenue"}. Réessaie ! 🎬` });
     } finally {
       setIsStreaming(false);
+      setStreamingContent("");
     }
   }, [isStreaming, currentMessages, mode, activeMovie, title, addMessage]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     sendMessage(input);
+  };
+
+  const handleMovieClick = (movie: any) => {
+    // Navigate to the result page with this movie
+    closeOverlay();
+    // Store movie in sessionStorage for the result page to pick up
+    sessionStorage.setItem("pick-fab-movie", JSON.stringify(movie));
+    navigate("/app?from=pick-chat");
   };
 
   const handleDragEnd = (_: any, info: PanInfo) => {
@@ -145,6 +185,7 @@ export default function PickChatOverlay() {
   };
 
   const overlayHeight = isExpanded ? "92vh" : "55vh";
+  const hasUserMessages = currentMessages.some(m => m.role === "user");
 
   return (
     <AnimatePresence>
@@ -167,14 +208,12 @@ export default function PickChatOverlay() {
             exit={{ y: "100%" }}
             transition={{ type: "spring", damping: 30, stiffness: 300 }}
             style={{ y, height: overlayHeight }}
-            className="fixed bottom-0 left-0 right-0 z-[61] flex flex-col rounded-t-[20px] overflow-hidden"
+            className="fixed bottom-0 left-0 right-0 z-[61] flex flex-col rounded-t-[20px] overflow-hidden bg-background"
             drag="y"
             dragConstraints={{ top: 0, bottom: 0 }}
             dragElastic={0.2}
             onDragEnd={handleDragEnd}
           >
-            <div className="absolute inset-0 bg-[hsl(260,20%,7%)] backdrop-blur-xl" />
-
             {/* Drag handle */}
             <div className="relative z-10 flex justify-center pt-3 pb-1 cursor-grab active:cursor-grabbing">
               <div className="w-10 h-1 rounded-full bg-foreground/20" />
@@ -191,15 +230,15 @@ export default function PickChatOverlay() {
                     <div className="min-w-0">
                       <p className="text-sm font-serif font-medium truncate">{title}</p>
                       <div className="flex items-center gap-1">
-                        <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
-                        <span className="text-[10px] text-green-400 font-sans">Companion actif</span>
+                        <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                        <span className="text-[10px] text-green-500 font-sans">Companion actif</span>
                       </div>
                     </div>
                   </div>
                 ) : (
                   <div>
-                    <p className="text-sm font-serif font-medium">Pick</p>
-                    <p className="text-[10px] text-muted-foreground font-sans">Découverte</p>
+                    <p className="text-sm font-serif font-medium">Parle à Pick</p>
+                    <p className="text-[10px] text-muted-foreground font-sans">Films, séries, appli — demande-moi tout</p>
                   </div>
                 )}
               </div>
@@ -224,15 +263,31 @@ export default function PickChatOverlay() {
                       : "bg-card/60 border border-border/15 rounded-bl-md"
                   }`}>
                     {msg.role === "assistant" ? (
-                      <div className="prose prose-sm prose-invert max-w-none [&>p]:mb-1 [&>p:last-child]:mb-0">
-                        <ReactMarkdown>{msg.content}</ReactMarkdown>
-                      </div>
+                      <>
+                        <div className="prose prose-sm prose-invert max-w-none [&>p]:mb-1 [&>p:last-child]:mb-0">
+                          <ReactMarkdown>{msg.content}</ReactMarkdown>
+                        </div>
+                        {/* Inline movie card */}
+                        {(msg as any).movie && <MovieCard movie={(msg as any).movie} onClick={() => handleMovieClick((msg as any).movie)} />}
+                      </>
                     ) : msg.content}
                   </div>
                 </motion.div>
               ))}
 
-              {isStreaming && (
+              {/* Streaming content */}
+              {streamingContent && (
+                <motion.div initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} className="flex justify-start">
+                  <div className="max-w-[85%] rounded-2xl px-3.5 py-2 text-[13px] font-sans leading-relaxed bg-card/60 border border-border/15 rounded-bl-md">
+                    <div className="prose prose-sm prose-invert max-w-none [&>p]:mb-1 [&>p:last-child]:mb-0">
+                      <ReactMarkdown>{streamingContent}</ReactMarkdown>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+
+              {/* Loading dots (only when no streaming content yet) */}
+              {isStreaming && !streamingContent && (
                 <div className="flex justify-start">
                   <div className="bg-card/60 border border-border/15 rounded-2xl rounded-bl-md px-4 py-3">
                     <div className="flex gap-1.5">
@@ -250,7 +305,7 @@ export default function PickChatOverlay() {
                   <p className="text-sm text-muted-foreground font-sans">
                     {mode === "companion"
                       ? "Pose-moi une question sur le film !"
-                      : "Dis-moi ce que tu veux regarder…"
+                      : "Films, séries, ou l'appli — demande-moi tout ! 🎬"
                     }
                   </p>
                 </div>
@@ -258,20 +313,22 @@ export default function PickChatOverlay() {
             </div>
 
             {/* Suggestion chips */}
-            <div className="relative z-10 px-4 pb-2">
-              <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
-                {chips.map(chip => (
-                  <button
-                    key={chip.label}
-                    onClick={() => sendMessage(chip.msg)}
-                    disabled={isStreaming}
-                    className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-secondary/60 border border-border/15 text-[11px] font-sans text-foreground/60 hover:text-primary hover:border-primary/25 transition-all disabled:opacity-50 active:scale-[0.97]"
-                  >
-                    {chip.label}
-                  </button>
-                ))}
+            {!hasUserMessages && (
+              <div className="relative z-10 px-4 pb-2">
+                <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
+                  {chips.map(chip => (
+                    <button
+                      key={chip.label}
+                      onClick={() => sendMessage(chip.msg)}
+                      disabled={isStreaming}
+                      className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-secondary/60 border border-border/15 text-[11px] font-sans text-foreground/60 hover:text-primary hover:border-primary/25 transition-all disabled:opacity-50 active:scale-[0.97]"
+                    >
+                      {chip.label}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Input bar */}
             <div className="relative z-10 px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-2 border-t border-border/10">
@@ -302,5 +359,39 @@ export default function PickChatOverlay() {
         </>
       )}
     </AnimatePresence>
+  );
+}
+
+/** Inline movie recommendation card */
+function MovieCard({ movie, onClick }: { movie: any; onClick: () => void }) {
+  const posterUrl = movie.poster_path
+    ? `https://image.tmdb.org/t/p/w154${movie.poster_path}`
+    : null;
+  const movieTitle = movie.title || movie.name || "Film inconnu";
+  const year = (movie.release_date || movie.first_air_date || "").slice(0, 4);
+  const rating = movie.vote_average || 0;
+
+  return (
+    <button
+      onClick={onClick}
+      className="mt-2 flex items-center gap-3 w-full p-2 rounded-xl bg-secondary/40 border border-border/15 text-left hover:bg-secondary/60 transition-all active:scale-[0.98]"
+    >
+      {posterUrl && (
+        <img src={posterUrl} alt={movieTitle} className="w-10 h-14 rounded-lg object-cover flex-shrink-0" />
+      )}
+      <div className="flex-1 min-w-0">
+        <p className="text-[13px] font-serif font-medium truncate">{movieTitle}</p>
+        <div className="flex items-center gap-2 text-[10px] text-muted-foreground mt-0.5">
+          {year && <span>{year}</span>}
+          {rating > 0 && (
+            <span className="flex items-center gap-0.5 text-primary">
+              <Star className="w-2.5 h-2.5 fill-primary" />
+              {rating.toFixed(1)}
+            </span>
+          )}
+        </div>
+      </div>
+      <ExternalLink className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
+    </button>
   );
 }

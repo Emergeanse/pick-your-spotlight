@@ -4,6 +4,7 @@ import type { MovieDetail } from "@/lib/tmdb";
 interface ChatMsg {
   role: "user" | "assistant";
   content: string;
+  movie?: any;
 }
 
 interface CompanionState {
