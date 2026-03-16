@@ -1,9 +1,10 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence, useMotionValue, useTransform, PanInfo } from "framer-motion";
-import { Bookmark, Loader2, Sparkles } from "lucide-react";
+import { Bookmark, Loader2, Sparkles, X, Tv, Star, Clock, Play } from "lucide-react";
 import { getWatchlist, removeFromWatchlist } from "@/lib/watchlist";
-import { getPosterUrl, getMovieDetails, getDisplayTitle } from "@/lib/tmdb";
+import { getPosterUrl, getBackdropUrl, getMovieDetails, getDisplayTitle, getYear, getWatchProviders } from "@/lib/tmdb";
 import type { MovieDetail } from "@/lib/tmdb";
+import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import PickCharacter from "./PickCharacter";
 
@@ -44,7 +45,6 @@ const SwipeableCard = ({
   onRemove: () => void;
 }) => {
   const x = useMotionValue(0);
-  const bgOpacity = useTransform(x, [-120, 0, 120], [1, 0, 0]);
   const removeBgOpacity = useTransform(x, [-120, 0], [1, 0]);
 
   const handleDragEnd = (_: any, info: PanInfo) => {
@@ -62,7 +62,6 @@ const SwipeableCard = ({
       transition={{ delay: index * 0.03 }}
       className="relative overflow-hidden rounded-xl"
     >
-      {/* Swipe background - remove */}
       <motion.div
         style={{ opacity: removeBgOpacity }}
         className="absolute inset-0 bg-destructive/20 flex items-center justify-end pr-5 rounded-xl"
@@ -106,10 +105,154 @@ const SwipeableCard = ({
   );
 };
 
+/* ── Movie Preview Sheet ── */
+const MoviePreviewSheet = ({
+  movie,
+  providers,
+  onWatch,
+  onClose,
+}: {
+  movie: MovieDetail;
+  providers: { name: string; logo_path: string }[];
+  onWatch: () => void;
+  onClose: () => void;
+}) => {
+  const title = getDisplayTitle(movie);
+  const year = getYear(movie);
+  const runtime = movie.runtime || movie.episode_run_time?.[0] || 0;
+  const rating = movie.vote_average || 0;
+  const backdrop = getBackdropUrl(movie.backdrop_path);
+  const poster = getPosterUrl(movie.poster_path, "w342");
+
+  return (
+    <>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        onClick={onClose}
+        className="fixed inset-0 z-[55] bg-black/60 backdrop-blur-sm"
+      />
+      <motion.div
+        initial={{ y: "100%" }}
+        animate={{ y: 0 }}
+        exit={{ y: "100%" }}
+        transition={{ type: "spring", damping: 30, stiffness: 300 }}
+        className="fixed bottom-0 left-0 right-0 z-[56] max-h-[88vh] rounded-t-3xl bg-card overflow-hidden flex flex-col"
+      >
+        {/* Backdrop header */}
+        <div className="relative h-44 shrink-0 overflow-hidden">
+          {backdrop ? (
+            <img src={backdrop} alt="" className="w-full h-full object-cover" />
+          ) : poster ? (
+            <img src={poster} alt="" className="w-full h-full object-cover blur-sm scale-110" />
+          ) : (
+            <div className="w-full h-full bg-foreground/5" />
+          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-card via-card/60 to-transparent" />
+
+          {/* Close button */}
+          <button
+            onClick={onClose}
+            className="absolute top-4 right-4 w-8 h-8 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center text-white/70 hover:text-white transition-colors"
+          >
+            <X className="w-4 h-4" />
+          </button>
+
+          {/* Poster + title overlay */}
+          <div className="absolute bottom-0 left-0 right-0 px-5 pb-4 flex items-end gap-4">
+            {poster && (
+              <img
+                src={poster}
+                alt={title}
+                className="w-20 h-[120px] rounded-xl object-cover border border-border/20 shadow-xl shrink-0 -mb-2"
+              />
+            )}
+            <div className="flex-1 min-w-0 pb-1">
+              <h2 className="text-xl font-serif text-foreground leading-tight line-clamp-2">{title}</h2>
+              <div className="flex items-center gap-3 mt-1 text-foreground/50 text-[11px] font-sans">
+                {year && <span>{year}</span>}
+                {runtime > 0 && (
+                  <span className="flex items-center gap-0.5">
+                    <Clock className="w-3 h-3" />
+                    {runtime} min
+                  </span>
+                )}
+                {rating > 0 && (
+                  <span className="flex items-center gap-0.5 text-primary">
+                    <Star className="w-3 h-3 fill-primary" />
+                    {rating.toFixed(1)}
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 overflow-y-auto px-5 py-4">
+          {/* Genres */}
+          {movie.genres && movie.genres.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 mb-4">
+              {movie.genres.map((g) => (
+                <span
+                  key={g.id}
+                  className="px-2.5 py-1 rounded-full bg-primary/8 border border-primary/15 text-primary/70 text-[11px] font-sans"
+                >
+                  {g.name}
+                </span>
+              ))}
+            </div>
+          )}
+
+          {/* Overview */}
+          {movie.overview && (
+            <p className="text-foreground/55 text-sm font-sans leading-relaxed mb-5">
+              {movie.overview}
+            </p>
+          )}
+
+          {/* Providers */}
+          {providers.length > 0 && (
+            <div className="flex items-center gap-2 mb-5">
+              <span className="text-foreground/30 text-[11px] font-sans">Dispo sur</span>
+              <div className="flex gap-1.5">
+                {providers.map((p) => (
+                  <img
+                    key={p.name}
+                    src={`https://image.tmdb.org/t/p/w92${p.logo_path}`}
+                    alt={p.name}
+                    className="w-6 h-6 rounded-md object-cover border border-border/20"
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* CTA */}
+        <div className="shrink-0 px-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] pt-3 border-t border-border/10 bg-card">
+          <Button
+            size="lg"
+            className="w-full rounded-2xl bg-primary text-primary-foreground hover:bg-primary/90 font-sans font-semibold h-13 gap-2.5 text-base neon-glow transition-all active:scale-[0.97]"
+            onClick={onWatch}
+          >
+            <Play className="w-4 h-4 fill-current" />
+            Voir la fiche complète
+          </Button>
+        </div>
+      </motion.div>
+    </>
+  );
+};
+
 const WatchlistPage = ({ onMovieSelect }: WatchlistPageProps) => {
   const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState<FilterChip>("ce-soir");
+  const [previewMovie, setPreviewMovie] = useState<MovieDetail | null>(null);
+  const [previewProviders, setPreviewProviders] = useState<{ name: string; logo_path: string }[]>([]);
+  const [previewLoading, setPreviewLoading] = useState(false);
 
   useEffect(() => {
     loadWatchlist();
@@ -137,12 +280,24 @@ const WatchlistPage = ({ onMovieSelect }: WatchlistPageProps) => {
     }
   };
 
-  const handleSelect = async (item: any) => {
+  const handlePreview = async (item: any) => {
+    setPreviewLoading(true);
     try {
-      const movie = await getMovieDetails(item.tmdb_id, item.media_type || "movie");
-      onMovieSelect(movie);
+      const mediaType = item.media_type || "movie";
+      const movie = await getMovieDetails(item.tmdb_id, mediaType);
+      setPreviewMovie(movie);
+      getWatchProviders(movie.id, mediaType).then(setPreviewProviders).catch(() => setPreviewProviders([]));
     } catch (e) {
       console.error(e);
+    } finally {
+      setPreviewLoading(false);
+    }
+  };
+
+  const handleWatchFromPreview = () => {
+    if (previewMovie) {
+      onMovieSelect(previewMovie);
+      setPreviewMovie(null);
     }
   };
 
@@ -231,12 +386,38 @@ const WatchlistPage = ({ onMovieSelect }: WatchlistPageProps) => {
               key={item.id}
               item={item}
               index={i}
-              onSelect={() => handleSelect(item)}
+              onSelect={() => handlePreview(item)}
               onRemove={() => handleRemove(item.tmdb_id)}
             />
           ))}
         </div>
       )}
+
+      {/* Loading overlay for preview */}
+      <AnimatePresence>
+        {previewLoading && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-background/60 backdrop-blur-sm"
+          >
+            <Loader2 className="w-6 h-6 text-primary animate-spin" />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Preview sheet */}
+      <AnimatePresence>
+        {previewMovie && (
+          <MoviePreviewSheet
+            movie={previewMovie}
+            providers={previewProviders}
+            onWatch={handleWatchFromPreview}
+            onClose={() => { setPreviewMovie(null); setPreviewProviders([]); }}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 };
