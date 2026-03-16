@@ -154,20 +154,13 @@ export default function PickChatOverlay() {
   const sendMessage = useCallback(async (text: string) => {
     if (!text.trim() || isStreaming) return;
 
-    // Check chat limit for free users
-    if (!pickPlus.canChat) {
-      pickPlus.showPaywall();
-      return;
+    // Free users: check if discovery chat is still available
+    if (!pickPlus.isPremium && mode !== "companion") {
+      if (!pickPlus.canDiscoveryChat) {
+        pickPlus.showPaywall("chat_limit");
+        return;
+      }
     }
-
-    const userMsg: ChatMsg = { role: "user", content: text.trim() };
-    addMessage(userMsg);
-    setInput("");
-    setIsStreaming(true);
-    setStreamingContent("");
-
-    // Record usage
-    await pickPlus.recordChatMessage();
 
     const allMessages = [...currentMessages, userMsg].map(m => ({ role: m.role, content: m.content }));
 
