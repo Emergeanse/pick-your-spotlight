@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { ArrowLeft, Flame, Target, Trophy, TrendingUp, Sparkles, Loader2, Dna } from "lucide-react";
+import { ArrowLeft, Flame, Target, Trophy, TrendingUp, Sparkles, Loader2, Dna, BookOpen } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
