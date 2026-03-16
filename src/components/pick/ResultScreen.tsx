@@ -564,6 +564,15 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                                 </div>
                               </div>
                             )}
+                            {whyExpanded && (
+                              <button
+                                onClick={() => setWhyExpanded(false)}
+                                className="text-primary/60 text-[11px] font-sans font-medium mt-1 flex items-center gap-0.5 hover:text-primary transition-colors"
+                              >
+                                Réduire
+                                <ChevronUp className="w-3 h-3" />
+                              </button>
+                            )}
                           </div>
                         </motion.div>
                       )}

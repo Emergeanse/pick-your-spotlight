@@ -51,6 +51,7 @@ const Onboarding = () => {
   const [loadingMore, setLoadingMore] = useState(false);
   const [saving, setSaving] = useState(false);
   const [selectedPlatforms, setSelectedPlatforms] = useState<number[]>([]);
+  const [showSearch, setShowSearch] = useState(false);
   const navigate = useNavigate();
 
   const stepIndex = STEPS.indexOf(step) + 1;
