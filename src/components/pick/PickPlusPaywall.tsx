@@ -13,6 +13,7 @@ interface PickPlusPaywallProps {
 }
 
 const BENEFITS = [
+  { icon: MessageCircle, label: "Pick partout, tout le temps", desc: "Chat illimité — ton assistant ciné toujours avec toi" },
   { icon: Zap, label: "Recommandations illimitées", desc: "Plus de limite de 3 par jour" },
   { icon: Brain, label: "Companion Mode complet", desc: "Questions illimitées + analyses approfondies" },
   { icon: Sparkles, label: "ADN Cinéma avancé", desc: "Évolution, comparaisons et rapport mensuel" },
