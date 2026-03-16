@@ -13,7 +13,7 @@ import BrandHeader from "./BrandHeader";
 import DiscoverySection from "./DiscoverySection";
 import PickCharacter from "./PickCharacter";
 
-import CinemaDNA from "./CinemaDNA";
+
 
 interface HomeScreenProps {
   onStart: () => void;
