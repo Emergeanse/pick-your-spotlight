@@ -178,16 +178,18 @@ export async function getRecommendations(
   return allDetails.sort(() => Math.random() - 0.5).slice(0, 3);
 }
 
-export async function getWatchProviders(id: number, mediaType: string): Promise<{ name: string; logo_path: string; provider_id: number }[]> {
+export async function getWatchProviders(id: number, mediaType: string): Promise<{ name: string; logo_path: string; provider_id: number; tmdb_link?: string }[]> {
   const endpoint = mediaType === "tv" ? `/tv/${id}/watch/providers` : `/movie/${id}/watch/providers`;
   const data = await fetchFromTMDB(endpoint);
   const fr = data.results?.FR;
   if (!fr) return [];
+  const tmdbLink = fr.link || null; // TMDB's link to the JustWatch page for this content
   const providers = fr.flatrate || [];
   return providers.map((p: any) => ({
     name: p.provider_name || p.name,
     logo_path: p.logo_path,
     provider_id: p.provider_id,
+    tmdb_link: tmdbLink,
   }));
 }
 
