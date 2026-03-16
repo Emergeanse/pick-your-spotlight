@@ -14,21 +14,18 @@ export interface StreamingPlatform {
 
 const platforms: StreamingPlatform[] = [
   { id: 8, label: "Netflix", logo: "https://image.tmdb.org/t/p/original/pbpMk2JmcoNnQwx5JGpXngfoWtp.jpg" },
-  { id: 337, label: "Disney+", logo: "https://image.tmdb.org/t/p/original/7rwgEs15tFwyR9NPQ5vpzxTj19Q.jpg" },
-  { id: 119, label: "Amazon Prime", logo: "https://image.tmdb.org/t/p/original/dQeAar5H991VYporEjUspolDarG.jpg" },
-  { id: 350, label: "Apple TV+", logo: "https://image.tmdb.org/t/p/original/6uhKBfmtzFqOcLousHwZuzcrScK.jpg" },
-  { id: 381, label: "Canal+", logo: "https://image.tmdb.org/t/p/original/dVMVBMOlOUPFfbkSKNnTGg3JX5b.jpg" },
-  { id: 56, label: "OCS", logo: "https://image.tmdb.org/t/p/original/3E0RkIEQrrGYazs63NMsn3XONT6.jpg" },
-  { id: 236, label: "Paramount+", logo: "https://image.tmdb.org/t/p/original/fi83B1ozBIOCEo7cWoevSYS0tXi.jpg" },
-  { id: 1899, label: "Max", logo: "https://image.tmdb.org/t/p/original/6Q3YKUNA60A4DxOrPaUTDOE4BrU.jpg" },
-  { id: 35, label: "Rakuten TV", logo: "https://image.tmdb.org/t/p/original/bKy4Scd3WQ9GJshE1eXEYbX6nOb.jpg" },
-  { id: 68, label: "Microsoft Store", logo: "https://image.tmdb.org/t/p/original/shq88b09gTBYC4hA7K7MUL8Q4zP.jpg" },
-  { id: 192, label: "YouTube", logo: "https://image.tmdb.org/t/p/original/oIkQkEkwfmcG7IGpRR1NB8frZZM.jpg" },
-  { id: 10, label: "Google Play", logo: "https://image.tmdb.org/t/p/original/tbEdFQDwx5LEVr8WpSeXQSIirVq.jpg" },
-  { id: 234, label: "Crunchyroll", logo: "https://image.tmdb.org/t/p/original/8Gt1iClBlzTeQs8WQm8UrCoIxnQ.jpg" },
-  { id: 188, label: "YouTube Premium", logo: "https://image.tmdb.org/t/p/original/6IPjvnYl6WWkIwN158qBFXCr2Ne.jpg" },
-  { id: 2, label: "Apple TV", logo: "https://image.tmdb.org/t/p/original/9ghgSC0MA082EL6HLCW3GalykFD.jpg" },
-  { id: 1967, label: "Molotov TV", logo: "https://image.tmdb.org/t/p/original/fSiNKaG0KEvsNOIttexKJG9uqRx.jpg" },
+  { id: 337, label: "Disney+", logo: "https://image.tmdb.org/t/p/original/97yvRBw1GzX7fXprcF80er19ot.jpg" },
+  { id: 119, label: "Amazon Prime", logo: "https://image.tmdb.org/t/p/original/pvske1MyAoymrs5bguRfVqYiM9a.jpg" },
+  { id: 350, label: "Apple TV+", logo: "https://image.tmdb.org/t/p/original/mcbz1LgtErU9p4UdbZ0rG6RTWHX.jpg" },
+  { id: 381, label: "Canal+", logo: "https://image.tmdb.org/t/p/original/geOzgeKZWpZC3lymAVEHVIk3X0q.jpg" },
+  { id: 236, label: "Paramount+", logo: "/logos/paramount-plus.png" },
+  { id: 384, label: "HBO", logo: "/logos/hbo.png" },
+  { id: 35, label: "Rakuten TV", logo: "https://image.tmdb.org/t/p/original/bZvc9dXrXNly7cA0V4D9pR8yJwm.jpg" },
+  { id: 192, label: "YouTube", logo: "https://image.tmdb.org/t/p/original/pTnn5JwWr4p3pG8H6VrpiQo7Vs0.jpg" },
+  { id: 283, label: "Crunchyroll", logo: "https://image.tmdb.org/t/p/original/fzN5Jok5Ig1eJ7gyNGoMhnLSCfh.jpg" },
+  { id: 2, label: "Apple TV", logo: "https://image.tmdb.org/t/p/original/SPnB1qiCkYfirS2it3hZORwGVn.jpg" },
+  { id: 3, label: "Google Play", logo: "https://image.tmdb.org/t/p/original/8z7rC8uIDaTM91X0ZfkRf04ydj2.jpg" },
+  { id: 1967, label: "Molotov TV", logo: "https://image.tmdb.org/t/p/original/8qSG9LtUhBQIWy2Fr6fzeW7gBdd.jpg" },
 ];
 
 interface PlatformStepProps {
@@ -86,7 +83,7 @@ const PlatformStep = ({ onSelect, loading, loadingMessage }: PlatformStepProps) 
               transition={{ duration: 0.4 }}
               className="text-2xl md:text-5xl font-serif mb-3 md:mb-4 text-center"
             >
-              Où regardez-vous ?
+              Où tu regardes ?
             </motion.h2>
 
             <motion.p
@@ -95,7 +92,7 @@ const PlatformStep = ({ onSelect, loading, loadingMessage }: PlatformStepProps) 
               transition={{ delay: 0.15, duration: 0.3 }}
               className="text-muted-foreground text-xs md:text-sm font-sans mb-6 md:mb-10 text-center"
             >
-              Sélectionnez vos abonnements pour des suggestions adaptées
+              Sélectionne tes abonnements pour des suggestions adaptées
             </motion.p>
 
             <div className="grid grid-cols-4 gap-2 md:gap-4 max-w-xl w-full mb-6 md:mb-10">
