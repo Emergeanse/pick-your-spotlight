@@ -133,7 +133,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
   const reviewChunksRef = useRef<Blob[]>([]);
   const [reviewSubmitted, setReviewSubmitted] = useState(false);
 
-  const isWhyUnlocked = profileConfidence >= CONFIDENCE_THRESHOLD;
+  const isWhyUnlocked = true; // All features unlocked for now
 
   const playBrowserWhyFallback = useCallback((text: string) => {
     if (typeof window === "undefined" || !("speechSynthesis" in window)) return false;
