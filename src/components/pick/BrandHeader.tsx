@@ -1,18 +1,12 @@
 import { motion } from "framer-motion";
-import { ArrowLeft, Dna } from "lucide-react";
-import { useAuth } from "@/hooks/use-auth";
-import { Button } from "@/components/ui/button";
+import { ArrowLeft } from "lucide-react";
 
 interface BrandHeaderProps {
   showBack?: boolean;
   onBack?: () => void;
-  onOpenWatchlist?: () => void;
-  onOpenDNA?: () => void;
 }
 
-const BrandHeader = ({ showBack, onBack, onOpenDNA }: BrandHeaderProps) => {
-  const { user } = useAuth();
-
+const BrandHeader = ({ showBack, onBack }: BrandHeaderProps) => {
   return (
     <motion.div
       initial={{ opacity: 0, y: -8 }}
@@ -36,20 +30,7 @@ const BrandHeader = ({ showBack, onBack, onOpenDNA }: BrandHeaderProps) => {
         </div>
       )}
 
-      <div className="flex items-center gap-1">
-        {onOpenDNA && user && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onOpenDNA}
-            className="text-foreground/50 hover:text-primary text-xs font-sans gap-1.5"
-            title="Mon ADN Cinéma"
-          >
-            <Dna className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">ADN</span>
-          </Button>
-        )}
-      </div>
+      <div />
     </motion.div>
   );
 };
