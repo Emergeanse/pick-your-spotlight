@@ -148,6 +148,11 @@ const Index = () => {
   const handlePlatformSelect = async (platformIds: number[]) => {
     setSelectedPlatformIds(platformIds);
     setSearchTags(buildSearchTags(mood, context, time));
+    
+    // Check freemium limit
+    const allowed = await pickPlus.recordRecommendation();
+    if (!allowed) return;
+    
     setLoading(true);
     setLoadingMessage("Analyse de vos préférences…");
     try {
