@@ -20,6 +20,8 @@ import { recordAcceptedRecommendation, recordSkippedRecommendation } from "@/lib
 import type { Mood, Context, TimeAvailable, MovieDetail } from "@/lib/tmdb";
 import { getRecommendations, getDisplayTitle } from "@/lib/tmdb";
 import { trackInteraction, getUserTasteProfile } from "@/lib/interactions";
+import { usePickPlus } from "@/hooks/use-pick-plus";
+import PickPlusPaywall from "@/components/pick/PickPlusPaywall";
 
 type Step = "home" | "mood" | "context" | "time" | "platforms" | "result";
 
