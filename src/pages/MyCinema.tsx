@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { ArrowLeft, Flame, Target, Trophy, TrendingUp, Sparkles, Loader2, Dna, BookOpen } from "lucide-react";
+import { ArrowLeft, Flame, Target, Trophy, TrendingUp, Sparkles, Loader2, Dna, BookOpen, Lock, Unlock, Brain, MessageSquareText, Shuffle, Star } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
@@ -30,6 +30,7 @@ const MyCinema = () => {
   const [engagement, setEngagement] = useState<EngagementData | null>(null);
   const [loading, setLoading] = useState(true);
   const [showDNA, setShowDNA] = useState(false);
+  const [likedCount, setLikedCount] = useState(0);
 
   useEffect(() => {
     if (!isReady) return;
@@ -41,8 +42,12 @@ const MyCinema = () => {
     if (!user) return;
     setLoading(true);
     try {
-      const data = await getEngagementData(user.id);
-      setEngagement(data);
+      const [engData, likedData] = await Promise.all([
+        getEngagementData(user.id),
+        supabase.from("liked_movies").select("id", { count: "exact", head: true }).eq("user_id", user.id),
+      ]);
+      setEngagement(engData);
+      setLikedCount(likedData.count || 0);
     } catch (e) {
       console.error(e);
     } finally {
@@ -182,10 +187,149 @@ const MyCinema = () => {
           )}
         </motion.div>
 
-        {/* ─── ADN Cinéma Teaser ─── */}
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-          <CinemaDNA userId={user.id} teaser onOpenFull={() => setShowDNA(true)} />
+        {/* ─── Fonctionnalités à débloquer ─── */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="mb-8"
+        >
+          <h2 className="text-[11px] uppercase tracking-[0.15em] text-foreground/30 font-sans font-semibold mb-4">
+            Fonctionnalités
+          </h2>
+          <div className="space-y-2.5">
+            {(() => {
+              const confidence = engagement?.profileConfidence || 0;
+              const totalRecos = engagement?.totalRecommendations || 0;
+
+              const features = [
+                {
+                  id: "why",
+                  icon: Brain,
+                  label: "Pourquoi ce film",
+                  desc: "Analyse personnalisée de chaque recommandation",
+                  unlocked: confidence >= 30,
+                  progress: Math.min((confidence / 30) * 100, 100),
+                  requirement: "30% de confiance",
+                },
+                {
+                  id: "dna",
+                  icon: Dna,
+                  label: "ADN Cinéma",
+                  desc: "Ton profil cinématographique unique",
+                  unlocked: likedCount >= 5,
+                  progress: Math.min((likedCount / 5) * 100, 100),
+                  requirement: "5 films aimés",
+                },
+                {
+                  id: "reviews",
+                  icon: MessageSquareText,
+                  label: "Avis post-visionnage",
+                  desc: "Partage ton ressenti pour affiner les recos",
+                  unlocked: totalRecos >= 1,
+                  progress: totalRecos >= 1 ? 100 : 0,
+                  requirement: "1 recommandation",
+                },
+                {
+                  id: "surprise",
+                  icon: Shuffle,
+                  label: "Surprends-moi",
+                  desc: "Films hors de ta zone de confort",
+                  unlocked: likedCount >= 3,
+                  progress: Math.min((likedCount / 3) * 100, 100),
+                  requirement: "3 films aimés",
+                },
+              ];
+
+              const unlockedCount = features.filter(f => f.unlocked).length;
+
+              return (
+                <>
+                  {/* Summary */}
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/[0.08] border border-primary/15">
+                      <Unlock className="w-3 h-3 text-primary" />
+                      <span className="text-[11px] font-sans font-semibold text-primary">
+                        {unlockedCount}/{features.length}
+                      </span>
+                    </div>
+                    <span className="text-[11px] text-muted-foreground font-sans">
+                      {unlockedCount === features.length ? "Tout débloqué !" : "débloquées"}
+                    </span>
+                  </div>
+
+                  {features.map((feature, i) => {
+                    const Icon = feature.icon;
+                    return (
+                      <motion.div
+                        key={feature.id}
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.15 + i * 0.05 }}
+                        className={`flex items-center gap-3 px-4 py-3.5 rounded-xl border transition-all ${
+                          feature.unlocked
+                            ? "bg-primary/[0.06] border-primary/15"
+                            : "bg-card border-border/15"
+                        }`}
+                        onClick={() => {
+                          if (feature.id === "dna" && feature.unlocked) setShowDNA(true);
+                        }}
+                        style={{ cursor: feature.id === "dna" && feature.unlocked ? "pointer" : "default" }}
+                      >
+                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                          feature.unlocked
+                            ? "bg-primary/15"
+                            : "bg-muted"
+                        }`}>
+                          {feature.unlocked ? (
+                            <Icon className="w-5 h-5 text-primary" />
+                          ) : (
+                            <Lock className="w-4 h-4 text-muted-foreground" />
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <p className={`text-sm font-sans font-medium ${feature.unlocked ? "text-foreground" : "text-foreground/50"}`}>
+                              {feature.label}
+                            </p>
+                            {feature.unlocked && (
+                              <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-primary/15 text-primary font-sans font-semibold">
+                                DÉBLOQUÉ
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-[11px] text-muted-foreground font-sans">{feature.desc}</p>
+                          {!feature.unlocked && (
+                            <div className="mt-1.5">
+                              <div className="h-1 rounded-full bg-muted overflow-hidden">
+                                <motion.div
+                                  initial={{ width: 0 }}
+                                  animate={{ width: `${feature.progress}%` }}
+                                  transition={{ delay: 0.3 + i * 0.05, duration: 0.8, ease: "easeOut" }}
+                                  className="h-full rounded-full bg-primary/40"
+                                />
+                              </div>
+                              <p className="text-[9px] text-muted-foreground/60 font-sans mt-0.5">
+                                Objectif : {feature.requirement}
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      </motion.div>
+                    );
+                  })}
+                </>
+              );
+            })()}
+          </div>
         </motion.div>
+
+        {/* ─── ADN Cinéma Teaser ─── */}
+        {likedCount >= 5 && (
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
+            <CinemaDNA userId={user.id} teaser onOpenFull={() => setShowDNA(true)} />
+          </motion.div>
+        )}
 
         {/* ─── Milestones ─── */}
         <motion.div
