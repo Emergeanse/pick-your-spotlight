@@ -205,11 +205,15 @@ const Index = () => {
     }
   };
 
+  const { activateCompanion } = useCompanion();
+
   const handleStartCompanion = () => {
     const currentMovie = results[currentResultIndex];
     if (currentMovie) {
       trackInteraction(currentMovie.id, "watched", { mood, context, time });
       if (user) recordAcceptedRecommendation(user.id);
+      activateCompanion(currentMovie);
+      toast("🎬 Companion activé — Pick est là pendant tout le film", { duration: 3000 });
     }
     setShowCompanion(true);
   };
