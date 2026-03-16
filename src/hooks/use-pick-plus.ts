@@ -12,7 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 
 const FREE_RECO_LIMIT = 3;
-const FREE_COMPANION_LIMIT = 5;
+const FREE_COMPANION_LIMIT = 1;
 
 export interface PickPlusState {
   plan: "free" | "pick_plus";

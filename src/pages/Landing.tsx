@@ -2,7 +2,7 @@ import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion"
 import { useNavigate } from "react-router-dom";
 import { useRef, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Target, Dice5, Mic, Brain, Tv, ChevronDown, Clapperboard, MessageCircle, Volume2, Zap, SlidersHorizontal } from "lucide-react";
+import { Sparkles, Target, Dice5, Mic, Brain, Tv, ChevronDown, Clapperboard, MessageCircle, Volume2, Zap, SlidersHorizontal, Crown, Check, X as XIcon } from "lucide-react";
 import pickLogo from "@/assets/pick-logo.png";
 import pickWave from "@/assets/pick-squirrel-wave.png";
 import pickThink from "@/assets/pick-squirrel-think.png";
@@ -627,6 +627,128 @@ const Landing = () => {
               </motion.div>
             ))}
           </motion.div>
+        </div>
+      </section>
+
+      {/* ── PRICING ── */}
+      <section className="py-24 md:py-32 px-5 relative overflow-hidden">
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div className="w-[500px] h-[400px] rounded-full bg-gold/4 blur-[120px]" />
+        </div>
+
+        <div className="max-w-4xl mx-auto relative z-10">
+          <motion.div
+            variants={fadeUp}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-100px" }}
+            className="text-center mb-12"
+          >
+            <h2 className="text-3xl md:text-5xl font-serif mb-3">
+              Commence <span className="text-gold italic">gratuitement</span>
+            </h2>
+            <p className="text-foreground/40 font-sans text-sm md:text-base max-w-lg mx-auto">
+              Pick est gratuit pour toujours. Pick+ amplifie l'expérience pour les plus cinéphiles.
+            </p>
+          </motion.div>
+
+          <motion.div
+            variants={stagger}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-80px" }}
+            className="grid md:grid-cols-2 gap-5 max-w-2xl mx-auto"
+          >
+            {/* Free plan */}
+            <motion.div
+              variants={fadeUp}
+              custom={0}
+              className="rounded-2xl border border-border/15 bg-card/40 p-6 md:p-8"
+            >
+              <h3 className="text-xl font-serif mb-1">Gratuit</h3>
+              <p className="text-foreground/40 text-sm font-sans mb-1">Pour toujours</p>
+              <p className="text-3xl font-serif text-foreground mb-5">0€</p>
+              <div className="space-y-3">
+                {[
+                  "Recommandation du soir (3/jour)",
+                  "Conversation avec Pick",
+                  "ADN Cinéma de base",
+                  "Watchlist complète",
+                  "Liens vers les plateformes",
+                  "Companion Mode (1 question/film)",
+                ].map((f) => (
+                  <div key={f} className="flex items-center gap-2.5">
+                    <Check className="w-4 h-4 text-primary/60 shrink-0" />
+                    <span className="text-foreground/60 text-sm font-sans">{f}</span>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+
+            {/* Pick+ plan */}
+            <motion.div
+              variants={fadeUp}
+              custom={1}
+              className="rounded-2xl border-2 border-gold/30 bg-gradient-to-br from-card/60 to-gold/[0.03] p-6 md:p-8 relative overflow-hidden"
+            >
+              <div className="absolute top-4 right-4 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-gold/15 border border-gold/25">
+                <Crown className="w-3 h-3 text-gold" />
+                <span className="text-gold text-[10px] font-sans font-bold uppercase tracking-wider">Populaire</span>
+              </div>
+              <h3 className="text-xl font-serif mb-1 text-gold">Pick+</h3>
+              <p className="text-foreground/40 text-sm font-sans mb-1">L'expérience complète</p>
+              <div className="flex items-baseline gap-1 mb-5">
+                <p className="text-3xl font-serif text-foreground">2,49€</p>
+                <span className="text-foreground/40 text-sm font-sans">/mois</span>
+              </div>
+              <div className="space-y-3">
+                {[
+                  "Tout le plan Gratuit",
+                  "Recommandations illimitées",
+                  "Companion Mode illimité",
+                  "ADN Cinéma avancé + rapports",
+                  "Alertes plateforme",
+                  "Mode hors-ligne",
+                  "Profils multiples",
+                ].map((f) => (
+                  <div key={f} className="flex items-center gap-2.5">
+                    <Check className="w-4 h-4 text-gold shrink-0" />
+                    <span className="text-foreground/70 text-sm font-sans">{f}</span>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-6 space-y-2">
+                <Button
+                  className="w-full rounded-full bg-gold text-gold-foreground hover:bg-gold/90 font-sans font-semibold h-11 text-sm gap-2 gold-glow"
+                  disabled
+                >
+                  <Crown className="w-4 h-4" />
+                  Annuel — 29,99€/an (-40%)
+                </Button>
+                <Button
+                  variant="outline"
+                  className="w-full rounded-full border-gold/20 text-foreground/50 font-sans text-sm h-10"
+                  disabled
+                >
+                  Mensuel — 3,99€/mois
+                </Button>
+                <p className="text-center text-foreground/20 text-[10px] font-sans">
+                  Bientôt disponible
+                </p>
+              </div>
+            </motion.div>
+          </motion.div>
+
+          {/* Value prop */}
+          <motion.p
+            variants={fadeUp}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            className="text-center text-foreground/25 text-xs font-sans mt-8 max-w-sm mx-auto"
+          >
+            Pick te fait économiser 20 minutes de scroll par soir — ça vaut bien 8 centimes par jour.
+          </motion.p>
         </div>
       </section>
 
