@@ -149,13 +149,25 @@ export default function PickChatOverlay() {
     }
   }, [scribe]);
 
+  const pickPlus = usePickPlus();
+
   const sendMessage = useCallback(async (text: string) => {
     if (!text.trim() || isStreaming) return;
+
+    // Check chat limit for free users
+    if (!pickPlus.canChat) {
+      pickPlus.showPaywall();
+      return;
+    }
+
     const userMsg: ChatMsg = { role: "user", content: text.trim() };
     addMessage(userMsg);
     setInput("");
     setIsStreaming(true);
     setStreamingContent("");
+
+    // Record usage
+    await pickPlus.recordChatMessage();
 
     const allMessages = [...currentMessages, userMsg].map(m => ({ role: m.role, content: m.content }));
 
