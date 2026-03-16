@@ -53,7 +53,7 @@ export default function PickChatOverlay() {
   const y = useMotionValue(0);
   const navigate = useNavigate();
   const { user } = useAuth();
-  const pendingSendRef = useRef<string | null>(null);
+  
 
   const scribe = useScribe({
     modelId: "scribe_v2_realtime",
