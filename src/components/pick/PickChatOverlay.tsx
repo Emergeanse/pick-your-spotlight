@@ -89,8 +89,63 @@ export default function PickChatOverlay() {
   useEffect(() => {
     if (isOverlayOpen) {
       setTimeout(() => inputRef.current?.focus(), 400);
+    } else {
+      // Disconnect mic when overlay closes
+      if (scribe.isConnected) {
+        scribe.disconnect();
+        setIsListening(false);
+      }
     }
   }, [isOverlayOpen]);
+
+  // Auto-send when committed transcript arrives
+  useEffect(() => {
+    if (pendingSendRef.current && !isStreaming) {
+      const text = pendingSendRef.current;
+      pendingSendRef.current = null;
+      setInput("");
+      // Disconnect mic before sending
+      if (scribe.isConnected) {
+        scribe.disconnect();
+        setIsListening(false);
+      }
+      sendMessage(text);
+    }
+  });
+
+  const toggleMic = useCallback(async () => {
+    if (scribe.isConnected) {
+      scribe.disconnect();
+      setIsListening(false);
+      return;
+    }
+    try {
+      const resp = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/scribe-token`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          },
+        }
+      );
+      const { token } = await resp.json();
+      if (!token) throw new Error("No token");
+      await scribe.connect({
+        token,
+        microphone: {
+          echoCancellation: true,
+          noiseSuppression: true,
+        },
+      });
+      setIsListening(true);
+      setInput("");
+    } catch (e) {
+      console.error("Mic error:", e);
+      setIsListening(false);
+    }
+  }, [scribe]);
 
   const sendMessage = useCallback(async (text: string) => {
     if (!text.trim() || isStreaming) return;
