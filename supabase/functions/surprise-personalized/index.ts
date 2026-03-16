@@ -198,16 +198,25 @@ Recommande UN film avec les scores détaillés.`;
       return true;
     };
 
-    // Search TMDB
-    const searchUrl = `https://api.themoviedb.org/3/search/movie?api_key=${TMDB_API_KEY}&language=fr-FR&query=${encodeURIComponent(suggestion.title)}&page=1`;
-    const searchRes = await fetch(searchUrl);
-    const searchData = await searchRes.json();
-    const results = searchData.results || [];
+    // Search TMDB — either from AI suggestion or direct discover fallback
+    let selectedMovie: any = null;
 
-    let selectedMovie = results.find((r: any) => isMovieAllowed(r));
+    if (suggestion && suggestion.title) {
+      const searchUrl = `https://api.themoviedb.org/3/search/movie?api_key=${TMDB_API_KEY}&language=fr-FR&query=${encodeURIComponent(suggestion.title)}&page=1`;
+      const searchRes = await fetch(searchUrl);
+      const searchData = await searchRes.json();
+      const results = searchData.results || [];
+      selectedMovie = results.find((r: any) => isMovieAllowed(r));
+    }
 
     if (!selectedMovie) {
-      // Fallback: use discover with filters
+      // Fallback: use discover with filters + user's favorite genres
+      const genreIdMap: Record<string, number> = {
+        "Action": 28, "Aventure": 12, "Animation": 16, "Comédie": 35, "Crime": 80,
+        "Documentaire": 99, "Drame": 18, "Famille": 10751, "Fantastique": 14,
+        "Histoire": 36, "Horreur": 27, "Musique": 10402, "Mystère": 9648,
+        "Romance": 10749, "Science-Fiction": 878, "Thriller": 53, "Guerre": 10752, "Western": 37,
+      };
       const discoverParams = new URLSearchParams({
         api_key: TMDB_API_KEY,
         language: "fr-FR",
@@ -217,6 +226,10 @@ Recommande UN film avec les scores détaillés.`;
       });
       if (minRating && minRating > 0) discoverParams.set("vote_average.gte", String(minRating));
       if (excludedGenreIds.size > 0) discoverParams.set("without_genres", [...excludedGenreIds].join(","));
+      if (topGenres.length > 0 && !outOfComfortZone) {
+        const genreIds = topGenres.map(g => genreIdMap[g]).filter(Boolean).slice(0, 3);
+        if (genreIds.length > 0) discoverParams.set("with_genres", genreIds.join("|"));
+      }
       if (platformIds && platformIds.length > 0) {
         discoverParams.set("with_watch_providers", platformIds.join("|"));
         discoverParams.set("watch_region", "FR");
@@ -250,18 +263,23 @@ Recommande UN film avec les scores détaillés.`;
       }).catch(() => {});
     }
 
+    const fallbackReason = aiFailed
+      ? `Ce film correspond à tes genres préférés (${topGenres.slice(0, 3).join(", ")}). Pick n'a pas pu utiliser l'IA pour affiner la recommandation, mais ce titre est populaire et bien noté !`
+      : suggestion?.reason || "Film recommandé par Pick.";
+
     return new Response(JSON.stringify({
       movie: movieDetail,
-      reason: suggestion.reason,
-      confidence: suggestion.confidence || 75,
+      reason: fallbackReason,
+      confidence: aiFailed ? 50 : (suggestion?.confidence || 75),
       isDiscovery: shouldDiscover,
-      scores: suggestion.scores || null,
+      scores: aiFailed ? null : (suggestion?.scores || null),
       engineMeta: {
         profileConfidence: confidence.score,
         discoveryRatio: confidence.discoveryRatio,
         acceptanceRate,
-        mode: shouldDiscover ? "discovery" : "precision",
+        mode: aiFailed ? "fallback" : (shouldDiscover ? "discovery" : "precision"),
         embeddingCandidatesCount: embeddingCandidates.length,
+        aiFallback: aiFailed,
       },
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
