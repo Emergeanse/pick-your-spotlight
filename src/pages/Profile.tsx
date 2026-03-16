@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "@/hooks/use-toast";
-import { ArrowLeft, Heart, Bookmark, Check, LogOut, Loader2, X, Ban, Star, Info, Film, Tv, Layers, Brain, Trash2, Sparkles } from "lucide-react";
+import { ArrowLeft, Heart, Bookmark, Check, LogOut, Loader2, X, Ban, Star, Info, Film, Tv, Layers, Trash2, Sparkles } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
