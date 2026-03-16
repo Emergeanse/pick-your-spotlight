@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Mic, Dices, Tv, Sparkles, Loader2, Zap, X, Flame, Target, Trophy } from "lucide-react";
+import { Mic, Dices, Tv, Sparkles, Loader2, Zap, X, Flame, Target, Trophy, Shuffle } from "lucide-react";
 import { getTrendingMovies, getBackdropUrl, getSurpriseRecommendation, getPosterUrl, getDisplayTitle, getWatchProviders } from "@/lib/tmdb";
 import { getLikedMovies } from "@/lib/liked-movies";
 import { useAuth } from "@/hooks/use-auth";
