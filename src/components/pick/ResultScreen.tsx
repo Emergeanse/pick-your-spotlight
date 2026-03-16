@@ -1,7 +1,7 @@
 import { useState, useEffect, forwardRef, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Mic, MicOff, X, Send, Loader2, Sparkles, Check, Play, Star, Clock, Heart, Bookmark, Tv, ChevronDown, ChevronUp, MoreHorizontal, RefreshCw, ThumbsUp, ThumbsDown, MessageCircle, Volume2, Eye, ExternalLink } from "lucide-react";
+import { Mic, MicOff, X, Send, Loader2, Sparkles, Check, Play, Star, Clock, Heart, Bookmark, Tv, ChevronDown, ChevronUp, MoreHorizontal, RefreshCw, ThumbsUp, ThumbsDown, MessageCircle, Volume2, Eye, ExternalLink, Share2, Zap } from "lucide-react";
 import type { MovieDetail } from "@/lib/tmdb";
 import { getDisplayTitle, getYear, getBackdropUrl, getPosterUrl, getWatchProviders, getMovieTrailerUrl } from "@/lib/tmdb";
 import { buildStreamingLinks, openStreamingLink, type StreamingLink } from "@/lib/streaming-links";
