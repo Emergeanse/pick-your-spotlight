@@ -424,7 +424,9 @@ export default function PickChatOverlay() {
                   <p className="text-sm text-muted-foreground font-sans">
                     {mode === "companion"
                       ? "Pose-moi une question sur le film !"
-                      : "Films, séries, ou l'appli — demande-moi tout ! 🎬"
+                      : pickPlus.isPremium
+                        ? "Films, séries, ou l'appli — demande-moi tout ! 🎬"
+                        : "Dis-moi ton humeur, je trouve ton film du soir ! 🎬"
                     }
                   </p>
                 </div>
