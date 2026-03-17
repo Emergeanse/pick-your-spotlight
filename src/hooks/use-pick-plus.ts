@@ -56,7 +56,9 @@ export function usePickPlus(): PickPlusState {
   const [shouldShowPaywall, setShouldShowPaywall] = useState(false);
   const [paywallTrigger, setPaywallTrigger] = useState("general");
 
-  const isPremium = plan !== "free";
+  // TODO: Re-enable when Pick+ monetization goes live
+  // const isPremium = plan !== "free";
+  const isPremium = true; // All features unlocked during pre-launch
 
   // Load subscription + today's usage
   useEffect(() => {
