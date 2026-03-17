@@ -133,7 +133,9 @@ IMPORTANT : NE recommande PAS un film des mêmes genres principaux que "${reject
     const userPrompt = `Films aimés (${titles.length}, pondérés par récence) : ${titles.join(", ")}
 Genres préférés (pondérés) : ${topGenres.join(", ")}
 Micro-genres : ${tasteClusters.join(", ") || "à déduire des films aimés"}
-Films regardés : ${stats.watchCount || 0} | Films skippés : ${stats.skipCount || 0}
+Films regardés : ${stats.watchCount || 0} | Films skippés : ${stats.skipCount || 0} | Films aimés : ${stats.likeCount || 0}
+Taux d'acceptation : ${acceptanceRate}%
+${heavilySkippedGenres.length > 0 ? `Genres souvent refusés : ${heavilySkippedGenres.join(", ")}` : ""}
 ${shouldDiscover ? "→ MODE DÉCOUVERTE" : "→ MODE PRÉCISION"}
 ${rejectionSection}
 
