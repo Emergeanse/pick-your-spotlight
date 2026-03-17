@@ -326,7 +326,7 @@ const Landing = () => {
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true, margin: "-100px" }}
-            className="text-center mb-16"
+            className="text-center mb-10"
           >
             <h2 className="text-3xl md:text-5xl font-serif mb-3">
               2 façons de trouver <span className="text-primary italic">ton film</span>
