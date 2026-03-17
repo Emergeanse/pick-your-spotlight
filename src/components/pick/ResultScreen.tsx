@@ -580,7 +580,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
             )}
 
             {/* "Pourquoi ce film" — combined match score + explanation */}
-            <AnimatePresence>
+            {!isYouTube && <AnimatePresence>
               {matchLoading && (
                 <motion.div
                   initial={{ opacity: 0 }}
