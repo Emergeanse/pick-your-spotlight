@@ -424,6 +424,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
 
                 {/* 3. Surprends-moi — warm amber accent */}
                 <motion.button
+                  data-tour="surprends-moi"
                   whileTap={{ scale: 0.95 }}
                   onClick={handleSurprise}
                   disabled={loading || isSurprising}
