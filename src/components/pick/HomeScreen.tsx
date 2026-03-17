@@ -436,7 +436,8 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
 
                 {/* 4. Entraîne ton Pick — teal accent */}
                 {user && (
-                  <motion.button
+                    <motion.button
+                      data-tour="entraine-pick"
                     whileTap={{ scale: 0.95 }}
                     onClick={() => setShowTrainer(true)}
                     className="group inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[hsl(175_70%_45%/0.08)] border border-[hsl(175_70%_45%/0.25)] hover:border-[hsl(175_70%_45%/0.45)] hover:bg-[hsl(175_70%_45%/0.12)] transition-all"
