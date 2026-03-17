@@ -290,10 +290,10 @@ const TasteTrainer = ({ onClose }: TasteTrainerProps) => {
 
             <motion.button
               whileTap={{ scale: 0.9 }}
-              onClick={handleAlreadySeen}
+              onClick={handleUnsure}
               className="w-10 h-10 rounded-full bg-foreground/5 border border-foreground/10 flex items-center justify-center hover:border-foreground/30 transition-colors"
             >
-              <Eye className="w-4 h-4 text-foreground/40" />
+              <span className="text-foreground/40 text-xs font-sans font-medium">?</span>
             </motion.button>
 
             <motion.button
