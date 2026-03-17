@@ -93,6 +93,8 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
   const [rejectedIds, setRejectedIds] = useState<number[]>([]);
   const [engagement, setEngagement] = useState<EngagementData | null>(null);
   const [progressionMsg, setProgressionMsg] = useState<string | null>(null);
+  const [historyExcludeIds, setHistoryExcludeIds] = useState<number[]>([]);
+  const [showTrainer, setShowTrainer] = useState(false);
   const { user } = useAuth();
 
   // Load engagement data
