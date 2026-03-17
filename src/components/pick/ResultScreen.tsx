@@ -202,9 +202,14 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
     }
   }, [matchData, whyAudioLoading, whySpeaking, playBrowserWhyFallback]);
 
+  const isYouTube = !!(movie as any)._youtube;
+  const youtubeData = (movie as any)._youtubeData;
+
   const title = getDisplayTitle(movie);
   const year = getYear(movie);
-  const backdrop = getBackdropUrl(movie.backdrop_path);
+  const backdrop = isYouTube && movie.backdrop_path?.startsWith("http")
+    ? movie.backdrop_path
+    : getBackdropUrl(movie.backdrop_path);
   const poster = getPosterUrl(movie.poster_path, "w780");
   const runtime = movie.runtime || (movie.episode_run_time?.[0]) || 0;
   const genres = movie.genres?.map(g => g.name).join(" · ") || "";
@@ -222,12 +227,13 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
   }, [movie.id]);
 
   useEffect(() => {
+    if (isYouTube) { setProviders([]); setStreamingLinks([]); setTrailerUrl(null); return; }
     getWatchProviders(movie.id, mediaType).then((p) => {
       setProviders(p);
       setStreamingLinks(buildStreamingLinks(p, title));
     }).catch(() => { setProviders([]); setStreamingLinks([]); });
     getMovieTrailerUrl(movie.id, mediaType).then(setTrailerUrl).catch(() => setTrailerUrl(null));
-  }, [movie.id, mediaType]);
+  }, [movie.id, mediaType, isYouTube]);
 
   // Fetch providers for alternative movies
   useEffect(() => {
@@ -251,39 +257,47 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
     setShowReviewSheet(false);
     setYoutubeVideo(null);
 
-    // Fetch a YouTube video about this movie
-    setYoutubeLoading(true);
-    getYouTubeRecommendations("cinema-culture", `${title} film analyse critique`, 3)
-      .then((videos) => {
-        if (videos.length > 0) setYoutubeVideo(videos[0]);
-      })
-      .catch(() => {})
-      .finally(() => setYoutubeLoading(false));
+    // Fetch a YouTube video about this movie (skip if movie IS a YouTube video)
+    if (!isYouTube) {
+      setYoutubeLoading(true);
+      getYouTubeRecommendations("cinema-culture", `${title} film analyse critique`, 3)
+        .then((videos) => {
+          if (videos.length > 0) setYoutubeVideo(videos[0]);
+        })
+        .catch(() => {})
+        .finally(() => setYoutubeLoading(false));
+    }
 
-    // Pre-generate embedding for this movie (fire & forget)
-    ensureMovieEmbedding(
-      movie.id,
-      movie.title || movie.name || "",
-      movie.overview || "",
-      (movie.genres || []).map(g => g.name)
-    );
+    // Pre-generate embedding for this movie (fire & forget) — skip for YouTube
+    if (!isYouTube) {
+      ensureMovieEmbedding(
+        movie.id,
+        movie.title || movie.name || "",
+        movie.overview || "",
+        (movie.genres || []).map(g => g.name)
+      );
+    }
 
-    // Load taste profile + user taste vector + liked movies + cinematic profile and pass to match function
-    Promise.all([
-      getUserTasteProfile(),
-      user ? computeUserTasteVector(user.id) : Promise.resolve(null),
-      user ? getLikedMovies().catch(() => []) : Promise.resolve([]),
-      user ? supabase.from("cinematic_profiles" as any).select("personality_title, narrative, taste_traits").eq("user_id", user.id).maybeSingle().then(r => r.data) : Promise.resolve(null),
-    ]).then(([tasteProfile, userTasteVector, likedMovies, cinematicProfile]) => {
-      const likedMovieTitles = (likedMovies || []).map((m: any) => m.title);
-      supabase.functions.invoke("movie-match", {
-        body: { movie, userCriteria, tasteProfile, userTasteVector, likedMovieTitles, searchTags, cinematicProfile },
-      }).then(({ data, error }) => {
-        if (error) { console.error("Match error:", error); setMatchLoading(false); return; }
-        setMatchData(data as MatchData);
-        setMatchLoading(false);
+    // Load taste profile — skip for YouTube
+    if (!isYouTube) {
+      Promise.all([
+        getUserTasteProfile(),
+        user ? computeUserTasteVector(user.id) : Promise.resolve(null),
+        user ? getLikedMovies().catch(() => []) : Promise.resolve([]),
+        user ? supabase.from("cinematic_profiles" as any).select("personality_title, narrative, taste_traits").eq("user_id", user.id).maybeSingle().then(r => r.data) : Promise.resolve(null),
+      ]).then(([tasteProfile, userTasteVector, likedMovies, cinematicProfile]) => {
+        const likedMovieTitles = (likedMovies || []).map((m: any) => m.title);
+        supabase.functions.invoke("movie-match", {
+          body: { movie, userCriteria, tasteProfile, userTasteVector, likedMovieTitles, searchTags, cinematicProfile },
+        }).then(({ data, error }) => {
+          if (error) { console.error("Match error:", error); setMatchLoading(false); return; }
+          setMatchData(data as MatchData);
+          setMatchLoading(false);
+        });
       });
-    });
+    } else {
+      setMatchLoading(false);
+    }
   }, [movie.id]);
 
   useEffect(() => {
@@ -369,17 +383,35 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                   {title}
                 </h1>
 
-                {/* Meta: Year • Runtime • Rating */}
+                {/* Meta: Year • Runtime • Rating / Views */}
                 <div className="flex items-center gap-2 text-foreground/50 text-xs font-sans mb-1 flex-wrap">
-                  {year && <span className="font-medium text-foreground/70">{year}</span>}
-                  {year && runtime > 0 && <span className="text-foreground/20">•</span>}
+                  {isYouTube && youtubeData?.channelTitle && (
+                    <>
+                      <span className="font-medium text-foreground/70">{youtubeData.channelTitle}</span>
+                      <span className="text-foreground/20">•</span>
+                    </>
+                  )}
+                  {!isYouTube && year && <span className="font-medium text-foreground/70">{year}</span>}
+                  {!isYouTube && year && runtime > 0 && <span className="text-foreground/20">•</span>}
                   {runtime > 0 && (
                     <span className="flex items-center gap-1">
                       <Clock className="w-3 h-3" />
                       {runtime} min
                     </span>
                   )}
-                  {movie.vote_average > 0 && (
+                  {isYouTube && youtubeData?.viewCount > 0 && (
+                    <>
+                      <span className="text-foreground/20">•</span>
+                      <span className="text-foreground/60 font-medium">
+                        {youtubeData.viewCount > 1_000_000
+                          ? `${(youtubeData.viewCount / 1_000_000).toFixed(1)}M vues`
+                          : youtubeData.viewCount > 1_000
+                            ? `${(youtubeData.viewCount / 1_000).toFixed(0)}K vues`
+                            : `${youtubeData.viewCount} vues`}
+                      </span>
+                    </>
+                  )}
+                  {!isYouTube && movie.vote_average > 0 && (
                     <>
                       <span className="text-foreground/20">•</span>
                       <span className="flex items-center gap-1 text-primary font-medium">
@@ -414,81 +446,100 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
               </div>
             </div>
 
-            {/* Where to watch — streaming platform buttons */}
+            {/* Where to watch / YouTube CTA */}
             <motion.div
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.5 }}
               className="mb-4"
             >
-              <p className="text-[10px] uppercase tracking-widest text-foreground/30 font-sans font-semibold mb-2">
-                Où regarder
-              </p>
-
-              {streamingLinks.length === 0 ? (
-                /* No platform available */
-                <div className="rounded-xl bg-foreground/[0.04] border border-border/15 p-3.5">
-                  <p className="text-foreground/40 text-[12px] font-sans mb-2.5">
-                    Non disponible en streaming actuellement
+              {isYouTube && youtubeData?.url ? (
+                <>
+                  <p className="text-[10px] uppercase tracking-widest text-foreground/30 font-sans font-semibold mb-2">
+                    Regarder
                   </p>
-                  {!bookmarked && (
+                  <motion.button
+                    whileTap={{ scale: 0.97 }}
+                    onClick={() => window.open(youtubeData.url, "_blank", "noopener")}
+                    className="w-full flex items-center justify-center gap-3 px-5 py-3.5 rounded-xl bg-red-600 text-white hover:bg-red-700 font-sans font-semibold text-sm transition-all active:scale-[0.98]"
+                  >
+                    <Play className="w-5 h-5 fill-white" />
+                    <span>Regarder sur YouTube</span>
+                    <ExternalLink className="w-3.5 h-3.5 opacity-70" />
+                  </motion.button>
+                </>
+              ) : (
+                <>
+                  <p className="text-[10px] uppercase tracking-widest text-foreground/30 font-sans font-semibold mb-2">
+                    Où regarder
+                  </p>
+
+                  {streamingLinks.length === 0 ? (
+                    /* No platform available */
+                    <div className="rounded-xl bg-foreground/[0.04] border border-border/15 p-3.5">
+                      <p className="text-foreground/40 text-[12px] font-sans mb-2.5">
+                        Non disponible en streaming actuellement
+                      </p>
+                      {!bookmarked && (
+                        <motion.button
+                          whileTap={{ scale: 0.97 }}
+                          onClick={handleToggleBookmark}
+                          disabled={bookmarkLoading}
+                          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary/10 border border-primary/25 text-primary text-[12px] font-sans font-semibold hover:bg-primary/15 transition-all"
+                        >
+                          <Bookmark className="w-3.5 h-3.5" />
+                          Sauvegarder pour plus tard
+                        </motion.button>
+                      )}
+                    </div>
+                  ) : streamingLinks.length === 1 ? (
+                    /* Single platform — full-width prominent button */
                     <motion.button
                       whileTap={{ scale: 0.97 }}
-                      onClick={handleToggleBookmark}
-                      disabled={bookmarkLoading}
-                      className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary/10 border border-primary/25 text-primary text-[12px] font-sans font-semibold hover:bg-primary/15 transition-all"
-                    >
-                      <Bookmark className="w-3.5 h-3.5" />
-                      Sauvegarder pour plus tard
-                    </motion.button>
-                  )}
-                </div>
-              ) : streamingLinks.length === 1 ? (
-                /* Single platform — full-width prominent button */
-                <motion.button
-                  whileTap={{ scale: 0.97 }}
-                  onClick={() => {
-                    trackInteraction(movie.id, "watch_clicked", { platform: streamingLinks[0].name });
-                    openStreamingLink(streamingLinks[0]);
-                  }}
-                  className="w-full flex items-center justify-center gap-3 px-5 py-3.5 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 font-sans font-semibold text-sm neon-glow transition-all active:scale-[0.98]"
-                >
-                  <img
-                    src={`${IMG_BASE}/w92${streamingLinks[0].logo_path}`}
-                    alt={streamingLinks[0].name}
-                    className="w-6 h-6 rounded-md object-cover"
-                  />
-                  <span>Regarder sur {streamingLinks[0].name}</span>
-                  <ExternalLink className="w-3.5 h-3.5 opacity-70" />
-                </motion.button>
-              ) : (
-                /* Multiple platforms — list with open buttons */
-                <div className="flex flex-col gap-2">
-                  {streamingLinks.slice(0, 6).map((link) => (
-                    <motion.button
-                      key={link.providerId + link.name}
-                      whileTap={{ scale: 0.98 }}
                       onClick={() => {
-                        trackInteraction(movie.id, "watch_clicked", { platform: link.name });
-                        openStreamingLink(link);
+                        trackInteraction(movie.id, "watch_clicked", { platform: streamingLinks[0].name });
+                        openStreamingLink(streamingLinks[0]);
                       }}
-                      className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-foreground/[0.05] border border-border/20 hover:border-primary/30 hover:bg-foreground/[0.08] transition-all active:scale-[0.98] group"
+                      className="w-full flex items-center justify-center gap-3 px-5 py-3.5 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 font-sans font-semibold text-sm neon-glow transition-all active:scale-[0.98]"
                     >
                       <img
-                        src={`${IMG_BASE}/w92${link.logo_path}`}
-                        alt={link.name}
-                        className="w-8 h-8 rounded-lg object-cover shrink-0"
+                        src={`${IMG_BASE}/w92${streamingLinks[0].logo_path}`}
+                        alt={streamingLinks[0].name}
+                        className="w-6 h-6 rounded-md object-cover"
                       />
-                      <span className="text-foreground/70 text-[13px] font-sans font-medium flex-1 text-left group-hover:text-foreground transition-colors">
-                        {link.name}
-                      </span>
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary/15 text-primary text-[11px] font-sans font-semibold group-hover:bg-primary/25 transition-colors">
-                        Ouvrir
-                        <ExternalLink className="w-3 h-3" />
-                      </span>
+                      <span>Regarder sur {streamingLinks[0].name}</span>
+                      <ExternalLink className="w-3.5 h-3.5 opacity-70" />
                     </motion.button>
-                  ))}
-                </div>
+                  ) : (
+                    /* Multiple platforms — list with open buttons */
+                    <div className="flex flex-col gap-2">
+                      {streamingLinks.slice(0, 6).map((link) => (
+                        <motion.button
+                          key={link.providerId + link.name}
+                          whileTap={{ scale: 0.98 }}
+                          onClick={() => {
+                            trackInteraction(movie.id, "watch_clicked", { platform: link.name });
+                            openStreamingLink(link);
+                          }}
+                          className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-foreground/[0.05] border border-border/20 hover:border-primary/30 hover:bg-foreground/[0.08] transition-all active:scale-[0.98] group"
+                        >
+                          <img
+                            src={`${IMG_BASE}/w92${link.logo_path}`}
+                            alt={link.name}
+                            className="w-8 h-8 rounded-lg object-cover shrink-0"
+                          />
+                          <span className="text-foreground/70 text-[13px] font-sans font-medium flex-1 text-left group-hover:text-foreground transition-colors">
+                            {link.name}
+                          </span>
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary/15 text-primary text-[11px] font-sans font-semibold group-hover:bg-primary/25 transition-colors">
+                            Ouvrir
+                            <ExternalLink className="w-3 h-3" />
+                          </span>
+                        </motion.button>
+                      ))}
+                    </div>
+                  )}
+                </>
               )}
             </motion.div>
 
@@ -508,8 +559,8 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
               )}
             </div>
 
-            {/* Trailer — inline after synopsis to help decide */}
-            {trailerUrl && (
+            {/* Trailer — hide for YouTube */}
+            {!isYouTube && trailerUrl && (
               <motion.button
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -529,7 +580,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
             )}
 
             {/* "Pourquoi ce film" — combined match score + explanation */}
-            <AnimatePresence>
+            {!isYouTube && <AnimatePresence>
               {matchLoading && (
                 <motion.div
                   initial={{ opacity: 0 }}
@@ -721,10 +772,10 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                   </div>
                 </motion.div>
               )}
-            </AnimatePresence>
+            </AnimatePresence>}
 
-            {/* Pour aller plus loin — YouTube video */}
-            {youtubeVideo && (
+            {/* Pour aller plus loin — YouTube video (hide when content IS YouTube) */}
+            {!isYouTube && youtubeVideo && (
               <motion.div
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -777,7 +828,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
             >
               {/* Main CTA row */}
               <div className="flex items-center gap-2.5">
-                {onStartCompanion && (
+                {!isYouTube && onStartCompanion && (
                   <Button
                     size="lg"
                     className="flex-1 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 font-sans font-semibold h-12 gap-2 text-[15px] neon-glow-strong transition-all active:scale-[0.97]"

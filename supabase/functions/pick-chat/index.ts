@@ -137,7 +137,20 @@ Recommande immédiatement (appelle suggest_movie OU suggest_youtube selon le cas
 - Une demande même vague ("un bon film", "quelque chose de bien", "un truc ce soir")
 - Une demande de vidéo YouTube ("une vidéo sur l'histoire", "un documentaire YouTube", "un truc éducatif")
 
-Si l'utilisateur demande explicitement du contenu YouTube (documentaires, vidéos éducatives, analyses, etc.), utilise suggest_youtube. Sinon, utilise suggest_movie.
+QUAND UTILISER suggest_youtube (TRÈS IMPORTANT) :
+- L'utilisateur demande explicitement du contenu YouTube, un documentaire YouTube, ou une vidéo
+- L'utilisateur demande quelque chose de COURT (moins de 30 minutes) sur un sujet éducatif, historique, culturel, scientifique
+- L'utilisateur demande un documentaire et que YouTube est plus pertinent qu'un film (ex: sujet de niche, format court)
+- L'utilisateur mentionne "vidéo", "YouTube", "documentaire court", "éducatif", "analyse", "video essay"
+- L'utilisateur demande du contenu sur un sujet précis (ex: "l'histoire de Napoléon", "comment fonctionne un trou noir") où des vidéos YouTube de qualité existent
+
+QUAND UTILISER suggest_movie :
+- L'utilisateur veut un film ou une série pour la soirée
+- L'utilisateur donne une humeur sans préciser le format
+- L'utilisateur veut quelque chose de long (1h+)
+- Par défaut, si le format n'est pas clair, propose un film
+
+En résumé : YouTube = contenu court/éducatif/documentaire/niche. Film = divertissement long/soirée.
 
 Pose une question UNIQUEMENT si le message ne contient AUCUN signal (ex: juste "Salut").
 Maximum 1 question avant de proposer un film.
@@ -182,13 +195,14 @@ ${ratingInstruction}
 ${genreInstruction}
 
 RÈGLE CRITIQUE : Tu fais de la recommandation de films/séries ET de vidéos YouTube (documentaires, vidéos éducatives, analyses ciné, etc.).
-- Si l'utilisateur demande une vidéo YouTube, un documentaire YouTube, du contenu éducatif → utilise suggest_youtube
-- Si l'utilisateur pose des questions sur le cinéma, les acteurs, l'histoire du cinéma → réponds gentiment : "Super question ! 🎬 Avec Pick+, tu pourras me poser toutes tes questions ciné. Pour l'instant, dis-moi ce que t'as envie de regarder ce soir !"
+- Si l'utilisateur demande une vidéo YouTube, un documentaire YouTube, du contenu éducatif, quelque chose de court sur un sujet → utilise suggest_youtube
+- Si l'utilisateur demande quelque chose de court (<30 min) sur un sujet précis (histoire, science, culture) → utilise suggest_youtube
+- Si l'utilisateur pose des questions sur le cinéma → réponds gentiment : "Super question ! 🎬 Avec Pick+, tu pourras me poser toutes tes questions ciné. Pour l'instant, dis-moi ce que t'as envie de regarder ce soir !"
 - Si l'utilisateur parle de hors-sujet → "Hé, moi c'est trouver ton film du soir ! 🎬 Dis-moi ton humeur."
 
 Recommande immédiatement (appelle suggest_movie ou suggest_youtube) si l'utilisateur donne AU MOINS UN signal :
 - Une humeur, un contexte, un genre, une référence, une demande même vague
-- Une demande de vidéo YouTube ou documentaire
+- Une demande de vidéo YouTube, documentaire, ou contenu éducatif/court
 
 Pose une question UNIQUEMENT si le message ne contient AUCUN signal.
 Maximum 1 question avant de proposer.
@@ -323,11 +337,10 @@ ANNÉE EN COURS : ${currentYear}`;
 
       const toolCall = message.tool_calls[0];
       
-      // Handle YouTube suggestion
+      // Handle YouTube suggestion — return as first-class recommendation
       if (toolCall.function.name === "suggest_youtube") {
         const args = JSON.parse(toolCall.function.arguments);
         
-        // Call YouTube API via the youtube-recommendations edge function
         const YOUTUBE_API_KEY = Deno.env.get("YOUTUBE_API_KEY");
         if (!YOUTUBE_API_KEY) {
           return new Response(JSON.stringify({
@@ -343,7 +356,7 @@ ANNÉE EN COURS : ${currentYear}`;
         const ytParams = new URLSearchParams({
           part: "snippet",
           type: "video",
-          maxResults: "3",
+          maxResults: "5",
           key: YOUTUBE_API_KEY,
           regionCode: "FR",
           relevanceLanguage: "fr",
@@ -357,7 +370,7 @@ ANNÉE EN COURS : ${currentYear}`;
         }
 
         const ytSearchRes = await fetch(`https://www.googleapis.com/youtube/v3/search?${ytParams}`);
-        let youtubeVideos: any[] = [];
+        let bestVideo: any = null;
         
         if (ytSearchRes.ok) {
           const ytData = await ytSearchRes.json();
@@ -369,26 +382,78 @@ ANNÉE EN COURS : ${currentYear}`;
             );
             if (detailsRes.ok) {
               const detailsData = await detailsRes.json();
-              youtubeVideos = (detailsData.items || []).map((v: any) => ({
+              const videos = (detailsData.items || []).map((v: any) => ({
                 id: v.id,
                 title: v.snippet.title,
                 description: v.snippet.description,
-                thumbnail: v.snippet.thumbnails?.high?.url || v.snippet.thumbnails?.medium?.url,
+                thumbnail: v.snippet.thumbnails?.maxres?.url || v.snippet.thumbnails?.high?.url || v.snippet.thumbnails?.medium?.url,
                 channelTitle: v.snippet.channelTitle,
                 publishedAt: v.snippet.publishedAt,
                 duration: v.contentDetails?.duration,
                 viewCount: parseInt(v.statistics?.viewCount || "0"),
                 url: `https://www.youtube.com/watch?v=${v.id}`,
               }));
+              // Pick best video by view count
+              if (videos.length > 0) {
+                bestVideo = videos.sort((a: any, b: any) => b.viewCount - a.viewCount)[0];
+              }
             }
           }
         }
 
+        if (!bestVideo) {
+          return new Response(JSON.stringify({
+            type: "text",
+            reply: args.reason + "\n\nJe n'ai pas trouvé de vidéo YouTube correspondante. Essaie de reformuler !",
+            movie: null,
+          }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
+        // Parse ISO 8601 duration to minutes
+        const durationMatch = (bestVideo.duration || "").match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
+        const hours = parseInt(durationMatch?.[1] || "0");
+        const mins = parseInt(durationMatch?.[2] || "0");
+        const secs = parseInt(durationMatch?.[3] || "0");
+        const runtimeMinutes = hours * 60 + mins + (secs > 30 ? 1 : 0);
+
+        // Category label mapping
+        const categoryLabels: Record<string, string> = {
+          documentary: "Documentaire",
+          film: "Cinéma",
+          "cinema-culture": "Culture ciné",
+          educational: "Éducatif",
+        };
+
+        // Build a MovieDetail-shaped object with _youtube flag
+        const youtubeMovie = {
+          id: -Math.abs(hashCode(bestVideo.id)),
+          title: bestVideo.title,
+          name: bestVideo.title,
+          overview: bestVideo.description || "Pas de description disponible.",
+          poster_path: null,
+          backdrop_path: bestVideo.thumbnail, // full URL, not TMDB path
+          vote_average: 0,
+          runtime: runtimeMinutes,
+          genres: [{ id: 99, name: categoryLabels[args.category] || "YouTube" }],
+          release_date: bestVideo.publishedAt?.slice(0, 10) || "",
+          _youtube: true,
+          _youtubeData: {
+            url: bestVideo.url,
+            channelTitle: bestVideo.channelTitle,
+            viewCount: bestVideo.viewCount,
+            duration: bestVideo.duration,
+            thumbnail: bestVideo.thumbnail,
+            id: bestVideo.id,
+          },
+        };
+
         return new Response(JSON.stringify({
-          type: "youtube",
+          type: "recommendation",
           reply: args.reason,
-          videos: youtubeVideos,
-          movie: null,
+          movie: youtubeMovie,
+          recap: [args.category === "documentary" ? "Documentaire" : "YouTube", args.query.split(" ").slice(0, 2).join(" ")],
         }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
@@ -504,4 +569,14 @@ Pick est une application de recommandation de films, séries et vidéos YouTube 
 - **Profil** : L'utilisateur peut configurer ses plateformes de streaming préférées, ses genres favoris/exclus, sa note minimale, et activer le rituel du soir.
 
 Si l'utilisateur demande comment faire quelque chose dans l'appli, explique-lui clairement en le guidant vers la bonne section.`;
+}
+
+function hashCode(str: string): number {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Convert to 32bit integer
+  }
+  return Math.abs(hash);
 }

@@ -278,12 +278,6 @@ export default function PickChatOverlay() {
             pickPlus.lockDiscoveryChat();
             await pickPlus.recordDiscoveryConvo();
           }
-        } else if (data.type === "youtube" && data.videos?.length > 0) {
-          addMessage({
-            role: "assistant",
-            content: data.reply,
-            youtubeVideos: data.videos,
-          } as any);
         } else {
           addMessage({ role: "assistant", content: data.reply || "Hmm, dis-moi en plus !" });
         }
@@ -413,11 +407,14 @@ export default function PickChatOverlay() {
                         <div className="prose prose-sm prose-invert max-w-none [&>p]:mb-1 [&>p:last-child]:mb-0">
                           <ReactMarkdown>{msg.content}</ReactMarkdown>
                         </div>
-                        {/* Inline movie card */}
-                        {(msg as any).movie && <MovieCard movie={(msg as any).movie} onClick={() => handleMovieClick((msg as any).movie)} />}
-                        {(msg as any).youtubeVideos && (msg as any).youtubeVideos.map((video: any) => (
-                          <YouTubeCard key={video.id} video={video} />
-                        ))}
+                        {/* Inline movie/youtube card */}
+                        {(msg as any).movie && (
+                          (msg as any).movie._youtube ? (
+                            <YouTubeRecoCard movie={(msg as any).movie} onClick={() => handleMovieClick((msg as any).movie)} />
+                          ) : (
+                            <MovieCard movie={(msg as any).movie} onClick={() => handleMovieClick((msg as any).movie)} />
+                          )
+                        )}
                       </>
                     ) : msg.content}
                   </div>
@@ -584,16 +581,20 @@ function MovieCard({ movie, onClick }: { movie: any; onClick: () => void }) {
   );
 }
 
-/** Inline YouTube video card */
-function YouTubeCard({ video }: { video: any }) {
+/** Inline YouTube recommendation card — navigates to ResultScreen */
+function YouTubeRecoCard({ movie, onClick }: { movie: any; onClick: () => void }) {
+  const thumbnail = movie._youtubeData?.thumbnail || movie.backdrop_path;
+  const channelTitle = movie._youtubeData?.channelTitle || "";
+  const videoTitle = movie.title || movie.name || "Vidéo";
+
   return (
     <button
-      onClick={() => window.open(video.url, "_blank", "noopener")}
-      className="mt-2 flex items-center gap-3 w-full p-2 rounded-xl bg-secondary/40 border border-border/15 text-left hover:bg-secondary/60 transition-all active:scale-[0.98] group"
+      onClick={onClick}
+      className="mt-2 flex items-center gap-3 w-full p-2 rounded-xl bg-secondary/40 border border-red-500/15 text-left hover:bg-secondary/60 transition-all active:scale-[0.98] group"
     >
       <div className="relative w-16 aspect-video rounded-lg overflow-hidden flex-shrink-0">
-        {video.thumbnail && (
-          <img src={video.thumbnail} alt={video.title} className="w-full h-full object-cover" />
+        {thumbnail && (
+          <img src={thumbnail} alt={videoTitle} className="w-full h-full object-cover" />
         )}
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="w-5 h-5 rounded-full bg-red-600/90 flex items-center justify-center">
@@ -602,8 +603,8 @@ function YouTubeCard({ video }: { video: any }) {
         </div>
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-[12px] font-sans font-medium truncate">{video.title}</p>
-        <p className="text-[10px] text-muted-foreground truncate mt-0.5">{video.channelTitle}</p>
+        <p className="text-[12px] font-sans font-medium truncate">{videoTitle}</p>
+        <p className="text-[10px] text-muted-foreground truncate mt-0.5">{channelTitle}</p>
       </div>
       <ExternalLink className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
     </button>
