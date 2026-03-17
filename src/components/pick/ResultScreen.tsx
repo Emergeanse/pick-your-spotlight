@@ -767,17 +767,6 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                     Lancer le compagnon 🍿
                   </Button>
                 )}
-
-                {trailerUrl && (
-                  <Button
-                    size="lg"
-                    className="rounded-full bg-foreground/8 text-foreground/70 hover:bg-foreground/12 hover:text-foreground font-sans font-medium px-5 h-12 gap-2 text-sm border border-border/20 transition-all active:scale-[0.97]"
-                    onClick={() => window.open(trailerUrl, "_blank")}
-                  >
-                    <Play className="w-4 h-4 fill-current" />
-                    Trailer
-                  </Button>
-                )}
               </div>
 
               {/* Compact secondary actions — icon row */}
