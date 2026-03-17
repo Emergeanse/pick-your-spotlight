@@ -159,6 +159,7 @@ const CinemaDNA = ({ userId, teaser, onOpenFull }: CinemaDNAProps) => {
   if (teaser) {
     if (loading) return null;
     if (!profile) {
+      const remaining = Math.max(0, MIN_LIKED_FOR_DNA - likeCount);
       return (
         <motion.button
           initial={{ opacity: 0, y: 10 }}
@@ -172,7 +173,11 @@ const CinemaDNA = ({ userId, teaser, onOpenFull }: CinemaDNAProps) => {
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-[11px] font-sans font-semibold text-primary/70 mb-0.5">🧬 ADN Cinéma</p>
-              <p className="text-foreground/40 text-[12px] font-sans">Découvre ton profil cinématographique unique</p>
+              <p className="text-foreground/40 text-[12px] font-sans">
+                {likeCount >= MIN_LIKED_FOR_DNA
+                  ? "Prêt à découvrir ton profil !"
+                  : `Encore ${remaining} film${remaining > 1 ? "s" : ""} pour débloquer`}
+              </p>
             </div>
           </div>
         </motion.button>
