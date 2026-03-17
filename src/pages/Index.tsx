@@ -112,6 +112,10 @@ const Index = () => {
             preferredPlatforms: data.preferred_platforms || [],
             profileConfidence: (data as any).profile_confidence || 0,
           });
+          // Show tour for users who just completed onboarding
+          if (data.onboarding_completed && !localStorage.getItem(TOUR_KEY)) {
+            setShowTour(true);
+          }
         }
       });
   }, [user, navigate]);
