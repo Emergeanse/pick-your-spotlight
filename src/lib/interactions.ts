@@ -10,6 +10,7 @@ export type ActionType =
   | "opened" 
   | "searched"
   | "already_seen"
+  | "unsure"
   | "watch_clicked"
   | "reviewed";
 

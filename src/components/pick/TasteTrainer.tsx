@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence, PanInfo } from "framer-motion";
-import { Heart, X, ChevronLeft, Loader2, Eye } from "lucide-react";
+import { Heart, X, ChevronLeft, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getPosterUrl, getDisplayTitle } from "@/lib/tmdb";
 import { likeMovie } from "@/lib/liked-movies";
@@ -118,11 +118,11 @@ const TasteTrainer = ({ onClose }: TasteTrainerProps) => {
     }, 300);
   };
 
-  const handleAlreadySeen = async () => {
+  const handleUnsure = async () => {
     if (!currentMovie || !user) return;
     
     try {
-      await trackInteraction(currentMovie.id, "already_seen", { source: "taste_trainer" });
+      await trackInteraction(currentMovie.id, "unsure", { source: "taste_trainer" });
     } catch (e) {
       console.error("Failed to track:", e);
     }
@@ -290,10 +290,10 @@ const TasteTrainer = ({ onClose }: TasteTrainerProps) => {
 
             <motion.button
               whileTap={{ scale: 0.9 }}
-              onClick={handleAlreadySeen}
+              onClick={handleUnsure}
               className="w-10 h-10 rounded-full bg-foreground/5 border border-foreground/10 flex items-center justify-center hover:border-foreground/30 transition-colors"
             >
-              <Eye className="w-4 h-4 text-foreground/40" />
+              <span className="text-foreground/40 text-xs font-sans font-medium">?</span>
             </motion.button>
 
             <motion.button
@@ -306,7 +306,7 @@ const TasteTrainer = ({ onClose }: TasteTrainerProps) => {
           </div>
 
           <p className="text-center text-foreground/25 text-[10px] font-sans mt-3">
-            Swipe ← passer · 👁 déjà vu · Swipe → j'aime
+            Swipe ← passer · ? je sais pas · Swipe → j'aime
           </p>
         </div>
       )}
