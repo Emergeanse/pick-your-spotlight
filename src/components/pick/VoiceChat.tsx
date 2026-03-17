@@ -131,14 +131,13 @@ const VoiceChat = ({ onClose, onMovieSuggested, initialMessages }: VoiceChatProp
     },
     onCommittedTranscript: (data) => {
       if (data.text.trim()) {
-        // Set final text in input field and stop mic — let user review & send manually
         const finalText = data.text.trim();
         setInputText(finalText);
         setPartialText("");
         scribe.disconnect();
         setPhase("idle");
-        // Focus the text input so user can send or edit
-        setTimeout(() => inputRef.current?.focus(), 100);
+        // Auto-send the transcribed message
+        setTimeout(() => sendToAI(finalText), 150);
       }
     },
   });

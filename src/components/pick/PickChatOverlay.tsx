@@ -65,10 +65,12 @@ export default function PickChatOverlay() {
     },
     onCommittedTranscript: (data) => {
       if (data.text?.trim()) {
-        // Set the final text in input and stop mic — let user review & send manually
-        setInput(data.text.trim());
+        const finalText = data.text.trim();
+        setInput(finalText);
         scribe.disconnect();
         setIsListening(false);
+        // Auto-send the transcribed message
+        setTimeout(() => sendMessage(finalText), 150);
       }
     },
   });
