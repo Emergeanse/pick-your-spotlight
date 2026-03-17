@@ -119,6 +119,7 @@ const VoiceChat = ({ onClose, onMovieSuggested, initialMessages }: VoiceChatProp
           likedMovies: likedMovies?.map((m: any) => ({ title: m.title, genres: m.genres })) || [],
           favoriteGenres: profile?.favorite_genres || [],
           excludedGenres: profile?.excluded_genres || [],
+          minRating: (profile as any)?.min_rating || 0,
         });
       }).catch(console.error);
     }
