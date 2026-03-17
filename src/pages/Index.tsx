@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import GuidedTour, { TOUR_KEY } from "@/components/pick/GuidedTour";
 import { AnimatePresence, motion } from "framer-motion";
 import { useNavigate, useLocation } from "react-router-dom";
 import HomeScreen from "@/components/pick/HomeScreen";
@@ -61,6 +62,7 @@ const Index = () => {
   const location = useLocation();
   const pickPlus = usePickPlus();
   const [openTrainerOnMount, setOpenTrainerOnMount] = useState(false);
+  const [showTour, setShowTour] = useState(false);
 
   // Check if we should open the trainer (from MyCinema navigation)
   useEffect(() => {
@@ -110,6 +112,10 @@ const Index = () => {
             preferredPlatforms: data.preferred_platforms || [],
             profileConfidence: (data as any).profile_confidence || 0,
           });
+          // Show tour for users who just completed onboarding
+          if (data.onboarding_completed && !localStorage.getItem(TOUR_KEY)) {
+            setShowTour(true);
+          }
         }
       });
   }, [user, navigate]);
@@ -359,6 +365,8 @@ const Index = () => {
         onClose={pickPlus.hidePaywall}
         trigger="reco_limit"
       />
+
+      {showTour && <GuidedTour onComplete={() => setShowTour(false)} />}
     </div>
   );
 };

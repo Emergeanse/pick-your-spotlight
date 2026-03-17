@@ -154,7 +154,7 @@ const Landing = () => {
         <div className="max-w-6xl mx-auto flex items-center justify-between px-5 h-14">
           <div className="flex items-center gap-2.5">
             <img src={pickLogo} alt="Pick" className="w-6 h-6 object-contain invert brightness-200" />
-            <span className="font-serif text-xl tracking-wide">Prendre en Pick</span>
+            <span className="font-serif text-xl tracking-wide">Pick</span>
           </div>
           <div className="flex items-center gap-3">
             <Button
@@ -244,7 +244,7 @@ const Landing = () => {
             transition={{ duration: 0.6, delay: 0.5 }}
             className="text-foreground/45 text-base md:text-lg font-sans font-light max-w-md mx-auto mb-6 leading-relaxed"
           >
-            Dis ton envie. Pick trouve ton film.
+            Dis ton humeur, ton envie, ton contexte — Pick te trouve le film parfait en secondes. Fini le scroll infini.
           </motion.p>
 
           <motion.div
@@ -402,7 +402,7 @@ const Landing = () => {
               Ton univers <span className="text-primary italic">ciné</span>
             </h2>
             <p className="text-foreground/40 font-sans text-sm md:text-base max-w-lg mx-auto">
-              Pick construit ton profil cinématographique et garde tout ce que tu aimes en un seul endroit.
+              Plus tu utilises Pick, mieux il te connaît. Voici ce qu'il construit pour toi au fil du temps.
             </p>
           </motion.div>
 
@@ -537,10 +537,10 @@ const Landing = () => {
               <h2 className="text-3xl md:text-4xl font-serif mb-4 mt-1">
                 Pick regarde <span className="text-primary italic">avec toi</span>
               </h2>
-              <p className="text-foreground/45 font-sans text-sm md:text-base leading-relaxed mb-5">
-                Active le Mode Compagnon et Pick devient ton copilote de visionnage. 
-                Anecdotes de tournage, contexte historique, infos sur les acteurs… 
-                Tout ça sans spoilers, à ton rythme.
+               <p className="text-foreground/45 font-sans text-sm md:text-base leading-relaxed mb-5">
+                Active le Mode Compagnon quand tu lances un film. Pick devient ton copilote de visionnage : 
+                pose-lui des questions sur les acteurs, le tournage, le contexte historique… 
+                Il te répond en temps réel, sans jamais te spoiler (sauf si tu le veux).
               </p>
               <div className="flex flex-wrap gap-2">
                 {["Fun facts 🎬", "Acteurs & casting", "Contexte historique", "Sans spoilers"].map(tag => (
