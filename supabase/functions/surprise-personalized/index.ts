@@ -31,6 +31,7 @@ serve(async (req) => {
     const normalizedExcludeIds = [...new Set([
       ...(likedMovies || []).map((m: any) => Number(m.tmdb_id || m.id)).filter((id: number) => Number.isFinite(id)),
       ...((excludeIds || []).map((id: any) => Number(id)).filter((id: number) => Number.isFinite(id))),
+      ...(tasteProfile?.excludeIds || []).map((id: any) => Number(id)).filter((id: number) => Number.isFinite(id)),
     ])];
     const allGenres = (likedMovies || []).flatMap((m: any) => m.genres || []);
     const genreCounts: Record<string, number> = {};
@@ -64,7 +65,7 @@ serve(async (req) => {
       }
     }
 
-    // ── Extract enriched profile data ──
+    // ── Extract enriched profile data (from client-side getUserTasteProfile or fallbacks) ──
     const confidence = tasteProfile?.confidence || { score: 50, discoveryRatio: 0.2 };
     const tasteClusters = tasteProfile?.tasteClusters || [];
     const skipPatterns = tasteProfile?.skipPatterns || {};
@@ -72,6 +73,12 @@ serve(async (req) => {
     const session = tasteProfile?.session || {};
     const scoringWeights = tasteProfile?.scoringWeights || {};
     const acceptanceRate = stats.acceptanceRate || 0;
+
+    // ── Skipped genres analysis (from taste trainer & other interactions) ──
+    const skippedGenreInfo = skipPatterns?.skippedGenres || {};
+    const heavilySkippedGenres = Object.entries(skippedGenreInfo)
+      .filter(([, count]) => (count as number) >= 3)
+      .map(([genre]) => genre);
 
     const shouldDiscover = Math.random() < confidence.discoveryRatio;
 
@@ -104,7 +111,8 @@ ${skipInsights ? `- Insight skip : ${skipInsights}` : ""}
 ${session.mood ? `- Session actuelle : humeur "${session.mood}", contexte "${session.context || "?"}", temps "${session.time || "?"}"` : ""}
 ${platformIds && platformIds.length > 0 ? `- IMPORTANT : L'utilisateur a UNIQUEMENT accès aux plateformes de streaming suivantes (IDs TMDB: ${platformIds.join(", ")}). Le film recommandé DOIT être disponible sur l'une de ces plateformes en France.` : ""}
 ${excludedPlatformIds && excludedPlatformIds.length > 0 ? `- PLATEFORMES EXCLUES : NE JAMAIS recommander de films uniquement disponibles sur ces plateformes (IDs TMDB: ${excludedPlatformIds.join(", ")}).` : ""}
-${excludedGenres && excludedGenres.length > 0 ? `- GENRES EXCLUS : NE JAMAIS recommander de films des genres suivants : ${excludedGenres.join(", ")}. C'est une règle ABSOLUE.` : ""}
+${excludedGenres && excludedGenres.length > 0 ? `- GENRES EXCLUS (profil) : NE JAMAIS recommander de films des genres suivants : ${excludedGenres.join(", ")}. C'est une règle ABSOLUE.` : ""}
+${heavilySkippedGenres.length > 0 ? `- GENRES SOUVENT REFUSÉS (taste trainer) : L'utilisateur a refusé 3+ films de ces genres : ${heavilySkippedGenres.join(", ")}. Évite-les fortement sauf en mode découverte.` : ""}
 ${minRating && minRating > 0 ? `- NOTE MINIMALE : Le film DOIT avoir une note TMDB supérieure ou égale à ${minRating}/10. Ne recommande JAMAIS un film noté en dessous.` : ""}
 ${embeddingSection}
 
@@ -125,7 +133,9 @@ IMPORTANT : NE recommande PAS un film des mêmes genres principaux que "${reject
     const userPrompt = `Films aimés (${titles.length}, pondérés par récence) : ${titles.join(", ")}
 Genres préférés (pondérés) : ${topGenres.join(", ")}
 Micro-genres : ${tasteClusters.join(", ") || "à déduire des films aimés"}
-Films regardés : ${stats.watchCount || 0} | Films skippés : ${stats.skipCount || 0}
+Films regardés : ${stats.watchCount || 0} | Films skippés : ${stats.skipCount || 0} | Films aimés : ${stats.likeCount || 0}
+Taux d'acceptation : ${acceptanceRate}%
+${heavilySkippedGenres.length > 0 ? `Genres souvent refusés : ${heavilySkippedGenres.join(", ")}` : ""}
 ${shouldDiscover ? "→ MODE DÉCOUVERTE" : "→ MODE PRÉCISION"}
 ${rejectionSection}
 

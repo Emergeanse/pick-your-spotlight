@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Mic, Dices, Tv, Sparkles, Loader2, Zap, Flame, Target, Trophy, Shuffle, Brain } from "lucide-react";
 import { getTrendingMovies, getBackdropUrl, getSurpriseRecommendation, getPosterUrl, getDisplayTitle, getWatchProviders } from "@/lib/tmdb";
 import { getLikedMovies } from "@/lib/liked-movies";
-import { trackInteraction } from "@/lib/interactions";
+import { trackInteraction, getUserTasteProfile } from "@/lib/interactions";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { computeUserTasteVector } from "@/lib/taste-engine";
@@ -119,11 +119,11 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
         if ((data as any)?.excluded_genres) setUserExcludedGenres((data as any).excluded_genres);
         if ((data as any)?.min_rating) setUserMinRating((data as any).min_rating);
       });
-    // Load interaction history (watched, skipped, already_seen) to avoid repeats
+    // Load interaction history (all types) to avoid repeats
     supabase.from("user_interactions")
       .select("tmdb_id")
       .eq("user_id", user.id)
-      .in("action_type", ["watched", "skipped", "already_seen"])
+      .in("action_type", ["watched", "skipped", "already_seen", "liked", "unsure"])
       .limit(500)
       .then(({ data }) => {
         if (data) {
@@ -185,9 +185,13 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
       if (user) {
         const liked = await getLikedMovies();
         if (liked.length >= 2) {
-          const userTasteVector = await computeUserTasteVector(user.id);
+          const [userTasteVector, tasteProfile] = await Promise.all([
+            computeUserTasteVector(user.id),
+            getUserTasteProfile(),
+          ]);
           const data = await invokeSurprisePersonalized({
-            likedMovies: liked, userTasteVector, platformIds: userPlatformIds, excludedPlatformIds: userExcludedPlatformIds, excludedGenres: userExcludedGenres, minRating: userMinRating,
+            likedMovies: liked, userTasteVector, tasteProfile,
+            platformIds: userPlatformIds, excludedPlatformIds: userExcludedPlatformIds, excludedGenres: userExcludedGenres, minRating: userMinRating,
             outOfComfortZone: true, excludeIds: historyExcludeIds,
           });
           movie = data.movie as MovieDetail;
@@ -234,9 +238,13 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
       if (user) {
         const liked = await getLikedMovies();
         if (liked.length >= 2) {
-          const userTasteVector = await computeUserTasteVector(user.id);
+          const [userTasteVector, tasteProfile] = await Promise.all([
+            computeUserTasteVector(user.id),
+            getUserTasteProfile(),
+          ]);
           const data = await invokeSurprisePersonalized({
-            likedMovies: liked, userTasteVector, platformIds: userPlatformIds, excludedPlatformIds: userExcludedPlatformIds, excludedGenres: userExcludedGenres, minRating: userMinRating, excludeIds: allExcludeIds, rejectionContext,
+            likedMovies: liked, userTasteVector, tasteProfile,
+            platformIds: userPlatformIds, excludedPlatformIds: userExcludedPlatformIds, excludedGenres: userExcludedGenres, minRating: userMinRating, excludeIds: allExcludeIds, rejectionContext,
           });
           movie = data.movie as MovieDetail;
         } else {

@@ -1,10 +1,11 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence, PanInfo } from "framer-motion";
 import { Heart, X, ChevronLeft, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getPosterUrl, getDisplayTitle } from "@/lib/tmdb";
 import { likeMovie } from "@/lib/liked-movies";
 import { trackInteraction } from "@/lib/interactions";
+import { recordAcceptedRecommendation, recordSkippedRecommendation } from "@/lib/engagement";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
 import type { Movie, MovieDetail } from "@/lib/tmdb";
@@ -81,6 +82,9 @@ const TasteTrainer = ({ onClose }: TasteTrainerProps) => {
   const currentMovie = movies[currentIndex];
   const nextMovie = movies[currentIndex + 1];
 
+  // Track total actions for profile update on close
+  const actionsRef = useRef({ likes: 0, skips: 0 });
+
   const handleLike = async () => {
     if (!currentMovie || !user) return;
     setSwiping("right");
@@ -88,7 +92,12 @@ const TasteTrainer = ({ onClose }: TasteTrainerProps) => {
     try {
       const detail = await fetchMovieDetail(currentMovie.id);
       await likeMovie(detail);
+      // Also track as interaction with genre context for taste profile
+      const genres = (currentMovie.genre_ids || []).map(gid => GENRE_MAP[gid]).filter(Boolean);
+      await trackInteraction(currentMovie.id, "liked", { source: "taste_trainer", genres: genres.join(",") });
+      await recordAcceptedRecommendation(user.id);
       setLikedCount(c => c + 1);
+      actionsRef.current.likes++;
     } catch (e) {
       console.error("Failed to like:", e);
     }
@@ -105,8 +114,12 @@ const TasteTrainer = ({ onClose }: TasteTrainerProps) => {
     setSwiping("left");
     
     try {
-      await trackInteraction(currentMovie.id, "skipped", { source: "taste_trainer" });
+      // Pass genre info so the taste engine learns what genres to avoid
+      const genres = (currentMovie.genre_ids || []).map(gid => GENRE_MAP[gid]).filter(Boolean);
+      await trackInteraction(currentMovie.id, "skipped", { source: "taste_trainer", genres: genres.join(",") });
+      await recordSkippedRecommendation(user.id);
       setSkippedCount(c => c + 1);
+      actionsRef.current.skips++;
     } catch (e) {
       console.error("Failed to track skip:", e);
     }
@@ -150,7 +163,13 @@ const TasteTrainer = ({ onClose }: TasteTrainerProps) => {
     >
       {/* Header */}
       <div className="flex items-center justify-between px-5 pt-[calc(1rem+env(safe-area-inset-top))] pb-3">
-        <button onClick={onClose} className="text-foreground/50 hover:text-foreground transition-colors">
+        <button onClick={() => {
+          const { likes, skips } = actionsRef.current;
+          if (likes + skips > 0) {
+            toast.success(`Profil mis à jour ! ${likes} aimé${likes > 1 ? "s" : ""}, ${skips} passé${skips > 1 ? "s" : ""}`);
+          }
+          onClose();
+        }} className="text-foreground/50 hover:text-foreground transition-colors">
           <ChevronLeft className="w-5 h-5" />
         </button>
         <div className="text-center">
