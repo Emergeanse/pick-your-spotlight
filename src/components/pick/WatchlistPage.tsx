@@ -3,6 +3,7 @@ import { motion, AnimatePresence, useMotionValue, useTransform, PanInfo } from "
 import { Bookmark, Loader2, Sparkles, X, Tv, Star, Clock, Play } from "lucide-react";
 import { getWatchlist, removeFromWatchlist } from "@/lib/watchlist";
 import { getPosterUrl, getBackdropUrl, getMovieDetails, getDisplayTitle, getYear, getWatchProviders } from "@/lib/tmdb";
+import { getLikedMovies } from "@/lib/liked-movies";
 import type { MovieDetail } from "@/lib/tmdb";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -13,7 +14,6 @@ interface WatchlistPageProps {
 }
 
 type MediaFilter = "all" | "movie" | "tv";
-type DurationFilter = "all" | "short" | "medium" | "long";
 
 
 const PICK_COMMENTS = [
@@ -111,11 +111,13 @@ const SwipeableCard = ({
 const MoviePreviewSheet = ({
   movie,
   providers,
+  personalNote,
   onWatch,
   onClose,
 }: {
   movie: MovieDetail;
   providers: { name: string; logo_path: string }[];
+  personalNote: string;
   onWatch: () => void;
   onClose: () => void;
 }) => {
@@ -207,6 +209,16 @@ const MoviePreviewSheet = ({
             </div>
           )}
 
+          {/* Personal recommendation note */}
+          {personalNote && (
+            <div className="flex items-start gap-2 mb-4 px-3 py-2.5 rounded-xl bg-primary/5 border border-primary/15">
+              <Sparkles className="w-3.5 h-3.5 text-primary shrink-0 mt-0.5" />
+              <p className="text-primary/70 text-[12px] font-sans leading-relaxed italic">
+                {personalNote}
+              </p>
+            </div>
+          )}
+
           {/* Overview */}
           {movie.overview && (
             <p className="text-foreground/55 text-sm font-sans leading-relaxed mb-5">
@@ -252,11 +264,10 @@ const WatchlistPage = ({ onMovieSelect }: WatchlistPageProps) => {
   const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [mediaFilter, setMediaFilter] = useState<MediaFilter>("all");
-  const [durationFilter, setDurationFilter] = useState<DurationFilter>("all");
-  const [genreFilter, setGenreFilter] = useState<string>("all");
   const [previewMovie, setPreviewMovie] = useState<MovieDetail | null>(null);
   const [previewProviders, setPreviewProviders] = useState<{ name: string; logo_path: string }[]>([]);
   const [previewLoading, setPreviewLoading] = useState(false);
+  const [previewNote, setPreviewNote] = useState("");
 
   useEffect(() => {
     loadWatchlist();
@@ -274,22 +285,9 @@ const WatchlistPage = ({ onMovieSelect }: WatchlistPageProps) => {
     }
   };
 
-  // Extract all unique genres from items
-  const allGenres = Array.from(
-    new Set(items.flatMap((i: any) => i.genres || []))
-  ).sort();
-
   // Apply filters
   const filteredItems = items.filter((item: any) => {
     if (mediaFilter !== "all" && item.media_type !== mediaFilter) return false;
-    if (genreFilter !== "all" && !(item.genres || []).includes(genreFilter)) return false;
-    if (durationFilter !== "all") {
-      const rt = item.runtime || 0;
-      if (rt === 0) return false;
-      if (durationFilter === "short" && rt > 90) return false;
-      if (durationFilter === "medium" && (rt <= 90 || rt > 130)) return false;
-      if (durationFilter === "long" && rt <= 130) return false;
-    }
     return true;
   });
 
@@ -297,13 +295,6 @@ const WatchlistPage = ({ onMovieSelect }: WatchlistPageProps) => {
     { id: "all", label: "Tout" },
     { id: "movie", label: "Films" },
     { id: "tv", label: "Séries" },
-  ];
-
-  const durationFilters: { id: DurationFilter; label: string }[] = [
-    { id: "all", label: "Toutes durées" },
-    { id: "short", label: "< 1h30" },
-    { id: "medium", label: "1h30 – 2h10" },
-    { id: "long", label: "> 2h10" },
   ];
 
   const handleRemove = async (tmdbId: number) => {
@@ -316,13 +307,46 @@ const WatchlistPage = ({ onMovieSelect }: WatchlistPageProps) => {
     }
   };
 
+  const generatePersonalNote = async (movie: MovieDetail): Promise<string> => {
+    try {
+      const liked = await getLikedMovies();
+      const likedGenres = liked.flatMap((m: any) => m.genres || []);
+      const genreCounts: Record<string, number> = {};
+      likedGenres.forEach((g: string) => { genreCounts[g] = (genreCounts[g] || 0) + 1; });
+      const topGenres = Object.entries(genreCounts).sort((a, b) => b[1] - a[1]).slice(0, 3).map(e => e[0]);
+      
+      const movieGenres = movie.genres?.map(g => g.name) || [];
+      const matchingGenres = movieGenres.filter(g => topGenres.includes(g));
+      
+      if (matchingGenres.length > 0) {
+        const genreStr = matchingGenres.join(" et ");
+        const templates = [
+          `Tu adores le ${genreStr} — ce titre est pile dans tes goûts.`,
+          `Vu ton amour pour le ${genreStr}, celui-ci devrait te plaire.`,
+          `Le ${genreStr}, c'est ton truc. Ce film est fait pour toi.`,
+        ];
+        return templates[Math.floor(Math.random() * templates.length)];
+      }
+      
+      if (movie.vote_average && movie.vote_average >= 7.5) {
+        return `Noté ${movie.vote_average.toFixed(1)}/10 — un titre très apprécié qui mérite le détour.`;
+      }
+      
+      return "Tu l'as sauvegardé, c'est qu'il t'a tapé dans l'œil. Fais-toi confiance !";
+    } catch {
+      return "";
+    }
+  };
+
   const handlePreview = async (item: any) => {
     setPreviewLoading(true);
+    setPreviewNote("");
     try {
       const mediaType = item.media_type || "movie";
       const movie = await getMovieDetails(item.tmdb_id, mediaType);
       setPreviewMovie(movie);
       getWatchProviders(movie.id, mediaType).then(setPreviewProviders).catch(() => setPreviewProviders([]));
+      generatePersonalNote(movie).then(setPreviewNote);
     } catch (e) {
       console.error(e);
     } finally {
@@ -387,7 +411,6 @@ const WatchlistPage = ({ onMovieSelect }: WatchlistPageProps) => {
           transition={{ delay: 0.15 }}
           className="space-y-2.5 mb-5"
         >
-          {/* Type filter */}
           <div className="flex gap-1.5 overflow-x-auto scrollbar-hide">
             {mediaFilters.map(f => (
               <button
@@ -403,52 +426,6 @@ const WatchlistPage = ({ onMovieSelect }: WatchlistPageProps) => {
               </button>
             ))}
           </div>
-
-          {/* Duration filter */}
-          <div className="flex gap-1.5 overflow-x-auto scrollbar-hide">
-            {durationFilters.map(f => (
-              <button
-                key={f.id}
-                onClick={() => setDurationFilter(f.id)}
-                className={`shrink-0 px-3 py-1.5 rounded-full text-[11px] font-sans font-medium border transition-all ${
-                  durationFilter === f.id
-                    ? "bg-primary/15 border-primary/30 text-primary"
-                    : "bg-card/40 border-border/15 text-foreground/40 hover:text-foreground/60"
-                }`}
-              >
-                {f.label}
-              </button>
-            ))}
-          </div>
-
-          {/* Genre filter */}
-          {allGenres.length > 0 && (
-            <div className="flex gap-1.5 overflow-x-auto scrollbar-hide">
-              <button
-                onClick={() => setGenreFilter("all")}
-                className={`shrink-0 px-3 py-1.5 rounded-full text-[11px] font-sans font-medium border transition-all ${
-                  genreFilter === "all"
-                    ? "bg-primary/15 border-primary/30 text-primary"
-                    : "bg-card/40 border-border/15 text-foreground/40 hover:text-foreground/60"
-                }`}
-              >
-                Tous genres
-              </button>
-              {allGenres.map(g => (
-                <button
-                  key={g}
-                  onClick={() => setGenreFilter(g)}
-                  className={`shrink-0 px-3 py-1.5 rounded-full text-[11px] font-sans font-medium border transition-all ${
-                    genreFilter === g
-                      ? "bg-primary/15 border-primary/30 text-primary"
-                      : "bg-card/40 border-border/15 text-foreground/40 hover:text-foreground/60"
-                  }`}
-                >
-                  {g}
-                </button>
-              ))}
-            </div>
-          )}
         </motion.div>
       )}
 
@@ -462,7 +439,7 @@ const WatchlistPage = ({ onMovieSelect }: WatchlistPageProps) => {
         <div className="flex flex-col items-center justify-center py-16 text-center">
           <p className="text-foreground/30 text-sm font-sans">Aucun résultat avec ces filtres</p>
           <button
-            onClick={() => { setMediaFilter("all"); setDurationFilter("all"); setGenreFilter("all"); }}
+            onClick={() => { setMediaFilter("all"); }}
             className="mt-3 text-primary text-xs font-sans underline"
           >
             Réinitialiser les filtres
@@ -502,8 +479,9 @@ const WatchlistPage = ({ onMovieSelect }: WatchlistPageProps) => {
           <MoviePreviewSheet
             movie={previewMovie}
             providers={previewProviders}
+            personalNote={previewNote}
             onWatch={handleWatchFromPreview}
-            onClose={() => { setPreviewMovie(null); setPreviewProviders([]); }}
+            onClose={() => { setPreviewMovie(null); setPreviewProviders([]); setPreviewNote(""); }}
           />
         )}
       </AnimatePresence>
