@@ -407,11 +407,14 @@ export default function PickChatOverlay() {
                         <div className="prose prose-sm prose-invert max-w-none [&>p]:mb-1 [&>p:last-child]:mb-0">
                           <ReactMarkdown>{msg.content}</ReactMarkdown>
                         </div>
-                        {/* Inline movie card */}
-                        {(msg as any).movie && <MovieCard movie={(msg as any).movie} onClick={() => handleMovieClick((msg as any).movie)} />}
-                        {(msg as any).youtubeVideos && (msg as any).youtubeVideos.map((video: any) => (
-                          <YouTubeCard key={video.id} video={video} />
-                        ))}
+                        {/* Inline movie/youtube card */}
+                        {(msg as any).movie && (
+                          (msg as any).movie._youtube ? (
+                            <YouTubeRecoCard movie={(msg as any).movie} onClick={() => handleMovieClick((msg as any).movie)} />
+                          ) : (
+                            <MovieCard movie={(msg as any).movie} onClick={() => handleMovieClick((msg as any).movie)} />
+                          )
+                        )}
                       </>
                     ) : msg.content}
                   </div>
