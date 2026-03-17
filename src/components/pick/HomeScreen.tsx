@@ -420,26 +420,26 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
                   </div>
                 </motion.button>
 
-                {/* 3. Surprends-moi — smaller, centered below */}
+                {/* 3. Surprends-moi — warm amber accent */}
                 <motion.button
                   whileTap={{ scale: 0.95 }}
                   onClick={handleSurprise}
                   disabled={loading || isSurprising}
-                  className="group inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-foreground/[0.05] border border-border/20 hover:border-primary/30 hover:bg-primary/[0.06] transition-all"
+                  className="group inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[hsl(28_90%_55%/0.08)] border border-[hsl(28_90%_55%/0.25)] hover:border-[hsl(28_90%_55%/0.45)] hover:bg-[hsl(28_90%_55%/0.12)] transition-all"
                 >
-                  <Shuffle className="w-3.5 h-3.5 text-foreground/50 group-hover:text-primary transition-colors" />
-                  <span className="text-[13px] font-sans font-medium text-foreground/60 group-hover:text-foreground transition-colors">Surprends-moi</span>
+                  <Shuffle className="w-3.5 h-3.5 text-[hsl(28_90%_55%)] opacity-70 group-hover:opacity-100 transition-opacity" />
+                  <span className="text-[13px] font-sans font-medium text-[hsl(28_90%_55%/0.8)] group-hover:text-[hsl(28_90%_55%)] transition-colors">Surprends-moi</span>
                 </motion.button>
 
-                {/* 4. Entraîne ton Pick */}
+                {/* 4. Entraîne ton Pick — teal accent */}
                 {user && (
                   <motion.button
                     whileTap={{ scale: 0.95 }}
                     onClick={() => setShowTrainer(true)}
-                    className="group inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-foreground/[0.05] border border-border/20 hover:border-primary/30 hover:bg-primary/[0.06] transition-all"
+                    className="group inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[hsl(175_70%_45%/0.08)] border border-[hsl(175_70%_45%/0.25)] hover:border-[hsl(175_70%_45%/0.45)] hover:bg-[hsl(175_70%_45%/0.12)] transition-all"
                   >
-                    <Brain className="w-3.5 h-3.5 text-foreground/50 group-hover:text-primary transition-colors" />
-                    <span className="text-[13px] font-sans font-medium text-foreground/60 group-hover:text-foreground transition-colors">Entraîne ton Pick</span>
+                    <Brain className="w-3.5 h-3.5 text-[hsl(175_70%_45%)] opacity-70 group-hover:opacity-100 transition-opacity" />
+                    <span className="text-[13px] font-sans font-medium text-[hsl(175_70%_45%/0.8)] group-hover:text-[hsl(175_70%_45%)] transition-colors">Entraîne ton Pick</span>
                   </motion.button>
                 )}
 
