@@ -772,7 +772,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                   </div>
                 </motion.div>
               )}
-            </AnimatePresence>
+            </AnimatePresence>}
 
             {/* Pour aller plus loin — YouTube video */}
             {youtubeVideo && (
