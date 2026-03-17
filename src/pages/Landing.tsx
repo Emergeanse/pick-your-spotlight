@@ -357,12 +357,6 @@ const Landing = () => {
                 desc: "Dis-lui ton humeur, avec qui tu regardes. Il comprend et te propose LE film idéal.",
                 label: "Vocal",
               },
-              {
-                icon: <SlidersHorizontal className="w-5 h-5" />,
-                title: "🎬 Recherche guidée",
-                desc: "Humeur, contexte, durée, plateforme. 4 questions rapides et c'est trouvé.",
-                label: "Guidé",
-              },
             ].map((item, i) => (
               <motion.div
                 key={item.label}
