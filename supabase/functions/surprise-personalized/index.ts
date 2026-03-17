@@ -31,6 +31,7 @@ serve(async (req) => {
     const normalizedExcludeIds = [...new Set([
       ...(likedMovies || []).map((m: any) => Number(m.tmdb_id || m.id)).filter((id: number) => Number.isFinite(id)),
       ...((excludeIds || []).map((id: any) => Number(id)).filter((id: number) => Number.isFinite(id))),
+      ...(tasteProfile?.excludeIds || []).map((id: any) => Number(id)).filter((id: number) => Number.isFinite(id)),
     ])];
     const allGenres = (likedMovies || []).flatMap((m: any) => m.genres || []);
     const genreCounts: Record<string, number> = {};
