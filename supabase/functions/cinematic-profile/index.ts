@@ -52,10 +52,14 @@ serve(async (req) => {
     const interactions = interactionsRes.data || [];
     const favoriteGenres = profileRes.data?.favorite_genres || [];
 
-    if (likedMovies.length < 3 && interactions.length < 5) {
+    const MIN_LIKED_FOR_DNA = 15;
+    if (likedMovies.length < MIN_LIKED_FOR_DNA) {
       return new Response(JSON.stringify({
+        error: "not_enough_data",
+        liked_count: likedMovies.length,
+        required: MIN_LIKED_FOR_DNA,
         personality_title: "Explorateur en devenir",
-        narrative: "Tu débutes ton aventure cinématographique avec Pick. Continue à explorer et à noter des films — ton profil se dessinera au fil de tes découvertes.",
+        narrative: `Tu as aimé ${likedMovies.length} film${likedMovies.length > 1 ? "s" : ""} sur les ${MIN_LIKED_FOR_DNA} nécessaires. Continue à explorer et à entraîner Pick pour débloquer ton ADN Cinéma !`,
         taste_traits: ["curieux", "en exploration"],
         representative_films: [],
         evolution_note: null,

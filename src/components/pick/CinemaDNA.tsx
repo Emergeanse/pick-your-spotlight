@@ -127,7 +127,10 @@ const CinemaDNA = ({ userId, teaser, onOpenFull }: CinemaDNAProps) => {
     } catch {}
   };
 
+  const MIN_LIKED_FOR_DNA = 15;
+
   const generateProfile = async () => {
+    if (likeCount < MIN_LIKED_FOR_DNA) return;
     setGenerating(true);
     try {
       const { data, error } = await supabase.functions.invoke("cinematic-profile", {
@@ -138,8 +141,10 @@ const CinemaDNA = ({ userId, teaser, onOpenFull }: CinemaDNAProps) => {
         throw new Error(error.message || "Failed to generate");
       }
 
-      if (!data) {
-        throw new Error("Empty response");
+      if (!data || data.error === "not_enough_data") {
+        // Update like count from response
+        if (data?.liked_count !== undefined) setLikeCount(data.liked_count);
+        return;
       }
 
       setProfile(data as CinematicProfile);
