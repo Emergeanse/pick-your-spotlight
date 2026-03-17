@@ -153,7 +153,6 @@ const Landing = () => {
       <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border/8">
         <div className="max-w-6xl mx-auto flex items-center justify-between px-5 h-14">
           <div className="flex items-center gap-2.5">
-            <img src={pickLogo} alt="Pick" className="w-6 h-6 object-contain invert brightness-200" />
             <span className="font-serif text-xl tracking-wide">Pick</span>
           </div>
           <div className="flex items-center gap-3">
