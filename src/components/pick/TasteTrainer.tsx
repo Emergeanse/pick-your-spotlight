@@ -70,6 +70,23 @@ const TasteTrainer = ({ onClose }: TasteTrainerProps) => {
 
   useEffect(() => {
     loadMovies(1);
+    // Load total evaluated count & profile confidence from DB
+    if (user) {
+      supabase.from("user_interactions")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", user.id)
+        .in("action_type", ["liked", "skipped", "unsure"])
+        .then(({ count }) => {
+          setTotalEvaluated(count || 0);
+        });
+      supabase.from("profiles")
+        .select("profile_confidence")
+        .eq("id", user.id)
+        .single()
+        .then(({ data }) => {
+          if (data) setProfileConfidence((data as any).profile_confidence || 0);
+        });
+    }
   }, []);
 
   // Load more when running low
