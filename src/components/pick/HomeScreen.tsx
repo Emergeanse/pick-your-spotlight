@@ -657,6 +657,13 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
         )}
       </AnimatePresence>
 
+      {/* Taste Trainer overlay */}
+      <AnimatePresence>
+        {showTrainer && (
+          <TasteTrainer onClose={() => setShowTrainer(false)} />
+        )}
+      </AnimatePresence>
+
     </div>
   );
 };
