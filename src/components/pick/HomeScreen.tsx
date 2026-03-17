@@ -238,7 +238,6 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
           const data = await invokeSurprisePersonalized({
             likedMovies: liked, userTasteVector, platformIds: userPlatformIds, excludedPlatformIds: userExcludedPlatformIds, excludedGenres: userExcludedGenres, minRating: userMinRating, excludeIds: allExcludeIds, rejectionContext,
           });
-          });
           movie = data.movie as MovieDetail;
         } else {
           movie = await getSurpriseRecommendation(excludeList, { platformIds: userPlatformIds, minRating: userMinRating, excludedGenres: userExcludedGenres });
