@@ -319,7 +319,7 @@ const Landing = () => {
       </section>
 
       {/* ── 3 FAÇONS DE TROUVER TON FILM ── */}
-      <section className="py-24 md:py-32 px-5">
+      <section className="py-16 md:py-24 px-5">
         <div className="max-w-5xl mx-auto">
           <motion.div
             variants={fadeUp}
