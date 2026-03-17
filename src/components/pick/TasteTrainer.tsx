@@ -306,7 +306,7 @@ const TasteTrainer = ({ onClose }: TasteTrainerProps) => {
           </div>
 
           <p className="text-center text-foreground/25 text-[10px] font-sans mt-3">
-            Swipe ← passer · 👁 déjà vu · Swipe → j'aime
+            Swipe ← passer · ? je sais pas · Swipe → j'aime
           </p>
         </div>
       )}
