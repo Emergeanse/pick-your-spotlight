@@ -631,7 +631,7 @@ const Landing = () => {
       </section>
 
       {/* ── PLATEFORMES ── */}
-      <section className="py-24 md:py-32 px-5 relative">
+      <section className="py-16 md:py-24 px-5 relative">
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <div className="w-[400px] h-[300px] rounded-full bg-gold/3 blur-[100px]" />
         </div>
