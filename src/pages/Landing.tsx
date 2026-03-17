@@ -582,7 +582,7 @@ const Landing = () => {
       </section>
 
       {/* ── PICK TE PARLE ── */}
-      <section className="py-24 md:py-32 px-5 relative overflow-hidden">
+      <section className="py-16 md:py-24 px-5 relative overflow-hidden">
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <div className="w-[500px] h-[400px] rounded-full bg-gold/3 blur-[100px]" />
         </div>
