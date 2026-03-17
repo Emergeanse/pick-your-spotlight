@@ -65,7 +65,7 @@ serve(async (req) => {
       }
     }
 
-    // ── Extract enriched profile data ──
+    // ── Extract enriched profile data (from client-side getUserTasteProfile or fallbacks) ──
     const confidence = tasteProfile?.confidence || { score: 50, discoveryRatio: 0.2 };
     const tasteClusters = tasteProfile?.tasteClusters || [];
     const skipPatterns = tasteProfile?.skipPatterns || {};
@@ -73,6 +73,12 @@ serve(async (req) => {
     const session = tasteProfile?.session || {};
     const scoringWeights = tasteProfile?.scoringWeights || {};
     const acceptanceRate = stats.acceptanceRate || 0;
+
+    // ── Skipped genres analysis (from taste trainer & other interactions) ──
+    const skippedGenreInfo = skipPatterns?.skippedGenres || {};
+    const heavilySkippedGenres = Object.entries(skippedGenreInfo)
+      .filter(([, count]) => (count as number) >= 3)
+      .map(([genre]) => genre);
 
     const shouldDiscover = Math.random() < confidence.discoveryRatio;
 
