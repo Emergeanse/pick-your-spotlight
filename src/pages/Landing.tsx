@@ -402,7 +402,7 @@ const Landing = () => {
               Ton univers <span className="text-primary italic">ciné</span>
             </h2>
             <p className="text-foreground/40 font-sans text-sm md:text-base max-w-lg mx-auto">
-              Pick construit ton profil cinématographique et garde tout ce que tu aimes en un seul endroit.
+              Plus tu utilises Pick, mieux il te connaît. Voici ce qu'il construit pour toi au fil du temps.
             </p>
           </motion.div>
 
