@@ -62,6 +62,7 @@ const Index = () => {
   const location = useLocation();
   const pickPlus = usePickPlus();
   const [openTrainerOnMount, setOpenTrainerOnMount] = useState(false);
+  const [showTour, setShowTour] = useState(false);
 
   // Check if we should open the trainer (from MyCinema navigation)
   useEffect(() => {
