@@ -154,7 +154,7 @@ const Landing = () => {
         <div className="max-w-6xl mx-auto flex items-center justify-between px-5 h-14">
           <div className="flex items-center gap-2.5">
             <img src={pickLogo} alt="Pick" className="w-6 h-6 object-contain invert brightness-200" />
-            <span className="font-serif text-xl tracking-wide">Prendre en Pick</span>
+            <span className="font-serif text-xl tracking-wide">Pick</span>
           </div>
           <div className="flex items-center gap-3">
             <Button
