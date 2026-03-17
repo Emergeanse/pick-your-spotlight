@@ -82,6 +82,9 @@ const TasteTrainer = ({ onClose }: TasteTrainerProps) => {
   const currentMovie = movies[currentIndex];
   const nextMovie = movies[currentIndex + 1];
 
+  // Track total actions for profile update on close
+  const actionsRef = useRef({ likes: 0, skips: 0 });
+
   const handleLike = async () => {
     if (!currentMovie || !user) return;
     setSwiping("right");
@@ -89,7 +92,12 @@ const TasteTrainer = ({ onClose }: TasteTrainerProps) => {
     try {
       const detail = await fetchMovieDetail(currentMovie.id);
       await likeMovie(detail);
+      // Also track as interaction with genre context for taste profile
+      const genres = (currentMovie.genre_ids || []).map(gid => GENRE_MAP[gid]).filter(Boolean);
+      await trackInteraction(currentMovie.id, "liked", { source: "taste_trainer", genres: genres.join(",") });
+      await recordAcceptedRecommendation(user.id);
       setLikedCount(c => c + 1);
+      actionsRef.current.likes++;
     } catch (e) {
       console.error("Failed to like:", e);
     }
@@ -106,8 +114,12 @@ const TasteTrainer = ({ onClose }: TasteTrainerProps) => {
     setSwiping("left");
     
     try {
-      await trackInteraction(currentMovie.id, "skipped", { source: "taste_trainer" });
+      // Pass genre info so the taste engine learns what genres to avoid
+      const genres = (currentMovie.genre_ids || []).map(gid => GENRE_MAP[gid]).filter(Boolean);
+      await trackInteraction(currentMovie.id, "skipped", { source: "taste_trainer", genres: genres.join(",") });
+      await recordSkippedRecommendation(user.id);
       setSkippedCount(c => c + 1);
+      actionsRef.current.skips++;
     } catch (e) {
       console.error("Failed to track skip:", e);
     }
