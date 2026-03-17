@@ -272,22 +272,9 @@ const WatchlistPage = ({ onMovieSelect }: WatchlistPageProps) => {
     }
   };
 
-  // Extract all unique genres from items
-  const allGenres = Array.from(
-    new Set(items.flatMap((i: any) => i.genres || []))
-  ).sort();
-
   // Apply filters
   const filteredItems = items.filter((item: any) => {
     if (mediaFilter !== "all" && item.media_type !== mediaFilter) return false;
-    if (genreFilter !== "all" && !(item.genres || []).includes(genreFilter)) return false;
-    if (durationFilter !== "all") {
-      const rt = item.runtime || 0;
-      if (rt === 0) return false;
-      if (durationFilter === "short" && rt > 90) return false;
-      if (durationFilter === "medium" && (rt <= 90 || rt > 130)) return false;
-      if (durationFilter === "long" && rt <= 130) return false;
-    }
     return true;
   });
 
@@ -295,13 +282,6 @@ const WatchlistPage = ({ onMovieSelect }: WatchlistPageProps) => {
     { id: "all", label: "Tout" },
     { id: "movie", label: "Films" },
     { id: "tv", label: "Séries" },
-  ];
-
-  const durationFilters: { id: DurationFilter; label: string }[] = [
-    { id: "all", label: "Toutes durées" },
-    { id: "short", label: "< 1h30" },
-    { id: "medium", label: "1h30 – 2h10" },
-    { id: "long", label: "> 2h10" },
   ];
 
   const handleRemove = async (tmdbId: number) => {
