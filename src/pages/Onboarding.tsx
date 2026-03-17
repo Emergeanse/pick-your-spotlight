@@ -1,10 +1,11 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, Heart, Check, ArrowRight, Loader2, Sun, Moon, User, Users, X } from "lucide-react";
+import { Search, Heart, Check, ArrowRight, Loader2, Sun, Moon, User, Users, X, Brain } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { likeMovie } from "@/lib/liked-movies";
+import { trackInteraction } from "@/lib/interactions";
 import { getPopularMoviesForOnboarding, searchMovies, getPosterUrl, getDisplayTitle, getMovieDetails } from "@/lib/tmdb";
 import type { Movie } from "@/lib/tmdb";
 import type { StreamingPlatform } from "@/components/pick/PlatformStep";
@@ -135,6 +136,8 @@ const Onboarding = () => {
           const mediaType = movie.media_type || (movie.first_air_date ? "tv" : "movie");
           const detail = await getMovieDetails(movie.id, mediaType);
           await likeMovie(detail);
+          // Also track as interaction so the recommendation engine counts it
+          await trackInteraction(movie.id, "liked", { source: "onboarding" });
         } catch (e) { console.error("Failed to like movie:", movie.id, e); }
       }
 
@@ -300,9 +303,15 @@ const Onboarding = () => {
             <div className="flex-shrink-0 px-5 pt-3 pb-4">
               <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="max-w-2xl mx-auto">
                 <h1 className="text-2xl md:text-4xl font-serif mb-2">Qu'as-tu apprécié récemment ?</h1>
-                <p className="text-muted-foreground text-sm font-sans mb-4">
+                <p className="text-muted-foreground text-sm font-sans mb-2">
                   Sélectionne au moins {MIN_MOVIE_SELECTIONS} films ou séries — on apprend vite !
                 </p>
+                <div className="flex items-center gap-1.5 mb-4">
+                  <Brain className="w-3 h-3 text-primary/50" />
+                  <p className="text-primary/50 text-[11px] font-sans">
+                    Tu pourras continuer à entraîner Pick après l'inscription
+                  </p>
+                </div>
                 {/* Search — secondary, collapsed by default */}
                 {!showSearch ? (
                   <button
