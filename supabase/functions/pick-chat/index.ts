@@ -322,6 +322,78 @@ ANNÉE EN COURS : ${currentYear}`;
       }
 
       const toolCall = message.tool_calls[0];
+      
+      // Handle YouTube suggestion
+      if (toolCall.function.name === "suggest_youtube") {
+        const args = JSON.parse(toolCall.function.arguments);
+        
+        // Call YouTube API via the youtube-recommendations edge function
+        const YOUTUBE_API_KEY = Deno.env.get("YOUTUBE_API_KEY");
+        if (!YOUTUBE_API_KEY) {
+          return new Response(JSON.stringify({
+            type: "text",
+            reply: args.reason + "\n\nMalheureusement, je n'arrive pas à chercher sur YouTube pour le moment. Essaie de chercher directement : " + args.query,
+            movie: null,
+          }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
+        // Search YouTube directly
+        const ytParams = new URLSearchParams({
+          part: "snippet",
+          type: "video",
+          maxResults: "3",
+          key: YOUTUBE_API_KEY,
+          regionCode: "FR",
+          relevanceLanguage: "fr",
+          q: args.query,
+        });
+        
+        if (args.category === "documentary" || args.category === "educational") {
+          ytParams.set("videoDuration", "long");
+        } else {
+          ytParams.set("videoDuration", "medium");
+        }
+
+        const ytSearchRes = await fetch(`https://www.googleapis.com/youtube/v3/search?${ytParams}`);
+        let youtubeVideos: any[] = [];
+        
+        if (ytSearchRes.ok) {
+          const ytData = await ytSearchRes.json();
+          const videoIds = (ytData.items || []).map((item: any) => item.id.videoId).filter(Boolean);
+          
+          if (videoIds.length > 0) {
+            const detailsRes = await fetch(
+              `https://www.googleapis.com/youtube/v3/videos?part=snippet,contentDetails,statistics&id=${videoIds.join(",")}&key=${YOUTUBE_API_KEY}`
+            );
+            if (detailsRes.ok) {
+              const detailsData = await detailsRes.json();
+              youtubeVideos = (detailsData.items || []).map((v: any) => ({
+                id: v.id,
+                title: v.snippet.title,
+                description: v.snippet.description,
+                thumbnail: v.snippet.thumbnails?.high?.url || v.snippet.thumbnails?.medium?.url,
+                channelTitle: v.snippet.channelTitle,
+                publishedAt: v.snippet.publishedAt,
+                duration: v.contentDetails?.duration,
+                viewCount: parseInt(v.statistics?.viewCount || "0"),
+                url: `https://www.youtube.com/watch?v=${v.id}`,
+              }));
+            }
+          }
+        }
+
+        return new Response(JSON.stringify({
+          type: "youtube",
+          reply: args.reason,
+          videos: youtubeVideos,
+          movie: null,
+        }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
       if (toolCall.function.name !== "suggest_movie") break;
 
       const args = JSON.parse(toolCall.function.arguments);
