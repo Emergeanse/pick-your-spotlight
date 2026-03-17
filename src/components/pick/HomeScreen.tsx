@@ -286,9 +286,9 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
   };
 
   const handleTonightPick = () => {
-    setRejectedIds([]);
+    // Don't reset rejectedIds — keep excluding previously rejected movies
     setTonightPick(null);
-    generateTonightPick([]);
+    generateTonightPick(rejectedIds);
   };
 
   return (
@@ -600,12 +600,18 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
                       size="lg"
                       className="rounded-full border border-border/30 text-foreground/50 hover:text-foreground hover:border-border/50 font-sans font-medium px-5 h-11 gap-2 text-sm transition-all active:scale-[0.97]"
                       onClick={() => {
-                        const nextRejected = tonightPick ? [...rejectedIds, tonightPick.id] : rejectedIds;
-                        const rejContext = tonightPick ? {
+                        if (!tonightPick) return;
+                        // Track the rejection so it persists across sessions
+                        trackInteraction(tonightPick.id, "skipped", {
+                          reason: "not_my_style",
+                          genres: (tonightPick.genres || []).map(g => g.name),
+                        });
+                        const nextRejected = [...rejectedIds, tonightPick.id];
+                        const rejContext = {
                           reason: "not_my_style" as const,
                           rejectedGenres: (tonightPick.genres || []).map(g => g.name),
                           rejectedTitle: getDisplayTitle(tonightPick),
-                        } : undefined;
+                        };
                         setRejectedIds(nextRejected);
                         setTonightPick(null);
                         generateTonightPick(nextRejected, rejContext);
