@@ -819,60 +819,6 @@ const Landing = () => {
         </div>
       </section>
 
-      {/* ── FINAL CTA ── */}
-      <section className="py-24 md:py-32 px-5 relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-primary/3 to-transparent" />
-        <div className="absolute inset-0 bg-gradient-to-t from-transparent via-gold/2 to-transparent" />
-
-        <motion.div
-          variants={fadeUp}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: "-100px" }}
-          className="max-w-3xl mx-auto text-center relative z-10"
-        >
-          <motion.img
-            src={pickThink}
-            alt="Pick réfléchit"
-            className="w-16 h-16 md:w-20 md:h-20 object-contain mx-auto mb-6 drop-shadow-lg"
-            initial={{ opacity: 0, y: 10 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-          />
-
-          <h2 className="text-3xl md:text-5xl lg:text-6xl font-serif mb-4">
-            Arrête de scroller.{" "}
-            <span className="text-gold italic">Regarde.</span>
-          </h2>
-          <p className="text-foreground/40 font-sans text-sm md:text-base max-w-md mx-auto mb-8">
-            Pick est prêt à trouver ton prochain coup de cœur.
-          </p>
-
-          <div className="flex items-center justify-center gap-3 flex-wrap">
-            <Button
-              size="lg"
-              className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90 font-sans font-semibold px-7 h-12 gap-2.5 text-base neon-glow transition-all active:scale-[0.97]"
-              onClick={() => navigate("/app")}
-            >
-              <Clapperboard className="w-4 h-4" />
-              Demander à Pick
-            </Button>
-            <Button
-              size="lg"
-              variant="ghost"
-              className="rounded-full text-foreground/60 hover:text-foreground font-sans font-medium px-6 h-12 gap-2 text-base border border-border/20 hover:border-border/40 transition-all"
-              onClick={() => navigate("/app")}
-            >
-              <Dice5 className="w-4 h-4" />
-              Surprends-moi
-            </Button>
-          </div>
-
-          <p className="text-foreground/20 text-xs font-sans mt-4">
-            Gratuit · Sans inscription
-          </p>
-        </motion.div>
-      </section>
 
       {/* ── FOOTER ── */}
       <footer className="border-t border-border/10 py-10 px-5">
