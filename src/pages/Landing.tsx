@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import {
   Sparkles, Target, Dice5, Mic, Brain, Tv, ChevronDown, Clapperboard,
   MessageCircle, Volume2, Zap, SlidersHorizontal, Crown, Check, X as XIcon,
-  BookmarkPlus, Dna, Film, Popcorn, Star, ListVideo, Eye
+  BookmarkPlus, Dna, Film, Popcorn, Star, ListVideo, Eye, Play, Youtube
 } from "lucide-react";
 import pickLogo from "@/assets/pick-logo.png";
 import pickWave from "@/assets/pick-squirrel-wave.png";
