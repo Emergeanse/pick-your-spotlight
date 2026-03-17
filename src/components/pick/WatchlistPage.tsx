@@ -479,8 +479,9 @@ const WatchlistPage = ({ onMovieSelect }: WatchlistPageProps) => {
           <MoviePreviewSheet
             movie={previewMovie}
             providers={previewProviders}
+            personalNote={previewNote}
             onWatch={handleWatchFromPreview}
-            onClose={() => { setPreviewMovie(null); setPreviewProviders([]); }}
+            onClose={() => { setPreviewMovie(null); setPreviewProviders([]); setPreviewNote(""); }}
           />
         )}
       </AnimatePresence>
