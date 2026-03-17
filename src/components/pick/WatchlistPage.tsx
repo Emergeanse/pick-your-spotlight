@@ -285,7 +285,7 @@ const WatchlistPage = ({ onMovieSelect }: WatchlistPageProps) => {
     if (genreFilter !== "all" && !(item.genres || []).includes(genreFilter)) return false;
     if (durationFilter !== "all") {
       const rt = item.runtime || 0;
-      if (rt === 0) return durationFilter === "all";
+      if (rt === 0) return false;
       if (durationFilter === "short" && rt > 90) return false;
       if (durationFilter === "medium" && (rt <= 90 || rt > 130)) return false;
       if (durationFilter === "long" && rt <= 130) return false;
