@@ -60,8 +60,9 @@ const App = () => (
             <Route path="/profile" element={<Navigate to="/app/profile" replace />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
-          <PickFAB />
-          <PickChatOverlay />
+          {/* TODO: Réactiver le chatbot plus tard */}
+          {/* <PickFAB /> */}
+          {/* <PickChatOverlay /> */}
         </BrowserRouter>
       </CompanionProvider>
     </TooltipProvider>
