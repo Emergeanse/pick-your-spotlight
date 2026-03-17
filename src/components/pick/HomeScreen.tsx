@@ -348,6 +348,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
 
                 {/* 1. Pick pour ce soir — with popcorn animation */}
                 <motion.button
+                  data-tour="pick-ce-soir"
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.96 }}
                   onClick={() => {
@@ -402,6 +403,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
 
                 {/* 2. Parle à Pick */}
                 <motion.button
+                  data-tour="parle-a-pick"
                   whileTap={{ scale: 0.98 }}
                   onClick={onOpenChat}
                   disabled={loading}
@@ -422,6 +424,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
 
                 {/* 3. Surprends-moi — warm amber accent */}
                 <motion.button
+                  data-tour="surprends-moi"
                   whileTap={{ scale: 0.95 }}
                   onClick={handleSurprise}
                   disabled={loading || isSurprising}
@@ -433,7 +436,8 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
 
                 {/* 4. Entraîne ton Pick — teal accent */}
                 {user && (
-                  <motion.button
+                    <motion.button
+                      data-tour="entraine-pick"
                     whileTap={{ scale: 0.95 }}
                     onClick={() => setShowTrainer(true)}
                     className="group inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[hsl(175_70%_45%/0.08)] border border-[hsl(175_70%_45%/0.25)] hover:border-[hsl(175_70%_45%/0.45)] hover:bg-[hsl(175_70%_45%/0.12)] transition-all"
