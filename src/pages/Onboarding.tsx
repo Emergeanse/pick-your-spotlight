@@ -136,6 +136,8 @@ const Onboarding = () => {
           const mediaType = movie.media_type || (movie.first_air_date ? "tv" : "movie");
           const detail = await getMovieDetails(movie.id, mediaType);
           await likeMovie(detail);
+          // Also track as interaction so the recommendation engine counts it
+          await trackInteraction(movie.id, "liked", { source: "onboarding" });
         } catch (e) { console.error("Failed to like movie:", movie.id, e); }
       }
 
