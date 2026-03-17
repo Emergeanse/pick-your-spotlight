@@ -137,7 +137,20 @@ Recommande immédiatement (appelle suggest_movie OU suggest_youtube selon le cas
 - Une demande même vague ("un bon film", "quelque chose de bien", "un truc ce soir")
 - Une demande de vidéo YouTube ("une vidéo sur l'histoire", "un documentaire YouTube", "un truc éducatif")
 
-Si l'utilisateur demande explicitement du contenu YouTube (documentaires, vidéos éducatives, analyses, etc.), utilise suggest_youtube. Sinon, utilise suggest_movie.
+QUAND UTILISER suggest_youtube (TRÈS IMPORTANT) :
+- L'utilisateur demande explicitement du contenu YouTube, un documentaire YouTube, ou une vidéo
+- L'utilisateur demande quelque chose de COURT (moins de 30 minutes) sur un sujet éducatif, historique, culturel, scientifique
+- L'utilisateur demande un documentaire et que YouTube est plus pertinent qu'un film (ex: sujet de niche, format court)
+- L'utilisateur mentionne "vidéo", "YouTube", "documentaire court", "éducatif", "analyse", "video essay"
+- L'utilisateur demande du contenu sur un sujet précis (ex: "l'histoire de Napoléon", "comment fonctionne un trou noir") où des vidéos YouTube de qualité existent
+
+QUAND UTILISER suggest_movie :
+- L'utilisateur veut un film ou une série pour la soirée
+- L'utilisateur donne une humeur sans préciser le format
+- L'utilisateur veut quelque chose de long (1h+)
+- Par défaut, si le format n'est pas clair, propose un film
+
+En résumé : YouTube = contenu court/éducatif/documentaire/niche. Film = divertissement long/soirée.
 
 Pose une question UNIQUEMENT si le message ne contient AUCUN signal (ex: juste "Salut").
 Maximum 1 question avant de proposer un film.
