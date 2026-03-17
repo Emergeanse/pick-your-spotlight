@@ -540,6 +540,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                     </div>
                   )}
                 </>
+              )}
             </motion.div>
 
             {/* Synopsis — expandable */}
