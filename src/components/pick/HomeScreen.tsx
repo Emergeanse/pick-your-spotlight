@@ -20,6 +20,8 @@ interface HomeScreenProps {
   onSurprise: (movie: MovieDetail) => void;
   onMovieSelect: (movie: MovieDetail) => void;
   loading: boolean;
+  openTrainerOnMount?: boolean;
+  onTrainerOpened?: () => void;
 }
 
 const SURPRISE_MESSAGES = [
@@ -72,7 +74,7 @@ const PROACTIVE_MESSAGES = [
   "Un petit bijou juste pour toi ce soir.",
 ];
 
-const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }: HomeScreenProps) => {
+const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, openTrainerOnMount, onTrainerOpened }: HomeScreenProps) => {
   const [isSurprising, setIsSurprising] = useState(false);
   const [surpriseMsg, setSurpriseMsg] = useState("");
   const [bgImages, setBgImages] = useState<string[]>([]);
@@ -95,6 +97,14 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
   const [progressionMsg, setProgressionMsg] = useState<string | null>(null);
   const [historyExcludeIds, setHistoryExcludeIds] = useState<number[]>([]);
   const [showTrainer, setShowTrainer] = useState(false);
+
+  // Open trainer from MyCinema navigation
+  useEffect(() => {
+    if (openTrainerOnMount) {
+      setShowTrainer(true);
+      onTrainerOpened?.();
+    }
+  }, [openTrainerOnMount]);
   const { user } = useAuth();
 
   // Load engagement data

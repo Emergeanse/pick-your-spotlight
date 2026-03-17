@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import HomeScreen from "@/components/pick/HomeScreen";
 import MoodStep from "@/components/pick/MoodStep";
 import ContextStep from "@/components/pick/ContextStep";
@@ -58,7 +58,18 @@ const Index = () => {
   const [profilePrefs, setProfilePrefs] = useState<{ excludedGenres: string[]; excludedPlatforms: number[]; minRating: number; preferredPlatforms: number[]; profileConfidence: number }>({ excludedGenres: [], excludedPlatforms: [], minRating: 0, preferredPlatforms: [], profileConfidence: 0 });
   const { user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const pickPlus = usePickPlus();
+  const [openTrainerOnMount, setOpenTrainerOnMount] = useState(false);
+
+  // Check if we should open the trainer (from MyCinema navigation)
+  useEffect(() => {
+    if ((location.state as any)?.openTrainer) {
+      setOpenTrainerOnMount(true);
+      // Clear the state so it doesn't reopen on subsequent renders
+      window.history.replaceState({}, "", "/app");
+    }
+  }, [location.state]);
 
   // Handle movie from Pick FAB chat
   const loadChatMovie = useCallback(() => {
@@ -271,7 +282,7 @@ const Index = () => {
           <motion.div key="home" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.4 }}
             className="absolute inset-0 pb-[calc(3.5rem+env(safe-area-inset-bottom))]"
           >
-            <HomeScreen onStart={handleStart} onOpenChat={handleOpenChat} onSurprise={handleSurprise} onMovieSelect={handleMovieSelect} loading={loading} />
+            <HomeScreen onStart={handleStart} onOpenChat={handleOpenChat} onSurprise={handleSurprise} onMovieSelect={handleMovieSelect} loading={loading} openTrainerOnMount={openTrainerOnMount} onTrainerOpened={() => setOpenTrainerOnMount(false)} />
           </motion.div>
         )}
 
