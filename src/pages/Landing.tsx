@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import {
   Sparkles, Target, Dice5, Mic, Brain, Tv, ChevronDown, Clapperboard,
   MessageCircle, Volume2, Zap, SlidersHorizontal, Crown, Check, X as XIcon,
-  BookmarkPlus, Dna, Film, Popcorn, Star, ListVideo, Eye
+  BookmarkPlus, Dna, Film, Popcorn, Star, ListVideo, Eye, Play, Youtube
 } from "lucide-react";
 import pickLogo from "@/assets/pick-logo.png";
 import pickWave from "@/assets/pick-squirrel-wave.png";
@@ -244,7 +244,7 @@ const Landing = () => {
             transition={{ duration: 0.6, delay: 0.5 }}
             className="text-foreground/45 text-base md:text-lg font-sans font-light max-w-md mx-auto mb-6 leading-relaxed"
           >
-            Dis ton humeur, ton envie, ton contexte — Pick te trouve le film parfait en secondes. Fini le scroll infini.
+            Dis ton humeur, ton envie, ton contexte — Pick te trouve le film parfait en secondes. Films, séries, et même des vidéos YouTube pour aller plus loin.
           </motion.p>
 
           <motion.div
@@ -545,6 +545,61 @@ const Landing = () => {
               <div className="flex flex-wrap gap-2">
                 {["Fun facts 🎬", "Acteurs & casting", "Contexte historique", "Sans spoilers"].map(tag => (
                   <span key={tag} className="px-3 py-1.5 rounded-full bg-card/60 border border-border/15 text-foreground/50 text-xs font-sans">
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ── POUR ALLER PLUS LOIN — YOUTUBE ── */}
+      <section className="py-24 md:py-32 px-5 relative overflow-hidden">
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div className="w-[500px] h-[400px] rounded-full bg-red-500/4 blur-[100px]" />
+        </div>
+
+        <div className="max-w-4xl mx-auto relative z-10">
+          <motion.div
+            variants={fadeUp}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-100px" }}
+            className="flex flex-col md:flex-row-reverse items-center gap-10 md:gap-16"
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
+              className="flex-shrink-0"
+            >
+              <div className="relative">
+                <div className="w-32 h-32 md:w-40 md:h-40 rounded-2xl bg-red-600/10 border border-red-600/20 flex items-center justify-center">
+                  <Play className="w-12 h-12 md:w-16 md:h-16 text-red-500 fill-red-500/80" />
+                </div>
+                <div className="absolute -top-3 -right-3 md:-right-6 px-3 py-2 rounded-xl bg-red-600/15 border border-red-600/25 backdrop-blur-sm">
+                  <Youtube className="w-4 h-4 text-red-500" />
+                </div>
+              </div>
+            </motion.div>
+
+            <div className="text-center md:text-left">
+              <span className="text-[10px] uppercase tracking-widest text-red-400/60 font-sans font-semibold">
+                Pour aller plus loin
+              </span>
+              <h2 className="text-3xl md:text-4xl font-serif mb-4 mt-1">
+                Des vidéos YouTube <span className="text-red-400 italic">sur chaque film</span>
+              </h2>
+              <p className="text-foreground/45 font-sans text-sm md:text-base leading-relaxed mb-5">
+                Pour chaque recommandation, Pick te propose une vidéo YouTube pertinente : 
+                analyses, critiques, coulisses de tournage, anecdotes… 
+                De quoi approfondir ta découverte ou te convaincre avant de lancer le film.
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {["Analyses 🧠", "Critiques ciné", "Coulisses 🎬", "Documentaires"].map(tag => (
+                  <span key={tag} className="px-3 py-1.5 rounded-full bg-red-600/8 border border-red-600/15 text-foreground/50 text-xs font-sans">
                     {tag}
                   </span>
                 ))}
