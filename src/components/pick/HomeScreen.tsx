@@ -286,9 +286,9 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
   };
 
   const handleTonightPick = () => {
-    setRejectedIds([]);
+    // Don't reset rejectedIds — keep excluding previously rejected movies
     setTonightPick(null);
-    generateTonightPick([]);
+    generateTonightPick(rejectedIds);
   };
 
   return (
