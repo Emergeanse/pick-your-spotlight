@@ -303,9 +303,15 @@ const Onboarding = () => {
             <div className="flex-shrink-0 px-5 pt-3 pb-4">
               <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="max-w-2xl mx-auto">
                 <h1 className="text-2xl md:text-4xl font-serif mb-2">Qu'as-tu apprécié récemment ?</h1>
-                <p className="text-muted-foreground text-sm font-sans mb-4">
+                <p className="text-muted-foreground text-sm font-sans mb-2">
                   Sélectionne au moins {MIN_MOVIE_SELECTIONS} films ou séries — on apprend vite !
                 </p>
+                <div className="flex items-center gap-1.5 mb-4">
+                  <Brain className="w-3 h-3 text-primary/50" />
+                  <p className="text-primary/50 text-[11px] font-sans">
+                    Tu pourras continuer à entraîner Pick après l'inscription
+                  </p>
+                </div>
                 {/* Search — secondary, collapsed by default */}
                 {!showSearch ? (
                   <button
