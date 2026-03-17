@@ -330,10 +330,10 @@ const Landing = () => {
             className="text-center mb-16"
           >
             <h2 className="text-3xl md:text-5xl font-serif mb-3">
-              3 façons de trouver <span className="text-primary italic">ton film</span>
+              2 façons de trouver <span className="text-primary italic">ton film</span>
             </h2>
             <p className="text-foreground/40 font-sans text-sm md:text-base max-w-md mx-auto">
-              Tape, parle ou laisse-toi guider. Zéro prise de tête.
+              Tape ou parle. Zéro prise de tête.
             </p>
           </motion.div>
 
