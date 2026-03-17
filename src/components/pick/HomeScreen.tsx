@@ -20,6 +20,8 @@ interface HomeScreenProps {
   onSurprise: (movie: MovieDetail) => void;
   onMovieSelect: (movie: MovieDetail) => void;
   loading: boolean;
+  openTrainerOnMount?: boolean;
+  onTrainerOpened?: () => void;
 }
 
 const SURPRISE_MESSAGES = [
