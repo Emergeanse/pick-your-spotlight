@@ -342,7 +342,7 @@ const Landing = () => {
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true, margin: "-80px" }}
-            className="grid md:grid-cols-3 gap-4 md:gap-6"
+            className="grid md:grid-cols-2 gap-4 md:gap-6 max-w-3xl mx-auto"
           >
             {[
               {
