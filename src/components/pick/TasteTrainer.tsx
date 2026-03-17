@@ -118,11 +118,11 @@ const TasteTrainer = ({ onClose }: TasteTrainerProps) => {
     }, 300);
   };
 
-  const handleAlreadySeen = async () => {
+  const handleUnsure = async () => {
     if (!currentMovie || !user) return;
     
     try {
-      await trackInteraction(currentMovie.id, "already_seen", { source: "taste_trainer" });
+      await trackInteraction(currentMovie.id, "unsure", { source: "taste_trainer" });
     } catch (e) {
       console.error("Failed to track:", e);
     }
