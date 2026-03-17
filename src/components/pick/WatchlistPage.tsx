@@ -252,7 +252,6 @@ const WatchlistPage = ({ onMovieSelect }: WatchlistPageProps) => {
   const [loading, setLoading] = useState(true);
   const [mediaFilter, setMediaFilter] = useState<MediaFilter>("all");
   const [previewMovie, setPreviewMovie] = useState<MovieDetail | null>(null);
-  const [previewMovie, setPreviewMovie] = useState<MovieDetail | null>(null);
   const [previewProviders, setPreviewProviders] = useState<{ name: string; logo_path: string }[]>([]);
   const [previewLoading, setPreviewLoading] = useState(false);
 
