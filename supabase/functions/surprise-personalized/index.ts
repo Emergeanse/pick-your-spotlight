@@ -222,7 +222,7 @@ Recommande UN film avec les scores détaillés.`;
         language: "fr-FR",
         sort_by: "popularity.desc",
         "vote_count.gte": "100",
-        page: String(Math.floor(Math.random() * 5) + 1),
+        page: String(Math.floor(Math.random() * 20) + 1),
       });
       if (minRating && minRating > 0) discoverParams.set("vote_average.gte", String(minRating));
       if (excludedGenreIds.size > 0) discoverParams.set("without_genres", [...excludedGenreIds].join(","));

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Mic, Dices, Tv, Sparkles, Loader2, Zap, Flame, Target, Trophy, Shuffle } from "lucide-react";
+import { Mic, Dices, Tv, Sparkles, Loader2, Zap, Flame, Target, Trophy, Shuffle, Brain } from "lucide-react";
 import { getTrendingMovies, getBackdropUrl, getSurpriseRecommendation, getPosterUrl, getDisplayTitle, getWatchProviders } from "@/lib/tmdb";
 import { getLikedMovies } from "@/lib/liked-movies";
 import { trackInteraction } from "@/lib/interactions";
@@ -12,6 +12,7 @@ import { getEngagementData, getProgressionMessage, getStreakLabel, type Engageme
 import type { Movie, MovieDetail } from "@/lib/tmdb";
 import BrandHeader from "./BrandHeader";
 import PickCharacter from "./PickCharacter";
+import TasteTrainer from "./TasteTrainer";
 
 interface HomeScreenProps {
   onStart: () => void;
@@ -92,6 +93,8 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
   const [rejectedIds, setRejectedIds] = useState<number[]>([]);
   const [engagement, setEngagement] = useState<EngagementData | null>(null);
   const [progressionMsg, setProgressionMsg] = useState<string | null>(null);
+  const [historyExcludeIds, setHistoryExcludeIds] = useState<number[]>([]);
+  const [showTrainer, setShowTrainer] = useState(false);
   const { user } = useAuth();
 
   // Load engagement data
@@ -105,7 +108,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
     });
   }, [user]);
 
-  // Load user's full profile preferences
+  // Load user's full profile preferences + interaction history for exclusion
   useEffect(() => {
     if (!user) return;
     supabase.from("profiles").select("preferred_platforms, excluded_platforms, favorite_genres, excluded_genres, min_rating").eq("id", user.id).single()
@@ -115,6 +118,18 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
         if (data?.favorite_genres) setUserGenres(data.favorite_genres);
         if ((data as any)?.excluded_genres) setUserExcludedGenres((data as any).excluded_genres);
         if ((data as any)?.min_rating) setUserMinRating((data as any).min_rating);
+      });
+    // Load interaction history (watched, skipped, already_seen) to avoid repeats
+    supabase.from("user_interactions")
+      .select("tmdb_id")
+      .eq("user_id", user.id)
+      .in("action_type", ["watched", "skipped", "already_seen"])
+      .limit(500)
+      .then(({ data }) => {
+        if (data) {
+          const ids = [...new Set(data.map(d => d.tmdb_id))];
+          setHistoryExcludeIds(ids);
+        }
       });
   }, [user]);
 
@@ -173,7 +188,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
           const userTasteVector = await computeUserTasteVector(user.id);
           const data = await invokeSurprisePersonalized({
             likedMovies: liked, userTasteVector, platformIds: userPlatformIds, excludedPlatformIds: userExcludedPlatformIds, excludedGenres: userExcludedGenres, minRating: userMinRating,
-            outOfComfortZone: true,
+            outOfComfortZone: true, excludeIds: historyExcludeIds,
           });
           movie = data.movie as MovieDetail;
           (movie as any)._surpriseComfortZone = true;
@@ -204,6 +219,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
   };
 
   const generateTonightPick = async (excludeList: number[] = rejectedIds, rejectionContext?: { reason: string; rejectedGenres: string[]; rejectedTitle: string }) => {
+    const allExcludeIds = [...new Set([...excludeList, ...historyExcludeIds])];
     setTonightLoading(true);
     setTonightProviders([]);
     let msgIndex = 0;
@@ -220,7 +236,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
         if (liked.length >= 2) {
           const userTasteVector = await computeUserTasteVector(user.id);
           const data = await invokeSurprisePersonalized({
-            likedMovies: liked, userTasteVector, platformIds: userPlatformIds, excludedPlatformIds: userExcludedPlatformIds, excludedGenres: userExcludedGenres, minRating: userMinRating, excludeIds: excludeList, rejectionContext,
+            likedMovies: liked, userTasteVector, platformIds: userPlatformIds, excludedPlatformIds: userExcludedPlatformIds, excludedGenres: userExcludedGenres, minRating: userMinRating, excludeIds: allExcludeIds, rejectionContext,
           });
           movie = data.movie as MovieDetail;
         } else {
@@ -431,6 +447,18 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
                   <span className="text-[13px] font-sans font-medium text-foreground/60 group-hover:text-foreground transition-colors">Surprends-moi</span>
                 </motion.button>
 
+                {/* 4. Entraîne ton Pick */}
+                {user && (
+                  <motion.button
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => setShowTrainer(true)}
+                    className="group inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-foreground/[0.05] border border-border/20 hover:border-primary/30 hover:bg-primary/[0.06] transition-all"
+                  >
+                    <Brain className="w-3.5 h-3.5 text-foreground/50 group-hover:text-primary transition-colors" />
+                    <span className="text-[13px] font-sans font-medium text-foreground/60 group-hover:text-foreground transition-colors">Entraîne ton Pick</span>
+                  </motion.button>
+                )}
+
               </div>
 
               {/* Platform logos */}
@@ -626,6 +654,13 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
               </motion.div>
             </div>
           </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Taste Trainer overlay */}
+      <AnimatePresence>
+        {showTrainer && (
+          <TasteTrainer onClose={() => setShowTrainer(false)} />
         )}
       </AnimatePresence>
 
