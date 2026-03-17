@@ -58,7 +58,18 @@ const Index = () => {
   const [profilePrefs, setProfilePrefs] = useState<{ excludedGenres: string[]; excludedPlatforms: number[]; minRating: number; preferredPlatforms: number[]; profileConfidence: number }>({ excludedGenres: [], excludedPlatforms: [], minRating: 0, preferredPlatforms: [], profileConfidence: 0 });
   const { user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const pickPlus = usePickPlus();
+  const [openTrainerOnMount, setOpenTrainerOnMount] = useState(false);
+
+  // Check if we should open the trainer (from MyCinema navigation)
+  useEffect(() => {
+    if ((location.state as any)?.openTrainer) {
+      setOpenTrainerOnMount(true);
+      // Clear the state so it doesn't reopen on subsequent renders
+      window.history.replaceState({}, "", "/app");
+    }
+  }, [location.state]);
 
   // Handle movie from Pick FAB chat
   const loadChatMovie = useCallback(() => {
