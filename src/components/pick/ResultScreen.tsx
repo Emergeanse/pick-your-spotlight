@@ -278,26 +278,22 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
       );
     }
 
-    // Load taste profile — skip for YouTube
-    if (!isYouTube) {
-      Promise.all([
-        getUserTasteProfile(),
-        user ? computeUserTasteVector(user.id) : Promise.resolve(null),
-        user ? getLikedMovies().catch(() => []) : Promise.resolve([]),
-        user ? supabase.from("cinematic_profiles" as any).select("personality_title, narrative, taste_traits").eq("user_id", user.id).maybeSingle().then(r => r.data) : Promise.resolve(null),
-      ]).then(([tasteProfile, userTasteVector, likedMovies, cinematicProfile]) => {
-        const likedMovieTitles = (likedMovies || []).map((m: any) => m.title);
-        supabase.functions.invoke("movie-match", {
-          body: { movie, userCriteria, tasteProfile, userTasteVector, likedMovieTitles, searchTags, cinematicProfile },
-        }).then(({ data, error }) => {
-          if (error) { console.error("Match error:", error); setMatchLoading(false); return; }
-          setMatchData(data as MatchData);
-          setMatchLoading(false);
-        });
+    // Load taste profile for match analysis (movies AND YouTube)
+    Promise.all([
+      getUserTasteProfile(),
+      user ? computeUserTasteVector(user.id) : Promise.resolve(null),
+      user ? getLikedMovies().catch(() => []) : Promise.resolve([]),
+      user ? supabase.from("cinematic_profiles" as any).select("personality_title, narrative, taste_traits").eq("user_id", user.id).maybeSingle().then(r => r.data) : Promise.resolve(null),
+    ]).then(([tasteProfile, userTasteVector, likedMovies, cinematicProfile]) => {
+      const likedMovieTitles = (likedMovies || []).map((m: any) => m.title);
+      supabase.functions.invoke("movie-match", {
+        body: { movie, userCriteria, tasteProfile, userTasteVector: isYouTube ? null : userTasteVector, likedMovieTitles, searchTags, cinematicProfile },
+      }).then(({ data, error }) => {
+        if (error) { console.error("Match error:", error); setMatchLoading(false); return; }
+        setMatchData(data as MatchData);
+        setMatchLoading(false);
       });
-    } else {
-      setMatchLoading(false);
-    }
+    });
   }, [movie.id]);
 
   useEffect(() => {
@@ -580,7 +576,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
             )}
 
             {/* "Pourquoi ce film" — combined match score + explanation */}
-            {!isYouTube && <AnimatePresence>
+            {<AnimatePresence>
               {matchLoading && (
                 <motion.div
                   initial={{ opacity: 0 }}
@@ -610,7 +606,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-[10px] uppercase tracking-widest text-muted-foreground/80 font-sans font-semibold mb-0.5">
-                          Pourquoi ce film
+                          {isYouTube ? "Pourquoi cette vidéo" : "Pourquoi ce film"}
                         </p>
                         <p className="text-muted-foreground text-[12px] sm:text-[13px] font-sans leading-snug">
                           Utilise Pick un peu plus pour débloquer l'analyse personnalisée de tes recommandations.
@@ -655,7 +651,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-[10px] uppercase tracking-widest text-primary/60 font-sans font-semibold mb-0.5">
-                          Pourquoi ce film
+                          {isYouTube ? "Pourquoi cette vidéo" : "Pourquoi ce film"}
                         </p>
                         <p className="text-foreground/70 text-[12px] sm:text-[13px] font-sans leading-snug">
                           {matchData.headline}

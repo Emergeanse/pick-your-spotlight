@@ -31,21 +31,22 @@ serve(async (req) => {
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
-    const title = movie.title || movie.name || "Film inconnu";
+    const isYouTube = !!(movie._youtube);
+    const youtubeData = movie._youtubeData || {};
+    const title = movie.title || movie.name || "Contenu inconnu";
     const genres = (movie.genres || []).map((g: any) => g.name).join(", ");
     const overview = movie.overview || "";
     const rating = movie.vote_average || 0;
     const runtime = movie.runtime || 0;
     const tmdbId = movie.id;
 
-    // ── Embedding similarity (new signal) ──
+    // ── Embedding similarity (skip for YouTube) ──
     let embeddingSimilarity: number | null = null;
     let movieTasteTags: string[] = [];
 
-    if (userTasteVector && SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) {
+    if (!isYouTube && userTasteVector && SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) {
       const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-      // Get or generate movie embedding
       const { data: movieEmb } = await supabase
         .from("movie_embeddings")
         .select("embedding, taste_tags")
@@ -53,7 +54,6 @@ serve(async (req) => {
         .maybeSingle();
 
       if (movieEmb) {
-        // Parse embedding - could be string "[0.1,0.2,...]" or array
         let movieVector: number[];
         if (typeof movieEmb.embedding === "string") {
           movieVector = JSON.parse(movieEmb.embedding.replace(/^\[/, "[").replace(/\]$/, "]"));
@@ -63,7 +63,6 @@ serve(async (req) => {
         embeddingSimilarity = cosineSimilarity(userTasteVector, movieVector);
         movieTasteTags = movieEmb.taste_tags || [];
       } else {
-        // Generate embedding on-the-fly (fire & forget cache)
         try {
           const embResponse = await fetch(`${SUPABASE_URL}/functions/v1/generate-embedding`, {
             method: "POST",
@@ -131,7 +130,38 @@ Le match score doit refléter ces poids :
 - novelty (${scoringWeights.novelty || 0.05}) : découverte
 ${cinematicProfile ? `\nPROFIL CINÉMATOGRAPHIQUE DE L'UTILISATEUR :\n- Personnalité : "${cinematicProfile.personality_title}"\n- Description : ${cinematicProfile.narrative}\n- Traits : ${(cinematicProfile.taste_traits || []).join(", ")}\nUtilise ce profil pour enrichir tes explications. Par exemple : "Avec ton profil de ${cinematicProfile.personality_title}, ce film va résonner avec ta sensibilité pour..."` : ""}` : "";
 
-    const systemPrompt = `Tu es Pick, un ami cinéphile passionné qui calcule un match score. On te donne un film, le profil de goûts d'un utilisateur, et sa session actuelle.
+    const contentType = isYouTube ? "vidéo YouTube" : "film";
+    const contentTypeShort = isYouTube ? "vidéo" : "film";
+
+    const systemPrompt = isYouTube
+      ? `Tu es Pick, un ami passionné de culture audiovisuelle qui calcule un match score. On te donne une vidéo YouTube, le profil de goûts d'un utilisateur, et sa session actuelle.
+
+TON : Tu parles comme un pote — chaleureux, direct, jamais robotique.
+- "headline" → une accroche naturelle et enthousiaste. Exemples :
+  • "Pile le genre de vidéo qui va te passionner"
+  • "T'as demandé, j'ai trouvé la pépite"
+  • "Exactement ce qu'il te fallait"
+  JAMAIS : "Cette vidéo correspond à vos préférences"
+- "whyItMatches" → 1 phrase courte, style pote.
+- "detailedExplanation" → 3-5 phrases. REPRENDS LES MOTS EXACTS de l'utilisateur (ses tags de recherche, ce qu'il a dit). Explique pourquoi cette vidéo spécifique est pertinente pour lui — la chaîne, le sujet, la durée, le format.
+
+RÈGLES :
+- Réponds UNIQUEMENT avec un JSON valide, sans markdown, sans backticks
+- Structure :
+{
+  "matchScore": <number 40-99>,
+  "headline": "<accroche naturelle, 10 mots max>",
+  "pickNote": "<1 phrase qui montre que Pick a compris la demande. Si aucun profil connu, null.>",
+  "whyItMatches": "<1 phrase perso, ton conversationnel, tutoiement>",
+  "detailedExplanation": "<3-5 phrases détaillées reprenant les mots de l'utilisateur>",
+  "emotionalJourney": "<2-3 phrases sur l'expérience de visionnage>",
+  "perfectFor": "<1 phrase, style 'Parfait pour apprendre un truc en 20 min'>",
+  "funFact": "<1 info intéressante sur le sujet ou la chaîne>",
+  "similarLikedMovies": [],
+  "matchingReasons": ["<raison courte, 2-4 mots>", ...max 4]
+}
+- Score calibré : pas aligné → 40-60. Match parfait → 85-99.`
+      : `Tu es Pick, un ami cinéphile passionné qui calcule un match score. On te donne un film, le profil de goûts d'un utilisateur, et sa session actuelle.
 
 TON : Tu parles comme un pote cinéphile — chaleureux, direct, jamais robotique.
 - "headline" → une accroche naturelle et enthousiaste, comme un ami dirait. Exemples :
@@ -178,8 +208,10 @@ RÈGLES :
 - Score calibré : session pas alignée → 40-60 max. Match parfait → 85-99.
 - Profil jeune (confiance < 40) = scores plus modérés`;
 
-    const userPrompt = `Film : "${title}" (${genres}, ${runtime}min, note ${rating}/10)
-Synopsis : ${overview}
+    const youtubeExtra = isYouTube ? `\nChaîne YouTube : ${youtubeData.channelTitle || "inconnue"}\nVues : ${youtubeData.viewCount || 0}\nDurée : ${runtime} min` : "";
+
+    const userPrompt = `${isYouTube ? "Vidéo YouTube" : "Film"} : "${title}" (${genres}, ${runtime}min${!isYouTube ? `, note ${rating}/10` : ""})
+Synopsis : ${overview}${youtubeExtra}
 ${criteriaText}${tasteSection}
 
 Génère la fiche de match.`;
