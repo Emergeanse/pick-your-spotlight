@@ -97,6 +97,14 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
   const [progressionMsg, setProgressionMsg] = useState<string | null>(null);
   const [historyExcludeIds, setHistoryExcludeIds] = useState<number[]>([]);
   const [showTrainer, setShowTrainer] = useState(false);
+
+  // Open trainer from MyCinema navigation
+  useEffect(() => {
+    if (openTrainerOnMount) {
+      setShowTrainer(true);
+      onTrainerOpened?.();
+    }
+  }, [openTrainerOnMount]);
   const { user } = useAuth();
 
   // Load engagement data
