@@ -188,7 +188,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
           const userTasteVector = await computeUserTasteVector(user.id);
           const data = await invokeSurprisePersonalized({
             likedMovies: liked, userTasteVector, platformIds: userPlatformIds, excludedPlatformIds: userExcludedPlatformIds, excludedGenres: userExcludedGenres, minRating: userMinRating,
-            outOfComfortZone: true,
+            outOfComfortZone: true, excludeIds: historyExcludeIds,
           });
           movie = data.movie as MovieDetail;
           (movie as any)._surpriseComfortZone = true;
