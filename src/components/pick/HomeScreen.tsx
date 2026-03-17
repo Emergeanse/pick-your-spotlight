@@ -447,6 +447,18 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
                   <span className="text-[13px] font-sans font-medium text-foreground/60 group-hover:text-foreground transition-colors">Surprends-moi</span>
                 </motion.button>
 
+                {/* 4. Entraîne ton Pick */}
+                {user && (
+                  <motion.button
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => setShowTrainer(true)}
+                    className="group inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-foreground/[0.05] border border-border/20 hover:border-primary/30 hover:bg-primary/[0.06] transition-all"
+                  >
+                    <Brain className="w-3.5 h-3.5 text-foreground/50 group-hover:text-primary transition-colors" />
+                    <span className="text-[13px] font-sans font-medium text-foreground/60 group-hover:text-foreground transition-colors">Entraîne ton Pick</span>
+                  </motion.button>
+                )}
+
               </div>
 
               {/* Platform logos */}
