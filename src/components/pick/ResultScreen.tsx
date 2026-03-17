@@ -268,13 +268,15 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
         .finally(() => setYoutubeLoading(false));
     }
 
-    // Pre-generate embedding for this movie (fire & forget)
-    ensureMovieEmbedding(
-      movie.id,
-      movie.title || movie.name || "",
-      movie.overview || "",
-      (movie.genres || []).map(g => g.name)
-    );
+    // Pre-generate embedding for this movie (fire & forget) — skip for YouTube
+    if (!isYouTube) {
+      ensureMovieEmbedding(
+        movie.id,
+        movie.title || movie.name || "",
+        movie.overview || "",
+        (movie.genres || []).map(g => g.name)
+      );
+    }
 
     // Load taste profile + user taste vector + liked movies + cinematic profile and pass to match function
     Promise.all([
