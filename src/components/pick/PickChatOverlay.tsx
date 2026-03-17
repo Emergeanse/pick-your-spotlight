@@ -54,6 +54,8 @@ export default function PickChatOverlay() {
   const navigate = useNavigate();
   const { user } = useAuth();
   
+  
+  const pendingVoiceRef = useRef<string | null>(null);
 
   const scribe = useScribe({
     modelId: "scribe_v2_realtime",
@@ -65,13 +67,30 @@ export default function PickChatOverlay() {
     },
     onCommittedTranscript: (data) => {
       if (data.text?.trim()) {
-        // Set the final text in input and stop mic — let user review & send manually
-        setInput(data.text.trim());
+        const finalText = data.text.trim();
+        setInput(finalText);
         scribe.disconnect();
         setIsListening(false);
+        // Store for auto-send (sendMessage not yet available in this scope)
+        pendingVoiceRef.current = finalText;
       }
     },
   });
+
+  // Auto-send when voice transcription completes
+  useEffect(() => {
+    if (pendingVoiceRef.current && !isStreaming) {
+      const text = pendingVoiceRef.current;
+      pendingVoiceRef.current = null;
+      // Small delay to let sendMessage be defined
+      const timer = setTimeout(() => {
+        sendMessageRef.current?.(text);
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [isListening, isStreaming]);
+
+  const sendMessageRef = useRef<(text: string) => void>();
 
   const currentMessages = mode === "companion" ? companionMessages : messages;
   
@@ -271,6 +290,11 @@ export default function PickChatOverlay() {
       setStreamingContent("");
     }
   }, [isStreaming, currentMessages, mode, activeMovie, title, addMessage]);
+
+  // Keep ref in sync for voice auto-send
+  useEffect(() => {
+    sendMessageRef.current = sendMessage;
+  }, [sendMessage]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

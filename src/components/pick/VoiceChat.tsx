@@ -99,6 +99,8 @@ const VoiceChat = ({ onClose, onMovieSuggested, initialMessages }: VoiceChatProp
   const [pickReply, setPickReply] = useState("");
   const [userTasteContext, setUserTasteContext] = useState<any>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const sendToAIRef = useRef<(text: string) => void>();
+  const pendingVoiceRef = useRef<string | null>(null);
   const { user } = useAuth();
 
   // Pre-fetch scribe token and user taste context on mount
@@ -131,19 +133,27 @@ const VoiceChat = ({ onClose, onMovieSuggested, initialMessages }: VoiceChatProp
     },
     onCommittedTranscript: (data) => {
       if (data.text.trim()) {
-        // Set final text in input field and stop mic — let user review & send manually
         const finalText = data.text.trim();
         setInputText(finalText);
         setPartialText("");
         scribe.disconnect();
         setPhase("idle");
-        // Focus the text input so user can send or edit
-        setTimeout(() => inputRef.current?.focus(), 100);
+        pendingVoiceRef.current = finalText;
       }
     },
   });
 
-  // No auto-send — user presses Send or Enter after voice input
+  // Auto-send when voice transcription completes
+  useEffect(() => {
+    if (pendingVoiceRef.current && phase === "idle") {
+      const text = pendingVoiceRef.current;
+      pendingVoiceRef.current = null;
+      const timer = setTimeout(() => {
+        sendToAIRef.current?.(text);
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [phase]);
 
   const sendToAI = useCallback(async (text: string) => {
     setPhase("processing");
@@ -191,6 +201,11 @@ const VoiceChat = ({ onClose, onMovieSuggested, initialMessages }: VoiceChatProp
     setInputText("");
     setPartialText("");
     await sendToAI(text.trim());
+  }, [sendToAI]);
+
+  // Keep ref in sync for voice auto-send
+  useEffect(() => {
+    sendToAIRef.current = sendToAI;
   }, [sendToAI]);
 
   const startListening = useCallback(async () => {
