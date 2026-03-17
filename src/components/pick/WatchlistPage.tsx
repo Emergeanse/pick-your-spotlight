@@ -12,7 +12,9 @@ interface WatchlistPageProps {
   onMovieSelect: (movie: MovieDetail) => void;
 }
 
-type FilterChip = "ce-soir" | "court" | "en-couple";
+type MediaFilter = "all" | "movie" | "tv";
+type DurationFilter = "all" | "short" | "medium" | "long";
+
 
 const PICK_COMMENTS = [
   "Tu l'as sauvegardé, c'est qu'il te fait de l'œil.",
