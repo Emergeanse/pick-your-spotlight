@@ -113,12 +113,13 @@ const VoiceChat = ({ onClose, onMovieSuggested, initialMessages }: VoiceChatProp
     if (user) {
       Promise.all([
         getLikedMovies(),
-        supabase.from("profiles").select("favorite_genres, excluded_genres").eq("id", user.id).single(),
+        supabase.from("profiles").select("favorite_genres, excluded_genres, min_rating").eq("id", user.id).single(),
       ]).then(([likedMovies, { data: profile }]) => {
         setUserTasteContext({
           likedMovies: likedMovies?.map((m: any) => ({ title: m.title, genres: m.genres })) || [],
           favoriteGenres: profile?.favorite_genres || [],
           excludedGenres: profile?.excluded_genres || [],
+          minRating: (profile as any)?.min_rating || 0,
         });
       }).catch(console.error);
     }
@@ -168,8 +169,14 @@ const VoiceChat = ({ onClose, onMovieSuggested, initialMessages }: VoiceChatProp
         ? [...initialMessages, ...fullHistory]
         : fullHistory;
 
-      const { data, error } = await supabase.functions.invoke("movie-chat", {
-        body: { messages, userTasteContext },
+      const { data, error } = await supabase.functions.invoke("pick-chat", {
+        body: {
+          messages,
+          mode: "discovery",
+          isPremium: true,
+          minRating: userTasteContext?.minRating || 0,
+          excludedGenres: userTasteContext?.excludedGenres || [],
+        },
       });
 
       if (error) throw error;

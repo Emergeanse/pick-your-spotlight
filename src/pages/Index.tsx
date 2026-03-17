@@ -319,7 +319,15 @@ const Index = () => {
                     { role: "assistant" as const, content: `Je t'ai recommandé **${getDisplayTitle(currentMovie)}**.` },
                     { role: "user" as const, content: message },
                   ];
-                  const { data, error } = await supabase.functions.invoke("movie-chat", { body: { messages: contextMessages } });
+                  const { data, error } = await supabase.functions.invoke("pick-chat", {
+                    body: {
+                      messages: contextMessages,
+                      mode: "discovery",
+                      isPremium: pickPlus.isPremium,
+                      minRating: profilePrefs.minRating,
+                      excludedGenres: profilePrefs.excludedGenres,
+                    },
+                  });
                   if (error) throw error;
                   if (data?.movie) {
                     if (data.recap?.length > 0) setSearchTags(prev => { const merged = [...prev]; data.recap.forEach((t: string) => { if (!merged.includes(t)) merged.push(t); }); return merged; });
