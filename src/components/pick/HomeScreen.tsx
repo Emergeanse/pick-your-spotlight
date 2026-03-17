@@ -348,6 +348,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
 
                 {/* 1. Pick pour ce soir — with popcorn animation */}
                 <motion.button
+                  data-tour="pick-ce-soir"
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.96 }}
                   onClick={() => {
