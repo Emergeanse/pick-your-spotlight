@@ -365,6 +365,8 @@ const Index = () => {
         onClose={pickPlus.hidePaywall}
         trigger="reco_limit"
       />
+
+      {showTour && <GuidedTour onComplete={() => setShowTour(false)} />}
     </div>
   );
 };
