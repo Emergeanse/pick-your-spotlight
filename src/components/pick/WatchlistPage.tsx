@@ -307,13 +307,46 @@ const WatchlistPage = ({ onMovieSelect }: WatchlistPageProps) => {
     }
   };
 
+  const generatePersonalNote = async (movie: MovieDetail): Promise<string> => {
+    try {
+      const liked = await getLikedMovies();
+      const likedGenres = liked.flatMap((m: any) => m.genres || []);
+      const genreCounts: Record<string, number> = {};
+      likedGenres.forEach((g: string) => { genreCounts[g] = (genreCounts[g] || 0) + 1; });
+      const topGenres = Object.entries(genreCounts).sort((a, b) => b[1] - a[1]).slice(0, 3).map(e => e[0]);
+      
+      const movieGenres = movie.genres?.map(g => g.name) || [];
+      const matchingGenres = movieGenres.filter(g => topGenres.includes(g));
+      
+      if (matchingGenres.length > 0) {
+        const genreStr = matchingGenres.join(" et ");
+        const templates = [
+          `Tu adores le ${genreStr} — ce titre est pile dans tes goûts.`,
+          `Vu ton amour pour le ${genreStr}, celui-ci devrait te plaire.`,
+          `Le ${genreStr}, c'est ton truc. Ce film est fait pour toi.`,
+        ];
+        return templates[Math.floor(Math.random() * templates.length)];
+      }
+      
+      if (movie.vote_average && movie.vote_average >= 7.5) {
+        return `Noté ${movie.vote_average.toFixed(1)}/10 — un titre très apprécié qui mérite le détour.`;
+      }
+      
+      return "Tu l'as sauvegardé, c'est qu'il t'a tapé dans l'œil. Fais-toi confiance !";
+    } catch {
+      return "";
+    }
+  };
+
   const handlePreview = async (item: any) => {
     setPreviewLoading(true);
+    setPreviewNote("");
     try {
       const mediaType = item.media_type || "movie";
       const movie = await getMovieDetails(item.tmdb_id, mediaType);
       setPreviewMovie(movie);
       getWatchProviders(movie.id, mediaType).then(setPreviewProviders).catch(() => setPreviewProviders([]));
+      generatePersonalNote(movie).then(setPreviewNote);
     } catch (e) {
       console.error(e);
     } finally {
