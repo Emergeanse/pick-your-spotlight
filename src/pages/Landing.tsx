@@ -584,15 +584,15 @@ const Landing = () => {
                 Pour aller plus loin
               </span>
               <h2 className="text-3xl md:text-4xl font-serif mb-4 mt-1">
-                Des vidéos YouTube <span className="text-red-400 italic">sur chaque film</span>
+                YouTube intégré <span className="text-red-400 italic">dans tes recos</span>
               </h2>
               <p className="text-foreground/45 font-sans text-sm md:text-base leading-relaxed mb-5">
-                Pour chaque recommandation, Pick te propose une vidéo YouTube pertinente : 
-                analyses, critiques, coulisses de tournage, anecdotes… 
-                De quoi approfondir ta découverte ou te convaincre avant de lancer le film.
+                Pick ne se limite pas aux plateformes de streaming. Il te recommande aussi des documentaires, 
+                des vidéos de qualité et des créations de YouTubeurs passionnés — directement dans tes suggestions. 
+                Et pour chaque film recommandé, une vidéo complémentaire pour approfondir ta découverte.
               </p>
               <div className="flex flex-wrap gap-2">
-                {["Analyses 🧠", "Critiques ciné", "Coulisses 🎬", "Documentaires"].map(tag => (
+                {["Documentaires 🎬", "Vidéos de qualité", "Analyses 🧠", "Créateurs passionnés"].map(tag => (
                   <span key={tag} className="px-3 py-1.5 rounded-full bg-red-600/8 border border-red-600/15 text-foreground/50 text-xs font-sans">
                     {tag}
                   </span>
