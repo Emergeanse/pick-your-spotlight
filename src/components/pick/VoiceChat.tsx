@@ -203,6 +203,11 @@ const VoiceChat = ({ onClose, onMovieSuggested, initialMessages }: VoiceChatProp
     await sendToAI(text.trim());
   }, [sendToAI]);
 
+  // Keep ref in sync for voice auto-send
+  useEffect(() => {
+    sendToAIRef.current = sendToAI;
+  }, [sendToAI]);
+
   const startListening = useCallback(async () => {
     setMicError(null);
     console.log("[VoiceChat] startListening called");
