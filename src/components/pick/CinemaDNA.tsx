@@ -210,6 +210,10 @@ const CinemaDNA = ({ userId, teaser, onOpenFull }: CinemaDNAProps) => {
   }
 
   if (!profile) {
+    const progress = Math.min(100, Math.round((likeCount / MIN_LIKED_FOR_DNA) * 100));
+    const remaining = Math.max(0, MIN_LIKED_FOR_DNA - likeCount);
+    const isUnlocked = likeCount >= MIN_LIKED_FOR_DNA;
+
     return (
       <motion.div
         initial={{ opacity: 0, y: 10 }}
@@ -220,18 +224,54 @@ const CinemaDNA = ({ userId, teaser, onOpenFull }: CinemaDNAProps) => {
           <img src={pickLogo} alt="Pick" className="w-10 h-10 object-contain" />
         </div>
         <h3 className="font-serif text-2xl mb-3 text-foreground">Ton ADN Cinéma</h3>
-        <p className="text-muted-foreground text-sm font-sans mb-6 max-w-xs mx-auto leading-relaxed">
-          Pick analyse tes goûts pour créer ton portrait cinématographique unique. Comme une empreinte, mais pour les films.
-        </p>
-        <Button
-          onClick={generateProfile}
-          disabled={generating}
-          className="rounded-full gap-2 font-sans px-8 h-12"
-          variant="hero"
-        >
-          {generating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-          {generating ? "Pick analyse…" : "Découvrir mon profil"}
-        </Button>
+
+        {isUnlocked ? (
+          <>
+            <p className="text-muted-foreground text-sm font-sans mb-6 max-w-xs mx-auto leading-relaxed">
+              Pick a assez de données pour créer ton portrait cinématographique unique !
+            </p>
+            <Button
+              onClick={generateProfile}
+              disabled={generating}
+              className="rounded-full gap-2 font-sans px-8 h-12"
+              variant="hero"
+            >
+              {generating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+              {generating ? "Pick analyse…" : "Découvrir mon profil"}
+            </Button>
+          </>
+        ) : (
+          <>
+            <p className="text-muted-foreground text-sm font-sans mb-4 max-w-xs mx-auto leading-relaxed">
+              Encore <span className="text-primary font-semibold">{remaining} film{remaining > 1 ? "s" : ""}</span> à évaluer pour débloquer ton ADN Cinéma.
+            </p>
+
+            {/* Progress ring */}
+            <div className="relative w-28 h-28 mb-5">
+              <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
+                <circle cx="50" cy="50" r="42" fill="none" stroke="hsl(var(--foreground) / 0.08)" strokeWidth="6" />
+                <motion.circle
+                  cx="50" cy="50" r="42" fill="none"
+                  stroke="hsl(var(--primary))"
+                  strokeWidth="6"
+                  strokeLinecap="round"
+                  strokeDasharray={`${2 * Math.PI * 42}`}
+                  initial={{ strokeDashoffset: 2 * Math.PI * 42 }}
+                  animate={{ strokeDashoffset: 2 * Math.PI * 42 * (1 - progress / 100) }}
+                  transition={{ duration: 1, ease: "easeOut", delay: 0.3 }}
+                />
+              </svg>
+              <div className="absolute inset-0 flex flex-col items-center justify-center">
+                <span className="text-2xl font-sans font-bold text-foreground">{likeCount}</span>
+                <span className="text-[10px] font-sans text-foreground/40">/ {MIN_LIKED_FOR_DNA}</span>
+              </div>
+            </div>
+
+            <p className="text-foreground/30 text-[11px] font-sans mb-4">
+              Utilise « Entraîne ton Pick » pour évaluer rapidement des films
+            </p>
+          </>
+        )}
       </motion.div>
     );
   }
