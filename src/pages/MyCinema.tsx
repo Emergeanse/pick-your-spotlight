@@ -253,7 +253,7 @@ const MyCinema = () => {
             <p className="text-foreground/60 text-[13px] font-sans leading-relaxed">
               {getLearningMessage()}
             </p>
-            {confidence >= 30 && (
+            {confidence > 0 && (
               <div className="mt-2.5 h-1.5 rounded-full bg-foreground/10 overflow-hidden">
                 <motion.div
                   initial={{ width: 0 }}
@@ -263,6 +263,13 @@ const MyCinema = () => {
                 />
               </div>
             )}
+            <button
+              onClick={() => navigate("/app", { state: { openTrainer: true } })}
+              className="mt-3 w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-primary/10 border border-primary/20 hover:bg-primary/15 transition-colors"
+            >
+              <Brain className="w-4 h-4 text-primary" />
+              <span className="text-primary text-[13px] font-sans font-semibold">Améliore tes recos</span>
+            </button>
           </div>
         </motion.div>
       </div>
