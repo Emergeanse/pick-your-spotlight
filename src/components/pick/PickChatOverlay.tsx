@@ -415,6 +415,9 @@ export default function PickChatOverlay() {
                         </div>
                         {/* Inline movie card */}
                         {(msg as any).movie && <MovieCard movie={(msg as any).movie} onClick={() => handleMovieClick((msg as any).movie)} />}
+                        {(msg as any).youtubeVideos && (msg as any).youtubeVideos.map((video: any) => (
+                          <YouTubeCard key={video.id} video={video} />
+                        ))}
                       </>
                     ) : msg.content}
                   </div>
