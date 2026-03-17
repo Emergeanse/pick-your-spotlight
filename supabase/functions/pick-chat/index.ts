@@ -491,10 +491,11 @@ ANNÉE EN COURS : ${currentYear}`;
 function getAppKnowledgeSection(): string {
   return `
 CONNAISSANCES SUR L'APPLICATION PICK :
-Pick est une application de recommandation de films et séries personnalisée. Voici ses fonctionnalités :
+Pick est une application de recommandation de films, séries et vidéos YouTube personnalisée. Voici ses fonctionnalités :
 
-- **Page d'accueil** : L'utilisateur peut lancer une recherche guidée (humeur → contexte → durée → plateformes) ou parler directement à Pick via le chat.
-- **Recommandation guidée** : Pick pose 4 questions rapides puis propose LE film parfait avec une fiche détaillée (note, synopsis, plateformes de streaming, bande-annonce).
+- **Page d'accueil** : L'utilisateur peut lancer "Pick pour ce soir" (recommandation instantanée) ou parler directement à Pick via le chat.
+- **Recommandations** : Pick propose LE film/série/vidéo YouTube parfait(e) avec une fiche détaillée (note, synopsis, plateformes de streaming, bande-annonce, vidéo YouTube complémentaire).
+- **YouTube intégré** : Pick recommande aussi des documentaires, vidéos éducatives, analyses ciné et créations de YouTubeurs passionnés. Pour chaque film recommandé, une vidéo YouTube complémentaire est proposée.
 - **Watchlist** : L'utilisateur peut sauvegarder des films pour plus tard. Accessible depuis la barre de navigation.
 - **Mon Cinéma** : Section profil cinématographique avec les films aimés, l'ADN cinématique de l'utilisateur, et des statistiques.
 - **Mode Compagnon** : Quand l'utilisateur choisit de regarder un film, Pick devient un compagnon de visionnage — il peut répondre à des questions sur le film en cours, partager des anecdotes, expliquer des scènes, etc.
