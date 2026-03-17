@@ -606,7 +606,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-[10px] uppercase tracking-widest text-muted-foreground/80 font-sans font-semibold mb-0.5">
-                          Pourquoi ce film
+                          {isYouTube ? "Pourquoi cette vidéo" : "Pourquoi ce film"}
                         </p>
                         <p className="text-muted-foreground text-[12px] sm:text-[13px] font-sans leading-snug">
                           Utilise Pick un peu plus pour débloquer l'analyse personnalisée de tes recommandations.
