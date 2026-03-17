@@ -323,11 +323,10 @@ ANNÉE EN COURS : ${currentYear}`;
 
       const toolCall = message.tool_calls[0];
       
-      // Handle YouTube suggestion
+      // Handle YouTube suggestion — return as first-class recommendation
       if (toolCall.function.name === "suggest_youtube") {
         const args = JSON.parse(toolCall.function.arguments);
         
-        // Call YouTube API via the youtube-recommendations edge function
         const YOUTUBE_API_KEY = Deno.env.get("YOUTUBE_API_KEY");
         if (!YOUTUBE_API_KEY) {
           return new Response(JSON.stringify({
@@ -343,7 +342,7 @@ ANNÉE EN COURS : ${currentYear}`;
         const ytParams = new URLSearchParams({
           part: "snippet",
           type: "video",
-          maxResults: "3",
+          maxResults: "5",
           key: YOUTUBE_API_KEY,
           regionCode: "FR",
           relevanceLanguage: "fr",
@@ -357,7 +356,7 @@ ANNÉE EN COURS : ${currentYear}`;
         }
 
         const ytSearchRes = await fetch(`https://www.googleapis.com/youtube/v3/search?${ytParams}`);
-        let youtubeVideos: any[] = [];
+        let bestVideo: any = null;
         
         if (ytSearchRes.ok) {
           const ytData = await ytSearchRes.json();
@@ -369,26 +368,78 @@ ANNÉE EN COURS : ${currentYear}`;
             );
             if (detailsRes.ok) {
               const detailsData = await detailsRes.json();
-              youtubeVideos = (detailsData.items || []).map((v: any) => ({
+              const videos = (detailsData.items || []).map((v: any) => ({
                 id: v.id,
                 title: v.snippet.title,
                 description: v.snippet.description,
-                thumbnail: v.snippet.thumbnails?.high?.url || v.snippet.thumbnails?.medium?.url,
+                thumbnail: v.snippet.thumbnails?.maxres?.url || v.snippet.thumbnails?.high?.url || v.snippet.thumbnails?.medium?.url,
                 channelTitle: v.snippet.channelTitle,
                 publishedAt: v.snippet.publishedAt,
                 duration: v.contentDetails?.duration,
                 viewCount: parseInt(v.statistics?.viewCount || "0"),
                 url: `https://www.youtube.com/watch?v=${v.id}`,
               }));
+              // Pick best video by view count
+              if (videos.length > 0) {
+                bestVideo = videos.sort((a: any, b: any) => b.viewCount - a.viewCount)[0];
+              }
             }
           }
         }
 
+        if (!bestVideo) {
+          return new Response(JSON.stringify({
+            type: "text",
+            reply: args.reason + "\n\nJe n'ai pas trouvé de vidéo YouTube correspondante. Essaie de reformuler !",
+            movie: null,
+          }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
+        // Parse ISO 8601 duration to minutes
+        const durationMatch = (bestVideo.duration || "").match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
+        const hours = parseInt(durationMatch?.[1] || "0");
+        const mins = parseInt(durationMatch?.[2] || "0");
+        const secs = parseInt(durationMatch?.[3] || "0");
+        const runtimeMinutes = hours * 60 + mins + (secs > 30 ? 1 : 0);
+
+        // Category label mapping
+        const categoryLabels: Record<string, string> = {
+          documentary: "Documentaire",
+          film: "Cinéma",
+          "cinema-culture": "Culture ciné",
+          educational: "Éducatif",
+        };
+
+        // Build a MovieDetail-shaped object with _youtube flag
+        const youtubeMovie = {
+          id: -Math.abs(hashCode(bestVideo.id)),
+          title: bestVideo.title,
+          name: bestVideo.title,
+          overview: bestVideo.description || "Pas de description disponible.",
+          poster_path: null,
+          backdrop_path: bestVideo.thumbnail, // full URL, not TMDB path
+          vote_average: 0,
+          runtime: runtimeMinutes,
+          genres: [{ id: 99, name: categoryLabels[args.category] || "YouTube" }],
+          release_date: bestVideo.publishedAt?.slice(0, 10) || "",
+          _youtube: true,
+          _youtubeData: {
+            url: bestVideo.url,
+            channelTitle: bestVideo.channelTitle,
+            viewCount: bestVideo.viewCount,
+            duration: bestVideo.duration,
+            thumbnail: bestVideo.thumbnail,
+            id: bestVideo.id,
+          },
+        };
+
         return new Response(JSON.stringify({
-          type: "youtube",
+          type: "recommendation",
           reply: args.reason,
-          videos: youtubeVideos,
-          movie: null,
+          movie: youtubeMovie,
+          recap: [args.category === "documentary" ? "Documentaire" : "YouTube", args.query.split(" ").slice(0, 2).join(" ")],
         }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
