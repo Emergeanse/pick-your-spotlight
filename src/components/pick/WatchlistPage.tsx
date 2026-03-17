@@ -111,11 +111,13 @@ const SwipeableCard = ({
 const MoviePreviewSheet = ({
   movie,
   providers,
+  personalNote,
   onWatch,
   onClose,
 }: {
   movie: MovieDetail;
   providers: { name: string; logo_path: string }[];
+  personalNote: string;
   onWatch: () => void;
   onClose: () => void;
 }) => {
