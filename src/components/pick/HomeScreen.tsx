@@ -482,8 +482,6 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
           )}
         </div>
 
-        {/* YouTube Section */}
-        {user && <YouTubeSection />}
       </div>
 
       {/* Tonight loading overlay */}
