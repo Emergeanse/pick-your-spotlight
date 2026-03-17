@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence, useMotionValue, PanInfo } from "framer-motion";
-import { X, Send, Star, ExternalLink, Mic, MicOff } from "lucide-react";
+import { X, Send, Star, ExternalLink, Mic, MicOff, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ReactMarkdown from "react-markdown";
 import { useCompanion } from "@/contexts/CompanionContext";
