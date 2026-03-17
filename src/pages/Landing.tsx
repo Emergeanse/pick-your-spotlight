@@ -244,7 +244,7 @@ const Landing = () => {
             transition={{ duration: 0.6, delay: 0.5 }}
             className="text-foreground/45 text-base md:text-lg font-sans font-light max-w-md mx-auto mb-6 leading-relaxed"
           >
-            Dis ton envie. Pick trouve ton film.
+            Dis ton humeur, ton envie, ton contexte — Pick te trouve le film parfait en secondes. Fini le scroll infini.
           </motion.p>
 
           <motion.div
