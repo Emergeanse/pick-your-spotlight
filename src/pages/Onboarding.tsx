@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, Heart, Check, ArrowRight, Loader2, Sun, Moon, User, Users, X } from "lucide-react";
+import { Search, Heart, Check, ArrowRight, Loader2, Sun, Moon, User, Users, X, Brain } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
