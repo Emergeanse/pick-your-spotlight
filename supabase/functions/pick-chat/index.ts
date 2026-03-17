@@ -235,6 +235,23 @@ ANNÉE EN COURS : ${currentYear}`;
           },
         },
       },
+      {
+        type: "function",
+        function: {
+          name: "suggest_youtube",
+          description: "Suggest a YouTube video (documentary, educational, cinema analysis, etc.) to the user. Use when the user explicitly asks for YouTube content, documentaries, educational videos, or video essays.",
+          parameters: {
+            type: "object",
+            properties: {
+              query: { type: "string", description: "Search query to find the YouTube video (in French)" },
+              category: { type: "string", enum: ["documentary", "film", "cinema-culture", "educational"], description: "Category of YouTube content" },
+              reason: { type: "string", description: "Brief reason why this fits (in French, 2-3 sentences)" },
+            },
+            required: ["query", "category", "reason"],
+            additionalProperties: false,
+          },
+        },
+      },
     ] : undefined;
 
     const useStreaming = mode === "companion";
