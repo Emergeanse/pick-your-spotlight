@@ -253,13 +253,15 @@ ANNÉE EN COURS : ${currentYear}`;
         type: "function",
         function: {
           name: "suggest_youtube",
-          description: "Suggest a YouTube video (documentary, educational, cinema analysis, etc.) to the user. Use when the user explicitly asks for YouTube content, documentaries, educational videos, or video essays.",
+          description: "Suggest a YouTube video. Extract duration, channel size preference, and topic from the user's message.",
           parameters: {
             type: "object",
             properties: {
               query: { type: "string", description: "Search query to find the YouTube video (in French)" },
               category: { type: "string", enum: ["documentary", "film", "cinema-culture", "educational"], description: "Category of YouTube content" },
               reason: { type: "string", description: "Brief reason why this fits (in French, 2-3 sentences)" },
+              targetDurationMinutes: { type: "number", description: "Target duration in minutes if the user specified one (e.g. 30 for '30 minutes'). 0 if not specified." },
+              channelSize: { type: "string", enum: ["any", "small", "medium", "large"], description: "Preferred channel size: 'small' = niche/peu connu (<100K subs), 'medium' = mid-tier, 'large' = big/populaire, 'any' = no preference" },
             },
             required: ["query", "category", "reason"],
             additionalProperties: false,
