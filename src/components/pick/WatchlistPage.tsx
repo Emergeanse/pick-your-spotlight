@@ -209,6 +209,16 @@ const MoviePreviewSheet = ({
             </div>
           )}
 
+          {/* Personal recommendation note */}
+          {personalNote && (
+            <div className="flex items-start gap-2 mb-4 px-3 py-2.5 rounded-xl bg-primary/5 border border-primary/15">
+              <Sparkles className="w-3.5 h-3.5 text-primary shrink-0 mt-0.5" />
+              <p className="text-primary/70 text-[12px] font-sans leading-relaxed italic">
+                {personalNote}
+              </p>
+            </div>
+          )}
+
           {/* Overview */}
           {movie.overview && (
             <p className="text-foreground/55 text-sm font-sans leading-relaxed mb-5">
