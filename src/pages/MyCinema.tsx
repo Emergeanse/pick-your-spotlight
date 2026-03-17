@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { ArrowLeft, Loader2, Sparkles, RefreshCw, ChevronRight, Crown, TrendingUp, Calendar } from "lucide-react";
+import { ArrowLeft, Loader2, Sparkles, RefreshCw, ChevronRight, Crown, TrendingUp, Calendar, Brain } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/use-auth";
 import { usePickPlus } from "@/hooks/use-pick-plus";
