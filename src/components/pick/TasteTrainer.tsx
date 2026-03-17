@@ -49,6 +49,8 @@ const TasteTrainer = ({ onClose }: TasteTrainerProps) => {
   const [likedCount, setLikedCount] = useState(0);
   const [skippedCount, setSkippedCount] = useState(0);
   const [page, setPage] = useState(1);
+  const [totalEvaluated, setTotalEvaluated] = useState(0);
+  const [profileConfidence, setProfileConfidence] = useState(0);
 
   const loadMovies = useCallback(async (p: number) => {
     setLoading(true);
