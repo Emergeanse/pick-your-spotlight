@@ -25,7 +25,7 @@ const BrandHeader = ({ showBack, onBack }: BrandHeaderProps) => {
       ) : (
         <div className="flex items-center gap-1.5 md:gap-2">
           <span className="font-serif text-lg md:text-xl tracking-wide text-foreground/80">
-            Prendre en Pick
+            Pick
           </span>
         </div>
       )}
