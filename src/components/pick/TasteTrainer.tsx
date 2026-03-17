@@ -173,6 +173,16 @@ const TasteTrainer = ({ onClose }: TasteTrainerProps) => {
   };
 
   const totalProcessed = likedCount + skippedCount;
+  const cumulativeTotal = totalEvaluated + totalProcessed;
+  const liveConfidence = Math.min(100, profileConfidence + totalProcessed * 2);
+
+  const getConfidenceLabel = (c: number) => {
+    if (c < 20) return "Débutant";
+    if (c < 40) return "En apprentissage";
+    if (c < 60) return "Prometteur";
+    if (c < 80) return "Fiable";
+    return "Expert";
+  };
 
   return (
     <motion.div
@@ -195,24 +205,37 @@ const TasteTrainer = ({ onClose }: TasteTrainerProps) => {
         <div className="text-center">
           <h2 className="text-sm font-sans font-semibold text-foreground">Entraîne ton Pick</h2>
           <p className="text-[11px] font-sans text-foreground/40">
-            {totalProcessed > 0 ? `${likedCount} aimé${likedCount > 1 ? "s" : ""} · ${skippedCount} passé${skippedCount > 1 ? "s" : ""}` : "Swipe pour affiner tes recommandations"}
+            {cumulativeTotal} film{cumulativeTotal > 1 ? "s" : ""} évalué{cumulativeTotal > 1 ? "s" : ""} au total
           </p>
         </div>
         <div className="w-5" />
       </div>
 
-      {/* Progress bar */}
+      {/* Confidence indicator */}
       <div className="px-5 mb-4">
-        <div className="h-1 rounded-full bg-foreground/10 overflow-hidden">
+        <div className="flex items-center justify-between mb-1.5">
+          <span className="text-[10px] font-sans text-foreground/40">Fiabilité des recos</span>
+          <span className="text-[10px] font-sans font-semibold text-primary">
+            {getConfidenceLabel(liveConfidence)} · {liveConfidence}%
+          </span>
+        </div>
+        <div className="h-1.5 rounded-full bg-foreground/10 overflow-hidden">
           <motion.div
             className="h-full rounded-full bg-primary"
-            animate={{ width: `${Math.min(100, totalProcessed * 5)}%` }}
-            transition={{ duration: 0.3 }}
+            initial={{ width: `${profileConfidence}%` }}
+            animate={{ width: `${liveConfidence}%` }}
+            transition={{ duration: 0.5, ease: "easeOut" }}
           />
         </div>
-        <p className="text-[10px] font-sans text-foreground/30 mt-1 text-center">
-          {totalProcessed < 10 ? `Encore ${10 - totalProcessed} pour de meilleures recos` : totalProcessed < 20 ? "Continue, Pick apprend tes goûts !" : "🎯 Ton profil est bien entraîné !"}
-        </p>
+        {totalProcessed > 0 && (
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="text-[10px] font-sans text-primary/60 mt-1 text-center"
+          >
+            +{totalProcessed * 2}% cette session
+          </motion.p>
+        )}
       </div>
 
       {/* Card stack */}
