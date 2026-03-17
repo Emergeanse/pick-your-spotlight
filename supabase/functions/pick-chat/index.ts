@@ -144,6 +144,11 @@ QUAND UTILISER suggest_youtube (TRÈS IMPORTANT) :
 - L'utilisateur mentionne "vidéo", "YouTube", "documentaire court", "éducatif", "analyse", "video essay"
 - L'utilisateur demande du contenu sur un sujet précis (ex: "l'histoire de Napoléon", "comment fonctionne un trou noir") où des vidéos YouTube de qualité existent
 
+PARAMÈTRES YOUTUBE À EXTRAIRE (très important) :
+- targetDurationMinutes : Si l'utilisateur dit "une vidéo de 30 minutes" → 30. "Un truc court" → 10. "Un long documentaire" → 60. Si pas précisé → 0.
+- channelSize : Si l'utilisateur dit "chaîne pas très connue" / "petit YouTubeur" / "chaîne de niche" → "small". "Grosse chaîne" / "populaire" → "large". Si pas précisé → "any".
+- Les vidéos proposées sont TOUJOURS de haute qualité (très bien notées par la communauté YouTube).
+
 QUAND UTILISER suggest_movie :
 - L'utilisateur veut un film ou une série pour la soirée
 - L'utilisateur donne une humeur sans préciser le format
@@ -253,13 +258,15 @@ ANNÉE EN COURS : ${currentYear}`;
         type: "function",
         function: {
           name: "suggest_youtube",
-          description: "Suggest a YouTube video (documentary, educational, cinema analysis, etc.) to the user. Use when the user explicitly asks for YouTube content, documentaries, educational videos, or video essays.",
+          description: "Suggest a YouTube video. Extract duration, channel size preference, and topic from the user's message.",
           parameters: {
             type: "object",
             properties: {
               query: { type: "string", description: "Search query to find the YouTube video (in French)" },
               category: { type: "string", enum: ["documentary", "film", "cinema-culture", "educational"], description: "Category of YouTube content" },
               reason: { type: "string", description: "Brief reason why this fits (in French, 2-3 sentences)" },
+              targetDurationMinutes: { type: "number", description: "Target duration in minutes if the user specified one (e.g. 30 for '30 minutes'). 0 if not specified." },
+              channelSize: { type: "string", enum: ["any", "small", "medium", "large"], description: "Preferred channel size: 'small' = niche/peu connu (<100K subs), 'medium' = mid-tier, 'large' = big/populaire, 'any' = no preference" },
             },
             required: ["query", "category", "reason"],
             additionalProperties: false,
@@ -352,22 +359,32 @@ ANNÉE EN COURS : ${currentYear}`;
           });
         }
 
-        // Search YouTube directly
+        const targetDuration = args.targetDurationMinutes || 0;
+        const channelSize = args.channelSize || "any";
+
+        // Choose YouTube videoDuration filter based on target
+        let ytDurationFilter = "any";
+        if (targetDuration > 0) {
+          if (targetDuration <= 4) ytDurationFilter = "short"; // < 4 min
+          else if (targetDuration <= 20) ytDurationFilter = "medium"; // 4-20 min
+          else ytDurationFilter = "long"; // > 20 min
+        } else if (args.category === "documentary" || args.category === "educational") {
+          ytDurationFilter = "long";
+        } else {
+          ytDurationFilter = "medium";
+        }
+
+        // Search YouTube — fetch more results to allow filtering
         const ytParams = new URLSearchParams({
           part: "snippet",
           type: "video",
-          maxResults: "5",
+          maxResults: "15",
           key: YOUTUBE_API_KEY,
           regionCode: "FR",
           relevanceLanguage: "fr",
           q: args.query,
+          videoDuration: ytDurationFilter,
         });
-        
-        if (args.category === "documentary" || args.category === "educational") {
-          ytParams.set("videoDuration", "long");
-        } else {
-          ytParams.set("videoDuration", "medium");
-        }
 
         const ytSearchRes = await fetch(`https://www.googleapis.com/youtube/v3/search?${ytParams}`);
         let bestVideo: any = null;
@@ -382,21 +399,59 @@ ANNÉE EN COURS : ${currentYear}`;
             );
             if (detailsRes.ok) {
               const detailsData = await detailsRes.json();
-              const videos = (detailsData.items || []).map((v: any) => ({
-                id: v.id,
-                title: v.snippet.title,
-                description: v.snippet.description,
-                thumbnail: v.snippet.thumbnails?.maxres?.url || v.snippet.thumbnails?.high?.url || v.snippet.thumbnails?.medium?.url,
-                channelTitle: v.snippet.channelTitle,
-                publishedAt: v.snippet.publishedAt,
-                duration: v.contentDetails?.duration,
-                viewCount: parseInt(v.statistics?.viewCount || "0"),
-                url: `https://www.youtube.com/watch?v=${v.id}`,
-              }));
-              // Pick best video by view count
-              if (videos.length > 0) {
-                bestVideo = videos.sort((a: any, b: any) => b.viewCount - a.viewCount)[0];
+              let videos = (detailsData.items || []).map((v: any) => {
+                const likes = parseInt(v.statistics?.likeCount || "0");
+                const views = parseInt(v.statistics?.viewCount || "0");
+                const likeRatio = views > 0 ? likes / views : 0;
+                // Parse duration
+                const dm = (v.contentDetails?.duration || "").match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
+                const dMins = parseInt(dm?.[1] || "0") * 60 + parseInt(dm?.[2] || "0") + (parseInt(dm?.[3] || "0") > 30 ? 1 : 0);
+                return {
+                  id: v.id,
+                  title: v.snippet.title,
+                  description: v.snippet.description,
+                  thumbnail: v.snippet.thumbnails?.maxres?.url || v.snippet.thumbnails?.high?.url || v.snippet.thumbnails?.medium?.url,
+                  channelTitle: v.snippet.channelTitle,
+                  channelId: v.snippet.channelId,
+                  publishedAt: v.snippet.publishedAt,
+                  duration: v.contentDetails?.duration,
+                  durationMinutes: dMins,
+                  viewCount: views,
+                  likeCount: likes,
+                  likeRatio,
+                  url: `https://www.youtube.com/watch?v=${v.id}`,
+                };
+              });
+
+              // Filter: minimum quality — like ratio > 3% (very well received)
+              videos = videos.filter((v: any) => v.likeRatio >= 0.03 || v.viewCount < 1000);
+
+              // Filter: duration match — within ±40% of target if specified
+              if (targetDuration > 0) {
+                const minD = targetDuration * 0.6;
+                const maxD = targetDuration * 1.4;
+                const durationMatched = videos.filter((v: any) => v.durationMinutes >= minD && v.durationMinutes <= maxD);
+                if (durationMatched.length > 0) videos = durationMatched;
               }
+
+              // Filter: channel size preference
+              if (channelSize === "small") {
+                // Prefer videos with fewer views (proxy for small channels)
+                const smallChannel = videos.filter((v: any) => v.viewCount < 500_000);
+                if (smallChannel.length > 0) videos = smallChannel;
+              } else if (channelSize === "large") {
+                const bigChannel = videos.filter((v: any) => v.viewCount >= 500_000);
+                if (bigChannel.length > 0) videos = bigChannel;
+              }
+
+              // Sort by quality score: like ratio * log(views) — rewards well-rated + somewhat popular
+              videos.sort((a: any, b: any) => {
+                const scoreA = a.likeRatio * Math.log10(Math.max(a.viewCount, 1));
+                const scoreB = b.likeRatio * Math.log10(Math.max(b.viewCount, 1));
+                return scoreB - scoreA;
+              });
+
+              if (videos.length > 0) bestVideo = videos[0];
             }
           }
         }
