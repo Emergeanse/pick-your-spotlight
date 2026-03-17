@@ -174,6 +174,7 @@ export default function PickChatOverlay() {
   const chips = mode === "companion" ? COMPANION_CHIPS : (pickPlus.isPremium ? DISCOVERY_CHIPS_PREMIUM : DISCOVERY_CHIPS_FREE);
 
   const sendMessage = useCallback(async (text: string) => {
+    sendMessageRef.current = sendMessage;
     if (!text.trim() || isStreaming) return;
 
     // Free users: check if discovery chat is still available
