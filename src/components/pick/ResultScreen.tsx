@@ -774,8 +774,8 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
               )}
             </AnimatePresence>}
 
-            {/* Pour aller plus loin — YouTube video */}
-            {youtubeVideo && (
+            {/* Pour aller plus loin — YouTube video (hide when content IS YouTube) */}
+            {!isYouTube && youtubeVideo && (
               <motion.div
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
