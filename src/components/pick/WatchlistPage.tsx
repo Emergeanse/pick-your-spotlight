@@ -365,7 +365,6 @@ const WatchlistPage = ({ onMovieSelect }: WatchlistPageProps) => {
           transition={{ delay: 0.15 }}
           className="space-y-2.5 mb-5"
         >
-          {/* Type filter */}
           <div className="flex gap-1.5 overflow-x-auto scrollbar-hide">
             {mediaFilters.map(f => (
               <button
@@ -381,52 +380,6 @@ const WatchlistPage = ({ onMovieSelect }: WatchlistPageProps) => {
               </button>
             ))}
           </div>
-
-          {/* Duration filter */}
-          <div className="flex gap-1.5 overflow-x-auto scrollbar-hide">
-            {durationFilters.map(f => (
-              <button
-                key={f.id}
-                onClick={() => setDurationFilter(f.id)}
-                className={`shrink-0 px-3 py-1.5 rounded-full text-[11px] font-sans font-medium border transition-all ${
-                  durationFilter === f.id
-                    ? "bg-primary/15 border-primary/30 text-primary"
-                    : "bg-card/40 border-border/15 text-foreground/40 hover:text-foreground/60"
-                }`}
-              >
-                {f.label}
-              </button>
-            ))}
-          </div>
-
-          {/* Genre filter */}
-          {allGenres.length > 0 && (
-            <div className="flex gap-1.5 overflow-x-auto scrollbar-hide">
-              <button
-                onClick={() => setGenreFilter("all")}
-                className={`shrink-0 px-3 py-1.5 rounded-full text-[11px] font-sans font-medium border transition-all ${
-                  genreFilter === "all"
-                    ? "bg-primary/15 border-primary/30 text-primary"
-                    : "bg-card/40 border-border/15 text-foreground/40 hover:text-foreground/60"
-                }`}
-              >
-                Tous genres
-              </button>
-              {allGenres.map(g => (
-                <button
-                  key={g}
-                  onClick={() => setGenreFilter(g)}
-                  className={`shrink-0 px-3 py-1.5 rounded-full text-[11px] font-sans font-medium border transition-all ${
-                    genreFilter === g
-                      ? "bg-primary/15 border-primary/30 text-primary"
-                      : "bg-card/40 border-border/15 text-foreground/40 hover:text-foreground/60"
-                  }`}
-                >
-                  {g}
-                </button>
-              ))}
-            </div>
-          )}
         </motion.div>
       )}
 
