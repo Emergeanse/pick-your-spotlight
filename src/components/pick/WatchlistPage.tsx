@@ -393,7 +393,7 @@ const WatchlistPage = ({ onMovieSelect }: WatchlistPageProps) => {
         <div className="flex flex-col items-center justify-center py-16 text-center">
           <p className="text-foreground/30 text-sm font-sans">Aucun résultat avec ces filtres</p>
           <button
-            onClick={() => { setMediaFilter("all"); setDurationFilter("all"); setGenreFilter("all"); }}
+            onClick={() => { setMediaFilter("all"); }}
             className="mt-3 text-primary text-xs font-sans underline"
           >
             Réinitialiser les filtres
