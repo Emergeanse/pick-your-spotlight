@@ -108,7 +108,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
     });
   }, [user]);
 
-  // Load user's full profile preferences
+  // Load user's full profile preferences + interaction history for exclusion
   useEffect(() => {
     if (!user) return;
     supabase.from("profiles").select("preferred_platforms, excluded_platforms, favorite_genres, excluded_genres, min_rating").eq("id", user.id).single()
@@ -118,6 +118,18 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
         if (data?.favorite_genres) setUserGenres(data.favorite_genres);
         if ((data as any)?.excluded_genres) setUserExcludedGenres((data as any).excluded_genres);
         if ((data as any)?.min_rating) setUserMinRating((data as any).min_rating);
+      });
+    // Load interaction history (watched, skipped, already_seen) to avoid repeats
+    supabase.from("user_interactions")
+      .select("tmdb_id")
+      .eq("user_id", user.id)
+      .in("action_type", ["watched", "skipped", "already_seen"])
+      .limit(500)
+      .then(({ data }) => {
+        if (data) {
+          const ids = [...new Set(data.map(d => d.tmdb_id))];
+          setHistoryExcludeIds(ids);
+        }
       });
   }, [user]);
 
