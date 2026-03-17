@@ -322,7 +322,7 @@ const Profile = () => {
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}>
           <Button
             variant="ghost"
-            onClick={signOut}
+            onClick={async () => { await signOut(); navigate("/"); }}
             className="text-foreground/40 hover:text-foreground text-xs font-sans gap-1.5"
           >
             <LogOut className="w-3.5 h-3.5" />
