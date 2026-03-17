@@ -163,7 +163,13 @@ const TasteTrainer = ({ onClose }: TasteTrainerProps) => {
     >
       {/* Header */}
       <div className="flex items-center justify-between px-5 pt-[calc(1rem+env(safe-area-inset-top))] pb-3">
-        <button onClick={onClose} className="text-foreground/50 hover:text-foreground transition-colors">
+        <button onClick={() => {
+          const { likes, skips } = actionsRef.current;
+          if (likes + skips > 0) {
+            toast.success(`Profil mis à jour ! ${likes} aimé${likes > 1 ? "s" : ""}, ${skips} passé${skips > 1 ? "s" : ""}`);
+          }
+          onClose();
+        }} className="text-foreground/50 hover:text-foreground transition-colors">
           <ChevronLeft className="w-5 h-5" />
         </button>
         <div className="text-center">
