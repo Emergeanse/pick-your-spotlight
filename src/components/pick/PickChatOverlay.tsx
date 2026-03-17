@@ -278,6 +278,12 @@ export default function PickChatOverlay() {
             pickPlus.lockDiscoveryChat();
             await pickPlus.recordDiscoveryConvo();
           }
+        } else if (data.type === "youtube" && data.videos?.length > 0) {
+          addMessage({
+            role: "assistant",
+            content: data.reply,
+            youtubeVideos: data.videos,
+          } as any);
         } else {
           addMessage({ role: "assistant", content: data.reply || "Hmm, dis-moi en plus !" });
         }
