@@ -470,27 +470,6 @@ const Landing = () => {
             ))}
           </motion.div>
 
-          {/* Taste tags */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.5, duration: 0.8 }}
-            className="flex flex-wrap justify-center gap-2 mt-12"
-          >
-            {["Thriller", "Feel Good", "Sombre", "Époustouflant", "Cosy", "Slow Burn", "Visuellement dingue", "Twist final"].map((tag, i) => (
-              <motion.span
-                key={tag}
-                initial={{ opacity: 0, scale: 0.8 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: true }}
-                transition={{ delay: 0.6 + i * 0.05 }}
-                className="px-3 py-1.5 rounded-full bg-card/60 border border-border/15 text-foreground/40 text-xs font-sans"
-              >
-                {tag}
-              </motion.span>
-            ))}
-          </motion.div>
         </div>
       </section>
 
