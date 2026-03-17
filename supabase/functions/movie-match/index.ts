@@ -31,7 +31,9 @@ serve(async (req) => {
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
-    const title = movie.title || movie.name || "Film inconnu";
+    const isYouTube = !!(movie._youtube);
+    const youtubeData = movie._youtubeData || {};
+    const title = movie.title || movie.name || "Contenu inconnu";
     const genres = (movie.genres || []).map((g: any) => g.name).join(", ");
     const overview = movie.overview || "";
     const rating = movie.vote_average || 0;
