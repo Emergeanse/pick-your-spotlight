@@ -291,6 +291,11 @@ export default function PickChatOverlay() {
     }
   }, [isStreaming, currentMessages, mode, activeMovie, title, addMessage]);
 
+  // Keep ref in sync for voice auto-send
+  useEffect(() => {
+    sendMessageRef.current = sendMessage;
+  }, [sendMessage]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     sendMessage(input);
