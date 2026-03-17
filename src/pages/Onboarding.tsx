@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { likeMovie } from "@/lib/liked-movies";
+import { trackInteraction } from "@/lib/interactions";
 import { getPopularMoviesForOnboarding, searchMovies, getPosterUrl, getDisplayTitle, getMovieDetails } from "@/lib/tmdb";
 import type { Movie } from "@/lib/tmdb";
 import type { StreamingPlatform } from "@/components/pick/PlatformStep";
