@@ -306,6 +306,37 @@ const WatchlistPage = ({ onMovieSelect }: WatchlistPageProps) => {
     { id: "long", label: "> 2h10" },
   ];
 
+  const handleRemove = async (tmdbId: number) => {
+    try {
+      await removeFromWatchlist(tmdbId);
+      setItems(prev => prev.filter(i => i.tmdb_id !== tmdbId));
+      toast.success("Retiré de ta watchlist");
+    } catch {
+      toast.error("Erreur");
+    }
+  };
+
+  const handlePreview = async (item: any) => {
+    setPreviewLoading(true);
+    try {
+      const mediaType = item.media_type || "movie";
+      const movie = await getMovieDetails(item.tmdb_id, mediaType);
+      setPreviewMovie(movie);
+      getWatchProviders(movie.id, mediaType).then(setPreviewProviders).catch(() => setPreviewProviders([]));
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setPreviewLoading(false);
+    }
+  };
+
+  const handleWatchFromPreview = () => {
+    if (previewMovie) {
+      onMovieSelect(previewMovie);
+      setPreviewMovie(null);
+    }
+  };
+
   const hour = new Date().getHours();
   const bubbleMessage = getPickBubbleMessage(items.length, hour);
 
@@ -324,7 +355,7 @@ const WatchlistPage = ({ onMovieSelect }: WatchlistPageProps) => {
         <div className="flex items-baseline gap-3 mb-1">
           <h1 className="text-2xl font-serif">Ta Watchlist</h1>
           <span className="text-[12px] font-sans text-primary/60 font-medium px-2 py-0.5 rounded-full bg-primary/8 border border-primary/15">
-            {items.length} film{items.length !== 1 ? "s" : ""}
+            {filteredItems.length}/{items.length}
           </span>
         </div>
       </motion.div>
@@ -335,7 +366,7 @@ const WatchlistPage = ({ onMovieSelect }: WatchlistPageProps) => {
           initial={{ opacity: 0, y: 6 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="flex items-start gap-2.5 mt-3 mb-5"
+          className="flex items-start gap-2.5 mt-3 mb-4"
         >
           <div className="shrink-0 w-8 h-8">
             <PickCharacter mood="default" size="sm" animate={false} />
@@ -348,27 +379,76 @@ const WatchlistPage = ({ onMovieSelect }: WatchlistPageProps) => {
         </motion.div>
       )}
 
-      {/* Filter chips */}
+      {/* Filters */}
       {items.length > 0 && (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.15 }}
-          className="flex gap-2 mb-5 overflow-x-auto scrollbar-hide"
+          className="space-y-2.5 mb-5"
         >
-          {filters.map(f => (
-            <button
-              key={f.id}
-              onClick={() => setActiveFilter(f.id)}
-              className={`shrink-0 px-3.5 py-1.5 rounded-full text-[12px] font-sans font-medium border transition-all ${
-                activeFilter === f.id
-                  ? "bg-primary/15 border-primary/30 text-primary"
-                  : "bg-card/40 border-border/15 text-foreground/40 hover:text-foreground/60"
-              }`}
-            >
-              {f.label}
-            </button>
-          ))}
+          {/* Type filter */}
+          <div className="flex gap-1.5 overflow-x-auto scrollbar-hide">
+            {mediaFilters.map(f => (
+              <button
+                key={f.id}
+                onClick={() => setMediaFilter(f.id)}
+                className={`shrink-0 px-3 py-1.5 rounded-full text-[11px] font-sans font-medium border transition-all ${
+                  mediaFilter === f.id
+                    ? "bg-primary/15 border-primary/30 text-primary"
+                    : "bg-card/40 border-border/15 text-foreground/40 hover:text-foreground/60"
+                }`}
+              >
+                {f.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Duration filter */}
+          <div className="flex gap-1.5 overflow-x-auto scrollbar-hide">
+            {durationFilters.map(f => (
+              <button
+                key={f.id}
+                onClick={() => setDurationFilter(f.id)}
+                className={`shrink-0 px-3 py-1.5 rounded-full text-[11px] font-sans font-medium border transition-all ${
+                  durationFilter === f.id
+                    ? "bg-primary/15 border-primary/30 text-primary"
+                    : "bg-card/40 border-border/15 text-foreground/40 hover:text-foreground/60"
+                }`}
+              >
+                {f.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Genre filter */}
+          {allGenres.length > 0 && (
+            <div className="flex gap-1.5 overflow-x-auto scrollbar-hide">
+              <button
+                onClick={() => setGenreFilter("all")}
+                className={`shrink-0 px-3 py-1.5 rounded-full text-[11px] font-sans font-medium border transition-all ${
+                  genreFilter === "all"
+                    ? "bg-primary/15 border-primary/30 text-primary"
+                    : "bg-card/40 border-border/15 text-foreground/40 hover:text-foreground/60"
+                }`}
+              >
+                Tous genres
+              </button>
+              {allGenres.map(g => (
+                <button
+                  key={g}
+                  onClick={() => setGenreFilter(g)}
+                  className={`shrink-0 px-3 py-1.5 rounded-full text-[11px] font-sans font-medium border transition-all ${
+                    genreFilter === g
+                      ? "bg-primary/15 border-primary/30 text-primary"
+                      : "bg-card/40 border-border/15 text-foreground/40 hover:text-foreground/60"
+                  }`}
+                >
+                  {g}
+                </button>
+              ))}
+            </div>
+          )}
         </motion.div>
       )}
 
@@ -378,9 +458,19 @@ const WatchlistPage = ({ onMovieSelect }: WatchlistPageProps) => {
           <PickCharacter mood="wave" message="Sauvegarde des films et retrouve-les ici !" size="md" animate />
           <p className="text-foreground/25 text-xs font-sans mt-4">Ta watchlist est vide</p>
         </div>
+      ) : filteredItems.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-16 text-center">
+          <p className="text-foreground/30 text-sm font-sans">Aucun résultat avec ces filtres</p>
+          <button
+            onClick={() => { setMediaFilter("all"); setDurationFilter("all"); setGenreFilter("all"); }}
+            className="mt-3 text-primary text-xs font-sans underline"
+          >
+            Réinitialiser les filtres
+          </button>
+        </div>
       ) : (
         <div className="space-y-2">
-          {items.map((item, i) => (
+          {filteredItems.map((item, i) => (
             <SwipeableCard
               key={item.id}
               item={item}
