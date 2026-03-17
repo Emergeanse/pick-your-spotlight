@@ -319,14 +319,14 @@ const Landing = () => {
       </section>
 
       {/* ── 3 FAÇONS DE TROUVER TON FILM ── */}
-      <section className="py-24 md:py-32 px-5">
+      <section className="py-16 md:py-24 px-5">
         <div className="max-w-5xl mx-auto">
           <motion.div
             variants={fadeUp}
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true, margin: "-100px" }}
-            className="text-center mb-16"
+            className="text-center mb-10"
           >
             <h2 className="text-3xl md:text-5xl font-serif mb-3">
               2 façons de trouver <span className="text-primary italic">ton film</span>
@@ -378,7 +378,7 @@ const Landing = () => {
       </section>
 
       {/* ── TON UNIVERS CINÉ ── */}
-      <section className="py-24 md:py-32 px-5 relative overflow-hidden">
+      <section className="py-16 md:py-24 px-5 relative overflow-hidden">
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <div className="w-[500px] h-[500px] rounded-full bg-primary/4 blur-[100px]" />
         </div>
@@ -389,7 +389,7 @@ const Landing = () => {
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true, margin: "-100px" }}
-            className="text-center mb-16"
+            className="text-center mb-10"
           >
             <h2 className="text-3xl md:text-5xl font-serif mb-3">
               Ton univers <span className="text-primary italic">ciné</span>
@@ -474,7 +474,7 @@ const Landing = () => {
       </section>
 
       {/* ── MODE COMPAGNON ── */}
-      <section className="py-24 md:py-32 px-5 relative overflow-hidden">
+      <section className="py-16 md:py-24 px-5 relative overflow-hidden">
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <div className="w-[500px] h-[400px] rounded-full bg-gold/4 blur-[100px]" />
         </div>
@@ -527,7 +527,7 @@ const Landing = () => {
       </section>
 
       {/* ── POUR ALLER PLUS LOIN — YOUTUBE ── */}
-      <section className="py-24 md:py-32 px-5 relative overflow-hidden">
+      <section className="py-16 md:py-24 px-5 relative overflow-hidden">
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <div className="w-[500px] h-[400px] rounded-full bg-red-500/4 blur-[100px]" />
         </div>
@@ -582,7 +582,7 @@ const Landing = () => {
       </section>
 
       {/* ── PICK TE PARLE ── */}
-      <section className="py-24 md:py-32 px-5 relative overflow-hidden">
+      <section className="py-16 md:py-24 px-5 relative overflow-hidden">
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <div className="w-[500px] h-[400px] rounded-full bg-gold/3 blur-[100px]" />
         </div>
@@ -631,7 +631,7 @@ const Landing = () => {
       </section>
 
       {/* ── PLATEFORMES ── */}
-      <section className="py-24 md:py-32 px-5 relative">
+      <section className="py-16 md:py-24 px-5 relative">
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <div className="w-[400px] h-[300px] rounded-full bg-gold/3 blur-[100px]" />
         </div>
@@ -676,7 +676,7 @@ const Landing = () => {
       </section>
 
       {/* ── PRICING ── */}
-      <section className="py-24 md:py-32 px-5 relative overflow-hidden">
+      <section className="py-16 md:py-24 px-5 relative overflow-hidden">
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <div className="w-[500px] h-[400px] rounded-full bg-gold/4 blur-[120px]" />
         </div>
