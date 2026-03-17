@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import GuidedTour, { TOUR_KEY } from "@/components/pick/GuidedTour";
 import { AnimatePresence, motion } from "framer-motion";
 import { useNavigate, useLocation } from "react-router-dom";
 import HomeScreen from "@/components/pick/HomeScreen";
