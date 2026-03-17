@@ -40,14 +40,13 @@ serve(async (req) => {
     const runtime = movie.runtime || 0;
     const tmdbId = movie.id;
 
-    // ── Embedding similarity (new signal) ──
+    // ── Embedding similarity (skip for YouTube) ──
     let embeddingSimilarity: number | null = null;
     let movieTasteTags: string[] = [];
 
-    if (userTasteVector && SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) {
+    if (!isYouTube && userTasteVector && SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) {
       const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-      // Get or generate movie embedding
       const { data: movieEmb } = await supabase
         .from("movie_embeddings")
         .select("embedding, taste_tags")
@@ -55,7 +54,6 @@ serve(async (req) => {
         .maybeSingle();
 
       if (movieEmb) {
-        // Parse embedding - could be string "[0.1,0.2,...]" or array
         let movieVector: number[];
         if (typeof movieEmb.embedding === "string") {
           movieVector = JSON.parse(movieEmb.embedding.replace(/^\[/, "[").replace(/\]$/, "]"));
@@ -65,7 +63,6 @@ serve(async (req) => {
         embeddingSimilarity = cosineSimilarity(userTasteVector, movieVector);
         movieTasteTags = movieEmb.taste_tags || [];
       } else {
-        // Generate embedding on-the-fly (fire & forget cache)
         try {
           const embResponse = await fetch(`${SUPABASE_URL}/functions/v1/generate-embedding`, {
             method: "POST",
