@@ -13,6 +13,7 @@ import type { Movie, MovieDetail } from "@/lib/tmdb";
 import BrandHeader from "./BrandHeader";
 import PickCharacter from "./PickCharacter";
 import TasteTrainer from "./TasteTrainer";
+import YouTubeSection from "./YouTubeSection";
 
 interface HomeScreenProps {
   onStart: () => void;
