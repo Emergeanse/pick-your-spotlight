@@ -251,7 +251,9 @@ const MoviePreviewSheet = ({
 const WatchlistPage = ({ onMovieSelect }: WatchlistPageProps) => {
   const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeFilter, setActiveFilter] = useState<FilterChip>("ce-soir");
+  const [mediaFilter, setMediaFilter] = useState<MediaFilter>("all");
+  const [durationFilter, setDurationFilter] = useState<DurationFilter>("all");
+  const [genreFilter, setGenreFilter] = useState<string>("all");
   const [previewMovie, setPreviewMovie] = useState<MovieDetail | null>(null);
   const [previewProviders, setPreviewProviders] = useState<{ name: string; logo_path: string }[]>([]);
   const [previewLoading, setPreviewLoading] = useState(false);
@@ -272,41 +274,36 @@ const WatchlistPage = ({ onMovieSelect }: WatchlistPageProps) => {
     }
   };
 
-  const handleRemove = async (tmdbId: number) => {
-    try {
-      await removeFromWatchlist(tmdbId);
-      setItems(prev => prev.filter(i => i.tmdb_id !== tmdbId));
-      toast.success("Retiré de ta watchlist");
-    } catch {
-      toast.error("Erreur");
-    }
-  };
+  // Extract all unique genres from items
+  const allGenres = Array.from(
+    new Set(items.flatMap((i: any) => i.genres || []))
+  ).sort();
 
-  const handlePreview = async (item: any) => {
-    setPreviewLoading(true);
-    try {
-      const mediaType = item.media_type || "movie";
-      const movie = await getMovieDetails(item.tmdb_id, mediaType);
-      setPreviewMovie(movie);
-      getWatchProviders(movie.id, mediaType).then(setPreviewProviders).catch(() => setPreviewProviders([]));
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setPreviewLoading(false);
+  // Apply filters
+  const filteredItems = items.filter((item: any) => {
+    if (mediaFilter !== "all" && item.media_type !== mediaFilter) return false;
+    if (genreFilter !== "all" && !(item.genres || []).includes(genreFilter)) return false;
+    if (durationFilter !== "all") {
+      const rt = item.runtime || 0;
+      if (rt === 0) return durationFilter === "all";
+      if (durationFilter === "short" && rt > 90) return false;
+      if (durationFilter === "medium" && (rt <= 90 || rt > 130)) return false;
+      if (durationFilter === "long" && rt <= 130) return false;
     }
-  };
+    return true;
+  });
 
-  const handleWatchFromPreview = () => {
-    if (previewMovie) {
-      onMovieSelect(previewMovie);
-      setPreviewMovie(null);
-    }
-  };
+  const mediaFilters: { id: MediaFilter; label: string }[] = [
+    { id: "all", label: "Tout" },
+    { id: "movie", label: "Films" },
+    { id: "tv", label: "Séries" },
+  ];
 
-  const filters: { id: FilterChip; label: string }[] = [
-    { id: "ce-soir", label: "Ce soir" },
-    { id: "court", label: "Court (< 1h30)" },
-    { id: "en-couple", label: "En couple" },
+  const durationFilters: { id: DurationFilter; label: string }[] = [
+    { id: "all", label: "Toutes durées" },
+    { id: "short", label: "< 1h30" },
+    { id: "medium", label: "1h30 – 2h10" },
+    { id: "long", label: "> 2h10" },
   ];
 
   const hour = new Date().getHours();
