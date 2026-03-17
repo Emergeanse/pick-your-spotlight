@@ -13,7 +13,6 @@ interface WatchlistPageProps {
 }
 
 type MediaFilter = "all" | "movie" | "tv";
-type DurationFilter = "all" | "short" | "medium" | "long";
 
 
 const PICK_COMMENTS = [
