@@ -3,13 +3,17 @@ import type { MovieDetail } from "@/lib/tmdb";
 
 export async function addToWatchlist(movie: MovieDetail) {
   const mediaType = movie.first_air_date ? "tv" : "movie";
+  const genres = movie.genres?.map((g) => g.name) || [];
+  const runtime = movie.runtime || movie.episode_run_time?.[0] || null;
   const { error } = await supabase.from("watchlist").upsert({
     user_id: (await supabase.auth.getUser()).data.user?.id!,
     tmdb_id: movie.id,
     title: movie.title || movie.name || "Sans titre",
     poster_path: movie.poster_path,
     media_type: mediaType,
-  }, { onConflict: "user_id,tmdb_id" });
+    genres,
+    runtime,
+  } as any, { onConflict: "user_id,tmdb_id" });
   if (error) throw error;
 }
 
