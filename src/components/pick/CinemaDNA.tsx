@@ -39,9 +39,9 @@ const CinemaDNA = ({ userId, teaser, onOpenFull }: CinemaDNAProps) => {
 
   useEffect(() => {
     loadProfile();
+    loadLikedPosters(); // Always load to get likeCount for threshold
     if (!teaser) {
       loadInsights();
-      loadLikedPosters();
     }
   }, [userId, teaser]);
 
