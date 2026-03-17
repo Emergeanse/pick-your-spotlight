@@ -111,7 +111,8 @@ ${skipInsights ? `- Insight skip : ${skipInsights}` : ""}
 ${session.mood ? `- Session actuelle : humeur "${session.mood}", contexte "${session.context || "?"}", temps "${session.time || "?"}"` : ""}
 ${platformIds && platformIds.length > 0 ? `- IMPORTANT : L'utilisateur a UNIQUEMENT accès aux plateformes de streaming suivantes (IDs TMDB: ${platformIds.join(", ")}). Le film recommandé DOIT être disponible sur l'une de ces plateformes en France.` : ""}
 ${excludedPlatformIds && excludedPlatformIds.length > 0 ? `- PLATEFORMES EXCLUES : NE JAMAIS recommander de films uniquement disponibles sur ces plateformes (IDs TMDB: ${excludedPlatformIds.join(", ")}).` : ""}
-${excludedGenres && excludedGenres.length > 0 ? `- GENRES EXCLUS : NE JAMAIS recommander de films des genres suivants : ${excludedGenres.join(", ")}. C'est une règle ABSOLUE.` : ""}
+${excludedGenres && excludedGenres.length > 0 ? `- GENRES EXCLUS (profil) : NE JAMAIS recommander de films des genres suivants : ${excludedGenres.join(", ")}. C'est une règle ABSOLUE.` : ""}
+${heavilySkippedGenres.length > 0 ? `- GENRES SOUVENT REFUSÉS (taste trainer) : L'utilisateur a refusé 3+ films de ces genres : ${heavilySkippedGenres.join(", ")}. Évite-les fortement sauf en mode découverte.` : ""}
 ${minRating && minRating > 0 ? `- NOTE MINIMALE : Le film DOIT avoir une note TMDB supérieure ou égale à ${minRating}/10. Ne recommande JAMAIS un film noté en dessous.` : ""}
 ${embeddingSection}
 
