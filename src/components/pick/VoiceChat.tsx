@@ -113,7 +113,7 @@ const VoiceChat = ({ onClose, onMovieSuggested, initialMessages }: VoiceChatProp
     if (user) {
       Promise.all([
         getLikedMovies(),
-        supabase.from("profiles").select("favorite_genres, excluded_genres").eq("id", user.id).single(),
+        supabase.from("profiles").select("favorite_genres, excluded_genres, min_rating").eq("id", user.id).single(),
       ]).then(([likedMovies, { data: profile }]) => {
         setUserTasteContext({
           likedMovies: likedMovies?.map((m: any) => ({ title: m.title, genres: m.genres })) || [],
