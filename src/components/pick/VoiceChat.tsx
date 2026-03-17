@@ -168,8 +168,14 @@ const VoiceChat = ({ onClose, onMovieSuggested, initialMessages }: VoiceChatProp
         ? [...initialMessages, ...fullHistory]
         : fullHistory;
 
-      const { data, error } = await supabase.functions.invoke("movie-chat", {
-        body: { messages, userTasteContext },
+      const { data, error } = await supabase.functions.invoke("pick-chat", {
+        body: {
+          messages,
+          mode: "discovery",
+          isPremium: true,
+          minRating: userTasteContext?.minRating || 0,
+          excludedGenres: userTasteContext?.excludedGenres || [],
+        },
       });
 
       if (error) throw error;
