@@ -249,6 +249,16 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
     setReviewSubmitted(false);
     setReviewText("");
     setShowReviewSheet(false);
+    setYoutubeVideo(null);
+
+    // Fetch a YouTube video about this movie
+    setYoutubeLoading(true);
+    getYouTubeRecommendations("cinema-culture", `${title} film analyse critique`, 3)
+      .then((videos) => {
+        if (videos.length > 0) setYoutubeVideo(videos[0]);
+      })
+      .catch(() => {})
+      .finally(() => setYoutubeLoading(false));
 
     // Pre-generate embedding for this movie (fire & forget)
     ensureMovieEmbedding(
