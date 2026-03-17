@@ -403,6 +403,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
 
                 {/* 2. Parle à Pick */}
                 <motion.button
+                  data-tour="parle-a-pick"
                   whileTap={{ scale: 0.98 }}
                   onClick={onOpenChat}
                   disabled={loading}
