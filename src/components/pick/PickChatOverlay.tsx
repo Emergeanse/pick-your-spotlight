@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence, useMotionValue, PanInfo } from "framer-motion";
-import { X, Send, Star, ExternalLink, Mic, MicOff } from "lucide-react";
+import { X, Send, Star, ExternalLink, Mic, MicOff, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ReactMarkdown from "react-markdown";
 import { useCompanion } from "@/contexts/CompanionContext";
@@ -278,6 +278,12 @@ export default function PickChatOverlay() {
             pickPlus.lockDiscoveryChat();
             await pickPlus.recordDiscoveryConvo();
           }
+        } else if (data.type === "youtube" && data.videos?.length > 0) {
+          addMessage({
+            role: "assistant",
+            content: data.reply,
+            youtubeVideos: data.videos,
+          } as any);
         } else {
           addMessage({ role: "assistant", content: data.reply || "Hmm, dis-moi en plus !" });
         }
@@ -409,6 +415,9 @@ export default function PickChatOverlay() {
                         </div>
                         {/* Inline movie card */}
                         {(msg as any).movie && <MovieCard movie={(msg as any).movie} onClick={() => handleMovieClick((msg as any).movie)} />}
+                        {(msg as any).youtubeVideos && (msg as any).youtubeVideos.map((video: any) => (
+                          <YouTubeCard key={video.id} video={video} />
+                        ))}
                       </>
                     ) : msg.content}
                   </div>
@@ -569,6 +578,32 @@ function MovieCard({ movie, onClick }: { movie: any; onClick: () => void }) {
             </span>
           )}
         </div>
+      </div>
+      <ExternalLink className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
+    </button>
+  );
+}
+
+/** Inline YouTube video card */
+function YouTubeCard({ video }: { video: any }) {
+  return (
+    <button
+      onClick={() => window.open(video.url, "_blank", "noopener")}
+      className="mt-2 flex items-center gap-3 w-full p-2 rounded-xl bg-secondary/40 border border-border/15 text-left hover:bg-secondary/60 transition-all active:scale-[0.98] group"
+    >
+      <div className="relative w-16 aspect-video rounded-lg overflow-hidden flex-shrink-0">
+        {video.thumbnail && (
+          <img src={video.thumbnail} alt={video.title} className="w-full h-full object-cover" />
+        )}
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="w-5 h-5 rounded-full bg-red-600/90 flex items-center justify-center">
+            <Play className="w-2.5 h-2.5 text-white fill-white ml-0.5" />
+          </div>
+        </div>
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-[12px] font-sans font-medium truncate">{video.title}</p>
+        <p className="text-[10px] text-muted-foreground truncate mt-0.5">{video.channelTitle}</p>
       </div>
       <ExternalLink className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
     </button>

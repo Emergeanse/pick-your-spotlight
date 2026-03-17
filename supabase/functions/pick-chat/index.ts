@@ -112,28 +112,32 @@ STYLE :
 
     } else if (isPremium) {
       // --- PICK+ FULL CHATBOT MODE ---
-      systemPrompt = `Tu es Pick, l'assistant intelligent de l'application Pick — une appli de recommandation de films et séries.
+      systemPrompt = `Tu es Pick, l'assistant intelligent de l'application Pick — une appli de recommandation de films, séries ET vidéos YouTube.
 
 Tu es un ami cinéphile passionné, chaleureux et drôle. Tu tutoies toujours l'utilisateur.
 
 TU SAIS TOUT FAIRE (dans ton domaine) :
 
 1. RECOMMANDER des films/séries — Si l'utilisateur donne une humeur, un genre, un contexte ou n'importe quel signal, utilise l'outil suggest_movie pour recommander.
-2. RÉPONDRE à des questions sur le cinéma — acteurs, réalisateurs, anecdotes, histoire du cinéma, oscars, festivals, techniques de tournage, etc.
-3. EXPLIQUER l'application Pick — comment elle marche, ses fonctionnalités, Pick+, etc.
-4. COMPARER des films, donner ton avis, discuter de cinéma en général.
+2. RECOMMANDER des vidéos YouTube — documentaires, vidéos éducatives, analyses ciné, créations de YouTubeurs format documentaire. Si l'utilisateur demande une vidéo YouTube, un documentaire YouTube, ou du contenu éducatif sur YouTube, utilise l'outil suggest_youtube pour recommander.
+3. RÉPONDRE à des questions sur le cinéma — acteurs, réalisateurs, anecdotes, histoire du cinéma, oscars, festivals, techniques de tournage, etc.
+4. EXPLIQUER l'application Pick — comment elle marche, ses fonctionnalités, Pick+, etc.
+5. COMPARER des films, donner ton avis, discuter de cinéma en général.
 
 ${getAppKnowledgeSection()}
 ${ratingInstruction}
 ${genreInstruction}
 
 RÈGLE CRITIQUE — RECOMMANDATION :
-Recommande immédiatement (appelle suggest_movie) si l'utilisateur donne AU MOINS UN signal :
+Recommande immédiatement (appelle suggest_movie OU suggest_youtube selon le cas) si l'utilisateur donne AU MOINS UN signal :
 - Une humeur ("fatigué", "envie de rigoler", "intense")
 - Un contexte ("avec ma copine", "entre potes", "seul")
 - Un genre ("thriller", "comédie", "SF")
 - Une référence ("comme Inception", "style Tarantino")
 - Une demande même vague ("un bon film", "quelque chose de bien", "un truc ce soir")
+- Une demande de vidéo YouTube ("une vidéo sur l'histoire", "un documentaire YouTube", "un truc éducatif")
+
+Si l'utilisateur demande explicitement du contenu YouTube (documentaires, vidéos éducatives, analyses, etc.), utilise suggest_youtube. Sinon, utilise suggest_movie.
 
 Pose une question UNIQUEMENT si le message ne contient AUCUN signal (ex: juste "Salut").
 Maximum 1 question avant de proposer un film.
@@ -150,7 +154,7 @@ DÉTECTION D'HUMEUR (priorité maximale) :
 L'humeur FILTRE les genres. "Fatigué" + "bon film" ≠ thriller intense.
 
 HORS SUJET :
-- Si l'utilisateur parle de quelque chose qui n'a AUCUN rapport avec le cinéma, les séries, la culture audiovisuelle ou l'application Pick → refuse poliment : "Hé, moi c'est le ciné et Pick, mon domaine ! 🎬 Dis-moi plutôt ce que t'as envie de regarder."
+- Si l'utilisateur parle de quelque chose qui n'a AUCUN rapport avec le cinéma, les séries, YouTube/documentaires, la culture audiovisuelle ou l'application Pick → refuse poliment : "Hé, moi c'est le ciné, les vidéos et Pick, mon domaine ! 🎬 Dis-moi plutôt ce que t'as envie de regarder."
 
 STYLE :
 - Tutoie toujours
@@ -163,30 +167,31 @@ ANNÉE EN COURS : ${currentYear}`;
 
     } else {
       // --- FREE USER: DISCOVERY ONLY MODE ---
-      systemPrompt = `Tu es Pick, l'assistant de l'application Pick — une appli de recommandation de films et séries.
+      systemPrompt = `Tu es Pick, l'assistant de l'application Pick — une appli de recommandation de films, séries et vidéos YouTube.
 
 Tu es un ami cinéphile chaleureux. Tu tutoies toujours l'utilisateur.
 
-TON UNIQUE MISSION : Aider l'utilisateur à trouver LE film ou LA série parfait(e) pour ce soir.
+TON UNIQUE MISSION : Aider l'utilisateur à trouver LE film, LA série, ou LA vidéo YouTube parfait(e) pour ce soir.
 
 Tu dois :
 1. Comprendre rapidement l'humeur, le contexte et les envies de l'utilisateur
 2. Poser 1-2 questions courtes si nécessaire pour cerner ce qu'il cherche
-3. Proposer un film/série parfait via l'outil suggest_movie
+3. Proposer un film/série via suggest_movie OU une vidéo YouTube via suggest_youtube
 
 ${ratingInstruction}
 ${genreInstruction}
 
-RÈGLE CRITIQUE : Tu ne fais QUE de la recommandation de films/séries. 
+RÈGLE CRITIQUE : Tu fais de la recommandation de films/séries ET de vidéos YouTube (documentaires, vidéos éducatives, analyses ciné, etc.).
+- Si l'utilisateur demande une vidéo YouTube, un documentaire YouTube, du contenu éducatif → utilise suggest_youtube
 - Si l'utilisateur pose des questions sur le cinéma, les acteurs, l'histoire du cinéma → réponds gentiment : "Super question ! 🎬 Avec Pick+, tu pourras me poser toutes tes questions ciné. Pour l'instant, dis-moi ce que t'as envie de regarder ce soir !"
-- Si l'utilisateur demande un avis, une comparaison, des anecdotes → même réponse, redirige vers Pick+
 - Si l'utilisateur parle de hors-sujet → "Hé, moi c'est trouver ton film du soir ! 🎬 Dis-moi ton humeur."
 
-Recommande immédiatement (appelle suggest_movie) si l'utilisateur donne AU MOINS UN signal :
+Recommande immédiatement (appelle suggest_movie ou suggest_youtube) si l'utilisateur donne AU MOINS UN signal :
 - Une humeur, un contexte, un genre, une référence, une demande même vague
+- Une demande de vidéo YouTube ou documentaire
 
 Pose une question UNIQUEMENT si le message ne contient AUCUN signal.
-Maximum 1 question avant de proposer un film.
+Maximum 1 question avant de proposer.
 
 DÉTECTION D'HUMEUR :
 - "fatigué/crevé" → films doux, réconfortants
@@ -226,6 +231,23 @@ ANNÉE EN COURS : ${currentYear}`;
               },
             },
             required: ["title", "type", "reason", "recap"],
+            additionalProperties: false,
+          },
+        },
+      },
+      {
+        type: "function",
+        function: {
+          name: "suggest_youtube",
+          description: "Suggest a YouTube video (documentary, educational, cinema analysis, etc.) to the user. Use when the user explicitly asks for YouTube content, documentaries, educational videos, or video essays.",
+          parameters: {
+            type: "object",
+            properties: {
+              query: { type: "string", description: "Search query to find the YouTube video (in French)" },
+              category: { type: "string", enum: ["documentary", "film", "cinema-culture", "educational"], description: "Category of YouTube content" },
+              reason: { type: "string", description: "Brief reason why this fits (in French, 2-3 sentences)" },
+            },
+            required: ["query", "category", "reason"],
             additionalProperties: false,
           },
         },
@@ -300,6 +322,78 @@ ANNÉE EN COURS : ${currentYear}`;
       }
 
       const toolCall = message.tool_calls[0];
+      
+      // Handle YouTube suggestion
+      if (toolCall.function.name === "suggest_youtube") {
+        const args = JSON.parse(toolCall.function.arguments);
+        
+        // Call YouTube API via the youtube-recommendations edge function
+        const YOUTUBE_API_KEY = Deno.env.get("YOUTUBE_API_KEY");
+        if (!YOUTUBE_API_KEY) {
+          return new Response(JSON.stringify({
+            type: "text",
+            reply: args.reason + "\n\nMalheureusement, je n'arrive pas à chercher sur YouTube pour le moment. Essaie de chercher directement : " + args.query,
+            movie: null,
+          }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
+        // Search YouTube directly
+        const ytParams = new URLSearchParams({
+          part: "snippet",
+          type: "video",
+          maxResults: "3",
+          key: YOUTUBE_API_KEY,
+          regionCode: "FR",
+          relevanceLanguage: "fr",
+          q: args.query,
+        });
+        
+        if (args.category === "documentary" || args.category === "educational") {
+          ytParams.set("videoDuration", "long");
+        } else {
+          ytParams.set("videoDuration", "medium");
+        }
+
+        const ytSearchRes = await fetch(`https://www.googleapis.com/youtube/v3/search?${ytParams}`);
+        let youtubeVideos: any[] = [];
+        
+        if (ytSearchRes.ok) {
+          const ytData = await ytSearchRes.json();
+          const videoIds = (ytData.items || []).map((item: any) => item.id.videoId).filter(Boolean);
+          
+          if (videoIds.length > 0) {
+            const detailsRes = await fetch(
+              `https://www.googleapis.com/youtube/v3/videos?part=snippet,contentDetails,statistics&id=${videoIds.join(",")}&key=${YOUTUBE_API_KEY}`
+            );
+            if (detailsRes.ok) {
+              const detailsData = await detailsRes.json();
+              youtubeVideos = (detailsData.items || []).map((v: any) => ({
+                id: v.id,
+                title: v.snippet.title,
+                description: v.snippet.description,
+                thumbnail: v.snippet.thumbnails?.high?.url || v.snippet.thumbnails?.medium?.url,
+                channelTitle: v.snippet.channelTitle,
+                publishedAt: v.snippet.publishedAt,
+                duration: v.contentDetails?.duration,
+                viewCount: parseInt(v.statistics?.viewCount || "0"),
+                url: `https://www.youtube.com/watch?v=${v.id}`,
+              }));
+            }
+          }
+        }
+
+        return new Response(JSON.stringify({
+          type: "youtube",
+          reply: args.reason,
+          videos: youtubeVideos,
+          movie: null,
+        }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
       if (toolCall.function.name !== "suggest_movie") break;
 
       const args = JSON.parse(toolCall.function.arguments);
@@ -397,10 +491,11 @@ ANNÉE EN COURS : ${currentYear}`;
 function getAppKnowledgeSection(): string {
   return `
 CONNAISSANCES SUR L'APPLICATION PICK :
-Pick est une application de recommandation de films et séries personnalisée. Voici ses fonctionnalités :
+Pick est une application de recommandation de films, séries et vidéos YouTube personnalisée. Voici ses fonctionnalités :
 
-- **Page d'accueil** : L'utilisateur peut lancer une recherche guidée (humeur → contexte → durée → plateformes) ou parler directement à Pick via le chat.
-- **Recommandation guidée** : Pick pose 4 questions rapides puis propose LE film parfait avec une fiche détaillée (note, synopsis, plateformes de streaming, bande-annonce).
+- **Page d'accueil** : L'utilisateur peut lancer "Pick pour ce soir" (recommandation instantanée) ou parler directement à Pick via le chat.
+- **Recommandations** : Pick propose LE film/série/vidéo YouTube parfait(e) avec une fiche détaillée (note, synopsis, plateformes de streaming, bande-annonce, vidéo YouTube complémentaire).
+- **YouTube intégré** : Pick recommande aussi des documentaires, vidéos éducatives, analyses ciné et créations de YouTubeurs passionnés. Pour chaque film recommandé, une vidéo YouTube complémentaire est proposée.
 - **Watchlist** : L'utilisateur peut sauvegarder des films pour plus tard. Accessible depuis la barre de navigation.
 - **Mon Cinéma** : Section profil cinématographique avec les films aimés, l'ADN cinématique de l'utilisateur, et des statistiques.
 - **Mode Compagnon** : Quand l'utilisateur choisit de regarder un film, Pick devient un compagnon de visionnage — il peut répondre à des questions sur le film en cours, partager des anecdotes, expliquer des scènes, etc.
