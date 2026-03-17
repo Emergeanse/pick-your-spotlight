@@ -537,10 +537,10 @@ const Landing = () => {
               <h2 className="text-3xl md:text-4xl font-serif mb-4 mt-1">
                 Pick regarde <span className="text-primary italic">avec toi</span>
               </h2>
-              <p className="text-foreground/45 font-sans text-sm md:text-base leading-relaxed mb-5">
-                Active le Mode Compagnon et Pick devient ton copilote de visionnage. 
-                Anecdotes de tournage, contexte historique, infos sur les acteurs… 
-                Tout ça sans spoilers, à ton rythme.
+               <p className="text-foreground/45 font-sans text-sm md:text-base leading-relaxed mb-5">
+                Active le Mode Compagnon quand tu lances un film. Pick devient ton copilote de visionnage : 
+                pose-lui des questions sur les acteurs, le tournage, le contexte historique… 
+                Il te répond en temps réel, sans jamais te spoiler (sauf si tu le veux).
               </p>
               <div className="flex flex-wrap gap-2">
                 {["Fun facts 🎬", "Acteurs & casting", "Contexte historique", "Sans spoilers"].map(tag => (
