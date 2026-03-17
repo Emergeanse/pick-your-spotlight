@@ -119,11 +119,11 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading }:
         if ((data as any)?.excluded_genres) setUserExcludedGenres((data as any).excluded_genres);
         if ((data as any)?.min_rating) setUserMinRating((data as any).min_rating);
       });
-    // Load interaction history (watched, skipped, already_seen) to avoid repeats
+    // Load interaction history (all types) to avoid repeats
     supabase.from("user_interactions")
       .select("tmdb_id")
       .eq("user_id", user.id)
-      .in("action_type", ["watched", "skipped", "already_seen"])
+      .in("action_type", ["watched", "skipped", "already_seen", "liked", "unsure"])
       .limit(500)
       .then(({ data }) => {
         if (data) {
