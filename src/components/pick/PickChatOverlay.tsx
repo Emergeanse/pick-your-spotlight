@@ -54,6 +54,8 @@ export default function PickChatOverlay() {
   const navigate = useNavigate();
   const { user } = useAuth();
   
+  
+  const pendingVoiceRef = useRef<string | null>(null);
 
   const scribe = useScribe({
     modelId: "scribe_v2_realtime",
@@ -69,11 +71,26 @@ export default function PickChatOverlay() {
         setInput(finalText);
         scribe.disconnect();
         setIsListening(false);
-        // Auto-send the transcribed message
-        setTimeout(() => sendMessage(finalText), 150);
+        // Store for auto-send (sendMessage not yet available in this scope)
+        pendingVoiceRef.current = finalText;
       }
     },
   });
+
+  // Auto-send when voice transcription completes
+  useEffect(() => {
+    if (pendingVoiceRef.current && !isStreaming) {
+      const text = pendingVoiceRef.current;
+      pendingVoiceRef.current = null;
+      // Small delay to let sendMessage be defined
+      const timer = setTimeout(() => {
+        sendMessageRef.current?.(text);
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [isListening, isStreaming]);
+
+  const sendMessageRef = useRef<(text: string) => void>();
 
   const currentMessages = mode === "companion" ? companionMessages : messages;
   
