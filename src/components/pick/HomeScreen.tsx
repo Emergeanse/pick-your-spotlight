@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Mic, Dices, Tv, Sparkles, Loader2, Zap, Flame, Target, Trophy, Shuffle } from "lucide-react";
+import { Mic, Dices, Tv, Sparkles, Loader2, Zap, Flame, Target, Trophy, Shuffle, Brain } from "lucide-react";
 import { getTrendingMovies, getBackdropUrl, getSurpriseRecommendation, getPosterUrl, getDisplayTitle, getWatchProviders } from "@/lib/tmdb";
 import { getLikedMovies } from "@/lib/liked-movies";
 import { trackInteraction } from "@/lib/interactions";
@@ -12,6 +12,7 @@ import { getEngagementData, getProgressionMessage, getStreakLabel, type Engageme
 import type { Movie, MovieDetail } from "@/lib/tmdb";
 import BrandHeader from "./BrandHeader";
 import PickCharacter from "./PickCharacter";
+import TasteTrainer from "./TasteTrainer";
 
 interface HomeScreenProps {
   onStart: () => void;
