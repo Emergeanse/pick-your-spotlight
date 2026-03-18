@@ -17,6 +17,8 @@ import Glossary from "./pages/Glossary.tsx";
 import PickPlusPage from "./pages/PickPlus.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import WatchlistPageRoute from "./pages/WatchlistRoute.tsx";
+import Friends from "./pages/Friends.tsx";
+import PickTogether from "./pages/PickTogether.tsx";
 
 const queryClient = new QueryClient();
 
