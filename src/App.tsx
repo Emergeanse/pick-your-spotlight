@@ -17,6 +17,8 @@ import Glossary from "./pages/Glossary.tsx";
 import PickPlusPage from "./pages/PickPlus.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import WatchlistPageRoute from "./pages/WatchlistRoute.tsx";
+import Friends from "./pages/Friends.tsx";
+import PickTogether from "./pages/PickTogether.tsx";
 
 const queryClient = new QueryClient();
 
@@ -55,6 +57,8 @@ const App = () => (
             <Route path="/app/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
             <Route path="/app/my-cinema" element={<ProtectedRoute><MyCinema /></ProtectedRoute>} />
             <Route path="/app/watchlist" element={<ProtectedRoute><WatchlistPageRoute /></ProtectedRoute>} />
+            <Route path="/app/friends" element={<ProtectedRoute><Friends /></ProtectedRoute>} />
+            <Route path="/app/pick-together" element={<ProtectedRoute><PickTogether /></ProtectedRoute>} />
             <Route path="/app/pick-plus" element={<ProtectedRoute><PickPlusPage /></ProtectedRoute>} />
             <Route path="/glossary" element={<ProtectedRoute><Glossary /></ProtectedRoute>} />
             <Route path="/profile" element={<Navigate to="/app/profile" replace />} />

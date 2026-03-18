@@ -80,6 +80,89 @@ export type Database = {
         }
         Relationships: []
       }
+      friendships: {
+        Row: {
+          addressee_id: string
+          created_at: string
+          id: string
+          requester_id: string
+          status: string
+        }
+        Insert: {
+          addressee_id: string
+          created_at?: string
+          id?: string
+          requester_id: string
+          status?: string
+        }
+        Update: {
+          addressee_id?: string
+          created_at?: string
+          id?: string
+          requester_id?: string
+          status?: string
+        }
+        Relationships: []
+      }
+      group_session_members: {
+        Row: {
+          id: string
+          joined_at: string
+          session_id: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          joined_at?: string
+          session_id: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          joined_at?: string
+          session_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "group_session_members_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "group_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      group_sessions: {
+        Row: {
+          context: string | null
+          created_at: string
+          creator_id: string
+          id: string
+          mood: string | null
+          name: string
+          time_available: string | null
+        }
+        Insert: {
+          context?: string | null
+          created_at?: string
+          creator_id: string
+          id?: string
+          mood?: string | null
+          name?: string
+          time_available?: string | null
+        }
+        Update: {
+          context?: string | null
+          created_at?: string
+          creator_id?: string
+          id?: string
+          mood?: string | null
+          name?: string
+          time_available?: string | null
+        }
+        Relationships: []
+      }
       liked_movies: {
         Row: {
           genres: string[] | null
@@ -156,6 +239,7 @@ export type Database = {
           excluded_platforms: number[] | null
           favorite_genres: string[] | null
           first_use_date: string | null
+          friend_code: string
           hook_messages_seen: string[]
           id: string
           last_recommendation_date: string | null
@@ -179,6 +263,7 @@ export type Database = {
           excluded_platforms?: number[] | null
           favorite_genres?: string[] | null
           first_use_date?: string | null
+          friend_code?: string
           hook_messages_seen?: string[]
           id: string
           last_recommendation_date?: string | null
@@ -202,6 +287,7 @@ export type Database = {
           excluded_platforms?: number[] | null
           favorite_genres?: string[] | null
           first_use_date?: string | null
+          friend_code?: string
           hook_messages_seen?: string[]
           id?: string
           last_recommendation_date?: string | null
@@ -349,6 +435,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      generate_friend_code: { Args: never; Returns: string }
       match_movies_by_taste: {
         Args: {
           exclude_ids?: number[]

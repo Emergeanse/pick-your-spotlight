@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Mic, Dices, Tv, Sparkles, Loader2, Zap, Flame, Target, Trophy, Shuffle, Brain } from "lucide-react";
+import { Mic, Dices, Tv, Sparkles, Loader2, Zap, Flame, Target, Trophy, Shuffle, Brain, Users } from "lucide-react";
 import { getTrendingMovies, getBackdropUrl, getSurpriseRecommendation, getPosterUrl, getDisplayTitle, getWatchProviders } from "@/lib/tmdb";
 import { getLikedMovies } from "@/lib/liked-movies";
 import { trackInteraction, getUserTasteProfile } from "@/lib/interactions";
@@ -14,6 +14,7 @@ import BrandHeader from "./BrandHeader";
 import PickCharacter from "./PickCharacter";
 import TasteTrainer from "./TasteTrainer";
 import YouTubeSection from "./YouTubeSection";
+import { useNavigate } from "react-router-dom";
 
 interface HomeScreenProps {
   onStart: () => void;
@@ -76,6 +77,7 @@ const PROACTIVE_MESSAGES = [
 ];
 
 const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, openTrainerOnMount, onTrainerOpened }: HomeScreenProps) => {
+  const navigate = useNavigate();
   const [isSurprising, setIsSurprising] = useState(false);
   const [surpriseMsg, setSurpriseMsg] = useState("");
   const [bgImages, setBgImages] = useState<string[]>([]);
@@ -435,7 +437,19 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
                   <span className="text-[13px] font-sans font-medium text-[hsl(28_90%_55%/0.8)] group-hover:text-[hsl(28_90%_55%)] transition-colors">Surprends-moi</span>
                 </motion.button>
 
-                {/* 4. Entraîne ton Pick — teal accent */}
+                {/* 4. Pick Together — social accent */}
+                {user && (
+                  <motion.button
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => navigate("/app/friends")}
+                    className="group inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-primary/8 border border-primary/25 hover:border-primary/45 hover:bg-primary/12 transition-all"
+                  >
+                    <Users className="w-3.5 h-3.5 text-primary opacity-70 group-hover:opacity-100 transition-opacity" />
+                    <span className="text-[13px] font-sans font-medium text-primary/80 group-hover:text-primary transition-colors">Pick Together</span>
+                  </motion.button>
+                )}
+
+                {/* 5. Entraîne ton Pick — teal accent */}
                 {user && (
                     <motion.button
                       data-tour="entraine-pick"
