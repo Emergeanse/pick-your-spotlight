@@ -114,12 +114,12 @@ const Friends = () => {
       }
 
       // Check if friendship already exists
-      const { data: existing } = await supabase
+      const { data: existing } = await (supabase
         .from("friendships" as any)
-        .select("id")
+        .select("id") as any)
         .or(`and(requester_id.eq.${user.id},addressee_id.eq.${found.id}),and(requester_id.eq.${found.id},addressee_id.eq.${user.id})`);
 
-      if (existing && existing.length > 0) {
+      if (existing && (existing as any[]).length > 0) {
         toast.info("Vous êtes déjà amis ou une demande est en cours");
         setAdding(false);
         return;
