@@ -34,21 +34,43 @@ export async function computeUserTasteVector(
   userId: string
 ): Promise<number[] | null> {
   try {
-    // Check cached vector
-    const { data: cached } = await supabase
-      .from("user_taste_vectors" as any)
-      .select("taste_vector, liked_count, updated_at")
-      .eq("user_id", userId)
-      .maybeSingle();
+    // Fetch liked movies, watchlist, and cached vector in parallel
+    const [
+      { data: cached },
+      { count: likedCount },
+      { count: watchlistCount },
+      { data: likedMovies },
+      { data: watchlistItems },
+    ] = await Promise.all([
+      supabase
+        .from("user_taste_vectors" as any)
+        .select("taste_vector, liked_count, updated_at")
+        .eq("user_id", userId)
+        .maybeSingle(),
+      supabase
+        .from("liked_movies")
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", userId),
+      supabase
+        .from("watchlist")
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", userId),
+      supabase
+        .from("liked_movies")
+        .select("tmdb_id, title, genres, liked_at")
+        .eq("user_id", userId)
+        .order("liked_at", { ascending: false }),
+      supabase
+        .from("watchlist")
+        .select("tmdb_id, title, genres, added_at")
+        .eq("user_id", userId)
+        .order("added_at", { ascending: false }),
+    ]);
 
-    // Get liked movies count
-    const { count } = await supabase
-      .from("liked_movies")
-      .select("*", { count: "exact", head: true })
-      .eq("user_id", userId);
+    const totalCount = (likedCount || 0) + (watchlistCount || 0);
 
-    // If cache is fresh (same liked count), return it
-    if (cached && (cached as any).liked_count === count) {
+    // If cache is fresh (same combined count), return it
+    if (cached && (cached as any).liked_count === totalCount) {
       const vec = (cached as any).taste_vector;
       if (typeof vec === "string") {
         return JSON.parse(vec.replace(/^\[/, "[").replace(/\]$/, "]"));
@@ -56,25 +78,34 @@ export async function computeUserTasteVector(
       return vec;
     }
 
-    // Get all liked movies with their tmdb_ids
-    const { data: likedMovies } = await supabase
-      .from("liked_movies")
-      .select("tmdb_id, title, genres, liked_at")
-      .eq("user_id", userId)
-      .order("liked_at", { ascending: false });
+    if ((!likedMovies || likedMovies.length === 0) && (!watchlistItems || watchlistItems.length === 0)) {
+      return null;
+    }
 
-    if (!likedMovies || likedMovies.length === 0) return null;
+    // Build a set of liked tmdb_ids for deduplication
+    const likedTmdbIds = new Set((likedMovies || []).map((m) => m.tmdb_id));
 
-    // Get embeddings for liked movies
-    const tmdbIds = likedMovies.map((m) => m.tmdb_id);
+    // Deduplicated watchlist items (exclude those already liked)
+    const uniqueWatchlist = (watchlistItems || []).filter(
+      (w) => !likedTmdbIds.has(w.tmdb_id)
+    );
+
+    // Collect all unique tmdb_ids for embedding lookup
+    const allTmdbIds = [
+      ...(likedMovies || []).map((m) => m.tmdb_id),
+      ...uniqueWatchlist.map((w) => w.tmdb_id),
+    ];
+
+    if (allTmdbIds.length === 0) return null;
+
     const { data: embeddings } = await supabase
       .from("movie_embeddings" as any)
       .select("tmdb_id, embedding")
-      .in("tmdb_id", tmdbIds);
+      .in("tmdb_id", allTmdbIds);
 
     if (!embeddings || embeddings.length === 0) return null;
 
-    // Build weighted average (recency-weighted)
+    // Parse embeddings into a map
     const embMap = new Map<number, number[]>();
     for (const emb of embeddings as any[]) {
       let vec = emb.embedding;
@@ -87,14 +118,24 @@ export async function computeUserTasteVector(
     const tasteVector = new Array(VECTOR_DIM).fill(0);
     let totalWeight = 0;
 
-    likedMovies.forEach((movie, index) => {
+    // Liked movies: base weight 1.0, recency decay
+    const likedList = likedMovies || [];
+    likedList.forEach((movie, index) => {
       const vec = embMap.get(movie.tmdb_id);
       if (!vec) return;
-
-      // Recency weight: most recent = 1.0, oldest = 0.3
-      const recencyWeight = 1.0 - (index / likedMovies.length) * 0.7;
+      const recencyWeight = 1.0 - (index / Math.max(likedList.length, 1)) * 0.7;
       totalWeight += recencyWeight;
+      for (let i = 0; i < VECTOR_DIM; i++) {
+        tasteVector[i] += vec[i] * recencyWeight;
+      }
+    });
 
+    // Watchlist items: base weight 0.4, recency decay
+    uniqueWatchlist.forEach((item, index) => {
+      const vec = embMap.get(item.tmdb_id);
+      if (!vec) return;
+      const recencyWeight = 0.4 * (1.0 - (index / Math.max(uniqueWatchlist.length, 1)) * 0.7);
+      totalWeight += recencyWeight;
       for (let i = 0; i < VECTOR_DIM; i++) {
         tasteVector[i] += vec[i] * recencyWeight;
       }
@@ -107,7 +148,7 @@ export async function computeUserTasteVector(
       tasteVector[i] /= totalWeight;
     }
 
-    // Cache the vector
+    // Cache the vector (store combined count for invalidation)
     const vectorStr = `[${tasteVector.join(",")}]`;
     await supabase
       .from("user_taste_vectors" as any)
@@ -115,7 +156,7 @@ export async function computeUserTasteVector(
         {
           user_id: userId,
           taste_vector: vectorStr,
-          liked_count: count || likedMovies.length,
+          liked_count: totalCount,
           updated_at: new Date().toISOString(),
         } as any,
         { onConflict: "user_id" }
