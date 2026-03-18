@@ -101,10 +101,10 @@ const Friends = () => {
     setAdding(true);
     try {
       // Find profile by friend_code
-      const { data: found } = await supabase
+      const { data: found } = await (supabase
         .from("profiles")
-        .select("id, display_name")
-        .eq("friend_code" as any, code)
+        .select("id, display_name") as any)
+        .eq("friend_code", code)
         .single();
 
       if (!found) {
