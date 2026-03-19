@@ -122,8 +122,8 @@ const PickTogether = () => {
     );
   };
 
-  // ─── Session QR Code ───
-  const handleCreateSessionQR = async () => {
+  // ─── Create session + go to who step ───
+  const handleCreateSoiree = async () => {
     if (!user) return;
     setCreatingSession(true);
     try {
@@ -133,32 +133,38 @@ const PickTogether = () => {
         .select("id, invite_code")
         .single();
       if (error) throw error;
-      setSessionInviteCode((data as any).invite_code);
-      setShowSessionQR(true);
+      const sessionId = (data as any).id;
+      const inviteCode = (data as any).invite_code;
+      setSessionInviteCode(inviteCode);
 
       // Subscribe to realtime members
-      const channel = supabase
-        .channel(`session-${(data as any).id}`)
+      supabase
+        .channel(`session-${sessionId}`)
         .on("postgres_changes", {
           event: "INSERT",
           schema: "public",
           table: "group_session_members",
-          filter: `session_id=eq.${(data as any).id}`,
+          filter: `session_id=eq.${sessionId}`,
         }, async (payload: any) => {
-          const { data: prof } = await supabase
-            .from("profiles")
-            .select("display_name")
-            .eq("id", payload.new.user_id)
-            .single();
-          setRealtimeMembers(prev => [
-            ...prev,
-            { id: payload.new.user_id, name: (prof as any)?.display_name || "Quelqu'un" },
-          ]);
-          toast.success(`${(prof as any)?.display_name || "Quelqu'un"} a rejoint la soirée !`);
+          const memberId = payload.new.user_id;
+          const guestName = payload.new.guest_name;
+          if (memberId) {
+            const { data: prof } = await supabase
+              .from("profiles")
+              .select("display_name")
+              .eq("id", memberId)
+              .single();
+            const name = (prof as any)?.display_name || "Quelqu'un";
+            setRealtimeMembers(prev => [...prev, { id: memberId, name }]);
+            toast.success(`${name} a rejoint la soirée !`);
+          } else if (guestName) {
+            setRealtimeMembers(prev => [...prev, { id: `guest-${Date.now()}`, name: guestName }]);
+            toast.success(`${guestName} a rejoint la soirée !`);
+          }
         })
         .subscribe();
 
-      // Cleanup on unmount handled by React
+      setStep("who");
     } catch (e) {
       console.error(e);
       toast.error("Erreur lors de la création de la session");
@@ -175,12 +181,18 @@ const PickTogether = () => {
     if (!sessionInviteUrl) return;
     if (navigator.share) {
       try {
-        await navigator.share({ title: "Soirée ciné Pick", text: "Rejoins ma soirée ciné !", url: sessionInviteUrl });
+        await navigator.share({ title: "Soirée ciné Pick", text: "Rejoins ma soirée ciné ! 🍿", url: sessionInviteUrl });
       } catch {}
     } else {
       navigator.clipboard.writeText(sessionInviteUrl);
       toast.success("Lien copié !");
     }
+  };
+
+  const handleCopyLink = () => {
+    if (!sessionInviteUrl) return;
+    navigator.clipboard.writeText(sessionInviteUrl);
+    toast.success("Lien copié !");
   };
 
   const toggleFriend = (id: string) => {
