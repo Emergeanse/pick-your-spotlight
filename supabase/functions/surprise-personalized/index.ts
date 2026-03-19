@@ -274,7 +274,7 @@ Recommande UN film avec les scores détaillés.`;
           discoverParams.set("with_watch_providers", platformIds.join("|"));
           discoverParams.set("watch_region", "FR");
         }
-        const fallbackUrl = `https://api.themoviedb.org/3/discover/movie?${discoverParams}`;
+        const fallbackUrl = `https://api.themoviedb.org/3/discover/${searchType}?${discoverParams}`;
         const fallbackRes = await fetch(fallbackUrl);
         const fallbackData = await fallbackRes.json();
         selectedMovie = (fallbackData.results || []).find((r: any) => isMovieAllowed(r));
