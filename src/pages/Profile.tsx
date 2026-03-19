@@ -110,7 +110,107 @@ const Profile = () => {
     }
   };
 
-  const togglePlatform = (id: number) => {
+  const loadFriends = async () => {
+    if (!user) return;
+    setFriendsLoading(true);
+    const { data: prof } = await supabase.from("profiles").select("friend_code").eq("id", user.id).single();
+    if (prof) setMyFriendCode((prof as any).friend_code || "");
+
+    const { data: friendships } = await supabase
+      .from("friendships" as any)
+      .select("id, requester_id, addressee_id, status")
+      .or(`requester_id.eq.${user.id},addressee_id.eq.${user.id}`);
+
+    if (friendships && friendships.length > 0) {
+      const otherIds = (friendships as any[]).map((f: any) => f.requester_id === user.id ? f.addressee_id : f.requester_id);
+      const { data: otherProfiles } = await supabase.from("profiles").select("id, display_name, friend_code, avatar_url").in("id", otherIds);
+      const profileMap = new Map((otherProfiles || []).map((p: any) => [p.id, p]));
+      setFriends((friendships as any[]).map((f: any) => {
+        const otherId = f.requester_id === user.id ? f.addressee_id : f.requester_id;
+        const op = profileMap.get(otherId);
+        return { id: otherId, friendshipId: f.id, displayName: op?.display_name || "Ami", friendCode: op?.friend_code || "", avatarUrl: op?.avatar_url, status: f.status, isRequester: f.requester_id === user.id };
+      }));
+    } else {
+      setFriends([]);
+    }
+    setFriendsLoading(false);
+  };
+
+  const handleCopyCode = () => {
+    navigator.clipboard.writeText(myFriendCode);
+    setCodeCopied(true);
+    sonnerToast.success("Code copié !");
+    setTimeout(() => setCodeCopied(false), 2000);
+  };
+
+  const handleAddFriend = async () => {
+    if (!user || !addCode.trim()) return;
+    const code = addCode.trim().toUpperCase();
+    if (code === myFriendCode) { sonnerToast.error("Tu ne peux pas t'ajouter toi-même !"); return; }
+    setAddingFriend(true);
+    try {
+      const { data: found } = await (supabase.from("profiles").select("id, display_name") as any).eq("friend_code", code).single();
+      if (!found) { sonnerToast.error("Code ami introuvable"); setAddingFriend(false); return; }
+      const { data: existing } = await (supabase.from("friendships" as any).select("id") as any).or(`and(requester_id.eq.${user.id},addressee_id.eq.${found.id}),and(requester_id.eq.${found.id},addressee_id.eq.${user.id})`);
+      if (existing && (existing as any[]).length > 0) { sonnerToast.info("Déjà amis ou demande en cours"); setAddingFriend(false); return; }
+      await supabase.from("friendships" as any).insert({ requester_id: user.id, addressee_id: found.id, status: "pending" } as any);
+      const { data: myProf } = await supabase.from("profiles").select("display_name").eq("id", user.id).single();
+      await sendNotification(found.id, "friend_request", `${myProf?.display_name || "Quelqu'un"} veut être ton ami !`, "Accepte sa demande pour regarder des films ensemble.");
+      sonnerToast.success(`Demande envoyée à ${(found as any).display_name || "ton ami"} !`);
+      setAddCode("");
+      setShowAddModal(false);
+      loadFriends();
+    } catch { sonnerToast.error("Erreur lors de l'ajout"); } finally { setAddingFriend(false); }
+  };
+
+  const handleAcceptFriend = async (friendshipId: string, friendId: string) => {
+    await supabase.from("friendships" as any).update({ status: "accepted" } as any).eq("id", friendshipId);
+    if (user) {
+      const { data: myProf } = await supabase.from("profiles").select("display_name").eq("id", user.id).single();
+      await sendNotification(friendId, "friend_accepted", `${myProf?.display_name || "Quelqu'un"} a accepté ta demande !`, "Vous pouvez maintenant regarder des films ensemble.");
+    }
+    sonnerToast.success("Ami accepté !");
+    loadFriends();
+  };
+
+  const handleDeclineFriend = async (friendshipId: string) => {
+    await supabase.from("friendships" as any).delete().eq("id", friendshipId);
+    sonnerToast.success("Demande refusée");
+    loadFriends();
+  };
+
+  const handleRemoveFriend = async (friendshipId: string) => {
+    await supabase.from("friendships" as any).delete().eq("id", friendshipId);
+    sonnerToast.success("Ami retiré");
+    setSelectedFriend(null);
+    loadFriends();
+  };
+
+  const handleViewFriendProfile = async (friend: any) => {
+    setSelectedFriend(friend);
+    setLoadingFriendProfile(true);
+    setFriendProfile(null);
+    try {
+      const [{ data: prof }, { data: cin }] = await Promise.all([
+        supabase.from("profiles").select("display_name, avatar_url, friend_code, favorite_genres").eq("id", friend.id).single(),
+        supabase.from("cinematic_profiles").select("personality_title, dna_archetype, global_level, taste_traits, narrative").eq("user_id", friend.id).single(),
+      ]);
+      setFriendProfile({
+        displayName: (prof as any)?.display_name || friend.displayName,
+        avatarUrl: (prof as any)?.avatar_url,
+        friendCode: (prof as any)?.friend_code || friend.friendCode,
+        favoriteGenres: (prof as any)?.favorite_genres || [],
+        cinematicProfile: cin ? { personalityTitle: (cin as any).personality_title, dnaArchetype: (cin as any).dna_archetype, globalLevel: (cin as any).global_level, tasteTraits: (cin as any).taste_traits || [], narrative: (cin as any).narrative } : null,
+      });
+    } catch { setFriendProfile(null); } finally { setLoadingFriendProfile(false); }
+  };
+
+  const inviteUrl = `https://pick-your-spotlight.lovable.app/auth?invite=${myFriendCode}`;
+  const acceptedFriends = friends.filter((f: any) => f.status === "accepted");
+  const pendingReceived = friends.filter((f: any) => f.status === "pending" && !f.isRequester);
+  const pendingSent = friends.filter((f: any) => f.status === "pending" && f.isRequester);
+
+
     setSelectedPlatforms(prev =>
       prev.includes(id) ? prev.filter(p => p !== id) : [...prev, id]
     );
