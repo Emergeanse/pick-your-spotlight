@@ -68,7 +68,7 @@ const WatchlistMissionGuide = ({ step, savedCount, target }: WatchlistMissionGui
       >
         <div className="bg-card/95 backdrop-blur-xl border border-primary/30 rounded-2xl px-4 py-3 shadow-[0_0_30px_-5px_hsl(var(--primary)/0.3)] max-w-sm pointer-events-auto">
           <div className="flex items-center gap-3">
-            <PickCharacter mood="happy" size="sm" animate={false} />
+            <PickCharacter mood="wave" size="sm" animate={false} />
             <div>
               <p className="text-foreground text-sm font-sans font-medium">
                 Bravo ! 🎉
