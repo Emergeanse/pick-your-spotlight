@@ -9,8 +9,8 @@ const corsHeaders = {
 
 const TMDB_API_KEY = "2dca580c2a14b55200e784d157207b4d";
 
-async function getMovieDetails(id: number): Promise<any> {
-  const url = `https://api.themoviedb.org/3/movie/${id}?api_key=${TMDB_API_KEY}&language=fr-FR`;
+async function getMovieDetails(id: number, type: "movie" | "tv" = "movie"): Promise<any> {
+  const url = `https://api.themoviedb.org/3/${type}/${id}?api_key=${TMDB_API_KEY}&language=fr-FR`;
   const res = await fetch(url);
   return res.json();
 }
@@ -21,8 +21,12 @@ serve(async (req) => {
   }
 
   try {
-    const { likedMovies, tasteProfile, userTasteVector, platformIds, excludeIds, excludedPlatformIds, excludedGenres, minRating, rejectionContext, outOfComfortZone, explorationLevel: rawExplorationLevel } = await req.json();
+    const { likedMovies, tasteProfile, userTasteVector, platformIds, excludeIds, excludedPlatformIds, excludedGenres, minRating, rejectionContext, outOfComfortZone, explorationLevel: rawExplorationLevel, mediaType: rawMediaType } = await req.json();
     const explorationLevel = typeof rawExplorationLevel === "number" ? Math.max(0, Math.min(10, rawExplorationLevel)) : 5;
+    // mediaType: "movie" | "tv" | "both" — determines which TMDB endpoints to use
+    const mediaType: "movie" | "tv" | "both" = rawMediaType === "tv" ? "tv" : rawMediaType === "movie" ? "movie" : "both";
+    // For "both", randomly pick one to search this time (50/50)
+    const searchType: "movie" | "tv" = mediaType === "both" ? (Math.random() < 0.5 ? "movie" : "tv") : mediaType;
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
@@ -105,7 +109,8 @@ serve(async (req) => {
       ? `\n\nFILMS SIMILAIRES PAR EMBEDDING (du plus proche au moins proche) :\n${embeddingCandidates.map((c, i) => `${i + 1}. ${c}`).join("\n")}\nCes films ont été trouvés par similarité vectorielle avec le profil de goût. Tu peux en recommander un ou t'en inspirer pour trouver un film encore meilleur.`
       : "";
 
-    const systemPrompt = `Tu es un moteur de recommandation cinéma de niveau Netflix. Tu combines plusieurs signaux pour trouver LE film parfait.
+    const mediaTypeLabel = searchType === "tv" ? "une SÉRIE TV" : "un FILM";
+    const systemPrompt = `Tu es un moteur de recommandation cinéma de niveau Netflix. Tu combines plusieurs signaux pour trouver ${mediaTypeLabel} parfait(e).
 
 SYSTÈME DE SCORING (poids) :
 - taste_match (${scoringWeights.taste_match || 0.30}) : correspondance avec les genres et micro-genres préférés
@@ -127,6 +132,8 @@ ${excludedPlatformIds && excludedPlatformIds.length > 0 ? `- PLATEFORMES EXCLUES
 ${excludedGenres && excludedGenres.length > 0 ? `- GENRES EXCLUS (profil) : NE JAMAIS recommander de films des genres suivants : ${excludedGenres.join(", ")}. C'est une règle ABSOLUE.` : ""}
 ${heavilySkippedGenres.length > 0 ? `- GENRES SOUVENT REFUSÉS (taste trainer) : L'utilisateur a refusé 3+ films de ces genres : ${heavilySkippedGenres.join(", ")}. Évite-les fortement sauf en mode découverte.` : ""}
 ${minRating && minRating > 0 ? `- NOTE MINIMALE : Le film DOIT avoir une note TMDB supérieure ou égale à ${minRating}/10. Ne recommande JAMAIS un film noté en dessous.` : ""}
+
+TYPE DE CONTENU DEMANDÉ : ${searchType === "tv" ? "SÉRIE TV uniquement. Tu DOIS recommander une série, PAS un film." : "FILM uniquement. Tu DOIS recommander un film, PAS une série."}
 
 NIVEAU D'EXPLORATION : ${explorationLevel}/10 (${explorationModeLabel})
 ${explorationInstruction}
@@ -228,7 +235,7 @@ Recommande UN film avec les scores détaillés.`;
     let selectedMovie: any = null;
 
     if (suggestion && suggestion.title) {
-      const searchUrl = `https://api.themoviedb.org/3/search/movie?api_key=${TMDB_API_KEY}&language=fr-FR&query=${encodeURIComponent(suggestion.title)}&page=1`;
+      const searchUrl = `https://api.themoviedb.org/3/search/${searchType}?api_key=${TMDB_API_KEY}&language=fr-FR&query=${encodeURIComponent(suggestion.title)}&page=1`;
       const searchRes = await fetch(searchUrl);
       const searchData = await searchRes.json();
       const results = searchData.results || [];
@@ -267,7 +274,7 @@ Recommande UN film avec les scores détaillés.`;
           discoverParams.set("with_watch_providers", platformIds.join("|"));
           discoverParams.set("watch_region", "FR");
         }
-        const fallbackUrl = `https://api.themoviedb.org/3/discover/movie?${discoverParams}`;
+        const fallbackUrl = `https://api.themoviedb.org/3/discover/${searchType}?${discoverParams}`;
         const fallbackRes = await fetch(fallbackUrl);
         const fallbackData = await fallbackRes.json();
         selectedMovie = (fallbackData.results || []).find((r: any) => isMovieAllowed(r));
@@ -279,8 +286,8 @@ Recommande UN film avec les scores détaillés.`;
     }
 
     if (!selectedMovie) {
-      // Ultimate fallback: trending movies
-      const trendingRes = await fetch(`https://api.themoviedb.org/3/trending/movie/week?api_key=${TMDB_API_KEY}&language=fr-FR`);
+      // Ultimate fallback: trending
+      const trendingRes = await fetch(`https://api.themoviedb.org/3/trending/${searchType}/week?api_key=${TMDB_API_KEY}&language=fr-FR`);
       const trendingData = await trendingRes.json();
       selectedMovie = (trendingData.results || []).find((r: any) => !excludedSet.has(r.id));
     }
@@ -289,7 +296,7 @@ Recommande UN film avec les scores détaillés.`;
       throw new Error("No non-excluded movie found on TMDB");
     }
 
-    const movieDetail = await getMovieDetails(selectedMovie.id);
+    const movieDetail = await getMovieDetails(selectedMovie.id, searchType);
 
     // Generate embedding for the recommended movie (fire & forget)
     if (SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) {
@@ -301,16 +308,17 @@ Recommande UN film avec les scores détaillés.`;
         },
         body: JSON.stringify({
           tmdbId: movieDetail.id,
-          title: movieDetail.title,
+          title: movieDetail.title || movieDetail.name,
           overview: movieDetail.overview,
           genres: (movieDetail.genres || []).map((g: any) => g.name),
         }),
       }).catch(() => {});
     }
 
+    const contentLabel = searchType === "tv" ? "Cette série" : "Ce film";
     const fallbackReason = aiFailed
-      ? `Ce film correspond à tes genres préférés (${topGenres.slice(0, 3).join(", ")}). Pick n'a pas pu utiliser l'IA pour affiner la recommandation, mais ce titre est populaire et bien noté !`
-      : suggestion?.reason || "Film recommandé par Pick.";
+      ? `${contentLabel} correspond à tes genres préférés (${topGenres.slice(0, 3).join(", ")}). Pick n'a pas pu utiliser l'IA pour affiner la recommandation, mais ce titre est populaire et bien noté !`
+      : suggestion?.reason || `${contentLabel} est recommandé par Pick.`;
 
     return new Response(JSON.stringify({
       movie: movieDetail,
@@ -324,6 +332,7 @@ Recommande UN film avec les scores détaillés.`;
         acceptanceRate,
         mode: aiFailed ? "fallback" : (shouldDiscover ? "discovery" : "precision"),
         explorationLevel,
+        mediaType: searchType,
         embeddingCandidatesCount: embeddingCandidates.length,
         aiFallback: aiFailed,
       },

@@ -106,6 +106,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
   const [showTrainer, setShowTrainer] = useState(false);
   const [flowStep, setFlowStep] = useState<"idle" | "who" | "what" | "exploration">("idle");
   const [explorationLevel, setExplorationLevel] = useState<number>(5);
+  const [whatChoice, setWhatChoice] = useState<WhatOption>("both");
   const [whoChoice, setWhoChoice] = useState<WhoOption | null>(null);
 
   // Open trainer from MyCinema navigation
@@ -266,6 +267,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
             likedMovies: liked, userTasteVector, tasteProfile,
             platformIds: userPlatformIds, excludedPlatformIds: userExcludedPlatformIds, excludedGenres: userExcludedGenres, minRating: userMinRating, excludeIds: allExcludeIds, rejectionContext,
             explorationLevel,
+            mediaType: whatChoice,
           });
           movie = data.movie as MovieDetail;
         } else {
@@ -692,6 +694,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
               )}
               {flowStep === "what" && (
                 <WhatStep onSelect={(w) => {
+                  setWhatChoice(w);
                   setFlowStep("exploration");
                 }} />
               )}
