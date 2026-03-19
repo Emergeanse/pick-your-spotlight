@@ -4,7 +4,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/use-auth";
-import { CompanionProvider } from "@/contexts/CompanionContext";
+
 import PickFAB from "@/components/pick/PickFAB";
 import PickChatOverlay from "@/components/pick/PickChatOverlay";
 import Landing from "./pages/Landing.tsx";
