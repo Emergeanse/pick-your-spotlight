@@ -226,6 +226,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
       setStreamingLinks(buildStreamingLinks(p, title));
     }).catch(() => { setProviders([]); setStreamingLinks([]); });
     getMovieTrailerUrl(movie.id, mediaType).then(setTrailerUrl).catch(() => setTrailerUrl(null));
+    getMovieCredits(movie.id, mediaType).then(setCredits).catch(() => setCredits(null));
   }, [movie.id, mediaType]);
 
   // Fetch providers for alternative movies
