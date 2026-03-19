@@ -255,7 +255,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
       (movie.genres || []).map(g => g.name)
     );
 
-    // Load taste profile for match analysis (movies AND YouTube)
+    // Load taste profile for match analysis
     Promise.all([
       getUserTasteProfile(),
       user ? computeUserTasteVector(user.id) : Promise.resolve(null),
@@ -264,7 +264,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
     ]).then(([tasteProfile, userTasteVector, likedMovies, cinematicProfile]) => {
       const likedMovieTitles = (likedMovies || []).map((m: any) => m.title);
       supabase.functions.invoke("movie-match", {
-        body: { movie, userCriteria, tasteProfile, userTasteVector: isYouTube ? null : userTasteVector, likedMovieTitles, searchTags, cinematicProfile },
+        body: { movie, userCriteria, tasteProfile, userTasteVector, likedMovieTitles, searchTags, cinematicProfile },
       }).then(({ data, error }) => {
         if (error) { console.error("Match error:", error); setMatchLoading(false); return; }
         setMatchData(data as MatchData);
