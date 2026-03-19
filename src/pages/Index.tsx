@@ -298,6 +298,11 @@ const Index = () => {
   };
 
   const handleShowAnother = async (rejectReason?: string, rejectedMovie?: MovieDetail) => {
+    // Advance watchlist guide: user clicked "Autre suggestion" → next show "Sauvegarder"
+    if (watchlistGuideStep === "autre-suggestion") {
+      setWatchlistGuideStep("sauvegarder");
+    }
+
     const currentMovie = results[currentResultIndex];
     if (currentMovie) {
       trackInteraction(currentMovie.id, "skipped", {});
