@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence, PanInfo } from "framer-motion";
-import { Heart, X, ChevronLeft, Loader2 } from "lucide-react";
+import { ChevronLeft, Loader2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getPosterUrl, getDisplayTitle } from "@/lib/tmdb";
 import { likeMovie } from "@/lib/liked-movies";
@@ -17,7 +17,6 @@ interface TasteTrainerProps {
   onClose: () => void;
 }
 
-// Genre ID to French name
 const GENRE_MAP: Record<number, string> = {
   28: "Action", 12: "Aventure", 16: "Animation", 35: "Comédie", 80: "Crime",
   99: "Documentaire", 18: "Drame", 10751: "Famille", 14: "Fantastique",
@@ -40,6 +39,38 @@ async function fetchMovieDetail(id: number): Promise<MovieDetail> {
   return res.json();
 }
 
+// Rating system
+const RATING_LABELS = [
+  { value: 0, label: "Pas pour moi" },
+  { value: 25, label: "Bof" },
+  { value: 50, label: "Correct" },
+  { value: 75, label: "J'aime bien" },
+  { value: 100, label: "Chef-d'œuvre" },
+];
+
+const getRatingInfo = (value: number) => {
+  if (value <= 12) return { label: "Pas pour moi", sentiment: "negative" as const };
+  if (value <= 37) return { label: "Bof", sentiment: "low" as const };
+  if (value <= 62) return { label: "Correct", sentiment: "neutral" as const };
+  if (value <= 87) return { label: "J'aime bien", sentiment: "positive" as const };
+  return { label: "Chef-d'œuvre", sentiment: "love" as const };
+};
+
+const getSliderColor = (value: number) => {
+  if (value <= 12) return "bg-destructive";
+  if (value <= 37) return "bg-muted-foreground";
+  if (value <= 62) return "bg-foreground/50";
+  if (value <= 87) return "bg-primary";
+  return "bg-primary";
+};
+
+const getSliderGlow = (value: number) => {
+  if (value <= 37) return "";
+  if (value <= 62) return "";
+  if (value <= 87) return "shadow-[0_0_12px_hsl(var(--primary)/0.3)]";
+  return "shadow-[0_0_20px_hsl(var(--primary)/0.5)]";
+};
+
 const TasteTrainer = ({ onClose }: TasteTrainerProps) => {
   const { user } = useAuth();
   const [movies, setMovies] = useState<Movie[]>([]);
@@ -52,14 +83,13 @@ const TasteTrainer = ({ onClose }: TasteTrainerProps) => {
   const [page, setPage] = useState(1);
   const [totalEvaluated, setTotalEvaluated] = useState(0);
   const [profileConfidence, setProfileConfidence] = useState(0);
+  const [sliderValue, setSliderValue] = useState(50);
 
   const loadMovies = useCallback(async (p: number) => {
     setLoading(true);
     try {
-      // Load from multiple random pages for diversity
       const randomPage = Math.floor(Math.random() * 20) + p;
       const results = await fetchTrainingMovies(randomPage);
-      // Filter out already processed
       const filtered = results.filter(m => !processedIds.has(m.id) && m.poster_path);
       setMovies(prev => [...prev, ...filtered]);
     } catch (e) {
@@ -71,7 +101,6 @@ const TasteTrainer = ({ onClose }: TasteTrainerProps) => {
 
   useEffect(() => {
     loadMovies(1);
-    // Load total evaluated count & profile confidence from DB
     if (user) {
       supabase.from("user_interactions")
         .select("id", { count: "exact", head: true })
@@ -90,7 +119,6 @@ const TasteTrainer = ({ onClose }: TasteTrainerProps) => {
     }
   }, []);
 
-  // Load more when running low
   useEffect(() => {
     if (movies.length - currentIndex < 3 && !loading) {
       const nextPage = page + 1;
@@ -102,73 +130,60 @@ const TasteTrainer = ({ onClose }: TasteTrainerProps) => {
   const currentMovie = movies[currentIndex];
   const nextMovie = movies[currentIndex + 1];
 
-  // Track total actions for profile update on close
   const actionsRef = useRef({ likes: 0, skips: 0 });
 
-  const handleLike = async () => {
+  const handleRate = async () => {
     if (!currentMovie || !user) return;
-    setSwiping("right");
-    
+
+    const rating = sliderValue;
+    const isPositive = rating > 50;
+    const actionType = rating <= 25 ? "disliked" : rating <= 50 ? "skipped" : "liked";
+
+    setSwiping(isPositive ? "right" : "left");
+
     try {
-      const detail = await fetchMovieDetail(currentMovie.id);
-      await likeMovie(detail);
-      // Also track as interaction with genre context for taste profile
       const genres = (currentMovie.genre_ids || []).map(gid => GENRE_MAP[gid]).filter(Boolean);
-      await trackInteraction(currentMovie.id, "liked", { source: "taste_trainer", genres: genres.join(",") });
-      await recordAcceptedRecommendation(user.id);
-      setLikedCount(c => c + 1);
-      actionsRef.current.likes++;
+
+      if (rating > 50) {
+        const detail = await fetchMovieDetail(currentMovie.id);
+        await likeMovie(detail);
+        await trackInteraction(currentMovie.id, actionType, {
+          source: "taste_trainer",
+          genres: genres.join(","),
+          rating: rating,
+        });
+        await recordAcceptedRecommendation(user.id);
+        setLikedCount(c => c + 1);
+        actionsRef.current.likes++;
+      } else {
+        await trackInteraction(currentMovie.id, actionType, {
+          source: "taste_trainer",
+          genres: genres.join(","),
+          rating: rating,
+        });
+        await recordSkippedRecommendation(user.id);
+        setSkippedCount(c => c + 1);
+        actionsRef.current.skips++;
+      }
     } catch (e) {
-      console.error("Failed to like:", e);
+      console.error("Failed to rate:", e);
     }
 
     setProcessedIds(prev => new Set(prev).add(currentMovie.id));
     setTimeout(() => {
       setSwiping(null);
+      setSliderValue(50);
       setCurrentIndex(i => i + 1);
     }, 300);
-  };
-
-  const handleSkip = async () => {
-    if (!currentMovie || !user) return;
-    setSwiping("left");
-    
-    try {
-      // Pass genre info so the taste engine learns what genres to avoid
-      const genres = (currentMovie.genre_ids || []).map(gid => GENRE_MAP[gid]).filter(Boolean);
-      await trackInteraction(currentMovie.id, "skipped", { source: "taste_trainer", genres: genres.join(",") });
-      await recordSkippedRecommendation(user.id);
-      setSkippedCount(c => c + 1);
-      actionsRef.current.skips++;
-    } catch (e) {
-      console.error("Failed to track skip:", e);
-    }
-
-    setProcessedIds(prev => new Set(prev).add(currentMovie.id));
-    setTimeout(() => {
-      setSwiping(null);
-      setCurrentIndex(i => i + 1);
-    }, 300);
-  };
-
-  const handleUnsure = async () => {
-    if (!currentMovie || !user) return;
-    
-    try {
-      await trackInteraction(currentMovie.id, "unsure", { source: "taste_trainer" });
-    } catch (e) {
-      console.error("Failed to track:", e);
-    }
-
-    setProcessedIds(prev => new Set(prev).add(currentMovie.id));
-    setCurrentIndex(i => i + 1);
   };
 
   const handleDragEnd = (_: any, info: PanInfo) => {
     if (info.offset.x > 100) {
-      handleLike();
+      setSliderValue(80);
+      setTimeout(handleRate, 50);
     } else if (info.offset.x < -100) {
-      handleSkip();
+      setSliderValue(15);
+      setTimeout(handleRate, 50);
     }
   };
 
@@ -183,6 +198,8 @@ const TasteTrainer = ({ onClose }: TasteTrainerProps) => {
     if (c < 80) return "Fiable";
     return "Expert";
   };
+
+  const ratingInfo = getRatingInfo(sliderValue);
 
   return (
     <motion.div
@@ -254,7 +271,6 @@ const TasteTrainer = ({ onClose }: TasteTrainerProps) => {
           </div>
         ) : (
           <>
-            {/* Next card (behind) */}
             {nextMovie && (
               <div className="absolute inset-x-8">
                 <div className="relative w-full aspect-[2/3] max-h-[65vh] rounded-2xl overflow-hidden border border-border/20 opacity-40 scale-95">
@@ -267,7 +283,6 @@ const TasteTrainer = ({ onClose }: TasteTrainerProps) => {
               </div>
             )}
 
-            {/* Current card */}
             <AnimatePresence mode="popLayout">
               <motion.div
                 key={currentMovie.id}
@@ -293,7 +308,6 @@ const TasteTrainer = ({ onClose }: TasteTrainerProps) => {
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
                 
-                {/* Movie info */}
                 <div className="absolute bottom-0 left-0 right-0 p-5">
                   <h3 className="text-lg font-serif text-white font-bold leading-tight mb-1">
                     {getDisplayTitle(currentMovie)}
@@ -319,14 +333,14 @@ const TasteTrainer = ({ onClose }: TasteTrainerProps) => {
 
                 {/* Swipe indicators */}
                 <motion.div
-                  className="absolute top-6 left-6 px-4 py-2 rounded-xl bg-red-500/90 border-2 border-red-400"
+                  className="absolute top-6 left-6 px-4 py-2 rounded-xl bg-destructive/90 border-2 border-destructive"
                   style={{ opacity: 0 }}
                   whileDrag={{ opacity: 1 }}
                 >
                   <span className="text-white font-sans font-bold text-sm">PASSE</span>
                 </motion.div>
                 <motion.div
-                  className="absolute top-6 right-6 px-4 py-2 rounded-xl bg-green-500/90 border-2 border-green-400"
+                  className="absolute top-6 right-6 px-4 py-2 rounded-xl bg-primary/90 border-2 border-primary"
                   style={{ opacity: 0 }}
                   whileDrag={{ opacity: 1 }}
                 >
@@ -338,37 +352,88 @@ const TasteTrainer = ({ onClose }: TasteTrainerProps) => {
         )}
       </div>
 
-      {/* Action buttons */}
+      {/* Rating slider */}
       {currentMovie && (
-        <div className="px-8 pb-[calc(2rem+env(safe-area-inset-bottom))] pt-4">
-          <div className="flex items-center justify-center gap-5">
-            <motion.button
-              whileTap={{ scale: 0.85 }}
-              onClick={handleSkip}
-              className="w-14 h-14 rounded-full bg-foreground/5 border-2 border-foreground/15 flex items-center justify-center hover:border-red-400/50 hover:bg-red-500/10 transition-colors"
+        <div className="px-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] pt-4">
+          {/* Current rating label */}
+          <div className="flex items-center justify-center mb-3">
+            <motion.span
+              key={ratingInfo.label}
+              initial={{ opacity: 0, y: 4 }}
+              animate={{ opacity: 1, y: 0 }}
+              className={`text-sm font-sans font-semibold ${
+                ratingInfo.sentiment === "negative" ? "text-destructive" :
+                ratingInfo.sentiment === "low" ? "text-muted-foreground" :
+                ratingInfo.sentiment === "neutral" ? "text-foreground/60" :
+                "text-primary"
+              }`}
             >
-              <X className="w-6 h-6 text-foreground/50" />
-            </motion.button>
-
-            <motion.button
-              whileTap={{ scale: 0.9 }}
-              onClick={handleUnsure}
-              className="w-10 h-10 rounded-full bg-foreground/5 border border-foreground/10 flex items-center justify-center hover:border-foreground/30 transition-colors"
-            >
-              <span className="text-foreground/40 text-xs font-sans font-medium">?</span>
-            </motion.button>
-
-            <motion.button
-              whileTap={{ scale: 0.85 }}
-              onClick={handleLike}
-              className="w-14 h-14 rounded-full bg-primary/10 border-2 border-primary/30 flex items-center justify-center hover:border-primary/60 hover:bg-primary/20 transition-colors"
-            >
-              <Heart className="w-6 h-6 text-primary" />
-            </motion.button>
+              {ratingInfo.label}
+            </motion.span>
           </div>
 
-          <p className="text-center text-foreground/25 text-[10px] font-sans mt-3">
-            Swipe ← passer · ? je sais pas · Swipe → j'aime
+          {/* Slider track */}
+          <div className="relative mb-4">
+            <div className="relative h-10 flex items-center">
+              {/* Background track */}
+              <div className="absolute inset-x-0 h-1.5 rounded-full bg-foreground/10" />
+              
+              {/* Filled track */}
+              <motion.div
+                className={`absolute left-0 h-1.5 rounded-full transition-colors duration-200 ${getSliderColor(sliderValue)}`}
+                style={{ width: `${sliderValue}%` }}
+                layout
+              />
+
+              {/* Tick marks */}
+              <div className="absolute inset-x-0 flex justify-between px-0">
+                {RATING_LABELS.map((r) => (
+                  <button
+                    key={r.value}
+                    onClick={() => setSliderValue(r.value === 0 ? 5 : r.value)}
+                    className="w-1 h-1 rounded-full bg-foreground/20 hover:bg-foreground/40 transition-colors relative z-10"
+                  />
+                ))}
+              </div>
+
+              {/* Range input */}
+              <input
+                type="range"
+                min={0}
+                max={100}
+                value={sliderValue}
+                onChange={(e) => setSliderValue(Number(e.target.value))}
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20"
+              />
+
+              {/* Thumb */}
+              <motion.div
+                className={`absolute top-1/2 -translate-y-1/2 w-6 h-6 rounded-full border-2 border-background ${getSliderColor(sliderValue)} ${getSliderGlow(sliderValue)} pointer-events-none z-10`}
+                style={{ left: `calc(${sliderValue}% - 12px)` }}
+                layout
+                transition={{ type: "spring", stiffness: 400, damping: 30 }}
+              />
+            </div>
+
+            {/* Labels underneath */}
+            <div className="flex justify-between mt-1 px-0">
+              <span className="text-[9px] font-sans text-foreground/30">Pas pour moi</span>
+              <span className="text-[9px] font-sans text-foreground/30">Chef-d'œuvre</span>
+            </div>
+          </div>
+
+          {/* Validate button */}
+          <motion.button
+            whileTap={{ scale: 0.95 }}
+            onClick={handleRate}
+            className="w-full py-3 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center gap-2 hover:bg-primary/20 transition-colors"
+          >
+            <Check className="w-4 h-4 text-primary" />
+            <span className="text-sm font-sans font-medium text-primary">Valider</span>
+          </motion.button>
+
+          <p className="text-center text-foreground/25 text-[10px] font-sans mt-2.5">
+            Glisse le curseur puis valide · ou swipe la carte
           </p>
         </div>
       )}
