@@ -3,7 +3,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Mic, MicOff, X, Send, Loader2, Sparkles, Check, Play, Star, Clock, Heart, Bookmark, Tv, ChevronDown, ChevronUp, MoreHorizontal, RefreshCw, MessageCircle, Volume2, ExternalLink, Share2, Zap, Lock, PenLine } from "lucide-react";
 import type { MovieDetail } from "@/lib/tmdb";
-import { getDisplayTitle, getYear, getBackdropUrl, getPosterUrl, getWatchProviders, getMovieTrailerUrl } from "@/lib/tmdb";
+import { getDisplayTitle, getYear, getBackdropUrl, getPosterUrl, getWatchProviders, getMovieTrailerUrl, getMovieCredits } from "@/lib/tmdb";
+import type { MovieCredits } from "@/lib/tmdb";
 import { buildStreamingLinks, openStreamingLink, type StreamingLink } from "@/lib/streaming-links";
 import type { Mood, Context, TimeAvailable } from "@/lib/tmdb";
 import { supabase } from "@/integrations/supabase/client";
@@ -101,6 +102,7 @@ const CONFIDENCE_THRESHOLD = 30;
 
 const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onShowAnother, onRestart, onRefineWithVoice, onRefineWithMessage, onStartCompanion, hasMore, userCriteria, alternativeMovies, onSelectAlternative, searchTags, onRemoveTag, refining, profileConfidence = 0 }, ref) => {
   const [providers, setProviders] = useState<{ name: string; logo_path: string; provider_id: number }[]>([]);
+  const [credits, setCredits] = useState<MovieCredits | null>(null);
   const [streamingLinks, setStreamingLinks] = useState<StreamingLink[]>([]);
   const [trailerUrl, setTrailerUrl] = useState<string | null>(null);
   const [matchData, setMatchData] = useState<MatchData | null>(null);
@@ -224,6 +226,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
       setStreamingLinks(buildStreamingLinks(p, title));
     }).catch(() => { setProviders([]); setStreamingLinks([]); });
     getMovieTrailerUrl(movie.id, mediaType).then(setTrailerUrl).catch(() => setTrailerUrl(null));
+    getMovieCredits(movie.id, mediaType).then(setCredits).catch(() => setCredits(null));
   }, [movie.id, mediaType]);
 
   // Fetch providers for alternative movies
@@ -239,6 +242,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
 
   useEffect(() => {
     setMatchData(null);
+    setCredits(null);
     setMatchLoading(true);
     setShowOptions(false);
     setMarkedSeen(false);
@@ -498,6 +502,78 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                 </button>
               )}
             </div>
+
+            {/* Cast & Crew */}
+            {credits && (credits.director || credits.cast.length > 0) && (
+              <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.42 }}
+                className="mb-4"
+              >
+                <p className="text-[10px] uppercase tracking-widest text-foreground/30 font-sans font-semibold mb-2.5">
+                  Équipe du film
+                </p>
+                <div className="rounded-xl bg-foreground/[0.04] border border-border/15 p-3.5">
+                  {credits.director && (
+                    <div className="flex items-center gap-2.5 mb-3">
+                      <div className="w-9 h-9 rounded-full bg-primary/15 border border-primary/25 flex items-center justify-center overflow-hidden shrink-0">
+                        {credits.director.profile_path ? (
+                          <img
+                            src={`${IMG_BASE}/w185${credits.director.profile_path}`}
+                            alt={credits.director.name}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <span className="text-primary text-[11px] font-sans font-bold">
+                            {credits.director.name.charAt(0)}
+                          </span>
+                        )}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-foreground/80 text-[13px] font-sans font-semibold leading-tight truncate">
+                          {credits.director.name}
+                        </p>
+                        <p className="text-primary/50 text-[10px] font-sans font-medium uppercase tracking-wider">
+                          Réalisateur
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                  {credits.cast.length > 0 && (
+                    <div className="flex gap-3 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-hide">
+                      {credits.cast.map((actor) => (
+                        <div key={actor.id} className="flex flex-col items-center gap-1.5 shrink-0 w-14">
+                          <div className="w-11 h-11 rounded-full bg-foreground/[0.06] border border-border/20 overflow-hidden">
+                            {actor.profile_path ? (
+                              <img
+                                src={`${IMG_BASE}/w185${actor.profile_path}`}
+                                alt={actor.name}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center">
+                                <span className="text-foreground/30 text-[11px] font-sans font-bold">
+                                  {actor.name.charAt(0)}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                          <div className="text-center w-full">
+                            <p className="text-foreground/70 text-[10px] font-sans font-medium leading-tight truncate">
+                              {actor.name}
+                            </p>
+                            <p className="text-foreground/35 text-[9px] font-sans leading-tight truncate">
+                              {actor.character}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </motion.div>
+            )}
 
             {/* Trailer */}
             {trailerUrl && (
