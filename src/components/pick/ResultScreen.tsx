@@ -499,8 +499,8 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
               )}
             </div>
 
-            {/* Trailer — hide for YouTube */}
-            {!isYouTube && trailerUrl && (
+            {/* Trailer */}
+            {trailerUrl && (
               <motion.button
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
