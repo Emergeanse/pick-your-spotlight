@@ -151,6 +151,14 @@ const Friends = () => {
 
   const handleAccept = async (friendshipId: string) => {
     await supabase.from("friendships" as any).update({ status: "accepted" } as any).eq("id", friendshipId);
+    // Notify the requester
+    const friendship = friends.find(f => f.friendshipId === friendshipId);
+    if (friendship && user) {
+      const { data: myProfile } = await supabase.from("profiles").select("display_name").eq("id", user.id).single();
+      const myName = myProfile?.display_name || user.email?.split("@")[0] || "Quelqu'un";
+      const requesterId = friendship.id; // the friend's user id
+      await sendNotification(requesterId, "friend_accepted", `${myName} a accepté ta demande !`, "Vous pouvez maintenant regarder des films ensemble.");
+    }
     toast.success("Ami accepté !");
     loadData();
   };
