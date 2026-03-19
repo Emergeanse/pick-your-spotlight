@@ -165,6 +165,7 @@ const REJECT_REASONS = [
 
 const RejectSheet = ({ open, onClose, movie, mediaType, onShowAnother, onRejectReaction, onFeedbackGiven }: {
   open: boolean; onClose: () => void; movie: MovieDetail; mediaType: string;
+  userCriteria?: { mood: Mood | null; context: Context | null; time: TimeAvailable | null };
   onShowAnother: (reason?: string, movie?: MovieDetail) => void;
   rejectReaction: string | null; onRejectReaction: (r: string | null) => void; onFeedbackGiven: (f: "good" | "bad" | null) => void;
 }) => {
