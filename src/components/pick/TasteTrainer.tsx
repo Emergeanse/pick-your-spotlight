@@ -43,11 +43,11 @@ async function fetchMovieDetail(id: number): Promise<MovieDetail> {
 }
 
 const RATING_BUTTONS = [
-  { value: 5,   label: "Pas pour moi", emoji: "👎", color: "from-red-500/20 to-red-600/10 border-red-500/30 text-red-400" },
-  { value: 25,  label: "Bof",          emoji: "😐", color: "from-foreground/10 to-foreground/5 border-foreground/15 text-foreground/50" },
-  { value: 50,  label: "Correct",      emoji: "👌", color: "from-foreground/10 to-foreground/5 border-foreground/15 text-foreground/60" },
-  { value: 75,  label: "J'aime bien",  emoji: "😍", color: "from-primary/15 to-primary/5 border-primary/25 text-primary" },
-  { value: 100, label: "Chef-d'œuvre", emoji: "🤩", color: "from-primary/25 to-primary/10 border-primary/40 text-primary" },
+  { value: 5,   label: "Pas pour moi", color: "from-red-500/20 to-red-600/10 border-red-500/30 text-red-400" },
+  { value: 25,  label: "Bof",          color: "from-foreground/10 to-foreground/5 border-foreground/15 text-foreground/50" },
+  { value: 50,  label: "Correct",      color: "from-foreground/10 to-foreground/5 border-foreground/15 text-foreground/60" },
+  { value: 75,  label: "J'aime bien",  color: "from-primary/15 to-primary/5 border-primary/25 text-primary" },
+  { value: 100, label: "Chef-d'œuvre", color: "from-primary/25 to-primary/10 border-primary/40 text-primary" },
 ];
 
 const getMilestoneMessage = (count: number): string | null => {
@@ -430,13 +430,11 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
                 whileHover={{ scale: 1.04, y: -2 }}
                 onClick={() => {
                   setSliderValue(btn.value);
-                  setRatingFlash(btn.emoji);
                   setTimeout(() => handleRate(), 150);
                 }}
                 className={`flex-1 py-3 px-1 rounded-xl border bg-gradient-to-b transition-all duration-200 ${btn.color}`}
               >
-                <span className="text-lg block mb-0.5">{btn.emoji}</span>
-                <span className="text-[10px] font-sans font-medium leading-tight block opacity-80">
+                <span className="text-[11px] font-sans font-medium leading-tight block">
                   {btn.label}
                 </span>
               </motion.button>
