@@ -951,8 +951,6 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
               transition={{ delay: 0.6 }}
               className="space-y-3"
             >
-              {/* Main CTA row */}
-              <div className="flex items-center gap-2.5">
 
               {/* Compact secondary actions — icon row */}
               <div className="flex items-center gap-2">
