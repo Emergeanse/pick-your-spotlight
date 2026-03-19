@@ -589,6 +589,10 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
                   </p>
                 )}
 
+                <p className="text-foreground/40 text-[13px] font-sans italic mb-4">
+                  Pick pense que ce film est parfait pour toi.
+                </p>
+
                 <div className="flex flex-col items-center gap-2.5 w-full">
                   <div className="flex items-center gap-3 justify-center">
                     <Button
@@ -600,7 +604,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
                       }}
                     >
                       <Tv className="w-4 h-4" />
-                      Je découvre
+                      On regarde ?
                     </Button>
 
                      <Button
