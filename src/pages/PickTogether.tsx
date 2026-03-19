@@ -117,17 +117,50 @@ const PickTogether = () => {
   };
 
   const toggleFriend = (id: string) => {
+    const totalOthers = selectedFriendIds.size + guests.length;
     setSelectedFriendIds(prev => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id);
-      else if (next.size < 5) next.add(id);
+      else if (totalOthers < 5) next.add(id);
       else toast.info("Maximum 6 personnes");
       return next;
     });
   };
 
+  const addGuest = () => {
+    if (!guestName.trim()) { toast.info("Donne un prénom à ton invité"); return; }
+    const totalOthers = selectedFriendIds.size + guests.length;
+    if (totalOthers >= 5) { toast.info("Maximum 6 personnes"); return; }
+    const newGuest: Guest = {
+      id: `guest-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      name: guestName.trim(),
+      age: guestAge ? parseInt(guestAge) : undefined,
+      gender: guestGender || undefined,
+      favoriteGenres: [...guestGenres],
+    };
+    setGuests(prev => [...prev, newGuest]);
+    setGuestName("");
+    setGuestAge("");
+    setGuestGender("");
+    setGuestGenres(new Set());
+    setShowGuestForm(false);
+  };
+
+  const removeGuest = (id: string) => {
+    setGuests(prev => prev.filter(g => g.id !== id));
+  };
+
+  const toggleGuestGenre = (genre: string) => {
+    setGuestGenres(prev => {
+      const next = new Set(prev);
+      if (next.has(genre)) next.delete(genre);
+      else if (next.size < 5) next.add(genre);
+      return next;
+    });
+  };
+
   const handleContinueFromWho = () => {
-    if (selectedFriendIds.size === 0) return;
+    if (selectedFriendIds.size === 0 && guests.length === 0) return;
     setMediaStep(true);
   };
 
@@ -138,7 +171,7 @@ const PickTogether = () => {
   };
 
   const handleStartSearch = async (skipMood = false) => {
-    if (!user || selectedFriendIds.size === 0) return;
+    if (!user || (selectedFriendIds.size === 0 && guests.length === 0)) return;
     setStep("loading");
     setLoading(true);
     let msgIdx = 0;
@@ -150,8 +183,19 @@ const PickTogether = () => {
 
     try {
       const memberIds = [user.id, ...selectedFriendIds];
+      const guestProfiles = guests.map(g => ({
+        name: g.name,
+        age: g.age,
+        gender: g.gender,
+        favoriteGenres: g.favoriteGenres,
+      }));
       const { data, error } = await supabase.functions.invoke("group-recommend", {
-        body: { memberIds, mood: skipMood ? undefined : mood || undefined, mediaType: mediaChoice },
+        body: {
+          memberIds,
+          guests: guestProfiles.length > 0 ? guestProfiles : undefined,
+          mood: skipMood ? undefined : mood || undefined,
+          mediaType: mediaChoice,
+        },
       });
       clearInterval(msgInterval);
       if (error) throw error;
@@ -195,7 +239,7 @@ const PickTogether = () => {
     } catch { toast.error("Erreur"); }
   };
 
-  const selectedCount = selectedFriendIds.size + 1;
+  const selectedCount = selectedFriendIds.size + guests.length + 1;
   const hero = recommendations[0];
   const alternatives = recommendations.slice(1, 3);
   const selectedFriends = friends.filter(f => selectedFriendIds.has(f.id));
