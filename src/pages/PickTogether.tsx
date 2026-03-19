@@ -272,42 +272,59 @@ const PickTogether = () => {
                   </p>
                 </div>
 
-                <p className="text-xs font-sans font-semibold text-foreground/50 mb-3 uppercase tracking-wider">Humeur</p>
-                <div className="grid grid-cols-2 gap-2 mb-6">
-                  {MOODS.map(m => (
-                    <motion.button
-                      key={m.id}
-                      whileTap={{ scale: 0.96 }}
-                      onClick={() => setMood(mood === m.id ? null : m.id)}
-                      className={`p-4 rounded-xl border text-left transition-all ${
-                        mood === m.id
-                          ? "bg-primary/10 border-primary/30"
-                          : "bg-card/50 border-border/15 hover:border-border/30"
-                      }`}
-                    >
-                      <span className="text-xl mb-1 block">{m.emoji}</span>
-                      <span className="text-sm font-sans font-medium text-foreground">{m.label}</span>
-                    </motion.button>
-                  ))}
+                <p className="text-[10px] font-sans font-semibold text-foreground/40 mb-3 uppercase tracking-widest">Humeur</p>
+                <div className="grid grid-cols-2 gap-2.5 mb-8">
+                  {MOODS.map((m, i) => {
+                    const Icon = m.icon;
+                    const selected = mood === m.id;
+                    return (
+                      <motion.button
+                        key={m.id}
+                        initial={{ opacity: 0, y: 12 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: i * 0.05 }}
+                        whileTap={{ scale: 0.96 }}
+                        onClick={() => setMood(mood === m.id ? null : m.id)}
+                        className={`p-4 rounded-2xl border text-left transition-all flex items-start gap-3 ${
+                          selected
+                            ? "bg-primary/10 border-primary/30 neon-glow"
+                            : "bg-card/50 border-border/15 hover:border-primary/20 hover:bg-card/80"
+                        }`}
+                      >
+                        <Icon className={`w-5 h-5 shrink-0 mt-0.5 transition-colors ${selected ? "text-primary" : "text-primary/40"}`} />
+                        <div>
+                          <span className="text-sm font-serif font-medium text-foreground block">{m.label}</span>
+                          <span className="text-muted-foreground/50 text-[11px] font-sans mt-0.5 block">{m.description}</span>
+                        </div>
+                      </motion.button>
+                    );
+                  })}
                 </div>
 
-                <p className="text-xs font-sans font-semibold text-foreground/50 mb-3 uppercase tracking-wider">Contexte</p>
-                <div className="grid grid-cols-3 gap-2 mb-8">
-                  {CONTEXTS.map(c => (
-                    <motion.button
-                      key={c.id}
-                      whileTap={{ scale: 0.96 }}
-                      onClick={() => setContext(context === c.id ? null : c.id)}
-                      className={`p-3 rounded-xl border text-center transition-all ${
-                        context === c.id
-                          ? "bg-primary/10 border-primary/30"
-                          : "bg-card/50 border-border/15 hover:border-border/30"
-                      }`}
-                    >
-                      <span className="text-lg mb-0.5 block">{c.emoji}</span>
-                      <span className="text-xs font-sans font-medium text-foreground">{c.label}</span>
-                    </motion.button>
-                  ))}
+                <p className="text-[10px] font-sans font-semibold text-foreground/40 mb-3 uppercase tracking-widest">Contexte</p>
+                <div className="grid grid-cols-3 gap-2.5 mb-8">
+                  {CONTEXTS.map((c, i) => {
+                    const Icon = c.icon;
+                    const selected = context === c.id;
+                    return (
+                      <motion.button
+                        key={c.id}
+                        initial={{ opacity: 0, y: 12 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.2 + i * 0.05 }}
+                        whileTap={{ scale: 0.96 }}
+                        onClick={() => setContext(context === c.id ? null : c.id)}
+                        className={`p-3.5 rounded-2xl border text-center transition-all flex flex-col items-center gap-2 ${
+                          selected
+                            ? "bg-primary/10 border-primary/30 neon-glow"
+                            : "bg-card/50 border-border/15 hover:border-primary/20 hover:bg-card/80"
+                        }`}
+                      >
+                        <Icon className={`w-5 h-5 transition-colors ${selected ? "text-primary" : "text-primary/40"}`} />
+                        <span className="text-xs font-sans font-medium text-foreground">{c.label}</span>
+                      </motion.button>
+                    );
+                  })}
                 </div>
 
                 <Button
