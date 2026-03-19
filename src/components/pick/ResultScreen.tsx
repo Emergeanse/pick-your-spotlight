@@ -1,5 +1,4 @@
 import { useState, useEffect, forwardRef, useCallback, useRef } from "react";
-import { getYouTubeRecommendations, formatViews, type YouTubeVideo } from "@/lib/youtube";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Mic, MicOff, X, Send, Loader2, Sparkles, Check, Play, Star, Clock, Heart, Bookmark, Tv, ChevronDown, ChevronUp, MoreHorizontal, RefreshCw, MessageCircle, Volume2, ExternalLink, Share2, Zap, Lock, PenLine } from "lucide-react";
