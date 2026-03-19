@@ -214,3 +214,45 @@
 .fab-pulse {
   animation: fabPulse 2s ease-in-out infinite;
 }
+
+/* ─── Cinematic Avatar Animations ─── */
+@keyframes cinematicBreathe {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+@keyframes cinematicPulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.02); opacity: 0.85; }
+}
+
+@keyframes cinematicShimmer {
+  0% { filter: brightness(1); }
+  50% { filter: brightness(1.08); }
+  100% { filter: brightness(1); }
+}
+
+@keyframes cinematicAura {
+  0%, 100% { opacity: 0.6; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.04); }
+}
+
+.cinematic-breathe {
+  animation: cinematicBreathe 4s ease-in-out infinite;
+}
+
+.cinematic-pulse {
+  animation: cinematicPulse 3s ease-in-out infinite;
+}
+
+.cinematic-shimmer {
+  animation: cinematicShimmer 5s ease-in-out infinite;
+}
+
+.cinematic-aura {
+  animation: cinematicAura 4s ease-in-out infinite;
+}
+
+.cinematic-ring-secondary {
+  animation: cinematicBreathe 5s ease-in-out infinite reverse;
+}

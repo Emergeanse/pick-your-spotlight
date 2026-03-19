@@ -11,7 +11,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { getEngagementData, type EngagementData } from "@/lib/engagement";
 import BottomTabBar from "@/components/pick/BottomTabBar";
-
+import CinematicAvatar, { mapLevelToType, mapArchetypeToDNA, mapSignatureToAnimation, type CinematicLevel, type CinematicDNA, type TasteAnimation } from "@/components/pick/CinematicAvatar";
 const ALL_PLATFORMS = [
   { id: 8, label: "Netflix", logo: "https://image.tmdb.org/t/p/original/pbpMk2JmcoNnQwx5JGpXngfoWtp.jpg" },
   { id: 337, label: "Disney+", logo: "https://image.tmdb.org/t/p/original/97yvRBw1GzX7fXprcF80er19ot.jpg" },
@@ -49,6 +49,9 @@ const Profile = () => {
   const [editingName, setEditingName] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [cinematicLevel, setCinematicLevel] = useState<CinematicLevel>("emerging");
+  const [cinematicDNA, setCinematicDNA] = useState<CinematicDNA>("contemplative");
+  const [tasteAnim, setTasteAnim] = useState<TasteAnimation>("default");
 
   useEffect(() => {
     if (!isReady) return;
@@ -75,7 +78,14 @@ const Profile = () => {
       setDisplayName(data?.display_name || user.email?.split("@")[0] || "");
       setAvatarUrl((data as any)?.avatar_url || null);
       setEngagement(engData);
-      if (dnaRes.data) setDnaTitle((dnaRes.data as any).personality_title || null);
+      if (dnaRes.data) {
+        const d = dnaRes.data as any;
+        setDnaTitle(d.personality_title || null);
+        setCinematicLevel(mapLevelToType(d.global_level));
+        setCinematicDNA(mapArchetypeToDNA(d.dna_archetype));
+        const sigs = Array.isArray(d.taste_signatures) ? d.taste_signatures.map((s: any) => typeof s === "string" ? s : s?.name || "") : [];
+        setTasteAnim(mapSignatureToAnimation(sigs));
+      }
     } catch (e) {
       console.error(e);
     } finally {
@@ -187,7 +197,7 @@ const Profile = () => {
         {/* ─── User Identity Block ─── */}
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
           <div className="flex items-center gap-4">
-            {/* Avatar with upload */}
+            {/* Avatar with cinematic identity halo */}
             <label className="relative cursor-pointer group">
               <input
                 type="file"
@@ -196,18 +206,15 @@ const Profile = () => {
                 className="hidden"
                 disabled={uploadingAvatar}
               />
-              {avatarUrl ? (
-                <img
-                  src={avatarUrl}
-                  alt="Avatar"
-                  className="w-16 h-16 rounded-full object-cover border-2 border-primary/20 group-hover:border-primary/50 transition-colors"
-                />
-              ) : (
-                <div className="w-16 h-16 rounded-full bg-primary/10 border-2 border-primary/20 group-hover:border-primary/50 flex items-center justify-center transition-colors">
-                  <span className="text-2xl font-serif text-primary">{nameDisplay.charAt(0).toUpperCase()}</span>
-                </div>
-              )}
-              <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-card border border-border/30 flex items-center justify-center group-hover:bg-primary/10 transition-colors">
+              <CinematicAvatar
+                src={avatarUrl}
+                name={nameDisplay}
+                size="md"
+                level={cinematicLevel}
+                dna={cinematicDNA}
+                tasteSignature={tasteAnim}
+              />
+              <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-card border border-border/30 flex items-center justify-center group-hover:bg-primary/10 transition-colors z-20">
                 {uploadingAvatar ? (
                   <Loader2 className="w-3 h-3 text-primary animate-spin" />
                 ) : (
