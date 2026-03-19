@@ -98,17 +98,26 @@ const PlatformTour = ({ onComplete }: PlatformTourProps) => {
   const getTooltipStyle = (): React.CSSProperties => {
     if (!targetRect) return { top: "50%", left: "50%", transform: "translate(-50%, -50%)" };
 
+    const margin = 12;
+    const maxW = Math.min(320, window.innerWidth - margin * 2);
+
     if (step.position === "bottom") {
       return {
         top: targetRect.bottom + 16,
-        left: Math.max(16, Math.min(targetRect.left + targetRect.width / 2 - 160, window.innerWidth - 336)),
-        width: 320,
+        left: margin,
+        right: margin,
+        maxWidth: maxW,
+        marginLeft: "auto",
+        marginRight: "auto",
       };
     } else {
       return {
         bottom: window.innerHeight - targetRect.top + 16,
-        left: Math.max(16, Math.min(targetRect.left + targetRect.width / 2 - 160, window.innerWidth - 336)),
-        width: 320,
+        left: margin,
+        right: margin,
+        maxWidth: maxW,
+        marginLeft: "auto",
+        marginRight: "auto",
       };
     }
   };
