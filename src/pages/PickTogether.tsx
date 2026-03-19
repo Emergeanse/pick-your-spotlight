@@ -37,7 +37,7 @@ interface GroupRecommendation {
   providers: { name: string; logo_path: string; provider_id: number }[];
 }
 
-type FlowStep = "who" | "mood" | "loading" | "results";
+type FlowStep = "landing" | "who" | "mood" | "loading" | "results";
 type MediaChoice = "movie" | "tv" | "both";
 
 const GENRE_OPTIONS = [
