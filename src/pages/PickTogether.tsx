@@ -248,7 +248,7 @@ const PickTogether = () => {
     if (step === "results") { setStep("who"); setRecommendations([]); setHeroReaction(null); }
     else if (step === "mood") { setStep("who"); }
     else if (mediaStep) { setMediaStep(false); }
-    else navigate("/app/friends");
+    else navigate("/app/pick-together");
   };
 
   return (
@@ -296,7 +296,7 @@ const PickTogether = () => {
                   </div>
                   <p className="text-foreground/50 text-sm font-sans mb-1">Pas encore d'amis sur Pick</p>
                   <p className="text-foreground/30 text-xs font-sans mb-4">Partage ton code ami pour commencer</p>
-                  <Button onClick={() => navigate("/app/friends")} variant="outline" className="rounded-xl font-sans border-primary/30 text-primary">
+                  <Button onClick={() => navigate("/app/profile")} variant="outline" className="rounded-xl font-sans border-primary/30 text-primary">
                     Ajouter des amis
                   </Button>
                 </motion.div>
