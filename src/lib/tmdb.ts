@@ -446,4 +446,45 @@ export async function getMovieCredits(id: number, mediaType: string): Promise<Mo
   return { cast, director };
 }
 
+export interface PersonDetails {
+  id: number;
+  name: string;
+  biography: string;
+  birthday: string | null;
+  place_of_birth: string | null;
+  profile_path: string | null;
+  known_for_department: string;
+  knownFor: { id: number; title: string; year: string; poster_path: string | null; media_type: string }[];
+}
+
+export async function getPersonDetails(personId: number): Promise<PersonDetails> {
+  const [person, credits] = await Promise.all([
+    fetchFromTMDB(`/person/${personId}`, { language: "fr-FR" }),
+    fetchFromTMDB(`/person/${personId}/combined_credits`, { language: "fr-FR" }),
+  ]);
+
+  const allCredits = (credits.cast || [])
+    .filter((c: any) => c.poster_path && (c.vote_count || 0) > 50)
+    .sort((a: any, b: any) => (b.popularity || 0) - (a.popularity || 0))
+    .slice(0, 6)
+    .map((c: any) => ({
+      id: c.id,
+      title: c.title || c.name || "",
+      year: (c.release_date || c.first_air_date || "").slice(0, 4),
+      poster_path: c.poster_path,
+      media_type: c.media_type || "movie",
+    }));
+
+  return {
+    id: person.id,
+    name: person.name,
+    biography: person.biography || "",
+    birthday: person.birthday,
+    place_of_birth: person.place_of_birth,
+    profile_path: person.profile_path,
+    known_for_department: person.known_for_department || "Acting",
+    knownFor: allCredits,
+  };
+}
+
 export { getDisplayTitle, getYear, getPosterUrl, getBackdropUrl, getMovieDetails };

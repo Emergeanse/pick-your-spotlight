@@ -1,10 +1,10 @@
-import { useState, useEffect, forwardRef, useCallback, useRef } from "react";
+import { useState, useEffect, forwardRef, useCallback, useRef, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Mic, MicOff, X, Send, Loader2, Sparkles, Check, Play, Star, Clock, Heart, Bookmark, Tv, ChevronDown, ChevronUp, MoreHorizontal, RefreshCw, MessageCircle, Volume2, ExternalLink, Share2, Zap, Lock, PenLine } from "lucide-react";
 import type { MovieDetail } from "@/lib/tmdb";
-import { getDisplayTitle, getYear, getBackdropUrl, getPosterUrl, getWatchProviders, getMovieTrailerUrl, getMovieCredits } from "@/lib/tmdb";
-import type { MovieCredits } from "@/lib/tmdb";
+import { getDisplayTitle, getYear, getBackdropUrl, getPosterUrl, getWatchProviders, getMovieTrailerUrl, getMovieCredits, getPersonDetails } from "@/lib/tmdb";
+import type { MovieCredits, PersonDetails } from "@/lib/tmdb";
 import { buildStreamingLinks, openStreamingLink, type StreamingLink } from "@/lib/streaming-links";
 import type { Mood, Context, TimeAvailable } from "@/lib/tmdb";
 import { supabase } from "@/integrations/supabase/client";
@@ -17,8 +17,115 @@ import { computeUserTasteVector, ensureMovieEmbedding } from "@/lib/taste-engine
 import BrandHeader from "./BrandHeader";
 import PickCharacter from "./PickCharacter";
 
-
 const IMG_BASE = "https://image.tmdb.org/t/p";
+
+function ActorCard({ actor }: { actor: import("@/lib/tmdb").CastMember }) {
+  const [hovered, setHovered] = useState(false);
+  const [person, setPerson] = useState<PersonDetails | null>(null);
+  const [loading, setLoading] = useState(false);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleMouseEnter = () => {
+    timeoutRef.current = setTimeout(() => {
+      setHovered(true);
+      if (!person && !loading) {
+        setLoading(true);
+        getPersonDetails(actor.id).then(setPerson).catch(() => {}).finally(() => setLoading(false));
+      }
+    }, 300);
+  };
+
+  const handleMouseLeave = () => {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    setHovered(false);
+  };
+
+  return (
+    <div
+      className="relative flex flex-col items-center gap-1.5 shrink-0 w-14 cursor-pointer"
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+    >
+      <div className={`w-11 h-11 rounded-full bg-foreground/[0.06] border overflow-hidden transition-all duration-200 ${hovered ? "border-primary/50 ring-2 ring-primary/20 scale-110" : "border-border/20"}`}>
+        {actor.profile_path ? (
+          <img src={`${IMG_BASE}/w185${actor.profile_path}`} alt={actor.name} className="w-full h-full object-cover" />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center">
+            <span className="text-foreground/30 text-[11px] font-sans font-bold">{actor.name.charAt(0)}</span>
+          </div>
+        )}
+      </div>
+      <div className="text-center w-full">
+        <p className="text-foreground/70 text-[10px] font-sans font-medium leading-tight truncate">{actor.name}</p>
+        <p className="text-foreground/35 text-[9px] font-sans leading-tight truncate">{actor.character}</p>
+      </div>
+
+      <AnimatePresence>
+        {hovered && (
+          <motion.div
+            initial={{ opacity: 0, y: 8, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 8, scale: 0.95 }}
+            transition={{ duration: 0.2 }}
+            className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 z-50 w-64 rounded-xl bg-card/95 backdrop-blur-xl border border-border/30 shadow-2xl p-3.5 pointer-events-none"
+          >
+            {loading ? (
+              <div className="flex items-center justify-center py-4">
+                <Loader2 className="w-4 h-4 animate-spin text-primary/60" />
+              </div>
+            ) : person ? (
+              <div>
+                <div className="flex items-center gap-2.5 mb-2.5">
+                  <div className="w-10 h-10 rounded-full overflow-hidden bg-foreground/[0.06] border border-border/20 shrink-0">
+                    {person.profile_path ? (
+                      <img src={`${IMG_BASE}/w185${person.profile_path}`} alt={person.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <span className="text-foreground/30 text-sm font-bold">{person.name.charAt(0)}</span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-foreground text-[13px] font-sans font-semibold leading-tight truncate">{person.name}</p>
+                    <p className="text-muted-foreground text-[10px] font-sans">
+                      {person.known_for_department === "Acting" ? "Acteur/Actrice" : person.known_for_department}
+                      {person.birthday && ` · ${new Date().getFullYear() - new Date(person.birthday).getFullYear()} ans`}
+                    </p>
+                  </div>
+                </div>
+                {person.biography && (
+                  <p className="text-foreground/60 text-[11px] font-sans leading-relaxed line-clamp-3 mb-2.5">
+                    {person.biography}
+                  </p>
+                )}
+                {person.knownFor.length > 0 && (
+                  <div>
+                    <p className="text-[9px] uppercase tracking-widest text-foreground/30 font-sans font-semibold mb-1.5">Filmographie</p>
+                    <div className="flex gap-1.5 overflow-hidden">
+                      {person.knownFor.slice(0, 4).map((m) => (
+                        <div key={`${m.media_type}-${m.id}`} className="shrink-0 w-11">
+                          {m.poster_path ? (
+                            <img src={`${IMG_BASE}/w92${m.poster_path}`} alt={m.title} className="w-11 h-[66px] rounded-md object-cover border border-border/10" />
+                          ) : (
+                            <div className="w-11 h-[66px] rounded-md bg-foreground/[0.04] border border-border/10 flex items-center justify-center">
+                              <span className="text-foreground/20 text-[8px]">{m.title.slice(0, 3)}</span>
+                            </div>
+                          )}
+                          <p className="text-foreground/50 text-[8px] font-sans leading-tight mt-0.5 truncate">{m.title}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : null}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
 
 interface MatchData {
   matchScore: number;
@@ -560,7 +667,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                 className="mb-4"
               >
                 <p className="text-[10px] uppercase tracking-widest text-foreground/30 font-sans font-semibold mb-2.5">
-                  Équipe du film
+                  {mediaType === "tv" ? "Équipe de la série" : "Équipe du film"}
                 </p>
                 <div className="rounded-xl bg-foreground/[0.04] border border-border/15 p-3.5">
                   {credits.director && (
@@ -591,31 +698,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                   {credits.cast.length > 0 && (
                     <div className="flex gap-3 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-hide">
                       {credits.cast.map((actor) => (
-                        <div key={actor.id} className="flex flex-col items-center gap-1.5 shrink-0 w-14">
-                          <div className="w-11 h-11 rounded-full bg-foreground/[0.06] border border-border/20 overflow-hidden">
-                            {actor.profile_path ? (
-                              <img
-                                src={`${IMG_BASE}/w185${actor.profile_path}`}
-                                alt={actor.name}
-                                className="w-full h-full object-cover"
-                              />
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center">
-                                <span className="text-foreground/30 text-[11px] font-sans font-bold">
-                                  {actor.name.charAt(0)}
-                                </span>
-                              </div>
-                            )}
-                          </div>
-                          <div className="text-center w-full">
-                            <p className="text-foreground/70 text-[10px] font-sans font-medium leading-tight truncate">
-                              {actor.name}
-                            </p>
-                            <p className="text-foreground/35 text-[9px] font-sans leading-tight truncate">
-                              {actor.character}
-                            </p>
-                          </div>
-                        </div>
+                        <ActorCard key={actor.id} actor={actor} />
                       ))}
                     </div>
                   )}
