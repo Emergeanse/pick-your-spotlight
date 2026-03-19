@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback } from "react";
-import GuidedTour, { TOUR_KEY } from "@/components/pick/GuidedTour";
 import { AnimatePresence, motion } from "framer-motion";
 import { useNavigate, useLocation } from "react-router-dom";
 import HomeScreen from "@/components/pick/HomeScreen";
@@ -8,6 +7,9 @@ import VoiceChat from "@/components/pick/VoiceChat";
 import CompanionMode from "@/components/pick/CompanionMode";
 import BottomTabBar from "@/components/pick/BottomTabBar";
 import RevealAnimation from "@/components/pick/RevealAnimation";
+import PlatformTour from "@/components/pick/PlatformTour";
+import ActivationFlow from "@/components/pick/ActivationFlow";
+import type { MissionId } from "@/components/pick/ActivationFlow";
 import { useCompanion } from "@/contexts/CompanionContext";
 import type { ChatMessage } from "@/components/pick/VoiceChat";
 import { toast } from "sonner";
@@ -49,16 +51,15 @@ const Index = () => {
   const location = useLocation();
   const pickPlus = usePickPlus();
   const [openTrainerOnMount, setOpenTrainerOnMount] = useState(false);
+
+  // Activation flow states
   const [showTour, setShowTour] = useState(false);
-  const [isActivation, setIsActivation] = useState(false);
+  const [showActivation, setShowActivation] = useState(false);
+  const [profileLoaded, setProfileLoaded] = useState(false);
 
   useEffect(() => {
     if ((location.state as any)?.openTrainer) {
       setOpenTrainerOnMount(true);
-      window.history.replaceState({}, "", "/app");
-    }
-    if ((location.state as any)?.activateTraining) {
-      setIsActivation(true);
       window.history.replaceState({}, "", "/app");
     }
   }, [location.state]);
@@ -87,11 +88,15 @@ const Index = () => {
     return () => window.removeEventListener("pick-chat-movie", handler);
   }, [loadChatMovie]);
 
+  // Load profile and determine tour/activation state
   useEffect(() => {
     if (!user) return;
-    supabase.from("profiles").select("onboarding_completed, preferred_platforms, excluded_platforms, favorite_genres, excluded_genres, min_rating, profile_confidence").eq("id", user.id).single()
+    supabase.from("profiles").select("onboarding_completed, preferred_platforms, excluded_platforms, favorite_genres, excluded_genres, min_rating, profile_confidence, tour_completed, activation_completed").eq("id", user.id).single()
       .then(({ data }) => {
-        if (data && !data.onboarding_completed) navigate("/onboarding");
+        if (data && !data.onboarding_completed) {
+          navigate("/onboarding");
+          return;
+        }
         if (data) {
           setProfilePrefs({
             excludedGenres: (data as any).excluded_genres || [],
@@ -100,23 +105,59 @@ const Index = () => {
             preferredPlatforms: data.preferred_platforms || [],
             profileConfidence: (data as any).profile_confidence || 0,
           });
-          if (data.onboarding_completed && !localStorage.getItem(TOUR_KEY)) {
-            // Show tour for returning new users, activation overlay for fresh onboarding
-            if (isActivation) {
-              setOpenTrainerOnMount(true);
-              setIsActivation(false);
-              localStorage.setItem(TOUR_KEY, "true");
-            } else {
-              setShowTour(true);
-            }
+
+          const tourDone = (data as any).tour_completed;
+          const activationDone = (data as any).activation_completed;
+          const fromOnboarding = (location.state as any)?.showTour;
+
+          if (!tourDone && fromOnboarding) {
+            setShowTour(true);
+          } else if (!tourDone && !activationDone) {
+            // Returning user who hasn't done tour — show it
+            setShowTour(true);
+          } else if (tourDone && !activationDone) {
+            setShowActivation(true);
           }
+
+          setProfileLoaded(true);
         }
       });
   }, [user, navigate]);
 
-  const handleStart = () => {
-    // Flow is now handled inside HomeScreen (who → what → tonight pick overlay)
+  const handleTourComplete = async () => {
+    setShowTour(false);
+    if (user) {
+      await supabase.from("profiles").update({ tour_completed: true } as any).eq("id", user.id);
+    }
+    setShowActivation(true);
   };
+
+  const handleActivationMission = (missionId: MissionId) => {
+    switch (missionId) {
+      case "train_20":
+        setOpenTrainerOnMount(true);
+        break;
+      case "first_reco":
+        // User needs to use "Pick pour ce soir" — just close overlay, they'll see the button
+        break;
+      case "talk_to_pick":
+        setChatInitialMessages(undefined);
+        setShowChat(true);
+        break;
+      case "watchlist_3":
+      case "like_5":
+        // User navigates freely
+        break;
+    }
+  };
+
+  const handleActivationComplete = () => {
+    setShowActivation(false);
+    // Reload pick plus state to pick up the trial
+    window.location.reload();
+  };
+
+  const handleStart = () => {};
 
   const handleSurprise = (movie: MovieDetail) => {
     setResults([movie]);
@@ -153,7 +194,6 @@ const Index = () => {
     setStep("result");
   };
 
-  // Helper: invoke surprise-personalized with retry on 429
   const invokeSurprisePersonalized = async (body: any, retries = 2): Promise<any> => {
     const { data, error } = await supabase.functions.invoke("surprise-personalized", { body });
     if (error) {
@@ -243,16 +283,16 @@ const Index = () => {
     setSearchTags(prev => prev.filter(t => t !== tag));
   };
 
-  const showTabBar = step === "home";
+  const showTabBar = step === "home" && !showTour && !showActivation;
 
   return (
     <div className="fixed inset-0 bg-background overflow-hidden">
       <AnimatePresence mode="wait">
         {step === "home" && (
           <motion.div key="home" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.4 }}
-            className="absolute inset-0 pb-[calc(3.5rem+env(safe-area-inset-bottom))]"
+            className={`absolute inset-0 ${showActivation && !showTour ? "pt-12" : ""} pb-[calc(3.5rem+env(safe-area-inset-bottom))]`}
           >
-            <HomeScreen onStart={handleStart} onOpenChat={handleOpenChat} onSurprise={handleSurprise} onMovieSelect={handleMovieSelect} loading={loading} openTrainerOnMount={openTrainerOnMount} onTrainerOpened={() => setOpenTrainerOnMount(false)} isActivation={isActivation} onActivationComplete={() => setIsActivation(false)} />
+            <HomeScreen onStart={handleStart} onOpenChat={handleOpenChat} onSurprise={handleSurprise} onMovieSelect={handleMovieSelect} loading={loading} openTrainerOnMount={openTrainerOnMount} onTrainerOpened={() => setOpenTrainerOnMount(false)} />
           </motion.div>
         )}
 
@@ -325,10 +365,16 @@ const Index = () => {
         trigger="reco_limit"
       />
 
-      {showTour && (
-        <GuidedTour
-          onComplete={() => setShowTour(false)}
-          onStartTraining={() => setOpenTrainerOnMount(true)}
+      {/* Platform Tour */}
+      <AnimatePresence>
+        {showTour && <PlatformTour onComplete={handleTourComplete} />}
+      </AnimatePresence>
+
+      {/* Activation Flow */}
+      {showActivation && !showTour && (
+        <ActivationFlow
+          onStartMission={handleActivationMission}
+          onComplete={handleActivationComplete}
         />
       )}
     </div>
