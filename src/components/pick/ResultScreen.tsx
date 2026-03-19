@@ -199,13 +199,9 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
     }
   }, [matchData, whyAudioLoading, whySpeaking, playBrowserWhyFallback]);
 
-  const isYouTube = false;
-
   const title = getDisplayTitle(movie);
   const year = getYear(movie);
-  const backdrop = isYouTube && movie.backdrop_path?.startsWith("http")
-    ? movie.backdrop_path
-    : getBackdropUrl(movie.backdrop_path);
+  const backdrop = getBackdropUrl(movie.backdrop_path);
   const poster = getPosterUrl(movie.poster_path, "w780");
   const runtime = movie.runtime || (movie.episode_run_time?.[0]) || 0;
   const genres = movie.genres?.map(g => g.name).join(" · ") || "";
