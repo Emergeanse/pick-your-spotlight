@@ -137,6 +137,7 @@ const PickTogether = () => {
           mood: mood || undefined,
           context: context || undefined,
           timeAvailable: undefined,
+          mediaType: mediaChoice,
         },
       });
 
