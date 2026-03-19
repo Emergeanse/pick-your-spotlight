@@ -51,16 +51,16 @@ const RATING_BUTTONS = [
 ];
 
 const getMilestoneMessage = (count: number): string | null => {
-  if (count === 3) return "🎬 Ça commence à prendre forme…";
-  if (count === 5) return "🧠 Pick apprend vite avec toi !";
-  if (count === 8) return "🍿 On y est presque…";
-  if (count === THRESHOLDS.minimum) return "🎯 Pick commence à te comprendre";
-  if (count === 13) return "✨ Encore quelques-uns pour des recos au top";
-  if (count === 15) return "🔮 Tes goûts se dessinent clairement";
-  if (count === 18) return "📡 Pick affine son radar…";
-  if (count === THRESHOLDS.ideal) return "🎉 Parfait ! Pick est prêt à te recommander";
-  if (count === 25) return "💫 Tu formes un duo de choc avec Pick";
-  if (count === 30) return "🧠 Pick te connaît par cœur";
+  if (count === 3) return "Ça commence à prendre forme…";
+  if (count === 5) return "Pick apprend vite avec toi !";
+  if (count === 8) return "On y est presque…";
+  if (count === THRESHOLDS.minimum) return "Pick commence à te comprendre";
+  if (count === 13) return "Encore quelques-uns pour des recos au top";
+  if (count === 15) return "Tes goûts se dessinent clairement";
+  if (count === 18) return "Pick affine son radar…";
+  if (count === THRESHOLDS.ideal) return "Parfait ! Pick est prêt à te recommander";
+  if (count === 25) return "Tu formes un duo de choc avec Pick";
+  if (count === 30) return "Pick te connaît par cœur";
   return null;
 };
 
