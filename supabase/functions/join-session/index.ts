@@ -80,7 +80,20 @@ Deno.serve(async (req) => {
 
     // --- CHECK AUTH ---
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader?.startsWith("Bearer ")) {
+    let userId: string | null = null;
+
+    if (authHeader?.startsWith("Bearer ")) {
+      const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+      const userClient = createClient(supabaseUrl, anonKey, {
+        global: { headers: { Authorization: authHeader } },
+      });
+      const { data: claims } = await userClient.auth.getUser();
+      if (claims?.user) {
+        userId = claims.user.id;
+      }
+    }
+
+    if (!userId) {
       // Unauthenticated lookup
       const found = await findSession();
       if (!found) {
