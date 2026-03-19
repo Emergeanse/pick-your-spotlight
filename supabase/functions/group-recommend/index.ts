@@ -148,8 +148,22 @@ serve(async (req) => {
         platforms: p.preferred_platforms || [],
         minRating: p.min_rating || 0,
         likedCount: liked.length,
+        isGuest: false,
       };
     });
+
+    // Add guest summaries
+    for (const guest of guestProfiles) {
+      memberSummaries.push({
+        name: guest.name,
+        favoriteGenres: guest.favoriteGenres || [],
+        excludedGenres: [],
+        platforms: [],
+        minRating: 0,
+        likedCount: 0,
+        isGuest: true,
+      });
+    }
 
     // ── 6. AI arbitration ──
     const candidateList = embeddingCandidates.slice(0, 15).map((c, i) =>
