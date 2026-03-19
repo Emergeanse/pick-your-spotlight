@@ -119,7 +119,6 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
       setShowTrainer(true);
       onTrainerOpened?.();
     }
-    }
   }, [openTrainerOnMount]);
   const { user } = useAuth();
 
