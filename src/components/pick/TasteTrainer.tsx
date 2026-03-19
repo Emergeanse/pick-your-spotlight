@@ -257,7 +257,7 @@ const TasteTrainer = ({ onClose }: TasteTrainerProps) => {
             {/* Next card (behind) */}
             {nextMovie && (
               <div className="absolute inset-x-8">
-                <div className="relative w-full aspect-[2/3] max-h-[55vh] rounded-2xl overflow-hidden border border-border/20 opacity-40 scale-95">
+                <div className="relative w-full aspect-[2/3] max-h-[65vh] rounded-2xl overflow-hidden border border-border/20 opacity-40 scale-95">
                   <img
                     src={getPosterUrl(nextMovie.poster_path, "w500")}
                     alt=""
@@ -282,13 +282,13 @@ const TasteTrainer = ({ onClose }: TasteTrainerProps) => {
                 initial={{ scale: 0.95, opacity: 0 }}
                 exit={{ opacity: 0 }}
                 transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                className="relative w-full aspect-[2/3] max-h-[55vh] rounded-2xl overflow-hidden border-2 border-border/30 shadow-2xl cursor-grab active:cursor-grabbing"
+                className="relative w-full aspect-[2/3] max-h-[65vh] rounded-2xl overflow-hidden border-2 border-border/30 shadow-2xl cursor-grab active:cursor-grabbing"
                 style={{ touchAction: "none" }}
               >
                 <img
                   src={getPosterUrl(currentMovie.poster_path, "w780")}
                   alt={getDisplayTitle(currentMovie)}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-contain bg-black/90"
                   draggable={false}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
