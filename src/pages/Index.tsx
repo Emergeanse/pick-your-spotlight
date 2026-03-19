@@ -201,8 +201,12 @@ const Index = () => {
         // User needs to use "Pick pour ce soir" — just close overlay, they'll see the button
         break;
       case "talk_to_pick":
+        setStep("home");
+        setResults([]);
+        setCurrentResultIndex(0);
+        setShowChat(false);
         setChatInitialMessages(undefined);
-        setShowChat(true);
+        setTimeout(() => setTalkToPickGuideStep("open-chat"), 400);
         break;
       case "watchlist_3":
         // Reset to home screen first, then start the guided flow
