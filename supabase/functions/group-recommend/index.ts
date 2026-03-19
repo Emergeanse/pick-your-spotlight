@@ -180,6 +180,7 @@ CONTRAINTES GROUPE :
 ${mood ? `- Humeur du groupe: ${mood}` : ""}
 ${context ? `- Contexte: ${context}` : ""}
 ${timeAvailable ? `- Temps disponible: ${timeAvailable}` : ""}
+${mediaTypeInstruction}
 
 ${candidateList ? `CANDIDATS PAR SIMILARITÉ VECTORIELLE :\n${candidateList}\n\nTu peux en choisir parmi ceux-ci OU proposer d'autres films.` : "Aucun candidat vectoriel disponible. Propose des films populaires et bien notés."}
 
