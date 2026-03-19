@@ -73,6 +73,7 @@ const Profile = () => {
     if (!isReady) return;
     if (!user) { navigate("/auth"); return; }
     loadData();
+    loadFriends();
   }, [user, isReady, navigate]);
 
   const loadData = async () => {
