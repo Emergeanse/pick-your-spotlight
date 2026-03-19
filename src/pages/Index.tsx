@@ -278,6 +278,9 @@ const Index = () => {
   const handleOpenChat = () => {
     setChatInitialMessages(undefined);
     setShowChat(true);
+    if (activeActivationMission === "talk_to_pick") {
+      setTimeout(() => setTalkToPickGuideStep("mic"), 250);
+    }
   };
   const handleCloseChat = () => setShowChat(false);
 
