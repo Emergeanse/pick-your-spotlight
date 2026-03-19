@@ -315,9 +315,10 @@ Recommande UN film avec les scores détaillés.`;
       }).catch(() => {});
     }
 
+    const contentLabel = searchType === "tv" ? "Cette série" : "Ce film";
     const fallbackReason = aiFailed
-      ? `Ce film correspond à tes genres préférés (${topGenres.slice(0, 3).join(", ")}). Pick n'a pas pu utiliser l'IA pour affiner la recommandation, mais ce titre est populaire et bien noté !`
-      : suggestion?.reason || "Film recommandé par Pick.";
+      ? `${contentLabel} correspond à tes genres préférés (${topGenres.slice(0, 3).join(", ")}). Pick n'a pas pu utiliser l'IA pour affiner la recommandation, mais ce titre est populaire et bien noté !`
+      : suggestion?.reason || `${contentLabel} est recommandé par Pick.`;
 
     return new Response(JSON.stringify({
       movie: movieDetail,
