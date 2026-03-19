@@ -99,7 +99,14 @@ const Index = () => {
             profileConfidence: (data as any).profile_confidence || 0,
           });
           if (data.onboarding_completed && !localStorage.getItem(TOUR_KEY)) {
-            setShowTour(true);
+            // Show tour for returning new users, activation overlay for fresh onboarding
+            if (isActivation) {
+              setOpenTrainerOnMount(true);
+              setIsActivation(false);
+              localStorage.setItem(TOUR_KEY, "true");
+            } else {
+              setShowTour(true);
+            }
           }
         }
       });
