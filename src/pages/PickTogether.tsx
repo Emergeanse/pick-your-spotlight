@@ -1139,10 +1139,6 @@ const PickTogether = () => {
         )}
       </AnimatePresence>
 
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       {/* Show tab bar only on landing */}
       {step === "landing" && <BottomTabBar />}
