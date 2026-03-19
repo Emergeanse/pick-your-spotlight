@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Users, Loader2, ArrowLeft, Sparkles, Star, Clock, ChevronRight, Check, Wind, Flame, Laugh, Heart, UserRound, UsersRound, Home } from "lucide-react";
+import { Users, Loader2, ArrowLeft, Sparkles, Star, Clock, ChevronRight, Check, Wind, Flame, Laugh, Heart, UserRound, UsersRound, Home, Film, Tv, Layers } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -25,7 +25,14 @@ interface GroupRecommendation {
   providers: { name: string; logo_path: string; provider_id: number }[];
 }
 
-type SessionStep = "select-friends" | "select-mood" | "loading" | "results";
+type SessionStep = "select-friends" | "select-what" | "select-mood" | "loading" | "results";
+type MediaChoice = "movie" | "tv" | "both";
+
+const MEDIA_OPTIONS: { value: MediaChoice; icon: React.ElementType; label: string; description: string }[] = [
+  { value: "movie", icon: Film, label: "Un film", description: "Long-métrage" },
+  { value: "tv", icon: Tv, label: "Une série", description: "Série ou documentaire" },
+  { value: "both", icon: Layers, label: "Peu importe", description: "Films et séries" },
+];
 
 const MOODS: { id: string; icon: React.ElementType; label: string; description: string }[] = [
   { id: "relax", icon: Wind, label: "Détente", description: "Calme et apaisant" },
@@ -57,6 +64,7 @@ const PickTogether = () => {
   const [selectedFriendIds, setSelectedFriendIds] = useState<Set<string>>(new Set());
   const [mood, setMood] = useState<string | null>(null);
   const [context, setContext] = useState<string | null>(null);
+  const [mediaChoice, setMediaChoice] = useState<MediaChoice>("both");
   const [loading, setLoading] = useState(false);
   const [loadingMsg, setLoadingMsg] = useState("");
   const [recommendations, setRecommendations] = useState<GroupRecommendation[]>([]);
@@ -129,6 +137,7 @@ const PickTogether = () => {
           mood: mood || undefined,
           context: context || undefined,
           timeAvailable: undefined,
+          mediaType: mediaChoice,
         },
       });
 
@@ -167,7 +176,8 @@ const PickTogether = () => {
     <div className="fixed inset-0 bg-background overflow-hidden">
       <BrandHeader showBack onBack={() => {
         if (step === "results") setStep("select-friends");
-        else if (step === "select-mood") setStep("select-friends");
+        else if (step === "select-mood") setStep("select-what");
+        else if (step === "select-what") setStep("select-friends");
         else navigate("/app/friends");
       }} />
 
@@ -251,7 +261,7 @@ const PickTogether = () => {
                 {selectedFriendIds.size > 0 && (
                   <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
                     <Button
-                      onClick={() => setStep("select-mood")}
+                      onClick={() => setStep("select-what")}
                       className="w-full rounded-xl h-13 gap-2 bg-primary text-primary-foreground hover:bg-primary/90 font-sans text-base neon-glow"
                     >
                       Continuer ({selectedCount} personnes)
@@ -262,7 +272,51 @@ const PickTogether = () => {
               </motion.div>
             )}
 
-            {/* Step 2: Mood & context */}
+            {/* Step 2: What to watch */}
+            {step === "select-what" && (
+              <motion.div key="what" initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -40 }}>
+                <div className="mb-6">
+                  <h1 className="text-2xl font-serif text-foreground mb-1">Vous voulez regarder quoi ?</h1>
+                  <p className="text-muted-foreground text-sm font-sans">
+                    Film, série ou les deux ?
+                  </p>
+                </div>
+
+                <div className="flex flex-col gap-2.5 mb-6">
+                  {MEDIA_OPTIONS.map((opt, i) => {
+                    const Icon = opt.icon;
+                    const selected = mediaChoice === opt.value;
+                    return (
+                      <motion.button
+                        key={opt.value}
+                        initial={{ opacity: 0, y: 16 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: i * 0.06, duration: 0.35 }}
+                        whileHover={{ scale: 1.03, y: -2 }}
+                        whileTap={{ scale: 0.96 }}
+                        onClick={() => {
+                          setMediaChoice(opt.value);
+                          setTimeout(() => setStep("select-mood"), 300);
+                        }}
+                        className={`bg-card rounded-2xl p-4 text-left transition-all border flex items-center gap-3 ${
+                          selected
+                            ? "border-primary neon-glow bg-primary/10"
+                            : "border-transparent hover:border-primary/30"
+                        }`}
+                      >
+                        <Icon className={`w-5 h-5 shrink-0 transition-colors ${selected ? "text-primary" : "text-primary/40"}`} />
+                        <div>
+                          <span className="font-serif text-lg tracking-wide block">{opt.label}</span>
+                          <span className="text-muted-foreground text-xs mt-0.5 block font-sans">{opt.description}</span>
+                        </div>
+                      </motion.button>
+                    );
+                  })}
+                </div>
+              </motion.div>
+            )}
+
+            {/* Step 3: Mood & context */}
             {step === "select-mood" && (
               <motion.div key="mood" initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -40 }}>
                 <div className="mb-6">

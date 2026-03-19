@@ -10,8 +10,8 @@ const corsHeaders = {
 const TMDB_API_KEY = "2dca580c2a14b55200e784d157207b4d";
 const VECTOR_DIM = 32;
 
-async function getMovieDetails(id: number): Promise<any> {
-  const res = await fetch(`https://api.themoviedb.org/3/movie/${id}?api_key=${TMDB_API_KEY}&language=fr-FR`);
+async function getDetails(id: number, type: "movie" | "tv" = "movie"): Promise<any> {
+  const res = await fetch(`https://api.themoviedb.org/3/${type}/${id}?api_key=${TMDB_API_KEY}&language=fr-FR`);
   return res.json();
 }
 
@@ -28,7 +28,8 @@ serve(async (req) => {
   }
 
   try {
-    const { memberIds, mood, context, timeAvailable } = await req.json();
+    const { memberIds, mood, context, timeAvailable, mediaType: rawMediaType } = await req.json();
+    const mediaType: "movie" | "tv" | "both" = rawMediaType === "tv" ? "tv" : rawMediaType === "movie" ? "movie" : "both";
 
     if (!memberIds || memberIds.length < 2) {
       return new Response(JSON.stringify({ error: "Au moins 2 membres requis" }), {
@@ -159,7 +160,15 @@ serve(async (req) => {
     };
     const excludedGenreIds = excludedGenres.map(g => genreNameToId[g]).filter(Boolean);
 
-    const systemPrompt = `Tu es un moteur de recommandation cinéma spécialisé dans les GROUPES. Tu dois trouver les films qui satisferont TOUT le monde.
+    const mediaTypeInstruction = mediaType === "tv"
+      ? "\n- TYPE DE CONTENU : SÉRIES TV UNIQUEMENT. Tu DOIS recommander exclusivement des séries, PAS de films."
+      : mediaType === "movie"
+        ? "\n- TYPE DE CONTENU : FILMS UNIQUEMENT. Tu DOIS recommander exclusivement des films, PAS de séries."
+        : "\n- TYPE DE CONTENU : MIXTE. Tu DOIS recommander un mélange de films ET de séries (au moins 2 de chaque type). Précise le type dans la raison.";
+
+    const contentLabel = mediaType === "tv" ? "séries" : mediaType === "movie" ? "films" : "films et séries";
+
+    const systemPrompt = `Tu es un moteur de recommandation cinéma spécialisé dans les GROUPES. Tu dois trouver les ${contentLabel} qui satisferont TOUT le monde.
 
 MEMBRES DU GROUPE (${memberSummaries.length} personnes) :
 ${memberSummaries.map((m, i) => `${i + 1}. ${m.name} — Genres favoris: ${m.favoriteGenres.join(", ") || "?"} | Genres exclus: ${m.excludedGenres.join(", ") || "aucun"} | Films aimés: ${m.likedCount} | Note min: ${m.minRating}/10`).join("\n")}
@@ -171,6 +180,7 @@ CONTRAINTES GROUPE :
 ${mood ? `- Humeur du groupe: ${mood}` : ""}
 ${context ? `- Contexte: ${context}` : ""}
 ${timeAvailable ? `- Temps disponible: ${timeAvailable}` : ""}
+${mediaTypeInstruction}
 
 ${candidateList ? `CANDIDATS PAR SIMILARITÉ VECTORIELLE :\n${candidateList}\n\nTu peux en choisir parmi ceux-ci OU proposer d'autres films.` : "Aucun candidat vectoriel disponible. Propose des films populaires et bien notés."}
 
@@ -180,14 +190,14 @@ ALGORITHME DE SCORING GROUPE :
 - Privilégie les films qui sont "acceptables pour tous" plutôt que "adorés par un seul"
 
 RÈGLES :
-- Recommande EXACTEMENT 5 films, du meilleur au moins bon
-- Chaque film doit inclure: title, reason (2 phrases max), groupScore (0-100), memberNotes (1 phrase par membre expliquant pourquoi ça lui convient)
-- NE recommande PAS de films des genres exclus
-- NE recommande PAS de films déjà vus (IDs exclus: ${excludeIds.length} films)
+- Recommande EXACTEMENT 5 ${contentLabel}, du meilleur au moins bon
+- Chaque recommandation doit inclure: title, type ("movie" ou "tv"), reason (2 phrases max), groupScore (0-100), memberNotes (1 phrase par membre expliquant pourquoi ça lui convient)
+- NE recommande PAS de contenus des genres exclus
+- NE recommande PAS de contenus déjà vus (IDs exclus: ${excludeIds.length})
 - Réponds UNIQUEMENT en JSON valide sans backticks
 
 Structure :
-{"recommendations": [{"title": "...", "reason": "...", "groupScore": 85, "memberNotes": {"nom1": "...", "nom2": "..."}}]}`;
+{"recommendations": [{"title": "...", "type": "movie", "reason": "...", "groupScore": 85, "memberNotes": {"nom1": "...", "nom2": "..."}}]}`;
 
     const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -199,7 +209,7 @@ Structure :
         model: "google/gemini-3-flash-preview",
         messages: [
           { role: "system", content: systemPrompt },
-          { role: "user", content: "Trouve les 5 meilleurs films pour ce groupe." },
+          { role: "user", content: `Trouve les 5 meilleurs ${contentLabel} pour ce groupe.` },
         ],
       }),
     });
@@ -230,19 +240,21 @@ Structure :
 
     const recommendations = aiResult.recommendations || [];
 
-    // ── 7. Resolve each recommendation to TMDB MovieDetail ──
+    // ── 7. Resolve each recommendation to TMDB detail ──
     const resolvedMovies = [];
 
     for (const rec of recommendations.slice(0, 5)) {
       try {
-        const searchUrl = `https://api.themoviedb.org/3/search/movie?api_key=${TMDB_API_KEY}&language=fr-FR&query=${encodeURIComponent(rec.title)}&page=1`;
+        // Determine search type from AI response or fallback to mediaType
+        const recType: "movie" | "tv" = rec.type === "tv" ? "tv" : mediaType === "tv" ? "tv" : mediaType === "movie" ? "movie" : (rec.type || "movie");
+        const searchUrl = `https://api.themoviedb.org/3/search/${recType}?api_key=${TMDB_API_KEY}&language=fr-FR&query=${encodeURIComponent(rec.title)}&page=1`;
         const searchRes = await fetch(searchUrl);
         const searchData = await searchRes.json();
         const found = (searchData.results || [])[0];
 
         if (found) {
-          const detail = await getMovieDetails(found.id);
-          const providers = await getWatchProvidersFR(found.id);
+          const detail = await getDetails(found.id, recType);
+          const providers = await getWatchProvidersFR(found.id, recType);
 
           resolvedMovies.push({
             movie: detail,
