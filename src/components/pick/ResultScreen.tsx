@@ -442,6 +442,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
       } else {
         await addToWatchlist(movie); setBookmarked(true); toast.success("Ajouté à ta watchlist !");
         trackInteraction(movie.id, "saved");
+        window.dispatchEvent(new CustomEvent("pick-watchlist-added"));
       }
     } catch { toast.error("Erreur lors de la sauvegarde"); }
     finally { setBookmarkLoading(false); }
