@@ -15,6 +15,7 @@ import { sendNotification } from "@/lib/notifications";
 import BottomTabBar from "@/components/pick/BottomTabBar";
 import CinematicAvatar, { mapLevelToType, mapArchetypeToDNA, mapSignatureToAnimation, type CinematicLevel, type CinematicDNA, type TasteAnimation } from "@/components/pick/CinematicAvatar";
 import { QRCodeSVG } from "qrcode.react";
+import { useAdmin } from "@/hooks/use-admin";
 const ALL_PLATFORMS = [
   { id: 8, label: "Netflix", logo: "https://image.tmdb.org/t/p/original/pbpMk2JmcoNnQwx5JGpXngfoWtp.jpg" },
   { id: 337, label: "Disney+", logo: "https://image.tmdb.org/t/p/original/97yvRBw1GzX7fXprcF80er19ot.jpg" },
