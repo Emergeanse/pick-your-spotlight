@@ -348,30 +348,22 @@ const PickTogether = () => {
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.25 }}
-              className="w-full max-w-sm space-y-3"
+              className="w-full max-w-sm"
             >
               <Button
-                onClick={() => setStep("who")}
+                onClick={handleCreateSoiree}
+                disabled={creatingSession}
                 variant="hero"
                 size="xl"
                 className="w-full gap-2 font-sans text-base"
               >
-                <Sparkles className="w-4 h-4" />
-                Créer une soirée ciné
-              </Button>
-
-              <button
-                onClick={handleCreateSessionQR}
-                disabled={creatingSession}
-                className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl border border-border/15 bg-card/40 text-foreground/60 text-sm font-sans hover:border-primary/30 hover:text-foreground transition-all"
-              >
                 {creatingSession ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
                 ) : (
-                  <QrCode className="w-4 h-4" />
+                  <Sparkles className="w-4 h-4" />
                 )}
-                Inviter par QR code
-              </button>
+                Créer une soirée ciné
+              </Button>
             </motion.div>
           </motion.div>
         )}
