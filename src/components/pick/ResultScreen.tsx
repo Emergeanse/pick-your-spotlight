@@ -20,33 +20,55 @@ import PickCharacter from "./PickCharacter";
 const IMG_BASE = "https://image.tmdb.org/t/p";
 
 function ActorCard({ actor }: { actor: import("@/lib/tmdb").CastMember }) {
-  const [hovered, setHovered] = useState(false);
+  const [open, setOpen] = useState(false);
   const [person, setPerson] = useState<PersonDetails | null>(null);
   const [loading, setLoading] = useState(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
+
+  const fetchPerson = () => {
+    if (!person && !loading) {
+      setLoading(true);
+      getPersonDetails(actor.id).then(setPerson).catch(() => {}).finally(() => setLoading(false));
+    }
+  };
 
   const handleMouseEnter = () => {
     timeoutRef.current = setTimeout(() => {
-      setHovered(true);
-      if (!person && !loading) {
-        setLoading(true);
-        getPersonDetails(actor.id).then(setPerson).catch(() => {}).finally(() => setLoading(false));
-      }
-    }, 300);
+      setOpen(true);
+      fetchPerson();
+    }, 250);
   };
 
   const handleMouseLeave = () => {
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    setHovered(false);
+    setOpen(false);
   };
+
+  const handleTap = () => {
+    setOpen(prev => !prev);
+    fetchPerson();
+  };
+
+  // Close on outside click for mobile
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: PointerEvent) => {
+      if (cardRef.current && !cardRef.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("pointerdown", handler);
+    return () => document.removeEventListener("pointerdown", handler);
+  }, [open]);
 
   return (
     <div
+      ref={cardRef}
       className="relative flex flex-col items-center gap-1.5 shrink-0 w-14 cursor-pointer"
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
+      onClick={handleTap}
     >
-      <div className={`w-11 h-11 rounded-full bg-foreground/[0.06] border overflow-hidden transition-all duration-200 ${hovered ? "border-primary/50 ring-2 ring-primary/20 scale-110" : "border-border/20"}`}>
+      <div className={`w-11 h-11 rounded-full bg-foreground/[0.06] border overflow-hidden transition-all duration-200 ${open ? "border-primary/50 ring-2 ring-primary/20 scale-110" : "border-border/20"}`}>
         {actor.profile_path ? (
           <img src={`${IMG_BASE}/w185${actor.profile_path}`} alt={actor.name} className="w-full h-full object-cover" />
         ) : (
@@ -61,57 +83,57 @@ function ActorCard({ actor }: { actor: import("@/lib/tmdb").CastMember }) {
       </div>
 
       <AnimatePresence>
-        {hovered && (
+        {open && (
           <motion.div
-            initial={{ opacity: 0, y: 8, scale: 0.95 }}
+            initial={{ opacity: 0, y: -6, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 8, scale: 0.95 }}
+            exit={{ opacity: 0, y: -6, scale: 0.95 }}
             transition={{ duration: 0.2 }}
-            className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 z-50 w-64 rounded-xl bg-card/95 backdrop-blur-xl border border-border/30 shadow-2xl p-3.5 pointer-events-none"
+            className="absolute top-full mt-2 left-1/2 -translate-x-1/2 z-[60] w-64 rounded-2xl bg-black/80 backdrop-blur-2xl border border-white/10 shadow-2xl p-4"
           >
             {loading ? (
               <div className="flex items-center justify-center py-4">
-                <Loader2 className="w-4 h-4 animate-spin text-primary/60" />
+                <Loader2 className="w-4 h-4 animate-spin text-white/50" />
               </div>
             ) : person ? (
               <div>
-                <div className="flex items-center gap-2.5 mb-2.5">
-                  <div className="w-10 h-10 rounded-full overflow-hidden bg-foreground/[0.06] border border-border/20 shrink-0">
+                <div className="flex items-center gap-2.5 mb-3">
+                  <div className="w-11 h-11 rounded-full overflow-hidden bg-white/5 border border-white/10 shrink-0">
                     {person.profile_path ? (
                       <img src={`${IMG_BASE}/w185${person.profile_path}`} alt={person.name} className="w-full h-full object-cover" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
-                        <span className="text-foreground/30 text-sm font-bold">{person.name.charAt(0)}</span>
+                        <span className="text-white/30 text-sm font-bold">{person.name.charAt(0)}</span>
                       </div>
                     )}
                   </div>
                   <div className="min-w-0">
-                    <p className="text-foreground text-[13px] font-sans font-semibold leading-tight truncate">{person.name}</p>
-                    <p className="text-muted-foreground text-[10px] font-sans">
+                    <p className="text-white text-[13px] font-sans font-semibold leading-tight truncate">{person.name}</p>
+                    <p className="text-white/50 text-[10px] font-sans">
                       {person.known_for_department === "Acting" ? "Acteur/Actrice" : person.known_for_department}
                       {person.birthday && ` · ${new Date().getFullYear() - new Date(person.birthday).getFullYear()} ans`}
                     </p>
                   </div>
                 </div>
                 {person.biography && (
-                  <p className="text-foreground/60 text-[11px] font-sans leading-relaxed line-clamp-3 mb-2.5">
+                  <p className="text-white/60 text-[11px] font-sans leading-relaxed line-clamp-3 mb-3">
                     {person.biography}
                   </p>
                 )}
                 {person.knownFor.length > 0 && (
                   <div>
-                    <p className="text-[9px] uppercase tracking-widest text-foreground/30 font-sans font-semibold mb-1.5">Filmographie</p>
+                    <p className="text-[9px] uppercase tracking-widest text-white/30 font-sans font-semibold mb-1.5">Filmographie</p>
                     <div className="flex gap-1.5 overflow-hidden">
                       {person.knownFor.slice(0, 4).map((m) => (
                         <div key={`${m.media_type}-${m.id}`} className="shrink-0 w-11">
                           {m.poster_path ? (
-                            <img src={`${IMG_BASE}/w92${m.poster_path}`} alt={m.title} className="w-11 h-[66px] rounded-md object-cover border border-border/10" />
+                            <img src={`${IMG_BASE}/w92${m.poster_path}`} alt={m.title} className="w-11 h-[66px] rounded-md object-cover border border-white/10" />
                           ) : (
-                            <div className="w-11 h-[66px] rounded-md bg-foreground/[0.04] border border-border/10 flex items-center justify-center">
-                              <span className="text-foreground/20 text-[8px]">{m.title.slice(0, 3)}</span>
+                            <div className="w-11 h-[66px] rounded-md bg-white/5 border border-white/10 flex items-center justify-center">
+                              <span className="text-white/20 text-[8px]">{m.title.slice(0, 3)}</span>
                             </div>
                           )}
-                          <p className="text-foreground/50 text-[8px] font-sans leading-tight mt-0.5 truncate">{m.title}</p>
+                          <p className="text-white/50 text-[8px] font-sans leading-tight mt-0.5 truncate">{m.title}</p>
                         </div>
                       ))}
                     </div>
