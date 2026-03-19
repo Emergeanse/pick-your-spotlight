@@ -10,6 +10,8 @@ import RevealAnimation from "@/components/pick/RevealAnimation";
 import PlatformTour from "@/components/pick/PlatformTour";
 import ActivationFlow from "@/components/pick/ActivationFlow";
 import type { MissionId } from "@/components/pick/ActivationFlow";
+import WatchlistMissionGuide from "@/components/pick/WatchlistMissionGuide";
+import type { WatchlistGuideStep } from "@/components/pick/WatchlistMissionGuide";
 
 import type { ChatMessage } from "@/components/pick/VoiceChat";
 import { toast } from "sonner";
