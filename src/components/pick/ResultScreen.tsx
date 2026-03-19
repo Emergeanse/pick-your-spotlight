@@ -953,17 +953,6 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
             >
               {/* Main CTA row */}
               <div className="flex items-center gap-2.5">
-                {onStartCompanion && (
-                  <Button
-                    size="lg"
-                    className="flex-1 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 font-sans font-semibold h-12 gap-2 text-[15px] neon-glow-strong transition-all active:scale-[0.97]"
-                    onClick={onStartCompanion}
-                  >
-                    <Tv className="w-5 h-5" />
-                    Lancer le compagnon 🍿
-                  </Button>
-                )}
-              </div>
 
               {/* Compact secondary actions — icon row */}
               <div className="flex items-center gap-2">
