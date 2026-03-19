@@ -84,14 +84,9 @@ const Profile = () => {
   };
 
   const togglePlatform = (id: number) => {
-    if (selectedPlatforms.includes(id)) {
-      setSelectedPlatforms(prev => prev.filter(p => p !== id));
-      setExcludedPlatforms(prev => [...prev, id]);
-    } else if (excludedPlatforms.includes(id)) {
-      setExcludedPlatforms(prev => prev.filter(p => p !== id));
-    } else {
-      setSelectedPlatforms(prev => [...prev, id]);
-    }
+    setSelectedPlatforms(prev =>
+      prev.includes(id) ? prev.filter(p => p !== id) : [...prev, id]
+    );
   };
 
   const handleSaveName = async () => {
