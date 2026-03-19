@@ -14,31 +14,25 @@ interface TourStep {
 const TOUR_STEPS: TourStep[] = [
   {
     selector: '[data-tour="pick-ce-soir"]',
-    title: "🍿 Pick pour ce soir",
+    title: "Pick pour ce soir",
     desc: "Ton bouton principal ! Dis ce que tu veux regarder et Pick trouve le film parfait pour ta soirée.",
     position: "bottom",
   },
   {
     selector: '[data-tour="parle-a-pick"]',
-    title: "🎙 Parle à Pick",
+    title: "Parle à Pick",
     desc: "Discute librement avec Pick. Essaie : « Un thriller psychologique récent » ou « Quelque chose de léger avec de l'humour ».",
     position: "bottom",
   },
   {
-    selector: '[data-tour="entraine-pick"]',
-    title: "🧠 Entraîne ton Pick",
-    desc: "Swipe des films pour que Pick comprenne tes goûts. Plus tu l'entraînes, plus il est précis.",
-    position: "top",
-  },
-  {
     selector: '[data-tour="tab-watchlist"]',
-    title: "📌 Ta Watchlist",
+    title: "Ta Watchlist",
     desc: "Sauvegarde tous les films que tu veux voir. Tu les retrouveras toujours ici.",
     position: "top",
   },
   {
     selector: '[data-tour="tab-cinema"]',
-    title: "🧬 Mon Cinéma",
+    title: "Mon Cinéma",
     desc: "Ton profil cinéma, tes coups de cœur, ton ADN Cinéma… Tout ce qui te rend unique.",
     position: "top",
   },
