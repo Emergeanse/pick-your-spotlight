@@ -362,9 +362,9 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
                   onClick={() => {
                     setPickAnimating(true);
                     setTimeout(() => setPickAnimating(false), 900);
-                    onStart();
+                    setFlowStep("who");
                   }}
-                  disabled={loading || tonightLoading}
+                  disabled={loading || tonightLoading || flowStep !== "idle"}
                   className="group w-full text-left rounded-2xl p-5 bg-gradient-to-br from-primary/20 via-primary/15 to-accent/10 border-2 border-primary/50 hover:border-primary/70 hover:from-primary/25 transition-all disabled:opacity-50 relative overflow-hidden shadow-[0_0_30px_-8px_hsl(var(--primary)/0.35)]"
                 >
                   {/* Popcorn burst animation on click */}
