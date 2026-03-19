@@ -412,79 +412,113 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
               transition={{ delay: 0.5 }}
               className="mb-4"
             >
-              {(
-                <>
-                  <p className="text-[10px] uppercase tracking-widest text-foreground/30 font-sans font-semibold mb-2">
-                    Où regarder
-                  </p>
+              {(() => {
+                // Detect if movie is currently in theaters (released within last 4 months, no streaming)
+                const releaseDate = movie.release_date ? new Date(movie.release_date) : null;
+                const now = new Date();
+                const fourMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 4, now.getDate());
+                const isInTheaters = releaseDate && releaseDate > fourMonthsAgo && releaseDate <= now && streamingLinks.length === 0;
+                const allocineUrl = `https://www.allocine.fr/rechercher/?q=${encodeURIComponent(title)}`;
 
-                  {streamingLinks.length === 0 ? (
-                    /* No platform available */
-                    <div className="rounded-xl bg-foreground/[0.04] border border-border/15 p-3.5">
-                      <p className="text-foreground/40 text-[12px] font-sans mb-2.5">
-                        Non disponible en streaming actuellement
+                if (isInTheaters) {
+                  return (
+                    <>
+                      <p className="text-[10px] uppercase tracking-widest text-foreground/30 font-sans font-semibold mb-2">
+                        Où regarder
                       </p>
-                      {!bookmarked && (
-                        <motion.button
-                          whileTap={{ scale: 0.97 }}
-                          onClick={handleToggleBookmark}
-                          disabled={bookmarkLoading}
-                          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary/10 border border-primary/25 text-primary text-[12px] font-sans font-semibold hover:bg-primary/15 transition-all"
-                        >
-                          <Bookmark className="w-3.5 h-3.5" />
-                          Sauvegarder pour plus tard
-                        </motion.button>
-                      )}
-                    </div>
-                  ) : streamingLinks.length === 1 ? (
-                    /* Single platform — full-width prominent button */
-                    <motion.button
-                      whileTap={{ scale: 0.97 }}
-                      onClick={() => {
-                        trackInteraction(movie.id, "watch_clicked", { platform: streamingLinks[0].name });
-                        openStreamingLink(streamingLinks[0]);
-                      }}
-                      className="w-full flex items-center justify-center gap-3 px-5 py-3.5 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 font-sans font-semibold text-sm neon-glow transition-all active:scale-[0.98]"
-                    >
-                      <img
-                        src={`${IMG_BASE}/w92${streamingLinks[0].logo_path}`}
-                        alt={streamingLinks[0].name}
-                        className="w-6 h-6 rounded-md object-cover"
-                      />
-                      <span>Regarder sur {streamingLinks[0].name}</span>
-                      <ExternalLink className="w-3.5 h-3.5 opacity-70" />
-                    </motion.button>
-                  ) : (
-                    /* Multiple platforms — list with open buttons */
-                    <div className="flex flex-col gap-2">
-                      {streamingLinks.slice(0, 6).map((link) => (
-                        <motion.button
-                          key={link.providerId + link.name}
-                          whileTap={{ scale: 0.98 }}
-                          onClick={() => {
-                            trackInteraction(movie.id, "watch_clicked", { platform: link.name });
-                            openStreamingLink(link);
-                          }}
-                          className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-foreground/[0.05] border border-border/20 hover:border-primary/30 hover:bg-foreground/[0.08] transition-all active:scale-[0.98] group"
-                        >
-                          <img
-                            src={`${IMG_BASE}/w92${link.logo_path}`}
-                            alt={link.name}
-                            className="w-8 h-8 rounded-lg object-cover shrink-0"
-                          />
-                          <span className="text-foreground/70 text-[13px] font-sans font-medium flex-1 text-left group-hover:text-foreground transition-colors">
-                            {link.name}
-                          </span>
-                          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary/15 text-primary text-[11px] font-sans font-semibold group-hover:bg-primary/25 transition-colors">
-                            Ouvrir
-                            <ExternalLink className="w-3 h-3" />
-                          </span>
-                        </motion.button>
-                      ))}
-                    </div>
-                  )}
-                </>
-              )}
+                      <motion.button
+                        whileTap={{ scale: 0.97 }}
+                        onClick={() => {
+                          trackInteraction(movie.id, "watch_clicked", { platform: "cinema" });
+                          window.open(allocineUrl, "_blank");
+                        }}
+                        className="w-full flex items-center justify-center gap-3 px-5 py-3.5 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 font-sans font-semibold text-sm neon-glow transition-all active:scale-[0.98]"
+                      >
+                        <Tv className="w-5 h-5" />
+                        <span>Actuellement au cinéma</span>
+                        <ExternalLink className="w-3.5 h-3.5 opacity-70" />
+                      </motion.button>
+                      <p className="text-foreground/30 text-[11px] font-sans mt-1.5 text-center">
+                        Voir les séances sur Allociné
+                      </p>
+                    </>
+                  );
+                }
+
+                return (
+                  <>
+                    <p className="text-[10px] uppercase tracking-widest text-foreground/30 font-sans font-semibold mb-2">
+                      Où regarder
+                    </p>
+
+                    {streamingLinks.length === 0 ? (
+                      /* No platform available */
+                      <div className="rounded-xl bg-foreground/[0.04] border border-border/15 p-3.5">
+                        <p className="text-foreground/40 text-[12px] font-sans mb-2.5">
+                          Non disponible en streaming actuellement
+                        </p>
+                        {!bookmarked && (
+                          <motion.button
+                            whileTap={{ scale: 0.97 }}
+                            onClick={handleToggleBookmark}
+                            disabled={bookmarkLoading}
+                            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary/10 border border-primary/25 text-primary text-[12px] font-sans font-semibold hover:bg-primary/15 transition-all"
+                          >
+                            <Bookmark className="w-3.5 h-3.5" />
+                            Sauvegarder pour plus tard
+                          </motion.button>
+                        )}
+                      </div>
+                    ) : streamingLinks.length === 1 ? (
+                      /* Single platform — full-width prominent button */
+                      <motion.button
+                        whileTap={{ scale: 0.97 }}
+                        onClick={() => {
+                          trackInteraction(movie.id, "watch_clicked", { platform: streamingLinks[0].name });
+                          openStreamingLink(streamingLinks[0]);
+                        }}
+                        className="w-full flex items-center justify-center gap-3 px-5 py-3.5 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 font-sans font-semibold text-sm neon-glow transition-all active:scale-[0.98]"
+                      >
+                        <img
+                          src={`${IMG_BASE}/w92${streamingLinks[0].logo_path}`}
+                          alt={streamingLinks[0].name}
+                          className="w-6 h-6 rounded-md object-cover"
+                        />
+                        <span>Regarder sur {streamingLinks[0].name}</span>
+                        <ExternalLink className="w-3.5 h-3.5 opacity-70" />
+                      </motion.button>
+                    ) : (
+                      /* Multiple platforms — list with open buttons */
+                      <div className="flex flex-col gap-2">
+                        {streamingLinks.slice(0, 6).map((link) => (
+                          <motion.button
+                            key={link.providerId + link.name}
+                            whileTap={{ scale: 0.98 }}
+                            onClick={() => {
+                              trackInteraction(movie.id, "watch_clicked", { platform: link.name });
+                              openStreamingLink(link);
+                            }}
+                            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-foreground/[0.05] border border-border/20 hover:border-primary/30 hover:bg-foreground/[0.08] transition-all active:scale-[0.98] group"
+                          >
+                            <img
+                              src={`${IMG_BASE}/w92${link.logo_path}`}
+                              alt={link.name}
+                              className="w-8 h-8 rounded-lg object-cover shrink-0"
+                            />
+                            <span className="text-foreground/70 text-[13px] font-sans font-medium flex-1 text-left group-hover:text-foreground transition-colors">
+                              {link.name}
+                            </span>
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary/15 text-primary text-[11px] font-sans font-semibold group-hover:bg-primary/25 transition-colors">
+                              Ouvrir
+                              <ExternalLink className="w-3 h-3" />
+                            </span>
+                          </motion.button>
+                        ))}
+                      </div>
+                    )}
+                  </>
+                );
+              })()}
             </motion.div>
 
             {/* Synopsis — expandable */}
