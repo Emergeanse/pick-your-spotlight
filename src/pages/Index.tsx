@@ -299,9 +299,10 @@ const Index = () => {
   };
 
   const handleShowAnother = async (rejectReason?: string, rejectedMovie?: MovieDetail) => {
-    // Advance watchlist guide: hide during loading, will show "sauvegarder" after new movie loads
+    // Advance watchlist guide
     if (watchlistGuideStep === "autre-suggestion") {
-      setWatchlistGuideStep(null); // hide temporarily during loading
+      setWatchlistGuideStep(null);
+      watchlistGuideAwaitingLoad.current = true;
     }
 
     const currentMovie = results[currentResultIndex];
