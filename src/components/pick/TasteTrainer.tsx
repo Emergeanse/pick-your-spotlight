@@ -257,7 +257,7 @@ const TasteTrainer = ({ onClose }: TasteTrainerProps) => {
             {/* Next card (behind) */}
             {nextMovie && (
               <div className="absolute inset-x-8">
-                <div className="relative w-full aspect-[2/3] max-h-[55vh] rounded-2xl overflow-hidden border border-border/20 opacity-40 scale-95">
+                <div className="relative w-full aspect-[2/3] max-h-[65vh] rounded-2xl overflow-hidden border border-border/20 opacity-40 scale-95">
                   <img
                     src={getPosterUrl(nextMovie.poster_path, "w500")}
                     alt=""
