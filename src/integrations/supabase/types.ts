@@ -157,6 +157,7 @@ export type Database = {
           created_at: string
           creator_id: string
           id: string
+          invite_code: string | null
           mood: string | null
           name: string
           time_available: string | null
@@ -166,6 +167,7 @@ export type Database = {
           created_at?: string
           creator_id: string
           id?: string
+          invite_code?: string | null
           mood?: string | null
           name?: string
           time_available?: string | null
@@ -175,6 +177,7 @@ export type Database = {
           created_at?: string
           creator_id?: string
           id?: string
+          invite_code?: string | null
           mood?: string | null
           name?: string
           time_available?: string | null
@@ -490,6 +493,7 @@ export type Database = {
     }
     Functions: {
       generate_friend_code: { Args: never; Returns: string }
+      generate_session_code: { Args: never; Returns: string }
       match_movies_by_taste: {
         Args: {
           exclude_ids?: number[]
