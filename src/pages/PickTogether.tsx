@@ -27,17 +27,17 @@ interface GroupRecommendation {
 
 type SessionStep = "select-friends" | "select-mood" | "loading" | "results";
 
-const MOODS = [
-  { id: "relax", emoji: "🧘", label: "Détente" },
-  { id: "excited", emoji: "🔥", label: "Intense" },
-  { id: "fun", emoji: "😂", label: "Fun" },
-  { id: "romantic", emoji: "💕", label: "Romantique" },
+const MOODS: { id: string; icon: React.ElementType; label: string; description: string }[] = [
+  { id: "relax", icon: Wind, label: "Détente", description: "Calme et apaisant" },
+  { id: "excited", icon: Flame, label: "Intense", description: "Adrénaline et tension" },
+  { id: "fun", icon: Laugh, label: "Fun", description: "Rires et bonne humeur" },
+  { id: "romantic", icon: Heart, label: "Romantique", description: "Amour et émotion" },
 ];
 
-const CONTEXTS = [
-  { id: "couple", emoji: "👫", label: "En duo" },
-  { id: "friends", emoji: "🍕", label: "Entre amis" },
-  { id: "family", emoji: "👨‍👩‍👧‍👦", label: "En famille" },
+const CONTEXTS: { id: string; icon: React.ElementType; label: string }[] = [
+  { id: "couple", icon: UserRound, label: "En duo" },
+  { id: "friends", icon: UsersRound, label: "Entre amis" },
+  { id: "family", icon: Home, label: "En famille" },
 ];
 
 const LOADING_MESSAGES = [
