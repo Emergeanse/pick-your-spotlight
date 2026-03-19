@@ -107,6 +107,24 @@ const Admin = () => {
     }
   };
 
+  const handleDeleteTestUser = async (userId: string, displayName: string) => {
+    if (!confirm(`Supprimer définitivement "${displayName}" et toutes ses données ?`)) return;
+    setDeletingId(userId);
+    try {
+      const { data, error } = await supabase.functions.invoke("admin-delete-user", {
+        body: { userId },
+      });
+      if (error) throw new Error(error.message);
+      if (data?.error) throw new Error(data.error);
+      toast.success(`Compte "${displayName}" supprimé`);
+      fetchUsers();
+    } catch (err: any) {
+      toast.error(err.message || "Erreur lors de la suppression");
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
   const handleLoginAsTestUser = async () => {
     if (!createdAccount) return;
     await supabase.auth.signOut();
