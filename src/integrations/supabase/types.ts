@@ -229,9 +229,43 @@ export type Database = {
         }
         Relationships: []
       }
+      notifications: {
+        Row: {
+          body: string | null
+          created_at: string
+          data: Json | null
+          id: string
+          read: boolean
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string
+          data?: Json | null
+          id?: string
+          read?: boolean
+          title: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          body?: string | null
+          created_at?: string
+          data?: Json | null
+          id?: string
+          read?: boolean
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           accepted_recommendations: number
+          avatar_url: string | null
           best_streak: number
           created_at: string
           display_name: string | null
@@ -256,6 +290,7 @@ export type Database = {
         }
         Insert: {
           accepted_recommendations?: number
+          avatar_url?: string | null
           best_streak?: number
           created_at?: string
           display_name?: string | null
@@ -280,6 +315,7 @@ export type Database = {
         }
         Update: {
           accepted_recommendations?: number
+          avatar_url?: string | null
           best_streak?: number
           created_at?: string
           display_name?: string | null

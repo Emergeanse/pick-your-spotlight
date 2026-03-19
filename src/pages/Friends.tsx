@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import BrandHeader from "@/components/pick/BrandHeader";
 import BottomTabBar from "@/components/pick/BottomTabBar";
+import { sendNotification } from "@/lib/notifications";
 
 interface Friend {
   id: string;
@@ -131,6 +132,11 @@ const Friends = () => {
         status: "pending",
       } as any);
 
+      // Get my display name for the notification
+      const { data: myProfile } = await supabase.from("profiles").select("display_name").eq("id", user.id).single();
+      const myName = myProfile?.display_name || user.email?.split("@")[0] || "Quelqu'un";
+      await sendNotification(found.id, "friend_request", `${myName} veut être ton ami !`, "Accepte sa demande pour regarder des films ensemble.");
+
       toast.success(`Demande envoyée à ${(found as any).display_name || "ton ami"} !`);
       setAddCode("");
       setShowAddModal(false);
@@ -145,6 +151,14 @@ const Friends = () => {
 
   const handleAccept = async (friendshipId: string) => {
     await supabase.from("friendships" as any).update({ status: "accepted" } as any).eq("id", friendshipId);
+    // Notify the requester
+    const friendship = friends.find(f => f.friendshipId === friendshipId);
+    if (friendship && user) {
+      const { data: myProfile } = await supabase.from("profiles").select("display_name").eq("id", user.id).single();
+      const myName = myProfile?.display_name || user.email?.split("@")[0] || "Quelqu'un";
+      const requesterId = friendship.id; // the friend's user id
+      await sendNotification(requesterId, "friend_accepted", `${myName} a accepté ta demande !`, "Vous pouvez maintenant regarder des films ensemble.");
+    }
     toast.success("Ami accepté !");
     loadData();
   };

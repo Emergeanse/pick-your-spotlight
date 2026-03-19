@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { toast } from "@/hooks/use-toast";
-import { Check, LogOut, Loader2, Ban, Star, Info, Film, Tv, Layers, Clock, Bell } from "lucide-react";
+import { Check, LogOut, Loader2, Ban, Star, Info, Film, Tv, Layers, Clock, Bell, Camera, Pencil } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
@@ -45,6 +46,10 @@ const Profile = () => {
   const [dnaTitle, setDnaTitle] = useState<string | null>(null);
   const [ritualEnabled, setRitualEnabled] = useState(false);
   const [ritualTime, setRitualTime] = useState("20:00");
+  const [displayName, setDisplayName] = useState("");
+  const [editingName, setEditingName] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
   useEffect(() => {
     if (!isReady) return;
@@ -69,6 +74,8 @@ const Profile = () => {
       setMediaPreference((data as any)?.media_preference || "both");
       setRitualEnabled(data?.ritual_enabled || false);
       setRitualTime(data?.ritual_time || "20:00");
+      setDisplayName(data?.display_name || user.email?.split("@")[0] || "");
+      setAvatarUrl((data as any)?.avatar_url || null);
       setEngagement(engData);
       if (dnaRes.data) setDnaTitle((dnaRes.data as any).personality_title || null);
     } catch (e) {
@@ -86,6 +93,43 @@ const Profile = () => {
       setExcludedPlatforms(prev => prev.filter(p => p !== id));
     } else {
       setSelectedPlatforms(prev => [...prev, id]);
+    }
+  };
+
+  const handleSaveName = async () => {
+    if (!user || !displayName.trim()) return;
+    const { error } = await supabase.from("profiles").update({ display_name: displayName.trim() } as any).eq("id", user.id);
+    if (!error) {
+      setProfile((prev: any) => ({ ...prev, display_name: displayName.trim() }));
+      setEditingName(false);
+      toast({ title: "Pseudo mis à jour ✓" });
+    }
+  };
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+    if (file.size > 5 * 1024 * 1024) {
+      toast({ title: "Image trop lourde", description: "Maximum 5 Mo", variant: "destructive" });
+      return;
+    }
+    setUploadingAvatar(true);
+    try {
+      const ext = file.name.split(".").pop() || "jpg";
+      const path = `${user.id}/avatar.${ext}`;
+      const { error: uploadError } = await supabase.storage.from("avatars").upload(path, file, { upsert: true });
+      if (uploadError) throw uploadError;
+      const { data: urlData } = supabase.storage.from("avatars").getPublicUrl(path);
+      const publicUrl = `${urlData.publicUrl}?t=${Date.now()}`;
+      await supabase.from("profiles").update({ avatar_url: publicUrl } as any).eq("id", user.id);
+      setAvatarUrl(publicUrl);
+      setProfile((prev: any) => ({ ...prev, avatar_url: publicUrl }));
+      toast({ title: "Photo de profil mise à jour ✓" });
+    } catch (err) {
+      console.error(err);
+      toast({ title: "Erreur lors de l'upload", variant: "destructive" });
+    } finally {
+      setUploadingAvatar(false);
     }
   };
 
@@ -139,7 +183,7 @@ const Profile = () => {
 
   if (!user) return null;
 
-  const displayName = profile?.display_name || user.email?.split("@")[0] || "Cinéphile";
+  const nameDisplay = displayName || user.email?.split("@")[0] || "Cinéphile";
   const totalRecos = engagement?.totalRecommendations || 0;
   const reachedMilestones = MILESTONES.filter(m => totalRecos >= m.count);
   const memberSince = profile?.created_at ? new Date(profile.created_at).toLocaleDateString("fr-FR", { month: "long", year: "numeric" }) : null;
@@ -151,11 +195,62 @@ const Profile = () => {
         {/* ─── User Identity Block ─── */}
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
           <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center">
-              <span className="text-2xl font-serif text-primary">{displayName.charAt(0).toUpperCase()}</span>
-            </div>
+            {/* Avatar with upload */}
+            <label className="relative cursor-pointer group">
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleAvatarUpload}
+                className="hidden"
+                disabled={uploadingAvatar}
+              />
+              {avatarUrl ? (
+                <img
+                  src={avatarUrl}
+                  alt="Avatar"
+                  className="w-16 h-16 rounded-full object-cover border-2 border-primary/20 group-hover:border-primary/50 transition-colors"
+                />
+              ) : (
+                <div className="w-16 h-16 rounded-full bg-primary/10 border-2 border-primary/20 group-hover:border-primary/50 flex items-center justify-center transition-colors">
+                  <span className="text-2xl font-serif text-primary">{nameDisplay.charAt(0).toUpperCase()}</span>
+                </div>
+              )}
+              <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-card border border-border/30 flex items-center justify-center group-hover:bg-primary/10 transition-colors">
+                {uploadingAvatar ? (
+                  <Loader2 className="w-3 h-3 text-primary animate-spin" />
+                ) : (
+                  <Camera className="w-3 h-3 text-foreground/50" />
+                )}
+              </div>
+            </label>
+
             <div className="flex-1 min-w-0">
-              <h1 className="text-2xl font-serif mb-0.5">{displayName}</h1>
+              {editingName ? (
+                <div className="flex items-center gap-2">
+                  <Input
+                    value={displayName}
+                    onChange={(e) => setDisplayName(e.target.value)}
+                    className="h-9 text-lg font-serif bg-card border-border/20"
+                    placeholder="Ton pseudo"
+                    maxLength={30}
+                    autoFocus
+                    onKeyDown={(e) => { if (e.key === "Enter") handleSaveName(); if (e.key === "Escape") setEditingName(false); }}
+                  />
+                  <Button size="sm" onClick={handleSaveName} className="h-9 px-3">
+                    <Check className="w-4 h-4" />
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <h1 className="text-2xl font-serif mb-0.5">{nameDisplay}</h1>
+                  <button
+                    onClick={() => setEditingName(true)}
+                    className="p-1 rounded-md hover:bg-foreground/5 transition-colors"
+                  >
+                    <Pencil className="w-3.5 h-3.5 text-foreground/30 hover:text-foreground/60" />
+                  </button>
+                </div>
+              )}
               {memberSince && (
                 <p className="text-muted-foreground text-[11px] font-sans">Membre depuis {memberSince}</p>
               )}
