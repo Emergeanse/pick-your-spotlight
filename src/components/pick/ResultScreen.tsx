@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Loader2, Sparkles, Check, Play, Star, Clock, Heart, Bookmark, ChevronDown, ChevronUp, RefreshCw, Share2, Zap, Lock, ExternalLink } from "lucide-react";
 import type { MovieDetail } from "@/lib/tmdb";
 import { getDisplayTitle, getYear, getBackdropUrl, getPosterUrl, getWatchProviders, getMovieTrailerUrl, getMovieCredits } from "@/lib/tmdb";
-import type { MovieCredits } from "@/lib/tmdb";
+import type { MovieCredits, CastMember } from "@/lib/tmdb";
 import { buildStreamingLinks, type StreamingLink } from "@/lib/streaming-links";
 import type { Mood, Context, TimeAvailable } from "@/lib/tmdb";
 import { supabase } from "@/integrations/supabase/client";
@@ -16,19 +16,244 @@ import { computeUserTasteVector, ensureMovieEmbedding } from "@/lib/taste-engine
 import BrandHeader from "./BrandHeader";
 import PickCharacter from "./PickCharacter";
 
-// Extracted sub-components
-import ActorCard from "@/components/pick/result/ActorCard";
-import MatchAnalysis from "@/components/pick/result/MatchAnalysis";
-import type { MatchData } from "@/components/pick/result/MatchAnalysis";
-import StreamingSection from "@/components/pick/result/StreamingSection";
-import RefineSheet from "@/components/pick/result/RefineSheet";
-import OptionsSheet from "@/components/pick/result/OptionsSheet";
-import RejectSheet from "@/components/pick/result/RejectSheet";
-import ReviewSheet from "@/components/pick/result/ReviewSheet";
-import AlternativeMovies from "@/components/pick/result/AlternativeMovies";
-
 const IMG_BASE = "https://image.tmdb.org/t/p";
 const CONFIDENCE_THRESHOLD = 30;
+
+// ── Inlined sub-components ──────────────────────────────────────────
+
+interface MatchData {
+  score?: number;
+  summary?: string;
+  reasons?: string[];
+  tone?: string;
+}
+
+const ActorCard = ({ actor }: { actor: CastMember }) => (
+  <div className="flex flex-col items-center gap-1.5 min-w-[56px]">
+    <div className="w-11 h-11 rounded-full bg-foreground/[0.06] border border-border/15 overflow-hidden shrink-0">
+      {actor.profile_path ? (
+        <img src={`${IMG_BASE}/w185${actor.profile_path}`} alt={actor.name} className="w-full h-full object-cover" />
+      ) : (
+        <div className="w-full h-full flex items-center justify-center">
+          <span className="text-foreground/30 text-[11px] font-sans font-bold">{actor.name.charAt(0)}</span>
+        </div>
+      )}
+    </div>
+    <div className="text-center min-w-0 max-w-[64px]">
+      <p className="text-foreground/70 text-[10px] font-sans font-medium leading-tight truncate">{actor.name}</p>
+      <p className="text-foreground/30 text-[9px] font-sans leading-tight truncate">{actor.character}</p>
+    </div>
+  </div>
+);
+
+const MatchAnalysis = ({ matchData, mediaType }: { matchData: MatchData; mediaType: string; movieId: number }) => {
+  const { score, summary, reasons } = matchData;
+  return (
+    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1, duration: 0.4 }} className="mb-5 max-w-md">
+      <div className="p-3 sm:p-4 rounded-xl bg-primary/[0.04] border border-primary/15 backdrop-blur-sm">
+        <div className="flex items-start gap-3">
+          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
+            <Sparkles className="w-4 h-4 text-primary" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-1">
+              <p className="text-[10px] uppercase tracking-widest text-primary/60 font-sans font-semibold">
+                Pourquoi {mediaType === "tv" ? "cette série" : "ce film"}
+              </p>
+              {score != null && (
+                <span className="text-[10px] font-sans font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded-full">{score}%</span>
+              )}
+            </div>
+            {summary && <p className="text-foreground/70 text-[12px] sm:text-[13px] font-sans leading-snug mb-2">{summary}</p>}
+            {reasons && reasons.length > 0 && (
+              <ul className="space-y-1">
+                {reasons.map((reason, i) => (
+                  <li key={i} className="text-foreground/50 text-[11px] font-sans flex items-start gap-1.5">
+                    <span className="text-primary/60 mt-0.5">•</span>
+                    <span>{reason}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  );
+};
+
+const StreamingSection = ({ streamingLinks }: { streamingLinks: StreamingLink[] }) => {
+  if (streamingLinks.length === 0) return null;
+  return (
+    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }} className="mb-4">
+      <p className="text-[10px] uppercase tracking-widest text-foreground/30 font-sans font-semibold mb-2">Où regarder</p>
+      <div className="flex flex-wrap gap-2">
+        {streamingLinks.map((link) => (
+          <a key={link.providerId} href={link.url} target="_blank" rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-foreground/[0.04] border border-border/15 hover:border-primary/25 hover:bg-foreground/[0.08] transition-all group">
+            {link.logo_path && <img src={`${IMG_BASE}/w92${link.logo_path}`} alt={link.name} className="w-5 h-5 rounded-md object-contain" />}
+            <span className="text-foreground/60 text-[12px] font-sans font-medium group-hover:text-foreground transition-colors">{link.name}</span>
+            <ExternalLink className="w-3 h-3 text-foreground/20" />
+          </a>
+        ))}
+      </div>
+    </motion.div>
+  );
+};
+
+const RefineSheet = ({ open, onClose, onRefineWithMessage, mediaType }: { open: boolean; onClose: () => void; onRefineWithMessage?: (msg: string) => void; mediaType: string }) => {
+  const [message, setMessage] = useState("");
+  if (!open) return null;
+  const handleSend = () => { if (message.trim() && onRefineWithMessage) { onRefineWithMessage(message.trim()); setMessage(""); onClose(); } };
+  return (
+    <AnimatePresence>
+      {open && (
+        <>
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose} className="fixed inset-0 bg-background/60 backdrop-blur-sm z-50" />
+          <motion.div initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }} transition={{ type: "spring", damping: 25, stiffness: 300 }}
+            className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t border-border/20 rounded-t-2xl p-5 pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
+            <div className="w-10 h-1 rounded-full bg-foreground/10 mx-auto mb-4" />
+            <p className="text-foreground/80 text-sm font-sans font-semibold mb-3">Affine ta recherche</p>
+            <textarea value={message} onChange={(e) => setMessage(e.target.value)} placeholder="Dis-moi ce que tu cherches de différent…"
+              className="w-full h-20 rounded-xl bg-foreground/[0.04] border border-border/15 p-3 text-sm font-sans text-foreground placeholder:text-foreground/30 resize-none focus:outline-none focus:border-primary/30" />
+            <button onClick={handleSend} disabled={!message.trim()}
+              className="mt-3 w-full h-10 rounded-xl bg-primary text-primary-foreground text-sm font-sans font-semibold disabled:opacity-40 transition-opacity">Envoyer</button>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
+  );
+};
+
+const OptionsSheet = ({ open, onClose, onShowAnother, onRefineWithVoice }: { open: boolean; onClose: () => void; onShowAnother: () => void; onRefineWithVoice?: () => void }) => {
+  if (!open) return null;
+  return (
+    <AnimatePresence>
+      {open && (
+        <>
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose} className="fixed inset-0 bg-background/60 backdrop-blur-sm z-50" />
+          <motion.div initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }} transition={{ type: "spring", damping: 25, stiffness: 300 }}
+            className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t border-border/20 rounded-t-2xl p-5 pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
+            <div className="w-10 h-1 rounded-full bg-foreground/10 mx-auto mb-4" />
+            <div className="space-y-2">
+              <button onClick={() => { onShowAnother(); onClose(); }}
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-foreground/[0.04] border border-border/15 hover:bg-foreground/[0.08] transition-all">
+                <RefreshCw className="w-4 h-4 text-foreground/40" />
+                <span className="text-foreground/70 text-sm font-sans font-medium">Autre suggestion</span>
+              </button>
+              {onRefineWithVoice && (
+                <button onClick={() => { onRefineWithVoice(); onClose(); }}
+                  className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-foreground/[0.04] border border-border/15 hover:bg-foreground/[0.08] transition-all">
+                  <Sparkles className="w-4 h-4 text-primary/60" />
+                  <span className="text-foreground/70 text-sm font-sans font-medium">Affiner vocalement</span>
+                </button>
+              )}
+            </div>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
+  );
+};
+
+const REJECT_REASONS = [
+  { id: "seen", label: "Déjà vu", emoji: "👀" },
+  { id: "not-mood", label: "Pas dans le mood", emoji: "😐" },
+  { id: "not-genre", label: "Pas le genre", emoji: "🎭" },
+  { id: "too-long", label: "Trop long", emoji: "⏱️" },
+];
+
+const RejectSheet = ({ open, onClose, movie, mediaType, onShowAnother, onRejectReaction, onFeedbackGiven }: {
+  open: boolean; onClose: () => void; movie: MovieDetail; mediaType: string;
+  userCriteria?: { mood: Mood | null; context: Context | null; time: TimeAvailable | null };
+  onShowAnother: (reason?: string, movie?: MovieDetail) => void;
+  rejectReaction: string | null; onRejectReaction: (r: string | null) => void; onFeedbackGiven: (f: "good" | "bad" | null) => void;
+}) => {
+  if (!open) return null;
+  const handleReject = (reasonId: string) => {
+    onRejectReaction(reasonId); onFeedbackGiven("bad");
+    trackInteraction(movie.id, "skipped", { reason: reasonId });
+    onClose(); onShowAnother(reasonId, movie);
+  };
+  return (
+    <AnimatePresence>
+      {open && (
+        <>
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose} className="fixed inset-0 bg-background/60 backdrop-blur-sm z-50" />
+          <motion.div initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }} transition={{ type: "spring", damping: 25, stiffness: 300 }}
+            className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t border-border/20 rounded-t-2xl p-5 pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
+            <div className="w-10 h-1 rounded-full bg-foreground/10 mx-auto mb-4" />
+            <p className="text-foreground/80 text-sm font-sans font-semibold mb-3">Pourquoi pas {mediaType === "tv" ? "cette série" : "ce film"} ?</p>
+            <div className="grid grid-cols-2 gap-2">
+              {REJECT_REASONS.map((reason) => (
+                <button key={reason.id} onClick={() => handleReject(reason.id)}
+                  className="flex items-center gap-2 px-4 py-3 rounded-xl bg-foreground/[0.04] border border-border/15 hover:bg-foreground/[0.08] transition-all">
+                  <span>{reason.emoji}</span>
+                  <span className="text-foreground/70 text-sm font-sans font-medium">{reason.label}</span>
+                </button>
+              ))}
+            </div>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
+  );
+};
+
+const ReviewSheet = ({ open, onClose, movieId, userCriteria }: { open: boolean; onClose: () => void; movieId: number; userCriteria?: { mood: Mood | null; context: Context | null; time: TimeAvailable | null } }) => {
+  const [rating, setRating] = useState(0);
+  const [hoveredStar, setHoveredStar] = useState(0);
+  if (!open) return null;
+  const handleSubmit = () => { if (rating > 0) { trackInteraction(movieId, "reviewed", { rating, ...userCriteria }); toast.success("Avis enregistré !"); onClose(); setRating(0); } };
+  return (
+    <AnimatePresence>
+      {open && (
+        <>
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose} className="fixed inset-0 bg-background/60 backdrop-blur-sm z-50" />
+          <motion.div initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }} transition={{ type: "spring", damping: 25, stiffness: 300 }}
+            className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t border-border/20 rounded-t-2xl p-5 pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
+            <div className="w-10 h-1 rounded-full bg-foreground/10 mx-auto mb-4" />
+            <p className="text-foreground/80 text-sm font-sans font-semibold mb-3">Note ce film</p>
+            <div className="flex items-center gap-2 justify-center mb-4">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <button key={star} onMouseEnter={() => setHoveredStar(star)} onMouseLeave={() => setHoveredStar(0)} onClick={() => setRating(star)} className="transition-transform hover:scale-110">
+                  <Star className={`w-8 h-8 ${star <= (hoveredStar || rating) ? "text-primary fill-primary" : "text-foreground/20"}`} />
+                </button>
+              ))}
+            </div>
+            <button onClick={handleSubmit} disabled={rating === 0}
+              className="w-full h-10 rounded-xl bg-primary text-primary-foreground text-sm font-sans font-semibold disabled:opacity-40 transition-opacity">Enregistrer</button>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
+  );
+};
+
+const AlternativeMovies = ({ movies, onSelect }: { movies: MovieDetail[]; onSelect: (m: MovieDetail) => void }) => {
+  if (movies.length === 0) return null;
+  return (
+    <div className="px-5 py-6 md:px-12">
+      <p className="text-[10px] uppercase tracking-widest text-foreground/30 font-sans font-semibold mb-3">Autres suggestions</p>
+      <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+        {movies.map((movie) => (
+          <motion.button key={movie.id} whileTap={{ scale: 0.95 }} onClick={() => onSelect(movie)} className="flex-shrink-0 w-28 group">
+            <div className="w-28 h-[168px] rounded-xl overflow-hidden border border-border/15 mb-2">
+              {movie.poster_path ? (
+                <img src={getPosterUrl(movie.poster_path, "w342") || ""} alt={getDisplayTitle(movie)} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+              ) : (
+                <div className="w-full h-full bg-foreground/[0.04] flex items-center justify-center"><span className="text-foreground/20 text-xs font-sans">No img</span></div>
+              )}
+            </div>
+            <p className="text-foreground/60 text-[11px] font-sans font-medium leading-tight truncate">{getDisplayTitle(movie)}</p>
+          </motion.button>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+// ── Main Component ──────────────────────────────────────────────────
 
 interface ResultScreenProps {
   movie: MovieDetail;
@@ -86,39 +311,19 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({
   const seasons = (movie as any).number_of_seasons;
   const bgImage = backdrop || poster;
 
-  // Track movie opened
   useEffect(() => {
-    trackInteraction(movie.id, "opened", {
-      mood: userCriteria?.mood,
-      context: userCriteria?.context,
-      time: userCriteria?.time,
-    });
+    trackInteraction(movie.id, "opened", { mood: userCriteria?.mood, context: userCriteria?.context, time: userCriteria?.time });
   }, [movie.id]);
 
   useEffect(() => {
-    getWatchProviders(movie.id, mediaType).then((p) => {
-      setProviders(p);
-      setStreamingLinks(buildStreamingLinks(p, title));
-    }).catch(() => { setProviders([]); setStreamingLinks([]); });
+    getWatchProviders(movie.id, mediaType).then((p) => { setProviders(p); setStreamingLinks(buildStreamingLinks(p, title)); }).catch(() => { setProviders([]); setStreamingLinks([]); });
     getMovieTrailerUrl(movie.id, mediaType).then(setTrailerUrl).catch(() => setTrailerUrl(null));
     getMovieCredits(movie.id, mediaType).then(setCredits).catch(() => setCredits(null));
   }, [movie.id, mediaType]);
 
   useEffect(() => {
-    setMatchData(null);
-    setCredits(null);
-    setMatchLoading(true);
-    setShowOptions(false);
-    setMarkedSeen(false);
-    setFeedbackGiven(null);
-
-    ensureMovieEmbedding(
-      movie.id,
-      movie.title || movie.name || "",
-      movie.overview || "",
-      (movie.genres || []).map(g => g.name)
-    );
-
+    setMatchData(null); setCredits(null); setMatchLoading(true); setShowOptions(false); setMarkedSeen(false); setFeedbackGiven(null);
+    ensureMovieEmbedding(movie.id, movie.title || movie.name || "", movie.overview || "", (movie.genres || []).map(g => g.name));
     Promise.all([
       getUserTasteProfile(),
       user ? computeUserTasteVector(user.id) : Promise.resolve(null),
@@ -130,30 +335,21 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({
         body: { movie, userCriteria, tasteProfile, userTasteVector, likedMovieTitles, searchTags, cinematicProfile },
       }).then(({ data, error }) => {
         if (error) { console.error("Match error:", error); setMatchLoading(false); return; }
-        setMatchData(data as MatchData);
-        setMatchLoading(false);
+        setMatchData(data as MatchData); setMatchLoading(false);
       });
     });
   }, [movie.id]);
 
   useEffect(() => {
-    if (user) {
-      isMovieLiked(movie.id).then(setLiked).catch(() => {});
-      isInWatchlist(movie.id).then(setBookmarked).catch(() => {});
-    }
+    if (user) { isMovieLiked(movie.id).then(setLiked).catch(() => {}); isInWatchlist(movie.id).then(setBookmarked).catch(() => {}); }
   }, [movie.id, user]);
 
   const handleToggleLike = async () => {
     if (!user) { toast.info("Connecte-toi pour sauvegarder tes films !"); return; }
     setLikeLoading(true);
     try {
-      if (liked) {
-        await unlikeMovie(movie.id); setLiked(false); toast.success("Retiré des favoris");
-        trackInteraction(movie.id, "unliked");
-      } else {
-        await likeMovie(movie); setLiked(true); toast.success("Ajouté aux favoris !");
-        trackInteraction(movie.id, "liked");
-      }
+      if (liked) { await unlikeMovie(movie.id); setLiked(false); toast.success("Retiré des favoris"); trackInteraction(movie.id, "unliked"); }
+      else { await likeMovie(movie); setLiked(true); toast.success("Ajouté aux favoris !"); trackInteraction(movie.id, "liked"); }
     } catch { toast.error("Erreur lors de la sauvegarde"); }
     finally { setLikeLoading(false); }
   };
@@ -162,14 +358,8 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({
     if (!user) { toast.info("Connecte-toi pour ta watchlist !"); return; }
     setBookmarkLoading(true);
     try {
-      if (bookmarked) {
-        await removeFromWatchlist(movie.id); setBookmarked(false); toast.success("Retiré de ta watchlist");
-        trackInteraction(movie.id, "unsaved");
-      } else {
-        await addToWatchlist(movie); setBookmarked(true); toast.success("Ajouté à ta watchlist !");
-        trackInteraction(movie.id, "saved");
-        window.dispatchEvent(new CustomEvent("pick-watchlist-added"));
-      }
+      if (bookmarked) { await removeFromWatchlist(movie.id); setBookmarked(false); toast.success("Retiré de ta watchlist"); trackInteraction(movie.id, "unsaved"); }
+      else { await addToWatchlist(movie); setBookmarked(true); toast.success("Ajouté à ta watchlist !"); trackInteraction(movie.id, "saved"); window.dispatchEvent(new CustomEvent("pick-watchlist-added")); }
     } catch { toast.error("Erreur lors de la sauvegarde"); }
     finally { setBookmarkLoading(false); }
   };
@@ -179,58 +369,36 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({
       <BrandHeader showBack onBack={onRestart} />
 
       <div className="relative min-h-screen w-full overflow-hidden">
-        {/* Background */}
         {bgImage && (
-          <motion.div
-            initial={{ opacity: 0, scale: 1.05 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 1.2 }}
-            className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-            style={{ backgroundImage: `url(${bgImage})` }}
-          />
+          <motion.div initial={{ opacity: 0, scale: 1.05 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 1.2 }}
+            className="absolute inset-0 bg-cover bg-center bg-no-repeat" style={{ backgroundImage: `url(${bgImage})` }} />
         )}
         <div className="absolute inset-0 poster-gradient" />
         <div className="absolute inset-0 bg-gradient-to-r from-background/90 via-background/60 to-transparent" />
 
-        {/* Content */}
         <div className="relative z-10 flex flex-col justify-end min-h-screen px-5 pb-[calc(1.5rem+env(safe-area-inset-bottom))] md:px-12 lg:px-16 md:pb-12">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            className="max-w-xl"
-          >
-            {/* Poster + Title block */}
+          <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.2 }} className="max-w-xl">
+            {/* Poster + Title */}
             <div className="flex items-end gap-4 mb-3">
               {movie.poster_path && (
-                <motion.img
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: 0.3, type: "spring", stiffness: 200 }}
-                  src={getPosterUrl(movie.poster_path, "w342") || ""}
-                  alt={title}
-                  className="w-20 h-[120px] md:w-28 md:h-[168px] rounded-xl object-cover shadow-2xl border border-border/20 shrink-0"
-                />
+                <motion.img initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.3, type: "spring", stiffness: 200 }}
+                  src={getPosterUrl(movie.poster_path, "w342") || ""} alt={title}
+                  className="w-20 h-[120px] md:w-28 md:h-[168px] rounded-xl object-cover shadow-2xl border border-border/20 shrink-0" />
               )}
               <div className="flex-1 min-w-0">
                 <h1 className="text-2xl md:text-4xl lg:text-5xl font-serif mb-1.5 leading-[1.05]">{title}</h1>
                 <div className="flex items-center gap-2 text-foreground/50 text-xs font-sans mb-1 flex-wrap">
                   <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-primary/10 text-primary text-[10px] font-sans font-semibold uppercase tracking-wide">{mediaLabel}</span>
                   {year && <span className="font-medium text-foreground/70">{year}</span>}
-                  {mediaType === "tv" && seasons && seasons > 0 && (
-                    <><span className="text-foreground/20">•</span><span>{seasons} saison{seasons > 1 ? "s" : ""}</span></>
-                  )}
-                  {runtime > 0 && (
-                    <><span className="text-foreground/20">•</span><span className="flex items-center gap-1"><Clock className="w-3 h-3" />{runtime} min</span></>
-                  )}
-                  {movie.vote_average > 0 && (
-                    <><span className="text-foreground/20">•</span><span className="flex items-center gap-1 text-primary font-medium"><Star className="w-3 h-3 fill-primary" />{movie.vote_average.toFixed(1)}</span></>
-                  )}
+                  {mediaType === "tv" && seasons && seasons > 0 && (<><span className="text-foreground/20">•</span><span>{seasons} saison{seasons > 1 ? "s" : ""}</span></>)}
+                  {runtime > 0 && (<><span className="text-foreground/20">•</span><span className="flex items-center gap-1"><Clock className="w-3 h-3" />{runtime} min</span></>)}
+                  {movie.vote_average > 0 && (<><span className="text-foreground/20">•</span><span className="flex items-center gap-1 text-primary font-medium"><Star className="w-3 h-3 fill-primary" />{movie.vote_average.toFixed(1)}</span></>)}
                 </div>
                 <div className="flex items-center gap-2 flex-wrap">
                   {genres && <p className="text-primary/60 text-[10px] md:text-xs tracking-[0.12em] uppercase font-sans font-medium">{genres}</p>}
                   {(movie as any)._surpriseComfortZone && (
-                    <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.2, type: "spring", stiffness: 200 }} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30">
+                    <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30">
                       <Zap className="w-2.5 h-2.5 text-amber-400" />
                       <span className="text-amber-400 text-[10px] font-sans font-semibold">Hors de ta zone</span>
                     </motion.div>
@@ -239,16 +407,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({
               </div>
             </div>
 
-            {/* Where to watch */}
-            <StreamingSection
-              movieId={movie.id}
-              title={title}
-              releaseDate={movie.release_date}
-              streamingLinks={streamingLinks}
-              bookmarked={bookmarked}
-              bookmarkLoading={bookmarkLoading}
-              onToggleBookmark={handleToggleBookmark}
-            />
+            <StreamingSection streamingLinks={streamingLinks} />
 
             {/* Synopsis */}
             <div className="mb-4">
@@ -285,9 +444,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({
                   )}
                   {credits.cast.length > 0 && (
                     <div className="flex gap-3 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-hide">
-                      {credits.cast.map((actor) => (
-                        <ActorCard key={actor.id} actor={actor} />
-                      ))}
+                      {credits.cast.map((actor) => <ActorCard key={actor.id} actor={actor} />)}
                     </div>
                   )}
                 </div>
@@ -296,12 +453,9 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({
 
             {/* Trailer */}
             {trailerUrl && (
-              <motion.button
-                initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.45 }}
-                whileTap={{ scale: 0.97 }}
+              <motion.button initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.45 }} whileTap={{ scale: 0.97 }}
                 onClick={() => window.open(trailerUrl, "_blank")}
-                className="mb-4 inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-foreground/[0.05] border border-border/15 hover:border-primary/25 hover:bg-foreground/[0.08] transition-all group cursor-pointer"
-              >
+                className="mb-4 inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-foreground/[0.05] border border-border/15 hover:border-primary/25 hover:bg-foreground/[0.08] transition-all group cursor-pointer">
                 <div className="w-7 h-7 rounded-full bg-primary/15 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
                   <Play className="w-3 h-3 text-primary fill-primary ml-0.5" />
                 </div>
@@ -318,7 +472,6 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({
                   <span className="text-foreground/40 text-xs font-sans">Analyse en cours…</span>
                 </motion.div>
               )}
-
               {!matchLoading && !isWhyUnlocked && (
                 <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1, duration: 0.4 }} className="mb-5 max-w-md">
                   <div className="p-3 sm:p-4 rounded-xl bg-muted/40 border border-border/30 backdrop-blur-sm">
@@ -345,7 +498,6 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({
                   </div>
                 </motion.div>
               )}
-
               {matchData && !matchLoading && isWhyUnlocked && (
                 <MatchAnalysis matchData={matchData} mediaType={mediaType} movieId={movie.id} />
               )}
@@ -354,51 +506,30 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({
             {/* Primary Actions */}
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }} className="space-y-3">
               <div className="flex items-center gap-2">
-                <button
-                  data-tour="sauvegarder"
-                  onClick={handleToggleBookmark}
-                  disabled={bookmarkLoading}
-                  className={`flex items-center gap-1.5 px-3.5 h-9 rounded-full border text-xs font-sans font-medium transition-all active:scale-95 ${
-                    bookmarked ? "bg-primary/15 border-primary/30 text-primary" : "border-border/25 text-foreground/40 hover:text-primary hover:border-primary/25"
-                  }`}
-                >
+                <button data-tour="sauvegarder" onClick={handleToggleBookmark} disabled={bookmarkLoading}
+                  className={`flex items-center gap-1.5 px-3.5 h-9 rounded-full border text-xs font-sans font-medium transition-all active:scale-95 ${bookmarked ? "bg-primary/15 border-primary/30 text-primary" : "border-border/25 text-foreground/40 hover:text-primary hover:border-primary/25"}`}>
                   <Bookmark className={`w-3.5 h-3.5 ${bookmarked ? "fill-primary" : ""}`} />
                   Sauvegarder
                 </button>
-                <button
-                  onClick={handleToggleLike}
-                  disabled={likeLoading}
-                  className={`w-9 h-9 rounded-full border flex items-center justify-center transition-all active:scale-95 ${
-                    liked ? "bg-primary/15 border-primary/30 text-primary" : "border-border/25 text-foreground/40 hover:text-primary hover:border-primary/25"
-                  }`}
-                >
+                <button onClick={handleToggleLike} disabled={likeLoading}
+                  className={`w-9 h-9 rounded-full border flex items-center justify-center transition-all active:scale-95 ${liked ? "bg-primary/15 border-primary/30 text-primary" : "border-border/25 text-foreground/40 hover:text-primary hover:border-primary/25"}`}>
                   <Heart className={`w-3.5 h-3.5 ${liked ? "fill-primary" : ""}`} />
                 </button>
-                <button
-                  onClick={() => {
-                    const shareText = `Pick me suggère "${title}" ce soir — tu veux qu'on le regarde ensemble ? 🍿`;
-                    const shareUrl = window.location.origin;
-                    if (navigator.share) {
-                      navigator.share({ title: `Pick — ${title}`, text: shareText, url: shareUrl }).catch(() => {});
-                    } else {
-                      navigator.clipboard.writeText(`${shareText}\n${shareUrl}`).then(() => toast.success("Lien copié !")).catch(() => {});
-                    }
-                  }}
-                  className="w-9 h-9 rounded-full border border-border/25 text-foreground/40 hover:text-primary hover:border-primary/25 flex items-center justify-center transition-all active:scale-95"
-                  title="Partager"
-                >
+                <button onClick={() => {
+                  const shareText = `Pick me suggère "${title}" ce soir — tu veux qu'on le regarde ensemble ? 🍿`;
+                  const shareUrl = window.location.origin;
+                  if (navigator.share) { navigator.share({ title: `Pick — ${title}`, text: shareText, url: shareUrl }).catch(() => {}); }
+                  else { navigator.clipboard.writeText(`${shareText}\n${shareUrl}`).then(() => toast.success("Lien copié !")).catch(() => {}); }
+                }}
+                  className="w-9 h-9 rounded-full border border-border/25 text-foreground/40 hover:text-primary hover:border-primary/25 flex items-center justify-center transition-all active:scale-95" title="Partager">
                   <Share2 className="w-3.5 h-3.5" />
                 </button>
-                <button
-                  data-tour="autre-suggestion"
-                  onClick={() => onShowAnother()}
-                  className="flex items-center gap-1.5 px-3.5 h-9 rounded-full border border-border/25 text-foreground/40 hover:text-primary hover:border-primary/25 text-xs font-sans font-medium transition-all active:scale-95"
-                >
+                <button data-tour="autre-suggestion" onClick={() => onShowAnother()}
+                  className="flex items-center gap-1.5 px-3.5 h-9 rounded-full border border-border/25 text-foreground/40 hover:text-primary hover:border-primary/25 text-xs font-sans font-medium transition-all active:scale-95">
                   <RefreshCw className="w-3.5 h-3.5" />
                   Autre suggestion
                 </button>
               </div>
-
               {refining && (
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="pt-3">
                   <PickCharacter mood="think" message="Attends, je cherche mieux…" size="sm" animate={false} />
@@ -409,47 +540,15 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({
         </div>
       </div>
 
-      {/* Alternative recommendations */}
       {alternativeMovies && alternativeMovies.length > 0 && onSelectAlternative && (
-        <AlternativeMovies
-          movies={alternativeMovies.filter((_, i) => i < 2)}
-          onSelect={onSelectAlternative}
-        />
+        <AlternativeMovies movies={alternativeMovies.filter((_, i) => i < 2)} onSelect={onSelectAlternative} />
       )}
 
-      {/* Bottom Sheets */}
-      <RefineSheet
-        open={showRefineSheet}
-        onClose={() => setShowRefineSheet(false)}
-        onRefineWithMessage={onRefineWithMessage}
-        mediaType={mediaType}
-      />
-
-      <OptionsSheet
-        open={showOptions}
-        onClose={() => setShowOptions(false)}
-        onShowAnother={() => onShowAnother()}
-        onRefineWithVoice={onRefineWithVoice}
-      />
-
-      <RejectSheet
-        open={showRejectReasons}
-        onClose={() => setShowRejectReasons(false)}
-        movie={movie}
-        mediaType={mediaType}
-        userCriteria={userCriteria}
-        onShowAnother={onShowAnother}
-        rejectReaction={rejectReaction}
-        onRejectReaction={setRejectReaction}
-        onFeedbackGiven={setFeedbackGiven}
-      />
-
-      <ReviewSheet
-        open={showReviewSheet}
-        onClose={() => setShowReviewSheet(false)}
-        movieId={movie.id}
-        userCriteria={userCriteria}
-      />
+      <RefineSheet open={showRefineSheet} onClose={() => setShowRefineSheet(false)} onRefineWithMessage={onRefineWithMessage} mediaType={mediaType} />
+      <OptionsSheet open={showOptions} onClose={() => setShowOptions(false)} onShowAnother={() => onShowAnother()} onRefineWithVoice={onRefineWithVoice} />
+      <RejectSheet open={showRejectReasons} onClose={() => setShowRejectReasons(false)} movie={movie} mediaType={mediaType} userCriteria={userCriteria}
+        onShowAnother={onShowAnother} rejectReaction={rejectReaction} onRejectReaction={setRejectReaction} onFeedbackGiven={setFeedbackGiven} />
+      <ReviewSheet open={showReviewSheet} onClose={() => setShowReviewSheet(false)} movieId={movie.id} userCriteria={userCriteria} />
     </div>
   );
 });
