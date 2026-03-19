@@ -20,6 +20,7 @@ import WatchlistPageRoute from "./pages/WatchlistRoute.tsx";
 import Friends from "./pages/Friends.tsx";
 import PickTogether from "./pages/PickTogether.tsx";
 import JoinSession from "./pages/JoinSession.tsx";
+import Admin from "./pages/Admin.tsx";
 
 const queryClient = new QueryClient();
 
