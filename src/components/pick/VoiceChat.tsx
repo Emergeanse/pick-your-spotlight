@@ -13,6 +13,7 @@ interface VoiceChatProps {
   onClose: () => void;
   onMovieSuggested: (movie: MovieDetail, recapTags?: string[]) => void;
   initialMessages?: ChatMessage[];
+  showMicGuide?: boolean;
 }
 
 export type ChatMessage = {

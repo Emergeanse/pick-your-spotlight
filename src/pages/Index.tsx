@@ -12,6 +12,8 @@ import ActivationFlow from "@/components/pick/ActivationFlow";
 import type { MissionId } from "@/components/pick/ActivationFlow";
 import WatchlistMissionGuide from "@/components/pick/WatchlistMissionGuide";
 import type { WatchlistGuideStep } from "@/components/pick/WatchlistMissionGuide";
+import TalkToPickMissionGuide from "@/components/pick/TalkToPickMissionGuide";
+import type { TalkToPickGuideStep } from "@/components/pick/TalkToPickMissionGuide";
 
 import type { ChatMessage } from "@/components/pick/VoiceChat";
 import { toast } from "sonner";
