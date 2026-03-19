@@ -182,7 +182,7 @@ const PickTogether = () => {
     }
   };
 
-
+  const toggleFriend = (id: string) => {
     const totalOthers = selectedFriendIds.size + guests.length;
     setSelectedFriendIds(prev => {
       const next = new Set(prev);
