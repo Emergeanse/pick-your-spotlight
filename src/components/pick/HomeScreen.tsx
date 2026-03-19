@@ -17,6 +17,7 @@ import type { Movie, MovieDetail } from "@/lib/tmdb";
 import BrandHeader from "./BrandHeader";
 import PickCharacter from "./PickCharacter";
 import TasteTrainer from "./TasteTrainer";
+import TrainingProgress from "./TrainingProgress";
 
 import { useNavigate } from "react-router-dom";
 
@@ -28,6 +29,8 @@ interface HomeScreenProps {
   loading: boolean;
   openTrainerOnMount?: boolean;
   onTrainerOpened?: () => void;
+  isActivation?: boolean;
+  onActivationComplete?: () => void;
 }
 
 const SURPRISE_MESSAGES = [
@@ -80,7 +83,7 @@ const PROACTIVE_MESSAGES = [
   "Un petit bijou juste pour toi ce soir.",
 ];
 
-const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, openTrainerOnMount, onTrainerOpened }: HomeScreenProps) => {
+const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, openTrainerOnMount, onTrainerOpened, isActivation, onActivationComplete }: HomeScreenProps) => {
   const navigate = useNavigate();
   const [isSurprising, setIsSurprising] = useState(false);
   const [surpriseMsg, setSurpriseMsg] = useState("");
@@ -108,8 +111,9 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
   const [explorationLevel, setExplorationLevel] = useState<number>(5);
   const [whatChoice, setWhatChoice] = useState<WhatOption>("both");
   const [whoChoice, setWhoChoice] = useState<WhoOption | null>(null);
+  const [totalEvaluated, setTotalEvaluated] = useState(0);
 
-  // Open trainer from MyCinema navigation
+  // Open trainer from MyCinema navigation or activation flow
   useEffect(() => {
     if (openTrainerOnMount) {
       setShowTrainer(true);
@@ -140,7 +144,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
         if ((data as any)?.excluded_genres) setUserExcludedGenres((data as any).excluded_genres);
         if ((data as any)?.min_rating) setUserMinRating((data as any).min_rating);
       });
-    // Load interaction history (all types) to avoid repeats
+    // Load interaction history (all types) to avoid repeats + count for progress
     supabase.from("user_interactions")
       .select("tmdb_id")
       .eq("user_id", user.id)
@@ -150,6 +154,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
         if (data) {
           const ids = [...new Set(data.map(d => d.tmdb_id))];
           setHistoryExcludeIds(ids);
+          setTotalEvaluated(ids.length);
         }
       });
   }, [user]);
@@ -435,6 +440,12 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
                   </div>
                 </motion.button>
 
+                {/* Training progress widget */}
+                <TrainingProgress
+                  evaluated={totalEvaluated}
+                  confidence={engagement?.profileConfidence || 0}
+                  onStartTraining={() => setShowTrainer(true)}
+                />
 
               </div>
 
@@ -689,7 +700,24 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
       {/* Taste Trainer overlay */}
       <AnimatePresence>
         {showTrainer && (
-          <TasteTrainer onClose={() => setShowTrainer(false)} />
+          <TasteTrainer
+            onClose={() => {
+              setShowTrainer(false);
+              // Refresh evaluated count
+              if (user) {
+                supabase.from("user_interactions")
+                  .select("tmdb_id")
+                  .eq("user_id", user.id)
+                  .in("action_type", ["watched", "skipped", "already_seen", "liked", "unsure"])
+                  .limit(500)
+                  .then(({ data }) => {
+                    if (data) setTotalEvaluated([...new Set(data.map(d => d.tmdb_id))].length);
+                  });
+              }
+            }}
+            isActivation={isActivation}
+            onActivationComplete={onActivationComplete}
+          />
         )}
       </AnimatePresence>
 

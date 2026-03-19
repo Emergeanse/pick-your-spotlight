@@ -48,10 +48,15 @@ const Index = () => {
   const pickPlus = usePickPlus();
   const [openTrainerOnMount, setOpenTrainerOnMount] = useState(false);
   const [showTour, setShowTour] = useState(false);
+  const [isActivation, setIsActivation] = useState(false);
 
   useEffect(() => {
     if ((location.state as any)?.openTrainer) {
       setOpenTrainerOnMount(true);
+      window.history.replaceState({}, "", "/app");
+    }
+    if ((location.state as any)?.activateTraining) {
+      setIsActivation(true);
       window.history.replaceState({}, "", "/app");
     }
   }, [location.state]);
@@ -94,7 +99,14 @@ const Index = () => {
             profileConfidence: (data as any).profile_confidence || 0,
           });
           if (data.onboarding_completed && !localStorage.getItem(TOUR_KEY)) {
-            setShowTour(true);
+            // Show tour for returning new users, activation overlay for fresh onboarding
+            if (isActivation) {
+              setOpenTrainerOnMount(true);
+              setIsActivation(false);
+              localStorage.setItem(TOUR_KEY, "true");
+            } else {
+              setShowTour(true);
+            }
           }
         }
       });
@@ -238,7 +250,7 @@ const Index = () => {
           <motion.div key="home" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.4 }}
             className="absolute inset-0 pb-[calc(3.5rem+env(safe-area-inset-bottom))]"
           >
-            <HomeScreen onStart={handleStart} onOpenChat={handleOpenChat} onSurprise={handleSurprise} onMovieSelect={handleMovieSelect} loading={loading} openTrainerOnMount={openTrainerOnMount} onTrainerOpened={() => setOpenTrainerOnMount(false)} />
+            <HomeScreen onStart={handleStart} onOpenChat={handleOpenChat} onSurprise={handleSurprise} onMovieSelect={handleMovieSelect} loading={loading} openTrainerOnMount={openTrainerOnMount} onTrainerOpened={() => setOpenTrainerOnMount(false)} isActivation={isActivation} onActivationComplete={() => setIsActivation(false)} />
           </motion.div>
         )}
 
@@ -311,7 +323,12 @@ const Index = () => {
         trigger="reco_limit"
       />
 
-      {showTour && <GuidedTour onComplete={() => setShowTour(false)} />}
+      {showTour && (
+        <GuidedTour
+          onComplete={() => setShowTour(false)}
+          onStartTraining={() => setOpenTrainerOnMount(true)}
+        />
+      )}
     </div>
   );
 };

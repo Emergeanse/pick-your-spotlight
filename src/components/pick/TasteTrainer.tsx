@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence, PanInfo } from "framer-motion";
-import { ChevronLeft, Loader2 } from "lucide-react";
+import { ChevronLeft, Loader2, Sparkles, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getPosterUrl, getDisplayTitle } from "@/lib/tmdb";
 import { likeMovie } from "@/lib/liked-movies";
@@ -10,11 +10,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
 import type { Movie, MovieDetail } from "@/lib/tmdb";
+import { THRESHOLDS } from "./TrainingProgress";
 
 const TMDB_API_KEY = "2dca580c2a14b55200e784d157207b4d";
 
 interface TasteTrainerProps {
   onClose: () => void;
+  isActivation?: boolean; // True when opened from onboarding activation
+  onActivationComplete?: () => void; // Called when user reaches threshold during activation
 }
 
 const GENRE_MAP: Record<number, string> = {
@@ -39,7 +42,6 @@ async function fetchMovieDetail(id: number): Promise<MovieDetail> {
   return res.json();
 }
 
-// Rating system
 const RATING_BUTTONS = [
   { value: 5,   label: "Pas pour moi", style: "border-destructive/30 bg-destructive/5 text-destructive hover:bg-destructive/10" },
   { value: 25,  label: "Bof",          style: "border-foreground/10 bg-foreground/5 text-muted-foreground hover:bg-foreground/10" },
@@ -48,7 +50,22 @@ const RATING_BUTTONS = [
   { value: 100, label: "Chef-d'œuvre", style: "border-primary/30 bg-primary/10 text-primary hover:bg-primary/20" },
 ];
 
-const TasteTrainer = ({ onClose }: TasteTrainerProps) => {
+// Milestone messages that feel cinematic
+const getMilestoneMessage = (count: number, total: number): string | null => {
+  if (count === 3) return "Ça commence à prendre forme…";
+  if (count === 5) return "Pick apprend vite avec toi !";
+  if (count === 8) return "On y est presque…";
+  if (count === THRESHOLDS.minimum) return "Pick commence à te comprendre 🎯";
+  if (count === 13) return "Encore quelques-uns pour des recos au top";
+  if (count === 15) return "Tes goûts se dessinent clairement";
+  if (count === 18) return "Pick affine son radar…";
+  if (count === THRESHOLDS.ideal) return "Parfait ! Pick est prêt à te recommander ✨";
+  if (count === 25) return "Tu formes un duo de choc avec Pick";
+  if (count === 30) return "Pick te connaît par cœur 🧠";
+  return null;
+};
+
+const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: TasteTrainerProps) => {
   const { user } = useAuth();
   const [movies, setMovies] = useState<Movie[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -61,6 +78,9 @@ const TasteTrainer = ({ onClose }: TasteTrainerProps) => {
   const [totalEvaluated, setTotalEvaluated] = useState(0);
   const [profileConfidence, setProfileConfidence] = useState(0);
   const [sliderValue, setSliderValue] = useState(50);
+  const [milestoneMsg, setMilestoneMsg] = useState<string | null>(null);
+  const [showActivationCTA, setShowActivationCTA] = useState(false);
+  const milestoneTimeout = useRef<ReturnType<typeof setTimeout>>();
 
   const loadMovies = useCallback(async (p: number) => {
     setLoading(true);
@@ -106,8 +126,27 @@ const TasteTrainer = ({ onClose }: TasteTrainerProps) => {
 
   const currentMovie = movies[currentIndex];
   const nextMovie = movies[currentIndex + 1];
-
   const actionsRef = useRef({ likes: 0, skips: 0 });
+
+  const totalProcessed = likedCount + skippedCount;
+  const cumulativeTotal = totalEvaluated + totalProcessed;
+  const sessionTarget = Math.max(0, THRESHOLDS.ideal - totalEvaluated);
+  const sessionProgress = Math.min(totalProcessed, sessionTarget);
+
+  // Show milestone messages
+  useEffect(() => {
+    const msg = getMilestoneMessage(cumulativeTotal, totalProcessed);
+    if (msg) {
+      setMilestoneMsg(msg);
+      if (milestoneTimeout.current) clearTimeout(milestoneTimeout.current);
+      milestoneTimeout.current = setTimeout(() => setMilestoneMsg(null), 3000);
+    }
+
+    // Show activation CTA after reaching ideal threshold during activation
+    if (isActivation && cumulativeTotal >= THRESHOLDS.ideal && !showActivationCTA) {
+      setShowActivationCTA(true);
+    }
+  }, [cumulativeTotal]);
 
   const handleRate = async () => {
     if (!currentMovie || !user) return;
@@ -164,19 +203,27 @@ const TasteTrainer = ({ onClose }: TasteTrainerProps) => {
     }
   };
 
-  const totalProcessed = likedCount + skippedCount;
-  const cumulativeTotal = totalEvaluated + totalProcessed;
-  const liveConfidence = Math.min(100, profileConfidence + totalProcessed * 2);
-
-  const getConfidenceLabel = (c: number) => {
-    if (c < 20) return "Débutant";
-    if (c < 40) return "En apprentissage";
-    if (c < 60) return "Prometteur";
-    if (c < 80) return "Fiable";
-    return "Expert";
+  const handleClose = () => {
+    const { likes, skips } = actionsRef.current;
+    if (likes + skips > 0) {
+      toast.success(`Profil mis à jour ! ${likes} aimé${likes > 1 ? "s" : ""}, ${skips} passé${skips > 1 ? "s" : ""}`);
+    }
+    onClose();
   };
 
-  
+  const handleActivationDone = () => {
+    const { likes, skips } = actionsRef.current;
+    if (likes + skips > 0) {
+      toast.success(`Pick te connaît maintenant ! ${likes} film${likes > 1 ? "s" : ""} aimé${likes > 1 ? "s" : ""}`);
+    }
+    onActivationComplete?.();
+    onClose();
+  };
+
+  const liveConfidence = Math.min(100, profileConfidence + totalProcessed * 2);
+  const progressPercent = sessionTarget > 0
+    ? Math.min(100, Math.round((sessionProgress / sessionTarget) * 100))
+    : 100;
 
   return (
     <motion.div
@@ -186,50 +233,69 @@ const TasteTrainer = ({ onClose }: TasteTrainerProps) => {
       className="absolute inset-0 z-50 flex flex-col bg-background"
     >
       {/* Header */}
-      <div className="flex items-center justify-between px-5 pt-[calc(1rem+env(safe-area-inset-top))] pb-3">
-        <button onClick={() => {
-          const { likes, skips } = actionsRef.current;
-          if (likes + skips > 0) {
-            toast.success(`Profil mis à jour ! ${likes} aimé${likes > 1 ? "s" : ""}, ${skips} passé${skips > 1 ? "s" : ""}`);
-          }
-          onClose();
-        }} className="text-foreground/50 hover:text-foreground transition-colors">
+      <div className="flex items-center justify-between px-5 pt-[calc(1rem+env(safe-area-inset-top))] pb-2">
+        <button onClick={handleClose} className="text-foreground/50 hover:text-foreground transition-colors">
           <ChevronLeft className="w-5 h-5" />
         </button>
         <div className="text-center">
-          <h2 className="text-sm font-sans font-semibold text-foreground">Entraîne ton Pick</h2>
-          <p className="text-[11px] font-sans text-foreground/40">
-            {cumulativeTotal} film{cumulativeTotal > 1 ? "s" : ""} évalué{cumulativeTotal > 1 ? "s" : ""} au total
-          </p>
+          <h2 className="text-sm font-sans font-semibold text-foreground">
+            {isActivation ? "Apprends-moi tes goûts" : "Entraîne ton Pick"}
+          </h2>
         </div>
         <div className="w-5" />
       </div>
 
-      {/* Confidence indicator */}
-      <div className="px-5 mb-4">
+      {/* Progress section */}
+      <div className="px-5 mb-3">
+        {/* Counter */}
         <div className="flex items-center justify-between mb-1.5">
-          <span className="text-[10px] font-sans text-foreground/40">Fiabilité des recos</span>
-          <span className="text-[10px] font-sans font-semibold text-primary">
-            {getConfidenceLabel(liveConfidence)} · {liveConfidence}%
+          <span className="text-[11px] font-sans text-foreground/50">
+            {cumulativeTotal} film{cumulativeTotal > 1 ? "s" : ""} évalué{cumulativeTotal > 1 ? "s" : ""}
           </span>
+          {sessionTarget > 0 && (
+            <span className="text-[11px] font-sans font-semibold text-primary">
+              {sessionProgress} / {sessionTarget}
+            </span>
+          )}
         </div>
-        <div className="h-1.5 rounded-full bg-foreground/10 overflow-hidden">
+
+        {/* Progress bar */}
+        <div className="h-2 rounded-full bg-foreground/10 overflow-hidden mb-1">
           <motion.div
             className="h-full rounded-full bg-primary"
-            initial={{ width: `${profileConfidence}%` }}
-            animate={{ width: `${liveConfidence}%` }}
+            initial={{ width: 0 }}
+            animate={{ width: `${progressPercent}%` }}
             transition={{ duration: 0.5, ease: "easeOut" }}
           />
         </div>
-        {totalProcessed > 0 && (
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="text-[10px] font-sans text-primary/60 mt-1 text-center"
-          >
-            +{totalProcessed * 2}% cette session
-          </motion.p>
-        )}
+
+        {/* Milestone message or default label */}
+        <AnimatePresence mode="wait">
+          {milestoneMsg ? (
+            <motion.p
+              key={milestoneMsg}
+              initial={{ opacity: 0, y: 5 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -5 }}
+              className="text-[11px] font-sans text-primary text-center font-medium"
+            >
+              {milestoneMsg}
+            </motion.p>
+          ) : (
+            <motion.p
+              key="default"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="text-[10px] font-sans text-foreground/30 text-center"
+            >
+              {cumulativeTotal < THRESHOLDS.minimum
+                ? "Plus tu swipes, mieux Pick te comprend"
+                : cumulativeTotal < THRESHOLDS.ideal
+                ? "Encore un peu pour des recos vraiment personnalisées"
+                : "Pick te connaît bien — continue pour encore plus de précision"}
+            </motion.p>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* Card stack */}
@@ -242,7 +308,7 @@ const TasteTrainer = ({ onClose }: TasteTrainerProps) => {
         ) : !currentMovie ? (
           <div className="flex flex-col items-center gap-3 text-center">
             <p className="text-foreground/60 text-sm font-sans">Plus de films pour le moment !</p>
-            <Button variant="outline" onClick={onClose} className="rounded-full">
+            <Button variant="outline" onClick={handleClose} className="rounded-full">
               Retour à l'accueil
             </Button>
           </div>
@@ -330,7 +396,7 @@ const TasteTrainer = ({ onClose }: TasteTrainerProps) => {
       </div>
 
       {/* Rating buttons */}
-      {currentMovie && (
+      {currentMovie && !showActivationCTA && (
         <div className="px-4 pb-[calc(1.5rem+env(safe-area-inset-bottom))] pt-4">
           <div className="flex items-center justify-center gap-2">
             {RATING_BUTTONS.map((btn) => (
@@ -368,6 +434,43 @@ const TasteTrainer = ({ onClose }: TasteTrainerProps) => {
           </p>
         </div>
       )}
+
+      {/* Activation complete CTA */}
+      <AnimatePresence>
+        {showActivationCTA && (
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="px-5 pb-[calc(2rem+env(safe-area-inset-bottom))] pt-4"
+          >
+            <div className="bg-card/80 backdrop-blur-sm rounded-2xl border border-primary/20 p-5 text-center">
+              <Sparkles className="w-6 h-6 text-primary mx-auto mb-2" />
+              <h3 className="text-lg font-serif mb-1">Pick est prêt !</h3>
+              <p className="text-foreground/50 text-sm font-sans mb-4">
+                Maintenant qu'on se connaît, trouvons ton film de ce soir.
+              </p>
+              <div className="flex flex-col gap-2">
+                <Button
+                  variant="hero"
+                  size="xl"
+                  className="w-full"
+                  onClick={handleActivationDone}
+                >
+                  <Sparkles className="w-4 h-4" />
+                  Trouve-moi un film
+                  <ArrowRight className="w-4 h-4" />
+                </Button>
+                <button
+                  onClick={() => setShowActivationCTA(false)}
+                  className="text-foreground/30 text-xs font-sans hover:text-foreground/50 transition-colors"
+                >
+                  Je continue à swiper
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 };
