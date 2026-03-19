@@ -365,13 +365,24 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
 
                 {/* Meta: Year • Runtime • Rating / Views */}
                 <div className="flex items-center gap-2 text-foreground/50 text-xs font-sans mb-1 flex-wrap">
+                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-primary/10 text-primary text-[10px] font-sans font-semibold uppercase tracking-wide">
+                    {mediaLabel}
+                  </span>
                   {year && <span className="font-medium text-foreground/70">{year}</span>}
-                  {year && runtime > 0 && <span className="text-foreground/20">•</span>}
+                  {mediaType === "tv" && seasons && seasons > 0 && (
+                    <>
+                      <span className="text-foreground/20">•</span>
+                      <span>{seasons} saison{seasons > 1 ? "s" : ""}</span>
+                    </>
+                  )}
                   {runtime > 0 && (
-                    <span className="flex items-center gap-1">
-                      <Clock className="w-3 h-3" />
-                      {runtime} min
-                    </span>
+                    <>
+                      <span className="text-foreground/20">•</span>
+                      <span className="flex items-center gap-1">
+                        <Clock className="w-3 h-3" />
+                        {runtime} min
+                      </span>
+                    </>
                   )}
                   {movie.vote_average > 0 && (
                     <>
