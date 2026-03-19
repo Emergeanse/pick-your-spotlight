@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence, PanInfo } from "framer-motion";
-import { ChevronLeft, Loader2, Check } from "lucide-react";
+import { ChevronLeft, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getPosterUrl, getDisplayTitle } from "@/lib/tmdb";
 import { likeMovie } from "@/lib/liked-movies";
