@@ -59,6 +59,9 @@ const Index = () => {
   const [showActivation, setShowActivation] = useState(false);
   const [profileLoaded, setProfileLoaded] = useState(false);
   const [activeActivationMission, setActiveActivationMission] = useState<MissionId | null>(null);
+  const [watchlistGuideStep, setWatchlistGuideStep] = useState<WatchlistGuideStep>(null);
+  const [watchlistGuideDone, setWatchlistGuideDone] = useState(false);
+  const [watchlistSavedCount, setWatchlistSavedCount] = useState(0);
 
   useEffect(() => {
     if ((location.state as any)?.openTrainer) {
