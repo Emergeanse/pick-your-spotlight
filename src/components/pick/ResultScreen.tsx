@@ -242,6 +242,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
 
   useEffect(() => {
     setMatchData(null);
+    setCredits(null);
     setMatchLoading(true);
     setShowOptions(false);
     setMarkedSeen(false);
