@@ -36,7 +36,7 @@ const Index = () => {
   const [currentResultIndex, setCurrentResultIndex] = useState(0);
   const [loadingMessage, setLoadingMessage] = useState("");
   const [showChat, setShowChat] = useState(false);
-  const [showCompanion, setShowCompanion] = useState(false);
+  
   const [chatInitialMessages, setChatInitialMessages] = useState<ChatMessage[] | undefined>(undefined);
   const [searchTags, setSearchTags] = useState<string[]>([]);
   const [profilePrefs, setProfilePrefs] = useState<{
