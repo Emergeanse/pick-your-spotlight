@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "@/hooks/use-toast";
-import { Check, LogOut, Loader2, Star, Info, Film, Tv, Layers, Clock, Bell, Camera, Pencil } from "lucide-react";
+import { toast as sonnerToast } from "sonner";
+import { Check, LogOut, Loader2, Star, Info, Film, Tv, Layers, Clock, Bell, Camera, Pencil, Copy, UserPlus, Users, X, ChevronRight, Clapperboard, QrCode, Share2 } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
@@ -10,8 +11,10 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { getEngagementData, type EngagementData } from "@/lib/engagement";
+import { sendNotification } from "@/lib/notifications";
 import BottomTabBar from "@/components/pick/BottomTabBar";
 import CinematicAvatar, { mapLevelToType, mapArchetypeToDNA, mapSignatureToAnimation, type CinematicLevel, type CinematicDNA, type TasteAnimation } from "@/components/pick/CinematicAvatar";
+import { QRCodeSVG } from "qrcode.react";
 const ALL_PLATFORMS = [
   { id: 8, label: "Netflix", logo: "https://image.tmdb.org/t/p/original/pbpMk2JmcoNnQwx5JGpXngfoWtp.jpg" },
   { id: 337, label: "Disney+", logo: "https://image.tmdb.org/t/p/original/97yvRBw1GzX7fXprcF80er19ot.jpg" },
