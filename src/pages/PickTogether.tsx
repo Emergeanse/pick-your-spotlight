@@ -354,6 +354,44 @@ const PickTogether = () => {
                 </div>
               </div>
 
+              {/* QR Code invite button */}
+              <motion.button
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.15 }}
+                onClick={handleCreateSessionQR}
+                disabled={creatingSession || showSessionQR}
+                className="w-full flex items-center gap-3 p-3.5 rounded-2xl border border-dashed border-primary/20 hover:border-primary/40 bg-primary/5 transition-all mb-3 text-left group"
+              >
+                <div className="w-10 h-10 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center group-hover:bg-primary/15 transition-colors">
+                  {creatingSession ? (
+                    <Loader2 className="w-4 h-4 text-primary animate-spin" />
+                  ) : (
+                    <QrCode className="w-4 h-4 text-primary" />
+                  )}
+                </div>
+                <div>
+                  <p className="text-sm font-sans font-medium text-primary">Inviter par QR code</p>
+                  <p className="text-foreground/30 text-[10px] font-sans">Les gens autour de toi rejoignent en scannant</p>
+                </div>
+              </motion.button>
+
+              {/* Realtime joined members */}
+              {realtimeMembers.length > 0 && (
+                <div className="mb-3 space-y-1.5">
+                  <p className="text-[10px] font-sans font-semibold text-primary/60 uppercase tracking-widest">Ont rejoint via QR</p>
+                  {realtimeMembers.map(m => (
+                    <div key={m.id} className="flex items-center gap-3 p-3 rounded-2xl bg-primary/5 border border-primary/15">
+                      <div className="w-8 h-8 rounded-full bg-primary/15 flex items-center justify-center">
+                        <span className="text-xs font-bold text-primary">{m.name[0]}</span>
+                      </div>
+                      <p className="text-sm font-sans text-foreground">{m.name}</p>
+                      <Check className="w-4 h-4 text-primary ml-auto" />
+                    </div>
+                  ))}
+                </div>
+              )}
+
               {/* Friends */}
               {friends.length === 0 ? (
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-10">
