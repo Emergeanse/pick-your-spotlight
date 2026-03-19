@@ -38,6 +38,7 @@ const Admin = () => {
   // Users list
   const [users, setUsers] = useState<RegisteredUser[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(false);
+  const onlineUsers = useOnlineUsers(isAdmin);
 
   const fetchUsers = async () => {
     setLoadingUsers(true);
