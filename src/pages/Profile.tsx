@@ -132,7 +132,7 @@ const Profile = () => {
     try {
       const { error } = await supabase.from("profiles").update({
         preferred_platforms: selectedPlatforms,
-        excluded_platforms: excludedPlatforms,
+        excluded_platforms: [],
         min_rating: minRating,
         media_preference: mediaPreference,
         ritual_enabled: ritualEnabled,
@@ -142,7 +142,7 @@ const Profile = () => {
       setProfile((prev: any) => ({
         ...prev,
         preferred_platforms: [...selectedPlatforms],
-        excluded_platforms: [...excludedPlatforms],
+        excluded_platforms: [],
         min_rating: minRating,
         media_preference: mediaPreference,
         ritual_enabled: ritualEnabled,
