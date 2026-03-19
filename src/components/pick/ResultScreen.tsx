@@ -199,8 +199,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
     }
   }, [matchData, whyAudioLoading, whySpeaking, playBrowserWhyFallback]);
 
-  const isYouTube = !!(movie as any)._youtube;
-  const youtubeData = (movie as any)._youtubeData;
+  const isYouTube = false;
 
   const title = getDisplayTitle(movie);
   const year = getYear(movie);
