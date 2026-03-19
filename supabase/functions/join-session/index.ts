@@ -114,20 +114,15 @@ Deno.serve(async (req) => {
     }
 
     // --- AUTHENTICATED USER ---
-    const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
-    const userClient = createClient(supabaseUrl, anonKey, {
-      global: { headers: { Authorization: authHeader } },
-    });
-
-    const { data: claims, error: claimsErr } = await userClient.auth.getUser();
-    if (claimsErr || !claims?.user) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
+    const found = await findSession();
+    if (!found) {
+      return new Response(JSON.stringify({ error: "Session introuvable" }), {
+        status: 404,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const userId = claims.user.id;
+    const { session } = found;
 
     const found = await findSession();
     if (!found) {
