@@ -189,7 +189,7 @@ serve(async (req) => {
     const systemPrompt = `Tu es un moteur de recommandation cinéma spécialisé dans les GROUPES. Tu dois trouver les ${contentLabel} qui satisferont TOUT le monde.
 
 MEMBRES DU GROUPE (${memberSummaries.length} personnes) :
-${memberSummaries.map((m, i) => `${i + 1}. ${m.name} — Genres favoris: ${m.favoriteGenres.join(", ") || "?"} | Genres exclus: ${m.excludedGenres.join(", ") || "aucun"} | Films aimés: ${m.likedCount} | Note min: ${m.minRating}/10`).join("\n")}
+${memberSummaries.map((m, i) => `${i + 1}. ${m.name}${m.isGuest ? " (invité — pas de profil)" : ""} — Genres favoris: ${m.favoriteGenres.join(", ") || "?"} | Genres exclus: ${m.excludedGenres.join(", ") || "aucun"} | Films aimés: ${m.likedCount} | Note min: ${m.minRating}/10`).join("\n")}
 
 CONTRAINTES GROUPE :
 - Genres EXCLUS (union): ${excludedGenres.join(", ") || "aucun"}
