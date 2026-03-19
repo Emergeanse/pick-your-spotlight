@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Mail, Lock, User, ArrowLeft, Loader2 } from "lucide-react";
-import { useNavigate, Navigate } from "react-router-dom";
+import { useNavigate, Navigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
 
@@ -14,11 +14,33 @@ const Auth = () => {
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const inviteCode = searchParams.get("invite");
 
   const { user, isReady } = useAuth();
+
+  // Auto-process invite after login
+  useEffect(() => {
+    if (isReady && user && inviteCode) {
+      processInvite(user.id, inviteCode);
+    }
+  }, [isReady, user, inviteCode]);
+
   if (isReady && user) {
     return <Navigate to="/app" replace />;
   }
+
+  const processInvite = async (userId: string, code: string) => {
+    try {
+      const { data: found } = await (supabase.from("profiles").select("id") as any).eq("friend_code", code.toUpperCase()).single();
+      if (!found || found.id === userId) return;
+      const { data: existing } = await (supabase.from("friendships" as any).select("id") as any)
+        .or(`and(requester_id.eq.${userId},addressee_id.eq.${found.id}),and(requester_id.eq.${found.id},addressee_id.eq.${userId})`);
+      if (existing && (existing as any[]).length > 0) return;
+      await supabase.from("friendships" as any).insert({ requester_id: userId, addressee_id: found.id, status: "accepted" } as any);
+      toast.success("Ami ajouté automatiquement !");
+    } catch (e) { console.error("Invite processing failed", e); }
+  };
 
   const isFormValid = isLogin
     ? email.trim().length > 0 && password.length >= 6
@@ -30,8 +52,9 @@ const Auth = () => {
 
     try {
       if (isLogin) {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
+        if (inviteCode && data.user) await processInvite(data.user.id, inviteCode);
         toast.success("Connecté !");
         navigate("/app");
       } else {
@@ -40,7 +63,7 @@ const Auth = () => {
           password,
           options: {
             data: { display_name: name },
-            emailRedirectTo: window.location.origin,
+            emailRedirectTo: inviteCode ? `${window.location.origin}/auth?invite=${inviteCode}` : window.location.origin,
           },
         });
         if (error) throw error;
