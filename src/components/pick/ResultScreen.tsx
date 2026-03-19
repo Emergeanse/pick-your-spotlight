@@ -358,33 +358,15 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
 
                 {/* Meta: Year • Runtime • Rating / Views */}
                 <div className="flex items-center gap-2 text-foreground/50 text-xs font-sans mb-1 flex-wrap">
-                  {isYouTube && youtubeData?.channelTitle && (
-                    <>
-                      <span className="font-medium text-foreground/70">{youtubeData.channelTitle}</span>
-                      <span className="text-foreground/20">•</span>
-                    </>
-                  )}
-                  {!isYouTube && year && <span className="font-medium text-foreground/70">{year}</span>}
-                  {!isYouTube && year && runtime > 0 && <span className="text-foreground/20">•</span>}
+                  {year && <span className="font-medium text-foreground/70">{year}</span>}
+                  {year && runtime > 0 && <span className="text-foreground/20">•</span>}
                   {runtime > 0 && (
                     <span className="flex items-center gap-1">
                       <Clock className="w-3 h-3" />
                       {runtime} min
                     </span>
                   )}
-                  {isYouTube && youtubeData?.viewCount > 0 && (
-                    <>
-                      <span className="text-foreground/20">•</span>
-                      <span className="text-foreground/60 font-medium">
-                        {youtubeData.viewCount > 1_000_000
-                          ? `${(youtubeData.viewCount / 1_000_000).toFixed(1)}M vues`
-                          : youtubeData.viewCount > 1_000
-                            ? `${(youtubeData.viewCount / 1_000).toFixed(0)}K vues`
-                            : `${youtubeData.viewCount} vues`}
-                      </span>
-                    </>
-                  )}
-                  {!isYouTube && movie.vote_average > 0 && (
+                  {movie.vote_average > 0 && (
                     <>
                       <span className="text-foreground/20">•</span>
                       <span className="flex items-center gap-1 text-primary font-medium">
