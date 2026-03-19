@@ -49,6 +49,9 @@ const Profile = () => {
   const [editingName, setEditingName] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [cinematicLevel, setCinematicLevel] = useState<CinematicLevel>("emerging");
+  const [cinematicDNA, setCinematicDNA] = useState<CinematicDNA>("contemplative");
+  const [tasteAnim, setTasteAnim] = useState<TasteAnimation>("default");
 
   useEffect(() => {
     if (!isReady) return;
