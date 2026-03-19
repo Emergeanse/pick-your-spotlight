@@ -219,9 +219,13 @@ const Admin = () => {
             </div>
             <div>
               <h1 className="text-2xl font-serif">Administration</h1>
-              <p className="text-xs text-muted-foreground">
-                {users.length} utilisateur{users.length > 1 ? "s" : ""} inscrit{users.length > 1 ? "s" : ""}
-              </p>
+              <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                <span>{users.length} utilisateur{users.length > 1 ? "s" : ""} inscrit{users.length > 1 ? "s" : ""}</span>
+                <span className="flex items-center gap-1.5">
+                  <Circle className="w-2 h-2 fill-green-500 text-green-500 animate-pulse" />
+                  {onlineUsers.length} en ligne
+                </span>
+              </div>
             </div>
           </div>
 
