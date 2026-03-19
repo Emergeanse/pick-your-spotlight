@@ -1001,55 +1001,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                   <Share2 className="w-3.5 h-3.5" />
                 </button>
 
-                {/* Spacer + Refine with Pick button */}
-                <div className="flex-1" />
-                {matchData && !refining && (
-                  <button
-                    onClick={() => setShowRefineSheet(true)}
-                    className="flex items-center gap-1.5 px-3.5 h-9 rounded-full border border-primary/25 bg-primary/10 text-primary text-xs font-sans font-medium hover:bg-primary/15 transition-all active:scale-95"
-                  >
-                    <MessageCircle className="w-3.5 h-3.5" />
-                    Affiner
-                  </button>
-                )}
               </div>
-
-              {/* Search context tags */}
-              {searchTags && searchTags.length > 0 && (
-                <motion.div
-                  initial={{ opacity: 0, y: 6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.8, duration: 0.4 }}
-                >
-                  <div className="flex items-center gap-1.5 mb-2">
-                    <Check className="w-3 h-3 text-primary/60" />
-                    <p className="text-[10px] uppercase tracking-widest text-primary/50 font-sans font-semibold">
-                      Pick a compris
-                    </p>
-                  </div>
-                  <div className="flex flex-wrap gap-1.5">
-                    {searchTags.map((tag, i) => (
-                      <motion.span
-                        key={tag}
-                        initial={{ opacity: 0, scale: 0.9 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ delay: 0.9 + i * 0.08 }}
-                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary/80 text-[11px] font-sans font-medium group"
-                      >
-                        {tag}
-                        {onRemoveTag && (
-                          <button
-                            onClick={() => onRemoveTag(tag)}
-                            className="ml-0.5 w-3.5 h-3.5 rounded-full flex items-center justify-center text-primary/30 hover:text-primary hover:bg-primary/15 transition-colors"
-                          >
-                            <X className="w-2.5 h-2.5" />
-                          </button>
-                        )}
-                      </motion.span>
-                    ))}
-                  </div>
-                </motion.div>
-              )}
 
               {/* Refining loading state */}
               {refining && (
