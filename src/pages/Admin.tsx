@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { ArrowLeft, UserPlus, Loader2, Shield, LogIn, Users, RefreshCw } from "lucide-react";
+import { ArrowLeft, UserPlus, Loader2, Shield, LogIn, Users, RefreshCw, Circle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useNavigate } from "react-router-dom";
@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useOnlineUsers } from "@/hooks/use-presence";
 
 interface RegisteredUser {
   id: string;

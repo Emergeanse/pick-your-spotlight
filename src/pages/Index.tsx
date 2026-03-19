@@ -22,10 +22,12 @@ import { usePickPlus } from "@/hooks/use-pick-plus";
 import PickPlusPaywall from "@/components/pick/PickPlusPaywall";
 import { getLikedMovies } from "@/lib/liked-movies";
 import { computeUserTasteVector } from "@/lib/taste-engine";
+import { usePresenceTracker } from "@/hooks/use-presence";
 
 type Step = "home" | "result";
 
 const Index = () => {
+  usePresenceTracker();
   const [step, setStep] = useState<Step>("home");
   const [results, setResults] = useState<MovieDetail[]>([]);
   const [loading, setLoading] = useState(false);
