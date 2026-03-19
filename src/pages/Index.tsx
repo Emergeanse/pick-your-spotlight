@@ -56,6 +56,7 @@ const Index = () => {
   const [showTour, setShowTour] = useState(false);
   const [showActivation, setShowActivation] = useState(false);
   const [profileLoaded, setProfileLoaded] = useState(false);
+  const [activeActivationMission, setActiveActivationMission] = useState<MissionId | null>(null);
 
   useEffect(() => {
     if ((location.state as any)?.openTrainer) {
