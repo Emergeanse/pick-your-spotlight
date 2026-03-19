@@ -591,31 +591,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                   {credits.cast.length > 0 && (
                     <div className="flex gap-3 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-hide">
                       {credits.cast.map((actor) => (
-                        <div key={actor.id} className="flex flex-col items-center gap-1.5 shrink-0 w-14">
-                          <div className="w-11 h-11 rounded-full bg-foreground/[0.06] border border-border/20 overflow-hidden">
-                            {actor.profile_path ? (
-                              <img
-                                src={`${IMG_BASE}/w185${actor.profile_path}`}
-                                alt={actor.name}
-                                className="w-full h-full object-cover"
-                              />
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center">
-                                <span className="text-foreground/30 text-[11px] font-sans font-bold">
-                                  {actor.name.charAt(0)}
-                                </span>
-                              </div>
-                            )}
-                          </div>
-                          <div className="text-center w-full">
-                            <p className="text-foreground/70 text-[10px] font-sans font-medium leading-tight truncate">
-                              {actor.name}
-                            </p>
-                            <p className="text-foreground/35 text-[9px] font-sans leading-tight truncate">
-                              {actor.character}
-                            </p>
-                          </div>
-                        </div>
+                        <ActorCard key={actor.id} actor={actor} />
                       ))}
                     </div>
                   )}
