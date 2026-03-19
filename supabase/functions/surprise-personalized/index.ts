@@ -57,8 +57,10 @@ serve(async (req) => {
         });
 
         if (matches && matches.length > 0) {
+          // Adjust similarity threshold based on exploration level
+          const similarityThreshold = explorationLevel <= 2 ? 0.85 : explorationLevel <= 5 ? 0.7 : explorationLevel <= 8 ? 0.5 : 0.3;
           embeddingCandidates = matches
-            .filter((m: any) => m.similarity > 0.7)
+            .filter((m: any) => m.similarity > similarityThreshold)
             .map((m: any) => `${m.title} (similarité: ${Math.round(m.similarity * 100)}%, tags: ${(m.taste_tags || []).join(", ")})`);
         }
       } catch (e) {
