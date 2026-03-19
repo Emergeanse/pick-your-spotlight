@@ -113,17 +113,16 @@ const Index = () => {
           const fromOnboarding = Boolean((location.state as any)?.showTour || forceTour);
 
           if (!tourDone && fromOnboarding) {
+            // Fresh from onboarding — show the tour
             setShowActivation(false);
             setShowTour(true);
             sessionStorage.removeItem("pick_force_tour");
-          } else if (!tourDone && !activationDone) {
-            // Returning user who hasn't done tour — show it
-            setShowActivation(false);
-            setShowTour(true);
           } else if (tourDone && !activationDone) {
+            // Tour done but activation pending — show activation
             setShowTour(false);
             setShowActivation(true);
           }
+          // Otherwise: returning user — just show the app normally
 
           setProfileLoaded(true);
         }
