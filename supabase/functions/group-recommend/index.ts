@@ -28,10 +28,14 @@ serve(async (req) => {
   }
 
   try {
-    const { memberIds, mood, context, timeAvailable, mediaType: rawMediaType } = await req.json();
+    const { memberIds, guests, mood, context, timeAvailable, mediaType: rawMediaType } = await req.json();
     const mediaType: "movie" | "tv" | "both" = rawMediaType === "tv" ? "tv" : rawMediaType === "movie" ? "movie" : "both";
 
-    if (!memberIds || memberIds.length < 2) {
+    // Guests are non-registered users with { name, age?, gender?, favoriteGenres? }
+    const guestProfiles: { name: string; age?: number; gender?: string; favoriteGenres?: string[] }[] = guests || [];
+    const totalMembers = (memberIds?.length || 0) + guestProfiles.length;
+
+    if (totalMembers < 2) {
       return new Response(JSON.stringify({ error: "Au moins 2 membres requis" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
