@@ -18,6 +18,7 @@ import BrandHeader from "./BrandHeader";
 import PickCharacter from "./PickCharacter";
 import TasteTrainer from "./TasteTrainer";
 import TrainingProgress from "./TrainingProgress";
+import DiscoverySection from "./DiscoverySection";
 
 import { useNavigate } from "react-router-dom";
 
