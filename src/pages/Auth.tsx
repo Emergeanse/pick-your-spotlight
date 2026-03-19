@@ -60,11 +60,11 @@ const Auth = () => {
         toast.success("Connecté !");
         navigate(redirectTo || "/app");
       } else {
-        const { error } = await supabase.auth.signUp({
+        const { data: signUpData, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
-            data: { display_name: name },
+            data: { display_name: name, birth_year: birthYear ? parseInt(birthYear) : undefined },
             emailRedirectTo: inviteCode ? `${window.location.origin}/auth?invite=${inviteCode}` : window.location.origin,
           },
         });
