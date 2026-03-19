@@ -314,7 +314,8 @@ const PickTogether = () => {
     if (step === "results") { setStep("who"); setRecommendations([]); setHeroReaction(null); }
     else if (step === "mood") { setStep("who"); }
     else if (mediaStep) { setMediaStep(false); }
-    else navigate("/app/pick-together");
+    else if (step === "who") { setStep("landing"); }
+    else navigate("/app");
   };
 
   return (
