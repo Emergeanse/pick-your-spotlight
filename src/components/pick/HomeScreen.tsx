@@ -694,6 +694,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
               )}
               {flowStep === "what" && (
                 <WhatStep onSelect={(w) => {
+                  setWhatChoice(w);
                   setFlowStep("exploration");
                 }} />
               )}
