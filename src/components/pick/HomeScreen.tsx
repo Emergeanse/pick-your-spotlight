@@ -119,6 +119,13 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
       onTrainerOpened?.();
     }
   }, [openTrainerOnMount]);
+
+  // Force close trainer when switching missions
+  useEffect(() => {
+    if (forceCloseTrainer) {
+      setShowTrainer(false);
+    }
+  }, [forceCloseTrainer]);
   const { user } = useAuth();
 
   // Load engagement data
