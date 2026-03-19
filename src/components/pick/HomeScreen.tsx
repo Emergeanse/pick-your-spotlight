@@ -595,7 +595,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
                 )}
 
                 <p className="text-foreground/40 text-[13px] font-sans italic mb-4">
-                  Pick pense que ce film est parfait pour toi.
+                  Pick pense que {tonightPick.first_air_date ? "cette série est parfaite" : "ce film est parfait"} pour toi.
                 </p>
 
                 <div className="flex flex-col items-center gap-4 w-full">

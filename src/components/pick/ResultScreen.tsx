@@ -1267,7 +1267,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                 <div className="w-10 h-1 rounded-full bg-foreground/15" />
               </div>
               <div className="px-5 pb-5 pt-2">
-                <p className="text-sm font-sans font-semibold text-foreground mb-3">Pourquoi ce film ne te convient pas ?</p>
+                <p className="text-sm font-sans font-semibold text-foreground mb-3">Pourquoi {mediaType === "tv" ? "cette série" : "ce film"} ne te convient pas ?</p>
                 <div className="grid grid-cols-2 gap-2">
                   {[
                     { label: "Déjà vu", value: "already_seen" },
