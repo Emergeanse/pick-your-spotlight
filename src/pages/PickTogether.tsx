@@ -176,7 +176,8 @@ const PickTogether = () => {
     <div className="fixed inset-0 bg-background overflow-hidden">
       <BrandHeader showBack onBack={() => {
         if (step === "results") setStep("select-friends");
-        else if (step === "select-mood") setStep("select-friends");
+        else if (step === "select-mood") setStep("select-what");
+        else if (step === "select-what") setStep("select-friends");
         else navigate("/app/friends");
       }} />
 
