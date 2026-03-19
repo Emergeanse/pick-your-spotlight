@@ -104,7 +104,8 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
   const [progressionMsg, setProgressionMsg] = useState<string | null>(null);
   const [historyExcludeIds, setHistoryExcludeIds] = useState<number[]>([]);
   const [showTrainer, setShowTrainer] = useState(false);
-  const [flowStep, setFlowStep] = useState<"idle" | "who" | "what">("idle");
+  const [flowStep, setFlowStep] = useState<"idle" | "who" | "what" | "exploration">("idle");
+  const [explorationLevel, setExplorationLevel] = useState<number>(5);
   const [whoChoice, setWhoChoice] = useState<WhoOption | null>(null);
 
   // Open trainer from MyCinema navigation
