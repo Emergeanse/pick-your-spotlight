@@ -546,7 +546,7 @@ const PickTogether = () => {
                                   onClick={(e) => { e.stopPropagation(); handleSelectMovie(rec); }}
                                   className="w-full mt-4 rounded-xl h-11 bg-primary text-primary-foreground hover:bg-primary/90 font-sans gap-2"
                                 >
-                                  Découvrir ce film
+                                  Découvrir {rec.movie.first_air_date ? "cette série" : "ce film"}
                                   <ChevronRight className="w-4 h-4" />
                                 </Button>
                               </div>

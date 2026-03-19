@@ -66,7 +66,7 @@ const PlatformStep = ({ onSelect, loading, loadingMessage }: PlatformStepProps) 
             transition={{ duration: 0.3 }}
             className="flex flex-col items-center justify-center py-20"
           >
-            <PickCharacter mood="think" message={loadingMessage || "Je cherche le film parfait…"} size="md" animate />
+            <PickCharacter mood="think" message={loadingMessage || "Je cherche la perle parfaite…"} size="md" animate />
           </motion.div>
         ) : (
           <motion.div

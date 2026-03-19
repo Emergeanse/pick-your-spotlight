@@ -17,14 +17,14 @@ const BENEFITS = [
   { icon: Zap, label: "Recommandations illimitées", desc: "Plus de limite de 3 par jour" },
   { icon: Brain, label: "Companion Mode complet", desc: "Questions illimitées + analyses approfondies" },
   { icon: Sparkles, label: "ADN Cinéma avancé", desc: "Évolution, comparaisons et rapport mensuel" },
-  { icon: Bell, label: "Alertes plateforme", desc: "Sois notifié quand un film arrive sur tes plateformes" },
+  { icon: Bell, label: "Alertes plateforme", desc: "Sois notifié quand un contenu arrive sur tes plateformes" },
   { icon: Wifi, label: "Mode hors-ligne", desc: "Consulte ta Watchlist sans connexion" },
   { icon: Users, label: "Profils multiples", desc: "Un profil par personne dans le foyer" },
 ];
 
 const TRIGGER_MESSAGES: Record<string, string> = {
   reco_limit: "Tu as utilisé tes 3 recommandations du jour.",
-  companion_limit: "Tu as utilisé ta question gratuite pour ce film.",
+  companion_limit: "Tu as utilisé ta question gratuite pour cette recommandation.",
   dna_advanced: "L'évolution de ton profil est une fonctionnalité Pick+.",
   chat_limit: "Ta conversation découverte du jour est terminée. Avec Pick+, parle à Pick autant que tu veux !",
   general: "Passe à Pick+ pour débloquer tout le potentiel de Pick.",

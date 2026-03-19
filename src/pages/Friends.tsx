@@ -189,7 +189,7 @@ const Friends = () => {
           <div className="mb-6">
             <h1 className="text-2xl font-serif text-foreground mb-1">Pick Together</h1>
             <p className="text-muted-foreground text-sm font-sans">
-              Regarde avec tes amis. Trouvez le film parfait ensemble.
+              Regarde avec tes amis. Trouvez quoi regarder ensemble.
             </p>
           </div>
 

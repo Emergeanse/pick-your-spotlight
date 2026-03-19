@@ -34,18 +34,18 @@ function getContextualSuggestions(): { label: string; message: string }[] {
   // Time-based
   if (isLateNight) {
     suggestions.push(
-      { label: "Un film court ce soir", message: "Propose-moi un film court, il est tard et j'ai pas beaucoup de temps", weight: 10 },
+      { label: "Quelque chose de court", message: "Propose-moi quelque chose de court, il est tard et j'ai pas beaucoup de temps", weight: 10 },
       { label: "Quelque chose de doux", message: "Je veux un truc doux et réconfortant pour finir la soirée", weight: 8 },
     );
   } else if (isEvening) {
     suggestions.push(
-      { label: "Soirée détente", message: "Je veux un film feel-good pour me détendre ce soir", weight: 9 },
-      { label: "Un film qui surprend", message: "Surprends-moi avec un film que je n'aurais jamais choisi tout seul", weight: 7 },
+      { label: "Soirée détente", message: "Je veux quelque chose de feel-good pour me détendre ce soir", weight: 9 },
+      { label: "Une surprise", message: "Surprends-moi avec quelque chose que je n'aurais jamais choisi tout seul", weight: 7 },
     );
   } else {
     suggestions.push(
       { label: "Un classique", message: "Propose-moi un classique incontournable que je devrais voir", weight: 6 },
-      { label: "Un film léger", message: "Je veux un film léger et facile à regarder", weight: 7 },
+      { label: "Quelque chose de léger", message: "Je veux quelque chose de léger et facile à regarder", weight: 7 },
     );
   }
 

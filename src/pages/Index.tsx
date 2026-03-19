@@ -213,7 +213,7 @@ const Index = () => {
       trackInteraction(currentMovie.id, "watched", {});
       if (user) recordAcceptedRecommendation(user.id);
       activateCompanion(currentMovie);
-      toast("🎬 Companion activé — Pick est là pendant tout le film", { duration: 3000 });
+      toast(`🎬 Companion activé — Pick est là pendant ${currentMovie.first_air_date ? "toute la série" : "tout le film"}`, { duration: 3000 });
     }
     setShowCompanion(true);
   };

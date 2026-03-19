@@ -78,7 +78,7 @@ const REJECT_REACTIONS: Record<string, string[]> = {
     "OK, on part sur quelque chose de plus rapide.",
     "Compris, pas le temps pour un marathon. J'adapte.",
     "Plus court, plus punchy. Ça marche !",
-    "T'inquiète, j'ai des films express aussi.",
+    "T'inquiète, j'ai des trucs express aussi.",
   ],
   not_tonight: [
     "Pas ce soir ? Pas de souci, j'ai mieux pour l'instant.",
@@ -643,7 +643,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
               </motion.button>
             )}
 
-            {/* "Pourquoi ce film" — combined match score + explanation */}
+            {/* "Pourquoi ce film/cette série" — combined match score + explanation */}
             {<AnimatePresence>
               {matchLoading && (
                 <motion.div
@@ -674,7 +674,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-[10px] uppercase tracking-widest text-muted-foreground/80 font-sans font-semibold mb-0.5">
-                          Pourquoi ce film
+                          Pourquoi {mediaType === "tv" ? "cette série" : "ce film"}
                         </p>
                         <p className="text-muted-foreground text-[12px] sm:text-[13px] font-sans leading-snug">
                           Utilise Pick un peu plus pour débloquer l'analyse personnalisée de tes recommandations.
@@ -719,7 +719,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-[10px] uppercase tracking-widest text-primary/60 font-sans font-semibold mb-0.5">
-                          Pourquoi ce film
+                          Pourquoi {mediaType === "tv" ? "cette série" : "ce film"}
                         </p>
                         <p className="text-foreground/70 text-[12px] sm:text-[13px] font-sans leading-snug">
                           {matchData.headline}
@@ -1162,7 +1162,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                   {[
                     { label: "Plus intense", message: "Je veux quelque chose de plus intense" },
                     { label: "Plus émouvant", message: "Je veux quelque chose de plus émouvant et touchant" },
-                    { label: "Plus court", message: "Je préfère un film plus court" },
+                    { label: "Plus court", message: `Je préfère ${mediaType === "tv" ? "une série plus courte" : "un film plus court"}` },
                     { label: "Plus drôle", message: "Je veux un truc plus drôle et léger" },
                   ].map((chip) => (
                     <button
@@ -1267,7 +1267,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                 <div className="w-10 h-1 rounded-full bg-foreground/15" />
               </div>
               <div className="px-5 pb-5 pt-2">
-                <p className="text-sm font-sans font-semibold text-foreground mb-3">Pourquoi ce film ne te convient pas ?</p>
+                <p className="text-sm font-sans font-semibold text-foreground mb-3">Pourquoi {mediaType === "tv" ? "cette série" : "ce film"} ne te convient pas ?</p>
                 <div className="grid grid-cols-2 gap-2">
                   {[
                     { label: "Déjà vu", value: "already_seen" },

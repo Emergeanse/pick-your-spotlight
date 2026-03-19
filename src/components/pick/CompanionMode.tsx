@@ -14,14 +14,17 @@ interface ChatMsg {
   content: string;
 }
 
-const QUICK_ACTIONS = [
-  { label: "Fun fact", icon: Sparkles, message: "Donne-moi un fun fact sur ce film !" },
-  { label: "Cet acteur ?", icon: User, message: "Qui est l'acteur/actrice principal(e) et quels sont ses autres films connus ?" },
-  { label: "Cette scène", icon: Eye, message: "Explique-moi cette scène sans spoilers." },
-  { label: "Coulisses", icon: Clapperboard, message: "Raconte-moi une anecdote de tournage !" },
-  { label: "Musique", icon: Music, message: "Parle-moi de la musique / bande-son de ce film." },
-  { label: "Sans spoilers", icon: Shield, message: "Explique-moi le contexte de ce film sans me spoiler." },
-];
+const getQuickActions = (isTv: boolean) => {
+  const label = isTv ? "cette série" : "ce film";
+  return [
+    { label: "Fun fact", icon: Sparkles, message: `Donne-moi un fun fact sur ${label} !` },
+    { label: "Cet acteur ?", icon: User, message: "Qui est l'acteur/actrice principal(e) et quels sont ses autres rôles connus ?" },
+    { label: "Cette scène", icon: Eye, message: "Explique-moi cette scène sans spoilers." },
+    { label: "Coulisses", icon: Clapperboard, message: "Raconte-moi une anecdote de tournage !" },
+    { label: "Musique", icon: Music, message: `Parle-moi de la musique / bande-son de ${label}.` },
+    { label: "Sans spoilers", icon: Shield, message: `Explique-moi le contexte de ${label} sans me spoiler.` },
+  ];
+};
 
 const CONTEXTUAL_PROMPTS = [
   "Pourquoi ce personnage fait ça ?",
@@ -55,13 +58,13 @@ interface CompanionModeProps {
 }
 
 // Proactive suggestions that Pick surfaces periodically
-const PROACTIVE_SUGGESTIONS = [
+const getProactiveSuggestions = (isTv: boolean) => [
   "Tu veux un fun fact sur cette scène ? 🎬",
   "Je connais une anecdote sur cet acteur 👀",
-  "Tu savais que ce film a failli ne jamais sortir ?",
+  `Tu savais que ${isTv ? "cette série a failli ne jamais sortir" : "ce film a failli ne jamais sortir"} ?`,
   "Envie d'en savoir plus sur la musique de cette scène ? 🎵",
   "Le réalisateur a caché un easter egg ici…",
-  "Ce plan est une référence à un autre film, tu veux savoir lequel ?",
+  `Ce plan est une référence à ${isTv ? "une autre série" : "un autre film"}, tu veux savoir ${isTv ? "laquelle" : "lequel"} ?`,
   "L'acteur a improvisé cette réplique !",
   "Fun fact : ce lieu de tournage est réel 🗺️",
 ];
@@ -83,6 +86,10 @@ export default function CompanionMode({ movie, onClose, pickPlus }: CompanionMod
   const proactiveTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const isTv = !!movie.first_air_date;
+  const QUICK_ACTIONS = getQuickActions(isTv);
+  const PROACTIVE_SUGGESTIONS = getProactiveSuggestions(isTv);
 
   const title = getDisplayTitle(movie);
   const year = getYear(movie);
@@ -451,7 +458,7 @@ export default function CompanionMode({ movie, onClose, pickPlus }: CompanionMod
             type="text"
             value={input}
             onChange={e => setInput(e.target.value)}
-            placeholder="Pose-moi une question sur le film"
+            placeholder={`Pose-moi une question sur ${movie.first_air_date ? "la série" : "le film"}`}
             disabled={isStreaming}
             className="flex-1 bg-secondary/50 border border-border/20 rounded-full px-4 py-2.5 text-sm font-sans placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/20 disabled:opacity-50 transition-all"
           />
