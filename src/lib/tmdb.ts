@@ -409,4 +409,39 @@ export async function getTonightsPick(
   return getMovieDetails(results[idx].id, "movie");
 }
 
+export interface CastMember {
+  id: number;
+  name: string;
+  character: string;
+  profile_path: string | null;
+  order: number;
+}
+
+export interface CrewMember {
+  id: number;
+  name: string;
+  job: string;
+  department: string;
+  profile_path: string | null;
+}
+
+export interface MovieCredits {
+  cast: CastMember[];
+  director: CrewMember | null;
+}
+
+export async function getMovieCredits(id: number, mediaType: string): Promise<MovieCredits> {
+  const endpoint = mediaType === "tv" ? `/tv/${id}/credits` : `/movie/${id}/credits`;
+  const data = await fetchFromTMDB(endpoint);
+  const cast: CastMember[] = (data.cast || []).slice(0, 6).map((c: any) => ({
+    id: c.id,
+    name: c.name,
+    character: c.character || c.roles?.[0]?.character || "",
+    profile_path: c.profile_path,
+    order: c.order ?? 999,
+  }));
+  const director = (data.crew || []).find((c: any) => c.job === "Director") || null;
+  return { cast, director };
+}
+
 export { getDisplayTitle, getYear, getPosterUrl, getBackdropUrl, getMovieDetails };
