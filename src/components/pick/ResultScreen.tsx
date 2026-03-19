@@ -719,7 +719,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-[10px] uppercase tracking-widest text-primary/60 font-sans font-semibold mb-0.5">
-                          Pourquoi ce film
+                          Pourquoi {mediaType === "tv" ? "cette série" : "ce film"}
                         </p>
                         <p className="text-foreground/70 text-[12px] sm:text-[13px] font-sans leading-snug">
                           {matchData.headline}
