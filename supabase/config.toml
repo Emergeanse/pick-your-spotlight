@@ -29,3 +29,6 @@ verify_jwt = false
 
 [functions.admin-create-user]
 verify_jwt = false
+
+[functions.cleanup-test-user]
+verify_jwt = false

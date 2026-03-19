@@ -91,7 +91,7 @@ const Admin = () => {
             </div>
             <div>
               <h1 className="text-2xl font-serif">Administration</h1>
-              <p className="text-xs text-muted-foreground">Créer des comptes de test</p>
+              <p className="text-xs text-muted-foreground">Comptes éphémères — supprimés à la déconnexion</p>
             </div>
           </div>
 

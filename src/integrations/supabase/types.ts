@@ -301,6 +301,7 @@ export type Database = {
           friend_code: string
           hook_messages_seen: string[]
           id: string
+          is_test_account: boolean
           last_recommendation_date: string | null
           media_preference: string
           min_rating: number | null
@@ -327,6 +328,7 @@ export type Database = {
           friend_code?: string
           hook_messages_seen?: string[]
           id: string
+          is_test_account?: boolean
           last_recommendation_date?: string | null
           media_preference?: string
           min_rating?: number | null
@@ -353,6 +355,7 @@ export type Database = {
           friend_code?: string
           hook_messages_seen?: string[]
           id?: string
+          is_test_account?: boolean
           last_recommendation_date?: string | null
           media_preference?: string
           min_rating?: number | null
