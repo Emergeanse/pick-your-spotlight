@@ -17,6 +17,8 @@ import { computeUserTasteVector, ensureMovieEmbedding } from "@/lib/taste-engine
 import BrandHeader from "./BrandHeader";
 import PickCharacter from "./PickCharacter";
 
+const IMG_BASE = "https://image.tmdb.org/t/p";
+
 function ActorCard({ actor }: { actor: import("@/lib/tmdb").CastMember }) {
   const [hovered, setHovered] = useState(false);
   const [person, setPerson] = useState<PersonDetails | null>(null);
