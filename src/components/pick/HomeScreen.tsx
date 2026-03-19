@@ -63,7 +63,7 @@ const LOADING_MESSAGES = [
 ];
 
 const PROACTIVE_MESSAGES = [
-  "J'ai peut-être le film parfait pour ce soir.",
+   "J'ai peut-être la recommandation parfaite pour ce soir.",
   "Tiens, j'ai pensé à un truc qui devrait te plaire.",
   "Avant que tu choisisses… regarde celui-là.",
   "J'ai une idée pour toi ce soir.",
@@ -73,10 +73,10 @@ const PROACTIVE_MESSAGES = [
   "Celui-ci a ton nom écrit dessus.",
   "Je crois que j'ai trouvé ta soirée.",
   "Attends de voir ce que j'ai déniché…",
-  "Je parie que tu vas adorer celui-là.",
-  "J'ai un petit pressentiment sur ce film…",
+  "Je parie que tu vas adorer.",
+  "J'ai un petit pressentiment sur celui-là…",
   "Regarde ce que j'ai trouvé en fouillant pour toi.",
-  "Ce film-là, c'est du sur-mesure pour toi.",
+  "Du sur-mesure pour toi.",
   "Un petit bijou juste pour toi ce soir.",
 ];
 
