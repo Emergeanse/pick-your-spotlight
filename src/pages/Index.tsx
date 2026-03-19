@@ -12,6 +12,8 @@ import ActivationFlow from "@/components/pick/ActivationFlow";
 import type { MissionId } from "@/components/pick/ActivationFlow";
 import WatchlistMissionGuide from "@/components/pick/WatchlistMissionGuide";
 import type { WatchlistGuideStep } from "@/components/pick/WatchlistMissionGuide";
+import TalkToPickMissionGuide from "@/components/pick/TalkToPickMissionGuide";
+import type { TalkToPickGuideStep } from "@/components/pick/TalkToPickMissionGuide";
 
 import type { ChatMessage } from "@/components/pick/VoiceChat";
 import { toast } from "sonner";
@@ -62,6 +64,7 @@ const Index = () => {
   const [watchlistGuideStep, setWatchlistGuideStep] = useState<WatchlistGuideStep>(null);
   const [watchlistGuideDone, setWatchlistGuideDone] = useState(false);
   const [watchlistSavedCount, setWatchlistSavedCount] = useState(0);
+  const [talkToPickGuideStep, setTalkToPickGuideStep] = useState<TalkToPickGuideStep>(null);
   const watchlistGuideAwaitingLoad = useRef(false);
 
   useEffect(() => {
@@ -198,8 +201,12 @@ const Index = () => {
         // User needs to use "Pick pour ce soir" — just close overlay, they'll see the button
         break;
       case "talk_to_pick":
+        setStep("home");
+        setResults([]);
+        setCurrentResultIndex(0);
+        setShowChat(false);
         setChatInitialMessages(undefined);
-        setShowChat(true);
+        setTimeout(() => setTalkToPickGuideStep("open-chat"), 400);
         break;
       case "watchlist_3":
         // Reset to home screen first, then start the guided flow
@@ -271,6 +278,9 @@ const Index = () => {
   const handleOpenChat = () => {
     setChatInitialMessages(undefined);
     setShowChat(true);
+    if (activeActivationMission === "talk_to_pick") {
+      setTimeout(() => setTalkToPickGuideStep("mic"), 250);
+    }
   };
   const handleCloseChat = () => setShowChat(false);
 
@@ -291,8 +301,10 @@ const Index = () => {
         { user_id: user.id, usage_date: today, chat_count: 1 },
         { onConflict: "user_id,usage_date" }
       );
+      setTalkToPickGuideStep(null);
       setShowChat(false);
       setActiveActivationMission(null);
+      setStep("home");
       return;
     }
 
@@ -455,7 +467,7 @@ const Index = () => {
       {showTabBar && <BottomTabBar />}
 
       <AnimatePresence>
-        {showChat && <VoiceChat onClose={handleCloseChat} onMovieSuggested={handleMovieSuggested} initialMessages={chatInitialMessages} />}
+        {showChat && <VoiceChat onClose={handleCloseChat} onMovieSuggested={handleMovieSuggested} initialMessages={chatInitialMessages} showMicGuide={talkToPickGuideStep === "mic"} />}
       </AnimatePresence>
 
 
@@ -485,6 +497,10 @@ const Index = () => {
           savedCount={watchlistSavedCount}
           target={3}
         />
+      )}
+
+      {talkToPickGuideStep && (
+        <TalkToPickMissionGuide step={talkToPickGuideStep} />
       )}
     </div>
   );
