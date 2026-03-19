@@ -676,7 +676,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
             className="absolute inset-0 z-50 bg-background"
           >
             <BrandHeader showBack onBack={() => { setFlowStep("idle"); setWhoChoice(null); }} />
-            <StepLayout currentStep={flowStep === "who" ? 1 : 2} totalSteps={2}>
+            <StepLayout currentStep={flowStep === "who" ? 1 : flowStep === "what" ? 2 : 3} totalSteps={3}>
               {flowStep === "who" && (
                 <WhoStep onSelect={(w) => {
                   setWhoChoice(w);
@@ -691,6 +691,12 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
               )}
               {flowStep === "what" && (
                 <WhatStep onSelect={(w) => {
+                  setFlowStep("exploration");
+                }} />
+              )}
+              {flowStep === "exploration" && (
+                <ExplorationStep onSelect={(level) => {
+                  setExplorationLevel(level);
                   setFlowStep("idle");
                   setTonightPick(null);
                   generateTonightPick(rejectedIds);
