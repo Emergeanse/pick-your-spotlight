@@ -10,7 +10,7 @@ import RevealAnimation from "@/components/pick/RevealAnimation";
 import PlatformTour from "@/components/pick/PlatformTour";
 import ActivationFlow from "@/components/pick/ActivationFlow";
 import type { MissionId } from "@/components/pick/ActivationFlow";
-import { useCompanion } from "@/contexts/CompanionContext";
+
 import type { ChatMessage } from "@/components/pick/VoiceChat";
 import { toast } from "sonner";
 import BrandHeader from "@/components/pick/BrandHeader";
