@@ -139,6 +139,7 @@ const Index = () => {
   };
 
   const handleActivationMission = (missionId: MissionId) => {
+    setActiveActivationMission(missionId);
     switch (missionId) {
       case "train_20":
         setOpenTrainerOnMount(true);
