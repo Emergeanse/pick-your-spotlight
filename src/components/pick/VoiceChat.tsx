@@ -88,7 +88,7 @@ const SoundWave = () => (
   </div>
 );
 
-const VoiceChat = ({ onClose, onMovieSuggested, initialMessages }: VoiceChatProps) => {
+const VoiceChat = ({ onClose, onMovieSuggested, initialMessages, showMicGuide = false }: VoiceChatProps) => {
   const [phase, setPhase] = useState<Phase>("idle");
   const [userText, setUserText] = useState("");
   const [recapTags, setRecapTags] = useState<string[]>([]);
