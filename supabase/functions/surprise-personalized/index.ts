@@ -296,7 +296,7 @@ Recommande UN film avec les scores détaillés.`;
       throw new Error("No non-excluded movie found on TMDB");
     }
 
-    const movieDetail = await getMovieDetails(selectedMovie.id);
+    const movieDetail = await getMovieDetails(selectedMovie.id, searchType);
 
     // Generate embedding for the recommended movie (fire & forget)
     if (SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) {
