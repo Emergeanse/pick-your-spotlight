@@ -191,8 +191,13 @@ const Index = () => {
         setShowChat(true);
         break;
       case "watchlist_3":
+        // Start the guided flow: first, highlight "Pick pour ce soir"
+        if (!watchlistGuideDone) {
+          setWatchlistGuideStep("pick-ce-soir");
+        }
+        break;
       case "like_5":
-        // Auto-trigger a recommendation so user lands on ResultScreen with bookmark/like buttons
+        // Auto-trigger a recommendation so user lands on ResultScreen with like button
         triggerSurpriseForMission();
         break;
     }
