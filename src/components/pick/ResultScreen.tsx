@@ -124,6 +124,7 @@ function ActorCard({ actor }: { actor: import("@/lib/tmdb").CastMember }) {
   );
 }
 
+const IMG_BASE = "https://image.tmdb.org/t/p";
 
 const IMG_BASE = "https://image.tmdb.org/t/p";
 
