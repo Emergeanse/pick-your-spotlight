@@ -28,6 +28,7 @@ interface HomeScreenProps {
   onMovieSelect: (movie: MovieDetail) => void;
   loading: boolean;
   openTrainerOnMount?: boolean;
+  forceCloseTrainer?: boolean;
   onTrainerOpened?: () => void;
 }
 
@@ -81,7 +82,7 @@ const PROACTIVE_MESSAGES = [
   "Un petit bijou juste pour toi ce soir.",
 ];
 
-const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, openTrainerOnMount, onTrainerOpened }: HomeScreenProps) => {
+const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, openTrainerOnMount, forceCloseTrainer, onTrainerOpened }: HomeScreenProps) => {
   const navigate = useNavigate();
   const [isSurprising, setIsSurprising] = useState(false);
   const [surpriseMsg, setSurpriseMsg] = useState("");
@@ -118,6 +119,13 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
       onTrainerOpened?.();
     }
   }, [openTrainerOnMount]);
+
+  // Force close trainer when switching missions
+  useEffect(() => {
+    if (forceCloseTrainer) {
+      setShowTrainer(false);
+    }
+  }, [forceCloseTrainer]);
   const { user } = useAuth();
 
   // Load engagement data
