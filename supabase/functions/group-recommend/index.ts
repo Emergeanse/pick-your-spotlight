@@ -209,7 +209,7 @@ Structure :
         model: "google/gemini-3-flash-preview",
         messages: [
           { role: "system", content: systemPrompt },
-          { role: "user", content: "Trouve les 5 meilleurs films pour ce groupe." },
+          { role: "user", content: `Trouve les 5 meilleurs ${contentLabel} pour ce groupe.` },
         ],
       }),
     });
