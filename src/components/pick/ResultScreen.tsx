@@ -229,7 +229,7 @@ function getRejectReaction(reason: string): string {
 
 const CONFIDENCE_THRESHOLD = 30;
 
-const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onShowAnother, onRestart, onRefineWithVoice, onRefineWithMessage, onStartCompanion, hasMore, userCriteria, alternativeMovies, onSelectAlternative, searchTags, onRemoveTag, refining, profileConfidence = 0 }, ref) => {
+const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onShowAnother, onRestart, onRefineWithVoice, onRefineWithMessage, hasMore, userCriteria, alternativeMovies, onSelectAlternative, searchTags, onRemoveTag, refining, profileConfidence = 0 }, ref) => {
   const [providers, setProviders] = useState<{ name: string; logo_path: string; provider_id: number }[]>([]);
   const [credits, setCredits] = useState<MovieCredits | null>(null);
   const [streamingLinks, setStreamingLinks] = useState<StreamingLink[]>([]);
