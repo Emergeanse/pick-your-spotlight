@@ -83,7 +83,17 @@ serve(async (req) => {
       .filter(([, count]) => (count as number) >= 3)
       .map(([genre]) => genre);
 
-    const shouldDiscover = Math.random() < confidence.discoveryRatio;
+    const shouldDiscover = explorationLevel >= 7 || Math.random() < confidence.discoveryRatio;
+    const effectiveOutOfComfortZone = outOfComfortZone || explorationLevel >= 9;
+
+    const explorationModeLabel = explorationLevel <= 2 ? "ULTRA-PRÉCISION" : explorationLevel <= 5 ? "ÉQUILIBRÉ" : explorationLevel <= 8 ? "DÉCOUVERTE" : "TERRE INCONNUE";
+    const explorationInstruction = explorationLevel <= 2
+      ? "MODE ULTRA-PRÉCISION : Colle exactement aux genres et micro-genres favoris. Privilégie les candidats embedding à très haute similarité (>85%). Ne prends aucun risque, l'utilisateur veut du confort total."
+      : explorationLevel <= 5
+        ? "MODE ÉQUILIBRÉ : Balance entre confort et découverte. Reste proche des goûts mais permets-toi des genres adjacents occasionnels."
+        : explorationLevel <= 8
+          ? "MODE DÉCOUVERTE : Propose des genres adjacents, des films sous-estimés, des pépites méconnues. L'utilisateur est ouvert à la surprise. Ose des recommandations moins évidentes."
+          : "MODE TERRE INCONNUE : Le film recommandé DOIT être RADICALEMENT différent des habitudes de l'utilisateur. Choisis un genre qu'il ne regarde JAMAIS. Propose l'exact opposé de ses goûts habituels. Explique dans 'reason' pourquoi ce choix inattendu pourrait lui plaire. Commence par 'Changement radical :'.";
 
     const skipInsights = skipPatterns.avgSkipRate > 0.6
       ? "L'utilisateur skip souvent — sois plus sélectif et surprenant."
