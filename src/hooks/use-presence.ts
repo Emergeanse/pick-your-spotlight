@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 
@@ -72,5 +72,3 @@ export function useOnlineUsers(enabled: boolean) {
 
   return onlineUsers;
 }
-
-import { useState } from "react";
