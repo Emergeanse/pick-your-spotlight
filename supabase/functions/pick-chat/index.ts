@@ -112,50 +112,28 @@ STYLE :
 
     } else if (isPremium) {
       // --- PICK+ FULL CHATBOT MODE ---
-      systemPrompt = `Tu es Pick, l'assistant intelligent de l'application Pick — une appli de recommandation de films, séries ET vidéos YouTube.
+      systemPrompt = `Tu es Pick, l'assistant intelligent de l'application Pick — une appli de recommandation de films et séries.
 
 Tu es un ami cinéphile passionné, chaleureux et drôle. Tu tutoies toujours l'utilisateur.
 
 TU SAIS TOUT FAIRE (dans ton domaine) :
 
 1. RECOMMANDER des films/séries — Si l'utilisateur donne une humeur, un genre, un contexte ou n'importe quel signal, utilise l'outil suggest_movie pour recommander.
-2. RECOMMANDER des vidéos YouTube — documentaires, vidéos éducatives, analyses ciné, créations de YouTubeurs format documentaire. Si l'utilisateur demande une vidéo YouTube, un documentaire YouTube, ou du contenu éducatif sur YouTube, utilise l'outil suggest_youtube pour recommander.
-3. RÉPONDRE à des questions sur le cinéma — acteurs, réalisateurs, anecdotes, histoire du cinéma, oscars, festivals, techniques de tournage, etc.
-4. EXPLIQUER l'application Pick — comment elle marche, ses fonctionnalités, Pick+, etc.
-5. COMPARER des films, donner ton avis, discuter de cinéma en général.
+2. RÉPONDRE à des questions sur le cinéma — acteurs, réalisateurs, anecdotes, histoire du cinéma, oscars, festivals, techniques de tournage, etc.
+3. EXPLIQUER l'application Pick — comment elle marche, ses fonctionnalités, Pick+, etc.
+4. COMPARER des films, donner ton avis, discuter de cinéma en général.
 
 ${getAppKnowledgeSection()}
 ${ratingInstruction}
 ${genreInstruction}
 
 RÈGLE CRITIQUE — RECOMMANDATION :
-Recommande immédiatement (appelle suggest_movie OU suggest_youtube selon le cas) si l'utilisateur donne AU MOINS UN signal :
+Recommande immédiatement (appelle suggest_movie) si l'utilisateur donne AU MOINS UN signal :
 - Une humeur ("fatigué", "envie de rigoler", "intense")
 - Un contexte ("avec ma copine", "entre potes", "seul")
 - Un genre ("thriller", "comédie", "SF")
 - Une référence ("comme Inception", "style Tarantino")
 - Une demande même vague ("un bon film", "quelque chose de bien", "un truc ce soir")
-- Une demande de vidéo YouTube ("une vidéo sur l'histoire", "un documentaire YouTube", "un truc éducatif")
-
-QUAND UTILISER suggest_youtube (TRÈS IMPORTANT) :
-- L'utilisateur demande explicitement du contenu YouTube, un documentaire YouTube, ou une vidéo
-- L'utilisateur demande quelque chose de COURT (moins de 30 minutes) sur un sujet éducatif, historique, culturel, scientifique
-- L'utilisateur demande un documentaire et que YouTube est plus pertinent qu'un film (ex: sujet de niche, format court)
-- L'utilisateur mentionne "vidéo", "YouTube", "documentaire court", "éducatif", "analyse", "video essay"
-- L'utilisateur demande du contenu sur un sujet précis (ex: "l'histoire de Napoléon", "comment fonctionne un trou noir") où des vidéos YouTube de qualité existent
-
-PARAMÈTRES YOUTUBE À EXTRAIRE (très important) :
-- targetDurationMinutes : Si l'utilisateur dit "une vidéo de 30 minutes" → 30. "Un truc court" → 10. "Un long documentaire" → 60. Si pas précisé → 0.
-- channelSize : Si l'utilisateur dit "chaîne pas très connue" / "petit YouTubeur" / "chaîne de niche" → "small". "Grosse chaîne" / "populaire" → "large". Si pas précisé → "any".
-- Les vidéos proposées sont TOUJOURS de haute qualité (très bien notées par la communauté YouTube).
-
-QUAND UTILISER suggest_movie :
-- L'utilisateur veut un film ou une série pour la soirée
-- L'utilisateur donne une humeur sans préciser le format
-- L'utilisateur veut quelque chose de long (1h+)
-- Par défaut, si le format n'est pas clair, propose un film
-
-En résumé : YouTube = contenu court/éducatif/documentaire/niche. Film = divertissement long/soirée.
 
 Pose une question UNIQUEMENT si le message ne contient AUCUN signal (ex: juste "Salut").
 Maximum 1 question avant de proposer un film.
@@ -172,7 +150,7 @@ DÉTECTION D'HUMEUR (priorité maximale) :
 L'humeur FILTRE les genres. "Fatigué" + "bon film" ≠ thriller intense.
 
 HORS SUJET :
-- Si l'utilisateur parle de quelque chose qui n'a AUCUN rapport avec le cinéma, les séries, YouTube/documentaires, la culture audiovisuelle ou l'application Pick → refuse poliment : "Hé, moi c'est le ciné, les vidéos et Pick, mon domaine ! 🎬 Dis-moi plutôt ce que t'as envie de regarder."
+- Si l'utilisateur parle de quelque chose qui n'a AUCUN rapport avec le cinéma, les séries, ou l'application Pick → refuse poliment : "Hé, moi c'est le ciné et Pick, mon domaine ! 🎬 Dis-moi plutôt ce que t'as envie de regarder."
 
 STYLE :
 - Tutoie toujours
@@ -185,29 +163,26 @@ ANNÉE EN COURS : ${currentYear}`;
 
     } else {
       // --- FREE USER: DISCOVERY ONLY MODE ---
-      systemPrompt = `Tu es Pick, l'assistant de l'application Pick — une appli de recommandation de films, séries et vidéos YouTube.
+      systemPrompt = `Tu es Pick, l'assistant de l'application Pick — une appli de recommandation de films et séries.
 
 Tu es un ami cinéphile chaleureux. Tu tutoies toujours l'utilisateur.
 
-TON UNIQUE MISSION : Aider l'utilisateur à trouver LE film, LA série, ou LA vidéo YouTube parfait(e) pour ce soir.
+TON UNIQUE MISSION : Aider l'utilisateur à trouver LE film ou LA série parfait(e) pour ce soir.
 
 Tu dois :
 1. Comprendre rapidement l'humeur, le contexte et les envies de l'utilisateur
 2. Poser 1-2 questions courtes si nécessaire pour cerner ce qu'il cherche
-3. Proposer un film/série via suggest_movie OU une vidéo YouTube via suggest_youtube
+3. Proposer un film/série via suggest_movie
 
 ${ratingInstruction}
 ${genreInstruction}
 
-RÈGLE CRITIQUE : Tu fais de la recommandation de films/séries ET de vidéos YouTube (documentaires, vidéos éducatives, analyses ciné, etc.).
-- Si l'utilisateur demande une vidéo YouTube, un documentaire YouTube, du contenu éducatif, quelque chose de court sur un sujet → utilise suggest_youtube
-- Si l'utilisateur demande quelque chose de court (<30 min) sur un sujet précis (histoire, science, culture) → utilise suggest_youtube
+RÈGLE CRITIQUE : Tu fais de la recommandation de films et séries uniquement.
 - Si l'utilisateur pose des questions sur le cinéma → réponds gentiment : "Super question ! 🎬 Avec Pick+, tu pourras me poser toutes tes questions ciné. Pour l'instant, dis-moi ce que t'as envie de regarder ce soir !"
 - Si l'utilisateur parle de hors-sujet → "Hé, moi c'est trouver ton film du soir ! 🎬 Dis-moi ton humeur."
 
-Recommande immédiatement (appelle suggest_movie ou suggest_youtube) si l'utilisateur donne AU MOINS UN signal :
+Recommande immédiatement (appelle suggest_movie) si l'utilisateur donne AU MOINS UN signal :
 - Une humeur, un contexte, un genre, une référence, une demande même vague
-- Une demande de vidéo YouTube, documentaire, ou contenu éducatif/court
 
 Pose une question UNIQUEMENT si le message ne contient AUCUN signal.
 Maximum 1 question avant de proposer.
@@ -250,25 +225,6 @@ ANNÉE EN COURS : ${currentYear}`;
               },
             },
             required: ["title", "type", "reason", "recap"],
-            additionalProperties: false,
-          },
-        },
-      },
-      {
-        type: "function",
-        function: {
-          name: "suggest_youtube",
-          description: "Suggest a YouTube video. Extract duration, channel size preference, and topic from the user's message.",
-          parameters: {
-            type: "object",
-            properties: {
-              query: { type: "string", description: "Search query to find the YouTube video (in French)" },
-              category: { type: "string", enum: ["documentary", "film", "cinema-culture", "educational"], description: "Category of YouTube content" },
-              reason: { type: "string", description: "Brief reason why this fits (in French, 2-3 sentences)" },
-              targetDurationMinutes: { type: "number", description: "Target duration in minutes if the user specified one (e.g. 30 for '30 minutes'). 0 if not specified." },
-              channelSize: { type: "string", enum: ["any", "small", "medium", "large"], description: "Preferred channel size: 'small' = niche/peu connu (<100K subs), 'medium' = mid-tier, 'large' = big/populaire, 'any' = no preference" },
-            },
-            required: ["query", "category", "reason"],
             additionalProperties: false,
           },
         },
@@ -344,176 +300,6 @@ ANNÉE EN COURS : ${currentYear}`;
 
       const toolCall = message.tool_calls[0];
       
-      // Handle YouTube suggestion — return as first-class recommendation
-      if (toolCall.function.name === "suggest_youtube") {
-        const args = JSON.parse(toolCall.function.arguments);
-        
-        const YOUTUBE_API_KEY = Deno.env.get("YOUTUBE_API_KEY");
-        if (!YOUTUBE_API_KEY) {
-          return new Response(JSON.stringify({
-            type: "text",
-            reply: args.reason + "\n\nMalheureusement, je n'arrive pas à chercher sur YouTube pour le moment. Essaie de chercher directement : " + args.query,
-            movie: null,
-          }), {
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-          });
-        }
-
-        const targetDuration = args.targetDurationMinutes || 0;
-        const channelSize = args.channelSize || "any";
-
-        // Choose YouTube videoDuration filter based on target
-        let ytDurationFilter = "any";
-        if (targetDuration > 0) {
-          if (targetDuration <= 4) ytDurationFilter = "short"; // < 4 min
-          else if (targetDuration <= 20) ytDurationFilter = "medium"; // 4-20 min
-          else ytDurationFilter = "long"; // > 20 min
-        } else if (args.category === "documentary" || args.category === "educational") {
-          ytDurationFilter = "long";
-        } else {
-          ytDurationFilter = "medium";
-        }
-
-        // Search YouTube — fetch more results to allow filtering
-        const ytParams = new URLSearchParams({
-          part: "snippet",
-          type: "video",
-          maxResults: "15",
-          key: YOUTUBE_API_KEY,
-          regionCode: "FR",
-          relevanceLanguage: "fr",
-          q: args.query,
-          videoDuration: ytDurationFilter,
-        });
-
-        const ytSearchRes = await fetch(`https://www.googleapis.com/youtube/v3/search?${ytParams}`);
-        let bestVideo: any = null;
-        
-        if (ytSearchRes.ok) {
-          const ytData = await ytSearchRes.json();
-          const videoIds = (ytData.items || []).map((item: any) => item.id.videoId).filter(Boolean);
-          
-          if (videoIds.length > 0) {
-            const detailsRes = await fetch(
-              `https://www.googleapis.com/youtube/v3/videos?part=snippet,contentDetails,statistics&id=${videoIds.join(",")}&key=${YOUTUBE_API_KEY}`
-            );
-            if (detailsRes.ok) {
-              const detailsData = await detailsRes.json();
-              let videos = (detailsData.items || []).map((v: any) => {
-                const likes = parseInt(v.statistics?.likeCount || "0");
-                const views = parseInt(v.statistics?.viewCount || "0");
-                const likeRatio = views > 0 ? likes / views : 0;
-                // Parse duration
-                const dm = (v.contentDetails?.duration || "").match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
-                const dMins = parseInt(dm?.[1] || "0") * 60 + parseInt(dm?.[2] || "0") + (parseInt(dm?.[3] || "0") > 30 ? 1 : 0);
-                return {
-                  id: v.id,
-                  title: v.snippet.title,
-                  description: v.snippet.description,
-                  thumbnail: v.snippet.thumbnails?.maxres?.url || v.snippet.thumbnails?.high?.url || v.snippet.thumbnails?.medium?.url,
-                  channelTitle: v.snippet.channelTitle,
-                  channelId: v.snippet.channelId,
-                  publishedAt: v.snippet.publishedAt,
-                  duration: v.contentDetails?.duration,
-                  durationMinutes: dMins,
-                  viewCount: views,
-                  likeCount: likes,
-                  likeRatio,
-                  url: `https://www.youtube.com/watch?v=${v.id}`,
-                };
-              });
-
-              // Filter: minimum quality — like ratio > 3% (very well received)
-              videos = videos.filter((v: any) => v.likeRatio >= 0.03 || v.viewCount < 1000);
-
-              // Filter: duration match — within ±40% of target if specified
-              if (targetDuration > 0) {
-                const minD = targetDuration * 0.6;
-                const maxD = targetDuration * 1.4;
-                const durationMatched = videos.filter((v: any) => v.durationMinutes >= minD && v.durationMinutes <= maxD);
-                if (durationMatched.length > 0) videos = durationMatched;
-              }
-
-              // Filter: channel size preference
-              if (channelSize === "small") {
-                // Prefer videos with fewer views (proxy for small channels)
-                const smallChannel = videos.filter((v: any) => v.viewCount < 500_000);
-                if (smallChannel.length > 0) videos = smallChannel;
-              } else if (channelSize === "large") {
-                const bigChannel = videos.filter((v: any) => v.viewCount >= 500_000);
-                if (bigChannel.length > 0) videos = bigChannel;
-              }
-
-              // Sort by quality score: like ratio * log(views) — rewards well-rated + somewhat popular
-              videos.sort((a: any, b: any) => {
-                const scoreA = a.likeRatio * Math.log10(Math.max(a.viewCount, 1));
-                const scoreB = b.likeRatio * Math.log10(Math.max(b.viewCount, 1));
-                return scoreB - scoreA;
-              });
-
-              if (videos.length > 0) bestVideo = videos[0];
-            }
-          }
-        }
-
-        if (!bestVideo) {
-          return new Response(JSON.stringify({
-            type: "text",
-            reply: args.reason + "\n\nJe n'ai pas trouvé de vidéo YouTube correspondante. Essaie de reformuler !",
-            movie: null,
-          }), {
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-          });
-        }
-
-        // Parse ISO 8601 duration to minutes
-        const durationMatch = (bestVideo.duration || "").match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
-        const hours = parseInt(durationMatch?.[1] || "0");
-        const mins = parseInt(durationMatch?.[2] || "0");
-        const secs = parseInt(durationMatch?.[3] || "0");
-        const runtimeMinutes = hours * 60 + mins + (secs > 30 ? 1 : 0);
-
-        // Category label mapping
-        const categoryLabels: Record<string, string> = {
-          documentary: "Documentaire",
-          film: "Cinéma",
-          "cinema-culture": "Culture ciné",
-          educational: "Éducatif",
-        };
-
-        // Build a MovieDetail-shaped object with _youtube flag
-        const youtubeMovie = {
-          id: -Math.abs(hashCode(bestVideo.id)),
-          title: bestVideo.title,
-          name: bestVideo.title,
-          overview: bestVideo.description || "Pas de description disponible.",
-          poster_path: null,
-          backdrop_path: bestVideo.thumbnail, // full URL, not TMDB path
-          vote_average: 0,
-          runtime: runtimeMinutes,
-          genres: [{ id: 99, name: categoryLabels[args.category] || "YouTube" }],
-          release_date: bestVideo.publishedAt?.slice(0, 10) || "",
-          _youtube: true,
-          _youtubeData: {
-            url: bestVideo.url,
-            channelTitle: bestVideo.channelTitle,
-            viewCount: bestVideo.viewCount,
-            duration: bestVideo.duration,
-            thumbnail: bestVideo.thumbnail,
-            id: bestVideo.id,
-          },
-        };
-
-        return new Response(JSON.stringify({
-          type: "recommendation",
-          reply: args.reason,
-          movie: youtubeMovie,
-          recap: [args.category === "documentary" ? "Documentaire" : "YouTube", args.query.split(" ").slice(0, 2).join(" ")],
-        }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-
       if (toolCall.function.name !== "suggest_movie") break;
 
       const args = JSON.parse(toolCall.function.arguments);
@@ -611,27 +397,15 @@ ANNÉE EN COURS : ${currentYear}`;
 function getAppKnowledgeSection(): string {
   return `
 CONNAISSANCES SUR L'APPLICATION PICK :
-Pick est une application de recommandation de films, séries et vidéos YouTube personnalisée. Voici ses fonctionnalités :
+Pick est une application de recommandation de films et séries personnalisée. Voici ses fonctionnalités :
 
 - **Page d'accueil** : L'utilisateur peut lancer "Pick pour ce soir" (recommandation instantanée) ou parler directement à Pick via le chat.
-- **Recommandations** : Pick propose LE film/série/vidéo YouTube parfait(e) avec une fiche détaillée (note, synopsis, plateformes de streaming, bande-annonce, vidéo YouTube complémentaire).
-- **YouTube intégré** : Pick recommande aussi des documentaires, vidéos éducatives, analyses ciné et créations de YouTubeurs passionnés. Pour chaque film recommandé, une vidéo YouTube complémentaire est proposée.
+- **Recommandations** : Pick propose LE film ou LA série parfait(e) avec une fiche détaillée (note, synopsis, plateformes de streaming, bande-annonce).
 - **Watchlist** : L'utilisateur peut sauvegarder des films pour plus tard. Accessible depuis la barre de navigation.
 - **Mon Cinéma** : Section profil cinématographique avec les films aimés, l'ADN cinématique de l'utilisateur, et des statistiques.
 - **Mode Compagnon** : Quand l'utilisateur choisit de regarder un film, Pick devient un compagnon de visionnage — il peut répondre à des questions sur le film en cours, partager des anecdotes, expliquer des scènes, etc.
-- **Pick+** : Version premium (3,99€/mois ou 29,99€/an) avec chatbot complet (poser toutes les questions ciné), recommandations illimitées, compagnon illimité, ADN avancé, alertes plateforme.
-- **Version gratuite** : 3 recommandations/jour, 1 conversation découverte/jour (trouver un film), 1 question compagnon par film.
-- **Profil** : L'utilisateur peut configurer ses plateformes de streaming préférées, ses genres favoris/exclus, sa note minimale, et activer le rituel du soir.
+- **Pick+** : Version premium avec chatbot complet (poser toutes les questions ciné), recommandations illimitées, compagnon illimité, ADN avancé, alertes plateforme.
+- **Profil** : L'utilisateur peut configurer ses plateformes de streaming préférées, ses genres favoris/exclus, sa note minimale, et son pseudo/photo de profil.
 
 Si l'utilisateur demande comment faire quelque chose dans l'appli, explique-lui clairement en le guidant vers la bonne section.`;
-}
-
-function hashCode(str: string): number {
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    const char = str.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
-    hash = hash & hash; // Convert to 32bit integer
-  }
-  return Math.abs(hash);
 }

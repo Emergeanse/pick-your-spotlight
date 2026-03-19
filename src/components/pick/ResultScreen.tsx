@@ -1,5 +1,4 @@
 import { useState, useEffect, forwardRef, useCallback, useRef } from "react";
-import { getYouTubeRecommendations, formatViews, type YouTubeVideo } from "@/lib/youtube";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Mic, MicOff, X, Send, Loader2, Sparkles, Check, Play, Star, Clock, Heart, Bookmark, Tv, ChevronDown, ChevronUp, MoreHorizontal, RefreshCw, MessageCircle, Volume2, ExternalLink, Share2, Zap, Lock, PenLine } from "lucide-react";
@@ -121,8 +120,6 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
   const [whySpeaking, setWhySpeaking] = useState(false);
   const [whyAudioLoading, setWhyAudioLoading] = useState(false);
   const { user } = useAuth();
-  const [youtubeVideo, setYoutubeVideo] = useState<YouTubeVideo | null>(null);
-  const [youtubeLoading, setYoutubeLoading] = useState(false);
   const [voiceListening, setVoiceListening] = useState(false);
   const [voiceProcessing, setVoiceProcessing] = useState(false);
   const voiceRecorderRef = useRef<MediaRecorder | null>(null);
@@ -202,14 +199,9 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
     }
   }, [matchData, whyAudioLoading, whySpeaking, playBrowserWhyFallback]);
 
-  const isYouTube = !!(movie as any)._youtube;
-  const youtubeData = (movie as any)._youtubeData;
-
   const title = getDisplayTitle(movie);
   const year = getYear(movie);
-  const backdrop = isYouTube && movie.backdrop_path?.startsWith("http")
-    ? movie.backdrop_path
-    : getBackdropUrl(movie.backdrop_path);
+  const backdrop = getBackdropUrl(movie.backdrop_path);
   const poster = getPosterUrl(movie.poster_path, "w780");
   const runtime = movie.runtime || (movie.episode_run_time?.[0]) || 0;
   const genres = movie.genres?.map(g => g.name).join(" · ") || "";
@@ -227,13 +219,12 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
   }, [movie.id]);
 
   useEffect(() => {
-    if (isYouTube) { setProviders([]); setStreamingLinks([]); setTrailerUrl(null); return; }
     getWatchProviders(movie.id, mediaType).then((p) => {
       setProviders(p);
       setStreamingLinks(buildStreamingLinks(p, title));
     }).catch(() => { setProviders([]); setStreamingLinks([]); });
     getMovieTrailerUrl(movie.id, mediaType).then(setTrailerUrl).catch(() => setTrailerUrl(null));
-  }, [movie.id, mediaType, isYouTube]);
+  }, [movie.id, mediaType]);
 
   // Fetch providers for alternative movies
   useEffect(() => {
@@ -255,30 +246,16 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
     setReviewSubmitted(false);
     setReviewText("");
     setShowReviewSheet(false);
-    setYoutubeVideo(null);
 
-    // Fetch a YouTube video about this movie (skip if movie IS a YouTube video)
-    if (!isYouTube) {
-      setYoutubeLoading(true);
-      getYouTubeRecommendations("cinema-culture", `${title} film analyse critique`, 3)
-        .then((videos) => {
-          if (videos.length > 0) setYoutubeVideo(videos[0]);
-        })
-        .catch(() => {})
-        .finally(() => setYoutubeLoading(false));
-    }
+    // Pre-generate embedding for this movie (fire & forget)
+    ensureMovieEmbedding(
+      movie.id,
+      movie.title || movie.name || "",
+      movie.overview || "",
+      (movie.genres || []).map(g => g.name)
+    );
 
-    // Pre-generate embedding for this movie (fire & forget) — skip for YouTube
-    if (!isYouTube) {
-      ensureMovieEmbedding(
-        movie.id,
-        movie.title || movie.name || "",
-        movie.overview || "",
-        (movie.genres || []).map(g => g.name)
-      );
-    }
-
-    // Load taste profile for match analysis (movies AND YouTube)
+    // Load taste profile for match analysis
     Promise.all([
       getUserTasteProfile(),
       user ? computeUserTasteVector(user.id) : Promise.resolve(null),
@@ -287,7 +264,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
     ]).then(([tasteProfile, userTasteVector, likedMovies, cinematicProfile]) => {
       const likedMovieTitles = (likedMovies || []).map((m: any) => m.title);
       supabase.functions.invoke("movie-match", {
-        body: { movie, userCriteria, tasteProfile, userTasteVector: isYouTube ? null : userTasteVector, likedMovieTitles, searchTags, cinematicProfile },
+        body: { movie, userCriteria, tasteProfile, userTasteVector, likedMovieTitles, searchTags, cinematicProfile },
       }).then(({ data, error }) => {
         if (error) { console.error("Match error:", error); setMatchLoading(false); return; }
         setMatchData(data as MatchData);
@@ -381,33 +358,15 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
 
                 {/* Meta: Year • Runtime • Rating / Views */}
                 <div className="flex items-center gap-2 text-foreground/50 text-xs font-sans mb-1 flex-wrap">
-                  {isYouTube && youtubeData?.channelTitle && (
-                    <>
-                      <span className="font-medium text-foreground/70">{youtubeData.channelTitle}</span>
-                      <span className="text-foreground/20">•</span>
-                    </>
-                  )}
-                  {!isYouTube && year && <span className="font-medium text-foreground/70">{year}</span>}
-                  {!isYouTube && year && runtime > 0 && <span className="text-foreground/20">•</span>}
+                  {year && <span className="font-medium text-foreground/70">{year}</span>}
+                  {year && runtime > 0 && <span className="text-foreground/20">•</span>}
                   {runtime > 0 && (
                     <span className="flex items-center gap-1">
                       <Clock className="w-3 h-3" />
                       {runtime} min
                     </span>
                   )}
-                  {isYouTube && youtubeData?.viewCount > 0 && (
-                    <>
-                      <span className="text-foreground/20">•</span>
-                      <span className="text-foreground/60 font-medium">
-                        {youtubeData.viewCount > 1_000_000
-                          ? `${(youtubeData.viewCount / 1_000_000).toFixed(1)}M vues`
-                          : youtubeData.viewCount > 1_000
-                            ? `${(youtubeData.viewCount / 1_000).toFixed(0)}K vues`
-                            : `${youtubeData.viewCount} vues`}
-                      </span>
-                    </>
-                  )}
-                  {!isYouTube && movie.vote_average > 0 && (
+                  {movie.vote_average > 0 && (
                     <>
                       <span className="text-foreground/20">•</span>
                       <span className="flex items-center gap-1 text-primary font-medium">
@@ -449,22 +408,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
               transition={{ delay: 0.5 }}
               className="mb-4"
             >
-              {isYouTube && youtubeData?.url ? (
-                <>
-                  <p className="text-[10px] uppercase tracking-widest text-foreground/30 font-sans font-semibold mb-2">
-                    Regarder
-                  </p>
-                  <motion.button
-                    whileTap={{ scale: 0.97 }}
-                    onClick={() => window.open(youtubeData.url, "_blank", "noopener")}
-                    className="w-full flex items-center justify-center gap-3 px-5 py-3.5 rounded-xl bg-red-600 text-white hover:bg-red-700 font-sans font-semibold text-sm transition-all active:scale-[0.98]"
-                  >
-                    <Play className="w-5 h-5 fill-white" />
-                    <span>Regarder sur YouTube</span>
-                    <ExternalLink className="w-3.5 h-3.5 opacity-70" />
-                  </motion.button>
-                </>
-              ) : (
+              {(
                 <>
                   <p className="text-[10px] uppercase tracking-widest text-foreground/30 font-sans font-semibold mb-2">
                     Où regarder
@@ -555,8 +499,8 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
               )}
             </div>
 
-            {/* Trailer — hide for YouTube */}
-            {!isYouTube && trailerUrl && (
+            {/* Trailer */}
+            {trailerUrl && (
               <motion.button
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -606,7 +550,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-[10px] uppercase tracking-widest text-muted-foreground/80 font-sans font-semibold mb-0.5">
-                          {isYouTube ? "Pourquoi cette vidéo" : "Pourquoi ce film"}
+                          Pourquoi ce film
                         </p>
                         <p className="text-muted-foreground text-[12px] sm:text-[13px] font-sans leading-snug">
                           Utilise Pick un peu plus pour débloquer l'analyse personnalisée de tes recommandations.
@@ -651,7 +595,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-[10px] uppercase tracking-widest text-primary/60 font-sans font-semibold mb-0.5">
-                          {isYouTube ? "Pourquoi cette vidéo" : "Pourquoi ce film"}
+                          Pourquoi ce film
                         </p>
                         <p className="text-foreground/70 text-[12px] sm:text-[13px] font-sans leading-snug">
                           {matchData.headline}
@@ -770,50 +714,6 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
               )}
             </AnimatePresence>}
 
-            {/* Pour aller plus loin — YouTube video (hide when content IS YouTube) */}
-            {!isYouTube && youtubeVideo && (
-              <motion.div
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.5, duration: 0.4 }}
-                className="mb-5 max-w-md"
-              >
-                <p className="text-[10px] uppercase tracking-widest text-foreground/30 font-sans font-semibold mb-2">
-                  Pour aller plus loin
-                </p>
-                <motion.button
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() => window.open(youtubeVideo.url, "_blank", "noopener")}
-                  className="w-full flex items-center gap-3 p-2.5 rounded-xl bg-foreground/[0.04] border border-border/15 hover:border-red-500/25 hover:bg-foreground/[0.06] transition-all group cursor-pointer"
-                >
-                  {/* Thumbnail */}
-                  <div className="relative w-24 aspect-video rounded-lg overflow-hidden shrink-0">
-                    <img
-                      src={youtubeVideo.thumbnail}
-                      alt={youtubeVideo.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      loading="lazy"
-                    />
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="w-7 h-7 rounded-full bg-red-600/90 flex items-center justify-center shadow-lg">
-                        <Play className="w-3 h-3 text-white fill-white ml-0.5" />
-                      </div>
-                    </div>
-                  </div>
-                  {/* Info */}
-                  <div className="flex-1 min-w-0 text-left">
-                    <p className="text-[12px] font-sans font-medium text-foreground/70 line-clamp-2 leading-snug mb-1 group-hover:text-foreground transition-colors">
-                      {youtubeVideo.title}
-                    </p>
-                    <div className="flex items-center gap-1.5 text-foreground/30 text-[10px] font-sans">
-                      <span className="truncate max-w-[120px]">{youtubeVideo.channelTitle}</span>
-                      {youtubeVideo.viewCount > 0 && <span>· {formatViews(youtubeVideo.viewCount)}</span>}
-                    </div>
-                  </div>
-                  <ExternalLink className="w-3.5 h-3.5 text-foreground/20 group-hover:text-red-400 shrink-0 transition-colors" />
-                </motion.button>
-              </motion.div>
-            )}
 
             {/* Primary Actions */}
             <motion.div
@@ -824,7 +724,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
             >
               {/* Main CTA row */}
               <div className="flex items-center gap-2.5">
-                {!isYouTube && onStartCompanion && (
+                {onStartCompanion && (
                   <Button
                     size="lg"
                     className="flex-1 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 font-sans font-semibold h-12 gap-2 text-[15px] neon-glow-strong transition-all active:scale-[0.97]"
