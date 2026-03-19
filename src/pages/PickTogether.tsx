@@ -261,7 +261,7 @@ const PickTogether = () => {
                 {selectedFriendIds.size > 0 && (
                   <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
                     <Button
-                      onClick={() => setStep("select-mood")}
+                      onClick={() => setStep("select-what")}
                       className="w-full rounded-xl h-13 gap-2 bg-primary text-primary-foreground hover:bg-primary/90 font-sans text-base neon-glow"
                     >
                       Continuer ({selectedCount} personnes)
