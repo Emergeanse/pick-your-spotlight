@@ -11,7 +11,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { getEngagementData, type EngagementData } from "@/lib/engagement";
 import BottomTabBar from "@/components/pick/BottomTabBar";
-
+import CinematicAvatar, { mapLevelToType, mapArchetypeToDNA, mapSignatureToAnimation, type CinematicLevel, type CinematicDNA, type TasteAnimation } from "@/components/pick/CinematicAvatar";
 const ALL_PLATFORMS = [
   { id: 8, label: "Netflix", logo: "https://image.tmdb.org/t/p/original/pbpMk2JmcoNnQwx5JGpXngfoWtp.jpg" },
   { id: 337, label: "Disney+", logo: "https://image.tmdb.org/t/p/original/97yvRBw1GzX7fXprcF80er19ot.jpg" },
