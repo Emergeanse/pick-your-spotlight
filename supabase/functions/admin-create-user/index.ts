@@ -50,11 +50,12 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: createError.message }), { status: 400, headers: corsHeaders });
     }
 
-    // Update profile with extra data
-    if (newUser?.user && (displayName || birthYear)) {
+    // Update profile with extra data + mark as test account
+    if (newUser?.user) {
       await adminClient.from("profiles").update({
         display_name: displayName || null,
         birth_year: birthYear || null,
+        is_test_account: true,
       }).eq("id", newUser.user.id);
     }
 
