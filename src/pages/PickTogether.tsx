@@ -248,7 +248,7 @@ const PickTogether = () => {
     if (step === "results") { setStep("who"); setRecommendations([]); setHeroReaction(null); }
     else if (step === "mood") { setStep("who"); }
     else if (mediaStep) { setMediaStep(false); }
-    else navigate("/app/friends");
+    else navigate("/app/pick-together");
   };
 
   return (
