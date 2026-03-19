@@ -408,22 +408,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
               transition={{ delay: 0.5 }}
               className="mb-4"
             >
-              {isYouTube && youtubeData?.url ? (
-                <>
-                  <p className="text-[10px] uppercase tracking-widest text-foreground/30 font-sans font-semibold mb-2">
-                    Regarder
-                  </p>
-                  <motion.button
-                    whileTap={{ scale: 0.97 }}
-                    onClick={() => window.open(youtubeData.url, "_blank", "noopener")}
-                    className="w-full flex items-center justify-center gap-3 px-5 py-3.5 rounded-xl bg-red-600 text-white hover:bg-red-700 font-sans font-semibold text-sm transition-all active:scale-[0.98]"
-                  >
-                    <Play className="w-5 h-5 fill-white" />
-                    <span>Regarder sur YouTube</span>
-                    <ExternalLink className="w-3.5 h-3.5 opacity-70" />
-                  </motion.button>
-                </>
-              ) : (
+              {(
                 <>
                   <p className="text-[10px] uppercase tracking-widest text-foreground/30 font-sans font-semibold mb-2">
                     Où regarder
