@@ -17,7 +17,7 @@ const BENEFITS = [
   { icon: Zap, label: "Recommandations illimitées", desc: "Plus de limite de 3 par jour" },
   { icon: Brain, label: "Companion Mode complet", desc: "Questions illimitées + analyses approfondies" },
   { icon: Sparkles, label: "ADN Cinéma avancé", desc: "Évolution, comparaisons et rapport mensuel" },
-  { icon: Bell, label: "Alertes plateforme", desc: "Sois notifié quand un film arrive sur tes plateformes" },
+  { icon: Bell, label: "Alertes plateforme", desc: "Sois notifié quand un contenu arrive sur tes plateformes" },
   { icon: Wifi, label: "Mode hors-ligne", desc: "Consulte ta Watchlist sans connexion" },
   { icon: Users, label: "Profils multiples", desc: "Un profil par personne dans le foyer" },
 ];
