@@ -87,6 +87,10 @@ export default function CompanionMode({ movie, onClose, pickPlus }: CompanionMod
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  const isTv = !!movie.first_air_date;
+  const QUICK_ACTIONS = getQuickActions(isTv);
+  const PROACTIVE_SUGGESTIONS = getProactiveSuggestions(isTv);
+
   const title = getDisplayTitle(movie);
   const year = getYear(movie);
   const poster = getPosterUrl(movie.poster_path, "w342");
