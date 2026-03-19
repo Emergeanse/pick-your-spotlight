@@ -21,7 +21,9 @@ serve(async (req) => {
   }
 
   try {
-    const { likedMovies, tasteProfile, userTasteVector, platformIds, excludeIds, excludedPlatformIds, excludedGenres, minRating, rejectionContext, outOfComfortZone, explorationLevel: rawExplorationLevel, mediaType: rawMediaType } = await req.json();
+    const { likedMovies, tasteProfile, userTasteVector, platformIds, excludeIds, excludedPlatformIds, excludedGenres, minRating: rawMinRating, rejectionContext, outOfComfortZone, explorationLevel: rawExplorationLevel, mediaType: rawMediaType } = await req.json();
+    // Cap min_rating at 8.0 to avoid overly restrictive filtering
+    const minRating = typeof rawMinRating === "number" ? Math.min(rawMinRating, 8) : 0;
     const explorationLevel = typeof rawExplorationLevel === "number" ? Math.max(0, Math.min(10, rawExplorationLevel)) : 5;
     // mediaType: "movie" | "tv" | "both" — determines which TMDB endpoints to use
     const mediaType: "movie" | "tv" | "both" = rawMediaType === "tv" ? "tv" : rawMediaType === "movie" ? "movie" : "both";

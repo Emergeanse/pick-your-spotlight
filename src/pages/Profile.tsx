@@ -466,8 +466,11 @@ const Profile = () => {
                   {minRating === 0 ? "Peu importe" : `${minRating}+ / 10`}
                 </span>
               </div>
+              {minRating >= 8 && (
+                <span className="text-[10px] font-sans text-destructive/70">⚠️ Très restrictif</span>
+              )}
             </div>
-            <Slider value={[minRating]} onValueChange={([v]) => setMinRating(v)} min={0} max={9} step={1} className="w-full" />
+            <Slider value={[minRating]} onValueChange={([v]) => setMinRating(v)} min={0} max={8} step={0.5} className="w-full" />
           </div>
         </motion.div>
 

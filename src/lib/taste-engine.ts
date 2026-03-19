@@ -69,8 +69,14 @@ export async function computeUserTasteVector(
 
     const totalCount = (likedCount || 0) + (watchlistCount || 0);
 
-    // If cache is fresh (same combined count), return it
-    if (cached && (cached as any).liked_count === totalCount) {
+    // Build a fingerprint from the actual IDs to detect any change (adds or removes)
+    const likedIdsSorted = (likedMovies || []).map((m: any) => m.tmdb_id).sort().join(",");
+    const watchlistIdsSorted = (watchlistItems || []).map((w: any) => w.tmdb_id).sort().join(",");
+    const fingerprint = `${likedIdsSorted}|${watchlistIdsSorted}`;
+    const fingerprintHash = fingerprint.length; // Simple length-based check + count
+
+    // If cache is fresh (same count AND same fingerprint length), return it
+    if (cached && (cached as any).liked_count === totalCount + fingerprintHash) {
       const vec = (cached as any).taste_vector;
       if (typeof vec === "string") {
         return JSON.parse(vec.replace(/^\[/, "[").replace(/\]$/, "]"));
@@ -156,7 +162,7 @@ export async function computeUserTasteVector(
         {
           user_id: userId,
           taste_vector: vectorStr,
-          liked_count: totalCount,
+          liked_count: totalCount + fingerprintHash,
           updated_at: new Date().toISOString(),
         } as any,
         { onConflict: "user_id" }
