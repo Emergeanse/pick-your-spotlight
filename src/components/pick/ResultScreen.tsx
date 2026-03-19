@@ -643,7 +643,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
               </motion.button>
             )}
 
-            {/* "Pourquoi ce film" — combined match score + explanation */}
+            {/* "Pourquoi ce film/cette série" — combined match score + explanation */}
             {<AnimatePresence>
               {matchLoading && (
                 <motion.div
