@@ -632,6 +632,20 @@ const Profile = () => {
           )}
         </motion.div>
 
+        {/* ─── Admin ─── */}
+        {isAdmin && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.25 }}>
+            <Button
+              variant="ghost"
+              onClick={() => navigate("/admin")}
+              className="text-primary/60 hover:text-primary text-xs font-sans gap-1.5"
+            >
+              <Shield className="w-3.5 h-3.5" />
+              Administration
+            </Button>
+          </motion.div>
+        )}
+
         {/* ─── Logout ─── */}
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}>
           <Button
