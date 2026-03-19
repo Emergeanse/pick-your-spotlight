@@ -957,6 +957,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
               <div className="flex items-center gap-2">
                 {/* Bookmark / Sauvegarder */}
                 <button
+                  data-tour="sauvegarder"
                   onClick={handleToggleBookmark}
                   disabled={bookmarkLoading}
                   className={`flex items-center gap-1.5 px-3.5 h-9 rounded-full border text-xs font-sans font-medium transition-all active:scale-95 ${
