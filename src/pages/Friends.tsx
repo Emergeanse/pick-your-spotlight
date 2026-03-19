@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import BrandHeader from "@/components/pick/BrandHeader";
 import BottomTabBar from "@/components/pick/BottomTabBar";
+import { sendNotification } from "@/lib/notifications";
 
 interface Friend {
   id: string;
