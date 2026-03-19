@@ -48,7 +48,7 @@ const SURPRISE_MESSAGES = [
 const LOADING_MESSAGES = [
   "Je cherche la perle rare…",
   "Voyons voir ce que j'ai pour toi…",
-  "Attends, j'ai peut-être le film parfait.",
+  "Attends, j'ai peut-être la perle parfaite.",
   "Je parcours mes favoris…",
   "Laisse-moi réfléchir deux secondes…",
   "Je fouille dans ma cinémathèque…",
