@@ -100,25 +100,31 @@ const PlatformTour = ({ onComplete }: PlatformTourProps) => {
 
     const margin = 12;
     const maxW = Math.min(320, window.innerWidth - margin * 2);
+    const tooltipEstimatedHeight = 180; // approximate tooltip height
+    const gap = 16;
 
-    if (step.position === "bottom") {
-      return {
-        top: targetRect.bottom + 16,
-        left: margin,
-        right: margin,
-        maxWidth: maxW,
-        marginLeft: "auto",
-        marginRight: "auto",
-      };
+    // Decide if we should flip: if preferred position overflows, use the other side
+    const spaceBelow = window.innerHeight - targetRect.bottom - gap;
+    const spaceAbove = targetRect.top - gap;
+    let pos = step.position;
+    if (pos === "bottom" && spaceBelow < tooltipEstimatedHeight && spaceAbove > spaceBelow) {
+      pos = "top";
+    } else if (pos === "top" && spaceAbove < tooltipEstimatedHeight && spaceBelow > spaceAbove) {
+      pos = "bottom";
+    }
+
+    const base: React.CSSProperties = {
+      left: margin,
+      right: margin,
+      maxWidth: maxW,
+      marginLeft: "auto",
+      marginRight: "auto",
+    };
+
+    if (pos === "bottom") {
+      return { ...base, top: Math.min(targetRect.bottom + gap, window.innerHeight - tooltipEstimatedHeight - margin) };
     } else {
-      return {
-        bottom: window.innerHeight - targetRect.top + 16,
-        left: margin,
-        right: margin,
-        maxWidth: maxW,
-        marginLeft: "auto",
-        marginRight: "auto",
-      };
+      return { ...base, bottom: Math.max(window.innerHeight - targetRect.top + gap, margin) };
     }
   };
 
