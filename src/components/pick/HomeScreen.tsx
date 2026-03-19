@@ -700,7 +700,24 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
       {/* Taste Trainer overlay */}
       <AnimatePresence>
         {showTrainer && (
-          <TasteTrainer onClose={() => setShowTrainer(false)} />
+          <TasteTrainer
+            onClose={() => {
+              setShowTrainer(false);
+              // Refresh evaluated count
+              if (user) {
+                supabase.from("user_interactions")
+                  .select("tmdb_id")
+                  .eq("user_id", user.id)
+                  .in("action_type", ["watched", "skipped", "already_seen", "liked", "unsure"])
+                  .limit(500)
+                  .then(({ data }) => {
+                    if (data) setTotalEvaluated([...new Set(data.map(d => d.tmdb_id))].length);
+                  });
+              }
+            }}
+            isActivation={isActivation}
+            onActivationComplete={onActivationComplete}
+          />
         )}
       </AnimatePresence>
 
