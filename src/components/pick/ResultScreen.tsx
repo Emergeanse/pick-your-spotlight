@@ -168,7 +168,7 @@ interface ResultScreenProps {
   onRestart: () => void;
   onRefineWithVoice?: () => void;
   onRefineWithMessage?: (message: string) => void;
-  onStartCompanion?: () => void;
+  
   hasMore: boolean;
   userCriteria?: {
     mood: Mood | null;
