@@ -133,6 +133,8 @@ ${excludedGenres && excludedGenres.length > 0 ? `- GENRES EXCLUS (profil) : NE J
 ${heavilySkippedGenres.length > 0 ? `- GENRES SOUVENT REFUSÉS (taste trainer) : L'utilisateur a refusé 3+ films de ces genres : ${heavilySkippedGenres.join(", ")}. Évite-les fortement sauf en mode découverte.` : ""}
 ${minRating && minRating > 0 ? `- NOTE MINIMALE : Le film DOIT avoir une note TMDB supérieure ou égale à ${minRating}/10. Ne recommande JAMAIS un film noté en dessous.` : ""}
 
+TYPE DE CONTENU DEMANDÉ : ${searchType === "tv" ? "SÉRIE TV uniquement. Tu DOIS recommander une série, PAS un film." : "FILM uniquement. Tu DOIS recommander un film, PAS une série."}
+
 NIVEAU D'EXPLORATION : ${explorationLevel}/10 (${explorationModeLabel})
 ${explorationInstruction}
 ${embeddingSection}
