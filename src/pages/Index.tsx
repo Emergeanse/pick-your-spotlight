@@ -343,9 +343,6 @@ const Index = () => {
         {showChat && <VoiceChat onClose={handleCloseChat} onMovieSuggested={handleMovieSuggested} initialMessages={chatInitialMessages} />}
       </AnimatePresence>
 
-      <AnimatePresence>
-        {showCompanion && results[currentResultIndex] && <CompanionMode movie={results[currentResultIndex]} onClose={() => setShowCompanion(false)} pickPlus={pickPlus} />}
-      </AnimatePresence>
 
       <PickPlusPaywall
         open={pickPlus.shouldShowPaywall}

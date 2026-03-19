@@ -72,7 +72,7 @@ const App = () => (
           {/* <PickFAB /> */}
           {/* <PickChatOverlay /> */}
         </BrowserRouter>
-      </CompanionProvider>
+      </>
     </TooltipProvider>
   </QueryClientProvider>
 );
