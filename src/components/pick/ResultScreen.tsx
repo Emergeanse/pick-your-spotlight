@@ -17,15 +17,15 @@ import BrandHeader from "./BrandHeader";
 import PickCharacter from "./PickCharacter";
 
 // Extracted sub-components
-import ActorCard from "./result/ActorCard";
-import MatchAnalysis from "./result/MatchAnalysis";
-import type { MatchData } from "./result/MatchAnalysis";
-import StreamingSection from "./result/StreamingSection";
-import RefineSheet from "./result/RefineSheet";
-import OptionsSheet from "./result/OptionsSheet";
-import RejectSheet from "./result/RejectSheet";
-import ReviewSheet from "./result/ReviewSheet";
-import AlternativeMovies from "./result/AlternativeMovies";
+import ActorCard from "@/components/pick/result/ActorCard";
+import MatchAnalysis from "@/components/pick/result/MatchAnalysis";
+import type { MatchData } from "@/components/pick/result/MatchAnalysis";
+import StreamingSection from "@/components/pick/result/StreamingSection";
+import RefineSheet from "@/components/pick/result/RefineSheet";
+import OptionsSheet from "@/components/pick/result/OptionsSheet";
+import RejectSheet from "@/components/pick/result/RejectSheet";
+import ReviewSheet from "@/components/pick/result/ReviewSheet";
+import AlternativeMovies from "@/components/pick/result/AlternativeMovies";
 
 const IMG_BASE = "https://image.tmdb.org/t/p";
 const CONFIDENCE_THRESHOLD = 30;
