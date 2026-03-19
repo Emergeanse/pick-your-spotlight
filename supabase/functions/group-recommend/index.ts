@@ -240,19 +240,21 @@ Structure :
 
     const recommendations = aiResult.recommendations || [];
 
-    // ── 7. Resolve each recommendation to TMDB MovieDetail ──
+    // ── 7. Resolve each recommendation to TMDB detail ──
     const resolvedMovies = [];
 
     for (const rec of recommendations.slice(0, 5)) {
       try {
-        const searchUrl = `https://api.themoviedb.org/3/search/movie?api_key=${TMDB_API_KEY}&language=fr-FR&query=${encodeURIComponent(rec.title)}&page=1`;
+        // Determine search type from AI response or fallback to mediaType
+        const recType: "movie" | "tv" = rec.type === "tv" ? "tv" : mediaType === "tv" ? "tv" : mediaType === "movie" ? "movie" : (rec.type || "movie");
+        const searchUrl = `https://api.themoviedb.org/3/search/${recType}?api_key=${TMDB_API_KEY}&language=fr-FR&query=${encodeURIComponent(rec.title)}&page=1`;
         const searchRes = await fetch(searchUrl);
         const searchData = await searchRes.json();
         const found = (searchData.results || [])[0];
 
         if (found) {
-          const detail = await getMovieDetails(found.id);
-          const providers = await getWatchProvidersFR(found.id);
+          const detail = await getDetails(found.id, recType);
+          const providers = await getWatchProvidersFR(found.id, recType);
 
           resolvedMovies.push({
             movie: detail,
