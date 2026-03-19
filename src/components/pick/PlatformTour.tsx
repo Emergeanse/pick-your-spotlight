@@ -25,7 +25,7 @@ const TOUR_STEPS: TourStep[] = [
     position: "bottom",
   },
   {
-    selector: '[data-tour="training-widget"]',
+    selector: '[data-tour="entraine-pick"]',
     title: "🧠 Entraîne ton Pick",
     desc: "Swipe des films pour que Pick comprenne tes goûts. Plus tu l'entraînes, plus il est précis.",
     position: "top",
