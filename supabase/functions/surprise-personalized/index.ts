@@ -9,8 +9,8 @@ const corsHeaders = {
 
 const TMDB_API_KEY = "2dca580c2a14b55200e784d157207b4d";
 
-async function getMovieDetails(id: number): Promise<any> {
-  const url = `https://api.themoviedb.org/3/movie/${id}?api_key=${TMDB_API_KEY}&language=fr-FR`;
+async function getMovieDetails(id: number, type: "movie" | "tv" = "movie"): Promise<any> {
+  const url = `https://api.themoviedb.org/3/${type}/${id}?api_key=${TMDB_API_KEY}&language=fr-FR`;
   const res = await fetch(url);
   return res.json();
 }
