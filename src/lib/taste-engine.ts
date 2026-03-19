@@ -162,7 +162,7 @@ export async function computeUserTasteVector(
         {
           user_id: userId,
           taste_vector: vectorStr,
-          liked_count: totalCount,
+          liked_count: totalCount + fingerprintHash,
           updated_at: new Date().toISOString(),
         } as any,
         { onConflict: "user_id" }
