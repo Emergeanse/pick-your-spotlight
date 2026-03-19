@@ -78,7 +78,14 @@ const Profile = () => {
       setDisplayName(data?.display_name || user.email?.split("@")[0] || "");
       setAvatarUrl((data as any)?.avatar_url || null);
       setEngagement(engData);
-      if (dnaRes.data) setDnaTitle((dnaRes.data as any).personality_title || null);
+      if (dnaRes.data) {
+        const d = dnaRes.data as any;
+        setDnaTitle(d.personality_title || null);
+        setCinematicLevel(mapLevelToType(d.global_level));
+        setCinematicDNA(mapArchetypeToDNA(d.dna_archetype));
+        const sigs = Array.isArray(d.taste_signatures) ? d.taste_signatures.map((s: any) => typeof s === "string" ? s : s?.name || "") : [];
+        setTasteAnim(mapSignatureToAnimation(sigs));
+      }
     } catch (e) {
       console.error(e);
     } finally {
