@@ -29,8 +29,6 @@ interface HomeScreenProps {
   loading: boolean;
   openTrainerOnMount?: boolean;
   onTrainerOpened?: () => void;
-  isActivation?: boolean;
-  onActivationComplete?: () => void;
 }
 
 const SURPRISE_MESSAGES = [
@@ -83,7 +81,7 @@ const PROACTIVE_MESSAGES = [
   "Un petit bijou juste pour toi ce soir.",
 ];
 
-const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, openTrainerOnMount, onTrainerOpened, isActivation, onActivationComplete }: HomeScreenProps) => {
+const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, openTrainerOnMount, onTrainerOpened }: HomeScreenProps) => {
   const navigate = useNavigate();
   const [isSurprising, setIsSurprising] = useState(false);
   const [surpriseMsg, setSurpriseMsg] = useState("");
@@ -715,8 +713,6 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
                   });
               }
             }}
-            isActivation={isActivation}
-            onActivationComplete={onActivationComplete}
           />
         )}
       </AnimatePresence>

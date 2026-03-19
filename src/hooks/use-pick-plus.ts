@@ -8,6 +8,7 @@
  * - No full chatbot access (Pick+ only)
  * 
  * Pick+ (plan !== 'free') → unlimited everything + full chatbot.
+ * Trial: 7 days granted after completing activation flow.
  */
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,30 +16,27 @@ import { useAuth } from "@/hooks/use-auth";
 
 const FREE_RECO_LIMIT = 3;
 const FREE_COMPANION_LIMIT = 1;
-const FREE_DISCOVERY_CHAT_LIMIT = 1; // 1 conversation/day for free users
+const FREE_DISCOVERY_CHAT_LIMIT = 1;
 
 export interface PickPlusState {
   plan: "free" | "pick_plus";
   isPremium: boolean;
   loading: boolean;
-  // Recommendation limits
+  trialDaysLeft: number;
   recoUsed: number;
   recoLimit: number;
   recoRemaining: number;
   canRecommend: boolean;
   recordRecommendation: () => Promise<boolean>;
-  // Companion limits
   getCompanionUsed: (movieId: number) => number;
   companionLimit: number;
   canAskCompanion: (movieId: number) => boolean;
   recordCompanionQuestion: (movieId: number) => Promise<boolean>;
-  // Discovery chat limits (free users only)
   discoveryConvoUsed: number;
   canDiscoveryChat: boolean;
   discoveryConvoLocked: boolean;
   lockDiscoveryChat: () => void;
   recordDiscoveryConvo: () => Promise<boolean>;
-  // Paywall
   shouldShowPaywall: boolean;
   paywallTrigger: string;
   showPaywall: (trigger?: string) => void;
@@ -48,6 +46,8 @@ export interface PickPlusState {
 export function usePickPlus(): PickPlusState {
   const { user } = useAuth();
   const [plan, setPlan] = useState<"free" | "pick_plus">("free");
+  const [subStatus, setSubStatus] = useState<string>("active");
+  const [periodEnd, setPeriodEnd] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [recoUsed, setRecoUsed] = useState(0);
   const [discoveryConvoUsed, setDiscoveryConvoUsed] = useState(0);
@@ -56,11 +56,16 @@ export function usePickPlus(): PickPlusState {
   const [shouldShowPaywall, setShouldShowPaywall] = useState(false);
   const [paywallTrigger, setPaywallTrigger] = useState("general");
 
-  // TODO: Re-enable when Pick+ monetization goes live
-  // const isPremium = plan !== "free";
-  const isPremium = true; // All features unlocked during pre-launch
+  // Real premium logic: paid plan OR active trial
+  const isPremium = plan === "pick_plus" && (
+    subStatus === "active" ||
+    (subStatus === "trial" && periodEnd ? new Date(periodEnd) > new Date() : false)
+  );
 
-  // Load subscription + today's usage
+  const trialDaysLeft = subStatus === "trial" && periodEnd
+    ? Math.max(0, Math.ceil((new Date(periodEnd).getTime() - Date.now()) / (1000 * 3600 * 24)))
+    : 0;
+
   useEffect(() => {
     if (!user) { setLoading(false); return; }
     loadData();
@@ -73,13 +78,15 @@ export function usePickPlus(): PickPlusState {
       const today = new Date().toISOString().split("T")[0];
 
       const [subRes, usageRes] = await Promise.all([
-        supabase.from("subscriptions" as any).select("plan, status").eq("user_id", user.id).maybeSingle(),
+        supabase.from("subscriptions" as any).select("plan, status, current_period_end").eq("user_id", user.id).maybeSingle(),
         supabase.from("daily_usage" as any).select("recommendation_count, companion_questions, chat_count").eq("user_id", user.id).eq("usage_date", today).maybeSingle(),
       ]);
 
-      if (subRes.data && (subRes.data as any).status === "active") {
-        const p = (subRes.data as any).plan;
-        setPlan(p === "free" ? "free" : "pick_plus");
+      if (subRes.data) {
+        const d = subRes.data as any;
+        setPlan(d.plan === "free" ? "free" : "pick_plus");
+        setSubStatus(d.status || "active");
+        setPeriodEnd(d.current_period_end || null);
       }
 
       if (usageRes.data) {
@@ -97,8 +104,6 @@ export function usePickPlus(): PickPlusState {
   const recoLimit = isPremium ? Infinity : FREE_RECO_LIMIT;
   const recoRemaining = isPremium ? Infinity : Math.max(0, FREE_RECO_LIMIT - recoUsed);
   const canRecommend = isPremium || recoUsed < FREE_RECO_LIMIT;
-
-  // Free users: can start a discovery chat if they haven't used their daily convo
   const canDiscoveryChat = isPremium || (discoveryConvoUsed < FREE_DISCOVERY_CHAT_LIMIT && !discoveryConvoLocked);
 
   const recordRecommendation = useCallback(async (): Promise<boolean> => {
@@ -108,15 +113,12 @@ export function usePickPlus(): PickPlusState {
       setShouldShowPaywall(true);
       return false;
     }
-
     const today = new Date().toISOString().split("T")[0];
     const newCount = recoUsed + 1;
-
     const { error } = await supabase.from("daily_usage" as any).upsert(
       { user_id: user.id, usage_date: today, recommendation_count: newCount },
       { onConflict: "user_id,usage_date" }
     );
-
     if (!error) setRecoUsed(newCount);
     return !error;
   }, [user, isPremium, recoUsed]);
@@ -134,44 +136,33 @@ export function usePickPlus(): PickPlusState {
     if (!user) return false;
     const key = String(movieId);
     const current = companionUsage[key] || 0;
-
     if (!isPremium && current >= FREE_COMPANION_LIMIT) {
       setPaywallTrigger("companion_limit");
       setShouldShowPaywall(true);
       return false;
     }
-
     const today = new Date().toISOString().split("T")[0];
     const updated = { ...companionUsage, [key]: current + 1 };
-
     const { error } = await supabase.from("daily_usage" as any).upsert(
       { user_id: user.id, usage_date: today, companion_questions: updated },
       { onConflict: "user_id,usage_date" }
     );
-
     if (!error) setCompanionUsage(updated);
     return !error;
   }, [user, isPremium, companionUsage]);
 
-  // Lock the discovery chat (called when free user receives a recommendation in chat)
   const lockDiscoveryChat = useCallback(() => {
-    if (!isPremium) {
-      setDiscoveryConvoLocked(true);
-    }
+    if (!isPremium) setDiscoveryConvoLocked(true);
   }, [isPremium]);
 
-  // Record that a discovery conversation was used
   const recordDiscoveryConvo = useCallback(async (): Promise<boolean> => {
     if (!user || isPremium) return true;
-
     const today = new Date().toISOString().split("T")[0];
     const newCount = discoveryConvoUsed + 1;
-
     const { error } = await supabase.from("daily_usage" as any).upsert(
       { user_id: user.id, usage_date: today, chat_count: newCount },
       { onConflict: "user_id,usage_date" }
     );
-
     if (!error) setDiscoveryConvoUsed(newCount);
     return !error;
   }, [user, isPremium, discoveryConvoUsed]);
@@ -180,6 +171,7 @@ export function usePickPlus(): PickPlusState {
     plan,
     isPremium,
     loading,
+    trialDaysLeft,
     recoUsed,
     recoLimit,
     recoRemaining,
