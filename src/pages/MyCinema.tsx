@@ -23,6 +23,7 @@ const MyCinema = () => {
   const [likedCount, setLikedCount] = useState(0);
   const [recentPosters, setRecentPosters] = useState<{ poster: string; title: string }[]>([]);
   const [dnaTitle, setDnaTitle] = useState<string | null>(null);
+  const [dnaLevel, setDnaLevel] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isReady) return;
@@ -38,7 +39,7 @@ const MyCinema = () => {
         getEngagementData(user.id),
         getLikedMovies().catch(() => []),
         supabase.from("cinematic_profiles" as any)
-          .select("personality_title")
+          .select("personality_title, dna_archetype, global_level")
           .eq("user_id", user.id)
           .maybeSingle(),
       ]);
@@ -51,7 +52,9 @@ const MyCinema = () => {
         })).filter((m: any) => m.poster)
       );
       if (dnaData.data) {
-        setDnaTitle((dnaData.data as any).personality_title || null);
+        const d = dnaData.data as any;
+        setDnaTitle(d.dna_archetype || d.personality_title || null);
+        setDnaLevel(d.global_level || null);
       }
     } catch (e) {
       console.error(e);
@@ -130,9 +133,16 @@ const MyCinema = () => {
         >
           <div className="absolute inset-0 bg-gradient-to-br from-gold/[0.04] to-transparent pointer-events-none" />
           <div className="relative z-10">
-            <p className="text-[10px] uppercase tracking-[0.2em] text-gold/50 font-sans font-semibold mb-2">
-              🧬 Ton ADN Cinéma
-            </p>
+            <div className="flex items-center gap-2 mb-2">
+              <p className="text-[10px] uppercase tracking-[0.2em] text-gold/50 font-sans font-semibold">
+                🧬 Ton ADN Cinéma
+              </p>
+              {dnaLevel && (
+                <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-gold/10 text-gold/70 font-sans font-medium">
+                  {dnaLevel}
+                </span>
+              )}
+            </div>
             {dnaTitle ? (
               <h2 className="text-xl font-serif text-foreground mb-2 group-hover:text-gold/90 transition-colors">
                 {dnaTitle}
