@@ -235,7 +235,7 @@ Recommande UN film avec les scores détaillés.`;
     let selectedMovie: any = null;
 
     if (suggestion && suggestion.title) {
-      const searchUrl = `https://api.themoviedb.org/3/search/movie?api_key=${TMDB_API_KEY}&language=fr-FR&query=${encodeURIComponent(suggestion.title)}&page=1`;
+      const searchUrl = `https://api.themoviedb.org/3/search/${searchType}?api_key=${TMDB_API_KEY}&language=fr-FR&query=${encodeURIComponent(suggestion.title)}&page=1`;
       const searchRes = await fetch(searchUrl);
       const searchData = await searchRes.json();
       const results = searchData.results || [];
