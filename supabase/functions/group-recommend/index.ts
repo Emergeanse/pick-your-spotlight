@@ -294,7 +294,7 @@ Structure :
     return new Response(JSON.stringify({
       recommendations: resolvedMovies,
       groupInfo: {
-        memberCount: memberIds.length,
+        memberCount: totalMembers,
         sharedPlatforms,
         excludedGenres,
         minRating,
