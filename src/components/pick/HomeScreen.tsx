@@ -635,7 +635,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
                       ) : (
                         <Dices className="w-4 h-4" />
                       )}
-                      Autre
+                      Autre suggestion
                     </Button>
                   </div>
 
