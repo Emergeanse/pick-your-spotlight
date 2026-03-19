@@ -320,7 +320,7 @@ const Index = () => {
                 } catch (e) { console.error("Refine error:", e); }
                 finally { setLoading(false); setLoadingMessage(""); }
               }}
-              onStartCompanion={handleStartCompanion}
+              
               hasMore={currentResultIndex < results.length - 1}
               userCriteria={{ mood: null, context: null, time: null }}
               searchTags={searchTags}
