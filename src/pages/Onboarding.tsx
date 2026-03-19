@@ -74,8 +74,12 @@ const Onboarding = () => {
           preferred_platforms: selectedPlatforms,
           birth_year: birthYear,
           media_preference: mediaPreference,
+          tour_completed: false,
+          activation_completed: false,
+          activation_step: "train_20",
         } as any).eq("id", userId);
       }
+      sessionStorage.setItem("pick_force_tour", "1");
       navigate("/app", { state: { showTour: true } });
     } catch (e) { console.error(e); }
     finally { setSaving(false); }
