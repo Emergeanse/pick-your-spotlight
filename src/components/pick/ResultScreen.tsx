@@ -1002,6 +1002,16 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                   <Share2 className="w-3.5 h-3.5" />
                 </button>
 
+                {/* Autre suggestion */}
+                <button
+                  data-tour="autre-suggestion"
+                  onClick={() => onShowAnother()}
+                  className="flex items-center gap-1.5 px-3.5 h-9 rounded-full border border-border/25 text-foreground/40 hover:text-primary hover:border-primary/25 text-xs font-sans font-medium transition-all active:scale-95"
+                >
+                  <RefreshCw className="w-3.5 h-3.5" />
+                  Autre suggestion
+                </button>
+
               </div>
 
               {/* Refining loading state */}
