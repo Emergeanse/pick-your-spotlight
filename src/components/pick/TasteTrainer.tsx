@@ -176,7 +176,7 @@ const TasteTrainer = ({ onClose }: TasteTrainerProps) => {
     return "Expert";
   };
 
-  const ratingInfo = getRatingInfo(sliderValue);
+  
 
   return (
     <motion.div
