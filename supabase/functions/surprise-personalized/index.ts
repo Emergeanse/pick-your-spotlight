@@ -152,7 +152,7 @@ Micro-genres : ${tasteClusters.join(", ") || "à déduire des films aimés"}
 Films regardés : ${stats.watchCount || 0} | Films skippés : ${stats.skipCount || 0} | Films aimés : ${stats.likeCount || 0}
 Taux d'acceptation : ${acceptanceRate}%
 ${heavilySkippedGenres.length > 0 ? `Genres souvent refusés : ${heavilySkippedGenres.join(", ")}` : ""}
-${shouldDiscover ? "→ MODE DÉCOUVERTE" : "→ MODE PRÉCISION"}
+${shouldDiscover ? "→ MODE DÉCOUVERTE" : "→ MODE PRÉCISION"} | Niveau d'exploration : ${explorationLevel}/10 (${explorationModeLabel})
 ${rejectionSection}
 
 Recommande UN film avec les scores détaillés.`;
