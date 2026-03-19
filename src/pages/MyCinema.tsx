@@ -133,9 +133,16 @@ const MyCinema = () => {
         >
           <div className="absolute inset-0 bg-gradient-to-br from-gold/[0.04] to-transparent pointer-events-none" />
           <div className="relative z-10">
-            <p className="text-[10px] uppercase tracking-[0.2em] text-gold/50 font-sans font-semibold mb-2">
-              🧬 Ton ADN Cinéma
-            </p>
+            <div className="flex items-center gap-2 mb-2">
+              <p className="text-[10px] uppercase tracking-[0.2em] text-gold/50 font-sans font-semibold">
+                🧬 Ton ADN Cinéma
+              </p>
+              {dnaLevel && (
+                <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-gold/10 text-gold/70 font-sans font-medium">
+                  {dnaLevel}
+                </span>
+              )}
+            </div>
             {dnaTitle ? (
               <h2 className="text-xl font-serif text-foreground mb-2 group-hover:text-gold/90 transition-colors">
                 {dnaTitle}
