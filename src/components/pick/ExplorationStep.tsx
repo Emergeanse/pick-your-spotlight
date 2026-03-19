@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Compass } from "lucide-react";
+import { Compass, Target, Telescope, Rocket } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import { Button } from "@/components/ui/button";
 
@@ -17,11 +17,11 @@ const labels = [
 const ExplorationStep = ({ onSelect }: ExplorationStepProps) => {
   const [level, setLevel] = useState(5);
 
-  const getEmoji = () => {
-    if (level <= 2) return "🎯";
-    if (level <= 5) return "⚖️";
-    if (level <= 8) return "🔭";
-    return "🚀";
+  const getIcon = () => {
+    if (level <= 2) return <Target className="w-8 h-8 md:w-10 md:h-10 text-primary" />;
+    if (level <= 5) return <Compass className="w-8 h-8 md:w-10 md:h-10 text-primary" />;
+    if (level <= 8) return <Telescope className="w-8 h-8 md:w-10 md:h-10 text-primary" />;
+    return <Rocket className="w-8 h-8 md:w-10 md:h-10 text-primary" />;
   };
 
   const getDescription = () => {
@@ -55,14 +55,14 @@ const ExplorationStep = ({ onSelect }: ExplorationStepProps) => {
       >
         {/* Current level display */}
         <div className="text-center mb-6">
-          <motion.span
+          <motion.div
             key={level}
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="text-4xl md:text-5xl block mb-2"
+            className="flex justify-center mb-3"
           >
-            {getEmoji()}
-          </motion.span>
+            {getIcon()}
+          </motion.div>
           <span className="text-primary font-serif text-2xl md:text-3xl font-bold">{level}</span>
           <span className="text-muted-foreground text-sm">/10</span>
         </div>
