@@ -1,44 +1,46 @@
-import { useState } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Sparkles, MessageCircle, Brain, Bookmark, Dna } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import pickWave from "@/assets/pick-squirrel-wave.png";
 
-const SLIDES = [
+interface TourStep {
+  selector: string; // data-tour attribute value OR CSS selector
+  title: string;
+  desc: string;
+  position: "bottom" | "top"; // tooltip position relative to element
+}
+
+const TOUR_STEPS: TourStep[] = [
   {
-    icon: Sparkles,
-    emoji: "🍿",
-    title: "Pick pour ce soir",
-    desc: "Dis-moi ce que tu veux, je trouve le film parfait pour ta soirée.",
-    detail: "En quelques questions, je te recommande un film taillé sur mesure.",
+    selector: '[data-tour="pick-ce-soir"]',
+    title: "🍿 Pick pour ce soir",
+    desc: "Ton bouton principal ! Dis ce que tu veux regarder et Pick trouve le film parfait pour ta soirée.",
+    position: "bottom",
   },
   {
-    icon: MessageCircle,
-    emoji: "💬",
-    title: "Parle à Pick",
-    desc: "Demande-moi n'importe quoi sur le cinéma.",
-    detail: "Essaie : « Un thriller psychologique récent » ou « Quelque chose de léger avec de l'humour »",
+    selector: '[data-tour="parle-a-pick"]',
+    title: "🎙 Parle à Pick",
+    desc: "Discute librement avec Pick. Essaie : « Un thriller psychologique récent » ou « Quelque chose de léger avec de l'humour ».",
+    position: "bottom",
   },
   {
-    icon: Brain,
-    emoji: "🧠",
-    title: "Entraîne ton Pick",
-    desc: "Swipe des films pour que je comprenne tes goûts.",
-    detail: "Plus tu m'entraînes, plus mes recommandations sont précises.",
+    selector: '[data-tour="training-widget"]',
+    title: "🧠 Entraîne ton Pick",
+    desc: "Swipe des films pour que Pick comprenne tes goûts. Plus tu l'entraînes, plus il est précis.",
+    position: "top",
   },
   {
-    icon: Bookmark,
-    emoji: "📌",
-    title: "Watchlist & Coups de cœur",
-    desc: "Sauvegarde tout ce que tu veux voir et ce que tu as adoré.",
-    detail: "Ta collection personnelle, toujours à portée de main.",
+    selector: '[data-tour="tab-watchlist"]',
+    title: "📌 Ta Watchlist",
+    desc: "Sauvegarde tous les films que tu veux voir. Tu les retrouveras toujours ici.",
+    position: "top",
   },
   {
-    icon: Dna,
-    emoji: "🧬",
-    title: "Ton ADN Cinéma",
-    desc: "Plus tu m'utilises, plus ton profil cinéma se construit.",
-    detail: "Découvre ta personnalité cinématographique unique.",
+    selector: '[data-tour="tab-cinema"]',
+    title: "🧬 Mon Cinéma",
+    desc: "Ton profil cinéma, tes coups de cœur, ton ADN Cinéma… Tout ce qui te rend unique.",
+    position: "top",
   },
 ];
 
@@ -47,79 +49,171 @@ interface PlatformTourProps {
 }
 
 const PlatformTour = ({ onComplete }: PlatformTourProps) => {
-  const [currentSlide, setCurrentSlide] = useState(-1); // -1 = intro
+  const [phase, setPhase] = useState<"intro" | "spotlight">("intro");
+  const [currentStep, setCurrentStep] = useState(0);
+  const [targetRect, setTargetRect] = useState<DOMRect | null>(null);
+  const overlayRef = useRef<HTMLDivElement>(null);
+
+  const measureTarget = useCallback(() => {
+    if (phase !== "spotlight") return;
+    const step = TOUR_STEPS[currentStep];
+    const el = document.querySelector(step.selector);
+    if (el) {
+      setTargetRect(el.getBoundingClientRect());
+    } else {
+      setTargetRect(null);
+    }
+  }, [phase, currentStep]);
+
+  useEffect(() => {
+    measureTarget();
+    // Re-measure on resize/scroll
+    window.addEventListener("resize", measureTarget);
+    window.addEventListener("scroll", measureTarget, true);
+    return () => {
+      window.removeEventListener("resize", measureTarget);
+      window.removeEventListener("scroll", measureTarget, true);
+    };
+  }, [measureTarget]);
+
+  // Re-measure periodically in case elements render late
+  useEffect(() => {
+    if (phase !== "spotlight") return;
+    const interval = setInterval(measureTarget, 500);
+    return () => clearInterval(interval);
+  }, [phase, measureTarget]);
 
   const handleNext = () => {
-    if (currentSlide < SLIDES.length - 1) {
-      setCurrentSlide(s => s + 1);
+    if (currentStep < TOUR_STEPS.length - 1) {
+      setCurrentStep(s => s + 1);
     } else {
       onComplete();
     }
   };
 
-  const isIntro = currentSlide === -1;
-  const slide = !isIntro ? SLIDES[currentSlide] : null;
+  const step = TOUR_STEPS[currentStep];
+  const padding = 8;
+
+  // Compute tooltip position
+  const getTooltipStyle = (): React.CSSProperties => {
+    if (!targetRect) return { top: "50%", left: "50%", transform: "translate(-50%, -50%)" };
+
+    if (step.position === "bottom") {
+      return {
+        top: targetRect.bottom + 16,
+        left: Math.max(16, Math.min(targetRect.left + targetRect.width / 2 - 160, window.innerWidth - 336)),
+        width: 320,
+      };
+    } else {
+      return {
+        bottom: window.innerHeight - targetRect.top + 16,
+        left: Math.max(16, Math.min(targetRect.left + targetRect.width / 2 - 160, window.innerWidth - 336)),
+        width: 320,
+      };
+    }
+  };
+
+  // SVG cutout mask
+  const renderMask = () => {
+    if (!targetRect) return null;
+    const x = targetRect.left - padding;
+    const y = targetRect.top - padding;
+    const w = targetRect.width + padding * 2;
+    const h = targetRect.height + padding * 2;
+    const r = 16;
+
+    return (
+      <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ zIndex: 1 }}>
+        <defs>
+          <mask id="spotlight-mask">
+            <rect x="0" y="0" width="100%" height="100%" fill="white" />
+            <rect x={x} y={y} width={w} height={h} rx={r} ry={r} fill="black" />
+          </mask>
+        </defs>
+        <rect x="0" y="0" width="100%" height="100%" fill="hsl(var(--background) / 0.85)" mask="url(#spotlight-mask)" />
+      </svg>
+    );
+  };
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100]">
-      <div className="absolute inset-0 bg-background/95 backdrop-blur-xl" />
+    <motion.div ref={overlayRef} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      className="fixed inset-0 z-[100]" onClick={(e) => { if (e.target === overlayRef.current) handleNext(); }}>
 
-      <div className="relative z-10 flex flex-col items-center justify-center h-full px-5">
-        {/* Progress dots */}
-        {!isIntro && (
-          <div className="absolute top-8 left-0 right-0 flex justify-center gap-2">
-            {SLIDES.map((_, i) => (
-              <div key={i} className={`h-1 w-8 rounded-full transition-colors duration-300 ${i <= currentSlide ? "bg-primary" : "bg-muted"}`} />
-            ))}
-          </div>
-        )}
-
-        <AnimatePresence mode="wait">
-          {isIntro ? (
-            <motion.div key="intro" initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}
-              transition={{ type: "spring", stiffness: 300, damping: 25 }} className="text-center max-w-sm">
+      <AnimatePresence mode="wait">
+        {phase === "intro" && (
+          <motion.div key="intro" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="absolute inset-0 flex items-center justify-center" style={{ zIndex: 2 }}>
+            <div className="absolute inset-0 bg-background/90 backdrop-blur-xl" />
+            <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}
+              transition={{ type: "spring", stiffness: 300, damping: 25 }} className="relative z-10 text-center max-w-sm px-5">
               <motion.img src={pickWave} alt="Pick" className="w-20 h-20 object-contain mx-auto mb-6"
                 initial={{ scale: 0.8 }} animate={{ scale: 1 }} transition={{ delay: 0.2, type: "spring" }} />
               <h2 className="text-2xl font-serif mb-3">Bienvenue chez toi ! 🎬</h2>
               <p className="text-foreground/50 text-sm font-sans leading-relaxed mb-2">
-                Avant de commencer, laisse-moi te faire un petit tour de la plateforme.
+                Laisse-moi te montrer comment ça marche.
               </p>
-              <p className="text-primary/50 text-xs font-sans mb-8">30 secondes, promis.</p>
-              <Button variant="hero" size="xl" onClick={handleNext}>
-                Découvrir Pick <ArrowRight className="w-4 h-4" />
+              <p className="text-primary/50 text-xs font-sans mb-8">Je te montre les boutons importants !</p>
+              <Button variant="hero" size="xl" onClick={() => setPhase("spotlight")}>
+                C'est parti <ArrowRight className="w-4 h-4" />
               </Button>
             </motion.div>
-          ) : slide && (
-            <motion.div key={currentSlide} initial={{ opacity: 0, x: 60 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -60 }}
-              transition={{ type: "spring", stiffness: 300, damping: 30 }} className="text-center max-w-sm">
-              <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ delay: 0.1 }}
-                className="w-16 h-16 rounded-2xl bg-primary/15 border border-primary/25 flex items-center justify-center mx-auto mb-6">
-                <span className="text-3xl">{slide.emoji}</span>
-              </motion.div>
-
-              <motion.h2 initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
-                className="text-2xl font-serif mb-3">{slide.title}</motion.h2>
-
-              <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.25 }}
-                className="text-foreground/60 text-sm font-sans leading-relaxed mb-2">{slide.desc}</motion.p>
-
-              <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.35 }}
-                className="text-primary/50 text-xs font-sans italic mb-10">{slide.detail}</motion.p>
-
-              <Button variant="hero" size="xl" onClick={handleNext}>
-                {currentSlide < SLIDES.length - 1 ? "Suivant" : "C'est compris, on y va !"} <ArrowRight className="w-4 h-4" />
-              </Button>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Skip button */}
-        {!isIntro && (
-          <button onClick={onComplete} className="absolute bottom-10 text-foreground/30 text-xs font-sans hover:text-foreground/60 transition-colors">
-            Passer le tour
-          </button>
+          </motion.div>
         )}
-      </div>
+
+        {phase === "spotlight" && (
+          <motion.div key={`step-${currentStep}`} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="absolute inset-0">
+            {/* Dark overlay with cutout */}
+            {renderMask()}
+
+            {/* Glowing border around target */}
+            {targetRect && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="absolute pointer-events-none rounded-2xl"
+                style={{
+                  left: targetRect.left - padding,
+                  top: targetRect.top - padding,
+                  width: targetRect.width + padding * 2,
+                  height: targetRect.height + padding * 2,
+                  boxShadow: "0 0 0 3px hsl(var(--primary) / 0.6), 0 0 30px 5px hsl(var(--primary) / 0.2)",
+                  zIndex: 2,
+                }}
+              />
+            )}
+
+            {/* Tooltip card */}
+            <motion.div
+              initial={{ opacity: 0, y: step.position === "bottom" ? -10 : 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              transition={{ delay: 0.15 }}
+              className="absolute z-10 bg-card border border-border/30 rounded-2xl p-5 shadow-2xl"
+              style={{ ...getTooltipStyle(), zIndex: 3 }}
+            >
+              {/* Progress */}
+              <div className="flex items-center gap-1.5 mb-3">
+                {TOUR_STEPS.map((_, i) => (
+                  <div key={i} className={`h-1 flex-1 rounded-full transition-colors ${i <= currentStep ? "bg-primary" : "bg-muted"}`} />
+                ))}
+              </div>
+
+              <h3 className="text-lg font-serif mb-1.5">{step.title}</h3>
+              <p className="text-foreground/50 text-sm font-sans leading-relaxed mb-4">{step.desc}</p>
+
+              <div className="flex items-center justify-between">
+                <button onClick={onComplete} className="text-foreground/30 text-xs font-sans hover:text-foreground/60 transition-colors">
+                  Passer le tour
+                </button>
+                <Button variant="hero" size="sm" onClick={handleNext}>
+                  {currentStep < TOUR_STEPS.length - 1 ? "Suivant" : "C'est compris !"} <ArrowRight className="w-3.5 h-3.5" />
+                </Button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 };
