@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Mic, Dices, Tv, Sparkles, Loader2, Zap, Flame, Target, Trophy, Shuffle, Brain, Users } from "lucide-react";
 import WhoStep, { type WhoOption } from "./WhoStep";
 import WhatStep, { type WhatOption } from "./WhatStep";
+import ExplorationStep from "./ExplorationStep";
 import StepLayout from "./StepLayout";
 import { getTrendingMovies, getBackdropUrl, getSurpriseRecommendation, getPosterUrl, getDisplayTitle, getWatchProviders } from "@/lib/tmdb";
 import { getLikedMovies } from "@/lib/liked-movies";
@@ -103,7 +104,8 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
   const [progressionMsg, setProgressionMsg] = useState<string | null>(null);
   const [historyExcludeIds, setHistoryExcludeIds] = useState<number[]>([]);
   const [showTrainer, setShowTrainer] = useState(false);
-  const [flowStep, setFlowStep] = useState<"idle" | "who" | "what">("idle");
+  const [flowStep, setFlowStep] = useState<"idle" | "who" | "what" | "exploration">("idle");
+  const [explorationLevel, setExplorationLevel] = useState<number>(5);
   const [whoChoice, setWhoChoice] = useState<WhoOption | null>(null);
 
   // Open trainer from MyCinema navigation
@@ -263,6 +265,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
           const data = await invokeSurprisePersonalized({
             likedMovies: liked, userTasteVector, tasteProfile,
             platformIds: userPlatformIds, excludedPlatformIds: userExcludedPlatformIds, excludedGenres: userExcludedGenres, minRating: userMinRating, excludeIds: allExcludeIds, rejectionContext,
+            explorationLevel,
           });
           movie = data.movie as MovieDetail;
         } else {
@@ -674,7 +677,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
             className="absolute inset-0 z-50 bg-background"
           >
             <BrandHeader showBack onBack={() => { setFlowStep("idle"); setWhoChoice(null); }} />
-            <StepLayout currentStep={flowStep === "who" ? 1 : 2} totalSteps={2}>
+            <StepLayout currentStep={flowStep === "who" ? 1 : flowStep === "what" ? 2 : 3} totalSteps={3}>
               {flowStep === "who" && (
                 <WhoStep onSelect={(w) => {
                   setWhoChoice(w);
@@ -689,6 +692,12 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
               )}
               {flowStep === "what" && (
                 <WhatStep onSelect={(w) => {
+                  setFlowStep("exploration");
+                }} />
+              )}
+              {flowStep === "exploration" && (
+                <ExplorationStep onSelect={(level) => {
+                  setExplorationLevel(level);
                   setFlowStep("idle");
                   setTonightPick(null);
                   generateTonightPick(rejectedIds);

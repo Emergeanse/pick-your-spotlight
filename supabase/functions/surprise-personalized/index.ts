@@ -21,7 +21,8 @@ serve(async (req) => {
   }
 
   try {
-    const { likedMovies, tasteProfile, userTasteVector, platformIds, excludeIds, excludedPlatformIds, excludedGenres, minRating, rejectionContext, outOfComfortZone } = await req.json();
+    const { likedMovies, tasteProfile, userTasteVector, platformIds, excludeIds, excludedPlatformIds, excludedGenres, minRating, rejectionContext, outOfComfortZone, explorationLevel: rawExplorationLevel } = await req.json();
+    const explorationLevel = typeof rawExplorationLevel === "number" ? Math.max(0, Math.min(10, rawExplorationLevel)) : 5;
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
@@ -56,8 +57,10 @@ serve(async (req) => {
         });
 
         if (matches && matches.length > 0) {
+          // Adjust similarity threshold based on exploration level
+          const similarityThreshold = explorationLevel <= 2 ? 0.85 : explorationLevel <= 5 ? 0.7 : explorationLevel <= 8 ? 0.5 : 0.3;
           embeddingCandidates = matches
-            .filter((m: any) => m.similarity > 0.7)
+            .filter((m: any) => m.similarity > similarityThreshold)
             .map((m: any) => `${m.title} (similarité: ${Math.round(m.similarity * 100)}%, tags: ${(m.taste_tags || []).join(", ")})`);
         }
       } catch (e) {
@@ -80,7 +83,17 @@ serve(async (req) => {
       .filter(([, count]) => (count as number) >= 3)
       .map(([genre]) => genre);
 
-    const shouldDiscover = Math.random() < confidence.discoveryRatio;
+    const shouldDiscover = explorationLevel >= 7 || Math.random() < confidence.discoveryRatio;
+    const effectiveOutOfComfortZone = outOfComfortZone || explorationLevel >= 9;
+
+    const explorationModeLabel = explorationLevel <= 2 ? "ULTRA-PRÉCISION" : explorationLevel <= 5 ? "ÉQUILIBRÉ" : explorationLevel <= 8 ? "DÉCOUVERTE" : "TERRE INCONNUE";
+    const explorationInstruction = explorationLevel <= 2
+      ? "MODE ULTRA-PRÉCISION : Colle exactement aux genres et micro-genres favoris. Privilégie les candidats embedding à très haute similarité (>85%). Ne prends aucun risque, l'utilisateur veut du confort total."
+      : explorationLevel <= 5
+        ? "MODE ÉQUILIBRÉ : Balance entre confort et découverte. Reste proche des goûts mais permets-toi des genres adjacents occasionnels."
+        : explorationLevel <= 8
+          ? "MODE DÉCOUVERTE : Propose des genres adjacents, des films sous-estimés, des pépites méconnues. L'utilisateur est ouvert à la surprise. Ose des recommandations moins évidentes."
+          : "MODE TERRE INCONNUE : Le film recommandé DOIT être RADICALEMENT différent des habitudes de l'utilisateur. Choisis un genre qu'il ne regarde JAMAIS. Propose l'exact opposé de ses goûts habituels. Explique dans 'reason' pourquoi ce choix inattendu pourrait lui plaire. Commence par 'Changement radical :'.";
 
     const skipInsights = skipPatterns.avgSkipRate > 0.6
       ? "L'utilisateur skip souvent — sois plus sélectif et surprenant."
@@ -114,14 +127,17 @@ ${excludedPlatformIds && excludedPlatformIds.length > 0 ? `- PLATEFORMES EXCLUES
 ${excludedGenres && excludedGenres.length > 0 ? `- GENRES EXCLUS (profil) : NE JAMAIS recommander de films des genres suivants : ${excludedGenres.join(", ")}. C'est une règle ABSOLUE.` : ""}
 ${heavilySkippedGenres.length > 0 ? `- GENRES SOUVENT REFUSÉS (taste trainer) : L'utilisateur a refusé 3+ films de ces genres : ${heavilySkippedGenres.join(", ")}. Évite-les fortement sauf en mode découverte.` : ""}
 ${minRating && minRating > 0 ? `- NOTE MINIMALE : Le film DOIT avoir une note TMDB supérieure ou égale à ${minRating}/10. Ne recommande JAMAIS un film noté en dessous.` : ""}
+
+NIVEAU D'EXPLORATION : ${explorationLevel}/10 (${explorationModeLabel})
+${explorationInstruction}
 ${embeddingSection}
 
 RÈGLES :
 - Réponds UNIQUEMENT avec un JSON valide sans backticks
 - Structure : {"title": "<titre exact>", "reason": "<2-3 phrases>", "confidence": <0-100>, "scores": {"taste": <0-100>, "context": <0-100>, "embedding": <0-100>, "behaviour": <0-100>, "rating": <0-100>, "novelty": <0-100>}}
 - Ne recommande JAMAIS un film déjà dans la liste ni un film avec l'un de ces IDs TMDB : ${normalizedExcludeIds.length > 0 ? normalizedExcludeIds.join(", ") : "aucun"}
-- ${shouldDiscover || outOfComfortZone ? "MODE DÉCOUVERTE : propose une pépite inattendue, un micro-genre adjacent, ou un film sous-estimé. Surprends." : "MODE PRÉCISION : colle au plus près des micro-genres et clusters identifiés. Si des candidats par embedding sont disponibles, privilégie-les."}
-${outOfComfortZone ? `- MODE "HORS ZONE DE CONFORT" ACTIVÉ : Le film recommandé DOIT être VOLONTAIREMENT en dehors des genres et micro-genres habituels de l'utilisateur. Choisis un genre qu'il ne regarde JAMAIS. Explique dans "reason" pourquoi tu sors de ses habitudes et ce qu'il pourrait y trouver. Commence la raison par "Je sors volontairement de tes habitudes parce que…".` : ""}
+- ${shouldDiscover || effectiveOutOfComfortZone ? "MODE DÉCOUVERTE/EXPLORATION activé selon le niveau d'exploration ci-dessus." : "MODE PRÉCISION : colle au plus près des micro-genres et clusters identifiés. Si des candidats par embedding sont disponibles, privilégie-les."}
+${effectiveOutOfComfortZone ? `- MODE "HORS ZONE DE CONFORT" ACTIVÉ : Le film recommandé DOIT être VOLONTAIREMENT en dehors des genres et micro-genres habituels de l'utilisateur. Choisis un genre qu'il ne regarde JAMAIS. Explique dans "reason" pourquoi tu sors de ses habitudes et ce qu'il pourrait y trouver. Commence la raison par "Changement radical :".` : ""}
 - Calibre le score de confiance selon la qualité du match`;
 
     const rejectionSection = rejectionContext ? `
@@ -136,7 +152,7 @@ Micro-genres : ${tasteClusters.join(", ") || "à déduire des films aimés"}
 Films regardés : ${stats.watchCount || 0} | Films skippés : ${stats.skipCount || 0} | Films aimés : ${stats.likeCount || 0}
 Taux d'acceptation : ${acceptanceRate}%
 ${heavilySkippedGenres.length > 0 ? `Genres souvent refusés : ${heavilySkippedGenres.join(", ")}` : ""}
-${shouldDiscover ? "→ MODE DÉCOUVERTE" : "→ MODE PRÉCISION"}
+${shouldDiscover ? "→ MODE DÉCOUVERTE" : "→ MODE PRÉCISION"} | Niveau d'exploration : ${explorationLevel}/10 (${explorationModeLabel})
 ${rejectionSection}
 
 Recommande UN film avec les scores détaillés.`;
@@ -239,9 +255,13 @@ Recommande UN film avec les scores détaillés.`;
         });
         if (minRating && minRating > 0 && attempt < 3) discoverParams.set("vote_average.gte", String(minRating));
         if (excludedGenreIds.size > 0 && attempt < 3) discoverParams.set("without_genres", [...excludedGenreIds].join(","));
-        if (topGenres.length > 0 && !outOfComfortZone && attempt < 2) {
+        if (topGenres.length > 0 && !effectiveOutOfComfortZone && explorationLevel < 7 && attempt < 2) {
           const genreIds = topGenres.map(g => genreIdMap[g]).filter(Boolean).slice(0, 3);
           if (genreIds.length > 0) discoverParams.set("with_genres", genreIds.join("|"));
+        } else if (topGenres.length > 0 && explorationLevel >= 7 && attempt < 2) {
+          // For high exploration: exclude preferred genres to force discovery
+          const genreIds = topGenres.map(g => genreIdMap[g]).filter(Boolean).slice(0, 3);
+          if (genreIds.length > 0) discoverParams.set("without_genres", [...new Set([...(discoverParams.get("without_genres") || "").split(",").filter(Boolean), ...genreIds.map(String)])].join(","));
         }
         if (platformIds && platformIds.length > 0 && attempt < 3) {
           discoverParams.set("with_watch_providers", platformIds.join("|"));
@@ -303,6 +323,7 @@ Recommande UN film avec les scores détaillés.`;
         discoveryRatio: confidence.discoveryRatio,
         acceptanceRate,
         mode: aiFailed ? "fallback" : (shouldDiscover ? "discovery" : "precision"),
+        explorationLevel,
         embeddingCandidatesCount: embeddingCandidates.length,
         aiFallback: aiFailed,
       },
