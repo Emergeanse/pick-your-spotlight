@@ -56,6 +56,7 @@ const Index = () => {
   const [showTour, setShowTour] = useState(false);
   const [showActivation, setShowActivation] = useState(false);
   const [profileLoaded, setProfileLoaded] = useState(false);
+  const [activeActivationMission, setActiveActivationMission] = useState<MissionId | null>(null);
 
   useEffect(() => {
     if ((location.state as any)?.openTrainer) {
@@ -138,6 +139,7 @@ const Index = () => {
   };
 
   const handleActivationMission = (missionId: MissionId) => {
+    setActiveActivationMission(missionId);
     switch (missionId) {
       case "train_20":
         setOpenTrainerOnMount(true);
@@ -191,7 +193,19 @@ const Index = () => {
     setShowChat(true);
   };
 
-  const handleMovieSuggested = (movie: MovieDetail, recapTags?: string[]) => {
+  const handleMovieSuggested = async (movie: MovieDetail, recapTags?: string[]) => {
+    // During "talk_to_pick" activation mission: record chat, close chat, skip result
+    if (activeActivationMission === "talk_to_pick" && showActivation && user) {
+      const today = new Date().toISOString().split("T")[0];
+      await supabase.from("daily_usage").upsert(
+        { user_id: user.id, usage_date: today, chat_count: 1 },
+        { onConflict: "user_id,usage_date" }
+      );
+      setShowChat(false);
+      setActiveActivationMission(null);
+      return;
+    }
+
     setResults([movie]);
     setCurrentResultIndex(0);
     if (recapTags && recapTags.length > 0) setSearchTags(recapTags);
