@@ -457,6 +457,15 @@ const Index = () => {
           onComplete={handleActivationComplete}
         />
       )}
+
+      {/* Watchlist Mission Guide */}
+      {watchlistGuideStep && (
+        <WatchlistMissionGuide
+          step={watchlistGuideStep}
+          savedCount={watchlistSavedCount}
+          target={3}
+        />
+      )}
     </div>
   );
 };
