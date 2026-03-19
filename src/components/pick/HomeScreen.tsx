@@ -29,8 +29,6 @@ interface HomeScreenProps {
   loading: boolean;
   openTrainerOnMount?: boolean;
   onTrainerOpened?: () => void;
-  isActivation?: boolean;
-  onActivationComplete?: () => void;
 }
 
 const SURPRISE_MESSAGES = [
