@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Users, Loader2, Sparkles, Star, Clock, ChevronRight, Check, Wind, Flame, Laugh, Heart, UserRound, UsersRound, Home, Film, Tv, Layers, ThumbsUp, ThumbsDown, Meh, RefreshCw, Bookmark, Zap } from "lucide-react";
+import { Users, Loader2, Sparkles, Star, Clock, ChevronRight, Check, Wind, Flame, Laugh, Heart, UserRound, UsersRound, Home, Film, Tv, Layers, ThumbsUp, ThumbsDown, Meh, RefreshCw, Bookmark, Zap, UserPlus, X, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
