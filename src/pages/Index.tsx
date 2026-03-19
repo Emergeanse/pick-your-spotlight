@@ -48,10 +48,15 @@ const Index = () => {
   const pickPlus = usePickPlus();
   const [openTrainerOnMount, setOpenTrainerOnMount] = useState(false);
   const [showTour, setShowTour] = useState(false);
+  const [isActivation, setIsActivation] = useState(false);
 
   useEffect(() => {
     if ((location.state as any)?.openTrainer) {
       setOpenTrainerOnMount(true);
+      window.history.replaceState({}, "", "/app");
+    }
+    if ((location.state as any)?.activateTraining) {
+      setIsActivation(true);
       window.history.replaceState({}, "", "/app");
     }
   }, [location.state]);
