@@ -498,6 +498,10 @@ const Index = () => {
           target={3}
         />
       )}
+
+      {talkToPickGuideStep && (
+        <TalkToPickMissionGuide step={talkToPickGuideStep} />
+      )}
     </div>
   );
 };

@@ -375,6 +375,7 @@ const VoiceChat = ({ onClose, onMovieSuggested, initialMessages, showMicGuide = 
               <button
                 type="button"
                 onClick={startListening}
+                data-tour="voice-chat-mic"
                 className="w-24 h-24 rounded-full bg-primary/10 border-2 border-primary/30 flex items-center justify-center mb-6 transition-all duration-200 active:scale-95 active:bg-primary/20 cursor-pointer select-none hover:bg-primary/15 hover:border-primary/40"
                 style={{ WebkitTapHighlightColor: "transparent", touchAction: "manipulation" }}
               >
