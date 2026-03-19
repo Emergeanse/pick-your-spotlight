@@ -80,7 +80,20 @@ Deno.serve(async (req) => {
 
     // --- CHECK AUTH ---
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader?.startsWith("Bearer ")) {
+    let userId: string | null = null;
+
+    if (authHeader?.startsWith("Bearer ")) {
+      const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+      const userClient = createClient(supabaseUrl, anonKey, {
+        global: { headers: { Authorization: authHeader } },
+      });
+      const { data: claims } = await userClient.auth.getUser();
+      if (claims?.user) {
+        userId = claims.user.id;
+      }
+    }
+
+    if (!userId) {
       // Unauthenticated lookup
       const found = await findSession();
       if (!found) {
@@ -101,21 +114,6 @@ Deno.serve(async (req) => {
     }
 
     // --- AUTHENTICATED USER ---
-    const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
-    const userClient = createClient(supabaseUrl, anonKey, {
-      global: { headers: { Authorization: authHeader } },
-    });
-
-    const { data: claims, error: claimsErr } = await userClient.auth.getUser();
-    if (claimsErr || !claims?.user) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    const userId = claims.user.id;
-
     const found = await findSession();
     if (!found) {
       return new Response(JSON.stringify({ error: "Session introuvable" }), {
@@ -125,6 +123,7 @@ Deno.serve(async (req) => {
     }
 
     const { session } = found;
+
 
     // Auto-add friendship
     if (session.creator_id !== userId) {
