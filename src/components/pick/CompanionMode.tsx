@@ -14,14 +14,17 @@ interface ChatMsg {
   content: string;
 }
 
-const QUICK_ACTIONS = [
-  { label: "Fun fact", icon: Sparkles, message: "Donne-moi un fun fact sur ce film !" },
-  { label: "Cet acteur ?", icon: User, message: "Qui est l'acteur/actrice principal(e) et quels sont ses autres films connus ?" },
-  { label: "Cette scène", icon: Eye, message: "Explique-moi cette scène sans spoilers." },
-  { label: "Coulisses", icon: Clapperboard, message: "Raconte-moi une anecdote de tournage !" },
-  { label: "Musique", icon: Music, message: "Parle-moi de la musique / bande-son de ce film." },
-  { label: "Sans spoilers", icon: Shield, message: "Explique-moi le contexte de ce film sans me spoiler." },
-];
+const getQuickActions = (isTv: boolean) => {
+  const label = isTv ? "cette série" : "ce film";
+  return [
+    { label: "Fun fact", icon: Sparkles, message: `Donne-moi un fun fact sur ${label} !` },
+    { label: "Cet acteur ?", icon: User, message: "Qui est l'acteur/actrice principal(e) et quels sont ses autres rôles connus ?" },
+    { label: "Cette scène", icon: Eye, message: "Explique-moi cette scène sans spoilers." },
+    { label: "Coulisses", icon: Clapperboard, message: "Raconte-moi une anecdote de tournage !" },
+    { label: "Musique", icon: Music, message: `Parle-moi de la musique / bande-son de ${label}.` },
+    { label: "Sans spoilers", icon: Shield, message: `Explique-moi le contexte de ${label} sans me spoiler.` },
+  ];
+};
 
 const CONTEXTUAL_PROMPTS = [
   "Pourquoi ce personnage fait ça ?",
