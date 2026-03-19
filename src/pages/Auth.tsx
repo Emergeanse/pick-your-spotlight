@@ -160,7 +160,7 @@ const Auth = () => {
                     onChange={e => setBirthYear(e.target.value)}
                     className="w-full bg-card border border-border/30 rounded-xl px-4 py-3 text-sm font-sans text-foreground outline-none focus:border-primary/50 transition-colors appearance-none"
                   >
-                    <option value="" className="text-muted-foreground">Ton année de naissance</option>
+                    <option value="" className="text-muted-foreground">Quelle est ton année de naissance ?</option>
                     {Array.from({ length: 80 }, (_, i) => new Date().getFullYear() - 5 - i).map(y => (
                       <option key={y} value={y}>{y} ({new Date().getFullYear() - y} ans)</option>
                     ))}
