@@ -117,8 +117,8 @@ const Admin = () => {
       toast.error("Connexion échouée : " + error.message);
       return;
     }
-    toast.success(`Connecté en tant que ${createdAccount.name}`);
-    navigate("/app");
+    // Full page reload to ensure clean state — no data leaks from admin session
+    window.location.href = "/app";
   };
 
   const currentYear = new Date().getFullYear();
