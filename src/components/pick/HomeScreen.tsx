@@ -593,27 +593,23 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
                   Pick pense que ce film est parfait pour toi.
                 </p>
 
-                <div className="flex flex-col items-center gap-2.5 w-full">
-                  <div className="flex items-center gap-3 justify-center">
-                    <Button
-                      size="lg"
-                      className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90 font-sans font-semibold px-6 h-11 gap-2 text-sm neon-glow transition-all active:scale-[0.97]"
-                      onClick={() => {
-                        onSurprise(tonightPick);
-                        setTonightPick(null);
-                      }}
-                    >
-                      <Tv className="w-4 h-4" />
-                      On regarde ?
-                    </Button>
+                <div className="flex flex-col items-center gap-4 w-full">
+                  <Button
+                    size="lg"
+                    className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90 font-sans font-semibold px-8 h-12 gap-2 text-base neon-glow transition-all active:scale-[0.97] w-full max-w-xs"
+                    onClick={() => {
+                      onSurprise(tonightPick);
+                      setTonightPick(null);
+                    }}
+                  >
+                    <Tv className="w-5 h-5" />
+                    On regarde ?
+                  </Button>
 
-                     <Button
-                      variant="ghost"
-                      size="lg"
-                      className="rounded-full border border-border/30 text-foreground/50 hover:text-foreground hover:border-border/50 font-sans font-medium px-5 h-11 gap-2 text-sm transition-all active:scale-[0.97]"
+                  <div className="flex items-center gap-4">
+                    <button
                       onClick={() => {
                         if (!tonightPick) return;
-                        // Track the rejection so it persists across sessions
                         trackInteraction(tonightPick.id, "skipped", {
                           reason: "not_my_style",
                           genres: (tonightPick.genres || []).map(g => g.name),
@@ -629,35 +625,37 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
                         generateTonightPick(nextRejected, rejContext);
                       }}
                       disabled={tonightLoading}
+                      className="text-foreground/40 text-[12px] font-sans hover:text-foreground/60 transition-colors disabled:opacity-50 flex items-center gap-1.5"
                     >
                       {tonightLoading ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <Loader2 className="w-3 h-3 animate-spin" />
                       ) : (
-                        <Dices className="w-4 h-4" />
+                        <Dices className="w-3 h-3" />
                       )}
                       Autre suggestion
-                    </Button>
-                  </div>
+                    </button>
 
-                  <button
-                    onClick={() => {
-                      if (!tonightPick) return;
-                      // Mark as seen and get another suggestion
-                      trackInteraction(tonightPick.id, "already_seen", {});
-                      const nextRejected = [...rejectedIds, tonightPick.id];
-                      setRejectedIds(nextRejected);
-                      setTonightPick(null);
-                      generateTonightPick(nextRejected, {
-                        reason: "already_seen",
-                        rejectedGenres: (tonightPick.genres || []).map(g => g.name),
-                        rejectedTitle: getDisplayTitle(tonightPick),
-                      });
-                    }}
-                    disabled={tonightLoading}
-                    className="text-foreground/35 text-[12px] font-sans hover:text-foreground/60 transition-colors disabled:opacity-50"
-                  >
-                    Déjà vu ce film
-                  </button>
+                    <span className="text-foreground/15 text-[10px]">·</span>
+
+                    <button
+                      onClick={() => {
+                        if (!tonightPick) return;
+                        trackInteraction(tonightPick.id, "already_seen", {});
+                        const nextRejected = [...rejectedIds, tonightPick.id];
+                        setRejectedIds(nextRejected);
+                        setTonightPick(null);
+                        generateTonightPick(nextRejected, {
+                          reason: "already_seen",
+                          rejectedGenres: (tonightPick.genres || []).map(g => g.name),
+                          rejectedTitle: getDisplayTitle(tonightPick),
+                        });
+                      }}
+                      disabled={tonightLoading}
+                      className="text-foreground/35 text-[12px] font-sans hover:text-foreground/60 transition-colors disabled:opacity-50"
+                    >
+                      Déjà vu
+                    </button>
+                  </div>
                 </div>
               </motion.div>
             </div>
