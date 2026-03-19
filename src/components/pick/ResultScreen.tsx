@@ -23,8 +23,6 @@ function ActorCard({ actor }: { actor: import("@/lib/tmdb").CastMember }) {
   const [open, setOpen] = useState(false);
   const [person, setPerson] = useState<PersonDetails | null>(null);
   const [loading, setLoading] = useState(false);
-  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const cardRef = useRef<HTMLDivElement>(null);
 
   const fetchPerson = () => {
     if (!person && !loading) {
@@ -33,118 +31,121 @@ function ActorCard({ actor }: { actor: import("@/lib/tmdb").CastMember }) {
     }
   };
 
-  const handleMouseEnter = () => {
-    timeoutRef.current = setTimeout(() => {
-      setOpen(true);
-      fetchPerson();
-    }, 250);
-  };
-
-  const handleMouseLeave = () => {
-    if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    setOpen(false);
-  };
-
-  const handleTap = () => {
-    setOpen(prev => !prev);
+  const handleOpen = () => {
+    setOpen(true);
     fetchPerson();
   };
 
-  // Close on outside click for mobile
-  useEffect(() => {
-    if (!open) return;
-    const handler = (e: PointerEvent) => {
-      if (cardRef.current && !cardRef.current.contains(e.target as Node)) setOpen(false);
-    };
-    document.addEventListener("pointerdown", handler);
-    return () => document.removeEventListener("pointerdown", handler);
-  }, [open]);
-
   return (
-    <div
-      ref={cardRef}
-      className="relative flex flex-col items-center gap-1.5 shrink-0 w-14 cursor-pointer"
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-      onClick={handleTap}
-    >
-      <div className={`w-11 h-11 rounded-full bg-foreground/[0.06] border overflow-hidden transition-all duration-200 ${open ? "border-primary/50 ring-2 ring-primary/20 scale-110" : "border-border/20"}`}>
-        {actor.profile_path ? (
-          <img src={`${IMG_BASE}/w185${actor.profile_path}`} alt={actor.name} className="w-full h-full object-cover" />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center">
-            <span className="text-foreground/30 text-[11px] font-sans font-bold">{actor.name.charAt(0)}</span>
-          </div>
-        )}
-      </div>
-      <div className="text-center w-full">
-        <p className="text-foreground/70 text-[10px] font-sans font-medium leading-tight truncate">{actor.name}</p>
-        <p className="text-foreground/35 text-[9px] font-sans leading-tight truncate">{actor.character}</p>
+    <>
+      <div
+        className="flex flex-col items-center gap-1.5 shrink-0 w-14 cursor-pointer"
+        onClick={handleOpen}
+      >
+        <div className="w-11 h-11 rounded-full bg-foreground/[0.06] border border-border/20 overflow-hidden transition-all duration-200 hover:border-primary/50 hover:ring-2 hover:ring-primary/20 hover:scale-110">
+          {actor.profile_path ? (
+            <img src={`${IMG_BASE}/w185${actor.profile_path}`} alt={actor.name} className="w-full h-full object-cover" />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center">
+              <span className="text-foreground/30 text-[11px] font-sans font-bold">{actor.name.charAt(0)}</span>
+            </div>
+          )}
+        </div>
+        <div className="text-center w-full">
+          <p className="text-foreground/70 text-[10px] font-sans font-medium leading-tight truncate">{actor.name}</p>
+          <p className="text-foreground/35 text-[9px] font-sans leading-tight truncate">{actor.character}</p>
+        </div>
       </div>
 
       <AnimatePresence>
         {open && (
           <motion.div
-            initial={{ opacity: 0, y: -6, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -6, scale: 0.95 }}
-            transition={{ duration: 0.2 }}
-            className="absolute top-full mt-2 left-1/2 -translate-x-1/2 z-[60] w-64 rounded-2xl bg-black/80 backdrop-blur-2xl border border-white/10 shadow-2xl p-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[80] flex items-end sm:items-center justify-center"
+            onClick={() => setOpen(false)}
           >
-            {loading ? (
-              <div className="flex items-center justify-center py-4">
-                <Loader2 className="w-4 h-4 animate-spin text-white/50" />
-              </div>
-            ) : person ? (
-              <div>
-                <div className="flex items-center gap-2.5 mb-3">
-                  <div className="w-11 h-11 rounded-full overflow-hidden bg-white/5 border border-white/10 shrink-0">
-                    {person.profile_path ? (
-                      <img src={`${IMG_BASE}/w185${person.profile_path}`} alt={person.name} className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center">
-                        <span className="text-white/30 text-sm font-bold">{person.name.charAt(0)}</span>
-                      </div>
-                    )}
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-white text-[13px] font-sans font-semibold leading-tight truncate">{person.name}</p>
-                    <p className="text-white/50 text-[10px] font-sans">
-                      {person.known_for_department === "Acting" ? "Acteur/Actrice" : person.known_for_department}
-                      {person.birthday && ` · ${new Date().getFullYear() - new Date(person.birthday).getFullYear()} ans`}
-                    </p>
-                  </div>
+            <div className="absolute inset-0 bg-background/70 backdrop-blur-sm" />
+            <motion.div
+              initial={{ opacity: 0, y: 60, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 40, scale: 0.95 }}
+              transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              className="relative z-10 w-full max-w-sm mx-4 mb-4 sm:mb-0 rounded-2xl bg-card/95 backdrop-blur-2xl border border-primary/20 shadow-[0_0_40px_-10px_hsl(var(--primary)/0.3)] overflow-hidden"
+              onClick={e => e.stopPropagation()}
+            >
+              <button onClick={() => setOpen(false)} className="absolute top-3 right-3 w-8 h-8 rounded-full bg-foreground/10 flex items-center justify-center hover:bg-foreground/20 transition-colors z-10">
+                <X className="w-4 h-4 text-foreground/60" />
+              </button>
+
+              {loading ? (
+                <div className="flex items-center justify-center py-16">
+                  <Loader2 className="w-6 h-6 animate-spin text-primary/50" />
                 </div>
-                {person.biography && (
-                  <p className="text-white/60 text-[11px] font-sans leading-relaxed line-clamp-3 mb-3">
-                    {person.biography}
-                  </p>
-                )}
-                {person.knownFor.length > 0 && (
-                  <div>
-                    <p className="text-[9px] uppercase tracking-widest text-white/30 font-sans font-semibold mb-1.5">Filmographie</p>
-                    <div className="flex gap-1.5 overflow-hidden">
-                      {person.knownFor.slice(0, 4).map((m) => (
-                        <div key={`${m.media_type}-${m.id}`} className="shrink-0 w-11">
-                          {m.poster_path ? (
-                            <img src={`${IMG_BASE}/w92${m.poster_path}`} alt={m.title} className="w-11 h-[66px] rounded-md object-cover border border-white/10" />
-                          ) : (
-                            <div className="w-11 h-[66px] rounded-md bg-white/5 border border-white/10 flex items-center justify-center">
-                              <span className="text-white/20 text-[8px]">{m.title.slice(0, 3)}</span>
-                            </div>
-                          )}
-                          <p className="text-white/50 text-[8px] font-sans leading-tight mt-0.5 truncate">{m.title}</p>
+              ) : person ? (
+                <div className="p-5">
+                  <div className="flex items-center gap-4 mb-4">
+                    <div className="w-16 h-16 rounded-xl overflow-hidden bg-foreground/5 border border-border/20 shrink-0">
+                      {person.profile_path ? (
+                        <img src={`${IMG_BASE}/w185${person.profile_path}`} alt={person.name} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <span className="text-foreground/30 text-lg font-bold">{person.name.charAt(0)}</span>
                         </div>
-                      ))}
+                      )}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <h3 className="text-foreground text-lg font-serif leading-tight">{person.name}</h3>
+                      <p className="text-foreground/40 text-xs font-sans mt-0.5">
+                        {person.known_for_department === "Acting" ? "Acteur/Actrice" : person.known_for_department === "Directing" ? "Réalisateur/Réalisatrice" : person.known_for_department}
+                        {person.birthday && ` · ${new Date().getFullYear() - new Date(person.birthday).getFullYear()} ans`}
+                      </p>
+                      {person.place_of_birth && (
+                        <p className="text-foreground/30 text-[11px] font-sans mt-0.5 truncate">📍 {person.place_of_birth}</p>
+                      )}
                     </div>
                   </div>
-                )}
-              </div>
-            ) : null}
+
+                  {person.biography && (
+                    <p className="text-foreground/50 text-[13px] font-sans leading-relaxed line-clamp-4 mb-4">
+                      {person.biography}
+                    </p>
+                  )}
+
+                  {person.knownFor.length > 0 && (
+                    <div>
+                      <p className="text-[10px] uppercase tracking-widest text-primary/50 font-sans font-semibold mb-2">Filmographie</p>
+                      <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
+                        {person.knownFor.slice(0, 6).map((m) => (
+                          <div key={`${m.media_type}-${m.id}`} className="shrink-0 w-16">
+                            {m.poster_path ? (
+                              <img src={`${IMG_BASE}/w154${m.poster_path}`} alt={m.title} className="w-16 h-24 rounded-lg object-cover border border-border/20" />
+                            ) : (
+                              <div className="w-16 h-24 rounded-lg bg-foreground/5 border border-border/20 flex items-center justify-center">
+                                <span className="text-foreground/20 text-[9px] font-sans text-center px-1">{m.title}</span>
+                              </div>
+                            )}
+                            <p className="text-foreground/50 text-[10px] font-sans leading-tight mt-1 truncate">{m.title}</p>
+                            {m.year && (
+                              <p className="text-foreground/25 text-[9px] font-sans">{m.year}</p>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="flex items-center justify-center py-16">
+                  <p className="text-foreground/30 text-sm font-sans">Aucune info disponible</p>
+                </div>
+              )}
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+    </>
   );
 }
 
@@ -168,7 +169,7 @@ interface ResultScreenProps {
   onRestart: () => void;
   onRefineWithVoice?: () => void;
   onRefineWithMessage?: (message: string) => void;
-  onStartCompanion?: () => void;
+  
   hasMore: boolean;
   userCriteria?: {
     mood: Mood | null;
@@ -229,7 +230,7 @@ function getRejectReaction(reason: string): string {
 
 const CONFIDENCE_THRESHOLD = 30;
 
-const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onShowAnother, onRestart, onRefineWithVoice, onRefineWithMessage, onStartCompanion, hasMore, userCriteria, alternativeMovies, onSelectAlternative, searchTags, onRemoveTag, refining, profileConfidence = 0 }, ref) => {
+const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onShowAnother, onRestart, onRefineWithVoice, onRefineWithMessage, hasMore, userCriteria, alternativeMovies, onSelectAlternative, searchTags, onRemoveTag, refining, profileConfidence = 0 }, ref) => {
   const [providers, setProviders] = useState<{ name: string; logo_path: string; provider_id: number }[]>([]);
   const [credits, setCredits] = useState<MovieCredits | null>(null);
   const [streamingLinks, setStreamingLinks] = useState<StreamingLink[]>([]);
@@ -951,19 +952,6 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
               transition={{ delay: 0.6 }}
               className="space-y-3"
             >
-              {/* Main CTA row */}
-              <div className="flex items-center gap-2.5">
-                {onStartCompanion && (
-                  <Button
-                    size="lg"
-                    className="flex-1 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 font-sans font-semibold h-12 gap-2 text-[15px] neon-glow-strong transition-all active:scale-[0.97]"
-                    onClick={onStartCompanion}
-                  >
-                    <Tv className="w-5 h-5" />
-                    Lancer le compagnon 🍿
-                  </Button>
-                )}
-              </div>
 
               {/* Compact secondary actions — icon row */}
               <div className="flex items-center gap-2">

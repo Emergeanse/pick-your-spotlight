@@ -4,13 +4,13 @@ import { useNavigate, useLocation } from "react-router-dom";
 import HomeScreen from "@/components/pick/HomeScreen";
 import ResultScreen from "@/components/pick/ResultScreen";
 import VoiceChat from "@/components/pick/VoiceChat";
-import CompanionMode from "@/components/pick/CompanionMode";
+
 import BottomTabBar from "@/components/pick/BottomTabBar";
 import RevealAnimation from "@/components/pick/RevealAnimation";
 import PlatformTour from "@/components/pick/PlatformTour";
 import ActivationFlow from "@/components/pick/ActivationFlow";
 import type { MissionId } from "@/components/pick/ActivationFlow";
-import { useCompanion } from "@/contexts/CompanionContext";
+
 import type { ChatMessage } from "@/components/pick/VoiceChat";
 import { toast } from "sonner";
 import BrandHeader from "@/components/pick/BrandHeader";
@@ -36,7 +36,7 @@ const Index = () => {
   const [currentResultIndex, setCurrentResultIndex] = useState(0);
   const [loadingMessage, setLoadingMessage] = useState("");
   const [showChat, setShowChat] = useState(false);
-  const [showCompanion, setShowCompanion] = useState(false);
+  
   const [chatInitialMessages, setChatInitialMessages] = useState<ChatMessage[] | undefined>(undefined);
   const [searchTags, setSearchTags] = useState<string[]>([]);
   const [profilePrefs, setProfilePrefs] = useState<{
@@ -259,18 +259,6 @@ const Index = () => {
     }
   };
 
-  const { activateCompanion } = useCompanion();
-
-  const handleStartCompanion = () => {
-    const currentMovie = results[currentResultIndex];
-    if (currentMovie) {
-      trackInteraction(currentMovie.id, "watched", {});
-      if (user) recordAcceptedRecommendation(user.id);
-      activateCompanion(currentMovie);
-      toast(`🎬 Companion activé — Pick est là pendant ${currentMovie.first_air_date ? "toute la série" : "tout le film"}`, { duration: 3000 });
-    }
-    setShowCompanion(true);
-  };
 
   const handleRestart = () => {
     setStep("home");
@@ -332,7 +320,7 @@ const Index = () => {
                 } catch (e) { console.error("Refine error:", e); }
                 finally { setLoading(false); setLoadingMessage(""); }
               }}
-              onStartCompanion={handleStartCompanion}
+              
               hasMore={currentResultIndex < results.length - 1}
               userCriteria={{ mood: null, context: null, time: null }}
               searchTags={searchTags}
@@ -355,9 +343,6 @@ const Index = () => {
         {showChat && <VoiceChat onClose={handleCloseChat} onMovieSuggested={handleMovieSuggested} initialMessages={chatInitialMessages} />}
       </AnimatePresence>
 
-      <AnimatePresence>
-        {showCompanion && results[currentResultIndex] && <CompanionMode movie={results[currentResultIndex]} onClose={() => setShowCompanion(false)} pickPlus={pickPlus} />}
-      </AnimatePresence>
 
       <PickPlusPaywall
         open={pickPlus.shouldShowPaywall}
