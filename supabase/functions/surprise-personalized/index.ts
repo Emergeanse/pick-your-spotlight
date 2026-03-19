@@ -286,8 +286,8 @@ Recommande UN film avec les scores détaillés.`;
     }
 
     if (!selectedMovie) {
-      // Ultimate fallback: trending movies
-      const trendingRes = await fetch(`https://api.themoviedb.org/3/trending/movie/week?api_key=${TMDB_API_KEY}&language=fr-FR`);
+      // Ultimate fallback: trending
+      const trendingRes = await fetch(`https://api.themoviedb.org/3/trending/${searchType}/week?api_key=${TMDB_API_KEY}&language=fr-FR`);
       const trendingData = await trendingRes.json();
       selectedMovie = (trendingData.results || []).find((r: any) => !excludedSet.has(r.id));
     }
