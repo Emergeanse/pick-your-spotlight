@@ -58,13 +58,13 @@ interface CompanionModeProps {
 }
 
 // Proactive suggestions that Pick surfaces periodically
-const PROACTIVE_SUGGESTIONS = [
+const getProactiveSuggestions = (isTv: boolean) => [
   "Tu veux un fun fact sur cette scène ? 🎬",
   "Je connais une anecdote sur cet acteur 👀",
-  "Tu savais que ce film a failli ne jamais sortir ?",
+  `Tu savais que ${isTv ? "cette série a failli ne jamais sortir" : "ce film a failli ne jamais sortir"} ?`,
   "Envie d'en savoir plus sur la musique de cette scène ? 🎵",
   "Le réalisateur a caché un easter egg ici…",
-  "Ce plan est une référence à un autre film, tu veux savoir lequel ?",
+  `Ce plan est une référence à ${isTv ? "une autre série" : "un autre film"}, tu veux savoir ${isTv ? "laquelle" : "lequel"} ?`,
   "L'acteur a improvisé cette réplique !",
   "Fun fact : ce lieu de tournage est réel 🗺️",
 ];
