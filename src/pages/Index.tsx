@@ -250,7 +250,7 @@ const Index = () => {
           <motion.div key="home" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.4 }}
             className="absolute inset-0 pb-[calc(3.5rem+env(safe-area-inset-bottom))]"
           >
-            <HomeScreen onStart={handleStart} onOpenChat={handleOpenChat} onSurprise={handleSurprise} onMovieSelect={handleMovieSelect} loading={loading} openTrainerOnMount={openTrainerOnMount} onTrainerOpened={() => setOpenTrainerOnMount(false)} />
+            <HomeScreen onStart={handleStart} onOpenChat={handleOpenChat} onSurprise={handleSurprise} onMovieSelect={handleMovieSelect} loading={loading} openTrainerOnMount={openTrainerOnMount} onTrainerOpened={() => setOpenTrainerOnMount(false)} isActivation={isActivation} onActivationComplete={() => setIsActivation(false)} />
           </motion.div>
         )}
 
