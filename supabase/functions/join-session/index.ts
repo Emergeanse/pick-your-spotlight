@@ -124,15 +124,6 @@ Deno.serve(async (req) => {
 
     const { session } = found;
 
-    const found = await findSession();
-    if (!found) {
-      return new Response(JSON.stringify({ error: "Session introuvable" }), {
-        status: 404,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    const { session } = found;
 
     // Auto-add friendship
     if (session.creator_id !== userId) {
