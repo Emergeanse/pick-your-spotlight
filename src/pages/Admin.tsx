@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { ArrowLeft, UserPlus, Loader2, Shield, LogIn, Users, RefreshCw } from "lucide-react";
+import { ArrowLeft, UserPlus, Loader2, Shield, LogIn, Users, RefreshCw, Circle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useNavigate } from "react-router-dom";
@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useOnlineUsers } from "@/hooks/use-presence";
 
 interface RegisteredUser {
   id: string;
@@ -37,6 +38,7 @@ const Admin = () => {
   // Users list
   const [users, setUsers] = useState<RegisteredUser[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(false);
+  const onlineUsers = useOnlineUsers(isAdmin);
 
   const fetchUsers = async () => {
     setLoadingUsers(true);
@@ -134,11 +136,14 @@ const Admin = () => {
     });
   };
 
+  const onlineUserIds = new Set(onlineUsers.map(u => u.user_id));
+
   const UserTable = ({ userList }: { userList: RegisteredUser[] }) => (
     <div className="rounded-xl border border-border/30 overflow-hidden">
       <Table>
         <TableHeader>
           <TableRow className="bg-card/50">
+            <TableHead className="text-xs font-sans w-8"></TableHead>
             <TableHead className="text-xs font-sans">Nom</TableHead>
             <TableHead className="text-xs font-sans">Email</TableHead>
             <TableHead className="text-xs font-sans">Inscription</TableHead>
@@ -150,38 +155,46 @@ const Admin = () => {
         <TableBody>
           {userList.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={6} className="text-center text-muted-foreground text-sm py-8">
+              <TableCell colSpan={7} className="text-center text-muted-foreground text-sm py-8">
                 Aucun utilisateur
               </TableCell>
             </TableRow>
           ) : (
-            userList.map((u) => (
-              <TableRow key={u.id} className="bg-card/30">
-                <TableCell className="font-medium text-sm">
-                  <div className="flex items-center gap-2">
-                    {u.display_name || "—"}
-                    {u.is_test_account && (
-                      <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-primary/30 text-primary">
-                        test
-                      </Badge>
+            userList.map((u) => {
+              const isOnline = onlineUserIds.has(u.id);
+              return (
+                <TableRow key={u.id} className="bg-card/30">
+                  <TableCell className="w-8 pr-0">
+                    <Circle
+                      className={`w-2.5 h-2.5 ${isOnline ? "fill-green-500 text-green-500" : "fill-foreground/10 text-foreground/10"}`}
+                    />
+                  </TableCell>
+                  <TableCell className="font-medium text-sm">
+                    <div className="flex items-center gap-2">
+                      {u.display_name || "—"}
+                      {u.is_test_account && (
+                        <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-primary/30 text-primary">
+                          test
+                        </Badge>
+                      )}
+                      {u.onboarding_completed && (
+                        <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+                          onboardé
+                        </Badge>
+                      )}
+                    </div>
+                    {u.birth_year && (
+                      <span className="text-xs text-muted-foreground">{currentYear - u.birth_year} ans</span>
                     )}
-                    {u.onboarding_completed && (
-                      <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
-                        onboardé
-                      </Badge>
-                    )}
-                  </div>
-                  {u.birth_year && (
-                    <span className="text-xs text-muted-foreground">{currentYear - u.birth_year} ans</span>
-                  )}
-                </TableCell>
-                <TableCell className="text-xs text-muted-foreground font-mono">{u.email}</TableCell>
-                <TableCell className="text-xs text-muted-foreground">{formatDate(u.created_at)}</TableCell>
-                <TableCell className="text-xs text-muted-foreground">{formatDate(u.last_sign_in_at)}</TableCell>
-                <TableCell className="text-center text-sm">{u.total_recommendations}</TableCell>
-                <TableCell className="text-center text-sm">{u.streak_count > 0 ? `🔥 ${u.streak_count}` : "—"}</TableCell>
-              </TableRow>
-            ))
+                  </TableCell>
+                  <TableCell className="text-xs text-muted-foreground font-mono">{u.email}</TableCell>
+                  <TableCell className="text-xs text-muted-foreground">{formatDate(u.created_at)}</TableCell>
+                  <TableCell className="text-xs text-muted-foreground">{formatDate(u.last_sign_in_at)}</TableCell>
+                  <TableCell className="text-center text-sm">{u.total_recommendations}</TableCell>
+                  <TableCell className="text-center text-sm">{u.streak_count > 0 ? `🔥 ${u.streak_count}` : "—"}</TableCell>
+                </TableRow>
+              );
+            })
           )}
         </TableBody>
       </Table>
@@ -206,9 +219,13 @@ const Admin = () => {
             </div>
             <div>
               <h1 className="text-2xl font-serif">Administration</h1>
-              <p className="text-xs text-muted-foreground">
-                {users.length} utilisateur{users.length > 1 ? "s" : ""} inscrit{users.length > 1 ? "s" : ""}
-              </p>
+              <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                <span>{users.length} utilisateur{users.length > 1 ? "s" : ""} inscrit{users.length > 1 ? "s" : ""}</span>
+                <span className="flex items-center gap-1.5">
+                  <Circle className="w-2 h-2 fill-green-500 text-green-500 animate-pulse" />
+                  {onlineUsers.length} en ligne
+                </span>
+              </div>
             </div>
           </div>
 
