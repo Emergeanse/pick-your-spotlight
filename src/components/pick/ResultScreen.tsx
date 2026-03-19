@@ -714,50 +714,6 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
               )}
             </AnimatePresence>}
 
-            {/* Pour aller plus loin — YouTube video (hide when content IS YouTube) */}
-            {!isYouTube && youtubeVideo && (
-              <motion.div
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.5, duration: 0.4 }}
-                className="mb-5 max-w-md"
-              >
-                <p className="text-[10px] uppercase tracking-widest text-foreground/30 font-sans font-semibold mb-2">
-                  Pour aller plus loin
-                </p>
-                <motion.button
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() => window.open(youtubeVideo.url, "_blank", "noopener")}
-                  className="w-full flex items-center gap-3 p-2.5 rounded-xl bg-foreground/[0.04] border border-border/15 hover:border-red-500/25 hover:bg-foreground/[0.06] transition-all group cursor-pointer"
-                >
-                  {/* Thumbnail */}
-                  <div className="relative w-24 aspect-video rounded-lg overflow-hidden shrink-0">
-                    <img
-                      src={youtubeVideo.thumbnail}
-                      alt={youtubeVideo.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      loading="lazy"
-                    />
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="w-7 h-7 rounded-full bg-red-600/90 flex items-center justify-center shadow-lg">
-                        <Play className="w-3 h-3 text-white fill-white ml-0.5" />
-                      </div>
-                    </div>
-                  </div>
-                  {/* Info */}
-                  <div className="flex-1 min-w-0 text-left">
-                    <p className="text-[12px] font-sans font-medium text-foreground/70 line-clamp-2 leading-snug mb-1 group-hover:text-foreground transition-colors">
-                      {youtubeVideo.title}
-                    </p>
-                    <div className="flex items-center gap-1.5 text-foreground/30 text-[10px] font-sans">
-                      <span className="truncate max-w-[120px]">{youtubeVideo.channelTitle}</span>
-                      {youtubeVideo.viewCount > 0 && <span>· {formatViews(youtubeVideo.viewCount)}</span>}
-                    </div>
-                  </div>
-                  <ExternalLink className="w-3.5 h-3.5 text-foreground/20 group-hover:text-red-400 shrink-0 transition-colors" />
-                </motion.button>
-              </motion.div>
-            )}
 
             {/* Primary Actions */}
             <motion.div
