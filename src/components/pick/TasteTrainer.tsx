@@ -282,7 +282,7 @@ const TasteTrainer = ({ onClose }: TasteTrainerProps) => {
                 initial={{ scale: 0.95, opacity: 0 }}
                 exit={{ opacity: 0 }}
                 transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                className="relative w-full aspect-[2/3] max-h-[55vh] rounded-2xl overflow-hidden border-2 border-border/30 shadow-2xl cursor-grab active:cursor-grabbing"
+                className="relative w-full aspect-[2/3] max-h-[65vh] rounded-2xl overflow-hidden border-2 border-border/30 shadow-2xl cursor-grab active:cursor-grabbing"
                 style={{ touchAction: "none" }}
               >
                 <img
