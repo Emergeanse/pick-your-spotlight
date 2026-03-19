@@ -197,7 +197,7 @@ const Profile = () => {
         {/* ─── User Identity Block ─── */}
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
           <div className="flex items-center gap-4">
-            {/* Avatar with upload */}
+            {/* Avatar with cinematic identity halo */}
             <label className="relative cursor-pointer group">
               <input
                 type="file"
@@ -206,18 +206,15 @@ const Profile = () => {
                 className="hidden"
                 disabled={uploadingAvatar}
               />
-              {avatarUrl ? (
-                <img
-                  src={avatarUrl}
-                  alt="Avatar"
-                  className="w-16 h-16 rounded-full object-cover border-2 border-primary/20 group-hover:border-primary/50 transition-colors"
-                />
-              ) : (
-                <div className="w-16 h-16 rounded-full bg-primary/10 border-2 border-primary/20 group-hover:border-primary/50 flex items-center justify-center transition-colors">
-                  <span className="text-2xl font-serif text-primary">{nameDisplay.charAt(0).toUpperCase()}</span>
-                </div>
-              )}
-              <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-card border border-border/30 flex items-center justify-center group-hover:bg-primary/10 transition-colors">
+              <CinematicAvatar
+                src={avatarUrl}
+                name={nameDisplay}
+                size="md"
+                level={cinematicLevel}
+                dna={cinematicDNA}
+                tasteSignature={tasteAnim}
+              />
+              <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-card border border-border/30 flex items-center justify-center group-hover:bg-primary/10 transition-colors z-20">
                 {uploadingAvatar ? (
                   <Loader2 className="w-3 h-3 text-primary animate-spin" />
                 ) : (
