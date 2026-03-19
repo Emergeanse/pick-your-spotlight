@@ -209,6 +209,9 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
   const genres = movie.genres?.map(g => g.name).join(" · ") || "";
   const overview = movie.overview || "Aucune description disponible.";
   const mediaType = movie.first_air_date ? "tv" : "movie";
+  const isDocumentary = movie.genres?.some(g => g.id === 99);
+  const mediaLabel = isDocumentary ? "Documentaire" : mediaType === "tv" ? "Série" : "Film";
+  const seasons = (movie as any).number_of_seasons;
   const bgImage = backdrop || poster;
 
   // Track movie opened
