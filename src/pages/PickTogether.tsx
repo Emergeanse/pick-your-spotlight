@@ -25,7 +25,14 @@ interface GroupRecommendation {
   providers: { name: string; logo_path: string; provider_id: number }[];
 }
 
-type SessionStep = "select-friends" | "select-mood" | "loading" | "results";
+type SessionStep = "select-friends" | "select-what" | "select-mood" | "loading" | "results";
+type MediaChoice = "movie" | "tv" | "both";
+
+const MEDIA_OPTIONS: { value: MediaChoice; icon: React.ElementType; label: string; description: string }[] = [
+  { value: "movie", icon: Film, label: "Un film", description: "Long-métrage" },
+  { value: "tv", icon: Tv, label: "Une série", description: "Série ou documentaire" },
+  { value: "both", icon: Layers, label: "Peu importe", description: "Films et séries" },
+];
 
 const MOODS: { id: string; icon: React.ElementType; label: string; description: string }[] = [
   { id: "relax", icon: Wind, label: "Détente", description: "Calme et apaisant" },
