@@ -27,8 +27,8 @@ const Auth = () => {
     }
   }, [isReady, user, inviteCode]);
 
-  if (isReady && user) {
-    return <Navigate to="/app" replace />;
+  if (isReady && user && !inviteCode) {
+    return <Navigate to={redirectTo || "/app"} replace />;
   }
 
   const processInvite = async (userId: string, code: string) => {
