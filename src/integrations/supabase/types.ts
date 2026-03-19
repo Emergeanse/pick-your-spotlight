@@ -289,6 +289,8 @@ export type Database = {
       profiles: {
         Row: {
           accepted_recommendations: number
+          activation_completed: boolean
+          activation_step: string
           avatar_url: string | null
           best_streak: number
           birth_year: number | null
@@ -312,10 +314,13 @@ export type Database = {
           ritual_time: string | null
           streak_count: number
           total_recommendations: number
+          tour_completed: boolean
           updated_at: string
         }
         Insert: {
           accepted_recommendations?: number
+          activation_completed?: boolean
+          activation_step?: string
           avatar_url?: string | null
           best_streak?: number
           birth_year?: number | null
@@ -339,10 +344,13 @@ export type Database = {
           ritual_time?: string | null
           streak_count?: number
           total_recommendations?: number
+          tour_completed?: boolean
           updated_at?: string
         }
         Update: {
           accepted_recommendations?: number
+          activation_completed?: boolean
+          activation_step?: string
           avatar_url?: string | null
           best_streak?: number
           birth_year?: number | null
@@ -366,6 +374,7 @@ export type Database = {
           ritual_time?: string | null
           streak_count?: number
           total_recommendations?: number
+          tour_completed?: boolean
           updated_at?: string
         }
         Relationships: []
