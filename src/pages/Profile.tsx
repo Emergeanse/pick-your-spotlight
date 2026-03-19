@@ -56,6 +56,19 @@ const Profile = () => {
   const [cinematicDNA, setCinematicDNA] = useState<CinematicDNA>("contemplative");
   const [tasteAnim, setTasteAnim] = useState<TasteAnimation>("default");
 
+  // Friend management state
+  const [myFriendCode, setMyFriendCode] = useState("");
+  const [codeCopied, setCodeCopied] = useState(false);
+  const [friends, setFriends] = useState<any[]>([]);
+  const [friendsLoading, setFriendsLoading] = useState(true);
+  const [addCode, setAddCode] = useState("");
+  const [addingFriend, setAddingFriend] = useState(false);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [showQR, setShowQR] = useState(false);
+  const [selectedFriend, setSelectedFriend] = useState<any>(null);
+  const [friendProfile, setFriendProfile] = useState<any>(null);
+  const [loadingFriendProfile, setLoadingFriendProfile] = useState(false);
+
   useEffect(() => {
     if (!isReady) return;
     if (!user) { navigate("/auth"); return; }
