@@ -203,8 +203,34 @@ const Index = () => {
     }
   };
 
+  // Advance watchlist guide when step changes to "result"
+  useEffect(() => {
+    if (watchlistGuideStep === "pick-ce-soir" && step === "result") {
+      setWatchlistGuideStep("autre-suggestion");
+    }
+  }, [step, watchlistGuideStep]);
+
+  // Listen for watchlist additions during the guide
+  useEffect(() => {
+    if (activeActivationMission !== "watchlist_3") return;
+    const channel = supabase
+      .channel("watchlist-guide")
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "watchlist" }, () => {
+        setWatchlistSavedCount(c => c + 1);
+        if (!watchlistGuideDone) {
+          setWatchlistGuideStep("continue");
+          setWatchlistGuideDone(true);
+          // Clear the guide after a moment
+          setTimeout(() => setWatchlistGuideStep(null), 4000);
+        }
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [activeActivationMission, watchlistGuideDone]);
+
   const handleActivationComplete = () => {
     setShowActivation(false);
+    setWatchlistGuideStep(null);
     // Reload pick plus state to pick up the trial
     window.location.reload();
   };
