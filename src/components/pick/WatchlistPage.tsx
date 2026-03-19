@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence, useMotionValue, useTransform, PanInfo } from "framer-motion";
-import { Bookmark, Loader2, Sparkles, X, Tv, Star, Clock, Play } from "lucide-react";
+import { Bookmark, Heart, Loader2, Sparkles, X, Tv, Star, Clock, Play } from "lucide-react";
 import { getWatchlist, removeFromWatchlist } from "@/lib/watchlist";
 import { getPosterUrl, getBackdropUrl, getMovieDetails, getDisplayTitle, getYear, getWatchProviders } from "@/lib/tmdb";
-import { getLikedMovies } from "@/lib/liked-movies";
+import { getLikedMovies, unlikeMovie } from "@/lib/liked-movies";
 import type { MovieDetail } from "@/lib/tmdb";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -14,7 +14,7 @@ interface WatchlistPageProps {
 }
 
 type MediaFilter = "all" | "movie" | "tv";
-
+type ActiveTab = "watchlist" | "liked";
 
 const PICK_COMMENTS = [
   "Tu l'as sauvegardé, c'est qu'il te fait de l'œil.",
@@ -24,15 +24,26 @@ const PICK_COMMENTS = [
   "Idéal pour une soirée tranquille.",
 ];
 
-const getPickBubbleMessage = (count: number, hour: number): string => {
+const LIKED_COMMENTS = [
+  "Un de tes coups de cœur.",
+  "Tu as adoré celui-là !",
+  "Un favori confirmé.",
+  "Dans tes classiques personnels.",
+  "Un titre qui t'a marqué.",
+];
+
+const getPickBubbleMessage = (tab: ActiveTab, count: number, hour: number): string => {
   if (count === 0) return "";
+  if (tab === "liked") {
+    return `${count} titre${count > 1 ? "s" : ""} dans tes coups de cœur. Tes goûts parlent d'eux-mêmes !`;
+  }
   if (hour >= 18 || hour < 4) {
-    return `${count} film${count > 1 ? "s" : ""} t'attend${count > 1 ? "ent" : ""}. Lequel ce soir ?`;
+    return `${count} titre${count > 1 ? "s" : ""} t'attend${count > 1 ? "ent" : ""}. Lequel ce soir ?`;
   }
   if (hour >= 12) {
-    return `Tu as ${count} film${count > 1 ? "s" : ""} en attente. Prépare ta soirée !`;
+    return `Tu as ${count} titre${count > 1 ? "s" : ""} en attente. Prépare ta soirée !`;
   }
-  return `${count} film${count > 1 ? "s" : ""} dans ta liste. On en parle ce soir ?`;
+  return `${count} titre${count > 1 ? "s" : ""} dans ta liste. On en parle ce soir ?`;
 };
 
 const SwipeableCard = ({
@@ -40,11 +51,13 @@ const SwipeableCard = ({
   index,
   onSelect,
   onRemove,
+  comments,
 }: {
   item: any;
   index: number;
   onSelect: () => void;
   onRemove: () => void;
+  comments: string[];
 }) => {
   const x = useMotionValue(0);
   const removeBgOpacity = useTransform(x, [-120, 0], [1, 0]);
@@ -55,7 +68,8 @@ const SwipeableCard = ({
     }
   };
 
-  const comment = PICK_COMMENTS[index % PICK_COMMENTS.length];
+  const comment = comments[index % comments.length];
+  const mediaType = item.media_type || (item.first_air_date ? "tv" : "movie");
 
   return (
     <motion.div
@@ -95,7 +109,7 @@ const SwipeableCard = ({
               {item.title}
             </p>
             <p className="text-[11px] text-foreground/40 font-sans capitalize mb-1.5">
-              {item.media_type === "tv" ? "Série" : "Film"}
+              {mediaType === "tv" ? "Série" : "Film"}
             </p>
             <p className="text-[10px] text-primary/50 font-sans italic line-clamp-1">
               💬 {comment}
@@ -144,7 +158,6 @@ const MoviePreviewSheet = ({
         transition={{ type: "spring", damping: 30, stiffness: 300 }}
         className="fixed bottom-0 left-0 right-0 z-[56] max-h-[88vh] rounded-t-3xl bg-card overflow-hidden flex flex-col"
       >
-        {/* Backdrop header */}
         <div className="relative h-44 shrink-0 overflow-hidden">
           {backdrop ? (
             <img src={backdrop} alt="" className="w-full h-full object-cover" />
@@ -154,23 +167,15 @@ const MoviePreviewSheet = ({
             <div className="w-full h-full bg-foreground/5" />
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-card via-card/60 to-transparent" />
-
-          {/* Close button */}
           <button
             onClick={onClose}
             className="absolute top-4 right-4 w-8 h-8 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center text-white/70 hover:text-white transition-colors"
           >
             <X className="w-4 h-4" />
           </button>
-
-          {/* Poster + title overlay */}
           <div className="absolute bottom-0 left-0 right-0 px-5 pb-4 flex items-end gap-4">
             {poster && (
-              <img
-                src={poster}
-                alt={title}
-                className="w-20 h-[120px] rounded-xl object-cover border border-border/20 shadow-xl shrink-0 -mb-2"
-              />
+              <img src={poster} alt={title} className="w-20 h-[120px] rounded-xl object-cover border border-border/20 shadow-xl shrink-0 -mb-2" />
             )}
             <div className="flex-1 min-w-0 pb-1">
               <h2 className="text-xl font-serif text-foreground leading-tight line-clamp-2">{title}</h2>
@@ -193,58 +198,37 @@ const MoviePreviewSheet = ({
           </div>
         </div>
 
-        {/* Content */}
         <div className="flex-1 overflow-y-auto px-5 py-4">
-          {/* Genres */}
           {movie.genres && movie.genres.length > 0 && (
             <div className="flex flex-wrap gap-1.5 mb-4">
               {movie.genres.map((g) => (
-                <span
-                  key={g.id}
-                  className="px-2.5 py-1 rounded-full bg-primary/8 border border-primary/15 text-primary/70 text-[11px] font-sans"
-                >
+                <span key={g.id} className="px-2.5 py-1 rounded-full bg-primary/8 border border-primary/15 text-primary/70 text-[11px] font-sans">
                   {g.name}
                 </span>
               ))}
             </div>
           )}
-
-          {/* Personal recommendation note */}
           {personalNote && (
             <div className="flex items-start gap-2 mb-4 px-3 py-2.5 rounded-xl bg-primary/5 border border-primary/15">
               <Sparkles className="w-3.5 h-3.5 text-primary shrink-0 mt-0.5" />
-              <p className="text-primary/70 text-[12px] font-sans leading-relaxed italic">
-                {personalNote}
-              </p>
+              <p className="text-primary/70 text-[12px] font-sans leading-relaxed italic">{personalNote}</p>
             </div>
           )}
-
-          {/* Overview */}
           {movie.overview && (
-            <p className="text-foreground/55 text-sm font-sans leading-relaxed mb-5">
-              {movie.overview}
-            </p>
+            <p className="text-foreground/55 text-sm font-sans leading-relaxed mb-5">{movie.overview}</p>
           )}
-
-          {/* Providers */}
           {providers.length > 0 && (
             <div className="flex items-center gap-2 mb-5">
               <span className="text-foreground/30 text-[11px] font-sans">Dispo sur</span>
               <div className="flex gap-1.5">
                 {providers.map((p) => (
-                  <img
-                    key={p.name}
-                    src={`https://image.tmdb.org/t/p/w92${p.logo_path}`}
-                    alt={p.name}
-                    className="w-6 h-6 rounded-md object-cover border border-border/20"
-                  />
+                  <img key={p.name} src={`https://image.tmdb.org/t/p/w92${p.logo_path}`} alt={p.name} className="w-6 h-6 rounded-md object-cover border border-border/20" />
                 ))}
               </div>
             </div>
           )}
         </div>
 
-        {/* CTA */}
         <div className="shrink-0 px-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] pt-3 border-t border-border/10 bg-card">
           <Button
             size="lg"
@@ -261,7 +245,9 @@ const MoviePreviewSheet = ({
 };
 
 const WatchlistPage = ({ onMovieSelect }: WatchlistPageProps) => {
-  const [items, setItems] = useState<any[]>([]);
+  const [activeTab, setActiveTab] = useState<ActiveTab>("watchlist");
+  const [watchlistItems, setWatchlistItems] = useState<any[]>([]);
+  const [likedItems, setLikedItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [mediaFilter, setMediaFilter] = useState<MediaFilter>("all");
   const [previewMovie, setPreviewMovie] = useState<MovieDetail | null>(null);
@@ -270,25 +256,29 @@ const WatchlistPage = ({ onMovieSelect }: WatchlistPageProps) => {
   const [previewNote, setPreviewNote] = useState("");
 
   useEffect(() => {
-    loadWatchlist();
+    loadData();
   }, []);
 
-  const loadWatchlist = async () => {
+  const loadData = async () => {
     setLoading(true);
     try {
-      const data = await getWatchlist();
-      setItems(data);
+      const [watchlist, liked] = await Promise.all([getWatchlist(), getLikedMovies()]);
+      setWatchlistItems(watchlist);
+      setLikedItems(liked);
     } catch {
-      setItems([]);
+      setWatchlistItems([]);
+      setLikedItems([]);
     } finally {
       setLoading(false);
     }
   };
 
-  // Apply filters
-  const filteredItems = items.filter((item: any) => {
-    if (mediaFilter !== "all" && item.media_type !== mediaFilter) return false;
-    return true;
+  const currentItems = activeTab === "watchlist" ? watchlistItems : likedItems;
+
+  const filteredItems = currentItems.filter((item: any) => {
+    if (mediaFilter === "all") return true;
+    const mt = item.media_type || (item.first_air_date ? "tv" : "movie");
+    return mt === mediaFilter;
   });
 
   const mediaFilters: { id: MediaFilter; label: string }[] = [
@@ -297,11 +287,21 @@ const WatchlistPage = ({ onMovieSelect }: WatchlistPageProps) => {
     { id: "tv", label: "Séries" },
   ];
 
-  const handleRemove = async (tmdbId: number) => {
+  const handleRemoveWatchlist = async (tmdbId: number) => {
     try {
       await removeFromWatchlist(tmdbId);
-      setItems(prev => prev.filter(i => i.tmdb_id !== tmdbId));
+      setWatchlistItems(prev => prev.filter(i => i.tmdb_id !== tmdbId));
       toast.success("Retiré de ta watchlist");
+    } catch {
+      toast.error("Erreur");
+    }
+  };
+
+  const handleRemoveLiked = async (tmdbId: number) => {
+    try {
+      await unlikeMovie(tmdbId);
+      setLikedItems(prev => prev.filter(i => i.tmdb_id !== tmdbId));
+      toast.success("Retiré de tes coups de cœur");
     } catch {
       toast.error("Erreur");
     }
@@ -309,30 +309,28 @@ const WatchlistPage = ({ onMovieSelect }: WatchlistPageProps) => {
 
   const generatePersonalNote = async (movie: MovieDetail): Promise<string> => {
     try {
-      const liked = await getLikedMovies();
+      const liked = likedItems.length > 0 ? likedItems : await getLikedMovies();
       const likedGenres = liked.flatMap((m: any) => m.genres || []);
       const genreCounts: Record<string, number> = {};
       likedGenres.forEach((g: string) => { genreCounts[g] = (genreCounts[g] || 0) + 1; });
       const topGenres = Object.entries(genreCounts).sort((a, b) => b[1] - a[1]).slice(0, 3).map(e => e[0]);
-      
       const movieGenres = movie.genres?.map(g => g.name) || [];
       const matchingGenres = movieGenres.filter(g => topGenres.includes(g));
-      
       if (matchingGenres.length > 0) {
         const genreStr = matchingGenres.join(" et ");
         const templates = [
           `Tu adores le ${genreStr} — ce titre est pile dans tes goûts.`,
           `Vu ton amour pour le ${genreStr}, celui-ci devrait te plaire.`,
-          `Le ${genreStr}, c'est ton truc. Ce film est fait pour toi.`,
+          `Le ${genreStr}, c'est ton truc.`,
         ];
         return templates[Math.floor(Math.random() * templates.length)];
       }
-      
       if (movie.vote_average && movie.vote_average >= 7.5) {
         return `Noté ${movie.vote_average.toFixed(1)}/10 — un titre très apprécié qui mérite le détour.`;
       }
-      
-      return "Tu l'as sauvegardé, c'est qu'il t'a tapé dans l'œil. Fais-toi confiance !";
+      return activeTab === "liked"
+        ? "Un de tes coups de cœur. Tu as du goût !"
+        : "Tu l'as sauvegardé, c'est qu'il t'a tapé dans l'œil. Fais-toi confiance !";
     } catch {
       return "";
     }
@@ -342,7 +340,7 @@ const WatchlistPage = ({ onMovieSelect }: WatchlistPageProps) => {
     setPreviewLoading(true);
     setPreviewNote("");
     try {
-      const mediaType = item.media_type || "movie";
+      const mediaType = item.media_type || (item.first_air_date ? "tv" : "movie");
       const movie = await getMovieDetails(item.tmdb_id, mediaType);
       setPreviewMovie(movie);
       getWatchProviders(movie.id, mediaType).then(setPreviewProviders).catch(() => setPreviewProviders([]));
@@ -362,7 +360,7 @@ const WatchlistPage = ({ onMovieSelect }: WatchlistPageProps) => {
   };
 
   const hour = new Date().getHours();
-  const bubbleMessage = getPickBubbleMessage(items.length, hour);
+  const bubbleMessage = getPickBubbleMessage(activeTab, currentItems.length, hour);
 
   if (loading) {
     return (
@@ -376,21 +374,58 @@ const WatchlistPage = ({ onMovieSelect }: WatchlistPageProps) => {
     <div className="h-full overflow-y-auto px-5 pt-[calc(1rem+env(safe-area-inset-top))] pb-24">
       {/* Header */}
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-        <div className="flex items-baseline gap-3 mb-1">
-          <h1 className="text-2xl font-serif">Ta Watchlist</h1>
-          <span className="text-[12px] font-sans text-primary/60 font-medium px-2 py-0.5 rounded-full bg-primary/8 border border-primary/15">
-            {filteredItems.length}/{items.length}
-          </span>
-        </div>
+        <h1 className="text-2xl font-serif mb-3">Ma Collection</h1>
+      </motion.div>
+
+      {/* Tabs: Watchlist / Liked */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.05 }}
+        className="flex gap-1 p-1 rounded-xl bg-muted/30 border border-border/15 mb-4"
+      >
+        <button
+          onClick={() => { setActiveTab("watchlist"); setMediaFilter("all"); }}
+          className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-[12px] font-sans font-medium transition-all ${
+            activeTab === "watchlist"
+              ? "bg-card shadow-sm text-foreground border border-border/20"
+              : "text-foreground/40 hover:text-foreground/60"
+          }`}
+        >
+          <Bookmark className="w-3.5 h-3.5" />
+          Watchlist
+          {watchlistItems.length > 0 && (
+            <span className="text-[10px] font-sans text-primary/60 font-medium px-1.5 py-0.5 rounded-full bg-primary/8">
+              {watchlistItems.length}
+            </span>
+          )}
+        </button>
+        <button
+          onClick={() => { setActiveTab("liked"); setMediaFilter("all"); }}
+          className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-[12px] font-sans font-medium transition-all ${
+            activeTab === "liked"
+              ? "bg-card shadow-sm text-foreground border border-border/20"
+              : "text-foreground/40 hover:text-foreground/60"
+          }`}
+        >
+          <Heart className="w-3.5 h-3.5" />
+          Coups de cœur
+          {likedItems.length > 0 && (
+            <span className="text-[10px] font-sans text-primary/60 font-medium px-1.5 py-0.5 rounded-full bg-primary/8">
+              {likedItems.length}
+            </span>
+          )}
+        </button>
       </motion.div>
 
       {/* Pick's contextual comment */}
-      {items.length > 0 && bubbleMessage && (
+      {currentItems.length > 0 && bubbleMessage && (
         <motion.div
           initial={{ opacity: 0, y: 6 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="flex items-start gap-2.5 mt-3 mb-4"
+          className="flex items-start gap-2.5 mb-4"
+          key={activeTab}
         >
           <div className="shrink-0 w-8 h-8">
             <PickCharacter mood="default" size="sm" animate={false} />
@@ -403,8 +438,8 @@ const WatchlistPage = ({ onMovieSelect }: WatchlistPageProps) => {
         </motion.div>
       )}
 
-      {/* Filters */}
-      {items.length > 0 && (
+      {/* Media type filters */}
+      {currentItems.length > 0 && (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -430,16 +465,25 @@ const WatchlistPage = ({ onMovieSelect }: WatchlistPageProps) => {
       )}
 
       {/* List */}
-      {items.length === 0 ? (
+      {currentItems.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-center">
-          <PickCharacter mood="wave" message="Sauvegarde des films et retrouve-les ici !" size="md" animate />
-          <p className="text-foreground/25 text-xs font-sans mt-4">Ta watchlist est vide</p>
+          <PickCharacter
+            mood="wave"
+            message={activeTab === "watchlist"
+              ? "Sauvegarde des titres et retrouve-les ici !"
+              : "Like des films et séries pour construire tes goûts !"}
+            size="md"
+            animate
+          />
+          <p className="text-foreground/25 text-xs font-sans mt-4">
+            {activeTab === "watchlist" ? "Ta watchlist est vide" : "Aucun coup de cœur pour l'instant"}
+          </p>
         </div>
       ) : filteredItems.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-center">
           <p className="text-foreground/30 text-sm font-sans">Aucun résultat avec ces filtres</p>
           <button
-            onClick={() => { setMediaFilter("all"); }}
+            onClick={() => setMediaFilter("all")}
             className="mt-3 text-primary text-xs font-sans underline"
           >
             Réinitialiser les filtres
@@ -453,7 +497,12 @@ const WatchlistPage = ({ onMovieSelect }: WatchlistPageProps) => {
               item={item}
               index={i}
               onSelect={() => handlePreview(item)}
-              onRemove={() => handleRemove(item.tmdb_id)}
+              onRemove={() =>
+                activeTab === "watchlist"
+                  ? handleRemoveWatchlist(item.tmdb_id)
+                  : handleRemoveLiked(item.tmdb_id)
+              }
+              comments={activeTab === "watchlist" ? PICK_COMMENTS : LIKED_COMMENTS}
             />
           ))}
         </div>
