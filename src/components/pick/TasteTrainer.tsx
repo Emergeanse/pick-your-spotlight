@@ -430,13 +430,11 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
                 whileHover={{ scale: 1.04, y: -2 }}
                 onClick={() => {
                   setSliderValue(btn.value);
-                  setRatingFlash(btn.emoji);
                   setTimeout(() => handleRate(), 150);
                 }}
                 className={`flex-1 py-3 px-1 rounded-xl border bg-gradient-to-b transition-all duration-200 ${btn.color}`}
               >
-                <span className="text-lg block mb-0.5">{btn.emoji}</span>
-                <span className="text-[10px] font-sans font-medium leading-tight block opacity-80">
+                <span className="text-[11px] font-sans font-medium leading-tight block">
                   {btn.label}
                 </span>
               </motion.button>
