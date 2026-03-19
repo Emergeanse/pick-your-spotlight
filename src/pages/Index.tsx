@@ -117,8 +117,8 @@ const Index = () => {
             setShowActivation(false);
             setShowTour(true);
             sessionStorage.removeItem("pick_force_tour");
-          } else if (tourDone && !activationDone) {
-            // Tour done but activation pending — show activation
+          } else if (tourDone && !activationDone && fromOnboarding) {
+            // Only continue activation automatically right after onboarding/tour
             setShowTour(false);
             setShowActivation(true);
           }
