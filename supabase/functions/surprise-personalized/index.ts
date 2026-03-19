@@ -21,8 +21,12 @@ serve(async (req) => {
   }
 
   try {
-    const { likedMovies, tasteProfile, userTasteVector, platformIds, excludeIds, excludedPlatformIds, excludedGenres, minRating, rejectionContext, outOfComfortZone, explorationLevel: rawExplorationLevel } = await req.json();
+    const { likedMovies, tasteProfile, userTasteVector, platformIds, excludeIds, excludedPlatformIds, excludedGenres, minRating, rejectionContext, outOfComfortZone, explorationLevel: rawExplorationLevel, mediaType: rawMediaType } = await req.json();
     const explorationLevel = typeof rawExplorationLevel === "number" ? Math.max(0, Math.min(10, rawExplorationLevel)) : 5;
+    // mediaType: "movie" | "tv" | "both" — determines which TMDB endpoints to use
+    const mediaType: "movie" | "tv" | "both" = rawMediaType === "tv" ? "tv" : rawMediaType === "movie" ? "movie" : "both";
+    // For "both", randomly pick one to search this time (50/50)
+    const searchType: "movie" | "tv" = mediaType === "both" ? (Math.random() < 0.5 ? "movie" : "tv") : mediaType;
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
