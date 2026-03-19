@@ -167,6 +167,39 @@ const PLATFORM_MAP: Record<number, PlatformConfig> = {
  * Build streaming links for a movie's providers.
  * Now accepts an optional TMDB link per provider for direct content URLs.
  */
+// Provider IDs that are sub-brands / add-on channels — skip them in favor of the main platform
+const VARIANT_PROVIDER_IDS = new Set([
+  // Netflix variants
+  1796, // Netflix basic with Ads
+  // HBO / Max variants
+  1825, // HBO Max Amazon Channel
+  // Amazon / Prime variants
+  9,    // Amazon Prime Video (duplicate entry in some regions)
+  // Apple variants
+  // Disney variants
+  619,  // Star Plus (merged into Disney+)
+]);
+
+// Patterns that indicate a sub-brand or add-on channel (case-insensitive)
+const VARIANT_NAME_PATTERNS = [
+  /with ads/i,
+  /standard with/i,
+  /basic with/i,
+  /amazon channel/i,
+  /apple tv channel/i,
+  /roku channel$/i,
+  /channel$/i,
+];
+
+function isVariantProvider(name: string, providerId: number | null): boolean {
+  if (providerId && VARIANT_PROVIDER_IDS.has(providerId)) return true;
+  return VARIANT_NAME_PATTERNS.some(pattern => pattern.test(name));
+}
+
+/**
+ * Build streaming links for a movie's providers.
+ * Filters out sub-brand / add-on channel variants to keep only main platforms.
+ */
 export function buildStreamingLinks(
   providers: { name: string; logo_path: string; provider_id?: number; tmdb_link?: string }[],
   movieTitle: string,
@@ -175,6 +208,12 @@ export function buildStreamingLinks(
 
   return providers.reduce<StreamingLink[]>((links, p) => {
     const pid = p.provider_id || guessProviderId(p.name);
+
+    // Skip known variant/sub-brand providers
+    if (isVariantProvider(p.name, pid)) {
+      return links;
+    }
+
     const config = pid ? PLATFORM_MAP[pid] : null;
     const tmdbLink = p.tmdb_link || null;
     const canonicalName = config?.name || p.name;
