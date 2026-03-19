@@ -560,7 +560,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                 className="mb-4"
               >
                 <p className="text-[10px] uppercase tracking-widest text-foreground/30 font-sans font-semibold mb-2.5">
-                  Équipe du film
+                  {mediaType === "tv" ? "Équipe de la série" : "Équipe du film"}
                 </p>
                 <div className="rounded-xl bg-foreground/[0.04] border border-border/15 p-3.5">
                   {credits.director && (
