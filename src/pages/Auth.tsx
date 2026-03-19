@@ -57,7 +57,7 @@ const Auth = () => {
         if (error) throw error;
         if (inviteCode && data.user) await processInvite(data.user.id, inviteCode);
         toast.success("Connecté !");
-        navigate("/app");
+        navigate(redirectTo || "/app");
       } else {
         const { error } = await supabase.auth.signUp({
           email,
