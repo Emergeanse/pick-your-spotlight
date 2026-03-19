@@ -62,6 +62,7 @@ const Index = () => {
   const [watchlistGuideStep, setWatchlistGuideStep] = useState<WatchlistGuideStep>(null);
   const [watchlistGuideDone, setWatchlistGuideDone] = useState(false);
   const [watchlistSavedCount, setWatchlistSavedCount] = useState(0);
+  const watchlistGuideAwaitingLoad = useRef(false);
 
   useEffect(() => {
     if ((location.state as any)?.openTrainer) {
