@@ -39,6 +39,7 @@ const MILESTONES = [
 const Profile = () => {
   const { user, isReady, signOut } = useAuth();
   const navigate = useNavigate();
+  const { isAdmin } = useAdmin();
   const [profile, setProfile] = useState<any>(null);
   const [engagement, setEngagement] = useState<EngagementData | null>(null);
   const [selectedPlatforms, setSelectedPlatforms] = useState<number[]>([]);
