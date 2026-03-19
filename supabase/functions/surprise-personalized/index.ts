@@ -109,7 +109,8 @@ serve(async (req) => {
       ? `\n\nFILMS SIMILAIRES PAR EMBEDDING (du plus proche au moins proche) :\n${embeddingCandidates.map((c, i) => `${i + 1}. ${c}`).join("\n")}\nCes films ont été trouvés par similarité vectorielle avec le profil de goût. Tu peux en recommander un ou t'en inspirer pour trouver un film encore meilleur.`
       : "";
 
-    const systemPrompt = `Tu es un moteur de recommandation cinéma de niveau Netflix. Tu combines plusieurs signaux pour trouver LE film parfait.
+    const mediaTypeLabel = searchType === "tv" ? "une SÉRIE TV" : "un FILM";
+    const systemPrompt = `Tu es un moteur de recommandation cinéma de niveau Netflix. Tu combines plusieurs signaux pour trouver ${mediaTypeLabel} parfait(e).
 
 SYSTÈME DE SCORING (poids) :
 - taste_match (${scoringWeights.taste_match || 0.30}) : correspondance avec les genres et micro-genres préférés
