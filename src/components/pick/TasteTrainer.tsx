@@ -137,7 +137,7 @@ const TasteTrainer = ({ onClose }: TasteTrainerProps) => {
 
     const rating = sliderValue;
     const isPositive = rating > 50;
-    const actionType = rating <= 25 ? "disliked" : rating <= 50 ? "skipped" : "liked";
+    const actionType = rating <= 50 ? "skipped" : "liked";
 
     setSwiping(isPositive ? "right" : "left");
 
