@@ -132,26 +132,23 @@ const Onboarding = () => {
             <div className="w-full max-w-xl pt-[env(safe-area-inset-top)]">{renderStepIndicator()}</div>
             <div className="flex items-center gap-3 mb-2 mt-4">
               <img src={pickLogo} alt="Pick" className="w-10 h-10 object-contain" />
-              <h1 className="text-2xl md:text-4xl font-serif">Quel âge as-tu ?</h1>
+              <h1 className="text-2xl md:text-4xl font-serif">Quelle est ton année de naissance ?</h1>
             </div>
             <p className="text-muted-foreground text-sm font-sans mb-8 text-center">
               Pour adapter mes recommandations à ta génération
             </p>
 
             <div className="w-full max-w-xs mb-10">
-              <div className="grid grid-cols-4 gap-2 max-h-[40vh] overflow-y-auto px-1 py-2">
+              <select
+                value={birthYear ?? ""}
+                onChange={e => setBirthYear(e.target.value ? parseInt(e.target.value) : null)}
+                className="w-full bg-card border border-border/30 rounded-xl px-4 py-3.5 text-sm font-sans text-foreground outline-none focus:border-primary/50 transition-colors appearance-none"
+              >
+                <option value="" className="text-muted-foreground">Sélectionne ton année</option>
                 {Array.from({ length: MAX_YEAR - MIN_YEAR + 1 }, (_, i) => MAX_YEAR - i).map(year => (
-                  <motion.button key={year} whileTap={{ scale: 0.95 }} onClick={() => setBirthYear(year)}
-                    className={`px-2 py-2.5 rounded-xl text-sm font-sans font-medium transition-all cursor-pointer border ${
-                      birthYear === year
-                        ? "bg-primary/15 border-primary/30 text-primary"
-                        : "bg-card border-transparent text-foreground/60 hover:border-primary/20 hover:text-foreground"
-                    }`}
-                  >
-                    {year}
-                  </motion.button>
+                  <option key={year} value={year}>{year} ({new Date().getFullYear() - year} ans)</option>
                 ))}
-              </div>
+              </select>
             </div>
 
             <div className="flex flex-col items-center gap-3">
