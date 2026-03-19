@@ -108,21 +108,26 @@ const Index = () => {
 
           const tourDone = (data as any).tour_completed;
           const activationDone = (data as any).activation_completed;
-          const fromOnboarding = (location.state as any)?.showTour;
+          const forceTour = sessionStorage.getItem("pick_force_tour") === "1";
+          const fromOnboarding = Boolean((location.state as any)?.showTour || forceTour);
 
           if (!tourDone && fromOnboarding) {
+            setShowActivation(false);
             setShowTour(true);
+            sessionStorage.removeItem("pick_force_tour");
           } else if (!tourDone && !activationDone) {
             // Returning user who hasn't done tour — show it
+            setShowActivation(false);
             setShowTour(true);
           } else if (tourDone && !activationDone) {
+            setShowTour(false);
             setShowActivation(true);
           }
 
           setProfileLoaded(true);
         }
       });
-  }, [user, navigate]);
+  }, [user, navigate, location.state]);
 
   const handleTourComplete = async () => {
     setShowTour(false);

@@ -57,6 +57,10 @@ Deno.serve(async (req) => {
         display_name: displayName || `Test ${randomId}`,
         birth_year: birthYear || null,
         is_test_account: true,
+        onboarding_completed: false,
+        tour_completed: false,
+        activation_completed: false,
+        activation_step: "train_20",
       }).eq("id", newUser.user.id);
     }
 
