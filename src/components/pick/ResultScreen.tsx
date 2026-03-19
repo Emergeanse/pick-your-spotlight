@@ -1162,7 +1162,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                   {[
                     { label: "Plus intense", message: "Je veux quelque chose de plus intense" },
                     { label: "Plus émouvant", message: "Je veux quelque chose de plus émouvant et touchant" },
-                    { label: "Plus court", message: "Je préfère un film plus court" },
+                    { label: "Plus court", message: `Je préfère ${mediaType === "tv" ? "une série plus courte" : "un film plus court"}` },
                     { label: "Plus drôle", message: "Je veux un truc plus drôle et léger" },
                   ].map((chip) => (
                     <button
