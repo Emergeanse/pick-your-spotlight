@@ -66,6 +66,12 @@ const PickTogether = () => {
   const [step, setStep] = useState<FlowStep>("who");
   const [friends, setFriends] = useState<Friend[]>([]);
   const [selectedFriendIds, setSelectedFriendIds] = useState<Set<string>>(new Set());
+  const [guests, setGuests] = useState<Guest[]>([]);
+  const [showGuestForm, setShowGuestForm] = useState(false);
+  const [guestName, setGuestName] = useState("");
+  const [guestAge, setGuestAge] = useState("");
+  const [guestGender, setGuestGender] = useState<"homme" | "femme" | "autre" | "">("");
+  const [guestGenres, setGuestGenres] = useState<Set<string>>(new Set());
   const [mood, setMood] = useState<string | null>(null);
   const [mediaChoice, setMediaChoice] = useState<MediaChoice>("both");
   const [loading, setLoading] = useState(false);
