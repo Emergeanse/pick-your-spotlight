@@ -265,6 +265,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
           const data = await invokeSurprisePersonalized({
             likedMovies: liked, userTasteVector, tasteProfile,
             platformIds: userPlatformIds, excludedPlatformIds: userExcludedPlatformIds, excludedGenres: userExcludedGenres, minRating: userMinRating, excludeIds: allExcludeIds, rejectionContext,
+            explorationLevel,
           });
           movie = data.movie as MovieDetail;
         } else {
