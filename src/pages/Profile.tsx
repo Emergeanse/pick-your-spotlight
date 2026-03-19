@@ -211,7 +211,7 @@ const Profile = () => {
   const pendingSent = friends.filter((f: any) => f.status === "pending" && f.isRequester);
 
 
-    setSelectedPlatforms(prev =>
+    const togglePlatform = (id: number) => {
       prev.includes(id) ? prev.filter(p => p !== id) : [...prev, id]
     );
   };
