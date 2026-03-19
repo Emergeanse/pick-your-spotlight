@@ -190,14 +190,14 @@ ALGORITHME DE SCORING GROUPE :
 - Privilégie les films qui sont "acceptables pour tous" plutôt que "adorés par un seul"
 
 RÈGLES :
-- Recommande EXACTEMENT 5 films, du meilleur au moins bon
-- Chaque film doit inclure: title, reason (2 phrases max), groupScore (0-100), memberNotes (1 phrase par membre expliquant pourquoi ça lui convient)
-- NE recommande PAS de films des genres exclus
-- NE recommande PAS de films déjà vus (IDs exclus: ${excludeIds.length} films)
+- Recommande EXACTEMENT 5 ${contentLabel}, du meilleur au moins bon
+- Chaque recommandation doit inclure: title, type ("movie" ou "tv"), reason (2 phrases max), groupScore (0-100), memberNotes (1 phrase par membre expliquant pourquoi ça lui convient)
+- NE recommande PAS de contenus des genres exclus
+- NE recommande PAS de contenus déjà vus (IDs exclus: ${excludeIds.length})
 - Réponds UNIQUEMENT en JSON valide sans backticks
 
 Structure :
-{"recommendations": [{"title": "...", "reason": "...", "groupScore": 85, "memberNotes": {"nom1": "...", "nom2": "..."}}]}`;
+{"recommendations": [{"title": "...", "type": "movie", "reason": "...", "groupScore": 85, "memberNotes": {"nom1": "...", "nom2": "..."}}]}`;
 
     const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
