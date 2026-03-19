@@ -425,42 +425,31 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
                   </div>
                 </motion.button>
 
-                {/* 3. Surprends-moi — warm amber accent */}
-                <motion.button
-                  data-tour="surprends-moi"
-                  whileTap={{ scale: 0.95 }}
-                  onClick={handleSurprise}
-                  disabled={loading || isSurprising}
-                  className="group inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[hsl(28_90%_55%/0.08)] border border-[hsl(28_90%_55%/0.25)] hover:border-[hsl(28_90%_55%/0.45)] hover:bg-[hsl(28_90%_55%/0.12)] transition-all"
-                >
-                  <Shuffle className="w-3.5 h-3.5 text-[hsl(28_90%_55%)] opacity-70 group-hover:opacity-100 transition-opacity" />
-                  <span className="text-[13px] font-sans font-medium text-[hsl(28_90%_55%/0.8)] group-hover:text-[hsl(28_90%_55%)] transition-colors">Surprends-moi</span>
-                </motion.button>
-
-                {/* 4. Pick Together — social accent */}
-                {user && (
+                {/* Secondary actions row */}
+                <div className="flex items-center justify-center gap-3 flex-wrap">
                   <motion.button
+                    data-tour="surprends-moi"
                     whileTap={{ scale: 0.95 }}
-                    onClick={() => navigate("/app/friends")}
-                    className="group inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-primary/8 border border-primary/25 hover:border-primary/45 hover:bg-primary/12 transition-all"
+                    onClick={handleSurprise}
+                    disabled={loading || isSurprising}
+                    className="group inline-flex items-center gap-2 px-4 py-2 rounded-full bg-muted/30 border border-border/20 hover:border-border/40 hover:bg-muted/50 transition-all"
                   >
-                    <Users className="w-3.5 h-3.5 text-primary opacity-70 group-hover:opacity-100 transition-opacity" />
-                    <span className="text-[13px] font-sans font-medium text-primary/80 group-hover:text-primary transition-colors">Pick Together</span>
+                    <Shuffle className="w-3.5 h-3.5 text-foreground/40 group-hover:text-foreground/60 transition-opacity" />
+                    <span className="text-[12px] font-sans font-medium text-foreground/40 group-hover:text-foreground/60 transition-colors">Surprends-moi</span>
                   </motion.button>
-                )}
 
-                {/* 5. Entraîne ton Pick — teal accent */}
-                {user && (
+                  {user && (
                     <motion.button
                       data-tour="entraine-pick"
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => setShowTrainer(true)}
-                    className="group inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[hsl(175_70%_45%/0.08)] border border-[hsl(175_70%_45%/0.25)] hover:border-[hsl(175_70%_45%/0.45)] hover:bg-[hsl(175_70%_45%/0.12)] transition-all"
-                  >
-                    <Brain className="w-3.5 h-3.5 text-[hsl(175_70%_45%)] opacity-70 group-hover:opacity-100 transition-opacity" />
-                    <span className="text-[13px] font-sans font-medium text-[hsl(175_70%_45%/0.8)] group-hover:text-[hsl(175_70%_45%)] transition-colors">Entraîne ton Pick</span>
-                  </motion.button>
-                )}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => setShowTrainer(true)}
+                      className="group inline-flex items-center gap-2 px-4 py-2 rounded-full bg-muted/30 border border-border/20 hover:border-border/40 hover:bg-muted/50 transition-all"
+                    >
+                      <Brain className="w-3.5 h-3.5 text-foreground/40 group-hover:text-foreground/60 transition-opacity" />
+                      <span className="text-[12px] font-sans font-medium text-foreground/40 group-hover:text-foreground/60 transition-colors">Entraîner</span>
+                    </motion.button>
+                  )}
+                </div>
 
               </div>
 

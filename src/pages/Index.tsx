@@ -3,10 +3,8 @@ import GuidedTour, { TOUR_KEY } from "@/components/pick/GuidedTour";
 import { AnimatePresence, motion } from "framer-motion";
 import { useNavigate, useLocation } from "react-router-dom";
 import HomeScreen from "@/components/pick/HomeScreen";
-import MoodStep from "@/components/pick/MoodStep";
-import ContextStep from "@/components/pick/ContextStep";
-import TimeStep from "@/components/pick/TimeStep";
-import PlatformStep from "@/components/pick/PlatformStep";
+import WhoStep, { type WhoOption } from "@/components/pick/WhoStep";
+import WhatStep, { type WhatOption } from "@/components/pick/WhatStep";
 import ResultScreen from "@/components/pick/ResultScreen";
 import VoiceChat from "@/components/pick/VoiceChat";
 import CompanionMode from "@/components/pick/CompanionMode";
@@ -20,15 +18,18 @@ import BrandHeader from "@/components/pick/BrandHeader";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { recordAcceptedRecommendation, recordSkippedRecommendation } from "@/lib/engagement";
-import type { Mood, Context, TimeAvailable, MovieDetail } from "@/lib/tmdb";
-import { getRecommendations, getDisplayTitle } from "@/lib/tmdb";
+import type { MovieDetail } from "@/lib/tmdb";
+import { getDisplayTitle } from "@/lib/tmdb";
 import { trackInteraction, getUserTasteProfile } from "@/lib/interactions";
 import { usePickPlus } from "@/hooks/use-pick-plus";
 import PickPlusPaywall from "@/components/pick/PickPlusPaywall";
+import { getLikedMovies } from "@/lib/liked-movies";
+import { computeUserTasteVector } from "@/lib/taste-engine";
+import { getSurpriseRecommendation, getWatchProviders } from "@/lib/tmdb";
 
-type Step = "home" | "mood" | "context" | "time" | "platforms" | "result";
+type Step = "home" | "who" | "what" | "result";
 
-const STEP_ORDER: Step[] = ["mood", "context", "time", "platforms"];
+const STEP_ORDER: Step[] = ["who", "what"];
 const TOTAL_STEPS = STEP_ORDER.length;
 
 function getStepNumber(step: Step): number {
@@ -42,12 +43,21 @@ const slideVariants = {
   exit: { x: -80, opacity: 0 },
 };
 
+const LOADING_MESSAGES = [
+  "Je cherche la perle rare…",
+  "Voyons voir ce que j'ai pour toi…",
+  "Analyse de ton profil…",
+  "Je parcours mes favoris…",
+  "Je fouille dans ma cinémathèque…",
+  "C'est presque prêt, promis !",
+  "Je compare quelques options pour toi…",
+  "J'affine ma sélection…",
+];
+
 const Index = () => {
   const [step, setStep] = useState<Step>("home");
-  const [mood, setMood] = useState<Mood | null>(null);
-  const [context, setContext] = useState<Context | null>(null);
-  const [time, setTime] = useState<TimeAvailable | null>(null);
-  const [selectedPlatformIds, setSelectedPlatformIds] = useState<number[]>([]);
+  const [who, setWho] = useState<WhoOption | null>(null);
+  const [what, setWhat] = useState<WhatOption | null>(null);
   const [results, setResults] = useState<MovieDetail[]>([]);
   const [loading, setLoading] = useState(false);
   const [currentResultIndex, setCurrentResultIndex] = useState(0);
@@ -56,7 +66,14 @@ const Index = () => {
   const [showCompanion, setShowCompanion] = useState(false);
   const [chatInitialMessages, setChatInitialMessages] = useState<ChatMessage[] | undefined>(undefined);
   const [searchTags, setSearchTags] = useState<string[]>([]);
-  const [profilePrefs, setProfilePrefs] = useState<{ excludedGenres: string[]; excludedPlatforms: number[]; minRating: number; preferredPlatforms: number[]; profileConfidence: number }>({ excludedGenres: [], excludedPlatforms: [], minRating: 0, preferredPlatforms: [], profileConfidence: 0 });
+  const [profilePrefs, setProfilePrefs] = useState<{
+    excludedGenres: string[];
+    excludedPlatforms: number[];
+    minRating: number;
+    preferredPlatforms: number[];
+    profileConfidence: number;
+    favoriteGenres: string[];
+  }>({ excludedGenres: [], excludedPlatforms: [], minRating: 0, preferredPlatforms: [], profileConfidence: 0, favoriteGenres: [] });
   const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -68,7 +85,6 @@ const Index = () => {
   useEffect(() => {
     if ((location.state as any)?.openTrainer) {
       setOpenTrainerOnMount(true);
-      // Clear the state so it doesn't reopen on subsequent renders
       window.history.replaceState({}, "", "/app");
     }
   }, [location.state]);
@@ -93,7 +109,6 @@ const Index = () => {
     if (params.get("from") === "pick-chat") {
       loadChatMovie();
     }
-    // Also listen for custom event (when already on /app)
     const handler = () => loadChatMovie();
     window.addEventListener("pick-chat-movie", handler);
     return () => window.removeEventListener("pick-chat-movie", handler);
@@ -111,8 +126,8 @@ const Index = () => {
             minRating: (data as any).min_rating || 0,
             preferredPlatforms: data.preferred_platforms || [],
             profileConfidence: (data as any).profile_confidence || 0,
+            favoriteGenres: data.favorite_genres || [],
           });
-          // Show tour for users who just completed onboarding
           if (data.onboarding_completed && !localStorage.getItem(TOUR_KEY)) {
             setShowTour(true);
           }
@@ -120,36 +135,21 @@ const Index = () => {
       });
   }, [user, navigate]);
 
-  const MOOD_LABELS: Record<string, string> = {
-    relax: "détente", excited: "intense", romantic: "romantique",
-    "mind-blowing": "époustouflant", "easy-watch": "facile", fun: "fun",
-  };
-  const CONTEXT_LABELS: Record<string, string> = {
-    alone: "solo", couple: "en couple", friends: "entre amis", family: "en famille",
-  };
-  const TIME_LABELS: Record<string, string> = {
-    short: "film court", "movie-night": "soirée ciné", episode: "un épisode",
-  };
-
-  const buildSearchTags = (m: Mood | null, c: Context | null, t: TimeAvailable | null) => {
-    const tags: string[] = [];
-    if (m) tags.push(MOOD_LABELS[m] || m);
-    if (c) tags.push(CONTEXT_LABELS[c] || c);
-    if (t) tags.push(TIME_LABELS[t] || t);
-    return tags;
+  // Helper: invoke surprise-personalized with retry on 429
+  const invokeSurprisePersonalized = async (body: any, retries = 2): Promise<any> => {
+    const { data, error } = await supabase.functions.invoke("surprise-personalized", { body });
+    if (error) {
+      const errMsg = typeof error === "object" && error?.message ? error.message : String(error);
+      if (retries > 0 && (errMsg.includes("429") || errMsg.includes("Trop de requêtes"))) {
+        await new Promise(r => setTimeout(r, 2000 + Math.random() * 1000));
+        return invokeSurprisePersonalized(body, retries - 1);
+      }
+      throw error;
+    }
+    return data;
   };
 
-  const handleRemoveTag = (tag: string) => {
-    setSearchTags(prev => prev.filter(t => t !== tag));
-    const moodEntry = Object.entries(MOOD_LABELS).find(([, v]) => v === tag);
-    if (moodEntry) setMood(null);
-    const ctxEntry = Object.entries(CONTEXT_LABELS).find(([, v]) => v === tag);
-    if (ctxEntry) setContext(null);
-    const timeEntry = Object.entries(TIME_LABELS).find(([, v]) => v === tag);
-    if (timeEntry) setTime(null);
-  };
-
-  const handleStart = () => setStep("mood");
+  const handleStart = () => setStep("who");
 
   const handleSurprise = (movie: MovieDetail) => {
     setResults([movie]);
@@ -186,41 +186,113 @@ const Index = () => {
     setStep("result");
   };
 
-  const handleMoodSelect = (m: Mood | null) => { if (m) setMood(m); setStep("context"); };
-  const handleContextSelect = (c: Context | null) => { if (c) setContext(c); setStep("time"); };
-  const handleTimeSelect = (t: TimeAvailable | null) => { if (t) setTime(t); setStep("platforms"); };
+  const handleWhoSelect = (w: WhoOption) => {
+    setWho(w);
+    if (w === "duo" || w === "group") {
+      // Navigate to Pick Together flow for group mode
+      navigate("/app/pick-together");
+      return;
+    }
+    setStep("what");
+  };
 
-  const handlePlatformSelect = async (platformIds: number[]) => {
-    setSelectedPlatformIds(platformIds);
-    setSearchTags(buildSearchTags(mood, context, time));
+  const handleWhatSelect = async (w: WhatOption) => {
+    setWhat(w);
     
     // Check freemium limit
     const allowed = await pickPlus.recordRecommendation();
-    if (!allowed) return;
-    
+    if (!allowed) {
+      setStep("home");
+      return;
+    }
+
+    // Build search tags
+    const tags: string[] = [];
+    if (w === "movie") tags.push("film");
+    else if (w === "tv") tags.push("série");
+    setSearchTags(tags);
+
+    // Generate recommendation directly using profile
     setLoading(true);
-    setLoadingMessage("Analyse de vos préférences…");
+    let msgIndex = 0;
+    setLoadingMessage(LOADING_MESSAGES[0]);
+    const msgInterval = setInterval(() => {
+      msgIndex = (msgIndex + 1) % LOADING_MESSAGES.length;
+      setLoadingMessage(LOADING_MESSAGES[msgIndex]);
+    }, 2000);
+
     try {
-      await new Promise(r => setTimeout(r, 400));
-      setLoadingMessage("Recherche du film idéal…");
-      const mergedPlatforms = platformIds.length > 0 ? platformIds : profilePrefs.preferredPlatforms;
-      const recs = await getRecommendations(
-        mood || "easy-watch", context || "alone", time || "movie-night", mergedPlatforms, [],
-        { excludedGenres: profilePrefs.excludedGenres, minRating: profilePrefs.minRating }
-      );
-      setLoadingMessage("Presque prêt…");
-      await new Promise(r => setTimeout(r, 300));
-      setResults(recs);
+      let movie: MovieDetail;
+
+      if (user) {
+        const liked = await getLikedMovies();
+        // Load interaction history for exclusion
+        const { data: interactionData } = await supabase.from("user_interactions")
+          .select("tmdb_id")
+          .eq("user_id", user.id)
+          .in("action_type", ["watched", "skipped", "already_seen", "liked", "unsure"])
+          .limit(500);
+        const excludeIds = interactionData ? [...new Set(interactionData.map(d => d.tmdb_id))] : [];
+
+        if (liked.length >= 2) {
+          const [userTasteVector, tasteProfile] = await Promise.all([
+            computeUserTasteVector(user.id),
+            getUserTasteProfile(),
+          ]);
+          const data = await invokeSurprisePersonalized({
+            likedMovies: liked,
+            userTasteVector,
+            tasteProfile,
+            platformIds: profilePrefs.preferredPlatforms,
+            excludedPlatformIds: profilePrefs.excludedPlatforms,
+            excludedGenres: profilePrefs.excludedGenres,
+            minRating: profilePrefs.minRating,
+            excludeIds,
+            mediaType: w === "both" ? undefined : w,
+          });
+          movie = data.movie as MovieDetail;
+        } else {
+          movie = await getSurpriseRecommendation(excludeIds, {
+            platformIds: profilePrefs.preferredPlatforms,
+            minRating: profilePrefs.minRating,
+            excludedGenres: profilePrefs.excludedGenres,
+          });
+        }
+      } else {
+        movie = await getSurpriseRecommendation([], {
+          platformIds: profilePrefs.preferredPlatforms,
+          minRating: profilePrefs.minRating,
+          excludedGenres: profilePrefs.excludedGenres,
+        });
+      }
+
+      clearInterval(msgInterval);
+      setResults([movie]);
       setCurrentResultIndex(0);
       setStep("result");
-    } catch (e) { console.error(e); }
-    finally { setLoading(false); setLoadingMessage(""); }
+    } catch (e) {
+      console.error(e);
+      clearInterval(msgInterval);
+      try {
+        const movie = await getSurpriseRecommendation([], {
+          platformIds: profilePrefs.preferredPlatforms,
+          minRating: profilePrefs.minRating,
+          excludedGenres: profilePrefs.excludedGenres,
+        });
+        setResults([movie]);
+        setCurrentResultIndex(0);
+        setStep("result");
+      } catch { /* ignore */ }
+    } finally {
+      setLoading(false);
+      setLoadingMessage("");
+    }
   };
 
   const handleShowAnother = async (rejectReason?: string, rejectedMovie?: MovieDetail) => {
     const currentMovie = results[currentResultIndex];
     if (currentMovie) {
-      trackInteraction(currentMovie.id, "skipped", { mood, context, time });
+      trackInteraction(currentMovie.id, "skipped", { who, what });
       if (user) recordSkippedRecommendation(user.id);
     }
     if (currentResultIndex < results.length - 1 && !rejectReason) {
@@ -230,7 +302,6 @@ const Index = () => {
       try {
         const tasteProfile = await getUserTasteProfile();
         const excludeIds = [...results.map(r => r.id), ...(tasteProfile?.excludeIds || [])];
-        const mergedPlatforms = selectedPlatformIds.length > 0 ? selectedPlatformIds : profilePrefs.preferredPlatforms;
         const rejectionContext = rejectReason && rejectedMovie ? {
           reason: rejectReason,
           rejectedGenres: (rejectedMovie.genres || []).map(g => g.name),
@@ -238,11 +309,39 @@ const Index = () => {
           rejectedRating: rejectedMovie.vote_average,
           rejectedRuntime: rejectedMovie.runtime,
         } : undefined;
-        const recs = await getRecommendations(
-          mood || "easy-watch", context || "alone", time || "movie-night", mergedPlatforms, excludeIds,
-          { excludedGenres: profilePrefs.excludedGenres, minRating: profilePrefs.minRating, rejectionContext }
-        );
-        if (recs.length > 0) { setResults(prev => [...prev, ...recs]); setCurrentResultIndex(i => i + 1); }
+
+        if (user) {
+          const liked = await getLikedMovies();
+          if (liked.length >= 2) {
+            const [userTasteVector] = await Promise.all([
+              computeUserTasteVector(user.id),
+            ]);
+            const data = await invokeSurprisePersonalized({
+              likedMovies: liked,
+              userTasteVector,
+              tasteProfile,
+              platformIds: profilePrefs.preferredPlatforms,
+              excludedPlatformIds: profilePrefs.excludedPlatforms,
+              excludedGenres: profilePrefs.excludedGenres,
+              minRating: profilePrefs.minRating,
+              excludeIds,
+              rejectionContext,
+              mediaType: what === "both" ? undefined : what,
+            });
+            if (data?.movie) {
+              setResults(prev => [...prev, data.movie]);
+              setCurrentResultIndex(i => i + 1);
+            }
+          } else {
+            const movie = await getSurpriseRecommendation(excludeIds, {
+              platformIds: profilePrefs.preferredPlatforms,
+              minRating: profilePrefs.minRating,
+              excludedGenres: profilePrefs.excludedGenres,
+            });
+            setResults(prev => [...prev, movie]);
+            setCurrentResultIndex(i => i + 1);
+          }
+        }
       } catch (e) { console.error(e); }
       finally { setLoading(false); }
     }
@@ -253,7 +352,7 @@ const Index = () => {
   const handleStartCompanion = () => {
     const currentMovie = results[currentResultIndex];
     if (currentMovie) {
-      trackInteraction(currentMovie.id, "watched", { mood, context, time });
+      trackInteraction(currentMovie.id, "watched", { who, what });
       if (user) recordAcceptedRecommendation(user.id);
       activateCompanion(currentMovie);
       toast("🎬 Companion activé — Pick est là pendant tout le film", { duration: 3000 });
@@ -263,8 +362,15 @@ const Index = () => {
 
   const handleRestart = () => {
     setStep("home");
-    setMood(null); setContext(null); setTime(null);
-    setSelectedPlatformIds([]); setResults([]); setCurrentResultIndex(0); setSearchTags([]);
+    setWho(null);
+    setWhat(null);
+    setResults([]);
+    setCurrentResultIndex(0);
+    setSearchTags([]);
+  };
+
+  const handleRemoveTag = (tag: string) => {
+    setSearchTags(prev => prev.filter(t => t !== tag));
   };
 
   const currentStepNumber = getStepNumber(step);
@@ -273,10 +379,8 @@ const Index = () => {
 
   const renderStep = () => {
     switch (step) {
-      case "mood": return <MoodStep onSelect={handleMoodSelect} onSkip={() => handleMoodSelect(null)} />;
-      case "context": return <ContextStep onSelect={handleContextSelect} onSkip={() => handleContextSelect(null)} />;
-      case "time": return <TimeStep onSelect={handleTimeSelect} onSkip={() => handleTimeSelect(null)} loading={false} />;
-      case "platforms": return <PlatformStep onSelect={handlePlatformSelect} loading={loading} loadingMessage={loadingMessage} />;
+      case "who": return <WhoStep onSelect={handleWhoSelect} />;
+      case "what": return <WhatStep onSelect={handleWhatSelect} />;
       default: return null;
     }
   };
@@ -339,7 +443,7 @@ const Index = () => {
               }}
               onStartCompanion={handleStartCompanion}
               hasMore={currentResultIndex < results.length - 1}
-              userCriteria={{ mood, context, time }}
+              userCriteria={{ mood: null, context: who === "alone" ? "alone" : who === "duo" ? "couple" : "friends", time: null }}
               searchTags={searchTags}
               onRemoveTag={handleRemoveTag}
               refining={loading}
@@ -365,7 +469,7 @@ const Index = () => {
       </AnimatePresence>
 
       <AnimatePresence>
-      {showCompanion && results[currentResultIndex] && <CompanionMode movie={results[currentResultIndex]} onClose={() => setShowCompanion(false)} pickPlus={pickPlus} />}
+        {showCompanion && results[currentResultIndex] && <CompanionMode movie={results[currentResultIndex]} onClose={() => setShowCompanion(false)} pickPlus={pickPlus} />}
       </AnimatePresence>
 
       <PickPlusPaywall
