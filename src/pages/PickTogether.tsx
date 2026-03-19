@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Users, Loader2, Sparkles, Star, Clock, ChevronRight, Check, Wind, Flame, Laugh, Heart, UserRound, UsersRound, Home, Film, Tv, Layers, ThumbsUp, ThumbsDown, Meh, RefreshCw, Bookmark, Zap } from "lucide-react";
+import { Users, Loader2, Sparkles, Star, Clock, ChevronRight, Check, Wind, Flame, Laugh, Heart, UserRound, UsersRound, Home, Film, Tv, Layers, ThumbsUp, ThumbsDown, Meh, RefreshCw, Bookmark, Zap, UserPlus, X, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -20,6 +20,14 @@ interface Friend {
   avatarUrl?: string | null;
 }
 
+interface Guest {
+  id: string; // local UUID
+  name: string;
+  age?: number;
+  gender?: "homme" | "femme" | "autre";
+  favoriteGenres: string[];
+}
+
 interface GroupRecommendation {
   movie: MovieDetail;
   groupScore: number;
@@ -30,6 +38,11 @@ interface GroupRecommendation {
 
 type FlowStep = "who" | "mood" | "loading" | "results";
 type MediaChoice = "movie" | "tv" | "both";
+
+const GENRE_OPTIONS = [
+  "Action", "Aventure", "Animation", "Comédie", "Crime", "Documentaire",
+  "Drame", "Famille", "Fantastique", "Horreur", "Romance", "Science-Fiction", "Thriller",
+];
 
 const MOODS: { id: string; icon: React.ElementType; label: string; emoji: string }[] = [
   { id: "relax", icon: Wind, label: "On veut se détendre", emoji: "😌" },
@@ -53,6 +66,12 @@ const PickTogether = () => {
   const [step, setStep] = useState<FlowStep>("who");
   const [friends, setFriends] = useState<Friend[]>([]);
   const [selectedFriendIds, setSelectedFriendIds] = useState<Set<string>>(new Set());
+  const [guests, setGuests] = useState<Guest[]>([]);
+  const [showGuestForm, setShowGuestForm] = useState(false);
+  const [guestName, setGuestName] = useState("");
+  const [guestAge, setGuestAge] = useState("");
+  const [guestGender, setGuestGender] = useState<"homme" | "femme" | "autre" | "">("");
+  const [guestGenres, setGuestGenres] = useState<Set<string>>(new Set());
   const [mood, setMood] = useState<string | null>(null);
   const [mediaChoice, setMediaChoice] = useState<MediaChoice>("both");
   const [loading, setLoading] = useState(false);
@@ -98,17 +117,50 @@ const PickTogether = () => {
   };
 
   const toggleFriend = (id: string) => {
+    const totalOthers = selectedFriendIds.size + guests.length;
     setSelectedFriendIds(prev => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id);
-      else if (next.size < 5) next.add(id);
+      else if (totalOthers < 5) next.add(id);
       else toast.info("Maximum 6 personnes");
       return next;
     });
   };
 
+  const addGuest = () => {
+    if (!guestName.trim()) { toast.info("Donne un prénom à ton invité"); return; }
+    const totalOthers = selectedFriendIds.size + guests.length;
+    if (totalOthers >= 5) { toast.info("Maximum 6 personnes"); return; }
+    const newGuest: Guest = {
+      id: `guest-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      name: guestName.trim(),
+      age: guestAge ? parseInt(guestAge) : undefined,
+      gender: guestGender || undefined,
+      favoriteGenres: [...guestGenres],
+    };
+    setGuests(prev => [...prev, newGuest]);
+    setGuestName("");
+    setGuestAge("");
+    setGuestGender("");
+    setGuestGenres(new Set());
+    setShowGuestForm(false);
+  };
+
+  const removeGuest = (id: string) => {
+    setGuests(prev => prev.filter(g => g.id !== id));
+  };
+
+  const toggleGuestGenre = (genre: string) => {
+    setGuestGenres(prev => {
+      const next = new Set(prev);
+      if (next.has(genre)) next.delete(genre);
+      else if (next.size < 5) next.add(genre);
+      return next;
+    });
+  };
+
   const handleContinueFromWho = () => {
-    if (selectedFriendIds.size === 0) return;
+    if (selectedFriendIds.size === 0 && guests.length === 0) return;
     setMediaStep(true);
   };
 
@@ -119,7 +171,7 @@ const PickTogether = () => {
   };
 
   const handleStartSearch = async (skipMood = false) => {
-    if (!user || selectedFriendIds.size === 0) return;
+    if (!user || (selectedFriendIds.size === 0 && guests.length === 0)) return;
     setStep("loading");
     setLoading(true);
     let msgIdx = 0;
@@ -131,8 +183,19 @@ const PickTogether = () => {
 
     try {
       const memberIds = [user.id, ...selectedFriendIds];
+      const guestProfiles = guests.map(g => ({
+        name: g.name,
+        age: g.age,
+        gender: g.gender,
+        favoriteGenres: g.favoriteGenres,
+      }));
       const { data, error } = await supabase.functions.invoke("group-recommend", {
-        body: { memberIds, mood: skipMood ? undefined : mood || undefined, mediaType: mediaChoice },
+        body: {
+          memberIds,
+          guests: guestProfiles.length > 0 ? guestProfiles : undefined,
+          mood: skipMood ? undefined : mood || undefined,
+          mediaType: mediaChoice,
+        },
       });
       clearInterval(msgInterval);
       if (error) throw error;
@@ -176,7 +239,7 @@ const PickTogether = () => {
     } catch { toast.error("Erreur"); }
   };
 
-  const selectedCount = selectedFriendIds.size + 1;
+  const selectedCount = selectedFriendIds.size + guests.length + 1;
   const hero = recommendations[0];
   const alternatives = recommendations.slice(1, 3);
   const selectedFriends = friends.filter(f => selectedFriendIds.has(f.id));
@@ -280,9 +343,149 @@ const PickTogether = () => {
                 </div>
               )}
 
+              {/* ─── GUESTS ─── */}
+              <div className="mt-5">
+                <p className="text-[10px] font-sans font-semibold text-foreground/30 uppercase tracking-widest mb-3">Invités (sans compte)</p>
+
+                {/* Existing guests */}
+                {guests.map((g) => (
+                  <div key={g.id} className="flex items-center gap-3 p-3.5 rounded-2xl bg-accent/5 border border-accent/15 mb-2">
+                    <div className="w-10 h-10 rounded-full bg-accent/15 border border-accent/25 flex items-center justify-center">
+                      <span className="text-sm font-sans font-bold text-accent-foreground/70">{g.name[0].toUpperCase()}</span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-sans font-medium text-foreground">{g.name}</p>
+                      <p className="text-foreground/30 text-[10px] font-sans truncate">
+                        {[g.age ? `${g.age} ans` : null, g.gender, g.favoriteGenres.length > 0 ? g.favoriteGenres.slice(0, 2).join(", ") : null].filter(Boolean).join(" · ") || "Invité"}
+                      </p>
+                    </div>
+                    <button onClick={() => removeGuest(g.id)} className="w-6 h-6 rounded-full bg-muted/30 flex items-center justify-center hover:bg-destructive/10 transition-colors">
+                      <X className="w-3 h-3 text-foreground/30" />
+                    </button>
+                  </div>
+                ))}
+
+                {/* Add guest button / form */}
+                <AnimatePresence mode="wait">
+                  {!showGuestForm ? (
+                    <motion.button
+                      key="add-btn"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      onClick={() => setShowGuestForm(true)}
+                      className="w-full flex items-center gap-3 p-3.5 rounded-2xl border border-dashed border-border/20 hover:border-primary/30 transition-all text-left group"
+                    >
+                      <div className="w-10 h-10 rounded-full bg-muted/20 border border-border/15 flex items-center justify-center group-hover:bg-primary/10 group-hover:border-primary/20 transition-colors">
+                        <UserPlus className="w-4 h-4 text-foreground/30 group-hover:text-primary transition-colors" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-sans font-medium text-foreground/50 group-hover:text-foreground/70 transition-colors">Ajouter un invité</p>
+                        <p className="text-foreground/25 text-[10px] font-sans">Quelqu'un sans compte Pick</p>
+                      </div>
+                    </motion.button>
+                  ) : (
+                    <motion.div
+                      key="form"
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      className="rounded-2xl bg-card/60 backdrop-blur-sm border border-border/15 p-4 space-y-4"
+                    >
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm font-sans font-semibold text-foreground">Nouvel invité</p>
+                        <button onClick={() => setShowGuestForm(false)} className="text-foreground/30 hover:text-foreground/60 transition-colors">
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+
+                      {/* Name */}
+                      <div>
+                        <label className="text-[10px] font-sans font-semibold text-foreground/30 uppercase tracking-widest block mb-1.5">Prénom *</label>
+                        <input
+                          type="text"
+                          value={guestName}
+                          onChange={e => setGuestName(e.target.value)}
+                          placeholder="Ex: Sarah"
+                          maxLength={30}
+                          className="w-full px-3.5 py-2.5 rounded-xl bg-background/60 border border-border/15 text-foreground text-sm font-sans placeholder:text-foreground/20 focus:outline-none focus:border-primary/40 transition-colors"
+                        />
+                      </div>
+
+                      {/* Age + Gender row */}
+                      <div className="flex gap-3">
+                        <div className="flex-1">
+                          <label className="text-[10px] font-sans font-semibold text-foreground/30 uppercase tracking-widest block mb-1.5">Âge</label>
+                          <input
+                            type="number"
+                            value={guestAge}
+                            onChange={e => setGuestAge(e.target.value)}
+                            placeholder="25"
+                            min={5}
+                            max={99}
+                            className="w-full px-3.5 py-2.5 rounded-xl bg-background/60 border border-border/15 text-foreground text-sm font-sans placeholder:text-foreground/20 focus:outline-none focus:border-primary/40 transition-colors"
+                          />
+                        </div>
+                        <div className="flex-1">
+                          <label className="text-[10px] font-sans font-semibold text-foreground/30 uppercase tracking-widest block mb-1.5">Genre</label>
+                          <div className="flex gap-1.5">
+                            {(["homme", "femme", "autre"] as const).map(g => (
+                              <button
+                                key={g}
+                                onClick={() => setGuestGender(guestGender === g ? "" : g)}
+                                className={`flex-1 py-2 rounded-lg text-[11px] font-sans font-medium transition-all border ${
+                                  guestGender === g
+                                    ? "bg-primary/10 border-primary/30 text-primary"
+                                    : "bg-background/40 border-border/10 text-foreground/40 hover:border-border/25"
+                                }`}
+                              >
+                                {g === "homme" ? "H" : g === "femme" ? "F" : "?"}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Favorite genres */}
+                      <div>
+                        <label className="text-[10px] font-sans font-semibold text-foreground/30 uppercase tracking-widest block mb-1.5">Genres préférés</label>
+                        <div className="flex flex-wrap gap-1.5">
+                          {GENRE_OPTIONS.map(genre => {
+                            const selected = guestGenres.has(genre);
+                            return (
+                              <button
+                                key={genre}
+                                onClick={() => toggleGuestGenre(genre)}
+                                className={`px-2.5 py-1 rounded-lg text-[11px] font-sans transition-all border ${
+                                  selected
+                                    ? "bg-primary/10 border-primary/30 text-primary font-medium"
+                                    : "bg-background/40 border-border/10 text-foreground/40 hover:border-border/25"
+                                }`}
+                              >
+                                {genre}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {/* Add button */}
+                      <Button
+                        onClick={addGuest}
+                        disabled={!guestName.trim()}
+                        className="w-full rounded-xl h-11 bg-primary text-primary-foreground hover:bg-primary/90 font-sans gap-2"
+                      >
+                        <Plus className="w-4 h-4" />
+                        Ajouter {guestName.trim() || "l'invité"}
+                      </Button>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+
               {/* Continue button */}
               <AnimatePresence>
-                {selectedFriendIds.size > 0 && (
+                {(selectedFriendIds.size > 0 || guests.length > 0) && (
                   <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}

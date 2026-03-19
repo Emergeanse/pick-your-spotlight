@@ -28,10 +28,14 @@ serve(async (req) => {
   }
 
   try {
-    const { memberIds, mood, context, timeAvailable, mediaType: rawMediaType } = await req.json();
+    const { memberIds, guests, mood, context, timeAvailable, mediaType: rawMediaType } = await req.json();
     const mediaType: "movie" | "tv" | "both" = rawMediaType === "tv" ? "tv" : rawMediaType === "movie" ? "movie" : "both";
 
-    if (!memberIds || memberIds.length < 2) {
+    // Guests are non-registered users with { name, age?, gender?, favoriteGenres? }
+    const guestProfiles: { name: string; age?: number; gender?: string; favoriteGenres?: string[] }[] = guests || [];
+    const totalMembers = (memberIds?.length || 0) + guestProfiles.length;
+
+    if (totalMembers < 2) {
       return new Response(JSON.stringify({ error: "Au moins 2 membres requis" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -144,8 +148,22 @@ serve(async (req) => {
         platforms: p.preferred_platforms || [],
         minRating: p.min_rating || 0,
         likedCount: liked.length,
+        isGuest: false,
       };
     });
+
+    // Add guest summaries
+    for (const guest of guestProfiles) {
+      memberSummaries.push({
+        name: guest.name,
+        favoriteGenres: guest.favoriteGenres || [],
+        excludedGenres: [],
+        platforms: [],
+        minRating: 0,
+        likedCount: 0,
+        isGuest: true,
+      });
+    }
 
     // ── 6. AI arbitration ──
     const candidateList = embeddingCandidates.slice(0, 15).map((c, i) =>
@@ -171,7 +189,7 @@ serve(async (req) => {
     const systemPrompt = `Tu es un moteur de recommandation cinéma spécialisé dans les GROUPES. Tu dois trouver les ${contentLabel} qui satisferont TOUT le monde.
 
 MEMBRES DU GROUPE (${memberSummaries.length} personnes) :
-${memberSummaries.map((m, i) => `${i + 1}. ${m.name} — Genres favoris: ${m.favoriteGenres.join(", ") || "?"} | Genres exclus: ${m.excludedGenres.join(", ") || "aucun"} | Films aimés: ${m.likedCount} | Note min: ${m.minRating}/10`).join("\n")}
+${memberSummaries.map((m, i) => `${i + 1}. ${m.name}${m.isGuest ? " (invité — pas de profil)" : ""} — Genres favoris: ${m.favoriteGenres.join(", ") || "?"} | Genres exclus: ${m.excludedGenres.join(", ") || "aucun"} | Films aimés: ${m.likedCount} | Note min: ${m.minRating}/10`).join("\n")}
 
 CONTRAINTES GROUPE :
 - Genres EXCLUS (union): ${excludedGenres.join(", ") || "aucun"}
@@ -276,7 +294,7 @@ Structure :
     return new Response(JSON.stringify({
       recommendations: resolvedMovies,
       groupInfo: {
-        memberCount: memberIds.length,
+        memberCount: totalMembers,
         sharedPlatforms,
         excludedGenres,
         minRating,
