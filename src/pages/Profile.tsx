@@ -661,6 +661,99 @@ const Profile = () => {
       )}
 
       <BottomTabBar />
+
+      {/* Add friend modal */}
+      <AnimatePresence>
+        {showAddModal && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 flex items-end justify-center">
+            <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" onClick={() => setShowAddModal(false)} />
+            <motion.div initial={{ y: 100, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 100, opacity: 0 }} transition={{ type: "spring", damping: 25 }}
+              className="relative w-full max-w-lg rounded-t-3xl bg-card border-t border-border/30 p-6 pb-[calc(2rem+env(safe-area-inset-bottom))]">
+              <div className="w-10 h-1 rounded-full bg-border/40 mx-auto mb-5" />
+              <h3 className="text-lg font-serif text-foreground mb-4">Ajouter un ami</h3>
+              <p className="text-muted-foreground text-sm font-sans mb-4">Entre le code ami de ton pote (ex: PICK-A3F2)</p>
+              <div className="flex gap-3">
+                <input type="text" value={addCode} onChange={(e) => setAddCode(e.target.value.toUpperCase())} placeholder="PICK-XXXX"
+                  className="flex-1 h-12 rounded-xl bg-background border border-border/30 px-4 font-mono text-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:border-primary/50 transition-colors" maxLength={9} />
+                <Button onClick={handleAddFriend} disabled={addingFriend || addCode.length < 9} className="rounded-xl h-12 px-6 bg-primary text-primary-foreground">
+                  {addingFriend ? <Loader2 className="w-4 h-4 animate-spin" /> : <UserPlus className="w-4 h-4" />}
+                </Button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Friend profile drawer */}
+      <AnimatePresence>
+        {selectedFriend && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 flex items-end justify-center">
+            <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" onClick={() => setSelectedFriend(null)} />
+            <motion.div initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }} transition={{ type: "spring", damping: 28, stiffness: 300 }}
+              className="relative w-full max-w-lg rounded-t-3xl bg-card border-t border-border/30 max-h-[85vh] overflow-y-auto">
+              <div className="sticky top-0 bg-card/90 backdrop-blur-xl z-10 px-6 pt-4 pb-3">
+                <div className="w-10 h-1 rounded-full bg-border/40 mx-auto mb-4" />
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-serif text-foreground">Profil</h3>
+                  <div className="flex items-center gap-2">
+                    <button onClick={() => { handleRemoveFriend(selectedFriend.friendshipId); }}
+                      className="text-xs font-sans text-destructive/60 hover:text-destructive transition-colors px-2 py-1">Retirer</button>
+                    <button onClick={() => setSelectedFriend(null)} className="p-1 text-muted-foreground/40 hover:text-muted-foreground"><X className="w-5 h-5" /></button>
+                  </div>
+                </div>
+              </div>
+              <div className="px-6 pb-[calc(2rem+env(safe-area-inset-bottom))]">
+                {loadingFriendProfile ? (
+                  <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 text-primary animate-spin" /></div>
+                ) : friendProfile ? (
+                  <div className="space-y-5">
+                    <div className="flex flex-col items-center py-4">
+                      <div className="w-20 h-20 rounded-full bg-primary/15 border-2 border-primary/20 flex items-center justify-center overflow-hidden mb-3">
+                        {friendProfile.avatarUrl ? <img src={friendProfile.avatarUrl} alt={friendProfile.displayName} className="w-full h-full object-cover" /> :
+                          <span className="text-2xl font-sans font-bold text-primary">{(friendProfile.displayName || "A")[0].toUpperCase()}</span>}
+                      </div>
+                      <p className="text-lg font-serif font-semibold text-foreground">{friendProfile.displayName}</p>
+                      <p className="text-muted-foreground/50 text-xs font-mono mt-0.5">{friendProfile.friendCode}</p>
+                    </div>
+                    {friendProfile.favoriteGenres?.length > 0 && (
+                      <div>
+                        <p className="text-[10px] font-sans font-semibold text-foreground/30 uppercase tracking-widest mb-2">Genres favoris</p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {friendProfile.favoriteGenres.map((g: string) => <span key={g} className="px-2.5 py-1 rounded-full bg-primary/10 text-primary text-[11px] font-sans font-medium">{g}</span>)}
+                        </div>
+                      </div>
+                    )}
+                    {friendProfile.cinematicProfile ? (
+                      <div className="rounded-2xl bg-background/50 border border-border/15 p-4 space-y-4">
+                        <div className="flex items-center gap-2 mb-1">
+                          <Clapperboard className="w-4 h-4 text-primary" />
+                          <p className="text-xs font-sans font-semibold text-foreground/70">Profil cinématographique</p>
+                        </div>
+                        <div>
+                          <p className="text-lg font-serif font-semibold text-foreground">{friendProfile.cinematicProfile.personalityTitle}</p>
+                          {friendProfile.cinematicProfile.dnaArchetype && <p className="text-primary text-xs font-sans font-medium mt-0.5">{friendProfile.cinematicProfile.dnaArchetype}</p>}
+                          <p className="text-muted-foreground/50 text-[11px] font-sans mt-1">{friendProfile.cinematicProfile.globalLevel}</p>
+                        </div>
+                        {friendProfile.cinematicProfile.tasteTraits?.length > 0 && (
+                          <div className="flex flex-wrap gap-1.5">
+                            {friendProfile.cinematicProfile.tasteTraits.slice(0, 6).map((t: string) => <span key={t} className="px-2 py-0.5 rounded-full bg-primary/8 text-primary/80 text-[10px] font-sans">{t}</span>)}
+                          </div>
+                        )}
+                        {friendProfile.cinematicProfile.narrative && <p className="text-foreground/50 text-xs font-sans leading-relaxed line-clamp-4">{friendProfile.cinematicProfile.narrative}</p>}
+                      </div>
+                    ) : (
+                      <div className="rounded-2xl bg-background/50 border border-border/15 p-5 text-center">
+                        <Clapperboard className="w-6 h-6 text-muted-foreground/20 mx-auto mb-2" />
+                        <p className="text-foreground/40 text-sm font-sans">Pas encore de profil cinéma</p>
+                      </div>
+                    )}
+                  </div>
+                ) : <div className="text-center py-12 text-muted-foreground/40 text-sm font-sans">Profil introuvable</div>}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
