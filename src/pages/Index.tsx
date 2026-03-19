@@ -123,12 +123,22 @@ const Index = () => {
             setShowActivation(false);
             setShowTour(true);
             sessionStorage.removeItem("pick_force_tour");
-          } else if (tourDone && !activationDone && fromOnboarding) {
-            // Only continue activation automatically right after onboarding/tour
-            setShowTour(false);
-            setShowActivation(true);
+          } else if (!activationDone) {
+            // Show activation for any user who hasn't completed it
+            // But first check if they're a mature user who should auto-skip
+            supabase.from("user_interactions")
+              .select("id", { count: "exact", head: true })
+              .eq("user_id", user.id)
+              .then(({ count }) => {
+                if (count && count >= 20) {
+                  // Mature user — auto-complete activation
+                  supabase.from("profiles").update({ activation_completed: true } as any).eq("id", user.id);
+                } else {
+                  setShowTour(false);
+                  setShowActivation(true);
+                }
+              });
           }
-          // Otherwise: returning user — just show the app normally
 
           setProfileLoaded(true);
         }
