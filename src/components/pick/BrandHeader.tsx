@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { ArrowLeft } from "lucide-react";
+import NotificationBell from "./NotificationBell";
 
 interface BrandHeaderProps {
   showBack?: boolean;
@@ -30,7 +31,7 @@ const BrandHeader = ({ showBack, onBack }: BrandHeaderProps) => {
         </div>
       )}
 
-      <div />
+      <NotificationBell />
     </motion.div>
   );
 };
