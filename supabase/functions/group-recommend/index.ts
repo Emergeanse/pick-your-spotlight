@@ -160,7 +160,15 @@ serve(async (req) => {
     };
     const excludedGenreIds = excludedGenres.map(g => genreNameToId[g]).filter(Boolean);
 
-    const systemPrompt = `Tu es un moteur de recommandation cinéma spécialisé dans les GROUPES. Tu dois trouver les films qui satisferont TOUT le monde.
+    const mediaTypeInstruction = mediaType === "tv"
+      ? "\n- TYPE DE CONTENU : SÉRIES TV UNIQUEMENT. Tu DOIS recommander exclusivement des séries, PAS de films."
+      : mediaType === "movie"
+        ? "\n- TYPE DE CONTENU : FILMS UNIQUEMENT. Tu DOIS recommander exclusivement des films, PAS de séries."
+        : "\n- TYPE DE CONTENU : MIXTE. Tu DOIS recommander un mélange de films ET de séries (au moins 2 de chaque type). Précise le type dans la raison.";
+
+    const contentLabel = mediaType === "tv" ? "séries" : mediaType === "movie" ? "films" : "films et séries";
+
+    const systemPrompt = `Tu es un moteur de recommandation cinéma spécialisé dans les GROUPES. Tu dois trouver les ${contentLabel} qui satisferont TOUT le monde.
 
 MEMBRES DU GROUPE (${memberSummaries.length} personnes) :
 ${memberSummaries.map((m, i) => `${i + 1}. ${m.name} — Genres favoris: ${m.favoriteGenres.join(", ") || "?"} | Genres exclus: ${m.excludedGenres.join(", ") || "aucun"} | Films aimés: ${m.likedCount} | Note min: ${m.minRating}/10`).join("\n")}
