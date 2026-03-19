@@ -397,27 +397,15 @@ ANNÉE EN COURS : ${currentYear}`;
 function getAppKnowledgeSection(): string {
   return `
 CONNAISSANCES SUR L'APPLICATION PICK :
-Pick est une application de recommandation de films, séries et vidéos YouTube personnalisée. Voici ses fonctionnalités :
+Pick est une application de recommandation de films et séries personnalisée. Voici ses fonctionnalités :
 
 - **Page d'accueil** : L'utilisateur peut lancer "Pick pour ce soir" (recommandation instantanée) ou parler directement à Pick via le chat.
-- **Recommandations** : Pick propose LE film/série/vidéo YouTube parfait(e) avec une fiche détaillée (note, synopsis, plateformes de streaming, bande-annonce, vidéo YouTube complémentaire).
-- **YouTube intégré** : Pick recommande aussi des documentaires, vidéos éducatives, analyses ciné et créations de YouTubeurs passionnés. Pour chaque film recommandé, une vidéo YouTube complémentaire est proposée.
+- **Recommandations** : Pick propose LE film ou LA série parfait(e) avec une fiche détaillée (note, synopsis, plateformes de streaming, bande-annonce).
 - **Watchlist** : L'utilisateur peut sauvegarder des films pour plus tard. Accessible depuis la barre de navigation.
 - **Mon Cinéma** : Section profil cinématographique avec les films aimés, l'ADN cinématique de l'utilisateur, et des statistiques.
 - **Mode Compagnon** : Quand l'utilisateur choisit de regarder un film, Pick devient un compagnon de visionnage — il peut répondre à des questions sur le film en cours, partager des anecdotes, expliquer des scènes, etc.
-- **Pick+** : Version premium (3,99€/mois ou 29,99€/an) avec chatbot complet (poser toutes les questions ciné), recommandations illimitées, compagnon illimité, ADN avancé, alertes plateforme.
-- **Version gratuite** : 3 recommandations/jour, 1 conversation découverte/jour (trouver un film), 1 question compagnon par film.
-- **Profil** : L'utilisateur peut configurer ses plateformes de streaming préférées, ses genres favoris/exclus, sa note minimale, et activer le rituel du soir.
+- **Pick+** : Version premium avec chatbot complet (poser toutes les questions ciné), recommandations illimitées, compagnon illimité, ADN avancé, alertes plateforme.
+- **Profil** : L'utilisateur peut configurer ses plateformes de streaming préférées, ses genres favoris/exclus, sa note minimale, et son pseudo/photo de profil.
 
 Si l'utilisateur demande comment faire quelque chose dans l'appli, explique-lui clairement en le guidant vers la bonne section.`;
-}
-
-function hashCode(str: string): number {
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    const char = str.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
-    hash = hash & hash; // Convert to 32bit integer
-  }
-  return Math.abs(hash);
 }
