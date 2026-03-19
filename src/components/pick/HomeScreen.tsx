@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Mic, Dices, Tv, Sparkles, Loader2, Zap, Flame, Target, Trophy, Shuffle, Brain, Users } from "lucide-react";
 import WhoStep, { type WhoOption } from "./WhoStep";
 import WhatStep, { type WhatOption } from "./WhatStep";
+import ExplorationStep from "./ExplorationStep";
 import StepLayout from "./StepLayout";
 import { getTrendingMovies, getBackdropUrl, getSurpriseRecommendation, getPosterUrl, getDisplayTitle, getWatchProviders } from "@/lib/tmdb";
 import { getLikedMovies } from "@/lib/liked-movies";
