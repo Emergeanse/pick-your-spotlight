@@ -272,7 +272,51 @@ const PickTogether = () => {
               </motion.div>
             )}
 
-            {/* Step 2: Mood & context */}
+            {/* Step 2: What to watch */}
+            {step === "select-what" && (
+              <motion.div key="what" initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -40 }}>
+                <div className="mb-6">
+                  <h1 className="text-2xl font-serif text-foreground mb-1">Vous voulez regarder quoi ?</h1>
+                  <p className="text-muted-foreground text-sm font-sans">
+                    Film, série ou les deux ?
+                  </p>
+                </div>
+
+                <div className="flex flex-col gap-2.5 mb-6">
+                  {MEDIA_OPTIONS.map((opt, i) => {
+                    const Icon = opt.icon;
+                    const selected = mediaChoice === opt.value;
+                    return (
+                      <motion.button
+                        key={opt.value}
+                        initial={{ opacity: 0, y: 16 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: i * 0.06, duration: 0.35 }}
+                        whileHover={{ scale: 1.03, y: -2 }}
+                        whileTap={{ scale: 0.96 }}
+                        onClick={() => {
+                          setMediaChoice(opt.value);
+                          setTimeout(() => setStep("select-mood"), 300);
+                        }}
+                        className={`bg-card rounded-2xl p-4 text-left transition-all border flex items-center gap-3 ${
+                          selected
+                            ? "border-primary neon-glow bg-primary/10"
+                            : "border-transparent hover:border-primary/30"
+                        }`}
+                      >
+                        <Icon className={`w-5 h-5 shrink-0 transition-colors ${selected ? "text-primary" : "text-primary/40"}`} />
+                        <div>
+                          <span className="font-serif text-lg tracking-wide block">{opt.label}</span>
+                          <span className="text-muted-foreground text-xs mt-0.5 block font-sans">{opt.description}</span>
+                        </div>
+                      </motion.button>
+                    );
+                  })}
+                </div>
+              </motion.div>
+            )}
+
+            {/* Step 3: Mood & context */}
             {step === "select-mood" && (
               <motion.div key="mood" initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -40 }}>
                 <div className="mb-6">
