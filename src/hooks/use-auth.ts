@@ -25,6 +25,22 @@ export function useAuth() {
   }, []);
 
   const signOut = async () => {
+    // Check if test account — if so, clean up before signing out
+    if (user) {
+      try {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("is_test_account")
+          .eq("id", user.id)
+          .single();
+
+        if (profile?.is_test_account) {
+          await supabase.functions.invoke("cleanup-test-user");
+        }
+      } catch (e) {
+        console.error("Cleanup check failed:", e);
+      }
+    }
     await supabase.auth.signOut();
   };
 
