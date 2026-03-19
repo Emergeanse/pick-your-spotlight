@@ -34,6 +34,7 @@ const Admin = () => {
   const [birthYear, setBirthYear] = useState("");
   const [creating, setCreating] = useState(false);
   const [createdAccount, setCreatedAccount] = useState<{ email: string; password: string; name: string } | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   // Users list
   const [users, setUsers] = useState<RegisteredUser[]>([]);
