@@ -16,6 +16,7 @@ const Auth = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const inviteCode = searchParams.get("invite");
+  const redirectTo = searchParams.get("redirect");
 
   const { user, isReady } = useAuth();
 
