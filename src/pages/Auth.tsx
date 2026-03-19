@@ -15,6 +15,7 @@ const Auth = () => {
   const [name, setName] = useState("");
   const [birthYear, setBirthYear] = useState("");
   const [loading, setLoading] = useState(false);
+  const [socialLoading, setSocialLoading] = useState<string | null>(null);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const inviteCode = searchParams.get("invite");
