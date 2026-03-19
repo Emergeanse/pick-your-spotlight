@@ -255,9 +255,13 @@ Recommande UN film avec les scores détaillés.`;
         });
         if (minRating && minRating > 0 && attempt < 3) discoverParams.set("vote_average.gte", String(minRating));
         if (excludedGenreIds.size > 0 && attempt < 3) discoverParams.set("without_genres", [...excludedGenreIds].join(","));
-        if (topGenres.length > 0 && !outOfComfortZone && attempt < 2) {
+        if (topGenres.length > 0 && !effectiveOutOfComfortZone && explorationLevel < 7 && attempt < 2) {
           const genreIds = topGenres.map(g => genreIdMap[g]).filter(Boolean).slice(0, 3);
           if (genreIds.length > 0) discoverParams.set("with_genres", genreIds.join("|"));
+        } else if (topGenres.length > 0 && explorationLevel >= 7 && attempt < 2) {
+          // For high exploration: exclude preferred genres to force discovery
+          const genreIds = topGenres.map(g => genreIdMap[g]).filter(Boolean).slice(0, 3);
+          if (genreIds.length > 0) discoverParams.set("without_genres", [...new Set([...(discoverParams.get("without_genres") || "").split(",").filter(Boolean), ...genreIds.map(String)])].join(","));
         }
         if (platformIds && platformIds.length > 0 && attempt < 3) {
           discoverParams.set("with_watch_providers", platformIds.join("|"));
