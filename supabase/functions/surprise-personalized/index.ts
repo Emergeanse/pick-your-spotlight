@@ -323,6 +323,7 @@ Recommande UN film avec les scores détaillés.`;
         discoveryRatio: confidence.discoveryRatio,
         acceptanceRate,
         mode: aiFailed ? "fallback" : (shouldDiscover ? "discovery" : "precision"),
+        explorationLevel,
         embeddingCandidatesCount: embeddingCandidates.length,
         aiFallback: aiFailed,
       },
