@@ -40,36 +40,13 @@ async function fetchMovieDetail(id: number): Promise<MovieDetail> {
 }
 
 // Rating system
-const RATING_LABELS = [
-  { value: 0, label: "Pas pour moi" },
-  { value: 25, label: "Bof" },
-  { value: 50, label: "Correct" },
-  { value: 75, label: "J'aime bien" },
-  { value: 100, label: "Chef-d'œuvre" },
+const RATING_BUTTONS = [
+  { value: 5,   label: "Pas pour moi", style: "border-destructive/30 bg-destructive/5 text-destructive hover:bg-destructive/10" },
+  { value: 25,  label: "Bof",          style: "border-foreground/10 bg-foreground/5 text-muted-foreground hover:bg-foreground/10" },
+  { value: 50,  label: "Correct",      style: "border-foreground/10 bg-foreground/5 text-foreground/60 hover:bg-foreground/10" },
+  { value: 75,  label: "J'aime bien",  style: "border-primary/20 bg-primary/5 text-primary hover:bg-primary/10" },
+  { value: 100, label: "Chef-d'œuvre", style: "border-primary/30 bg-primary/10 text-primary hover:bg-primary/20" },
 ];
-
-const getRatingInfo = (value: number) => {
-  if (value <= 12) return { label: "Pas pour moi", sentiment: "negative" as const };
-  if (value <= 37) return { label: "Bof", sentiment: "low" as const };
-  if (value <= 62) return { label: "Correct", sentiment: "neutral" as const };
-  if (value <= 87) return { label: "J'aime bien", sentiment: "positive" as const };
-  return { label: "Chef-d'œuvre", sentiment: "love" as const };
-};
-
-const getSliderColor = (value: number) => {
-  if (value <= 12) return "bg-destructive";
-  if (value <= 37) return "bg-muted-foreground";
-  if (value <= 62) return "bg-foreground/50";
-  if (value <= 87) return "bg-primary";
-  return "bg-primary";
-};
-
-const getSliderGlow = (value: number) => {
-  if (value <= 37) return "";
-  if (value <= 62) return "";
-  if (value <= 87) return "shadow-[0_0_12px_hsl(var(--primary)/0.3)]";
-  return "shadow-[0_0_20px_hsl(var(--primary)/0.5)]";
-};
 
 const TasteTrainer = ({ onClose }: TasteTrainerProps) => {
   const { user } = useAuth();
