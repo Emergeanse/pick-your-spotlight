@@ -68,7 +68,6 @@ const Profile = () => {
       const data = profileRes.data;
       setProfile(data);
       setSelectedPlatforms(data?.preferred_platforms || []);
-      setExcludedPlatforms(data?.excluded_platforms || []);
       setMinRating((data as any)?.min_rating || 0);
       setMediaPreference((data as any)?.media_preference || "both");
       setRitualEnabled(data?.ritual_enabled || false);
