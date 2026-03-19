@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useNavigate, useLocation } from "react-router-dom";
 import HomeScreen from "@/components/pick/HomeScreen";
@@ -10,6 +10,8 @@ import RevealAnimation from "@/components/pick/RevealAnimation";
 import PlatformTour from "@/components/pick/PlatformTour";
 import ActivationFlow from "@/components/pick/ActivationFlow";
 import type { MissionId } from "@/components/pick/ActivationFlow";
+import WatchlistMissionGuide from "@/components/pick/WatchlistMissionGuide";
+import type { WatchlistGuideStep } from "@/components/pick/WatchlistMissionGuide";
 
 import type { ChatMessage } from "@/components/pick/VoiceChat";
 import { toast } from "sonner";
@@ -57,6 +59,10 @@ const Index = () => {
   const [showActivation, setShowActivation] = useState(false);
   const [profileLoaded, setProfileLoaded] = useState(false);
   const [activeActivationMission, setActiveActivationMission] = useState<MissionId | null>(null);
+  const [watchlistGuideStep, setWatchlistGuideStep] = useState<WatchlistGuideStep>(null);
+  const [watchlistGuideDone, setWatchlistGuideDone] = useState(false);
+  const [watchlistSavedCount, setWatchlistSavedCount] = useState(0);
+  const watchlistGuideAwaitingLoad = useRef(false);
 
   useEffect(() => {
     if ((location.state as any)?.openTrainer) {
@@ -186,15 +192,51 @@ const Index = () => {
         setShowChat(true);
         break;
       case "watchlist_3":
+        // Start the guided flow: first, highlight "Pick pour ce soir"
+        if (!watchlistGuideDone) {
+          setWatchlistGuideStep("pick-ce-soir");
+        }
+        break;
       case "like_5":
-        // Auto-trigger a recommendation so user lands on ResultScreen with bookmark/like buttons
+        // Auto-trigger a recommendation so user lands on ResultScreen with like button
         triggerSurpriseForMission();
         break;
     }
   };
 
+  // Advance watchlist guide when step changes to "result"
+  useEffect(() => {
+    if (watchlistGuideStep === "pick-ce-soir" && step === "result") {
+      setWatchlistGuideStep("autre-suggestion");
+    }
+  }, [step, watchlistGuideStep]);
+
+  // Listen for watchlist additions during the guide
+  useEffect(() => {
+    if (activeActivationMission !== "watchlist_3") return;
+    const handler = () => {
+      setWatchlistSavedCount(c => c + 1);
+      if (!watchlistGuideDone) {
+        setWatchlistGuideStep("continue");
+        setWatchlistGuideDone(true);
+        setTimeout(() => setWatchlistGuideStep(null), 4000);
+      }
+    };
+    window.addEventListener("pick-watchlist-added", handler);
+    return () => window.removeEventListener("pick-watchlist-added", handler);
+  }, [activeActivationMission, watchlistGuideDone]);
+
+  // Show "sauvegarder" step after new movie loads
+  useEffect(() => {
+    if (watchlistGuideAwaitingLoad.current && !loading && step === "result") {
+      watchlistGuideAwaitingLoad.current = false;
+      setTimeout(() => setWatchlistGuideStep("sauvegarder"), 500);
+    }
+  }, [loading, step]);
+
   const handleActivationComplete = () => {
     setShowActivation(false);
+    setWatchlistGuideStep(null);
     // Reload pick plus state to pick up the trial
     window.location.reload();
   };
@@ -262,6 +304,12 @@ const Index = () => {
   };
 
   const handleShowAnother = async (rejectReason?: string, rejectedMovie?: MovieDetail) => {
+    // Advance watchlist guide
+    if (watchlistGuideStep === "autre-suggestion") {
+      setWatchlistGuideStep(null);
+      watchlistGuideAwaitingLoad.current = true;
+    }
+
     const currentMovie = results[currentResultIndex];
     if (currentMovie) {
       trackInteraction(currentMovie.id, "skipped", {});
@@ -414,6 +462,15 @@ const Index = () => {
         <ActivationFlow
           onStartMission={handleActivationMission}
           onComplete={handleActivationComplete}
+        />
+      )}
+
+      {/* Watchlist Mission Guide */}
+      {watchlistGuideStep && (
+        <WatchlistMissionGuide
+          step={watchlistGuideStep}
+          savedCount={watchlistSavedCount}
+          target={3}
         />
       )}
     </div>

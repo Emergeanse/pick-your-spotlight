@@ -442,6 +442,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
       } else {
         await addToWatchlist(movie); setBookmarked(true); toast.success("Ajouté à ta watchlist !");
         trackInteraction(movie.id, "saved");
+        window.dispatchEvent(new CustomEvent("pick-watchlist-added"));
       }
     } catch { toast.error("Erreur lors de la sauvegarde"); }
     finally { setBookmarkLoading(false); }
@@ -957,6 +958,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
               <div className="flex items-center gap-2">
                 {/* Bookmark / Sauvegarder */}
                 <button
+                  data-tour="sauvegarder"
                   onClick={handleToggleBookmark}
                   disabled={bookmarkLoading}
                   className={`flex items-center gap-1.5 px-3.5 h-9 rounded-full border text-xs font-sans font-medium transition-all active:scale-95 ${
@@ -999,6 +1001,16 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
                   title="Partager"
                 >
                   <Share2 className="w-3.5 h-3.5" />
+                </button>
+
+                {/* Autre suggestion */}
+                <button
+                  data-tour="autre-suggestion"
+                  onClick={() => onShowAnother()}
+                  className="flex items-center gap-1.5 px-3.5 h-9 rounded-full border border-border/25 text-foreground/40 hover:text-primary hover:border-primary/25 text-xs font-sans font-medium transition-all active:scale-95"
+                >
+                  <RefreshCw className="w-3.5 h-3.5" />
+                  Autre suggestion
                 </button>
 
               </div>
@@ -1253,6 +1265,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
 
               <div className="px-5 pb-5 pt-2 space-y-1">
                 <button
+                  data-tour="autre-suggestion"
                   onClick={() => { setShowOptions(false); onShowAnother(); }}
                   className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl hover:bg-secondary/60 transition-colors active:scale-[0.98]"
                 >
