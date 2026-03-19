@@ -144,7 +144,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
         if ((data as any)?.excluded_genres) setUserExcludedGenres((data as any).excluded_genres);
         if ((data as any)?.min_rating) setUserMinRating((data as any).min_rating);
       });
-    // Load interaction history (all types) to avoid repeats
+    // Load interaction history (all types) to avoid repeats + count for progress
     supabase.from("user_interactions")
       .select("tmdb_id")
       .eq("user_id", user.id)
@@ -154,6 +154,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
         if (data) {
           const ids = [...new Set(data.map(d => d.tmdb_id))];
           setHistoryExcludeIds(ids);
+          setTotalEvaluated(ids.length);
         }
       });
   }, [user]);
