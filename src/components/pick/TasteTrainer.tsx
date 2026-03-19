@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence, PanInfo } from "framer-motion";
-import { ChevronLeft, Loader2, Sparkles, ArrowRight } from "lucide-react";
+import { ChevronLeft, Loader2, Sparkles, ArrowRight, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getPosterUrl, getDisplayTitle } from "@/lib/tmdb";
 import { likeMovie } from "@/lib/liked-movies";
@@ -16,8 +16,8 @@ const TMDB_API_KEY = "2dca580c2a14b55200e784d157207b4d";
 
 interface TasteTrainerProps {
   onClose: () => void;
-  isActivation?: boolean; // True when opened from onboarding activation
-  onActivationComplete?: () => void; // Called when user reaches threshold during activation
+  isActivation?: boolean;
+  onActivationComplete?: () => void;
 }
 
 const GENRE_MAP: Record<number, string> = {
@@ -43,25 +43,24 @@ async function fetchMovieDetail(id: number): Promise<MovieDetail> {
 }
 
 const RATING_BUTTONS = [
-  { value: 5,   label: "Pas pour moi", style: "border-destructive/30 bg-destructive/5 text-destructive hover:bg-destructive/10" },
-  { value: 25,  label: "Bof",          style: "border-foreground/10 bg-foreground/5 text-muted-foreground hover:bg-foreground/10" },
-  { value: 50,  label: "Correct",      style: "border-foreground/10 bg-foreground/5 text-foreground/60 hover:bg-foreground/10" },
-  { value: 75,  label: "J'aime bien",  style: "border-primary/20 bg-primary/5 text-primary hover:bg-primary/10" },
-  { value: 100, label: "Chef-d'œuvre", style: "border-primary/30 bg-primary/10 text-primary hover:bg-primary/20" },
+  { value: 5,   label: "Pas pour moi", emoji: "👎", color: "from-red-500/20 to-red-600/10 border-red-500/30 text-red-400" },
+  { value: 25,  label: "Bof",          emoji: "😐", color: "from-foreground/10 to-foreground/5 border-foreground/15 text-foreground/50" },
+  { value: 50,  label: "Correct",      emoji: "👌", color: "from-foreground/10 to-foreground/5 border-foreground/15 text-foreground/60" },
+  { value: 75,  label: "J'aime bien",  emoji: "😍", color: "from-primary/15 to-primary/5 border-primary/25 text-primary" },
+  { value: 100, label: "Chef-d'œuvre", emoji: "🤩", color: "from-primary/25 to-primary/10 border-primary/40 text-primary" },
 ];
 
-// Milestone messages that feel cinematic
-const getMilestoneMessage = (count: number, total: number): string | null => {
-  if (count === 3) return "Ça commence à prendre forme…";
-  if (count === 5) return "Pick apprend vite avec toi !";
-  if (count === 8) return "On y est presque…";
-  if (count === THRESHOLDS.minimum) return "Pick commence à te comprendre 🎯";
-  if (count === 13) return "Encore quelques-uns pour des recos au top";
-  if (count === 15) return "Tes goûts se dessinent clairement";
-  if (count === 18) return "Pick affine son radar…";
-  if (count === THRESHOLDS.ideal) return "Parfait ! Pick est prêt à te recommander ✨";
-  if (count === 25) return "Tu formes un duo de choc avec Pick";
-  if (count === 30) return "Pick te connaît par cœur 🧠";
+const getMilestoneMessage = (count: number): string | null => {
+  if (count === 3) return "🎬 Ça commence à prendre forme…";
+  if (count === 5) return "🧠 Pick apprend vite avec toi !";
+  if (count === 8) return "🍿 On y est presque…";
+  if (count === THRESHOLDS.minimum) return "🎯 Pick commence à te comprendre";
+  if (count === 13) return "✨ Encore quelques-uns pour des recos au top";
+  if (count === 15) return "🔮 Tes goûts se dessinent clairement";
+  if (count === 18) return "📡 Pick affine son radar…";
+  if (count === THRESHOLDS.ideal) return "🎉 Parfait ! Pick est prêt à te recommander";
+  if (count === 25) return "💫 Tu formes un duo de choc avec Pick";
+  if (count === 30) return "🧠 Pick te connaît par cœur";
   return null;
 };
 
@@ -80,6 +79,7 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
   const [sliderValue, setSliderValue] = useState(50);
   const [milestoneMsg, setMilestoneMsg] = useState<string | null>(null);
   const [showActivationCTA, setShowActivationCTA] = useState(false);
+  const [ratingFlash, setRatingFlash] = useState<string | null>(null);
   const milestoneTimeout = useRef<ReturnType<typeof setTimeout>>();
 
   const loadMovies = useCallback(async (p: number) => {
@@ -133,16 +133,13 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
   const sessionTarget = Math.max(0, THRESHOLDS.ideal - totalEvaluated);
   const sessionProgress = Math.min(totalProcessed, sessionTarget);
 
-  // Show milestone messages
   useEffect(() => {
-    const msg = getMilestoneMessage(cumulativeTotal, totalProcessed);
+    const msg = getMilestoneMessage(cumulativeTotal);
     if (msg) {
       setMilestoneMsg(msg);
       if (milestoneTimeout.current) clearTimeout(milestoneTimeout.current);
       milestoneTimeout.current = setTimeout(() => setMilestoneMsg(null), 3000);
     }
-
-    // Show activation CTA after reaching ideal threshold during activation
     if (isActivation && cumulativeTotal >= THRESHOLDS.ideal && !showActivationCTA) {
       setShowActivationCTA(true);
     }
@@ -159,24 +156,15 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
 
     try {
       const genres = (currentMovie.genre_ids || []).map(gid => GENRE_MAP[gid]).filter(Boolean);
-
       if (rating > 50) {
         const detail = await fetchMovieDetail(currentMovie.id);
         await likeMovie(detail);
-        await trackInteraction(currentMovie.id, actionType, {
-          source: "taste_trainer",
-          genres: genres.join(","),
-          rating: rating,
-        });
+        await trackInteraction(currentMovie.id, actionType, { source: "taste_trainer", genres: genres.join(","), rating });
         await recordAcceptedRecommendation(user.id);
         setLikedCount(c => c + 1);
         actionsRef.current.likes++;
       } else {
-        await trackInteraction(currentMovie.id, actionType, {
-          source: "taste_trainer",
-          genres: genres.join(","),
-          rating: rating,
-        });
+        await trackInteraction(currentMovie.id, actionType, { source: "taste_trainer", genres: genres.join(","), rating });
         await recordSkippedRecommendation(user.id);
         setSkippedCount(c => c + 1);
         actionsRef.current.skips++;
@@ -190,6 +178,7 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
       setSwiping(null);
       setSliderValue(50);
       setCurrentIndex(i => i + 1);
+      setRatingFlash(null);
     }, 300);
   };
 
@@ -220,7 +209,6 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
     onClose();
   };
 
-  const liveConfidence = Math.min(100, profileConfidence + totalProcessed * 2);
   const progressPercent = sessionTarget > 0
     ? Math.min(100, Math.round((sessionProgress / sessionTarget) * 100))
     : 100;
@@ -230,66 +218,75 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="absolute inset-0 z-50 flex flex-col bg-background"
+      className="absolute inset-0 z-50 flex flex-col bg-background overflow-hidden"
     >
+      {/* Ambient glow behind card */}
+      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] rounded-full bg-primary/8 blur-[120px] pointer-events-none" />
+
       {/* Header */}
-      <div className="flex items-center justify-between px-5 pt-[calc(1rem+env(safe-area-inset-top))] pb-2">
-        <button onClick={handleClose} className="text-foreground/50 hover:text-foreground transition-colors">
-          <ChevronLeft className="w-5 h-5" />
+      <div className="relative z-10 flex items-center justify-between px-5 pt-[calc(1rem+env(safe-area-inset-top))] pb-1">
+        <button onClick={handleClose} className="w-9 h-9 rounded-full bg-card/60 backdrop-blur-sm border border-border/30 flex items-center justify-center text-foreground/50 hover:text-foreground hover:bg-card transition-all">
+          <ChevronLeft className="w-4 h-4" />
         </button>
         <div className="text-center">
-          <h2 className="text-sm font-sans font-semibold text-foreground">
+          <h2 className="text-sm font-serif font-semibold text-foreground tracking-wide">
             {isActivation ? "Apprends-moi tes goûts" : "Entraîne ton Pick"}
           </h2>
         </div>
-        <div className="w-5" />
+        <div className="w-9" />
       </div>
 
       {/* Progress section */}
-      <div className="px-5 mb-3">
-        {/* Counter */}
-        <div className="flex items-center justify-between mb-1.5">
-          <span className="text-[11px] font-sans text-foreground/50">
-            {cumulativeTotal} film{cumulativeTotal > 1 ? "s" : ""} évalué{cumulativeTotal > 1 ? "s" : ""}
-          </span>
+      <div className="relative z-10 px-5 py-3">
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded-full bg-primary/15 border border-primary/25 flex items-center justify-center">
+              <Eye className="w-3 h-3 text-primary" />
+            </div>
+            <span className="text-xs font-sans font-medium text-foreground/70">
+              {cumulativeTotal} film{cumulativeTotal > 1 ? "s" : ""} évalué{cumulativeTotal > 1 ? "s" : ""}
+            </span>
+          </div>
           {sessionTarget > 0 && (
-            <span className="text-[11px] font-sans font-semibold text-primary">
-              {sessionProgress} / {sessionTarget}
+            <span className="text-xs font-sans font-bold text-primary tabular-nums">
+              {sessionProgress}/{sessionTarget}
             </span>
           )}
         </div>
 
         {/* Progress bar */}
-        <div className="h-2 rounded-full bg-foreground/10 overflow-hidden mb-1">
+        <div className="h-1.5 rounded-full bg-card border border-border/30 overflow-hidden">
           <motion.div
-            className="h-full rounded-full bg-primary"
+            className="h-full rounded-full bg-gradient-to-r from-primary/80 to-primary"
             initial={{ width: 0 }}
             animate={{ width: `${progressPercent}%` }}
-            transition={{ duration: 0.5, ease: "easeOut" }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
           />
         </div>
 
-        {/* Milestone message or default label */}
+        {/* Milestone message */}
         <AnimatePresence mode="wait">
           {milestoneMsg ? (
-            <motion.p
+            <motion.div
               key={milestoneMsg}
-              initial={{ opacity: 0, y: 5 }}
+              initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -5 }}
-              className="text-[11px] font-sans text-primary text-center font-medium"
+              exit={{ opacity: 0, y: -8 }}
+              className="mt-2.5 px-4 py-2 rounded-xl bg-primary/10 border border-primary/20 text-center"
             >
-              {milestoneMsg}
-            </motion.p>
+              <p className="text-xs font-sans font-medium text-primary">
+                {milestoneMsg}
+              </p>
+            </motion.div>
           ) : (
             <motion.p
               key="default"
               initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="text-[10px] font-sans text-foreground/30 text-center"
+              animate={{ opacity: 0.5 }}
+              className="text-[10px] font-sans text-foreground/30 text-center mt-2"
             >
               {cumulativeTotal < THRESHOLDS.minimum
-                ? "Plus tu swipes, mieux Pick te comprend"
+                ? "Plus tu évalues, mieux Pick te comprend"
                 : cumulativeTotal < THRESHOLDS.ideal
                 ? "Encore un peu pour des recos vraiment personnalisées"
                 : "Pick te connaît bien — continue pour encore plus de précision"}
@@ -299,14 +296,19 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
       </div>
 
       {/* Card stack */}
-      <div className="flex-1 flex items-center justify-center px-8 relative">
+      <div className="relative z-10 flex-1 flex items-center justify-center px-6">
         {loading && movies.length === 0 ? (
           <div className="flex flex-col items-center gap-3">
-            <Loader2 className="w-8 h-8 text-primary animate-spin" />
+            <div className="w-14 h-14 rounded-2xl bg-card border border-border/30 flex items-center justify-center">
+              <Loader2 className="w-6 h-6 text-primary animate-spin" />
+            </div>
             <p className="text-foreground/40 text-sm font-sans">Chargement des films…</p>
           </div>
         ) : !currentMovie ? (
-          <div className="flex flex-col items-center gap-3 text-center">
+          <div className="flex flex-col items-center gap-4 text-center">
+            <div className="w-16 h-16 rounded-2xl bg-card border border-border/30 flex items-center justify-center">
+              <Sparkles className="w-7 h-7 text-primary" />
+            </div>
             <p className="text-foreground/60 text-sm font-sans">Plus de films pour le moment !</p>
             <Button variant="outline" onClick={handleClose} className="rounded-full">
               Retour à l'accueil
@@ -314,9 +316,10 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
           </div>
         ) : (
           <>
+            {/* Background card (next) */}
             {nextMovie && (
-              <div className="absolute inset-x-8">
-                <div className="relative w-full aspect-[2/3] max-h-[65vh] rounded-2xl overflow-hidden border border-border/20 opacity-40 scale-95">
+              <div className="absolute inset-x-6">
+                <div className="relative w-full aspect-[2/3] max-h-[55vh] rounded-2xl overflow-hidden border border-border/10 opacity-30 scale-[0.92] translate-y-2">
                   <img
                     src={getPosterUrl(nextMovie.poster_path, "w500")}
                     alt=""
@@ -326,6 +329,7 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
               </div>
             )}
 
+            {/* Current card */}
             <AnimatePresence mode="popLayout">
               <motion.div
                 key={currentMovie.id}
@@ -333,31 +337,37 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
                 dragConstraints={{ left: 0, right: 0 }}
                 onDragEnd={handleDragEnd}
                 animate={
-                  swiping === "right" ? { x: 400, opacity: 0, rotate: 15 } :
-                  swiping === "left" ? { x: -400, opacity: 0, rotate: -15 } :
+                  swiping === "right" ? { x: 400, opacity: 0, rotate: 12 } :
+                  swiping === "left" ? { x: -400, opacity: 0, rotate: -12 } :
                   { x: 0, opacity: 1, rotate: 0 }
                 }
-                initial={{ scale: 0.95, opacity: 0 }}
+                initial={{ scale: 0.92, opacity: 0 }}
                 exit={{ opacity: 0 }}
                 transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                className="relative w-full aspect-[2/3] max-h-[65vh] rounded-2xl overflow-hidden border-2 border-border/30 shadow-2xl cursor-grab active:cursor-grabbing"
+                className="relative w-full aspect-[2/3] max-h-[55vh] rounded-2xl overflow-hidden shadow-2xl cursor-grab active:cursor-grabbing group"
                 style={{ touchAction: "none" }}
               >
+                {/* Card border glow */}
+                <div className="absolute inset-0 rounded-2xl border border-border/40 z-20 pointer-events-none" />
+                <div className="absolute -inset-px rounded-2xl bg-gradient-to-b from-white/5 to-transparent z-20 pointer-events-none" />
+
                 <img
                   src={getPosterUrl(currentMovie.poster_path, "w780")}
                   alt={getDisplayTitle(currentMovie)}
-                  className="w-full h-full object-contain bg-black/90"
+                  className="w-full h-full object-contain bg-black/95"
                   draggable={false}
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+
+                {/* Bottom gradient with info */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent z-10" />
                 
-                <div className="absolute bottom-0 left-0 right-0 p-5">
-                  <h3 className="text-lg font-serif text-white font-bold leading-tight mb-1">
+                <div className="absolute bottom-0 left-0 right-0 p-5 z-10">
+                  <h3 className="text-lg font-serif text-white font-bold leading-tight mb-1.5 drop-shadow-lg">
                     {getDisplayTitle(currentMovie)}
                   </h3>
-                  <div className="flex items-center gap-2 flex-wrap mb-2">
-                    <span className="text-white/60 text-xs font-sans">
-                      ⭐ {currentMovie.vote_average?.toFixed(1)}
+                  <div className="flex items-center gap-2.5 mb-2.5">
+                    <span className="text-white/80 text-xs font-sans font-medium flex items-center gap-1">
+                      <span className="text-yellow-400">★</span> {currentMovie.vote_average?.toFixed(1)}
                     </span>
                     {currentMovie.release_date && (
                       <span className="text-white/40 text-xs font-sans">
@@ -367,7 +377,7 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
                   </div>
                   <div className="flex gap-1.5 flex-wrap">
                     {(currentMovie.genre_ids || []).slice(0, 3).map(gid => (
-                      <span key={gid} className="text-[10px] font-sans px-2 py-0.5 rounded-full bg-white/15 text-white/70">
+                      <span key={gid} className="text-[10px] font-sans px-2.5 py-0.5 rounded-full bg-white/10 backdrop-blur-sm text-white/70 border border-white/10">
                         {GENRE_MAP[gid] || ""}
                       </span>
                     ))}
@@ -376,19 +386,33 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
 
                 {/* Swipe indicators */}
                 <motion.div
-                  className="absolute top-6 left-6 px-4 py-2 rounded-xl bg-destructive/90 border-2 border-destructive"
+                  className="absolute top-6 left-6 px-5 py-2.5 rounded-2xl bg-red-500/90 backdrop-blur-sm border border-red-400/50 z-30"
                   style={{ opacity: 0 }}
                   whileDrag={{ opacity: 1 }}
                 >
-                  <span className="text-white font-sans font-bold text-sm">PASSE</span>
+                  <span className="text-white font-sans font-bold text-sm tracking-wide">PASSE</span>
                 </motion.div>
                 <motion.div
-                  className="absolute top-6 right-6 px-4 py-2 rounded-xl bg-primary/90 border-2 border-primary"
+                  className="absolute top-6 right-6 px-5 py-2.5 rounded-2xl bg-primary/90 backdrop-blur-sm border border-primary/50 z-30"
                   style={{ opacity: 0 }}
                   whileDrag={{ opacity: 1 }}
                 >
-                  <span className="text-white font-sans font-bold text-sm">J'AIME</span>
+                  <span className="text-white font-sans font-bold text-sm tracking-wide">J'AIME</span>
                 </motion.div>
+
+                {/* Rating flash overlay */}
+                <AnimatePresence>
+                  {ratingFlash && (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.5 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0 }}
+                      className="absolute inset-0 flex items-center justify-center z-30 pointer-events-none"
+                    >
+                      <span className="text-5xl">{ratingFlash}</span>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </motion.div>
             </AnimatePresence>
           </>
@@ -397,19 +421,22 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
 
       {/* Rating buttons */}
       {currentMovie && !showActivationCTA && (
-        <div className="px-4 pb-[calc(1.5rem+env(safe-area-inset-bottom))] pt-4">
-          <div className="flex items-center justify-center gap-2">
+        <div className="relative z-10 px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-3">
+          <div className="flex items-stretch justify-center gap-1.5">
             {RATING_BUTTONS.map((btn) => (
               <motion.button
                 key={btn.value}
-                whileTap={{ scale: 0.9 }}
+                whileTap={{ scale: 0.88 }}
+                whileHover={{ scale: 1.04, y: -2 }}
                 onClick={() => {
                   setSliderValue(btn.value);
-                  setTimeout(() => handleRate(), 50);
+                  setRatingFlash(btn.emoji);
+                  setTimeout(() => handleRate(), 150);
                 }}
-                className={`flex-1 py-2.5 px-1 rounded-xl border text-center transition-all duration-200 ${btn.style}`}
+                className={`flex-1 py-3 px-1 rounded-xl border bg-gradient-to-b transition-all duration-200 ${btn.color}`}
               >
-                <span className="text-[11px] font-sans font-medium leading-tight block">
+                <span className="text-lg block mb-0.5">{btn.emoji}</span>
+                <span className="text-[10px] font-sans font-medium leading-tight block opacity-80">
                   {btn.label}
                 </span>
               </motion.button>
@@ -422,14 +449,14 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
               setProcessedIds(prev => new Set(prev).add(currentMovie.id));
               setCurrentIndex(i => i + 1);
             }}
-            className="w-full mt-2.5 py-2 text-center"
+            className="w-full mt-3 py-2 text-center group"
           >
-            <span className="text-[11px] font-sans text-foreground/30 hover:text-foreground/50 transition-colors">
-              Je ne connais pas ce film
+            <span className="text-[11px] font-sans text-foreground/25 group-hover:text-foreground/40 transition-colors">
+              Je ne connais pas ce film →
             </span>
           </motion.button>
 
-          <p className="text-center text-foreground/25 text-[10px] font-sans mt-1">
+          <p className="text-center text-foreground/15 text-[10px] font-sans mt-1">
             Choisis ton ressenti · ou swipe la carte
           </p>
         </div>
@@ -441,15 +468,21 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            className="px-5 pb-[calc(2rem+env(safe-area-inset-bottom))] pt-4"
+            className="relative z-10 px-5 pb-[calc(2rem+env(safe-area-inset-bottom))] pt-4"
           >
-            <div className="bg-card/80 backdrop-blur-sm rounded-2xl border border-primary/20 p-5 text-center">
-              <Sparkles className="w-6 h-6 text-primary mx-auto mb-2" />
-              <h3 className="text-lg font-serif mb-1">Pick est prêt !</h3>
-              <p className="text-foreground/50 text-sm font-sans mb-4">
+            <div className="bg-card/80 backdrop-blur-xl rounded-2xl border border-primary/20 p-6 text-center shadow-lg shadow-primary/5">
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ type: "spring", delay: 0.2 }}
+              >
+                <Sparkles className="w-8 h-8 text-primary mx-auto mb-3" />
+              </motion.div>
+              <h3 className="text-xl font-serif mb-1.5">Pick est prêt !</h3>
+              <p className="text-foreground/50 text-sm font-sans mb-5 max-w-xs mx-auto leading-relaxed">
                 Maintenant qu'on se connaît, trouvons ton film de ce soir.
               </p>
-              <div className="flex flex-col gap-2">
+              <div className="flex flex-col gap-2.5">
                 <Button
                   variant="hero"
                   size="xl"
@@ -462,9 +495,9 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
                 </Button>
                 <button
                   onClick={() => setShowActivationCTA(false)}
-                  className="text-foreground/30 text-xs font-sans hover:text-foreground/50 transition-colors"
+                  className="text-foreground/25 text-xs font-sans hover:text-foreground/40 transition-colors py-1"
                 >
-                  Je continue à swiper
+                  Je continue à évaluer
                 </button>
               </div>
             </div>
