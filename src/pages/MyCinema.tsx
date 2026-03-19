@@ -38,7 +38,7 @@ const MyCinema = () => {
         getEngagementData(user.id),
         getLikedMovies().catch(() => []),
         supabase.from("cinematic_profiles" as any)
-          .select("personality_title")
+          .select("personality_title, dna_archetype, global_level")
           .eq("user_id", user.id)
           .maybeSingle(),
       ]);
@@ -51,7 +51,9 @@ const MyCinema = () => {
         })).filter((m: any) => m.poster)
       );
       if (dnaData.data) {
-        setDnaTitle((dnaData.data as any).personality_title || null);
+        const d = dnaData.data as any;
+        setDnaTitle(d.dna_archetype || d.personality_title || null);
+        setDnaLevel(d.global_level || null);
       }
     } catch (e) {
       console.error(e);
