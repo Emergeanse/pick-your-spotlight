@@ -27,6 +27,7 @@ const BottomTabBar = () => {
           return (
             <button
               key={tab.id}
+              data-tour={`tab-${tab.id}`}
               onClick={() => navigate(tab.path)}
               className="relative flex flex-col items-center justify-center gap-0.5 w-16 h-full transition-colors"
               style={{ WebkitTapHighlightColor: "transparent" }}
