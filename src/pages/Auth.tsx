@@ -16,6 +16,7 @@ const Auth = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const inviteCode = searchParams.get("invite");
+  const redirectTo = searchParams.get("redirect");
 
   const { user, isReady } = useAuth();
 
@@ -26,8 +27,8 @@ const Auth = () => {
     }
   }, [isReady, user, inviteCode]);
 
-  if (isReady && user) {
-    return <Navigate to="/app" replace />;
+  if (isReady && user && !inviteCode) {
+    return <Navigate to={redirectTo || "/app"} replace />;
   }
 
   const processInvite = async (userId: string, code: string) => {
@@ -56,7 +57,7 @@ const Auth = () => {
         if (error) throw error;
         if (inviteCode && data.user) await processInvite(data.user.id, inviteCode);
         toast.success("Connecté !");
-        navigate("/app");
+        navigate(redirectTo || "/app");
       } else {
         const { error } = await supabase.auth.signUp({
           email,
