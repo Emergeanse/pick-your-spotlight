@@ -28,7 +28,8 @@ serve(async (req) => {
   }
 
   try {
-    const { memberIds, mood, context, timeAvailable } = await req.json();
+    const { memberIds, mood, context, timeAvailable, mediaType: rawMediaType } = await req.json();
+    const mediaType: "movie" | "tv" | "both" = rawMediaType === "tv" ? "tv" : rawMediaType === "movie" ? "movie" : "both";
 
     if (!memberIds || memberIds.length < 2) {
       return new Response(JSON.stringify({ error: "Au moins 2 membres requis" }), {
