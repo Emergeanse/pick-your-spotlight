@@ -352,88 +352,29 @@ const TasteTrainer = ({ onClose }: TasteTrainerProps) => {
         )}
       </div>
 
-      {/* Rating slider */}
+      {/* Rating buttons */}
       {currentMovie && (
-        <div className="px-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] pt-4">
-          {/* Current rating label */}
-          <div className="flex items-center justify-center mb-3">
-            <motion.span
-              key={ratingInfo.label}
-              initial={{ opacity: 0, y: 4 }}
-              animate={{ opacity: 1, y: 0 }}
-              className={`text-sm font-sans font-semibold ${
-                ratingInfo.sentiment === "negative" ? "text-destructive" :
-                ratingInfo.sentiment === "low" ? "text-muted-foreground" :
-                ratingInfo.sentiment === "neutral" ? "text-foreground/60" :
-                "text-primary"
-              }`}
-            >
-              {ratingInfo.label}
-            </motion.span>
+        <div className="px-4 pb-[calc(1.5rem+env(safe-area-inset-bottom))] pt-4">
+          <div className="flex items-center justify-center gap-2">
+            {RATING_BUTTONS.map((btn) => (
+              <motion.button
+                key={btn.value}
+                whileTap={{ scale: 0.9 }}
+                onClick={() => {
+                  setSliderValue(btn.value);
+                  setTimeout(() => handleRate(), 50);
+                }}
+                className={`flex-1 py-2.5 px-1 rounded-xl border text-center transition-all duration-200 ${btn.style}`}
+              >
+                <span className="text-[11px] font-sans font-medium leading-tight block">
+                  {btn.label}
+                </span>
+              </motion.button>
+            ))}
           </div>
 
-          {/* Slider track */}
-          <div className="relative mb-4">
-            <div className="relative h-10 flex items-center">
-              {/* Background track */}
-              <div className="absolute inset-x-0 h-1.5 rounded-full bg-foreground/10" />
-              
-              {/* Filled track */}
-              <motion.div
-                className={`absolute left-0 h-1.5 rounded-full transition-colors duration-200 ${getSliderColor(sliderValue)}`}
-                style={{ width: `${sliderValue}%` }}
-                layout
-              />
-
-              {/* Tick marks */}
-              <div className="absolute inset-x-0 flex justify-between px-0">
-                {RATING_LABELS.map((r) => (
-                  <button
-                    key={r.value}
-                    onClick={() => setSliderValue(r.value === 0 ? 5 : r.value)}
-                    className="w-1 h-1 rounded-full bg-foreground/20 hover:bg-foreground/40 transition-colors relative z-10"
-                  />
-                ))}
-              </div>
-
-              {/* Range input */}
-              <input
-                type="range"
-                min={0}
-                max={100}
-                value={sliderValue}
-                onChange={(e) => setSliderValue(Number(e.target.value))}
-                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20"
-              />
-
-              {/* Thumb */}
-              <motion.div
-                className={`absolute top-1/2 -translate-y-1/2 w-6 h-6 rounded-full border-2 border-background ${getSliderColor(sliderValue)} ${getSliderGlow(sliderValue)} pointer-events-none z-10`}
-                style={{ left: `calc(${sliderValue}% - 12px)` }}
-                layout
-                transition={{ type: "spring", stiffness: 400, damping: 30 }}
-              />
-            </div>
-
-            {/* Labels underneath */}
-            <div className="flex justify-between mt-1 px-0">
-              <span className="text-[9px] font-sans text-foreground/30">Pas pour moi</span>
-              <span className="text-[9px] font-sans text-foreground/30">Chef-d'œuvre</span>
-            </div>
-          </div>
-
-          {/* Validate button */}
-          <motion.button
-            whileTap={{ scale: 0.95 }}
-            onClick={handleRate}
-            className="w-full py-3 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center gap-2 hover:bg-primary/20 transition-colors"
-          >
-            <Check className="w-4 h-4 text-primary" />
-            <span className="text-sm font-sans font-medium text-primary">Valider</span>
-          </motion.button>
-
-          <p className="text-center text-foreground/25 text-[10px] font-sans mt-2.5">
-            Glisse le curseur puis valide · ou swipe la carte
+          <p className="text-center text-foreground/25 text-[10px] font-sans mt-3">
+            Choisis ton ressenti · ou swipe la carte
           </p>
         </div>
       )}
