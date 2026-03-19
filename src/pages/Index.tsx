@@ -3,8 +3,6 @@ import GuidedTour, { TOUR_KEY } from "@/components/pick/GuidedTour";
 import { AnimatePresence, motion } from "framer-motion";
 import { useNavigate, useLocation } from "react-router-dom";
 import HomeScreen from "@/components/pick/HomeScreen";
-import WhoStep, { type WhoOption } from "@/components/pick/WhoStep";
-import WhatStep, { type WhatOption } from "@/components/pick/WhatStep";
 import ResultScreen from "@/components/pick/ResultScreen";
 import VoiceChat from "@/components/pick/VoiceChat";
 import CompanionMode from "@/components/pick/CompanionMode";
@@ -13,51 +11,22 @@ import RevealAnimation from "@/components/pick/RevealAnimation";
 import { useCompanion } from "@/contexts/CompanionContext";
 import type { ChatMessage } from "@/components/pick/VoiceChat";
 import { toast } from "sonner";
-import StepLayout from "@/components/pick/StepLayout";
 import BrandHeader from "@/components/pick/BrandHeader";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { recordAcceptedRecommendation, recordSkippedRecommendation } from "@/lib/engagement";
 import type { MovieDetail } from "@/lib/tmdb";
-import { getDisplayTitle } from "@/lib/tmdb";
+import { getDisplayTitle, getSurpriseRecommendation } from "@/lib/tmdb";
 import { trackInteraction, getUserTasteProfile } from "@/lib/interactions";
 import { usePickPlus } from "@/hooks/use-pick-plus";
 import PickPlusPaywall from "@/components/pick/PickPlusPaywall";
 import { getLikedMovies } from "@/lib/liked-movies";
 import { computeUserTasteVector } from "@/lib/taste-engine";
-import { getSurpriseRecommendation, getWatchProviders } from "@/lib/tmdb";
 
-type Step = "home" | "who" | "what" | "result";
-
-const STEP_ORDER: Step[] = ["who", "what"];
-const TOTAL_STEPS = STEP_ORDER.length;
-
-function getStepNumber(step: Step): number {
-  const idx = STEP_ORDER.indexOf(step);
-  return idx >= 0 ? idx + 1 : 0;
-}
-
-const slideVariants = {
-  enter: { x: 80, opacity: 0 },
-  center: { x: 0, opacity: 1 },
-  exit: { x: -80, opacity: 0 },
-};
-
-const LOADING_MESSAGES = [
-  "Je cherche la perle rare…",
-  "Voyons voir ce que j'ai pour toi…",
-  "Analyse de ton profil…",
-  "Je parcours mes favoris…",
-  "Je fouille dans ma cinémathèque…",
-  "C'est presque prêt, promis !",
-  "Je compare quelques options pour toi…",
-  "J'affine ma sélection…",
-];
+type Step = "home" | "result";
 
 const Index = () => {
   const [step, setStep] = useState<Step>("home");
-  const [who, setWho] = useState<WhoOption | null>(null);
-  const [what, setWhat] = useState<WhatOption | null>(null);
   const [results, setResults] = useState<MovieDetail[]>([]);
   const [loading, setLoading] = useState(false);
   const [currentResultIndex, setCurrentResultIndex] = useState(0);
@@ -72,8 +41,7 @@ const Index = () => {
     minRating: number;
     preferredPlatforms: number[];
     profileConfidence: number;
-    favoriteGenres: string[];
-  }>({ excludedGenres: [], excludedPlatforms: [], minRating: 0, preferredPlatforms: [], profileConfidence: 0, favoriteGenres: [] });
+  }>({ excludedGenres: [], excludedPlatforms: [], minRating: 0, preferredPlatforms: [], profileConfidence: 0 });
   const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -81,7 +49,6 @@ const Index = () => {
   const [openTrainerOnMount, setOpenTrainerOnMount] = useState(false);
   const [showTour, setShowTour] = useState(false);
 
-  // Check if we should open the trainer (from MyCinema navigation)
   useEffect(() => {
     if ((location.state as any)?.openTrainer) {
       setOpenTrainerOnMount(true);
@@ -89,7 +56,6 @@ const Index = () => {
     }
   }, [location.state]);
 
-  // Handle movie from Pick FAB chat
   const loadChatMovie = useCallback(() => {
     const stored = sessionStorage.getItem("pick-fab-movie");
     if (stored) {
@@ -126,7 +92,6 @@ const Index = () => {
             minRating: (data as any).min_rating || 0,
             preferredPlatforms: data.preferred_platforms || [],
             profileConfidence: (data as any).profile_confidence || 0,
-            favoriteGenres: data.favorite_genres || [],
           });
           if (data.onboarding_completed && !localStorage.getItem(TOUR_KEY)) {
             setShowTour(true);
@@ -135,21 +100,9 @@ const Index = () => {
       });
   }, [user, navigate]);
 
-  // Helper: invoke surprise-personalized with retry on 429
-  const invokeSurprisePersonalized = async (body: any, retries = 2): Promise<any> => {
-    const { data, error } = await supabase.functions.invoke("surprise-personalized", { body });
-    if (error) {
-      const errMsg = typeof error === "object" && error?.message ? error.message : String(error);
-      if (retries > 0 && (errMsg.includes("429") || errMsg.includes("Trop de requêtes"))) {
-        await new Promise(r => setTimeout(r, 2000 + Math.random() * 1000));
-        return invokeSurprisePersonalized(body, retries - 1);
-      }
-      throw error;
-    }
-    return data;
+  const handleStart = () => {
+    // Flow is now handled inside HomeScreen (who → what → tonight pick overlay)
   };
-
-  const handleStart = () => setStep("who");
 
   const handleSurprise = (movie: MovieDetail) => {
     setResults([movie]);
@@ -186,113 +139,24 @@ const Index = () => {
     setStep("result");
   };
 
-  const handleWhoSelect = (w: WhoOption) => {
-    setWho(w);
-    if (w === "duo" || w === "group") {
-      // Navigate to Pick Together flow for group mode
-      navigate("/app/pick-together");
-      return;
-    }
-    setStep("what");
-  };
-
-  const handleWhatSelect = async (w: WhatOption) => {
-    setWhat(w);
-    
-    // Check freemium limit
-    const allowed = await pickPlus.recordRecommendation();
-    if (!allowed) {
-      setStep("home");
-      return;
-    }
-
-    // Build search tags
-    const tags: string[] = [];
-    if (w === "movie") tags.push("film");
-    else if (w === "tv") tags.push("série");
-    setSearchTags(tags);
-
-    // Generate recommendation directly using profile
-    setLoading(true);
-    let msgIndex = 0;
-    setLoadingMessage(LOADING_MESSAGES[0]);
-    const msgInterval = setInterval(() => {
-      msgIndex = (msgIndex + 1) % LOADING_MESSAGES.length;
-      setLoadingMessage(LOADING_MESSAGES[msgIndex]);
-    }, 2000);
-
-    try {
-      let movie: MovieDetail;
-
-      if (user) {
-        const liked = await getLikedMovies();
-        // Load interaction history for exclusion
-        const { data: interactionData } = await supabase.from("user_interactions")
-          .select("tmdb_id")
-          .eq("user_id", user.id)
-          .in("action_type", ["watched", "skipped", "already_seen", "liked", "unsure"])
-          .limit(500);
-        const excludeIds = interactionData ? [...new Set(interactionData.map(d => d.tmdb_id))] : [];
-
-        if (liked.length >= 2) {
-          const [userTasteVector, tasteProfile] = await Promise.all([
-            computeUserTasteVector(user.id),
-            getUserTasteProfile(),
-          ]);
-          const data = await invokeSurprisePersonalized({
-            likedMovies: liked,
-            userTasteVector,
-            tasteProfile,
-            platformIds: profilePrefs.preferredPlatforms,
-            excludedPlatformIds: profilePrefs.excludedPlatforms,
-            excludedGenres: profilePrefs.excludedGenres,
-            minRating: profilePrefs.minRating,
-            excludeIds,
-            mediaType: w === "both" ? undefined : w,
-          });
-          movie = data.movie as MovieDetail;
-        } else {
-          movie = await getSurpriseRecommendation(excludeIds, {
-            platformIds: profilePrefs.preferredPlatforms,
-            minRating: profilePrefs.minRating,
-            excludedGenres: profilePrefs.excludedGenres,
-          });
-        }
-      } else {
-        movie = await getSurpriseRecommendation([], {
-          platformIds: profilePrefs.preferredPlatforms,
-          minRating: profilePrefs.minRating,
-          excludedGenres: profilePrefs.excludedGenres,
-        });
+  // Helper: invoke surprise-personalized with retry on 429
+  const invokeSurprisePersonalized = async (body: any, retries = 2): Promise<any> => {
+    const { data, error } = await supabase.functions.invoke("surprise-personalized", { body });
+    if (error) {
+      const errMsg = typeof error === "object" && error?.message ? error.message : String(error);
+      if (retries > 0 && (errMsg.includes("429") || errMsg.includes("Trop de requêtes"))) {
+        await new Promise(r => setTimeout(r, 2000 + Math.random() * 1000));
+        return invokeSurprisePersonalized(body, retries - 1);
       }
-
-      clearInterval(msgInterval);
-      setResults([movie]);
-      setCurrentResultIndex(0);
-      setStep("result");
-    } catch (e) {
-      console.error(e);
-      clearInterval(msgInterval);
-      try {
-        const movie = await getSurpriseRecommendation([], {
-          platformIds: profilePrefs.preferredPlatforms,
-          minRating: profilePrefs.minRating,
-          excludedGenres: profilePrefs.excludedGenres,
-        });
-        setResults([movie]);
-        setCurrentResultIndex(0);
-        setStep("result");
-      } catch { /* ignore */ }
-    } finally {
-      setLoading(false);
-      setLoadingMessage("");
+      throw error;
     }
+    return data;
   };
 
   const handleShowAnother = async (rejectReason?: string, rejectedMovie?: MovieDetail) => {
     const currentMovie = results[currentResultIndex];
     if (currentMovie) {
-      trackInteraction(currentMovie.id, "skipped", { who, what });
+      trackInteraction(currentMovie.id, "skipped", {});
       if (user) recordSkippedRecommendation(user.id);
     }
     if (currentResultIndex < results.length - 1 && !rejectReason) {
@@ -313,20 +177,14 @@ const Index = () => {
         if (user) {
           const liked = await getLikedMovies();
           if (liked.length >= 2) {
-            const [userTasteVector] = await Promise.all([
-              computeUserTasteVector(user.id),
-            ]);
+            const [userTasteVector] = await Promise.all([computeUserTasteVector(user.id)]);
             const data = await invokeSurprisePersonalized({
-              likedMovies: liked,
-              userTasteVector,
-              tasteProfile,
+              likedMovies: liked, userTasteVector, tasteProfile,
               platformIds: profilePrefs.preferredPlatforms,
               excludedPlatformIds: profilePrefs.excludedPlatforms,
               excludedGenres: profilePrefs.excludedGenres,
               minRating: profilePrefs.minRating,
-              excludeIds,
-              rejectionContext,
-              mediaType: what === "both" ? undefined : what,
+              excludeIds, rejectionContext,
             });
             if (data?.movie) {
               setResults(prev => [...prev, data.movie]);
@@ -352,7 +210,7 @@ const Index = () => {
   const handleStartCompanion = () => {
     const currentMovie = results[currentResultIndex];
     if (currentMovie) {
-      trackInteraction(currentMovie.id, "watched", { who, what });
+      trackInteraction(currentMovie.id, "watched", {});
       if (user) recordAcceptedRecommendation(user.id);
       activateCompanion(currentMovie);
       toast("🎬 Companion activé — Pick est là pendant tout le film", { duration: 3000 });
@@ -362,8 +220,6 @@ const Index = () => {
 
   const handleRestart = () => {
     setStep("home");
-    setWho(null);
-    setWhat(null);
     setResults([]);
     setCurrentResultIndex(0);
     setSearchTags([]);
@@ -373,17 +229,7 @@ const Index = () => {
     setSearchTags(prev => prev.filter(t => t !== tag));
   };
 
-  const currentStepNumber = getStepNumber(step);
-  const isQuestionStep = currentStepNumber > 0;
   const showTabBar = step === "home";
-
-  const renderStep = () => {
-    switch (step) {
-      case "who": return <WhoStep onSelect={handleWhoSelect} />;
-      case "what": return <WhatStep onSelect={handleWhatSelect} />;
-      default: return null;
-    }
-  };
 
   return (
     <div className="fixed inset-0 bg-background overflow-hidden">
@@ -393,15 +239,6 @@ const Index = () => {
             className="absolute inset-0 pb-[calc(3.5rem+env(safe-area-inset-bottom))]"
           >
             <HomeScreen onStart={handleStart} onOpenChat={handleOpenChat} onSurprise={handleSurprise} onMovieSelect={handleMovieSelect} loading={loading} openTrainerOnMount={openTrainerOnMount} onTrainerOpened={() => setOpenTrainerOnMount(false)} />
-          </motion.div>
-        )}
-
-        {isQuestionStep && step !== "result" && (
-          <motion.div key={step} variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.35, ease: "easeOut" }} className="absolute inset-0">
-            <BrandHeader showBack onBack={handleRestart} />
-            <StepLayout currentStep={currentStepNumber} totalSteps={TOTAL_STEPS}>
-              {renderStep()}
-            </StepLayout>
           </motion.div>
         )}
 
@@ -443,7 +280,7 @@ const Index = () => {
               }}
               onStartCompanion={handleStartCompanion}
               hasMore={currentResultIndex < results.length - 1}
-              userCriteria={{ mood: null, context: who === "alone" ? "alone" : who === "duo" ? "couple" : "friends", time: null }}
+              userCriteria={{ mood: null, context: null, time: null }}
               searchTags={searchTags}
               onRemoveTag={handleRemoveTag}
               refining={loading}
@@ -459,10 +296,6 @@ const Index = () => {
       </AnimatePresence>
 
       {showTabBar && <BottomTabBar />}
-
-      <AnimatePresence>
-        {loading && step !== "result" && <RevealAnimation active={loading} message={loadingMessage || undefined} />}
-      </AnimatePresence>
 
       <AnimatePresence>
         {showChat && <VoiceChat onClose={handleCloseChat} onMovieSuggested={handleMovieSuggested} initialMessages={chatInitialMessages} />}
