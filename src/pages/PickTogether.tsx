@@ -7,6 +7,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import BrandHeader from "@/components/pick/BrandHeader";
+import BottomTabBar from "@/components/pick/BottomTabBar";
 import PickCharacter from "@/components/pick/PickCharacter";
 import { QRCodeSVG } from "qrcode.react";
 import type { MovieDetail } from "@/lib/tmdb";
