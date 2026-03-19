@@ -127,8 +127,8 @@ function ActorCard({ actor }: { actor: import("@/lib/tmdb").CastMember }) {
                               </div>
                             )}
                             <p className="text-foreground/50 text-[10px] font-sans leading-tight mt-1 truncate">{m.title}</p>
-                            {m.release_date && (
-                              <p className="text-foreground/25 text-[9px] font-sans">{m.release_date.split("-")[0]}</p>
+                            {m.year && (
+                              <p className="text-foreground/25 text-[9px] font-sans">{m.year}</p>
                             )}
                           </div>
                         ))}
