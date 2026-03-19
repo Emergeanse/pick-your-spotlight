@@ -124,22 +124,25 @@ export type Database = {
       }
       group_session_members: {
         Row: {
+          guest_name: string | null
           id: string
           joined_at: string
           session_id: string
-          user_id: string
+          user_id: string | null
         }
         Insert: {
+          guest_name?: string | null
           id?: string
           joined_at?: string
           session_id: string
-          user_id: string
+          user_id?: string | null
         }
         Update: {
+          guest_name?: string | null
           id?: string
           joined_at?: string
           session_id?: string
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: [
           {

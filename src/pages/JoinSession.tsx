@@ -3,10 +3,18 @@ import { motion } from "framer-motion";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
-import { Loader2, Users, LogIn, UserPlus, Sparkles } from "lucide-react";
+import { Loader2, LogIn, UserPlus, Sparkles, Star, Film, Users, Bookmark } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import PickCharacter from "@/components/pick/PickCharacter";
+
+const BENEFITS = [
+  { icon: Bookmark, text: "Sauvegarde tes recommandations" },
+  { icon: Star, text: "Profil cinéma personnalisé (CinéDNA)" },
+  { icon: Film, text: "Crée tes propres soirées ciné" },
+  { icon: Users, text: "Retrouve tes amis cinéphiles" },
+];
 
 const JoinSession = () => {
   const [searchParams] = useSearchParams();
@@ -15,8 +23,10 @@ const JoinSession = () => {
   const { user, isReady } = useAuth();
   const [loading, setLoading] = useState(true);
   const [joining, setJoining] = useState(false);
-  const [sessionInfo, setSessionInfo] = useState<{ name: string; creatorName: string } | null>(null);
+  const [sessionInfo, setSessionInfo] = useState<{ name: string; creatorName: string; sessionId: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [showGuestForm, setShowGuestForm] = useState(false);
+  const [guestName, setGuestName] = useState("");
 
   useEffect(() => {
     if (!sessionCode) {
@@ -44,6 +54,7 @@ const JoinSession = () => {
         setSessionInfo({
           name: data.session.name,
           creatorName: data.creator.displayName,
+          sessionId: data.session.id,
         });
       }
     } catch {
@@ -74,11 +85,27 @@ const JoinSession = () => {
     }
   };
 
-  const handleLogin = () => {
-    navigate(`/auth?redirect=${encodeURIComponent(`/join?session=${sessionCode}`)}`);
+  const joinAsGuest = async () => {
+    if (!guestName.trim()) return;
+    setJoining(true);
+    try {
+      const { data, error: fnErr } = await supabase.functions.invoke("join-session", {
+        body: { sessionCode, guest: true, guestName: guestName.trim() },
+      });
+      if (fnErr || data?.error) {
+        toast.error(data?.error || "Impossible de rejoindre");
+        setJoining(false);
+        return;
+      }
+      toast.success(`Bienvenue ${guestName.trim()} ! 🍿`);
+      navigate(`/app/pick-together?session=${data.session.id}`, { replace: true });
+    } catch {
+      toast.error("Erreur de connexion");
+      setJoining(false);
+    }
   };
 
-  const handleSignup = () => {
+  const handleCreateAccount = () => {
     navigate(`/auth?redirect=${encodeURIComponent(`/join?session=${sessionCode}`)}`);
   };
 
@@ -106,44 +133,152 @@ const JoinSession = () => {
     );
   }
 
-  // Unauthenticated user — show join options
   return (
-    <div className="fixed inset-0 bg-background flex items-center justify-center p-6">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-sm text-center"
-      >
-        <PickCharacter mood="wave" size="md" animate />
+    <div className="fixed inset-0 bg-background overflow-y-auto">
+      <div className="min-h-full flex items-center justify-center p-6 py-12">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="w-full max-w-sm"
+        >
+          {/* Hero */}
+          <div className="text-center">
+            <PickCharacter mood="wave" size="lg" animate />
 
-        <div className="mt-6 mb-2 inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/15 border border-primary/25">
-          <Sparkles className="w-3.5 h-3.5 text-primary" />
-          <span className="text-primary text-xs font-sans font-semibold">Soirée ciné</span>
-        </div>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.2 }}
+              className="mt-4 inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/15 border border-primary/25"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-primary" />
+              <span className="text-primary text-xs font-sans font-semibold">Soirée ciné</span>
+            </motion.div>
 
-        <h1 className="text-2xl font-serif mt-4 mb-2">
-          {sessionInfo?.creatorName} t'invite !
-        </h1>
-        <p className="text-foreground/50 text-sm font-sans mb-8">
-          Rejoins la soirée « {sessionInfo?.name} » pour trouver le film parfait ensemble.
-        </p>
+            <motion.h1
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.3 }}
+              className="text-2xl font-serif mt-4 mb-2"
+            >
+              {sessionInfo?.creatorName} t'invite à une soirée ciné !
+            </motion.h1>
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.4 }}
+              className="text-foreground/50 text-sm font-sans mb-8"
+            >
+              Rejoins « {sessionInfo?.name} » pour trouver le film parfait ensemble.
+            </motion.p>
+          </div>
 
-        <div className="space-y-3">
-          <Button
-            onClick={handleLogin}
-            variant="hero"
-            size="xl"
-            className="w-full gap-2 font-sans"
+          {/* CTA: Create account */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
           >
-            <LogIn className="w-4 h-4" />
-            Se connecter / S'inscrire
-          </Button>
+            <Button
+              onClick={handleCreateAccount}
+              variant="hero"
+              size="xl"
+              className="w-full gap-2 font-sans"
+            >
+              <UserPlus className="w-4 h-4" />
+              Créer un compte gratuit
+            </Button>
+          </motion.div>
 
-          <p className="text-foreground/25 text-[11px] font-sans">
-            Crée un compte gratuit ou connecte-toi pour rejoindre
-          </p>
-        </div>
-      </motion.div>
+          {/* Benefits */}
+          <motion.ul
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.6 }}
+            className="mt-5 space-y-2.5 px-2"
+          >
+            {BENEFITS.map((b, i) => (
+              <motion.li
+                key={i}
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.7 + i * 0.1 }}
+                className="flex items-center gap-3 text-foreground/60 text-[13px] font-sans"
+              >
+                <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                  <b.icon className="w-3.5 h-3.5 text-primary" />
+                </div>
+                {b.text}
+              </motion.li>
+            ))}
+          </motion.ul>
+
+          {/* Separator */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 1 }}
+            className="flex items-center gap-4 my-7"
+          >
+            <div className="flex-1 h-px bg-border/50" />
+            <span className="text-foreground/30 text-xs font-sans uppercase tracking-wider">ou</span>
+            <div className="flex-1 h-px bg-border/50" />
+          </motion.div>
+
+          {/* Guest flow */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 1.1 }}
+          >
+            {!showGuestForm ? (
+              <Button
+                onClick={() => setShowGuestForm(true)}
+                variant="heroOutline"
+                size="xl"
+                className="w-full gap-2 font-sans"
+              >
+                <LogIn className="w-4 h-4" />
+                Rejoindre en invité
+              </Button>
+            ) : (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                className="space-y-3"
+              >
+                <Input
+                  placeholder="Ton prénom"
+                  value={guestName}
+                  onChange={(e) => setGuestName(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && joinAsGuest()}
+                  className="h-14 rounded-lg text-center text-base font-sans border-primary/30 focus-visible:ring-primary/40"
+                  autoFocus
+                />
+                <Button
+                  onClick={joinAsGuest}
+                  disabled={!guestName.trim()}
+                  variant="hero"
+                  size="xl"
+                  className="w-full gap-2 font-sans"
+                >
+                  <Sparkles className="w-4 h-4" />
+                  Rejoindre la soirée
+                </Button>
+              </motion.div>
+            )}
+          </motion.div>
+
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 1.2 }}
+            className="text-foreground/20 text-[11px] font-sans text-center mt-5"
+          >
+            En invité, tes recommandations ne seront pas sauvegardées
+          </motion.p>
+        </motion.div>
+      </div>
     </div>
   );
 };
