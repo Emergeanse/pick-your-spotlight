@@ -64,6 +64,7 @@ const PickTogether = () => {
   const [selectedFriendIds, setSelectedFriendIds] = useState<Set<string>>(new Set());
   const [mood, setMood] = useState<string | null>(null);
   const [context, setContext] = useState<string | null>(null);
+  const [mediaChoice, setMediaChoice] = useState<MediaChoice>("both");
   const [loading, setLoading] = useState(false);
   const [loadingMsg, setLoadingMsg] = useState("");
   const [recommendations, setRecommendations] = useState<GroupRecommendation[]>([]);
