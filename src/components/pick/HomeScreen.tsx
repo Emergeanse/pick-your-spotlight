@@ -16,7 +16,7 @@ import type { Movie, MovieDetail } from "@/lib/tmdb";
 import BrandHeader from "./BrandHeader";
 import PickCharacter from "./PickCharacter";
 import TasteTrainer from "./TasteTrainer";
-import YouTubeSection from "./YouTubeSection";
+
 import { useNavigate } from "react-router-dom";
 
 interface HomeScreenProps {
