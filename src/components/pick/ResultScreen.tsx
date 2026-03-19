@@ -78,7 +78,7 @@ const REJECT_REACTIONS: Record<string, string[]> = {
     "OK, on part sur quelque chose de plus rapide.",
     "Compris, pas le temps pour un marathon. J'adapte.",
     "Plus court, plus punchy. Ça marche !",
-    "T'inquiète, j'ai des films express aussi.",
+    "T'inquiète, j'ai des trucs express aussi.",
   ],
   not_tonight: [
     "Pas ce soir ? Pas de souci, j'ai mieux pour l'instant.",
