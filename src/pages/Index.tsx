@@ -206,6 +206,7 @@ const Index = () => {
         setCurrentResultIndex(0);
         setShowChat(false);
         setChatInitialMessages(undefined);
+        setOpenTrainerOnMount(false);
         setTimeout(() => setTalkToPickGuideStep("open-chat"), 400);
         break;
       case "watchlist_3":
