@@ -522,6 +522,116 @@ const Profile = () => {
           </div>
         </motion.div>
 
+        {/* ─── Mes Amis ─── */}
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.28 }} className="mb-8">
+          <h2 className="text-lg font-serif mb-1">Mes amis</h2>
+          <p className="text-[11px] text-muted-foreground font-sans mb-4">Gère tes amis et partage ton code.</p>
+
+          {/* Friend code + QR */}
+          <div className="rounded-2xl p-4 bg-card border border-border/20 mb-4">
+            <p className="text-muted-foreground text-xs font-sans mb-2">Ton code ami</p>
+            <div className="flex items-center gap-3 mb-2">
+              <span className="text-xl font-mono font-bold text-primary tracking-wider">{myFriendCode || "..."}</span>
+              <button onClick={handleCopyCode} className="p-2 rounded-lg bg-primary/10 hover:bg-primary/20 transition-colors">
+                {codeCopied ? <Check className="w-4 h-4 text-primary" /> : <Copy className="w-4 h-4 text-primary" />}
+              </button>
+              <button onClick={() => setShowQR(!showQR)} className="p-2 rounded-lg bg-primary/10 hover:bg-primary/20 transition-colors">
+                <QrCode className="w-4 h-4 text-primary" />
+              </button>
+              {typeof navigator.share === "function" && (
+                <button
+                  onClick={() => navigator.share({ title: "Ajoute-moi sur Pick !", url: inviteUrl })}
+                  className="p-2 rounded-lg bg-primary/10 hover:bg-primary/20 transition-colors"
+                >
+                  <Share2 className="w-4 h-4 text-primary" />
+                </button>
+              )}
+            </div>
+            <AnimatePresence>
+              {showQR && myFriendCode && (
+                <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden">
+                  <div className="flex flex-col items-center py-4">
+                    <div className="bg-white p-3 rounded-xl">
+                      <QRCodeSVG value={inviteUrl} size={160} />
+                    </div>
+                    <p className="text-muted-foreground/50 text-[10px] font-sans mt-2 text-center">Scanne ce QR pour m'ajouter sur Pick</p>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
+          {/* Add friend */}
+          <Button onClick={() => setShowAddModal(true)} className="w-full rounded-xl h-11 gap-2 bg-primary text-primary-foreground hover:bg-primary/90 font-sans mb-4">
+            <UserPlus className="w-4 h-4" />
+            Ajouter un ami
+          </Button>
+
+          {/* Pending received */}
+          {pendingReceived.length > 0 && (
+            <div className="mb-4">
+              <p className="text-xs font-sans font-semibold text-foreground/50 mb-2">Demandes reçues ({pendingReceived.length})</p>
+              <div className="space-y-2">
+                {pendingReceived.map((f: any) => (
+                  <div key={f.friendshipId} className="flex items-center justify-between p-3 rounded-xl bg-card border border-primary/20">
+                    <div>
+                      <p className="text-sm font-sans font-medium text-foreground">{f.displayName}</p>
+                      <p className="text-muted-foreground text-[10px] font-mono">{f.friendCode}</p>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button size="sm" onClick={() => handleAcceptFriend(f.friendshipId, f.id)} className="rounded-lg h-8 px-3 text-xs bg-primary text-primary-foreground">Accepter</Button>
+                      <Button size="sm" variant="ghost" onClick={() => handleDeclineFriend(f.friendshipId)} className="rounded-lg h-8 px-3 text-xs text-muted-foreground"><X className="w-3.5 h-3.5" /></Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Accepted friends */}
+          {friendsLoading ? (
+            <div className="flex justify-center py-6"><Loader2 className="w-5 h-5 text-primary animate-spin" /></div>
+          ) : acceptedFriends.length === 0 ? (
+            <div className="text-center py-6 text-muted-foreground/50 text-sm font-sans">
+              <Users className="w-7 h-7 mx-auto mb-2 opacity-30" />
+              <p>Aucun ami pour le moment.</p>
+            </div>
+          ) : (
+            <div className="space-y-2 mb-4">
+              {acceptedFriends.map((f: any) => (
+                <motion.button key={f.friendshipId} whileTap={{ scale: 0.98 }} onClick={() => handleViewFriendProfile(f)}
+                  className="w-full flex items-center justify-between p-3 rounded-xl bg-card border border-border/20 hover:border-border/40 transition-all text-left group">
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-full bg-primary/15 flex items-center justify-center overflow-hidden border border-primary/10">
+                      {f.avatarUrl ? <img src={f.avatarUrl} alt={f.displayName} className="w-full h-full object-cover" /> : <span className="text-sm font-sans font-bold text-primary">{(f.displayName || "A")[0].toUpperCase()}</span>}
+                    </div>
+                    <div>
+                      <p className="text-sm font-sans font-medium text-foreground">{f.displayName}</p>
+                      <p className="text-muted-foreground/50 text-[10px] font-mono">{f.friendCode}</p>
+                    </div>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-muted-foreground/20 group-hover:text-muted-foreground/50 transition-colors" />
+                </motion.button>
+              ))}
+            </div>
+          )}
+
+          {/* Pending sent */}
+          {pendingSent.length > 0 && (
+            <div>
+              <p className="text-xs font-sans font-semibold text-foreground/50 mb-2">En attente ({pendingSent.length})</p>
+              <div className="space-y-2">
+                {pendingSent.map((f: any) => (
+                  <div key={f.friendshipId} className="flex items-center justify-between p-3 rounded-xl bg-card/50 border border-border/10">
+                    <p className="text-sm font-sans text-foreground/60">{f.displayName}</p>
+                    <button onClick={() => handleRemoveFriend(f.friendshipId)} className="text-muted-foreground/30 hover:text-destructive transition-colors p-1"><X className="w-3.5 h-3.5" /></button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </motion.div>
+
         {/* ─── Logout ─── */}
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}>
           <Button
