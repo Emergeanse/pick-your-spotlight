@@ -440,6 +440,12 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
                   </div>
                 </motion.button>
 
+                {/* Training progress widget */}
+                <TrainingProgress
+                  evaluated={totalEvaluated}
+                  confidence={engagement?.profileConfidence || 0}
+                  onStartTraining={() => setShowTrainer(true)}
+                />
 
               </div>
 
