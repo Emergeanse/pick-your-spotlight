@@ -61,6 +61,7 @@ const App = () => (
             <Route path="/app/friends" element={<Navigate to="/app/profile" replace />} />
             <Route path="/app/pick-together" element={<ProtectedRoute><PickTogether /></ProtectedRoute>} />
             <Route path="/app/pick-plus" element={<ProtectedRoute><PickPlusPage /></ProtectedRoute>} />
+            <Route path="/join" element={<JoinSession />} />
             <Route path="/glossary" element={<ProtectedRoute><Glossary /></ProtectedRoute>} />
             <Route path="/profile" element={<Navigate to="/app/profile" replace />} />
             <Route path="*" element={<NotFound />} />
