@@ -7,6 +7,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import BrandHeader from "@/components/pick/BrandHeader";
+import BottomTabBar from "@/components/pick/BottomTabBar";
 import PickCharacter from "@/components/pick/PickCharacter";
 import { QRCodeSVG } from "qrcode.react";
 import type { MovieDetail } from "@/lib/tmdb";
@@ -37,7 +38,7 @@ interface GroupRecommendation {
   providers: { name: string; logo_path: string; provider_id: number }[];
 }
 
-type FlowStep = "who" | "mood" | "loading" | "results";
+type FlowStep = "landing" | "who" | "mood" | "loading" | "results";
 type MediaChoice = "movie" | "tv" | "both";
 
 const GENRE_OPTIONS = [
@@ -64,7 +65,7 @@ const LOADING_MESSAGES = [
 const PickTogether = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [step, setStep] = useState<FlowStep>("who");
+  const [step, setStep] = useState<FlowStep>("landing");
   const [friends, setFriends] = useState<Friend[]>([]);
   const [selectedFriendIds, setSelectedFriendIds] = useState<Set<string>>(new Set());
   const [guests, setGuests] = useState<Guest[]>([]);
@@ -314,7 +315,8 @@ const PickTogether = () => {
     if (step === "results") { setStep("who"); setRecommendations([]); setHeroReaction(null); }
     else if (step === "mood") { setStep("who"); }
     else if (mediaStep) { setMediaStep(false); }
-    else navigate("/app/pick-together");
+    else if (step === "who") { setStep("landing"); }
+    else navigate("/app");
   };
 
   return (
@@ -322,6 +324,58 @@ const PickTogether = () => {
       <BrandHeader showBack onBack={goBack} />
 
       <AnimatePresence mode="wait">
+        {/* ─── LANDING: Create a session ─── */}
+        {step === "landing" && (
+          <motion.div key="landing" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, x: -40 }}
+            className="h-full flex flex-col items-center justify-center px-6"
+          >
+            <PickCharacter mood="wave" size="md" animate />
+
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.15 }}
+              className="text-center mt-6 mb-10 max-w-sm"
+            >
+              <h1 className="text-3xl md:text-4xl font-serif mb-3">Together</h1>
+              <p className="text-foreground/50 text-sm font-sans leading-relaxed">
+                Trouvez le film parfait à plusieurs.<br />
+                Amis, invités, QR code — tout le monde participe.
+              </p>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.25 }}
+              className="w-full max-w-sm space-y-3"
+            >
+              <Button
+                onClick={() => setStep("who")}
+                variant="hero"
+                size="xl"
+                className="w-full gap-2 font-sans text-base"
+              >
+                <Sparkles className="w-4 h-4" />
+                Créer une soirée ciné
+              </Button>
+
+              <button
+                onClick={handleCreateSessionQR}
+                disabled={creatingSession}
+                className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl border border-border/15 bg-card/40 text-foreground/60 text-sm font-sans hover:border-primary/30 hover:text-foreground transition-all"
+              >
+                {creatingSession ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <QrCode className="w-4 h-4" />
+                )}
+                Inviter par QR code
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+
         {/* ─── STEP 1: WHO IS JOINING ─── */}
         {step === "who" && !mediaStep && (
           <motion.div key="who" initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -40 }}
@@ -1138,6 +1192,9 @@ const PickTogether = () => {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Show tab bar only on landing */}
+      {step === "landing" && <BottomTabBar />}
     </div>
   );
 };

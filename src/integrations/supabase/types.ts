@@ -494,6 +494,10 @@ export type Database = {
     Functions: {
       generate_friend_code: { Args: never; Returns: string }
       generate_session_code: { Args: never; Returns: string }
+      is_session_member: {
+        Args: { _session_id: string; _user_id: string }
+        Returns: boolean
+      }
       match_movies_by_taste: {
         Args: {
           exclude_ids?: number[]
