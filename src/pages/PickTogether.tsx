@@ -461,7 +461,7 @@ const PickTogether = () => {
                     className="w-10 h-10 rounded-full bg-card border-2 border-background flex items-center justify-center"
                   >
                     <span className="text-[10px] font-bold text-foreground/50">
-                      {(p as any).displayName?.[0] || p.name[0]}
+                      {"displayName" in p ? p.displayName[0] : p.name[0]}
                     </span>
                   </motion.div>
                 ))}
