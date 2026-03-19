@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { ArrowLeft, UserPlus, Loader2, Shield, LogIn, Users, RefreshCw, Circle } from "lucide-react";
+import { ArrowLeft, UserPlus, Loader2, Shield, LogIn, Users, RefreshCw, Circle, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useNavigate } from "react-router-dom";
@@ -34,6 +34,7 @@ const Admin = () => {
   const [birthYear, setBirthYear] = useState("");
   const [creating, setCreating] = useState(false);
   const [createdAccount, setCreatedAccount] = useState<{ email: string; password: string; name: string } | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   // Users list
   const [users, setUsers] = useState<RegisteredUser[]>([]);
@@ -106,6 +107,24 @@ const Admin = () => {
     }
   };
 
+  const handleDeleteTestUser = async (userId: string, displayName: string) => {
+    if (!confirm(`Supprimer définitivement "${displayName}" et toutes ses données ?`)) return;
+    setDeletingId(userId);
+    try {
+      const { data, error } = await supabase.functions.invoke("admin-delete-user", {
+        body: { userId },
+      });
+      if (error) throw new Error(error.message);
+      if (data?.error) throw new Error(data.error);
+      toast.success(`Compte "${displayName}" supprimé`);
+      fetchUsers();
+    } catch (err: any) {
+      toast.error(err.message || "Erreur lors de la suppression");
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
   const handleLoginAsTestUser = async () => {
     if (!createdAccount) return;
     await supabase.auth.signOut();
@@ -150,12 +169,13 @@ const Admin = () => {
             <TableHead className="text-xs font-sans">Dernière connexion</TableHead>
             <TableHead className="text-xs font-sans text-center">Recos</TableHead>
             <TableHead className="text-xs font-sans text-center">Streak</TableHead>
+            <TableHead className="text-xs font-sans w-12"></TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {userList.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={7} className="text-center text-muted-foreground text-sm py-8">
+              <TableCell colSpan={8} className="text-center text-muted-foreground text-sm py-8">
                 Aucun utilisateur
               </TableCell>
             </TableRow>
@@ -192,6 +212,22 @@ const Admin = () => {
                   <TableCell className="text-xs text-muted-foreground">{formatDate(u.last_sign_in_at)}</TableCell>
                   <TableCell className="text-center text-sm">{u.total_recommendations}</TableCell>
                   <TableCell className="text-center text-sm">{u.streak_count > 0 ? `🔥 ${u.streak_count}` : "—"}</TableCell>
+                  <TableCell className="w-12 text-center">
+                    {u.is_test_account && (
+                      <button
+                        onClick={() => handleDeleteTestUser(u.id, u.display_name || u.email)}
+                        disabled={deletingId === u.id}
+                        className="p-1.5 rounded-lg text-destructive/50 hover:text-destructive hover:bg-destructive/10 transition-all disabled:opacity-30"
+                        title="Supprimer ce compte test"
+                      >
+                        {deletingId === u.id ? (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        ) : (
+                          <Trash2 className="w-3.5 h-3.5" />
+                        )}
+                      </button>
+                    )}
+                  </TableCell>
                 </TableRow>
               );
             })
