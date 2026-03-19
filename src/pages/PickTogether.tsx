@@ -121,7 +121,68 @@ const PickTogether = () => {
     );
   };
 
-  const toggleFriend = (id: string) => {
+  // ─── Session QR Code ───
+  const handleCreateSessionQR = async () => {
+    if (!user) return;
+    setCreatingSession(true);
+    try {
+      const { data, error } = await supabase
+        .from("group_sessions" as any)
+        .insert({ creator_id: user.id, name: "Soirée ciné" } as any)
+        .select("id, invite_code")
+        .single();
+      if (error) throw error;
+      setSessionInviteCode((data as any).invite_code);
+      setShowSessionQR(true);
+
+      // Subscribe to realtime members
+      const channel = supabase
+        .channel(`session-${(data as any).id}`)
+        .on("postgres_changes", {
+          event: "INSERT",
+          schema: "public",
+          table: "group_session_members",
+          filter: `session_id=eq.${(data as any).id}`,
+        }, async (payload: any) => {
+          const { data: prof } = await supabase
+            .from("profiles")
+            .select("display_name")
+            .eq("id", payload.new.user_id)
+            .single();
+          setRealtimeMembers(prev => [
+            ...prev,
+            { id: payload.new.user_id, name: (prof as any)?.display_name || "Quelqu'un" },
+          ]);
+          toast.success(`${(prof as any)?.display_name || "Quelqu'un"} a rejoint la soirée !`);
+        })
+        .subscribe();
+
+      // Cleanup on unmount handled by React
+    } catch (e) {
+      console.error(e);
+      toast.error("Erreur lors de la création de la session");
+    } finally {
+      setCreatingSession(false);
+    }
+  };
+
+  const sessionInviteUrl = sessionInviteCode
+    ? `https://pick-your-spotlight.lovable.app/join?session=${sessionInviteCode}`
+    : "";
+
+  const handleShareSession = async () => {
+    if (!sessionInviteUrl) return;
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: "Soirée ciné Pick", text: "Rejoins ma soirée ciné !", url: sessionInviteUrl });
+      } catch {}
+    } else {
+      navigator.clipboard.writeText(sessionInviteUrl);
+      toast.success("Lien copié !");
+    }
+  };
+
+
     const totalOthers = selectedFriendIds.size + guests.length;
     setSelectedFriendIds(prev => {
       const next = new Set(prev);
