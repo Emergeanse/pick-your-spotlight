@@ -350,7 +350,20 @@ const TasteTrainer = ({ onClose }: TasteTrainerProps) => {
             ))}
           </div>
 
-          <p className="text-center text-foreground/25 text-[10px] font-sans mt-3">
+          <motion.button
+            whileTap={{ scale: 0.95 }}
+            onClick={() => {
+              setProcessedIds(prev => new Set(prev).add(currentMovie.id));
+              setCurrentIndex(i => i + 1);
+            }}
+            className="w-full mt-2.5 py-2 text-center"
+          >
+            <span className="text-[11px] font-sans text-foreground/30 hover:text-foreground/50 transition-colors">
+              Je ne connais pas ce film
+            </span>
+          </motion.button>
+
+          <p className="text-center text-foreground/25 text-[10px] font-sans mt-1">
             Choisis ton ressenti · ou swipe la carte
           </p>
         </div>
