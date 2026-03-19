@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { toast } from "@/hooks/use-toast";
-import { Check, LogOut, Loader2, Ban, Star, Info, Film, Tv, Layers, Clock, Bell, Camera, Pencil } from "lucide-react";
+import { Check, LogOut, Loader2, Star, Info, Film, Tv, Layers, Clock, Bell, Camera, Pencil } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
@@ -38,7 +38,6 @@ const Profile = () => {
   const [profile, setProfile] = useState<any>(null);
   const [engagement, setEngagement] = useState<EngagementData | null>(null);
   const [selectedPlatforms, setSelectedPlatforms] = useState<number[]>([]);
-  const [excludedPlatforms, setExcludedPlatforms] = useState<number[]>([]);
   const [minRating, setMinRating] = useState<number>(0);
   const [mediaPreference, setMediaPreference] = useState<string>("both");
   const [saving, setSaving] = useState(false);
@@ -69,7 +68,6 @@ const Profile = () => {
       const data = profileRes.data;
       setProfile(data);
       setSelectedPlatforms(data?.preferred_platforms || []);
-      setExcludedPlatforms(data?.excluded_platforms || []);
       setMinRating((data as any)?.min_rating || 0);
       setMediaPreference((data as any)?.media_preference || "both");
       setRitualEnabled(data?.ritual_enabled || false);
@@ -86,14 +84,9 @@ const Profile = () => {
   };
 
   const togglePlatform = (id: number) => {
-    if (selectedPlatforms.includes(id)) {
-      setSelectedPlatforms(prev => prev.filter(p => p !== id));
-      setExcludedPlatforms(prev => [...prev, id]);
-    } else if (excludedPlatforms.includes(id)) {
-      setExcludedPlatforms(prev => prev.filter(p => p !== id));
-    } else {
-      setSelectedPlatforms(prev => [...prev, id]);
-    }
+    setSelectedPlatforms(prev =>
+      prev.includes(id) ? prev.filter(p => p !== id) : [...prev, id]
+    );
   };
 
   const handleSaveName = async () => {
@@ -139,7 +132,7 @@ const Profile = () => {
     try {
       const { error } = await supabase.from("profiles").update({
         preferred_platforms: selectedPlatforms,
-        excluded_platforms: excludedPlatforms,
+        excluded_platforms: [],
         min_rating: minRating,
         media_preference: mediaPreference,
         ritual_enabled: ritualEnabled,
@@ -149,7 +142,7 @@ const Profile = () => {
       setProfile((prev: any) => ({
         ...prev,
         preferred_platforms: [...selectedPlatforms],
-        excluded_platforms: [...excludedPlatforms],
+        excluded_platforms: [],
         min_rating: minRating,
         media_preference: mediaPreference,
         ritual_enabled: ritualEnabled,
@@ -166,7 +159,6 @@ const Profile = () => {
 
   const hasChanges = profile && (
     JSON.stringify([...selectedPlatforms].sort()) !== JSON.stringify([...(profile.preferred_platforms || [])].sort()) ||
-    JSON.stringify([...excludedPlatforms].sort()) !== JSON.stringify([...(profile.excluded_platforms || [])].sort()) ||
     minRating !== ((profile as any)?.min_rating || 0) ||
     mediaPreference !== ((profile as any)?.media_preference || "both") ||
     ritualEnabled !== (profile?.ritual_enabled || false) ||
@@ -267,12 +259,11 @@ const Profile = () => {
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="mb-8">
           <h2 className="text-lg font-serif mb-1">Tes plateformes</h2>
           <p className="text-[11px] text-muted-foreground font-sans mb-3">
-            Clique une fois pour <span className="text-primary font-medium">activer</span>, deux fois pour <span className="text-destructive font-medium">exclure</span>
+            Sélectionne tes abonnements. Si aucun n'est coché, toutes les plateformes seront prises en compte.
           </p>
           <div className="grid grid-cols-4 gap-2">
             {ALL_PLATFORMS.map((platform) => {
               const isSelected = selectedPlatforms.includes(platform.id);
-              const isExcluded = excludedPlatforms.includes(platform.id);
               return (
                 <button
                   key={platform.id}
@@ -280,9 +271,7 @@ const Profile = () => {
                   className={`relative bg-card rounded-xl p-2.5 flex flex-col items-center gap-1.5 transition-all duration-200 hover:scale-[1.02] cursor-pointer border ${
                     isSelected
                       ? "border-primary neon-glow"
-                      : isExcluded
-                        ? "border-destructive/40 opacity-60"
-                        : "border-transparent hover:border-primary/30"
+                      : "border-transparent hover:border-primary/30"
                   }`}
                 >
                   {isSelected && (
@@ -290,12 +279,7 @@ const Profile = () => {
                       <Check className="w-2.5 h-2.5 text-primary-foreground" />
                     </div>
                   )}
-                  {isExcluded && (
-                    <div className="absolute top-1 right-1 w-4 h-4 rounded-full bg-destructive flex items-center justify-center">
-                      <Ban className="w-2.5 h-2.5 text-destructive-foreground" />
-                    </div>
-                  )}
-                  <img src={platform.logo} alt={platform.label} className={`w-8 h-8 rounded-lg object-cover ${isExcluded ? "grayscale" : ""}`} />
+                  <img src={platform.logo} alt={platform.label} className="w-8 h-8 rounded-lg object-cover" />
                   <span className="font-sans text-[10px] tracking-wide text-foreground/90 leading-tight text-center">{platform.label}</span>
                 </button>
               );
