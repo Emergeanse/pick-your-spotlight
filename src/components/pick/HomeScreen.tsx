@@ -435,31 +435,6 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
                   </div>
                 </motion.button>
 
-                {/* Secondary actions row */}
-                <div className="flex items-center justify-center gap-3 flex-wrap">
-                  <motion.button
-                    data-tour="surprends-moi"
-                    whileTap={{ scale: 0.95 }}
-                    onClick={handleSurprise}
-                    disabled={loading || isSurprising}
-                    className="group inline-flex items-center gap-2 px-4 py-2 rounded-full bg-muted/30 border border-border/20 hover:border-border/40 hover:bg-muted/50 transition-all"
-                  >
-                    <Shuffle className="w-3.5 h-3.5 text-foreground/40 group-hover:text-foreground/60 transition-opacity" />
-                    <span className="text-[12px] font-sans font-medium text-foreground/40 group-hover:text-foreground/60 transition-colors">Surprends-moi</span>
-                  </motion.button>
-
-                  {user && (
-                    <motion.button
-                      data-tour="entraine-pick"
-                      whileTap={{ scale: 0.95 }}
-                      onClick={() => setShowTrainer(true)}
-                      className="group inline-flex items-center gap-2 px-4 py-2 rounded-full bg-muted/30 border border-border/20 hover:border-border/40 hover:bg-muted/50 transition-all"
-                    >
-                      <Brain className="w-3.5 h-3.5 text-foreground/40 group-hover:text-foreground/60 transition-opacity" />
-                      <span className="text-[12px] font-sans font-medium text-foreground/40 group-hover:text-foreground/60 transition-colors">Entraîner</span>
-                    </motion.button>
-                  )}
-                </div>
 
               </div>
 
