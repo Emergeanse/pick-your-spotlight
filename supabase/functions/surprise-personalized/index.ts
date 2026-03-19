@@ -308,7 +308,7 @@ Recommande UN film avec les scores détaillés.`;
         },
         body: JSON.stringify({
           tmdbId: movieDetail.id,
-          title: movieDetail.title,
+          title: movieDetail.title || movieDetail.name,
           overview: movieDetail.overview,
           genres: (movieDetail.genres || []).map((g: any) => g.name),
         }),
