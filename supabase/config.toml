@@ -23,3 +23,6 @@ verify_jwt = false
 
 [functions.group-recommend]
 verify_jwt = false
+
+[functions.join-session]
+verify_jwt = false
