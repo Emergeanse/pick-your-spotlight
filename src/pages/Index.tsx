@@ -214,19 +214,16 @@ const Index = () => {
   // Listen for watchlist additions during the guide
   useEffect(() => {
     if (activeActivationMission !== "watchlist_3") return;
-    const channel = supabase
-      .channel("watchlist-guide")
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "watchlist" }, () => {
-        setWatchlistSavedCount(c => c + 1);
-        if (!watchlistGuideDone) {
-          setWatchlistGuideStep("continue");
-          setWatchlistGuideDone(true);
-          // Clear the guide after a moment
-          setTimeout(() => setWatchlistGuideStep(null), 4000);
-        }
-      })
-      .subscribe();
-    return () => { supabase.removeChannel(channel); };
+    const handler = () => {
+      setWatchlistSavedCount(c => c + 1);
+      if (!watchlistGuideDone) {
+        setWatchlistGuideStep("continue");
+        setWatchlistGuideDone(true);
+        setTimeout(() => setWatchlistGuideStep(null), 4000);
+      }
+    };
+    window.addEventListener("pick-watchlist-added", handler);
+    return () => window.removeEventListener("pick-watchlist-added", handler);
   }, [activeActivationMission, watchlistGuideDone]);
 
   // Show "sauvegarder" step after new movie loads
