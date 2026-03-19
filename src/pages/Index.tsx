@@ -202,9 +202,12 @@ const Index = () => {
         setShowChat(true);
         break;
       case "watchlist_3":
-        // Start the guided flow: first, highlight "Pick pour ce soir"
+        // Reset to home screen first, then start the guided flow
+        setStep("home");
+        setResults([]);
+        setCurrentResultIndex(0);
         if (!watchlistGuideDone) {
-          setWatchlistGuideStep("pick-ce-soir");
+          setTimeout(() => setWatchlistGuideStep("pick-ce-soir"), 400);
         }
         break;
       case "like_5":
