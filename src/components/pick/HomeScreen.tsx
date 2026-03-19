@@ -111,12 +111,14 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
   const [explorationLevel, setExplorationLevel] = useState<number>(5);
   const [whatChoice, setWhatChoice] = useState<WhatOption>("both");
   const [whoChoice, setWhoChoice] = useState<WhoOption | null>(null);
+  const [totalEvaluated, setTotalEvaluated] = useState(0);
 
-  // Open trainer from MyCinema navigation
+  // Open trainer from MyCinema navigation or activation flow
   useEffect(() => {
     if (openTrainerOnMount) {
       setShowTrainer(true);
       onTrainerOpened?.();
+    }
     }
   }, [openTrainerOnMount]);
   const { user } = useAuth();
