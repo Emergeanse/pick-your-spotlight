@@ -483,6 +483,17 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
           )}
         </div>
 
+        {/* Below-the-fold: Discovery */}
+        <div className="px-5 md:px-12 pb-32">
+          <DiscoverySection
+            onMovieSelect={onMovieSelect}
+            platformIds={userPlatformIds}
+            favoriteGenres={userGenres}
+            minRating={userMinRating}
+            excludedGenres={userExcludedGenres}
+          />
+        </div>
+
       </div>
 
       {/* Tonight loading overlay */}
