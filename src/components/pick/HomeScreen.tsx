@@ -28,6 +28,7 @@ interface HomeScreenProps {
   onMovieSelect: (movie: MovieDetail) => void;
   loading: boolean;
   openTrainerOnMount?: boolean;
+  forceCloseTrainer?: boolean;
   onTrainerOpened?: () => void;
 }
 
