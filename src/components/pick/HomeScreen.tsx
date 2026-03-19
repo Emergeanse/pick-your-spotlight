@@ -713,8 +713,6 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
                   });
               }
             }}
-            isActivation={isActivation}
-            onActivationComplete={onActivationComplete}
           />
         )}
       </AnimatePresence>
