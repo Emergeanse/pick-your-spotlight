@@ -127,6 +127,9 @@ ${excludedPlatformIds && excludedPlatformIds.length > 0 ? `- PLATEFORMES EXCLUES
 ${excludedGenres && excludedGenres.length > 0 ? `- GENRES EXCLUS (profil) : NE JAMAIS recommander de films des genres suivants : ${excludedGenres.join(", ")}. C'est une règle ABSOLUE.` : ""}
 ${heavilySkippedGenres.length > 0 ? `- GENRES SOUVENT REFUSÉS (taste trainer) : L'utilisateur a refusé 3+ films de ces genres : ${heavilySkippedGenres.join(", ")}. Évite-les fortement sauf en mode découverte.` : ""}
 ${minRating && minRating > 0 ? `- NOTE MINIMALE : Le film DOIT avoir une note TMDB supérieure ou égale à ${minRating}/10. Ne recommande JAMAIS un film noté en dessous.` : ""}
+
+NIVEAU D'EXPLORATION : ${explorationLevel}/10 (${explorationModeLabel})
+${explorationInstruction}
 ${embeddingSection}
 
 RÈGLES :
