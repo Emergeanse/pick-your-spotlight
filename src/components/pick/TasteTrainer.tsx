@@ -288,7 +288,7 @@ const TasteTrainer = ({ onClose }: TasteTrainerProps) => {
                 <img
                   src={getPosterUrl(currentMovie.poster_path, "w780")}
                   alt={getDisplayTitle(currentMovie)}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-contain bg-black/90"
                   draggable={false}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
