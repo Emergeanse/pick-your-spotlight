@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "@/hooks/use-toast";
 import { toast as sonnerToast } from "sonner";
-import { Check, LogOut, Loader2, Star, Info, Film, Tv, Layers, Clock, Bell, Camera, Pencil, Copy, UserPlus, Users, X, ChevronRight, Clapperboard, QrCode, Share2 } from "lucide-react";
+import { Check, LogOut, Loader2, Star, Info, Film, Tv, Layers, Clock, Bell, Camera, Pencil, Copy, UserPlus, Users, X, ChevronRight, Clapperboard, QrCode, Share2, Shield } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,7 @@ import { sendNotification } from "@/lib/notifications";
 import BottomTabBar from "@/components/pick/BottomTabBar";
 import CinematicAvatar, { mapLevelToType, mapArchetypeToDNA, mapSignatureToAnimation, type CinematicLevel, type CinematicDNA, type TasteAnimation } from "@/components/pick/CinematicAvatar";
 import { QRCodeSVG } from "qrcode.react";
+import { useAdmin } from "@/hooks/use-admin";
 const ALL_PLATFORMS = [
   { id: 8, label: "Netflix", logo: "https://image.tmdb.org/t/p/original/pbpMk2JmcoNnQwx5JGpXngfoWtp.jpg" },
   { id: 337, label: "Disney+", logo: "https://image.tmdb.org/t/p/original/97yvRBw1GzX7fXprcF80er19ot.jpg" },
@@ -38,6 +39,7 @@ const MILESTONES = [
 const Profile = () => {
   const { user, isReady, signOut } = useAuth();
   const navigate = useNavigate();
+  const { isAdmin } = useAdmin();
   const [profile, setProfile] = useState<any>(null);
   const [engagement, setEngagement] = useState<EngagementData | null>(null);
   const [selectedPlatforms, setSelectedPlatforms] = useState<number[]>([]);
@@ -631,6 +633,20 @@ const Profile = () => {
             </div>
           )}
         </motion.div>
+
+        {/* ─── Admin ─── */}
+        {isAdmin && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.25 }}>
+            <Button
+              variant="ghost"
+              onClick={() => navigate("/admin")}
+              className="text-primary/60 hover:text-primary text-xs font-sans gap-1.5"
+            >
+              <Shield className="w-3.5 h-3.5" />
+              Administration
+            </Button>
+          </motion.div>
+        )}
 
         {/* ─── Logout ─── */}
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}>

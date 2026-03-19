@@ -12,6 +12,7 @@ const Auth = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
+  const [birthYear, setBirthYear] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -59,11 +60,11 @@ const Auth = () => {
         toast.success("Connecté !");
         navigate(redirectTo || "/app");
       } else {
-        const { error } = await supabase.auth.signUp({
+        const { data: signUpData, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
-            data: { display_name: name },
+            data: { display_name: name, birth_year: birthYear ? parseInt(birthYear) : undefined },
             emailRedirectTo: inviteCode ? `${window.location.origin}/auth?invite=${inviteCode}` : window.location.origin,
           },
         });
@@ -150,6 +151,18 @@ const Auth = () => {
                     autoComplete="given-name"
                     className="w-full bg-card border border-border/30 rounded-xl px-10 py-3 text-sm font-sans text-foreground placeholder:text-muted-foreground/50 outline-none focus:border-primary/50 transition-colors"
                   />
+                </div>
+                <div className="relative pb-4">
+                  <select
+                    value={birthYear}
+                    onChange={e => setBirthYear(e.target.value)}
+                    className="w-full bg-card border border-border/30 rounded-xl px-4 py-3 text-sm font-sans text-foreground outline-none focus:border-primary/50 transition-colors appearance-none"
+                  >
+                    <option value="" className="text-muted-foreground">Ton année de naissance</option>
+                    {Array.from({ length: 80 }, (_, i) => new Date().getFullYear() - 5 - i).map(y => (
+                      <option key={y} value={y}>{y} ({new Date().getFullYear() - y} ans)</option>
+                    ))}
+                  </select>
                 </div>
               </motion.div>
             )}
