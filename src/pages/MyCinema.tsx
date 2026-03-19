@@ -23,6 +23,7 @@ const MyCinema = () => {
   const [likedCount, setLikedCount] = useState(0);
   const [recentPosters, setRecentPosters] = useState<{ poster: string; title: string }[]>([]);
   const [dnaTitle, setDnaTitle] = useState<string | null>(null);
+  const [dnaLevel, setDnaLevel] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isReady) return;
