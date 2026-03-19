@@ -17,6 +17,7 @@ import type { Movie, MovieDetail } from "@/lib/tmdb";
 import BrandHeader from "./BrandHeader";
 import PickCharacter from "./PickCharacter";
 import TasteTrainer from "./TasteTrainer";
+import TrainingProgress from "./TrainingProgress";
 
 import { useNavigate } from "react-router-dom";
 
@@ -28,6 +29,8 @@ interface HomeScreenProps {
   loading: boolean;
   openTrainerOnMount?: boolean;
   onTrainerOpened?: () => void;
+  isActivation?: boolean;
+  onActivationComplete?: () => void;
 }
 
 const SURPRISE_MESSAGES = [
