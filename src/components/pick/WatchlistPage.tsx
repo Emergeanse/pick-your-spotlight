@@ -116,6 +116,13 @@ const SwipeableCard = ({
             </p>
           </div>
         </button>
+        <button
+          onClick={(e) => { e.stopPropagation(); onRemove(); }}
+          className="shrink-0 self-center w-8 h-8 rounded-full flex items-center justify-center text-foreground/25 hover:text-destructive hover:bg-destructive/10 transition-all active:scale-90"
+          aria-label="Supprimer"
+        >
+          <X className="w-4 h-4" />
+        </button>
       </motion.div>
     </motion.div>
   );
