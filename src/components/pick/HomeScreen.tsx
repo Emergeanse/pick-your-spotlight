@@ -2,6 +2,9 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Mic, Dices, Tv, Sparkles, Loader2, Zap, Flame, Target, Trophy, Shuffle, Brain, Users } from "lucide-react";
+import WhoStep, { type WhoOption } from "./WhoStep";
+import WhatStep, { type WhatOption } from "./WhatStep";
+import StepLayout from "./StepLayout";
 import { getTrendingMovies, getBackdropUrl, getSurpriseRecommendation, getPosterUrl, getDisplayTitle, getWatchProviders } from "@/lib/tmdb";
 import { getLikedMovies } from "@/lib/liked-movies";
 import { trackInteraction, getUserTasteProfile } from "@/lib/interactions";
@@ -100,6 +103,8 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
   const [progressionMsg, setProgressionMsg] = useState<string | null>(null);
   const [historyExcludeIds, setHistoryExcludeIds] = useState<number[]>([]);
   const [showTrainer, setShowTrainer] = useState(false);
+  const [flowStep, setFlowStep] = useState<"idle" | "who" | "what">("idle");
+  const [whoChoice, setWhoChoice] = useState<WhoOption | null>(null);
 
   // Open trainer from MyCinema navigation
   useEffect(() => {
@@ -357,9 +362,9 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
                   onClick={() => {
                     setPickAnimating(true);
                     setTimeout(() => setPickAnimating(false), 900);
-                    onStart();
+                    setFlowStep("who");
                   }}
-                  disabled={loading || tonightLoading}
+                  disabled={loading || tonightLoading || flowStep !== "idle"}
                   className="group w-full text-left rounded-2xl p-5 bg-gradient-to-br from-primary/20 via-primary/15 to-accent/10 border-2 border-primary/50 hover:border-primary/70 hover:from-primary/25 transition-all disabled:opacity-50 relative overflow-hidden shadow-[0_0_30px_-8px_hsl(var(--primary)/0.35)]"
                 >
                   {/* Popcorn burst animation on click */}
@@ -584,6 +589,10 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
                   </p>
                 )}
 
+                <p className="text-foreground/40 text-[13px] font-sans italic mb-4">
+                  Pick pense que ce film est parfait pour toi.
+                </p>
+
                 <div className="flex flex-col items-center gap-2.5 w-full">
                   <div className="flex items-center gap-3 justify-center">
                     <Button
@@ -595,7 +604,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
                       }}
                     >
                       <Tv className="w-4 h-4" />
-                      Je découvre
+                      On regarde ?
                     </Button>
 
                      <Button
@@ -626,7 +635,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
                       ) : (
                         <Dices className="w-4 h-4" />
                       )}
-                      Autre
+                      Autre suggestion
                     </Button>
                   </div>
 
@@ -652,6 +661,42 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
                 </div>
               </motion.div>
             </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Who/What flow overlay */}
+      <AnimatePresence mode="wait">
+        {flowStep !== "idle" && (
+          <motion.div
+            key={flowStep}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute inset-0 z-50 bg-background"
+          >
+            <BrandHeader showBack onBack={() => { setFlowStep("idle"); setWhoChoice(null); }} />
+            <StepLayout currentStep={flowStep === "who" ? 1 : 2} totalSteps={2}>
+              {flowStep === "who" && (
+                <WhoStep onSelect={(w) => {
+                  setWhoChoice(w);
+                  if (w === "duo" || w === "group") {
+                    setFlowStep("idle");
+                    setWhoChoice(null);
+                    navigate("/app/pick-together");
+                    return;
+                  }
+                  setFlowStep("what");
+                }} />
+              )}
+              {flowStep === "what" && (
+                <WhatStep onSelect={(w) => {
+                  setFlowStep("idle");
+                  setTonightPick(null);
+                  generateTonightPick(rejectedIds);
+                }} />
+              )}
+            </StepLayout>
           </motion.div>
         )}
       </AnimatePresence>
