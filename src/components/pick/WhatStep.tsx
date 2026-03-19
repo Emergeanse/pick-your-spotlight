@@ -52,6 +52,7 @@ const WhatStep = ({ onSelect }: WhatStepProps) => {
                 ease: "easeOut",
                 scale: { duration: 0.3 },
               }}
+              whileHover={{ scale: 1.03, y: -2 }}
               onClick={() => handleSelect(opt.value)}
               disabled={selected !== null}
               className={`bg-card rounded-2xl p-4 md:p-8 text-left transition-all duration-200 hover:scale-[1.02] cursor-pointer border flex items-center gap-3 md:gap-4 ${
