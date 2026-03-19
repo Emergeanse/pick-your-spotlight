@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Copy, Check, UserPlus, Users, X, Loader2, ChevronRight } from "lucide-react";
+import { Copy, Check, UserPlus, Users, X, Loader2, ChevronRight, Clapperboard, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -15,8 +15,23 @@ interface Friend {
   friendshipId: string;
   displayName: string;
   friendCode: string;
+  avatarUrl?: string | null;
   status: "pending" | "accepted" | "declined";
   isRequester: boolean;
+}
+
+interface FriendProfile {
+  displayName: string;
+  avatarUrl?: string | null;
+  friendCode: string;
+  favoriteGenres: string[];
+  cinematicProfile?: {
+    personalityTitle: string;
+    dnaArchetype: string | null;
+    globalLevel: string;
+    tasteTraits: string[];
+    narrative: string;
+  } | null;
 }
 
 const Friends = () => {
@@ -29,6 +44,9 @@ const Friends = () => {
   const [addCode, setAddCode] = useState("");
   const [adding, setAdding] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [selectedFriend, setSelectedFriend] = useState<Friend | null>(null);
+  const [friendProfile, setFriendProfile] = useState<FriendProfile | null>(null);
+  const [loadingProfile, setLoadingProfile] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -39,7 +57,6 @@ const Friends = () => {
     if (!user) return;
     setLoading(true);
 
-    // Fetch my friend code
     const { data: profile } = await supabase
       .from("profiles")
       .select("friend_code")
@@ -47,7 +64,6 @@ const Friends = () => {
       .single();
     if (profile) setMyFriendCode((profile as any).friend_code || "");
 
-    // Fetch friendships
     const { data: friendships } = await supabase
       .from("friendships" as any)
       .select("id, requester_id, addressee_id, status, created_at")
@@ -60,7 +76,7 @@ const Friends = () => {
 
       const { data: otherProfiles } = await supabase
         .from("profiles")
-        .select("id, display_name, friend_code")
+        .select("id, display_name, friend_code, avatar_url")
         .in("id", otherIds);
 
       const profileMap = new Map((otherProfiles || []).map((p: any) => [p.id, p]));
@@ -73,6 +89,7 @@ const Friends = () => {
           friendshipId: f.id,
           displayName: otherProfile?.display_name || "Ami",
           friendCode: otherProfile?.friend_code || "",
+          avatarUrl: otherProfile?.avatar_url || null,
           status: f.status,
           isRequester: f.requester_id === user.id,
         };
@@ -101,7 +118,6 @@ const Friends = () => {
 
     setAdding(true);
     try {
-      // Find profile by friend_code
       const { data: found } = await (supabase
         .from("profiles")
         .select("id, display_name") as any)
@@ -114,7 +130,6 @@ const Friends = () => {
         return;
       }
 
-      // Check if friendship already exists
       const { data: existing } = await (supabase
         .from("friendships" as any)
         .select("id") as any)
@@ -132,7 +147,6 @@ const Friends = () => {
         status: "pending",
       } as any);
 
-      // Get my display name for the notification
       const { data: myProfile } = await supabase.from("profiles").select("display_name").eq("id", user.id).single();
       const myName = myProfile?.display_name || user.email?.split("@")[0] || "Quelqu'un";
       await sendNotification(found.id, "friend_request", `${myName} veut être ton ami !`, "Accepte sa demande pour regarder des films ensemble.");
@@ -151,13 +165,11 @@ const Friends = () => {
 
   const handleAccept = async (friendshipId: string) => {
     await supabase.from("friendships" as any).update({ status: "accepted" } as any).eq("id", friendshipId);
-    // Notify the requester
     const friendship = friends.find(f => f.friendshipId === friendshipId);
     if (friendship && user) {
       const { data: myProfile } = await supabase.from("profiles").select("display_name").eq("id", user.id).single();
       const myName = myProfile?.display_name || user.email?.split("@")[0] || "Quelqu'un";
-      const requesterId = friendship.id; // the friend's user id
-      await sendNotification(requesterId, "friend_accepted", `${myName} a accepté ta demande !`, "Vous pouvez maintenant regarder des films ensemble.");
+      await sendNotification(friendship.id, "friend_accepted", `${myName} a accepté ta demande !`, "Vous pouvez maintenant regarder des films ensemble.");
     }
     toast.success("Ami accepté !");
     loadData();
@@ -175,6 +187,37 @@ const Friends = () => {
     loadData();
   };
 
+  const handleViewProfile = async (friend: Friend) => {
+    setSelectedFriend(friend);
+    setLoadingProfile(true);
+    setFriendProfile(null);
+
+    try {
+      const [{ data: profile }, { data: cinematic }] = await Promise.all([
+        supabase.from("profiles").select("display_name, avatar_url, friend_code, favorite_genres").eq("id", friend.id).single(),
+        supabase.from("cinematic_profiles").select("personality_title, dna_archetype, global_level, taste_traits, narrative").eq("user_id", friend.id).single(),
+      ]);
+
+      setFriendProfile({
+        displayName: (profile as any)?.display_name || friend.displayName,
+        avatarUrl: (profile as any)?.avatar_url || null,
+        friendCode: (profile as any)?.friend_code || friend.friendCode,
+        favoriteGenres: (profile as any)?.favorite_genres || [],
+        cinematicProfile: cinematic ? {
+          personalityTitle: (cinematic as any).personality_title,
+          dnaArchetype: (cinematic as any).dna_archetype,
+          globalLevel: (cinematic as any).global_level,
+          tasteTraits: (cinematic as any).taste_traits || [],
+          narrative: (cinematic as any).narrative,
+        } : null,
+      });
+    } catch {
+      setFriendProfile(null);
+    } finally {
+      setLoadingProfile(false);
+    }
+  };
+
   const acceptedFriends = friends.filter(f => f.status === "accepted");
   const pendingReceived = friends.filter(f => f.status === "pending" && !f.isRequester);
   const pendingSent = friends.filter(f => f.status === "pending" && f.isRequester);
@@ -187,11 +230,31 @@ const Friends = () => {
 
           {/* Header */}
           <div className="mb-6">
-            <h1 className="text-2xl font-serif text-foreground mb-1">Pick Together</h1>
+            <h1 className="text-2xl font-serif text-foreground mb-1">Mes Amis</h1>
             <p className="text-muted-foreground text-sm font-sans">
-              Regarde avec tes amis. Trouvez quoi regarder ensemble.
+              Gère tes amis et découvre leurs profils cinéma.
             </p>
           </div>
+
+          {/* CTA soirée ciné */}
+          {acceptedFriends.length >= 1 && (
+            <motion.button
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => navigate("/app/pick-together")}
+              className="w-full mb-5 flex items-center gap-4 p-4 rounded-2xl bg-gradient-to-r from-primary/15 to-primary/5 border border-primary/20 hover:border-primary/35 transition-all group"
+            >
+              <div className="w-11 h-11 rounded-xl bg-primary/20 flex items-center justify-center group-hover:bg-primary/30 transition-colors">
+                <Sparkles className="w-5 h-5 text-primary" />
+              </div>
+              <div className="flex-1 text-left">
+                <p className="text-sm font-sans font-semibold text-foreground">Créer une soirée ciné</p>
+                <p className="text-foreground/40 text-[11px] font-sans">Trouvez quoi regarder ensemble</p>
+              </div>
+              <ChevronRight className="w-4 h-4 text-primary/50 group-hover:text-primary transition-colors" />
+            </motion.button>
+          )}
 
           {/* My Friend Code */}
           <motion.div
@@ -220,26 +283,14 @@ const Friends = () => {
             </p>
           </motion.div>
 
-          {/* Actions */}
-          <div className="flex gap-3 mb-6">
-            <Button
-              onClick={() => setShowAddModal(true)}
-              className="flex-1 rounded-xl h-12 gap-2 bg-primary text-primary-foreground hover:bg-primary/90 font-sans"
-            >
-              <UserPlus className="w-4 h-4" />
-              Ajouter un ami
-            </Button>
-            {acceptedFriends.length >= 1 && (
-              <Button
-                onClick={() => navigate("/app/pick-together")}
-                variant="outline"
-                className="flex-1 rounded-xl h-12 gap-2 font-sans border-primary/30 text-primary hover:bg-primary/10"
-              >
-                <Users className="w-4 h-4" />
-                Créer une soirée
-              </Button>
-            )}
-          </div>
+          {/* Add friend button */}
+          <Button
+            onClick={() => setShowAddModal(true)}
+            className="w-full rounded-xl h-12 gap-2 bg-primary text-primary-foreground hover:bg-primary/90 font-sans mb-6"
+          >
+            <UserPlus className="w-4 h-4" />
+            Ajouter un ami
+          </Button>
 
           {/* Pending received */}
           {pendingReceived.length > 0 && (
@@ -286,25 +337,29 @@ const Friends = () => {
             ) : (
               <div className="space-y-2">
                 {acceptedFriends.map(f => (
-                  <div key={f.friendshipId} className="flex items-center justify-between p-3 rounded-xl bg-card border border-border/20">
+                  <motion.button
+                    key={f.friendshipId}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => handleViewProfile(f)}
+                    className="w-full flex items-center justify-between p-3 rounded-xl bg-card border border-border/20 hover:border-border/40 transition-all text-left group"
+                  >
                     <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-full bg-primary/15 flex items-center justify-center">
-                        <span className="text-sm font-sans font-bold text-primary">
-                          {(f.displayName || "A")[0].toUpperCase()}
-                        </span>
+                      <div className="w-10 h-10 rounded-full bg-primary/15 flex items-center justify-center overflow-hidden border border-primary/10">
+                        {f.avatarUrl ? (
+                          <img src={f.avatarUrl} alt={f.displayName} className="w-full h-full object-cover" />
+                        ) : (
+                          <span className="text-sm font-sans font-bold text-primary">
+                            {(f.displayName || "A")[0].toUpperCase()}
+                          </span>
+                        )}
                       </div>
                       <div>
                         <p className="text-sm font-sans font-medium text-foreground">{f.displayName}</p>
                         <p className="text-muted-foreground/50 text-[10px] font-mono">{f.friendCode}</p>
                       </div>
                     </div>
-                    <button
-                      onClick={() => handleRemove(f.friendshipId)}
-                      className="text-muted-foreground/30 hover:text-destructive transition-colors p-1"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
+                    <ChevronRight className="w-4 h-4 text-muted-foreground/20 group-hover:text-muted-foreground/50 transition-colors" />
+                  </motion.button>
                 ))}
               </div>
             )}
@@ -377,6 +432,127 @@ const Friends = () => {
                 >
                   {adding ? <Loader2 className="w-4 h-4 animate-spin" /> : <UserPlus className="w-4 h-4" />}
                 </Button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Friend profile drawer */}
+      <AnimatePresence>
+        {selectedFriend && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-end justify-center"
+          >
+            <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" onClick={() => setSelectedFriend(null)} />
+            <motion.div
+              initial={{ y: "100%" }}
+              animate={{ y: 0 }}
+              exit={{ y: "100%" }}
+              transition={{ type: "spring", damping: 28, stiffness: 300 }}
+              className="relative w-full max-w-lg rounded-t-3xl bg-card border-t border-border/30 max-h-[85vh] overflow-y-auto"
+            >
+              <div className="sticky top-0 bg-card/90 backdrop-blur-xl z-10 px-6 pt-4 pb-3">
+                <div className="w-10 h-1 rounded-full bg-border/40 mx-auto mb-4" />
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-serif text-foreground">Profil</h3>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => {
+                        if (selectedFriend) handleRemove(selectedFriend.friendshipId);
+                        setSelectedFriend(null);
+                      }}
+                      className="text-xs font-sans text-destructive/60 hover:text-destructive transition-colors px-2 py-1"
+                    >
+                      Retirer
+                    </button>
+                    <button onClick={() => setSelectedFriend(null)} className="p-1 text-muted-foreground/40 hover:text-muted-foreground">
+                      <X className="w-5 h-5" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="px-6 pb-[calc(2rem+env(safe-area-inset-bottom))]">
+                {loadingProfile ? (
+                  <div className="flex justify-center py-12">
+                    <Loader2 className="w-6 h-6 text-primary animate-spin" />
+                  </div>
+                ) : friendProfile ? (
+                  <div className="space-y-5">
+                    {/* Avatar & name */}
+                    <div className="flex flex-col items-center py-4">
+                      <div className="w-20 h-20 rounded-full bg-primary/15 border-2 border-primary/20 flex items-center justify-center overflow-hidden mb-3">
+                        {friendProfile.avatarUrl ? (
+                          <img src={friendProfile.avatarUrl} alt={friendProfile.displayName} className="w-full h-full object-cover" />
+                        ) : (
+                          <span className="text-2xl font-sans font-bold text-primary">
+                            {(friendProfile.displayName || "A")[0].toUpperCase()}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-lg font-serif font-semibold text-foreground">{friendProfile.displayName}</p>
+                      <p className="text-muted-foreground/50 text-xs font-mono mt-0.5">{friendProfile.friendCode}</p>
+                    </div>
+
+                    {/* Favorite genres */}
+                    {friendProfile.favoriteGenres.length > 0 && (
+                      <div>
+                        <p className="text-[10px] font-sans font-semibold text-foreground/30 uppercase tracking-widest mb-2">Genres favoris</p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {friendProfile.favoriteGenres.map(g => (
+                            <span key={g} className="px-2.5 py-1 rounded-full bg-primary/10 text-primary text-[11px] font-sans font-medium">{g}</span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Cinematic profile */}
+                    {friendProfile.cinematicProfile ? (
+                      <div className="rounded-2xl bg-background/50 border border-border/15 p-4 space-y-4">
+                        <div className="flex items-center gap-2 mb-1">
+                          <Clapperboard className="w-4 h-4 text-primary" />
+                          <p className="text-xs font-sans font-semibold text-foreground/70">Profil cinématographique</p>
+                        </div>
+
+                        <div>
+                          <p className="text-lg font-serif font-semibold text-foreground">{friendProfile.cinematicProfile.personalityTitle}</p>
+                          {friendProfile.cinematicProfile.dnaArchetype && (
+                            <p className="text-primary text-xs font-sans font-medium mt-0.5">{friendProfile.cinematicProfile.dnaArchetype}</p>
+                          )}
+                          <p className="text-muted-foreground/50 text-[11px] font-sans mt-1">{friendProfile.cinematicProfile.globalLevel}</p>
+                        </div>
+
+                        {friendProfile.cinematicProfile.tasteTraits.length > 0 && (
+                          <div className="flex flex-wrap gap-1.5">
+                            {friendProfile.cinematicProfile.tasteTraits.slice(0, 6).map(t => (
+                              <span key={t} className="px-2 py-0.5 rounded-full bg-primary/8 text-primary/80 text-[10px] font-sans">{t}</span>
+                            ))}
+                          </div>
+                        )}
+
+                        {friendProfile.cinematicProfile.narrative && (
+                          <p className="text-foreground/50 text-xs font-sans leading-relaxed line-clamp-4">
+                            {friendProfile.cinematicProfile.narrative}
+                          </p>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="rounded-2xl bg-background/50 border border-border/15 p-5 text-center">
+                        <Clapperboard className="w-6 h-6 text-muted-foreground/20 mx-auto mb-2" />
+                        <p className="text-foreground/40 text-sm font-sans">Pas encore de profil cinéma</p>
+                        <p className="text-foreground/20 text-[11px] font-sans mt-1">Ce profil se génère après quelques recommandations</p>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="text-center py-12 text-muted-foreground/40 text-sm font-sans">
+                    Profil introuvable
+                  </div>
+                )}
               </div>
             </motion.div>
           </motion.div>
