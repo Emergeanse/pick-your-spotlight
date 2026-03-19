@@ -32,18 +32,19 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: "Accès refusé" }), { status: 403, headers: corsHeaders });
     }
 
-    const { email, password, displayName, birthYear } = await req.json();
+    const { displayName, birthYear } = await req.json();
 
-    if (!email || !password || password.length < 6) {
-      return new Response(JSON.stringify({ error: "Email et mot de passe (6+ chars) requis" }), { status: 400, headers: corsHeaders });
-    }
+    // Auto-generate a random email and password
+    const randomId = crypto.randomUUID().slice(0, 8);
+    const fakeEmail = `test-${randomId}@pick-test.local`;
+    const fakePassword = crypto.randomUUID();
 
-    // Create user via admin API
+    // Create user via admin API (auto-confirmed, no email sent)
     const { data: newUser, error: createError } = await adminClient.auth.admin.createUser({
-      email,
-      password,
+      email: fakeEmail,
+      password: fakePassword,
       email_confirm: true,
-      user_metadata: { display_name: displayName || "" },
+      user_metadata: { display_name: displayName || `Test ${randomId}` },
     });
 
     if (createError) {
@@ -53,13 +54,20 @@ Deno.serve(async (req) => {
     // Update profile with extra data + mark as test account
     if (newUser?.user) {
       await adminClient.from("profiles").update({
-        display_name: displayName || null,
+        display_name: displayName || `Test ${randomId}`,
         birth_year: birthYear || null,
         is_test_account: true,
       }).eq("id", newUser.user.id);
     }
 
-    return new Response(JSON.stringify({ success: true, userId: newUser?.user?.id, email }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    // Return credentials so the frontend can auto-login
+    return new Response(JSON.stringify({
+      success: true,
+      userId: newUser?.user?.id,
+      email: fakeEmail,
+      password: fakePassword,
+      displayName: displayName || `Test ${randomId}`,
+    }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
   } catch (e) {
     return new Response(JSON.stringify({ error: e.message }), { status: 500, headers: corsHeaders });
   }
