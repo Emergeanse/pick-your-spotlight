@@ -125,7 +125,7 @@ const MyCinema = () => {
           </button>
         </div>
         <div className="p-5">
-          <TasteTrainer onComplete={() => { setShowTrainer(false); loadData(); }} />
+          <TasteTrainer onClose={() => { setShowTrainer(false); loadData(); }} />
         </div>
       </div>
     );
