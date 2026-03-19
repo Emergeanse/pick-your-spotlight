@@ -1254,6 +1254,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
 
               <div className="px-5 pb-5 pt-2 space-y-1">
                 <button
+                  data-tour="autre-suggestion"
                   onClick={() => { setShowOptions(false); onShowAnother(); }}
                   className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl hover:bg-secondary/60 transition-colors active:scale-[0.98]"
                 >
