@@ -18,6 +18,7 @@ import BrandHeader from "./BrandHeader";
 import PickCharacter from "./PickCharacter";
 import TasteTrainer from "./TasteTrainer";
 import TrainingProgress from "./TrainingProgress";
+import DiscoverySection from "./DiscoverySection";
 
 import { useNavigate } from "react-router-dom";
 
@@ -480,6 +481,17 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
               </motion.div>
             </motion.div>
           )}
+        </div>
+
+        {/* Below-the-fold: Discovery */}
+        <div className="px-5 md:px-12 pb-32">
+          <DiscoverySection
+            onMovieSelect={onMovieSelect}
+            platformIds={userPlatformIds}
+            favoriteGenres={userGenres}
+            minRating={userMinRating}
+            excludedGenres={userExcludedGenres}
+          />
         </div>
 
       </div>
