@@ -229,6 +229,14 @@ const Index = () => {
     return () => { supabase.removeChannel(channel); };
   }, [activeActivationMission, watchlistGuideDone]);
 
+  // Show "sauvegarder" step after new movie loads
+  useEffect(() => {
+    if (watchlistGuideAwaitingLoad.current && !loading && step === "result") {
+      watchlistGuideAwaitingLoad.current = false;
+      setTimeout(() => setWatchlistGuideStep("sauvegarder"), 500);
+    }
+  }, [loading, step]);
+
   const handleActivationComplete = () => {
     setShowActivation(false);
     setWatchlistGuideStep(null);
