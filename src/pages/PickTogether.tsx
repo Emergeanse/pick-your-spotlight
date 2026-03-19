@@ -20,6 +20,14 @@ interface Friend {
   avatarUrl?: string | null;
 }
 
+interface Guest {
+  id: string; // local UUID
+  name: string;
+  age?: number;
+  gender?: "homme" | "femme" | "autre";
+  favoriteGenres: string[];
+}
+
 interface GroupRecommendation {
   movie: MovieDetail;
   groupScore: number;
@@ -30,6 +38,11 @@ interface GroupRecommendation {
 
 type FlowStep = "who" | "mood" | "loading" | "results";
 type MediaChoice = "movie" | "tv" | "both";
+
+const GENRE_OPTIONS = [
+  "Action", "Aventure", "Animation", "Comédie", "Crime", "Documentaire",
+  "Drame", "Famille", "Fantastique", "Horreur", "Romance", "Science-Fiction", "Thriller",
+];
 
 const MOODS: { id: string; icon: React.ElementType; label: string; emoji: string }[] = [
   { id: "relax", icon: Wind, label: "On veut se détendre", emoji: "😌" },
