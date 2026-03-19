@@ -209,6 +209,9 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
   const genres = movie.genres?.map(g => g.name).join(" · ") || "";
   const overview = movie.overview || "Aucune description disponible.";
   const mediaType = movie.first_air_date ? "tv" : "movie";
+  const isDocumentary = movie.genres?.some(g => g.id === 99);
+  const mediaLabel = isDocumentary ? "Documentaire" : mediaType === "tv" ? "Série" : "Film";
+  const seasons = (movie as any).number_of_seasons;
   const bgImage = backdrop || poster;
 
   // Track movie opened
@@ -362,13 +365,24 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({ movie, onS
 
                 {/* Meta: Year • Runtime • Rating / Views */}
                 <div className="flex items-center gap-2 text-foreground/50 text-xs font-sans mb-1 flex-wrap">
+                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-primary/10 text-primary text-[10px] font-sans font-semibold uppercase tracking-wide">
+                    {mediaLabel}
+                  </span>
                   {year && <span className="font-medium text-foreground/70">{year}</span>}
-                  {year && runtime > 0 && <span className="text-foreground/20">•</span>}
+                  {mediaType === "tv" && seasons && seasons > 0 && (
+                    <>
+                      <span className="text-foreground/20">•</span>
+                      <span>{seasons} saison{seasons > 1 ? "s" : ""}</span>
+                    </>
+                  )}
                   {runtime > 0 && (
-                    <span className="flex items-center gap-1">
-                      <Clock className="w-3 h-3" />
-                      {runtime} min
-                    </span>
+                    <>
+                      <span className="text-foreground/20">•</span>
+                      <span className="flex items-center gap-1">
+                        <Clock className="w-3 h-3" />
+                        {runtime} min
+                      </span>
+                    </>
                   )}
                   {movie.vote_average > 0 && (
                     <>

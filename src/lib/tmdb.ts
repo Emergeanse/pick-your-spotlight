@@ -22,6 +22,8 @@ export interface MovieDetail extends Movie {
   runtime: number;
   episode_run_time: number[];
   genres: { id: number; name: string }[];
+  number_of_seasons?: number;
+  number_of_episodes?: number;
 }
 
 export type Mood = "relax" | "excited" | "romantic" | "mind-blowing" | "easy-watch" | "fun";
