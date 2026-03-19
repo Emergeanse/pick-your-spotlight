@@ -137,6 +137,41 @@ const Index = () => {
     setShowActivation(true);
   };
 
+  const triggerSurpriseForMission = useCallback(async () => {
+    setLoading(true);
+    try {
+      const liked = user ? await getLikedMovies() : [];
+      const excludeIds = results.map(r => r.id);
+      if (user && liked.length >= 2) {
+        const userTasteVector = await computeUserTasteVector(user.id);
+        const tasteProfile = await getUserTasteProfile();
+        const data = await invokeSurprisePersonalized({
+          likedMovies: liked, userTasteVector, tasteProfile,
+          platformIds: profilePrefs.preferredPlatforms,
+          excludedPlatformIds: profilePrefs.excludedPlatforms,
+          excludedGenres: profilePrefs.excludedGenres,
+          minRating: profilePrefs.minRating,
+          excludeIds,
+        });
+        if (data?.movie) {
+          setResults([data.movie]);
+          setCurrentResultIndex(0);
+          setStep("result");
+        }
+      } else {
+        const movie = await getSurpriseRecommendation(excludeIds, {
+          platformIds: profilePrefs.preferredPlatforms,
+          minRating: profilePrefs.minRating,
+          excludedGenres: profilePrefs.excludedGenres,
+        });
+        setResults([movie]);
+        setCurrentResultIndex(0);
+        setStep("result");
+      }
+    } catch (e) { console.error(e); }
+    finally { setLoading(false); }
+  }, [user, results, profilePrefs]);
+
   const handleActivationMission = (missionId: MissionId) => {
     setActiveActivationMission(missionId);
     switch (missionId) {
@@ -152,7 +187,8 @@ const Index = () => {
         break;
       case "watchlist_3":
       case "like_5":
-        // User navigates freely
+        // Auto-trigger a recommendation so user lands on ResultScreen with bookmark/like buttons
+        triggerSurpriseForMission();
         break;
     }
   };
