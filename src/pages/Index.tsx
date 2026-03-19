@@ -323,7 +323,12 @@ const Index = () => {
         trigger="reco_limit"
       />
 
-      {showTour && <GuidedTour onComplete={() => setShowTour(false)} />}
+      {showTour && (
+        <GuidedTour
+          onComplete={() => setShowTour(false)}
+          onStartTraining={() => setOpenTrainerOnMount(true)}
+        />
+      )}
     </div>
   );
 };
