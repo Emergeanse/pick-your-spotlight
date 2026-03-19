@@ -259,18 +259,6 @@ const Index = () => {
     }
   };
 
-  const { activateCompanion } = useCompanion();
-
-  const handleStartCompanion = () => {
-    const currentMovie = results[currentResultIndex];
-    if (currentMovie) {
-      trackInteraction(currentMovie.id, "watched", {});
-      if (user) recordAcceptedRecommendation(user.id);
-      activateCompanion(currentMovie);
-      toast(`🎬 Companion activé — Pick est là pendant ${currentMovie.first_air_date ? "toute la série" : "tout le film"}`, { duration: 3000 });
-    }
-    setShowCompanion(true);
-  };
 
   const handleRestart = () => {
     setStep("home");
