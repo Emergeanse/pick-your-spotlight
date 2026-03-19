@@ -30,25 +30,30 @@ const WatchlistMissionGuide = ({ step, savedCount, target }: WatchlistMissionGui
   const rafRef = useRef<number>(0);
 
   useEffect(() => {
-    if (!step || step === "continue") return;
+    if (!step || step === "continue") {
+      setTargetRect(null);
+      return;
+    }
 
     const config = STEP_CONFIG[step];
     if (!config) return;
 
+    let mounted = true;
+
     const updateRect = () => {
+      if (!mounted) return;
       const el = document.querySelector(config.targetSelector);
       if (el) {
-        setTargetRect(el.getBoundingClientRect());
+        const rect = el.getBoundingClientRect();
+        setTargetRect(rect);
       }
       rafRef.current = requestAnimationFrame(updateRect);
     };
 
-    // Small delay to let DOM settle
-    const timeout = setTimeout(() => {
-      updateRect();
-    }, 300);
+    const timeout = setTimeout(updateRect, 300);
 
     return () => {
+      mounted = false;
       clearTimeout(timeout);
       cancelAnimationFrame(rafRef.current);
     };
@@ -56,7 +61,7 @@ const WatchlistMissionGuide = ({ step, savedCount, target }: WatchlistMissionGui
 
   if (!step) return null;
 
-  // "Continue" step — just a floating message
+  // "Continue" step — floating encouragement message
   if (step === "continue") {
     const remaining = target - savedCount;
     return (
@@ -95,42 +100,45 @@ const WatchlistMissionGuide = ({ step, savedCount, target }: WatchlistMissionGui
     left: targetRect.left - padding,
     width: targetRect.width + padding * 2,
     height: targetRect.height + padding * 2,
-    borderRadius: 16,
+    right: targetRect.right + padding,
+    bottom: targetRect.bottom + padding,
   };
 
-  // Tooltip position: below or above the target
-  const tooltipBelow = cutout.top < window.innerHeight / 2;
-  const tooltipTop = tooltipBelow
-    ? cutout.top + cutout.height + 12
-    : cutout.top - 12;
+  const vh = window.innerHeight;
+  const vw = window.innerWidth;
+
+  // Tooltip below or above
+  const tooltipBelow = cutout.top < vh / 2;
 
   return (
-    <div className="fixed inset-0 z-[85] pointer-events-auto">
-      {/* Dark overlay with cutout */}
-      <svg className="absolute inset-0 w-full h-full" style={{ pointerEvents: "none" }}>
-        <defs>
-          <mask id="watchlist-guide-mask">
-            <rect x="0" y="0" width="100%" height="100%" fill="white" />
-            <rect
-              x={cutout.left}
-              y={cutout.top}
-              width={cutout.width}
-              height={cutout.height}
-              rx={cutout.borderRadius}
-              fill="black"
-            />
-          </mask>
-        </defs>
-        <rect
-          x="0" y="0" width="100%" height="100%"
-          fill="hsl(var(--background) / 0.75)"
-          mask="url(#watchlist-guide-mask)"
-          style={{ pointerEvents: "auto" }}
-          onClick={(e) => e.stopPropagation()}
-        />
-      </svg>
+    <div className="fixed inset-0 z-[85]">
+      {/* 4 overlay panels around the cutout */}
+      {/* Top */}
+      <div
+        className="absolute top-0 left-0 right-0 bg-background/80 backdrop-blur-sm"
+        style={{ height: Math.max(0, cutout.top) }}
+        onClick={(e) => e.stopPropagation()}
+      />
+      {/* Bottom */}
+      <div
+        className="absolute bottom-0 left-0 right-0 bg-background/80 backdrop-blur-sm"
+        style={{ top: cutout.bottom }}
+        onClick={(e) => e.stopPropagation()}
+      />
+      {/* Left */}
+      <div
+        className="absolute bg-background/80 backdrop-blur-sm"
+        style={{ top: cutout.top, left: 0, width: Math.max(0, cutout.left), height: cutout.height }}
+        onClick={(e) => e.stopPropagation()}
+      />
+      {/* Right */}
+      <div
+        className="absolute bg-background/80 backdrop-blur-sm"
+        style={{ top: cutout.top, left: cutout.right, right: 0, height: cutout.height }}
+        onClick={(e) => e.stopPropagation()}
+      />
 
-      {/* Pulsing ring around target */}
+      {/* Pulsing ring */}
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
@@ -140,10 +148,10 @@ const WatchlistMissionGuide = ({ step, savedCount, target }: WatchlistMissionGui
           left: cutout.left - 2,
           width: cutout.width + 4,
           height: cutout.height + 4,
-          borderRadius: cutout.borderRadius + 2,
+          borderRadius: 16,
         }}
       >
-        <div className="w-full h-full rounded-[18px] border-2 border-primary animate-pulse shadow-[0_0_20px_hsl(var(--primary)/0.4)]" />
+        <div className="w-full h-full rounded-2xl border-2 border-primary animate-pulse shadow-[0_0_20px_hsl(var(--primary)/0.4)]" />
       </motion.div>
 
       {/* Tooltip */}
@@ -152,7 +160,10 @@ const WatchlistMissionGuide = ({ step, savedCount, target }: WatchlistMissionGui
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
         className="absolute left-4 right-4 flex justify-center pointer-events-none"
-        style={{ top: tooltipBelow ? tooltipTop : undefined, bottom: tooltipBelow ? undefined : window.innerHeight - tooltipTop }}
+        style={{
+          top: tooltipBelow ? cutout.bottom + 12 : undefined,
+          bottom: !tooltipBelow ? vh - cutout.top + 12 : undefined,
+        }}
       >
         <div className="bg-card/95 backdrop-blur-xl border border-primary/30 rounded-2xl px-4 py-3 shadow-[0_0_30px_-5px_hsl(var(--primary)/0.3)] max-w-sm">
           <div className="flex items-center gap-3">
@@ -163,19 +174,6 @@ const WatchlistMissionGuide = ({ step, savedCount, target }: WatchlistMissionGui
           </div>
         </div>
       </motion.div>
-
-      {/* Allow clicks only on the target area */}
-      <div
-        className="absolute"
-        style={{
-          top: cutout.top,
-          left: cutout.left,
-          width: cutout.width,
-          height: cutout.height,
-          borderRadius: cutout.borderRadius,
-          pointerEvents: "none",
-        }}
-      />
     </div>
   );
 };
