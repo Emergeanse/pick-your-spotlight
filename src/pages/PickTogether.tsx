@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Users, Loader2, ArrowLeft, Sparkles, Star, Clock, ChevronRight, Check, Wind, Flame, Laugh, Heart, UserRound, UsersRound, Home, Film, Tv, Layers } from "lucide-react";
+import { Users, Loader2, Sparkles, Star, Clock, ChevronRight, Check, Wind, Flame, Laugh, Heart, UserRound, UsersRound, Home, Film, Tv, Layers, ThumbsUp, ThumbsDown, Meh, RefreshCw, Bookmark, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -9,12 +9,15 @@ import { useNavigate } from "react-router-dom";
 import BrandHeader from "@/components/pick/BrandHeader";
 import PickCharacter from "@/components/pick/PickCharacter";
 import type { MovieDetail } from "@/lib/tmdb";
-import { getPosterUrl, getDisplayTitle, getYear } from "@/lib/tmdb";
+import { getPosterUrl, getDisplayTitle, getYear, getBackdropUrl } from "@/lib/tmdb";
+import { addToWatchlist } from "@/lib/watchlist";
+import { likeMovie } from "@/lib/liked-movies";
 
 interface Friend {
   id: string;
   displayName: string;
   friendCode: string;
+  avatarUrl?: string | null;
 }
 
 interface GroupRecommendation {
@@ -25,50 +28,40 @@ interface GroupRecommendation {
   providers: { name: string; logo_path: string; provider_id: number }[];
 }
 
-type SessionStep = "select-friends" | "select-what" | "select-mood" | "loading" | "results";
+type FlowStep = "who" | "mood" | "loading" | "results";
 type MediaChoice = "movie" | "tv" | "both";
 
-const MEDIA_OPTIONS: { value: MediaChoice; icon: React.ElementType; label: string; description: string }[] = [
-  { value: "movie", icon: Film, label: "Un film", description: "Long-métrage" },
-  { value: "tv", icon: Tv, label: "Une série", description: "Série ou documentaire" },
-  { value: "both", icon: Layers, label: "Peu importe", description: "Films et séries" },
-];
-
-const MOODS: { id: string; icon: React.ElementType; label: string; description: string }[] = [
-  { id: "relax", icon: Wind, label: "Détente", description: "Calme et apaisant" },
-  { id: "excited", icon: Flame, label: "Intense", description: "Adrénaline et tension" },
-  { id: "fun", icon: Laugh, label: "Fun", description: "Rires et bonne humeur" },
-  { id: "romantic", icon: Heart, label: "Romantique", description: "Amour et émotion" },
-];
-
-const CONTEXTS: { id: string; icon: React.ElementType; label: string }[] = [
-  { id: "couple", icon: UserRound, label: "En duo" },
-  { id: "friends", icon: UsersRound, label: "Entre amis" },
-  { id: "family", icon: Home, label: "En famille" },
+const MOODS: { id: string; icon: React.ElementType; label: string; emoji: string }[] = [
+  { id: "relax", icon: Wind, label: "On veut se détendre", emoji: "😌" },
+  { id: "excited", icon: Flame, label: "Quelque chose d'intense", emoji: "🔥" },
+  { id: "fun", icon: Laugh, label: "On veut rigoler", emoji: "😂" },
+  { id: "romantic", icon: Heart, label: "Un moment émotion", emoji: "💕" },
 ];
 
 const LOADING_MESSAGES = [
-  "On croise vos profils…",
-  "On cherche le compromis parfait…",
-  "Analyse des goûts de chacun…",
-  "Le film idéal pour tout le monde…",
-  "Presque trouvé…",
-  "On peaufine la sélection…",
+  "J'analyse vos profils cinématographiques…",
+  "Je croise vos goûts et vos envies…",
+  "Le compromis parfait, ça se mérite…",
+  "Je cherche LE film qui plaira à tout le monde…",
+  "Presque… je peaufine ma sélection…",
+  "Voilà, j'ai trouvé quelque chose de spécial…",
 ];
 
 const PickTogether = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [step, setStep] = useState<SessionStep>("select-friends");
+  const [step, setStep] = useState<FlowStep>("who");
   const [friends, setFriends] = useState<Friend[]>([]);
   const [selectedFriendIds, setSelectedFriendIds] = useState<Set<string>>(new Set());
   const [mood, setMood] = useState<string | null>(null);
-  const [context, setContext] = useState<string | null>(null);
   const [mediaChoice, setMediaChoice] = useState<MediaChoice>("both");
   const [loading, setLoading] = useState(false);
   const [loadingMsg, setLoadingMsg] = useState("");
   const [recommendations, setRecommendations] = useState<GroupRecommendation[]>([]);
-  const [selectedRecIdx, setSelectedRecIdx] = useState<number | null>(null);
+  const [heroReaction, setHeroReaction] = useState<"like" | "meh" | "reject" | null>(null);
+  const [showAlternatives, setShowAlternatives] = useState(false);
+  const [groupInfo, setGroupInfo] = useState<any>(null);
+  const [mediaStep, setMediaStep] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -83,10 +76,7 @@ const PickTogether = () => {
       .eq("status", "accepted")
       .or(`requester_id.eq.${user.id},addressee_id.eq.${user.id}`);
 
-    if (!friendships || friendships.length === 0) {
-      setFriends([]);
-      return;
-    }
+    if (!friendships || friendships.length === 0) { setFriends([]); return; }
 
     const otherIds = (friendships as any[]).map((f: any) =>
       f.requester_id === user.id ? f.addressee_id : f.requester_id
@@ -94,7 +84,7 @@ const PickTogether = () => {
 
     const { data: profiles } = await supabase
       .from("profiles")
-      .select("id, display_name, friend_code")
+      .select("id, display_name, friend_code, avatar_url")
       .in("id", otherIds);
 
     setFriends(
@@ -102,6 +92,7 @@ const PickTogether = () => {
         id: p.id,
         displayName: p.display_name || "Ami",
         friendCode: p.friend_code || "",
+        avatarUrl: p.avatar_url,
       }))
     );
   };
@@ -111,14 +102,24 @@ const PickTogether = () => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id);
       else if (next.size < 5) next.add(id);
-      else toast.info("Maximum 6 personnes (toi + 5 amis)");
+      else toast.info("Maximum 6 personnes");
       return next;
     });
   };
 
-  const handleStartSearch = async () => {
-    if (!user || selectedFriendIds.size === 0) return;
+  const handleContinueFromWho = () => {
+    if (selectedFriendIds.size === 0) return;
+    setMediaStep(true);
+  };
 
+  const handleMediaSelect = (choice: MediaChoice) => {
+    setMediaChoice(choice);
+    setMediaStep(false);
+    setStep("mood");
+  };
+
+  const handleStartSearch = async (skipMood = false) => {
+    if (!user || selectedFriendIds.size === 0) return;
     setStep("loading");
     setLoading(true);
     let msgIdx = 0;
@@ -126,454 +127,626 @@ const PickTogether = () => {
     const msgInterval = setInterval(() => {
       msgIdx = (msgIdx + 1) % LOADING_MESSAGES.length;
       setLoadingMsg(LOADING_MESSAGES[msgIdx]);
-    }, 2500);
+    }, 3000);
 
     try {
       const memberIds = [user.id, ...selectedFriendIds];
-
       const { data, error } = await supabase.functions.invoke("group-recommend", {
-        body: {
-          memberIds,
-          mood: mood || undefined,
-          context: context || undefined,
-          timeAvailable: undefined,
-          mediaType: mediaChoice,
-        },
+        body: { memberIds, mood: skipMood ? undefined : mood || undefined, mediaType: mediaChoice },
       });
-
       clearInterval(msgInterval);
-
       if (error) throw error;
-      if (data?.recommendations) {
+      if (data?.recommendations?.length > 0) {
         setRecommendations(data.recommendations);
+        setGroupInfo(data.groupInfo);
         setStep("results");
       } else {
         toast.error("Aucune recommandation trouvée");
-        setStep("select-friends");
+        setStep("who");
       }
     } catch (e: any) {
       clearInterval(msgInterval);
-      console.error(e);
       const msg = e?.message || "";
       if (msg.includes("429")) toast.error("Trop de requêtes, réessaie dans un instant.");
       else if (msg.includes("402")) toast.error("Crédits IA épuisés.");
       else toast.error("Erreur lors de la recherche");
-      setStep("select-friends");
-    } finally {
-      setLoading(false);
-    }
+      setStep("who");
+    } finally { setLoading(false); }
+  };
+
+  const handleReject = () => {
+    setHeroReaction("reject");
+    setTimeout(() => {
+      setHeroReaction(null);
+      setRecommendations([]);
+      handleStartSearch();
+    }, 800);
   };
 
   const handleSelectMovie = (rec: GroupRecommendation) => {
-    // Store movie and navigate to result
     sessionStorage.setItem("pick-fab-movie", JSON.stringify(rec.movie));
     navigate("/app?from=pick-chat");
   };
 
-  const selectedCount = selectedFriendIds.size + 1; // +1 for the user
+  const handleAddToWatchlist = async (movie: MovieDetail) => {
+    if (!user) return;
+    try {
+      await addToWatchlist(movie);
+      toast.success("Ajouté à ta watchlist !");
+    } catch { toast.error("Erreur"); }
+  };
+
+  const selectedCount = selectedFriendIds.size + 1;
+  const hero = recommendations[0];
+  const alternatives = recommendations.slice(1, 3);
+  const selectedFriends = friends.filter(f => selectedFriendIds.has(f.id));
+
+  const goBack = () => {
+    if (step === "results") { setStep("who"); setRecommendations([]); setHeroReaction(null); }
+    else if (step === "mood") { setStep("who"); }
+    else if (mediaStep) { setMediaStep(false); }
+    else navigate("/app/friends");
+  };
 
   return (
     <div className="fixed inset-0 bg-background overflow-hidden">
-      <BrandHeader showBack onBack={() => {
-        if (step === "results") setStep("select-friends");
-        else if (step === "select-mood") setStep("select-what");
-        else if (step === "select-what") setStep("select-friends");
-        else navigate("/app/friends");
-      }} />
+      <BrandHeader showBack onBack={goBack} />
 
-      <div className="h-full overflow-y-auto pt-16 pb-[calc(2rem+env(safe-area-inset-bottom))] px-5">
-        <div className="max-w-lg mx-auto">
-
-          <AnimatePresence mode="wait">
-            {/* Step 1: Select friends */}
-            {step === "select-friends" && (
-              <motion.div key="friends" initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -40 }}>
-                <div className="mb-6">
-                  <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20 mb-4">
-                    <Users className="w-3.5 h-3.5 text-primary" />
-                    <span className="text-primary text-xs font-sans font-semibold">Pick Together</span>
-                  </div>
-                  <h1 className="text-2xl font-serif text-foreground mb-1">Qui regarde ce soir ?</h1>
-                  <p className="text-muted-foreground text-sm font-sans">
-                    Sélectionne les amis qui regardent avec toi
+      <AnimatePresence mode="wait">
+        {/* ─── STEP 1: WHO IS JOINING ─── */}
+        {step === "who" && !mediaStep && (
+          <motion.div key="who" initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -40 }}
+            className="h-full overflow-y-auto pt-16 pb-[calc(6rem+env(safe-area-inset-bottom))] px-5"
+          >
+            <div className="max-w-lg mx-auto">
+              {/* Conversational header */}
+              <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-8 mt-4">
+                <PickCharacter mood="wave" size="sm" animate />
+                <div className="mt-4 bg-card/60 backdrop-blur-sm rounded-2xl p-4 border border-border/10 relative">
+                  <div className="absolute -top-2 left-8 w-4 h-4 bg-card/60 border-l border-t border-border/10 rotate-45" />
+                  <p className="text-foreground text-[15px] font-sans leading-relaxed">
+                    Super, une soirée ciné à plusieurs ! 🍿<br />
+                    <span className="text-foreground/60">Qui sera là ce soir ?</span>
                   </p>
-                </div>
-
-                {/* Current user */}
-                <div className="flex items-center gap-3 p-3 rounded-xl bg-primary/5 border border-primary/15 mb-3">
-                  <div className="w-9 h-9 rounded-full bg-primary/20 flex items-center justify-center">
-                    <span className="text-sm font-sans font-bold text-primary">Toi</span>
-                  </div>
-                  <p className="text-sm font-sans font-medium text-foreground">Toi</p>
-                  <Check className="w-4 h-4 text-primary ml-auto" />
-                </div>
-
-                {/* Friends list */}
-                {friends.length === 0 ? (
-                  <div className="text-center py-8">
-                    <Users className="w-8 h-8 mx-auto mb-2 text-muted-foreground/30" />
-                    <p className="text-muted-foreground text-sm font-sans mb-3">Aucun ami ajouté</p>
-                    <Button
-                      onClick={() => navigate("/app/friends")}
-                      variant="outline"
-                      className="rounded-xl font-sans border-primary/30 text-primary"
-                    >
-                      Ajouter des amis
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="space-y-2 mb-6">
-                    {friends.map(f => {
-                      const selected = selectedFriendIds.has(f.id);
-                      return (
-                        <motion.button
-                          key={f.id}
-                          whileTap={{ scale: 0.98 }}
-                          onClick={() => toggleFriend(f.id)}
-                          className={`w-full flex items-center gap-3 p-3 rounded-xl border transition-all ${
-                            selected
-                              ? "bg-primary/10 border-primary/30"
-                              : "bg-card/50 border-border/15 hover:border-border/30"
-                          }`}
-                        >
-                          <div className={`w-9 h-9 rounded-full flex items-center justify-center transition-colors ${
-                            selected ? "bg-primary/20" : "bg-muted"
-                          }`}>
-                            <span className={`text-sm font-sans font-bold ${selected ? "text-primary" : "text-muted-foreground"}`}>
-                              {f.displayName[0].toUpperCase()}
-                            </span>
-                          </div>
-                          <div className="flex-1 text-left">
-                            <p className="text-sm font-sans font-medium text-foreground">{f.displayName}</p>
-                            <p className="text-muted-foreground/40 text-[10px] font-mono">{f.friendCode}</p>
-                          </div>
-                          <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
-                            selected ? "border-primary bg-primary" : "border-border/40"
-                          }`}>
-                            {selected && <Check className="w-3 h-3 text-primary-foreground" />}
-                          </div>
-                        </motion.button>
-                      );
-                    })}
-                  </div>
-                )}
-
-                {selectedFriendIds.size > 0 && (
-                  <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-                    <Button
-                      onClick={() => setStep("select-what")}
-                      className="w-full rounded-xl h-13 gap-2 bg-primary text-primary-foreground hover:bg-primary/90 font-sans text-base neon-glow"
-                    >
-                      Continuer ({selectedCount} personnes)
-                      <ChevronRight className="w-4 h-4" />
-                    </Button>
-                  </motion.div>
-                )}
-              </motion.div>
-            )}
-
-            {/* Step 2: What to watch */}
-            {step === "select-what" && (
-              <motion.div key="what" initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -40 }}>
-                <div className="mb-6">
-                  <h1 className="text-2xl font-serif text-foreground mb-1">Vous voulez regarder quoi ?</h1>
-                  <p className="text-muted-foreground text-sm font-sans">
-                    Film, série ou les deux ?
-                  </p>
-                </div>
-
-                <div className="flex flex-col gap-2.5 mb-6">
-                  {MEDIA_OPTIONS.map((opt, i) => {
-                    const Icon = opt.icon;
-                    const selected = mediaChoice === opt.value;
-                    return (
-                      <motion.button
-                        key={opt.value}
-                        initial={{ opacity: 0, y: 16 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: i * 0.06, duration: 0.35 }}
-                        whileHover={{ scale: 1.03, y: -2 }}
-                        whileTap={{ scale: 0.96 }}
-                        onClick={() => {
-                          setMediaChoice(opt.value);
-                          setTimeout(() => setStep("select-mood"), 300);
-                        }}
-                        className={`bg-card rounded-2xl p-4 text-left transition-all border flex items-center gap-3 ${
-                          selected
-                            ? "border-primary neon-glow bg-primary/10"
-                            : "border-transparent hover:border-primary/30"
-                        }`}
-                      >
-                        <Icon className={`w-5 h-5 shrink-0 transition-colors ${selected ? "text-primary" : "text-primary/40"}`} />
-                        <div>
-                          <span className="font-serif text-lg tracking-wide block">{opt.label}</span>
-                          <span className="text-muted-foreground text-xs mt-0.5 block font-sans">{opt.description}</span>
-                        </div>
-                      </motion.button>
-                    );
-                  })}
                 </div>
               </motion.div>
-            )}
 
-            {/* Step 3: Mood & context */}
-            {step === "select-mood" && (
-              <motion.div key="mood" initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -40 }}>
-                <div className="mb-6">
-                  <h1 className="text-2xl font-serif text-foreground mb-1">Quelle ambiance ?</h1>
-                  <p className="text-muted-foreground text-sm font-sans">
-                    Optionnel — aide Pick à trouver le film parfait
-                  </p>
+              {/* Current user */}
+              <div className="flex items-center gap-3 p-3.5 rounded-2xl bg-primary/5 border border-primary/15 mb-3">
+                <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center border border-primary/30">
+                  <span className="text-sm font-sans font-bold text-primary">Toi</span>
                 </div>
+                <div className="flex-1">
+                  <p className="text-sm font-sans font-semibold text-foreground">Toi</p>
+                  <p className="text-foreground/30 text-[10px] font-sans">Organisateur</p>
+                </div>
+                <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center">
+                  <Check className="w-3.5 h-3.5 text-primary-foreground" />
+                </div>
+              </div>
 
-                <p className="text-[10px] font-sans font-semibold text-foreground/40 mb-3 uppercase tracking-widest">Humeur</p>
-                <div className="grid grid-cols-2 gap-2.5 mb-8">
-                  {MOODS.map((m, i) => {
-                    const Icon = m.icon;
-                    const selected = mood === m.id;
+              {/* Friends */}
+              {friends.length === 0 ? (
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-10">
+                  <div className="w-16 h-16 rounded-full bg-muted/30 flex items-center justify-center mx-auto mb-4">
+                    <Users className="w-7 h-7 text-muted-foreground/30" />
+                  </div>
+                  <p className="text-foreground/50 text-sm font-sans mb-1">Pas encore d'amis sur Pick</p>
+                  <p className="text-foreground/30 text-xs font-sans mb-4">Partage ton code ami pour commencer</p>
+                  <Button onClick={() => navigate("/app/friends")} variant="outline" className="rounded-xl font-sans border-primary/30 text-primary">
+                    Ajouter des amis
+                  </Button>
+                </motion.div>
+              ) : (
+                <div className="space-y-2">
+                  {friends.map((f, i) => {
+                    const selected = selectedFriendIds.has(f.id);
                     return (
                       <motion.button
-                        key={m.id}
+                        key={f.id}
                         initial={{ opacity: 0, y: 12 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: i * 0.05 }}
-                        whileHover={{ scale: 1.03, y: -2 }}
-                        whileTap={{ scale: 0.96 }}
-                        onClick={() => setMood(mood === m.id ? null : m.id)}
-                        className={`p-4 rounded-2xl border text-left transition-all flex items-start gap-3 ${
+                        whileTap={{ scale: 0.98 }}
+                        onClick={() => toggleFriend(f.id)}
+                        className={`w-full flex items-center gap-3 p-3.5 rounded-2xl border transition-all duration-200 ${
                           selected
-                            ? "bg-primary/10 border-primary/30 neon-glow"
-                            : "bg-card/50 border-border/15 hover:border-primary/20 hover:bg-card/80"
+                            ? "bg-primary/8 border-primary/25 shadow-[0_0_20px_-6px_hsl(var(--primary)/0.2)]"
+                            : "bg-card/40 border-border/10 hover:border-border/25"
                         }`}
                       >
-                        <Icon className={`w-5 h-5 shrink-0 mt-0.5 transition-colors ${selected ? "text-primary" : "text-primary/40"}`} />
-                        <div>
-                          <span className="text-sm font-serif font-medium text-foreground block">{m.label}</span>
-                          <span className="text-muted-foreground/50 text-[11px] font-sans mt-0.5 block">{m.description}</span>
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center border transition-all overflow-hidden ${
+                          selected ? "bg-primary/15 border-primary/30" : "bg-muted/50 border-border/20"
+                        }`}>
+                          {f.avatarUrl ? (
+                            <img src={f.avatarUrl} alt={f.displayName} className="w-full h-full object-cover" />
+                          ) : (
+                            <span className={`text-sm font-sans font-bold ${selected ? "text-primary" : "text-muted-foreground"}`}>
+                              {f.displayName[0].toUpperCase()}
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex-1 text-left">
+                          <p className={`text-sm font-sans font-medium transition-colors ${selected ? "text-foreground" : "text-foreground/70"}`}>{f.displayName}</p>
+                        </div>
+                        <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
+                          selected ? "border-primary bg-primary" : "border-border/30"
+                        }`}>
+                          {selected && <Check className="w-3.5 h-3.5 text-primary-foreground" />}
                         </div>
                       </motion.button>
                     );
                   })}
                 </div>
+              )}
 
-                <p className="text-[10px] font-sans font-semibold text-foreground/40 mb-3 uppercase tracking-widest">Contexte</p>
-                <div className="grid grid-cols-3 gap-2.5 mb-8">
-                  {CONTEXTS.map((c, i) => {
-                    const Icon = c.icon;
-                    const selected = context === c.id;
-                    return (
-                      <motion.button
-                        key={c.id}
-                        initial={{ opacity: 0, y: 12 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.2 + i * 0.05 }}
-                        whileHover={{ scale: 1.03, y: -2 }}
-                        whileTap={{ scale: 0.96 }}
-                        onClick={() => setContext(context === c.id ? null : c.id)}
-                        className={`p-3.5 rounded-2xl border text-center transition-all flex flex-col items-center gap-2 ${
-                          selected
-                            ? "bg-primary/10 border-primary/30 neon-glow"
-                            : "bg-card/50 border-border/15 hover:border-primary/20 hover:bg-card/80"
-                        }`}
-                      >
-                        <Icon className={`w-5 h-5 transition-colors ${selected ? "text-primary" : "text-primary/40"}`} />
-                        <span className="text-xs font-sans font-medium text-foreground">{c.label}</span>
-                      </motion.button>
-                    );
-                  })}
+              {/* Continue button */}
+              <AnimatePresence>
+                {selectedFriendIds.size > 0 && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 20 }}
+                    className="fixed bottom-0 left-0 right-0 p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] bg-gradient-to-t from-background via-background to-transparent z-20"
+                  >
+                    <Button
+                      onClick={handleContinueFromWho}
+                      className="w-full max-w-lg mx-auto block rounded-2xl h-14 gap-2 bg-primary text-primary-foreground hover:bg-primary/90 font-sans text-base neon-glow shadow-[0_0_30px_-5px_hsl(var(--primary)/0.4)]"
+                    >
+                      <Users className="w-4 h-4" />
+                      C'est parti — {selectedCount} personnes
+                    </Button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          </motion.div>
+        )}
+
+        {/* ─── STEP 1b: MEDIA TYPE ─── */}
+        {step === "who" && mediaStep && (
+          <motion.div key="media" initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -40 }}
+            className="h-full overflow-y-auto pt-16 pb-8 px-5"
+          >
+            <div className="max-w-lg mx-auto flex flex-col items-center justify-center min-h-[70vh]">
+              <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-10">
+                <h2 className="text-2xl md:text-4xl font-serif text-foreground mb-2">Vous cherchez quoi ?</h2>
+                <p className="text-foreground/40 text-sm font-sans">Film, série, ou les deux ?</p>
+              </motion.div>
+
+              <div className="flex flex-col gap-3 w-full max-w-md">
+                {([
+                  { value: "movie" as MediaChoice, icon: Film, label: "Un film", desc: "Long-métrage" },
+                  { value: "tv" as MediaChoice, icon: Tv, label: "Une série", desc: "Série ou documentaire" },
+                  { value: "both" as MediaChoice, icon: Layers, label: "Peu importe", desc: "Films et séries" },
+                ]).map((opt, i) => {
+                  const Icon = opt.icon;
+                  return (
+                    <motion.button
+                      key={opt.value}
+                      initial={{ opacity: 0, y: 16 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: i * 0.06, duration: 0.35 }}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.97 }}
+                      onClick={() => handleMediaSelect(opt.value)}
+                      className="bg-card/60 backdrop-blur-sm rounded-2xl p-5 text-left border border-border/10 hover:border-primary/30 transition-all flex items-center gap-4"
+                    >
+                      <div className="w-11 h-11 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center">
+                        <Icon className="w-5 h-5 text-primary/60" />
+                      </div>
+                      <div>
+                        <span className="font-serif text-lg text-foreground block">{opt.label}</span>
+                        <span className="text-foreground/40 text-xs font-sans">{opt.desc}</span>
+                      </div>
+                    </motion.button>
+                  );
+                })}
+              </div>
+            </div>
+          </motion.div>
+        )}
+
+        {/* ─── STEP 2: MOOD (Conversational) ─── */}
+        {step === "mood" && (
+          <motion.div key="mood" initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -40 }}
+            className="h-full overflow-y-auto pt-16 pb-8 px-5"
+          >
+            <div className="max-w-lg mx-auto">
+              <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-8 mt-4">
+                <PickCharacter mood="default" size="sm" animate={false} />
+                <div className="mt-4 bg-card/60 backdrop-blur-sm rounded-2xl p-4 border border-border/10 relative">
+                  <div className="absolute -top-2 left-8 w-4 h-4 bg-card/60 border-l border-t border-border/10 rotate-45" />
+                  <p className="text-foreground text-[15px] font-sans leading-relaxed">
+                    Parfait, vous êtes {selectedCount} ! 🎬<br />
+                    <span className="text-foreground/60">C'est quoi l'ambiance ce soir ?</span>
+                  </p>
                 </div>
+              </motion.div>
 
+              {/* Group avatars mini row */}
+              <div className="flex items-center gap-2 mb-6">
+                <div className="flex -space-x-2">
+                  <div className="w-7 h-7 rounded-full bg-primary/20 border-2 border-background flex items-center justify-center z-10">
+                    <span className="text-[9px] font-bold text-primary">Toi</span>
+                  </div>
+                  {selectedFriends.slice(0, 4).map((f, i) => (
+                    <div key={f.id} className="w-7 h-7 rounded-full bg-card border-2 border-background flex items-center justify-center" style={{ zIndex: 9 - i }}>
+                      {f.avatarUrl ? (
+                        <img src={f.avatarUrl} alt="" className="w-full h-full rounded-full object-cover" />
+                      ) : (
+                        <span className="text-[9px] font-bold text-foreground/50">{f.displayName[0]}</span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+                <span className="text-foreground/30 text-[11px] font-sans">{selectedCount} personnes</span>
+              </div>
+
+              {/* Mood cards */}
+              <div className="grid grid-cols-2 gap-3 mb-8">
+                {MOODS.map((m, i) => {
+                  const selected = mood === m.id;
+                  return (
+                    <motion.button
+                      key={m.id}
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: 0.15 + i * 0.06 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => setMood(mood === m.id ? null : m.id)}
+                      className={`relative p-4 rounded-2xl border text-left transition-all duration-200 ${
+                        selected
+                          ? "bg-primary/10 border-primary/30 shadow-[0_0_25px_-5px_hsl(var(--primary)/0.3)]"
+                          : "bg-card/40 border-border/10 hover:border-border/25"
+                      }`}
+                    >
+                      <span className="text-2xl mb-2 block">{m.emoji}</span>
+                      <span className={`text-sm font-sans font-medium block transition-colors ${selected ? "text-foreground" : "text-foreground/70"}`}>
+                        {m.label}
+                      </span>
+                    </motion.button>
+                  );
+                })}
+              </div>
+
+              {/* Actions */}
+              <div className="space-y-3">
                 <Button
-                  onClick={handleStartSearch}
-                  className="w-full rounded-xl h-13 gap-2 bg-primary text-primary-foreground hover:bg-primary/90 font-sans text-base neon-glow"
+                  onClick={() => handleStartSearch(false)}
+                  className="w-full rounded-2xl h-14 gap-2 bg-primary text-primary-foreground hover:bg-primary/90 font-sans text-base neon-glow shadow-[0_0_30px_-5px_hsl(var(--primary)/0.4)]"
                 >
                   <Sparkles className="w-4 h-4" />
                   Trouver le film parfait
                 </Button>
-
                 <button
-                  onClick={() => { setMood(null); setContext(null); handleStartSearch(); }}
-                  className="w-full mt-3 text-center text-muted-foreground/50 text-xs font-sans hover:text-muted-foreground transition-colors"
+                  onClick={() => handleStartSearch(true)}
+                  className="w-full text-center text-foreground/30 text-xs font-sans hover:text-foreground/50 transition-colors py-2"
                 >
                   Passer — surprise totale
                 </button>
-              </motion.div>
-            )}
+              </div>
+            </div>
+          </motion.div>
+        )}
 
-            {/* Step 3: Loading */}
-            {step === "loading" && (
-              <motion.div key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                className="flex flex-col items-center justify-center min-h-[60vh]"
+        {/* ─── STEP 3: LOADING (AI Moment) ─── */}
+        {step === "loading" && (
+          <motion.div key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="h-full flex flex-col items-center justify-center px-6"
+          >
+            <motion.div
+              initial={{ scale: 0.9 }}
+              animate={{ scale: 1 }}
+              className="flex flex-col items-center text-center max-w-sm"
+            >
+              <PickCharacter mood="think" size="md" animate />
+              <motion.p
+                key={loadingMsg}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="text-foreground/60 text-sm font-sans mt-6 italic"
               >
-                <PickCharacter mood="think" message={loadingMsg} size="md" animate />
-              </motion.div>
-            )}
+                {loadingMsg}
+              </motion.p>
 
-            {/* Step 4: Results */}
-            {step === "results" && (
-              <motion.div key="results" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-                <div className="mb-6">
-                  <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20 mb-3">
-                    <Sparkles className="w-3.5 h-3.5 text-primary" />
-                    <span className="text-primary text-xs font-sans font-semibold">Pick Together</span>
+              {/* Group avatars during loading */}
+              <div className="flex -space-x-3 mt-8">
+                {[{ name: "Toi" }, ...selectedFriends].map((p, i) => (
+                  <motion.div
+                    key={i}
+                    initial={{ opacity: 0, scale: 0 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.3 + i * 0.15, type: "spring" }}
+                    className="w-10 h-10 rounded-full bg-card border-2 border-background flex items-center justify-center"
+                  >
+                    <span className="text-[10px] font-bold text-foreground/50">
+                      {(p as any).displayName?.[0] || p.name[0]}
+                    </span>
+                  </motion.div>
+                ))}
+              </div>
+              <motion.div
+                initial={{ width: 0 }}
+                animate={{ width: "100%" }}
+                transition={{ duration: 8, ease: "linear" }}
+                className="h-0.5 bg-primary/30 rounded-full mt-6 max-w-[200px]"
+              />
+            </motion.div>
+          </motion.div>
+        )}
+
+        {/* ─── STEP 4: RESULTS (Hero + Alternatives) ─── */}
+        {step === "results" && hero && (
+          <motion.div key="results" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="h-full overflow-y-auto"
+          >
+            {/* Hero backdrop */}
+            <div className="relative min-h-[70vh]">
+              <div
+                className="absolute inset-0 bg-cover bg-center"
+                style={{ backgroundImage: `url(${getBackdropUrl(hero.movie.backdrop_path) || getPosterUrl(hero.movie.poster_path, "w780")})` }}
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-background/30" />
+              <div className="absolute inset-0 bg-gradient-to-b from-background/60 via-transparent to-transparent h-24" />
+
+              {/* Hero content */}
+              <div className="relative z-10 flex flex-col items-center justify-end min-h-[70vh] px-6 pb-6">
+                {/* Badge */}
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2 }}
+                  className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/15 border border-primary/25 backdrop-blur-sm mb-4"
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-primary" />
+                  <span className="text-primary text-xs font-sans font-semibold tracking-wide">Pick Together</span>
+                </motion.div>
+
+                {/* Poster */}
+                {hero.movie.poster_path && (
+                  <motion.img
+                    initial={{ opacity: 0, scale: 0.85, y: 20 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    transition={{ delay: 0.3, type: "spring", stiffness: 180 }}
+                    src={getPosterUrl(hero.movie.poster_path, "w342") || ""}
+                    alt={getDisplayTitle(hero.movie)}
+                    className="w-40 h-60 md:w-48 md:h-72 rounded-2xl object-cover shadow-2xl border border-border/20 mb-5"
+                  />
+                )}
+
+                {/* Title */}
+                <motion.h1
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.4 }}
+                  className="text-2xl md:text-3xl font-serif text-foreground text-center mb-1"
+                >
+                  {getDisplayTitle(hero.movie)}
+                </motion.h1>
+
+                {/* Meta */}
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.5 }}
+                  className="flex items-center gap-2 text-foreground/40 text-xs font-sans mb-4"
+                >
+                  <span>{getYear(hero.movie)}</span>
+                  {hero.movie.runtime > 0 && (
+                    <>
+                      <span className="text-border">·</span>
+                      <span className="flex items-center gap-0.5"><Clock className="w-3 h-3" />{hero.movie.runtime} min</span>
+                    </>
+                  )}
+                  {hero.movie.vote_average > 0 && (
+                    <>
+                      <span className="text-border">·</span>
+                      <span className="flex items-center gap-0.5"><Star className="w-3 h-3 fill-gold text-gold" />{hero.movie.vote_average.toFixed(1)}</span>
+                    </>
+                  )}
+                </motion.div>
+
+                {/* Group Match Score */}
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.6, type: "spring" }}
+                  className="flex items-center gap-3 px-5 py-3 rounded-2xl bg-card/60 backdrop-blur-md border border-border/15 mb-4"
+                >
+                  <div className="relative w-14 h-14">
+                    <svg className="w-14 h-14 -rotate-90" viewBox="0 0 56 56">
+                      <circle cx="28" cy="28" r="24" strokeWidth="3" stroke="hsl(var(--muted))" fill="none" />
+                      <motion.circle
+                        cx="28" cy="28" r="24" strokeWidth="3" stroke="hsl(var(--primary))" fill="none"
+                        strokeLinecap="round"
+                        strokeDasharray={`${2 * Math.PI * 24}`}
+                        initial={{ strokeDashoffset: 2 * Math.PI * 24 }}
+                        animate={{ strokeDashoffset: 2 * Math.PI * 24 * (1 - hero.groupScore / 100) }}
+                        transition={{ delay: 0.8, duration: 1.2, ease: "easeOut" }}
+                      />
+                    </svg>
+                    <span className="absolute inset-0 flex items-center justify-center text-primary text-sm font-sans font-bold">
+                      {hero.groupScore}%
+                    </span>
                   </div>
-                  <h1 className="text-2xl font-serif text-foreground mb-1">
-                    {recommendations.length} films pour votre groupe
-                  </h1>
-                  <p className="text-muted-foreground text-sm font-sans">
-                    {selectedCount} personnes · Classés par compatibilité groupe
-                  </p>
-                </div>
+                  <div>
+                    <p className="text-foreground text-sm font-sans font-semibold">Compatibilité groupe</p>
+                    <p className="text-foreground/40 text-[11px] font-sans">{selectedCount} personnes · Recommandé par Pick</p>
+                  </div>
+                </motion.div>
 
-                <div className="space-y-4">
-                  {recommendations.map((rec, idx) => (
+                {/* Reason */}
+                <motion.p
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.7 }}
+                  className="text-foreground/50 text-[13px] font-sans text-center leading-relaxed max-w-sm mb-3 italic"
+                >
+                  "{hero.reason}"
+                </motion.p>
+
+                {/* Providers */}
+                {hero.providers && hero.providers.length > 0 && (
+                  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.8 }}
+                    className="flex items-center gap-2 mb-6"
+                  >
+                    <span className="text-foreground/25 text-[10px] font-sans">Disponible sur</span>
+                    <div className="flex gap-1.5">
+                      {hero.providers.map(p => (
+                        <img key={p.provider_id} src={`https://image.tmdb.org/t/p/w45${p.logo_path}`} alt={p.name}
+                          className="w-6 h-6 rounded-lg object-cover border border-border/20" />
+                      ))}
+                    </div>
+                  </motion.div>
+                )}
+
+                {/* Member notes */}
+                {hero.memberNotes && Object.keys(hero.memberNotes).length > 0 && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.9 }}
+                    className="w-full max-w-sm space-y-2 mb-6"
+                  >
+                    {Object.entries(hero.memberNotes).map(([name, note], i) => (
+                      <div key={name} className="flex items-start gap-2.5 px-3.5 py-2.5 rounded-xl bg-card/40 backdrop-blur-sm border border-border/10">
+                        <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
+                          <span className="text-[9px] font-bold text-primary">{name[0]}</span>
+                        </div>
+                        <div>
+                          <span className="text-foreground/70 text-xs font-sans font-medium">{name}</span>
+                          <p className="text-foreground/40 text-[11px] font-sans">{note}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </motion.div>
+                )}
+              </div>
+            </div>
+
+            {/* Reaction buttons */}
+            <div className="px-6 pb-4">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 1 }}
+                className="flex items-center justify-center gap-4 mb-6"
+              >
+                <motion.button
+                  whileTap={{ scale: 0.85 }}
+                  onClick={handleReject}
+                  className={`w-14 h-14 rounded-full border-2 flex items-center justify-center transition-all ${
+                    heroReaction === "reject"
+                      ? "border-destructive bg-destructive/10 scale-110"
+                      : "border-border/20 bg-card/40 hover:border-destructive/40"
+                  }`}
+                >
+                  <ThumbsDown className={`w-5 h-5 ${heroReaction === "reject" ? "text-destructive" : "text-foreground/40"}`} />
+                </motion.button>
+
+                <motion.button
+                  whileTap={{ scale: 0.9 }}
+                  onClick={() => handleSelectMovie(hero)}
+                  className="w-16 h-16 rounded-full bg-primary flex items-center justify-center neon-glow shadow-[0_0_30px_-5px_hsl(var(--primary)/0.5)] hover:scale-105 transition-transform"
+                >
+                  <ThumbsUp className="w-6 h-6 text-primary-foreground" />
+                </motion.button>
+
+                <motion.button
+                  whileTap={{ scale: 0.85 }}
+                  onClick={() => handleAddToWatchlist(hero.movie)}
+                  className="w-14 h-14 rounded-full border-2 border-border/20 bg-card/40 flex items-center justify-center hover:border-primary/40 transition-all"
+                >
+                  <Bookmark className="w-5 h-5 text-foreground/40" />
+                </motion.button>
+              </motion.div>
+
+              <div className="flex items-center justify-center gap-6 text-[10px] font-sans text-foreground/25 mb-8">
+                <span>Pas pour nous</span>
+                <span>On regarde !</span>
+                <span>Watchlist</span>
+              </div>
+            </div>
+
+            {/* Alternatives */}
+            {alternatives.length > 0 && (
+              <div className="px-6 pb-10">
+                <button
+                  onClick={() => setShowAlternatives(!showAlternatives)}
+                  className="flex items-center gap-2 mb-4 text-foreground/40 text-xs font-sans hover:text-foreground/60 transition-colors"
+                >
+                  <span>{showAlternatives ? "Masquer" : "Voir"} les alternatives</span>
+                  <ChevronRight className={`w-3.5 h-3.5 transition-transform ${showAlternatives ? "rotate-90" : ""}`} />
+                </button>
+
+                <AnimatePresence>
+                  {showAlternatives && (
                     <motion.div
-                      key={rec.movie.id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: idx * 0.1 }}
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className="space-y-3 overflow-hidden"
                     >
-                      <motion.button
-                        whileTap={{ scale: 0.98 }}
-                        onClick={() => setSelectedRecIdx(selectedRecIdx === idx ? null : idx)}
-                        className="w-full text-left rounded-2xl overflow-hidden bg-card border border-border/20 hover:border-border/40 transition-all"
-                      >
-                        <div className="flex gap-4 p-4">
-                          {/* Poster */}
+                      {alternatives.map((rec, idx) => (
+                        <motion.button
+                          key={rec.movie.id}
+                          initial={{ opacity: 0, x: -20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: idx * 0.1 }}
+                          whileTap={{ scale: 0.98 }}
+                          onClick={() => handleSelectMovie(rec)}
+                          className="w-full flex items-center gap-4 p-3.5 rounded-2xl bg-card/40 backdrop-blur-sm border border-border/10 hover:border-border/25 transition-all text-left"
+                        >
                           {rec.movie.poster_path && (
                             <img
-                              src={getPosterUrl(rec.movie.poster_path, "w185") || ""}
+                              src={getPosterUrl(rec.movie.poster_path, "w92") || ""}
                               alt={getDisplayTitle(rec.movie)}
-                              className="w-20 h-[120px] rounded-xl object-cover shrink-0"
+                              className="w-14 h-20 rounded-xl object-cover shrink-0"
                             />
                           )}
-
                           <div className="flex-1 min-w-0">
-                            {/* Rank badge */}
-                            {idx === 0 && (
-                              <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gold/15 border border-gold/25 mb-1.5">
-                                <Star className="w-3 h-3 text-gold fill-gold" />
-                                <span className="text-gold text-[10px] font-sans font-bold">Meilleur choix</span>
-                              </div>
-                            )}
-
-                            <h3 className="text-base font-serif text-foreground leading-tight mb-1">
-                              {getDisplayTitle(rec.movie)}
-                            </h3>
-
-                            <div className="flex items-center gap-2 text-muted-foreground text-[11px] font-sans mb-2">
+                            <h3 className="text-sm font-serif text-foreground leading-tight mb-1 truncate">{getDisplayTitle(rec.movie)}</h3>
+                            <div className="flex items-center gap-1.5 text-foreground/30 text-[10px] font-sans mb-1.5">
                               <span>{getYear(rec.movie)}</span>
-                              {rec.movie.runtime > 0 && (
-                                <>
-                                  <span className="text-border">•</span>
-                                  <span className="flex items-center gap-0.5">
-                                    <Clock className="w-3 h-3" />
-                                    {rec.movie.runtime} min
-                                  </span>
-                                </>
-                              )}
                               {rec.movie.vote_average > 0 && (
-                                <>
-                                  <span className="text-border">•</span>
-                                  <span className="flex items-center gap-0.5">
-                                    <Star className="w-3 h-3 fill-gold text-gold" />
-                                    {rec.movie.vote_average.toFixed(1)}
-                                  </span>
-                                </>
+                                <span className="flex items-center gap-0.5">
+                                  <Star className="w-2.5 h-2.5 fill-gold text-gold" />
+                                  {rec.movie.vote_average.toFixed(1)}
+                                </span>
                               )}
                             </div>
-
-                            {/* Group score */}
                             <div className="flex items-center gap-2">
-                              <div className="flex-1 h-1.5 rounded-full bg-muted overflow-hidden">
-                                <motion.div
-                                  initial={{ width: 0 }}
-                                  animate={{ width: `${rec.groupScore}%` }}
-                                  transition={{ delay: idx * 0.1 + 0.3, duration: 0.6 }}
-                                  className="h-full rounded-full bg-primary"
-                                />
+                              <div className="flex-1 h-1 rounded-full bg-muted overflow-hidden">
+                                <div className="h-full rounded-full bg-primary/60" style={{ width: `${rec.groupScore}%` }} />
                               </div>
-                              <span className="text-primary text-xs font-sans font-bold">{rec.groupScore}%</span>
+                              <span className="text-primary/70 text-[10px] font-sans font-semibold">{rec.groupScore}%</span>
                             </div>
-
-                            {/* Providers */}
-                            {rec.providers && rec.providers.length > 0 && (
-                              <div className="flex items-center gap-1.5 mt-2">
-                                {rec.providers.slice(0, 4).map(p => (
-                                  <img
-                                    key={p.provider_id}
-                                    src={`https://image.tmdb.org/t/p/w45${p.logo_path}`}
-                                    alt={p.name}
-                                    className="w-5 h-5 rounded object-cover"
-                                  />
-                                ))}
-                              </div>
-                            )}
                           </div>
-
-                          <ChevronRight className={`w-4 h-4 text-muted-foreground/30 shrink-0 mt-1 transition-transform ${selectedRecIdx === idx ? "rotate-90" : ""}`} />
-                        </div>
-
-                        {/* Expanded details */}
-                        <AnimatePresence>
-                          {selectedRecIdx === idx && (
-                            <motion.div
-                              initial={{ height: 0, opacity: 0 }}
-                              animate={{ height: "auto", opacity: 1 }}
-                              exit={{ height: 0, opacity: 0 }}
-                              className="overflow-hidden"
-                            >
-                              <div className="px-4 pb-4 pt-1 border-t border-border/10">
-                                <p className="text-sm font-sans text-foreground/70 mb-3">{rec.reason}</p>
-
-                                {/* Member notes */}
-                                {rec.memberNotes && Object.keys(rec.memberNotes).length > 0 && (
-                                  <div className="space-y-1.5">
-                                    {Object.entries(rec.memberNotes).map(([name, note]) => (
-                                      <div key={name} className="flex items-start gap-2">
-                                        <div className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
-                                          <span className="text-[9px] font-sans font-bold text-primary">{name[0]}</span>
-                                        </div>
-                                        <p className="text-xs font-sans text-muted-foreground">
-                                          <span className="text-foreground/70 font-medium">{name}</span> — {note}
-                                        </p>
-                                      </div>
-                                    ))}
-                                  </div>
-                                )}
-
-                                <Button
-                                  onClick={(e) => { e.stopPropagation(); handleSelectMovie(rec); }}
-                                  className="w-full mt-4 rounded-xl h-11 bg-primary text-primary-foreground hover:bg-primary/90 font-sans gap-2"
-                                >
-                                  Découvrir {rec.movie.first_air_date ? "cette série" : "ce film"}
-                                  <ChevronRight className="w-4 h-4" />
-                                </Button>
-                              </div>
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
-                      </motion.button>
+                          <ChevronRight className="w-4 h-4 text-foreground/15 shrink-0" />
+                        </motion.button>
+                      ))}
                     </motion.div>
-                  ))}
-                </div>
+                  )}
+                </AnimatePresence>
 
                 {/* Restart */}
                 <button
                   onClick={() => {
                     setRecommendations([]);
-                    setSelectedRecIdx(null);
-                    setStep("select-friends");
+                    setHeroReaction(null);
+                    setShowAlternatives(false);
+                    setStep("who");
                   }}
-                  className="w-full mt-6 text-center text-muted-foreground/50 text-sm font-sans hover:text-muted-foreground transition-colors"
+                  className="w-full mt-6 text-center text-foreground/25 text-xs font-sans hover:text-foreground/40 transition-colors"
                 >
                   ← Recommencer avec d'autres amis
                 </button>
-              </motion.div>
+              </div>
             )}
-          </AnimatePresence>
-        </div>
-      </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
