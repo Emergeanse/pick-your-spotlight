@@ -313,6 +313,7 @@ const PickTogether = () => {
                         initial={{ opacity: 0, y: 12 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.2 + i * 0.05 }}
+                        whileHover={{ scale: 1.03, y: -2 }}
                         whileTap={{ scale: 0.96 }}
                         onClick={() => setContext(context === c.id ? null : c.id)}
                         className={`p-3.5 rounded-2xl border text-center transition-all flex flex-col items-center gap-2 ${
