@@ -267,6 +267,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
             likedMovies: liked, userTasteVector, tasteProfile,
             platformIds: userPlatformIds, excludedPlatformIds: userExcludedPlatformIds, excludedGenres: userExcludedGenres, minRating: userMinRating, excludeIds: allExcludeIds, rejectionContext,
             explorationLevel,
+            mediaType: whatChoice,
           });
           movie = data.movie as MovieDetail;
         } else {
