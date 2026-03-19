@@ -83,7 +83,7 @@ const PickTogether = () => {
   const [showAlternatives, setShowAlternatives] = useState(false);
   const [groupInfo, setGroupInfo] = useState<any>(null);
   const [mediaStep, setMediaStep] = useState(false);
-  const [showSessionQR, setShowSessionQR] = useState(false);
+  // showSessionQR removed — QR is now inline in the "who" step
   const [sessionInviteCode, setSessionInviteCode] = useState<string | null>(null);
   const [creatingSession, setCreatingSession] = useState(false);
   const [realtimeMembers, setRealtimeMembers] = useState<{ id: string; name: string }[]>([]);
@@ -122,8 +122,8 @@ const PickTogether = () => {
     );
   };
 
-  // ─── Session QR Code ───
-  const handleCreateSessionQR = async () => {
+  // ─── Create session + go to who step ───
+  const handleCreateSoiree = async () => {
     if (!user) return;
     setCreatingSession(true);
     try {
@@ -133,32 +133,38 @@ const PickTogether = () => {
         .select("id, invite_code")
         .single();
       if (error) throw error;
-      setSessionInviteCode((data as any).invite_code);
-      setShowSessionQR(true);
+      const sessionId = (data as any).id;
+      const inviteCode = (data as any).invite_code;
+      setSessionInviteCode(inviteCode);
 
       // Subscribe to realtime members
-      const channel = supabase
-        .channel(`session-${(data as any).id}`)
+      supabase
+        .channel(`session-${sessionId}`)
         .on("postgres_changes", {
           event: "INSERT",
           schema: "public",
           table: "group_session_members",
-          filter: `session_id=eq.${(data as any).id}`,
+          filter: `session_id=eq.${sessionId}`,
         }, async (payload: any) => {
-          const { data: prof } = await supabase
-            .from("profiles")
-            .select("display_name")
-            .eq("id", payload.new.user_id)
-            .single();
-          setRealtimeMembers(prev => [
-            ...prev,
-            { id: payload.new.user_id, name: (prof as any)?.display_name || "Quelqu'un" },
-          ]);
-          toast.success(`${(prof as any)?.display_name || "Quelqu'un"} a rejoint la soirée !`);
+          const memberId = payload.new.user_id;
+          const guestName = payload.new.guest_name;
+          if (memberId) {
+            const { data: prof } = await supabase
+              .from("profiles")
+              .select("display_name")
+              .eq("id", memberId)
+              .single();
+            const name = (prof as any)?.display_name || "Quelqu'un";
+            setRealtimeMembers(prev => [...prev, { id: memberId, name }]);
+            toast.success(`${name} a rejoint la soirée !`);
+          } else if (guestName) {
+            setRealtimeMembers(prev => [...prev, { id: `guest-${Date.now()}`, name: guestName }]);
+            toast.success(`${guestName} a rejoint la soirée !`);
+          }
         })
         .subscribe();
 
-      // Cleanup on unmount handled by React
+      setStep("who");
     } catch (e) {
       console.error(e);
       toast.error("Erreur lors de la création de la session");
@@ -175,12 +181,18 @@ const PickTogether = () => {
     if (!sessionInviteUrl) return;
     if (navigator.share) {
       try {
-        await navigator.share({ title: "Soirée ciné Pick", text: "Rejoins ma soirée ciné !", url: sessionInviteUrl });
+        await navigator.share({ title: "Soirée ciné Pick", text: "Rejoins ma soirée ciné ! 🍿", url: sessionInviteUrl });
       } catch {}
     } else {
       navigator.clipboard.writeText(sessionInviteUrl);
       toast.success("Lien copié !");
     }
+  };
+
+  const handleCopyLink = () => {
+    if (!sessionInviteUrl) return;
+    navigator.clipboard.writeText(sessionInviteUrl);
+    toast.success("Lien copié !");
   };
 
   const toggleFriend = (id: string) => {
@@ -348,30 +360,22 @@ const PickTogether = () => {
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.25 }}
-              className="w-full max-w-sm space-y-3"
+              className="w-full max-w-sm"
             >
               <Button
-                onClick={() => setStep("who")}
+                onClick={handleCreateSoiree}
+                disabled={creatingSession}
                 variant="hero"
                 size="xl"
                 className="w-full gap-2 font-sans text-base"
               >
-                <Sparkles className="w-4 h-4" />
-                Créer une soirée ciné
-              </Button>
-
-              <button
-                onClick={handleCreateSessionQR}
-                disabled={creatingSession}
-                className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl border border-border/15 bg-card/40 text-foreground/60 text-sm font-sans hover:border-primary/30 hover:text-foreground transition-all"
-              >
                 {creatingSession ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
                 ) : (
-                  <QrCode className="w-4 h-4" />
+                  <Sparkles className="w-4 h-4" />
                 )}
-                Inviter par QR code
-              </button>
+                Créer une soirée ciné
+              </Button>
             </motion.div>
           </motion.div>
         )}
@@ -408,42 +412,68 @@ const PickTogether = () => {
                 </div>
               </div>
 
-              {/* QR Code invite button */}
-              <motion.button
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.15 }}
-                onClick={handleCreateSessionQR}
-                disabled={creatingSession || showSessionQR}
-                className="w-full flex items-center gap-3 p-3.5 rounded-2xl border border-dashed border-primary/20 hover:border-primary/40 bg-primary/5 transition-all mb-3 text-left group"
-              >
-                <div className="w-10 h-10 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center group-hover:bg-primary/15 transition-colors">
-                  {creatingSession ? (
-                    <Loader2 className="w-4 h-4 text-primary animate-spin" />
-                  ) : (
+              {/* ─── Invitation Card: QR + Link ─── */}
+              {sessionInviteCode && (
+                <motion.div
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1 }}
+                  className="rounded-2xl bg-card/60 backdrop-blur-sm border border-primary/15 p-4 mb-4"
+                >
+                  <div className="flex items-center gap-2 mb-3">
                     <QrCode className="w-4 h-4 text-primary" />
-                  )}
-                </div>
-                <div>
-                  <p className="text-sm font-sans font-medium text-primary">Inviter par QR code</p>
-                  <p className="text-foreground/30 text-[10px] font-sans">Les gens autour de toi rejoignent en scannant</p>
-                </div>
-              </motion.button>
+                    <p className="text-sm font-sans font-semibold text-foreground">Invite tes potes</p>
+                  </div>
 
-              {/* Realtime joined members */}
-              {realtimeMembers.length > 0 && (
-                <div className="mb-3 space-y-1.5">
-                  <p className="text-[10px] font-sans font-semibold text-primary/60 uppercase tracking-widest">Ont rejoint via QR</p>
-                  {realtimeMembers.map(m => (
-                    <div key={m.id} className="flex items-center gap-3 p-3 rounded-2xl bg-primary/5 border border-primary/15">
-                      <div className="w-8 h-8 rounded-full bg-primary/15 flex items-center justify-center">
-                        <span className="text-xs font-bold text-primary">{m.name[0]}</span>
-                      </div>
-                      <p className="text-sm font-sans text-foreground">{m.name}</p>
-                      <Check className="w-4 h-4 text-primary ml-auto" />
+                  <div className="flex items-start gap-4">
+                    {/* QR Code */}
+                    <div className="bg-white rounded-xl p-2 shrink-0">
+                      <QRCodeSVG value={sessionInviteUrl} size={88} level="M" />
                     </div>
-                  ))}
-                </div>
+
+                    {/* Actions */}
+                    <div className="flex-1 space-y-2 min-w-0">
+                      <p className="text-foreground/40 text-[11px] font-sans leading-relaxed">
+                        Scanne le QR ou partage le lien pour inviter des gens à ta soirée ciné.
+                      </p>
+
+                      <div className="flex gap-2">
+                        <button
+                          onClick={handleShareSession}
+                          className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl bg-primary/10 border border-primary/20 text-primary text-xs font-sans font-medium hover:bg-primary/15 transition-all"
+                        >
+                          <Share2 className="w-3.5 h-3.5" />
+                          Partager
+                        </button>
+                        <button
+                          onClick={handleCopyLink}
+                          className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl bg-muted/30 border border-border/15 text-foreground/60 text-xs font-sans font-medium hover:bg-muted/50 transition-all"
+                        >
+                          <Copy className="w-3.5 h-3.5" />
+                          Copier le lien
+                        </button>
+                      </div>
+
+                      <p className="text-foreground/25 text-[10px] font-sans text-center font-mono tracking-wider">{sessionInviteCode}</p>
+                    </div>
+                  </div>
+
+                  {/* Realtime joined members */}
+                  {realtimeMembers.length > 0 && (
+                    <div className="mt-3 pt-3 border-t border-border/10 space-y-1.5">
+                      <p className="text-[10px] font-sans font-semibold text-primary/60 uppercase tracking-widest">Ont rejoint</p>
+                      {realtimeMembers.map(m => (
+                        <div key={m.id} className="flex items-center gap-2.5 py-1.5">
+                          <div className="w-7 h-7 rounded-full bg-primary/15 flex items-center justify-center">
+                            <span className="text-[10px] font-bold text-primary">{m.name[0]}</span>
+                          </div>
+                          <p className="text-sm font-sans text-foreground">{m.name}</p>
+                          <Check className="w-3.5 h-3.5 text-primary ml-auto" />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </motion.div>
               )}
 
               {/* Friends */}
@@ -1109,89 +1139,6 @@ const PickTogether = () => {
         )}
       </AnimatePresence>
 
-      {/* ─── SESSION QR CODE MODAL ─── */}
-      <AnimatePresence>
-        {showSessionQR && sessionInviteCode && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-background/90 backdrop-blur-md flex items-center justify-center p-6"
-            onClick={() => setShowSessionQR(false)}
-          >
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              onClick={e => e.stopPropagation()}
-              className="bg-card rounded-3xl p-6 max-w-sm w-full border border-border/15 shadow-2xl"
-            >
-              <div className="text-center mb-6">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 mb-3">
-                  <Sparkles className="w-3 h-3 text-primary" />
-                  <span className="text-primary text-[11px] font-sans font-semibold">Soirée ciné</span>
-                </div>
-                <h2 className="text-xl font-serif text-foreground">Scanne pour rejoindre</h2>
-                <p className="text-foreground/40 text-xs font-sans mt-1">Les autres scannent ce QR pour rejoindre ta soirée</p>
-              </div>
-
-              <div className="flex justify-center mb-6">
-                <div className="bg-white rounded-2xl p-4">
-                  <QRCodeSVG value={sessionInviteUrl} size={200} level="M" />
-                </div>
-              </div>
-
-              <div className="text-center mb-4">
-                <p className="text-foreground/30 text-[10px] font-sans uppercase tracking-widest mb-1">Code session</p>
-                <p className="text-foreground font-mono text-lg font-bold tracking-wider">{sessionInviteCode}</p>
-              </div>
-
-              {realtimeMembers.length > 0 && (
-                <div className="mb-4 p-3 rounded-xl bg-primary/5 border border-primary/10">
-                  <p className="text-[10px] font-sans font-semibold text-primary/60 uppercase tracking-widest mb-2">
-                    {realtimeMembers.length} participant{realtimeMembers.length > 1 ? "s" : ""} rejoint{realtimeMembers.length > 1 ? "s" : ""}
-                  </p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {realtimeMembers.map(m => (
-                      <span key={m.id} className="px-2.5 py-1 rounded-lg bg-primary/10 text-primary text-xs font-sans">
-                        {m.name}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              <div className="flex gap-2">
-                <Button
-                  onClick={handleShareSession}
-                  variant="outline"
-                  className="flex-1 rounded-xl font-sans gap-2 border-border/20"
-                >
-                  <Share2 className="w-4 h-4" />
-                  Partager
-                </Button>
-                <Button
-                  onClick={() => {
-                    navigator.clipboard.writeText(sessionInviteUrl);
-                    toast.success("Lien copié !");
-                  }}
-                  variant="outline"
-                  className="rounded-xl font-sans border-border/20"
-                >
-                  <Copy className="w-4 h-4" />
-                </Button>
-              </div>
-
-              <button
-                onClick={() => setShowSessionQR(false)}
-                className="w-full mt-3 text-center text-foreground/30 text-xs font-sans hover:text-foreground/50 transition-colors py-2"
-              >
-                Fermer
-              </button>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       {/* Show tab bar only on landing */}
       {step === "landing" && <BottomTabBar />}
