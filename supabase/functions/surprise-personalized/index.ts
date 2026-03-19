@@ -227,27 +227,42 @@ Recommande UN film avec les scores détaillés.`;
         "Histoire": 36, "Horreur": 27, "Musique": 10402, "Mystère": 9648,
         "Romance": 10749, "Science-Fiction": 878, "Thriller": 53, "Guerre": 10752, "Western": 37,
       };
-      const discoverParams = new URLSearchParams({
-        api_key: TMDB_API_KEY,
-        language: "fr-FR",
-        sort_by: "popularity.desc",
-        "vote_count.gte": "100",
-        page: String(Math.floor(Math.random() * 20) + 1),
-      });
-      if (minRating && minRating > 0) discoverParams.set("vote_average.gte", String(minRating));
-      if (excludedGenreIds.size > 0) discoverParams.set("without_genres", [...excludedGenreIds].join(","));
-      if (topGenres.length > 0 && !outOfComfortZone) {
-        const genreIds = topGenres.map(g => genreIdMap[g]).filter(Boolean).slice(0, 3);
-        if (genreIds.length > 0) discoverParams.set("with_genres", genreIds.join("|"));
+
+      // Try multiple pages with progressively relaxed filters
+      for (let attempt = 0; attempt < 4 && !selectedMovie; attempt++) {
+        const discoverParams = new URLSearchParams({
+          api_key: TMDB_API_KEY,
+          language: "fr-FR",
+          sort_by: "popularity.desc",
+          "vote_count.gte": attempt < 2 ? "100" : "50",
+          page: String(Math.floor(Math.random() * (attempt < 2 ? 10 : 5)) + 1),
+        });
+        if (minRating && minRating > 0 && attempt < 3) discoverParams.set("vote_average.gte", String(minRating));
+        if (excludedGenreIds.size > 0 && attempt < 3) discoverParams.set("without_genres", [...excludedGenreIds].join(","));
+        if (topGenres.length > 0 && !outOfComfortZone && attempt < 2) {
+          const genreIds = topGenres.map(g => genreIdMap[g]).filter(Boolean).slice(0, 3);
+          if (genreIds.length > 0) discoverParams.set("with_genres", genreIds.join("|"));
+        }
+        if (platformIds && platformIds.length > 0 && attempt < 3) {
+          discoverParams.set("with_watch_providers", platformIds.join("|"));
+          discoverParams.set("watch_region", "FR");
+        }
+        const fallbackUrl = `https://api.themoviedb.org/3/discover/movie?${discoverParams}`;
+        const fallbackRes = await fetch(fallbackUrl);
+        const fallbackData = await fallbackRes.json();
+        selectedMovie = (fallbackData.results || []).find((r: any) => isMovieAllowed(r));
+        // If strict filter found nothing, try any non-excluded movie from results
+        if (!selectedMovie && (fallbackData.results || []).length > 0) {
+          selectedMovie = (fallbackData.results || []).find((r: any) => !excludedSet.has(r.id));
+        }
       }
-      if (platformIds && platformIds.length > 0) {
-        discoverParams.set("with_watch_providers", platformIds.join("|"));
-        discoverParams.set("watch_region", "FR");
-      }
-      const fallbackUrl = `https://api.themoviedb.org/3/discover/movie?${discoverParams}`;
-      const fallbackRes = await fetch(fallbackUrl);
-      const fallbackData = await fallbackRes.json();
-      selectedMovie = (fallbackData.results || []).find((r: any) => !excludedSet.has(r.id));
+    }
+
+    if (!selectedMovie) {
+      // Ultimate fallback: trending movies
+      const trendingRes = await fetch(`https://api.themoviedb.org/3/trending/movie/week?api_key=${TMDB_API_KEY}&language=fr-FR`);
+      const trendingData = await trendingRes.json();
+      selectedMovie = (trendingData.results || []).find((r: any) => !excludedSet.has(r.id));
     }
 
     if (!selectedMovie) {
