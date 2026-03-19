@@ -159,7 +159,6 @@ const Profile = () => {
 
   const hasChanges = profile && (
     JSON.stringify([...selectedPlatforms].sort()) !== JSON.stringify([...(profile.preferred_platforms || [])].sort()) ||
-    JSON.stringify([...excludedPlatforms].sort()) !== JSON.stringify([...(profile.excluded_platforms || [])].sort()) ||
     minRating !== ((profile as any)?.min_rating || 0) ||
     mediaPreference !== ((profile as any)?.media_preference || "both") ||
     ritualEnabled !== (profile?.ritual_enabled || false) ||
