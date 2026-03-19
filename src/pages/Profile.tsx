@@ -38,7 +38,6 @@ const Profile = () => {
   const [profile, setProfile] = useState<any>(null);
   const [engagement, setEngagement] = useState<EngagementData | null>(null);
   const [selectedPlatforms, setSelectedPlatforms] = useState<number[]>([]);
-  const [excludedPlatforms, setExcludedPlatforms] = useState<number[]>([]);
   const [minRating, setMinRating] = useState<number>(0);
   const [mediaPreference, setMediaPreference] = useState<string>("both");
   const [saving, setSaving] = useState(false);
