@@ -16,34 +16,52 @@ export type Database = {
     Tables: {
       cinematic_profiles: {
         Row: {
+          distinctions: Json
+          dna_archetype: string | null
           evolution_note: string | null
           generated_at: string
+          global_level: string
           id: string
           narrative: string
           personality_title: string
           representative_films: string[]
+          social_reputation: Json
+          specializations: Json
+          taste_signatures: Json
           taste_traits: string[]
           updated_at: string
           user_id: string
         }
         Insert: {
+          distinctions?: Json
+          dna_archetype?: string | null
           evolution_note?: string | null
           generated_at?: string
+          global_level?: string
           id?: string
           narrative?: string
           personality_title?: string
           representative_films?: string[]
+          social_reputation?: Json
+          specializations?: Json
+          taste_signatures?: Json
           taste_traits?: string[]
           updated_at?: string
           user_id: string
         }
         Update: {
+          distinctions?: Json
+          dna_archetype?: string | null
           evolution_note?: string | null
           generated_at?: string
+          global_level?: string
           id?: string
           narrative?: string
           personality_title?: string
           representative_films?: string[]
+          social_reputation?: Json
+          specializations?: Json
+          taste_signatures?: Json
           taste_traits?: string[]
           updated_at?: string
           user_id?: string
