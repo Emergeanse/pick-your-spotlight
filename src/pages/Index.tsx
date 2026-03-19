@@ -301,8 +301,10 @@ const Index = () => {
         { user_id: user.id, usage_date: today, chat_count: 1 },
         { onConflict: "user_id,usage_date" }
       );
+      setTalkToPickGuideStep(null);
       setShowChat(false);
       setActiveActivationMission(null);
+      setStep("home");
       return;
     }
 
