@@ -191,7 +191,7 @@ const Landing = () => {
         "@context": "https://schema.org", "@type": "FAQPage",
         "mainEntity": [
           { "@type": "Question", "name": "Pick est-il gratuit ?", "acceptedAnswer": { "@type": "Answer", "text": "Oui, Pick est gratuit avec 3 recommandations par jour. Pick+ à 3,99€/mois offre des recommandations illimitées." }},
-          { "@type": "Question", "name": "Comment Pick recommande-t-il des films ?", "acceptedAnswer": { "@type": "Answer", "text": "Pick utilise l'IA pour analyser tes goûts, ton humeur et ton contexte afin de te proposer le film parfait." }},
+          { "@type": "Question", "name": "Comment Pick recommande-t-il des films ?", "acceptedAnswer": { "@type": "Answer", "text": "Pick apprend tes goûts au fil du temps et croise ton humeur, ton contexte et tes préférences pour te proposer le film parfait." }},
           { "@type": "Question", "name": "Pick fonctionne-t-il avec toutes les plateformes ?", "acceptedAnswer": { "@type": "Answer", "text": "Oui, Pick est compatible avec Netflix, Disney+, Amazon Prime, Apple TV+, Canal+, HBO, Paramount+ et plus." }}
         ]
       })}} />
@@ -259,7 +259,7 @@ const Landing = () => {
             transition={{ duration: 0.6, delay: 0.4 }}
             className="text-foreground/40 text-base md:text-lg font-sans font-light max-w-lg mx-auto mb-8 leading-relaxed"
           >
-            Pick analyse tes goûts et ton humeur pour te trouver le film parfait en quelques secondes. Plus de débat, plus d'hésitation.
+            Pick comprend tes goûts et ton humeur pour te trouver le film parfait en quelques secondes. Plus de débat, plus d'hésitation.
           </motion.p>
 
           {/* Single CTA */}
@@ -330,7 +330,7 @@ const Landing = () => {
           <motion.div variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }} className="grid md:grid-cols-3 gap-6 max-w-3xl mx-auto">
             {[
               { step: "01", icon: <Zap className="w-5 h-5" />, title: "Dis ton envie", desc: "Tape ou dis à Pick ce que tu as en tête. Une humeur, un contexte, une envie vague — il comprend tout." },
-              { step: "02", icon: <Brain className="w-5 h-5" />, title: "Pick analyse", desc: "L'IA croise tes goûts, ton historique et tes plateformes pour isoler le film parfait." },
+              { step: "02", icon: <Brain className="w-5 h-5" />, title: "Pick analyse", desc: "Pick croise tes goûts, ton historique et tes plateformes pour isoler le film parfait." },
               { step: "03", icon: <Play className="w-5 h-5" />, title: "Tu regardes", desc: "Un seul film, le bon. Avec le lien direct vers ta plateforme de streaming." },
             ].map((item, i) => (
               <motion.div key={item.step} variants={fadeUp} custom={i} className="text-center md:text-left">
