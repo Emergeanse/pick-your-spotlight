@@ -116,6 +116,20 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
   const [whatChoice, setWhatChoice] = useState<WhatOption>("both");
   const [whoChoice, setWhoChoice] = useState<WhoOption | null>(null);
   const [totalEvaluated, setTotalEvaluated] = useState(0);
+  const [chatMoviesPool, setChatMoviesPool] = useState<MovieDetail[] | null>(null);
+
+  // When chat suggests movies, show the first one in the tonightPick preview
+  useEffect(() => {
+    if (chatSuggestedMovies && chatSuggestedMovies.length > 0) {
+      const firstMovie = chatSuggestedMovies[0];
+      setChatMoviesPool(chatSuggestedMovies);
+      setTonightPick(firstMovie);
+      setTonightProviders([]);
+      const mediaType = firstMovie.first_air_date ? "tv" : "movie";
+      getWatchProviders(firstMovie.id, mediaType).then(setTonightProviders).catch(() => {});
+      onChatSuggestedConsumed?.();
+    }
+  }, [chatSuggestedMovies]);
 
   // Open trainer from MyCinema navigation or activation flow
   useEffect(() => {
