@@ -121,7 +121,8 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
 
   // All movies available for tonight pick navigation (chat pool or single generated)
   const tonightPool: MovieDetail[] = chatMoviesPool || (tonightPick ? [tonightPick] : []);
-  const hasTonightNav = tonightPool.length > 1;
+  // Arrows only show once user has clicked "Autre suggestion" at least once
+  const hasTonightNav = tonightPool.length > 1 && tonightPickIndex > 0;
 
   const navigateTonightPick = (direction: "prev" | "next") => {
     if (!hasTonightNav) return;
@@ -718,15 +719,29 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
                           reason: "not_my_style",
                           genres: (tonightPick.genres || []).map(g => g.name),
                         });
-                        const nextRejected = [...rejectedIds, tonightPick.id];
-                        const rejContext = {
-                          reason: "not_my_style" as const,
-                          rejectedGenres: (tonightPick.genres || []).map(g => g.name),
-                          rejectedTitle: getDisplayTitle(tonightPick),
-                        };
-                        setRejectedIds(nextRejected);
-                        setTonightPick(null);
-                        generateTonightPick(nextRejected, rejContext);
+                        // If there are more movies in the pool, advance
+                        if (tonightPool.length > 1 && tonightPickIndex < tonightPool.length - 1) {
+                          const newIndex = tonightPickIndex + 1;
+                          setTonightPickIndex(newIndex);
+                          const nextMovie = tonightPool[newIndex];
+                          setTonightPick(nextMovie);
+                          setTonightProviders([]);
+                          const mediaType = nextMovie.first_air_date ? "tv" : "movie";
+                          getWatchProviders(nextMovie.id, mediaType).then(setTonightProviders).catch(() => {});
+                        } else {
+                          // Pool exhausted — regenerate
+                          const nextRejected = [...rejectedIds, tonightPick.id];
+                          const rejContext = {
+                            reason: "not_my_style" as const,
+                            rejectedGenres: (tonightPick.genres || []).map(g => g.name),
+                            rejectedTitle: getDisplayTitle(tonightPick),
+                          };
+                          setRejectedIds(nextRejected);
+                          setTonightPick(null);
+                          setChatMoviesPool(null);
+                          setTonightPickIndex(0);
+                          generateTonightPick(nextRejected, rejContext);
+                        }
                       }}
                       disabled={tonightLoading}
                       className="text-foreground/40 text-[12px] font-sans hover:text-foreground/60 transition-colors disabled:opacity-50 flex items-center gap-1.5"
