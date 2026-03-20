@@ -304,6 +304,10 @@ Génère la fiche de match multi-vecteur.`;
     if (recentSimilarity !== null) matchData.recentSimilarity = Math.round(recentSimilarity * 100);
     if (avoidanceSimilarity !== null) matchData.avoidanceSimilarity = Math.round(avoidanceSimilarity * 100);
     if (movieTasteTags.length > 0) matchData.movieTasteTags = movieTasteTags;
+    if (movieClusterLabels.length > 0) matchData.clusterLabels = movieClusterLabels;
+    if (movieSafetyTags.length > 0) matchData.safetyTags = movieSafetyTags;
+    if (movieSuitabilityTags.length > 0) matchData.suitabilityTags = movieSuitabilityTags;
+    if (Object.keys(movieSemanticAxes).length > 0) matchData.semanticAxes = movieSemanticAxes;
 
     return new Response(JSON.stringify(matchData), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
