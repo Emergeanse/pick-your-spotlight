@@ -105,7 +105,8 @@ const PickCharacter = ({
 
   useEffect(() => {
     if (showGreeting && !message) {
-      setGreeting(GREETINGS[Math.floor(Math.random() * GREETINGS.length)]);
+      const greetings = getTimeAwareGreetings();
+      setGreeting(greetings[Math.floor(Math.random() * greetings.length)]);
     }
   }, [showGreeting, message]);
 
