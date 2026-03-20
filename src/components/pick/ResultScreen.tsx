@@ -10,7 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { likeMovie, unlikeMovie, isMovieLiked, getLikedMovies } from "@/lib/liked-movies";
 import { addToWatchlist, removeFromWatchlist, isInWatchlist } from "@/lib/watchlist";
-import { trackInteraction, getUserTasteProfile } from "@/lib/interactions";
+import { trackInteraction, getUserTasteProfile, trackRecommendationEvent, updateRecommendationReaction } from "@/lib/interactions";
 import { toast } from "sonner";
 import { computeUserTasteVector, ensureMovieEmbedding } from "@/lib/taste-engine";
 import MovieActionBar from "@/components/pick/MovieActionBar";
@@ -356,13 +356,30 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({
       user ? computeUserTasteVector(user.id) : Promise.resolve(null),
       user ? getLikedMovies().catch(() => []) : Promise.resolve([]),
       user ? supabase.from("cinematic_profiles" as any).select("personality_title, narrative, taste_traits").eq("user_id", user.id).maybeSingle().then(r => r.data) : Promise.resolve(null),
-    ]).then(([tasteProfile, userTasteVector, likedMovies, cinematicProfile]) => {
+      user ? supabase.from("user_taste_vectors" as any).select("avoidance_vector, recent_taste_vector").eq("user_id", user.id).maybeSingle().then(r => r.data) : Promise.resolve(null),
+    ]).then(([tasteProfile, userTasteVector, likedMovies, cinematicProfile, vectorData]) => {
       const likedMovieTitles = (likedMovies || []).map((m: any) => m.title);
+      // Enrich tasteProfile with multi-vector data for movie-match
+      const enrichedProfile = tasteProfile ? {
+        ...tasteProfile,
+        recentTasteVector: (vectorData as any)?.recent_taste_vector || null,
+        avoidanceVector: (vectorData as any)?.avoidance_vector || null,
+      } : null;
       supabase.functions.invoke("movie-match", {
-        body: { movie, userCriteria, tasteProfile, userTasteVector, likedMovieTitles, searchTags, cinematicProfile },
+        body: { movie, userCriteria, tasteProfile: enrichedProfile, userTasteVector, likedMovieTitles, searchTags, cinematicProfile },
       }).then(({ data, error }) => {
         if (error) { console.error("Match error:", error); setMatchLoading(false); return; }
-        setMatchData(data as MatchData); setMatchLoading(false);
+        setMatchData(data as MatchData);
+        setMatchLoading(false);
+        // Track recommendation event
+        if (user && data) {
+          trackRecommendationEvent({
+            tmdbId: movie.id,
+            title: movie.title || movie.name || "",
+            source: "result_screen",
+            scoreBreakdown: (data as any).scores || {},
+          });
+        }
       });
     });
   }, [movie.id]);
@@ -376,7 +393,11 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({
     setLikeLoading(true);
     try {
       if (liked) { await unlikeMovie(movie.id); setLiked(false); toast.success("Retiré des favoris"); trackInteraction(movie.id, "unliked"); }
-      else { await likeMovie(movie); setLiked(true); toast.success("Ajouté aux favoris !"); trackInteraction(movie.id, "liked"); }
+      else {
+        await likeMovie(movie); setLiked(true); toast.success("Ajouté aux favoris !");
+        trackInteraction(movie.id, "liked");
+        updateRecommendationReaction(movie.id, "accepted", "liked");
+      }
     } catch { toast.error("Erreur lors de la sauvegarde"); }
     finally { setLikeLoading(false); }
   };
@@ -386,7 +407,12 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({
     setBookmarkLoading(true);
     try {
       if (bookmarked) { await removeFromWatchlist(movie.id); setBookmarked(false); toast.success("Retiré de ta watchlist"); trackInteraction(movie.id, "unsaved"); }
-      else { await addToWatchlist(movie); setBookmarked(true); toast.success("Ajouté à ta watchlist !"); trackInteraction(movie.id, "saved"); window.dispatchEvent(new CustomEvent("pick-watchlist-added")); }
+      else {
+        await addToWatchlist(movie); setBookmarked(true); toast.success("Ajouté à ta watchlist !");
+        trackInteraction(movie.id, "saved");
+        updateRecommendationReaction(movie.id, "accepted", "saved_to_watchlist");
+        window.dispatchEvent(new CustomEvent("pick-watchlist-added"));
+      }
     } catch { toast.error("Erreur lors de la sauvegarde"); }
     finally { setBookmarkLoading(false); }
   };

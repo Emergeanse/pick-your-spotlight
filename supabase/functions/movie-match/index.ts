@@ -19,6 +19,15 @@ function cosineSimilarity(a: number[], b: number[]): number {
   return dot / (Math.sqrt(magA) * Math.sqrt(magB));
 }
 
+function parseVector(v: any): number[] | null {
+  if (!v) return null;
+  if (Array.isArray(v)) return v;
+  if (typeof v === "string") {
+    try { return JSON.parse(v.replace(/^\[/, "[").replace(/\]$/, "]")); } catch { return null; }
+  }
+  return null;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -40,11 +49,13 @@ serve(async (req) => {
     const runtime = movie.runtime || 0;
     const tmdbId = movie.id;
 
-    // ── Embedding similarity (skip for YouTube) ──
+    // ── Embedding similarities (stable + recent + avoidance) ──
     let embeddingSimilarity: number | null = null;
+    let recentSimilarity: number | null = null;
+    let avoidanceSimilarity: number | null = null;
     let movieTasteTags: string[] = [];
 
-    if (!isYouTube && userTasteVector && SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) {
+    if (!isYouTube && SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) {
       const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
       const { data: movieEmb } = await supabase
@@ -53,37 +64,42 @@ serve(async (req) => {
         .eq("tmdb_id", tmdbId)
         .maybeSingle();
 
+      let movieVector: number[] | null = null;
+
       if (movieEmb) {
-        let movieVector: number[];
-        if (typeof movieEmb.embedding === "string") {
-          movieVector = JSON.parse(movieEmb.embedding.replace(/^\[/, "[").replace(/\]$/, "]"));
-        } else {
-          movieVector = movieEmb.embedding;
-        }
-        embeddingSimilarity = cosineSimilarity(userTasteVector, movieVector);
+        movieVector = typeof movieEmb.embedding === "string"
+          ? JSON.parse(movieEmb.embedding.replace(/^\[/, "[").replace(/\]$/, "]"))
+          : movieEmb.embedding;
         movieTasteTags = movieEmb.taste_tags || [];
       } else {
         try {
           const embResponse = await fetch(`${SUPABASE_URL}/functions/v1/generate-embedding`, {
             method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
-            },
-            body: JSON.stringify({
-              tmdbId,
-              title,
-              overview,
-              genres: (movie.genres || []).map((g: any) => g.name),
-            }),
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}` },
+            body: JSON.stringify({ tmdbId, title, overview, genres: (movie.genres || []).map((g: any) => g.name) }),
           });
           if (embResponse.ok) {
             const embData = await embResponse.json();
-            embeddingSimilarity = cosineSimilarity(userTasteVector, embData.embedding);
+            movieVector = embData.embedding;
             movieTasteTags = embData.tasteTags || [];
           }
-        } catch (e) {
-          console.error("Embedding generation failed:", e);
+        } catch (e) { console.error("Embedding generation failed:", e); }
+      }
+
+      if (movieVector) {
+        // Stable taste similarity
+        if (userTasteVector) {
+          embeddingSimilarity = cosineSimilarity(userTasteVector, movieVector);
+        }
+        // Recent taste similarity
+        const recentVec = parseVector(tasteProfile?.recentTasteVector);
+        if (recentVec) {
+          recentSimilarity = cosineSimilarity(recentVec, movieVector);
+        }
+        // Avoidance similarity (high = BAD)
+        const avoidVec = parseVector(tasteProfile?.avoidanceVector);
+        if (avoidVec) {
+          avoidanceSimilarity = cosineSimilarity(avoidVec, movieVector);
         }
       }
     }
@@ -98,52 +114,59 @@ serve(async (req) => {
 
     // ── Enriched taste context ──
     const tasteClusters = tasteProfile?.tasteClusters || [];
+    const rejectedClusters = tasteProfile?.rejectedClusters || [];
     const confidence = tasteProfile?.confidence || { score: 50 };
     const skipPatterns = tasteProfile?.skipPatterns || {};
     const stats = tasteProfile?.stats || {};
     const topGenres = tasteProfile?.topGenres || [];
     const scoringWeights = tasteProfile?.scoringWeights || {};
+    const fatigueState = tasteProfile?.fatigueState || {};
 
     const likedTitlesStr = (likedMovieTitles || []).slice(0, 30).join(", ");
 
+    // Fatigue info
+    const fatiguedGenres = Object.entries(fatigueState)
+      .filter(([k, v]) => k.startsWith("genre_") && (v as number) >= 3)
+      .map(([k, v]) => `${k.replace("genre_", "")} (${v}x cette semaine)`);
+
     const tasteSection = tasteProfile ? `
-PROFIL DE GOÛTS ENRICHI :
+PROFIL DE GOÛTS ENRICHI (MULTI-VECTEUR) :
 - Genres préférés (pondérés par récence) : ${topGenres.join(", ")}
-- Micro-genres / clusters : ${tasteClusters.join(", ") || "non déterminés"}
+- Micro-genres / clusters favoris : ${tasteClusters.join(", ") || "non déterminés"}
+${rejectedClusters.length > 0 ? `- ⛔ CLUSTERS REJETÉS (fréquemment refusés) : ${rejectedClusters.join(", ")} — FORTE PÉNALITÉ` : ""}
 - Films aimés : ${likedTitlesStr || "aucun encore"}
 - ${stats.likeCount || 0} films aimés, ${stats.watchCount || 0} vus, ${stats.skipCount || 0} skippés
 - Confiance profil : ${confidence.score}/100
 - Taux d'acceptation : ${stats.acceptanceRate || 0}%
-${embeddingSimilarity !== null ? `- 🧬 Similarité embedding : ${Math.round(embeddingSimilarity * 100)}% (signal vectoriel)` : ""}
+${embeddingSimilarity !== null ? `- 🧬 Similarité STABLE (goût profond) : ${Math.round(embeddingSimilarity * 100)}%` : ""}
+${recentSimilarity !== null ? `- 🔄 Similarité RÉCENTE (30 derniers jours) : ${Math.round(recentSimilarity * 100)}%` : ""}
+${avoidanceSimilarity !== null ? `- ⚠️ Similarité ÉVITEMENT : ${Math.round(avoidanceSimilarity * 100)}% ${avoidanceSimilarity > 0.6 ? "— RISQUE ÉLEVÉ DE REJET" : avoidanceSimilarity > 0.4 ? "— risque modéré" : "— risque faible"}` : ""}
 ${movieTasteTags.length > 0 ? `- 🏷️ Taste tags du film : ${movieTasteTags.join(", ")}` : ""}
 ${skipPatterns.avgSkipRate > 0.5 ? `- ⚠️ Skip rate élevé (${Math.round(skipPatterns.avgSkipRate * 100)}%) — l'utilisateur est exigeant` : ""}
 ${skipPatterns.recentSkipStreak > 2 ? `- ⚠️ ${skipPatterns.recentSkipStreak} skips consécutifs récents` : ""}
+${fatiguedGenres.length > 0 ? `- 🔄 FATIGUE genre : ${fatiguedGenres.join(", ")} — pénalise ces genres dans le score` : ""}
 
-SYSTÈME DE SCORING :
-Le match score doit refléter ces poids :
-- taste_match (${scoringWeights.taste_match || 0.30}) : genres + micro-genres + embedding similarity
-- context_match (${scoringWeights.context_match || 0.25}) : session actuelle
-- embedding_match (${scoringWeights.embedding_match || 0.15}) : similarité vectorielle du profil de goût${embeddingSimilarity !== null ? ` (score brut: ${Math.round(embeddingSimilarity * 100)})` : ""}
-- behaviour_match (${scoringWeights.behaviour_match || 0.10}) : patterns comportementaux
-- rating_score (${scoringWeights.rating_score || 0.10}) : note critique
-- availability (${scoringWeights.availability || 0.05}) : plateforme
-- novelty (${scoringWeights.novelty || 0.05}) : découverte
-${cinematicProfile ? `\nPROFIL CINÉMATOGRAPHIQUE DE L'UTILISATEUR :\n- Personnalité : "${cinematicProfile.personality_title}"\n- Description : ${cinematicProfile.narrative}\n- Traits : ${(cinematicProfile.taste_traits || []).join(", ")}\nUtilise ce profil pour enrichir tes explications. Par exemple : "Avec ton profil de ${cinematicProfile.personality_title}, ce film va résonner avec ta sensibilité pour..."` : ""}` : "";
+SYSTÈME DE SCORING MULTI-CRITÈRE :
+Le matchScore FINAL doit être la combinaison pondérée de :
+- stable_taste (${scoringWeights.stable_taste || 0.18}) : similarité avec le goût profond${embeddingSimilarity !== null ? ` (brut: ${Math.round(embeddingSimilarity * 100)})` : ""}
+- recent_taste (${scoringWeights.recent_taste || 0.12}) : tendances récentes${recentSimilarity !== null ? ` (brut: ${Math.round(recentSimilarity * 100)})` : ""}
+- session_context (${scoringWeights.session_context || 0.18}) : adéquation session
+- acceptance_likelihood (${scoringWeights.acceptance_likelihood || 0.12}) : probabilité d'acceptation
+- rejection_risk (${scoringWeights.rejection_risk || -0.10}) : PÉNALITÉ${avoidanceSimilarity !== null ? ` (brut: ${Math.round(avoidanceSimilarity * 100)})` : ""}
+- quality_score (${scoringWeights.quality_score || 0.06}) : note critique
+- novelty_fit (${scoringWeights.novelty_fit || 0.05}) : découverte calibrée
+- fatigue_penalty (${scoringWeights.fatigue_penalty || -0.03}) : pénalité si genre sur-exposé
+${cinematicProfile ? `\nPROFIL CINÉMATOGRAPHIQUE :\n- Personnalité : "${cinematicProfile.personality_title}"\n- Description : ${cinematicProfile.narrative}\n- Traits : ${(cinematicProfile.taste_traits || []).join(", ")}\nUtilise ce profil pour enrichir tes explications.` : ""}` : "";
 
     const contentType = isYouTube ? "vidéo YouTube" : "film";
-    const contentTypeShort = isYouTube ? "vidéo" : "film";
 
     const systemPrompt = isYouTube
       ? `Tu es Pick, un ami passionné de culture audiovisuelle qui calcule un match score. On te donne une vidéo YouTube, le profil de goûts d'un utilisateur, et sa session actuelle.
 
 TON : Tu parles comme un pote — chaleureux, direct, jamais robotique.
-- "headline" → une accroche naturelle et enthousiaste. Exemples :
-  • "Pile le genre de vidéo qui va te passionner"
-  • "T'as demandé, j'ai trouvé la pépite"
-  • "Exactement ce qu'il te fallait"
-  JAMAIS : "Cette vidéo correspond à vos préférences"
+- "headline" → une accroche naturelle et enthousiaste.
 - "whyItMatches" → 1 phrase courte, style pote.
-- "detailedExplanation" → 3-5 phrases. REPRENDS LES MOTS EXACTS de l'utilisateur (ses tags de recherche, ce qu'il a dit). Explique pourquoi cette vidéo spécifique est pertinente pour lui — la chaîne, le sujet, la durée, le format.
+- "detailedExplanation" → 3-5 phrases. REPRENDS LES MOTS EXACTS de l'utilisateur.
 
 RÈGLES :
 - Réponds UNIQUEMENT avec un JSON valide, sans markdown, sans backticks
@@ -161,23 +184,21 @@ RÈGLES :
   "matchingReasons": ["<raison courte, 2-4 mots>", ...max 4]
 }
 - Score calibré : pas aligné → 40-60. Match parfait → 85-99.`
-      : `Tu es Pick, un ami cinéphile passionné qui calcule un match score. On te donne un film, le profil de goûts d'un utilisateur, et sa session actuelle.
+      : `Tu es Pick, un ami cinéphile passionné qui calcule un match score MULTI-VECTEUR. On te donne un film, le profil de goûts multi-dimensionnel d'un utilisateur, et sa session actuelle.
 
 TON : Tu parles comme un pote cinéphile — chaleureux, direct, jamais robotique.
-- "headline" → une accroche naturelle et enthousiaste, comme un ami dirait. Exemples :
-  • "Exactement ce qu'il te faut ce soir"
-  • "Celui-là va te scotcher"
-  • "Une pépite taillée pour toi"
-  • "Tu vas pas être déçu"
-  JAMAIS : "Ce film correspond à vos préférences" ou "Film recommandé"
-- "whyItMatches" → 1 phrase courte, style pote. "Vu que t'adores les thrillers sombres, celui-là va te prendre aux tripes."
-- "detailedExplanation" → 3-5 phrases. REPRENDS LES MOTS EXACTS de l'utilisateur (ses tags de recherche, son humeur, ce qu'il a dit).
-  Si l'utilisateur a dit "je suis fatigué, avec ma copine, on veut un truc léger" → écris : "T'es crevé après ta journée, et tu cherches un truc chill à mater avec ta copine. Ce film, c'est exactement ça : léger, doux, avec juste ce qu'il faut d'émotion pour passer une belle soirée sans prise de tête. L'ambiance est enveloppante et le casting est parfait."
-  Si c'est une surprise sans contexte → explique pourquoi ce film est objectivement bon et en quoi il plaît universellement.
+- "headline" → accroche naturelle, comme un ami dirait
+- "whyItMatches" → 1 phrase courte, style pote
+- "detailedExplanation" → 3-5 phrases. REPRENDS LES MOTS EXACTS de l'utilisateur
 
-SCORING :
-- La SESSION prime sur le profil global
-${embeddingSimilarity !== null ? `- Similarité embedding (${Math.round(embeddingSimilarity * 100)}%) : ancrage objectif pour taste_match. >80% = très bon match, <40% = décalage.` : ""}
+SCORING MULTI-VECTEUR :
+- La SESSION prime sur le profil global quand elle est explicite
+- Le score STABLE ancre le goût profond
+- Le score RÉCENT capte les envies du moment
+- Le score d'ÉVITEMENT PÉNALISE fortement (un film proche du vecteur de rejet = score bas)
+- La FATIGUE pénalise les genres sur-exposés cette semaine
+${embeddingSimilarity !== null ? `- Similarité stable (${Math.round(embeddingSimilarity * 100)}%) : >80% = très bon, <40% = décalage` : ""}
+${avoidanceSimilarity !== null ? `- Similarité évitement (${Math.round(avoidanceSimilarity * 100)}%) : >60% = forte pénalité, <30% = OK` : ""}
 
 RÈGLES :
 - Réponds UNIQUEMENT avec un JSON valide, sans markdown, sans backticks
@@ -185,27 +206,27 @@ RÈGLES :
 {
   "matchScore": <number 40-99>,
   "headline": "<accroche naturelle et chaleureuse, 10 mots max>",
-  "pickNote": "<1 phrase courte qui montre que Pick connaît les goûts de l'utilisateur en les citant explicitement. Ex: 'Je sais que t'es fan de thrillers psychologiques, celui-là est taillé pour toi.' ou 'Vu ton amour pour les films à twist, tu vas kiffer.' Si aucun profil connu, null.>",
+  "pickNote": "<1 phrase courte citant un goût spécifique de l'utilisateur. Si profil vide, null.>",
   "whyItMatches": "<1 phrase perso, ton conversationnel, tutoiement>",
-  "detailedExplanation": "<3-5 phrases détaillées reprenant les mots de l'utilisateur, expliquant pourquoi CE film pour LUI>",
+  "detailedExplanation": "<3-5 phrases détaillées reprenant les mots de l'utilisateur>",
   "emotionalJourney": "<2-3 phrases sur l'expérience émotionnelle>",
   "perfectFor": "<1 phrase, style 'Parfait pour une soirée solo sous la couette'>",
   "funFact": "<1 anecdote cool>",
   "similarLikedMovies": ["<titre exact d'un film aimé similaire>", ...max 3],
   "matchingReasons": ["<raison courte, 2-4 mots>", ...max 4],
   "scores": {
-    "taste": <0-100>,
+    "stable_taste": <0-100>,
+    "recent_taste": <0-100>,
     "context": <0-100>,
-    "embedding": <0-100>,
-    "behaviour": <0-100>,
-    "rating": <0-100>,
-    "novelty": <0-100>
+    "rejection_risk": <0-100>,
+    "quality": <0-100>,
+    "novelty": <0-100>,
+    "fatigue": <0-100>
   }
 }
-- "pickNote" : DOIT citer un genre, micro-genre ou film aimé spécifique de l'utilisateur. JAMAIS générique. Si le profil est vide, mettre null.
-- "similarLikedMovies" : films aimés les plus similaires. Tableau vide si aucun.
-- "matchingReasons" : raisons courtes (ex: "thriller sombre", "soirée solo")
-- Score calibré : session pas alignée → 40-60 max. Match parfait → 85-99.
+- "scores.rejection_risk" : 0 = aucun risque, 100 = certain rejet. Basé sur similarité évitement + clusters rejetés.
+- "scores.fatigue" : 0 = aucune fatigue, 100 = genre totalement sur-exposé.
+- Score final calibré : session pas alignée → 40-60 max. Match parfait → 85-99.
 - Profil jeune (confiance < 40) = scores plus modérés`;
 
     const youtubeExtra = isYouTube ? `\nChaîne YouTube : ${youtubeData.channelTitle || "inconnue"}\nVues : ${youtubeData.viewCount || 0}\nDurée : ${runtime} min` : "";
@@ -214,7 +235,7 @@ RÈGLES :
 Synopsis : ${overview}${youtubeExtra}
 ${criteriaText}${tasteSection}
 
-Génère la fiche de match.`;
+Génère la fiche de match multi-vecteur.`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -254,15 +275,23 @@ Génère la fiche de match.`;
         emotionalJourney: "Une expérience qui vaut le détour.",
         perfectFor: "Parfait pour une soirée ciné sans prise de tête.",
         funFact: "Un film qui a marqué son genre.",
-        scores: { taste: 70, context: 70, embedding: embeddingSimilarity ? Math.round(embeddingSimilarity * 100) : 50, behaviour: 70, rating: 70, novelty: 50 },
+        scores: {
+          stable_taste: embeddingSimilarity ? Math.round(embeddingSimilarity * 100) : 50,
+          recent_taste: recentSimilarity ? Math.round(recentSimilarity * 100) : 50,
+          context: 70,
+          rejection_risk: avoidanceSimilarity ? Math.round(avoidanceSimilarity * 100) : 20,
+          quality: 70,
+          novelty: 50,
+          fatigue: 0,
+        },
       };
     }
 
-    // Inject raw embedding similarity for client-side use
-    if (embeddingSimilarity !== null) {
-      matchData.embeddingSimilarity = Math.round(embeddingSimilarity * 100);
-      matchData.movieTasteTags = movieTasteTags;
-    }
+    // Inject raw similarities for client-side use
+    if (embeddingSimilarity !== null) matchData.embeddingSimilarity = Math.round(embeddingSimilarity * 100);
+    if (recentSimilarity !== null) matchData.recentSimilarity = Math.round(recentSimilarity * 100);
+    if (avoidanceSimilarity !== null) matchData.avoidanceSimilarity = Math.round(avoidanceSimilarity * 100);
+    if (movieTasteTags.length > 0) matchData.movieTasteTags = movieTasteTags;
 
     return new Response(JSON.stringify(matchData), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
