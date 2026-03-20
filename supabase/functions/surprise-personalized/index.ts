@@ -138,6 +138,7 @@ ${heavilySkippedGenres.length > 0 ? `- GENRES SOUVENT REFUSÉS (taste trainer) :
 ${minRating && minRating > 0 ? `- NOTE MINIMALE : Le film DOIT avoir une note TMDB supérieure ou égale à ${minRating}/10. Ne recommande JAMAIS un film noté en dessous.` : ""}
 
 TYPE DE CONTENU DEMANDÉ : ${searchType === "tv" ? "SÉRIE TV uniquement. Tu DOIS recommander une série, PAS un film." : "FILM uniquement. Tu DOIS recommander un film, PAS une série."}
+${maxDuration ? `DURÉE MAXIMALE : Le film recommandé DOIT durer MOINS de ${maxDuration} minutes. C'est une contrainte ABSOLUE.` : ""}
 
 NIVEAU D'EXPLORATION : ${explorationLevel}/10 (${explorationModeLabel})
 ${explorationInstruction}
