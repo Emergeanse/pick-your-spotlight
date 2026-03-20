@@ -171,22 +171,7 @@ const Landing = () => {
 
       {/* ─── HERO — épuré ─── */}
       <section ref={heroRef} className="relative min-h-screen flex items-center justify-center overflow-hidden pt-14">
-        {/* Background posters */}
-        <div className="absolute inset-0 flex justify-center gap-2 opacity-[0.08]">
-          <div className="hidden md:flex gap-2 w-full max-w-[1400px] px-4">
-            <PosterColumn posters={col1} className="w-1/5 -mt-20" />
-            <PosterColumn posters={col2} reverse className="w-1/5 mt-10" />
-            <PosterColumn posters={col3} className="w-1/5 -mt-32 hidden lg:flex" />
-            <PosterColumn posters={[...col1].reverse()} reverse className="w-1/5 mt-5" />
-            <PosterColumn posters={[...col2].reverse()} className="w-1/5 -mt-16 hidden lg:flex" />
-          </div>
-          <div className="flex md:hidden gap-2 w-full px-2">
-            <PosterColumn posters={col1} className="w-1/3 -mt-10" />
-            <PosterColumn posters={col2} reverse className="w-1/3 mt-8" />
-            <PosterColumn posters={col3} className="w-1/3 -mt-20" />
-          </div>
-        </div>
-        <div className="absolute inset-0 bg-gradient-to-b from-background via-background/80 to-background" />
+        <div className="absolute inset-0 bg-gradient-to-b from-background via-background/70 to-background" />
         <div className="absolute inset-0 bg-gradient-to-r from-background via-transparent to-background" />
 
         <motion.div style={{ opacity: heroOpacity }} className="relative z-10 max-w-4xl mx-auto px-5 text-center">
