@@ -1,6 +1,6 @@
 import { useState, useEffect, forwardRef, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Loader2, Sparkles, Check, Play, Star, Clock, Heart, Bookmark, ChevronDown, ChevronUp, RefreshCw, Share2, Zap, Lock, ExternalLink } from "lucide-react";
+import { Loader2, Sparkles, Check, Play, Star, Clock, Heart, Bookmark, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, RefreshCw, Share2, Zap, Lock, ExternalLink } from "lucide-react";
 import type { MovieDetail } from "@/lib/tmdb";
 import { getDisplayTitle, getYear, getBackdropUrl, getPosterUrl, getWatchProviders, getMovieTrailerUrl, getMovieCredits } from "@/lib/tmdb";
 import type { MovieCredits, CastMember } from "@/lib/tmdb";
