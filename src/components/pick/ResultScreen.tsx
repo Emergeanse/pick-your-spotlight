@@ -573,7 +573,11 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({
 
               {/* Action icons row */}
               <div className="flex items-center justify-between">
-                <MovieActionBar movie={movie} />
+                <MovieActionBar movie={movie} onInteraction={(type) => {
+                  if (type === "already_seen" || type === "dislike") {
+                    setTimeout(() => onShowAnother(type === "dislike" ? "dislike" : "seen", movie), 400);
+                  }
+                }} />
                 <button data-tour="autre-suggestion" onClick={() => onShowAnother()}
                   className="flex items-center gap-1.5 px-3.5 h-8 rounded-full border border-border/25 text-foreground/50 hover:text-primary hover:border-primary/25 text-[11px] font-sans font-medium transition-all active:scale-95 shrink-0">
                   <RefreshCw className="w-3 h-3" />

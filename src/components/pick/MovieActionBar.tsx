@@ -14,7 +14,7 @@ interface MovieActionBarProps {
   onInteraction?: (type: string) => void;
 }
 
-const MovieActionBar = ({ movie, size = "md", className = "" }: MovieActionBarProps) => {
+const MovieActionBar = ({ movie, size = "md", className = "", onInteraction }: MovieActionBarProps) => {
   const { user } = useAuth();
   const [liked, setLiked] = useState(false);
   const [bookmarked, setBookmarked] = useState(false);
@@ -75,6 +75,7 @@ const MovieActionBar = ({ movie, size = "md", className = "" }: MovieActionBarPr
     if (!requireAuth()) return;
     trackInteraction(movie.id, "already_seen", {});
     toast.success("Marqué comme déjà vu");
+    onInteraction?.("already_seen");
   };
 
   const handleDislike = () => {
@@ -84,6 +85,7 @@ const MovieActionBar = ({ movie, size = "md", className = "" }: MovieActionBarPr
       genres: (movie.genres || []).map(g => g.name),
     });
     toast.success("Noté — Pick en tiendra compte");
+    onInteraction?.("dislike");
   };
 
   const iconSize = size === "sm" ? "w-3 h-3" : "w-3.5 h-3.5";
