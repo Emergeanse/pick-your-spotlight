@@ -322,8 +322,14 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
           });
           if (data?.movies && data.movies.length > 0) {
             movies = data.movies.map((m: any) => m.movie as MovieDetail);
+            const matchMap: Record<number, { confidence: number; reason: string }> = {};
+            data.movies.forEach((m: any) => {
+              if (m.movie?.id) matchMap[m.movie.id] = { confidence: m.confidence || 75, reason: m.reason || "" };
+            });
+            setMovieMatchData(prev => ({ ...prev, ...matchMap }));
           } else if (data?.movie) {
             movies = [data.movie as MovieDetail];
+            if (data.confidence) setMovieMatchData(prev => ({ ...prev, [data.movie.id]: { confidence: data.confidence, reason: data.reason || "" } }));
           }
         } else {
           const movie = await getSurpriseRecommendation(excludeList, { platformIds: userPlatformIds, minRating: userMinRating, excludedGenres: userExcludedGenres });
