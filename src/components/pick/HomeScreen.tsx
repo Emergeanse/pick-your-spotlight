@@ -600,7 +600,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
               </button>
             </div>
 
-            <div className="relative z-10 flex-1 flex flex-col items-center justify-end px-6 pb-[calc(2rem+env(safe-area-inset-bottom))]">
+            <div className="relative z-10 flex-1 flex flex-col items-center justify-end px-6 pb-[calc(5rem+env(safe-area-inset-bottom))] overflow-y-auto">
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
