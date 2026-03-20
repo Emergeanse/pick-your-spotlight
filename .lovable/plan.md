@@ -1,64 +1,43 @@
 
 
-## Problem
+## Plan : Rendre la barre de navigation visible sur tous les ecrans
 
-After a new inscription, the Platform Tour (2 spotlight steps) works, but the Activation Flow (5 missions to unlock the free trial) never appears. This is because the activation flow only triggers when `fromOnboarding` is true — a flag that only exists immediately after completing onboarding. If the user refreshes or the tour completes in a way that loses this flag, the activation never starts.
+### Probleme actuel
 
-Additionally, when an existing user reconnects who already completed the activation, it should never show. The current fix was too aggressive — it blocks activation for everyone unless they just came from onboarding.
+La `BottomTabBar` est incluse individuellement dans chaque page (`Index`, `WatchlistRoute`, `MyCinema`, `Profile`, `Friends`, `PickTogether`), avec des conditions qui la masquent parfois (ex: sur `Index.tsx` elle disparait quand on est sur l'ecran resultat, sur `PickTogether` elle n'apparait que sur le step "landing").
 
-## Root Cause
+### Approche
 
-In `src/pages/Index.tsx` (lines 121-130):
-- The tour requires `fromOnboarding` — correct, prevents old users from seeing it.
-- The activation also requires `fromOnboarding` — incorrect, new users who completed the tour but refresh lose access to activation permanently.
+Remonter la `BottomTabBar` au niveau du layout dans `App.tsx` pour qu'elle soit rendue une seule fois, automatiquement, sur toutes les routes `/app/*`. Les pages publiques (`/`, `/auth`, `/join`, `/onboarding`) ne l'afficheront pas.
 
-## Plan
+### Etapes
 
-### 1. Fix activation trigger logic in `src/pages/Index.tsx`
+1. **Creer un composant `AppLayout`** dans `src/components/pick/AppLayout.tsx`
+   - Wrapper qui rend `{children}` + `<BottomTabBar />` en permanence
+   - Ajoute le padding-bottom necessaire pour ne pas cacher le contenu sous la barre
 
-Change the conditions so that:
-- **Tour**: still requires `fromOnboarding` (only shows right after onboarding)
-- **Activation**: shows for ANY user where `activation_completed === false`, regardless of `fromOnboarding`. This is safe because the activation is the guided mission system, not a blocking overlay — it has a progress bar and mission cards.
-- **Existing users who had accounts before activation existed**: add a migration or a check — if a user has sufficient interactions (e.g., 20+ ratings), auto-mark them as `activation_completed = true` so they skip it.
+2. **Modifier `App.tsx`**
+   - Wrapper toutes les routes `/app/*` avec `AppLayout`
+   - Supprimer les imports/rendus individuels de `BottomTabBar` dans chaque page
 
-Specifically, replace lines 121-130:
-```typescript
-if (!tourDone && fromOnboarding) {
-  setShowActivation(false);
-  setShowTour(true);
-  sessionStorage.removeItem("pick_force_tour");
-} else if (!activationDone) {
-  // Show activation for any user who hasn't completed it
-  setShowTour(false);
-  setShowActivation(true);
-}
+3. **Nettoyer les pages individuelles** (supprimer `BottomTabBar` de chacune) :
+   - `src/pages/Index.tsx` — supprimer l'import, la variable `showTabBar`, et le rendu conditionnel
+   - `src/pages/WatchlistRoute.tsx` — supprimer l'import et le rendu
+   - `src/pages/MyCinema.tsx` — supprimer l'import et le rendu
+   - `src/pages/Profile.tsx` — supprimer l'import et le rendu
+   - `src/pages/Friends.tsx` — supprimer l'import et le rendu
+   - `src/pages/PickTogether.tsx` — supprimer l'import et le rendu conditionnel
+
+### Details techniques
+
+```text
+App.tsx
+  └─ /app/*  →  <AppLayout>        ← nouveau wrapper
+                  <children />
+                  <BottomTabBar />  ← toujours visible
+                </AppLayout>
+  └─ /auth, /join, /onboarding     ← pas de tab bar
 ```
 
-### 2. Auto-complete activation for existing mature users
-
-In the same profile loading effect, before setting `showActivation`, check if the user has enough data to skip (e.g., 20+ interactions). If so, auto-mark `activation_completed = true` in the DB and skip.
-
-```typescript
-// If user has lots of interactions already, auto-complete activation
-const { count } = await supabase.from("user_interactions")
-  .select("id", { count: "exact", head: true })
-  .eq("user_id", user.id);
-if (count && count >= 20) {
-  await supabase.from("profiles").update({ activation_completed: true }).eq("id", user.id);
-  // Don't show activation
-} else {
-  setShowActivation(true);
-}
-```
-
-This ensures:
-- New users after onboarding see tour then activation
-- New users who refresh mid-activation resume the activation
-- Existing users with 20+ interactions auto-skip
-- Fully completed users see nothing
-
-### Technical Details
-
-- **File changed**: `src/pages/Index.tsx` — profile loading effect (lines 98-136)
-- The interaction count check adds one extra lightweight query but only runs once on mount
+La barre sera fixee en bas (deja le cas via `fixed bottom-0`) et chaque page devra conserver ou ajouter un `pb-[calc(3.5rem+env(safe-area-inset-bottom))]` pour eviter que le contenu soit cache derriere.
 
