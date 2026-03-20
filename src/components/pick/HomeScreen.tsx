@@ -118,18 +118,20 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
   const [totalEvaluated, setTotalEvaluated] = useState(0);
   const [chatMoviesPool, setChatMoviesPool] = useState<MovieDetail[] | null>(null);
   const [tonightPickIndex, setTonightPickIndex] = useState(0);
+  const [tonightMaxSeen, setTonightMaxSeen] = useState(0); // highest index user has seen
 
   // All movies available for tonight pick navigation (chat pool or single generated)
   const tonightPool: MovieDetail[] = chatMoviesPool || (tonightPick ? [tonightPick] : []);
-  // Arrows only show for going back to previously seen films, never forward
+  // Can go back if not at first film; can go forward only to already-seen films
   const canGoPrev = tonightPickIndex > 0;
-  const hasTonightNav = canGoPrev;
+  const canGoNext = tonightPickIndex < tonightMaxSeen;
+  const showArrows = canGoPrev || canGoNext;
 
   const navigateTonightPick = (direction: "prev" | "next") => {
-    if (!hasTonightNav) return;
     const newIndex = direction === "next"
-      ? Math.min(tonightPickIndex + 1, tonightPool.length - 1)
+      ? Math.min(tonightPickIndex + 1, tonightMaxSeen)
       : Math.max(tonightPickIndex - 1, 0);
+    if (newIndex === tonightPickIndex) return;
     setTonightPickIndex(newIndex);
     const movie = tonightPool[newIndex];
     setTonightPick(movie);
@@ -621,10 +623,11 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
 
                 {tonightPick.poster_path && (
                   <div className="relative flex items-center gap-3 mb-4">
-                    {canGoPrev && (
+                    {showArrows && (
                       <button
                         onClick={() => navigateTonightPick("prev")}
-                        className="w-8 h-8 rounded-full bg-foreground/10 backdrop-blur-sm flex items-center justify-center transition-all active:scale-95"
+                        disabled={!canGoPrev}
+                        className="w-8 h-8 rounded-full bg-foreground/10 backdrop-blur-sm flex items-center justify-center transition-all active:scale-95 disabled:opacity-20"
                       >
                         <ChevronLeft className="w-4 h-4 text-foreground/70" />
                       </button>
@@ -638,12 +641,21 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
                       alt={getDisplayTitle(tonightPick)}
                       className="w-36 h-52 md:w-44 md:h-64 rounded-xl object-cover shadow-2xl border border-border/20"
                     />
+                    {showArrows && (
+                      <button
+                        onClick={() => navigateTonightPick("next")}
+                        disabled={!canGoNext}
+                        className="w-8 h-8 rounded-full bg-foreground/10 backdrop-blur-sm flex items-center justify-center transition-all active:scale-95 disabled:opacity-20"
+                      >
+                        <ChevronRight className="w-4 h-4 text-foreground/70" />
+                      </button>
+                    )}
                   </div>
                 )}
 
-                {canGoPrev && (
+                {showArrows && (
                   <p className="text-foreground/30 text-[10px] font-sans mb-2">
-                    {tonightPickIndex + 1} / {tonightPool.length}
+                    {tonightPickIndex + 1} / {tonightMaxSeen + 1}
                   </p>
                 )}
 
@@ -714,6 +726,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
                         if (tonightPool.length > 1 && tonightPickIndex < tonightPool.length - 1) {
                           const newIndex = tonightPickIndex + 1;
                           setTonightPickIndex(newIndex);
+                          setTonightMaxSeen(prev => Math.max(prev, newIndex));
                           const nextMovie = tonightPool[newIndex];
                           setTonightPick(nextMovie);
                           setTonightProviders([]);
@@ -731,6 +744,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
                           setTonightPick(null);
                           setChatMoviesPool(null);
                           setTonightPickIndex(0);
+                          setTonightMaxSeen(0);
                           generateTonightPick(nextRejected, rejContext);
                         }
                       }}
