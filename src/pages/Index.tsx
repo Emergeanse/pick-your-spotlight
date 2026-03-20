@@ -269,8 +269,8 @@ const Index = () => {
 
   const handleStart = () => {};
 
-  const handleSurprise = (movie: MovieDetail) => {
-    setResults([movie]);
+  const handleSurprise = (movies: MovieDetail[]) => {
+    setResults(movies);
     setCurrentResultIndex(0);
     setStep("result");
   };
