@@ -1,8 +1,9 @@
 import { useEffect, useState, useRef } from "react";
 import { motion } from "framer-motion";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import type { Movie } from "@/lib/tmdb";
-import { getPosterUrl, getDisplayTitle, getWatchProviders } from "@/lib/tmdb";
+import type { Movie, MovieDetail } from "@/lib/tmdb";
+import { getPosterUrl, getDisplayTitle, getWatchProviders, getMovieDetails } from "@/lib/tmdb";
+import MovieActionBar from "./MovieActionBar";
 
 interface TrendingRowProps {
   title: string;
