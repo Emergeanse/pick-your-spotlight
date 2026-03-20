@@ -43,11 +43,11 @@ async function fetchMovieDetail(id: number): Promise<MovieDetail> {
 }
 
 const RATING_BUTTONS = [
-  { value: 5,   label: "Pas pour moi", sentiment: "negative" as const },
-  { value: 25,  label: "Bof",          sentiment: "neutral" as const },
-  { value: 50,  label: "Correct",      sentiment: "neutral" as const },
-  { value: 75,  label: "J'aime bien",  sentiment: "positive" as const },
-  { value: 100, label: "Chef-d'œuvre", sentiment: "positive" as const },
+  { value: 5,   label: "Pas pour moi", color: "bg-red-500/15 border-red-500/25 text-red-400 hover:bg-red-500/25" },
+  { value: 25,  label: "Bof",          color: "bg-orange-500/15 border-orange-500/25 text-orange-400 hover:bg-orange-500/25" },
+  { value: 50,  label: "Correct",      color: "bg-yellow-500/15 border-yellow-500/25 text-yellow-400 hover:bg-yellow-500/25" },
+  { value: 75,  label: "J'aime bien",  color: "bg-emerald-500/15 border-emerald-500/25 text-emerald-400 hover:bg-emerald-500/25" },
+  { value: 100, label: "Chef-d'œuvre", color: "bg-primary/15 border-primary/25 text-primary hover:bg-primary/25" },
 ];
 
 const getMilestoneMessage = (count: number): string | null => {
@@ -311,7 +311,7 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
                 <img
                   src={getPosterUrl(currentMovie.poster_path, "w780")}
                   alt={getDisplayTitle(currentMovie)}
-                  className="absolute inset-0 w-full h-full object-cover"
+                  className="absolute inset-0 w-full h-full object-cover brightness-110 contrast-105 saturate-110"
                   draggable={false}
                 />
 
@@ -366,29 +366,19 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
       {currentMovie && !showActivationCTA && (
         <div className="relative z-10 px-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] pt-4">
           <div className="flex items-stretch gap-1.5">
-            {RATING_BUTTONS.map((btn) => {
-              const isNeg = btn.sentiment === "negative";
-              const isPos = btn.sentiment === "positive";
-              return (
-                <motion.button
-                  key={btn.value}
-                  whileTap={{ scale: 0.9 }}
-                  onClick={() => {
-                    setSliderValue(btn.value);
-                    setTimeout(() => handleRate(btn.value), 100);
-                  }}
-                  className={`flex-1 py-3 rounded-xl border font-sans text-[11px] font-medium transition-all active:scale-95 ${
-                    isNeg
-                      ? "bg-destructive/[0.06] border-destructive/15 text-destructive/70 hover:bg-destructive/10"
-                      : isPos
-                        ? "bg-primary/[0.06] border-primary/15 text-primary hover:bg-primary/10"
-                        : "bg-foreground/[0.03] border-border/10 text-foreground/40 hover:bg-foreground/[0.06]"
-                  }`}
-                >
-                  {btn.label}
-                </motion.button>
-              );
-            })}
+            {RATING_BUTTONS.map((btn) => (
+              <motion.button
+                key={btn.value}
+                whileTap={{ scale: 0.9 }}
+                onClick={() => {
+                  setSliderValue(btn.value);
+                  setTimeout(() => handleRate(btn.value), 100);
+                }}
+                className={`flex-1 py-3 rounded-xl border font-sans text-[11px] font-medium transition-all active:scale-95 ${btn.color}`}
+              >
+                {btn.label}
+              </motion.button>
+            ))}
           </div>
 
           <button
