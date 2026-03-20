@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
-import { ArrowLeft, Check, Copy, Loader2, QrCode, Share2, UserPlus, Users, X, ChevronRight } from "lucide-react";
+import { ArrowLeft, Check, Copy, Loader2, Mail, QrCode, Share2, UserPlus, Users, X, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/use-auth";
