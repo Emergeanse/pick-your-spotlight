@@ -336,8 +336,17 @@ const WatchlistPage = ({ onMovieSelect }: WatchlistPageProps) => {
   return (
     <div className="h-full overflow-y-auto px-5 pt-[calc(1rem+env(safe-area-inset-top))] pb-24">
       {/* Header */}
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-        <h1 className="text-2xl font-serif mb-3">Ma Collection</h1>
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex items-center justify-between mb-3">
+        <h1 className="text-2xl font-serif">Ma Collection</h1>
+        {currentItems.length > 0 && (
+          <button
+            onClick={() => setShowResetConfirm(true)}
+            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-sans text-destructive/40 hover:text-destructive/70 hover:bg-destructive/5 transition-colors active:scale-95"
+          >
+            <Trash2 className="w-3 h-3" />
+            Tout supprimer
+          </button>
+        )}
       </motion.div>
 
       {/* Tabs */}
