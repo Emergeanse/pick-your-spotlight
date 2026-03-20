@@ -228,7 +228,7 @@ STYLE :
 - Emojis avec modération (1-2 max)
 - Réponds TOUJOURS en français
 
-ANNÉE EN COURS : ${currentYear}`;
+ANNÉE EN COURS : ${currentYear}${timeInstruction}`;
     }
 
     // Decide if we need tools (only in discovery mode for reco)
