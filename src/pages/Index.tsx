@@ -5,7 +5,7 @@ import HomeScreen from "@/components/pick/HomeScreen";
 import ResultScreen from "@/components/pick/ResultScreen";
 import VoiceChat from "@/components/pick/VoiceChat";
 
-import BottomTabBar from "@/components/pick/BottomTabBar";
+
 import RevealAnimation from "@/components/pick/RevealAnimation";
 import PlatformTour from "@/components/pick/PlatformTour";
 import ActivationFlow from "@/components/pick/ActivationFlow";
@@ -399,7 +399,7 @@ const Index = () => {
     setSearchTags(prev => prev.filter(t => t !== tag));
   };
 
-  const showTabBar = step === "home" && !showTour && !showActivation;
+  
 
   return (
     <div className="fixed inset-0 bg-background overflow-hidden">
@@ -465,7 +465,7 @@ const Index = () => {
         )}
       </AnimatePresence>
 
-      {showTabBar && <BottomTabBar />}
+      
 
       <AnimatePresence>
         {showChat && <VoiceChat onClose={handleCloseChat} onMovieSuggested={handleMovieSuggested} initialMessages={chatInitialMessages} showMicGuide={talkToPickGuideStep === "mic"} />}

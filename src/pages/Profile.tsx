@@ -12,7 +12,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { getEngagementData, type EngagementData } from "@/lib/engagement";
 import { sendNotification } from "@/lib/notifications";
-import BottomTabBar from "@/components/pick/BottomTabBar";
+
 import CinematicAvatar, { mapLevelToType, mapArchetypeToDNA, mapSignatureToAnimation, type CinematicLevel, type CinematicDNA, type TasteAnimation } from "@/components/pick/CinematicAvatar";
 import { QRCodeSVG } from "qrcode.react";
 import { useAdmin } from "@/hooks/use-admin";
@@ -679,7 +679,7 @@ const Profile = () => {
         </motion.div>
       )}
 
-      <BottomTabBar />
+      
 
       {/* Add friend modal */}
       <AnimatePresence>

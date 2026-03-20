@@ -10,7 +10,7 @@ import { getLikedMovies } from "@/lib/liked-movies";
 import { getPosterUrl } from "@/lib/tmdb";
 import CinemaDNA from "@/components/pick/CinemaDNA";
 import PickCharacter from "@/components/pick/PickCharacter";
-import BottomTabBar from "@/components/pick/BottomTabBar";
+
 import PickPlusPaywall from "@/components/pick/PickPlusPaywall";
 import TasteTrainer from "@/components/pick/TasteTrainer";
 
@@ -358,7 +358,7 @@ const MyCinema = () => {
         </motion.div>
       </div>
 
-      <BottomTabBar />
+      
       <PickPlusPaywall open={shouldShowPaywall} onClose={hidePaywall} trigger="dna_advanced" />
     </div>
   );
