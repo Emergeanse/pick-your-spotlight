@@ -16,6 +16,7 @@ import { getEngagementData, getProgressionMessage, getStreakLabel, type Engageme
 import type { Movie, MovieDetail } from "@/lib/tmdb";
 import BrandHeader from "./BrandHeader";
 import PickCharacter from "./PickCharacter";
+import QuickFilters, { type QuickFilterState } from "./QuickFilters";
 import TasteTrainer from "./TasteTrainer";
 import TrainingProgress from "./TrainingProgress";
 import DiscoverySection from "./DiscoverySection";
@@ -105,6 +106,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
   const [movieMatchData, setMovieMatchData] = useState<Record<number, { confidence: number; reason: string }>>({});
   const [tonightPickIndex, setTonightPickIndex] = useState(0);
   const [tonightMaxSeen, setTonightMaxSeen] = useState(0);
+  const [quickFilters, setQuickFilters] = useState<QuickFilterState>({ mediaType: "both", maxDuration: null });
 
   // All movies available for tonight pick navigation (chat pool or single generated)
   const tonightPool: MovieDetail[] = chatMoviesPool || (tonightPick ? [tonightPick] : []);
@@ -317,7 +319,8 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
             likedMovies: liked, userTasteVector, tasteProfile,
             platformIds: userPlatformIds, excludedPlatformIds: userExcludedPlatformIds, excludedGenres: userExcludedGenres, minRating: userMinRating, excludeIds: allExcludeIds, rejectionContext,
             explorationLevel,
-            mediaType: whatChoice,
+            mediaType: quickFilters.mediaType !== "both" ? quickFilters.mediaType : whatChoice,
+            maxDuration: quickFilters.maxDuration,
             count: 5,
           });
           if (data?.movies && data.movies.length > 0) {
@@ -372,7 +375,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
 
   return (
     <div className="relative w-full h-full overflow-hidden">
-      <BrandHeader />
+      <BrandHeader extraActions={<QuickFilters filters={quickFilters} onFiltersChange={setQuickFilters} />} />
 
       {/* Background slideshow */}
       {bgImages.map((bg, i) => (

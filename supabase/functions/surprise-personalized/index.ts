@@ -21,7 +21,8 @@ serve(async (req) => {
   }
 
   try {
-    const { likedMovies, tasteProfile, userTasteVector, platformIds, excludeIds, excludedPlatformIds, excludedGenres, minRating: rawMinRating, rejectionContext, outOfComfortZone, explorationLevel: rawExplorationLevel, mediaType: rawMediaType, count: rawCount } = await req.json();
+    const { likedMovies, tasteProfile, userTasteVector, platformIds, excludeIds, excludedPlatformIds, excludedGenres, minRating: rawMinRating, rejectionContext, outOfComfortZone, explorationLevel: rawExplorationLevel, mediaType: rawMediaType, count: rawCount, maxDuration: rawMaxDuration } = await req.json();
+    const maxDuration = typeof rawMaxDuration === "number" && rawMaxDuration > 0 ? rawMaxDuration : null;
     const requestedCount = typeof rawCount === "number" && rawCount >= 1 && rawCount <= 10 ? rawCount : 1;
     // Cap min_rating at 8.0 to avoid overly restrictive filtering
     const minRating = typeof rawMinRating === "number" ? Math.min(rawMinRating, 8) : 0;
@@ -137,6 +138,7 @@ ${heavilySkippedGenres.length > 0 ? `- GENRES SOUVENT REFUSÉS (taste trainer) :
 ${minRating && minRating > 0 ? `- NOTE MINIMALE : Le film DOIT avoir une note TMDB supérieure ou égale à ${minRating}/10. Ne recommande JAMAIS un film noté en dessous.` : ""}
 
 TYPE DE CONTENU DEMANDÉ : ${searchType === "tv" ? "SÉRIE TV uniquement. Tu DOIS recommander une série, PAS un film." : "FILM uniquement. Tu DOIS recommander un film, PAS une série."}
+${maxDuration ? `DURÉE MAXIMALE : Le film recommandé DOIT durer MOINS de ${maxDuration} minutes. C'est une contrainte ABSOLUE.` : ""}
 
 NIVEAU D'EXPLORATION : ${explorationLevel}/10 (${explorationModeLabel})
 ${explorationInstruction}
@@ -256,6 +258,8 @@ Recommande ${requestedCount > 1 ? `${requestedCount} films/séries` : "UN film"}
       const found = results.find((r: any) => isMovieAllowed(r));
       if (!found) return null;
       const detail = await getMovieDetails(found.id, searchType);
+      // Filter by maxDuration for movies
+      if (maxDuration && searchType === "movie" && detail.runtime && detail.runtime > maxDuration) return null;
       return { movie: detail, suggestion: sug };
     };
 
@@ -270,6 +274,7 @@ Recommande ${requestedCount > 1 ? `${requestedCount} films/séries` : "UN film"}
           page: String(Math.floor(Math.random() * (attempt < 2 ? 10 : 5)) + 1),
         });
         if (minRating && minRating > 0 && attempt < 3) discoverParams.set("vote_average.gte", String(minRating));
+        if (maxDuration && searchType === "movie") discoverParams.set("with_runtime.lte", String(maxDuration));
         if (excludedGenreIds.size > 0 && attempt < 3) discoverParams.set("without_genres", [...excludedGenreIds].join(","));
         if (topGenres.length > 0 && !effectiveOutOfComfortZone && explorationLevel < 7 && attempt < 2) {
           const genreIds = topGenres.map(g => genreIdMap[g]).filter(Boolean).slice(0, 3);
