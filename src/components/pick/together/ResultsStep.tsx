@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, Star, Clock, ChevronRight, ThumbsUp, ThumbsDown, Bookmark } from "lucide-react";
 import type { MovieDetail } from "@/lib/tmdb";
 import { getPosterUrl, getDisplayTitle, getYear, getBackdropUrl } from "@/lib/tmdb";
+import MovieActionBar from "@/components/pick/MovieActionBar";
 
 interface GroupRecommendation {
   movie: MovieDetail;
