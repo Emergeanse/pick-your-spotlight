@@ -470,6 +470,10 @@ const Index = () => {
                 const idx = results.findIndex(r => r.id === movie.id);
                 if (idx >= 0) setCurrentResultIndex(idx);
               }}
+              currentIndex={currentResultIndex}
+              totalCount={results.length}
+              onNext={() => { if (currentResultIndex < results.length - 1) setCurrentResultIndex(i => i + 1); }}
+              onPrevious={() => { if (currentResultIndex > 0) setCurrentResultIndex(i => i - 1); }}
             />
           </motion.div>
         )}
