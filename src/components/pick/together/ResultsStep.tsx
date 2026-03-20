@@ -136,6 +136,13 @@ const ResultsStep = ({ hero, alternatives, selectedCount, heroReaction, onReject
         </div>
       </div>
 
+      {/* Action bar */}
+      <div className="px-6 pb-2">
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.9 }}>
+          <MovieActionBar movie={hero.movie} />
+        </motion.div>
+      </div>
+
       {/* Reaction buttons */}
       <div className="px-6 pb-4">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1 }}
@@ -153,14 +160,9 @@ const ResultsStep = ({ hero, alternatives, selectedCount, heroReaction, onReject
           >
             <ThumbsUp className="w-6 h-6 text-primary-foreground" />
           </motion.button>
-          <motion.button whileTap={{ scale: 0.85 }} onClick={() => onAddToWatchlist(hero.movie)}
-            className="w-14 h-14 rounded-full border-2 border-border/20 bg-card/40 flex items-center justify-center hover:border-primary/40 transition-all"
-          >
-            <Bookmark className="w-5 h-5 text-foreground/40" />
-          </motion.button>
         </motion.div>
         <div className="flex items-center justify-center gap-6 text-[10px] font-sans text-foreground/25 mb-8">
-          <span>Pas pour nous</span><span>On regarde !</span><span>Watchlist</span>
+          <span>Pas pour nous</span><span>On regarde !</span>
         </div>
       </div>
 
