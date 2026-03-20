@@ -129,7 +129,7 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
         .in("action_type", ["liked", "skipped", "unsure"])
         .then(({ count }) => setTotalEvaluated(count || 0));
     }
-  }, []);
+  }, [loadMovies, user]);
 
   useEffect(() => {
     if (movies.length - currentIndex < 3 && !loading) {

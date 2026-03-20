@@ -431,7 +431,11 @@ const Index = () => {
           <motion.div key="home" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.4 }}
             className={`absolute inset-0 ${showActivation && !showTour ? "pt-12" : ""} pb-[calc(3.5rem+env(safe-area-inset-bottom))]`}
           >
-            <HomeScreen onStart={handleStart} onOpenChat={handleOpenChat} onSurprise={handleSurprise} onMovieSelect={handleMovieSelect} loading={loading} openTrainerOnMount={openTrainerOnMount} forceCloseTrainer={activeActivationMission === "talk_to_pick"} onTrainerOpened={() => setOpenTrainerOnMount(false)} chatSuggestedMovies={chatSuggestedMovies} onChatSuggestedConsumed={() => setChatSuggestedMovies(null)} />
+            <HomeScreen onStart={handleStart} onOpenChat={handleOpenChat} onSurprise={handleSurprise} onMovieSelect={handleMovieSelect} loading={loading} openTrainerOnMount={openTrainerOnMount} forceCloseTrainer={activeActivationMission === "talk_to_pick"} onTrainerOpened={() => setOpenTrainerOnMount(false)} chatSuggestedMovies={chatSuggestedMovies} onChatSuggestedConsumed={() => setChatSuggestedMovies(null)} activationTrainerMode={activeActivationMission === "train_20"} onActivationTrainingComplete={async () => {
+              window.dispatchEvent(new Event("pick-activation-refresh"));
+              setActiveActivationMission(null);
+              setOpenTrainerOnMount(false);
+            }} />
           </motion.div>
         )}
 
