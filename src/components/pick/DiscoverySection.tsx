@@ -91,13 +91,11 @@ const MovieRow = ({
 const DiscoverySection = ({ onMovieSelect, platformIds = [], favoriteGenres = [], minRating = 0, excludedGenres = [] }: DiscoverySectionProps) => {
   const [trending, setTrending] = useState<Movie[]>([]);
   const [gems, setGems] = useState<Movie[]>([]);
-  const [tonightsPick, setTonightsPick] = useState<MovieDetail | null>(null);
   const filterOpts = { minRating, excludedGenres };
 
   useEffect(() => {
     getTrendingMovies(10, platformIds, favoriteGenres, filterOpts).then(setTrending).catch(console.error);
     getHiddenGems(10, platformIds, favoriteGenres, filterOpts).then(setGems).catch(console.error);
-    getTonightsPick(platformIds, favoriteGenres, filterOpts).then(setTonightsPick).catch(console.error);
   }, [platformIds.join(","), favoriteGenres.join(","), minRating, excludedGenres.join(",")]);
 
   const handleSelect = async (movie: Movie) => {
@@ -116,34 +114,6 @@ const DiscoverySection = ({ onMovieSelect, platformIds = [], favoriteGenres = []
       transition={{ delay: 0.6, duration: 0.5 }}
       className="w-full"
     >
-      {/* Tonight's Pick */}
-      {tonightsPick && (
-        <motion.button
-          onClick={() => onMovieSelect(tonightsPick)}
-          whileTap={{ scale: 0.98 }}
-          className="w-full mb-6 relative rounded-2xl overflow-hidden cursor-pointer group"
-        >
-          <div className="aspect-[16/7] relative">
-            <img
-              src={getPosterUrl(tonightsPick.backdrop_path || tonightsPick.poster_path, "w780")}
-              alt={getDisplayTitle(tonightsPick)}
-              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
-            <div className="absolute bottom-0 left-0 right-0 p-4">
-              <div className="flex items-center gap-1.5 mb-1.5">
-                <Sparkles className="w-3 h-3 text-primary" />
-                <span className="text-[10px] font-sans font-semibold text-primary uppercase tracking-widest">
-                  Le pick du soir
-                </span>
-              </div>
-              <h3 className="text-lg md:text-xl font-serif text-foreground leading-tight">
-                {getDisplayTitle(tonightsPick)}
-              </h3>
-            </div>
-          </div>
-        </motion.button>
-      )}
 
     </motion.div>
   );

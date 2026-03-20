@@ -109,6 +109,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
   const [historyExcludeIds, setHistoryExcludeIds] = useState<number[]>([]);
   const [showTrainer, setShowTrainer] = useState(false);
   const [flowStep, setFlowStep] = useState<"idle" | "who" | "what" | "exploration">("idle");
+  const [showFindChoice, setShowFindChoice] = useState(false);
   const [explorationLevel, setExplorationLevel] = useState<number>(5);
   const [whatChoice, setWhatChoice] = useState<WhatOption>("both");
   const [whoChoice, setWhoChoice] = useState<WhoOption | null>(null);
