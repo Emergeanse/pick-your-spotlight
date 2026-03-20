@@ -5,7 +5,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import BrandHeader from "@/components/pick/BrandHeader";
-import BottomTabBar from "@/components/pick/BottomTabBar";
+
 import type { MovieDetail } from "@/lib/tmdb";
 import { addToWatchlist } from "@/lib/watchlist";
 import { likeMovie } from "@/lib/liked-movies";
