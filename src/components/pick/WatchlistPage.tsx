@@ -253,6 +253,29 @@ const WatchlistPage = ({ onMovieSelect }: WatchlistPageProps) => {
     catch { toast.error("Erreur"); }
   };
 
+  const handleResetAll = async () => {
+    if (!currentItems.length) return;
+    setResetting(true);
+    try {
+      const { data: { user } } = await (await import("@/integrations/supabase/client")).supabase.auth.getUser();
+      if (!user) return;
+      if (activeTab === "watchlist") {
+        const { error } = await (await import("@/integrations/supabase/client")).supabase
+          .from("watchlist").delete().eq("user_id", user.id);
+        if (error) throw error;
+        setWatchlistItems([]);
+        toast.success("Watchlist vidée");
+      } else {
+        const { error } = await (await import("@/integrations/supabase/client")).supabase
+          .from("liked_movies").delete().eq("user_id", user.id);
+        if (error) throw error;
+        setLikedItems([]);
+        toast.success("Coups de cœur réinitialisés");
+      }
+    } catch { toast.error("Erreur lors de la réinitialisation"); }
+    finally { setResetting(false); setShowResetConfirm(false); }
+  };
+
   const generatePersonalNote = async (movie: MovieDetail): Promise<string> => {
     try {
       const liked = likedItems.length > 0 ? likedItems : await getLikedMovies();
