@@ -79,7 +79,8 @@ const MovieActionBar = ({ movie, size = "md", className = "" }: MovieActionBarPr
 
   const handleDislike = () => {
     if (!requireAuth()) return;
-    trackInteraction(movie.id, "disliked", {
+    trackInteraction(movie.id, "skipped", {
+      reason: "dislike",
       genres: (movie.genres || []).map(g => g.name),
     });
     toast.success("Noté — Pick en tiendra compte");
