@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "@/hooks/use-toast";
 import { toast as sonnerToast } from "sonner";
-import { Check, LogOut, Loader2, Star, Info, Film, Tv, Layers, Clock, Bell, Camera, Pencil, Copy, UserPlus, Users, X, ChevronRight, Clapperboard, QrCode, Share2, Shield } from "lucide-react";
+import { Check, LogOut, Loader2, Star, Info, Film, Tv, Layers, Camera, Pencil, Copy, UserPlus, Users, X, ChevronRight, Clapperboard, QrCode, Share2, Shield } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
@@ -27,14 +27,6 @@ const ALL_PLATFORMS = [
   { id: 35, label: "Rakuten TV", logo: "https://image.tmdb.org/t/p/original/bZvc9dXrXNly7cA0V4D9pR8yJwm.jpg" },
 ];
 
-const MILESTONES = [
-  { count: 1, label: "Premier film", emoji: "🎬" },
-  { count: 5, label: "Cinéphile débutant", emoji: "🍿" },
-  { count: 10, label: "Fidèle spectateur", emoji: "📽️" },
-  { count: 20, label: "Explorateur", emoji: "🧭" },
-  { count: 50, label: "Connaisseur", emoji: "🎪" },
-  { count: 100, label: "Maître cinéphile", emoji: "👑" },
-];
 
 const Profile = () => {
   const { user, isReady, signOut } = useAuth();
@@ -48,8 +40,6 @@ const Profile = () => {
   const [saving, setSaving] = useState(false);
   const [profileLoading, setProfileLoading] = useState(true);
   const [dnaTitle, setDnaTitle] = useState<string | null>(null);
-  const [ritualEnabled, setRitualEnabled] = useState(false);
-  const [ritualTime, setRitualTime] = useState("20:00");
   const [displayName, setDisplayName] = useState("");
   const [editingName, setEditingName] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
@@ -92,8 +82,6 @@ const Profile = () => {
       setSelectedPlatforms(data?.preferred_platforms || []);
       setMinRating((data as any)?.min_rating || 0);
       setMediaPreference((data as any)?.media_preference || "both");
-      setRitualEnabled(data?.ritual_enabled || false);
-      setRitualTime(data?.ritual_time || "20:00");
       setDisplayName(data?.display_name || user.email?.split("@")[0] || "");
       setAvatarUrl((data as any)?.avatar_url || null);
       setEngagement(engData);
@@ -265,8 +253,6 @@ const Profile = () => {
         excluded_platforms: [],
         min_rating: minRating,
         media_preference: mediaPreference,
-        ritual_enabled: ritualEnabled,
-        ritual_time: ritualTime,
       } as any).eq("id", user.id);
       if (error) throw error;
       setProfile((prev: any) => ({
@@ -275,8 +261,6 @@ const Profile = () => {
         excluded_platforms: [],
         min_rating: minRating,
         media_preference: mediaPreference,
-        ritual_enabled: ritualEnabled,
-        ritual_time: ritualTime,
       }));
       toast({ title: "Préférences enregistrées ✓" });
     } catch (e) {
@@ -290,9 +274,7 @@ const Profile = () => {
   const hasChanges = profile && (
     JSON.stringify([...selectedPlatforms].sort()) !== JSON.stringify([...(profile.preferred_platforms || [])].sort()) ||
     minRating !== ((profile as any)?.min_rating || 0) ||
-    mediaPreference !== ((profile as any)?.media_preference || "both") ||
-    ritualEnabled !== (profile?.ritual_enabled || false) ||
-    ritualTime !== (profile?.ritual_time || "20:00")
+    mediaPreference !== ((profile as any)?.media_preference || "both")
   );
 
   if (!isReady || profileLoading) {
@@ -306,8 +288,6 @@ const Profile = () => {
   if (!user) return null;
 
   const nameDisplay = displayName || user.email?.split("@")[0] || "Cinéphile";
-  const totalRecos = engagement?.totalRecommendations || 0;
-  const reachedMilestones = MILESTONES.filter(m => totalRecos >= m.count);
   const memberSince = profile?.created_at ? new Date(profile.created_at).toLocaleDateString("fr-FR", { month: "long", year: "numeric" }) : null;
 
   return (
@@ -474,58 +454,7 @@ const Profile = () => {
           </div>
         </motion.div>
 
-        {/* ─── Milestones — Visual Badges ─── */}
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="mb-8">
-          <h2 className="text-lg font-serif mb-3">Tes jalons</h2>
-          <div className="flex flex-wrap gap-2">
-            {MILESTONES.map(m => {
-              const reached = totalRecos >= m.count;
-              return (
-                <div
-                  key={m.count}
-                  className={`flex items-center gap-2 px-3.5 py-2 rounded-full border text-sm font-sans ${
-                    reached
-                      ? "bg-primary/[0.08] border-primary/20 text-foreground"
-                      : "bg-card/30 border-border/10 text-foreground/20"
-                  }`}
-                >
-                  <span className={reached ? "" : "grayscale opacity-40"}>{m.emoji}</span>
-                  <span className="font-medium">{reached ? m.label : "???"}</span>
-                </div>
-              );
-            })}
-          </div>
-        </motion.div>
 
-        {/* ─── Evening Ritual ─── */}
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }} className="mb-8">
-          <h2 className="text-lg font-serif mb-3">Rituel du soir</h2>
-          <div className="bg-card rounded-2xl p-4 border border-border/10">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <Bell className="w-4 h-4 text-primary/60" />
-                <span className="font-sans text-sm">Rappel quotidien</span>
-              </div>
-              <button
-                onClick={() => setRitualEnabled(!ritualEnabled)}
-                className={`w-11 h-6 rounded-full transition-colors ${ritualEnabled ? "bg-primary" : "bg-foreground/15"}`}
-              >
-                <div className={`w-5 h-5 rounded-full bg-white shadow-sm transition-transform ${ritualEnabled ? "translate-x-5.5" : "translate-x-0.5"}`} />
-              </button>
-            </div>
-            {ritualEnabled && (
-              <div className="flex items-center gap-2">
-                <Clock className="w-3.5 h-3.5 text-foreground/40" />
-                <input
-                  type="time"
-                  value={ritualTime}
-                  onChange={(e) => setRitualTime(e.target.value)}
-                  className="bg-transparent text-foreground text-sm font-sans border border-border/20 rounded-lg px-3 py-1.5 focus:outline-none focus:border-primary/40"
-                />
-              </div>
-            )}
-          </div>
-        </motion.div>
 
         {/* ─── Mes Amis ─── */}
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.28 }} className="mb-8">
