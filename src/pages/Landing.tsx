@@ -138,8 +138,24 @@ const Landing = () => {
           { "@type": "Question", "name": "Pick fonctionne-t-il avec toutes les plateformes ?", "acceptedAnswer": { "@type": "Answer", "text": "Oui, Pick est compatible avec Netflix, Disney+, Amazon Prime, Apple TV+, Canal+, HBO, Paramount+ et plus." }}
         ]
       })}} />
+      {/* ─── GLOBAL POSTER BACKGROUND — subtle scrolling posters behind entire page ─── */}
+      <div className="fixed inset-0 z-0 opacity-[0.04] pointer-events-none overflow-hidden">
+        <div className="hidden md:flex gap-2 w-full h-full px-4">
+          <PosterColumn posters={col1} className="w-1/6 -mt-20" />
+          <PosterColumn posters={col2} reverse className="w-1/6 mt-10" />
+          <PosterColumn posters={col3} className="w-1/6 -mt-32" />
+          <PosterColumn posters={[...col1].reverse()} reverse className="w-1/6 mt-5" />
+          <PosterColumn posters={[...col2].reverse()} className="w-1/6 -mt-16" />
+          <PosterColumn posters={[...col3].reverse()} reverse className="w-1/6 mt-12" />
+        </div>
+        <div className="flex md:hidden gap-2 w-full h-full px-1">
+          <PosterColumn posters={col1} className="w-1/4 -mt-10" />
+          <PosterColumn posters={col2} reverse className="w-1/4 mt-8" />
+          <PosterColumn posters={col3} className="w-1/4 -mt-20" />
+          <PosterColumn posters={[...col1].reverse()} reverse className="w-1/4 mt-4" />
+        </div>
+      </div>
 
-      {/* ─── NAV ─── */}
       <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border/8">
         <div className="max-w-6xl mx-auto flex items-center justify-between px-5 h-14">
           <div className="flex items-center gap-2.5">
