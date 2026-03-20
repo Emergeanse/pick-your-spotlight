@@ -274,6 +274,7 @@ Recommande ${requestedCount > 1 ? `${requestedCount} films/séries` : "UN film"}
           page: String(Math.floor(Math.random() * (attempt < 2 ? 10 : 5)) + 1),
         });
         if (minRating && minRating > 0 && attempt < 3) discoverParams.set("vote_average.gte", String(minRating));
+        if (maxDuration && searchType === "movie") discoverParams.set("with_runtime.lte", String(maxDuration));
         if (excludedGenreIds.size > 0 && attempt < 3) discoverParams.set("without_genres", [...excludedGenreIds].join(","));
         if (topGenres.length > 0 && !effectiveOutOfComfortZone && explorationLevel < 7 && attempt < 2) {
           const genreIds = topGenres.map(g => genreIdMap[g]).filter(Boolean).slice(0, 3);
