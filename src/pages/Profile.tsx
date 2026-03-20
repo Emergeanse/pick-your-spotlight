@@ -253,8 +253,6 @@ const Profile = () => {
         excluded_platforms: [],
         min_rating: minRating,
         media_preference: mediaPreference,
-        ritual_enabled: ritualEnabled,
-        ritual_time: ritualTime,
       } as any).eq("id", user.id);
       if (error) throw error;
       setProfile((prev: any) => ({
@@ -263,8 +261,6 @@ const Profile = () => {
         excluded_platforms: [],
         min_rating: minRating,
         media_preference: mediaPreference,
-        ritual_enabled: ritualEnabled,
-        ritual_time: ritualTime,
       }));
       toast({ title: "Préférences enregistrées ✓" });
     } catch (e) {
