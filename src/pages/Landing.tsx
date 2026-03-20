@@ -438,6 +438,24 @@ const Landing = () => {
           <motion.div variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }}
             className="flex flex-col md:flex-row items-center gap-10 md:gap-16">
 
+            {/* Text */}
+            <div className="text-center md:text-left">
+              <span className="text-[10px] uppercase tracking-[0.2em] text-gold/50 font-sans font-semibold">À plusieurs</span>
+              <h2 className="text-3xl md:text-4xl font-serif mb-4 mt-1">
+                Pick <span className="text-gold">Together</span>
+              </h2>
+              <p className="text-foreground/40 font-sans text-sm md:text-base leading-relaxed mb-5">
+                Fini les 30 minutes de débat. Pick croise vos profils cinématographiques
+                et trouve instantanément le film qui plaît à tout le monde.
+                Chacun a ses goûts — Pick trouve le terrain d'entente parfait.
+              </p>
+              <div className="flex flex-wrap gap-2 justify-center md:justify-start">
+                {["Croisement des profils", "Score de compatibilité", "QR code d'invitation", "Jusqu'à 8 personnes"].map(tag => (
+                  <span key={tag} className="px-3 py-1.5 rounded-full bg-card/60 border border-border/12 text-foreground/40 text-xs font-sans">{tag}</span>
+                ))}
+              </div>
+            </div>
+
             {/* Visual — crossing profiles */}
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
@@ -489,24 +507,6 @@ const Landing = () => {
                 </div>
               </div>
             </motion.div>
-
-            {/* Text */}
-            <div className="text-center md:text-left">
-              <span className="text-[10px] uppercase tracking-[0.2em] text-gold/50 font-sans font-semibold">À plusieurs</span>
-              <h2 className="text-3xl md:text-4xl font-serif mb-4 mt-1">
-                Pick <span className="text-gold">Together</span>
-              </h2>
-              <p className="text-foreground/40 font-sans text-sm md:text-base leading-relaxed mb-5">
-                Fini les 30 minutes de débat. Pick croise vos profils cinématographiques
-                et trouve instantanément le film qui plaît à tout le monde.
-                Chacun a ses goûts — Pick trouve le terrain d'entente parfait.
-              </p>
-              <div className="flex flex-wrap gap-2 justify-center md:justify-start">
-                {["Croisement des profils", "Score de compatibilité", "QR code d'invitation", "Jusqu'à 8 personnes"].map(tag => (
-                  <span key={tag} className="px-3 py-1.5 rounded-full bg-card/60 border border-border/12 text-foreground/40 text-xs font-sans">{tag}</span>
-                ))}
-              </div>
-            </div>
           </motion.div>
         </div>
       </section>
