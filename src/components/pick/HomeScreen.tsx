@@ -26,7 +26,7 @@ import { useNavigate } from "react-router-dom";
 interface HomeScreenProps {
   onStart: () => void;
   onOpenChat: () => void;
-  onSurprise: (movie: MovieDetail) => void;
+  onSurprise: (movies: MovieDetail[]) => void;
   onMovieSelect: (movie: MovieDetail) => void;
   loading: boolean;
   openTrainerOnMount?: boolean;
@@ -227,7 +227,16 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
             likedMovies: liked, userTasteVector, tasteProfile,
             platformIds: userPlatformIds, excludedPlatformIds: userExcludedPlatformIds, excludedGenres: userExcludedGenres, minRating: userMinRating,
             outOfComfortZone: true, excludeIds: historyExcludeIds,
+            count: 5,
           });
+          if (data?.movies && data.movies.length > 0) {
+            const allMovies = data.movies.map((m: any) => { const mv = m.movie as MovieDetail; (mv as any)._surpriseComfortZone = true; return mv; });
+            clearInterval(msgInterval);
+            setSurpriseMsg("✨ Trouvé !");
+            await new Promise(r => setTimeout(r, 400));
+            onSurprise(allMovies);
+            return;
+          }
           movie = data.movie as MovieDetail;
           (movie as any)._surpriseComfortZone = true;
         } else {
@@ -240,13 +249,13 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
       clearInterval(msgInterval);
       setSurpriseMsg("✨ Trouvé !");
       await new Promise(r => setTimeout(r, 400));
-      onSurprise(movie);
+      onSurprise([movie]);
     } catch (e) {
       console.error(e);
       try {
         const movie = await getSurpriseRecommendation([], { platformIds: userPlatformIds, minRating: userMinRating, excludedGenres: userExcludedGenres });
         clearInterval(msgInterval);
-        onSurprise(movie);
+        onSurprise([movie]);
       } catch {
         clearInterval(msgInterval);
       }
@@ -603,7 +612,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
                     size="lg"
                     className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90 font-sans font-semibold px-8 h-12 gap-2 text-base neon-glow transition-all active:scale-[0.97] w-full max-w-xs"
                     onClick={() => {
-                      onSurprise(tonightPick);
+                      onSurprise([tonightPick]);
                       setTonightPick(null);
                     }}
                   >
