@@ -330,7 +330,7 @@ const Landing = () => {
           <motion.div variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }} className="grid md:grid-cols-3 gap-6 max-w-3xl mx-auto">
             {[
               { step: "01", icon: <Zap className="w-5 h-5" />, title: "Dis ton envie", desc: "Tape ou dis à Pick ce que tu as en tête. Une humeur, un contexte, une envie vague — il comprend tout." },
-              { step: "02", icon: <Brain className="w-5 h-5" />, title: "Pick analyse", desc: "L'IA croise tes goûts, ton historique et tes plateformes pour isoler le film parfait." },
+              { step: "02", icon: <Brain className="w-5 h-5" />, title: "Pick analyse", desc: "Pick croise tes goûts, ton historique et tes plateformes pour isoler le film parfait." },
               { step: "03", icon: <Play className="w-5 h-5" />, title: "Tu regardes", desc: "Un seul film, le bon. Avec le lien direct vers ta plateforme de streaming." },
             ].map((item, i) => (
               <motion.div key={item.step} variants={fadeUp} custom={i} className="text-center md:text-left">
