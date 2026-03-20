@@ -147,10 +147,13 @@ ${genreInstruction}
 RÈGLE CRITIQUE — RECOMMANDATION :
 Recommande immédiatement (appelle suggest_movie) si l'utilisateur donne AU MOINS UN signal :
 - Une humeur ("fatigué", "envie de rigoler", "intense")
-- Un contexte ("avec ma copine", "entre potes", "seul")
+- Un contexte SOLO ("seul ce soir", "rien à faire")
 - Un genre ("thriller", "comédie", "SF")
 - Une référence ("comme Inception", "style Tarantino")
 - Une demande même vague ("un bon film", "quelque chose de bien", "un truc ce soir")
+
+RÈGLE GROUPE — TRÈS IMPORTANT :
+Si l'utilisateur mentionne qu'il est avec d'autres personnes (copine, potes, famille, groupe, "on est deux/trois/plusieurs", "soirée entre amis", "avec ma meuf", "entre potes"...), appelle l'outil suggest_pick_together au lieu de suggest_movie. Le mode Pick Together est conçu pour les groupes.
 
 Pose une question UNIQUEMENT si le message ne contient AUCUN signal (ex: juste "Salut").
 Maximum 1 question avant de proposer un film.
