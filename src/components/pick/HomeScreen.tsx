@@ -140,6 +140,8 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
       setTonightMaxSeen(0);
       setTonightPick(firstMovie);
       setTonightProviders([]);
+      setRevealBurst(true);
+      setTimeout(() => setRevealBurst(false), 2000);
       const mediaType = firstMovie.first_air_date ? "tv" : "movie";
       getWatchProviders(firstMovie.id, mediaType).then(setTonightProviders).catch(() => {});
       onChatSuggestedConsumed?.();
