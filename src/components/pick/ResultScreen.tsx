@@ -561,7 +561,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({
               {/* On regarde ce soir CTA */}
               <button
                 onClick={() => {
-                  trackInteraction(movie.id, "accepted", { mood: userCriteria?.mood, context: userCriteria?.context });
+                  trackInteraction(movie.id, "watched", { mood: userCriteria?.mood, context: userCriteria?.context });
                   updateRecommendationReaction(movie.id, "accepted", "on_regarde");
                   toast.success("Bon visionnage ! 🍿");
                 }}
