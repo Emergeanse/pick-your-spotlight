@@ -475,14 +475,18 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
                     >
                       <h3 className="text-center text-base font-sans font-semibold text-foreground mb-1">Comment veux-tu chercher ?</h3>
 
-                      {/* Option 1: Auto pick */}
+                      {/* Option 1: Auto pick — direct to Tonight's Pick */}
                       <motion.button
                         whileTap={{ scale: 0.97 }}
                         onClick={() => {
                           setShowFindChoice(false);
                           setPickAnimating(true);
                           setTimeout(() => setPickAnimating(false), 900);
-                          setFlowStep("who");
+                          setTonightPick(null);
+                          setChatMoviesPool(null);
+                          setTonightPickIndex(0);
+                          setTonightMaxSeen(0);
+                          generateTonightPick(rejectedIds);
                         }}
                         className="group w-full text-left rounded-xl p-4 bg-primary/10 border border-primary/30 hover:border-primary/50 hover:bg-primary/15 transition-all"
                       >
@@ -492,7 +496,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
                           </div>
                           <div>
                             <h4 className="text-sm font-sans font-semibold text-foreground">Pick choisit pour toi</h4>
-                            <p className="text-foreground/45 text-xs font-sans">Une suggestion sur-mesure en quelques clics.</p>
+                            <p className="text-foreground/45 text-xs font-sans">Une suggestion sur-mesure, instantanée.</p>
                           </div>
                         </div>
                       </motion.button>
