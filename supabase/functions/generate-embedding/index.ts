@@ -82,23 +82,58 @@ serve(async (req) => {
     }
 
     // Generate embedding via AI
-    const systemPrompt = `Tu es un expert en analyse cinématographique. On te donne un film et tu dois le positionner sur 32 dimensions de goût.
+    const systemPrompt = `Tu es un expert en analyse cinématographique. On te donne un film et tu dois le positionner sur 32 dimensions de goût ET générer des métadonnées enrichies.
 
 Chaque dimension est un spectre de 0.0 à 1.0. Voici les dimensions dans l'ordre :
 ${TASTE_DIMENSIONS.map((d, i) => `${i}: ${d}`).join("\n")}
 
 RÈGLES :
 - Réponds UNIQUEMENT avec un JSON valide, sans backticks
-- Structure : {"vector": [0.0, 0.1, ...], "tags": ["tag1", "tag2", ...]}
-- Le vector doit contenir exactement 32 floats entre 0.0 et 1.0
-- Les tags sont 3-6 micro-genres descriptifs (ex: "neo-noir", "slow burn", "twist ending", "feel-good")
-- Sois précis et nuancé dans tes scores`;
+- Structure :
+{
+  "vector": [0.0, 0.1, ...],
+  "tags": ["tag1", "tag2", ...],
+  "semantic_axes": {
+    "emotional_depth": 0.0-1.0,
+    "pacing": 0.0-1.0,
+    "darkness": 0.0-1.0,
+    "humor": 0.0-1.0,
+    "complexity": 0.0-1.0,
+    "romance": 0.0-1.0,
+    "suspense": 0.0-1.0,
+    "action_intensity": 0.0-1.0,
+    "visual_richness": 0.0-1.0,
+    "philosophical_depth": 0.0-1.0,
+    "realism": 0.0-1.0,
+    "weirdness": 0.0-1.0,
+    "comfort_level": 0.0-1.0,
+    "prestige_level": 0.0-1.0,
+    "mainstreamness": 0.0-1.0,
+    "twist_factor": 0.0-1.0,
+    "rewatchability": 0.0-1.0,
+    "intimacy": 0.0-1.0,
+    "epic_scale": 0.0-1.0,
+    "low_cognitive_load": 0.0-1.0,
+    "surprise_tolerance": 0.0-1.0
+  },
+  "safety_tags": ["violence_forte", "sexe_explicite", "drogue", ...ou vide],
+  "suitability_tags": ["solo", "couple", "amis", "famille", "enfants", ...],
+  "cluster_labels": ["thriller_psychologique", "slow_burn", ...]
+}
+- vector: exactement 32 floats entre 0.0 et 1.0
+- tags: 3-6 micro-genres descriptifs
+- semantic_axes: 21 axes continus (0-1)
+- safety_tags: tags de contenu sensible (vide si aucun)
+- suitability_tags: contextes de visionnage adaptés
+- cluster_labels: 2-5 micro-catégories précises`;
 
     const userPrompt = `Film : "${title}"
 Genres : ${(genres || []).join(", ")}
 Synopsis : ${overview || "Non disponible"}
+${year ? `Année : ${year}` : ""}
+${runtime ? `Durée : ${runtime} min` : ""}
 
-Génère le vecteur de goût 32D et les taste tags.`;
+Génère le vecteur de goût 32D, les axes sémantiques, et les métadonnées enrichies.`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
