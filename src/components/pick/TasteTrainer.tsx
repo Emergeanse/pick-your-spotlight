@@ -43,11 +43,11 @@ async function fetchMovieDetail(id: number): Promise<MovieDetail> {
 }
 
 const RATING_BUTTONS = [
-  { value: 5,   label: "Pas pour moi", sentiment: "negative" as const },
-  { value: 25,  label: "Bof",          sentiment: "neutral" as const },
-  { value: 50,  label: "Correct",      sentiment: "neutral" as const },
-  { value: 75,  label: "J'aime bien",  sentiment: "positive" as const },
-  { value: 100, label: "Chef-d'œuvre", sentiment: "positive" as const },
+  { value: 5,   label: "Pas pour moi", color: "bg-red-500/15 border-red-500/25 text-red-400 hover:bg-red-500/25" },
+  { value: 25,  label: "Bof",          color: "bg-orange-500/15 border-orange-500/25 text-orange-400 hover:bg-orange-500/25" },
+  { value: 50,  label: "Correct",      color: "bg-yellow-500/15 border-yellow-500/25 text-yellow-400 hover:bg-yellow-500/25" },
+  { value: 75,  label: "J'aime bien",  color: "bg-emerald-500/15 border-emerald-500/25 text-emerald-400 hover:bg-emerald-500/25" },
+  { value: 100, label: "Chef-d'œuvre", color: "bg-primary/15 border-primary/25 text-primary hover:bg-primary/25" },
 ];
 
 const getMilestoneMessage = (count: number): string | null => {
