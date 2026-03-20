@@ -258,6 +258,8 @@ Recommande ${requestedCount > 1 ? `${requestedCount} films/séries` : "UN film"}
       const found = results.find((r: any) => isMovieAllowed(r));
       if (!found) return null;
       const detail = await getMovieDetails(found.id, searchType);
+      // Filter by maxDuration for movies
+      if (maxDuration && searchType === "movie" && detail.runtime && detail.runtime > maxDuration) return null;
       return { movie: detail, suggestion: sug };
     };
 
