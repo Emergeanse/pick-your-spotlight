@@ -611,7 +611,7 @@ const VoiceChat = ({ onClose, onMovieSuggested, initialMessages, showMicGuide = 
                 }}
                 className="mt-4 text-foreground/40 text-xs font-sans hover:text-foreground/60 transition-colors"
               >
-                Non, je suis seul(e)
+                Continuer sans Pick Together
               </motion.button>
             </motion.div>
           )}
