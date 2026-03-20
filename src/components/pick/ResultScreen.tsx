@@ -23,10 +23,19 @@ const CONFIDENCE_THRESHOLD = 30;
 // ── Inlined sub-components ──────────────────────────────────────────
 
 interface MatchData {
+  matchScore?: number;
   score?: number;
+  headline?: string;
+  whyItMatches?: string;
+  detailedExplanation?: string;
+  emotionalJourney?: string;
+  perfectFor?: string;
+  funFact?: string;
   summary?: string;
   reasons?: string[];
   tone?: string;
+  matchingReasons?: string[];
+  pickNote?: string | null;
 }
 
 const ActorCard = ({ actor }: { actor: CastMember }) => (
@@ -48,7 +57,13 @@ const ActorCard = ({ actor }: { actor: CastMember }) => (
 );
 
 const MatchAnalysis = ({ matchData, mediaType }: { matchData: MatchData; mediaType: string; movieId: number }) => {
-  const { score, summary, reasons } = matchData;
+  const score = matchData.matchScore ?? matchData.score;
+  const summary = matchData.detailedExplanation || matchData.whyItMatches || matchData.summary;
+  const headline = matchData.headline;
+  const reasons = matchData.matchingReasons || matchData.reasons;
+  const funFact = matchData.funFact;
+  const perfectFor = matchData.perfectFor;
+
   return (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1, duration: 0.4 }} className="mb-5 max-w-md">
       <div className="p-3 sm:p-4 rounded-xl bg-primary/[0.04] border border-primary/15 backdrop-blur-sm">
@@ -65,16 +80,22 @@ const MatchAnalysis = ({ matchData, mediaType }: { matchData: MatchData; mediaTy
                 <span className="text-[10px] font-sans font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded-full">{score}%</span>
               )}
             </div>
+            {headline && <p className="text-foreground/80 text-[13px] font-sans font-semibold mb-1">{headline}</p>}
             {summary && <p className="text-foreground/70 text-[12px] sm:text-[13px] font-sans leading-snug mb-2">{summary}</p>}
             {reasons && reasons.length > 0 && (
-              <ul className="space-y-1">
+              <div className="flex flex-wrap gap-1.5 mb-2">
                 {reasons.map((reason, i) => (
-                  <li key={i} className="text-foreground/50 text-[11px] font-sans flex items-start gap-1.5">
-                    <span className="text-primary/60 mt-0.5">•</span>
-                    <span>{reason}</span>
-                  </li>
+                  <span key={i} className="text-[10px] font-sans text-primary/70 bg-primary/8 px-2 py-0.5 rounded-full border border-primary/10">
+                    {reason}
+                  </span>
                 ))}
-              </ul>
+              </div>
+            )}
+            {perfectFor && <p className="text-foreground/50 text-[11px] font-sans italic">{perfectFor}</p>}
+            {funFact && (
+              <p className="text-foreground/40 text-[11px] font-sans mt-2 leading-snug">
+                <span className="text-primary/50">💡</span> {funFact}
+              </p>
             )}
           </div>
         </div>

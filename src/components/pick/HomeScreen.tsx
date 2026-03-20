@@ -102,8 +102,9 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
   const [whoChoice, setWhoChoice] = useState<WhoOption | null>(null);
   const [totalEvaluated, setTotalEvaluated] = useState(0);
   const [chatMoviesPool, setChatMoviesPool] = useState<MovieDetail[] | null>(null);
+  const [movieMatchData, setMovieMatchData] = useState<Record<number, { confidence: number; reason: string }>>({});
   const [tonightPickIndex, setTonightPickIndex] = useState(0);
-  const [tonightMaxSeen, setTonightMaxSeen] = useState(0); // highest index user has seen
+  const [tonightMaxSeen, setTonightMaxSeen] = useState(0);
 
   // All movies available for tonight pick navigation (chat pool or single generated)
   const tonightPool: MovieDetail[] = chatMoviesPool || (tonightPick ? [tonightPick] : []);
@@ -321,8 +322,14 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
           });
           if (data?.movies && data.movies.length > 0) {
             movies = data.movies.map((m: any) => m.movie as MovieDetail);
+            const matchMap: Record<number, { confidence: number; reason: string }> = {};
+            data.movies.forEach((m: any) => {
+              if (m.movie?.id) matchMap[m.movie.id] = { confidence: m.confidence || 75, reason: m.reason || "" };
+            });
+            setMovieMatchData(prev => ({ ...prev, ...matchMap }));
           } else if (data?.movie) {
             movies = [data.movie as MovieDetail];
+            if (data.confidence) setMovieMatchData(prev => ({ ...prev, [data.movie.id]: { confidence: data.confidence, reason: data.reason || "" } }));
           }
         } else {
           const movie = await getSurpriseRecommendation(excludeList, { platformIds: userPlatformIds, minRating: userMinRating, excludedGenres: userExcludedGenres });
@@ -682,9 +689,29 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
                   </p>
                 )}
 
-                <p className="text-foreground/40 text-[13px] font-sans italic mb-4">
-                  Pick pense que {tonightPick.first_air_date ? "cette série est parfaite" : "ce film est parfait"} pour toi.
-                </p>
+                {(() => {
+                  const matchInfo = movieMatchData[tonightPick.id];
+                  if (matchInfo?.confidence) {
+                    return (
+                      <div className="flex flex-col items-center gap-1 mb-4">
+                        <div className="flex items-center gap-2">
+                          <span className="text-primary text-lg font-sans font-bold">{matchInfo.confidence}%</span>
+                          <span className="text-foreground/40 text-[12px] font-sans">match</span>
+                        </div>
+                        {matchInfo.reason && (
+                          <p className="text-foreground/50 text-[11px] font-sans text-center leading-snug max-w-[260px]">
+                            {matchInfo.reason}
+                          </p>
+                        )}
+                      </div>
+                    );
+                  }
+                  return (
+                    <p className="text-foreground/40 text-[13px] font-sans italic mb-4">
+                      Pick pense que {tonightPick.first_air_date ? "cette série est parfaite" : "ce film est parfait"} pour toi.
+                    </p>
+                  );
+                })()}
 
                 <div className="flex flex-col items-center gap-4 w-full">
                   <Button
