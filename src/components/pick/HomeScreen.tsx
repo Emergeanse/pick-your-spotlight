@@ -770,48 +770,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
         )}
       </AnimatePresence>
 
-      {/* Who/What flow overlay */}
-      <AnimatePresence mode="wait">
-        {flowStep !== "idle" && (
-          <motion.div
-            key={flowStep}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="absolute inset-0 z-50 bg-background"
-          >
-            <BrandHeader showBack onBack={() => { setFlowStep("idle"); setWhoChoice(null); }} />
-            <StepLayout currentStep={flowStep === "who" ? 1 : flowStep === "what" ? 2 : 3} totalSteps={3}>
-              {flowStep === "who" && (
-                <WhoStep onSelect={(w) => {
-                  setWhoChoice(w);
-                  if (w === "duo" || w === "group") {
-                    setFlowStep("idle");
-                    setWhoChoice(null);
-                    navigate("/app/pick-together");
-                    return;
-                  }
-                  setFlowStep("what");
-                }} />
-              )}
-              {flowStep === "what" && (
-                <WhatStep onSelect={(w) => {
-                  setWhatChoice(w);
-                  setFlowStep("exploration");
-                }} />
-              )}
-              {flowStep === "exploration" && (
-                <ExplorationStep onSelect={(level) => {
-                  setExplorationLevel(level);
-                  setFlowStep("idle");
-                  setTonightPick(null);
-                  generateTonightPick(rejectedIds);
-                }} />
-              )}
-            </StepLayout>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* Flow steps removed — direct access to Tonight's Pick */}
 
       {/* Taste Trainer overlay */}
       <AnimatePresence>
