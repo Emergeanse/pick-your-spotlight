@@ -1,6 +1,6 @@
-import { motion, useScroll, useTransform } from "framer-motion";
+import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { useRef } from "react";
+import { useRef, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Sparkles, Target, Mic, Brain, Tv, ChevronDown, Clapperboard,
@@ -61,53 +61,110 @@ const PosterColumn = ({ posters, reverse = false, className = "" }: { posters: s
   );
 };
 
+
+const DEMO_MOVIES = [
+  { poster: "https://image.tmdb.org/t/p/w500/q6y0Go1tsGEsmtFryDOJo3dEmqu.jpg", title: "The Shawshank Redemption", year: "1994", duration: "2h22", genre: "Drame", match: 94, prompt: "« Un film bouleversant pour ce soir »" },
+  { poster: "https://image.tmdb.org/t/p/w500/d5NXSklXo0qyIYkgV94XAgMIckC.jpg", title: "Inception", year: "2010", duration: "2h28", genre: "Sci-Fi, Action", match: 91, prompt: "« Un truc qui retourne le cerveau »" },
+  { poster: "https://image.tmdb.org/t/p/w500/qJ2tW6WMUDux911BTUgMe1cEgGR.jpg", title: "Interstellar", year: "2014", duration: "2h49", genre: "Sci-Fi, Drame", match: 89, prompt: "« Un film épique avec de l'émotion »" },
+  { poster: "https://image.tmdb.org/t/p/w500/rCzpDGLbOoPwLjy3OAm5NUPOTrC.jpg", title: "The Dark Knight", year: "2008", duration: "2h32", genre: "Action, Thriller", match: 92, prompt: "« Un thriller intense et sombre »" },
+];
+
 /* ─── Simulated phone mockup showing the product ─── */
-const PhoneMockup = () => (
-  <div className="relative mx-auto w-[260px] md:w-[280px]">
-    {/* Phone frame */}
-    <div className="rounded-[2.5rem] border-2 border-foreground/10 bg-background p-2 shadow-2xl shadow-primary/10">
-      {/* Screen */}
-      <div className="rounded-[2rem] overflow-hidden bg-card relative aspect-[9/17]">
-        {/* Status bar */}
-        <div className="h-6 bg-background/80 flex items-center justify-center">
-          <div className="w-16 h-1 rounded-full bg-foreground/15" />
-        </div>
-        {/* Content simulation */}
-        <div className="p-4 flex flex-col gap-3">
-          <div className="flex items-center gap-2 mb-1">
-            <img src={pickDefault} alt="Pick" className="w-6 h-6 object-contain" />
-            <span className="text-[10px] font-sans text-foreground/50">Pick pour ce soir</span>
-          </div>
-          {/* Movie poster — real poster image */}
-          <div className="relative rounded-xl overflow-hidden aspect-[2/3] w-full">
-            <img
-              src="https://image.tmdb.org/t/p/w500/q6y0Go1tsGEsmtFryDOJo3dEmqu.jpg"
-              alt="The Shawshank Redemption"
-              className="w-full h-full object-cover"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-background/95 via-background/20 to-transparent" />
-            <div className="absolute bottom-3 left-3 right-3">
-              <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary/20 border border-primary/30 mb-1.5">
-                <span className="text-[9px] font-sans font-bold text-primary">94% match</span>
+const PhoneMockup = () => {
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentIndex((prev) => (prev + 1) % DEMO_MOVIES.length);
+    }, 3000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const movie = DEMO_MOVIES[currentIndex];
+
+  return (
+    <div className="flex flex-col items-center gap-4">
+      {/* Prompt message above phone */}
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={currentIndex}
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -8 }}
+          transition={{ duration: 0.4 }}
+          className="px-5 py-2.5 rounded-2xl bg-card/50 border border-border/15 backdrop-blur-sm"
+        >
+          <p className="text-sm font-sans text-foreground/60 italic">{movie.prompt}</p>
+        </motion.div>
+      </AnimatePresence>
+
+      {/* Phone */}
+      <div className="relative mx-auto w-[260px] md:w-[280px]">
+        <div className="rounded-[2.5rem] border-2 border-foreground/10 bg-background p-2 shadow-2xl shadow-primary/10">
+          <div className="rounded-[2rem] overflow-hidden bg-card relative aspect-[9/17]">
+            <div className="h-6 bg-background/80 flex items-center justify-center">
+              <div className="w-16 h-1 rounded-full bg-foreground/15" />
+            </div>
+            <div className="p-4 flex flex-col gap-3">
+              <div className="flex items-center gap-2 mb-1">
+                <img src={pickDefault} alt="Pick" className="w-6 h-6 object-contain" />
+                <span className="text-[10px] font-sans text-foreground/50">Pick pour ce soir</span>
               </div>
-              <p className="text-[11px] font-serif text-foreground leading-tight">The Shawshank Redemption</p>
-              <p className="text-[8px] font-sans text-foreground/40 mt-0.5">1994 · 2h22 · Drame</p>
-            </div>
-          </div>
-          {/* Action buttons */}
-          <div className="flex gap-2">
-            <div className="flex-1 h-8 rounded-xl bg-primary/15 border border-primary/25 flex items-center justify-center">
-              <span className="text-[9px] font-sans font-medium text-primary">On regarde</span>
-            </div>
-            <div className="flex-1 h-8 rounded-xl bg-card border border-border/20 flex items-center justify-center">
-              <span className="text-[9px] font-sans text-foreground/40">Autre suggestion</span>
+              {/* Movie poster — cycling */}
+              <div className="relative rounded-xl overflow-hidden aspect-[2/3] w-full">
+                <AnimatePresence mode="wait">
+                  <motion.img
+                    key={movie.poster}
+                    src={movie.poster}
+                    alt={movie.title}
+                    className="w-full h-full object-cover absolute inset-0"
+                    initial={{ opacity: 0, scale: 1.05 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    transition={{ duration: 0.5 }}
+                  />
+                </AnimatePresence>
+                <div className="absolute inset-0 bg-gradient-to-t from-background/95 via-background/20 to-transparent" />
+                <div className="absolute bottom-3 left-3 right-3">
+                  <AnimatePresence mode="wait">
+                    <motion.div
+                      key={movie.title}
+                      initial={{ opacity: 0, y: 6 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -6 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary/20 border border-primary/30 mb-1.5">
+                        <span className="text-[9px] font-sans font-bold text-primary">{movie.match}% match</span>
+                      </div>
+                      <p className="text-[11px] font-serif text-foreground leading-tight">{movie.title}</p>
+                      <p className="text-[8px] font-sans text-foreground/40 mt-0.5">{movie.year} · {movie.duration} · {movie.genre}</p>
+                    </motion.div>
+                  </AnimatePresence>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <div className="flex-1 h-8 rounded-xl bg-primary/15 border border-primary/25 flex items-center justify-center">
+                  <span className="text-[9px] font-sans font-medium text-primary">On regarde</span>
+                </div>
+                <div className="flex-1 h-8 rounded-xl bg-card border border-border/20 flex items-center justify-center">
+                  <span className="text-[9px] font-sans text-foreground/40">Autre suggestion</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Dots indicator */}
+      <div className="flex gap-1.5">
+        {DEMO_MOVIES.map((_, i) => (
+          <div key={i} className={`w-1.5 h-1.5 rounded-full transition-colors duration-300 ${i === currentIndex ? "bg-primary" : "bg-foreground/15"}`} />
+        ))}
+      </div>
     </div>
-  </div>
-);
+  );
+};
 const Landing = () => {
   const navigate = useNavigate();
   const heroRef = useRef<HTMLDivElement>(null);
