@@ -118,7 +118,7 @@ const Landing = () => {
   const col3 = POSTER_URLS.slice(8, 12);
 
   return (
-    <div className="min-h-screen bg-background text-foreground overflow-x-hidden">
+    <div className="min-h-screen bg-background text-foreground overflow-x-hidden relative">
       {/* JSON-LD */}
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
         "@context": "https://schema.org", "@type": "WebApplication",
@@ -138,8 +138,24 @@ const Landing = () => {
           { "@type": "Question", "name": "Pick fonctionne-t-il avec toutes les plateformes ?", "acceptedAnswer": { "@type": "Answer", "text": "Oui, Pick est compatible avec Netflix, Disney+, Amazon Prime, Apple TV+, Canal+, HBO, Paramount+ et plus." }}
         ]
       })}} />
+      {/* ─── GLOBAL POSTER BACKGROUND — subtle scrolling posters behind entire page ─── */}
+      <div className="fixed inset-0 z-0 opacity-[0.04] pointer-events-none overflow-hidden">
+        <div className="hidden md:flex gap-2 w-full h-full px-4">
+          <PosterColumn posters={col1} className="w-1/6 -mt-20" />
+          <PosterColumn posters={col2} reverse className="w-1/6 mt-10" />
+          <PosterColumn posters={col3} className="w-1/6 -mt-32" />
+          <PosterColumn posters={[...col1].reverse()} reverse className="w-1/6 mt-5" />
+          <PosterColumn posters={[...col2].reverse()} className="w-1/6 -mt-16" />
+          <PosterColumn posters={[...col3].reverse()} reverse className="w-1/6 mt-12" />
+        </div>
+        <div className="flex md:hidden gap-2 w-full h-full px-1">
+          <PosterColumn posters={col1} className="w-1/4 -mt-10" />
+          <PosterColumn posters={col2} reverse className="w-1/4 mt-8" />
+          <PosterColumn posters={col3} className="w-1/4 -mt-20" />
+          <PosterColumn posters={[...col1].reverse()} reverse className="w-1/4 mt-4" />
+        </div>
+      </div>
 
-      {/* ─── NAV ─── */}
       <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border/8">
         <div className="max-w-6xl mx-auto flex items-center justify-between px-5 h-14">
           <div className="flex items-center gap-2.5">
@@ -155,22 +171,7 @@ const Landing = () => {
 
       {/* ─── HERO — épuré ─── */}
       <section ref={heroRef} className="relative min-h-screen flex items-center justify-center overflow-hidden pt-14">
-        {/* Background posters */}
-        <div className="absolute inset-0 flex justify-center gap-2 opacity-[0.08]">
-          <div className="hidden md:flex gap-2 w-full max-w-[1400px] px-4">
-            <PosterColumn posters={col1} className="w-1/5 -mt-20" />
-            <PosterColumn posters={col2} reverse className="w-1/5 mt-10" />
-            <PosterColumn posters={col3} className="w-1/5 -mt-32 hidden lg:flex" />
-            <PosterColumn posters={[...col1].reverse()} reverse className="w-1/5 mt-5" />
-            <PosterColumn posters={[...col2].reverse()} className="w-1/5 -mt-16 hidden lg:flex" />
-          </div>
-          <div className="flex md:hidden gap-2 w-full px-2">
-            <PosterColumn posters={col1} className="w-1/3 -mt-10" />
-            <PosterColumn posters={col2} reverse className="w-1/3 mt-8" />
-            <PosterColumn posters={col3} className="w-1/3 -mt-20" />
-          </div>
-        </div>
-        <div className="absolute inset-0 bg-gradient-to-b from-background via-background/80 to-background" />
+        <div className="absolute inset-0 bg-gradient-to-b from-background via-background/70 to-background" />
         <div className="absolute inset-0 bg-gradient-to-r from-background via-transparent to-background" />
 
         <motion.div style={{ opacity: heroOpacity }} className="relative z-10 max-w-4xl mx-auto px-5 text-center">
