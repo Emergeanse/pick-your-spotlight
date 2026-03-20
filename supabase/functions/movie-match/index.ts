@@ -60,17 +60,25 @@ serve(async (req) => {
 
       const { data: movieEmb } = await supabase
         .from("movie_embeddings")
-        .select("embedding, taste_tags")
+        .select("embedding, taste_tags, semantic_axes, safety_tags, suitability_tags, cluster_labels")
         .eq("tmdb_id", tmdbId)
         .maybeSingle();
 
       let movieVector: number[] | null = null;
+      let movieSemanticAxes: any = {};
+      let movieSafetyTags: string[] = [];
+      let movieSuitabilityTags: string[] = [];
+      let movieClusterLabels: string[] = [];
 
       if (movieEmb) {
         movieVector = typeof movieEmb.embedding === "string"
           ? JSON.parse(movieEmb.embedding.replace(/^\[/, "[").replace(/\]$/, "]"))
           : movieEmb.embedding;
         movieTasteTags = movieEmb.taste_tags || [];
+        movieSemanticAxes = (movieEmb as any).semantic_axes || {};
+        movieSafetyTags = (movieEmb as any).safety_tags || [];
+        movieSuitabilityTags = (movieEmb as any).suitability_tags || [];
+        movieClusterLabels = (movieEmb as any).cluster_labels || [];
       } else {
         try {
           const embResponse = await fetch(`${SUPABASE_URL}/functions/v1/generate-embedding`, {
