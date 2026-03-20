@@ -501,6 +501,8 @@ const Landing = () => {
         </div>
       </section>
 
+      {/* ─── PLATEFORMES ─── */}
+      <section className="py-16 md:py-24 px-5 relative">
         <div className="max-w-4xl mx-auto text-center">
           <motion.div variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }}>
             <h2 className="text-3xl md:text-5xl font-serif mb-3">Compatible avec <span className="text-gold">tes abonnements</span></h2>
