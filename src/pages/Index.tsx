@@ -465,7 +465,7 @@ const Index = () => {
         )}
       </AnimatePresence>
 
-      {showTabBar && <BottomTabBar />}
+      
 
       <AnimatePresence>
         {showChat && <VoiceChat onClose={handleCloseChat} onMovieSuggested={handleMovieSuggested} initialMessages={chatInitialMessages} showMicGuide={talkToPickGuideStep === "mic"} />}

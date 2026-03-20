@@ -17,7 +17,6 @@ const WatchlistRoute = () => {
       <div className="h-full pb-[calc(3.5rem+env(safe-area-inset-bottom))]">
         <WatchlistPage onMovieSelect={handleMovieSelect} />
       </div>
-      <BottomTabBar />
     </div>
   );
 };

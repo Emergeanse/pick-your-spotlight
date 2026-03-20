@@ -5,8 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/use-auth";
 
-import PickFAB from "@/components/pick/PickFAB";
-import PickChatOverlay from "@/components/pick/PickChatOverlay";
+import AppLayout from "@/components/pick/AppLayout";
 import Landing from "./pages/Landing.tsx";
 import Index from "./pages/Index.tsx";
 import Auth from "./pages/Auth.tsx";
@@ -53,24 +52,21 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<HomePage />} />
-            <Route path="/app" element={<AppRoute />} />
+            <Route path="/app" element={<ProtectedRoute><AppLayout><Index /></AppLayout></ProtectedRoute>} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
-            <Route path="/app/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-            <Route path="/app/my-cinema" element={<ProtectedRoute><MyCinema /></ProtectedRoute>} />
-            <Route path="/app/watchlist" element={<ProtectedRoute><WatchlistPageRoute /></ProtectedRoute>} />
+            <Route path="/app/profile" element={<ProtectedRoute><AppLayout><Profile /></AppLayout></ProtectedRoute>} />
+            <Route path="/app/my-cinema" element={<ProtectedRoute><AppLayout><MyCinema /></AppLayout></ProtectedRoute>} />
+            <Route path="/app/watchlist" element={<ProtectedRoute><AppLayout><WatchlistPageRoute /></AppLayout></ProtectedRoute>} />
             <Route path="/app/friends" element={<Navigate to="/app/profile" replace />} />
-            <Route path="/app/pick-together" element={<ProtectedRoute><PickTogether /></ProtectedRoute>} />
-            <Route path="/app/pick-plus" element={<ProtectedRoute><PickPlusPage /></ProtectedRoute>} />
+            <Route path="/app/pick-together" element={<ProtectedRoute><AppLayout><PickTogether /></AppLayout></ProtectedRoute>} />
+            <Route path="/app/pick-plus" element={<ProtectedRoute><AppLayout><PickPlusPage /></AppLayout></ProtectedRoute>} />
             <Route path="/join" element={<JoinSession />} />
             <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
-            <Route path="/glossary" element={<ProtectedRoute><Glossary /></ProtectedRoute>} />
+            <Route path="/glossary" element={<ProtectedRoute><AppLayout><Glossary /></AppLayout></ProtectedRoute>} />
             <Route path="/profile" element={<Navigate to="/app/profile" replace />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
-          {/* TODO: Réactiver le chatbot plus tard */}
-          {/* <PickFAB /> */}
-          {/* <PickChatOverlay /> */}
         </BrowserRouter>
       </>
     </TooltipProvider>

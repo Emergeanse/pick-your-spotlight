@@ -679,7 +679,7 @@ const Profile = () => {
         </motion.div>
       )}
 
-      <BottomTabBar />
+      
 
       {/* Add friend modal */}
       <AnimatePresence>

@@ -326,7 +326,7 @@ const PickTogether = () => {
         )}
       </AnimatePresence>
 
-      {step === "landing" && <BottomTabBar />}
+      
     </div>
   );
 };

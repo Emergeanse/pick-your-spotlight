@@ -358,7 +358,7 @@ const MyCinema = () => {
         </motion.div>
       </div>
 
-      <BottomTabBar />
+      
       <PickPlusPaywall open={shouldShowPaywall} onClose={hidePaywall} trigger="dna_advanced" />
     </div>
   );

@@ -392,7 +392,7 @@ const Friends = () => {
         </div>
       </div>
 
-      <BottomTabBar />
+      
 
       {/* Add friend modal */}
       <AnimatePresence>
