@@ -227,6 +227,7 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
     if (likes + skips > 0) {
       toast.success(`Pick te connaît maintenant ! ${likes} film${likes > 1 ? "s" : ""} aimé${likes > 1 ? "s" : ""}`);
     }
+    window.dispatchEvent(new Event("pick-activation-refresh"));
     onActivationComplete?.();
     onClose();
   };
