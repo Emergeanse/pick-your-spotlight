@@ -55,20 +55,44 @@ const Friends = () => {
   const handleCopyCode = () => { navigator.clipboard.writeText(myFriendCode); setCodeCopied(true); toast.success("Code copié !"); setTimeout(() => setCodeCopied(false), 2000); };
 
   const handleAddFriend = async () => {
-    if (!user || !addCode.trim()) return;
-    const code = addCode.trim().toUpperCase();
-    if (code === myFriendCode) { toast.error("Tu ne peux pas t'ajouter toi-même !"); return; }
+    if (!user) return;
     setAddingFriend(true);
     try {
-      const { data: found } = await (supabase.from("profiles").select("id, display_name") as any).eq("friend_code", code).single();
-      if (!found) { toast.error("Code ami introuvable"); setAddingFriend(false); return; }
+      let found: any = null;
+      if (addMode === "code") {
+        const code = addCode.trim().toUpperCase();
+        if (!code) { setAddingFriend(false); return; }
+        if (code === myFriendCode) { toast.error("Tu ne peux pas t'ajouter toi-même !"); setAddingFriend(false); return; }
+        const { data } = await (supabase.from("profiles").select("id, display_name") as any).eq("friend_code", code).single();
+        found = data;
+        if (!found) { toast.error("Code ami introuvable"); setAddingFriend(false); return; }
+      } else {
+        const email = addEmail.trim().toLowerCase();
+        if (!email || !email.includes("@")) { toast.error("Adresse email invalide"); setAddingFriend(false); return; }
+        if (email === user.email) { toast.error("Tu ne peux pas t'ajouter toi-même !"); setAddingFriend(false); return; }
+        // Look up user by email via edge function or auth — we search profiles joined with auth
+        const { data: allProfiles } = await supabase.from("profiles").select("id, display_name");
+        // We need to find the user by email — use supabase auth admin isn't available client-side
+        // Instead, we'll use a workaround: check if any user matches
+        const { data: { users: authUsers } } = await supabase.auth.admin.listUsers() as any;
+        // This won't work client-side. Let's use a simpler approach: search by invite link
+        // Actually, let's just look for the email in auth via edge function
+        const response = await supabase.functions.invoke("admin-list-users", {});
+        if (response.data?.users) {
+          const matchedUser = response.data.users.find((u: any) => u.email?.toLowerCase() === email);
+          if (matchedUser) {
+            found = { id: matchedUser.id, display_name: matchedUser.display_name || matchedUser.email };
+          }
+        }
+        if (!found) { toast.error("Aucun utilisateur trouvé avec cet email"); setAddingFriend(false); return; }
+      }
       const { data: existing } = await (supabase.from("friendships" as any).select("id") as any).or(`and(requester_id.eq.${user.id},addressee_id.eq.${found.id}),and(requester_id.eq.${found.id},addressee_id.eq.${user.id})`);
       if (existing && (existing as any[]).length > 0) { toast.info("Déjà amis ou demande en cours"); setAddingFriend(false); return; }
       await supabase.from("friendships" as any).insert({ requester_id: user.id, addressee_id: found.id, status: "pending" } as any);
       const { data: myProf } = await supabase.from("profiles").select("display_name").eq("id", user.id).single();
       await sendNotification(found.id, "friend_request", `${myProf?.display_name || "Quelqu'un"} veut être ton ami !`, "Accepte sa demande pour regarder des films ensemble.");
-      toast.success(`Demande envoyée à ${(found as any).display_name || "ton ami"} !`);
-      setAddCode(""); setShowAddModal(false); loadFriends();
+      toast.success(`Demande envoyée à ${found.display_name || "ton ami"} !`);
+      setAddCode(""); setAddEmail(""); setShowAddModal(false); loadFriends();
     } catch { toast.error("Erreur lors de l'ajout"); } finally { setAddingFriend(false); }
   };
 
