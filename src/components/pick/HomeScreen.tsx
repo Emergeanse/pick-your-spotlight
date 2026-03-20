@@ -349,8 +349,6 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
         setChatMoviesPool(movies);
         setTonightPickIndex(0);
         setTonightPick(movies[0]);
-        setRevealBurst(true);
-        setTimeout(() => setRevealBurst(false), 4000);
         const mediaType = movies[0].first_air_date ? "tv" : "movie";
         getWatchProviders(movies[0].id, mediaType).then(setTonightProviders).catch(() => {});
       }
