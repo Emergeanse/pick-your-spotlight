@@ -12,30 +12,19 @@ import pickDefault from "@/assets/pick-squirrel.png";
 import pickLogo from "@/assets/pick-logo.png";
 
 const POSTER_URLS = [
-  // Shawshank Redemption
+  // Match DEMO_MOVIES: Shawshank, Inception, Interstellar, Dark Knight
   "https://image.tmdb.org/t/p/w342/q6y0Go1tsGEsmtFryDOJo3dEmqu.jpg",
-  // Inception
   "https://image.tmdb.org/t/p/w342/d5NXSklXo0qyIYkgV94XAgMIckC.jpg",
-  // Interstellar
-  "https://image.tmdb.org/t/p/w342/rCzpDGLbOoPwLjy3OAm5NUPOTrC.jpg",
-  // The Dark Knight
   "https://image.tmdb.org/t/p/w342/qJ2tW6WMUDux911BTUgMe1cEgGR.jpg",
-  // Fight Club
-  "https://image.tmdb.org/t/p/w342/pB8BM7pdSp6B6Ih7QZ4DrQ3PmJK.jpg",
-  // The Matrix
-  "https://image.tmdb.org/t/p/w342/f89U3ADr1oiB1s9GkdPOEpXUk5H.jpg",
-  // Se7en
-  "https://image.tmdb.org/t/p/w342/6yoghtyTpznpBik8EngEmJskVUO.jpg",
-  // Blade Runner 2049
-  "https://image.tmdb.org/t/p/w342/gajva2L0rPYkEWjzgFlBXCAVBE5.jpg",
-  // Whiplash
-  "https://image.tmdb.org/t/p/w342/7fn624j5lj3xTme2SgiLCeuedmO.jpg",
-  // Arrival
-  "https://image.tmdb.org/t/p/w342/x2FJsf1ElAgr63Y3PNPtJrcmpoe.jpg",
-  // Parasite
-  "https://image.tmdb.org/t/p/w342/7IiTTgloJzvGI1TAYymCfbfl3vT.jpg",
-  // Dune
+  "https://image.tmdb.org/t/p/w342/rCzpDGLbOoPwLjy3OAm5NUPOTrC.jpg",
+  "https://image.tmdb.org/t/p/w342/q6y0Go1tsGEsmtFryDOJo3dEmqu.jpg",
   "https://image.tmdb.org/t/p/w342/d5NXSklXo0qyIYkgV94XAgMIckC.jpg",
+  "https://image.tmdb.org/t/p/w342/qJ2tW6WMUDux911BTUgMe1cEgGR.jpg",
+  "https://image.tmdb.org/t/p/w342/rCzpDGLbOoPwLjy3OAm5NUPOTrC.jpg",
+  "https://image.tmdb.org/t/p/w342/q6y0Go1tsGEsmtFryDOJo3dEmqu.jpg",
+  "https://image.tmdb.org/t/p/w342/d5NXSklXo0qyIYkgV94XAgMIckC.jpg",
+  "https://image.tmdb.org/t/p/w342/qJ2tW6WMUDux911BTUgMe1cEgGR.jpg",
+  "https://image.tmdb.org/t/p/w342/rCzpDGLbOoPwLjy3OAm5NUPOTrC.jpg",
 ];
 
 const PLATFORM_LOGOS = [
@@ -447,7 +436,25 @@ const Landing = () => {
         </div>
         <div className="max-w-5xl mx-auto relative z-10">
           <motion.div variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }}
-            className="flex flex-col md:flex-row-reverse items-center gap-10 md:gap-16">
+            className="flex flex-col md:flex-row items-center gap-10 md:gap-16">
+
+            {/* Text */}
+            <div className="text-center md:text-left">
+              <span className="text-[10px] uppercase tracking-[0.2em] text-gold/50 font-sans font-semibold">À plusieurs</span>
+              <h2 className="text-3xl md:text-4xl font-serif mb-4 mt-1">
+                Pick <span className="text-gold">Together</span>
+              </h2>
+              <p className="text-foreground/40 font-sans text-sm md:text-base leading-relaxed mb-5">
+                Fini les 30 minutes de débat. Pick croise vos profils cinématographiques
+                et trouve instantanément le film qui plaît à tout le monde.
+                Chacun a ses goûts — Pick trouve le terrain d'entente parfait.
+              </p>
+              <div className="flex flex-wrap gap-2 justify-center md:justify-start">
+                {["Croisement des profils", "Score de compatibilité", "QR code d'invitation", "Jusqu'à 8 personnes"].map(tag => (
+                  <span key={tag} className="px-3 py-1.5 rounded-full bg-card/60 border border-border/12 text-foreground/40 text-xs font-sans">{tag}</span>
+                ))}
+              </div>
+            </div>
 
             {/* Visual — crossing profiles */}
             <motion.div
@@ -500,24 +507,6 @@ const Landing = () => {
                 </div>
               </div>
             </motion.div>
-
-            {/* Text */}
-            <div className="text-center md:text-left">
-              <span className="text-[10px] uppercase tracking-[0.2em] text-gold/50 font-sans font-semibold">À plusieurs</span>
-              <h2 className="text-3xl md:text-4xl font-serif mb-4 mt-1">
-                Pick <span className="text-gold">Together</span>
-              </h2>
-              <p className="text-foreground/40 font-sans text-sm md:text-base leading-relaxed mb-5">
-                Fini les 30 minutes de débat. Pick croise vos profils cinématographiques
-                et trouve instantanément le film qui plaît à tout le monde.
-                Chacun a ses goûts — Pick trouve le terrain d'entente parfait.
-              </p>
-              <div className="flex flex-wrap gap-2 justify-center md:justify-start">
-                {["Croisement des profils", "Score de compatibilité", "QR code d'invitation", "Jusqu'à 8 personnes"].map(tag => (
-                  <span key={tag} className="px-3 py-1.5 rounded-full bg-card/60 border border-border/12 text-foreground/40 text-xs font-sans">{tag}</span>
-                ))}
-              </div>
-            </div>
           </motion.div>
         </div>
       </section>
@@ -526,7 +515,7 @@ const Landing = () => {
       <section className="py-10 md:py-14 px-5 relative">
         <div className="max-w-4xl mx-auto text-center">
           <motion.div variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }}>
-            <h2 className="text-3xl md:text-5xl font-serif mb-3">Compatible avec <span className="text-gold">tes abonnements</span></h2>
+            <h2 className="text-3xl md:text-5xl font-serif mb-3">Compatible avec <span className="text-primary">tes abonnements</span></h2>
             <p className="text-foreground/35 font-sans text-sm md:text-base max-w-lg mx-auto mb-8">Pick ne recommande que des films disponibles sur tes plateformes.</p>
           </motion.div>
           <motion.div variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }} className="flex items-center justify-center gap-5 md:gap-8 flex-wrap">
@@ -549,7 +538,7 @@ const Landing = () => {
         </div>
         <div className="max-w-4xl mx-auto relative z-10">
           <motion.div variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }} className="text-center mb-8">
-            <h2 className="text-3xl md:text-5xl font-serif mb-3">Commence <span className="text-gold">gratuitement</span></h2>
+            <h2 className="text-3xl md:text-5xl font-serif mb-3">Commence <span className="text-primary">gratuitement</span></h2>
             <p className="text-foreground/35 font-sans text-sm md:text-base max-w-lg mx-auto">Pick est gratuit pour toujours. Pick+ amplifie l'expérience.</p>
           </motion.div>
           <motion.div variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }} className="grid md:grid-cols-2 gap-5 max-w-2xl mx-auto">
