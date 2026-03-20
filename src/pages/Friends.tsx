@@ -238,20 +238,48 @@ const Friends = () => {
       {/* Add friend modal */}
       <AnimatePresence>
         {showAddModal && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 flex items-end justify-center">
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 flex items-center justify-center px-5">
             <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" onClick={() => setShowAddModal(false)} />
-            <motion.div initial={{ y: 100 }} animate={{ y: 0 }} exit={{ y: 100 }} transition={{ type: "spring", damping: 25 }}
-              className="relative w-full max-w-lg rounded-t-2xl bg-card border-t border-border/20 p-6 pb-[calc(2rem+env(safe-area-inset-bottom))]">
-              <div className="w-10 h-1 rounded-full bg-border/30 mx-auto mb-5" />
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} transition={{ type: "spring", damping: 25 }}
+              className="relative w-full max-w-md rounded-2xl bg-card border border-border/20 p-6 shadow-xl">
+              <button onClick={() => setShowAddModal(false)} className="absolute top-4 right-4 p-1 text-foreground/30 hover:text-foreground/60"><X className="w-4 h-4" /></button>
               <h3 className="text-base font-serif mb-4">Ajouter un ami</h3>
-              <p className="text-foreground/40 text-sm font-sans mb-4">Entre le code ami (ex: PICK-A3F2)</p>
-              <div className="flex gap-3">
-                <input type="text" value={addCode} onChange={(e) => setAddCode(e.target.value.toUpperCase())} placeholder="PICK-XXXX"
-                  className="flex-1 h-12 rounded-xl bg-background border border-border/20 px-4 font-mono text-foreground placeholder:text-foreground/15 focus:outline-none focus:border-primary/40 transition-colors" maxLength={9} />
-                <Button onClick={handleAddFriend} disabled={addingFriend || addCode.length < 9} className="rounded-xl h-12 px-6">
-                  {addingFriend ? <Loader2 className="w-4 h-4 animate-spin" /> : <UserPlus className="w-4 h-4" />}
-                </Button>
+
+              {/* Toggle code / email */}
+              <div className="flex gap-1 p-1 rounded-xl bg-background border border-border/10 mb-4">
+                <button onClick={() => setAddMode("code")}
+                  className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-[12px] font-sans font-medium transition-colors ${addMode === "code" ? "bg-card text-foreground shadow-sm" : "text-foreground/40"}`}>
+                  <UserPlus className="w-3.5 h-3.5" /> Code ami
+                </button>
+                <button onClick={() => setAddMode("email")}
+                  className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-[12px] font-sans font-medium transition-colors ${addMode === "email" ? "bg-card text-foreground shadow-sm" : "text-foreground/40"}`}>
+                  <Mail className="w-3.5 h-3.5" /> Email
+                </button>
               </div>
+
+              {addMode === "code" ? (
+                <>
+                  <p className="text-foreground/40 text-sm font-sans mb-3">Entre le code ami (ex: PICK-A3F2)</p>
+                  <div className="flex gap-3">
+                    <input type="text" value={addCode} onChange={(e) => setAddCode(e.target.value.toUpperCase())} placeholder="PICK-XXXX"
+                      className="flex-1 h-12 rounded-xl bg-background border border-border/20 px-4 font-mono text-foreground placeholder:text-foreground/15 focus:outline-none focus:border-primary/40 transition-colors" maxLength={9} />
+                    <Button onClick={handleAddFriend} disabled={addingFriend || addCode.length < 9} className="rounded-xl h-12 px-6">
+                      {addingFriend ? <Loader2 className="w-4 h-4 animate-spin" /> : <UserPlus className="w-4 h-4" />}
+                    </Button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <p className="text-foreground/40 text-sm font-sans mb-3">Entre l'adresse email de ton ami</p>
+                  <div className="flex gap-3">
+                    <input type="email" value={addEmail} onChange={(e) => setAddEmail(e.target.value)} placeholder="ami@exemple.com"
+                      className="flex-1 h-12 rounded-xl bg-background border border-border/20 px-4 font-sans text-sm text-foreground placeholder:text-foreground/15 focus:outline-none focus:border-primary/40 transition-colors" />
+                    <Button onClick={handleAddFriend} disabled={addingFriend || !addEmail.includes("@")} className="rounded-xl h-12 px-6">
+                      {addingFriend ? <Loader2 className="w-4 h-4 animate-spin" /> : <UserPlus className="w-4 h-4" />}
+                    </Button>
+                  </div>
+                </>
+              )}
             </motion.div>
           </motion.div>
         )}
