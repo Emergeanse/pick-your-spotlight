@@ -294,8 +294,6 @@ const Profile = () => {
   if (!user) return null;
 
   const nameDisplay = displayName || user.email?.split("@")[0] || "Cinéphile";
-  const totalRecos = engagement?.totalRecommendations || 0;
-  const reachedMilestones = MILESTONES.filter(m => totalRecos >= m.count);
   const memberSince = profile?.created_at ? new Date(profile.created_at).toLocaleDateString("fr-FR", { month: "long", year: "numeric" }) : null;
 
   return (
