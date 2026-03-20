@@ -394,33 +394,6 @@ const Profile = () => {
           </div>
         </motion.div>
 
-        {/* ─── Media Preference ─── */}
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="mb-8">
-          <h2 className="text-lg font-serif mb-3">Tu préfères regarder…</h2>
-          <div className="grid grid-cols-3 gap-2">
-            {[
-              { id: "movies", label: "Films", icon: Film },
-              { id: "tv", label: "Séries", icon: Tv },
-              { id: "both", label: "Les deux", icon: Layers },
-            ].map((opt) => {
-              const isSelected = mediaPreference === opt.id;
-              const Icon = opt.icon;
-              return (
-                <button
-                  key={opt.id}
-                  onClick={() => setMediaPreference(opt.id)}
-                  className={`rounded-xl p-3 flex flex-col items-center gap-1.5 transition-all duration-200 cursor-pointer border ${
-                    isSelected ? "bg-primary/10 border-primary/30" : "bg-card border-transparent hover:border-primary/20"
-                  }`}
-                >
-                  <Icon className={`w-5 h-5 ${isSelected ? "text-primary" : "text-foreground/50"}`} />
-                  <span className={`font-sans text-sm font-medium ${isSelected ? "text-primary" : "text-foreground/80"}`}>{opt.label}</span>
-                </button>
-              );
-            })}
-          </div>
-        </motion.div>
-
         {/* ─── Min Rating ─── */}
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="mb-8">
           <div className="flex items-center gap-2 mb-1">
