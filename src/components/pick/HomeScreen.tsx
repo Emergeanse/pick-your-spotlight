@@ -19,6 +19,7 @@ import PickCharacter from "./PickCharacter";
 import TasteTrainer from "./TasteTrainer";
 import TrainingProgress from "./TrainingProgress";
 import DiscoverySection from "./DiscoverySection";
+import MovieActionBar from "./MovieActionBar";
 
 import { useNavigate } from "react-router-dom";
 
