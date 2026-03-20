@@ -131,6 +131,12 @@ const ActivationFlow = ({ onStartMission, onComplete }: ActivationFlowProps) => 
 
   useEffect(() => { loadProgress(); }, [loadProgress]);
 
+  useEffect(() => {
+    const handleRefresh = () => { void loadProgress(); };
+    window.addEventListener("pick-activation-refresh", handleRefresh);
+    return () => window.removeEventListener("pick-activation-refresh", handleRefresh);
+  }, [loadProgress]);
+
   // Poll progress every 3s when mission card is hidden (user is doing the mission)
   useEffect(() => {
     if (showMissionCard || showReward || !loaded) return;

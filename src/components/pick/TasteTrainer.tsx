@@ -129,7 +129,7 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
         .in("action_type", ["liked", "skipped", "unsure"])
         .then(({ count }) => setTotalEvaluated(count || 0));
     }
-  }, []);
+  }, [loadMovies, user]);
 
   useEffect(() => {
     if (movies.length - currentIndex < 3 && !loading) {
@@ -166,8 +166,9 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
     }
     if (isActivation && cumulativeTotal >= THRESHOLDS.ideal && !showActivationCTA) {
       setShowActivationCTA(true);
+      window.dispatchEvent(new Event("pick-activation-refresh"));
     }
-  }, [cumulativeTotal]);
+  }, [cumulativeTotal, isActivation, showActivationCTA]);
 
   const handleRate = async (overrideValue?: number) => {
     if (!currentMovie || !user) return;
@@ -226,6 +227,7 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
     if (likes + skips > 0) {
       toast.success(`Pick te connaît maintenant ! ${likes} film${likes > 1 ? "s" : ""} aimé${likes > 1 ? "s" : ""}`);
     }
+    window.dispatchEvent(new Event("pick-activation-refresh"));
     onActivationComplete?.();
     onClose();
   };

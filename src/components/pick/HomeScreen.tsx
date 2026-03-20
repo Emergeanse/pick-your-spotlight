@@ -37,6 +37,8 @@ interface HomeScreenProps {
   onTrainerOpened?: () => void;
   chatSuggestedMovies?: MovieDetail[] | null;
   onChatSuggestedConsumed?: () => void;
+  activationTrainerMode?: boolean;
+  onActivationTrainingComplete?: () => void;
 }
 
 const SURPRISE_MESSAGES = [
@@ -73,7 +75,7 @@ const LOADING_MESSAGES = [
 
 // Proactive messages are now time-aware — see getProactiveMessages()
 
-const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, openTrainerOnMount, forceCloseTrainer, onTrainerOpened, chatSuggestedMovies, onChatSuggestedConsumed }: HomeScreenProps) => {
+const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, openTrainerOnMount, forceCloseTrainer, onTrainerOpened, chatSuggestedMovies, onChatSuggestedConsumed, activationTrainerMode = false, onActivationTrainingComplete }: HomeScreenProps) => {
   const navigate = useNavigate();
   const [isSurprising, setIsSurprising] = useState(false);
   const [surpriseMsg, setSurpriseMsg] = useState("");
@@ -841,6 +843,8 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
       <AnimatePresence>
         {showTrainer && (
           <TasteTrainer
+            isActivation={activationTrainerMode}
+            onActivationComplete={onActivationTrainingComplete}
             onClose={() => {
               setShowTrainer(false);
               // Refresh evaluated count
