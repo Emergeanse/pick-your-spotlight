@@ -246,6 +246,21 @@ ANNÉE EN COURS : ${currentYear}`;
           },
         },
       },
+      {
+        type: "function",
+        function: {
+          name: "suggest_pick_together",
+          description: "Propose le mode Pick Together quand l'utilisateur mentionne qu'il est avec d'autres personnes (copine, potes, famille, groupe, 'on est deux/trois/plusieurs', soirée entre amis, etc.)",
+          parameters: {
+            type: "object",
+            properties: {
+              message: { type: "string", description: "Message amical en français expliquant que Pick Together est parfait pour eux" },
+            },
+            required: ["message"],
+            additionalProperties: false,
+          },
+        },
+      },
     ] : undefined;
 
     const useStreaming = mode === "companion";
