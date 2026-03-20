@@ -54,6 +54,32 @@ const PlatformTour = ({ onComplete }: PlatformTourProps) => {
   const [targetRect, setTargetRect] = useState<DOMRect | null>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
 
+  // Raise target element above overlay during spotlight
+  useEffect(() => {
+    if (phase !== "spotlight") return;
+    const step = TOUR_STEPS[currentStep];
+    const el = document.querySelector(step.selector) as HTMLElement | null;
+    if (!el) return;
+
+    // Also raise the parent fixed container (e.g. BottomTabBar) if the element is inside one
+    const fixedParent = el.closest('.fixed, [style*="position: fixed"]') as HTMLElement | null;
+    const targetEl = fixedParent && fixedParent !== el ? fixedParent : null;
+
+    el.style.position = 'relative';
+    el.style.zIndex = '110';
+    if (targetEl) {
+      targetEl.style.zIndex = '110';
+    }
+
+    return () => {
+      el.style.position = '';
+      el.style.zIndex = '';
+      if (targetEl) {
+        targetEl.style.zIndex = '';
+      }
+    };
+  }, [phase, currentStep]);
+
   const measureTarget = useCallback(() => {
     if (phase !== "spotlight") return;
     const step = TOUR_STEPS[currentStep];
