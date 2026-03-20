@@ -505,16 +505,8 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({
 
             {/* Primary Actions */}
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }} className="space-y-3">
-              <div className="flex items-center gap-2">
-                <button data-tour="sauvegarder" onClick={handleToggleBookmark} disabled={bookmarkLoading}
-                  className={`flex items-center gap-1.5 px-3.5 h-9 rounded-full border text-xs font-sans font-medium transition-all active:scale-95 ${bookmarked ? "bg-primary/15 border-primary/30 text-primary" : "border-border/25 text-foreground/40 hover:text-primary hover:border-primary/25"}`}>
-                  <Bookmark className={`w-3.5 h-3.5 ${bookmarked ? "fill-primary" : ""}`} />
-                  Sauvegarder
-                </button>
-                <button onClick={handleToggleLike} disabled={likeLoading}
-                  className={`w-9 h-9 rounded-full border flex items-center justify-center transition-all active:scale-95 ${liked ? "bg-primary/15 border-primary/30 text-primary" : "border-border/25 text-foreground/40 hover:text-primary hover:border-primary/25"}`}>
-                  <Heart className={`w-3.5 h-3.5 ${liked ? "fill-primary" : ""}`} />
-                </button>
+              <MovieActionBar movie={movie} />
+              <div className="flex items-center gap-2 mt-2">
                 <button onClick={() => {
                   const shareText = `Pick me suggère "${title}" ce soir — tu veux qu'on le regarde ensemble ? 🍿`;
                   const shareUrl = window.location.origin;
