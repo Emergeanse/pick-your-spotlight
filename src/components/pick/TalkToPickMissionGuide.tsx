@@ -67,7 +67,7 @@ const TalkToPickMissionGuide = ({ step }: TalkToPickMissionGuideProps) => {
 
   return (
     <div className="fixed inset-0 z-[85]">
-      <div className="absolute top-0 left-0 right-0 bg-background/80 backdrop-blur-sm" style={{ height: Math.max(0, cutout.top) }} />
+      <div className="absolute top-0 left-0 right-0 bg-background/80 backdrop-blur-sm pointer-events-auto" style={{ height: Math.max(0, cutout.top) }} />
       <div className="absolute bottom-0 left-0 right-0 bg-background/80 backdrop-blur-sm" style={{ top: cutout.bottom }} />
       <div className="absolute bg-background/80 backdrop-blur-sm" style={{ top: cutout.top, left: 0, width: Math.max(0, cutout.left), height: cutout.height }} />
       <div className="absolute bg-background/80 backdrop-blur-sm" style={{ top: cutout.top, left: cutout.right, right: 0, height: cutout.height }} />
