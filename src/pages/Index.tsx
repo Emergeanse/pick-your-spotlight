@@ -299,7 +299,7 @@ const Index = () => {
     setShowChat(true);
   };
 
-  const handleMovieSuggested = async (movie: MovieDetail, recapTags?: string[]) => {
+  const handleMovieSuggested = async (movies: MovieDetail[], recapTags?: string[]) => {
     // During "talk_to_pick" activation mission: record chat, close chat, skip result
     if (activeActivationMission === "talk_to_pick" && showActivation && user) {
       const today = new Date().toISOString().split("T")[0];
@@ -314,7 +314,7 @@ const Index = () => {
       return;
     }
 
-    setResults([movie]);
+    setResults(movies);
     setCurrentResultIndex(0);
     if (recapTags && recapTags.length > 0) setSearchTags(recapTags);
     setShowChat(false);
@@ -452,7 +452,10 @@ const Index = () => {
                   if (error) throw error;
                   if (data?.movie) {
                     if (data.recap?.length > 0) setSearchTags(prev => { const merged = [...prev]; data.recap.forEach((t: string) => { if (!merged.includes(t)) merged.push(t); }); return merged; });
-                    setResults(prev => [...prev, data.movie]);
+                    const newMovies: MovieDetail[] = data.movies && data.movies.length > 0
+                      ? data.movies as MovieDetail[]
+                      : [data.movie as MovieDetail];
+                    setResults(prev => [...prev, ...newMovies]);
                     setCurrentResultIndex(results.length);
                   }
                 } catch (e) { console.error("Refine error:", e); }

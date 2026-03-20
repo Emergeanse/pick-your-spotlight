@@ -11,7 +11,7 @@ import PickCharacter from "./PickCharacter";
 
 interface VoiceChatProps {
   onClose: () => void;
-  onMovieSuggested: (movie: MovieDetail, recapTags?: string[]) => void;
+  onMovieSuggested: (movies: MovieDetail[], recapTags?: string[]) => void;
   initialMessages?: ChatMessage[];
   showMicGuide?: boolean;
 }
@@ -184,12 +184,15 @@ const VoiceChat = ({ onClose, onMovieSuggested, initialMessages, showMicGuide = 
 
       if (data?.movie) {
         const recap: string[] = data.recap || [];
+        const movies: MovieDetail[] = data.movies && data.movies.length > 0
+          ? data.movies as MovieDetail[]
+          : [data.movie as MovieDetail];
         setRecapTags(recap);
         setConversationHistory(fullHistory);
         setPhase("recap");
 
         setTimeout(() => {
-          onMovieSuggested(data.movie as MovieDetail, recap);
+          onMovieSuggested(movies, recap);
         }, recap.length > 0 ? 1800 : 800);
       } else if (data?.reply) {
         // Pick asked a follow-up question — show it and let user respond
