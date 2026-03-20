@@ -653,7 +653,15 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
                       transition={{ duration: 0.3, type: "spring", stiffness: 200 }}
                       src={getPosterUrl(tonightPick.poster_path, "w342") || ""}
                       alt={getDisplayTitle(tonightPick)}
-                      className="w-32 h-48 md:w-40 md:h-56 rounded-xl object-cover shadow-2xl border border-border/20"
+                      className="w-32 h-48 md:w-40 md:h-56 rounded-xl object-cover shadow-2xl border border-border/20 cursor-pointer active:scale-95 transition-transform"
+                      onClick={() => {
+                        const moviesToPass = chatMoviesPool && chatMoviesPool.length > 0
+                          ? chatMoviesPool
+                          : [tonightPick];
+                        onSurprise(moviesToPass);
+                        setTonightPick(null);
+                        setChatMoviesPool(null);
+                      }}
                     />
                     {showArrows && (
                       <button
