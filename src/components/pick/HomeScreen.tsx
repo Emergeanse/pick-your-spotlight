@@ -430,9 +430,9 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
                       <span className="text-2xl">🎬</span>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h3 className="text-lg font-sans font-bold text-foreground mb-0.5">Trouver mon film</h3>
+                      <h3 className="text-lg font-sans font-bold text-foreground mb-0.5">{getMainCTALabel()}</h3>
                       <p className="text-foreground/50 text-[13px] font-sans leading-relaxed">
-                        Laisse Pick te guider vers ta soirée parfaite.
+                        {getMainCTASubtitle()}
                       </p>
                     </div>
                   </div>
