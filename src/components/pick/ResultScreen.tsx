@@ -356,13 +356,30 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({
       user ? computeUserTasteVector(user.id) : Promise.resolve(null),
       user ? getLikedMovies().catch(() => []) : Promise.resolve([]),
       user ? supabase.from("cinematic_profiles" as any).select("personality_title, narrative, taste_traits").eq("user_id", user.id).maybeSingle().then(r => r.data) : Promise.resolve(null),
-    ]).then(([tasteProfile, userTasteVector, likedMovies, cinematicProfile]) => {
+      user ? supabase.from("user_taste_vectors" as any).select("avoidance_vector, recent_taste_vector").eq("user_id", user.id).maybeSingle().then(r => r.data) : Promise.resolve(null),
+    ]).then(([tasteProfile, userTasteVector, likedMovies, cinematicProfile, vectorData]) => {
       const likedMovieTitles = (likedMovies || []).map((m: any) => m.title);
+      // Enrich tasteProfile with multi-vector data for movie-match
+      const enrichedProfile = tasteProfile ? {
+        ...tasteProfile,
+        recentTasteVector: (vectorData as any)?.recent_taste_vector || null,
+        avoidanceVector: (vectorData as any)?.avoidance_vector || null,
+      } : null;
       supabase.functions.invoke("movie-match", {
-        body: { movie, userCriteria, tasteProfile, userTasteVector, likedMovieTitles, searchTags, cinematicProfile },
+        body: { movie, userCriteria, tasteProfile: enrichedProfile, userTasteVector, likedMovieTitles, searchTags, cinematicProfile },
       }).then(({ data, error }) => {
         if (error) { console.error("Match error:", error); setMatchLoading(false); return; }
-        setMatchData(data as MatchData); setMatchLoading(false);
+        setMatchData(data as MatchData);
+        setMatchLoading(false);
+        // Track recommendation event
+        if (user && data) {
+          trackRecommendationEvent({
+            tmdbId: movie.id,
+            title: movie.title || movie.name || "",
+            source: "result_screen",
+            scoreBreakdown: (data as any).scores || {},
+          });
+        }
       });
     });
   }, [movie.id]);
