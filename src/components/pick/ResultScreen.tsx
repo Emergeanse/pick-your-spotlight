@@ -270,6 +270,10 @@ interface ResultScreenProps {
   onRemoveTag?: (tag: string) => void;
   refining?: boolean;
   profileConfidence?: number;
+  currentIndex?: number;
+  totalCount?: number;
+  onNext?: () => void;
+  onPrevious?: () => void;
 }
 
 const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({
