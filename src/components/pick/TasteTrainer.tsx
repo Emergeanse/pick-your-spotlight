@@ -311,7 +311,7 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
                 <img
                   src={getPosterUrl(currentMovie.poster_path, "w780")}
                   alt={getDisplayTitle(currentMovie)}
-                  className="absolute inset-0 w-full h-full object-cover"
+                  className="absolute inset-0 w-full h-full object-cover brightness-110 contrast-105 saturate-110"
                   draggable={false}
                 />
 
