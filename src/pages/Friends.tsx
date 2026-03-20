@@ -70,21 +70,9 @@ const Friends = () => {
         const email = addEmail.trim().toLowerCase();
         if (!email || !email.includes("@")) { toast.error("Adresse email invalide"); setAddingFriend(false); return; }
         if (email === user.email) { toast.error("Tu ne peux pas t'ajouter toi-même !"); setAddingFriend(false); return; }
-        // Look up user by email via edge function or auth — we search profiles joined with auth
-        const { data: allProfiles } = await supabase.from("profiles").select("id, display_name");
-        // We need to find the user by email — use supabase auth admin isn't available client-side
-        // Instead, we'll use a workaround: check if any user matches
-        const { data: { users: authUsers } } = await supabase.auth.admin.listUsers() as any;
-        // This won't work client-side. Let's use a simpler approach: search by invite link
-        // Actually, let's just look for the email in auth via edge function
-        const response = await supabase.functions.invoke("admin-list-users", {});
-        if (response.data?.users) {
-          const matchedUser = response.data.users.find((u: any) => u.email?.toLowerCase() === email);
-          if (matchedUser) {
-            found = { id: matchedUser.id, display_name: matchedUser.display_name || matchedUser.email };
-          }
-        }
-        if (!found) { toast.error("Aucun utilisateur trouvé avec cet email"); setAddingFriend(false); return; }
+        const { data: result, error: fnError } = await supabase.functions.invoke("find-user-by-email", { body: { email } });
+        if (fnError || !result?.found) { toast.error("Aucun utilisateur trouvé avec cet email"); setAddingFriend(false); return; }
+        found = { id: result.user.id, display_name: result.user.display_name };
       }
       const { data: existing } = await (supabase.from("friendships" as any).select("id") as any).or(`and(requester_id.eq.${user.id},addressee_id.eq.${found.id}),and(requester_id.eq.${found.id},addressee_id.eq.${user.id})`);
       if (existing && (existing as any[]).length > 0) { toast.info("Déjà amis ou demande en cours"); setAddingFriend(false); return; }
