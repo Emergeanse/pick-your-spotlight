@@ -299,6 +299,8 @@ const Index = () => {
     setShowChat(true);
   };
 
+  const [chatSuggestedMovies, setChatSuggestedMovies] = useState<MovieDetail[] | null>(null);
+
   const handleMovieSuggested = async (movies: MovieDetail[], recapTags?: string[]) => {
     // During "talk_to_pick" activation mission: record chat, close chat, skip result
     if (activeActivationMission === "talk_to_pick" && showActivation && user) {
@@ -314,11 +316,11 @@ const Index = () => {
       return;
     }
 
-    setResults(movies);
-    setCurrentResultIndex(0);
     if (recapTags && recapTags.length > 0) setSearchTags(recapTags);
     setShowChat(false);
-    setStep("result");
+    // Show the tonight pick preview on HomeScreen instead of going to ResultScreen directly
+    setChatSuggestedMovies(movies);
+    setStep("home");
   };
 
   const invokeSurprisePersonalized = async (body: any, retries = 2): Promise<any> => {
@@ -418,7 +420,7 @@ const Index = () => {
           <motion.div key="home" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.4 }}
             className={`absolute inset-0 ${showActivation && !showTour ? "pt-12" : ""} pb-[calc(3.5rem+env(safe-area-inset-bottom))]`}
           >
-            <HomeScreen onStart={handleStart} onOpenChat={handleOpenChat} onSurprise={handleSurprise} onMovieSelect={handleMovieSelect} loading={loading} openTrainerOnMount={openTrainerOnMount} forceCloseTrainer={activeActivationMission === "talk_to_pick"} onTrainerOpened={() => setOpenTrainerOnMount(false)} />
+            <HomeScreen onStart={handleStart} onOpenChat={handleOpenChat} onSurprise={handleSurprise} onMovieSelect={handleMovieSelect} loading={loading} openTrainerOnMount={openTrainerOnMount} forceCloseTrainer={activeActivationMission === "talk_to_pick"} onTrainerOpened={() => setOpenTrainerOnMount(false)} chatSuggestedMovies={chatSuggestedMovies} onChatSuggestedConsumed={() => setChatSuggestedMovies(null)} />
           </motion.div>
         )}
 

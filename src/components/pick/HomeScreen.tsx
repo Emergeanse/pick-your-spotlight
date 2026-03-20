@@ -32,6 +32,8 @@ interface HomeScreenProps {
   openTrainerOnMount?: boolean;
   forceCloseTrainer?: boolean;
   onTrainerOpened?: () => void;
+  chatSuggestedMovies?: MovieDetail[] | null;
+  onChatSuggestedConsumed?: () => void;
 }
 
 const SURPRISE_MESSAGES = [
@@ -84,7 +86,7 @@ const PROACTIVE_MESSAGES = [
   "Un petit bijou juste pour toi ce soir.",
 ];
 
-const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, openTrainerOnMount, forceCloseTrainer, onTrainerOpened }: HomeScreenProps) => {
+const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, openTrainerOnMount, forceCloseTrainer, onTrainerOpened, chatSuggestedMovies, onChatSuggestedConsumed }: HomeScreenProps) => {
   const navigate = useNavigate();
   const [isSurprising, setIsSurprising] = useState(false);
   const [surpriseMsg, setSurpriseMsg] = useState("");
@@ -114,6 +116,20 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
   const [whatChoice, setWhatChoice] = useState<WhatOption>("both");
   const [whoChoice, setWhoChoice] = useState<WhoOption | null>(null);
   const [totalEvaluated, setTotalEvaluated] = useState(0);
+  const [chatMoviesPool, setChatMoviesPool] = useState<MovieDetail[] | null>(null);
+
+  // When chat suggests movies, show the first one in the tonightPick preview
+  useEffect(() => {
+    if (chatSuggestedMovies && chatSuggestedMovies.length > 0) {
+      const firstMovie = chatSuggestedMovies[0];
+      setChatMoviesPool(chatSuggestedMovies);
+      setTonightPick(firstMovie);
+      setTonightProviders([]);
+      const mediaType = firstMovie.first_air_date ? "tv" : "movie";
+      getWatchProviders(firstMovie.id, mediaType).then(setTonightProviders).catch(() => {});
+      onChatSuggestedConsumed?.();
+    }
+  }, [chatSuggestedMovies]);
 
   // Open trainer from MyCinema navigation or activation flow
   useEffect(() => {
@@ -623,8 +639,12 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
                     size="lg"
                     className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90 font-sans font-semibold px-8 h-12 gap-2 text-base neon-glow transition-all active:scale-[0.97] w-full max-w-xs"
                     onClick={() => {
-                      onSurprise([tonightPick]);
+                      const moviesToPass = chatMoviesPool && chatMoviesPool.length > 0
+                        ? chatMoviesPool
+                        : [tonightPick];
+                      onSurprise(moviesToPass);
                       setTonightPick(null);
+                      setChatMoviesPool(null);
                     }}
                   >
                     <Tv className="w-5 h-5" />
