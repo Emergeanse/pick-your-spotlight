@@ -13,6 +13,7 @@ import { addToWatchlist, removeFromWatchlist, isInWatchlist } from "@/lib/watchl
 import { trackInteraction, getUserTasteProfile } from "@/lib/interactions";
 import { toast } from "sonner";
 import { computeUserTasteVector, ensureMovieEmbedding } from "@/lib/taste-engine";
+import MovieActionBar from "@/components/pick/MovieActionBar";
 import BrandHeader from "./BrandHeader";
 import PickCharacter from "./PickCharacter";
 
