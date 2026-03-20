@@ -366,29 +366,19 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
       {currentMovie && !showActivationCTA && (
         <div className="relative z-10 px-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] pt-4">
           <div className="flex items-stretch gap-1.5">
-            {RATING_BUTTONS.map((btn) => {
-              const isNeg = btn.sentiment === "negative";
-              const isPos = btn.sentiment === "positive";
-              return (
-                <motion.button
-                  key={btn.value}
-                  whileTap={{ scale: 0.9 }}
-                  onClick={() => {
-                    setSliderValue(btn.value);
-                    setTimeout(() => handleRate(btn.value), 100);
-                  }}
-                  className={`flex-1 py-3 rounded-xl border font-sans text-[11px] font-medium transition-all active:scale-95 ${
-                    isNeg
-                      ? "bg-destructive/[0.06] border-destructive/15 text-destructive/70 hover:bg-destructive/10"
-                      : isPos
-                        ? "bg-primary/[0.06] border-primary/15 text-primary hover:bg-primary/10"
-                        : "bg-foreground/[0.03] border-border/10 text-foreground/40 hover:bg-foreground/[0.06]"
-                  }`}
-                >
-                  {btn.label}
-                </motion.button>
-              );
-            })}
+            {RATING_BUTTONS.map((btn) => (
+              <motion.button
+                key={btn.value}
+                whileTap={{ scale: 0.9 }}
+                onClick={() => {
+                  setSliderValue(btn.value);
+                  setTimeout(() => handleRate(btn.value), 100);
+                }}
+                className={`flex-1 py-3 rounded-xl border font-sans text-[11px] font-medium transition-all active:scale-95 ${btn.color}`}
+              >
+                {btn.label}
+              </motion.button>
+            ))}
           </div>
 
           <button
