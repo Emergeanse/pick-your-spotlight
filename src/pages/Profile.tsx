@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "@/hooks/use-toast";
 import { toast as sonnerToast } from "sonner";
-import { Check, LogOut, Loader2, Star, Info, Film, Tv, Layers, Clock, Bell, Camera, Pencil, Copy, UserPlus, Users, X, ChevronRight, Clapperboard, QrCode, Share2, Shield } from "lucide-react";
+import { Check, LogOut, Loader2, Star, Info, Film, Tv, Layers, Camera, Pencil, Copy, UserPlus, Users, X, ChevronRight, Clapperboard, QrCode, Share2, Shield } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
