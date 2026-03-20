@@ -407,7 +407,12 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({
     setBookmarkLoading(true);
     try {
       if (bookmarked) { await removeFromWatchlist(movie.id); setBookmarked(false); toast.success("Retiré de ta watchlist"); trackInteraction(movie.id, "unsaved"); }
-      else { await addToWatchlist(movie); setBookmarked(true); toast.success("Ajouté à ta watchlist !"); trackInteraction(movie.id, "saved"); window.dispatchEvent(new CustomEvent("pick-watchlist-added")); }
+      else {
+        await addToWatchlist(movie); setBookmarked(true); toast.success("Ajouté à ta watchlist !");
+        trackInteraction(movie.id, "saved");
+        updateRecommendationReaction(movie.id, "accepted", "saved_to_watchlist");
+        window.dispatchEvent(new CustomEvent("pick-watchlist-added"));
+      }
     } catch { toast.error("Erreur lors de la sauvegarde"); }
     finally { setBookmarkLoading(false); }
   };
