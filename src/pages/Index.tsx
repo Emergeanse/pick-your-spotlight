@@ -399,7 +399,7 @@ const Index = () => {
     setSearchTags(prev => prev.filter(t => t !== tag));
   };
 
-  const showTabBar = step === "home" && !showTour && !showActivation;
+  
 
   return (
     <div className="fixed inset-0 bg-background overflow-hidden">
