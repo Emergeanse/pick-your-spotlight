@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { motion, AnimatePresence, useMotionValue, useTransform, PanInfo } from "framer-motion";
-import { Bookmark, Heart, Loader2, Sparkles, X, Tv, Star, Clock, Play, Search, Filter, Timer } from "lucide-react";
+import { Bookmark, Heart, Loader2, Sparkles, X, Tv, Star, Clock, Play, Search, Filter, Timer, Trash2 } from "lucide-react";
 import { getWatchlist, removeFromWatchlist } from "@/lib/watchlist";
 import { getPosterUrl, getBackdropUrl, getMovieDetails, getDisplayTitle, getYear, getWatchProviders } from "@/lib/tmdb";
 import { getLikedMovies, unlikeMovie } from "@/lib/liked-movies";
@@ -186,6 +186,8 @@ const WatchlistPage = ({ onMovieSelect }: WatchlistPageProps) => {
   const [previewProviders, setPreviewProviders] = useState<{ name: string; logo_path: string }[]>([]);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [previewNote, setPreviewNote] = useState("");
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [resetting, setResetting] = useState(false);
 
   useEffect(() => { loadData(); }, []);
 
@@ -251,6 +253,29 @@ const WatchlistPage = ({ onMovieSelect }: WatchlistPageProps) => {
     catch { toast.error("Erreur"); }
   };
 
+  const handleResetAll = async () => {
+    if (!currentItems.length) return;
+    setResetting(true);
+    try {
+      const { data: { user } } = await (await import("@/integrations/supabase/client")).supabase.auth.getUser();
+      if (!user) return;
+      if (activeTab === "watchlist") {
+        const { error } = await (await import("@/integrations/supabase/client")).supabase
+          .from("watchlist").delete().eq("user_id", user.id);
+        if (error) throw error;
+        setWatchlistItems([]);
+        toast.success("Watchlist vidée");
+      } else {
+        const { error } = await (await import("@/integrations/supabase/client")).supabase
+          .from("liked_movies").delete().eq("user_id", user.id);
+        if (error) throw error;
+        setLikedItems([]);
+        toast.success("Coups de cœur réinitialisés");
+      }
+    } catch { toast.error("Erreur lors de la réinitialisation"); }
+    finally { setResetting(false); setShowResetConfirm(false); }
+  };
+
   const generatePersonalNote = async (movie: MovieDetail): Promise<string> => {
     try {
       const liked = likedItems.length > 0 ? likedItems : await getLikedMovies();
@@ -311,8 +336,17 @@ const WatchlistPage = ({ onMovieSelect }: WatchlistPageProps) => {
   return (
     <div className="h-full overflow-y-auto px-5 pt-[calc(1rem+env(safe-area-inset-top))] pb-24">
       {/* Header */}
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-        <h1 className="text-2xl font-serif mb-3">Ma Collection</h1>
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex items-center justify-between mb-3">
+        <h1 className="text-2xl font-serif">Ma Collection</h1>
+        {currentItems.length > 0 && (
+          <button
+            onClick={() => setShowResetConfirm(true)}
+            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-sans text-destructive/40 hover:text-destructive/70 hover:bg-destructive/5 transition-colors active:scale-95"
+          >
+            <Trash2 className="w-3 h-3" />
+            Tout supprimer
+          </button>
+        )}
       </motion.div>
 
       {/* Tabs */}
@@ -465,6 +499,42 @@ const WatchlistPage = ({ onMovieSelect }: WatchlistPageProps) => {
         {previewMovie && (
           <MoviePreviewSheet movie={previewMovie} providers={previewProviders} personalNote={previewNote}
             onWatch={handleWatchFromPreview} onClose={() => { setPreviewMovie(null); setPreviewProviders([]); setPreviewNote(""); }} />
+        )}
+      </AnimatePresence>
+
+      {/* Reset confirmation modal */}
+      <AnimatePresence>
+        {showResetConfirm && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 flex items-end justify-center">
+            <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" onClick={() => setShowResetConfirm(false)} />
+            <motion.div initial={{ y: 100 }} animate={{ y: 0 }} exit={{ y: 100 }} transition={{ type: "spring", damping: 25 }}
+              className="relative w-full max-w-lg rounded-t-2xl bg-card border-t border-border/20 p-6 pb-[calc(2rem+env(safe-area-inset-bottom))]">
+              <div className="w-10 h-1 rounded-full bg-border/30 mx-auto mb-5" />
+              <div className="flex flex-col items-center text-center mb-6">
+                <div className="w-12 h-12 rounded-full bg-destructive/10 flex items-center justify-center mb-3">
+                  <Trash2 className="w-5 h-5 text-destructive/60" />
+                </div>
+                <h3 className="text-base font-serif mb-1">
+                  {activeTab === "watchlist" ? "Vider ta watchlist ?" : "Réinitialiser tes coups de cœur ?"}
+                </h3>
+                <p className="text-foreground/40 text-sm font-sans">
+                  {activeTab === "watchlist"
+                    ? `${watchlistItems.length} titre${watchlistItems.length > 1 ? "s" : ""} seront supprimés. Cette action est irréversible.`
+                    : `${likedItems.length} titre${likedItems.length > 1 ? "s" : ""} seront retirés. Tes recommandations seront recalibrées.`}
+                </p>
+              </div>
+              <div className="flex gap-3">
+                <button onClick={() => setShowResetConfirm(false)}
+                  className="flex-1 h-12 rounded-xl bg-card border border-border/20 text-foreground/60 font-sans text-sm font-medium hover:bg-card/80 transition-colors active:scale-[0.98]">
+                  Annuler
+                </button>
+                <button onClick={handleResetAll} disabled={resetting}
+                  className="flex-1 h-12 rounded-xl bg-destructive/90 text-destructive-foreground font-sans text-sm font-medium hover:bg-destructive transition-colors active:scale-[0.98] flex items-center justify-center gap-2">
+                  {resetting ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Trash2 className="w-3.5 h-3.5" />Tout supprimer</>}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
         )}
       </AnimatePresence>
     </div>
