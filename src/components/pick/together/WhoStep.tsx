@@ -111,6 +111,61 @@ const WhoStep = ({
           </div>
         </div>
 
+        {/* Friends list */}
+        {friends.length === 0 ? (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-10">
+            <div className="w-16 h-16 rounded-full bg-muted/30 flex items-center justify-center mx-auto mb-4">
+              <Users className="w-7 h-7 text-muted-foreground/30" />
+            </div>
+            <p className="text-foreground/50 text-sm font-sans mb-1">Pas encore d'amis sur Pick</p>
+            <p className="text-foreground/30 text-xs font-sans mb-4">Partage ton code ami pour commencer</p>
+            <Button onClick={onNavigateToProfile} variant="outline" className="rounded-xl font-sans border-primary/30 text-primary">
+              Ajouter des amis
+            </Button>
+          </motion.div>
+        ) : (
+          <div className="space-y-2 mb-4">
+            {friends.map((f, i) => {
+              const selected = selectedFriendIds.has(f.id);
+              return (
+                <motion.button
+                  key={f.id}
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.05 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => onToggleFriend(f.id)}
+                  className={`w-full flex items-center gap-3 p-3.5 rounded-2xl border transition-all duration-200 ${
+                    selected
+                      ? "bg-primary/8 border-primary/25 shadow-[0_0_20px_-6px_hsl(var(--primary)/0.2)]"
+                      : "bg-card/40 border-border/10 hover:border-border/25"
+                  }`}
+                >
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center border transition-all overflow-hidden ${
+                    selected ? "bg-primary/15 border-primary/30" : "bg-muted/50 border-border/20"
+                  }`}>
+                    {f.avatarUrl ? (
+                      <img src={f.avatarUrl} alt={f.displayName} className="w-full h-full object-cover" />
+                    ) : (
+                      <span className={`text-sm font-sans font-bold ${selected ? "text-primary" : "text-muted-foreground"}`}>
+                        {f.displayName[0].toUpperCase()}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex-1 text-left">
+                    <p className={`text-sm font-sans font-medium transition-colors ${selected ? "text-foreground" : "text-foreground/70"}`}>{f.displayName}</p>
+                  </div>
+                  <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
+                    selected ? "border-primary bg-primary" : "border-border/30"
+                  }`}>
+                    {selected && <Check className="w-3.5 h-3.5 text-primary-foreground" />}
+                  </div>
+                </motion.button>
+              );
+            })}
+          </div>
+        )}
+
         {/* Invitation Card */}
         {sessionInviteCode && (
           <motion.div
@@ -157,61 +212,6 @@ const WhoStep = ({
               </div>
             )}
           </motion.div>
-        )}
-
-        {/* Friends list */}
-        {friends.length === 0 ? (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-10">
-            <div className="w-16 h-16 rounded-full bg-muted/30 flex items-center justify-center mx-auto mb-4">
-              <Users className="w-7 h-7 text-muted-foreground/30" />
-            </div>
-            <p className="text-foreground/50 text-sm font-sans mb-1">Pas encore d'amis sur Pick</p>
-            <p className="text-foreground/30 text-xs font-sans mb-4">Partage ton code ami pour commencer</p>
-            <Button onClick={onNavigateToProfile} variant="outline" className="rounded-xl font-sans border-primary/30 text-primary">
-              Ajouter des amis
-            </Button>
-          </motion.div>
-        ) : (
-          <div className="space-y-2">
-            {friends.map((f, i) => {
-              const selected = selectedFriendIds.has(f.id);
-              return (
-                <motion.button
-                  key={f.id}
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.05 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() => onToggleFriend(f.id)}
-                  className={`w-full flex items-center gap-3 p-3.5 rounded-2xl border transition-all duration-200 ${
-                    selected
-                      ? "bg-primary/8 border-primary/25 shadow-[0_0_20px_-6px_hsl(var(--primary)/0.2)]"
-                      : "bg-card/40 border-border/10 hover:border-border/25"
-                  }`}
-                >
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center border transition-all overflow-hidden ${
-                    selected ? "bg-primary/15 border-primary/30" : "bg-muted/50 border-border/20"
-                  }`}>
-                    {f.avatarUrl ? (
-                      <img src={f.avatarUrl} alt={f.displayName} className="w-full h-full object-cover" />
-                    ) : (
-                      <span className={`text-sm font-sans font-bold ${selected ? "text-primary" : "text-muted-foreground"}`}>
-                        {f.displayName[0].toUpperCase()}
-                      </span>
-                    )}
-                  </div>
-                  <div className="flex-1 text-left">
-                    <p className={`text-sm font-sans font-medium transition-colors ${selected ? "text-foreground" : "text-foreground/70"}`}>{f.displayName}</p>
-                  </div>
-                  <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
-                    selected ? "border-primary bg-primary" : "border-border/30"
-                  }`}>
-                    {selected && <Check className="w-3.5 h-3.5 text-primary-foreground" />}
-                  </div>
-                </motion.button>
-              );
-            })}
-          </div>
         )}
 
         {/* Guests */}
