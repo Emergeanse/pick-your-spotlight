@@ -337,6 +337,17 @@ ANNÉE EN COURS : ${currentYear}`;
       }
 
       const toolCall = message.tool_calls[0];
+
+      // Handle suggest_pick_together tool
+      if (toolCall.function.name === "suggest_pick_together") {
+        const args = JSON.parse(toolCall.function.arguments);
+        return new Response(JSON.stringify({
+          type: "pick_together",
+          reply: args.message || "Vous êtes plusieurs ? Parfait, lance Pick Together pour trouver un film qui plaît à tout le monde ! 🎬",
+        }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
       
       if (toolCall.function.name !== "suggest_movie") break;
 
