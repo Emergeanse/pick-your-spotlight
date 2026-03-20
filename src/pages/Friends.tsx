@@ -18,6 +18,8 @@ const Friends = () => {
   const [friends, setFriends] = useState<any[]>([]);
   const [friendsLoading, setFriendsLoading] = useState(true);
   const [addCode, setAddCode] = useState("");
+  const [addEmail, setAddEmail] = useState("");
+  const [addMode, setAddMode] = useState<"code" | "email">("code");
   const [addingFriend, setAddingFriend] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showQR, setShowQR] = useState(false);
