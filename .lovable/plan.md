@@ -1,38 +1,40 @@
 
 
-## Plan : Uniformiser les deux chemins vers le ResultScreen avec 5 films precharges
+## Plan : Simplifier "Pick choisit pour toi" et detecter le mode groupe dans le chat
 
-### Constat
+### Changements
 
-Les deux chemins ("Pick choisit pour toi" et "Parle a Pick") menent deja au meme composant `ResultScreen` visuellement (backdrop, poster, acteurs, analyse, streaming, boutons). Le probleme est que "Parle a Pick" ne renvoie qu'**1 seul film**, donc les boutons Precedent/Suivant n'apparaissent pas.
+#### 1. Supprimer les etapes intermediaires de "Pick choisit pour toi"
+**Fichier** : `src/components/pick/HomeScreen.tsx`
 
-### Ce qui sera fait
+- Au clic sur "Pick choisit pour toi", appeler directement `generateTonightPick()` au lieu de `setFlowStep("who")`
+- Supprimer le bloc de rendu conditionnel `flowStep !== "idle"` (lignes 770-810) qui affiche les etapes Who/What/Exploration
+- Utiliser les valeurs par defaut : `explorationLevel=5`, `whatChoice="both"`
+- Resultat : clic → chargement → Tonight's Pick directement
 
-#### 1. Modifier l'Edge Function `pick-chat` pour precharger 5 films
+#### 2. Ajouter un tool "suggest_pick_together" dans l'Edge Function pick-chat
 **Fichier** : `supabase/functions/pick-chat/index.ts`
-- Quand l'IA suggere un film, apres avoir recupere ses details TMDB, le backend cherche automatiquement **4 films similaires** via l'endpoint TMDB `/movie/{id}/recommendations`
-- Filtre par note minimale, recupere les details en parallele
-- Renvoie un champ `movies: MovieDetail[]` (5 films) en plus du champ `movie` existant
 
-#### 2. Adapter VoiceChat pour transmettre les 5 films
+- Ajouter un second outil `suggest_pick_together` que l'IA peut appeler quand elle detecte que l'utilisateur est a plusieurs
+- Ajouter dans le system prompt (modes premium et free) une instruction :
+  > "Si l'utilisateur mentionne qu'il est avec quelqu'un (copine, potes, famille, groupe, on est deux/trois/plusieurs, soiree entre amis...), utilise l'outil suggest_pick_together pour lui proposer le mode Pick Together."
+- Le backend renvoie `{ type: "pick_together" }` quand cet outil est appele
+
+#### 3. Gerer la reponse "pick_together" cote client
 **Fichier** : `src/components/pick/VoiceChat.tsx`
-- Changer la signature du callback : `onMovieSuggested(movies: MovieDetail[])`
-- Quand `data.movies` existe, passer le tableau complet ; sinon `[data.movie]`
 
-#### 3. Adapter Index.tsx pour recevoir un tableau
-**Fichier** : `src/pages/Index.tsx`
-- `handleMovieSuggested` accepte `MovieDetail[]` au lieu d'un seul film
-- Appelle `setResults(movies)` et `setCurrentResultIndex(0)`
+- Quand la reponse du chat est `type: "pick_together"`, afficher le message de l'IA puis proposer un bouton "Lancer Pick Together" qui navigue vers `/app/pick-together`
 
 ### Resultat
 
 ```text
-"Pick choisit pour toi" → surprise-personalized (count=5) → ResultScreen ◀ 1/5 ▶
-"Parle a Pick"          → pick-chat + 4 similaires        → ResultScreen ◀ 1/5 ▶
-                                                              ↑ meme page visuelle
+Avant :  "Pick choisit pour toi" → Qui → Quoi → Exploration → Tonight's Pick
+Apres :  "Pick choisit pour toi" → Tonight's Pick (direct)
+
+Chat :   "On est deux ce soir" → Pick propose d'aller sur Pick Together
 ```
 
-### Ce qui ne change PAS
-- `ResultScreen.tsx` — les boutons Precedent/Suivant sont deja implementes et fonctionnels
-- L'apparence visuelle — les deux chemins arrivent deja sur le meme composant
+### Ce qui ne change pas
+- Le flux "Parle a Pick" reste identique (chat → suggestion → Tonight's Pick)
+- Les preferences (exploration, type media) gardent leurs valeurs par defaut et restent configurables dans le profil
 
