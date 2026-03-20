@@ -726,6 +726,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
                         if (tonightPool.length > 1 && tonightPickIndex < tonightPool.length - 1) {
                           const newIndex = tonightPickIndex + 1;
                           setTonightPickIndex(newIndex);
+                          setTonightMaxSeen(prev => Math.max(prev, newIndex));
                           const nextMovie = tonightPool[newIndex];
                           setTonightPick(nextMovie);
                           setTonightProviders([]);
