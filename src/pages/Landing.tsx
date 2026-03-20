@@ -78,10 +78,14 @@ const PhoneMockup = () => (
             <img src={pickDefault} alt="Pick" className="w-6 h-6 object-contain" />
             <span className="text-[10px] font-sans text-foreground/50">Pick pour ce soir</span>
           </div>
-          {/* Movie poster */}
+          {/* Movie poster — real poster image */}
           <div className="relative rounded-xl overflow-hidden aspect-[2/3] w-full">
-            <img src={POSTER_URLS[0]} alt="Recommandation" className="w-full h-full object-cover" />
-            <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-transparent to-transparent" />
+            <img
+              src="https://image.tmdb.org/t/p/w500/q6y0Go1tsGEsmtFryDOJo3dEmqu.jpg"
+              alt="The Shawshank Redemption"
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-background/95 via-background/20 to-transparent" />
             <div className="absolute bottom-3 left-3 right-3">
               <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary/20 border border-primary/30 mb-1.5">
                 <span className="text-[9px] font-sans font-bold text-primary">94% match</span>
@@ -102,34 +106,8 @@ const PhoneMockup = () => (
         </div>
       </div>
     </div>
-    {/* Floating badges */}
-    <motion.div
-      initial={{ opacity: 0, x: -20 }}
-      whileInView={{ opacity: 1, x: 0 }}
-      viewport={{ once: true }}
-      transition={{ delay: 0.4, duration: 0.5 }}
-      className="absolute -left-4 md:-left-12 top-1/4 px-3 py-2 rounded-xl bg-card/90 border border-border/20 backdrop-blur-sm shadow-lg"
-    >
-      <div className="flex items-center gap-2">
-        <Brain className="w-3.5 h-3.5 text-primary" />
-        <span className="text-[10px] font-sans text-foreground/60">IA personnalisée</span>
-      </div>
-    </motion.div>
-    <motion.div
-      initial={{ opacity: 0, x: 20 }}
-      whileInView={{ opacity: 1, x: 0 }}
-      viewport={{ once: true }}
-      transition={{ delay: 0.6, duration: 0.5 }}
-      className="absolute -right-4 md:-right-14 top-2/3 px-3 py-2 rounded-xl bg-card/90 border border-border/20 backdrop-blur-sm shadow-lg"
-    >
-      <div className="flex items-center gap-2">
-        <Tv className="w-3.5 h-3.5 text-gold" />
-        <span className="text-[10px] font-sans text-foreground/60">Tes plateformes</span>
-      </div>
-    </motion.div>
   </div>
 );
-
 const Landing = () => {
   const navigate = useNavigate();
   const heroRef = useRef<HTMLDivElement>(null);
