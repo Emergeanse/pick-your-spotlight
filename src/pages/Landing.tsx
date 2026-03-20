@@ -78,10 +78,14 @@ const PhoneMockup = () => (
             <img src={pickDefault} alt="Pick" className="w-6 h-6 object-contain" />
             <span className="text-[10px] font-sans text-foreground/50">Pick pour ce soir</span>
           </div>
-          {/* Movie poster */}
+          {/* Movie poster — real poster image */}
           <div className="relative rounded-xl overflow-hidden aspect-[2/3] w-full">
-            <img src={POSTER_URLS[0]} alt="Recommandation" className="w-full h-full object-cover" />
-            <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-transparent to-transparent" />
+            <img
+              src="https://image.tmdb.org/t/p/w500/q6y0Go1tsGEsmtFryDOJo3dEmqu.jpg"
+              alt="The Shawshank Redemption"
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-background/95 via-background/20 to-transparent" />
             <div className="absolute bottom-3 left-3 right-3">
               <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary/20 border border-primary/30 mb-1.5">
                 <span className="text-[9px] font-sans font-bold text-primary">94% match</span>
@@ -102,34 +106,8 @@ const PhoneMockup = () => (
         </div>
       </div>
     </div>
-    {/* Floating badges */}
-    <motion.div
-      initial={{ opacity: 0, x: -20 }}
-      whileInView={{ opacity: 1, x: 0 }}
-      viewport={{ once: true }}
-      transition={{ delay: 0.4, duration: 0.5 }}
-      className="absolute -left-4 md:-left-12 top-1/4 px-3 py-2 rounded-xl bg-card/90 border border-border/20 backdrop-blur-sm shadow-lg"
-    >
-      <div className="flex items-center gap-2">
-        <Brain className="w-3.5 h-3.5 text-primary" />
-        <span className="text-[10px] font-sans text-foreground/60">IA personnalisée</span>
-      </div>
-    </motion.div>
-    <motion.div
-      initial={{ opacity: 0, x: 20 }}
-      whileInView={{ opacity: 1, x: 0 }}
-      viewport={{ once: true }}
-      transition={{ delay: 0.6, duration: 0.5 }}
-      className="absolute -right-4 md:-right-14 top-2/3 px-3 py-2 rounded-xl bg-card/90 border border-border/20 backdrop-blur-sm shadow-lg"
-    >
-      <div className="flex items-center gap-2">
-        <Tv className="w-3.5 h-3.5 text-gold" />
-        <span className="text-[10px] font-sans text-foreground/60">Tes plateformes</span>
-      </div>
-    </motion.div>
   </div>
 );
-
 const Landing = () => {
   const navigate = useNavigate();
   const heroRef = useRef<HTMLDivElement>(null);
@@ -358,7 +336,89 @@ const Landing = () => {
         </div>
       </section>
 
-      {/* ─── PLATEFORMES ─── */}
+      {/* ─── ADN CINÉMA ─── */}
+      <section className="py-20 md:py-28 px-5 relative overflow-hidden">
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div className="w-[500px] h-[500px] rounded-full bg-primary/4 blur-[140px]" />
+        </div>
+        <div className="max-w-5xl mx-auto relative z-10">
+          <motion.div variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }}
+            className="flex flex-col md:flex-row items-center gap-10 md:gap-16">
+
+            {/* DNA Visual */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] }}
+              className="flex-shrink-0 w-full md:w-auto"
+            >
+              <div className="mx-auto w-[260px] md:w-[300px] rounded-3xl border border-border/15 bg-card/30 p-5 backdrop-blur-sm">
+                {/* Simulated DNA profile card */}
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 rounded-full bg-primary/15 border border-primary/25 flex items-center justify-center">
+                    <Dna className="w-5 h-5 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-[11px] font-sans text-foreground/40">Ton archétype</p>
+                    <p className="text-sm font-serif text-foreground">L'Explorateur Nocturne</p>
+                  </div>
+                </div>
+                {/* Genre bars */}
+                <div className="space-y-2.5 mb-4">
+                  {[
+                    { genre: "Thriller", pct: 85, color: "bg-primary" },
+                    { genre: "Drame", pct: 72, color: "bg-primary/70" },
+                    { genre: "Sci-Fi", pct: 58, color: "bg-primary/50" },
+                    { genre: "Comédie", pct: 34, color: "bg-primary/30" },
+                  ].map((g) => (
+                    <div key={g.genre}>
+                      <div className="flex justify-between mb-0.5">
+                        <span className="text-[10px] font-sans text-foreground/50">{g.genre}</span>
+                        <span className="text-[10px] font-sans text-foreground/30">{g.pct}%</span>
+                      </div>
+                      <div className="h-1.5 rounded-full bg-foreground/5 overflow-hidden">
+                        <motion.div
+                          className={`h-full rounded-full ${g.color}`}
+                          initial={{ width: 0 }}
+                          whileInView={{ width: `${g.pct}%` }}
+                          viewport={{ once: true }}
+                          transition={{ duration: 0.8, delay: 0.2, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                {/* Taste traits */}
+                <div className="flex flex-wrap gap-1.5">
+                  {["Suspense psychologique", "Twists narratifs", "Ambiances sombres", "Anti-héros"].map((trait) => (
+                    <span key={trait} className="px-2 py-1 rounded-md bg-primary/8 border border-primary/12 text-[9px] font-sans text-foreground/50">{trait}</span>
+                  ))}
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Text */}
+            <div className="text-center md:text-left">
+              <span className="text-[10px] uppercase tracking-[0.2em] text-primary/50 font-sans font-semibold">Unique</span>
+              <h2 className="text-3xl md:text-4xl font-serif mb-4 mt-1">
+                Ton ADN <span className="text-primary">Cinéma</span>
+              </h2>
+              <p className="text-foreground/40 font-sans text-sm md:text-base leading-relaxed mb-5">
+                Plus tu utilises Pick, plus il te connaît. Il construit ton profil cinématographique unique :
+                tes genres de prédilection, tes traits de goût, ton archétype de spectateur.
+                Comme une empreinte digitale, mais pour le cinéma.
+              </p>
+              <div className="flex flex-wrap gap-2 justify-center md:justify-start">
+                {["Archétype unique", "Évolution dans le temps", "Traits de goût", "Partageable"].map(tag => (
+                  <span key={tag} className="px-3 py-1.5 rounded-full bg-card/60 border border-border/12 text-foreground/40 text-xs font-sans">{tag}</span>
+                ))}
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
       <section className="py-16 md:py-24 px-5 relative">
         <div className="max-w-4xl mx-auto text-center">
           <motion.div variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }}>
