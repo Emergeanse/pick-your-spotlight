@@ -437,7 +437,7 @@ const Landing = () => {
                 {/* Two profiles merging */}
                 <div className="flex items-center justify-center gap-3 mb-4">
                   <div className="w-14 h-14 rounded-full bg-primary/12 border-2 border-primary/25 flex items-center justify-center">
-                    <span className="text-primary font-sans font-bold text-lg">A</span>
+                    <span className="text-primary font-sans font-bold text-sm">Alex</span>
                   </div>
                   <div className="flex flex-col items-center gap-1">
                     <div className="w-8 h-px bg-primary/30" />
@@ -445,7 +445,7 @@ const Landing = () => {
                     <div className="w-8 h-px bg-gold/30" />
                   </div>
                   <div className="w-14 h-14 rounded-full bg-gold/12 border-2 border-gold/25 flex items-center justify-center">
-                    <span className="text-gold font-sans font-bold text-lg">M</span>
+                    <span className="text-gold font-sans font-bold text-sm">Marie</span>
                   </div>
                 </div>
 
@@ -465,11 +465,11 @@ const Landing = () => {
                   </div>
                   <div className="space-y-1.5">
                     <div className="flex items-center gap-2">
-                      <div className="w-4 h-4 rounded-full bg-primary/15 flex items-center justify-center"><span className="text-[8px] text-primary font-bold">A</span></div>
+                      <div className="w-5 h-5 rounded-full bg-primary/15 flex items-center justify-center"><span className="text-[7px] text-primary font-bold">Alex</span></div>
                       <span className="text-[9px] font-sans text-foreground/40">Adore les twists et le suspense</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <div className="w-4 h-4 rounded-full bg-gold/15 flex items-center justify-center"><span className="text-[8px] text-gold font-bold">M</span></div>
+                      <div className="w-5 h-5 rounded-full bg-gold/15 flex items-center justify-center"><span className="text-[7px] text-gold font-bold">Marie</span></div>
                       <span className="text-[9px] font-sans text-foreground/40">Fan de Leonardo DiCaprio</span>
                     </div>
                   </div>
