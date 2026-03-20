@@ -1,6 +1,6 @@
 import { useState, useEffect, forwardRef, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Loader2, Sparkles, Check, Play, Star, Clock, Heart, Bookmark, ChevronDown, ChevronUp, RefreshCw, Share2, Zap, Lock, ExternalLink } from "lucide-react";
+import { Loader2, Sparkles, Check, Play, Star, Clock, Heart, Bookmark, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, RefreshCw, Share2, Zap, Lock, ExternalLink } from "lucide-react";
 import type { MovieDetail } from "@/lib/tmdb";
 import { getDisplayTitle, getYear, getBackdropUrl, getPosterUrl, getWatchProviders, getMovieTrailerUrl, getMovieCredits } from "@/lib/tmdb";
 import type { MovieCredits, CastMember } from "@/lib/tmdb";
@@ -270,12 +270,17 @@ interface ResultScreenProps {
   onRemoveTag?: (tag: string) => void;
   refining?: boolean;
   profileConfidence?: number;
+  currentIndex?: number;
+  totalCount?: number;
+  onNext?: () => void;
+  onPrevious?: () => void;
 }
 
 const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({
   movie, onShowAnother, onRestart, onRefineWithVoice, onRefineWithMessage,
   hasMore, userCriteria, alternativeMovies, onSelectAlternative,
   searchTags, onRemoveTag, refining, profileConfidence = 0,
+  currentIndex = 0, totalCount = 1, onNext, onPrevious,
 }, ref) => {
   const [providers, setProviders] = useState<{ name: string; logo_path: string; provider_id: number }[]>([]);
   const [credits, setCredits] = useState<MovieCredits | null>(null);
@@ -507,6 +512,32 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({
             {/* Primary Actions */}
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }} className="space-y-3">
               <MovieActionBar movie={movie} />
+
+              {/* Navigation Prev/Next */}
+              {totalCount > 1 && (
+                <div className="flex items-center gap-3 mt-2">
+                  <button
+                    onClick={onPrevious}
+                    disabled={currentIndex === 0}
+                    className="w-9 h-9 rounded-full border border-border/25 text-foreground/40 hover:text-primary hover:border-primary/25 flex items-center justify-center transition-all active:scale-95 disabled:opacity-25 disabled:pointer-events-none"
+                    title="Précédent"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </button>
+                  <span className="text-foreground/40 text-xs font-sans font-medium tabular-nums">
+                    {currentIndex + 1}/{totalCount}
+                  </span>
+                  <button
+                    onClick={onNext}
+                    disabled={currentIndex >= totalCount - 1}
+                    className="w-9 h-9 rounded-full border border-border/25 text-foreground/40 hover:text-primary hover:border-primary/25 flex items-center justify-center transition-all active:scale-95 disabled:opacity-25 disabled:pointer-events-none"
+                    title="Suivant"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
+
               <div className="flex items-center gap-2 mt-2">
                 <button onClick={() => {
                   const shareText = `Pick me suggère "${title}" ce soir — tu veux qu'on le regarde ensemble ? 🍿`;
@@ -520,7 +551,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({
                 <button data-tour="autre-suggestion" onClick={() => onShowAnother()}
                   className="flex items-center gap-1.5 px-3.5 h-9 rounded-full border border-border/25 text-foreground/40 hover:text-primary hover:border-primary/25 text-xs font-sans font-medium transition-all active:scale-95">
                   <RefreshCw className="w-3.5 h-3.5" />
-                  Autre suggestion
+                  Nouvelles suggestions
                 </button>
               </div>
               {refining && (

@@ -171,8 +171,13 @@ const Index = () => {
           excludedGenres: profilePrefs.excludedGenres,
           minRating: profilePrefs.minRating,
           excludeIds,
+          count: 5,
         });
-        if (data?.movie) {
+        if (data?.movies && data.movies.length > 0) {
+          setResults(data.movies.map((m: any) => m.movie));
+          setCurrentResultIndex(0);
+          setStep("result");
+        } else if (data?.movie) {
           setResults([data.movie]);
           setCurrentResultIndex(0);
           setStep("result");
@@ -367,8 +372,13 @@ const Index = () => {
               excludedGenres: profilePrefs.excludedGenres,
               minRating: profilePrefs.minRating,
               excludeIds, rejectionContext,
+              count: 5,
             });
-            if (data?.movie) {
+            if (data?.movies && data.movies.length > 0) {
+              const newMovies = data.movies.map((m: any) => m.movie);
+              setResults(prev => [...prev, ...newMovies]);
+              setCurrentResultIndex(i => i + 1);
+            } else if (data?.movie) {
               setResults(prev => [...prev, data.movie]);
               setCurrentResultIndex(i => i + 1);
             }
@@ -460,6 +470,10 @@ const Index = () => {
                 const idx = results.findIndex(r => r.id === movie.id);
                 if (idx >= 0) setCurrentResultIndex(idx);
               }}
+              currentIndex={currentResultIndex}
+              totalCount={results.length}
+              onNext={() => { if (currentResultIndex < results.length - 1) setCurrentResultIndex(i => i + 1); }}
+              onPrevious={() => { if (currentResultIndex > 0) setCurrentResultIndex(i => i - 1); }}
             />
           </motion.div>
         )}

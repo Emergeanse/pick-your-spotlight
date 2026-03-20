@@ -21,7 +21,8 @@ serve(async (req) => {
   }
 
   try {
-    const { likedMovies, tasteProfile, userTasteVector, platformIds, excludeIds, excludedPlatformIds, excludedGenres, minRating: rawMinRating, rejectionContext, outOfComfortZone, explorationLevel: rawExplorationLevel, mediaType: rawMediaType } = await req.json();
+    const { likedMovies, tasteProfile, userTasteVector, platformIds, excludeIds, excludedPlatformIds, excludedGenres, minRating: rawMinRating, rejectionContext, outOfComfortZone, explorationLevel: rawExplorationLevel, mediaType: rawMediaType, count: rawCount } = await req.json();
+    const requestedCount = typeof rawCount === "number" && rawCount >= 1 && rawCount <= 10 ? rawCount : 1;
     // Cap min_rating at 8.0 to avoid overly restrictive filtering
     const minRating = typeof rawMinRating === "number" ? Math.min(rawMinRating, 8) : 0;
     const explorationLevel = typeof rawExplorationLevel === "number" ? Math.max(0, Math.min(10, rawExplorationLevel)) : 5;
@@ -143,7 +144,10 @@ ${embeddingSection}
 
 RÈGLES :
 - Réponds UNIQUEMENT avec un JSON valide sans backticks
-- Structure : {"title": "<titre exact>", "reason": "<2-3 phrases>", "confidence": <0-100>, "scores": {"taste": <0-100>, "context": <0-100>, "embedding": <0-100>, "behaviour": <0-100>, "rating": <0-100>, "novelty": <0-100>}}
+${requestedCount > 1 ? `- Structure : {"suggestions": [{"title": "<titre exact>", "reason": "<2-3 phrases>", "confidence": <0-100>, "scores": {"taste": <0-100>, "context": <0-100>, "embedding": <0-100>, "behaviour": <0-100>, "rating": <0-100>, "novelty": <0-100>}}, ...]}
+- Fournis EXACTEMENT ${requestedCount} suggestions DIFFÉRENTES, classées par pertinence décroissante
+- Chaque suggestion doit être un(e) ${searchType === "tv" ? "série" : "film"} DIFFÉRENT(E) — pas de doublons
+- Varie les styles et sous-genres entre les suggestions tout en restant pertinent` : `- Structure : {"title": "<titre exact>", "reason": "<2-3 phrases>", "confidence": <0-100>, "scores": {"taste": <0-100>, "context": <0-100>, "embedding": <0-100>, "behaviour": <0-100>, "rating": <0-100>, "novelty": <0-100>}}`}
 - Ne recommande JAMAIS un film déjà dans la liste ni un film avec l'un de ces IDs TMDB : ${normalizedExcludeIds.length > 0 ? normalizedExcludeIds.join(", ") : "aucun"}
 - ${shouldDiscover || effectiveOutOfComfortZone ? "MODE DÉCOUVERTE/EXPLORATION activé selon le niveau d'exploration ci-dessus." : "MODE PRÉCISION : colle au plus près des micro-genres et clusters identifiés. Si des candidats par embedding sont disponibles, privilégie-les."}
 ${effectiveOutOfComfortZone ? `- MODE "HORS ZONE DE CONFORT" ACTIVÉ : Le film recommandé DOIT être VOLONTAIREMENT en dehors des genres et micro-genres habituels de l'utilisateur. Choisis un genre qu'il ne regarde JAMAIS. Explique dans "reason" pourquoi tu sors de ses habitudes et ce qu'il pourrait y trouver. Commence la raison par "Changement radical :".` : ""}
@@ -164,7 +168,7 @@ ${heavilySkippedGenres.length > 0 ? `Genres souvent refusés : ${heavilySkippedG
 ${shouldDiscover ? "→ MODE DÉCOUVERTE" : "→ MODE PRÉCISION"} | Niveau d'exploration : ${explorationLevel}/10 (${explorationModeLabel})
 ${rejectionSection}
 
-Recommande UN film avec les scores détaillés.`;
+Recommande ${requestedCount > 1 ? `${requestedCount} films/séries` : "UN film"} avec les scores détaillés.`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -201,12 +205,21 @@ Recommande UN film avec les scores détaillés.`;
       }
     }
 
+    // Parse AI suggestions (single or multi)
+    let suggestions: any[] = [];
     if (!aiFailed) {
       const aiData = await response.json();
       const content = aiData.choices?.[0]?.message?.content || "";
       try {
         const jsonStr = content.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
-        suggestion = JSON.parse(jsonStr);
+        const parsed = JSON.parse(jsonStr);
+        if (requestedCount > 1 && parsed.suggestions && Array.isArray(parsed.suggestions)) {
+          suggestions = parsed.suggestions;
+        } else if (parsed.title) {
+          suggestions = [parsed];
+        } else {
+          aiFailed = true;
+        }
       } catch {
         console.warn("Failed to parse AI suggestion, falling back to TMDB");
         aiFailed = true;
@@ -233,32 +246,26 @@ Recommande UN film avec les scores détaillés.`;
       return true;
     };
 
-    // Search TMDB — either from AI suggestion or direct discover fallback
-    let selectedMovie: any = null;
-
-    if (suggestion && suggestion.title) {
-      const searchUrl = `https://api.themoviedb.org/3/search/${searchType}?api_key=${TMDB_API_KEY}&language=fr-FR&query=${encodeURIComponent(suggestion.title)}&page=1`;
+    // Helper to search a single suggestion on TMDB
+    const searchSuggestionOnTMDB = async (sug: any): Promise<any | null> => {
+      if (!sug?.title) return null;
+      const searchUrl = `https://api.themoviedb.org/3/search/${searchType}?api_key=${TMDB_API_KEY}&language=fr-FR&query=${encodeURIComponent(sug.title)}&page=1`;
       const searchRes = await fetch(searchUrl);
       const searchData = await searchRes.json();
       const results = searchData.results || [];
-      selectedMovie = results.find((r: any) => isMovieAllowed(r));
-    }
+      const found = results.find((r: any) => isMovieAllowed(r));
+      if (!found) return null;
+      const detail = await getMovieDetails(found.id, searchType);
+      return { movie: detail, suggestion: sug };
+    };
 
-    if (!selectedMovie) {
-      // Fallback: use discover with filters + user's favorite genres
-      const genreIdMap: Record<string, number> = {
-        "Action": 28, "Aventure": 12, "Animation": 16, "Comédie": 35, "Crime": 80,
-        "Documentaire": 99, "Drame": 18, "Famille": 10751, "Fantastique": 14,
-        "Histoire": 36, "Horreur": 27, "Musique": 10402, "Mystère": 9648,
-        "Romance": 10749, "Science-Fiction": 878, "Thriller": 53, "Guerre": 10752, "Western": 37,
-      };
-
-      // Try multiple pages with progressively relaxed filters
+    // Discover fallback helper
+    const discoverFallback = async (): Promise<any | null> => {
+      const genreIdMap = genreNameToId;
+      let selectedMovie: any = null;
       for (let attempt = 0; attempt < 4 && !selectedMovie; attempt++) {
         const discoverParams = new URLSearchParams({
-          api_key: TMDB_API_KEY,
-          language: "fr-FR",
-          sort_by: "popularity.desc",
+          api_key: TMDB_API_KEY, language: "fr-FR", sort_by: "popularity.desc",
           "vote_count.gte": attempt < 2 ? "100" : "50",
           page: String(Math.floor(Math.random() * (attempt < 2 ? 10 : 5)) + 1),
         });
@@ -268,7 +275,6 @@ Recommande UN film avec les scores détaillés.`;
           const genreIds = topGenres.map(g => genreIdMap[g]).filter(Boolean).slice(0, 3);
           if (genreIds.length > 0) discoverParams.set("with_genres", genreIds.join("|"));
         } else if (topGenres.length > 0 && explorationLevel >= 7 && attempt < 2) {
-          // For high exploration: exclude preferred genres to force discovery
           const genreIds = topGenres.map(g => genreIdMap[g]).filter(Boolean).slice(0, 3);
           if (genreIds.length > 0) discoverParams.set("without_genres", [...new Set([...(discoverParams.get("without_genres") || "").split(",").filter(Boolean), ...genreIds.map(String)])].join(","));
         }
@@ -280,67 +286,117 @@ Recommande UN film avec les scores détaillés.`;
         const fallbackRes = await fetch(fallbackUrl);
         const fallbackData = await fallbackRes.json();
         selectedMovie = (fallbackData.results || []).find((r: any) => isMovieAllowed(r));
-        // If strict filter found nothing, try any non-excluded movie from results
         if (!selectedMovie && (fallbackData.results || []).length > 0) {
           selectedMovie = (fallbackData.results || []).find((r: any) => !excludedSet.has(r.id));
         }
       }
+      if (!selectedMovie) {
+        const trendingRes = await fetch(`https://api.themoviedb.org/3/trending/${searchType}/week?api_key=${TMDB_API_KEY}&language=fr-FR`);
+        const trendingData = await trendingRes.json();
+        selectedMovie = (trendingData.results || []).find((r: any) => !excludedSet.has(r.id));
+      }
+      if (!selectedMovie) return null;
+      return await getMovieDetails(selectedMovie.id, searchType);
+    };
+
+    const contentLabel = searchType === "tv" ? "Cette série" : "Ce film";
+    const foundMovieIds = new Set<number>();
+
+    if (requestedCount > 1 && suggestions.length > 0) {
+      // Multi-movie mode: search all suggestions in parallel
+      const searchResults = await Promise.all(suggestions.map(s => searchSuggestionOnTMDB(s)));
+      const movies: any[] = [];
+      for (const result of searchResults) {
+        if (result && !foundMovieIds.has(result.movie.id)) {
+          foundMovieIds.add(result.movie.id);
+          movies.push({
+            movie: result.movie,
+            reason: result.suggestion.reason || `${contentLabel} est recommandé par Pick.`,
+            confidence: result.suggestion.confidence || 75,
+            scores: result.suggestion.scores || null,
+          });
+        }
+        if (movies.length >= requestedCount) break;
+      }
+
+      // Generate embeddings fire & forget
+      if (SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) {
+        for (const m of movies) {
+          fetch(`${SUPABASE_URL}/functions/v1/generate-embedding`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}` },
+            body: JSON.stringify({ tmdbId: m.movie.id, title: m.movie.title || m.movie.name, overview: m.movie.overview, genres: (m.movie.genres || []).map((g: any) => g.name) }),
+          }).catch(() => {});
+        }
+      }
+
+      if (movies.length === 0) {
+        // Total fallback
+        const fallbackMovie = await discoverFallback();
+        if (!fallbackMovie) throw new Error("No movie found");
+        movies.push({
+          movie: fallbackMovie,
+          reason: `${contentLabel} correspond à tes genres préférés. Pick n'a pas pu utiliser l'IA, mais ce titre est populaire et bien noté !`,
+          confidence: 50, scores: null,
+        });
+      }
+
+      return new Response(JSON.stringify({
+        movies,
+        movie: movies[0].movie,
+        reason: movies[0].reason,
+        confidence: movies[0].confidence,
+        scores: movies[0].scores,
+        isDiscovery: shouldDiscover,
+        engineMeta: {
+          profileConfidence: confidence.score, discoveryRatio: confidence.discoveryRatio, acceptanceRate,
+          mode: aiFailed ? "fallback" : (shouldDiscover ? "discovery" : "precision"),
+          explorationLevel, mediaType: searchType, embeddingCandidatesCount: embeddingCandidates.length, aiFallback: aiFailed,
+        },
+      }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    // Single movie mode (backward compatible)
+    let selectedMovie: any = null;
+    const singleSuggestion = suggestions[0] || null;
+
+    if (singleSuggestion?.title) {
+      const result = await searchSuggestionOnTMDB(singleSuggestion);
+      if (result) selectedMovie = result.movie;
     }
 
     if (!selectedMovie) {
-      // Ultimate fallback: trending
-      const trendingRes = await fetch(`https://api.themoviedb.org/3/trending/${searchType}/week?api_key=${TMDB_API_KEY}&language=fr-FR`);
-      const trendingData = await trendingRes.json();
-      selectedMovie = (trendingData.results || []).find((r: any) => !excludedSet.has(r.id));
+      selectedMovie = await discoverFallback();
     }
 
     if (!selectedMovie) {
       throw new Error("No non-excluded movie found on TMDB");
     }
 
-    const movieDetail = await getMovieDetails(selectedMovie.id, searchType);
-
-    // Generate embedding for the recommended movie (fire & forget)
     if (SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) {
       fetch(`${SUPABASE_URL}/functions/v1/generate-embedding`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
-        },
-        body: JSON.stringify({
-          tmdbId: movieDetail.id,
-          title: movieDetail.title || movieDetail.name,
-          overview: movieDetail.overview,
-          genres: (movieDetail.genres || []).map((g: any) => g.name),
-        }),
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}` },
+        body: JSON.stringify({ tmdbId: selectedMovie.id, title: selectedMovie.title || selectedMovie.name, overview: selectedMovie.overview, genres: (selectedMovie.genres || []).map((g: any) => g.name) }),
       }).catch(() => {});
     }
 
-    const contentLabel = searchType === "tv" ? "Cette série" : "Ce film";
     const fallbackReason = aiFailed
       ? `${contentLabel} correspond à tes genres préférés (${topGenres.slice(0, 3).join(", ")}). Pick n'a pas pu utiliser l'IA pour affiner la recommandation, mais ce titre est populaire et bien noté !`
-      : suggestion?.reason || `${contentLabel} est recommandé par Pick.`;
+      : singleSuggestion?.reason || `${contentLabel} est recommandé par Pick.`;
 
     return new Response(JSON.stringify({
-      movie: movieDetail,
+      movie: selectedMovie,
       reason: fallbackReason,
-      confidence: aiFailed ? 50 : (suggestion?.confidence || 75),
+      confidence: aiFailed ? 50 : (singleSuggestion?.confidence || 75),
       isDiscovery: shouldDiscover,
-      scores: aiFailed ? null : (suggestion?.scores || null),
+      scores: aiFailed ? null : (singleSuggestion?.scores || null),
       engineMeta: {
-        profileConfidence: confidence.score,
-        discoveryRatio: confidence.discoveryRatio,
-        acceptanceRate,
+        profileConfidence: confidence.score, discoveryRatio: confidence.discoveryRatio, acceptanceRate,
         mode: aiFailed ? "fallback" : (shouldDiscover ? "discovery" : "precision"),
-        explorationLevel,
-        mediaType: searchType,
-        embeddingCandidatesCount: embeddingCandidates.length,
-        aiFallback: aiFailed,
+        explorationLevel, mediaType: searchType, embeddingCandidatesCount: embeddingCandidates.length, aiFallback: aiFailed,
       },
-    }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
   } catch (e) {
     console.error("surprise-personalized error:", e);
     return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Erreur" }), {
