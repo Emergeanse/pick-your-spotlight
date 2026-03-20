@@ -170,6 +170,10 @@ Génère le vecteur de goût 32D, les axes sémantiques, et les métadonnées en
 
     const vector = parsed.vector;
     const tags = parsed.tags || [];
+    const semanticAxes = parsed.semantic_axes || {};
+    const safetyTags = parsed.safety_tags || [];
+    const suitabilityTags = parsed.suitability_tags || [];
+    const clusterLabels = parsed.cluster_labels || [];
 
     if (!Array.isArray(vector) || vector.length !== 32) {
       throw new Error(`Invalid vector length: ${vector?.length}`);
@@ -181,7 +185,7 @@ Génère le vecteur de goût 32D, les axes sémantiques, et les métadonnées en
     // Format as pgvector string
     const vectorStr = `[${normalized.join(",")}]`;
 
-    // Cache in DB
+    // Cache in DB with enriched data
     const { error: insertError } = await supabase
       .from("movie_embeddings")
       .upsert({
@@ -190,7 +194,17 @@ Génère le vecteur de goût 32D, les axes sémantiques, et les métadonnées en
         embedding: vectorStr,
         taste_tags: tags,
         genres: genres || [],
-      }, { onConflict: "tmdb_id" });
+        semantic_axes: semanticAxes,
+        safety_tags: safetyTags,
+        suitability_tags: suitabilityTags,
+        cluster_labels: clusterLabels,
+        year: year || null,
+        runtime: runtime || null,
+        popularity: popularity || 0,
+        vote_average: voteAverage || 0,
+        media_type: mediaType || "movie",
+        platform_ids: platformIds || [],
+      } as any, { onConflict: "tmdb_id" });
 
     if (insertError) {
       console.error("Insert error:", insertError);
@@ -199,6 +213,10 @@ Génère le vecteur de goût 32D, les axes sémantiques, et les métadonnées en
     return new Response(JSON.stringify({
       embedding: normalized,
       tasteTags: tags,
+      semanticAxes,
+      safetyTags,
+      suitabilityTags,
+      clusterLabels,
       cached: false,
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
