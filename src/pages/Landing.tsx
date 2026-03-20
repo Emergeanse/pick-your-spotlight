@@ -589,31 +589,6 @@ const Landing = () => {
         </div>
       </section>
 
-      {/* ─── CTA FINAL ─── */}
-      <section className="py-12 md:py-16 px-5 relative overflow-hidden">
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div className="w-[600px] h-[300px] rounded-full bg-primary/5 blur-[140px]" />
-        </div>
-        <div className="max-w-3xl mx-auto relative z-10 text-center">
-          <motion.div variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.3 }}>
-            <img src={pickDefault} alt="Pick" className="w-16 h-16 object-contain mx-auto mb-5 pick-float" />
-            <h2 className="text-3xl md:text-5xl font-serif mb-4 leading-tight">
-              Ce soir, c'est Pick<br />qui <span className="text-primary">choisit</span>
-            </h2>
-            <p className="text-foreground/35 font-sans text-sm md:text-base max-w-md mx-auto mb-8">
-              Rejoins les cinéphiles qui ont arrêté de perdre du temps à chercher quoi regarder.
-            </p>
-            <Button
-              size="lg"
-              className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90 font-sans font-semibold px-8 h-13 gap-2.5 text-base transition-all active:scale-[0.97] shadow-lg shadow-primary/20"
-              onClick={() => navigate("/app")}
-            >
-              Essayer Pick gratuitement
-              <ArrowRight className="w-4 h-4" />
-            </Button>
-          </motion.div>
-        </div>
-      </section>
 
       {/* ─── FOOTER ─── */}
       <footer className="border-t border-border/8 py-10 px-5">
