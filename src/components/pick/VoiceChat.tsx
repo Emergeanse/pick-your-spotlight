@@ -606,8 +606,8 @@ const VoiceChat = ({ onClose, onMovieSuggested, initialMessages, showMicGuide = 
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.6 }}
                 onClick={() => {
-                  setPhase("idle");
-                  setPickReply("");
+                  // Re-send the conversation but clarify user is alone — AI should suggest a movie
+                  sendToAI("En fait je suis seul(e), propose-moi un film directement");
                 }}
                 className="mt-4 text-foreground/40 text-xs font-sans hover:text-foreground/60 transition-colors"
               >
