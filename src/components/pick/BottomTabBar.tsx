@@ -28,7 +28,14 @@ const BottomTabBar = () => {
             <button
               key={tab.id}
               data-tour={`tab-${tab.id}`}
-              onClick={() => navigate(tab.path)}
+              onClick={() => {
+                if (tab.id === "home" && location.pathname === "/app") {
+                  // Already on home — dispatch event to reset to homepage
+                  window.dispatchEvent(new Event("pick-reset-home"));
+                } else {
+                  navigate(tab.path);
+                }
+              }}
               className="relative flex flex-col items-center justify-center gap-0.5 w-16 h-full transition-colors"
               style={{ WebkitTapHighlightColor: "transparent" }}
             >

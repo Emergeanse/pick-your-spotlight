@@ -401,12 +401,22 @@ const Index = () => {
   };
 
 
-  const handleRestart = () => {
+  const handleRestart = useCallback(() => {
     setStep("home");
     setResults([]);
     setCurrentResultIndex(0);
     setSearchTags([]);
-  };
+    setShowChat(false);
+    setChatInitialMessages(undefined);
+    setChatSuggestedMovies(null);
+  }, []);
+
+  // Listen for home tab re-tap to reset to homepage
+  useEffect(() => {
+    const handler = () => handleRestart();
+    window.addEventListener("pick-reset-home", handler);
+    return () => window.removeEventListener("pick-reset-home", handler);
+  }, [handleRestart]);
 
   const handleRemoveTag = (tag: string) => {
     setSearchTags(prev => prev.filter(t => t !== tag));
