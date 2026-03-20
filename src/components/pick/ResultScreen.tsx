@@ -393,7 +393,11 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({
     setLikeLoading(true);
     try {
       if (liked) { await unlikeMovie(movie.id); setLiked(false); toast.success("Retiré des favoris"); trackInteraction(movie.id, "unliked"); }
-      else { await likeMovie(movie); setLiked(true); toast.success("Ajouté aux favoris !"); trackInteraction(movie.id, "liked"); }
+      else {
+        await likeMovie(movie); setLiked(true); toast.success("Ajouté aux favoris !");
+        trackInteraction(movie.id, "liked");
+        updateRecommendationReaction(movie.id, "accepted", "liked");
+      }
     } catch { toast.error("Erreur lors de la sauvegarde"); }
     finally { setLikeLoading(false); }
   };
