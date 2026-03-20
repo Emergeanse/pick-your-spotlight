@@ -164,8 +164,8 @@ const MoviePreviewSheet = ({
         </div>
         <div className="shrink-0 px-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] pt-3 border-t border-border/10 bg-card">
           <Button size="lg" className="w-full rounded-2xl bg-primary text-primary-foreground hover:bg-primary/90 font-sans font-semibold h-13 gap-2.5 text-base neon-glow transition-all active:scale-[0.97]" onClick={onWatch}>
-            <Play className="w-4 h-4 fill-current" />
-            Voir la fiche complète
+            <Tv className="w-4 h-4" />
+            Je regarde
           </Button>
         </div>
       </motion.div>
