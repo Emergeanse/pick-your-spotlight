@@ -249,7 +249,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
       clearInterval(msgInterval);
       setSurpriseMsg("✨ Trouvé !");
       await new Promise(r => setTimeout(r, 400));
-      onSurprise(movie);
+      onSurprise([movie]);
     } catch (e) {
       console.error(e);
       try {
