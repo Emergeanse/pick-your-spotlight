@@ -144,7 +144,10 @@ ${embeddingSection}
 
 RÈGLES :
 - Réponds UNIQUEMENT avec un JSON valide sans backticks
-- Structure : {"title": "<titre exact>", "reason": "<2-3 phrases>", "confidence": <0-100>, "scores": {"taste": <0-100>, "context": <0-100>, "embedding": <0-100>, "behaviour": <0-100>, "rating": <0-100>, "novelty": <0-100>}}
+${requestedCount > 1 ? `- Structure : {"suggestions": [{"title": "<titre exact>", "reason": "<2-3 phrases>", "confidence": <0-100>, "scores": {"taste": <0-100>, "context": <0-100>, "embedding": <0-100>, "behaviour": <0-100>, "rating": <0-100>, "novelty": <0-100>}}, ...]}
+- Fournis EXACTEMENT ${requestedCount} suggestions DIFFÉRENTES, classées par pertinence décroissante
+- Chaque suggestion doit être un(e) ${searchType === "tv" ? "série" : "film"} DIFFÉRENT(E) — pas de doublons
+- Varie les styles et sous-genres entre les suggestions tout en restant pertinent` : `- Structure : {"title": "<titre exact>", "reason": "<2-3 phrases>", "confidence": <0-100>, "scores": {"taste": <0-100>, "context": <0-100>, "embedding": <0-100>, "behaviour": <0-100>, "rating": <0-100>, "novelty": <0-100>}}`}
 - Ne recommande JAMAIS un film déjà dans la liste ni un film avec l'un de ces IDs TMDB : ${normalizedExcludeIds.length > 0 ? normalizedExcludeIds.join(", ") : "aucun"}
 - ${shouldDiscover || effectiveOutOfComfortZone ? "MODE DÉCOUVERTE/EXPLORATION activé selon le niveau d'exploration ci-dessus." : "MODE PRÉCISION : colle au plus près des micro-genres et clusters identifiés. Si des candidats par embedding sont disponibles, privilégie-les."}
 ${effectiveOutOfComfortZone ? `- MODE "HORS ZONE DE CONFORT" ACTIVÉ : Le film recommandé DOIT être VOLONTAIREMENT en dehors des genres et micro-genres habituels de l'utilisateur. Choisis un genre qu'il ne regarde JAMAIS. Explique dans "reason" pourquoi tu sors de ses habitudes et ce qu'il pourrait y trouver. Commence la raison par "Changement radical :".` : ""}
@@ -165,7 +168,7 @@ ${heavilySkippedGenres.length > 0 ? `Genres souvent refusés : ${heavilySkippedG
 ${shouldDiscover ? "→ MODE DÉCOUVERTE" : "→ MODE PRÉCISION"} | Niveau d'exploration : ${explorationLevel}/10 (${explorationModeLabel})
 ${rejectionSection}
 
-Recommande UN film avec les scores détaillés.`;
+Recommande ${requestedCount > 1 ? `${requestedCount} films/séries` : "UN film"} avec les scores détaillés.`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
