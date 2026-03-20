@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { Star, TrendingUp, Gem, Sparkles } from "lucide-react";
 import { getTrendingMovies, getHiddenGems, getTonightsPick, getPosterUrl, getDisplayTitle, getMovieDetails } from "@/lib/tmdb";
 import type { Movie, MovieDetail } from "@/lib/tmdb";
+import MovieActionBar from "./MovieActionBar";
 
 interface DiscoverySectionProps {
   onMovieSelect: (movie: MovieDetail) => void;
