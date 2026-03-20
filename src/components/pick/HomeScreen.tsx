@@ -754,7 +754,34 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
                     On regarde ?
                   </Button>
 
-                   <MovieActionBar movie={tonightPick} />
+                   <MovieActionBar movie={tonightPick} onInteraction={(type) => {
+                     if (!tonightPick) return;
+                     if (type === "already_seen" || type === "dislike") {
+                       if (tonightPool.length > 1 && tonightPickIndex < tonightPool.length - 1) {
+                         const newIndex = tonightPickIndex + 1;
+                         setTonightPickIndex(newIndex);
+                         setTonightMaxSeen(prev => Math.max(prev, newIndex));
+                         const nextMovie = tonightPool[newIndex];
+                         setTonightPick(nextMovie);
+                         setTonightProviders([]);
+                         const mediaType = nextMovie.first_air_date ? "tv" : "movie";
+                         getWatchProviders(nextMovie.id, mediaType).then(setTonightProviders).catch(() => {});
+                       } else {
+                         const nextRejected = [...rejectedIds, tonightPick.id];
+                         const rejContext = {
+                           reason: type === "already_seen" ? "seen" as const : "not_my_style" as const,
+                           rejectedGenres: (tonightPick.genres || []).map(g => g.name),
+                           rejectedTitle: getDisplayTitle(tonightPick),
+                         };
+                         setRejectedIds(nextRejected);
+                         setTonightPick(null);
+                         setChatMoviesPool(null);
+                         setTonightPickIndex(0);
+                         setTonightMaxSeen(0);
+                         generateTonightPick(nextRejected, rejContext);
+                       }
+                     }
+                   }} />
 
                    <div className="flex items-center gap-4 mt-2">
                     <button
