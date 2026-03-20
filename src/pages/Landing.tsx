@@ -259,7 +259,7 @@ const Landing = () => {
             transition={{ duration: 0.6, delay: 0.4 }}
             className="text-foreground/40 text-base md:text-lg font-sans font-light max-w-lg mx-auto mb-8 leading-relaxed"
           >
-            Pick analyse tes goûts et ton humeur pour te trouver le film parfait en quelques secondes. Plus de débat, plus d'hésitation.
+            Pick comprend tes goûts et ton humeur pour te trouver le film parfait en quelques secondes. Plus de débat, plus d'hésitation.
           </motion.p>
 
           {/* Single CTA */}
