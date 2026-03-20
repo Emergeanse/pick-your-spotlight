@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import WatchlistPage from "@/components/pick/WatchlistPage";
-import BottomTabBar from "@/components/pick/BottomTabBar";
+
 import type { MovieDetail } from "@/lib/tmdb";
 
 const WatchlistRoute = () => {
