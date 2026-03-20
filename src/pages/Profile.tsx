@@ -82,8 +82,6 @@ const Profile = () => {
       setSelectedPlatforms(data?.preferred_platforms || []);
       setMinRating((data as any)?.min_rating || 0);
       setMediaPreference((data as any)?.media_preference || "both");
-      setRitualEnabled(data?.ritual_enabled || false);
-      setRitualTime(data?.ritual_time || "20:00");
       setDisplayName(data?.display_name || user.email?.split("@")[0] || "");
       setAvatarUrl((data as any)?.avatar_url || null);
       setEngagement(engData);
