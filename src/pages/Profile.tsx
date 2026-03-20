@@ -36,18 +36,6 @@ const Profile = () => {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
-  // Friend management state
-  const [myFriendCode, setMyFriendCode] = useState("");
-  const [codeCopied, setCodeCopied] = useState(false);
-  const [friends, setFriends] = useState<any[]>([]);
-  const [friendsLoading, setFriendsLoading] = useState(true);
-  const [addCode, setAddCode] = useState("");
-  const [addingFriend, setAddingFriend] = useState(false);
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [showQR, setShowQR] = useState(false);
-  const [selectedFriend, setSelectedFriend] = useState<any>(null);
-  const [friendProfile, setFriendProfile] = useState<any>(null);
-  const [loadingFriendProfile, setLoadingFriendProfile] = useState(false);
 
   useEffect(() => {
     if (!isReady) return;
