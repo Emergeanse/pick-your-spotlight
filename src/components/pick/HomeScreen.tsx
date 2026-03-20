@@ -689,9 +689,29 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
                   </p>
                 )}
 
-                <p className="text-foreground/40 text-[13px] font-sans italic mb-4">
-                  Pick pense que {tonightPick.first_air_date ? "cette série est parfaite" : "ce film est parfait"} pour toi.
-                </p>
+                {(() => {
+                  const matchInfo = movieMatchData[tonightPick.id];
+                  if (matchInfo?.confidence) {
+                    return (
+                      <div className="flex flex-col items-center gap-1 mb-4">
+                        <div className="flex items-center gap-2">
+                          <span className="text-primary text-lg font-sans font-bold">{matchInfo.confidence}%</span>
+                          <span className="text-foreground/40 text-[12px] font-sans">match</span>
+                        </div>
+                        {matchInfo.reason && (
+                          <p className="text-foreground/50 text-[11px] font-sans text-center leading-snug max-w-[260px]">
+                            {matchInfo.reason}
+                          </p>
+                        )}
+                      </div>
+                    );
+                  }
+                  return (
+                    <p className="text-foreground/40 text-[13px] font-sans italic mb-4">
+                      Pick pense que {tonightPick.first_air_date ? "cette série est parfaite" : "ce film est parfait"} pour toi.
+                    </p>
+                  );
+                })()}
 
                 <div className="flex flex-col items-center gap-4 w-full">
                   <Button
