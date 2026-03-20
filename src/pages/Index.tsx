@@ -372,8 +372,13 @@ const Index = () => {
               excludedGenres: profilePrefs.excludedGenres,
               minRating: profilePrefs.minRating,
               excludeIds, rejectionContext,
+              count: 5,
             });
-            if (data?.movie) {
+            if (data?.movies && data.movies.length > 0) {
+              const newMovies = data.movies.map((m: any) => m.movie);
+              setResults(prev => [...prev, ...newMovies]);
+              setCurrentResultIndex(i => i + 1);
+            } else if (data?.movie) {
               setResults(prev => [...prev, data.movie]);
               setCurrentResultIndex(i => i + 1);
             }
