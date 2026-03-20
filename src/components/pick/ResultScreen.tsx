@@ -23,10 +23,19 @@ const CONFIDENCE_THRESHOLD = 30;
 // ── Inlined sub-components ──────────────────────────────────────────
 
 interface MatchData {
+  matchScore?: number;
   score?: number;
+  headline?: string;
+  whyItMatches?: string;
+  detailedExplanation?: string;
+  emotionalJourney?: string;
+  perfectFor?: string;
+  funFact?: string;
   summary?: string;
   reasons?: string[];
   tone?: string;
+  matchingReasons?: string[];
+  pickNote?: string | null;
 }
 
 const ActorCard = ({ actor }: { actor: CastMember }) => (
