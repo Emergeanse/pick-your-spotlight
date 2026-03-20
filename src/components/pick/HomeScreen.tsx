@@ -607,20 +607,20 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
               </button>
             </div>
 
-            <div className="relative z-10 flex-1 flex flex-col items-center justify-end px-6 pb-[calc(5rem+env(safe-area-inset-bottom))] overflow-y-auto">
+            <div className="relative z-10 flex-1 flex flex-col items-center justify-center px-6 pb-[calc(5rem+env(safe-area-inset-bottom))]">
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 }}
                 className="flex flex-col items-center text-center max-w-sm"
               >
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/15 border border-primary/25 mb-4">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/15 border border-primary/25 mb-3">
                   <Sparkles className="w-3 h-3 text-primary" />
                   <span className="text-primary text-[11px] font-sans font-semibold">{getTonightPickLabel()}</span>
                 </div>
 
                 {tonightPick.poster_path && (
-                  <div className="relative flex items-center gap-3 mb-4">
+                  <div className="relative flex items-center gap-3 mb-3">
                     {showArrows && (
                       <button
                         onClick={() => navigateTonightPick("prev")}
@@ -637,7 +637,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
                       transition={{ duration: 0.3, type: "spring", stiffness: 200 }}
                       src={getPosterUrl(tonightPick.poster_path, "w342") || ""}
                       alt={getDisplayTitle(tonightPick)}
-                      className="w-36 h-52 md:w-44 md:h-64 rounded-xl object-cover shadow-2xl border border-border/20"
+                      className="w-32 h-48 md:w-40 md:h-56 rounded-xl object-cover shadow-2xl border border-border/20"
                     />
                     {showArrows && (
                       <button
@@ -652,12 +652,12 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
                 )}
 
                 {showArrows && (
-                  <p className="text-foreground/30 text-[10px] font-sans mb-2">
+                  <p className="text-foreground/30 text-[10px] font-sans mb-1">
                     {tonightPickIndex + 1} / {tonightMaxSeen + 1}
                   </p>
                 )}
 
-                <h2 className="text-xl md:text-2xl font-serif text-foreground mb-1">
+                <h2 className="text-lg md:text-xl font-serif text-foreground mb-0.5">
                   {getDisplayTitle(tonightPick)}
                 </h2>
 
@@ -668,7 +668,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
                 )}
 
                 {tonightProviders.length > 0 && (
-                  <div className="flex items-center gap-2 mb-4">
+                  <div className="flex items-center gap-2 mb-3">
                     <span className="text-foreground/30 text-[10px] font-sans">Dispo sur</span>
                     <div className="flex gap-1.5">
                       {tonightProviders.map((p) => (
@@ -683,20 +683,15 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
                   </div>
                 )}
 
-                {tonightPick.overview && (
-                  <p className="text-foreground/50 text-[12px] font-sans leading-relaxed line-clamp-3 mb-6">
-                    {tonightPick.overview}
-                  </p>
-                )}
-
                 {(() => {
                   const matchInfo = movieMatchData[tonightPick.id];
                   if (matchInfo?.confidence) {
                     return (
-                      <div className="flex flex-col items-center gap-1 mb-4">
+                      <div className="flex flex-col items-center gap-1 mb-3">
                         <div className="flex items-center gap-2">
+                          <Target className="w-4 h-4 text-primary" />
                           <span className="text-primary text-lg font-sans font-bold">{matchInfo.confidence}%</span>
-                          <span className="text-foreground/40 text-[12px] font-sans">match</span>
+                          <span className="text-foreground/40 text-[11px] font-sans">match</span>
                         </div>
                         {matchInfo.reason && (
                           <p className="text-foreground/50 text-[11px] font-sans text-center leading-snug max-w-[260px]">
@@ -707,7 +702,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
                     );
                   }
                   return (
-                    <p className="text-foreground/40 text-[13px] font-sans italic mb-4">
+                    <p className="text-foreground/40 text-[12px] font-sans italic mb-3">
                       Pick pense que {tonightPick.first_air_date ? "cette série est parfaite" : "ce film est parfait"} pour toi.
                     </p>
                   );
