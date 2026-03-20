@@ -416,6 +416,17 @@ ANNÉE EN COURS : ${currentYear}`;
         }
       }
 
+      // If detail is null, no valid movie was found
+      if (!detail) {
+        return new Response(JSON.stringify({
+          type: "text",
+          reply: "Je n'ai pas trouvé ce titre. Peux-tu reformuler ou me donner plus de détails ? 🎬",
+          movie: null,
+        }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
       // Rating check passed — fetch 4 similar movies to build a pool of 5
       const similarMovies = await getSimilarMovies(
         detail.id,
