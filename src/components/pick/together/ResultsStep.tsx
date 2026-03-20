@@ -41,10 +41,10 @@ const ResultsStep = ({ hero, alternatives, selectedCount, heroReaction, onReject
 
         <div className="relative z-10 flex flex-col items-center justify-end min-h-[70vh] px-6 pb-6">
           <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
-            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/15 border border-primary/25 backdrop-blur-sm mb-4"
+            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-card/40 backdrop-blur-md border border-primary/20 mb-4"
           >
-            <Sparkles className="w-3.5 h-3.5 text-primary" />
-            <span className="text-primary text-xs font-sans font-semibold tracking-wide">Pick Together</span>
+            <Sparkles className="w-3.5 h-3.5 text-primary/70" />
+            <span className="text-primary/80 text-[11px] font-sans font-semibold tracking-wide uppercase">Together</span>
           </motion.div>
 
           {hero.movie.poster_path && (

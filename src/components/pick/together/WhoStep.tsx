@@ -2,7 +2,6 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Users, Check, UserPlus, X, Plus, QrCode, Share2, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import PickCharacter from "@/components/pick/PickCharacter";
 import { QRCodeSVG } from "qrcode.react";
 import { toast } from "sonner";
 
@@ -86,15 +85,13 @@ const WhoStep = ({
     >
       <div className="max-w-lg mx-auto">
         {/* Conversational header */}
-        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-8 mt-4">
-          <PickCharacter mood="wave" size="sm" animate />
-          <div className="mt-4 bg-card/60 backdrop-blur-sm rounded-2xl p-4 border border-border/10 relative">
-            <div className="absolute -top-2 left-8 w-4 h-4 bg-card/60 border-l border-t border-border/10 rotate-45" />
-            <p className="text-foreground text-[15px] font-sans leading-relaxed">
-              Super, une soirée ciné à plusieurs ! 🍿<br />
-              <span className="text-foreground/60">Qui sera là ce soir ?</span>
-            </p>
-          </div>
+        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-6 mt-4">
+          <h2 className="text-2xl font-serif mb-1.5" style={{ lineHeight: "1.15" }}>
+            Qui sera là ?
+          </h2>
+          <p className="text-foreground/35 text-[13px] font-sans">
+            Sélectionne tes amis ou ajoute des invités
+          </p>
         </motion.div>
 
         {/* Current user */}

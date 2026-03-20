@@ -1,14 +1,13 @@
 import { motion } from "framer-motion";
-import { Sparkles, Wind, Flame, Laugh, Heart } from "lucide-react";
+import { Sparkles, CloudSun, Flame, Laugh, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import PickCharacter from "@/components/pick/PickCharacter";
 import type { Friend } from "./WhoStep";
 
-const MOODS: { id: string; label: string; emoji: string }[] = [
-  { id: "relax", label: "On veut se détendre", emoji: "😌" },
-  { id: "excited", label: "Quelque chose d'intense", emoji: "🔥" },
-  { id: "fun", label: "On veut rigoler", emoji: "😂" },
-  { id: "romantic", label: "Un moment émotion", emoji: "💕" },
+const MOODS: { id: string; label: string; desc: string; icon: React.ElementType; color: string }[] = [
+  { id: "relax", label: "Détente", desc: "Tranquille, posé, feel-good", icon: CloudSun, color: "from-blue-500/15 to-sky-400/5" },
+  { id: "excited", label: "Intensité", desc: "Suspense, action, adrénaline", icon: Flame, color: "from-orange-500/15 to-red-400/5" },
+  { id: "fun", label: "Rire", desc: "Comédie, léger, fun", icon: Laugh, color: "from-yellow-500/15 to-amber-400/5" },
+  { id: "romantic", label: "Émotion", desc: "Romance, drame, profond", icon: Heart, color: "from-pink-500/15 to-rose-400/5" },
 ];
 
 interface MoodStepProps {
@@ -24,76 +23,94 @@ const MoodStep = ({ mood, onSetMood, onStart, selectedCount, selectedFriends }: 
     className="h-full overflow-y-auto pt-16 pb-8 px-5"
   >
     <div className="max-w-lg mx-auto">
-      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-8 mt-4">
-        <PickCharacter mood="default" size="sm" animate={false} />
-        <div className="mt-4 bg-card/60 backdrop-blur-sm rounded-2xl p-4 border border-border/10 relative">
-          <div className="absolute -top-2 left-8 w-4 h-4 bg-card/60 border-l border-t border-border/10 rotate-45" />
-          <p className="text-foreground text-[15px] font-sans leading-relaxed">
-            Parfait, vous êtes {selectedCount} ! 🎬<br />
-            <span className="text-foreground/60">C'est quoi l'ambiance ce soir ?</span>
-          </p>
+      {/* Header */}
+      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-8 mt-6">
+        <div className="flex items-center gap-3 mb-5">
+          <div className="flex -space-x-2">
+            <div className="w-8 h-8 rounded-full bg-primary/15 border-2 border-background flex items-center justify-center z-10">
+              <span className="text-[9px] font-bold text-primary">Toi</span>
+            </div>
+            {selectedFriends.slice(0, 3).map((f, i) => (
+              <div key={f.id} className="w-8 h-8 rounded-full bg-card border-2 border-background flex items-center justify-center overflow-hidden" style={{ zIndex: 9 - i }}>
+                {f.avatarUrl ? (
+                  <img src={f.avatarUrl} alt="" className="w-full h-full rounded-full object-cover" />
+                ) : (
+                  <span className="text-[9px] font-bold text-foreground/40">{f.displayName[0]}</span>
+                )}
+              </div>
+            ))}
+            {selectedCount > 4 && (
+              <div className="w-8 h-8 rounded-full bg-card border-2 border-background flex items-center justify-center">
+                <span className="text-[9px] font-sans font-bold text-foreground/30">+{selectedCount - 4}</span>
+              </div>
+            )}
+          </div>
+          <span className="text-foreground/25 text-[11px] font-sans">{selectedCount} personnes</span>
         </div>
+
+        <h2 className="text-2xl font-serif mb-1.5" style={{ lineHeight: "1.15" }}>
+          Quelle ambiance<br />pour ce soir ?
+        </h2>
+        <p className="text-foreground/35 text-[13px] font-sans">Choisis une vibe ou laisse Pick décider</p>
       </motion.div>
 
-      {/* Group avatars */}
-      <div className="flex items-center gap-2 mb-6">
-        <div className="flex -space-x-2">
-          <div className="w-7 h-7 rounded-full bg-primary/20 border-2 border-background flex items-center justify-center z-10">
-            <span className="text-[9px] font-bold text-primary">Toi</span>
-          </div>
-          {selectedFriends.slice(0, 4).map((f, i) => (
-            <div key={f.id} className="w-7 h-7 rounded-full bg-card border-2 border-background flex items-center justify-center" style={{ zIndex: 9 - i }}>
-              {f.avatarUrl ? (
-                <img src={f.avatarUrl} alt="" className="w-full h-full rounded-full object-cover" />
-              ) : (
-                <span className="text-[9px] font-bold text-foreground/50">{f.displayName[0]}</span>
-              )}
-            </div>
-          ))}
-        </div>
-        <span className="text-foreground/30 text-[11px] font-sans">{selectedCount} personnes</span>
-      </div>
-
       {/* Mood cards */}
-      <div className="grid grid-cols-2 gap-3 mb-8">
+      <div className="grid grid-cols-2 gap-3 mb-10">
         {MOODS.map((m, i) => {
           const selected = mood === m.id;
+          const Icon = m.icon;
           return (
             <motion.button
               key={m.id}
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.15 + i * 0.06 }}
-              whileTap={{ scale: 0.95 }}
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.15 + i * 0.06, duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+              whileTap={{ scale: 0.96 }}
               onClick={() => onSetMood(mood === m.id ? null : m.id)}
-              className={`relative p-4 rounded-2xl border text-left transition-all duration-200 ${
+              className={`relative p-4 pb-5 rounded-2xl border text-left transition-all duration-300 overflow-hidden ${
                 selected
-                  ? "bg-primary/10 border-primary/30 shadow-[0_0_25px_-5px_hsl(var(--primary)/0.3)]"
-                  : "bg-card/40 border-border/10 hover:border-border/25"
+                  ? "bg-primary/8 border-primary/30 shadow-[0_0_30px_-8px_hsl(var(--primary)/0.25)]"
+                  : "bg-card/40 border-border/10 hover:border-border/20"
               }`}
             >
-              <span className="text-2xl mb-2 block">{m.emoji}</span>
-              <span className={`text-sm font-sans font-medium block transition-colors ${selected ? "text-foreground" : "text-foreground/70"}`}>
-                {m.label}
-              </span>
+              {/* Gradient bg */}
+              <div className={`absolute inset-0 bg-gradient-to-br ${m.color} opacity-${selected ? "100" : "0"} transition-opacity duration-300`} />
+              <div className="relative z-10">
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-3 transition-colors duration-300 ${
+                  selected ? "bg-primary/15 border border-primary/25" : "bg-foreground/5 border border-border/10"
+                }`}>
+                  <Icon className={`w-5 h-5 transition-colors duration-300 ${selected ? "text-primary" : "text-foreground/30"}`} />
+                </div>
+                <span className={`text-sm font-sans font-semibold block mb-0.5 transition-colors ${selected ? "text-foreground" : "text-foreground/65"}`}>
+                  {m.label}
+                </span>
+                <span className={`text-[11px] font-sans transition-colors ${selected ? "text-foreground/50" : "text-foreground/25"}`}>
+                  {m.desc}
+                </span>
+              </div>
             </motion.button>
           );
         })}
       </div>
 
       {/* Actions */}
-      <div className="space-y-3">
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.45 }}
+        className="space-y-3"
+      >
         <Button onClick={() => onStart(false)}
-          className="w-full rounded-2xl h-14 gap-2 bg-primary text-primary-foreground hover:bg-primary/90 font-sans text-base neon-glow shadow-[0_0_30px_-5px_hsl(var(--primary)/0.4)]"
+          className="w-full rounded-2xl h-14 gap-2 bg-primary text-primary-foreground hover:bg-primary/90 font-sans text-[15px] font-medium neon-glow shadow-[0_0_30px_-5px_hsl(var(--primary)/0.4)]"
         >
           <Sparkles className="w-4 h-4" />Trouver le film parfait
         </Button>
         <button onClick={() => onStart(true)}
-          className="w-full text-center text-foreground/30 text-xs font-sans hover:text-foreground/50 transition-colors py-2"
+          className="w-full text-center text-foreground/25 text-xs font-sans hover:text-foreground/40 transition-colors py-2"
         >
           Passer — surprise totale
         </button>
-      </div>
+      </motion.div>
     </div>
   </motion.div>
 );
