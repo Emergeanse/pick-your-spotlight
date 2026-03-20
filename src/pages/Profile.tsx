@@ -460,58 +460,7 @@ const Profile = () => {
           </div>
         </motion.div>
 
-        {/* ─── Milestones — Visual Badges ─── */}
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="mb-8">
-          <h2 className="text-lg font-serif mb-3">Tes jalons</h2>
-          <div className="flex flex-wrap gap-2">
-            {MILESTONES.map(m => {
-              const reached = totalRecos >= m.count;
-              return (
-                <div
-                  key={m.count}
-                  className={`flex items-center gap-2 px-3.5 py-2 rounded-full border text-sm font-sans ${
-                    reached
-                      ? "bg-primary/[0.08] border-primary/20 text-foreground"
-                      : "bg-card/30 border-border/10 text-foreground/20"
-                  }`}
-                >
-                  <span className={reached ? "" : "grayscale opacity-40"}>{m.emoji}</span>
-                  <span className="font-medium">{reached ? m.label : "???"}</span>
-                </div>
-              );
-            })}
-          </div>
-        </motion.div>
 
-        {/* ─── Evening Ritual ─── */}
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }} className="mb-8">
-          <h2 className="text-lg font-serif mb-3">Rituel du soir</h2>
-          <div className="bg-card rounded-2xl p-4 border border-border/10">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <Bell className="w-4 h-4 text-primary/60" />
-                <span className="font-sans text-sm">Rappel quotidien</span>
-              </div>
-              <button
-                onClick={() => setRitualEnabled(!ritualEnabled)}
-                className={`w-11 h-6 rounded-full transition-colors ${ritualEnabled ? "bg-primary" : "bg-foreground/15"}`}
-              >
-                <div className={`w-5 h-5 rounded-full bg-white shadow-sm transition-transform ${ritualEnabled ? "translate-x-5.5" : "translate-x-0.5"}`} />
-              </button>
-            </div>
-            {ritualEnabled && (
-              <div className="flex items-center gap-2">
-                <Clock className="w-3.5 h-3.5 text-foreground/40" />
-                <input
-                  type="time"
-                  value={ritualTime}
-                  onChange={(e) => setRitualTime(e.target.value)}
-                  className="bg-transparent text-foreground text-sm font-sans border border-border/20 rounded-lg px-3 py-1.5 focus:outline-none focus:border-primary/40"
-                />
-              </div>
-            )}
-          </div>
-        </motion.div>
 
         {/* ─── Mes Amis ─── */}
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.28 }} className="mb-8">
