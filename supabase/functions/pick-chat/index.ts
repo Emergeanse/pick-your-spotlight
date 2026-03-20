@@ -147,10 +147,13 @@ ${genreInstruction}
 RÈGLE CRITIQUE — RECOMMANDATION :
 Recommande immédiatement (appelle suggest_movie) si l'utilisateur donne AU MOINS UN signal :
 - Une humeur ("fatigué", "envie de rigoler", "intense")
-- Un contexte ("avec ma copine", "entre potes", "seul")
+- Un contexte SOLO ("seul ce soir", "rien à faire")
 - Un genre ("thriller", "comédie", "SF")
 - Une référence ("comme Inception", "style Tarantino")
 - Une demande même vague ("un bon film", "quelque chose de bien", "un truc ce soir")
+
+RÈGLE GROUPE — TRÈS IMPORTANT :
+Si l'utilisateur mentionne qu'il est avec d'autres personnes (copine, potes, famille, groupe, "on est deux/trois/plusieurs", "soirée entre amis", "avec ma meuf", "entre potes"...), appelle l'outil suggest_pick_together au lieu de suggest_movie. Le mode Pick Together est conçu pour les groupes.
 
 Pose une question UNIQUEMENT si le message ne contient AUCUN signal (ex: juste "Salut").
 Maximum 1 question avant de proposer un film.
@@ -199,7 +202,10 @@ RÈGLE CRITIQUE : Tu fais de la recommandation de films et séries uniquement.
 - Si l'utilisateur parle de hors-sujet → "Hé, moi c'est trouver ton film du soir ! 🎬 Dis-moi ton humeur."
 
 Recommande immédiatement (appelle suggest_movie) si l'utilisateur donne AU MOINS UN signal :
-- Une humeur, un contexte, un genre, une référence, une demande même vague
+- Une humeur, un genre, une référence, une demande même vague
+
+RÈGLE GROUPE — TRÈS IMPORTANT :
+Si l'utilisateur mentionne qu'il est avec d'autres personnes (copine, potes, famille, groupe, "on est deux/trois/plusieurs", "soirée entre amis", "avec ma meuf", "entre potes"...), appelle l'outil suggest_pick_together au lieu de suggest_movie.
 
 Pose une question UNIQUEMENT si le message ne contient AUCUN signal.
 Maximum 1 question avant de proposer.
@@ -242,6 +248,21 @@ ANNÉE EN COURS : ${currentYear}`;
               },
             },
             required: ["title", "type", "reason", "recap"],
+            additionalProperties: false,
+          },
+        },
+      },
+      {
+        type: "function",
+        function: {
+          name: "suggest_pick_together",
+          description: "Propose le mode Pick Together quand l'utilisateur mentionne qu'il est avec d'autres personnes (copine, potes, famille, groupe, 'on est deux/trois/plusieurs', soirée entre amis, etc.)",
+          parameters: {
+            type: "object",
+            properties: {
+              message: { type: "string", description: "Message amical en français expliquant que Pick Together est parfait pour eux" },
+            },
+            required: ["message"],
             additionalProperties: false,
           },
         },
@@ -316,6 +337,17 @@ ANNÉE EN COURS : ${currentYear}`;
       }
 
       const toolCall = message.tool_calls[0];
+
+      // Handle suggest_pick_together tool
+      if (toolCall.function.name === "suggest_pick_together") {
+        const args = JSON.parse(toolCall.function.arguments);
+        return new Response(JSON.stringify({
+          type: "pick_together",
+          reply: args.message || "Vous êtes plusieurs ? Parfait, lance Pick Together pour trouver un film qui plaît à tout le monde ! 🎬",
+        }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
       
       if (toolCall.function.name !== "suggest_movie") break;
 

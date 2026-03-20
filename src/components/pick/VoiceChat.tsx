@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Mic, MicOff, X, Send, Loader2, Sparkles, Check, MessageCircle } from "lucide-react";
+import { Mic, MicOff, X, Send, Loader2, Sparkles, Check, MessageCircle, Users } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useScribe, CommitStrategy } from "@elevenlabs/react";
@@ -72,7 +73,7 @@ function getContextualSuggestions(): { label: string; message: string }[] {
   return suggestions.sort((a, b) => b.weight - a.weight).slice(0, 3);
 }
 
-type Phase = "idle" | "listening" | "processing" | "recap" | "conversation";
+type Phase = "idle" | "listening" | "processing" | "recap" | "conversation" | "pick_together";
 
 // Sound wave bars animation
 const SoundWave = () => (
@@ -89,6 +90,7 @@ const SoundWave = () => (
 );
 
 const VoiceChat = ({ onClose, onMovieSuggested, initialMessages, showMicGuide = false }: VoiceChatProps) => {
+  const navigate = useNavigate();
   const [phase, setPhase] = useState<Phase>("idle");
   const [userText, setUserText] = useState("");
   const [recapTags, setRecapTags] = useState<string[]>([]);
@@ -194,6 +196,12 @@ const VoiceChat = ({ onClose, onMovieSuggested, initialMessages, showMicGuide = 
         setTimeout(() => {
           onMovieSuggested(movies, recap);
         }, recap.length > 0 ? 1800 : 800);
+      } else if (data?.type === "pick_together") {
+        // AI detected group context — propose Pick Together
+        const assistantMsg: ChatMessage = { role: "assistant", content: data.reply };
+        setConversationHistory([...fullHistory, assistantMsg]);
+        setPickReply(data.reply);
+        setPhase("pick_together");
       } else if (data?.reply) {
         // Pick asked a follow-up question — show it and let user respond
         const assistantMsg: ChatMessage = { role: "assistant", content: data.reply };
@@ -561,6 +569,50 @@ const VoiceChat = ({ onClose, onMovieSuggested, initialMessages, showMicGuide = 
               >
                 Réponds par la voix ou en tapant ci-dessous
               </motion.p>
+            </motion.div>
+          )}
+          {/* PICK TOGETHER — AI detected group */}
+          {phase === "pick_together" && (
+            <motion.div
+              key="pick_together"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.3 }}
+              className="flex flex-col items-center text-center"
+            >
+              <PickCharacter mood="default" message={pickReply} size="md" animate={false} />
+
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4 }}
+              >
+                <Button
+                  size="lg"
+                  className="mt-6 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 font-sans font-semibold px-8 h-12 gap-2 text-base neon-glow transition-all active:scale-[0.97]"
+                  onClick={() => {
+                    onClose();
+                    navigate("/app/pick-together");
+                  }}
+                >
+                  <Users className="w-5 h-5" />
+                  Lancer Pick Together
+                </Button>
+              </motion.div>
+
+              <motion.button
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.6 }}
+                onClick={() => {
+                  setPhase("idle");
+                  setPickReply("");
+                }}
+                className="mt-4 text-foreground/40 text-xs font-sans hover:text-foreground/60 transition-colors"
+              >
+                Non, je suis seul(e)
+              </motion.button>
             </motion.div>
           )}
         </AnimatePresence>

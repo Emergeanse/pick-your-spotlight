@@ -475,14 +475,18 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
                     >
                       <h3 className="text-center text-base font-sans font-semibold text-foreground mb-1">Comment veux-tu chercher ?</h3>
 
-                      {/* Option 1: Auto pick */}
+                      {/* Option 1: Auto pick — direct to Tonight's Pick */}
                       <motion.button
                         whileTap={{ scale: 0.97 }}
                         onClick={() => {
                           setShowFindChoice(false);
                           setPickAnimating(true);
                           setTimeout(() => setPickAnimating(false), 900);
-                          setFlowStep("who");
+                          setTonightPick(null);
+                          setChatMoviesPool(null);
+                          setTonightPickIndex(0);
+                          setTonightMaxSeen(0);
+                          generateTonightPick(rejectedIds);
                         }}
                         className="group w-full text-left rounded-xl p-4 bg-primary/10 border border-primary/30 hover:border-primary/50 hover:bg-primary/15 transition-all"
                       >
@@ -492,7 +496,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
                           </div>
                           <div>
                             <h4 className="text-sm font-sans font-semibold text-foreground">Pick choisit pour toi</h4>
-                            <p className="text-foreground/45 text-xs font-sans">Une suggestion sur-mesure en quelques clics.</p>
+                            <p className="text-foreground/45 text-xs font-sans">Une suggestion sur-mesure, instantanée.</p>
                           </div>
                         </div>
                       </motion.button>
@@ -766,48 +770,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
         )}
       </AnimatePresence>
 
-      {/* Who/What flow overlay */}
-      <AnimatePresence mode="wait">
-        {flowStep !== "idle" && (
-          <motion.div
-            key={flowStep}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="absolute inset-0 z-50 bg-background"
-          >
-            <BrandHeader showBack onBack={() => { setFlowStep("idle"); setWhoChoice(null); }} />
-            <StepLayout currentStep={flowStep === "who" ? 1 : flowStep === "what" ? 2 : 3} totalSteps={3}>
-              {flowStep === "who" && (
-                <WhoStep onSelect={(w) => {
-                  setWhoChoice(w);
-                  if (w === "duo" || w === "group") {
-                    setFlowStep("idle");
-                    setWhoChoice(null);
-                    navigate("/app/pick-together");
-                    return;
-                  }
-                  setFlowStep("what");
-                }} />
-              )}
-              {flowStep === "what" && (
-                <WhatStep onSelect={(w) => {
-                  setWhatChoice(w);
-                  setFlowStep("exploration");
-                }} />
-              )}
-              {flowStep === "exploration" && (
-                <ExplorationStep onSelect={(level) => {
-                  setExplorationLevel(level);
-                  setFlowStep("idle");
-                  setTonightPick(null);
-                  generateTonightPick(rejectedIds);
-                }} />
-              )}
-            </StepLayout>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* Flow steps removed — direct access to Tonight's Pick */}
 
       {/* Taste Trainer overlay */}
       <AnimatePresence>
