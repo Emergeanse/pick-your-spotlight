@@ -4,6 +4,7 @@ import { Volume2, Loader2 } from "lucide-react";
 import pickDefault from "@/assets/pick-squirrel.png";
 import pickWave from "@/assets/pick-squirrel-wave.png";
 import pickThink from "@/assets/pick-squirrel-think.png";
+import { getDayPeriod } from "@/lib/time-context";
 
 export type PickMood = "default" | "wave" | "think";
 
@@ -13,33 +14,61 @@ const PICK_IMAGES: Record<PickMood, string> = {
   think: pickThink,
 };
 
-const GREETINGS = [
-  "Alors… qu'est-ce qu'on se mate ce soir ?",
-  "J'ai plein de pépites à te montrer !",
-  "Dis-moi ton humeur, je m'occupe du reste.",
-  "Prêt pour une soirée ciné ?",
-  "Je connais le film parfait pour toi.",
-  "Salut ! T'as envie de quoi ce soir ?",
-  "On se fait un bon film ? J'ai des idées.",
-  "Yooo ! Prêt à découvrir un truc cool ?",
-  "Tu tombes bien, j'ai justement un truc pour toi.",
-  "Ce soir c'est ciné, et j'ai les clés du cinéma.",
-  "Installe-toi, je gère tout.",
-  "Hmm… j'ai quelques films en tête. On en parle ?",
-  "T'as l'air d'avoir besoin d'un bon film.",
-  "Pop-corn prêt ? Moi oui.",
-  "Dis-moi tout, je t'écoute !",
-  "Tiens, je pensais justement à toi.",
-  "Un film, une série ? Je suis chaud !",
-  "Encore toi ! J'adore. Qu'est-ce qu'on regarde ?",
-  "Je sens que ce soir va être une bonne soirée ciné.",
-  "Ah te voilà ! J'ai hâte de te proposer un truc.",
-  "Tu veux un classique ou un truc surprenant ?",
-  "Mon radar ciné est activé. À toi de jouer.",
-  "Bonsoir ! J'ai rechargé mes batteries cinématographiques.",
-  "Allez, on va trouver THE film du soir.",
-  "Je suis en forme, j'ai plein d'idées ce soir !",
-];
+function getTimeAwareGreetings(): string[] {
+  const period = getDayPeriod();
+  const universal = [
+    "J'ai plein de pépites à te montrer !",
+    "Dis-moi ton humeur, je m'occupe du reste.",
+    "Je connais le film parfait pour toi.",
+    "Tu tombes bien, j'ai justement un truc pour toi.",
+    "Installe-toi, je gère tout.",
+    "Hmm… j'ai quelques films en tête. On en parle ?",
+    "T'as l'air d'avoir besoin d'un bon film.",
+    "Dis-moi tout, je t'écoute !",
+    "Tiens, je pensais justement à toi.",
+    "Mon radar ciné est activé. À toi de jouer.",
+    "Tu veux un classique ou un truc surprenant ?",
+  ];
+
+  switch (period) {
+    case "morning":
+      return [
+        "Salut ! Déjà en mode ciné ?",
+        "Une idée de film pour plus tard ?",
+        "Bonjour ! Je te prépare quelque chose pour plus tard.",
+        "Matinée ciné ? J'adore l'idée.",
+        ...universal,
+      ];
+    case "afternoon":
+      return [
+        "Un film pour cet après-midi ?",
+        "Allez, on se trouve un bon film.",
+        "L'après-midi parfaite pour un bon film.",
+        "Yo ! Envie de regarder quelque chose ?",
+        ...universal,
+      ];
+    case "evening":
+      return [
+        "Alors… qu'est-ce qu'on se mate ce soir ?",
+        "Prêt pour une soirée ciné ?",
+        "Salut ! T'as envie de quoi ce soir ?",
+        "Ce soir c'est ciné, et j'ai les clés du cinéma.",
+        "Je sens que ce soir va être une bonne soirée ciné.",
+        "Bonsoir ! J'ai rechargé mes batteries cinématographiques.",
+        "Allez, on va trouver THE film du soir.",
+        "Je suis en forme, j'ai plein d'idées ce soir !",
+        ...universal,
+      ];
+    case "night":
+      return [
+        "Encore debout ? J'ai un film pour cette nuit.",
+        "Un dernier film avant de dormir ?",
+        "Nuit ciné ? Parfait, j'ai des idées.",
+        "Le calme de la nuit, le film parfait.",
+        ...universal,
+      ];
+  }
+}
 
 interface PickCharacterProps {
   mood?: PickMood;
