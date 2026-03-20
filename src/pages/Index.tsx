@@ -299,6 +299,8 @@ const Index = () => {
     setShowChat(true);
   };
 
+  const [chatSuggestedMovies, setChatSuggestedMovies] = useState<MovieDetail[] | null>(null);
+
   const handleMovieSuggested = async (movies: MovieDetail[], recapTags?: string[]) => {
     // During "talk_to_pick" activation mission: record chat, close chat, skip result
     if (activeActivationMission === "talk_to_pick" && showActivation && user) {
@@ -314,11 +316,11 @@ const Index = () => {
       return;
     }
 
-    setResults(movies);
-    setCurrentResultIndex(0);
     if (recapTags && recapTags.length > 0) setSearchTags(recapTags);
     setShowChat(false);
-    setStep("result");
+    // Show the tonight pick preview on HomeScreen instead of going to ResultScreen directly
+    setChatSuggestedMovies(movies);
+    setStep("home");
   };
 
   const invokeSurprisePersonalized = async (body: any, retries = 2): Promise<any> => {
