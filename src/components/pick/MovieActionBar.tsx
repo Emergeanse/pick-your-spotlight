@@ -85,6 +85,7 @@ const MovieActionBar = ({ movie, size = "md", className = "", onInteraction }: M
       genres: (movie.genres || []).map(g => g.name),
     });
     toast.success("Noté — Pick en tiendra compte");
+    onInteraction?.("dislike");
   };
 
   const iconSize = size === "sm" ? "w-3 h-3" : "w-3.5 h-3.5";
