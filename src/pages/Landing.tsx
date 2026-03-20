@@ -239,12 +239,12 @@ const Landing = () => {
       </section>
 
       {/* ─── DEMO VISUELLE — le produit en action ─── */}
-      <section className="py-20 md:py-28 px-5 relative overflow-hidden">
+      <section className="py-12 md:py-16 px-5 relative overflow-hidden">
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <div className="w-[500px] h-[500px] rounded-full bg-primary/5 blur-[140px]" />
         </div>
         <div className="max-w-5xl mx-auto relative z-10">
-          <motion.div variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }} className="text-center mb-14">
+          <motion.div variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }} className="text-center mb-10">
             <h2 className="text-3xl md:text-5xl font-serif mb-3 leading-tight">
               Une recommandation.<br /><span className="text-primary">Pas un catalogue.</span>
             </h2>
@@ -264,9 +264,9 @@ const Landing = () => {
       </section>
 
       {/* ─── COMMENT ÇA MARCHE — 3 étapes ─── */}
-      <section className="py-16 md:py-24 px-5 relative">
+      <section className="py-10 md:py-14 px-5 relative">
         <div className="max-w-4xl mx-auto">
-          <motion.div variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }} className="text-center mb-12">
+          <motion.div variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }} className="text-center mb-8">
             <h2 className="text-3xl md:text-5xl font-serif mb-3">Simple comme <span className="text-primary">1, 2, 3</span></h2>
             <p className="text-foreground/35 font-sans text-sm md:text-base max-w-md mx-auto">De l'envie au film en quelques secondes.</p>
           </motion.div>
@@ -290,12 +290,12 @@ const Landing = () => {
       </section>
 
       {/* ─── FEATURES — 2 modes + 4 features ─── */}
-      <section className="py-16 md:py-24 px-5 relative overflow-hidden">
+      <section className="py-10 md:py-14 px-5 relative overflow-hidden">
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <div className="w-[400px] h-[400px] rounded-full bg-primary/4 blur-[120px]" />
         </div>
         <div className="max-w-5xl mx-auto relative z-10">
-          <motion.div variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }} className="text-center mb-12">
+          <motion.div variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }} className="text-center mb-8">
             <h2 className="text-3xl md:text-5xl font-serif mb-3">Tout ce qu'il faut <span className="text-primary">pour ce soir</span></h2>
           </motion.div>
 
@@ -337,7 +337,7 @@ const Landing = () => {
       </section>
 
       {/* ─── ADN CINÉMA ─── */}
-      <section className="py-20 md:py-28 px-5 relative overflow-hidden">
+      <section className="py-12 md:py-16 px-5 relative overflow-hidden">
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <div className="w-[500px] h-[500px] rounded-full bg-primary/4 blur-[140px]" />
         </div>
@@ -420,7 +420,7 @@ const Landing = () => {
       </section>
 
       {/* ─── PICK TOGETHER ─── */}
-      <section className="py-20 md:py-28 px-5 relative overflow-hidden">
+      <section className="py-12 md:py-16 px-5 relative overflow-hidden">
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <div className="w-[500px] h-[400px] rounded-full bg-gold/4 blur-[130px]" />
         </div>
@@ -502,11 +502,11 @@ const Landing = () => {
       </section>
 
       {/* ─── PLATEFORMES ─── */}
-      <section className="py-16 md:py-24 px-5 relative">
+      <section className="py-10 md:py-14 px-5 relative">
         <div className="max-w-4xl mx-auto text-center">
           <motion.div variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }}>
             <h2 className="text-3xl md:text-5xl font-serif mb-3">Compatible avec <span className="text-gold">tes abonnements</span></h2>
-            <p className="text-foreground/35 font-sans text-sm md:text-base max-w-lg mx-auto mb-12">Pick ne recommande que des films disponibles sur tes plateformes.</p>
+            <p className="text-foreground/35 font-sans text-sm md:text-base max-w-lg mx-auto mb-8">Pick ne recommande que des films disponibles sur tes plateformes.</p>
           </motion.div>
           <motion.div variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }} className="flex items-center justify-center gap-5 md:gap-8 flex-wrap">
             {PLATFORM_LOGOS.map((p, i) => (
@@ -522,12 +522,12 @@ const Landing = () => {
       </section>
 
       {/* ─── PRICING ─── */}
-      <section className="py-16 md:py-24 px-5 relative overflow-hidden">
+      <section className="py-10 md:py-14 px-5 relative overflow-hidden">
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <div className="w-[500px] h-[400px] rounded-full bg-gold/4 blur-[120px]" />
         </div>
         <div className="max-w-4xl mx-auto relative z-10">
-          <motion.div variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }} className="text-center mb-12">
+          <motion.div variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }} className="text-center mb-8">
             <h2 className="text-3xl md:text-5xl font-serif mb-3">Commence <span className="text-gold">gratuitement</span></h2>
             <p className="text-foreground/35 font-sans text-sm md:text-base max-w-lg mx-auto">Pick est gratuit pour toujours. Pick+ amplifie l'expérience.</p>
           </motion.div>
@@ -569,7 +569,7 @@ const Landing = () => {
       </section>
 
       {/* ─── CTA FINAL ─── */}
-      <section className="py-20 md:py-28 px-5 relative overflow-hidden">
+      <section className="py-12 md:py-16 px-5 relative overflow-hidden">
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <div className="w-[600px] h-[300px] rounded-full bg-primary/5 blur-[140px]" />
         </div>
