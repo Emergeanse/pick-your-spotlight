@@ -263,12 +263,15 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
       if (user) {
         const liked = await getLikedMovies();
         if (liked.length >= 2) {
-          const [userTasteVector, tasteProfile] = await Promise.all([
-            computeUserTasteVector(user.id),
+          const [multiProfile, tasteProfile] = await Promise.all([
+            computeMultiVectorProfile(user.id),
             getUserTasteProfile(),
           ]);
+          const userTasteVector = multiProfile?.stableTasteVector || null;
           const data = await invokeSurprisePersonalized({
             likedMovies: liked, userTasteVector, tasteProfile,
+            recentTasteVector: multiProfile?.recentTasteVector || null,
+            avoidanceVector: multiProfile?.avoidanceVector || null,
             platformIds: userPlatformIds, excludedPlatformIds: userExcludedPlatformIds, excludedGenres: userExcludedGenres, minRating: userMinRating,
             outOfComfortZone: true, excludeIds: historyExcludeIds,
             count: 5,
