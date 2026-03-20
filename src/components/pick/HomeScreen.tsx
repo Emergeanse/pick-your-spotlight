@@ -126,11 +126,13 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
   };
 
   // When chat suggests movies, show the first one in the tonightPick preview
+  // Store the full pool but reset maxSeen to 0 so user must use "Autre suggestion" to reveal more
   useEffect(() => {
     if (chatSuggestedMovies && chatSuggestedMovies.length > 0) {
       const firstMovie = chatSuggestedMovies[0];
       setChatMoviesPool(chatSuggestedMovies);
       setTonightPickIndex(0);
+      setTonightMaxSeen(0);
       setTonightPick(firstMovie);
       setTonightProviders([]);
       const mediaType = firstMovie.first_air_date ? "tv" : "movie";
