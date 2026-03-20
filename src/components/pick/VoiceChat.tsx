@@ -196,6 +196,12 @@ const VoiceChat = ({ onClose, onMovieSuggested, initialMessages, showMicGuide = 
         setTimeout(() => {
           onMovieSuggested(movies, recap);
         }, recap.length > 0 ? 1800 : 800);
+      } else if (data?.type === "pick_together") {
+        // AI detected group context — propose Pick Together
+        const assistantMsg: ChatMessage = { role: "assistant", content: data.reply };
+        setConversationHistory([...fullHistory, assistantMsg]);
+        setPickReply(data.reply);
+        setPhase("pick_together");
       } else if (data?.reply) {
         // Pick asked a follow-up question — show it and let user respond
         const assistantMsg: ChatMessage = { role: "assistant", content: data.reply };
