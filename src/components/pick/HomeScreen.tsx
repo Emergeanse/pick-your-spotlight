@@ -607,14 +607,41 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
                 </div>
 
                 {tonightPick.poster_path && (
-                  <motion.img
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: 0.3, type: "spring", stiffness: 200 }}
-                    src={getPosterUrl(tonightPick.poster_path, "w342") || ""}
-                    alt={getDisplayTitle(tonightPick)}
-                    className="w-36 h-52 md:w-44 md:h-64 rounded-xl object-cover shadow-2xl border border-border/20 mb-4"
-                  />
+                  <div className="relative flex items-center gap-3 mb-4">
+                    {hasTonightNav && (
+                      <button
+                        onClick={() => navigateTonightPick("prev")}
+                        disabled={tonightPickIndex === 0}
+                        className="w-8 h-8 rounded-full bg-foreground/10 backdrop-blur-sm flex items-center justify-center transition-all active:scale-95 disabled:opacity-20"
+                      >
+                        <ChevronLeft className="w-4 h-4 text-foreground/70" />
+                      </button>
+                    )}
+                    <motion.img
+                      key={tonightPick.id}
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ duration: 0.3, type: "spring", stiffness: 200 }}
+                      src={getPosterUrl(tonightPick.poster_path, "w342") || ""}
+                      alt={getDisplayTitle(tonightPick)}
+                      className="w-36 h-52 md:w-44 md:h-64 rounded-xl object-cover shadow-2xl border border-border/20"
+                    />
+                    {hasTonightNav && (
+                      <button
+                        onClick={() => navigateTonightPick("next")}
+                        disabled={tonightPickIndex >= tonightPool.length - 1}
+                        className="w-8 h-8 rounded-full bg-foreground/10 backdrop-blur-sm flex items-center justify-center transition-all active:scale-95 disabled:opacity-20"
+                      >
+                        <ChevronRight className="w-4 h-4 text-foreground/70" />
+                      </button>
+                    )}
+                  </div>
+                )}
+
+                {hasTonightNav && (
+                  <p className="text-foreground/30 text-[10px] font-sans mb-2">
+                    {tonightPickIndex + 1} / {tonightPool.length}
+                  </p>
                 )}
 
                 <h2 className="text-xl md:text-2xl font-serif text-foreground mb-1">
