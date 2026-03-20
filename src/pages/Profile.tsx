@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { toast } from "@/hooks/use-toast";
-import { toast as sonnerToast } from "sonner";
-import { Check, LogOut, Loader2, Star, Info, Camera, Pencil, Copy, UserPlus, Users, X, ChevronRight, QrCode, Share2, Shield } from "lucide-react";
+import { Check, LogOut, Loader2, Star, Info, Camera, Pencil, Shield } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
@@ -10,8 +9,6 @@ import { Input } from "@/components/ui/input";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
-import { sendNotification } from "@/lib/notifications";
-import { QRCodeSVG } from "qrcode.react";
 import { useAdmin } from "@/hooks/use-admin";
 
 const ALL_PLATFORMS = [
