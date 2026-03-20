@@ -56,11 +56,8 @@ export function usePickPlus(): PickPlusState {
   const [shouldShowPaywall, setShouldShowPaywall] = useState(false);
   const [paywallTrigger, setPaywallTrigger] = useState("general");
 
-  // Real premium logic: paid plan OR active trial
-  const isPremium = plan === "pick_plus" && (
-    subStatus === "active" ||
-    (subStatus === "trial" && periodEnd ? new Date(periodEnd) > new Date() : false)
-  );
+  // TEMPORARY: All users are premium until Pick+ launch
+  const isPremium = true;
 
   const trialDaysLeft = subStatus === "trial" && periodEnd
     ? Math.max(0, Math.ceil((new Date(periodEnd).getTime() - Date.now()) / (1000 * 3600 * 24)))
