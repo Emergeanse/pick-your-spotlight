@@ -50,11 +50,11 @@ const stagger = { visible: { transition: { staggerChildren: 0.08 } } };
 const PosterColumn = ({ posters, reverse = false, className = "" }: { posters: string[]; reverse?: boolean; className?: string }) => {
   const doubled = [...posters, ...posters];
   return (
-    <div className={`flex flex-col gap-2 overflow-hidden ${className}`}>
-      <div className={reverse ? "poster-scroll-reverse" : "poster-scroll"}>
+    <div className={`flex flex-col gap-2 overflow-hidden h-full ${className}`}>
+      <div className={`h-full ${reverse ? "poster-scroll-reverse" : "poster-scroll"}`}>
         <div className="flex flex-col gap-2">
           {doubled.map((url, i) => (
-            <img key={i} src={url} alt="Affiche de film" className="w-full aspect-[2/3] object-cover rounded-lg" loading="lazy" />
+            <img key={i} src={url} alt="" className="w-full aspect-[2/3] object-cover rounded-lg" loading="lazy" />
           ))}
         </div>
       </div>
