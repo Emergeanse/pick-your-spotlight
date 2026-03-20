@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Mic, Dices, Tv, Sparkles, Loader2, Zap, Flame, Target, Trophy, Shuffle, Brain, Users } from "lucide-react";
+import { Mic, Dices, Tv, Sparkles, Loader2, Zap, Flame, Target, Trophy, Shuffle, Brain, Users, ChevronLeft, ChevronRight } from "lucide-react";
 import WhoStep, { type WhoOption } from "./WhoStep";
 import WhatStep, { type WhatOption } from "./WhatStep";
 import ExplorationStep from "./ExplorationStep";
@@ -117,12 +117,31 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
   const [whoChoice, setWhoChoice] = useState<WhoOption | null>(null);
   const [totalEvaluated, setTotalEvaluated] = useState(0);
   const [chatMoviesPool, setChatMoviesPool] = useState<MovieDetail[] | null>(null);
+  const [tonightPickIndex, setTonightPickIndex] = useState(0);
+
+  // All movies available for tonight pick navigation (chat pool or single generated)
+  const tonightPool: MovieDetail[] = chatMoviesPool || (tonightPick ? [tonightPick] : []);
+  const hasTonightNav = tonightPool.length > 1;
+
+  const navigateTonightPick = (direction: "prev" | "next") => {
+    if (!hasTonightNav) return;
+    const newIndex = direction === "next"
+      ? Math.min(tonightPickIndex + 1, tonightPool.length - 1)
+      : Math.max(tonightPickIndex - 1, 0);
+    setTonightPickIndex(newIndex);
+    const movie = tonightPool[newIndex];
+    setTonightPick(movie);
+    setTonightProviders([]);
+    const mediaType = movie.first_air_date ? "tv" : "movie";
+    getWatchProviders(movie.id, mediaType).then(setTonightProviders).catch(() => {});
+  };
 
   // When chat suggests movies, show the first one in the tonightPick preview
   useEffect(() => {
     if (chatSuggestedMovies && chatSuggestedMovies.length > 0) {
       const firstMovie = chatSuggestedMovies[0];
       setChatMoviesPool(chatSuggestedMovies);
+      setTonightPickIndex(0);
       setTonightPick(firstMovie);
       setTonightProviders([]);
       const mediaType = firstMovie.first_air_date ? "tv" : "movie";
@@ -588,14 +607,41 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
                 </div>
 
                 {tonightPick.poster_path && (
-                  <motion.img
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: 0.3, type: "spring", stiffness: 200 }}
-                    src={getPosterUrl(tonightPick.poster_path, "w342") || ""}
-                    alt={getDisplayTitle(tonightPick)}
-                    className="w-36 h-52 md:w-44 md:h-64 rounded-xl object-cover shadow-2xl border border-border/20 mb-4"
-                  />
+                  <div className="relative flex items-center gap-3 mb-4">
+                    {hasTonightNav && (
+                      <button
+                        onClick={() => navigateTonightPick("prev")}
+                        disabled={tonightPickIndex === 0}
+                        className="w-8 h-8 rounded-full bg-foreground/10 backdrop-blur-sm flex items-center justify-center transition-all active:scale-95 disabled:opacity-20"
+                      >
+                        <ChevronLeft className="w-4 h-4 text-foreground/70" />
+                      </button>
+                    )}
+                    <motion.img
+                      key={tonightPick.id}
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ duration: 0.3, type: "spring", stiffness: 200 }}
+                      src={getPosterUrl(tonightPick.poster_path, "w342") || ""}
+                      alt={getDisplayTitle(tonightPick)}
+                      className="w-36 h-52 md:w-44 md:h-64 rounded-xl object-cover shadow-2xl border border-border/20"
+                    />
+                    {hasTonightNav && (
+                      <button
+                        onClick={() => navigateTonightPick("next")}
+                        disabled={tonightPickIndex >= tonightPool.length - 1}
+                        className="w-8 h-8 rounded-full bg-foreground/10 backdrop-blur-sm flex items-center justify-center transition-all active:scale-95 disabled:opacity-20"
+                      >
+                        <ChevronRight className="w-4 h-4 text-foreground/70" />
+                      </button>
+                    )}
+                  </div>
+                )}
+
+                {hasTonightNav && (
+                  <p className="text-foreground/30 text-[10px] font-sans mb-2">
+                    {tonightPickIndex + 1} / {tonightPool.length}
+                  </p>
                 )}
 
                 <h2 className="text-xl md:text-2xl font-serif text-foreground mb-1">
