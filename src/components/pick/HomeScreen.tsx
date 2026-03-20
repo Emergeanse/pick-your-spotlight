@@ -20,6 +20,7 @@ import TasteTrainer from "./TasteTrainer";
 import TrainingProgress from "./TrainingProgress";
 import DiscoverySection from "./DiscoverySection";
 import MovieActionBar from "./MovieActionBar";
+import { getMainCTALabel, getMainCTASubtitle, getAutoPickLabel, getAutoPickSubtitle, getTonightPickLabel, getProactiveMessages } from "@/lib/time-context";
 
 import { useNavigate } from "react-router-dom";
 
