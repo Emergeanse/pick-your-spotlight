@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Mic, Dices, Tv, Sparkles, Loader2, Zap, Flame, Target, Trophy, Shuffle, Brain, Users, ChevronLeft, ChevronRight } from "lucide-react";
+import RevealBurst from "./RevealBurst";
 import WhoStep, { type WhoOption } from "./WhoStep";
 import WhatStep, { type WhatOption } from "./WhatStep";
 import ExplorationStep from "./ExplorationStep";
@@ -107,6 +108,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
   const [tonightPickIndex, setTonightPickIndex] = useState(0);
   const [tonightMaxSeen, setTonightMaxSeen] = useState(0);
   const [quickFilters, setQuickFilters] = useState<QuickFilterState>({ mediaType: "both", maxDuration: null });
+  const [revealBurst, setRevealBurst] = useState(false);
 
   // All movies available for tonight pick navigation (chat pool or single generated)
   const tonightPool: MovieDetail[] = chatMoviesPool || (tonightPick ? [tonightPick] : []);
@@ -138,6 +140,8 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
       setTonightMaxSeen(0);
       setTonightPick(firstMovie);
       setTonightProviders([]);
+      setRevealBurst(true);
+      setTimeout(() => setRevealBurst(false), 2000);
       const mediaType = firstMovie.first_air_date ? "tv" : "movie";
       getWatchProviders(firstMovie.id, mediaType).then(setTonightProviders).catch(() => {});
       onChatSuggestedConsumed?.();
@@ -347,6 +351,8 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
         setChatMoviesPool(movies);
         setTonightPickIndex(0);
         setTonightPick(movies[0]);
+        setRevealBurst(true);
+        setTimeout(() => setRevealBurst(false), 2000);
         const mediaType = movies[0].first_air_date ? "tv" : "movie";
         getWatchProviders(movies[0].id, mediaType).then(setTonightProviders).catch(() => {});
       }
@@ -356,6 +362,8 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
         const movie = await getSurpriseRecommendation(excludeList, { platformIds: userPlatformIds, minRating: userMinRating, excludedGenres: userExcludedGenres });
         clearInterval(msgInterval);
         setTonightPick(movie);
+        setRevealBurst(true);
+        setTimeout(() => setRevealBurst(false), 2000);
         const mediaType = movie.first_air_date ? "tv" : "movie";
         getWatchProviders(movie.id, mediaType).then(setTonightProviders).catch(() => {});
       } catch {
@@ -585,6 +593,9 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Reveal burst animation */}
+      <RevealBurst trigger={revealBurst} />
 
       {/* Tonight's Pick overlay */}
       <AnimatePresence>
