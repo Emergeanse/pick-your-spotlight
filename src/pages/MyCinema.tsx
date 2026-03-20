@@ -1,14 +1,15 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
-import { ArrowLeft, Loader2, Sparkles, ChevronRight, Brain, Film, Tv, Trophy, BarChart3, Heart, Bookmark, Eye } from "lucide-react";
+import { ArrowLeft, Loader2, Sparkles, ChevronRight, Brain, Film, Tv, Trophy, Eye, Heart, Bookmark, TrendingUp, Info } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { getEngagementData, type EngagementData } from "@/lib/engagement";
 import { getLikedMovies } from "@/lib/liked-movies";
-import { getPosterUrl, getMovieDetails } from "@/lib/tmdb";
 import CinemaDNA from "@/components/pick/CinemaDNA";
 import TasteTrainer from "@/components/pick/TasteTrainer";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { RadarChart, PolarGrid, PolarAngleAxis, Radar, ResponsiveContainer } from "recharts";
 
 const MILESTONES = [
   { count: 1, label: "Premier film", icon: "🎬" },
@@ -18,6 +19,48 @@ const MILESTONES = [
   { count: 50, label: "Connaisseur", icon: "🎪" },
   { count: 100, label: "Maître cinéphile", icon: "👑" },
 ];
+
+/** Calculate a detailed confidence score with breakdown */
+function computeDetailedConfidence(data: {
+  totalRecos: number;
+  acceptedRecos: number;
+  likedCount: number;
+  watchlistCount: number;
+  streakCount: number;
+  genreCount: number;
+}) {
+  const { totalRecos, acceptedRecos, likedCount, watchlistCount, streakCount, genreCount } = data;
+  
+  // 1. Data volume (max 30pts) — more data = better knowledge
+  const totalSignals = totalRecos + likedCount + watchlistCount;
+  const volumeScore = Math.min(Math.sqrt(totalSignals) * 4, 30);
+  
+  // 2. Acceptance rate (max 25pts) — how well Pick matches
+  const acceptRate = totalRecos > 0 ? acceptedRecos / totalRecos : 0;
+  const acceptScore = Math.min(acceptRate * 25, 25);
+  
+  // 3. Genre diversity (max 20pts) — broader taste profile = better understanding
+  const diversityScore = Math.min(genreCount * 3, 20);
+  
+  // 4. Engagement consistency (max 15pts) — streak shows ongoing calibration
+  const streakScore = Math.min(streakCount * 2.5, 15);
+  
+  // 5. Taste training (max 10pts) — liked movies are explicit signals
+  const trainingScore = Math.min(likedCount * 1.5, 10);
+  
+  const total = Math.round(volumeScore + acceptScore + diversityScore + streakScore + trainingScore);
+  
+  return {
+    total: Math.min(total, 100),
+    breakdown: [
+      { label: "Données collectées", score: Math.round(volumeScore), max: 30, detail: `${totalSignals} interactions` },
+      { label: "Taux de satisfaction", score: Math.round(acceptScore), max: 25, detail: totalRecos > 0 ? `${Math.round(acceptRate * 100)}% de recos validées` : "Pas encore de données" },
+      { label: "Diversité des genres", score: Math.round(diversityScore), max: 20, detail: `${genreCount} genres identifiés` },
+      { label: "Régularité", score: Math.round(streakScore), max: 15, detail: streakCount > 0 ? `Série de ${streakCount}` : "Commence une série" },
+      { label: "Entraînement goûts", score: Math.round(trainingScore), max: 10, detail: `${likedCount} films évalués` },
+    ],
+  };
+}
 
 const MyCinema = () => {
   const { user, isReady } = useAuth();
@@ -33,6 +76,7 @@ const MyCinema = () => {
   const [dnaArchetype, setDnaArchetype] = useState<string | null>(null);
   const [genreStats, setGenreStats] = useState<{ genre: string; count: number }[]>([]);
   const [movieVsSeries, setMovieVsSeries] = useState({ movies: 0, series: 0 });
+  const [showConfidenceDetail, setShowConfidenceDetail] = useState(false);
 
   useEffect(() => {
     if (!isReady) return;
@@ -60,18 +104,42 @@ const MyCinema = () => {
         setDnaArchetype(d.dna_archetype || null);
       }
 
-      // Genre stats
       const genreCounts: Record<string, number> = {};
       let movies = 0, series = 0;
       likedData.forEach((m: any) => {
         (m.genres || []).forEach((g: string) => { genreCounts[g] = (genreCounts[g] || 0) + 1; });
         if (m.media_type === "tv" || m.first_air_date) series++; else movies++;
       });
-      setGenreStats(Object.entries(genreCounts).sort((a, b) => b[1] - a[1]).slice(0, 6).map(([genre, count]) => ({ genre, count })));
+      setGenreStats(Object.entries(genreCounts).sort((a, b) => b[1] - a[1]).map(([genre, count]) => ({ genre, count })));
       setMovieVsSeries({ movies, series });
     } catch (e) { console.error(e); }
     finally { setLoading(false); }
   };
+
+  // Radar chart data — top 8 genres normalized to 0-100
+  const radarData = useMemo(() => {
+    if (genreStats.length === 0) return [];
+    const top = genreStats.slice(0, 8);
+    const max = top[0]?.count || 1;
+    return top.map(gs => ({
+      genre: gs.genre.length > 10 ? gs.genre.slice(0, 9) + "…" : gs.genre,
+      fullGenre: gs.genre,
+      value: Math.round((gs.count / max) * 100),
+      count: gs.count,
+    }));
+  }, [genreStats]);
+
+  const confidence = useMemo(() => {
+    if (!engagement) return null;
+    return computeDetailedConfidence({
+      totalRecos: engagement.totalRecommendations,
+      acceptedRecos: engagement.acceptedRecommendations,
+      likedCount: likedMovies.length,
+      watchlistCount,
+      streakCount: engagement.streakCount,
+      genreCount: genreStats.length,
+    });
+  }, [engagement, likedMovies.length, watchlistCount, genreStats.length]);
 
   if (!isReady || loading) return <div className="fixed inset-0 bg-background flex items-center justify-center"><Loader2 className="w-6 h-6 text-primary animate-spin" /></div>;
   if (!user) return null;
@@ -103,10 +171,11 @@ const MyCinema = () => {
   }
 
   const totalRecos = engagement?.totalRecommendations || 0;
-  const confidence = engagement?.profileConfidence || 0;
-  const maxGenreCount = genreStats.length > 0 ? genreStats[0].count : 1;
   const reachedMilestones = MILESTONES.filter(m => totalRecos >= m.count);
   const nextMilestone = MILESTONES.find(m => totalRecos < m.count);
+  const confidenceTotal = confidence?.total || 0;
+  const confidenceLabel = confidenceTotal < 20 ? "Apprentissage" : confidenceTotal < 45 ? "En progression" : confidenceTotal < 70 ? "Bien calibré" : confidenceTotal < 90 ? "Très précis" : "Expert";
+  const confidenceColor = confidenceTotal < 20 ? "text-foreground/40" : confidenceTotal < 45 ? "text-yellow-500/70" : confidenceTotal < 70 ? "text-primary/70" : "text-primary";
 
   return (
     <div className="fixed inset-0 bg-background overflow-y-auto">
@@ -119,7 +188,7 @@ const MyCinema = () => {
         {/* ─── ADN Cinéma ─── */}
         <motion.button initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
           onClick={() => setShowDNA(true)}
-          className="w-full text-left rounded-2xl p-5 border border-primary/15 bg-gradient-to-br from-card via-card to-primary/[0.03] hover:border-primary/30 transition-all group relative overflow-hidden">
+          className="w-full text-left rounded-2xl p-5 border border-primary/15 bg-gradient-to-br from-card via-card to-primary/[0.03] hover:border-primary/30 transition-all group relative overflow-hidden active:scale-[0.98]">
           <div className="relative z-10">
             <p className="text-[10px] uppercase tracking-[0.2em] text-primary/40 font-sans font-semibold mb-2">Ton ADN Cinéma</p>
             {dnaTitle ? (
@@ -138,66 +207,134 @@ const MyCinema = () => {
           </div>
         </motion.button>
 
-        {/* ─── Key metrics ─── */}
-        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
-          className="grid grid-cols-4 gap-2">
-          {[
-            { value: totalRecos, label: "Recos", icon: <Eye className="w-3 h-3 text-primary/40" /> },
-            { value: likedMovies.length, label: "Favoris", icon: <Heart className="w-3 h-3 text-destructive/40" /> },
-            { value: watchlistCount, label: "Watchlist", icon: <Bookmark className="w-3 h-3 text-primary/40" /> },
-            { value: `${movieVsSeries.movies}/${movieVsSeries.series}`, label: "Films/Séries", icon: <Film className="w-3 h-3 text-primary/40" /> },
-          ].map((stat, i) => (
-            <div key={i} className="rounded-xl bg-card/40 border border-border/8 p-3 text-center">
-              <div className="flex justify-center mb-1">{stat.icon}</div>
-              <p className="text-lg font-serif text-foreground">{stat.value}</p>
-              <p className="text-[9px] text-foreground/25 font-sans">{stat.label}</p>
-            </div>
-          ))}
-        </motion.div>
-
-        {/* ─── Top genres ─── */}
-        {genreStats.length > 0 && (
-          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-            <div className="flex items-center gap-2 mb-3">
-              <BarChart3 className="w-3.5 h-3.5 text-primary/30" />
-              <h3 className="text-xs font-sans font-semibold text-foreground/35 uppercase tracking-widest">Genres favoris</h3>
-            </div>
-            <div className="space-y-2.5">
-              {genreStats.map((gs, i) => (
-                <div key={gs.genre} className="flex items-center gap-3">
-                  <span className="text-foreground/50 text-[12px] font-sans w-28 truncate">{gs.genre}</span>
-                  <div className="flex-1 h-2 rounded-full bg-foreground/[0.04] overflow-hidden">
-                    <motion.div
-                      initial={{ width: 0 }}
-                      animate={{ width: `${(gs.count / maxGenreCount) * 100}%` }}
-                      transition={{ delay: 0.15 + i * 0.06, duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-                      className="h-full rounded-full bg-primary/50"
-                    />
-                  </div>
-                  <span className="text-foreground/25 text-[11px] font-sans tabular-nums w-5 text-right">{gs.count}</span>
-                </div>
-              ))}
+        {/* ─── Radar chart — Empreinte genres ─── */}
+        {radarData.length >= 3 && (
+          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
+            <h3 className="text-xs font-sans font-semibold text-foreground/35 uppercase tracking-widest mb-1">Empreinte cinématographique</h3>
+            <p className="text-[10px] text-foreground/20 font-sans mb-3">Basée sur tes {likedMovies.length} films évalués</p>
+            <div className="rounded-2xl bg-card/30 border border-border/8 p-2 pt-4">
+              <ResponsiveContainer width="100%" height={260}>
+                <RadarChart data={radarData} cx="50%" cy="50%" outerRadius="72%">
+                  <PolarGrid stroke="hsl(var(--foreground) / 0.06)" strokeDasharray="3 3" />
+                  <PolarAngleAxis
+                    dataKey="genre"
+                    tick={{ fill: "hsl(var(--foreground) / 0.4)", fontSize: 10, fontFamily: "var(--font-sans)" }}
+                    tickLine={false}
+                  />
+                  <Radar
+                    name="Genres"
+                    dataKey="value"
+                    stroke="hsl(var(--primary) / 0.7)"
+                    fill="hsl(var(--primary) / 0.15)"
+                    strokeWidth={2}
+                    dot={{ r: 3, fill: "hsl(var(--primary))", strokeWidth: 0 }}
+                  />
+                </RadarChart>
+              </ResponsiveContainer>
             </div>
           </motion.div>
         )}
 
-        {/* ─── Favoris gallery ─── */}
-        {likedMovies.length > 0 && (
+        {/* ─── Stats table ─── */}
+        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+          <h3 className="text-xs font-sans font-semibold text-foreground/35 uppercase tracking-widest mb-3">Statistiques</h3>
+          <div className="rounded-2xl bg-card/30 border border-border/8 overflow-hidden divide-y divide-border/5">
+            {[
+              { icon: <Eye className="w-3.5 h-3.5 text-primary/40" />, label: "Recommandations reçues", value: totalRecos },
+              { icon: <Heart className="w-3.5 h-3.5 text-destructive/40" />, label: "Films évalués / likés", value: likedMovies.length },
+              { icon: <Bookmark className="w-3.5 h-3.5 text-primary/40" />, label: "En watchlist", value: watchlistCount },
+              { icon: <Film className="w-3.5 h-3.5 text-primary/40" />, label: "Films", value: movieVsSeries.movies },
+              { icon: <Tv className="w-3.5 h-3.5 text-primary/40" />, label: "Séries", value: movieVsSeries.series },
+              { icon: <TrendingUp className="w-3.5 h-3.5 text-primary/40" />, label: "Meilleure série", value: `${engagement?.bestStreak || 0} d'affilée` },
+            ].map((row, i) => (
+              <div key={i} className="flex items-center justify-between px-4 py-3">
+                <div className="flex items-center gap-2.5">
+                  {row.icon}
+                  <span className="text-sm font-sans text-foreground/60">{row.label}</span>
+                </div>
+                <span className="text-sm font-sans font-semibold text-foreground tabular-nums">{row.value}</span>
+              </div>
+            ))}
+          </div>
+        </motion.div>
+
+        {/* ─── Fiabilité / Confiance ─── */}
+        {confidence && (
           <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
-            <h3 className="text-xs font-sans font-semibold text-foreground/35 uppercase tracking-widest mb-3">Tes coups de cœur</h3>
-            <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
-              {likedMovies.slice(0, 10).map((m: any, i: number) => m.poster_path && (
-                <motion.div key={m.tmdb_id || i}
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: 0.18 + i * 0.03 }}
-                  className="shrink-0 w-[4.5rem] group">
-                  <div className="rounded-lg overflow-hidden border border-border/8">
-                    <img src={getPosterUrl(m.poster_path, "w185")} alt={m.title} className="w-full aspect-[2/3] object-cover" loading="lazy" />
-                  </div>
-                  <p className="text-[9px] font-sans text-foreground/30 truncate mt-1 px-0.5">{m.title}</p>
+            <div className="flex items-center gap-2 mb-3">
+              <Sparkles className="w-3.5 h-3.5 text-primary/30" />
+              <h3 className="text-xs font-sans font-semibold text-foreground/35 uppercase tracking-widest">Niveau de personnalisation</h3>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button className="text-foreground/15 hover:text-foreground/30 transition-colors"><Info className="w-3 h-3" /></button>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="max-w-[280px] text-xs leading-relaxed">
+                    <p>Ce score reflète à quel point Pick te connaît. Plus tu interagis (recos, likes, watchlist, training), plus les suggestions sont personnalisées.</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
+            <div className="rounded-2xl bg-card/30 border border-border/8 p-4">
+              {/* Main score */}
+              <div className="flex items-end justify-between mb-3">
+                <div>
+                  <span className={`text-3xl font-serif font-bold tabular-nums ${confidenceColor}`}>{confidenceTotal}</span>
+                  <span className="text-foreground/20 text-sm font-sans">/100</span>
+                </div>
+                <span className={`text-xs font-sans font-semibold ${confidenceColor}`}>{confidenceLabel}</span>
+              </div>
+
+              {/* Progress bar */}
+              <div className="h-2 rounded-full bg-foreground/[0.04] overflow-hidden mb-4">
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: `${confidenceTotal}%` }}
+                  transition={{ delay: 0.3, duration: 1, ease: [0.16, 1, 0.3, 1] }}
+                  className="h-full rounded-full bg-gradient-to-r from-primary/30 via-primary/60 to-primary"
+                />
+              </div>
+
+              {/* Toggle detail */}
+              <button
+                onClick={() => setShowConfidenceDetail(!showConfidenceDetail)}
+                className="text-[11px] font-sans text-primary/40 hover:text-primary/60 transition-colors mb-1"
+              >
+                {showConfidenceDetail ? "Masquer le détail" : "Comment c'est calculé ?"}
+              </button>
+
+              {showConfidenceDetail && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  className="overflow-hidden mt-3 space-y-2.5"
+                >
+                  {confidence.breakdown.map((item, i) => (
+                    <div key={i}>
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-[11px] font-sans text-foreground/40">{item.label}</span>
+                        <span className="text-[11px] font-sans text-foreground/30 tabular-nums">{item.score}/{item.max}</span>
+                      </div>
+                      <div className="h-1 rounded-full bg-foreground/[0.04] overflow-hidden">
+                        <motion.div
+                          initial={{ width: 0 }}
+                          animate={{ width: `${(item.score / item.max) * 100}%` }}
+                          transition={{ delay: 0.4 + i * 0.08, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+                          className="h-full rounded-full bg-primary/40"
+                        />
+                      </div>
+                      <p className="text-[9px] font-sans text-foreground/15 mt-0.5">{item.detail}</p>
+                    </div>
+                  ))}
                 </motion.div>
-              ))}
+              )}
+
+              {/* Trainer CTA */}
+              <button onClick={() => setShowTrainer(true)}
+                className="w-full flex items-center justify-center gap-2 py-2.5 mt-4 rounded-xl bg-primary/8 border border-primary/15 hover:bg-primary/12 transition-colors active:scale-[0.98]">
+                <Brain className="w-3.5 h-3.5 text-primary" />
+                <span className="text-primary text-[12px] font-sans font-semibold">Entraîner mes goûts</span>
+              </button>
             </div>
           </motion.div>
         )}
@@ -230,28 +367,6 @@ const MyCinema = () => {
               Plus que {nextMilestone.count - totalRecos} reco{nextMilestone.count - totalRecos > 1 ? "s" : ""} pour "{nextMilestone.label}"
             </p>
           )}
-        </motion.div>
-
-        {/* ─── Confidence + Trainer CTA ─── */}
-        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}>
-          <div className="rounded-xl bg-primary/[0.03] border border-primary/10 p-4">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2">
-                <Sparkles className="w-3.5 h-3.5 text-primary/40" />
-                <span className="text-[11px] font-sans font-semibold text-foreground/40">Précision Pick</span>
-              </div>
-              <span className="text-primary/60 text-sm font-sans font-semibold tabular-nums">{confidence}%</span>
-            </div>
-            <div className="h-1.5 rounded-full bg-foreground/[0.06] overflow-hidden mb-3">
-              <motion.div initial={{ width: 0 }} animate={{ width: `${confidence}%` }} transition={{ delay: 0.35, duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-                className="h-full rounded-full bg-gradient-to-r from-primary/40 to-primary/80" />
-            </div>
-            <button onClick={() => setShowTrainer(true)}
-              className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg bg-primary/8 border border-primary/15 hover:bg-primary/12 transition-colors active:scale-[0.98]">
-              <Brain className="w-3.5 h-3.5 text-primary" />
-              <span className="text-primary text-[12px] font-sans font-semibold">Améliorer mes recos</span>
-            </button>
-          </div>
         </motion.div>
 
       </div>
