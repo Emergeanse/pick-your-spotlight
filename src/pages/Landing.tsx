@@ -419,6 +419,89 @@ const Landing = () => {
         </div>
       </section>
 
+      {/* ─── PICK TOGETHER ─── */}
+      <section className="py-20 md:py-28 px-5 relative overflow-hidden">
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div className="w-[500px] h-[400px] rounded-full bg-gold/4 blur-[130px]" />
+        </div>
+        <div className="max-w-5xl mx-auto relative z-10">
+          <motion.div variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }}
+            className="flex flex-col md:flex-row-reverse items-center gap-10 md:gap-16">
+
+            {/* Visual — crossing profiles */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] }}
+              className="flex-shrink-0 w-full md:w-auto"
+            >
+              <div className="mx-auto w-[280px] md:w-[300px]">
+                {/* Two profiles merging */}
+                <div className="flex items-center justify-center gap-3 mb-4">
+                  <div className="w-14 h-14 rounded-full bg-primary/12 border-2 border-primary/25 flex items-center justify-center">
+                    <span className="text-primary font-sans font-bold text-lg">A</span>
+                  </div>
+                  <div className="flex flex-col items-center gap-1">
+                    <div className="w-8 h-px bg-primary/30" />
+                    <Users className="w-4 h-4 text-primary/50" />
+                    <div className="w-8 h-px bg-gold/30" />
+                  </div>
+                  <div className="w-14 h-14 rounded-full bg-gold/12 border-2 border-gold/25 flex items-center justify-center">
+                    <span className="text-gold font-sans font-bold text-lg">M</span>
+                  </div>
+                </div>
+
+                {/* Result card */}
+                <div className="rounded-2xl border border-border/15 bg-card/30 p-4 backdrop-blur-sm">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-12 h-16 rounded-lg overflow-hidden flex-shrink-0">
+                      <img src="https://image.tmdb.org/t/p/w342/d5NXSklXo0qyIYkgV94XAgMIckC.jpg" alt="Film" className="w-full h-full object-cover" />
+                    </div>
+                    <div>
+                      <p className="text-[11px] font-serif text-foreground leading-tight">Inception</p>
+                      <p className="text-[9px] font-sans text-foreground/35 mt-0.5">2h28 · Sci-Fi, Action</p>
+                      <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gold/15 border border-gold/25 mt-1.5">
+                        <span className="text-[9px] font-sans font-bold text-gold">91% compatibilité</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="space-y-1.5">
+                    <div className="flex items-center gap-2">
+                      <div className="w-4 h-4 rounded-full bg-primary/15 flex items-center justify-center"><span className="text-[8px] text-primary font-bold">A</span></div>
+                      <span className="text-[9px] font-sans text-foreground/40">Adore les twists et le suspense</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-4 h-4 rounded-full bg-gold/15 flex items-center justify-center"><span className="text-[8px] text-gold font-bold">M</span></div>
+                      <span className="text-[9px] font-sans text-foreground/40">Fan de Leonardo DiCaprio</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Text */}
+            <div className="text-center md:text-left">
+              <span className="text-[10px] uppercase tracking-[0.2em] text-gold/50 font-sans font-semibold">À plusieurs</span>
+              <h2 className="text-3xl md:text-4xl font-serif mb-4 mt-1">
+                Pick <span className="text-gold">Together</span>
+              </h2>
+              <p className="text-foreground/40 font-sans text-sm md:text-base leading-relaxed mb-5">
+                Fini les 30 minutes de débat. Pick croise vos profils cinématographiques
+                et trouve instantanément le film qui plaît à tout le monde.
+                Chacun a ses goûts — Pick trouve le terrain d'entente parfait.
+              </p>
+              <div className="flex flex-wrap gap-2 justify-center md:justify-start">
+                {["Croisement des profils", "Score de compatibilité", "QR code d'invitation", "Jusqu'à 8 personnes"].map(tag => (
+                  <span key={tag} className="px-3 py-1.5 rounded-full bg-card/60 border border-border/12 text-foreground/40 text-xs font-sans">{tag}</span>
+                ))}
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ─── PLATEFORMES ─── */}
       <section className="py-16 md:py-24 px-5 relative">
         <div className="max-w-4xl mx-auto text-center">
           <motion.div variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }}>
