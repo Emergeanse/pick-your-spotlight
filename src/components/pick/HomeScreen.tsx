@@ -121,8 +121,9 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
 
   // All movies available for tonight pick navigation (chat pool or single generated)
   const tonightPool: MovieDetail[] = chatMoviesPool || (tonightPick ? [tonightPick] : []);
-  // Arrows only show once user has clicked "Autre suggestion" at least once
-  const hasTonightNav = tonightPool.length > 1 && tonightPickIndex > 0;
+  // Arrows only show for going back to previously seen films, never forward
+  const canGoPrev = tonightPickIndex > 0;
+  const hasTonightNav = canGoPrev;
 
   const navigateTonightPick = (direction: "prev" | "next") => {
     if (!hasTonightNav) return;
