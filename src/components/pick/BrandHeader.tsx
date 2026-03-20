@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Users } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import NotificationBell from "./NotificationBell";
 import { ReactNode } from "react";
 
@@ -10,6 +11,8 @@ interface BrandHeaderProps {
 }
 
 const BrandHeader = ({ showBack, onBack, extraActions }: BrandHeaderProps) => {
+  const navigate = useNavigate();
+
   return (
     <motion.div
       initial={{ opacity: 0, y: -8 }}
@@ -35,6 +38,13 @@ const BrandHeader = ({ showBack, onBack, extraActions }: BrandHeaderProps) => {
 
       <div className="flex items-center gap-1">
         {extraActions}
+        <button
+          onClick={() => navigate("/app/friends")}
+          className="relative p-2 rounded-full hover:bg-foreground/5 transition-colors active:scale-95"
+          aria-label="Mes amis"
+        >
+          <Users className="w-[18px] h-[18px] text-foreground/40" />
+        </button>
         <NotificationBell />
       </div>
     </motion.div>

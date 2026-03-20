@@ -58,7 +58,7 @@ const App = () => (
             <Route path="/app/profile" element={<ProtectedRoute><AppLayout><Profile /></AppLayout></ProtectedRoute>} />
             <Route path="/app/my-cinema" element={<ProtectedRoute><AppLayout><MyCinema /></AppLayout></ProtectedRoute>} />
             <Route path="/app/watchlist" element={<ProtectedRoute><AppLayout><WatchlistPageRoute /></AppLayout></ProtectedRoute>} />
-            <Route path="/app/friends" element={<Navigate to="/app/profile" replace />} />
+            <Route path="/app/friends" element={<ProtectedRoute><AppLayout><Friends /></AppLayout></ProtectedRoute>} />
             <Route path="/app/pick-together" element={<ProtectedRoute><AppLayout><PickTogether /></AppLayout></ProtectedRoute>} />
             <Route path="/app/pick-plus" element={<ProtectedRoute><AppLayout><PickPlusPage /></AppLayout></ProtectedRoute>} />
             <Route path="/join" element={<JoinSession />} />
