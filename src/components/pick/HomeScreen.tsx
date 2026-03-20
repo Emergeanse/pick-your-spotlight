@@ -69,23 +69,7 @@ const LOADING_MESSAGES = [
   "Ça cogite sévère de mon côté !",
 ];
 
-const PROACTIVE_MESSAGES = [
-   "J'ai peut-être la recommandation parfaite pour ce soir.",
-  "Tiens, j'ai pensé à un truc qui devrait te plaire.",
-  "Avant que tu choisisses… regarde celui-là.",
-  "J'ai une idée pour toi ce soir.",
-  "Psst… j'ai trouvé quelque chose.",
-  "Tu vas me remercier pour celui-là.",
-  "J'ai une suggestion qui te correspond bien.",
-  "Celui-ci a ton nom écrit dessus.",
-  "Je crois que j'ai trouvé ta soirée.",
-  "Attends de voir ce que j'ai déniché…",
-  "Je parie que tu vas adorer.",
-  "J'ai un petit pressentiment sur celui-là…",
-  "Regarde ce que j'ai trouvé en fouillant pour toi.",
-  "Du sur-mesure pour toi.",
-  "Un petit bijou juste pour toi ce soir.",
-];
+// Proactive messages are now time-aware — see getProactiveMessages()
 
 const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, openTrainerOnMount, forceCloseTrainer, onTrainerOpened, chatSuggestedMovies, onChatSuggestedConsumed }: HomeScreenProps) => {
   const navigate = useNavigate();
