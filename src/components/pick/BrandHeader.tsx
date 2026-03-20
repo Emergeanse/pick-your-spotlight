@@ -1,13 +1,15 @@
 import { motion } from "framer-motion";
 import { ArrowLeft } from "lucide-react";
 import NotificationBell from "./NotificationBell";
+import { ReactNode } from "react";
 
 interface BrandHeaderProps {
   showBack?: boolean;
   onBack?: () => void;
+  extraActions?: ReactNode;
 }
 
-const BrandHeader = ({ showBack, onBack }: BrandHeaderProps) => {
+const BrandHeader = ({ showBack, onBack, extraActions }: BrandHeaderProps) => {
   return (
     <motion.div
       initial={{ opacity: 0, y: -8 }}
@@ -31,7 +33,10 @@ const BrandHeader = ({ showBack, onBack }: BrandHeaderProps) => {
         </div>
       )}
 
-      <NotificationBell />
+      <div className="flex items-center gap-1">
+        {extraActions}
+        <NotificationBell />
+      </div>
     </motion.div>
   );
 };
