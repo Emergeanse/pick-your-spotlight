@@ -558,49 +558,55 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({
 
             {/* Primary Actions */}
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }} className="space-y-3">
-              <MovieActionBar movie={movie} />
+              {/* On regarde ce soir CTA */}
+              <button
+                onClick={() => {
+                  trackInteraction(movie.id, "watched", { mood: userCriteria?.mood, context: userCriteria?.context });
+                  updateRecommendationReaction(movie.id, "accepted", "on_regarde");
+                  toast.success("Bon visionnage ! 🍿");
+                }}
+                className="w-full h-12 rounded-xl bg-primary text-primary-foreground text-sm font-sans font-semibold flex items-center justify-center gap-2 transition-all active:scale-[0.97] hover:bg-primary/90"
+              >
+                <Check className="w-4 h-4" />
+                On regarde ce soir !
+              </button>
 
-              {/* Navigation Prev/Next */}
-              {totalCount > 1 && (
-                <div className="flex items-center gap-3 mt-2">
-                  <button
-                    onClick={onPrevious}
-                    disabled={currentIndex === 0}
-                    className="w-9 h-9 rounded-full border border-border/25 text-foreground/40 hover:text-primary hover:border-primary/25 flex items-center justify-center transition-all active:scale-95 disabled:opacity-25 disabled:pointer-events-none"
-                    title="Précédent"
-                  >
-                    <ChevronLeft className="w-4 h-4" />
-                  </button>
-                  <span className="text-foreground/40 text-xs font-sans font-medium tabular-nums">
-                    {currentIndex + 1}/{totalCount}
-                  </span>
-                  <button
-                    onClick={onNext}
-                    disabled={currentIndex >= totalCount - 1}
-                    className="w-9 h-9 rounded-full border border-border/25 text-foreground/40 hover:text-primary hover:border-primary/25 flex items-center justify-center transition-all active:scale-95 disabled:opacity-25 disabled:pointer-events-none"
-                    title="Suivant"
-                  >
-                    <ChevronRight className="w-4 h-4" />
-                  </button>
-                </div>
-              )}
+              {/* Action icons row */}
+              <div className="flex items-center justify-between">
+                <MovieActionBar movie={movie} />
+                <button data-tour="autre-suggestion" onClick={() => onShowAnother()}
+                  className="flex items-center gap-1.5 px-3.5 h-8 rounded-full border border-border/25 text-foreground/50 hover:text-primary hover:border-primary/25 text-[11px] font-sans font-medium transition-all active:scale-95 shrink-0">
+                  <RefreshCw className="w-3 h-3" />
+                  Autre suggestion
+                </button>
+              </div>
 
-              <div className="flex items-center gap-2 mt-2">
+              {/* Navigation Prev/Next + Share */}
+              <div className="flex items-center gap-2">
+                {totalCount > 1 && (
+                  <>
+                    <button onClick={onPrevious} disabled={currentIndex === 0}
+                      className="w-8 h-8 rounded-full border border-border/25 text-foreground/40 hover:text-primary hover:border-primary/25 flex items-center justify-center transition-all active:scale-95 disabled:opacity-25 disabled:pointer-events-none" title="Précédent">
+                      <ChevronLeft className="w-3.5 h-3.5" />
+                    </button>
+                    <span className="text-foreground/40 text-[11px] font-sans font-medium tabular-nums">{currentIndex + 1}/{totalCount}</span>
+                    <button onClick={onNext} disabled={currentIndex >= totalCount - 1}
+                      className="w-8 h-8 rounded-full border border-border/25 text-foreground/40 hover:text-primary hover:border-primary/25 flex items-center justify-center transition-all active:scale-95 disabled:opacity-25 disabled:pointer-events-none" title="Suivant">
+                      <ChevronRight className="w-3.5 h-3.5" />
+                    </button>
+                  </>
+                )}
                 <button onClick={() => {
                   const shareText = `Pick me suggère "${title}" ce soir — tu veux qu'on le regarde ensemble ? 🍿`;
                   const shareUrl = window.location.origin;
                   if (navigator.share) { navigator.share({ title: `Pick — ${title}`, text: shareText, url: shareUrl }).catch(() => {}); }
                   else { navigator.clipboard.writeText(`${shareText}\n${shareUrl}`).then(() => toast.success("Lien copié !")).catch(() => {}); }
                 }}
-                  className="w-9 h-9 rounded-full border border-border/25 text-foreground/40 hover:text-primary hover:border-primary/25 flex items-center justify-center transition-all active:scale-95" title="Partager">
+                  className="w-8 h-8 rounded-full border border-border/25 text-foreground/40 hover:text-primary hover:border-primary/25 flex items-center justify-center transition-all active:scale-95" title="Partager">
                   <Share2 className="w-3.5 h-3.5" />
                 </button>
-                <button data-tour="autre-suggestion" onClick={() => onShowAnother()}
-                  className="flex items-center gap-1.5 px-3.5 h-9 rounded-full border border-border/25 text-foreground/40 hover:text-primary hover:border-primary/25 text-xs font-sans font-medium transition-all active:scale-95">
-                  <RefreshCw className="w-3.5 h-3.5" />
-                  Nouvelles suggestions
-                </button>
               </div>
+
               {refining && (
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="pt-3">
                   <PickCharacter mood="think" message="Attends, je cherche mieux…" size="sm" animate={false} />
