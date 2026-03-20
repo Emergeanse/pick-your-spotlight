@@ -319,7 +319,8 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
             likedMovies: liked, userTasteVector, tasteProfile,
             platformIds: userPlatformIds, excludedPlatformIds: userExcludedPlatformIds, excludedGenres: userExcludedGenres, minRating: userMinRating, excludeIds: allExcludeIds, rejectionContext,
             explorationLevel,
-            mediaType: whatChoice,
+            mediaType: quickFilters.mediaType !== "both" ? quickFilters.mediaType : whatChoice,
+            maxDuration: quickFilters.maxDuration,
             count: 5,
           });
           if (data?.movies && data.movies.length > 0) {
