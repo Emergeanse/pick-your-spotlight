@@ -93,7 +93,7 @@ const MovieActionBar = ({ movie, size = "md", className = "", onInteraction }: M
   const fontSize = size === "sm" ? "text-[8px]" : "text-[9px]";
 
   return (
-    <div className={`flex items-center gap-1.5 ${className}`}>
+    <div className={`flex items-center justify-center gap-3 sm:gap-4 ${className}`}>
       <div className="flex flex-col items-center gap-0.5">
         <button
           onClick={handleToggleBookmark}
