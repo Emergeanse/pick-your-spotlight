@@ -255,7 +255,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
       try {
         const movie = await getSurpriseRecommendation([], { platformIds: userPlatformIds, minRating: userMinRating, excludedGenres: userExcludedGenres });
         clearInterval(msgInterval);
-        onSurprise(movie);
+        onSurprise([movie]);
       } catch {
         clearInterval(msgInterval);
       }
