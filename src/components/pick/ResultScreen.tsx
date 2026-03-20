@@ -512,6 +512,32 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({
             {/* Primary Actions */}
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }} className="space-y-3">
               <MovieActionBar movie={movie} />
+
+              {/* Navigation Prev/Next */}
+              {totalCount > 1 && (
+                <div className="flex items-center gap-3 mt-2">
+                  <button
+                    onClick={onPrevious}
+                    disabled={currentIndex === 0}
+                    className="w-9 h-9 rounded-full border border-border/25 text-foreground/40 hover:text-primary hover:border-primary/25 flex items-center justify-center transition-all active:scale-95 disabled:opacity-25 disabled:pointer-events-none"
+                    title="Précédent"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </button>
+                  <span className="text-foreground/40 text-xs font-sans font-medium tabular-nums">
+                    {currentIndex + 1}/{totalCount}
+                  </span>
+                  <button
+                    onClick={onNext}
+                    disabled={currentIndex >= totalCount - 1}
+                    className="w-9 h-9 rounded-full border border-border/25 text-foreground/40 hover:text-primary hover:border-primary/25 flex items-center justify-center transition-all active:scale-95 disabled:opacity-25 disabled:pointer-events-none"
+                    title="Suivant"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
+
               <div className="flex items-center gap-2 mt-2">
                 <button onClick={() => {
                   const shareText = `Pick me suggère "${title}" ce soir — tu veux qu'on le regarde ensemble ? 🍿`;
@@ -525,7 +551,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({
                 <button data-tour="autre-suggestion" onClick={() => onShowAnother()}
                   className="flex items-center gap-1.5 px-3.5 h-9 rounded-full border border-border/25 text-foreground/40 hover:text-primary hover:border-primary/25 text-xs font-sans font-medium transition-all active:scale-95">
                   <RefreshCw className="w-3.5 h-3.5" />
-                  Autre suggestion
+                  Nouvelles suggestions
                 </button>
               </div>
               {refining && (
