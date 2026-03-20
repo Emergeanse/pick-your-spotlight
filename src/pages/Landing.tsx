@@ -139,7 +139,7 @@ const Landing = () => {
         ]
       })}} />
       {/* ─── GLOBAL POSTER BACKGROUND — subtle scrolling posters behind entire page ─── */}
-      <div className="fixed inset-0 z-0 opacity-[0.04] pointer-events-none overflow-hidden">
+      <div className="fixed inset-0 z-0 opacity-[0.12] pointer-events-none overflow-hidden">
         <div className="hidden md:flex gap-2 w-full h-full px-4">
           <PosterColumn posters={col1} className="w-1/6 -mt-20" />
           <PosterColumn posters={col2} reverse className="w-1/6 mt-10" />
