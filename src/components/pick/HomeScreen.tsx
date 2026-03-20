@@ -744,6 +744,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
                           setTonightPick(null);
                           setChatMoviesPool(null);
                           setTonightPickIndex(0);
+                          setTonightMaxSeen(0);
                           generateTonightPick(nextRejected, rejContext);
                         }
                       }}
