@@ -343,18 +343,35 @@ const Landing = () => {
         </div>
         <div className="max-w-5xl mx-auto relative z-10">
           <motion.div variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }}
-            className="flex flex-col md:flex-row items-center gap-6 md:gap-10">
+            className="flex flex-col items-center gap-6 md:gap-10">
 
-            {/* DNA Visual */}
+            {/* Text — always on top */}
+            <div className="text-center">
+              <span className="text-[10px] uppercase tracking-[0.2em] text-primary/50 font-sans font-semibold">Unique</span>
+              <h2 className="text-3xl md:text-4xl font-serif mb-4 mt-1">
+                Ton ADN <span className="text-primary">Cinéma</span>
+              </h2>
+              <p className="text-foreground/40 font-sans text-sm md:text-base leading-relaxed mb-5 max-w-lg mx-auto">
+                Plus tu utilises Pick, plus il te connaît. Il construit ton profil cinématographique unique :
+                tes genres de prédilection, tes traits de goût, ton archétype de spectateur.
+                Comme une empreinte digitale, mais pour le cinéma.
+              </p>
+              <div className="flex flex-wrap gap-2 justify-center">
+                {["Archétype unique", "Évolution dans le temps", "Traits de goût", "Partageable"].map(tag => (
+                  <span key={tag} className="px-3 py-1.5 rounded-full bg-card/60 border border-border/12 text-foreground/40 text-xs font-sans">{tag}</span>
+                ))}
+              </div>
+            </div>
+
+            {/* DNA Visual — below text */}
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               whileInView={{ opacity: 1, scale: 1 }}
               viewport={{ once: true }}
               transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] }}
-              className="flex-shrink-0 w-full md:w-auto"
+              className="w-full max-w-[300px]"
             >
-              <div className="mx-auto w-[260px] md:w-[300px] rounded-3xl border border-border/15 bg-card/30 p-5 backdrop-blur-sm">
-                {/* Simulated DNA profile card */}
+              <div className="rounded-3xl border border-border/15 bg-card/30 p-5 backdrop-blur-sm">
                 <div className="flex items-center gap-3 mb-4">
                   <div className="w-10 h-10 rounded-full bg-primary/15 border border-primary/25 flex items-center justify-center">
                     <Dna className="w-5 h-5 text-primary" />
@@ -364,7 +381,6 @@ const Landing = () => {
                     <p className="text-sm font-serif text-foreground">L'Explorateur Nocturne</p>
                   </div>
                 </div>
-                {/* Genre bars */}
                 <div className="space-y-2.5 mb-4">
                   {[
                     { genre: "Thriller", pct: 85, color: "bg-primary" },
@@ -389,7 +405,6 @@ const Landing = () => {
                     </div>
                   ))}
                 </div>
-                {/* Taste traits */}
                 <div className="flex flex-wrap gap-1.5">
                   {["Suspense psychologique", "Twists narratifs", "Ambiances sombres", "Anti-héros"].map((trait) => (
                     <span key={trait} className="px-2 py-1 rounded-md bg-primary/8 border border-primary/12 text-[9px] font-sans text-foreground/50">{trait}</span>
@@ -397,24 +412,6 @@ const Landing = () => {
                 </div>
               </div>
             </motion.div>
-
-            {/* Text */}
-            <div className="text-center md:text-left">
-              <span className="text-[10px] uppercase tracking-[0.2em] text-primary/50 font-sans font-semibold">Unique</span>
-              <h2 className="text-3xl md:text-4xl font-serif mb-4 mt-1">
-                Ton ADN <span className="text-primary">Cinéma</span>
-              </h2>
-              <p className="text-foreground/40 font-sans text-sm md:text-base leading-relaxed mb-5">
-                Plus tu utilises Pick, plus il te connaît. Il construit ton profil cinématographique unique :
-                tes genres de prédilection, tes traits de goût, ton archétype de spectateur.
-                Comme une empreinte digitale, mais pour le cinéma.
-              </p>
-              <div className="flex flex-wrap gap-2 justify-center md:justify-start">
-                {["Archétype unique", "Évolution dans le temps", "Traits de goût", "Partageable"].map(tag => (
-                  <span key={tag} className="px-3 py-1.5 rounded-full bg-card/60 border border-border/12 text-foreground/40 text-xs font-sans">{tag}</span>
-                ))}
-              </div>
-            </div>
           </motion.div>
         </div>
       </section>
