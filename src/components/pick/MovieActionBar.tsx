@@ -75,6 +75,7 @@ const MovieActionBar = ({ movie, size = "md", className = "", onInteraction }: M
     if (!requireAuth()) return;
     trackInteraction(movie.id, "already_seen", {});
     toast.success("Marqué comme déjà vu");
+    onInteraction?.("already_seen");
   };
 
   const handleDislike = () => {
