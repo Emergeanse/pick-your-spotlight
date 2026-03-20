@@ -296,7 +296,6 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
                 dragConstraints={{ left: 0, right: 0 }}
                 dragElastic={0.7}
                 onDragEnd={handleDragEnd}
-                style={{ x, rotate }}
                 animate={
                   swiping === "right" ? { x: 400, opacity: 0, rotate: 15 } :
                   swiping === "left" ? { x: -400, opacity: 0, rotate: -15 } :
