@@ -274,9 +274,7 @@ const Profile = () => {
   const hasChanges = profile && (
     JSON.stringify([...selectedPlatforms].sort()) !== JSON.stringify([...(profile.preferred_platforms || [])].sort()) ||
     minRating !== ((profile as any)?.min_rating || 0) ||
-    mediaPreference !== ((profile as any)?.media_preference || "both") ||
-    ritualEnabled !== (profile?.ritual_enabled || false) ||
-    ritualTime !== (profile?.ritual_time || "20:00")
+    mediaPreference !== ((profile as any)?.media_preference || "both")
   );
 
   if (!isReady || profileLoading) {
