@@ -21,7 +21,7 @@ Deno.serve(async (req) => {
     const userClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!, {
       global: { headers: { Authorization: `Bearer ${token}` } },
     });
-    const { data: caller } = await userClient.auth.getUser();
+    const { data: caller } = await userClient.auth.getUser(token);
     if (!caller?.user) {
       return new Response(JSON.stringify({ error: "Non authentifié" }), { status: 401, headers: corsHeaders });
     }
