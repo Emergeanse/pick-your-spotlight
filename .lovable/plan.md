@@ -1,43 +1,38 @@
 
 
-## Plan : Rendre la barre de navigation visible sur tous les ecrans
+## Plan : Uniformiser les deux chemins vers le ResultScreen avec 5 films precharges
 
-### Probleme actuel
+### Constat
 
-La `BottomTabBar` est incluse individuellement dans chaque page (`Index`, `WatchlistRoute`, `MyCinema`, `Profile`, `Friends`, `PickTogether`), avec des conditions qui la masquent parfois (ex: sur `Index.tsx` elle disparait quand on est sur l'ecran resultat, sur `PickTogether` elle n'apparait que sur le step "landing").
+Les deux chemins ("Pick choisit pour toi" et "Parle a Pick") menent deja au meme composant `ResultScreen` visuellement (backdrop, poster, acteurs, analyse, streaming, boutons). Le probleme est que "Parle a Pick" ne renvoie qu'**1 seul film**, donc les boutons Precedent/Suivant n'apparaissent pas.
 
-### Approche
+### Ce qui sera fait
 
-Remonter la `BottomTabBar` au niveau du layout dans `App.tsx` pour qu'elle soit rendue une seule fois, automatiquement, sur toutes les routes `/app/*`. Les pages publiques (`/`, `/auth`, `/join`, `/onboarding`) ne l'afficheront pas.
+#### 1. Modifier l'Edge Function `pick-chat` pour precharger 5 films
+**Fichier** : `supabase/functions/pick-chat/index.ts`
+- Quand l'IA suggere un film, apres avoir recupere ses details TMDB, le backend cherche automatiquement **4 films similaires** via l'endpoint TMDB `/movie/{id}/recommendations`
+- Filtre par note minimale, recupere les details en parallele
+- Renvoie un champ `movies: MovieDetail[]` (5 films) en plus du champ `movie` existant
 
-### Etapes
+#### 2. Adapter VoiceChat pour transmettre les 5 films
+**Fichier** : `src/components/pick/VoiceChat.tsx`
+- Changer la signature du callback : `onMovieSuggested(movies: MovieDetail[])`
+- Quand `data.movies` existe, passer le tableau complet ; sinon `[data.movie]`
 
-1. **Creer un composant `AppLayout`** dans `src/components/pick/AppLayout.tsx`
-   - Wrapper qui rend `{children}` + `<BottomTabBar />` en permanence
-   - Ajoute le padding-bottom necessaire pour ne pas cacher le contenu sous la barre
+#### 3. Adapter Index.tsx pour recevoir un tableau
+**Fichier** : `src/pages/Index.tsx`
+- `handleMovieSuggested` accepte `MovieDetail[]` au lieu d'un seul film
+- Appelle `setResults(movies)` et `setCurrentResultIndex(0)`
 
-2. **Modifier `App.tsx`**
-   - Wrapper toutes les routes `/app/*` avec `AppLayout`
-   - Supprimer les imports/rendus individuels de `BottomTabBar` dans chaque page
-
-3. **Nettoyer les pages individuelles** (supprimer `BottomTabBar` de chacune) :
-   - `src/pages/Index.tsx` — supprimer l'import, la variable `showTabBar`, et le rendu conditionnel
-   - `src/pages/WatchlistRoute.tsx` — supprimer l'import et le rendu
-   - `src/pages/MyCinema.tsx` — supprimer l'import et le rendu
-   - `src/pages/Profile.tsx` — supprimer l'import et le rendu
-   - `src/pages/Friends.tsx` — supprimer l'import et le rendu
-   - `src/pages/PickTogether.tsx` — supprimer l'import et le rendu conditionnel
-
-### Details techniques
+### Resultat
 
 ```text
-App.tsx
-  └─ /app/*  →  <AppLayout>        ← nouveau wrapper
-                  <children />
-                  <BottomTabBar />  ← toujours visible
-                </AppLayout>
-  └─ /auth, /join, /onboarding     ← pas de tab bar
+"Pick choisit pour toi" → surprise-personalized (count=5) → ResultScreen ◀ 1/5 ▶
+"Parle a Pick"          → pick-chat + 4 similaires        → ResultScreen ◀ 1/5 ▶
+                                                              ↑ meme page visuelle
 ```
 
-La barre sera fixee en bas (deja le cas via `fixed bottom-0`) et chaque page devra conserver ou ajouter un `pb-[calc(3.5rem+env(safe-area-inset-bottom))]` pour eviter que le contenu soit cache derriere.
+### Ce qui ne change PAS
+- `ResultScreen.tsx` — les boutons Precedent/Suivant sont deja implementes et fonctionnels
+- L'apparence visuelle — les deux chemins arrivent deja sur le meme composant
 
