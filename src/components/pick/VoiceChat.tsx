@@ -11,7 +11,7 @@ import PickCharacter from "./PickCharacter";
 
 interface VoiceChatProps {
   onClose: () => void;
-  onMovieSuggested: (movie: MovieDetail, recapTags?: string[]) => void;
+  onMovieSuggested: (movies: MovieDetail[], recapTags?: string[]) => void;
   initialMessages?: ChatMessage[];
   showMicGuide?: boolean;
 }
