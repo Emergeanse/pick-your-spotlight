@@ -843,6 +843,8 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
       <AnimatePresence>
         {showTrainer && (
           <TasteTrainer
+            isActivation={activationTrainerMode}
+            onActivationComplete={onActivationTrainingComplete}
             onClose={() => {
               setShowTrainer(false);
               // Refresh evaluated count

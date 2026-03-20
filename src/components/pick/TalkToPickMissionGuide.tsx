@@ -66,7 +66,7 @@ const TalkToPickMissionGuide = ({ step }: TalkToPickMissionGuideProps) => {
   const tooltipBelow = cutout.top < vh / 2;
 
   return (
-    <div className="fixed inset-0 z-[85]">
+    <div className="fixed inset-0 z-[85] pointer-events-none">
       <div className="absolute top-0 left-0 right-0 bg-background/80 backdrop-blur-sm pointer-events-auto" style={{ height: Math.max(0, cutout.top) }} />
       <div className="absolute bottom-0 left-0 right-0 bg-background/80 backdrop-blur-sm pointer-events-auto" style={{ top: cutout.bottom }} />
       <div className="absolute bg-background/80 backdrop-blur-sm pointer-events-auto" style={{ top: cutout.top, left: 0, width: Math.max(0, cutout.left), height: cutout.height }} />
