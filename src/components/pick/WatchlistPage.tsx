@@ -119,7 +119,7 @@ const MoviePreviewSheet = ({
     <>
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose} className="fixed inset-0 z-[55] bg-black/60 backdrop-blur-sm" />
       <motion.div initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }} transition={{ type: "spring", damping: 30, stiffness: 300 }}
-        className="fixed bottom-0 left-0 right-0 z-[56] max-h-[88vh] rounded-t-3xl bg-card overflow-hidden flex flex-col">
+        className="fixed bottom-0 left-0 right-0 z-[56] max-h-[85vh] rounded-t-3xl bg-card overflow-hidden flex flex-col pb-safe">
         <div className="relative h-44 shrink-0 overflow-hidden">
           {backdrop ? <img src={backdrop} alt="" className="w-full h-full object-cover" /> :
            poster ? <img src={poster} alt="" className="w-full h-full object-cover blur-sm scale-110" /> :
