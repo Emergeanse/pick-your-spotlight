@@ -98,6 +98,33 @@ export type Database = {
         }
         Relationships: []
       }
+      engine_metrics: {
+        Row: {
+          breakdown: Json
+          created_at: string
+          id: string
+          metric_date: string
+          metric_type: string
+          metric_value: number
+        }
+        Insert: {
+          breakdown?: Json
+          created_at?: string
+          id?: string
+          metric_date?: string
+          metric_type: string
+          metric_value?: number
+        }
+        Update: {
+          breakdown?: Json
+          created_at?: string
+          id?: string
+          metric_date?: string
+          metric_type?: string
+          metric_value?: number
+        }
+        Relationships: []
+      }
       friendships: {
         Row: {
           addressee_id: string
@@ -222,34 +249,64 @@ export type Database = {
       }
       movie_embeddings: {
         Row: {
+          cluster_labels: string[]
           created_at: string
           embedding: string
           genres: string[] | null
           id: string
+          media_type: string
+          platform_ids: number[]
+          popularity: number | null
+          runtime: number | null
+          safety_tags: string[]
+          semantic_axes: Json
+          suitability_tags: string[]
           taste_tags: string[]
           title: string
           tmdb_id: number
           updated_at: string
+          vote_average: number | null
+          year: number | null
         }
         Insert: {
+          cluster_labels?: string[]
           created_at?: string
           embedding: string
           genres?: string[] | null
           id?: string
+          media_type?: string
+          platform_ids?: number[]
+          popularity?: number | null
+          runtime?: number | null
+          safety_tags?: string[]
+          semantic_axes?: Json
+          suitability_tags?: string[]
           taste_tags?: string[]
           title: string
           tmdb_id: number
           updated_at?: string
+          vote_average?: number | null
+          year?: number | null
         }
         Update: {
+          cluster_labels?: string[]
           created_at?: string
           embedding?: string
           genres?: string[] | null
           id?: string
+          media_type?: string
+          platform_ids?: number[]
+          popularity?: number | null
+          runtime?: number | null
+          safety_tags?: string[]
+          semantic_axes?: Json
+          suitability_tags?: string[]
           taste_tags?: string[]
           title?: string
           tmdb_id?: number
           updated_at?: string
+          vote_average?: number | null
+          year?: number | null
         }
         Relationships: []
       }

@@ -60,17 +60,25 @@ serve(async (req) => {
 
       const { data: movieEmb } = await supabase
         .from("movie_embeddings")
-        .select("embedding, taste_tags")
+        .select("embedding, taste_tags, semantic_axes, safety_tags, suitability_tags, cluster_labels")
         .eq("tmdb_id", tmdbId)
         .maybeSingle();
 
       let movieVector: number[] | null = null;
+      let movieSemanticAxes: any = {};
+      let movieSafetyTags: string[] = [];
+      let movieSuitabilityTags: string[] = [];
+      let movieClusterLabels: string[] = [];
 
       if (movieEmb) {
         movieVector = typeof movieEmb.embedding === "string"
           ? JSON.parse(movieEmb.embedding.replace(/^\[/, "[").replace(/\]$/, "]"))
           : movieEmb.embedding;
         movieTasteTags = movieEmb.taste_tags || [];
+        movieSemanticAxes = (movieEmb as any).semantic_axes || {};
+        movieSafetyTags = (movieEmb as any).safety_tags || [];
+        movieSuitabilityTags = (movieEmb as any).suitability_tags || [];
+        movieClusterLabels = (movieEmb as any).cluster_labels || [];
       } else {
         try {
           const embResponse = await fetch(`${SUPABASE_URL}/functions/v1/generate-embedding`, {
@@ -142,6 +150,10 @@ ${embeddingSimilarity !== null ? `- 🧬 Similarité STABLE (goût profond) : ${
 ${recentSimilarity !== null ? `- 🔄 Similarité RÉCENTE (30 derniers jours) : ${Math.round(recentSimilarity * 100)}%` : ""}
 ${avoidanceSimilarity !== null ? `- ⚠️ Similarité ÉVITEMENT : ${Math.round(avoidanceSimilarity * 100)}% ${avoidanceSimilarity > 0.6 ? "— RISQUE ÉLEVÉ DE REJET" : avoidanceSimilarity > 0.4 ? "— risque modéré" : "— risque faible"}` : ""}
 ${movieTasteTags.length > 0 ? `- 🏷️ Taste tags du film : ${movieTasteTags.join(", ")}` : ""}
+${movieClusterLabels.length > 0 ? `- 📂 Clusters : ${movieClusterLabels.join(", ")}` : ""}
+${movieSafetyTags.length > 0 ? `- ⚠️ Contenu sensible : ${movieSafetyTags.join(", ")}` : ""}
+${movieSuitabilityTags.length > 0 ? `- 👥 Adapté pour : ${movieSuitabilityTags.join(", ")}` : ""}
+${Object.keys(movieSemanticAxes).length > 0 ? `- 📊 Axes sémantiques : ${Object.entries(movieSemanticAxes).filter(([,v]) => (v as number) > 0.6).map(([k,v]) => `${k}=${v}`).join(", ")}` : ""}
 ${skipPatterns.avgSkipRate > 0.5 ? `- ⚠️ Skip rate élevé (${Math.round(skipPatterns.avgSkipRate * 100)}%) — l'utilisateur est exigeant` : ""}
 ${skipPatterns.recentSkipStreak > 2 ? `- ⚠️ ${skipPatterns.recentSkipStreak} skips consécutifs récents` : ""}
 ${fatiguedGenres.length > 0 ? `- 🔄 FATIGUE genre : ${fatiguedGenres.join(", ")} — pénalise ces genres dans le score` : ""}
@@ -292,6 +304,10 @@ Génère la fiche de match multi-vecteur.`;
     if (recentSimilarity !== null) matchData.recentSimilarity = Math.round(recentSimilarity * 100);
     if (avoidanceSimilarity !== null) matchData.avoidanceSimilarity = Math.round(avoidanceSimilarity * 100);
     if (movieTasteTags.length > 0) matchData.movieTasteTags = movieTasteTags;
+    if (movieClusterLabels.length > 0) matchData.clusterLabels = movieClusterLabels;
+    if (movieSafetyTags.length > 0) matchData.safetyTags = movieSafetyTags;
+    if (movieSuitabilityTags.length > 0) matchData.suitabilityTags = movieSuitabilityTags;
+    if (Object.keys(movieSemanticAxes).length > 0) matchData.semanticAxes = movieSemanticAxes;
 
     return new Response(JSON.stringify(matchData), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
