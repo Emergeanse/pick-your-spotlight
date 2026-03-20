@@ -19,6 +19,7 @@ import PickCharacter from "./PickCharacter";
 import TasteTrainer from "./TasteTrainer";
 import TrainingProgress from "./TrainingProgress";
 import DiscoverySection from "./DiscoverySection";
+import MovieActionBar from "./MovieActionBar";
 
 import { useNavigate } from "react-router-dom";
 
@@ -610,7 +611,9 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
                     On regarde ?
                   </Button>
 
-                  <div className="flex items-center gap-4">
+                   <MovieActionBar movie={tonightPick} />
+
+                   <div className="flex items-center gap-4 mt-2">
                     <button
                       onClick={() => {
                         if (!tonightPick) return;
@@ -637,27 +640,6 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
                         <Dices className="w-3 h-3" />
                       )}
                       Autre suggestion
-                    </button>
-
-                    <span className="text-foreground/15 text-[10px]">·</span>
-
-                    <button
-                      onClick={() => {
-                        if (!tonightPick) return;
-                        trackInteraction(tonightPick.id, "already_seen", {});
-                        const nextRejected = [...rejectedIds, tonightPick.id];
-                        setRejectedIds(nextRejected);
-                        setTonightPick(null);
-                        generateTonightPick(nextRejected, {
-                          reason: "already_seen",
-                          rejectedGenres: (tonightPick.genres || []).map(g => g.name),
-                          rejectedTitle: getDisplayTitle(tonightPick),
-                        });
-                      }}
-                      disabled={tonightLoading}
-                      className="text-foreground/35 text-[12px] font-sans hover:text-foreground/60 transition-colors disabled:opacity-50"
-                    >
-                      Déjà vu
                     </button>
                   </div>
                 </div>

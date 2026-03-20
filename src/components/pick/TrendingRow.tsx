@@ -1,8 +1,9 @@
 import { useEffect, useState, useRef } from "react";
 import { motion } from "framer-motion";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import type { Movie } from "@/lib/tmdb";
-import { getPosterUrl, getDisplayTitle, getWatchProviders } from "@/lib/tmdb";
+import type { Movie, MovieDetail } from "@/lib/tmdb";
+import { getPosterUrl, getDisplayTitle, getWatchProviders, getMovieDetails } from "@/lib/tmdb";
+import MovieActionBar from "./MovieActionBar";
 
 interface TrendingRowProps {
   title: string;
@@ -14,6 +15,8 @@ const IMG_BASE = "https://image.tmdb.org/t/p";
 
 const MovieCard = ({ movie, index, onMovieClick }: { movie: Movie; index: number; onMovieClick?: (m: Movie) => void }) => {
   const [provider, setProvider] = useState<{ name: string; logo_path: string } | null>(null);
+  const [detail, setDetail] = useState<MovieDetail | null>(null);
+  const [showActions, setShowActions] = useState(false);
 
   useEffect(() => {
     const mediaType = movie.first_air_date ? "tv" : "movie";
@@ -22,45 +25,60 @@ const MovieCard = ({ movie, index, onMovieClick }: { movie: Movie; index: number
       .catch(() => {});
   }, [movie.id]);
 
+  const handleLongPress = () => {
+    if (!detail) {
+      const mediaType = movie.first_air_date ? "tv" : "movie";
+      getMovieDetails(movie.id, mediaType).then(d => { setDetail(d); setShowActions(true); }).catch(() => {});
+    } else {
+      setShowActions(!showActions);
+    }
+  };
+
   return (
-    <motion.button
-      initial={{ opacity: 0, scale: 0.9 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ delay: index * 0.05, duration: 0.3 }}
-      onClick={() => onMovieClick?.(movie)}
-      className="flex-shrink-0 snap-start group/card cursor-pointer"
-    >
-      <div className="relative w-28 md:w-40 aspect-[2/3] rounded-lg md:rounded-xl overflow-hidden">
-        <img
-          src={getPosterUrl(movie.poster_path, "w342")}
-          alt={getDisplayTitle(movie)}
-          className="w-full h-full object-cover transition-transform duration-500 group-hover/card:scale-110"
-          loading="lazy"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent opacity-0 group-hover/card:opacity-100 transition-opacity duration-300" />
+    <div className="flex-shrink-0 snap-start">
+      <motion.button
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ delay: index * 0.05, duration: 0.3 }}
+        onClick={() => onMovieClick?.(movie)}
+        onContextMenu={(e) => { e.preventDefault(); handleLongPress(); }}
+        className="group/card cursor-pointer"
+      >
+        <div className="relative w-28 md:w-40 aspect-[2/3] rounded-lg md:rounded-xl overflow-hidden">
+          <img
+            src={getPosterUrl(movie.poster_path, "w342")}
+            alt={getDisplayTitle(movie)}
+            className="w-full h-full object-cover transition-transform duration-500 group-hover/card:scale-110"
+            loading="lazy"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent opacity-0 group-hover/card:opacity-100 transition-opacity duration-300" />
 
-        {/* Rating badge */}
-        {movie.vote_average > 0 && (
-          <div className="absolute top-1.5 right-1.5 md:top-2 md:right-2 bg-background/80 backdrop-blur-sm text-primary text-[10px] md:text-xs font-sans font-semibold px-1.5 py-0.5 rounded-md">
-            ★ {movie.vote_average.toFixed(1)}
-          </div>
-        )}
+          {movie.vote_average > 0 && (
+            <div className="absolute top-1.5 right-1.5 md:top-2 md:right-2 bg-background/80 backdrop-blur-sm text-primary text-[10px] md:text-xs font-sans font-semibold px-1.5 py-0.5 rounded-md">
+              ★ {movie.vote_average.toFixed(1)}
+            </div>
+          )}
 
-        {/* Platform badge */}
-        {provider && (
-          <div className="absolute bottom-1.5 left-1.5 md:bottom-2 md:left-2">
-            <img
-              src={`${IMG_BASE}/w92${provider.logo_path}`}
-              alt={provider.name}
-              className="w-5 h-5 md:w-6 md:h-6 rounded-md object-cover border border-border/30"
-            />
-          </div>
-        )}
-      </div>
-      <p className="mt-1.5 md:mt-2 text-[11px] md:text-sm font-sans text-foreground/70 truncate w-28 md:w-40 text-left">
-        {getDisplayTitle(movie)}
-      </p>
-    </motion.button>
+          {provider && (
+            <div className="absolute bottom-1.5 left-1.5 md:bottom-2 md:left-2">
+              <img
+                src={`${IMG_BASE}/w92${provider.logo_path}`}
+                alt={provider.name}
+                className="w-5 h-5 md:w-6 md:h-6 rounded-md object-cover border border-border/30"
+              />
+            </div>
+          )}
+        </div>
+        <p className="mt-1.5 md:mt-2 text-[11px] md:text-sm font-sans text-foreground/70 truncate w-28 md:w-40 text-left">
+          {getDisplayTitle(movie)}
+        </p>
+      </motion.button>
+      {showActions && detail && (
+        <motion.div initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} className="mt-1">
+          <MovieActionBar movie={detail} size="sm" />
+        </motion.div>
+      )}
+    </div>
   );
 };
 
