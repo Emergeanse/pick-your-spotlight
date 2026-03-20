@@ -117,12 +117,31 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
   const [whoChoice, setWhoChoice] = useState<WhoOption | null>(null);
   const [totalEvaluated, setTotalEvaluated] = useState(0);
   const [chatMoviesPool, setChatMoviesPool] = useState<MovieDetail[] | null>(null);
+  const [tonightPickIndex, setTonightPickIndex] = useState(0);
+
+  // All movies available for tonight pick navigation (chat pool or single generated)
+  const tonightPool: MovieDetail[] = chatMoviesPool || (tonightPick ? [tonightPick] : []);
+  const hasTonightNav = tonightPool.length > 1;
+
+  const navigateTonightPick = (direction: "prev" | "next") => {
+    if (!hasTonightNav) return;
+    const newIndex = direction === "next"
+      ? Math.min(tonightPickIndex + 1, tonightPool.length - 1)
+      : Math.max(tonightPickIndex - 1, 0);
+    setTonightPickIndex(newIndex);
+    const movie = tonightPool[newIndex];
+    setTonightPick(movie);
+    setTonightProviders([]);
+    const mediaType = movie.first_air_date ? "tv" : "movie";
+    getWatchProviders(movie.id, mediaType).then(setTonightProviders).catch(() => {});
+  };
 
   // When chat suggests movies, show the first one in the tonightPick preview
   useEffect(() => {
     if (chatSuggestedMovies && chatSuggestedMovies.length > 0) {
       const firstMovie = chatSuggestedMovies[0];
       setChatMoviesPool(chatSuggestedMovies);
+      setTonightPickIndex(0);
       setTonightPick(firstMovie);
       setTonightProviders([]);
       const mediaType = firstMovie.first_air_date ? "tv" : "movie";
