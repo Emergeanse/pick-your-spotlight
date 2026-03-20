@@ -313,7 +313,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
     }, 2000);
 
     try {
-      let movie: MovieDetail;
+      let movies: MovieDetail[] = [];
       if (user) {
         const liked = await getLikedMovies();
         if (liked.length >= 2) {
@@ -326,18 +326,29 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
             platformIds: userPlatformIds, excludedPlatformIds: userExcludedPlatformIds, excludedGenres: userExcludedGenres, minRating: userMinRating, excludeIds: allExcludeIds, rejectionContext,
             explorationLevel,
             mediaType: whatChoice,
+            count: 5,
           });
-          movie = data.movie as MovieDetail;
+          if (data?.movies && data.movies.length > 0) {
+            movies = data.movies.map((m: any) => m.movie as MovieDetail);
+          } else if (data?.movie) {
+            movies = [data.movie as MovieDetail];
+          }
         } else {
-          movie = await getSurpriseRecommendation(excludeList, { platformIds: userPlatformIds, minRating: userMinRating, excludedGenres: userExcludedGenres });
+          const movie = await getSurpriseRecommendation(excludeList, { platformIds: userPlatformIds, minRating: userMinRating, excludedGenres: userExcludedGenres });
+          movies = [movie];
         }
       } else {
-        movie = await getSurpriseRecommendation(excludeList, { platformIds: userPlatformIds, minRating: userMinRating, excludedGenres: userExcludedGenres });
+        const movie = await getSurpriseRecommendation(excludeList, { platformIds: userPlatformIds, minRating: userMinRating, excludedGenres: userExcludedGenres });
+        movies = [movie];
       }
       clearInterval(msgInterval);
-      setTonightPick(movie);
-      const mediaType = movie.first_air_date ? "tv" : "movie";
-      getWatchProviders(movie.id, mediaType).then(setTonightProviders).catch(() => {});
+      if (movies.length > 0) {
+        setChatMoviesPool(movies);
+        setTonightPickIndex(0);
+        setTonightPick(movies[0]);
+        const mediaType = movies[0].first_air_date ? "tv" : "movie";
+        getWatchProviders(movies[0].id, mediaType).then(setTonightProviders).catch(() => {});
+      }
     } catch (e) {
       console.error(e);
       try {
