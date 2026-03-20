@@ -264,9 +264,9 @@ const Landing = () => {
       </section>
 
       {/* ─── COMMENT ÇA MARCHE — 3 étapes ─── */}
-      <section className="py-10 md:py-14 px-5 relative">
+      <section className="pt-10 pb-4 md:pt-12 md:pb-6 px-5 relative">
         <div className="max-w-4xl mx-auto">
-          <motion.div variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }} className="text-center mb-8">
+          <motion.div variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }} className="text-center mb-6">
             <h2 className="text-3xl md:text-5xl font-serif mb-3">Simple comme <span className="text-primary">1, 2, 3</span></h2>
             <p className="text-foreground/35 font-sans text-sm md:text-base max-w-md mx-auto">De l'envie au film en quelques secondes.</p>
           </motion.div>
@@ -290,17 +290,17 @@ const Landing = () => {
       </section>
 
       {/* ─── FEATURES — 2 modes + 4 features ─── */}
-      <section className="py-10 md:py-14 px-5 relative overflow-hidden">
+      <section className="pt-4 pb-4 md:pt-6 md:pb-6 px-5 relative overflow-hidden">
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <div className="w-[400px] h-[400px] rounded-full bg-primary/4 blur-[120px]" />
         </div>
         <div className="max-w-5xl mx-auto relative z-10">
-          <motion.div variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }} className="text-center mb-8">
+          <motion.div variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }} className="text-center mb-6">
             <h2 className="text-3xl md:text-5xl font-serif mb-3">Tout ce qu'il faut <span className="text-primary">pour ce soir</span></h2>
           </motion.div>
 
           {/* 2 modes principaux */}
-          <motion.div variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }} className="grid md:grid-cols-2 gap-4 max-w-3xl mx-auto mb-6">
+          <motion.div variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }} className="grid md:grid-cols-2 gap-4 max-w-3xl mx-auto mb-4">
             {[
               { icon: <Zap className="w-5 h-5" />, title: "Pick pour ce soir", desc: "Un seul tap. Pick te trouve le film parfait immédiatement, sans question.", tag: "Instant" },
               { icon: <Mic className="w-5 h-5" />, title: "Parle à Pick", desc: "Dis-lui ton humeur, avec qui tu regardes. Il comprend et propose LE film.", tag: "Conversationnel" },
@@ -337,13 +337,13 @@ const Landing = () => {
       </section>
 
       {/* ─── ADN CINÉMA ─── */}
-      <section className="py-12 md:py-16 px-5 relative overflow-hidden">
+      <section className="pt-4 pb-8 md:pt-6 md:pb-10 px-5 relative overflow-hidden">
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <div className="w-[500px] h-[500px] rounded-full bg-primary/4 blur-[140px]" />
         </div>
         <div className="max-w-5xl mx-auto relative z-10">
           <motion.div variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }}
-            className="flex flex-col md:flex-row items-center gap-10 md:gap-16">
+            className="flex flex-col md:flex-row items-center gap-6 md:gap-10">
 
             {/* DNA Visual */}
             <motion.div
