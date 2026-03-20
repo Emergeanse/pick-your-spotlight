@@ -175,12 +175,17 @@ Génère le vecteur de goût 32D, les axes sémantiques, et les métadonnées en
     const suitabilityTags = parsed.suitability_tags || [];
     const clusterLabels = parsed.cluster_labels || [];
 
-    if (!Array.isArray(vector) || vector.length !== 32) {
+    if (!Array.isArray(vector) || vector.length < 28) {
       throw new Error(`Invalid vector length: ${vector?.length}`);
     }
 
+    // Pad to 32 if AI returned slightly fewer dimensions, then trim
+    const padded = [...vector];
+    while (padded.length < 32) padded.push(0.5);
+    const final32 = padded.slice(0, 32);
+
     // Normalize to [0, 1]
-    const normalized = vector.map((v: number) => Math.max(0, Math.min(1, v)));
+    const normalized = final32.map((v: number) => Math.max(0, Math.min(1, v)));
 
     // Format as pgvector string
     const vectorStr = `[${normalized.join(",")}]`;
