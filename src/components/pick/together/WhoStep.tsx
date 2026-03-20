@@ -2,7 +2,6 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Users, Check, UserPlus, X, Plus, QrCode, Share2, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import PickCharacter from "@/components/pick/PickCharacter";
 import { QRCodeSVG } from "qrcode.react";
 import { toast } from "sonner";
 
