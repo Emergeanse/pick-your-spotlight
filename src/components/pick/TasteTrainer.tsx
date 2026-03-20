@@ -163,7 +163,7 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
         setLikedCount(c => c + 1);
         actionsRef.current.likes++;
       } else {
-        await trackInteraction(currentMovie.id, actionType, { source: "taste_trainer", genres: genres.join(","), rating });
+        await trackInteraction(currentMovie.id, actionType, { source: "taste_trainer", genres, rating });
         await recordSkippedRecommendation(user.id);
         setSkippedCount(c => c + 1);
         actionsRef.current.skips++;
