@@ -14,7 +14,7 @@ interface MovieActionBarProps {
   onInteraction?: (type: string) => void;
 }
 
-const MovieActionBar = ({ movie, size = "md", className = "" }: MovieActionBarProps) => {
+const MovieActionBar = ({ movie, size = "md", className = "", onInteraction }: MovieActionBarProps) => {
   const { user } = useAuth();
   const [liked, setLiked] = useState(false);
   const [bookmarked, setBookmarked] = useState(false);
