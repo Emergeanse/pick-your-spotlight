@@ -119,7 +119,7 @@ const MoviePreviewSheet = ({
     <>
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose} className="fixed inset-0 z-[55] bg-black/60 backdrop-blur-sm" />
       <motion.div initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }} transition={{ type: "spring", damping: 30, stiffness: 300 }}
-        className="fixed bottom-0 left-0 right-0 z-[56] max-h-[88vh] rounded-t-3xl bg-card overflow-hidden flex flex-col">
+        className="fixed bottom-0 left-0 right-0 z-[56] max-h-[85vh] rounded-t-3xl bg-card overflow-hidden flex flex-col pb-safe">
         <div className="relative h-44 shrink-0 overflow-hidden">
           {backdrop ? <img src={backdrop} alt="" className="w-full h-full object-cover" /> :
            poster ? <img src={poster} alt="" className="w-full h-full object-cover blur-sm scale-110" /> :
@@ -163,7 +163,7 @@ const MoviePreviewSheet = ({
           )}
         </div>
         <div className="shrink-0 px-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] pt-3 border-t border-border/10 bg-card">
-          <Button size="lg" className="w-full rounded-2xl bg-primary text-primary-foreground hover:bg-primary/90 font-sans font-semibold h-13 gap-2.5 text-base neon-glow transition-all active:scale-[0.97]" onClick={onWatch}>
+          <Button size="lg" className="w-full rounded-2xl bg-primary text-primary-foreground hover:bg-primary/90 font-sans font-semibold h-12 gap-2.5 text-base neon-glow transition-all active:scale-[0.97]" onClick={onWatch}>
             <Tv className="w-4 h-4" />
             Je regarde
           </Button>
