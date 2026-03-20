@@ -639,8 +639,12 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
                     size="lg"
                     className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90 font-sans font-semibold px-8 h-12 gap-2 text-base neon-glow transition-all active:scale-[0.97] w-full max-w-xs"
                     onClick={() => {
-                      onSurprise([tonightPick]);
+                      const moviesToPass = chatMoviesPool && chatMoviesPool.length > 0
+                        ? chatMoviesPool
+                        : [tonightPick];
+                      onSurprise(moviesToPass);
                       setTonightPick(null);
+                      setChatMoviesPool(null);
                     }}
                   >
                     <Tv className="w-5 h-5" />
