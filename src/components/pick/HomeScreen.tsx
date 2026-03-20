@@ -102,8 +102,9 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
   const [whoChoice, setWhoChoice] = useState<WhoOption | null>(null);
   const [totalEvaluated, setTotalEvaluated] = useState(0);
   const [chatMoviesPool, setChatMoviesPool] = useState<MovieDetail[] | null>(null);
+  const [movieMatchData, setMovieMatchData] = useState<Record<number, { confidence: number; reason: string }>>({});
   const [tonightPickIndex, setTonightPickIndex] = useState(0);
-  const [tonightMaxSeen, setTonightMaxSeen] = useState(0); // highest index user has seen
+  const [tonightMaxSeen, setTonightMaxSeen] = useState(0);
 
   // All movies available for tonight pick navigation (chat pool or single generated)
   const tonightPool: MovieDetail[] = chatMoviesPool || (tonightPick ? [tonightPick] : []);
