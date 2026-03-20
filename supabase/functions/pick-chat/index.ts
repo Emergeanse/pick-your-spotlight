@@ -62,7 +62,7 @@ serve(async (req) => {
 
   try {
     const body = await req.json();
-    const { messages, mode, movieTitle, movieYear, movieOverview, spoilerMode, movieProgress, minRating: userMinRating, excludedGenres, isPremium } = body;
+    const { messages, mode, movieTitle, movieYear, movieOverview, spoilerMode, movieProgress, minRating: userMinRating, excludedGenres, isPremium, timeContext } = body;
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
@@ -70,6 +70,9 @@ serve(async (req) => {
     const currentYear = new Date().getFullYear();
     const effectiveMinRating = userMinRating || 0;
     const RATING_TOLERANCE = 0.5;
+
+    // Time-aware instruction from client
+    const timeInstruction = timeContext ? `\n\nCONTEXTE TEMPOREL : ${timeContext}` : "";
 
     // Build rating instruction for the prompt
     let ratingInstruction = "";
@@ -179,7 +182,7 @@ STYLE :
 - Réponds TOUJOURS en français
 - Jamais de formulations robotiques
 
-ANNÉE EN COURS : ${currentYear}`;
+ANNÉE EN COURS : ${currentYear}${timeInstruction}`;
 
     } else {
       // --- FREE USER: DISCOVERY ONLY MODE ---
@@ -187,7 +190,7 @@ ANNÉE EN COURS : ${currentYear}`;
 
 Tu es un ami cinéphile chaleureux. Tu tutoies toujours l'utilisateur.
 
-TON UNIQUE MISSION : Aider l'utilisateur à trouver LE film ou LA série parfait(e) pour ce soir.
+TON UNIQUE MISSION : Aider l'utilisateur à trouver LE film ou LA série parfait(e) à regarder.
 
 Tu dois :
 1. Comprendre rapidement l'humeur, le contexte et les envies de l'utilisateur
@@ -198,8 +201,8 @@ ${ratingInstruction}
 ${genreInstruction}
 
 RÈGLE CRITIQUE : Tu fais de la recommandation de films et séries uniquement.
-- Si l'utilisateur pose des questions sur le cinéma → réponds gentiment : "Super question ! 🎬 Avec Pick+, tu pourras me poser toutes tes questions ciné. Pour l'instant, dis-moi ce que t'as envie de regarder ce soir !"
-- Si l'utilisateur parle de hors-sujet → "Hé, moi c'est trouver ton film du soir ! 🎬 Dis-moi ton humeur."
+- Si l'utilisateur pose des questions sur le cinéma → réponds gentiment : "Super question ! 🎬 Avec Pick+, tu pourras me poser toutes tes questions ciné. Pour l'instant, dis-moi ce que t'as envie de regarder !"
+- Si l'utilisateur parle de hors-sujet → "Hé, moi c'est trouver ton film ! 🎬 Dis-moi ton humeur."
 
 Recommande immédiatement (appelle suggest_movie) si l'utilisateur donne AU MOINS UN signal :
 - Une humeur, un genre, une référence, une demande même vague
@@ -225,7 +228,7 @@ STYLE :
 - Emojis avec modération (1-2 max)
 - Réponds TOUJOURS en français
 
-ANNÉE EN COURS : ${currentYear}`;
+ANNÉE EN COURS : ${currentYear}${timeInstruction}`;
     }
 
     // Decide if we need tools (only in discovery mode for reco)

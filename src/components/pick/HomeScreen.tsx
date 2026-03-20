@@ -20,6 +20,7 @@ import TasteTrainer from "./TasteTrainer";
 import TrainingProgress from "./TrainingProgress";
 import DiscoverySection from "./DiscoverySection";
 import MovieActionBar from "./MovieActionBar";
+import { getMainCTALabel, getMainCTASubtitle, getAutoPickLabel, getAutoPickSubtitle, getTonightPickLabel, getProactiveMessages } from "@/lib/time-context";
 
 import { useNavigate } from "react-router-dom";
 
@@ -68,23 +69,7 @@ const LOADING_MESSAGES = [
   "Ça cogite sévère de mon côté !",
 ];
 
-const PROACTIVE_MESSAGES = [
-   "J'ai peut-être la recommandation parfaite pour ce soir.",
-  "Tiens, j'ai pensé à un truc qui devrait te plaire.",
-  "Avant que tu choisisses… regarde celui-là.",
-  "J'ai une idée pour toi ce soir.",
-  "Psst… j'ai trouvé quelque chose.",
-  "Tu vas me remercier pour celui-là.",
-  "J'ai une suggestion qui te correspond bien.",
-  "Celui-ci a ton nom écrit dessus.",
-  "Je crois que j'ai trouvé ta soirée.",
-  "Attends de voir ce que j'ai déniché…",
-  "Je parie que tu vas adorer.",
-  "J'ai un petit pressentiment sur celui-là…",
-  "Regarde ce que j'ai trouvé en fouillant pour toi.",
-  "Du sur-mesure pour toi.",
-  "Un petit bijou juste pour toi ce soir.",
-];
+// Proactive messages are now time-aware — see getProactiveMessages()
 
 const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, openTrainerOnMount, forceCloseTrainer, onTrainerOpened, chatSuggestedMovies, onChatSuggestedConsumed }: HomeScreenProps) => {
   const navigate = useNavigate();
@@ -445,9 +430,9 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
                       <span className="text-2xl">🎬</span>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h3 className="text-lg font-sans font-bold text-foreground mb-0.5">Trouver mon film</h3>
+                      <h3 className="text-lg font-sans font-bold text-foreground mb-0.5">{getMainCTALabel()}</h3>
                       <p className="text-foreground/50 text-[13px] font-sans leading-relaxed">
-                        Laisse Pick te guider vers ta soirée parfaite.
+                        {getMainCTASubtitle()}
                       </p>
                     </div>
                   </div>
@@ -495,8 +480,8 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
                             <span className="text-lg">🍿</span>
                           </div>
                           <div>
-                            <h4 className="text-sm font-sans font-semibold text-foreground">Pick choisit pour toi</h4>
-                            <p className="text-foreground/45 text-xs font-sans">Une suggestion sur-mesure, instantanée.</p>
+                            <h4 className="text-sm font-sans font-semibold text-foreground">{getAutoPickLabel()}</h4>
+                            <p className="text-foreground/45 text-xs font-sans">{getAutoPickSubtitle()}</p>
                           </div>
                         </div>
                       </motion.button>
@@ -622,7 +607,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
               >
                 <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/15 border border-primary/25 mb-4">
                   <Sparkles className="w-3 h-3 text-primary" />
-                  <span className="text-primary text-[11px] font-sans font-semibold">Tonight's Pick</span>
+                  <span className="text-primary text-[11px] font-sans font-semibold">{getTonightPickLabel()}</span>
                 </div>
 
                 {tonightPick.poster_path && (
