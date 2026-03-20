@@ -436,7 +436,7 @@ const Landing = () => {
         </div>
         <div className="max-w-5xl mx-auto relative z-10">
           <motion.div variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }}
-            className="flex flex-col md:flex-row-reverse items-center gap-10 md:gap-16">
+            className="flex flex-col md:flex-row items-center gap-10 md:gap-16">
 
             {/* Visual — crossing profiles */}
             <motion.div
