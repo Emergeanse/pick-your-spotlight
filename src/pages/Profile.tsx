@@ -40,8 +40,6 @@ const Profile = () => {
   const [saving, setSaving] = useState(false);
   const [profileLoading, setProfileLoading] = useState(true);
   const [dnaTitle, setDnaTitle] = useState<string | null>(null);
-  const [ritualEnabled, setRitualEnabled] = useState(false);
-  const [ritualTime, setRitualTime] = useState("20:00");
   const [displayName, setDisplayName] = useState("");
   const [editingName, setEditingName] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
