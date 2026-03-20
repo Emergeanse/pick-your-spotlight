@@ -384,11 +384,20 @@ ANNÉE EN COURS : ${currentYear}`;
         }
       }
 
-      // Rating check passed — return the recommendation
+      // Rating check passed — fetch 4 similar movies to build a pool of 5
+      const similarMovies = await getSimilarMovies(
+        detail.id,
+        bestMatch.media_type,
+        effectiveMinRating,
+        4
+      );
+      const allMovies = [detail, ...similarMovies];
+
       return new Response(JSON.stringify({
         type: "recommendation",
         reply: args.reason,
         movie: detail,
+        movies: allMovies,
         recap: args.recap || [],
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
