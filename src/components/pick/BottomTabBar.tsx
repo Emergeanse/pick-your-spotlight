@@ -7,8 +7,8 @@ export type TabId = "home" | "watchlist" | "together" | "cinema" | "profile";
 const tabs: { id: TabId; label: string; icon: typeof Home; path: string }[] = [
   { id: "home", label: "Accueil", icon: Home, path: "/app" },
   { id: "watchlist", label: "Watchlist", icon: Bookmark, path: "/app/watchlist" },
-  { id: "together", label: "Together", icon: Users, path: "/app/pick-together" },
   { id: "cinema", label: "Mon Cinéma", icon: Clapperboard, path: "/app/my-cinema" },
+  { id: "together", label: "Together", icon: Users, path: "/app/pick-together" },
   { id: "profile", label: "Profil", icon: User, path: "/app/profile" },
 ];
 
