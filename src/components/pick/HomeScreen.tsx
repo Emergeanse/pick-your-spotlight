@@ -227,7 +227,16 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
             likedMovies: liked, userTasteVector, tasteProfile,
             platformIds: userPlatformIds, excludedPlatformIds: userExcludedPlatformIds, excludedGenres: userExcludedGenres, minRating: userMinRating,
             outOfComfortZone: true, excludeIds: historyExcludeIds,
+            count: 5,
           });
+          if (data?.movies && data.movies.length > 0) {
+            const allMovies = data.movies.map((m: any) => { const mv = m.movie as MovieDetail; (mv as any)._surpriseComfortZone = true; return mv; });
+            clearInterval(msgInterval);
+            setSurpriseMsg("✨ Trouvé !");
+            await new Promise(r => setTimeout(r, 400));
+            onSurprise(allMovies);
+            return;
+          }
           movie = data.movie as MovieDetail;
           (movie as any)._surpriseComfortZone = true;
         } else {
