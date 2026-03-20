@@ -346,52 +346,7 @@ const Landing = () => {
         </div>
       </section>
 
-      {/* ─── FEATURES — 2 modes + 4 features ─── */}
-      <section className="pt-4 pb-4 md:pt-6 md:pb-6 px-5 relative overflow-hidden">
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div className="w-[400px] h-[400px] rounded-full bg-primary/4 blur-[120px]" />
-        </div>
-        <div className="max-w-5xl mx-auto relative z-10">
-          <motion.div variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }} className="text-center mb-6">
-            <h2 className="text-3xl md:text-5xl font-serif mb-3">Tout ce qu'il faut <span className="text-primary">pour ce soir</span></h2>
-          </motion.div>
 
-          {/* 2 modes principaux */}
-          <motion.div variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }} className="grid md:grid-cols-2 gap-4 max-w-3xl mx-auto mb-4">
-            {[
-              { icon: <Zap className="w-5 h-5" />, title: "Pick pour ce soir", desc: "Un seul tap. Pick te trouve le film parfait immédiatement, sans question.", tag: "Instant" },
-              { icon: <Mic className="w-5 h-5" />, title: "Parle à Pick", desc: "Dis-lui ton humeur, avec qui tu regardes. Il comprend et propose LE film.", tag: "Conversationnel" },
-            ].map((item, i) => (
-              <motion.div key={item.tag} variants={fadeUp} custom={i}
-                className="relative group bg-card/40 border border-border/12 rounded-2xl p-6 md:p-8 hover:border-primary/20 transition-all duration-300">
-                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center mb-4 text-primary">{item.icon}</div>
-                <span className="text-[10px] uppercase tracking-widest text-primary/50 font-sans font-semibold">{item.tag}</span>
-                <h3 className="text-lg md:text-xl font-serif mb-2 mt-1">{item.title}</h3>
-                <p className="text-foreground/35 text-sm font-sans leading-relaxed">{item.desc}</p>
-              </motion.div>
-            ))}
-          </motion.div>
-
-          {/* 4 features secondaires */}
-          <motion.div variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }} className="grid sm:grid-cols-2 gap-4 max-w-3xl mx-auto">
-            {[
-              { icon: <Dna className="w-4.5 h-4.5" />, title: "ADN Cinéma", desc: "Découvre ta personnalité cinématographique unique au fil des recommandations." },
-              { icon: <BookmarkPlus className="w-4.5 h-4.5" />, title: "Watchlist", desc: "Sauvegarde les films pour plus tard. Retrouve-les quand tu es prêt." },
-              { icon: <Eye className="w-4.5 h-4.5" />, title: "Mode Compagnon", desc: "Pose des questions pendant le film. Pick répond sans jamais spoiler." },
-              { icon: <Users className="w-4.5 h-4.5" />, title: "Pick Together", desc: "Trouvez un film à plusieurs. Chacun donne ses envies, Pick trouve le compromis." },
-            ].map((item, i) => (
-              <motion.div key={item.title} variants={fadeUp} custom={i}
-                className="flex items-start gap-4 p-4 rounded-xl bg-card/20 border border-border/8 hover:border-primary/12 transition-all">
-                <div className="mt-0.5 w-9 h-9 rounded-lg bg-primary/8 flex items-center justify-center flex-shrink-0 text-primary">{item.icon}</div>
-                <div>
-                  <h3 className="text-[15px] font-serif mb-1">{item.title}</h3>
-                  <p className="text-foreground/30 font-sans text-sm leading-relaxed">{item.desc}</p>
-                </div>
-              </motion.div>
-            ))}
-          </motion.div>
-        </div>
-      </section>
 
       {/* ─── ADN CINÉMA ─── */}
       <section className="pt-4 pb-8 md:pt-6 md:pb-10 px-5 relative overflow-hidden">
