@@ -594,6 +594,9 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
         )}
       </AnimatePresence>
 
+      {/* Reveal burst animation */}
+      <RevealBurst trigger={revealBurst} />
+
       {/* Tonight's Pick overlay */}
       <AnimatePresence>
         {tonightPick && (
