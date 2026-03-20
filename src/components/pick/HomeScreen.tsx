@@ -141,7 +141,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
       setTonightPick(firstMovie);
       setTonightProviders([]);
       setRevealBurst(true);
-      setTimeout(() => setRevealBurst(false), 2000);
+      setTimeout(() => setRevealBurst(false), 4000);
       const mediaType = firstMovie.first_air_date ? "tv" : "movie";
       getWatchProviders(firstMovie.id, mediaType).then(setTonightProviders).catch(() => {});
       onChatSuggestedConsumed?.();
@@ -352,7 +352,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
         setTonightPickIndex(0);
         setTonightPick(movies[0]);
         setRevealBurst(true);
-        setTimeout(() => setRevealBurst(false), 2000);
+        setTimeout(() => setRevealBurst(false), 4000);
         const mediaType = movies[0].first_air_date ? "tv" : "movie";
         getWatchProviders(movies[0].id, mediaType).then(setTonightProviders).catch(() => {});
       }
@@ -363,7 +363,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
         clearInterval(msgInterval);
         setTonightPick(movie);
         setRevealBurst(true);
-        setTimeout(() => setRevealBurst(false), 2000);
+        setTimeout(() => setRevealBurst(false), 4000);
         const mediaType = movie.first_air_date ? "tv" : "movie";
         getWatchProviders(movie.id, mediaType).then(setTonightProviders).catch(() => {});
       } catch {
