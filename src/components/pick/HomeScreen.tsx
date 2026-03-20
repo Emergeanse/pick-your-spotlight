@@ -118,18 +118,20 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
   const [totalEvaluated, setTotalEvaluated] = useState(0);
   const [chatMoviesPool, setChatMoviesPool] = useState<MovieDetail[] | null>(null);
   const [tonightPickIndex, setTonightPickIndex] = useState(0);
+  const [tonightMaxSeen, setTonightMaxSeen] = useState(0); // highest index user has seen
 
   // All movies available for tonight pick navigation (chat pool or single generated)
   const tonightPool: MovieDetail[] = chatMoviesPool || (tonightPick ? [tonightPick] : []);
-  // Arrows only show for going back to previously seen films, never forward
+  // Can go back if not at first film; can go forward only to already-seen films
   const canGoPrev = tonightPickIndex > 0;
-  const hasTonightNav = canGoPrev;
+  const canGoNext = tonightPickIndex < tonightMaxSeen;
+  const showArrows = canGoPrev || canGoNext;
 
   const navigateTonightPick = (direction: "prev" | "next") => {
-    if (!hasTonightNav) return;
     const newIndex = direction === "next"
-      ? Math.min(tonightPickIndex + 1, tonightPool.length - 1)
+      ? Math.min(tonightPickIndex + 1, tonightMaxSeen)
       : Math.max(tonightPickIndex - 1, 0);
+    if (newIndex === tonightPickIndex) return;
     setTonightPickIndex(newIndex);
     const movie = tonightPool[newIndex];
     setTonightPick(movie);
