@@ -18,15 +18,32 @@ async function searchMulti(query: string): Promise<any[]> {
 }
 
 async function getMovieDetails(id: number): Promise<any> {
-  const url = `https://api.themoviedb.org/3/movie/${id}?api_key=${TMDB_API_KEY}&language=fr-FR`;
+  const url = `https://api.themoviedb.org/3/movie/${id}?api_key=${TMDB_API_KEY}&language=fr-FR&append_to_response=credits,watch/providers,videos`;
   const res = await fetch(url);
   return res.json();
 }
 
 async function getTVDetails(id: number): Promise<any> {
-  const url = `https://api.themoviedb.org/3/tv/${id}?api_key=${TMDB_API_KEY}&language=fr-FR`;
+  const url = `https://api.themoviedb.org/3/tv/${id}?api_key=${TMDB_API_KEY}&language=fr-FR&append_to_response=credits,watch/providers,videos`;
   const res = await fetch(url);
   return res.json();
+}
+
+async function getSimilarMovies(id: number, mediaType: string, minRating: number, count: number = 4): Promise<any[]> {
+  const endpoint = mediaType === "tv" ? "tv" : "movie";
+  const url = `https://api.themoviedb.org/3/${endpoint}/${id}/recommendations?api_key=${TMDB_API_KEY}&language=fr-FR&page=1&watch_region=FR`;
+  const res = await fetch(url);
+  const data = await res.json();
+  const candidates = (data.results || [])
+    .filter((r: any) => (r.vote_average || 0) >= (minRating > 0 ? minRating - 0.5 : 0))
+    .slice(0, count);
+  
+  const details = await Promise.all(
+    candidates.map((c: any) =>
+      (c.media_type === "tv" || mediaType === "tv" ? getTVDetails(c.id) : getMovieDetails(c.id))
+    )
+  );
+  return details.filter((d: any) => d && (d.title || d.name));
 }
 
 // Discover high-rated movies from TMDB as fallback
