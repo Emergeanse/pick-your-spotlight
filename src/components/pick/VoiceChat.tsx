@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Mic, MicOff, X, Send, Loader2, Sparkles, Check, MessageCircle } from "lucide-react";
+import { Mic, MicOff, X, Send, Loader2, Sparkles, Check, MessageCircle, Users } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useScribe, CommitStrategy } from "@elevenlabs/react";
