@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { motion, AnimatePresence, PanInfo } from "framer-motion";
-import { ChevronLeft, Loader2, Sparkles, ArrowRight, Eye } from "lucide-react";
+import { motion, AnimatePresence, PanInfo, useMotionValue, useTransform } from "framer-motion";
+import { ChevronLeft, Loader2, Sparkles, ArrowRight, SkipForward } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getPosterUrl, getDisplayTitle } from "@/lib/tmdb";
 import { likeMovie } from "@/lib/liked-movies";
@@ -43,11 +43,11 @@ async function fetchMovieDetail(id: number): Promise<MovieDetail> {
 }
 
 const RATING_BUTTONS = [
-  { value: 5,   label: "Pas pour moi", color: "from-red-500/20 to-red-600/10 border-red-500/30 text-red-400" },
-  { value: 25,  label: "Bof",          color: "from-foreground/10 to-foreground/5 border-foreground/15 text-foreground/50" },
-  { value: 50,  label: "Correct",      color: "from-foreground/10 to-foreground/5 border-foreground/15 text-foreground/60" },
-  { value: 75,  label: "J'aime bien",  color: "from-primary/15 to-primary/5 border-primary/25 text-primary" },
-  { value: 100, label: "Chef-d'œuvre", color: "from-primary/25 to-primary/10 border-primary/40 text-primary" },
+  { value: 5,   label: "Pas pour moi", sentiment: "negative" as const },
+  { value: 25,  label: "Bof",          sentiment: "neutral" as const },
+  { value: 50,  label: "Correct",      sentiment: "neutral" as const },
+  { value: 75,  label: "J'aime bien",  sentiment: "positive" as const },
+  { value: 100, label: "Chef-d'œuvre", sentiment: "positive" as const },
 ];
 
 const getMilestoneMessage = (count: number): string | null => {
@@ -75,12 +75,11 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
   const [skippedCount, setSkippedCount] = useState(0);
   const [page, setPage] = useState(1);
   const [totalEvaluated, setTotalEvaluated] = useState(0);
-  const [profileConfidence, setProfileConfidence] = useState(0);
   const [sliderValue, setSliderValue] = useState(50);
   const [milestoneMsg, setMilestoneMsg] = useState<string | null>(null);
   const [showActivationCTA, setShowActivationCTA] = useState(false);
-  const [ratingFlash, setRatingFlash] = useState<string | null>(null);
   const milestoneTimeout = useRef<ReturnType<typeof setTimeout>>();
+  const x = useMotionValue(0);
 
   const loadMovies = useCallback(async (p: number) => {
     setLoading(true);
@@ -103,16 +102,7 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
         .select("id", { count: "exact", head: true })
         .eq("user_id", user.id)
         .in("action_type", ["liked", "skipped", "unsure"])
-        .then(({ count }) => {
-          setTotalEvaluated(count || 0);
-        });
-      supabase.from("profiles")
-        .select("profile_confidence")
-        .eq("id", user.id)
-        .single()
-        .then(({ data }) => {
-          if (data) setProfileConfidence((data as any).profile_confidence || 0);
-        });
+        .then(({ count }) => setTotalEvaluated(count || 0));
     }
   }, []);
 
@@ -133,6 +123,16 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
   const sessionTarget = Math.max(0, THRESHOLDS.ideal - totalEvaluated);
   const sessionProgress = Math.min(totalProcessed, sessionTarget);
 
+  // Derived motion values for swipe feedback
+  const rotate = useTransform(x, [-200, 0, 200], [-8, 0, 8]);
+  const likeOpacity = useTransform(x, [0, 80, 200], [0, 0.6, 1]);
+  const skipOpacity = useTransform(x, [-200, -80, 0], [1, 0.6, 0]);
+  const bgGlow = useTransform(x, [-200, 0, 200], [
+    "radial-gradient(circle at 30% 50%, hsl(var(--destructive) / 0.08) 0%, transparent 70%)",
+    "radial-gradient(circle at 50% 40%, hsl(var(--primary) / 0.06) 0%, transparent 70%)",
+    "radial-gradient(circle at 70% 50%, hsl(var(--primary) / 0.12) 0%, transparent 70%)",
+  ]);
+
   useEffect(() => {
     const msg = getMilestoneMessage(cumulativeTotal);
     if (msg) {
@@ -145,10 +145,9 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
     }
   }, [cumulativeTotal]);
 
-  const handleRate = async () => {
+  const handleRate = async (overrideValue?: number) => {
     if (!currentMovie || !user) return;
-
-    const rating = sliderValue;
+    const rating = overrideValue ?? sliderValue;
     const isPositive = rating > 50;
     const actionType = rating <= 50 ? "skipped" : "liked";
 
@@ -178,17 +177,15 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
       setSwiping(null);
       setSliderValue(50);
       setCurrentIndex(i => i + 1);
-      setRatingFlash(null);
+      x.set(0);
     }, 300);
   };
 
   const handleDragEnd = (_: any, info: PanInfo) => {
     if (info.offset.x > 100) {
-      setSliderValue(80);
-      setTimeout(handleRate, 50);
+      handleRate(80);
     } else if (info.offset.x < -100) {
-      setSliderValue(15);
-      setTimeout(handleRate, 50);
+      handleRate(15);
     }
   };
 
@@ -220,247 +217,196 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
       exit={{ opacity: 0 }}
       className="absolute inset-0 z-50 flex flex-col bg-background overflow-hidden"
     >
-      {/* Ambient glow behind card */}
-      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] rounded-full bg-primary/8 blur-[120px] pointer-events-none" />
+      {/* Dynamic ambient background */}
+      <motion.div className="absolute inset-0 pointer-events-none" style={{ background: bgGlow }} />
 
-      {/* Header */}
-      <div className="relative z-10 flex items-center justify-between px-5 pt-[calc(1rem+env(safe-area-inset-top))] pb-1">
-        <button onClick={handleClose} className="w-9 h-9 rounded-full bg-card/60 backdrop-blur-sm border border-border/30 flex items-center justify-center text-foreground/50 hover:text-foreground hover:bg-card transition-all">
+      {/* Header — minimal */}
+      <div className="relative z-10 flex items-center justify-between px-4 pt-[calc(0.75rem+env(safe-area-inset-top))] pb-1">
+        <button onClick={handleClose}
+          className="w-8 h-8 rounded-full bg-foreground/5 flex items-center justify-center text-foreground/40 hover:text-foreground hover:bg-foreground/10 transition-all active:scale-95">
           <ChevronLeft className="w-4 h-4" />
         </button>
-        <div className="text-center">
-          <h2 className="text-sm font-serif font-semibold text-foreground tracking-wide">
-            {isActivation ? "Apprends-moi tes goûts" : "Entraîne ton Pick"}
-          </h2>
-        </div>
-        <div className="w-9" />
+        <h2 className="text-xs font-sans font-medium text-foreground/40 uppercase tracking-[0.15em]">
+          {isActivation ? "Apprends-moi tes goûts" : "Entraîne ton Pick"}
+        </h2>
+        <div className="w-8" />
       </div>
 
-      {/* Progress section */}
-      <div className="relative z-10 px-5 py-3">
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-full bg-primary/15 border border-primary/25 flex items-center justify-center">
-              <Eye className="w-3 h-3 text-primary" />
-            </div>
-            <span className="text-xs font-sans font-medium text-foreground/70">
-              {cumulativeTotal} film{cumulativeTotal > 1 ? "s" : ""} évalué{cumulativeTotal > 1 ? "s" : ""}
-            </span>
+      {/* Progress — compact inline */}
+      <div className="relative z-10 px-5 pt-2 pb-1">
+        <div className="flex items-center gap-3">
+          <div className="flex-1 h-[3px] rounded-full bg-foreground/[0.06] overflow-hidden">
+            <motion.div
+              className="h-full rounded-full bg-primary/70"
+              initial={{ width: 0 }}
+              animate={{ width: `${progressPercent}%` }}
+              transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+            />
           </div>
-          {sessionTarget > 0 && (
-            <span className="text-xs font-sans font-bold text-primary tabular-nums">
-              {sessionProgress}/{sessionTarget}
-            </span>
-          )}
-        </div>
-
-        {/* Progress bar */}
-        <div className="h-1.5 rounded-full bg-card border border-border/30 overflow-hidden">
-          <motion.div
-            className="h-full rounded-full bg-gradient-to-r from-primary/80 to-primary"
-            initial={{ width: 0 }}
-            animate={{ width: `${progressPercent}%` }}
-            transition={{ duration: 0.6, ease: "easeOut" }}
-          />
+          <span className="text-[11px] font-sans tabular-nums text-foreground/25 shrink-0">
+            {cumulativeTotal} évalué{cumulativeTotal > 1 ? "s" : ""}
+          </span>
         </div>
 
         {/* Milestone message */}
         <AnimatePresence mode="wait">
-          {milestoneMsg ? (
-            <motion.div
-              key={milestoneMsg}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              className="mt-2.5 px-4 py-2 rounded-xl bg-primary/10 border border-primary/20 text-center"
-            >
-              <p className="text-xs font-sans font-medium text-primary">
-                {milestoneMsg}
-              </p>
-            </motion.div>
-          ) : (
+          {milestoneMsg && (
             <motion.p
-              key="default"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 0.5 }}
-              className="text-[10px] font-sans text-foreground/30 text-center mt-2"
+              key={milestoneMsg}
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -6 }}
+              className="text-primary/70 text-[11px] font-sans text-center mt-2 font-medium"
             >
-              {cumulativeTotal < THRESHOLDS.minimum
-                ? "Plus tu évalues, mieux Pick te comprend"
-                : cumulativeTotal < THRESHOLDS.ideal
-                ? "Encore un peu pour des recos vraiment personnalisées"
-                : "Pick te connaît bien — continue pour encore plus de précision"}
+              {milestoneMsg}
             </motion.p>
           )}
         </AnimatePresence>
       </div>
 
-      {/* Card stack */}
-      <div className="relative z-10 flex-1 flex items-center justify-center px-6">
+      {/* ─── Card Stack ─── */}
+      <div className="relative z-10 flex-1 flex items-center justify-center px-5">
         {loading && movies.length === 0 ? (
-          <div className="flex flex-col items-center gap-3">
-            <div className="w-14 h-14 rounded-2xl bg-card border border-border/30 flex items-center justify-center">
-              <Loader2 className="w-6 h-6 text-primary animate-spin" />
-            </div>
-            <p className="text-foreground/40 text-sm font-sans">Chargement des films…</p>
+          <div className="flex flex-col items-center gap-4">
+            <Loader2 className="w-6 h-6 text-primary/50 animate-spin" />
+            <p className="text-foreground/30 text-sm font-sans">Chargement…</p>
           </div>
         ) : !currentMovie ? (
           <div className="flex flex-col items-center gap-4 text-center">
-            <div className="w-16 h-16 rounded-2xl bg-card border border-border/30 flex items-center justify-center">
-              <Sparkles className="w-7 h-7 text-primary" />
-            </div>
-            <p className="text-foreground/60 text-sm font-sans">Plus de films pour le moment !</p>
-            <Button variant="outline" onClick={handleClose} className="rounded-full">
-              Retour à l'accueil
-            </Button>
+            <Sparkles className="w-8 h-8 text-primary/40" />
+            <p className="text-foreground/50 text-sm font-sans">Plus de films pour le moment</p>
+            <Button variant="outline" onClick={handleClose} className="rounded-full text-sm">Retour</Button>
           </div>
         ) : (
-          <>
-            {/* Background card (next) */}
+          <div className="relative w-full max-w-[320px]">
+            {/* Next card preview */}
             {nextMovie && (
-              <div className="absolute inset-x-6">
-                <div className="relative w-full aspect-[2/3] max-h-[55vh] rounded-2xl overflow-hidden border border-border/10 opacity-30 scale-[0.92] translate-y-2">
-                  <img
-                    src={getPosterUrl(nextMovie.poster_path, "w500")}
-                    alt=""
-                    className="w-full h-full object-cover"
-                  />
+              <div className="absolute inset-0 -z-10">
+                <div className="w-full aspect-[2/3] rounded-2xl overflow-hidden opacity-20 scale-[0.93] translate-y-3 border border-border/5">
+                  <img src={getPosterUrl(nextMovie.poster_path, "w342")} alt="" className="w-full h-full object-cover" />
                 </div>
               </div>
             )}
 
-            {/* Current card */}
+            {/* Active card */}
             <AnimatePresence mode="popLayout">
               <motion.div
                 key={currentMovie.id}
                 drag="x"
                 dragConstraints={{ left: 0, right: 0 }}
+                dragElastic={0.7}
                 onDragEnd={handleDragEnd}
+                style={{ x, rotate }}
                 animate={
-                  swiping === "right" ? { x: 400, opacity: 0, rotate: 12 } :
-                  swiping === "left" ? { x: -400, opacity: 0, rotate: -12 } :
-                  { x: 0, opacity: 1, rotate: 0 }
+                  swiping === "right" ? { x: 400, opacity: 0, rotate: 15 } :
+                  swiping === "left" ? { x: -400, opacity: 0, rotate: -15 } :
+                  {}
                 }
-                initial={{ scale: 0.92, opacity: 0 }}
-                exit={{ opacity: 0 }}
-                transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                className="relative w-full aspect-[2/3] max-h-[55vh] rounded-2xl overflow-hidden shadow-2xl cursor-grab active:cursor-grabbing group"
-                style={{ touchAction: "none" }}
+                initial={{ scale: 0.95, opacity: 0, y: 20 }}
+                exit={{ opacity: 0, scale: 0.9 }}
+                transition={swiping ? { duration: 0.3, ease: "easeOut" } : { type: "spring", stiffness: 260, damping: 24 }}
+                className="relative w-full aspect-[2/3] rounded-2xl overflow-hidden cursor-grab active:cursor-grabbing select-none"
+                style={{ x, rotate, touchAction: "none" }}
               >
-                {/* Card border glow */}
-                <div className="absolute inset-0 rounded-2xl border border-border/40 z-20 pointer-events-none" />
-                <div className="absolute -inset-px rounded-2xl bg-gradient-to-b from-white/5 to-transparent z-20 pointer-events-none" />
-
+                {/* Image */}
                 <img
                   src={getPosterUrl(currentMovie.poster_path, "w780")}
                   alt={getDisplayTitle(currentMovie)}
-                  className="w-full h-full object-contain bg-black/95"
+                  className="absolute inset-0 w-full h-full object-cover"
                   draggable={false}
                 />
 
-                {/* Bottom gradient with info */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent z-10" />
-                
-                <div className="absolute bottom-0 left-0 right-0 p-5 z-10">
-                  <h3 className="text-lg font-serif text-white font-bold leading-tight mb-1.5 drop-shadow-lg">
+                {/* Subtle edge highlight */}
+                <div className="absolute inset-0 rounded-2xl ring-1 ring-inset ring-white/[0.08] pointer-events-none" />
+
+                {/* Bottom info overlay */}
+                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent pt-24 pb-5 px-5">
+                  <h3 className="text-white text-lg font-serif font-bold leading-snug mb-1.5 drop-shadow-md">
                     {getDisplayTitle(currentMovie)}
                   </h3>
-                  <div className="flex items-center gap-2.5 mb-2.5">
-                    <span className="text-white/80 text-xs font-sans font-medium flex items-center gap-1">
-                      <span className="text-yellow-400">★</span> {currentMovie.vote_average?.toFixed(1)}
-                    </span>
-                    {currentMovie.release_date && (
-                      <span className="text-white/40 text-xs font-sans">
-                        {currentMovie.release_date.substring(0, 4)}
+                  <div className="flex items-center gap-3 text-white/60 text-xs font-sans mb-2.5">
+                    {currentMovie.vote_average > 0 && (
+                      <span className="flex items-center gap-1">
+                        <span className="text-primary">★</span>
+                        {currentMovie.vote_average.toFixed(1)}
                       </span>
+                    )}
+                    {currentMovie.release_date && (
+                      <span>{currentMovie.release_date.substring(0, 4)}</span>
                     )}
                   </div>
                   <div className="flex gap-1.5 flex-wrap">
-                    {(currentMovie.genre_ids || []).slice(0, 3).map(gid => (
-                      <span key={gid} className="text-[10px] font-sans px-2.5 py-0.5 rounded-full bg-white/10 backdrop-blur-sm text-white/70 border border-white/10">
-                        {GENRE_MAP[gid] || ""}
+                    {(currentMovie.genre_ids || []).slice(0, 3).map(gid => GENRE_MAP[gid]).filter(Boolean).map(g => (
+                      <span key={g} className="text-[10px] font-sans px-2 py-0.5 rounded-full bg-white/[0.08] text-white/50 backdrop-blur-sm">
+                        {g}
                       </span>
                     ))}
                   </div>
                 </div>
 
-                {/* Swipe indicators */}
+                {/* Swipe direction labels */}
                 <motion.div
-                  className="absolute top-6 left-6 px-5 py-2.5 rounded-2xl bg-red-500/90 backdrop-blur-sm border border-red-400/50 z-30"
-                  style={{ opacity: 0 }}
-                  whileDrag={{ opacity: 1 }}
+                  className="absolute top-5 left-5 px-4 py-2 rounded-xl border-2 border-destructive/60 z-30 -rotate-12"
+                  style={{ opacity: skipOpacity }}
                 >
-                  <span className="text-white font-sans font-bold text-sm tracking-wide">PASSE</span>
+                  <span className="text-destructive font-sans font-bold text-sm tracking-wide">PASSE</span>
                 </motion.div>
                 <motion.div
-                  className="absolute top-6 right-6 px-5 py-2.5 rounded-2xl bg-primary/90 backdrop-blur-sm border border-primary/50 z-30"
-                  style={{ opacity: 0 }}
-                  whileDrag={{ opacity: 1 }}
+                  className="absolute top-5 right-5 px-4 py-2 rounded-xl border-2 border-primary/60 z-30 rotate-12"
+                  style={{ opacity: likeOpacity }}
                 >
-                  <span className="text-white font-sans font-bold text-sm tracking-wide">J'AIME</span>
+                  <span className="text-primary font-sans font-bold text-sm tracking-wide">J'AIME</span>
                 </motion.div>
-
-                {/* Rating flash overlay */}
-                <AnimatePresence>
-                  {ratingFlash && (
-                    <motion.div
-                      initial={{ opacity: 0, scale: 0.5 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0 }}
-                      className="absolute inset-0 flex items-center justify-center z-30 pointer-events-none"
-                    >
-                      <span className="text-5xl">{ratingFlash}</span>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
               </motion.div>
             </AnimatePresence>
-          </>
+          </div>
         )}
       </div>
 
-      {/* Rating buttons */}
+      {/* ─── Rating Buttons ─── */}
       {currentMovie && !showActivationCTA && (
-        <div className="relative z-10 px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-3">
-          <div className="flex items-stretch justify-center gap-1.5">
-            {RATING_BUTTONS.map((btn) => (
-              <motion.button
-                key={btn.value}
-                whileTap={{ scale: 0.88 }}
-                whileHover={{ scale: 1.04, y: -2 }}
-                onClick={() => {
-                  setSliderValue(btn.value);
-                  setTimeout(() => handleRate(), 150);
-                }}
-                className={`flex-1 py-3 px-1 rounded-xl border bg-gradient-to-b transition-all duration-200 ${btn.color}`}
-              >
-                <span className="text-[11px] font-sans font-medium leading-tight block">
+        <div className="relative z-10 px-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] pt-4">
+          <div className="flex items-stretch gap-1.5">
+            {RATING_BUTTONS.map((btn) => {
+              const isNeg = btn.sentiment === "negative";
+              const isPos = btn.sentiment === "positive";
+              return (
+                <motion.button
+                  key={btn.value}
+                  whileTap={{ scale: 0.9 }}
+                  onClick={() => {
+                    setSliderValue(btn.value);
+                    setTimeout(() => handleRate(btn.value), 100);
+                  }}
+                  className={`flex-1 py-3 rounded-xl border font-sans text-[11px] font-medium transition-all active:scale-95 ${
+                    isNeg
+                      ? "bg-destructive/[0.06] border-destructive/15 text-destructive/70 hover:bg-destructive/10"
+                      : isPos
+                        ? "bg-primary/[0.06] border-primary/15 text-primary hover:bg-primary/10"
+                        : "bg-foreground/[0.03] border-border/10 text-foreground/40 hover:bg-foreground/[0.06]"
+                  }`}
+                >
                   {btn.label}
-                </span>
-              </motion.button>
-            ))}
+                </motion.button>
+              );
+            })}
           </div>
 
-          <motion.button
-            whileTap={{ scale: 0.95 }}
+          <button
             onClick={() => {
               setProcessedIds(prev => new Set(prev).add(currentMovie.id));
               setCurrentIndex(i => i + 1);
+              x.set(0);
             }}
-            className="w-full mt-3 py-2 text-center group"
+            className="w-full mt-3 flex items-center justify-center gap-1.5 py-2 text-foreground/20 hover:text-foreground/35 transition-colors"
           >
-            <span className="text-[11px] font-sans text-foreground/25 group-hover:text-foreground/40 transition-colors">
-              Je ne connais pas ce film →
-            </span>
-          </motion.button>
-
-          <p className="text-center text-foreground/15 text-[10px] font-sans mt-1">
-            Choisis ton ressenti · ou swipe la carte
-          </p>
+            <SkipForward className="w-3 h-3" />
+            <span className="text-[11px] font-sans">Je ne connais pas</span>
+          </button>
         </div>
       )}
 
-      {/* Activation complete CTA */}
+      {/* ─── Activation Complete CTA ─── */}
       <AnimatePresence>
         {showActivationCTA && (
           <motion.div
@@ -468,36 +414,23 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
             animate={{ opacity: 1, y: 0 }}
             className="relative z-10 px-5 pb-[calc(2rem+env(safe-area-inset-bottom))] pt-4"
           >
-            <div className="bg-card/80 backdrop-blur-xl rounded-2xl border border-primary/20 p-6 text-center shadow-lg shadow-primary/5">
-              <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ type: "spring", delay: 0.2 }}
-              >
-                <Sparkles className="w-8 h-8 text-primary mx-auto mb-3" />
+            <div className="rounded-2xl border border-primary/15 bg-card/60 backdrop-blur-xl p-6 text-center">
+              <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", delay: 0.2 }}>
+                <Sparkles className="w-7 h-7 text-primary mx-auto mb-3" />
               </motion.div>
-              <h3 className="text-xl font-serif mb-1.5">Pick est prêt !</h3>
-              <p className="text-foreground/50 text-sm font-sans mb-5 max-w-xs mx-auto leading-relaxed">
-                Maintenant qu'on se connaît, trouvons ton film de ce soir.
+              <h3 className="text-xl font-serif mb-1.5">Pick est prêt</h3>
+              <p className="text-foreground/40 text-sm font-sans mb-5 leading-relaxed">
+                Maintenant qu'on se connaît, trouvons ton film.
               </p>
-              <div className="flex flex-col gap-2.5">
-                <Button
-                  variant="hero"
-                  size="xl"
-                  className="w-full"
-                  onClick={handleActivationDone}
-                >
-                  <Sparkles className="w-4 h-4" />
-                  Trouve-moi un film
-                  <ArrowRight className="w-4 h-4" />
-                </Button>
-                <button
-                  onClick={() => setShowActivationCTA(false)}
-                  className="text-foreground/25 text-xs font-sans hover:text-foreground/40 transition-colors py-1"
-                >
-                  Je continue à évaluer
-                </button>
-              </div>
+              <Button variant="hero" size="xl" className="w-full mb-2" onClick={handleActivationDone}>
+                <Sparkles className="w-4 h-4" />
+                Trouve-moi un film
+                <ArrowRight className="w-4 h-4" />
+              </Button>
+              <button onClick={() => setShowActivationCTA(false)}
+                className="text-foreground/20 text-xs font-sans hover:text-foreground/35 transition-colors py-1">
+                Continuer à évaluer
+              </button>
             </div>
           </motion.div>
         )}
