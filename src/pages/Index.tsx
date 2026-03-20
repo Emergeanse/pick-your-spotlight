@@ -171,8 +171,13 @@ const Index = () => {
           excludedGenres: profilePrefs.excludedGenres,
           minRating: profilePrefs.minRating,
           excludeIds,
+          count: 5,
         });
-        if (data?.movie) {
+        if (data?.movies && data.movies.length > 0) {
+          setResults(data.movies.map((m: any) => m.movie));
+          setCurrentResultIndex(0);
+          setStep("result");
+        } else if (data?.movie) {
           setResults([data.movie]);
           setCurrentResultIndex(0);
           setStep("result");
