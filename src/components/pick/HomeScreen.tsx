@@ -108,7 +108,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
   const [tonightPickIndex, setTonightPickIndex] = useState(0);
   const [tonightMaxSeen, setTonightMaxSeen] = useState(0);
   const [quickFilters, setQuickFilters] = useState<QuickFilterState>({ mediaType: "both", maxDuration: null });
-  const [revealBurst, setRevealBurst] = useState(false);
+  
 
   // All movies available for tonight pick navigation (chat pool or single generated)
   const tonightPool: MovieDetail[] = chatMoviesPool || (tonightPick ? [tonightPick] : []);
