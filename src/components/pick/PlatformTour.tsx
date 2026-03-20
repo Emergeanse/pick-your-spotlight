@@ -14,26 +14,32 @@ interface TourStep {
 const TOUR_STEPS: TourStep[] = [
   {
     selector: '[data-tour="pick-ce-soir"]',
-    title: "Pick pour ce soir",
-    desc: "Ton bouton principal ! Dis ce que tu veux regarder et Pick trouve le film parfait pour ta soirée.",
+    title: "Trouver ton film 🎬",
+    desc: "Ton bouton principal ! Appuie ici pour que Pick te trouve le film parfait — en automatique ou en discutant avec lui.",
     position: "bottom",
   },
   {
-    selector: '[data-tour="parle-a-pick"]',
-    title: "Parle à Pick",
-    desc: "Discute librement avec Pick. Essaie : « Un thriller psychologique récent » ou « Quelque chose de léger avec de l'humour ».",
-    position: "bottom",
+    selector: '[data-tour="tab-together"]',
+    title: "Pick Together 👥",
+    desc: "Vous êtes plusieurs ? Pick croise vos profils et trouve LE film qui plaît à tout le monde.",
+    position: "top",
   },
   {
     selector: '[data-tour="tab-watchlist"]',
-    title: "Ta Watchlist",
-    desc: "Sauvegarde tous les films que tu veux voir. Tu les retrouveras toujours ici.",
+    title: "Ta Watchlist 🔖",
+    desc: "Sauvegarde les films qui t'intéressent pour ne rien oublier. Tu les retrouveras toujours ici.",
     position: "top",
   },
   {
     selector: '[data-tour="tab-cinema"]',
-    title: "Mon Cinéma",
-    desc: "Ton profil cinéma, tes coups de cœur, ton ADN Cinéma… Tout ce qui te rend unique.",
+    title: "Mon Cinéma 🎞️",
+    desc: "Ton espace perso : tes coups de cœur, ton ADN Cinéma, tes stats… Tout ce qui te rend unique.",
+    position: "top",
+  },
+  {
+    selector: '[data-tour="tab-profile"]',
+    title: "Ton Profil ⚙️",
+    desc: "Gère tes préférences, tes plateformes de streaming et tes amis depuis ici.",
     position: "top",
   },
 ];
