@@ -336,7 +336,89 @@ const Landing = () => {
         </div>
       </section>
 
-      {/* ─── PLATEFORMES ─── */}
+      {/* ─── ADN CINÉMA ─── */}
+      <section className="py-20 md:py-28 px-5 relative overflow-hidden">
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div className="w-[500px] h-[500px] rounded-full bg-primary/4 blur-[140px]" />
+        </div>
+        <div className="max-w-5xl mx-auto relative z-10">
+          <motion.div variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }}
+            className="flex flex-col md:flex-row items-center gap-10 md:gap-16">
+
+            {/* DNA Visual */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] }}
+              className="flex-shrink-0 w-full md:w-auto"
+            >
+              <div className="mx-auto w-[260px] md:w-[300px] rounded-3xl border border-border/15 bg-card/30 p-5 backdrop-blur-sm">
+                {/* Simulated DNA profile card */}
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 rounded-full bg-primary/15 border border-primary/25 flex items-center justify-center">
+                    <Dna className="w-5 h-5 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-[11px] font-sans text-foreground/40">Ton archétype</p>
+                    <p className="text-sm font-serif text-foreground">L'Explorateur Nocturne</p>
+                  </div>
+                </div>
+                {/* Genre bars */}
+                <div className="space-y-2.5 mb-4">
+                  {[
+                    { genre: "Thriller", pct: 85, color: "bg-primary" },
+                    { genre: "Drame", pct: 72, color: "bg-primary/70" },
+                    { genre: "Sci-Fi", pct: 58, color: "bg-primary/50" },
+                    { genre: "Comédie", pct: 34, color: "bg-primary/30" },
+                  ].map((g) => (
+                    <div key={g.genre}>
+                      <div className="flex justify-between mb-0.5">
+                        <span className="text-[10px] font-sans text-foreground/50">{g.genre}</span>
+                        <span className="text-[10px] font-sans text-foreground/30">{g.pct}%</span>
+                      </div>
+                      <div className="h-1.5 rounded-full bg-foreground/5 overflow-hidden">
+                        <motion.div
+                          className={`h-full rounded-full ${g.color}`}
+                          initial={{ width: 0 }}
+                          whileInView={{ width: `${g.pct}%` }}
+                          viewport={{ once: true }}
+                          transition={{ duration: 0.8, delay: 0.2, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                {/* Taste traits */}
+                <div className="flex flex-wrap gap-1.5">
+                  {["Suspense psychologique", "Twists narratifs", "Ambiances sombres", "Anti-héros"].map((trait) => (
+                    <span key={trait} className="px-2 py-1 rounded-md bg-primary/8 border border-primary/12 text-[9px] font-sans text-foreground/50">{trait}</span>
+                  ))}
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Text */}
+            <div className="text-center md:text-left">
+              <span className="text-[10px] uppercase tracking-[0.2em] text-primary/50 font-sans font-semibold">Unique</span>
+              <h2 className="text-3xl md:text-4xl font-serif mb-4 mt-1">
+                Ton ADN <span className="text-primary">Cinéma</span>
+              </h2>
+              <p className="text-foreground/40 font-sans text-sm md:text-base leading-relaxed mb-5">
+                Plus tu utilises Pick, plus il te connaît. Il construit ton profil cinématographique unique :
+                tes genres de prédilection, tes traits de goût, ton archétype de spectateur.
+                Comme une empreinte digitale, mais pour le cinéma.
+              </p>
+              <div className="flex flex-wrap gap-2 justify-center md:justify-start">
+                {["Archétype unique", "Évolution dans le temps", "Traits de goût", "Partageable"].map(tag => (
+                  <span key={tag} className="px-3 py-1.5 rounded-full bg-card/60 border border-border/12 text-foreground/40 text-xs font-sans">{tag}</span>
+                ))}
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
       <section className="py-16 md:py-24 px-5 relative">
         <div className="max-w-4xl mx-auto text-center">
           <motion.div variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }}>
