@@ -191,7 +191,7 @@ const Landing = () => {
         "@context": "https://schema.org", "@type": "FAQPage",
         "mainEntity": [
           { "@type": "Question", "name": "Pick est-il gratuit ?", "acceptedAnswer": { "@type": "Answer", "text": "Oui, Pick est gratuit avec 3 recommandations par jour. Pick+ à 3,99€/mois offre des recommandations illimitées." }},
-          { "@type": "Question", "name": "Comment Pick recommande-t-il des films ?", "acceptedAnswer": { "@type": "Answer", "text": "Pick utilise l'IA pour analyser tes goûts, ton humeur et ton contexte afin de te proposer le film parfait." }},
+          { "@type": "Question", "name": "Comment Pick recommande-t-il des films ?", "acceptedAnswer": { "@type": "Answer", "text": "Pick apprend tes goûts au fil du temps et croise ton humeur, ton contexte et tes préférences pour te proposer le film parfait." }},
           { "@type": "Question", "name": "Pick fonctionne-t-il avec toutes les plateformes ?", "acceptedAnswer": { "@type": "Answer", "text": "Oui, Pick est compatible avec Netflix, Disney+, Amazon Prime, Apple TV+, Canal+, HBO, Paramount+ et plus." }}
         ]
       })}} />
