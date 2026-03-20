@@ -63,7 +63,7 @@ serve(async (req) => {
     // Check cache first
     const { data: existing } = await supabase
       .from("movie_embeddings")
-      .select("embedding, taste_tags")
+      .select("embedding, taste_tags, semantic_axes, safety_tags, suitability_tags, cluster_labels")
       .eq("tmdb_id", tmdbId)
       .maybeSingle();
 
@@ -71,6 +71,10 @@ serve(async (req) => {
       return new Response(JSON.stringify({
         embedding: existing.embedding,
         tasteTags: existing.taste_tags,
+        semanticAxes: (existing as any).semantic_axes,
+        safetyTags: (existing as any).safety_tags,
+        suitabilityTags: (existing as any).suitability_tags,
+        clusterLabels: (existing as any).cluster_labels,
         cached: true,
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
