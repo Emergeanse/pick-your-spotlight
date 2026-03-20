@@ -182,7 +182,7 @@ STYLE :
 - Réponds TOUJOURS en français
 - Jamais de formulations robotiques
 
-ANNÉE EN COURS : ${currentYear}`;
+ANNÉE EN COURS : ${currentYear}${timeInstruction}`;
 
     } else {
       // --- FREE USER: DISCOVERY ONLY MODE ---
