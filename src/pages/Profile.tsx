@@ -27,14 +27,6 @@ const ALL_PLATFORMS = [
   { id: 35, label: "Rakuten TV", logo: "https://image.tmdb.org/t/p/original/bZvc9dXrXNly7cA0V4D9pR8yJwm.jpg" },
 ];
 
-const MILESTONES = [
-  { count: 1, label: "Premier film", emoji: "🎬" },
-  { count: 5, label: "Cinéphile débutant", emoji: "🍿" },
-  { count: 10, label: "Fidèle spectateur", emoji: "📽️" },
-  { count: 20, label: "Explorateur", emoji: "🧭" },
-  { count: 50, label: "Connaisseur", emoji: "🎪" },
-  { count: 100, label: "Maître cinéphile", emoji: "👑" },
-];
 
 const Profile = () => {
   const { user, isReady, signOut } = useAuth();
