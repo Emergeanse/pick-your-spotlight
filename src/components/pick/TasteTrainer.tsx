@@ -215,7 +215,7 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="absolute inset-0 z-50 flex flex-col bg-background overflow-hidden"
+      className="fixed inset-0 z-[80] flex flex-col bg-background overflow-hidden"
     >
       {/* Dynamic ambient background */}
       <motion.div className="absolute inset-0 pointer-events-none" style={{ background: bgGlow }} />
