@@ -379,6 +379,60 @@ export type Database = {
         }
         Relationships: []
       }
+      recommendation_events: {
+        Row: {
+          accepted: boolean | null
+          context: Json
+          id: string
+          rank_position: number
+          reaction: string | null
+          reaction_at: string | null
+          score_breakdown: Json | null
+          session_id: string | null
+          shown_at: string
+          skipped: boolean | null
+          source: string
+          title: string
+          tmdb_id: number
+          user_id: string
+          watched: boolean | null
+        }
+        Insert: {
+          accepted?: boolean | null
+          context?: Json
+          id?: string
+          rank_position?: number
+          reaction?: string | null
+          reaction_at?: string | null
+          score_breakdown?: Json | null
+          session_id?: string | null
+          shown_at?: string
+          skipped?: boolean | null
+          source?: string
+          title: string
+          tmdb_id: number
+          user_id: string
+          watched?: boolean | null
+        }
+        Update: {
+          accepted?: boolean | null
+          context?: Json
+          id?: string
+          rank_position?: number
+          reaction?: string | null
+          reaction_at?: string | null
+          score_breakdown?: Json | null
+          session_id?: string | null
+          shown_at?: string
+          skipped?: boolean | null
+          source?: string
+          title?: string
+          tmdb_id?: number
+          user_id?: string
+          watched?: boolean | null
+        }
+        Relationships: []
+      }
       subscriptions: {
         Row: {
           created_at: string
@@ -465,23 +519,44 @@ export type Database = {
       }
       user_taste_vectors: {
         Row: {
+          avoidance_vector: string | null
+          fatigue_state: Json
           id: string
           liked_count: number
+          novelty_tolerance: number
+          recent_taste_vector: string | null
+          rejected_clusters: string[]
+          stable_confidence: number
           taste_vector: string
+          top_clusters: string[]
           updated_at: string
           user_id: string
         }
         Insert: {
+          avoidance_vector?: string | null
+          fatigue_state?: Json
           id?: string
           liked_count?: number
+          novelty_tolerance?: number
+          recent_taste_vector?: string | null
+          rejected_clusters?: string[]
+          stable_confidence?: number
           taste_vector: string
+          top_clusters?: string[]
           updated_at?: string
           user_id: string
         }
         Update: {
+          avoidance_vector?: string | null
+          fatigue_state?: Json
           id?: string
           liked_count?: number
+          novelty_tolerance?: number
+          recent_taste_vector?: string | null
+          rejected_clusters?: string[]
+          stable_confidence?: number
           taste_vector?: string
+          top_clusters?: string[]
           updated_at?: string
           user_id?: string
         }

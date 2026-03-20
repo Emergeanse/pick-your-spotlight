@@ -158,12 +158,12 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
       if (rating > 50) {
         const detail = await fetchMovieDetail(currentMovie.id);
         await likeMovie(detail);
-        await trackInteraction(currentMovie.id, actionType, { source: "taste_trainer", genres: genres.join(","), rating });
+        await trackInteraction(currentMovie.id, actionType, { source: "taste_trainer", genres, rating });
         await recordAcceptedRecommendation(user.id);
         setLikedCount(c => c + 1);
         actionsRef.current.likes++;
       } else {
-        await trackInteraction(currentMovie.id, actionType, { source: "taste_trainer", genres: genres.join(","), rating });
+        await trackInteraction(currentMovie.id, actionType, { source: "taste_trainer", genres, rating });
         await recordSkippedRecommendation(user.id);
         setSkippedCount(c => c + 1);
         actionsRef.current.skips++;
