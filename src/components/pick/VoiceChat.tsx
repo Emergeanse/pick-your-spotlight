@@ -571,6 +571,50 @@ const VoiceChat = ({ onClose, onMovieSuggested, initialMessages, showMicGuide = 
               </motion.p>
             </motion.div>
           )}
+          {/* PICK TOGETHER — AI detected group */}
+          {phase === "pick_together" && (
+            <motion.div
+              key="pick_together"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.3 }}
+              className="flex flex-col items-center text-center"
+            >
+              <PickCharacter mood="default" message={pickReply} size="md" animate={false} />
+
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4 }}
+              >
+                <Button
+                  size="lg"
+                  className="mt-6 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 font-sans font-semibold px-8 h-12 gap-2 text-base neon-glow transition-all active:scale-[0.97]"
+                  onClick={() => {
+                    onClose();
+                    navigate("/app/pick-together");
+                  }}
+                >
+                  <Users className="w-5 h-5" />
+                  Lancer Pick Together
+                </Button>
+              </motion.div>
+
+              <motion.button
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.6 }}
+                onClick={() => {
+                  setPhase("idle");
+                  setPickReply("");
+                }}
+                className="mt-4 text-foreground/40 text-xs font-sans hover:text-foreground/60 transition-colors"
+              >
+                Non, je suis seul(e)
+              </motion.button>
+            </motion.div>
+          )}
         </AnimatePresence>
       </div>
 
