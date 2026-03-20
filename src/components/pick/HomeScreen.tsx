@@ -32,6 +32,8 @@ interface HomeScreenProps {
   openTrainerOnMount?: boolean;
   forceCloseTrainer?: boolean;
   onTrainerOpened?: () => void;
+  chatSuggestedMovies?: MovieDetail[] | null;
+  onChatSuggestedConsumed?: () => void;
 }
 
 const SURPRISE_MESSAGES = [
