@@ -184,19 +184,31 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
         if ((data as any)?.excluded_genres) setUserExcludedGenres((data as any).excluded_genres);
         if ((data as any)?.min_rating) setUserMinRating((data as any).min_rating);
       });
-    // Load interaction history (all types) to avoid repeats + count for progress
-    supabase.from("user_interactions")
-      .select("tmdb_id")
-      .eq("user_id", user.id)
-      .in("action_type", ["watched", "skipped", "already_seen", "liked", "unsure"])
-      .limit(500)
-      .then(({ data }) => {
-        if (data) {
-          const ids = [...new Set(data.map(d => d.tmdb_id))];
-          setHistoryExcludeIds(ids);
-          setTotalEvaluated(ids.length);
-        }
-      });
+    // Load interaction history + liked + watchlist to avoid repeats
+    Promise.all([
+      supabase.from("user_interactions")
+        .select("tmdb_id")
+        .eq("user_id", user.id)
+        .in("action_type", ["watched", "skipped", "already_seen", "liked", "unsure"])
+        .limit(500),
+      supabase.from("liked_movies")
+        .select("tmdb_id")
+        .eq("user_id", user.id)
+        .limit(500),
+      supabase.from("watchlist")
+        .select("tmdb_id")
+        .eq("user_id", user.id)
+        .limit(500),
+    ]).then(([interactionsRes, likedRes, watchlistRes]) => {
+      const ids = [
+        ...((interactionsRes.data || []).map(d => d.tmdb_id)),
+        ...((likedRes.data || []).map(d => d.tmdb_id)),
+        ...((watchlistRes.data || []).map(d => d.tmdb_id)),
+      ];
+      const uniqueIds = [...new Set(ids)];
+      setHistoryExcludeIds(uniqueIds);
+      setTotalEvaluated(uniqueIds.length);
+    });
   }, [user]);
 
   // Helper: invoke surprise-personalized with retry on 429
