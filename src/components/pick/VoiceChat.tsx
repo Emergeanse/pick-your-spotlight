@@ -73,7 +73,7 @@ function getContextualSuggestions(): { label: string; message: string }[] {
   return suggestions.sort((a, b) => b.weight - a.weight).slice(0, 3);
 }
 
-type Phase = "idle" | "listening" | "processing" | "recap" | "conversation";
+type Phase = "idle" | "listening" | "processing" | "recap" | "conversation" | "pick_together";
 
 // Sound wave bars animation
 const SoundWave = () => (
