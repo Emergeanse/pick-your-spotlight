@@ -757,10 +757,6 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
                    <MovieActionBar movie={tonightPick} onInteraction={(type) => {
                      if (!tonightPick) return;
                      if (type === "already_seen" || type === "dislike") {
-                       trackInteraction(tonightPick.id, "skipped", {
-                         reason: type === "already_seen" ? "seen" : "not_my_style",
-                         genres: (tonightPick.genres || []).map(g => g.name),
-                       });
                        if (tonightPool.length > 1 && tonightPickIndex < tonightPool.length - 1) {
                          const newIndex = tonightPickIndex + 1;
                          setTonightPickIndex(newIndex);

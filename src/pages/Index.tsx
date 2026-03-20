@@ -345,10 +345,10 @@ const Index = () => {
     }
 
     const currentMovie = results[currentResultIndex];
-    if (currentMovie) {
+    if (currentMovie && !rejectReason) {
       trackInteraction(currentMovie.id, "skipped", {});
-      if (user) recordSkippedRecommendation(user.id);
     }
+    if (currentMovie && user) recordSkippedRecommendation(user.id);
     if (currentResultIndex < results.length - 1 && !rejectReason) {
       setCurrentResultIndex(i => i + 1);
     } else {
