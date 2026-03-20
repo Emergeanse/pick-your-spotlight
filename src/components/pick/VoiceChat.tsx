@@ -172,6 +172,13 @@ const VoiceChat = ({ onClose, onMovieSuggested, initialMessages, showMicGuide = 
         ? [...initialMessages, ...fullHistory]
         : fullHistory;
 
+      // Build time context for the AI
+      const now = new Date();
+      const dayNames = ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"];
+      const hour = now.getHours();
+      const periodLabel = hour >= 5 && hour < 12 ? "le matin" : hour >= 12 && hour < 17 ? "l'après-midi" : hour >= 17 && hour < 22 ? "en soirée" : "tard dans la nuit";
+      const timeContext = `Nous sommes ${dayNames[now.getDay()]}, il est ${hour}h (${periodLabel}). Adapte ton ton et tes formulations à ce moment de la journée. Par exemple, ne dis pas "ce soir" si c'est le matin — dis plutôt "pour ta prochaine séance" ou "pour plus tard". Si c'est le soir ou la nuit, tu peux dire "ce soir" ou "cette nuit".`;
+
       const { data, error } = await supabase.functions.invoke("pick-chat", {
         body: {
           messages,
@@ -179,6 +186,7 @@ const VoiceChat = ({ onClose, onMovieSuggested, initialMessages, showMicGuide = 
           isPremium: true,
           minRating: userTasteContext?.minRating || 0,
           excludedGenres: userTasteContext?.excludedGenres || [],
+          timeContext,
         },
       });
 
