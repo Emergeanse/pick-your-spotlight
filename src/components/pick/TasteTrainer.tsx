@@ -43,11 +43,36 @@ async function fetchMovieDetail(id: number): Promise<MovieDetail> {
 }
 
 const RATING_BUTTONS = [
-  { value: 5,   label: "Pas pour moi", color: "bg-red-500/15 border-red-500/25 text-red-400 hover:bg-red-500/25" },
-  { value: 25,  label: "Bof",          color: "bg-orange-500/15 border-orange-500/25 text-orange-400 hover:bg-orange-500/25" },
-  { value: 50,  label: "Correct",      color: "bg-yellow-500/15 border-yellow-500/25 text-yellow-400 hover:bg-yellow-500/25" },
-  { value: 75,  label: "J'aime bien",  color: "bg-emerald-500/15 border-emerald-500/25 text-emerald-400 hover:bg-emerald-500/25" },
-  { value: 100, label: "Chef-d'œuvre", color: "bg-primary/15 border-primary/25 text-primary hover:bg-primary/25" },
+  {
+    value: 5,
+    label: "Pas pour moi",
+    toneClass:
+      "bg-[hsl(var(--destructive)/0.18)] border-[hsl(var(--destructive)/0.34)] text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.28)] shadow-[0_12px_32px_hsl(var(--destructive)/0.12)]",
+  },
+  {
+    value: 25,
+    label: "Bof",
+    toneClass:
+      "bg-[hsl(var(--surprise)/0.18)] border-[hsl(var(--surprise)/0.32)] text-[hsl(var(--surprise))] hover:bg-[hsl(var(--surprise)/0.28)] shadow-[0_12px_32px_hsl(var(--surprise)/0.10)]",
+  },
+  {
+    value: 50,
+    label: "Correct",
+    toneClass:
+      "bg-[hsl(var(--gold)/0.16)] border-[hsl(var(--gold)/0.30)] text-[hsl(var(--gold))] hover:bg-[hsl(var(--gold)/0.24)] shadow-[0_12px_32px_hsl(var(--gold)/0.10)]",
+  },
+  {
+    value: 75,
+    label: "J'aime bien",
+    toneClass:
+      "bg-[hsl(var(--train)/0.18)] border-[hsl(var(--train)/0.30)] text-[hsl(var(--train))] hover:bg-[hsl(var(--train)/0.26)] shadow-[0_12px_32px_hsl(var(--train)/0.10)]",
+  },
+  {
+    value: 100,
+    label: "Chef-d'œuvre",
+    toneClass:
+      "bg-[hsl(var(--primary)/0.18)] border-[hsl(var(--primary)/0.30)] text-primary hover:bg-[hsl(var(--primary)/0.26)] shadow-[0_12px_32px_hsl(var(--primary)/0.14)]",
+  },
 ];
 
 const getMilestoneMessage = (count: number): string | null => {
@@ -123,14 +148,13 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
   const sessionTarget = Math.max(0, THRESHOLDS.ideal - totalEvaluated);
   const sessionProgress = Math.min(totalProcessed, sessionTarget);
 
-  // Derived motion values for swipe feedback
   const rotate = useTransform(x, [-200, 0, 200], [-8, 0, 8]);
   const likeOpacity = useTransform(x, [0, 80, 200], [0, 0.6, 1]);
   const skipOpacity = useTransform(x, [-200, -80, 0], [1, 0.6, 0]);
   const bgGlow = useTransform(x, [-200, 0, 200], [
-    "radial-gradient(circle at 30% 50%, hsl(var(--destructive) / 0.08) 0%, transparent 70%)",
-    "radial-gradient(circle at 50% 40%, hsl(var(--primary) / 0.06) 0%, transparent 70%)",
-    "radial-gradient(circle at 70% 50%, hsl(var(--primary) / 0.12) 0%, transparent 70%)",
+    "radial-gradient(circle at 26% 48%, hsl(var(--destructive) / 0.12) 0%, transparent 62%)",
+    "radial-gradient(circle at 50% 40%, hsl(var(--primary) / 0.10) 0%, transparent 68%)",
+    "radial-gradient(circle at 74% 48%, hsl(var(--train) / 0.16) 0%, transparent 62%)",
   ]);
 
   useEffect(() => {
@@ -215,27 +239,27 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[100] flex flex-col bg-background overflow-hidden"
+      className="fixed inset-0 z-[100] flex flex-col overflow-y-auto overscroll-contain bg-background"
+      style={{ minHeight: "100dvh" }}
     >
-      {/* Dynamic ambient background */}
       <motion.div className="absolute inset-0 pointer-events-none" style={{ background: bgGlow }} />
 
-      {/* Header — minimal */}
       <div className="relative z-10 flex items-center justify-between px-4 pt-[calc(0.75rem+env(safe-area-inset-top))] pb-1">
-        <button onClick={handleClose}
-          className="w-8 h-8 rounded-full bg-foreground/5 flex items-center justify-center text-foreground/40 hover:text-foreground hover:bg-foreground/10 transition-all active:scale-95">
-          <ChevronLeft className="w-4 h-4" />
+        <button
+          onClick={handleClose}
+          className="flex h-8 w-8 items-center justify-center rounded-full bg-foreground/5 text-foreground/40 transition-all hover:bg-foreground/10 hover:text-foreground active:scale-95"
+        >
+          <ChevronLeft className="h-4 w-4" />
         </button>
-        <h2 className="text-xs font-sans font-medium text-foreground/40 uppercase tracking-[0.15em]">
+        <h2 className="text-center text-[11px] font-sans font-medium uppercase tracking-[0.15em] text-foreground/40">
           {isActivation ? "Apprends-moi tes goûts" : "Entraîne ton Pick"}
         </h2>
         <div className="w-8" />
       </div>
 
-      {/* Progress — compact inline */}
-      <div className="relative z-10 px-5 pt-2 pb-1">
+      <div className="relative z-10 px-4 pt-1 pb-2">
         <div className="flex items-center gap-3">
-          <div className="flex-1 h-[3px] rounded-full bg-foreground/[0.06] overflow-hidden">
+          <div className="h-[3px] flex-1 overflow-hidden rounded-full bg-foreground/[0.06]">
             <motion.div
               className="h-full rounded-full bg-primary/70"
               initial={{ width: 0 }}
@@ -243,12 +267,11 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
               transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
             />
           </div>
-          <span className="text-[11px] font-sans tabular-nums text-foreground/25 shrink-0">
+          <span className="shrink-0 text-[11px] font-sans tabular-nums text-foreground/25">
             {cumulativeTotal} évalué{cumulativeTotal > 1 ? "s" : ""}
           </span>
         </div>
 
-        {/* Milestone message */}
         <AnimatePresence mode="wait">
           {milestoneMsg && (
             <motion.p
@@ -256,7 +279,7 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
               initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -6 }}
-              className="text-primary/70 text-[11px] font-sans text-center mt-2 font-medium"
+              className="mt-2 text-center text-[11px] font-sans font-medium text-primary/70"
             >
               {milestoneMsg}
             </motion.p>
@@ -264,31 +287,31 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
         </AnimatePresence>
       </div>
 
-      {/* ─── Card Stack ─── */}
-      <div className="relative z-10 flex-1 flex items-center justify-center px-5">
+      <div className="relative z-10 flex min-h-0 flex-1 items-center justify-center px-4 py-3">
         {loading && movies.length === 0 ? (
           <div className="flex flex-col items-center gap-4">
-            <Loader2 className="w-6 h-6 text-primary/50 animate-spin" />
-            <p className="text-foreground/30 text-sm font-sans">Chargement…</p>
+            <Loader2 className="h-6 w-6 animate-spin text-primary/50" />
+            <p className="text-sm font-sans text-foreground/30">Chargement…</p>
           </div>
         ) : !currentMovie ? (
           <div className="flex flex-col items-center gap-4 text-center">
-            <Sparkles className="w-8 h-8 text-primary/40" />
-            <p className="text-foreground/50 text-sm font-sans">Plus de films pour le moment</p>
+            <Sparkles className="h-8 w-8 text-primary/40" />
+            <p className="text-sm font-sans text-foreground/50">Plus de films pour le moment</p>
             <Button variant="outline" onClick={handleClose} className="rounded-full text-sm">Retour</Button>
           </div>
         ) : (
-          <div className="relative w-full max-w-[320px]">
-            {/* Next card preview */}
+          <div
+            className="relative mx-auto w-full max-w-[320px]"
+            style={{ width: "min(72vw, 34vh, 320px)" }}
+          >
             {nextMovie && (
               <div className="absolute inset-0 -z-10">
-                <div className="w-full aspect-[2/3] rounded-2xl overflow-hidden opacity-20 scale-[0.93] translate-y-3 border border-border/5">
-                  <img src={getPosterUrl(nextMovie.poster_path, "w342")} alt="" className="w-full h-full object-cover" />
+                <div className="h-full w-full translate-y-3 scale-[0.94] overflow-hidden rounded-[1.75rem] border border-white/10 opacity-30 shadow-[0_24px_80px_hsl(var(--background)/0.55)] aspect-[2/3]">
+                  <img src={getPosterUrl(nextMovie.poster_path, "w342")} alt="" className="h-full w-full object-cover saturate-110" />
                 </div>
               </div>
             )}
 
-            {/* Active card */}
             <AnimatePresence mode="popLayout">
               <motion.div
                 key={currentMovie.id}
@@ -304,26 +327,24 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
                 initial={{ scale: 0.95, opacity: 0, y: 20 }}
                 exit={{ opacity: 0, scale: 0.9 }}
                 transition={swiping ? { duration: 0.3, ease: "easeOut" } : { type: "spring", stiffness: 260, damping: 24 }}
-                className="relative w-full aspect-[2/3] rounded-2xl overflow-hidden cursor-grab active:cursor-grabbing select-none"
+                className="relative aspect-[2/3] w-full select-none overflow-hidden rounded-[1.75rem] shadow-[0_24px_80px_hsl(var(--background)/0.72)] cursor-grab active:cursor-grabbing"
                 style={{ x, rotate, touchAction: "none" }}
               >
-                {/* Image */}
                 <img
                   src={getPosterUrl(currentMovie.poster_path, "w780")}
                   alt={getDisplayTitle(currentMovie)}
-                  className="absolute inset-0 w-full h-full object-cover brightness-110 contrast-105 saturate-110"
+                  className="absolute inset-0 h-full w-full object-cover brightness-[1.18] contrast-[1.08] saturate-[1.18]"
                   draggable={false}
                 />
 
-                {/* Subtle edge highlight */}
-                <div className="absolute inset-0 rounded-2xl ring-1 ring-inset ring-white/[0.08] pointer-events-none" />
+                <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,hsl(var(--foreground)/0.10)_0%,transparent_24%,transparent_100%)] mix-blend-screen" />
+                <div className="pointer-events-none absolute inset-0 rounded-[1.75rem] ring-1 ring-inset ring-white/10" />
 
-                {/* Bottom info overlay */}
-                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent pt-24 pb-5 px-5">
-                  <h3 className="text-white text-lg font-serif font-bold leading-snug mb-1.5 drop-shadow-md">
+                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-background via-background/38 to-transparent px-5 pt-24 pb-5">
+                  <h3 className="mb-1.5 text-xl font-serif font-bold leading-[1.05] text-white drop-shadow-md">
                     {getDisplayTitle(currentMovie)}
                   </h3>
-                  <div className="flex items-center gap-3 text-white/60 text-xs font-sans mb-2.5">
+                  <div className="mb-2.5 flex items-center gap-3 text-xs font-sans text-white/70">
                     {currentMovie.vote_average > 0 && (
                       <span className="flex items-center gap-1">
                         <span className="text-primary">★</span>
@@ -334,27 +355,26 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
                       <span>{currentMovie.release_date.substring(0, 4)}</span>
                     )}
                   </div>
-                  <div className="flex gap-1.5 flex-wrap">
+                  <div className="flex flex-wrap gap-1.5">
                     {(currentMovie.genre_ids || []).slice(0, 3).map(gid => GENRE_MAP[gid]).filter(Boolean).map(g => (
-                      <span key={g} className="text-[10px] font-sans px-2 py-0.5 rounded-full bg-white/[0.08] text-white/50 backdrop-blur-sm">
+                      <span key={g} className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] font-sans text-white/70 backdrop-blur-sm">
                         {g}
                       </span>
                     ))}
                   </div>
                 </div>
 
-                {/* Swipe direction labels */}
                 <motion.div
-                  className="absolute top-5 left-5 px-4 py-2 rounded-xl border-2 border-destructive/60 z-30 -rotate-12"
+                  className="absolute top-5 left-5 z-30 rounded-xl border-2 border-[hsl(var(--destructive)/0.6)] px-4 py-2 -rotate-12"
                   style={{ opacity: skipOpacity }}
                 >
-                  <span className="text-destructive font-sans font-bold text-sm tracking-wide">PASSE</span>
+                  <span className="text-sm font-sans font-bold tracking-wide text-[hsl(var(--destructive))]">PASSE</span>
                 </motion.div>
                 <motion.div
-                  className="absolute top-5 right-5 px-4 py-2 rounded-xl border-2 border-primary/60 z-30 rotate-12"
+                  className="absolute top-5 right-5 z-30 rounded-xl border-2 border-[hsl(var(--train)/0.6)] px-4 py-2 rotate-12"
                   style={{ opacity: likeOpacity }}
                 >
-                  <span className="text-primary font-sans font-bold text-sm tracking-wide">J'AIME</span>
+                  <span className="text-sm font-sans font-bold tracking-wide text-[hsl(var(--train))]">J'AIME</span>
                 </motion.div>
               </motion.div>
             </AnimatePresence>
@@ -362,19 +382,18 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
         )}
       </div>
 
-      {/* ─── Rating Buttons ─── */}
       {currentMovie && !showActivationCTA && (
-        <div className="relative z-10 px-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] pt-4">
-          <div className="flex items-stretch gap-1.5">
+        <div className="relative z-20 border-t border-border/20 bg-background/84 px-4 pt-3 pb-[calc(1rem+env(safe-area-inset-bottom))] backdrop-blur-xl shadow-[0_-18px_40px_hsl(var(--background)/0.32)]">
+          <div className="grid grid-cols-5 gap-1.5">
             {RATING_BUTTONS.map((btn) => (
               <motion.button
                 key={btn.value}
-                whileTap={{ scale: 0.9 }}
+                whileTap={{ scale: 0.94 }}
                 onClick={() => {
                   setSliderValue(btn.value);
                   setTimeout(() => handleRate(btn.value), 100);
                 }}
-                className={`flex-1 py-3 rounded-xl border font-sans text-[11px] font-medium transition-all active:scale-95 ${btn.color}`}
+                className={`min-h-11 rounded-xl border px-1 py-3 text-center font-sans text-[11px] font-medium leading-tight transition-all active:scale-95 ${btn.toneClass}`}
               >
                 {btn.label}
               </motion.button>
@@ -387,37 +406,38 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
               setCurrentIndex(i => i + 1);
               x.set(0);
             }}
-            className="w-full mt-3 flex items-center justify-center gap-1.5 py-2 text-foreground/20 hover:text-foreground/35 transition-colors"
+            className="mt-3 flex w-full items-center justify-center gap-1.5 py-2 text-foreground/30 transition-colors hover:text-foreground/45"
           >
-            <SkipForward className="w-3 h-3" />
+            <SkipForward className="h-3 w-3" />
             <span className="text-[11px] font-sans">Je ne connais pas</span>
           </button>
         </div>
       )}
 
-      {/* ─── Activation Complete CTA ─── */}
       <AnimatePresence>
         {showActivationCTA && (
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            className="relative z-10 px-5 pb-[calc(2rem+env(safe-area-inset-bottom))] pt-4"
+            className="relative z-10 px-5 pt-4 pb-[calc(2rem+env(safe-area-inset-bottom))]"
           >
-            <div className="rounded-2xl border border-primary/15 bg-card/60 backdrop-blur-xl p-6 text-center">
+            <div className="rounded-2xl border border-primary/15 bg-card/60 p-6 text-center backdrop-blur-xl">
               <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", delay: 0.2 }}>
-                <Sparkles className="w-7 h-7 text-primary mx-auto mb-3" />
+                <Sparkles className="mx-auto mb-3 h-7 w-7 text-primary" />
               </motion.div>
-              <h3 className="text-xl font-serif mb-1.5">Pick est prêt</h3>
-              <p className="text-foreground/40 text-sm font-sans mb-5 leading-relaxed">
+              <h3 className="mb-1.5 text-xl font-serif">Pick est prêt</h3>
+              <p className="mb-5 text-sm font-sans leading-relaxed text-foreground/40">
                 Maintenant qu'on se connaît, trouvons ton film.
               </p>
-              <Button variant="hero" size="xl" className="w-full mb-2" onClick={handleActivationDone}>
-                <Sparkles className="w-4 h-4" />
+              <Button variant="hero" size="xl" className="mb-2 w-full" onClick={handleActivationDone}>
+                <Sparkles className="h-4 w-4" />
                 Trouve-moi un film
-                <ArrowRight className="w-4 h-4" />
+                <ArrowRight className="h-4 w-4" />
               </Button>
-              <button onClick={() => setShowActivationCTA(false)}
-                className="text-foreground/20 text-xs font-sans hover:text-foreground/35 transition-colors py-1">
+              <button
+                onClick={() => setShowActivationCTA(false)}
+                className="py-1 text-xs font-sans text-foreground/20 transition-colors hover:text-foreground/35"
+              >
                 Continuer à évaluer
               </button>
             </div>
