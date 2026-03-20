@@ -501,6 +501,42 @@ const WatchlistPage = ({ onMovieSelect }: WatchlistPageProps) => {
             onWatch={handleWatchFromPreview} onClose={() => { setPreviewMovie(null); setPreviewProviders([]); setPreviewNote(""); }} />
         )}
       </AnimatePresence>
+
+      {/* Reset confirmation modal */}
+      <AnimatePresence>
+        {showResetConfirm && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 flex items-end justify-center">
+            <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" onClick={() => setShowResetConfirm(false)} />
+            <motion.div initial={{ y: 100 }} animate={{ y: 0 }} exit={{ y: 100 }} transition={{ type: "spring", damping: 25 }}
+              className="relative w-full max-w-lg rounded-t-2xl bg-card border-t border-border/20 p-6 pb-[calc(2rem+env(safe-area-inset-bottom))]">
+              <div className="w-10 h-1 rounded-full bg-border/30 mx-auto mb-5" />
+              <div className="flex flex-col items-center text-center mb-6">
+                <div className="w-12 h-12 rounded-full bg-destructive/10 flex items-center justify-center mb-3">
+                  <Trash2 className="w-5 h-5 text-destructive/60" />
+                </div>
+                <h3 className="text-base font-serif mb-1">
+                  {activeTab === "watchlist" ? "Vider ta watchlist ?" : "Réinitialiser tes coups de cœur ?"}
+                </h3>
+                <p className="text-foreground/40 text-sm font-sans">
+                  {activeTab === "watchlist"
+                    ? `${watchlistItems.length} titre${watchlistItems.length > 1 ? "s" : ""} seront supprimés. Cette action est irréversible.`
+                    : `${likedItems.length} titre${likedItems.length > 1 ? "s" : ""} seront retirés. Tes recommandations seront recalibrées.`}
+                </p>
+              </div>
+              <div className="flex gap-3">
+                <button onClick={() => setShowResetConfirm(false)}
+                  className="flex-1 h-12 rounded-xl bg-card border border-border/20 text-foreground/60 font-sans text-sm font-medium hover:bg-card/80 transition-colors active:scale-[0.98]">
+                  Annuler
+                </button>
+                <button onClick={handleResetAll} disabled={resetting}
+                  className="flex-1 h-12 rounded-xl bg-destructive/90 text-destructive-foreground font-sans text-sm font-medium hover:bg-destructive transition-colors active:scale-[0.98] flex items-center justify-center gap-2">
+                  {resetting ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Trash2 className="w-3.5 h-3.5" />Tout supprimer</>}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
