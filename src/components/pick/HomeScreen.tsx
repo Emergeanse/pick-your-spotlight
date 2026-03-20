@@ -75,7 +75,7 @@ const LOADING_MESSAGES = [
 
 // Proactive messages are now time-aware — see getProactiveMessages()
 
-const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, openTrainerOnMount, forceCloseTrainer, onTrainerOpened, chatSuggestedMovies, onChatSuggestedConsumed }: HomeScreenProps) => {
+const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, openTrainerOnMount, forceCloseTrainer, onTrainerOpened, chatSuggestedMovies, onChatSuggestedConsumed, activationTrainerMode = false, onActivationTrainingComplete }: HomeScreenProps) => {
   const navigate = useNavigate();
   const [isSurprising, setIsSurprising] = useState(false);
   const [surpriseMsg, setSurpriseMsg] = useState("");
