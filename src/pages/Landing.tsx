@@ -538,7 +538,7 @@ const Landing = () => {
         </div>
         <div className="max-w-4xl mx-auto relative z-10">
           <motion.div variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }} className="text-center mb-8">
-            <h2 className="text-3xl md:text-5xl font-serif mb-3">Commence <span className="text-gold">gratuitement</span></h2>
+            <h2 className="text-3xl md:text-5xl font-serif mb-3">Commence <span className="text-primary">gratuitement</span></h2>
             <p className="text-foreground/35 font-sans text-sm md:text-base max-w-lg mx-auto">Pick est gratuit pour toujours. Pick+ amplifie l'expérience.</p>
           </motion.div>
           <motion.div variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }} className="grid md:grid-cols-2 gap-5 max-w-2xl mx-auto">
