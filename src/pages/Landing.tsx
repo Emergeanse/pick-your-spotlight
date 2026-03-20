@@ -50,11 +50,11 @@ const stagger = { visible: { transition: { staggerChildren: 0.08 } } };
 const PosterColumn = ({ posters, reverse = false, className = "" }: { posters: string[]; reverse?: boolean; className?: string }) => {
   const doubled = [...posters, ...posters];
   return (
-    <div className={`flex flex-col gap-2 overflow-hidden ${className}`}>
-      <div className={reverse ? "poster-scroll-reverse" : "poster-scroll"}>
+    <div className={`flex flex-col gap-2 overflow-hidden h-full ${className}`}>
+      <div className={`h-full ${reverse ? "poster-scroll-reverse" : "poster-scroll"}`}>
         <div className="flex flex-col gap-2">
           {doubled.map((url, i) => (
-            <img key={i} src={url} alt="Affiche de film" className="w-full aspect-[2/3] object-cover rounded-lg" loading="lazy" />
+            <img key={i} src={url} alt="" className="w-full aspect-[2/3] object-cover rounded-lg" loading="lazy" />
           ))}
         </div>
       </div>
@@ -212,7 +212,7 @@ const Landing = () => {
       {/* ─── HERO — épuré ─── */}
       <section ref={heroRef} className="relative min-h-screen flex items-center justify-center overflow-hidden pt-14">
         {/* Poster background — only behind hero */}
-        <div className="absolute inset-0 z-0 opacity-[0.07] pointer-events-none overflow-hidden">
+        <div className="absolute inset-0 z-0 opacity-[0.12] pointer-events-none overflow-hidden">
           <div className="hidden md:flex gap-2 w-full h-full px-4">
             <PosterColumn posters={col1} className="w-1/6 -mt-20" />
             <PosterColumn posters={col2} reverse className="w-1/6 mt-10" />
@@ -221,7 +221,7 @@ const Landing = () => {
             <PosterColumn posters={[...col2].reverse()} className="w-1/6 -mt-16" />
             <PosterColumn posters={[...col3].reverse()} reverse className="w-1/6 mt-12" />
           </div>
-          <div className="flex md:hidden gap-2 w-full h-full px-1">
+          <div className="flex md:hidden gap-1.5 w-full h-full px-1">
             <PosterColumn posters={col1} className="w-1/4 -mt-10" />
             <PosterColumn posters={col2} reverse className="w-1/4 mt-8" />
             <PosterColumn posters={col3} className="w-1/4 -mt-20" />
