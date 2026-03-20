@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Mic, Dices, Tv, Sparkles, Loader2, Zap, Flame, Target, Trophy, Shuffle, Brain, Users, ChevronLeft, ChevronRight } from "lucide-react";
+import RevealBurst from "./RevealBurst";
 import WhoStep, { type WhoOption } from "./WhoStep";
 import WhatStep, { type WhatOption } from "./WhatStep";
 import ExplorationStep from "./ExplorationStep";
