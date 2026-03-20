@@ -10,7 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { likeMovie, unlikeMovie, isMovieLiked, getLikedMovies } from "@/lib/liked-movies";
 import { addToWatchlist, removeFromWatchlist, isInWatchlist } from "@/lib/watchlist";
-import { trackInteraction, getUserTasteProfile } from "@/lib/interactions";
+import { trackInteraction, getUserTasteProfile, trackRecommendationEvent, updateRecommendationReaction } from "@/lib/interactions";
 import { toast } from "sonner";
 import { computeUserTasteVector, ensureMovieEmbedding } from "@/lib/taste-engine";
 import MovieActionBar from "@/components/pick/MovieActionBar";
