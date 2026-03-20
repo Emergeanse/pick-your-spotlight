@@ -480,8 +480,8 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
                             <span className="text-lg">🍿</span>
                           </div>
                           <div>
-                            <h4 className="text-sm font-sans font-semibold text-foreground">Pick choisit pour toi</h4>
-                            <p className="text-foreground/45 text-xs font-sans">Une suggestion sur-mesure, instantanée.</p>
+                            <h4 className="text-sm font-sans font-semibold text-foreground">{getAutoPickLabel()}</h4>
+                            <p className="text-foreground/45 text-xs font-sans">{getAutoPickSubtitle()}</p>
                           </div>
                         </div>
                       </motion.button>
