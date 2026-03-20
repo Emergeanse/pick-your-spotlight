@@ -450,6 +450,7 @@ const Index = () => {
                       isPremium: pickPlus.isPremium,
                       minRating: profilePrefs.minRating,
                       excludedGenres: profilePrefs.excludedGenres,
+                      timeContext: getTimeContextForPrompt(),
                     },
                   });
                   if (error) throw error;
