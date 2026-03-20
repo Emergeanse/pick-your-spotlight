@@ -607,7 +607,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
               >
                 <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/15 border border-primary/25 mb-4">
                   <Sparkles className="w-3 h-3 text-primary" />
-                  <span className="text-primary text-[11px] font-sans font-semibold">Tonight's Pick</span>
+                  <span className="text-primary text-[11px] font-sans font-semibold">{getTonightPickLabel()}</span>
                 </div>
 
                 {tonightPick.poster_path && (
