@@ -150,6 +150,10 @@ ${embeddingSimilarity !== null ? `- 🧬 Similarité STABLE (goût profond) : ${
 ${recentSimilarity !== null ? `- 🔄 Similarité RÉCENTE (30 derniers jours) : ${Math.round(recentSimilarity * 100)}%` : ""}
 ${avoidanceSimilarity !== null ? `- ⚠️ Similarité ÉVITEMENT : ${Math.round(avoidanceSimilarity * 100)}% ${avoidanceSimilarity > 0.6 ? "— RISQUE ÉLEVÉ DE REJET" : avoidanceSimilarity > 0.4 ? "— risque modéré" : "— risque faible"}` : ""}
 ${movieTasteTags.length > 0 ? `- 🏷️ Taste tags du film : ${movieTasteTags.join(", ")}` : ""}
+${movieClusterLabels.length > 0 ? `- 📂 Clusters : ${movieClusterLabels.join(", ")}` : ""}
+${movieSafetyTags.length > 0 ? `- ⚠️ Contenu sensible : ${movieSafetyTags.join(", ")}` : ""}
+${movieSuitabilityTags.length > 0 ? `- 👥 Adapté pour : ${movieSuitabilityTags.join(", ")}` : ""}
+${Object.keys(movieSemanticAxes).length > 0 ? `- 📊 Axes sémantiques : ${Object.entries(movieSemanticAxes).filter(([,v]) => (v as number) > 0.6).map(([k,v]) => `${k}=${v}`).join(", ")}` : ""}
 ${skipPatterns.avgSkipRate > 0.5 ? `- ⚠️ Skip rate élevé (${Math.round(skipPatterns.avgSkipRate * 100)}%) — l'utilisateur est exigeant` : ""}
 ${skipPatterns.recentSkipStreak > 2 ? `- ⚠️ ${skipPatterns.recentSkipStreak} skips consécutifs récents` : ""}
 ${fatiguedGenres.length > 0 ? `- 🔄 FATIGUE genre : ${fatiguedGenres.join(", ")} — pénalise ces genres dans le score` : ""}
