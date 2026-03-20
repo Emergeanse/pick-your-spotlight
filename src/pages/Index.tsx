@@ -452,7 +452,10 @@ const Index = () => {
                   if (error) throw error;
                   if (data?.movie) {
                     if (data.recap?.length > 0) setSearchTags(prev => { const merged = [...prev]; data.recap.forEach((t: string) => { if (!merged.includes(t)) merged.push(t); }); return merged; });
-                    setResults(prev => [...prev, data.movie]);
+                    const newMovies: MovieDetail[] = data.movies && data.movies.length > 0
+                      ? data.movies as MovieDetail[]
+                      : [data.movie as MovieDetail];
+                    setResults(prev => [...prev, ...newMovies]);
                     setCurrentResultIndex(results.length);
                   }
                 } catch (e) { console.error("Refine error:", e); }
