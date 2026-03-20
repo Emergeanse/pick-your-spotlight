@@ -62,7 +62,7 @@ serve(async (req) => {
 
   try {
     const body = await req.json();
-    const { messages, mode, movieTitle, movieYear, movieOverview, spoilerMode, movieProgress, minRating: userMinRating, excludedGenres, isPremium } = body;
+    const { messages, mode, movieTitle, movieYear, movieOverview, spoilerMode, movieProgress, minRating: userMinRating, excludedGenres, isPremium, timeContext } = body;
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
@@ -70,6 +70,9 @@ serve(async (req) => {
     const currentYear = new Date().getFullYear();
     const effectiveMinRating = userMinRating || 0;
     const RATING_TOLERANCE = 0.5;
+
+    // Time-aware instruction from client
+    const timeInstruction = timeContext ? `\n\nCONTEXTE TEMPOREL : ${timeContext}` : "";
 
     // Build rating instruction for the prompt
     let ratingInstruction = "";
