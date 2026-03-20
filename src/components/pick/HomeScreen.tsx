@@ -687,11 +687,10 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
                   const matchInfo = movieMatchData[tonightPick.id];
                   if (matchInfo?.confidence) {
                     return (
-                      <div className="flex flex-col items-center gap-1 mb-3">
-                        <div className="flex items-center gap-2">
-                          <Target className="w-4 h-4 text-primary" />
-                          <span className="text-primary text-lg font-sans font-bold">{matchInfo.confidence}%</span>
-                          <span className="text-foreground/40 text-[11px] font-sans">match</span>
+                      <div className="flex flex-col items-center gap-1.5 mb-3">
+                        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 border border-primary/20">
+                          <Target className="w-3 h-3 text-primary/70" />
+                          <span className="text-primary/90 text-[12px] font-sans font-semibold">{matchInfo.confidence}% match</span>
                         </div>
                         {matchInfo.reason && (
                           <p className="text-foreground/50 text-[11px] font-sans text-center leading-snug max-w-[260px]">
