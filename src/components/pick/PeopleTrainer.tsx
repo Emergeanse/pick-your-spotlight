@@ -27,7 +27,7 @@ const PeopleTrainer = ({ onBack }: PeopleTrainerProps) => {
   const [processedIds, setProcessedIds] = useState<Set<number>>(new Set());
   const [page, setPage] = useState(1);
   const [history, setHistory] = useState<number[]>([]);
-  const [detailOpen, setDetailOpen] = useState(false);
+  const [flipped, setFlipped] = useState(false);
   const [ratedCount, setRatedCount] = useState(0);
   const x = useMotionValue(0);
 
