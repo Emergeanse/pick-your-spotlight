@@ -23,6 +23,7 @@ interface TasteTrainerProps {
 }
 
 type TrainerTab = "movies" | "people";
+type MediaMode = "movies" | "series";
 
 const GENRE_MAP: Record<number, string> = {
   28: "Action", 12: "Aventure", 16: "Animation", 35: "Comédie", 80: "Crime",
