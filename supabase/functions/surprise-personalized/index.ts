@@ -51,6 +51,7 @@ serve(async (req) => {
     const minRating = typeof rawMinRating === "number" ? Math.min(rawMinRating, 8) : 0;
     const explorationLevel = typeof rawExplorationLevel === "number" ? Math.max(0, Math.min(10, rawExplorationLevel)) : 5;
     const mediaType: "movie" | "tv" | "both" = rawMediaType === "tv" ? "tv" : rawMediaType === "movie" ? "movie" : "both";
+    // For single requests, pick randomly. For multi-requests with "both", we'll force a mix below.
     const searchType: "movie" | "tv" = mediaType === "both" ? (Math.random() < 0.5 ? "movie" : "tv") : mediaType;
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
