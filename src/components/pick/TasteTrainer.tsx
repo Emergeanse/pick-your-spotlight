@@ -424,69 +424,71 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
                     style={{ x, rotate: flipped ? 0 : rotate, touchAction: "none" }}
                     onClick={() => !swiping && setFlipped(f => !f)}
                   >
-                    {/* Front face */}
-                    <div
-                      className="absolute inset-0 rounded-[1.75rem] overflow-hidden shadow-[0_24px_80px_hsl(var(--background)/0.72)] cursor-pointer transition-all duration-500"
-                      style={{
-                        opacity: flipped ? 0 : 1,
-                        transform: flipped ? "scale(0.95)" : "scale(1)",
-                        pointerEvents: flipped ? "none" : "auto",
-                      }}
-                    >
-                      <img
-                        src={getPosterUrl(currentMovie.poster_path, "w780")}
-                        alt={getDisplayTitle(currentMovie)}
-                        className="absolute inset-0 h-full w-full object-cover brightness-[1.18] contrast-[1.08] saturate-[1.18]"
-                        draggable={false}
-                      />
-                      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,hsl(var(--foreground)/0.10)_0%,transparent_24%,transparent_100%)] mix-blend-screen" />
-                      <div className="pointer-events-none absolute inset-0 rounded-[1.75rem] ring-1 ring-inset ring-white/10" />
+                    <AnimatePresence initial={false} mode="wait">
+                      {!flipped ? (
+                        <motion.div
+                          key={`${currentMovie.id}-front`}
+                          initial={{ opacity: 0, scale: 0.96 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          exit={{ opacity: 0, scale: 0.98 }}
+                          transition={{ duration: 0.22, ease: "easeOut" }}
+                          className="absolute inset-0 rounded-[1.75rem] overflow-hidden shadow-[0_24px_80px_hsl(var(--background)/0.72)] cursor-pointer"
+                        >
+                          <img
+                            src={getPosterUrl(currentMovie.poster_path, "w780")}
+                            alt={getDisplayTitle(currentMovie)}
+                            className="absolute inset-0 h-full w-full object-cover brightness-[1.24] contrast-[1.1] saturate-[1.24]"
+                            draggable={false}
+                          />
+                          <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,hsl(var(--foreground)/0.12)_0%,transparent_24%,transparent_100%)] mix-blend-screen" />
+                          <div className="pointer-events-none absolute inset-0 rounded-[1.75rem] ring-1 ring-inset ring-white/10" />
 
-                      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-background via-background/38 to-transparent px-5 pt-24 pb-5">
-                        <h3 className="mb-1.5 text-xl font-serif font-bold leading-[1.05] text-white drop-shadow-md">
-                          {getDisplayTitle(currentMovie)}
-                        </h3>
-                        <div className="mb-2.5 flex items-center gap-3 text-xs font-sans text-white/70">
-                          {currentMovie.vote_average > 0 && (
-                            <span className="flex items-center gap-1">
-                              <span className="text-primary">★</span>
-                              {currentMovie.vote_average.toFixed(1)}
-                            </span>
-                          )}
-                          {currentMovie.release_date && (
-                            <span>{currentMovie.release_date.substring(0, 4)}</span>
-                          )}
-                        </div>
-                        <div className="flex flex-wrap gap-1.5">
-                          {(currentMovie.genre_ids || []).slice(0, 3).map(gid => genreMap[gid]).filter(Boolean).map(g => (
-                            <span key={g} className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] font-sans text-white/70 backdrop-blur-sm">{g}</span>
-                          ))}
-                        </div>
-                      </div>
+                          <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-background via-background/38 to-transparent px-5 pt-24 pb-5">
+                            <h3 className="mb-1.5 text-xl font-serif font-bold leading-[1.05] text-white drop-shadow-md">
+                              {getDisplayTitle(currentMovie)}
+                            </h3>
+                            <div className="mb-2.5 flex items-center gap-3 text-xs font-sans text-white/70">
+                              {currentMovie.vote_average > 0 && (
+                                <span className="flex items-center gap-1">
+                                  <span className="text-primary">★</span>
+                                  {currentMovie.vote_average.toFixed(1)}
+                                </span>
+                              )}
+                              {currentMovie.release_date && (
+                                <span>{currentMovie.release_date.substring(0, 4)}</span>
+                              )}
+                            </div>
+                            <div className="flex flex-wrap gap-1.5">
+                              {(currentMovie.genre_ids || []).slice(0, 3).map(gid => genreMap[gid]).filter(Boolean).map(g => (
+                                <span key={g} className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] font-sans text-white/70 backdrop-blur-sm">{g}</span>
+                              ))}
+                            </div>
+                          </div>
 
-                      <div className="absolute top-3 right-3 rounded-full bg-background/30 px-2 py-1 backdrop-blur-sm">
-                        <span className="text-[9px] font-sans text-white/50">Tap pour détails</span>
-                      </div>
+                          <div className="absolute top-3 right-3 rounded-full bg-background/30 px-2 py-1 backdrop-blur-sm">
+                            <span className="text-[9px] font-sans text-white/50">Tap pour détails</span>
+                          </div>
 
-                      <motion.div className="absolute top-5 left-5 z-30 rounded-xl border-2 border-[hsl(var(--destructive)/0.6)] px-4 py-2 -rotate-12" style={{ opacity: skipOpacity }}>
-                        <span className="text-sm font-sans font-bold tracking-wide text-[hsl(var(--destructive))]">PASSE</span>
-                      </motion.div>
-                      <motion.div className="absolute top-5 right-5 z-30 rounded-xl border-2 border-[hsl(var(--train)/0.6)] px-4 py-2 rotate-12" style={{ opacity: likeOpacity }}>
-                        <span className="text-sm font-sans font-bold tracking-wide text-[hsl(var(--train))]">J'AIME</span>
-                      </motion.div>
-                    </div>
-
-                    {/* Back face */}
-                    <div
-                      className="absolute inset-0 rounded-[1.75rem] overflow-hidden shadow-[0_24px_80px_hsl(var(--background)/0.72)] border border-border/20 cursor-pointer transition-all duration-500"
-                      style={{
-                        opacity: flipped ? 1 : 0,
-                        transform: flipped ? "scale(1)" : "scale(0.95)",
-                        pointerEvents: flipped ? "auto" : "none",
-                      }}
-                    >
-                      {flipped && <FlipCardBack item={currentMovie} type={isSeries ? "tv" : "movie"} />}
-                    </div>
+                          <motion.div className="absolute top-5 left-5 z-30 rounded-xl border-2 border-[hsl(var(--destructive)/0.6)] px-4 py-2 -rotate-12" style={{ opacity: skipOpacity }}>
+                            <span className="text-sm font-sans font-bold tracking-wide text-[hsl(var(--destructive))]">PASSE</span>
+                          </motion.div>
+                          <motion.div className="absolute top-5 right-5 z-30 rounded-xl border-2 border-[hsl(var(--train)/0.6)] px-4 py-2 rotate-12" style={{ opacity: likeOpacity }}>
+                            <span className="text-sm font-sans font-bold tracking-wide text-[hsl(var(--train))]">J'AIME</span>
+                          </motion.div>
+                        </motion.div>
+                      ) : (
+                        <motion.div
+                          key={`${currentMovie.id}-back`}
+                          initial={{ opacity: 0, scale: 0.96 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          exit={{ opacity: 0, scale: 0.98 }}
+                          transition={{ duration: 0.22, ease: "easeOut" }}
+                          className="absolute inset-0 rounded-[1.75rem] overflow-hidden border border-border/20 bg-background shadow-[0_24px_80px_hsl(var(--background)/0.72)]"
+                        >
+                          <FlipCardBack item={currentMovie} type={isSeries ? "tv" : "movie"} />
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </motion.div>
                 </AnimatePresence>
 

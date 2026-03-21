@@ -199,6 +199,7 @@ export default function PickChatOverlay() {
         isPremium: pickPlus.isPremium,
         minRating: userPrefs.minRating,
         excludedGenres: userPrefs.excludedGenres,
+        userName: user?.user_metadata?.display_name || user?.email?.split("@")[0] || null,
       };
 
       if (mode === "companion" && activeMovie) {

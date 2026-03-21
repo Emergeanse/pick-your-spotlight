@@ -187,6 +187,7 @@ const VoiceChat = ({ onClose, onMovieSuggested, initialMessages, showMicGuide = 
           minRating: userTasteContext?.minRating || 0,
           excludedGenres: userTasteContext?.excludedGenres || [],
           timeContext,
+          userName: user?.user_metadata?.display_name || user?.email?.split("@")[0] || null,
         },
       });
 
