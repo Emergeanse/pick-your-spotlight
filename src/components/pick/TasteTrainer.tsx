@@ -232,6 +232,7 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
     setHistory(prev => [...prev, currentIndex]);
     setProcessedIds(prev => new Set(prev).add(currentMovie.id));
     setCurrentIndex(i => i + 1);
+    setFlipped(false);
     x.set(0);
   };
 
