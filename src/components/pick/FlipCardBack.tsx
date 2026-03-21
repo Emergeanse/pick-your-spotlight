@@ -39,7 +39,7 @@ const FlipCardBack = ({ item, type }: FlipCardBackProps) => {
 
   if (loading) {
     return (
-      <div className="flex h-full items-center justify-center bg-card">
+      <div className="flex h-full items-center justify-center bg-background">
         <Loader2 className="h-5 w-5 animate-spin text-primary/50" />
       </div>
     );
