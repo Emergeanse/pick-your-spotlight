@@ -481,7 +481,7 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
                       animate={{ rotateY: flipped ? 0 : -180 }}
                       transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
                     >
-                      <FlipCardBack item={currentMovie} type="movie" />
+                      <FlipCardBack item={currentMovie} type={isSeries ? "tv" : "movie"} />
                     </motion.div>
                   </motion.div>
                 </AnimatePresence>
