@@ -3,7 +3,7 @@ import { motion, AnimatePresence, useMotionValue, useTransform, PanInfo } from "
 import { Loader2, Heart, ThumbsDown, Star, SkipForward, Info, ChevronLeft, ChevronRight } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { fetchPopularPeople, getPersonPhotoUrl, savePersonPreference, type PreferenceValue } from "@/lib/people-preferences";
-import FlipCardDetail from "./FlipCardDetail";
+import FlipCardBack from "./FlipCardBack";
 
 interface PeopleTrainerProps {
   onBack?: () => void;
