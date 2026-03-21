@@ -25,6 +25,11 @@ const FlipCardBack = ({ item, type }: FlipCardBackProps) => {
         .then(r => r.json())
         .then(d => setDetail(d))
         .finally(() => setLoading(false));
+    } else if (type === "tv") {
+      fetch(`https://api.themoviedb.org/3/tv/${item.id}?api_key=${TMDB_API_KEY}&language=fr-FR&append_to_response=credits`)
+        .then(r => r.json())
+        .then(d => setDetail(d))
+        .finally(() => setLoading(false));
     } else {
       fetchPersonDetail(item.id)
         .then(d => setDetail(d))
