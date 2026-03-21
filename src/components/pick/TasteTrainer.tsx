@@ -393,7 +393,7 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
             ) : !currentMovie ? (
               <div className="flex flex-col items-center gap-4 text-center">
                 <Sparkles className="h-8 w-8 text-primary/40" />
-                <p className="text-sm font-sans text-foreground/50">Plus de films pour le moment</p>
+                <p className="text-sm font-sans text-foreground/50">{isSeries ? "Plus de séries pour le moment" : "Plus de films pour le moment"}</p>
                 <Button variant="outline" onClick={handleClose} className="rounded-full text-sm">Retour</Button>
               </div>
             ) : (
