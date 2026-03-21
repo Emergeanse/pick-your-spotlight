@@ -556,6 +556,42 @@ export type Database = {
         }
         Relationships: []
       }
+      user_people_preferences: {
+        Row: {
+          created_at: string
+          id: string
+          known_for: string[] | null
+          person_id: number
+          person_name: string
+          person_type: string
+          photo_url: string | null
+          preference: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          known_for?: string[] | null
+          person_id: number
+          person_name: string
+          person_type?: string
+          photo_url?: string | null
+          preference?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          known_for?: string[] | null
+          person_id?: number
+          person_name?: string
+          person_type?: string
+          photo_url?: string | null
+          preference?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           id: string
