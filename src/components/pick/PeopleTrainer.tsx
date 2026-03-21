@@ -161,16 +161,18 @@ const PeopleTrainer = ({ onBack }: PeopleTrainerProps) => {
                 initial={{ scale: 0.95, opacity: 0, y: 20 }}
                 exit={{ opacity: 0, scale: 0.9 }}
                 transition={swiping ? { duration: 0.3, ease: "easeOut" } : { type: "spring", stiffness: 260, damping: 24 }}
-                className="relative aspect-[3/4] w-full select-none overflow-visible"
-                style={{ x, rotate: flipped ? 0 : rotate, touchAction: "none", transformStyle: "preserve-3d" }}
+                className="relative aspect-[3/4] w-full select-none"
+                style={{ x, rotate: flipped ? 0 : rotate, touchAction: "none" }}
                 onClick={() => !swiping && setFlipped(f => !f)}
               >
                 {/* Front face */}
-                <motion.div
-                  className="absolute inset-0 rounded-[1.75rem] overflow-hidden shadow-[0_24px_80px_hsl(var(--background)/0.72)] cursor-pointer"
-                  style={{ backfaceVisibility: "hidden" }}
-                  animate={{ rotateY: flipped ? 180 : 0 }}
-                  transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
+                <div
+                  className="absolute inset-0 rounded-[1.75rem] overflow-hidden shadow-[0_24px_80px_hsl(var(--background)/0.72)] cursor-pointer transition-all duration-500"
+                  style={{
+                    opacity: flipped ? 0 : 1,
+                    transform: flipped ? "scale(0.95)" : "scale(1)",
+                    pointerEvents: flipped ? "none" : "auto",
+                  }}
                 >
                   <img
                     src={getPersonPhotoUrl(currentPerson.profile_path, "w780")}
@@ -204,17 +206,19 @@ const PeopleTrainer = ({ onBack }: PeopleTrainerProps) => {
                   <motion.div className="absolute top-5 right-5 z-30 rounded-xl border-2 border-[hsl(var(--train)/0.6)] px-4 py-2 rotate-12" style={{ opacity: likeOpacity }}>
                     <span className="text-sm font-sans font-bold text-[hsl(var(--train))]">J'AIME</span>
                   </motion.div>
-                </motion.div>
+                </div>
 
                 {/* Back face */}
-                <motion.div
-                  className="absolute inset-0 rounded-[1.75rem] overflow-hidden shadow-[0_24px_80px_hsl(var(--background)/0.72)] border border-border/20 cursor-pointer"
-                  style={{ backfaceVisibility: "hidden" }}
-                  animate={{ rotateY: flipped ? 0 : -180 }}
-                  transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
+                <div
+                  className="absolute inset-0 rounded-[1.75rem] overflow-hidden shadow-[0_24px_80px_hsl(var(--background)/0.72)] border border-border/20 cursor-pointer transition-all duration-500"
+                  style={{
+                    opacity: flipped ? 1 : 0,
+                    transform: flipped ? "scale(1)" : "scale(0.95)",
+                    pointerEvents: flipped ? "auto" : "none",
+                  }}
                 >
-                  <FlipCardBack item={currentPerson} type="person" />
-                </motion.div>
+                  {flipped && <FlipCardBack item={currentPerson} type="person" />}
+                </div>
               </motion.div>
             </AnimatePresence>
 
