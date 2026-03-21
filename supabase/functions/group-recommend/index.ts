@@ -295,18 +295,21 @@ Structure :
 
     const recommendations = aiResult.recommendations || [];
 
-    // ── 7. Resolve to TMDB detail ──
+    // ── 7. Resolve to TMDB detail (with dedup) ──
     const resolvedMovies = [];
+    const resolvedIds = new Set<number>();
 
-    for (const rec of recommendations.slice(0, 5)) {
+    for (const rec of recommendations.slice(0, 8)) {
+      if (resolvedMovies.length >= 5) break;
       try {
         const recType: "movie" | "tv" = rec.type === "tv" ? "tv" : mediaType === "tv" ? "tv" : mediaType === "movie" ? "movie" : (rec.type || "movie");
         const searchUrl = `https://api.themoviedb.org/3/search/${recType}?api_key=${TMDB_API_KEY}&language=fr-FR&query=${encodeURIComponent(rec.title)}&page=1`;
         const searchRes = await fetch(searchUrl);
         const searchData = await searchRes.json();
-        const found = (searchData.results || [])[0];
+        const found = (searchData.results || []).find((r: any) => !seenIds.has(r.id) && !resolvedIds.has(r.id));
 
-        if (found && !seenIds.has(found.id)) {
+        if (found) {
+          resolvedIds.add(found.id);
           const detail = await getDetails(found.id, recType);
           const providers = await getWatchProvidersFR(found.id, recType);
 

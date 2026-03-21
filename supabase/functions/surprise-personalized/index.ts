@@ -364,26 +364,79 @@ Recommande ${requestedCount > 1 ? `${requestedCount} contenus` : "UN contenu"} a
     };
 
     if (requestedCount > 1 && suggestions.length > 0) {
-      const searchResults = await Promise.all(suggestions.map(s => searchSuggestionOnTMDB(s)));
+      // For "both" mode: enforce a true mix (3 movies, 2 series for count=5; ceil/floor for other counts)
+      const isMixed = mediaType === "both";
+      const targetMovies = isMixed ? Math.ceil(requestedCount * 0.6) : (mediaType === "movie" ? requestedCount : 0);
+      const targetTV = isMixed ? requestedCount - targetMovies : (mediaType === "tv" ? requestedCount : 0);
+
+      const searchSuggestionTyped = async (sug: any, forceType: "movie" | "tv"): Promise<any | null> => {
+        if (!sug?.title) return null;
+        const searchUrl = `https://api.themoviedb.org/3/search/${forceType}?api_key=${TMDB_API_KEY}&language=fr-FR&query=${encodeURIComponent(sug.title)}&page=1`;
+        const searchRes = await fetch(searchUrl);
+        const searchData = await searchRes.json();
+        const found = (searchData.results || []).find((r: any) => isMovieAllowed(r) && !foundMovieIds.has(r.id));
+        if (!found) return null;
+        const detail = await getMovieDetails(found.id, forceType);
+        if (maxDuration && forceType === "movie" && detail.runtime > maxDuration) return null;
+        return { movie: detail, suggestion: sug };
+      };
+
       const movies: any[] = [];
-      for (const result of searchResults) {
+      let movieCount = 0, tvCount = 0;
+
+      for (const sug of suggestions) {
+        if (movies.length >= requestedCount) break;
+        // Decide which type to search for this suggestion
+        let type: "movie" | "tv" = searchType;
+        if (isMixed) {
+          if (movieCount < targetMovies && tvCount < targetTV) {
+            type = movieCount <= tvCount ? "movie" : "tv";
+          } else if (movieCount < targetMovies) {
+            type = "movie";
+          } else {
+            type = "tv";
+          }
+        }
+        const result = await searchSuggestionTyped(sug, type);
         if (result && !foundMovieIds.has(result.movie.id)) {
           foundMovieIds.add(result.movie.id);
           movies.push({
             movie: result.movie,
-            reason: result.suggestion.reason || `${contentLabel} est recommandé par Pick.`,
+            reason: result.suggestion.reason || `Ce contenu est recommandé par Pick.`,
             confidence: result.suggestion.confidence || 75,
             scores: result.suggestion.scores || null,
           });
           fireEmbedding(result.movie);
+          if (type === "movie") movieCount++; else tvCount++;
         }
-        if (movies.length >= requestedCount) break;
+      }
+
+      // Fill remaining slots if needed
+      for (const type of (["movie", "tv"] as const)) {
+        const target = type === "movie" ? targetMovies : targetTV;
+        const current = type === "movie" ? movieCount : tvCount;
+        for (let i = current; i < target && movies.length < requestedCount; i++) {
+          const params = new URLSearchParams({
+            api_key: TMDB_API_KEY, language: "fr-FR", sort_by: "popularity.desc",
+            "vote_count.gte": "100", page: String(Math.floor(Math.random() * 10) + 1),
+          });
+          if (minRating > 0) params.set("vote_average.gte", String(minRating));
+          const res = await fetch(`https://api.themoviedb.org/3/discover/${type}?${params}`);
+          const data = await res.json();
+          const found = (data.results || []).find((r: any) => isMovieAllowed(r) && !foundMovieIds.has(r.id));
+          if (found) {
+            const detail = await getMovieDetails(found.id, type);
+            foundMovieIds.add(detail.id);
+            movies.push({ movie: detail, reason: `Recommandé par Pick pour diversifier.`, confidence: 50, scores: null });
+            fireEmbedding(detail);
+          }
+        }
       }
 
       if (movies.length === 0) {
         const fallback = await discoverFallback();
         if (!fallback) throw new Error("No movie found");
-        movies.push({ movie: fallback, reason: `${contentLabel} correspond à tes genres préférés.`, confidence: 50, scores: null });
+        movies.push({ movie: fallback, reason: `Ce contenu correspond à tes genres préférés.`, confidence: 50, scores: null });
       }
 
       return new Response(JSON.stringify({
@@ -393,10 +446,10 @@ Recommande ${requestedCount > 1 ? `${requestedCount} contenus` : "UN contenu"} a
         engineMeta: {
           profileConfidence: confidence.score, discoveryRatio: confidence.discoveryRatio, acceptanceRate,
           mode: aiFailed ? "fallback" : (shouldDiscover ? "discovery" : "precision"),
-          explorationLevel, mediaType: searchType,
+          explorationLevel, mediaType,
           stableCandidates: stableCandidates.length, recentCandidates: recentCandidates.length,
           avoidancePenalized: avoidanceCandidateIds.length, aiFallback: aiFailed,
-          multiVector: true,
+          multiVector: true, movieCount, tvCount,
         },
       }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }

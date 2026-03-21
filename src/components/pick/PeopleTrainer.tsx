@@ -165,63 +165,47 @@ const PeopleTrainer = ({ onBack }: PeopleTrainerProps) => {
                 style={{ x, rotate: flipped ? 0 : rotate, touchAction: "none" }}
                 onClick={() => !swiping && setFlipped(f => !f)}
               >
-                <AnimatePresence initial={false} mode="wait">
-                  {!flipped ? (
-                    <motion.div
-                      key={`${currentPerson.id}-front`}
-                      initial={{ opacity: 0, scale: 0.96 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0.98 }}
-                      transition={{ duration: 0.22, ease: "easeOut" }}
-                      className="absolute inset-0 rounded-[1.75rem] overflow-hidden shadow-[0_24px_80px_hsl(var(--background)/0.72)] cursor-pointer"
-                    >
-                      <img
-                        src={getPersonPhotoUrl(currentPerson.profile_path, "w780")}
-                        alt={currentPerson.name}
-                        className="absolute inset-0 h-full w-full object-cover brightness-[1.2] contrast-[1.08] saturate-[1.18]"
-                        draggable={false}
-                      />
-                      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,hsl(var(--foreground)/0.1)_0%,transparent_24%,transparent_100%)] mix-blend-screen" />
-                      <div className="pointer-events-none absolute inset-0 rounded-[1.75rem] ring-1 ring-inset ring-white/10" />
+                {!flipped ? (
+                  <div className="absolute inset-0 rounded-[1.75rem] overflow-hidden shadow-[0_24px_80px_hsl(var(--background)/0.72)] cursor-pointer">
+                    <img
+                      src={getPersonPhotoUrl(currentPerson.profile_path, "w780")}
+                      alt={currentPerson.name}
+                      className="absolute inset-0 h-full w-full object-cover brightness-[1.2] contrast-[1.08] saturate-[1.18]"
+                      draggable={false}
+                    />
+                    <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,hsl(var(--foreground)/0.1)_0%,transparent_24%,transparent_100%)] mix-blend-screen" />
+                    <div className="pointer-events-none absolute inset-0 rounded-[1.75rem] ring-1 ring-inset ring-white/10" />
 
-                      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-background via-background/50 to-transparent px-5 pt-20 pb-5">
-                        <h3 className="mb-1 text-xl font-serif font-bold text-white drop-shadow-md">{currentPerson.name}</h3>
-                        <p className="mb-2 text-xs font-sans text-white/60">
-                          {isDirector ? "Réalisateur" : "Acteur/Actrice"}
-                        </p>
-                        {knownForTitles.length > 0 && (
-                          <div className="flex flex-wrap gap-1">
-                            {knownForTitles.map((t: string) => (
-                              <span key={t} className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] text-white/70 backdrop-blur-sm">{t}</span>
-                            ))}
-                          </div>
-                        )}
-                      </div>
+                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-background via-background/50 to-transparent px-5 pt-20 pb-5">
+                      <h3 className="mb-1 text-xl font-serif font-bold text-white drop-shadow-md">{currentPerson.name}</h3>
+                      <p className="mb-2 text-xs font-sans text-white/60">
+                        {isDirector ? "Réalisateur" : "Acteur/Actrice"}
+                      </p>
+                      {knownForTitles.length > 0 && (
+                        <div className="flex flex-wrap gap-1">
+                          {knownForTitles.map((t: string) => (
+                            <span key={t} className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] text-white/70 backdrop-blur-sm">{t}</span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
 
-                      <div className="absolute top-3 right-3 rounded-full bg-background/30 px-2 py-1 backdrop-blur-sm">
-                        <span className="text-[9px] font-sans text-white/50">Tap pour détails</span>
-                      </div>
+                    <div className="absolute top-3 right-3 rounded-full bg-background/30 px-2 py-1 backdrop-blur-sm">
+                      <span className="text-[9px] font-sans text-white/50">Tap pour détails</span>
+                    </div>
 
-                      <motion.div className="absolute top-5 left-5 z-30 rounded-xl border-2 border-[hsl(var(--destructive)/0.6)] px-4 py-2 -rotate-12" style={{ opacity: skipOpacity }}>
-                        <span className="text-sm font-sans font-bold text-[hsl(var(--destructive))]">PASSE</span>
-                      </motion.div>
-                      <motion.div className="absolute top-5 right-5 z-30 rounded-xl border-2 border-[hsl(var(--train)/0.6)] px-4 py-2 rotate-12" style={{ opacity: likeOpacity }}>
-                        <span className="text-sm font-sans font-bold text-[hsl(var(--train))]">J'AIME</span>
-                      </motion.div>
+                    <motion.div className="absolute top-5 left-5 z-30 rounded-xl border-2 border-[hsl(var(--destructive)/0.6)] px-4 py-2 -rotate-12" style={{ opacity: skipOpacity }}>
+                      <span className="text-sm font-sans font-bold text-[hsl(var(--destructive))]">PASSE</span>
                     </motion.div>
-                  ) : (
-                    <motion.div
-                      key={`${currentPerson.id}-back`}
-                      initial={{ opacity: 0, scale: 0.96 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0.98 }}
-                      transition={{ duration: 0.22, ease: "easeOut" }}
-                      className="absolute inset-0 rounded-[1.75rem] overflow-hidden border border-border/20 bg-background shadow-[0_24px_80px_hsl(var(--background)/0.72)]"
-                    >
-                      <FlipCardBack item={currentPerson} type="person" />
+                    <motion.div className="absolute top-5 right-5 z-30 rounded-xl border-2 border-[hsl(var(--train)/0.6)] px-4 py-2 rotate-12" style={{ opacity: likeOpacity }}>
+                      <span className="text-sm font-sans font-bold text-[hsl(var(--train))]">J'AIME</span>
                     </motion.div>
-                  )}
-                </AnimatePresence>
+                  </div>
+                ) : (
+                  <div className="absolute inset-0 rounded-[1.75rem] overflow-hidden border border-border/20 bg-background shadow-[0_24px_80px_hsl(var(--background)/0.72)]">
+                    <FlipCardBack item={currentPerson} type="person" />
+                  </div>
+                )}
               </motion.div>
             </AnimatePresence>
 
