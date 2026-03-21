@@ -104,6 +104,7 @@ const getMilestoneMessage = (count: number): string | null => {
 const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: TasteTrainerProps) => {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<TrainerTab>("movies");
+  const [mediaMode, setMediaMode] = useState<MediaMode>("movies");
   const [movies, setMovies] = useState<Movie[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -120,6 +121,8 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
   const [flipped, setFlipped] = useState(false);
   const milestoneTimeout = useRef<ReturnType<typeof setTimeout>>();
   const x = useMotionValue(0);
+  const isSeries = mediaMode === "series";
+  const genreMap = isSeries ? TV_GENRE_MAP : GENRE_MAP;
 
   const loadMovies = useCallback(async (p: number) => {
     setLoading(true);
