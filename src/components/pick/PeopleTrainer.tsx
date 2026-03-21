@@ -110,6 +110,7 @@ const PeopleTrainer = ({ onBack }: PeopleTrainerProps) => {
     setHistory(prev => [...prev, currentIndex]);
     setProcessedIds(prev => new Set(prev).add(currentPerson.id));
     setCurrentIndex(i => i + 1);
+    setFlipped(false);
     x.set(0);
   };
 
