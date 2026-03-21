@@ -8,7 +8,7 @@ const TMDB_API_KEY = "2dca580c2a14b55200e784d157207b4d";
 
 interface FlipCardBackProps {
   item: Movie | any;
-  type: "movie" | "person";
+  type: "movie" | "tv" | "person";
 }
 
 const FlipCardBack = ({ item, type }: FlipCardBackProps) => {
