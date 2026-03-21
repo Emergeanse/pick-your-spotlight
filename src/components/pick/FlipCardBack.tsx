@@ -14,60 +14,98 @@ interface FlipCardBackProps {
 const FlipCardBack = ({ item, type }: FlipCardBackProps) => {
   const [detail, setDetail] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [hasError, setHasError] = useState(false);
 
   useEffect(() => {
     if (!item) return;
+
+    let cancelled = false;
+
     setLoading(true);
     setDetail(null);
+    setHasError(false);
+
+    const handleSuccess = (data: any) => {
+      if (!cancelled) {
+        setDetail(data);
+      }
+    };
+
+    const handleError = () => {
+      if (!cancelled) {
+        setHasError(true);
+      }
+    };
+
+    const handleFinally = () => {
+      if (!cancelled) {
+        setLoading(false);
+      }
+    };
 
     if (type === "movie") {
       fetch(`https://api.themoviedb.org/3/movie/${item.id}?api_key=${TMDB_API_KEY}&language=fr-FR&append_to_response=credits`)
         .then(r => r.json())
-        .then(d => setDetail(d))
-        .finally(() => setLoading(false));
+        .then(handleSuccess)
+        .catch(handleError)
+        .finally(handleFinally);
     } else if (type === "tv") {
       fetch(`https://api.themoviedb.org/3/tv/${item.id}?api_key=${TMDB_API_KEY}&language=fr-FR&append_to_response=credits`)
         .then(r => r.json())
-        .then(d => setDetail(d))
-        .finally(() => setLoading(false));
+        .then(handleSuccess)
+        .catch(handleError)
+        .finally(handleFinally);
     } else {
       fetchPersonDetail(item.id)
-        .then(d => setDetail(d))
-        .finally(() => setLoading(false));
+        .then(handleSuccess)
+        .catch(handleError)
+        .finally(handleFinally);
     }
+
+    return () => {
+      cancelled = true;
+    };
   }, [item?.id, type]);
 
-  if (loading) {
-    return (
-      <div className="flex h-full items-center justify-center bg-background">
-        <Loader2 className="h-5 w-5 animate-spin text-primary/50" />
-      </div>
-    );
-  }
-
   if (type === "movie" || type === "tv") {
+    const title = type === "tv"
+      ? (item.name || item.title || getDisplayTitle(item))
+      : getDisplayTitle(item);
+    const releaseYear = detail?.release_date?.substring(0, 4)
+      || detail?.first_air_date?.substring(0, 4)
+      || item.release_date?.substring(0, 4)
+      || item.first_air_date?.substring(0, 4);
+    const synopsis = detail?.overview || item.overview;
     const director = type === "tv"
       ? (detail?.created_by?.[0] || null)
       : detail?.credits?.crew?.find((c: any) => c.job === "Director");
     const cast = detail?.credits?.cast?.slice(0, 4) || [];
 
     return (
-      <div className="flex h-full flex-col overflow-y-auto bg-background px-4 py-4">
+      <div className="relative flex h-full flex-col overflow-y-auto bg-background px-4 py-4">
+        {(loading || hasError) && (
+          <div className="mb-3 flex items-center justify-between rounded-full border border-border/40 bg-card/80 px-3 py-2 text-[10px] font-medium text-foreground/70 backdrop-blur-sm">
+            <span>{loading ? "Chargement des détails…" : "Détails partiels affichés"}</span>
+            {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin text-primary/70" /> : null}
+          </div>
+        )}
+
         <h3 className="mb-1 text-base font-serif font-bold leading-tight text-foreground">
-          {type === "tv" ? (item.name || item.title || getDisplayTitle(item)) : getDisplayTitle(item)}
+          {title}
         </h3>
         {type === "tv" ? (
           <p className="mb-2 text-[10px] font-sans text-foreground/40">
-            {detail?.first_air_date?.substring(0, 4) || item.release_date?.substring(0, 4)}
+            {releaseYear}
             {detail?.number_of_seasons && ` • ${detail.number_of_seasons} saison${detail.number_of_seasons > 1 ? "s" : ""}`}
             {detail?.number_of_episodes && ` • ${detail.number_of_episodes} ép.`}
             {detail?.vote_average > 0 && (
               <span className="ml-2 text-primary">★ {detail.vote_average.toFixed(1)}</span>
             )}
           </p>
-        ) : detail?.release_date ? (
+        ) : releaseYear ? (
           <p className="mb-2 text-[10px] font-sans text-foreground/40">
-            {detail.release_date.substring(0, 4)} • {detail?.runtime}min
+            {releaseYear}
+            {detail?.runtime ? ` • ${detail.runtime}min` : ""}
             {detail?.vote_average > 0 && (
               <span className="ml-2 text-primary">★ {detail.vote_average.toFixed(1)}</span>
             )}
@@ -82,8 +120,8 @@ const FlipCardBack = ({ item, type }: FlipCardBackProps) => {
           </div>
         )}
 
-        {detail?.overview && (
-          <p className="mb-3 text-[11px] leading-relaxed text-foreground/55 line-clamp-4">{detail.overview}</p>
+        {synopsis && (
+          <p className="mb-3 text-[11px] leading-relaxed text-foreground/55 line-clamp-5">{synopsis}</p>
         )}
 
         {director && (
@@ -114,19 +152,41 @@ const FlipCardBack = ({ item, type }: FlipCardBackProps) => {
             </div>
           </div>
         )}
+
+        {!loading && !synopsis && !director && cast.length === 0 && (
+          <div className="mt-2 overflow-hidden rounded-2xl border border-border/30 bg-card/60 p-3">
+            <img
+              src={getPosterUrl(item.poster_path, "w342")}
+              alt={title}
+              className="mb-3 aspect-[2/3] w-full rounded-xl object-cover"
+            />
+            <p className="text-[11px] leading-relaxed text-foreground/55">
+              Les détails complets ne sont pas encore disponibles pour ce titre.
+            </p>
+          </div>
+        )}
       </div>
     );
   }
 
   // Person type
-  const filmography = detail?.movie_credits?.cast?.slice(0, 8) || detail?.movie_credits?.crew?.filter((c: any) => c.job === "Director").slice(0, 8) || [];
+  const actorCredits = detail?.movie_credits?.cast?.slice(0, 8) || [];
+  const directorCredits = detail?.movie_credits?.crew?.filter((c: any) => c.job === "Director").slice(0, 8) || [];
+  const filmography = actorCredits.length > 0 ? actorCredits : directorCredits;
 
   return (
-    <div className="flex h-full flex-col overflow-y-auto bg-background px-4 py-4">
+    <div className="relative flex h-full flex-col overflow-y-auto bg-background px-4 py-4">
+      {(loading || hasError) && (
+        <div className="mb-3 flex items-center justify-between rounded-full border border-border/40 bg-card/80 px-3 py-2 text-[10px] font-medium text-foreground/70 backdrop-blur-sm">
+          <span>{loading ? "Chargement des détails…" : "Détails partiels affichés"}</span>
+          {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin text-primary/70" /> : null}
+        </div>
+      )}
+
       <h3 className="mb-1 text-base font-serif font-bold leading-tight text-foreground">{item.name}</h3>
-      {detail?.known_for_department && (
+      {(detail?.known_for_department || item.known_for_department) && (
         <p className="mb-1 text-[10px] font-sans text-foreground/40">
-          {detail.known_for_department === "Acting" ? "Acteur/Actrice" : "Réalisateur/Réalisatrice"}
+          {(detail?.known_for_department || item.known_for_department) === "Acting" ? "Acteur/Actrice" : "Réalisateur/Réalisatrice"}
         </p>
       )}
       {detail?.birthday && (
@@ -135,8 +195,10 @@ const FlipCardBack = ({ item, type }: FlipCardBackProps) => {
         </p>
       )}
 
-      {detail?.biography && (
-        <p className="mb-3 text-[11px] leading-relaxed text-foreground/55 line-clamp-4">{detail.biography}</p>
+      {(detail?.biography || item?.known_for?.length) && (
+        <p className="mb-3 text-[11px] leading-relaxed text-foreground/55 line-clamp-5">
+          {detail?.biography || `Connu(e) pour ${item.known_for.map((entry: any) => entry.title || entry.name).filter(Boolean).slice(0, 4).join(", ")}.`}
+        </p>
       )}
 
       {filmography.length > 0 && (
@@ -148,7 +210,7 @@ const FlipCardBack = ({ item, type }: FlipCardBackProps) => {
             {filmography.map((f: any) => (
               <div key={`${f.id}-${f.character || f.job}`} className="flex flex-col items-center gap-0.5">
                 <img
-                  src={f.poster_path ? `https://image.tmdb.org/t/p/w92${f.poster_path}` : "/placeholder.svg"}
+                  src={getPosterUrl(f.poster_path, "w185")}
                   alt={f.title}
                   className="w-full aspect-[2/3] rounded-lg object-cover border border-border/20"
                 />
@@ -156,6 +218,19 @@ const FlipCardBack = ({ item, type }: FlipCardBackProps) => {
               </div>
             ))}
           </div>
+        </div>
+      )}
+
+      {!loading && !detail?.biography && filmography.length === 0 && (
+        <div className="mt-2 overflow-hidden rounded-2xl border border-border/30 bg-card/60 p-3">
+          <img
+            src={getPersonPhotoUrl(item.profile_path, "w342")}
+            alt={item.name}
+            className="mb-3 aspect-[3/4] w-full rounded-xl object-cover"
+          />
+          <p className="text-[11px] leading-relaxed text-foreground/55">
+            Les détails complets ne sont pas encore disponibles pour cette personne.
+          </p>
         </div>
       )}
     </div>
