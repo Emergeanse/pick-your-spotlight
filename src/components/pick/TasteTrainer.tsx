@@ -11,7 +11,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
 import type { Movie, MovieDetail } from "@/lib/tmdb";
 import { THRESHOLDS } from "./TrainingProgress";
-import FlipCardDetail from "./FlipCardDetail";
+import FlipCardBack from "./FlipCardBack";
 import PeopleTrainer from "./PeopleTrainer";
 
 const TMDB_API_KEY = "2dca580c2a14b55200e784d157207b4d";
