@@ -101,6 +101,7 @@ const PeopleTrainer = ({ onBack }: PeopleTrainerProps) => {
     const prevIndex = history[history.length - 1];
     setHistory(prev => prev.slice(0, -1));
     setCurrentIndex(prevIndex);
+    setFlipped(false);
     x.set(0);
   };
 
