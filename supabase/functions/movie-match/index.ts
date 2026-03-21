@@ -158,12 +158,21 @@ ${skipPatterns.avgSkipRate > 0.5 ? `- ⚠️ Skip rate élevé (${Math.round(ski
 ${skipPatterns.recentSkipStreak > 2 ? `- ⚠️ ${skipPatterns.recentSkipStreak} skips consécutifs récents` : ""}
 ${fatiguedGenres.length > 0 ? `- 🔄 FATIGUE genre : ${fatiguedGenres.join(", ")} — pénalise ces genres dans le score` : ""}
 
+PRÉFÉRENCES ACTEURS/RÉALISATEURS :
+${peoplePreferences?.lovedActors?.length > 0 ? `- ❤️ Acteurs adorés : ${peoplePreferences.lovedActors.join(", ")}` : ""}
+${peoplePreferences?.likedActors?.length > 0 ? `- 👍 Acteurs appréciés : ${peoplePreferences.likedActors.join(", ")}` : ""}
+${peoplePreferences?.dislikedActors?.length > 0 ? `- 👎 Acteurs pas aimés : ${peoplePreferences.dislikedActors.join(", ")} — PÉNALISER` : ""}
+${peoplePreferences?.lovedDirectors?.length > 0 ? `- ❤️ Réalisateurs adorés : ${peoplePreferences.lovedDirectors.join(", ")}` : ""}
+${peoplePreferences?.likedDirectors?.length > 0 ? `- 👍 Réalisateurs appréciés : ${peoplePreferences.likedDirectors.join(", ")}` : ""}
+${peoplePreferences?.dislikedDirectors?.length > 0 ? `- 👎 Réalisateurs pas aimés : ${peoplePreferences.dislikedDirectors.join(", ")} — PÉNALISER` : ""}
+
 SYSTÈME DE SCORING MULTI-CRITÈRE :
 Le matchScore FINAL doit être la combinaison pondérée de :
-- stable_taste (${scoringWeights.stable_taste || 0.18}) : similarité avec le goût profond${embeddingSimilarity !== null ? ` (brut: ${Math.round(embeddingSimilarity * 100)})` : ""}
-- recent_taste (${scoringWeights.recent_taste || 0.12}) : tendances récentes${recentSimilarity !== null ? ` (brut: ${Math.round(recentSimilarity * 100)})` : ""}
-- session_context (${scoringWeights.session_context || 0.18}) : adéquation session
-- acceptance_likelihood (${scoringWeights.acceptance_likelihood || 0.12}) : probabilité d'acceptation
+- stable_taste (${scoringWeights.stable_taste || 0.16}) : similarité avec le goût profond${embeddingSimilarity !== null ? ` (brut: ${Math.round(embeddingSimilarity * 100)})` : ""}
+- recent_taste (${scoringWeights.recent_taste || 0.10}) : tendances récentes${recentSimilarity !== null ? ` (brut: ${Math.round(recentSimilarity * 100)})` : ""}
+- session_context (${scoringWeights.session_context || 0.16}) : adéquation session
+- people_affinity (${scoringWeights.people_affinity || 0.11}) : boost si acteur/réal aimé, pénalité si détesté
+- acceptance_likelihood (${scoringWeights.acceptance_likelihood || 0.10}) : probabilité d'acceptation
 - rejection_risk (${scoringWeights.rejection_risk || -0.10}) : PÉNALITÉ${avoidanceSimilarity !== null ? ` (brut: ${Math.round(avoidanceSimilarity * 100)})` : ""}
 - quality_score (${scoringWeights.quality_score || 0.06}) : note critique
 - novelty_fit (${scoringWeights.novelty_fit || 0.05}) : découverte calibrée
