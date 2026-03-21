@@ -230,6 +230,7 @@ export async function getUserTasteProfile() {
     { data: profile },
     { data: watchlist },
     { data: vectorData },
+    { data: peoplePrefs },
   ] = await Promise.all([
     supabase.from("liked_movies")
       .select("tmdb_id, genres, title, liked_at")
@@ -250,6 +251,9 @@ export async function getUserTasteProfile() {
       .select("avoidance_vector, recent_taste_vector, stable_confidence, novelty_tolerance, fatigue_state, top_clusters, rejected_clusters")
       .eq("user_id", userId)
       .maybeSingle(),
+    (supabase.from("user_people_preferences" as any) as any)
+      .select("person_name, person_type, preference, known_for")
+      .eq("user_id", userId),
   ]);
 
   // Temporally weighted genre counts
