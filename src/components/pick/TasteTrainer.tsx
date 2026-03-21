@@ -89,7 +89,7 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
   const [milestoneMsg, setMilestoneMsg] = useState<string | null>(null);
   const [showActivationCTA, setShowActivationCTA] = useState(false);
   const [history, setHistory] = useState<number[]>([]);
-  const [detailOpen, setDetailOpen] = useState(false);
+  const [flipped, setFlipped] = useState(false);
   const milestoneTimeout = useRef<ReturnType<typeof setTimeout>>();
   const x = useMotionValue(0);
 
