@@ -314,19 +314,30 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
       {/* Category tabs */}
       <div className="relative z-10 flex items-center justify-center gap-1 px-4 pt-1 pb-1">
         <button
-          onClick={() => setActiveTab("movies")}
-          className={`flex items-center gap-1.5 rounded-full px-4 py-1.5 text-[11px] font-sans font-medium transition-all ${
-            activeTab === "movies"
+          onClick={() => { setActiveTab("movies"); setMediaMode("movies"); }}
+          className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-sans font-medium transition-all ${
+            activeTab === "movies" && mediaMode === "movies"
               ? "bg-primary/15 text-primary border border-primary/25"
               : "bg-foreground/5 text-foreground/35 border border-transparent hover:bg-foreground/8"
           }`}
         >
           <Film className="h-3 w-3" />
-          Films & Séries
+          Films
+        </button>
+        <button
+          onClick={() => { setActiveTab("movies"); setMediaMode("series"); }}
+          className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-sans font-medium transition-all ${
+            activeTab === "movies" && mediaMode === "series"
+              ? "bg-primary/15 text-primary border border-primary/25"
+              : "bg-foreground/5 text-foreground/35 border border-transparent hover:bg-foreground/8"
+          }`}
+        >
+          <Tv className="h-3 w-3" />
+          Séries
         </button>
         <button
           onClick={() => setActiveTab("people")}
-          className={`flex items-center gap-1.5 rounded-full px-4 py-1.5 text-[11px] font-sans font-medium transition-all ${
+          className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-sans font-medium transition-all ${
             activeTab === "people"
               ? "bg-primary/15 text-primary border border-primary/25"
               : "bg-foreground/5 text-foreground/35 border border-transparent hover:bg-foreground/8"
