@@ -89,7 +89,7 @@ const FlipCardBack = ({ item, type }: FlipCardBackProps) => {
         {director && (
           <div className="mb-2">
             <p className="text-[9px] font-sans font-semibold uppercase tracking-wider text-foreground/25 mb-0.5">
-              <Clapperboard className="inline h-2.5 w-2.5 mr-0.5" />Réalisateur
+              <Clapperboard className="inline h-2.5 w-2.5 mr-0.5" />{type === "tv" ? "Créateur" : "Réalisateur"}
             </p>
             <p className="text-[11px] text-foreground/60">{director.name}</p>
           </div>
