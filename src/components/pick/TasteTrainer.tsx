@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence, PanInfo, useMotionValue, useTransform } from "framer-motion";
-import { ChevronLeft, ChevronRight, Loader2, Sparkles, ArrowRight, SkipForward, Info, Film, Users } from "lucide-react";
+import { ChevronLeft, ChevronRight, Loader2, Sparkles, ArrowRight, SkipForward, Film, Users, Tv } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getPosterUrl, getDisplayTitle } from "@/lib/tmdb";
 import { likeMovie } from "@/lib/liked-movies";
@@ -23,6 +23,7 @@ interface TasteTrainerProps {
 }
 
 type TrainerTab = "movies" | "people";
+type MediaMode = "movies" | "series";
 
 const GENRE_MAP: Record<number, string> = {
   28: "Action", 12: "Aventure", 16: "Animation", 35: "Comédie", 80: "Crime",
@@ -31,17 +32,44 @@ const GENRE_MAP: Record<number, string> = {
   10749: "Romance", 878: "Science-Fiction", 53: "Thriller", 10752: "Guerre", 37: "Western",
 };
 
+const TV_GENRE_MAP: Record<number, string> = {
+  10759: "Action", 16: "Animation", 35: "Comédie", 80: "Crime",
+  99: "Documentaire", 18: "Drame", 10751: "Famille", 10762: "Enfants",
+  9648: "Mystère", 10763: "Actualités", 10764: "Téléréalité",
+  10765: "Sci-Fi & Fantasy", 10766: "Soap", 10767: "Talk", 10768: "Guerre & Politique", 37: "Western",
+};
+
 async function fetchTrainingMovies(page: number): Promise<Movie[]> {
   const res = await fetch(
-    `https://api.themoviedb.org/3/discover/movie?api_key=${TMDB_API_KEY}&language=fr-FR&sort_by=popularity.desc&vote_count.gte=500&vote_average.gte=6&page=${page}`
+    `https://api.themoviedb.org/3/discover/movie?api_key=${TMDB_API_KEY}&language=fr-FR&sort_by=popularity.desc&vote_count.gte=500&vote_average.gte=6&page=${page}&region=FR`
   );
   const data = await res.json();
   return (data.results || []) as Movie[];
 }
 
+async function fetchTrainingSeries(page: number): Promise<Movie[]> {
+  const res = await fetch(
+    `https://api.themoviedb.org/3/discover/tv?api_key=${TMDB_API_KEY}&language=fr-FR&sort_by=popularity.desc&vote_count.gte=200&vote_average.gte=6&page=${page}&watch_region=FR`
+  );
+  const data = await res.json();
+  return (data.results || []).map((s: any) => ({
+    ...s,
+    title: s.name,
+    release_date: s.first_air_date,
+    media_type: "tv",
+  })) as Movie[];
+}
+
 async function fetchMovieDetail(id: number): Promise<MovieDetail> {
   const res = await fetch(
     `https://api.themoviedb.org/3/movie/${id}?api_key=${TMDB_API_KEY}&language=fr-FR`
+  );
+  return res.json();
+}
+
+async function fetchSeriesDetail(id: number): Promise<any> {
+  const res = await fetch(
+    `https://api.themoviedb.org/3/tv/${id}?api_key=${TMDB_API_KEY}&language=fr-FR`
   );
   return res.json();
 }
@@ -76,6 +104,7 @@ const getMilestoneMessage = (count: number): string | null => {
 const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: TasteTrainerProps) => {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<TrainerTab>("movies");
+  const [mediaMode, setMediaMode] = useState<MediaMode>("movies");
   const [movies, setMovies] = useState<Movie[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -92,23 +121,36 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
   const [flipped, setFlipped] = useState(false);
   const milestoneTimeout = useRef<ReturnType<typeof setTimeout>>();
   const x = useMotionValue(0);
+  const isSeries = mediaMode === "series";
+  const genreMap = isSeries ? TV_GENRE_MAP : GENRE_MAP;
 
-  const loadMovies = useCallback(async (p: number) => {
+  const loadMovies = useCallback(async (p: number, mode: MediaMode = mediaMode) => {
     setLoading(true);
     try {
       const randomPage = Math.floor(Math.random() * 20) + p;
-      const results = await fetchTrainingMovies(randomPage);
-      const filtered = results.filter(m => !processedIds.has(m.id) && m.poster_path);
+      const results = mode === "series"
+        ? await fetchTrainingSeries(randomPage)
+        : await fetchTrainingMovies(randomPage);
+      const filtered = results.filter(m => !processedIds.has(m.id) && (m.poster_path));
       setMovies(prev => [...prev, ...filtered]);
     } catch (e) {
-      console.error("Failed to load training movies:", e);
+      console.error("Failed to load training content:", e);
     } finally {
       setLoading(false);
     }
-  }, [processedIds]);
+  }, [processedIds, mediaMode]);
 
   useEffect(() => {
-    loadMovies(1);
+    // Reset when media mode changes
+    setMovies([]);
+    setCurrentIndex(0);
+    setHistory([]);
+    setFlipped(false);
+    setPage(1);
+    loadMovies(1, mediaMode);
+  }, [mediaMode]);
+
+  useEffect(() => {
     if (user) {
       supabase.from("user_interactions")
         .select("id", { count: "exact", head: true })
@@ -116,7 +158,7 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
         .in("action_type", ["liked", "skipped", "unsure"])
         .then(({ count }) => setTotalEvaluated(count || 0));
     }
-  }, [loadMovies, user]);
+  }, [user]);
 
   useEffect(() => {
     if (movies.length - currentIndex < 3 && !loading) {
@@ -166,16 +208,19 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
     setSwiping(isPositive ? "right" : "left");
 
     try {
-      const genres = (currentMovie.genre_ids || []).map(gid => GENRE_MAP[gid]).filter(Boolean);
+      const genres = (currentMovie.genre_ids || []).map(gid => genreMap[gid]).filter(Boolean);
+      const source = isSeries ? "taste_trainer_series" : "taste_trainer";
       if (rating > 50) {
-        const detail = await fetchMovieDetail(currentMovie.id);
-        await likeMovie(detail);
-        await trackInteraction(currentMovie.id, actionType, { source: "taste_trainer", genres, rating });
+        if (!isSeries) {
+          const detail = await fetchMovieDetail(currentMovie.id);
+          await likeMovie(detail);
+        }
+        await trackInteraction(currentMovie.id, actionType, { source, genres, rating, media_type: isSeries ? "tv" : "movie" });
         await recordAcceptedRecommendation(user.id);
         setLikedCount(c => c + 1);
         actionsRef.current.likes++;
       } else {
-        await trackInteraction(currentMovie.id, actionType, { source: "taste_trainer", genres, rating });
+        await trackInteraction(currentMovie.id, actionType, { source, genres, rating, media_type: isSeries ? "tv" : "movie" });
         await recordSkippedRecommendation(user.id);
         setSkippedCount(c => c + 1);
         actionsRef.current.skips++;
@@ -269,19 +314,30 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
       {/* Category tabs */}
       <div className="relative z-10 flex items-center justify-center gap-1 px-4 pt-1 pb-1">
         <button
-          onClick={() => setActiveTab("movies")}
-          className={`flex items-center gap-1.5 rounded-full px-4 py-1.5 text-[11px] font-sans font-medium transition-all ${
-            activeTab === "movies"
+          onClick={() => { setActiveTab("movies"); setMediaMode("movies"); }}
+          className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-sans font-medium transition-all ${
+            activeTab === "movies" && mediaMode === "movies"
               ? "bg-primary/15 text-primary border border-primary/25"
               : "bg-foreground/5 text-foreground/35 border border-transparent hover:bg-foreground/8"
           }`}
         >
           <Film className="h-3 w-3" />
-          Films & Séries
+          Films
+        </button>
+        <button
+          onClick={() => { setActiveTab("movies"); setMediaMode("series"); }}
+          className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-sans font-medium transition-all ${
+            activeTab === "movies" && mediaMode === "series"
+              ? "bg-primary/15 text-primary border border-primary/25"
+              : "bg-foreground/5 text-foreground/35 border border-transparent hover:bg-foreground/8"
+          }`}
+        >
+          <Tv className="h-3 w-3" />
+          Séries
         </button>
         <button
           onClick={() => setActiveTab("people")}
-          className={`flex items-center gap-1.5 rounded-full px-4 py-1.5 text-[11px] font-sans font-medium transition-all ${
+          className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-sans font-medium transition-all ${
             activeTab === "people"
               ? "bg-primary/15 text-primary border border-primary/25"
               : "bg-foreground/5 text-foreground/35 border border-transparent hover:bg-foreground/8"
@@ -337,7 +393,7 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
             ) : !currentMovie ? (
               <div className="flex flex-col items-center gap-4 text-center">
                 <Sparkles className="h-8 w-8 text-primary/40" />
-                <p className="text-sm font-sans text-foreground/50">Plus de films pour le moment</p>
+                <p className="text-sm font-sans text-foreground/50">{isSeries ? "Plus de séries pour le moment" : "Plus de films pour le moment"}</p>
                 <Button variant="outline" onClick={handleClose} className="rounded-full text-sm">Retour</Button>
               </div>
             ) : (
@@ -400,7 +456,7 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
                           )}
                         </div>
                         <div className="flex flex-wrap gap-1.5">
-                          {(currentMovie.genre_ids || []).slice(0, 3).map(gid => GENRE_MAP[gid]).filter(Boolean).map(g => (
+                          {(currentMovie.genre_ids || []).slice(0, 3).map(gid => genreMap[gid]).filter(Boolean).map(g => (
                             <span key={g} className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] font-sans text-white/70 backdrop-blur-sm">{g}</span>
                           ))}
                         </div>
@@ -425,7 +481,7 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
                       animate={{ rotateY: flipped ? 0 : -180 }}
                       transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
                     >
-                      <FlipCardBack item={currentMovie} type="movie" />
+                      <FlipCardBack item={currentMovie} type={isSeries ? "tv" : "movie"} />
                     </motion.div>
                   </motion.div>
                 </AnimatePresence>

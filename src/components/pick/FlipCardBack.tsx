@@ -8,7 +8,7 @@ const TMDB_API_KEY = "2dca580c2a14b55200e784d157207b4d";
 
 interface FlipCardBackProps {
   item: Movie | any;
-  type: "movie" | "person";
+  type: "movie" | "tv" | "person";
 }
 
 const FlipCardBack = ({ item, type }: FlipCardBackProps) => {
@@ -22,6 +22,11 @@ const FlipCardBack = ({ item, type }: FlipCardBackProps) => {
 
     if (type === "movie") {
       fetch(`https://api.themoviedb.org/3/movie/${item.id}?api_key=${TMDB_API_KEY}&language=fr-FR&append_to_response=credits`)
+        .then(r => r.json())
+        .then(d => setDetail(d))
+        .finally(() => setLoading(false));
+    } else if (type === "tv") {
+      fetch(`https://api.themoviedb.org/3/tv/${item.id}?api_key=${TMDB_API_KEY}&language=fr-FR&append_to_response=credits`)
         .then(r => r.json())
         .then(d => setDetail(d))
         .finally(() => setLoading(false));
@@ -40,23 +45,34 @@ const FlipCardBack = ({ item, type }: FlipCardBackProps) => {
     );
   }
 
-  if (type === "movie") {
-    const director = detail?.credits?.crew?.find((c: any) => c.job === "Director");
+  if (type === "movie" || type === "tv") {
+    const director = type === "tv"
+      ? (detail?.created_by?.[0] || null)
+      : detail?.credits?.crew?.find((c: any) => c.job === "Director");
     const cast = detail?.credits?.cast?.slice(0, 4) || [];
 
     return (
       <div className="flex h-full flex-col overflow-y-auto bg-card px-4 py-4">
         <h3 className="mb-1 text-base font-serif font-bold leading-tight text-foreground">
-          {getDisplayTitle(item)}
+          {type === "tv" ? (item.name || item.title || getDisplayTitle(item)) : getDisplayTitle(item)}
         </h3>
-        {detail?.release_date && (
+        {type === "tv" ? (
+          <p className="mb-2 text-[10px] font-sans text-foreground/40">
+            {detail?.first_air_date?.substring(0, 4) || item.release_date?.substring(0, 4)}
+            {detail?.number_of_seasons && ` • ${detail.number_of_seasons} saison${detail.number_of_seasons > 1 ? "s" : ""}`}
+            {detail?.number_of_episodes && ` • ${detail.number_of_episodes} ép.`}
+            {detail?.vote_average > 0 && (
+              <span className="ml-2 text-primary">★ {detail.vote_average.toFixed(1)}</span>
+            )}
+          </p>
+        ) : detail?.release_date ? (
           <p className="mb-2 text-[10px] font-sans text-foreground/40">
             {detail.release_date.substring(0, 4)} • {detail?.runtime}min
             {detail?.vote_average > 0 && (
               <span className="ml-2 text-primary">★ {detail.vote_average.toFixed(1)}</span>
             )}
           </p>
-        )}
+        ) : null}
 
         {detail?.genres && (
           <div className="mb-2 flex flex-wrap gap-1">
@@ -73,7 +89,7 @@ const FlipCardBack = ({ item, type }: FlipCardBackProps) => {
         {director && (
           <div className="mb-2">
             <p className="text-[9px] font-sans font-semibold uppercase tracking-wider text-foreground/25 mb-0.5">
-              <Clapperboard className="inline h-2.5 w-2.5 mr-0.5" />Réalisateur
+              <Clapperboard className="inline h-2.5 w-2.5 mr-0.5" />{type === "tv" ? "Créateur" : "Réalisateur"}
             </p>
             <p className="text-[11px] text-foreground/60">{director.name}</p>
           </div>
