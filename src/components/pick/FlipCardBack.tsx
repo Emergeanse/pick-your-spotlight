@@ -52,7 +52,7 @@ const FlipCardBack = ({ item, type }: FlipCardBackProps) => {
     const cast = detail?.credits?.cast?.slice(0, 4) || [];
 
     return (
-      <div className="flex h-full flex-col overflow-y-auto bg-card px-4 py-4">
+      <div className="flex h-full flex-col overflow-y-auto bg-background px-4 py-4">
         <h3 className="mb-1 text-base font-serif font-bold leading-tight text-foreground">
           {type === "tv" ? (item.name || item.title || getDisplayTitle(item)) : getDisplayTitle(item)}
         </h3>
