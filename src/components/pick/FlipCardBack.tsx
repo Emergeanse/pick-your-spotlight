@@ -82,13 +82,21 @@ const FlipCardBack = ({ item, type }: FlipCardBackProps) => {
     const cast = detail?.credits?.cast?.slice(0, 4) || [];
 
     return (
-      <div className="relative flex h-full flex-col overflow-y-auto bg-background px-4 py-4">
+      <div className="relative flex h-full min-h-full flex-col overflow-y-auto bg-background px-4 py-4">
         {(loading || hasError) && (
           <div className="mb-3 flex items-center justify-between rounded-full border border-border/40 bg-card/80 px-3 py-2 text-[10px] font-medium text-foreground/70 backdrop-blur-sm">
             <span>{loading ? "Chargement des détails…" : "Détails partiels affichés"}</span>
             {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin text-primary/70" /> : null}
           </div>
         )}
+
+        <div className="mb-3 overflow-hidden rounded-2xl border border-border/20 bg-card/40">
+          <img
+            src={getPosterUrl(item.poster_path, "w342")}
+            alt={title}
+            className="aspect-[2/3] w-full object-cover brightness-[1.14] contrast-[1.08] saturate-[1.18]"
+          />
+        </div>
 
         <h3 className="mb-1 text-base font-serif font-bold leading-tight text-foreground">
           {title}
@@ -144,7 +152,7 @@ const FlipCardBack = ({ item, type }: FlipCardBackProps) => {
                   <img
                     src={c.profile_path ? `https://image.tmdb.org/t/p/w92${c.profile_path}` : "/placeholder.svg"}
                     alt={c.name}
-                    className="h-10 w-10 rounded-full object-cover border border-border/20"
+                    className="h-10 w-10 rounded-full object-cover border border-border/20 brightness-[1.08] contrast-[1.06] saturate-[1.12]"
                   />
                   <span className="text-center text-[8px] text-foreground/45 leading-tight">{c.name}</span>
                 </div>
@@ -175,13 +183,21 @@ const FlipCardBack = ({ item, type }: FlipCardBackProps) => {
   const filmography = actorCredits.length > 0 ? actorCredits : directorCredits;
 
   return (
-    <div className="relative flex h-full flex-col overflow-y-auto bg-background px-4 py-4">
+      <div className="relative flex h-full min-h-full flex-col overflow-y-auto bg-background px-4 py-4">
       {(loading || hasError) && (
         <div className="mb-3 flex items-center justify-between rounded-full border border-border/40 bg-card/80 px-3 py-2 text-[10px] font-medium text-foreground/70 backdrop-blur-sm">
           <span>{loading ? "Chargement des détails…" : "Détails partiels affichés"}</span>
           {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin text-primary/70" /> : null}
         </div>
       )}
+
+      <div className="mb-3 overflow-hidden rounded-2xl border border-border/20 bg-card/40">
+        <img
+          src={getPersonPhotoUrl(item.profile_path, "w342")}
+          alt={item.name}
+          className="aspect-[3/4] w-full object-cover brightness-[1.14] contrast-[1.08] saturate-[1.18]"
+        />
+      </div>
 
       <h3 className="mb-1 text-base font-serif font-bold leading-tight text-foreground">{item.name}</h3>
       {(detail?.known_for_department || item.known_for_department) && (
@@ -212,7 +228,7 @@ const FlipCardBack = ({ item, type }: FlipCardBackProps) => {
                 <img
                   src={getPosterUrl(f.poster_path, "w185")}
                   alt={f.title}
-                  className="w-full aspect-[2/3] rounded-lg object-cover border border-border/20"
+                  className="w-full aspect-[2/3] rounded-lg object-cover border border-border/20 brightness-[1.08] contrast-[1.06] saturate-[1.12]"
                 />
                 <span className="text-center text-[8px] text-foreground/45 leading-tight line-clamp-2">{f.title}</span>
               </div>
