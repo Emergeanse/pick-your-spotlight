@@ -223,6 +223,7 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
     const prevIndex = history[history.length - 1];
     setHistory(prev => prev.slice(0, -1));
     setCurrentIndex(prevIndex);
+    setFlipped(false);
     x.set(0);
   };
 
