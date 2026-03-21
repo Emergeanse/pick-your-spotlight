@@ -366,8 +366,9 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({
         recentTasteVector: (vectorData as any)?.recent_taste_vector || null,
         avoidanceVector: (vectorData as any)?.avoidance_vector || null,
       } : null;
+      const peoplePreferences = tasteProfile?.peoplePreferences || null;
       supabase.functions.invoke("movie-match", {
-        body: { movie, userCriteria, tasteProfile: enrichedProfile, userTasteVector, likedMovieTitles, searchTags, cinematicProfile },
+        body: { movie, userCriteria, tasteProfile: enrichedProfile, userTasteVector, likedMovieTitles, searchTags, cinematicProfile, peoplePreferences },
       }).then(({ data, error }) => {
         if (error) { console.error("Match error:", error); setMatchLoading(false); return; }
         setMatchData(data as MatchData);
