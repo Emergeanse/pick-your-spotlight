@@ -32,17 +32,44 @@ const GENRE_MAP: Record<number, string> = {
   10749: "Romance", 878: "Science-Fiction", 53: "Thriller", 10752: "Guerre", 37: "Western",
 };
 
+const TV_GENRE_MAP: Record<number, string> = {
+  10759: "Action", 16: "Animation", 35: "Comédie", 80: "Crime",
+  99: "Documentaire", 18: "Drame", 10751: "Famille", 10762: "Enfants",
+  9648: "Mystère", 10763: "Actualités", 10764: "Téléréalité",
+  10765: "Sci-Fi & Fantasy", 10766: "Soap", 10767: "Talk", 10768: "Guerre & Politique", 37: "Western",
+};
+
 async function fetchTrainingMovies(page: number): Promise<Movie[]> {
   const res = await fetch(
-    `https://api.themoviedb.org/3/discover/movie?api_key=${TMDB_API_KEY}&language=fr-FR&sort_by=popularity.desc&vote_count.gte=500&vote_average.gte=6&page=${page}`
+    `https://api.themoviedb.org/3/discover/movie?api_key=${TMDB_API_KEY}&language=fr-FR&sort_by=popularity.desc&vote_count.gte=500&vote_average.gte=6&page=${page}&region=FR`
   );
   const data = await res.json();
   return (data.results || []) as Movie[];
 }
 
+async function fetchTrainingSeries(page: number): Promise<Movie[]> {
+  const res = await fetch(
+    `https://api.themoviedb.org/3/discover/tv?api_key=${TMDB_API_KEY}&language=fr-FR&sort_by=popularity.desc&vote_count.gte=200&vote_average.gte=6&page=${page}&watch_region=FR`
+  );
+  const data = await res.json();
+  return (data.results || []).map((s: any) => ({
+    ...s,
+    title: s.name,
+    release_date: s.first_air_date,
+    media_type: "tv",
+  })) as Movie[];
+}
+
 async function fetchMovieDetail(id: number): Promise<MovieDetail> {
   const res = await fetch(
     `https://api.themoviedb.org/3/movie/${id}?api_key=${TMDB_API_KEY}&language=fr-FR`
+  );
+  return res.json();
+}
+
+async function fetchSeriesDetail(id: number): Promise<any> {
+  const res = await fetch(
+    `https://api.themoviedb.org/3/tv/${id}?api_key=${TMDB_API_KEY}&language=fr-FR`
   );
   return res.json();
 }
