@@ -208,11 +208,14 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
     setSwiping(isPositive ? "right" : "left");
 
     try {
-      const genres = (currentMovie.genre_ids || []).map(gid => GENRE_MAP[gid]).filter(Boolean);
+      const genres = (currentMovie.genre_ids || []).map(gid => genreMap[gid]).filter(Boolean);
+      const source = isSeries ? "taste_trainer_series" : "taste_trainer";
       if (rating > 50) {
-        const detail = await fetchMovieDetail(currentMovie.id);
-        await likeMovie(detail);
-        await trackInteraction(currentMovie.id, actionType, { source: "taste_trainer", genres, rating });
+        if (!isSeries) {
+          const detail = await fetchMovieDetail(currentMovie.id);
+          await likeMovie(detail);
+        }
+        await trackInteraction(currentMovie.id, actionType, { source, genres, rating, media_type: isSeries ? "tv" : "movie" });
         await recordAcceptedRecommendation(user.id);
         setLikedCount(c => c + 1);
         actionsRef.current.likes++;
