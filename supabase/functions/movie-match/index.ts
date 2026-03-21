@@ -54,6 +54,10 @@ serve(async (req) => {
     let recentSimilarity: number | null = null;
     let avoidanceSimilarity: number | null = null;
     let movieTasteTags: string[] = [];
+    let movieSemanticAxes: any = {};
+    let movieSafetyTags: string[] = [];
+    let movieSuitabilityTags: string[] = [];
+    let movieClusterLabels: string[] = [];
 
     if (!isYouTube && SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) {
       const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
@@ -65,10 +69,6 @@ serve(async (req) => {
         .maybeSingle();
 
       let movieVector: number[] | null = null;
-      let movieSemanticAxes: any = {};
-      let movieSafetyTags: string[] = [];
-      let movieSuitabilityTags: string[] = [];
-      let movieClusterLabels: string[] = [];
 
       if (movieEmb) {
         movieVector = typeof movieEmb.embedding === "string"
