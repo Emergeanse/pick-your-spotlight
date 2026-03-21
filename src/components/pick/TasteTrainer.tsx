@@ -189,6 +189,7 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
     setTimeout(() => {
       setSwiping(null);
       setSliderValue(50);
+      setFlipped(false);
       setCurrentIndex(i => i + 1);
       x.set(0);
     }, 300);
