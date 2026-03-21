@@ -45,7 +45,7 @@ const FlipCardBack = ({ item, type }: FlipCardBackProps) => {
     );
   }
 
-  if (type === "movie") {
+  if (type === "movie" || type === "tv") {
     const director = detail?.credits?.crew?.find((c: any) => c.job === "Director");
     const cast = detail?.credits?.cast?.slice(0, 4) || [];
 
