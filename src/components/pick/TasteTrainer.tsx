@@ -516,15 +516,6 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
         </>
       )}
 
-      {/* Movie detail sheet */}
-      {activeTab === "movies" && currentMovie && (
-        <FlipCardDetail
-          item={currentMovie}
-          type="movie"
-          isOpen={detailOpen}
-          onClose={() => setDetailOpen(false)}
-        />
-      )}
     </motion.div>
   );
 };

@@ -268,13 +268,6 @@ const PeopleTrainer = ({ onBack }: PeopleTrainerProps) => {
         </div>
       )}
 
-      {/* Detail sheet */}
-      <FlipCardDetail
-        item={currentPerson}
-        type="person"
-        isOpen={detailOpen}
-        onClose={() => setDetailOpen(false)}
-      />
     </div>
   );
 };
