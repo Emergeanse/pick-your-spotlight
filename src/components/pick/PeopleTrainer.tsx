@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence, useMotionValue, useTransform, PanInfo } from "framer-motion";
-import { Loader2, Heart, ThumbsDown, Star, SkipForward, Info, ChevronLeft, ChevronRight } from "lucide-react";
+import { Loader2, Heart, ThumbsDown, Star, SkipForward, ChevronLeft, ChevronRight } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { fetchPopularPeople, getPersonPhotoUrl, savePersonPreference, type PreferenceValue } from "@/lib/people-preferences";
 import FlipCardBack from "./FlipCardBack";
