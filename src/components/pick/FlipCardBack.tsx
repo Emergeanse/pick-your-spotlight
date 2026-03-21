@@ -39,7 +39,7 @@ const FlipCardBack = ({ item, type }: FlipCardBackProps) => {
 
   if (loading) {
     return (
-      <div className="flex h-full items-center justify-center bg-card">
+      <div className="flex h-full items-center justify-center bg-background">
         <Loader2 className="h-5 w-5 animate-spin text-primary/50" />
       </div>
     );
@@ -52,7 +52,7 @@ const FlipCardBack = ({ item, type }: FlipCardBackProps) => {
     const cast = detail?.credits?.cast?.slice(0, 4) || [];
 
     return (
-      <div className="flex h-full flex-col overflow-y-auto bg-card px-4 py-4">
+      <div className="flex h-full flex-col overflow-y-auto bg-background px-4 py-4">
         <h3 className="mb-1 text-base font-serif font-bold leading-tight text-foreground">
           {type === "tv" ? (item.name || item.title || getDisplayTitle(item)) : getDisplayTitle(item)}
         </h3>
@@ -122,7 +122,7 @@ const FlipCardBack = ({ item, type }: FlipCardBackProps) => {
   const filmography = detail?.movie_credits?.cast?.slice(0, 8) || detail?.movie_credits?.crew?.filter((c: any) => c.job === "Director").slice(0, 8) || [];
 
   return (
-    <div className="flex h-full flex-col overflow-y-auto bg-card px-4 py-4">
+    <div className="flex h-full flex-col overflow-y-auto bg-background px-4 py-4">
       <h3 className="mb-1 text-base font-serif font-bold leading-tight text-foreground">{item.name}</h3>
       {detail?.known_for_department && (
         <p className="mb-1 text-[10px] font-sans text-foreground/40">
