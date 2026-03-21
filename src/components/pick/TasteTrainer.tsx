@@ -124,22 +124,33 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
   const isSeries = mediaMode === "series";
   const genreMap = isSeries ? TV_GENRE_MAP : GENRE_MAP;
 
-  const loadMovies = useCallback(async (p: number) => {
+  const loadMovies = useCallback(async (p: number, mode: MediaMode = mediaMode) => {
     setLoading(true);
     try {
       const randomPage = Math.floor(Math.random() * 20) + p;
-      const results = await fetchTrainingMovies(randomPage);
-      const filtered = results.filter(m => !processedIds.has(m.id) && m.poster_path);
+      const results = mode === "series"
+        ? await fetchTrainingSeries(randomPage)
+        : await fetchTrainingMovies(randomPage);
+      const filtered = results.filter(m => !processedIds.has(m.id) && (m.poster_path));
       setMovies(prev => [...prev, ...filtered]);
     } catch (e) {
-      console.error("Failed to load training movies:", e);
+      console.error("Failed to load training content:", e);
     } finally {
       setLoading(false);
     }
-  }, [processedIds]);
+  }, [processedIds, mediaMode]);
 
   useEffect(() => {
-    loadMovies(1);
+    // Reset when media mode changes
+    setMovies([]);
+    setCurrentIndex(0);
+    setHistory([]);
+    setFlipped(false);
+    setPage(1);
+    loadMovies(1, mediaMode);
+  }, [mediaMode]);
+
+  useEffect(() => {
     if (user) {
       supabase.from("user_interactions")
         .select("id", { count: "exact", head: true })
@@ -147,7 +158,7 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
         .in("action_type", ["liked", "skipped", "unsure"])
         .then(({ count }) => setTotalEvaluated(count || 0));
     }
-  }, [loadMovies, user]);
+  }, [user]);
 
   useEffect(() => {
     if (movies.length - currentIndex < 3 && !loading) {
