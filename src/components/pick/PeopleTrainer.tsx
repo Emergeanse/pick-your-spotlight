@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence, useMotionValue, useTransform, PanInfo } from "framer-motion";
-import { Loader2, Heart, ThumbsDown, Star, SkipForward, Info, ChevronLeft, ChevronRight } from "lucide-react";
+import { Loader2, Heart, ThumbsDown, Star, SkipForward, ChevronLeft, ChevronRight } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { fetchPopularPeople, getPersonPhotoUrl, savePersonPreference, type PreferenceValue } from "@/lib/people-preferences";
-import FlipCardDetail from "./FlipCardDetail";
+import FlipCardBack from "./FlipCardBack";
 
 interface PeopleTrainerProps {
   onBack?: () => void;
@@ -27,7 +27,7 @@ const PeopleTrainer = ({ onBack }: PeopleTrainerProps) => {
   const [processedIds, setProcessedIds] = useState<Set<number>>(new Set());
   const [page, setPage] = useState(1);
   const [history, setHistory] = useState<number[]>([]);
-  const [detailOpen, setDetailOpen] = useState(false);
+  const [flipped, setFlipped] = useState(false);
   const [ratedCount, setRatedCount] = useState(0);
   const x = useMotionValue(0);
 
@@ -85,6 +85,7 @@ const PeopleTrainer = ({ onBack }: PeopleTrainerProps) => {
     setProcessedIds(prev => new Set(prev).add(currentPerson.id));
     setTimeout(() => {
       setSwiping(null);
+      setFlipped(false);
       setCurrentIndex(i => i + 1);
       x.set(0);
     }, 300);
@@ -100,6 +101,7 @@ const PeopleTrainer = ({ onBack }: PeopleTrainerProps) => {
     const prevIndex = history[history.length - 1];
     setHistory(prev => prev.slice(0, -1));
     setCurrentIndex(prevIndex);
+    setFlipped(false);
     x.set(0);
   };
 
@@ -108,6 +110,7 @@ const PeopleTrainer = ({ onBack }: PeopleTrainerProps) => {
     setHistory(prev => [...prev, currentIndex]);
     setProcessedIds(prev => new Set(prev).add(currentPerson.id));
     setCurrentIndex(i => i + 1);
+    setFlipped(false);
     x.set(0);
   };
 
@@ -135,8 +138,8 @@ const PeopleTrainer = ({ onBack }: PeopleTrainerProps) => {
             <p className="text-sm font-sans text-foreground/50">Plus de personnes pour le moment</p>
           </div>
         ) : (
-          <div className="relative mx-auto w-full max-w-[280px]" style={{ width: "min(68vw, 30vh, 280px)" }}>
-            {nextPerson && (
+          <div className="relative mx-auto w-full max-w-[280px]" style={{ width: "min(68vw, 30vh, 280px)", perspective: "1200px" }}>
+            {nextPerson && !flipped && (
               <div className="absolute inset-0 -z-10">
                 <div className="h-full w-full translate-y-3 scale-[0.94] overflow-hidden rounded-[1.75rem] border border-white/10 opacity-30 aspect-[3/4]">
                   <img src={getPersonPhotoUrl(nextPerson.profile_path, "w342")} alt="" className="h-full w-full object-cover" />
@@ -147,7 +150,7 @@ const PeopleTrainer = ({ onBack }: PeopleTrainerProps) => {
             <AnimatePresence mode="popLayout">
               <motion.div
                 key={currentPerson.id}
-                drag="x"
+                drag={flipped ? false : "x"}
                 dragConstraints={{ left: 0, right: 0 }}
                 dragElastic={0.7}
                 onDragEnd={handleDragEnd}
@@ -158,66 +161,85 @@ const PeopleTrainer = ({ onBack }: PeopleTrainerProps) => {
                 initial={{ scale: 0.95, opacity: 0, y: 20 }}
                 exit={{ opacity: 0, scale: 0.9 }}
                 transition={swiping ? { duration: 0.3, ease: "easeOut" } : { type: "spring", stiffness: 260, damping: 24 }}
-                className="relative aspect-[3/4] w-full select-none overflow-hidden rounded-[1.75rem] shadow-[0_24px_80px_hsl(var(--background)/0.72)] cursor-grab active:cursor-grabbing"
-                style={{ x, rotate, touchAction: "none" }}
+                className="relative aspect-[3/4] w-full select-none overflow-visible"
+                style={{ x, rotate: flipped ? 0 : rotate, touchAction: "none", transformStyle: "preserve-3d" }}
+                onClick={() => !swiping && setFlipped(f => !f)}
               >
-                <img
-                  src={getPersonPhotoUrl(currentPerson.profile_path, "w780")}
-                  alt={currentPerson.name}
-                  className="absolute inset-0 h-full w-full object-cover brightness-[1.1] contrast-[1.05]"
-                  draggable={false}
-                />
-                <div className="pointer-events-none absolute inset-0 rounded-[1.75rem] ring-1 ring-inset ring-white/10" />
-
-                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-background via-background/50 to-transparent px-5 pt-20 pb-5">
-                  <h3 className="mb-1 text-xl font-serif font-bold text-white drop-shadow-md">{currentPerson.name}</h3>
-                  <p className="mb-2 text-xs font-sans text-white/60">
-                    {isDirector ? "Réalisateur" : "Acteur/Actrice"}
-                  </p>
-                  {knownForTitles.length > 0 && (
-                    <div className="flex flex-wrap gap-1">
-                      {knownForTitles.map((t: string) => (
-                        <span key={t} className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] text-white/70 backdrop-blur-sm">{t}</span>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                {/* Info button */}
-                <button
-                  onClick={(e) => { e.stopPropagation(); setDetailOpen(true); }}
-                  className="absolute top-4 right-4 z-30 rounded-full bg-background/40 p-2 backdrop-blur-sm"
+                {/* Front face */}
+                <motion.div
+                  className="absolute inset-0 rounded-[1.75rem] overflow-hidden shadow-[0_24px_80px_hsl(var(--background)/0.72)] cursor-pointer"
+                  style={{ backfaceVisibility: "hidden" }}
+                  animate={{ rotateY: flipped ? 180 : 0 }}
+                  transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
                 >
-                  <Info className="h-4 w-4 text-white/70" />
-                </button>
+                  <img
+                    src={getPersonPhotoUrl(currentPerson.profile_path, "w780")}
+                    alt={currentPerson.name}
+                    className="absolute inset-0 h-full w-full object-cover brightness-[1.1] contrast-[1.05]"
+                    draggable={false}
+                  />
+                  <div className="pointer-events-none absolute inset-0 rounded-[1.75rem] ring-1 ring-inset ring-white/10" />
 
-                <motion.div className="absolute top-5 left-5 z-30 rounded-xl border-2 border-[hsl(var(--destructive)/0.6)] px-4 py-2 -rotate-12" style={{ opacity: skipOpacity }}>
-                  <span className="text-sm font-sans font-bold text-[hsl(var(--destructive))]">PASSE</span>
+                  <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-background via-background/50 to-transparent px-5 pt-20 pb-5">
+                    <h3 className="mb-1 text-xl font-serif font-bold text-white drop-shadow-md">{currentPerson.name}</h3>
+                    <p className="mb-2 text-xs font-sans text-white/60">
+                      {isDirector ? "Réalisateur" : "Acteur/Actrice"}
+                    </p>
+                    {knownForTitles.length > 0 && (
+                      <div className="flex flex-wrap gap-1">
+                        {knownForTitles.map((t: string) => (
+                          <span key={t} className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] text-white/70 backdrop-blur-sm">{t}</span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="absolute top-3 right-3 rounded-full bg-background/30 px-2 py-1 backdrop-blur-sm">
+                    <span className="text-[9px] font-sans text-white/50">Tap pour détails</span>
+                  </div>
+
+                  <motion.div className="absolute top-5 left-5 z-30 rounded-xl border-2 border-[hsl(var(--destructive)/0.6)] px-4 py-2 -rotate-12" style={{ opacity: skipOpacity }}>
+                    <span className="text-sm font-sans font-bold text-[hsl(var(--destructive))]">PASSE</span>
+                  </motion.div>
+                  <motion.div className="absolute top-5 right-5 z-30 rounded-xl border-2 border-[hsl(var(--train)/0.6)] px-4 py-2 rotate-12" style={{ opacity: likeOpacity }}>
+                    <span className="text-sm font-sans font-bold text-[hsl(var(--train))]">J'AIME</span>
+                  </motion.div>
                 </motion.div>
-                <motion.div className="absolute top-5 right-5 z-30 rounded-xl border-2 border-[hsl(var(--train)/0.6)] px-4 py-2 rotate-12" style={{ opacity: likeOpacity }}>
-                  <span className="text-sm font-sans font-bold text-[hsl(var(--train))]">J'AIME</span>
+
+                {/* Back face */}
+                <motion.div
+                  className="absolute inset-0 rounded-[1.75rem] overflow-hidden shadow-[0_24px_80px_hsl(var(--background)/0.72)] border border-border/20 cursor-pointer"
+                  style={{ backfaceVisibility: "hidden" }}
+                  animate={{ rotateY: flipped ? 0 : -180 }}
+                  transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
+                >
+                  <FlipCardBack item={currentPerson} type="person" />
                 </motion.div>
               </motion.div>
             </AnimatePresence>
 
             {/* Navigation arrows */}
-            <div className="absolute inset-y-0 -left-10 flex items-center">
-              <button
-                onClick={goBack}
-                disabled={history.length === 0}
-                className="rounded-full bg-foreground/5 p-1.5 text-foreground/30 transition-all hover:bg-foreground/10 disabled:opacity-20"
-              >
-                <ChevronLeft className="h-5 w-5" />
-              </button>
-            </div>
-            <div className="absolute inset-y-0 -right-10 flex items-center">
-              <button
-                onClick={skip}
-                className="rounded-full bg-foreground/5 p-1.5 text-foreground/30 transition-all hover:bg-foreground/10"
-              >
-                <ChevronRight className="h-5 w-5" />
-              </button>
-            </div>
+            {!flipped && (
+              <>
+                <div className="absolute inset-y-0 -left-10 flex items-center">
+                  <button
+                    onClick={goBack}
+                    disabled={history.length === 0}
+                    className="rounded-full bg-foreground/5 p-1.5 text-foreground/30 transition-all hover:bg-foreground/10 disabled:opacity-20"
+                  >
+                    <ChevronLeft className="h-5 w-5" />
+                  </button>
+                </div>
+                <div className="absolute inset-y-0 -right-10 flex items-center">
+                  <button
+                    onClick={skip}
+                    className="rounded-full bg-foreground/5 p-1.5 text-foreground/30 transition-all hover:bg-foreground/10"
+                  >
+                    <ChevronRight className="h-5 w-5" />
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         )}
       </div>
@@ -249,13 +271,6 @@ const PeopleTrainer = ({ onBack }: PeopleTrainerProps) => {
         </div>
       )}
 
-      {/* Detail sheet */}
-      <FlipCardDetail
-        item={currentPerson}
-        type="person"
-        isOpen={detailOpen}
-        onClose={() => setDetailOpen(false)}
-      />
     </div>
   );
 };
