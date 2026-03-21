@@ -239,6 +239,7 @@ RÈGLES :
     "stable_taste": <0-100>,
     "recent_taste": <0-100>,
     "context": <0-100>,
+    "people_affinity": <0-100>,
     "rejection_risk": <0-100>,
     "quality": <0-100>,
     "novelty": <0-100>,
