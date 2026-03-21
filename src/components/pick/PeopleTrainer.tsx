@@ -85,6 +85,7 @@ const PeopleTrainer = ({ onBack }: PeopleTrainerProps) => {
     setProcessedIds(prev => new Set(prev).add(currentPerson.id));
     setTimeout(() => {
       setSwiping(null);
+      setFlipped(false);
       setCurrentIndex(i => i + 1);
       x.set(0);
     }, 300);
