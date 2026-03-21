@@ -339,6 +339,15 @@ export async function getUserTasteProfile() {
     return clusters;
   }
 
+  // People preferences
+  const allPeoplePrefs = (peoplePrefs || []) as any[];
+  const lovedActors = allPeoplePrefs.filter((p: any) => p.person_type === "actor" && p.preference === "loved").map((p: any) => p.person_name);
+  const likedActors = allPeoplePrefs.filter((p: any) => p.person_type === "actor" && p.preference === "liked").map((p: any) => p.person_name);
+  const dislikedActors = allPeoplePrefs.filter((p: any) => p.person_type === "actor" && p.preference === "disliked").map((p: any) => p.person_name);
+  const lovedDirectors = allPeoplePrefs.filter((p: any) => p.person_type === "director" && p.preference === "loved").map((p: any) => p.person_name);
+  const likedDirectors = allPeoplePrefs.filter((p: any) => p.person_type === "director" && p.preference === "liked").map((p: any) => p.person_name);
+  const dislikedDirectors = allPeoplePrefs.filter((p: any) => p.person_type === "director" && p.preference === "disliked").map((p: any) => p.person_name);
+
   return {
     topGenres,
     genreCounts: roundedGenreCounts,
@@ -348,7 +357,6 @@ export async function getUserTasteProfile() {
 
     likedTitles: (likedMovies || []).map(m => m.title).slice(0, 20),
 
-    // IDs for exclusion (comprehensive)
     likedIds,
     skippedIds,
     watchedIds,
@@ -357,6 +365,16 @@ export async function getUserTasteProfile() {
     excludeIds: [...new Set([...skippedIds, ...watchedIds, ...likedIds, ...alreadySeenIds, ...watchlistIds])],
 
     preferredPlatforms: profile?.preferred_platforms || [],
+
+    // People preferences
+    peoplePreferences: {
+      lovedActors,
+      likedActors,
+      dislikedActors,
+      lovedDirectors,
+      likedDirectors,
+      dislikedDirectors,
+    },
 
     stats: {
       likeCount,
@@ -378,23 +396,22 @@ export async function getUserTasteProfile() {
       time: sessionTime,
     },
 
-    // Multi-vector references (the actual vectors are computed in taste-engine.ts)
     hasAvoidanceVector: !!multiVectorData?.avoidance_vector,
     hasRecentVector: !!multiVectorData?.recent_taste_vector,
 
-    // Enhanced scoring weights
     scoringWeights: {
-      stable_taste: 0.18,
-      recent_taste: 0.12,
-      session_context: 0.18,
-      embedding_similarity: 0.12,
-      acceptance_likelihood: 0.12,
+      stable_taste: 0.16,
+      recent_taste: 0.10,
+      session_context: 0.16,
+      embedding_similarity: 0.10,
+      acceptance_likelihood: 0.10,
       rejection_risk: -0.10,
       quality_score: 0.06,
       novelty_fit: 0.05,
       availability: 0.04,
       fatigue_penalty: -0.03,
       strategic_boost: 0.02,
+      people_affinity: 0.11,
     },
   };
 }
