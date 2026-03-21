@@ -456,7 +456,7 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
                           )}
                         </div>
                         <div className="flex flex-wrap gap-1.5">
-                          {(currentMovie.genre_ids || []).slice(0, 3).map(gid => GENRE_MAP[gid]).filter(Boolean).map(g => (
+                          {(currentMovie.genre_ids || []).slice(0, 3).map(gid => genreMap[gid]).filter(Boolean).map(g => (
                             <span key={g} className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] font-sans text-white/70 backdrop-blur-sm">{g}</span>
                           ))}
                         </div>
