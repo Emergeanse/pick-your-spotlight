@@ -112,6 +112,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
   const [tonightPickIndex, setTonightPickIndex] = useState(0);
   const [tonightVisitedIndices, setTonightVisitedIndices] = useState<Set<number>>(new Set([0]));
   const [quickFilters, setQuickFilters] = useState<QuickFilterState>({ mediaType: "both", maxDuration: null });
+  const [profileDefaults, setProfileDefaults] = useState<ProfileDefaults>({ mediaType: "both", maxDuration: null });
   
 
   const tonightPool: MovieDetail[] = chatMoviesPool || [];
