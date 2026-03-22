@@ -82,20 +82,16 @@ const Index = () => {
     setChatSuggestedMovies(null);
   };
 
-  // Check for reset param in URL (from Accueil tab)
+  // Check for forced home reset (from Accueil tab click)
   useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    if (params.has("reset")) {
+    if ((window as any).__pickForceResetHome) {
+      (window as any).__pickForceResetHome = false;
       resetToHomeView();
-      // Clean the URL
       window.history.replaceState({}, "", "/app");
       return;
     }
-  }, [location.search]);
 
-  useEffect(() => {
     const state = (location.state as any) || {};
-
     if (state.openTrainer) {
       setOpenTrainerOnMount(true);
       window.history.replaceState({}, "", "/app");
