@@ -40,6 +40,8 @@ const Index = () => {
   const [loading, setLoading] = useState(false);
   const [currentResultIndex, setCurrentResultIndex] = useState(0);
   const [resultIndexHistory, setResultIndexHistory] = useState<number[]>([]);
+  // Track where the result view originated from: "home" (internal), "external" (cross-page nav)
+  const [resultOrigin, setResultOrigin] = useState<"home" | "external">("home");
   const [loadingMessage, setLoadingMessage] = useState("");
   const [showChat, setShowChat] = useState(false);
   
