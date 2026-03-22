@@ -465,8 +465,11 @@ const Index = () => {
                   const prev = resultIndexHistory[resultIndexHistory.length - 1];
                   setResultIndexHistory(h => h.slice(0, -1));
                   setCurrentResultIndex(prev);
+                } else if (resultOrigin === "external") {
+                  // Came from another page (watchlist, together, etc.) — go back in browser history
+                  navigate(-1);
                 } else {
-                  // Restore tonight pick movies so HomeScreen shows the preview again
+                  // Came from HomeScreen — restore tonight pick preview
                   if (results.length > 0) {
                     setChatSuggestedMovies(results);
                   }
