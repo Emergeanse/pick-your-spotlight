@@ -311,18 +311,14 @@ const Index = () => {
 
   const handleStart = () => {};
 
-  const handleSurprise = (movies: MovieDetail[], startIndex: number = 0) => {
-    setResults(movies);
-    setCurrentResultIndex(startIndex);
-    setResultOrigin("home");
-    setStep("result");
+  const handleSurprise = async (movies: MovieDetail[], startIndex: number = 0) => {
+    const batch = await normalizeRecommendationBatch(movies);
+    openRecommendationBatch(batch, "home", startIndex);
   };
 
-  const handleMovieSelect = (movie: MovieDetail) => {
-    setResults([movie]);
-    setCurrentResultIndex(0);
-    setResultOrigin("home");
-    setStep("result");
+  const handleMovieSelect = async (movie: MovieDetail) => {
+    const batch = await normalizeRecommendationBatch([movie], [movie.id]);
+    openRecommendationBatch(batch, "home");
   };
 
   const handleOpenChat = () => {
