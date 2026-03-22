@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence, useMotionValue, useTransform, PanInfo } from "framer-motion";
-import { Loader2, Heart, ThumbsDown, Star, SkipForward, ChevronLeft, ChevronRight } from "lucide-react";
+import { Loader2, Heart, ThumbsDown, Star, SkipForward, ChevronLeft, ChevronRight, RotateCcw } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
-import { fetchPopularPeople, getPersonPhotoUrl, savePersonPreference, type PreferenceValue } from "@/lib/people-preferences";
+import { fetchPopularPeople, getPersonPhotoUrl, savePersonPreference, fetchPersonDetail, type PreferenceValue } from "@/lib/people-preferences";
 import FlipCardBack from "./FlipCardBack";
 
 interface PeopleTrainerProps {
@@ -19,6 +19,22 @@ const RATING_BUTTONS = [
     toneClass: "bg-[hsl(var(--primary)/0.18)] border-[hsl(var(--primary)/0.30)] text-primary hover:bg-[hsl(var(--primary)/0.26)]" },
 ];
 
+function computeAge(birthday: string | null): number | null {
+  if (!birthday) return null;
+  const birth = new Date(birthday);
+  const today = new Date();
+  let age = today.getFullYear() - birth.getFullYear();
+  const m = today.getMonth() - birth.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+  return age;
+}
+
+function extractNationality(placeOfBirth: string | null): string | null {
+  if (!placeOfBirth) return null;
+  const parts = placeOfBirth.split(",").map(s => s.trim());
+  return parts[parts.length - 1] || null;
+}
+
 const PeopleTrainer = ({ onBack, filterDepartment }: PeopleTrainerProps) => {
   const { user } = useAuth();
   const [people, setPeople] = useState<any[]>([]);
@@ -30,6 +46,7 @@ const PeopleTrainer = ({ onBack, filterDepartment }: PeopleTrainerProps) => {
   const [history, setHistory] = useState<number[]>([]);
   const [flipped, setFlipped] = useState(false);
   const [ratedCount, setRatedCount] = useState(0);
+  const [miniBios, setMiniBios] = useState<Record<number, any>>({});
   const x = useMotionValue(0);
 
   const loadPeople = useCallback(async (p: number) => {
@@ -56,6 +73,7 @@ const PeopleTrainer = ({ onBack, filterDepartment }: PeopleTrainerProps) => {
     setHistory([]);
     setFlipped(false);
     setPage(1);
+    setMiniBios({});
     loadPeople(1);
   }, [filterDepartment]);
 
@@ -67,8 +85,25 @@ const PeopleTrainer = ({ onBack, filterDepartment }: PeopleTrainerProps) => {
     }
   }, [currentIndex, people.length, loading, page]);
 
+  // Prefetch mini bio for current + next person
   const currentPerson = people[currentIndex];
   const nextPerson = people[currentIndex + 1];
+
+  useEffect(() => {
+    const ids = [currentPerson?.id, nextPerson?.id].filter(Boolean);
+    ids.forEach(id => {
+      if (id && !miniBios[id]) {
+        fetchPersonDetail(id).then(detail => {
+          setMiniBios(prev => ({ ...prev, [id]: detail }));
+        }).catch(() => {});
+      }
+    });
+  }, [currentPerson?.id, nextPerson?.id]);
+
+  const bio = currentPerson ? miniBios[currentPerson.id] : null;
+  const age = computeAge(bio?.birthday);
+  const nationality = extractNationality(bio?.place_of_birth);
+  const shortBio = bio?.biography?.split(".").slice(0, 2).join(".").trim();
 
   const rotate = useTransform(x, [-200, 0, 200], [-8, 0, 8]);
   const likeOpacity = useTransform(x, [0, 80, 200], [0, 0.6, 1]);
@@ -129,6 +164,11 @@ const PeopleTrainer = ({ onBack, filterDepartment }: PeopleTrainerProps) => {
   const knownForTitles = (currentPerson?.known_for || []).map((m: any) => m.title || m.name).filter(Boolean).slice(0, 3);
   const isDirector = currentPerson?.known_for_department === "Directing";
 
+  // Build mini info line
+  const infoChips: string[] = [];
+  if (age) infoChips.push(`${age} ans`);
+  if (nationality) infoChips.push(nationality);
+
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       {/* Counter */}
@@ -187,15 +227,19 @@ const PeopleTrainer = ({ onBack, filterDepartment }: PeopleTrainerProps) => {
                     />
                     <div className="pointer-events-none absolute inset-0 rounded-[1.75rem] ring-1 ring-inset ring-white/10" />
 
-                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-background via-background/50 to-transparent px-5 pt-20 pb-5">
-                      <h3 className="mb-1 text-xl font-serif font-bold text-white drop-shadow-md">{currentPerson.name}</h3>
-                      <p className="mb-2 text-xs font-sans text-white/60">
-                        {isDirector ? "Réalisateur" : "Acteur/Actrice"}
+                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-background via-background/60 to-transparent px-4 pt-20 pb-4">
+                      <h3 className="mb-0.5 text-lg font-serif font-bold text-white drop-shadow-md leading-tight">{currentPerson.name}</h3>
+                      <p className="mb-1 text-[11px] font-sans text-white/55">
+                        {isDirector ? "Réalisateur/Réalisatrice" : "Acteur/Actrice"}
+                        {infoChips.length > 0 && ` · ${infoChips.join(" · ")}`}
                       </p>
+                      {shortBio && (
+                        <p className="mb-2 text-[10px] font-sans leading-snug text-white/40 line-clamp-2">{shortBio}.</p>
+                      )}
                       {knownForTitles.length > 0 && (
                         <div className="flex flex-wrap gap-1">
                           {knownForTitles.map((t: string) => (
-                            <span key={t} className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] text-white/70 backdrop-blur-sm">{t}</span>
+                            <span key={t} className="rounded-full bg-white/10 px-2 py-0.5 text-[9px] text-white/65 backdrop-blur-sm">{t}</span>
                           ))}
                         </div>
                       )}
@@ -214,6 +258,14 @@ const PeopleTrainer = ({ onBack, filterDepartment }: PeopleTrainerProps) => {
                   </div>
                 ) : (
                   <div className="absolute inset-0 rounded-[1.75rem] overflow-hidden border border-border/20 bg-background shadow-[0_24px_80px_hsl(var(--background)/0.72)]">
+                    {/* Back button on flipped card */}
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setFlipped(false); }}
+                      className="absolute top-3 left-3 z-30 flex items-center gap-1 rounded-full bg-foreground/10 px-2.5 py-1.5 text-[10px] font-sans font-medium text-foreground/60 backdrop-blur-sm transition-all hover:bg-foreground/15"
+                    >
+                      <RotateCcw className="h-3 w-3" />
+                      Retour
+                    </button>
                     <FlipCardBack item={currentPerson} type="person" />
                   </div>
                 )}
@@ -272,7 +324,6 @@ const PeopleTrainer = ({ onBack, filterDepartment }: PeopleTrainerProps) => {
           </button>
         </div>
       )}
-
     </div>
   );
 };

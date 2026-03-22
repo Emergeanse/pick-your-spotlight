@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence, PanInfo, useMotionValue, useTransform } from "framer-motion";
-import { ChevronLeft, ChevronRight, Loader2, Sparkles, ArrowRight, SkipForward, Film, Users, Tv, Clapperboard } from "lucide-react";
+import { ChevronLeft, ChevronRight, Loader2, Sparkles, ArrowRight, SkipForward, Film, Users, Tv, Clapperboard, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getPosterUrl, getDisplayTitle } from "@/lib/tmdb";
 import { likeMovie } from "@/lib/liked-movies";
@@ -503,6 +503,13 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
                   </div>
                 ) : (
                   <div className="absolute inset-0 rounded-[1.75rem] overflow-hidden border border-border/20 bg-background shadow-[0_24px_80px_hsl(var(--background)/0.72)]">
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setFlipped(false); }}
+                      className="absolute top-3 left-3 z-30 flex items-center gap-1 rounded-full bg-foreground/10 px-2.5 py-1.5 text-[10px] font-sans font-medium text-foreground/60 backdrop-blur-sm transition-all hover:bg-foreground/15"
+                    >
+                      <RotateCcw className="h-3 w-3" />
+                      Retour
+                    </button>
                     <FlipCardBack item={currentMovie} type={isSeries ? "tv" : "movie"} />
                   </div>
                 )}
