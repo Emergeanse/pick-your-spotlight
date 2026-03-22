@@ -417,7 +417,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
 
   return (
     <div className="relative w-full h-full overflow-hidden">
-      <BrandHeader extraActions={<QuickFilters filters={quickFilters} onFiltersChange={setQuickFilters} />} />
+      <BrandHeader extraActions={<QuickFilters filters={quickFilters} onFiltersChange={setQuickFilters} profileDefaults={profileDefaults} />} />
 
       {/* Background slideshow */}
       {bgImages.map((bg, i) => (
