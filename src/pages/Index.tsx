@@ -286,9 +286,9 @@ const Index = () => {
 
   const handleStart = () => {};
 
-  const handleSurprise = (movies: MovieDetail[]) => {
+  const handleSurprise = (movies: MovieDetail[], startIndex: number = 0) => {
     setResults(movies);
-    setCurrentResultIndex(0);
+    setCurrentResultIndex(startIndex);
     setResultOrigin("home");
     setStep("result");
   };
