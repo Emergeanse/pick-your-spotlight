@@ -184,13 +184,18 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
   // Load user's full profile preferences + interaction history for exclusion
   useEffect(() => {
     if (!user) return;
-    supabase.from("profiles").select("preferred_platforms, excluded_platforms, favorite_genres, excluded_genres, min_rating").eq("id", user.id).single()
+    supabase.from("profiles").select("preferred_platforms, excluded_platforms, favorite_genres, excluded_genres, min_rating, default_media_type, default_max_duration").eq("id", user.id).single()
       .then(({ data }) => {
         if (data?.preferred_platforms) setUserPlatformIds(data.preferred_platforms);
         if ((data as any)?.excluded_platforms) setUserExcludedPlatformIds((data as any).excluded_platforms);
         if (data?.favorite_genres) setUserGenres(data.favorite_genres);
         if ((data as any)?.excluded_genres) setUserExcludedGenres((data as any).excluded_genres);
         if ((data as any)?.min_rating) setUserMinRating((data as any).min_rating);
+        // Initialize quick filters from profile defaults
+        const mt = ((data as any)?.default_media_type as "both" | "movie" | "tv") || "both";
+        const md = (data as any)?.default_max_duration ?? null;
+        setProfileDefaults({ mediaType: mt, maxDuration: md });
+        setQuickFilters({ mediaType: mt, maxDuration: md });
       });
     // Load interaction history + liked + watchlist to avoid repeats
     Promise.all([
