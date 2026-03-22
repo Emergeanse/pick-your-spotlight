@@ -39,6 +39,7 @@ const Index = () => {
   const [results, setResults] = useState<MovieDetail[]>([]);
   const [loading, setLoading] = useState(false);
   const [currentResultIndex, setCurrentResultIndex] = useState(0);
+  const [resultIndexHistory, setResultIndexHistory] = useState<number[]>([]);
   const [loadingMessage, setLoadingMessage] = useState("");
   const [showChat, setShowChat] = useState(false);
   
