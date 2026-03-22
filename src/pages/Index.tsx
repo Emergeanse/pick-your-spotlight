@@ -548,6 +548,8 @@ const Index = () => {
               totalCount={results.length}
               onNext={() => { if (currentResultIndex < results.length - 1) { setResultIndexHistory(h => [...h, currentResultIndex]); setCurrentResultIndex(i => i + 1); } }}
               onPrevious={() => { if (currentResultIndex > 0) { setResultIndexHistory(h => [...h, currentResultIndex]); setCurrentResultIndex(i => i - 1); } }}
+              visitedIndices={resultVisitedIndices}
+              onVisitedIndicesChange={setResultVisitedIndices}
             />
           </motion.div>
         )}
