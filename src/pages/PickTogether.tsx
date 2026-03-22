@@ -260,7 +260,7 @@ const PickTogether = () => {
     else if (step === "mood") { setStep("who"); }
     else if (mediaStep) { setMediaStep(false); }
     else if (step === "who") { setStep("landing"); }
-    else navigate("/app");
+    else navigate(-1);
   };
 
   return (
