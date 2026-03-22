@@ -30,11 +30,10 @@ const BottomTabBar = () => {
               data-tour={`tab-${tab.id}`}
               onClick={() => {
                 if (tab.id === "home") {
-                  // Call reset function directly if available
-                  if (typeof (window as any).__pickResetHome === "function") {
-                    (window as any).__pickResetHome();
-                  }
-                  if (location.pathname !== "/app") {
+                  if (location.pathname === "/app") {
+                    // Force full reset — reload clears all state
+                    window.location.href = "/app";
+                  } else {
                     navigate("/app");
                   }
                 } else {
