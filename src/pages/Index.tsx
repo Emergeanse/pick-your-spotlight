@@ -90,14 +90,6 @@ const Index = () => {
       window.history.replaceState({}, "", "/app");
     }
 
-  useEffect(() => {
-    const state = (location.state as any) || {};
-
-    if (state.openTrainer) {
-      setOpenTrainerOnMount(true);
-      window.history.replaceState({}, "", "/app");
-    }
-
     // Handle selectedMovie from external pages (e.g. WatchlistRoute)
     if (state.selectedMovie) {
       const movie = state.selectedMovie as MovieDetail;
