@@ -29,7 +29,7 @@ import { useNavigate } from "react-router-dom";
 interface HomeScreenProps {
   onStart: () => void;
   onOpenChat: () => void;
-  onSurprise: (movies: MovieDetail[]) => void;
+  onSurprise: (movies: MovieDetail[], startIndex?: number) => void;
   onMovieSelect: (movie: MovieDetail) => void;
   loading: boolean;
   openTrainerOnMount?: boolean;
@@ -745,7 +745,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
                       const moviesToPass = chatMoviesPool && chatMoviesPool.length > 0
                         ? chatMoviesPool
                         : [tonightPick];
-                      onSurprise(moviesToPass);
+                      onSurprise(moviesToPass, tonightPickIndex);
                     }}
                   >
                     <Tv className="w-5 h-5" />
