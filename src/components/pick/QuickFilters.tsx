@@ -1,15 +1,20 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { SlidersHorizontal, X, Film, Tv, Clapperboard, Clock, RotateCcw } from "lucide-react";
+import { SlidersHorizontal, Film, Tv, Clapperboard, Clock, RotateCcw, Target, Star } from "lucide-react";
+import { Slider } from "@/components/ui/slider";
 
 export interface QuickFilterState {
   mediaType: "both" | "movie" | "tv";
-  maxDuration: number | null; // in minutes, null = no limit
+  maxDuration: number | null;
+  matchThreshold: number;
+  minRating: number;
 }
 
 export interface ProfileDefaults {
   mediaType: "both" | "movie" | "tv";
   maxDuration: number | null;
+  matchThreshold: number;
+  minRating: number;
 }
 
 const DURATION_OPTIONS = [
@@ -33,16 +38,23 @@ interface QuickFiltersProps {
 
 const QuickFilters = ({ filters, onFiltersChange, profileDefaults }: QuickFiltersProps) => {
   const [open, setOpen] = useState(false);
-  const hasActiveFilters = filters.mediaType !== "both" || filters.maxDuration !== null;
+  const hasActiveFilters = filters.mediaType !== "both" || filters.maxDuration !== null || filters.matchThreshold !== 80 || filters.minRating !== 0;
 
   const isOverridden = profileDefaults && (
     filters.mediaType !== profileDefaults.mediaType ||
-    filters.maxDuration !== profileDefaults.maxDuration
+    filters.maxDuration !== profileDefaults.maxDuration ||
+    filters.matchThreshold !== profileDefaults.matchThreshold ||
+    filters.minRating !== profileDefaults.minRating
   );
 
   const handleResetToProfile = () => {
     if (profileDefaults) {
-      onFiltersChange({ mediaType: profileDefaults.mediaType, maxDuration: profileDefaults.maxDuration });
+      onFiltersChange({
+        mediaType: profileDefaults.mediaType,
+        maxDuration: profileDefaults.maxDuration,
+        matchThreshold: profileDefaults.matchThreshold,
+        minRating: profileDefaults.minRating,
+      });
     }
   };
 
@@ -77,7 +89,7 @@ const QuickFilters = ({ filters, onFiltersChange, profileDefaults }: QuickFilter
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -8, scale: 0.95 }}
               transition={{ duration: 0.2 }}
-              className="absolute right-0 top-full mt-2 z-50 w-72 rounded-2xl bg-card border border-border/20 shadow-xl overflow-hidden"
+              className="absolute right-0 top-full mt-2 z-50 w-80 rounded-2xl bg-card border border-border/20 shadow-xl overflow-hidden max-h-[70vh] overflow-y-auto"
             >
               <div className="p-3.5 border-b border-border/10 flex items-center justify-between">
                 <h3 className="font-sans font-semibold text-sm text-foreground">Filtres rapides</h3>
@@ -93,7 +105,7 @@ const QuickFilters = ({ filters, onFiltersChange, profileDefaults }: QuickFilter
                   )}
                   {hasActiveFilters && (
                     <button
-                      onClick={() => onFiltersChange({ mediaType: "both", maxDuration: null })}
+                      onClick={() => onFiltersChange({ mediaType: "both", maxDuration: null, matchThreshold: 80, minRating: 0 })}
                       className="text-foreground/40 text-[11px] font-sans font-medium hover:underline"
                     >
                       Tout effacer
@@ -109,6 +121,21 @@ const QuickFilters = ({ filters, onFiltersChange, profileDefaults }: QuickFilter
               )}
 
               <div className="p-3.5 space-y-4">
+                {/* Match threshold */}
+                <div>
+                  <div className="flex items-center gap-1.5 mb-2">
+                    <Target className="w-3 h-3 text-foreground/40" />
+                    <p className="text-foreground/50 text-[11px] font-sans font-medium uppercase tracking-wider">Correspondance</p>
+                  </div>
+                  <div className="bg-foreground/5 rounded-lg p-3">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="font-sans text-[12px] font-medium">{filters.matchThreshold}%</span>
+                      {filters.matchThreshold >= 95 && <span className="text-[10px] font-sans text-destructive/70">Très sélectif</span>}
+                    </div>
+                    <Slider value={[filters.matchThreshold]} onValueChange={([v]) => onFiltersChange({ ...filters, matchThreshold: v })} min={0} max={100} step={5} className="w-full" />
+                  </div>
+                </div>
+
                 {/* Media type */}
                 <div>
                   <p className="text-foreground/50 text-[11px] font-sans font-medium uppercase tracking-wider mb-2">Type</p>
@@ -161,6 +188,21 @@ const QuickFilters = ({ filters, onFiltersChange, profileDefaults }: QuickFilter
                     </div>
                   </div>
                 )}
+
+                {/* Min rating */}
+                <div>
+                  <div className="flex items-center gap-1.5 mb-2">
+                    <Star className="w-3 h-3 text-foreground/40" />
+                    <p className="text-foreground/50 text-[11px] font-sans font-medium uppercase tracking-wider">Note minimale</p>
+                  </div>
+                  <div className="bg-foreground/5 rounded-lg p-3">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="font-sans text-[12px] font-medium">{filters.minRating === 0 ? "Peu importe" : `${filters.minRating}+ / 10`}</span>
+                      {filters.minRating >= 8 && <span className="text-[10px] font-sans text-destructive/70">Très restrictif</span>}
+                    </div>
+                    <Slider value={[filters.minRating]} onValueChange={([v]) => onFiltersChange({ ...filters, minRating: v })} min={0} max={8} step={0.5} className="w-full" />
+                  </div>
+                </div>
               </div>
             </motion.div>
           </>
