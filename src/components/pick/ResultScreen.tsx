@@ -296,6 +296,8 @@ interface ResultScreenProps {
   totalCount?: number;
   onNext?: () => void;
   onPrevious?: () => void;
+  visitedIndices?: Set<number>;
+  onVisitedIndicesChange?: (indices: Set<number>) => void;
 }
 
 const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({
