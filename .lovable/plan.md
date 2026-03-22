@@ -1,40 +1,31 @@
 
 
-## Plan : Simplifier "Pick choisit pour toi" et detecter le mode groupe dans le chat
+## Plan: Improve Taste Trainer visuals and add landing menu
 
-### Changements
+### Problem
+1. **Images appear grayed/muted** in the Taste Trainer cards despite having brightness/saturation filters. The `bg-background` dark background combined with the card shadow and overlays makes posters look washed out.
+2. **No landing menu** -- users jump directly into swiping. The user wants a selection screen first: "Films", "Acteurs", "Réalisateurs".
 
-#### 1. Supprimer les etapes intermediaires de "Pick choisit pour toi"
-**Fichier** : `src/components/pick/HomeScreen.tsx`
+### Changes
 
-- Au clic sur "Pick choisit pour toi", appeler directement `generateTonightPick()` au lieu de `setFlowStep("who")`
-- Supprimer le bloc de rendu conditionnel `flowStep !== "idle"` (lignes 770-810) qui affiche les etapes Who/What/Exploration
-- Utiliser les valeurs par defaut : `explorationLevel=5`, `whatChoice="both"`
-- Resultat : clic → chargement → Tonight's Pick directement
+#### 1. Add a landing menu screen (`TasteTrainer.tsx`)
+- Add a new state `selectedCategory: null | "movies" | "series" | "actors" | "directors"` (default `null`).
+- When `null`, show a menu with 3-4 visually appealing cards: **Films**, **Séries**, **Acteurs**, **Réalisateurs**.
+- Each card has an icon, label, and a brief description (e.g. "Évalue des films pour affiner tes recommandations").
+- Tapping a card sets the category and enters the existing swipe flow.
+- Replace the current tab bar with this landing when no category is selected; add a back arrow to return to the menu from inside the trainer.
 
-#### 2. Ajouter un tool "suggest_pick_together" dans l'Edge Function pick-chat
-**Fichier** : `supabase/functions/pick-chat/index.ts`
+#### 2. Split "Acteurs & Réals" into two categories
+- Currently `PeopleTrainer` fetches both Acting and Directing. Add a `filterDepartment` prop to filter by "Acting" or "Directing".
+- Pass the appropriate filter based on selected category.
 
-- Ajouter un second outil `suggest_pick_together` que l'IA peut appeler quand elle detecte que l'utilisateur est a plusieurs
-- Ajouter dans le system prompt (modes premium et free) une instruction :
-  > "Si l'utilisateur mentionne qu'il est avec quelqu'un (copine, potes, famille, groupe, on est deux/trois/plusieurs, soiree entre amis...), utilise l'outil suggest_pick_together pour lui proposer le mode Pick Together."
-- Le backend renvoie `{ type: "pick_together" }` quand cet outil est appele
+#### 3. Fix image brightness
+- **Main card front**: Increase to `brightness-[1.3] saturate-[1.3]` and remove the `mix-blend-screen` overlay gradient that adds a white/gray wash on top.
+- **PeopleTrainer**: Same treatment -- boost brightness/saturation, remove the screen-blend overlay.
+- **Next card preview**: Increase opacity from `opacity-30` to `opacity-50` for a richer preview.
+- Remove or reduce the background glow motion value that can add a haze effect.
 
-#### 3. Gerer la reponse "pick_together" cote client
-**Fichier** : `src/components/pick/VoiceChat.tsx`
-
-- Quand la reponse du chat est `type: "pick_together"`, afficher le message de l'IA puis proposer un bouton "Lancer Pick Together" qui navigue vers `/app/pick-together`
-
-### Resultat
-
-```text
-Avant :  "Pick choisit pour toi" → Qui → Quoi → Exploration → Tonight's Pick
-Apres :  "Pick choisit pour toi" → Tonight's Pick (direct)
-
-Chat :   "On est deux ce soir" → Pick propose d'aller sur Pick Together
-```
-
-### Ce qui ne change pas
-- Le flux "Parle a Pick" reste identique (chat → suggestion → Tonight's Pick)
-- Les preferences (exploration, type media) gardent leurs valeurs par defaut et restent configurables dans le profil
+#### Files modified
+- `src/components/pick/TasteTrainer.tsx` -- landing menu, image fixes, category routing
+- `src/components/pick/PeopleTrainer.tsx` -- accept `filterDepartment` prop, image fixes
 
