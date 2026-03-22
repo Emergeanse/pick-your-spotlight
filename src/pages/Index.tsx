@@ -127,15 +127,16 @@ const Index = () => {
     if (stored) {
       try {
         const movie = JSON.parse(stored) as MovieDetail;
-        setResults([movie]);
-        setCurrentResultIndex(0);
-        setResultOrigin("external");
-        setStep("result");
-      } catch { /* ignore */ }
+        normalizeRecommendationBatch([movie], [movie.id])
+          .then((batch) => openRecommendationBatch(batch, "external"))
+          .catch(() => openRecommendationBatch([movie], "external"));
+      } catch {
+        /* ignore */
+      }
       sessionStorage.removeItem("pick-fab-movie");
     }
     window.history.replaceState({}, "", "/app");
-  }, []);
+  }, [normalizeRecommendationBatch, openRecommendationBatch]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
