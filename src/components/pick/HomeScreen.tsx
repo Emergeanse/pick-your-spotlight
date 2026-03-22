@@ -118,12 +118,19 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
   const canGoPrev = tonightPickIndex > 0;
   const canGoNext = tonightPickIndex < tonightPool.length - 1;
 
+  const tonightAllVisited = tonightVisitedIndices.size >= tonightPool.length && tonightPool.length > 0;
+
   const navigateTonightPick = (direction: "prev" | "next") => {
     const newIndex = direction === "next"
       ? Math.min(tonightPickIndex + 1, tonightPool.length - 1)
       : Math.max(tonightPickIndex - 1, 0);
     if (newIndex === tonightPickIndex) return;
     setTonightPickIndex(newIndex);
+    setTonightVisitedIndices(prev => {
+      const next = new Set(prev);
+      next.add(newIndex);
+      return next;
+    });
     const movie = tonightPool[newIndex];
     setTonightPick(movie);
     setTonightProviders([]);
