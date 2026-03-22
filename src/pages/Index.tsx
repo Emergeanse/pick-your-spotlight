@@ -442,7 +442,9 @@ const Index = () => {
 
   // Listen for home tab re-tap to reset to homepage
   useEffect(() => {
+    console.log("[pick-reset] listener attached");
     const handler = () => {
+      console.log("[pick-reset] EVENT FIRED — resetting to home");
       setStep("home");
       setResults([]);
       setCurrentResultIndex(0);
@@ -453,7 +455,10 @@ const Index = () => {
       setChatSuggestedMovies(null);
     };
     window.addEventListener("pick-reset-home", handler);
-    return () => window.removeEventListener("pick-reset-home", handler);
+    return () => {
+      console.log("[pick-reset] listener removed");
+      window.removeEventListener("pick-reset-home", handler);
+    };
   }, []);
 
   const handleRemoveTag = (tag: string) => {
