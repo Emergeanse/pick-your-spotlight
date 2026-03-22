@@ -101,6 +101,7 @@ const Index = () => {
       setResults(movies);
       setCurrentResultIndex(Math.min(startIndex, Math.max(movies.length - 1, 0)));
       setResultIndexHistory([]);
+      setResultVisitedIndices(new Set([Math.min(startIndex, Math.max(movies.length - 1, 0))]));
       setResultOrigin(origin);
       setStep("result");
     },
