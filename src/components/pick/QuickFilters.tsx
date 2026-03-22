@@ -1,10 +1,15 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { SlidersHorizontal, X, Film, Tv, Clapperboard, Clock } from "lucide-react";
+import { SlidersHorizontal, X, Film, Tv, Clapperboard, Clock, RotateCcw } from "lucide-react";
 
 export interface QuickFilterState {
   mediaType: "both" | "movie" | "tv";
   maxDuration: number | null; // in minutes, null = no limit
+}
+
+export interface ProfileDefaults {
+  mediaType: "both" | "movie" | "tv";
+  maxDuration: number | null;
 }
 
 const DURATION_OPTIONS = [
@@ -23,11 +28,23 @@ const MEDIA_OPTIONS = [
 interface QuickFiltersProps {
   filters: QuickFilterState;
   onFiltersChange: (f: QuickFilterState) => void;
+  profileDefaults?: ProfileDefaults;
 }
 
-const QuickFilters = ({ filters, onFiltersChange }: QuickFiltersProps) => {
+const QuickFilters = ({ filters, onFiltersChange, profileDefaults }: QuickFiltersProps) => {
   const [open, setOpen] = useState(false);
   const hasActiveFilters = filters.mediaType !== "both" || filters.maxDuration !== null;
+
+  const isOverridden = profileDefaults && (
+    filters.mediaType !== profileDefaults.mediaType ||
+    filters.maxDuration !== profileDefaults.maxDuration
+  );
+
+  const handleResetToProfile = () => {
+    if (profileDefaults) {
+      onFiltersChange({ mediaType: profileDefaults.mediaType, maxDuration: profileDefaults.maxDuration });
+    }
+  };
 
   return (
     <div className="relative">
@@ -64,15 +81,32 @@ const QuickFilters = ({ filters, onFiltersChange }: QuickFiltersProps) => {
             >
               <div className="p-3.5 border-b border-border/10 flex items-center justify-between">
                 <h3 className="font-sans font-semibold text-sm text-foreground">Filtres rapides</h3>
-                {hasActiveFilters && (
-                  <button
-                    onClick={() => onFiltersChange({ mediaType: "both", maxDuration: null })}
-                    className="text-primary text-[11px] font-sans font-medium hover:underline"
-                  >
-                    Réinitialiser
-                  </button>
-                )}
+                <div className="flex items-center gap-2">
+                  {isOverridden && (
+                    <button
+                      onClick={handleResetToProfile}
+                      className="flex items-center gap-1 text-primary text-[11px] font-sans font-medium hover:underline"
+                    >
+                      <RotateCcw className="w-3 h-3" />
+                      Profil
+                    </button>
+                  )}
+                  {hasActiveFilters && (
+                    <button
+                      onClick={() => onFiltersChange({ mediaType: "both", maxDuration: null })}
+                      className="text-foreground/40 text-[11px] font-sans font-medium hover:underline"
+                    >
+                      Tout effacer
+                    </button>
+                  )}
+                </div>
               </div>
+
+              {isOverridden && (
+                <div className="px-3.5 pt-2">
+                  <p className="text-[10px] font-sans text-primary/60 italic">Filtres modifiés par rapport au profil</p>
+                </div>
+              )}
 
               <div className="p-3.5 space-y-4">
                 {/* Media type */}
