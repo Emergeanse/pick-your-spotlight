@@ -647,15 +647,13 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
 
                 {tonightPick.poster_path && (
                   <div className="relative flex items-center gap-3 mb-3">
-                    {showArrows && (
-                      <button
-                        onClick={() => navigateTonightPick("prev")}
-                        disabled={!canGoPrev}
-                        className="w-8 h-8 rounded-full bg-foreground/10 backdrop-blur-sm flex items-center justify-center transition-all active:scale-95 disabled:opacity-20"
-                      >
-                        <ChevronLeft className="w-4 h-4 text-foreground/70" />
-                      </button>
-                    )}
+                    <button
+                      onClick={() => navigateTonightPick("prev")}
+                      disabled={!canGoPrev}
+                      className="w-10 h-10 rounded-full bg-card/60 backdrop-blur-md border border-border/30 flex items-center justify-center transition-all active:scale-90 disabled:opacity-30 disabled:cursor-not-allowed shadow-lg"
+                    >
+                      <ChevronLeft className="w-5 h-5 text-foreground" />
+                    </button>
                     <motion.img
                       key={tonightPick.id}
                       initial={{ opacity: 0, scale: 0.9 }}
@@ -671,23 +669,19 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
                         onSurprise(moviesToPass, tonightPickIndex);
                       }}
                     />
-                    {showArrows && (
-                      <button
-                        onClick={() => navigateTonightPick("next")}
-                        disabled={!canGoNext}
-                        className="w-8 h-8 rounded-full bg-foreground/10 backdrop-blur-sm flex items-center justify-center transition-all active:scale-95 disabled:opacity-20"
-                      >
-                        <ChevronRight className="w-4 h-4 text-foreground/70" />
-                      </button>
-                    )}
+                    <button
+                      onClick={() => navigateTonightPick("next")}
+                      disabled={!canGoNext}
+                      className="w-10 h-10 rounded-full bg-card/60 backdrop-blur-md border border-border/30 flex items-center justify-center transition-all active:scale-90 disabled:opacity-30 disabled:cursor-not-allowed shadow-lg"
+                    >
+                      <ChevronRight className="w-5 h-5 text-foreground" />
+                    </button>
                   </div>
                 )}
 
-                {showArrows && (
-                  <p className="text-foreground/30 text-[10px] font-sans mb-1">
-                    {tonightPickIndex + 1} / {tonightMaxSeen + 1}
-                  </p>
-                )}
+                <p className="text-foreground text-sm font-sans font-semibold tabular-nums px-3 py-1 rounded-full bg-card/60 backdrop-blur-md border border-border/30 shadow-lg mb-2">
+                  {tonightPickIndex + 1} / {tonightPool.length || RECOMMENDATION_BATCH_SIZE}
+                </p>
 
                 <h2 className="text-lg md:text-xl font-serif text-foreground mb-0.5">
                   {getDisplayTitle(tonightPick)}
