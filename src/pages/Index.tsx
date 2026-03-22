@@ -206,6 +206,7 @@ const Index = () => {
         });
         setResults([movie]);
         setCurrentResultIndex(0);
+        setResultOrigin("home");
         setStep("result");
       }
     } catch (e) { console.error(e); }
