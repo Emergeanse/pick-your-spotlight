@@ -30,12 +30,11 @@ const BottomTabBar = () => {
               data-tour={`tab-${tab.id}`}
               onClick={() => {
                 if (tab.id === "home") {
-                  // Set global flag then navigate
-                  (window as any).__pickForceResetHome = true;
-                  if (location.pathname === "/app") {
-                    // Already on /app — force re-render by toggling a search param
-                    navigate("/app?_r=" + Date.now());
-                  } else {
+                  // Call reset function directly if available
+                  if (typeof (window as any).__pickResetHome === "function") {
+                    (window as any).__pickResetHome();
+                  }
+                  if (location.pathname !== "/app") {
                     navigate("/app");
                   }
                 } else {
