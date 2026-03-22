@@ -440,16 +440,21 @@ const Index = () => {
   };
 
 
-  const handleRestart = useCallback(() => {
-    resetToHomeView();
-  }, []);
-
   // Listen for home tab re-tap to reset to homepage
   useEffect(() => {
-    const handler = () => handleRestart();
+    const handler = () => {
+      setStep("home");
+      setResults([]);
+      setCurrentResultIndex(0);
+      setResultIndexHistory([]);
+      setSearchTags([]);
+      setShowChat(false);
+      setChatInitialMessages(undefined);
+      setChatSuggestedMovies(null);
+    };
     window.addEventListener("pick-reset-home", handler);
     return () => window.removeEventListener("pick-reset-home", handler);
-  }, [handleRestart]);
+  }, []);
 
   const handleRemoveTag = (tag: string) => {
     setSearchTags(prev => prev.filter(t => t !== tag));
