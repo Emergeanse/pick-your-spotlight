@@ -322,7 +322,30 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({
   const [rejectReaction, setRejectReaction] = useState<string | null>(null);
   const [showRefineSheet, setShowRefineSheet] = useState(false);
   const [showReviewSheet, setShowReviewSheet] = useState(false);
+  const [visitedIndices, setVisitedIndices] = useState<Set<number>>(() => new Set([currentIndex]));
   const { user } = useAuth();
+
+  // Track visited indices
+  useEffect(() => {
+    setVisitedIndices(prev => {
+      if (prev.has(currentIndex)) return prev;
+      const next = new Set(prev);
+      next.add(currentIndex);
+      return next;
+    });
+  }, [currentIndex]);
+
+  // Reset visited indices when a new batch is loaded (totalCount or first movie changes)
+  const batchKeyRef = useRef<string>("");
+  useEffect(() => {
+    const key = `${totalCount}-${movie.id}`;
+    if (batchKeyRef.current && batchKeyRef.current !== key && currentIndex === 0) {
+      setVisitedIndices(new Set([0]));
+    }
+    batchKeyRef.current = key;
+  }, [totalCount, movie.id, currentIndex]);
+
+  const allVisited = visitedIndices.size >= totalCount;
 
   const isWhyUnlocked = true;
 
@@ -602,20 +625,35 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({
                   }
                 }} />
 
-                <div className="flex items-center gap-4 mt-2">
-                  <button
-                    data-tour="autre-suggestion"
-                    onClick={() => onShowAnother()}
-                    disabled={refining}
-                    className="text-foreground/40 text-[12px] font-sans hover:text-foreground/60 transition-colors disabled:opacity-50 flex items-center gap-1.5"
-                  >
-                    {refining ? (
-                      <Loader2 className="w-3 h-3 animate-spin" />
-                    ) : (
-                      <Dices className="w-3 h-3" />
-                    )}
-                    5 autres suggestions
-                  </button>
+                <div className="flex flex-col items-center gap-1.5 mt-2">
+                  <div className="relative group">
+                    <button
+                      data-tour="autre-suggestion"
+                      onClick={() => onShowAnother()}
+                      disabled={refining || !allVisited}
+                      className={`text-[12px] font-sans transition-all flex items-center gap-1.5 ${
+                        allVisited
+                          ? "text-foreground/40 hover:text-foreground/60"
+                          : "text-foreground/20 cursor-not-allowed"
+                      } disabled:opacity-50`}
+                    >
+                      {refining ? (
+                        <Loader2 className="w-3 h-3 animate-spin" />
+                      ) : (
+                        <Dices className="w-3 h-3" />
+                      )}
+                      5 autres suggestions
+                    </button>
+                  </div>
+                  {!allVisited && (
+                    <motion.p
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className="text-foreground/25 text-[10px] font-sans text-center"
+                    >
+                      Parcourez les {totalCount} films pour débloquer ({visitedIndices.size}/{totalCount})
+                    </motion.p>
+                  )}
                 </div>
 
                 {refining && (

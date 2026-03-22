@@ -110,6 +110,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
   const [chatMoviesPool, setChatMoviesPool] = useState<MovieDetail[] | null>(null);
   const [movieMatchData, setMovieMatchData] = useState<Record<number, { confidence: number; reason: string }>>({});
   const [tonightPickIndex, setTonightPickIndex] = useState(0);
+  const [tonightVisitedIndices, setTonightVisitedIndices] = useState<Set<number>>(new Set([0]));
   const [quickFilters, setQuickFilters] = useState<QuickFilterState>({ mediaType: "both", maxDuration: null });
   
 
@@ -117,12 +118,19 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
   const canGoPrev = tonightPickIndex > 0;
   const canGoNext = tonightPickIndex < tonightPool.length - 1;
 
+  const tonightAllVisited = tonightVisitedIndices.size >= tonightPool.length && tonightPool.length > 0;
+
   const navigateTonightPick = (direction: "prev" | "next") => {
     const newIndex = direction === "next"
       ? Math.min(tonightPickIndex + 1, tonightPool.length - 1)
       : Math.max(tonightPickIndex - 1, 0);
     if (newIndex === tonightPickIndex) return;
     setTonightPickIndex(newIndex);
+    setTonightVisitedIndices(prev => {
+      const next = new Set(prev);
+      next.add(newIndex);
+      return next;
+    });
     const movie = tonightPool[newIndex];
     setTonightPick(movie);
     setTonightProviders([]);
@@ -136,6 +144,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
       const targetMovie = chatSuggestedMovies[startIdx];
       setChatMoviesPool(chatSuggestedMovies.slice(0, RECOMMENDATION_BATCH_SIZE));
       setTonightPickIndex(startIdx);
+      setTonightVisitedIndices(new Set([startIdx]));
       setTonightPick(targetMovie);
       setTonightProviders([]);
       const mediaType = targetMovie.first_air_date ? "tv" : "movie";
@@ -378,8 +387,9 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
       }
       clearInterval(msgInterval);
       if (movies.length > 0) {
-        setChatMoviesPool(movies);
+      setChatMoviesPool(movies);
         setTonightPickIndex(0);
+        setTonightVisitedIndices(new Set([0]));
         setTonightPick(movies[0]);
         const mediaType = movies[0].first_air_date ? "tv" : "movie";
         getWatchProviders(movies[0].id, mediaType).then(setTonightProviders).catch(() => {});
@@ -776,7 +786,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
                      }
                    }} />
  
-                   <div className="flex items-center gap-4 mt-2">
+                   <div className="flex flex-col items-center gap-1.5 mt-2">
                     <button
                       onClick={() => {
                         if (!tonightPick) return;
@@ -794,10 +804,15 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
                         setTonightPick(null);
                         setChatMoviesPool(null);
                         setTonightPickIndex(0);
+                        setTonightVisitedIndices(new Set([0]));
                         generateTonightPick(nextRejected, rejContext);
                       }}
-                      disabled={tonightLoading}
-                      className="text-foreground/40 text-[12px] font-sans hover:text-foreground/60 transition-colors disabled:opacity-50 flex items-center gap-1.5"
+                      disabled={tonightLoading || !tonightAllVisited}
+                      className={`text-[12px] font-sans transition-all flex items-center gap-1.5 ${
+                        tonightAllVisited
+                          ? "text-foreground/40 hover:text-foreground/60"
+                          : "text-foreground/20 cursor-not-allowed"
+                      } disabled:opacity-50`}
                     >
                       {tonightLoading ? (
                         <Loader2 className="w-3 h-3 animate-spin" />
@@ -806,6 +821,11 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
                       )}
                       5 autres suggestions
                     </button>
+                    {!tonightAllVisited && tonightPool.length > 0 && (
+                      <p className="text-foreground/25 text-[10px] font-sans text-center">
+                        Parcourez les {tonightPool.length} films pour débloquer ({tonightVisitedIndices.size}/{tonightPool.length})
+                      </p>
+                    )}
                   </div>
                 </div>
               </motion.div>
