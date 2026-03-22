@@ -18,7 +18,7 @@ import { getEngagementData, getProgressionMessage, getStreakLabel, type Engageme
 import type { Movie, MovieDetail } from "@/lib/tmdb";
 import BrandHeader from "./BrandHeader";
 import PickCharacter from "./PickCharacter";
-import QuickFilters, { type QuickFilterState } from "./QuickFilters";
+import QuickFilters, { type QuickFilterState, type ProfileDefaults } from "./QuickFilters";
 import TasteTrainer from "./TasteTrainer";
 import TrainingProgress from "./TrainingProgress";
 import DiscoverySection from "./DiscoverySection";
