@@ -144,6 +144,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
       const targetMovie = chatSuggestedMovies[startIdx];
       setChatMoviesPool(chatSuggestedMovies.slice(0, RECOMMENDATION_BATCH_SIZE));
       setTonightPickIndex(startIdx);
+      setTonightVisitedIndices(new Set([startIdx]));
       setTonightPick(targetMovie);
       setTonightProviders([]);
       const mediaType = targetMovie.first_air_date ? "tv" : "movie";
