@@ -484,8 +484,9 @@ const Index = () => {
                   // Came from another page (watchlist, together, etc.) — go back in browser history
                   navigate(-1);
                 } else {
-                  // Came from HomeScreen — restore tonight pick preview
+                  // Came from HomeScreen — restore tonight pick preview at the same index
                   if (results.length > 0) {
+                    setChatSuggestedStartIndex(currentResultIndex);
                     setChatSuggestedMovies(results);
                   }
                   setStep("home");
