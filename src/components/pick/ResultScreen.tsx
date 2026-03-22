@@ -162,7 +162,7 @@ const OptionsSheet = ({ open, onClose, onShowAnother, onRefineWithVoice }: { ope
               <button onClick={() => { onShowAnother(); onClose(); }}
                 className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-foreground/[0.04] border border-border/15 hover:bg-foreground/[0.08] transition-all">
                 <RefreshCw className="w-4 h-4 text-foreground/40" />
-                <span className="text-foreground/70 text-sm font-sans font-medium">Autres suggestions</span>
+                <span className="text-foreground/70 text-sm font-sans font-medium">5 autres suggestions</span>
               </button>
               {onRefineWithVoice && (
                 <button onClick={() => { onRefineWithVoice(); onClose(); }}
