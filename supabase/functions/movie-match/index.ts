@@ -194,7 +194,7 @@ RÈGLES :
 - Réponds UNIQUEMENT avec un JSON valide, sans markdown, sans backticks
 - Structure :
 {
-  "matchScore": <number 40-99>,
+  "matchScore": <number ${minMatchScore}-99>,
   "headline": "<accroche naturelle, 10 mots max>",
   "pickNote": "<1 phrase qui montre que Pick a compris la demande. Si aucun profil connu, null.>",
   "whyItMatches": "<1 phrase perso, ton conversationnel, tutoiement>",
@@ -205,6 +205,7 @@ RÈGLES :
   "similarLikedMovies": [],
   "matchingReasons": ["<raison courte, 2-4 mots>", ...max 4]
 }
+- SCORE MINIMUM : ${minMatchScore}%. Si le contenu ne matche pas à au moins ${minMatchScore}%, donne un score honnête mais ce film n'aurait pas dû être recommandé.
 - Score calibré : pas aligné → 40-60. Match parfait → 85-99.`
       : `Tu es Pick, un ami cinéphile passionné qui calcule un match score MULTI-VECTEUR. On te donne un film, le profil de goûts multi-dimensionnel d'un utilisateur, et sa session actuelle.
 
