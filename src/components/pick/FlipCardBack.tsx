@@ -183,7 +183,7 @@ const FlipCardBack = ({ item, type }: FlipCardBackProps) => {
   const filmography = actorCredits.length > 0 ? actorCredits : directorCredits;
 
   return (
-      <div className="relative flex h-full min-h-full flex-col overflow-y-auto bg-background px-4 py-4">
+    <div className="relative flex h-full min-h-full flex-col overflow-y-auto bg-background px-4 pt-10 pb-4">
       {(loading || hasError) && (
         <div className="mb-3 flex items-center justify-between rounded-full border border-border/40 bg-card/80 px-3 py-2 text-[10px] font-medium text-foreground/70 backdrop-blur-sm">
           <span>{loading ? "Chargement des détails…" : "Détails partiels affichés"}</span>
@@ -191,28 +191,30 @@ const FlipCardBack = ({ item, type }: FlipCardBackProps) => {
         </div>
       )}
 
-      <div className="mb-3 overflow-hidden rounded-2xl border border-border/20 bg-card/40">
+      <div className="mb-3 flex items-center gap-3">
         <img
-          src={getPersonPhotoUrl(item.profile_path, "w342")}
+          src={getPersonPhotoUrl(item.profile_path, "w185")}
           alt={item.name}
-          className="aspect-[3/4] w-full object-cover brightness-[1.14] contrast-[1.08] saturate-[1.18]"
+          className="h-16 w-12 shrink-0 rounded-xl object-cover border border-border/20 brightness-[1.14] contrast-[1.08] saturate-[1.18]"
         />
+        <div className="min-w-0">
+          <h3 className="text-base font-serif font-bold leading-tight text-foreground">{item.name}</h3>
+          {(detail?.known_for_department || item.known_for_department) && (
+            <p className="text-[10px] font-sans text-foreground/40">
+              {(detail?.known_for_department || item.known_for_department) === "Acting" ? "Acteur/Actrice" : "Réalisateur/Réalisatrice"}
+            </p>
+          )}
+          {detail?.birthday && (
+            <p className="text-[10px] font-sans text-foreground/25">
+              Né(e) le {new Date(detail.birthday).toLocaleDateString("fr-FR")}
+              {detail?.place_of_birth && ` · ${detail.place_of_birth.split(",").pop()?.trim()}`}
+            </p>
+          )}
+        </div>
       </div>
 
-      <h3 className="mb-1 text-base font-serif font-bold leading-tight text-foreground">{item.name}</h3>
-      {(detail?.known_for_department || item.known_for_department) && (
-        <p className="mb-1 text-[10px] font-sans text-foreground/40">
-          {(detail?.known_for_department || item.known_for_department) === "Acting" ? "Acteur/Actrice" : "Réalisateur/Réalisatrice"}
-        </p>
-      )}
-      {detail?.birthday && (
-        <p className="mb-2 text-[10px] font-sans text-foreground/25">
-          Né(e) le {new Date(detail.birthday).toLocaleDateString("fr-FR")}
-        </p>
-      )}
-
       {(detail?.biography || item?.known_for?.length) && (
-        <p className="mb-3 text-[11px] leading-relaxed text-foreground/55 line-clamp-5">
+        <p className="mb-3 text-[11px] leading-relaxed text-foreground/55 line-clamp-6">
           {detail?.biography || `Connu(e) pour ${item.known_for.map((entry: any) => entry.title || entry.name).filter(Boolean).slice(0, 4).join(", ")}.`}
         </p>
       )}
@@ -238,16 +240,9 @@ const FlipCardBack = ({ item, type }: FlipCardBackProps) => {
       )}
 
       {!loading && !detail?.biography && filmography.length === 0 && (
-        <div className="mt-2 overflow-hidden rounded-2xl border border-border/30 bg-card/60 p-3">
-          <img
-            src={getPersonPhotoUrl(item.profile_path, "w342")}
-            alt={item.name}
-            className="mb-3 aspect-[3/4] w-full rounded-xl object-cover"
-          />
-          <p className="text-[11px] leading-relaxed text-foreground/55">
-            Les détails complets ne sont pas encore disponibles pour cette personne.
-          </p>
-        </div>
+        <p className="mt-2 text-[11px] leading-relaxed text-foreground/55">
+          Les détails complets ne sont pas encore disponibles pour cette personne.
+        </p>
       )}
     </div>
   );
