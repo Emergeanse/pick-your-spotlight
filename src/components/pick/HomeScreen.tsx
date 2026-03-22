@@ -37,6 +37,7 @@ interface HomeScreenProps {
   forceCloseTrainer?: boolean;
   onTrainerOpened?: () => void;
   chatSuggestedMovies?: MovieDetail[] | null;
+  chatSuggestedStartIndex?: number;
   onChatSuggestedConsumed?: () => void;
   activationTrainerMode?: boolean;
   onActivationTrainingComplete?: () => void;
@@ -76,7 +77,7 @@ const LOADING_MESSAGES = [
 
 // Proactive messages are now time-aware — see getProactiveMessages()
 
-const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, openTrainerOnMount, forceCloseTrainer, onTrainerOpened, chatSuggestedMovies, onChatSuggestedConsumed, activationTrainerMode = false, onActivationTrainingComplete }: HomeScreenProps) => {
+const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, openTrainerOnMount, forceCloseTrainer, onTrainerOpened, chatSuggestedMovies, chatSuggestedStartIndex = 0, onChatSuggestedConsumed, activationTrainerMode = false, onActivationTrainingComplete }: HomeScreenProps) => {
   const navigate = useNavigate();
   const [isSurprising, setIsSurprising] = useState(false);
   const [surpriseMsg, setSurpriseMsg] = useState("");
@@ -131,16 +132,17 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
 
   useEffect(() => {
     if (chatSuggestedMovies && chatSuggestedMovies.length > 0) {
-      const firstMovie = chatSuggestedMovies[0];
+      const startIdx = Math.min(chatSuggestedStartIndex, chatSuggestedMovies.length - 1);
+      const targetMovie = chatSuggestedMovies[startIdx];
       setChatMoviesPool(chatSuggestedMovies.slice(0, RECOMMENDATION_BATCH_SIZE));
-      setTonightPickIndex(0);
-      setTonightPick(firstMovie);
+      setTonightPickIndex(startIdx);
+      setTonightPick(targetMovie);
       setTonightProviders([]);
-      const mediaType = firstMovie.first_air_date ? "tv" : "movie";
-      getWatchProviders(firstMovie.id, mediaType).then(setTonightProviders).catch(() => {});
+      const mediaType = targetMovie.first_air_date ? "tv" : "movie";
+      getWatchProviders(targetMovie.id, mediaType).then(setTonightProviders).catch(() => {});
       onChatSuggestedConsumed?.();
     }
-  }, [chatSuggestedMovies, onChatSuggestedConsumed]);
+  }, [chatSuggestedMovies, chatSuggestedStartIndex, onChatSuggestedConsumed]);
 
   // Open trainer from MyCinema navigation or activation flow
   useEffect(() => {
