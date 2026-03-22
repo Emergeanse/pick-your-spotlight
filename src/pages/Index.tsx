@@ -40,6 +40,8 @@ const Index = () => {
   const [loading, setLoading] = useState(false);
   const [currentResultIndex, setCurrentResultIndex] = useState(0);
   const [resultIndexHistory, setResultIndexHistory] = useState<number[]>([]);
+  // Track where the result view originated from: "home" (internal), "external" (cross-page nav)
+  const [resultOrigin, setResultOrigin] = useState<"home" | "external">("home");
   const [loadingMessage, setLoadingMessage] = useState("");
   const [showChat, setShowChat] = useState(false);
   
@@ -74,6 +76,15 @@ const Index = () => {
       setOpenTrainerOnMount(true);
       window.history.replaceState({}, "", "/app");
     }
+    // Handle selectedMovie from external pages (e.g. WatchlistRoute)
+    if ((location.state as any)?.selectedMovie) {
+      const movie = (location.state as any).selectedMovie as MovieDetail;
+      setResults([movie]);
+      setCurrentResultIndex(0);
+      setResultOrigin("external");
+      setStep("result");
+      window.history.replaceState({}, "", "/app");
+    }
   }, [location.state]);
 
   const loadChatMovie = useCallback(() => {
@@ -83,6 +94,7 @@ const Index = () => {
         const movie = JSON.parse(stored) as MovieDetail;
         setResults([movie]);
         setCurrentResultIndex(0);
+        setResultOrigin("external");
         setStep("result");
       } catch { /* ignore */ }
       sessionStorage.removeItem("pick-fab-movie");
@@ -178,10 +190,12 @@ const Index = () => {
         if (data?.movies && data.movies.length > 0) {
           setResults(data.movies.map((m: any) => m.movie));
           setCurrentResultIndex(0);
+          setResultOrigin("home");
           setStep("result");
         } else if (data?.movie) {
           setResults([data.movie]);
           setCurrentResultIndex(0);
+          setResultOrigin("home");
           setStep("result");
         }
       } else {
@@ -192,6 +206,7 @@ const Index = () => {
         });
         setResults([movie]);
         setCurrentResultIndex(0);
+        setResultOrigin("home");
         setStep("result");
       }
     } catch (e) { console.error(e); }
@@ -274,12 +289,14 @@ const Index = () => {
   const handleSurprise = (movies: MovieDetail[]) => {
     setResults(movies);
     setCurrentResultIndex(0);
+    setResultOrigin("home");
     setStep("result");
   };
 
   const handleMovieSelect = (movie: MovieDetail) => {
     setResults([movie]);
     setCurrentResultIndex(0);
+    setResultOrigin("home");
     setStep("result");
   };
 
@@ -451,8 +468,11 @@ const Index = () => {
                   const prev = resultIndexHistory[resultIndexHistory.length - 1];
                   setResultIndexHistory(h => h.slice(0, -1));
                   setCurrentResultIndex(prev);
+                } else if (resultOrigin === "external") {
+                  // Came from another page (watchlist, together, etc.) — go back in browser history
+                  navigate(-1);
                 } else {
-                  // Restore tonight pick movies so HomeScreen shows the preview again
+                  // Came from HomeScreen — restore tonight pick preview
                   if (results.length > 0) {
                     setChatSuggestedMovies(results);
                   }
