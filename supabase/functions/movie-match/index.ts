@@ -227,7 +227,7 @@ RÈGLES :
 - Réponds UNIQUEMENT avec un JSON valide, sans markdown, sans backticks
 - Structure :
 {
-  "matchScore": <number 40-99>,
+  "matchScore": <number ${minMatchScore}-99>,
   "headline": "<accroche naturelle et chaleureuse, 10 mots max>",
   "pickNote": "<1 phrase courte citant un goût spécifique de l'utilisateur. Si profil vide, null.>",
   "whyItMatches": "<1 phrase perso, ton conversationnel, tutoiement>",
@@ -250,6 +250,7 @@ RÈGLES :
 }
 - "scores.rejection_risk" : 0 = aucun risque, 100 = certain rejet. Basé sur similarité évitement + clusters rejetés.
 - "scores.fatigue" : 0 = aucune fatigue, 100 = genre totalement sur-exposé.
+- SCORE MINIMUM : ${minMatchScore}%. Ne propose un matchScore ≥ ${minMatchScore}% QUE si le film correspond vraiment au profil. Sois honnête : un film qui ne matche pas = score bas.
 - Score final calibré : session pas alignée → 40-60 max. Match parfait → 85-99.
 - Profil jeune (confiance < 40) = scores plus modérés`;
 
