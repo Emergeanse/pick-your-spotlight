@@ -441,14 +441,7 @@ const Index = () => {
 
 
   const handleRestart = useCallback(() => {
-    setStep("home");
-    setResults([]);
-    setCurrentResultIndex(0);
-    setResultIndexHistory([]);
-    setSearchTags([]);
-    setShowChat(false);
-    setChatInitialMessages(undefined);
-    setChatSuggestedMovies(null);
+    resetToHomeView();
   }, []);
 
   // Listen for home tab re-tap to reset to homepage
