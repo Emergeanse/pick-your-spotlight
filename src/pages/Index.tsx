@@ -340,6 +340,7 @@ const Index = () => {
   };
 
   const [chatSuggestedMovies, setChatSuggestedMovies] = useState<MovieDetail[] | null>(null);
+  const [chatSuggestedStartIndex, setChatSuggestedStartIndex] = useState(0);
 
   const handleMovieSuggested = async (movies: MovieDetail[], recapTags?: string[]) => {
     if (activeActivationMission === "talk_to_pick" && showActivation && user) {
