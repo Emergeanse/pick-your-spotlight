@@ -286,12 +286,14 @@ const Index = () => {
   const handleSurprise = (movies: MovieDetail[]) => {
     setResults(movies);
     setCurrentResultIndex(0);
+    setResultOrigin("home");
     setStep("result");
   };
 
   const handleMovieSelect = (movie: MovieDetail) => {
     setResults([movie]);
     setCurrentResultIndex(0);
+    setResultOrigin("home");
     setStep("result");
   };
 
