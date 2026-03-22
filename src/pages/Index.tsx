@@ -22,13 +22,14 @@ import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { recordAcceptedRecommendation, recordSkippedRecommendation } from "@/lib/engagement";
 import type { MovieDetail } from "@/lib/tmdb";
-import { getDisplayTitle, getSurpriseRecommendation } from "@/lib/tmdb";
+import { getDisplayTitle } from "@/lib/tmdb";
 import { trackInteraction, getUserTasteProfile } from "@/lib/interactions";
 import { usePickPlus } from "@/hooks/use-pick-plus";
 import { getTimeContextForPrompt } from "@/lib/time-context";
 import PickPlusPaywall from "@/components/pick/PickPlusPaywall";
 import { getLikedMovies } from "@/lib/liked-movies";
 import { computeUserTasteVector } from "@/lib/taste-engine";
+import { extractRecommendationMovies, ensureRecommendationBatch } from "@/lib/recommendation-batch";
 import { usePresenceTracker } from "@/hooks/use-presence";
 
 type Step = "home" | "result";
