@@ -211,6 +211,8 @@ const Index = () => {
     try {
       const liked = user ? await getLikedMovies() : [];
       const excludeIds = results.map(r => r.id);
+      let batch: MovieDetail[] = [];
+
       if (user && liked.length >= 2) {
         const userTasteVector = await computeUserTasteVector(user.id);
         const tasteProfile = await getUserTasteProfile();
@@ -223,31 +225,18 @@ const Index = () => {
           excludeIds,
           count: 5,
         });
-        if (data?.movies && data.movies.length > 0) {
-          setResults(data.movies.map((m: any) => m.movie));
-          setCurrentResultIndex(0);
-          setResultOrigin("home");
-          setStep("result");
-        } else if (data?.movie) {
-          setResults([data.movie]);
-          setCurrentResultIndex(0);
-          setResultOrigin("home");
-          setStep("result");
-        }
+        batch = await normalizeRecommendationBatch(extractRecommendationMovies(data), excludeIds);
       } else {
-        const movie = await getSurpriseRecommendation(excludeIds, {
-          platformIds: profilePrefs.preferredPlatforms,
-          minRating: profilePrefs.minRating,
-          excludedGenres: profilePrefs.excludedGenres,
-        });
-        setResults([movie]);
-        setCurrentResultIndex(0);
-        setResultOrigin("home");
-        setStep("result");
+        batch = await normalizeRecommendationBatch([], excludeIds);
       }
-    } catch (e) { console.error(e); }
-    finally { setLoading(false); }
-  }, [user, results, profilePrefs]);
+
+      openRecommendationBatch(batch);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  }, [normalizeRecommendationBatch, openRecommendationBatch, profilePrefs.excludedGenres, profilePrefs.excludedPlatforms, profilePrefs.minRating, profilePrefs.preferredPlatforms, results, user]);
 
   const handleActivationMission = (missionId: MissionId) => {
     setActiveActivationMission(missionId);
