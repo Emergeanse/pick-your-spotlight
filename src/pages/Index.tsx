@@ -72,20 +72,29 @@ const Index = () => {
   const watchlistGuideAwaitingLoad = useRef(false);
 
   useEffect(() => {
-    if ((location.state as any)?.openTrainer) {
+    const state = (location.state as any) || {};
+
+    if (state.resetHomeAt) {
+      handleRestart();
+      window.history.replaceState({}, "", "/app");
+      return;
+    }
+
+    if (state.openTrainer) {
       setOpenTrainerOnMount(true);
       window.history.replaceState({}, "", "/app");
     }
+
     // Handle selectedMovie from external pages (e.g. WatchlistRoute)
-    if ((location.state as any)?.selectedMovie) {
-      const movie = (location.state as any).selectedMovie as MovieDetail;
+    if (state.selectedMovie) {
+      const movie = state.selectedMovie as MovieDetail;
       setResults([movie]);
       setCurrentResultIndex(0);
       setResultOrigin("external");
       setStep("result");
       window.history.replaceState({}, "", "/app");
     }
-  }, [location.state]);
+  }, [location.state, handleRestart]);
 
   const loadChatMovie = useCallback(() => {
     const stored = sessionStorage.getItem("pick-fab-movie");

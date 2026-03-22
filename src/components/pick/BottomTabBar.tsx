@@ -30,11 +30,12 @@ const BottomTabBar = () => {
               data-tour={`tab-${tab.id}`}
               onClick={() => {
                 if (tab.id === "home") {
-                  // Always reset to "Trouver un film" home screen
+                  // Always reset to the "Trouver un film" home screen
                   window.dispatchEvent(new Event("pick-reset-home"));
-                  if (location.pathname !== "/app") {
-                    navigate("/app");
-                  }
+                  navigate("/app", {
+                    state: { resetHomeAt: Date.now() },
+                    replace: location.pathname === "/app",
+                  });
                 } else {
                   navigate(tab.path);
                 }
