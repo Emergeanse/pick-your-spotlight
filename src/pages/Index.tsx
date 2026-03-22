@@ -452,6 +452,10 @@ const Index = () => {
                   setResultIndexHistory(h => h.slice(0, -1));
                   setCurrentResultIndex(prev);
                 } else {
+                  // Restore tonight pick movies so HomeScreen shows the preview again
+                  if (results.length > 0) {
+                    setChatSuggestedMovies(results);
+                  }
                   setStep("home");
                 }
               }}
