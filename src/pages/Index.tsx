@@ -113,16 +113,14 @@ const Index = () => {
       window.history.replaceState({}, "", "/app");
     }
 
-    // Handle selectedMovie from external pages (e.g. WatchlistRoute)
     if (state.selectedMovie) {
       const movie = state.selectedMovie as MovieDetail;
-      setResults([movie]);
-      setCurrentResultIndex(0);
-      setResultOrigin("external");
-      setStep("result");
+      normalizeRecommendationBatch([movie], [movie.id])
+        .then((batch) => openRecommendationBatch(batch, "external"))
+        .catch(() => openRecommendationBatch([movie], "external"));
       window.history.replaceState({}, "", "/app");
     }
-  }, [location.state]);
+  }, [location.state, normalizeRecommendationBatch, openRecommendationBatch]);
 
   const loadChatMovie = useCallback(() => {
     const stored = sessionStorage.getItem("pick-fab-movie");
