@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence, PanInfo, useMotionValue, useTransform } from "framer-motion";
-import { ChevronLeft, ChevronRight, Loader2, Sparkles, ArrowRight, SkipForward, Film, Users, Tv, Clapperboard } from "lucide-react";
+import { ChevronLeft, ChevronRight, Loader2, Sparkles, ArrowRight, SkipForward, Film, Users, Tv, Clapperboard, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getPosterUrl, getDisplayTitle } from "@/lib/tmdb";
 import { likeMovie } from "@/lib/liked-movies";
