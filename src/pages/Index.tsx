@@ -367,55 +367,56 @@ const Index = () => {
       trackInteraction(currentMovie.id, "skipped", {});
     }
     if (currentMovie && user) recordSkippedRecommendation(user.id);
-    if (currentResultIndex < results.length - 1 && !rejectReason) {
-      setCurrentResultIndex(i => i + 1);
-    } else {
-      setLoading(true);
-      try {
-        const tasteProfile = await getUserTasteProfile();
-        const excludeIds = [...results.map(r => r.id), ...(tasteProfile?.excludeIds || [])];
-        const rejectionContext = rejectReason && rejectedMovie ? {
-          reason: rejectReason,
-          rejectedGenres: (rejectedMovie.genres || []).map(g => g.name),
-          rejectedTitle: getDisplayTitle(rejectedMovie),
-          rejectedRating: rejectedMovie.vote_average,
-          rejectedRuntime: rejectedMovie.runtime,
-        } : undefined;
 
-        if (user) {
-          const liked = await getLikedMovies();
-          if (liked.length >= 2) {
-            const [userTasteVector] = await Promise.all([computeUserTasteVector(user.id)]);
-            const data = await invokeSurprisePersonalized({
-              likedMovies: liked, userTasteVector, tasteProfile,
-              platformIds: profilePrefs.preferredPlatforms,
-              excludedPlatformIds: profilePrefs.excludedPlatforms,
-              excludedGenres: profilePrefs.excludedGenres,
-              minRating: profilePrefs.minRating,
-              excludeIds, rejectionContext,
-              count: 5,
-            });
-            if (data?.movies && data.movies.length > 0) {
-              const newMovies = data.movies.map((m: any) => m.movie);
-              setResults(prev => [...prev, ...newMovies]);
-              setCurrentResultIndex(i => i + 1);
-            } else if (data?.movie) {
-              setResults(prev => [...prev, data.movie]);
-              setCurrentResultIndex(i => i + 1);
-            }
-          } else {
-            const movie = await getSurpriseRecommendation(excludeIds, {
-              platformIds: profilePrefs.preferredPlatforms,
-              minRating: profilePrefs.minRating,
-              excludedGenres: profilePrefs.excludedGenres,
-            });
-            setResults(prev => [...prev, movie]);
-            setCurrentResultIndex(i => i + 1);
+    // "Autres suggestions" (no reject reason) or at end of list with reject: always fetch fresh batch
+    setLoading(true);
+    try {
+      const tasteProfile = await getUserTasteProfile();
+      const excludeIds = [...results.map(r => r.id), ...(tasteProfile?.excludeIds || [])];
+      const rejectionContext = rejectReason && rejectedMovie ? {
+        reason: rejectReason,
+        rejectedGenres: (rejectedMovie.genres || []).map(g => g.name),
+        rejectedTitle: getDisplayTitle(rejectedMovie),
+        rejectedRating: rejectedMovie.vote_average,
+        rejectedRuntime: rejectedMovie.runtime,
+      } : undefined;
+
+      if (user) {
+        const liked = await getLikedMovies();
+        if (liked.length >= 2) {
+          const [userTasteVector] = await Promise.all([computeUserTasteVector(user.id)]);
+          const data = await invokeSurprisePersonalized({
+            likedMovies: liked, userTasteVector, tasteProfile,
+            platformIds: profilePrefs.preferredPlatforms,
+            excludedPlatformIds: profilePrefs.excludedPlatforms,
+            excludedGenres: profilePrefs.excludedGenres,
+            minRating: profilePrefs.minRating,
+            excludeIds, rejectionContext,
+            count: 5,
+          });
+          if (data?.movies && data.movies.length > 0) {
+            const newMovies = data.movies.map((m: any) => m.movie);
+            setResults(newMovies);
+            setCurrentResultIndex(0);
+            setResultIndexHistory([]);
+          } else if (data?.movie) {
+            setResults([data.movie]);
+            setCurrentResultIndex(0);
+            setResultIndexHistory([]);
           }
+        } else {
+          const movie = await getSurpriseRecommendation(excludeIds, {
+            platformIds: profilePrefs.preferredPlatforms,
+            minRating: profilePrefs.minRating,
+            excludedGenres: profilePrefs.excludedGenres,
+          });
+          setResults([movie]);
+          setCurrentResultIndex(0);
+          setResultIndexHistory([]);
         }
-      } catch (e) { console.error(e); }
-      finally { setLoading(false); }
-    }
+      }
+    } catch (e) { console.error(e); }
+    finally { setLoading(false); }
   };
 
 
