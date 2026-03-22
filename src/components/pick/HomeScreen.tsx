@@ -506,7 +506,6 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
                           setTonightPick(null);
                           setChatMoviesPool(null);
                           setTonightPickIndex(0);
-                          setTonightMaxSeen(0);
                           generateTonightPick(rejectedIds);
                         }}
                         className="group w-full text-left rounded-xl p-4 bg-primary/10 border border-primary/30 hover:border-primary/50 hover:bg-primary/15 transition-all"
