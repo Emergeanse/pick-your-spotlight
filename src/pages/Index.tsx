@@ -85,12 +85,6 @@ const Index = () => {
   useEffect(() => {
     const state = (location.state as any) || {};
 
-    if (state.resetHomeAt) {
-      resetToHomeView();
-      window.history.replaceState({}, "", "/app");
-      return;
-    }
-
     if (state.openTrainer) {
       setOpenTrainerOnMount(true);
       window.history.replaceState({}, "", "/app");
@@ -440,16 +434,21 @@ const Index = () => {
   };
 
 
-  const handleRestart = useCallback(() => {
-    resetToHomeView();
-  }, []);
-
-  // Listen for home tab re-tap to reset to homepage
+  // Listen for home tab re-tap to reset to homepage (kept as fallback)
   useEffect(() => {
-    const handler = () => handleRestart();
+    const handler = () => {
+      setStep("home");
+      setResults([]);
+      setCurrentResultIndex(0);
+      setResultIndexHistory([]);
+      setSearchTags([]);
+      setShowChat(false);
+      setChatInitialMessages(undefined);
+      setChatSuggestedMovies(null);
+    };
     window.addEventListener("pick-reset-home", handler);
     return () => window.removeEventListener("pick-reset-home", handler);
-  }, [handleRestart]);
+  }, []);
 
   const handleRemoveTag = (tag: string) => {
     setSearchTags(prev => prev.filter(t => t !== tag));
