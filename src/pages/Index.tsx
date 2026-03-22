@@ -190,10 +190,12 @@ const Index = () => {
         if (data?.movies && data.movies.length > 0) {
           setResults(data.movies.map((m: any) => m.movie));
           setCurrentResultIndex(0);
+          setResultOrigin("home");
           setStep("result");
         } else if (data?.movie) {
           setResults([data.movie]);
           setCurrentResultIndex(0);
+          setResultOrigin("home");
           setStep("result");
         }
       } else {
