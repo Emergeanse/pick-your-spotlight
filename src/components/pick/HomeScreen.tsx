@@ -666,7 +666,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
                         const moviesToPass = chatMoviesPool && chatMoviesPool.length > 0
                           ? chatMoviesPool
                           : [tonightPick];
-                        onSurprise(moviesToPass);
+                        onSurprise(moviesToPass, tonightPickIndex);
                       }}
                     />
                     {showArrows && (
