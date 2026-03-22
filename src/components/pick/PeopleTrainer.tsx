@@ -225,9 +225,9 @@ const PeopleTrainer = ({ onBack, filterDepartment }: PeopleTrainerProps) => {
                       className="absolute inset-0 h-full w-full object-cover brightness-[1.3] contrast-[1.08] saturate-[1.3]"
                       draggable={false}
                     />
-                    <div className="pointer-events-none absolute inset-0 rounded-[1.75rem] ring-1 ring-inset ring-white/10" />
+                    <div className="pointer-events-none absolute inset-0 rounded-[1.75rem] ring-1 ring-inset ring-white/10 z-[1]" />
 
-                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-background via-background/60 to-transparent px-4 pt-20 pb-4">
+                    <div className="absolute inset-x-0 bottom-0 z-[2] bg-gradient-to-t from-background via-background/70 to-transparent px-4 pt-24 pb-4">
                       <h3 className="mb-0.5 text-lg font-serif font-bold text-white drop-shadow-md leading-tight">{currentPerson.name}</h3>
                       <p className="mb-1 text-[11px] font-sans text-white/55">
                         {isDirector ? "Réalisateur/Réalisatrice" : "Acteur/Actrice"}
@@ -245,7 +245,7 @@ const PeopleTrainer = ({ onBack, filterDepartment }: PeopleTrainerProps) => {
                       )}
                     </div>
 
-                    <div className="absolute top-3 right-3 rounded-full bg-background/30 px-2 py-1 backdrop-blur-sm">
+                    <div className="absolute top-3 right-3 z-[2] rounded-full bg-background/30 px-2 py-1 backdrop-blur-sm">
                       <span className="text-[9px] font-sans text-white/50">Tap pour détails</span>
                     </div>
 
