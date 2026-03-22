@@ -78,6 +78,7 @@ const Index = () => {
     setResults([]);
     setCurrentResultIndex(0);
     setResultIndexHistory([]);
+    setResultVisitedIndices(new Set([0]));
     setSearchTags([]);
     setShowChat(false);
     setChatInitialMessages(undefined);
