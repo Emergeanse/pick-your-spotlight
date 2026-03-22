@@ -434,18 +434,21 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({
         <div className="relative z-10 flex flex-col justify-end min-h-screen px-5 pb-[calc(1.5rem+env(safe-area-inset-bottom))] md:px-12 lg:px-16 md:pb-12">
           <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.2 }} className="max-w-xl">
             {/* Navigation counter */}
-            {totalCount >= 1 && (
-              <div className="flex items-center justify-center gap-3 mb-4">
+            {totalCount > 1 && (
+              <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
+                className="flex items-center justify-center gap-4 mb-5">
                 <button onClick={onPrevious} disabled={currentIndex <= 0}
-                  className="w-8 h-8 rounded-full bg-foreground/10 backdrop-blur-sm flex items-center justify-center transition-all active:scale-95 disabled:opacity-20">
-                  <ChevronLeft className="w-4 h-4 text-foreground/70" />
+                  className="w-10 h-10 rounded-full bg-card/60 backdrop-blur-md border border-border/30 flex items-center justify-center transition-all active:scale-90 disabled:opacity-30 disabled:cursor-not-allowed shadow-lg">
+                  <ChevronLeft className="w-5 h-5 text-foreground" />
                 </button>
-                <span className="text-foreground/50 text-xs font-sans font-medium tabular-nums">{currentIndex + 1} / {totalCount}</span>
+                <span className="text-foreground text-sm font-sans font-semibold tabular-nums px-3 py-1 rounded-full bg-card/60 backdrop-blur-md border border-border/30 shadow-lg">
+                  {currentIndex + 1} / {totalCount}
+                </span>
                 <button onClick={onNext} disabled={currentIndex >= totalCount - 1}
-                  className="w-8 h-8 rounded-full bg-foreground/10 backdrop-blur-sm flex items-center justify-center transition-all active:scale-95 disabled:opacity-20">
-                  <ChevronRight className="w-4 h-4 text-foreground/70" />
+                  className="w-10 h-10 rounded-full bg-card/60 backdrop-blur-md border border-border/30 flex items-center justify-center transition-all active:scale-90 disabled:opacity-30 disabled:cursor-not-allowed shadow-lg">
+                  <ChevronRight className="w-5 h-5 text-foreground" />
                 </button>
-              </div>
+              </motion.div>
             )}
 
             {/* Poster + Title */}
