@@ -7,6 +7,7 @@ import FlipCardBack from "./FlipCardBack";
 
 interface PeopleTrainerProps {
   onBack?: () => void;
+  filterDepartment?: "Acting" | "Directing";
 }
 
 const RATING_BUTTONS = [
@@ -18,7 +19,7 @@ const RATING_BUTTONS = [
     toneClass: "bg-[hsl(var(--primary)/0.18)] border-[hsl(var(--primary)/0.30)] text-primary hover:bg-[hsl(var(--primary)/0.26)]" },
 ];
 
-const PeopleTrainer = ({ onBack }: PeopleTrainerProps) => {
+const PeopleTrainer = ({ onBack, filterDepartment }: PeopleTrainerProps) => {
   const { user } = useAuth();
   const [people, setPeople] = useState<any[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -36,16 +37,27 @@ const PeopleTrainer = ({ onBack }: PeopleTrainerProps) => {
     try {
       const randomPage = Math.floor(Math.random() * 30) + p;
       const results = await fetchPopularPeople(randomPage);
-      const filtered = results.filter(p => !processedIds.has(p.id));
+      const filtered = results.filter(person => {
+        if (processedIds.has(person.id)) return false;
+        if (filterDepartment && person.known_for_department !== filterDepartment) return false;
+        return true;
+      });
       setPeople(prev => [...prev, ...filtered]);
     } catch (e) {
       console.error("Failed to load people:", e);
     } finally {
       setLoading(false);
     }
-  }, [processedIds]);
+  }, [processedIds, filterDepartment]);
 
-  useEffect(() => { loadPeople(1); }, []);
+  useEffect(() => {
+    setPeople([]);
+    setCurrentIndex(0);
+    setHistory([]);
+    setFlipped(false);
+    setPage(1);
+    loadPeople(1);
+  }, [filterDepartment]);
 
   useEffect(() => {
     if (people.length - currentIndex < 3 && !loading) {
@@ -141,8 +153,8 @@ const PeopleTrainer = ({ onBack }: PeopleTrainerProps) => {
           <div className="relative mx-auto w-full max-w-[280px]" style={{ width: "min(68vw, 30vh, 280px)", perspective: "1200px" }}>
             {nextPerson && !flipped && (
               <div className="absolute inset-0 -z-10">
-                <div className="h-full w-full translate-y-3 scale-[0.94] overflow-hidden rounded-[1.75rem] border border-white/10 opacity-30 aspect-[3/4]">
-                  <img src={getPersonPhotoUrl(nextPerson.profile_path, "w342")} alt="" className="h-full w-full object-cover" />
+                <div className="h-full w-full translate-y-3 scale-[0.94] overflow-hidden rounded-[1.75rem] border border-white/10 opacity-50 aspect-[3/4]">
+                  <img src={getPersonPhotoUrl(nextPerson.profile_path, "w342")} alt="" className="h-full w-full object-cover brightness-[1.2] saturate-[1.2]" />
                 </div>
               </div>
             )}
@@ -170,10 +182,9 @@ const PeopleTrainer = ({ onBack }: PeopleTrainerProps) => {
                     <img
                       src={getPersonPhotoUrl(currentPerson.profile_path, "w780")}
                       alt={currentPerson.name}
-                      className="absolute inset-0 h-full w-full object-cover brightness-[1.2] contrast-[1.08] saturate-[1.18]"
+                      className="absolute inset-0 h-full w-full object-cover brightness-[1.3] contrast-[1.08] saturate-[1.3]"
                       draggable={false}
                     />
-                    <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,hsl(var(--foreground)/0.1)_0%,transparent_24%,transparent_100%)] mix-blend-screen" />
                     <div className="pointer-events-none absolute inset-0 rounded-[1.75rem] ring-1 ring-inset ring-white/10" />
 
                     <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-background via-background/50 to-transparent px-5 pt-20 pb-5">
