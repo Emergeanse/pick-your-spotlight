@@ -241,7 +241,7 @@ const Admin = () => {
     <div className="fixed inset-0 bg-background overflow-y-auto">
       <div className="max-w-4xl mx-auto p-5 pb-20">
         <button
-          onClick={() => navigate("/app")}
+          onClick={() => navigate(-1)}
           className="flex items-center gap-2 text-foreground/50 hover:text-foreground text-sm font-sans mb-6 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />

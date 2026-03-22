@@ -444,7 +444,7 @@ const Index = () => {
             <ResultScreen
               movie={results[currentResultIndex]}
               onShowAnother={handleShowAnother}
-              onRestart={handleRestart}
+              onRestart={() => setStep("home")}
               onRefineWithVoice={handleRefineWithVoice}
               onRefineWithMessage={async (message) => {
                 const currentMovie = results[currentResultIndex];
