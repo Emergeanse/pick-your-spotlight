@@ -29,7 +29,7 @@ import { useNavigate } from "react-router-dom";
 interface HomeScreenProps {
   onStart: () => void;
   onOpenChat: () => void;
-  onSurprise: (movies: MovieDetail[]) => void;
+  onSurprise: (movies: MovieDetail[], startIndex?: number) => void;
   onMovieSelect: (movie: MovieDetail) => void;
   loading: boolean;
   openTrainerOnMount?: boolean;
