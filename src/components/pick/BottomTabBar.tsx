@@ -30,8 +30,14 @@ const BottomTabBar = () => {
               data-tour={`tab-${tab.id}`}
               onClick={() => {
                 if (tab.id === "home") {
-                  // Force reset to "Trouver un film" home screen via URL param
-                  navigate("/app?reset=" + Date.now(), { replace: location.pathname === "/app" });
+                  // Set global flag then navigate
+                  (window as any).__pickForceResetHome = true;
+                  if (location.pathname === "/app") {
+                    // Already on /app — force re-render by toggling a search param
+                    navigate("/app?_r=" + Date.now());
+                  } else {
+                    navigate("/app");
+                  }
                 } else {
                   navigate(tab.path);
                 }
