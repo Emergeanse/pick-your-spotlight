@@ -376,7 +376,6 @@ const Index = () => {
   };
 
   const handleShowAnother = async (rejectReason?: string, rejectedMovie?: MovieDetail) => {
-    // Advance watchlist guide
     if (watchlistGuideStep === "autre-suggestion") {
       setWatchlistGuideStep(null);
       watchlistGuideAwaitingLoad.current = true;
@@ -388,7 +387,6 @@ const Index = () => {
     }
     if (currentMovie && user) recordSkippedRecommendation(user.id);
 
-    // "Autres suggestions" (no reject reason) or at end of list with reject: always fetch fresh batch
     setLoading(true);
     try {
       const tasteProfile = await getUserTasteProfile();
@@ -401,6 +399,7 @@ const Index = () => {
         rejectedRuntime: rejectedMovie.runtime,
       } : undefined;
 
+      let batch: MovieDetail[] = [];
       if (user) {
         const liked = await getLikedMovies();
         if (liked.length >= 2) {
@@ -414,29 +413,22 @@ const Index = () => {
             excludeIds, rejectionContext,
             count: 5,
           });
-          if (data?.movies && data.movies.length > 0) {
-            const newMovies = data.movies.map((m: any) => m.movie);
-            setResults(newMovies);
-            setCurrentResultIndex(0);
-            setResultIndexHistory([]);
-          } else if (data?.movie) {
-            setResults([data.movie]);
-            setCurrentResultIndex(0);
-            setResultIndexHistory([]);
-          }
+          batch = await normalizeRecommendationBatch(extractRecommendationMovies(data), excludeIds);
         } else {
-          const movie = await getSurpriseRecommendation(excludeIds, {
-            platformIds: profilePrefs.preferredPlatforms,
-            minRating: profilePrefs.minRating,
-            excludedGenres: profilePrefs.excludedGenres,
-          });
-          setResults([movie]);
-          setCurrentResultIndex(0);
-          setResultIndexHistory([]);
+          batch = await normalizeRecommendationBatch([], excludeIds);
         }
+      } else {
+        batch = await normalizeRecommendationBatch([], excludeIds);
       }
-    } catch (e) { console.error(e); }
-    finally { setLoading(false); }
+
+      setResults(batch);
+      setCurrentResultIndex(0);
+      setResultIndexHistory([]);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
   };
 
 
