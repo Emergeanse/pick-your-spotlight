@@ -82,10 +82,9 @@ const Index = () => {
     setChatSuggestedMovies(null);
   };
 
-  // Check for forced home reset (from Accueil tab click)
+  // Expose reset function globally for BottomTabBar
   useEffect(() => {
-    if ((window as any).__pickForceResetHome) {
-      (window as any).__pickForceResetHome = false;
+    (window as any).__pickResetHome = () => {
       setStep("home");
       setResults([]);
       setCurrentResultIndex(0);
@@ -94,9 +93,9 @@ const Index = () => {
       setShowChat(false);
       setChatInitialMessages(undefined);
       setChatSuggestedMovies(null);
-      window.history.replaceState({}, "", "/app");
-    }
-  }, [location.search, location.pathname]);
+    };
+    return () => { delete (window as any).__pickResetHome; };
+  }, []);
 
   useEffect(() => {
     const state = (location.state as any) || {};
