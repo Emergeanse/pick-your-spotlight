@@ -342,26 +342,37 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
             explorationLevel,
             mediaType: quickFilters.mediaType !== "both" ? quickFilters.mediaType : whatChoice,
             maxDuration: quickFilters.maxDuration,
-            count: 5,
+            count: RECOMMENDATION_BATCH_SIZE,
           });
-          if (data?.movies && data.movies.length > 0) {
-            movies = data.movies.map((m: any) => m.movie as MovieDetail);
-            const matchMap: Record<number, { confidence: number; reason: string }> = {};
-            data.movies.forEach((m: any) => {
-              if (m.movie?.id) matchMap[m.movie.id] = { confidence: m.confidence || 75, reason: m.reason || "" };
-            });
-            setMovieMatchData(prev => ({ ...prev, ...matchMap }));
-          } else if (data?.movie) {
-            movies = [data.movie as MovieDetail];
-            if (data.confidence) setMovieMatchData(prev => ({ ...prev, [data.movie.id]: { confidence: data.confidence, reason: data.reason || "" } }));
-          }
+          movies = await ensureRecommendationBatch(extractRecommendationMovies(data), {
+            excludeIds: allExcludeIds,
+            platformIds: userPlatformIds,
+            minRating: userMinRating,
+            excludedGenres: userExcludedGenres,
+            size: RECOMMENDATION_BATCH_SIZE,
+          });
+          const matchMap: Record<number, { confidence: number; reason: string }> = {};
+          (data?.movies || []).forEach((m: any) => {
+            if (m.movie?.id) matchMap[m.movie.id] = { confidence: m.confidence || 75, reason: m.reason || "" };
+          });
+          setMovieMatchData(prev => ({ ...prev, ...matchMap }));
         } else {
-          const movie = await getSurpriseRecommendation(excludeList, { platformIds: userPlatformIds, minRating: userMinRating, excludedGenres: userExcludedGenres });
-          movies = [movie];
+          movies = await ensureRecommendationBatch([], {
+            excludeIds: allExcludeIds,
+            platformIds: userPlatformIds,
+            minRating: userMinRating,
+            excludedGenres: userExcludedGenres,
+            size: RECOMMENDATION_BATCH_SIZE,
+          });
         }
       } else {
-        const movie = await getSurpriseRecommendation(excludeList, { platformIds: userPlatformIds, minRating: userMinRating, excludedGenres: userExcludedGenres });
-        movies = [movie];
+        movies = await ensureRecommendationBatch([], {
+          excludeIds: allExcludeIds,
+          platformIds: userPlatformIds,
+          minRating: userMinRating,
+          excludedGenres: userExcludedGenres,
+          size: RECOMMENDATION_BATCH_SIZE,
+        });
       }
       clearInterval(msgInterval);
       if (movies.length > 0) {
@@ -373,15 +384,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
       }
     } catch (e) {
       console.error(e);
-      try {
-        const movie = await getSurpriseRecommendation(excludeList, { platformIds: userPlatformIds, minRating: userMinRating, excludedGenres: userExcludedGenres });
-        clearInterval(msgInterval);
-        setTonightPick(movie);
-        const mediaType = movie.first_air_date ? "tv" : "movie";
-        getWatchProviders(movie.id, mediaType).then(setTonightProviders).catch(() => {});
-      } catch {
-        clearInterval(msgInterval);
-      }
+      clearInterval(msgInterval);
     } finally {
       setTonightLoading(false);
       setTonightLoadingMsg("");
