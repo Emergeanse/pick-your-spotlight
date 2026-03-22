@@ -284,7 +284,13 @@ Recommande ${requestedCount > 1 ? `${requestedCount} contenus` : "UN contenu"} a
         const jsonStr = content.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
         const parsed = JSON.parse(jsonStr);
         if (requestedCount > 1 && parsed.suggestions) {
-          suggestions = parsed.suggestions;
+          suggestions = parsed.suggestions.filter((s: any) => (s.confidence || 0) >= minMatchScore);
+          // If all filtered out, keep the best ones
+          if (suggestions.length === 0) {
+            suggestions = parsed.suggestions
+              .sort((a: any, b: any) => (b.confidence || 0) - (a.confidence || 0))
+              .slice(0, requestedCount);
+          }
         } else if (parsed.title) {
           suggestions = [parsed];
         } else { aiFailed = true; }
