@@ -322,7 +322,30 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({
   const [rejectReaction, setRejectReaction] = useState<string | null>(null);
   const [showRefineSheet, setShowRefineSheet] = useState(false);
   const [showReviewSheet, setShowReviewSheet] = useState(false);
+  const [visitedIndices, setVisitedIndices] = useState<Set<number>>(() => new Set([currentIndex]));
   const { user } = useAuth();
+
+  // Track visited indices
+  useEffect(() => {
+    setVisitedIndices(prev => {
+      if (prev.has(currentIndex)) return prev;
+      const next = new Set(prev);
+      next.add(currentIndex);
+      return next;
+    });
+  }, [currentIndex]);
+
+  // Reset visited indices when a new batch is loaded (totalCount or first movie changes)
+  const batchKeyRef = useRef<string>("");
+  useEffect(() => {
+    const key = `${totalCount}-${movie.id}`;
+    if (batchKeyRef.current && batchKeyRef.current !== key && currentIndex === 0) {
+      setVisitedIndices(new Set([0]));
+    }
+    batchKeyRef.current = key;
+  }, [totalCount, movie.id, currentIndex]);
+
+  const allVisited = visitedIndices.size >= totalCount;
 
   const isWhyUnlocked = true;
 
