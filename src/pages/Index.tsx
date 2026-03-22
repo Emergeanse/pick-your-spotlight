@@ -71,11 +71,22 @@ const Index = () => {
   const [talkToPickGuideStep, setTalkToPickGuideStep] = useState<TalkToPickGuideStep>(null);
   const watchlistGuideAwaitingLoad = useRef(false);
 
+  const resetToHomeView = () => {
+    setStep("home");
+    setResults([]);
+    setCurrentResultIndex(0);
+    setResultIndexHistory([]);
+    setSearchTags([]);
+    setShowChat(false);
+    setChatInitialMessages(undefined);
+    setChatSuggestedMovies(null);
+  };
+
   useEffect(() => {
     const state = (location.state as any) || {};
 
     if (state.resetHomeAt) {
-      handleRestart();
+      resetToHomeView();
       window.history.replaceState({}, "", "/app");
       return;
     }
@@ -94,7 +105,7 @@ const Index = () => {
       setStep("result");
       window.history.replaceState({}, "", "/app");
     }
-  }, [location.state, handleRestart]);
+  }, [location.state]);
 
   const loadChatMovie = useCallback(() => {
     const stored = sessionStorage.getItem("pick-fab-movie");
