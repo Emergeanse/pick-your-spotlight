@@ -7,12 +7,13 @@ import WhoStep, { type WhoOption } from "./WhoStep";
 import WhatStep, { type WhatOption } from "./WhatStep";
 import ExplorationStep from "./ExplorationStep";
 import StepLayout from "./StepLayout";
-import { getTrendingMovies, getBackdropUrl, getSurpriseRecommendation, getPosterUrl, getDisplayTitle, getWatchProviders } from "@/lib/tmdb";
+import { getTrendingMovies, getBackdropUrl, getPosterUrl, getDisplayTitle, getWatchProviders } from "@/lib/tmdb";
 import { getLikedMovies } from "@/lib/liked-movies";
 import { trackInteraction, getUserTasteProfile } from "@/lib/interactions";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
-import { computeUserTasteVector, computeMultiVectorProfile } from "@/lib/taste-engine";
+import { computeMultiVectorProfile } from "@/lib/taste-engine";
+import { extractRecommendationMovies, ensureRecommendationBatch, RECOMMENDATION_BATCH_SIZE } from "@/lib/recommendation-batch";
 import { getEngagementData, getProgressionMessage, getStreakLabel, type EngagementData } from "@/lib/engagement";
 import type { Movie, MovieDetail } from "@/lib/tmdb";
 import BrandHeader from "./BrandHeader";
@@ -108,20 +109,16 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
   const [chatMoviesPool, setChatMoviesPool] = useState<MovieDetail[] | null>(null);
   const [movieMatchData, setMovieMatchData] = useState<Record<number, { confidence: number; reason: string }>>({});
   const [tonightPickIndex, setTonightPickIndex] = useState(0);
-  const [tonightMaxSeen, setTonightMaxSeen] = useState(0);
   const [quickFilters, setQuickFilters] = useState<QuickFilterState>({ mediaType: "both", maxDuration: null });
   
 
-  // All movies available for tonight pick navigation (chat pool or single generated)
-  const tonightPool: MovieDetail[] = chatMoviesPool || (tonightPick ? [tonightPick] : []);
-  // Can go back if not at first film; can go forward only to already-seen films
+  const tonightPool: MovieDetail[] = chatMoviesPool || [];
   const canGoPrev = tonightPickIndex > 0;
-  const canGoNext = tonightPickIndex < tonightMaxSeen;
-  const showArrows = canGoPrev || canGoNext;
+  const canGoNext = tonightPickIndex < tonightPool.length - 1;
 
   const navigateTonightPick = (direction: "prev" | "next") => {
     const newIndex = direction === "next"
-      ? Math.min(tonightPickIndex + 1, tonightMaxSeen)
+      ? Math.min(tonightPickIndex + 1, tonightPool.length - 1)
       : Math.max(tonightPickIndex - 1, 0);
     if (newIndex === tonightPickIndex) return;
     setTonightPickIndex(newIndex);
@@ -132,21 +129,18 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
     getWatchProviders(movie.id, mediaType).then(setTonightProviders).catch(() => {});
   };
 
-  // When chat suggests movies, show the first one in the tonightPick preview
-  // Store the full pool but reset maxSeen to 0 so user must use "Autre suggestion" to reveal more
   useEffect(() => {
     if (chatSuggestedMovies && chatSuggestedMovies.length > 0) {
       const firstMovie = chatSuggestedMovies[0];
-      setChatMoviesPool(chatSuggestedMovies);
+      setChatMoviesPool(chatSuggestedMovies.slice(0, RECOMMENDATION_BATCH_SIZE));
       setTonightPickIndex(0);
-      setTonightMaxSeen(0);
       setTonightPick(firstMovie);
       setTonightProviders([]);
       const mediaType = firstMovie.first_air_date ? "tv" : "movie";
       getWatchProviders(firstMovie.id, mediaType).then(setTonightProviders).catch(() => {});
       onChatSuggestedConsumed?.();
     }
-  }, [chatSuggestedMovies]);
+  }, [chatSuggestedMovies, onChatSuggestedConsumed]);
 
   // Open trainer from MyCinema navigation or activation flow
   useEffect(() => {
@@ -260,7 +254,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
     }, 500);
 
     try {
-      let movie: MovieDetail;
+      let batch: MovieDetail[] = [];
 
       if (user) {
         const liked = await getLikedMovies();
@@ -276,39 +270,44 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
             avoidanceVector: multiProfile?.avoidanceVector || null,
             platformIds: userPlatformIds, excludedPlatformIds: userExcludedPlatformIds, excludedGenres: userExcludedGenres, minRating: userMinRating,
             outOfComfortZone: true, excludeIds: historyExcludeIds,
-            count: 5,
+            count: RECOMMENDATION_BATCH_SIZE,
           });
-          if (data?.movies && data.movies.length > 0) {
-            const allMovies = data.movies.map((m: any) => { const mv = m.movie as MovieDetail; (mv as any)._surpriseComfortZone = true; return mv; });
-            clearInterval(msgInterval);
-            setSurpriseMsg("✨ Trouvé !");
-            await new Promise(r => setTimeout(r, 400));
-            onSurprise(allMovies);
-            return;
-          }
-          movie = data.movie as MovieDetail;
-          (movie as any)._surpriseComfortZone = true;
+          batch = await ensureRecommendationBatch(extractRecommendationMovies(data), {
+            excludeIds: historyExcludeIds,
+            platformIds: userPlatformIds,
+            minRating: userMinRating,
+            excludedGenres: userExcludedGenres,
+            size: RECOMMENDATION_BATCH_SIZE,
+          });
+          batch.forEach((movie) => {
+            (movie as any)._surpriseComfortZone = true;
+          });
         } else {
-          movie = await getSurpriseRecommendation([], { platformIds: userPlatformIds, minRating: userMinRating, excludedGenres: userExcludedGenres });
+          batch = await ensureRecommendationBatch([], {
+            excludeIds: historyExcludeIds,
+            platformIds: userPlatformIds,
+            minRating: userMinRating,
+            excludedGenres: userExcludedGenres,
+            size: RECOMMENDATION_BATCH_SIZE,
+          });
         }
       } else {
-        movie = await getSurpriseRecommendation([], { platformIds: userPlatformIds, minRating: userMinRating, excludedGenres: userExcludedGenres });
+        batch = await ensureRecommendationBatch([], {
+          platformIds: userPlatformIds,
+          minRating: userMinRating,
+          excludedGenres: userExcludedGenres,
+          size: RECOMMENDATION_BATCH_SIZE,
+        });
       }
 
       clearInterval(msgInterval);
       setSurpriseMsg("✨ Trouvé !");
       await new Promise(r => setTimeout(r, 400));
-      onSurprise([movie]);
+      onSurprise(batch);
     } catch (e) {
       console.error(e);
-      try {
-        const movie = await getSurpriseRecommendation([], { platformIds: userPlatformIds, minRating: userMinRating, excludedGenres: userExcludedGenres });
-        clearInterval(msgInterval);
-        onSurprise([movie]);
-      } catch {
-        clearInterval(msgInterval);
-      }
     } finally {
+      clearInterval(msgInterval);
       setIsSurprising(false);
       setSurpriseMsg("");
     }
@@ -343,26 +342,37 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
             explorationLevel,
             mediaType: quickFilters.mediaType !== "both" ? quickFilters.mediaType : whatChoice,
             maxDuration: quickFilters.maxDuration,
-            count: 5,
+            count: RECOMMENDATION_BATCH_SIZE,
           });
-          if (data?.movies && data.movies.length > 0) {
-            movies = data.movies.map((m: any) => m.movie as MovieDetail);
-            const matchMap: Record<number, { confidence: number; reason: string }> = {};
-            data.movies.forEach((m: any) => {
-              if (m.movie?.id) matchMap[m.movie.id] = { confidence: m.confidence || 75, reason: m.reason || "" };
-            });
-            setMovieMatchData(prev => ({ ...prev, ...matchMap }));
-          } else if (data?.movie) {
-            movies = [data.movie as MovieDetail];
-            if (data.confidence) setMovieMatchData(prev => ({ ...prev, [data.movie.id]: { confidence: data.confidence, reason: data.reason || "" } }));
-          }
+          movies = await ensureRecommendationBatch(extractRecommendationMovies(data), {
+            excludeIds: allExcludeIds,
+            platformIds: userPlatformIds,
+            minRating: userMinRating,
+            excludedGenres: userExcludedGenres,
+            size: RECOMMENDATION_BATCH_SIZE,
+          });
+          const matchMap: Record<number, { confidence: number; reason: string }> = {};
+          (data?.movies || []).forEach((m: any) => {
+            if (m.movie?.id) matchMap[m.movie.id] = { confidence: m.confidence || 75, reason: m.reason || "" };
+          });
+          setMovieMatchData(prev => ({ ...prev, ...matchMap }));
         } else {
-          const movie = await getSurpriseRecommendation(excludeList, { platformIds: userPlatformIds, minRating: userMinRating, excludedGenres: userExcludedGenres });
-          movies = [movie];
+          movies = await ensureRecommendationBatch([], {
+            excludeIds: allExcludeIds,
+            platformIds: userPlatformIds,
+            minRating: userMinRating,
+            excludedGenres: userExcludedGenres,
+            size: RECOMMENDATION_BATCH_SIZE,
+          });
         }
       } else {
-        const movie = await getSurpriseRecommendation(excludeList, { platformIds: userPlatformIds, minRating: userMinRating, excludedGenres: userExcludedGenres });
-        movies = [movie];
+        movies = await ensureRecommendationBatch([], {
+          excludeIds: allExcludeIds,
+          platformIds: userPlatformIds,
+          minRating: userMinRating,
+          excludedGenres: userExcludedGenres,
+          size: RECOMMENDATION_BATCH_SIZE,
+        });
       }
       clearInterval(msgInterval);
       if (movies.length > 0) {
@@ -374,15 +384,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
       }
     } catch (e) {
       console.error(e);
-      try {
-        const movie = await getSurpriseRecommendation(excludeList, { platformIds: userPlatformIds, minRating: userMinRating, excludedGenres: userExcludedGenres });
-        clearInterval(msgInterval);
-        setTonightPick(movie);
-        const mediaType = movie.first_air_date ? "tv" : "movie";
-        getWatchProviders(movie.id, mediaType).then(setTonightProviders).catch(() => {});
-      } catch {
-        clearInterval(msgInterval);
-      }
+      clearInterval(msgInterval);
     } finally {
       setTonightLoading(false);
       setTonightLoadingMsg("");
@@ -504,7 +506,6 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
                           setTonightPick(null);
                           setChatMoviesPool(null);
                           setTonightPickIndex(0);
-                          setTonightMaxSeen(0);
                           generateTonightPick(rejectedIds);
                         }}
                         className="group w-full text-left rounded-xl p-4 bg-primary/10 border border-primary/30 hover:border-primary/50 hover:bg-primary/15 transition-all"
@@ -645,15 +646,13 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
 
                 {tonightPick.poster_path && (
                   <div className="relative flex items-center gap-3 mb-3">
-                    {showArrows && (
-                      <button
-                        onClick={() => navigateTonightPick("prev")}
-                        disabled={!canGoPrev}
-                        className="w-8 h-8 rounded-full bg-foreground/10 backdrop-blur-sm flex items-center justify-center transition-all active:scale-95 disabled:opacity-20"
-                      >
-                        <ChevronLeft className="w-4 h-4 text-foreground/70" />
-                      </button>
-                    )}
+                    <button
+                      onClick={() => navigateTonightPick("prev")}
+                      disabled={!canGoPrev}
+                      className="w-10 h-10 rounded-full bg-card/60 backdrop-blur-md border border-border/30 flex items-center justify-center transition-all active:scale-90 disabled:opacity-30 disabled:cursor-not-allowed shadow-lg"
+                    >
+                      <ChevronLeft className="w-5 h-5 text-foreground" />
+                    </button>
                     <motion.img
                       key={tonightPick.id}
                       initial={{ opacity: 0, scale: 0.9 }}
@@ -669,23 +668,19 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
                         onSurprise(moviesToPass, tonightPickIndex);
                       }}
                     />
-                    {showArrows && (
-                      <button
-                        onClick={() => navigateTonightPick("next")}
-                        disabled={!canGoNext}
-                        className="w-8 h-8 rounded-full bg-foreground/10 backdrop-blur-sm flex items-center justify-center transition-all active:scale-95 disabled:opacity-20"
-                      >
-                        <ChevronRight className="w-4 h-4 text-foreground/70" />
-                      </button>
-                    )}
+                    <button
+                      onClick={() => navigateTonightPick("next")}
+                      disabled={!canGoNext}
+                      className="w-10 h-10 rounded-full bg-card/60 backdrop-blur-md border border-border/30 flex items-center justify-center transition-all active:scale-90 disabled:opacity-30 disabled:cursor-not-allowed shadow-lg"
+                    >
+                      <ChevronRight className="w-5 h-5 text-foreground" />
+                    </button>
                   </div>
                 )}
 
-                {showArrows && (
-                  <p className="text-foreground/30 text-[10px] font-sans mb-1">
-                    {tonightPickIndex + 1} / {tonightMaxSeen + 1}
-                  </p>
-                )}
+                <p className="text-foreground text-sm font-sans font-semibold tabular-nums px-3 py-1 rounded-full bg-card/60 backdrop-blur-md border border-border/30 shadow-lg mb-2">
+                  {tonightPickIndex + 1} / {tonightPool.length || RECOMMENDATION_BATCH_SIZE}
+                </p>
 
                 <h2 className="text-lg md:text-xl font-serif text-foreground mb-0.5">
                   {getDisplayTitle(tonightPick)}
@@ -758,7 +753,6 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
                        if (tonightPool.length > 1 && tonightPickIndex < tonightPool.length - 1) {
                          const newIndex = tonightPickIndex + 1;
                          setTonightPickIndex(newIndex);
-                         setTonightMaxSeen(prev => Math.max(prev, newIndex));
                          const nextMovie = tonightPool[newIndex];
                          setTonightPick(nextMovie);
                          setTonightProviders([]);
@@ -775,12 +769,11 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
                          setTonightPick(null);
                          setChatMoviesPool(null);
                          setTonightPickIndex(0);
-                         setTonightMaxSeen(0);
                          generateTonightPick(nextRejected, rejContext);
                        }
                      }
                    }} />
-
+ 
                    <div className="flex items-center gap-4 mt-2">
                     <button
                       onClick={() => {
@@ -789,31 +782,17 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
                           reason: "not_my_style",
                           genres: (tonightPick.genres || []).map(g => g.name),
                         });
-                        // If there are more movies in the pool, advance
-                        if (tonightPool.length > 1 && tonightPickIndex < tonightPool.length - 1) {
-                          const newIndex = tonightPickIndex + 1;
-                          setTonightPickIndex(newIndex);
-                          setTonightMaxSeen(prev => Math.max(prev, newIndex));
-                          const nextMovie = tonightPool[newIndex];
-                          setTonightPick(nextMovie);
-                          setTonightProviders([]);
-                          const mediaType = nextMovie.first_air_date ? "tv" : "movie";
-                          getWatchProviders(nextMovie.id, mediaType).then(setTonightProviders).catch(() => {});
-                        } else {
-                          // Pool exhausted — regenerate
-                          const nextRejected = [...rejectedIds, tonightPick.id];
-                          const rejContext = {
-                            reason: "not_my_style" as const,
-                            rejectedGenres: (tonightPick.genres || []).map(g => g.name),
-                            rejectedTitle: getDisplayTitle(tonightPick),
-                          };
-                          setRejectedIds(nextRejected);
-                          setTonightPick(null);
-                          setChatMoviesPool(null);
-                          setTonightPickIndex(0);
-                          setTonightMaxSeen(0);
-                          generateTonightPick(nextRejected, rejContext);
-                        }
+                        const nextRejected = [...rejectedIds, tonightPick.id];
+                        const rejContext = {
+                          reason: "not_my_style" as const,
+                          rejectedGenres: (tonightPick.genres || []).map(g => g.name),
+                          rejectedTitle: getDisplayTitle(tonightPick),
+                        };
+                        setRejectedIds(nextRejected);
+                        setTonightPick(null);
+                        setChatMoviesPool(null);
+                        setTonightPickIndex(0);
+                        generateTonightPick(nextRejected, rejContext);
                       }}
                       disabled={tonightLoading}
                       className="text-foreground/40 text-[12px] font-sans hover:text-foreground/60 transition-colors disabled:opacity-50 flex items-center gap-1.5"
@@ -823,7 +802,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
                       ) : (
                         <Dices className="w-3 h-3" />
                       )}
-                      Autre suggestion
+                      5 autres suggestions
                     </button>
                   </div>
                 </div>

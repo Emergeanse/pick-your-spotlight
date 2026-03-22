@@ -22,13 +22,14 @@ import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { recordAcceptedRecommendation, recordSkippedRecommendation } from "@/lib/engagement";
 import type { MovieDetail } from "@/lib/tmdb";
-import { getDisplayTitle, getSurpriseRecommendation } from "@/lib/tmdb";
+import { getDisplayTitle } from "@/lib/tmdb";
 import { trackInteraction, getUserTasteProfile } from "@/lib/interactions";
 import { usePickPlus } from "@/hooks/use-pick-plus";
 import { getTimeContextForPrompt } from "@/lib/time-context";
 import PickPlusPaywall from "@/components/pick/PickPlusPaywall";
 import { getLikedMovies } from "@/lib/liked-movies";
 import { computeUserTasteVector } from "@/lib/taste-engine";
+import { extractRecommendationMovies, ensureRecommendationBatch } from "@/lib/recommendation-batch";
 import { usePresenceTracker } from "@/hooks/use-presence";
 
 type Step = "home" | "result";
@@ -82,6 +83,28 @@ const Index = () => {
     setChatSuggestedMovies(null);
   };
 
+  const normalizeRecommendationBatch = useCallback(
+    (movies: MovieDetail[], excludeIds: number[] = []) =>
+      ensureRecommendationBatch(movies, {
+        excludeIds,
+        platformIds: profilePrefs.preferredPlatforms,
+        minRating: profilePrefs.minRating,
+        excludedGenres: profilePrefs.excludedGenres,
+      }),
+    [profilePrefs.excludedGenres, profilePrefs.minRating, profilePrefs.preferredPlatforms],
+  );
+
+  const openRecommendationBatch = useCallback(
+    (movies: MovieDetail[], origin: "home" | "external" = "home", startIndex = 0) => {
+      setResults(movies);
+      setCurrentResultIndex(Math.min(startIndex, Math.max(movies.length - 1, 0)));
+      setResultIndexHistory([]);
+      setResultOrigin(origin);
+      setStep("result");
+    },
+    [],
+  );
+
   useEffect(() => {
     const state = (location.state as any) || {};
 
@@ -90,31 +113,30 @@ const Index = () => {
       window.history.replaceState({}, "", "/app");
     }
 
-    // Handle selectedMovie from external pages (e.g. WatchlistRoute)
     if (state.selectedMovie) {
       const movie = state.selectedMovie as MovieDetail;
-      setResults([movie]);
-      setCurrentResultIndex(0);
-      setResultOrigin("external");
-      setStep("result");
+      normalizeRecommendationBatch([movie], [movie.id])
+        .then((batch) => openRecommendationBatch(batch, "external"))
+        .catch(() => openRecommendationBatch([movie], "external"));
       window.history.replaceState({}, "", "/app");
     }
-  }, [location.state]);
+  }, [location.state, normalizeRecommendationBatch, openRecommendationBatch]);
 
   const loadChatMovie = useCallback(() => {
     const stored = sessionStorage.getItem("pick-fab-movie");
     if (stored) {
       try {
         const movie = JSON.parse(stored) as MovieDetail;
-        setResults([movie]);
-        setCurrentResultIndex(0);
-        setResultOrigin("external");
-        setStep("result");
-      } catch { /* ignore */ }
+        normalizeRecommendationBatch([movie], [movie.id])
+          .then((batch) => openRecommendationBatch(batch, "external"))
+          .catch(() => openRecommendationBatch([movie], "external"));
+      } catch {
+        /* ignore */
+      }
       sessionStorage.removeItem("pick-fab-movie");
     }
     window.history.replaceState({}, "", "/app");
-  }, []);
+  }, [normalizeRecommendationBatch, openRecommendationBatch]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -189,6 +211,8 @@ const Index = () => {
     try {
       const liked = user ? await getLikedMovies() : [];
       const excludeIds = results.map(r => r.id);
+      let batch: MovieDetail[] = [];
+
       if (user && liked.length >= 2) {
         const userTasteVector = await computeUserTasteVector(user.id);
         const tasteProfile = await getUserTasteProfile();
@@ -201,31 +225,18 @@ const Index = () => {
           excludeIds,
           count: 5,
         });
-        if (data?.movies && data.movies.length > 0) {
-          setResults(data.movies.map((m: any) => m.movie));
-          setCurrentResultIndex(0);
-          setResultOrigin("home");
-          setStep("result");
-        } else if (data?.movie) {
-          setResults([data.movie]);
-          setCurrentResultIndex(0);
-          setResultOrigin("home");
-          setStep("result");
-        }
+        batch = await normalizeRecommendationBatch(extractRecommendationMovies(data), excludeIds);
       } else {
-        const movie = await getSurpriseRecommendation(excludeIds, {
-          platformIds: profilePrefs.preferredPlatforms,
-          minRating: profilePrefs.minRating,
-          excludedGenres: profilePrefs.excludedGenres,
-        });
-        setResults([movie]);
-        setCurrentResultIndex(0);
-        setResultOrigin("home");
-        setStep("result");
+        batch = await normalizeRecommendationBatch([], excludeIds);
       }
-    } catch (e) { console.error(e); }
-    finally { setLoading(false); }
-  }, [user, results, profilePrefs]);
+
+      openRecommendationBatch(batch);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  }, [normalizeRecommendationBatch, openRecommendationBatch, profilePrefs.excludedGenres, profilePrefs.excludedPlatforms, profilePrefs.minRating, profilePrefs.preferredPlatforms, results, user]);
 
   const handleActivationMission = (missionId: MissionId) => {
     setActiveActivationMission(missionId);
@@ -300,18 +311,14 @@ const Index = () => {
 
   const handleStart = () => {};
 
-  const handleSurprise = (movies: MovieDetail[], startIndex: number = 0) => {
-    setResults(movies);
-    setCurrentResultIndex(startIndex);
-    setResultOrigin("home");
-    setStep("result");
+  const handleSurprise = async (movies: MovieDetail[], startIndex: number = 0) => {
+    const batch = await normalizeRecommendationBatch(movies);
+    openRecommendationBatch(batch, "home", startIndex);
   };
 
-  const handleMovieSelect = (movie: MovieDetail) => {
-    setResults([movie]);
-    setCurrentResultIndex(0);
-    setResultOrigin("home");
-    setStep("result");
+  const handleMovieSelect = async (movie: MovieDetail) => {
+    const batch = await normalizeRecommendationBatch([movie], [movie.id]);
+    openRecommendationBatch(batch, "home");
   };
 
   const handleOpenChat = () => {
@@ -335,7 +342,6 @@ const Index = () => {
   const [chatSuggestedMovies, setChatSuggestedMovies] = useState<MovieDetail[] | null>(null);
 
   const handleMovieSuggested = async (movies: MovieDetail[], recapTags?: string[]) => {
-    // During "talk_to_pick" activation mission: record chat, close chat, skip result
     if (activeActivationMission === "talk_to_pick" && showActivation && user) {
       const today = new Date().toISOString().split("T")[0];
       await supabase.from("daily_usage").upsert(
@@ -351,8 +357,8 @@ const Index = () => {
 
     if (recapTags && recapTags.length > 0) setSearchTags(recapTags);
     setShowChat(false);
-    // Show the tonight pick preview on HomeScreen instead of going to ResultScreen directly
-    setChatSuggestedMovies(movies);
+    const batch = await normalizeRecommendationBatch(movies);
+    setChatSuggestedMovies(batch);
     setStep("home");
   };
 
@@ -370,7 +376,6 @@ const Index = () => {
   };
 
   const handleShowAnother = async (rejectReason?: string, rejectedMovie?: MovieDetail) => {
-    // Advance watchlist guide
     if (watchlistGuideStep === "autre-suggestion") {
       setWatchlistGuideStep(null);
       watchlistGuideAwaitingLoad.current = true;
@@ -382,7 +387,6 @@ const Index = () => {
     }
     if (currentMovie && user) recordSkippedRecommendation(user.id);
 
-    // "Autres suggestions" (no reject reason) or at end of list with reject: always fetch fresh batch
     setLoading(true);
     try {
       const tasteProfile = await getUserTasteProfile();
@@ -395,6 +399,7 @@ const Index = () => {
         rejectedRuntime: rejectedMovie.runtime,
       } : undefined;
 
+      let batch: MovieDetail[] = [];
       if (user) {
         const liked = await getLikedMovies();
         if (liked.length >= 2) {
@@ -408,29 +413,22 @@ const Index = () => {
             excludeIds, rejectionContext,
             count: 5,
           });
-          if (data?.movies && data.movies.length > 0) {
-            const newMovies = data.movies.map((m: any) => m.movie);
-            setResults(newMovies);
-            setCurrentResultIndex(0);
-            setResultIndexHistory([]);
-          } else if (data?.movie) {
-            setResults([data.movie]);
-            setCurrentResultIndex(0);
-            setResultIndexHistory([]);
-          }
+          batch = await normalizeRecommendationBatch(extractRecommendationMovies(data), excludeIds);
         } else {
-          const movie = await getSurpriseRecommendation(excludeIds, {
-            platformIds: profilePrefs.preferredPlatforms,
-            minRating: profilePrefs.minRating,
-            excludedGenres: profilePrefs.excludedGenres,
-          });
-          setResults([movie]);
-          setCurrentResultIndex(0);
-          setResultIndexHistory([]);
+          batch = await normalizeRecommendationBatch([], excludeIds);
         }
+      } else {
+        batch = await normalizeRecommendationBatch([], excludeIds);
       }
-    } catch (e) { console.error(e); }
-    finally { setLoading(false); }
+
+      setResults(batch);
+      setCurrentResultIndex(0);
+      setResultIndexHistory([]);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
   };
 
 
@@ -515,18 +513,18 @@ const Index = () => {
                     },
                   });
                   if (error) throw error;
-                  if (data?.movie) {
+                  const newMovies = extractRecommendationMovies(data);
+                  if (newMovies.length > 0) {
                     if (data.recap?.length > 0) setSearchTags(prev => { const merged = [...prev]; data.recap.forEach((t: string) => { if (!merged.includes(t)) merged.push(t); }); return merged; });
-                    const newMovies: MovieDetail[] = data.movies && data.movies.length > 0
-                      ? data.movies as MovieDetail[]
-                      : [data.movie as MovieDetail];
-                    setResults(prev => [...prev, ...newMovies]);
-                    setCurrentResultIndex(results.length);
+                    const batch = await normalizeRecommendationBatch(newMovies, results.map(result => result.id));
+                    setResults(batch);
+                    setCurrentResultIndex(0);
+                    setResultIndexHistory([]);
                   }
                 } catch (e) { console.error("Refine error:", e); }
                 finally { setLoading(false); setLoadingMessage(""); }
               }}
-              
+
               hasMore={currentResultIndex < results.length - 1}
               userCriteria={{ mood: null, context: null, time: null }}
               searchTags={searchTags}
