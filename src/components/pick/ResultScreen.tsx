@@ -305,6 +305,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({
   hasMore, userCriteria, alternativeMovies, onSelectAlternative,
   searchTags, onRemoveTag, refining, profileConfidence = 0,
   currentIndex = 0, totalCount = 1, onNext, onPrevious,
+  visitedIndices: externalVisited, onVisitedIndicesChange,
 }, ref) => {
   const [providers, setProviders] = useState<{ name: string; logo_path: string; provider_id: number }[]>([]);
   const [credits, setCredits] = useState<MovieCredits | null>(null);
