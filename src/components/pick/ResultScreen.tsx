@@ -162,7 +162,7 @@ const OptionsSheet = ({ open, onClose, onShowAnother, onRefineWithVoice }: { ope
               <button onClick={() => { onShowAnother(); onClose(); }}
                 className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-foreground/[0.04] border border-border/15 hover:bg-foreground/[0.08] transition-all">
                 <RefreshCw className="w-4 h-4 text-foreground/40" />
-                <span className="text-foreground/70 text-sm font-sans font-medium">Autre suggestion</span>
+                <span className="text-foreground/70 text-sm font-sans font-medium">Autres suggestions</span>
               </button>
               {onRefineWithVoice && (
                 <button onClick={() => { onRefineWithVoice(); onClose(); }}
@@ -434,7 +434,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({
         <div className="relative z-10 flex flex-col justify-end min-h-screen px-5 pb-[calc(1.5rem+env(safe-area-inset-bottom))] md:px-12 lg:px-16 md:pb-12">
           <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.2 }} className="max-w-xl">
             {/* Navigation counter */}
-            {totalCount > 1 && (
+            {totalCount >= 1 && (
               <div className="flex items-center justify-center gap-3 mb-4">
                 <button onClick={onPrevious} disabled={currentIndex <= 0}
                   className="w-8 h-8 rounded-full bg-foreground/10 backdrop-blur-sm flex items-center justify-center transition-all active:scale-95 disabled:opacity-20">
