@@ -34,7 +34,8 @@ serve(async (req) => {
   }
 
   try {
-    const { movie, userCriteria, tasteProfile, userTasteVector, likedMovieTitles, searchTags, cinematicProfile, peoplePreferences } = await req.json();
+    const { movie, userCriteria, tasteProfile, userTasteVector, likedMovieTitles, searchTags, cinematicProfile, peoplePreferences, userName, minMatchScore: rawMinMatchScore } = await req.json();
+    const minMatchScore = typeof rawMinMatchScore === "number" ? Math.max(0, Math.min(100, rawMinMatchScore)) : 80;
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
@@ -193,7 +194,7 @@ RÈGLES :
 - Réponds UNIQUEMENT avec un JSON valide, sans markdown, sans backticks
 - Structure :
 {
-  "matchScore": <number 40-99>,
+  "matchScore": <number ${minMatchScore}-99>,
   "headline": "<accroche naturelle, 10 mots max>",
   "pickNote": "<1 phrase qui montre que Pick a compris la demande. Si aucun profil connu, null.>",
   "whyItMatches": "<1 phrase perso, ton conversationnel, tutoiement>",
@@ -204,6 +205,7 @@ RÈGLES :
   "similarLikedMovies": [],
   "matchingReasons": ["<raison courte, 2-4 mots>", ...max 4]
 }
+- SCORE MINIMUM : ${minMatchScore}%. Si le contenu ne matche pas à au moins ${minMatchScore}%, donne un score honnête mais ce film n'aurait pas dû être recommandé.
 - Score calibré : pas aligné → 40-60. Match parfait → 85-99.`
       : `Tu es Pick, un ami cinéphile passionné qui calcule un match score MULTI-VECTEUR. On te donne un film, le profil de goûts multi-dimensionnel d'un utilisateur, et sa session actuelle.
 
@@ -225,7 +227,7 @@ RÈGLES :
 - Réponds UNIQUEMENT avec un JSON valide, sans markdown, sans backticks
 - Structure :
 {
-  "matchScore": <number 40-99>,
+  "matchScore": <number ${minMatchScore}-99>,
   "headline": "<accroche naturelle et chaleureuse, 10 mots max>",
   "pickNote": "<1 phrase courte citant un goût spécifique de l'utilisateur. Si profil vide, null.>",
   "whyItMatches": "<1 phrase perso, ton conversationnel, tutoiement>",
@@ -248,6 +250,7 @@ RÈGLES :
 }
 - "scores.rejection_risk" : 0 = aucun risque, 100 = certain rejet. Basé sur similarité évitement + clusters rejetés.
 - "scores.fatigue" : 0 = aucune fatigue, 100 = genre totalement sur-exposé.
+- SCORE MINIMUM : ${minMatchScore}%. Ne propose un matchScore ≥ ${minMatchScore}% QUE si le film correspond vraiment au profil. Sois honnête : un film qui ne matche pas = score bas.
 - Score final calibré : session pas alignée → 40-60 max. Match parfait → 85-99.
 - Profil jeune (confiance < 40) = scores plus modérés`;
 

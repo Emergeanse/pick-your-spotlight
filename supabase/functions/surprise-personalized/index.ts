@@ -44,6 +44,7 @@ serve(async (req) => {
       minRating: rawMinRating, rejectionContext, outOfComfortZone,
       explorationLevel: rawExplorationLevel, mediaType: rawMediaType,
       count: rawCount, maxDuration: rawMaxDuration,
+      minMatchScore: rawMinMatchScore,
     } = await req.json();
 
     const maxDuration = typeof rawMaxDuration === "number" && rawMaxDuration > 0 ? rawMaxDuration : null;
@@ -51,6 +52,7 @@ serve(async (req) => {
     const minRating = typeof rawMinRating === "number" ? Math.min(rawMinRating, 8) : 0;
     const explorationLevel = typeof rawExplorationLevel === "number" ? Math.max(0, Math.min(10, rawExplorationLevel)) : 5;
     const mediaType: "movie" | "tv" | "both" = rawMediaType === "tv" ? "tv" : rawMediaType === "movie" ? "movie" : "both";
+    const minMatchScore = typeof rawMinMatchScore === "number" ? Math.max(0, Math.min(100, rawMinMatchScore)) : 80;
     // For single requests, pick randomly. For multi-requests with "both", we'll force a mix below.
     const searchType: "movie" | "tv" = mediaType === "both" ? (Math.random() < 0.5 ? "movie" : "tv") : mediaType;
 
@@ -232,6 +234,7 @@ RÈGLES JSON :
 - Réponds UNIQUEMENT avec un JSON valide sans backticks
 ${requestedCount > 1 ? `- Structure : {"suggestions": [{"title": "<titre>", "reason": "<2-3 phrases>", "confidence": <0-100>, "scores": {"stable_taste": <0-100>, "recent_taste": <0-100>, "context": <0-100>, "rejection_risk": <0-100>, "quality": <0-100>, "novelty": <0-100>, "fatigue": <0-100>}}, ...]}
 - EXACTEMENT ${requestedCount} suggestions DIFFÉRENTES` : `- Structure : {"title": "<titre>", "reason": "<2-3 phrases>", "confidence": <0-100>, "scores": {"stable_taste": <0-100>, "recent_taste": <0-100>, "context": <0-100>, "rejection_risk": <0-100>, "quality": <0-100>, "novelty": <0-100>, "fatigue": <0-100>}}`}
+- SCORE DE CONFIANCE MINIMUM : ${minMatchScore}% — Ne propose QUE des contenus dont tu es confiant à au moins ${minMatchScore}%. Si tu n'es pas sûr à ${minMatchScore}%, ne le propose pas.
 - IDs TMDB exclus : ${normalizedExcludeIds.length > 0 ? normalizedExcludeIds.slice(0, 200).join(", ") : "aucun"}
 ${effectiveOutOfComfortZone ? `- MODE HORS ZONE DE CONFORT ACTIVÉ` : ""}`;
 
@@ -281,7 +284,13 @@ Recommande ${requestedCount > 1 ? `${requestedCount} contenus` : "UN contenu"} a
         const jsonStr = content.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
         const parsed = JSON.parse(jsonStr);
         if (requestedCount > 1 && parsed.suggestions) {
-          suggestions = parsed.suggestions;
+          suggestions = parsed.suggestions.filter((s: any) => (s.confidence || 0) >= minMatchScore);
+          // If all filtered out, keep the best ones
+          if (suggestions.length === 0) {
+            suggestions = parsed.suggestions
+              .sort((a: any, b: any) => (b.confidence || 0) - (a.confidence || 0))
+              .slice(0, requestedCount);
+          }
         } else if (parsed.title) {
           suggestions = [parsed];
         } else { aiFailed = true; }
