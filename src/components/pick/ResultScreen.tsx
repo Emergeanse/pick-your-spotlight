@@ -434,7 +434,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({
         <div className="relative z-10 flex flex-col justify-end min-h-screen px-5 pb-[calc(1.5rem+env(safe-area-inset-bottom))] md:px-12 lg:px-16 md:pb-12">
           <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.2 }} className="max-w-xl">
             {/* Navigation counter */}
-            {totalCount > 1 && (
+            {totalCount >= 1 && (
               <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
                 className="flex items-center justify-center gap-4 mb-5">
                 <button onClick={onPrevious} disabled={currentIndex <= 0}
