@@ -232,9 +232,10 @@ RÈGLES DE RERANKING FINAL :
 
 RÈGLES JSON :
 - Réponds UNIQUEMENT avec un JSON valide sans backticks
-${requestedCount > 1 ? `- Structure : {"suggestions": [{"title": "<titre>", "reason": "<2-3 phrases>", "confidence": <0-100>, "scores": {"stable_taste": <0-100>, "recent_taste": <0-100>, "context": <0-100>, "rejection_risk": <0-100>, "quality": <0-100>, "novelty": <0-100>, "fatigue": <0-100>}}, ...]}
-- EXACTEMENT ${requestedCount} suggestions DIFFÉRENTES` : `- Structure : {"title": "<titre>", "reason": "<2-3 phrases>", "confidence": <0-100>, "scores": {"stable_taste": <0-100>, "recent_taste": <0-100>, "context": <0-100>, "rejection_risk": <0-100>, "quality": <0-100>, "novelty": <0-100>, "fatigue": <0-100>}}`}
-- SCORE DE CONFIANCE MINIMUM : ${minMatchScore}% — Ne propose QUE des contenus dont tu es confiant à au moins ${minMatchScore}%. Si tu n'es pas sûr à ${minMatchScore}%, ne le propose pas.
+${requestedCount > 1 ? `- Structure : {"suggestions": [{"title": "<titre>", "reason": "<2-3 phrases POSITIVES — mets en avant pourquoi ça va plaire, ne mentionne JAMAIS les aspects négatifs>", "confidence": <${minMatchScore}-100>, "scores": {"stable_taste": <0-100>, "recent_taste": <0-100>, "context": <0-100>, "rejection_risk": <0-100>, "quality": <0-100>, "novelty": <0-100>, "fatigue": <0-100>}}, ...]}
+- EXACTEMENT ${requestedCount} suggestions DIFFÉRENTES` : `- Structure : {"title": "<titre>", "reason": "<2-3 phrases POSITIVES — mets en avant pourquoi ça va plaire, ne mentionne JAMAIS les aspects négatifs>", "confidence": <${minMatchScore}-100>, "scores": {"stable_taste": <0-100>, "recent_taste": <0-100>, "context": <0-100>, "rejection_risk": <0-100>, "quality": <0-100>, "novelty": <0-100>, "fatigue": <0-100>}}`}
+- SCORE DE CONFIANCE MINIMUM : ${minMatchScore}% — Ne propose QUE des contenus dont tu es confiant à au moins ${minMatchScore}%.
+- RÈGLE D'OR DU TON : La "reason" doit être EXCLUSIVEMENT POSITIVE. Valorise ce qui va plaire, fais le lien entre les goûts de l'utilisateur et les qualités du contenu. Pas de "malgré", "cependant", "par contre". Vends le contenu comme un ami enthousiaste.
 - IDs TMDB exclus : ${normalizedExcludeIds.length > 0 ? normalizedExcludeIds.slice(0, 200).join(", ") : "aucun"}
 ${effectiveOutOfComfortZone ? `- MODE HORS ZONE DE CONFORT ACTIVÉ` : ""}`;
 
