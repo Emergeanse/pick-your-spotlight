@@ -234,6 +234,7 @@ RÈGLES JSON :
 - Réponds UNIQUEMENT avec un JSON valide sans backticks
 ${requestedCount > 1 ? `- Structure : {"suggestions": [{"title": "<titre>", "reason": "<2-3 phrases>", "confidence": <0-100>, "scores": {"stable_taste": <0-100>, "recent_taste": <0-100>, "context": <0-100>, "rejection_risk": <0-100>, "quality": <0-100>, "novelty": <0-100>, "fatigue": <0-100>}}, ...]}
 - EXACTEMENT ${requestedCount} suggestions DIFFÉRENTES` : `- Structure : {"title": "<titre>", "reason": "<2-3 phrases>", "confidence": <0-100>, "scores": {"stable_taste": <0-100>, "recent_taste": <0-100>, "context": <0-100>, "rejection_risk": <0-100>, "quality": <0-100>, "novelty": <0-100>, "fatigue": <0-100>}}`}
+- SCORE DE CONFIANCE MINIMUM : ${minMatchScore}% — Ne propose QUE des contenus dont tu es confiant à au moins ${minMatchScore}%. Si tu n'es pas sûr à ${minMatchScore}%, ne le propose pas.
 - IDs TMDB exclus : ${normalizedExcludeIds.length > 0 ? normalizedExcludeIds.slice(0, 200).join(", ") : "aucun"}
 ${effectiveOutOfComfortZone ? `- MODE HORS ZONE DE CONFORT ACTIVÉ` : ""}`;
 
