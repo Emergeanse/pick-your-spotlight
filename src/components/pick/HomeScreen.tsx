@@ -118,7 +118,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
 
   const navigateTonightPick = (direction: "prev" | "next") => {
     const newIndex = direction === "next"
-      ? Math.min(tonightPickIndex + 1, tonightMaxSeen)
+      ? Math.min(tonightPickIndex + 1, tonightPool.length - 1)
       : Math.max(tonightPickIndex - 1, 0);
     if (newIndex === tonightPickIndex) return;
     setTonightPickIndex(newIndex);
@@ -129,21 +129,18 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
     getWatchProviders(movie.id, mediaType).then(setTonightProviders).catch(() => {});
   };
 
-  // When chat suggests movies, show the first one in the tonightPick preview
-  // Store the full pool but reset maxSeen to 0 so user must use "Autre suggestion" to reveal more
   useEffect(() => {
     if (chatSuggestedMovies && chatSuggestedMovies.length > 0) {
       const firstMovie = chatSuggestedMovies[0];
-      setChatMoviesPool(chatSuggestedMovies);
+      setChatMoviesPool(chatSuggestedMovies.slice(0, RECOMMENDATION_BATCH_SIZE));
       setTonightPickIndex(0);
-      setTonightMaxSeen(0);
       setTonightPick(firstMovie);
       setTonightProviders([]);
       const mediaType = firstMovie.first_air_date ? "tv" : "movie";
       getWatchProviders(firstMovie.id, mediaType).then(setTonightProviders).catch(() => {});
       onChatSuggestedConsumed?.();
     }
-  }, [chatSuggestedMovies]);
+  }, [chatSuggestedMovies, onChatSuggestedConsumed]);
 
   // Open trainer from MyCinema navigation or activation flow
   useEffect(() => {
