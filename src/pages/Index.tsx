@@ -445,7 +445,15 @@ const Index = () => {
             <ResultScreen
               movie={results[currentResultIndex]}
               onShowAnother={handleShowAnother}
-              onRestart={() => setStep("home")}
+              onRestart={() => {
+                if (resultIndexHistory.length > 0) {
+                  const prev = resultIndexHistory[resultIndexHistory.length - 1];
+                  setResultIndexHistory(h => h.slice(0, -1));
+                  setCurrentResultIndex(prev);
+                } else {
+                  setStep("home");
+                }
+              }}
               onRefineWithVoice={handleRefineWithVoice}
               onRefineWithMessage={async (message) => {
                 const currentMovie = results[currentResultIndex];
@@ -490,12 +498,15 @@ const Index = () => {
               alternativeMovies={results.filter((_, i) => i !== currentResultIndex).slice(0, 2)}
               onSelectAlternative={(movie) => {
                 const idx = results.findIndex(r => r.id === movie.id);
-                if (idx >= 0) setCurrentResultIndex(idx);
+                if (idx >= 0) {
+                  setResultIndexHistory(h => [...h, currentResultIndex]);
+                  setCurrentResultIndex(idx);
+                }
               }}
               currentIndex={currentResultIndex}
               totalCount={results.length}
-              onNext={() => { if (currentResultIndex < results.length - 1) setCurrentResultIndex(i => i + 1); }}
-              onPrevious={() => { if (currentResultIndex > 0) setCurrentResultIndex(i => i - 1); }}
+              onNext={() => { if (currentResultIndex < results.length - 1) { setResultIndexHistory(h => [...h, currentResultIndex]); setCurrentResultIndex(i => i + 1); } }}
+              onPrevious={() => { if (currentResultIndex > 0) { setResultIndexHistory(h => [...h, currentResultIndex]); setCurrentResultIndex(i => i - 1); } }}
             />
           </motion.div>
         )}
