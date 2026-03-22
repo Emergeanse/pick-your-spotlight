@@ -611,7 +611,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({
                     ) : (
                       <Dices className="w-3 h-3" />
                     )}
-                    Autre suggestion
+                    Autres suggestions
                   </button>
                 </div>
 
