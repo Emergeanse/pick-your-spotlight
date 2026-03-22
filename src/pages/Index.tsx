@@ -83,6 +83,28 @@ const Index = () => {
     setChatSuggestedMovies(null);
   };
 
+  const normalizeRecommendationBatch = useCallback(
+    (movies: MovieDetail[], excludeIds: number[] = []) =>
+      ensureRecommendationBatch(movies, {
+        excludeIds,
+        platformIds: profilePrefs.preferredPlatforms,
+        minRating: profilePrefs.minRating,
+        excludedGenres: profilePrefs.excludedGenres,
+      }),
+    [profilePrefs.excludedGenres, profilePrefs.minRating, profilePrefs.preferredPlatforms],
+  );
+
+  const openRecommendationBatch = useCallback(
+    (movies: MovieDetail[], origin: "home" | "external" = "home", startIndex = 0) => {
+      setResults(movies);
+      setCurrentResultIndex(Math.min(startIndex, Math.max(movies.length - 1, 0)));
+      setResultIndexHistory([]);
+      setResultOrigin(origin);
+      setStep("result");
+    },
+    [],
+  );
+
   useEffect(() => {
     const state = (location.state as any) || {};
 
