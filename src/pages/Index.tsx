@@ -41,6 +41,7 @@ const Index = () => {
   const [loading, setLoading] = useState(false);
   const [currentResultIndex, setCurrentResultIndex] = useState(0);
   const [resultIndexHistory, setResultIndexHistory] = useState<number[]>([]);
+  const [resultVisitedIndices, setResultVisitedIndices] = useState<Set<number>>(new Set([0]));
   // Track where the result view originated from: "home" (internal), "external" (cross-page nav)
   const [resultOrigin, setResultOrigin] = useState<"home" | "external">("home");
   const [loadingMessage, setLoadingMessage] = useState("");
@@ -77,6 +78,7 @@ const Index = () => {
     setResults([]);
     setCurrentResultIndex(0);
     setResultIndexHistory([]);
+    setResultVisitedIndices(new Set([0]));
     setSearchTags([]);
     setShowChat(false);
     setChatInitialMessages(undefined);
@@ -99,6 +101,7 @@ const Index = () => {
       setResults(movies);
       setCurrentResultIndex(Math.min(startIndex, Math.max(movies.length - 1, 0)));
       setResultIndexHistory([]);
+      setResultVisitedIndices(new Set([Math.min(startIndex, Math.max(movies.length - 1, 0))]));
       setResultOrigin(origin);
       setStep("result");
     },
@@ -545,6 +548,8 @@ const Index = () => {
               totalCount={results.length}
               onNext={() => { if (currentResultIndex < results.length - 1) { setResultIndexHistory(h => [...h, currentResultIndex]); setCurrentResultIndex(i => i + 1); } }}
               onPrevious={() => { if (currentResultIndex > 0) { setResultIndexHistory(h => [...h, currentResultIndex]); setCurrentResultIndex(i => i - 1); } }}
+              visitedIndices={resultVisitedIndices}
+              onVisitedIndicesChange={setResultVisitedIndices}
             />
           </motion.div>
         )}

@@ -296,6 +296,8 @@ interface ResultScreenProps {
   totalCount?: number;
   onNext?: () => void;
   onPrevious?: () => void;
+  visitedIndices?: Set<number>;
+  onVisitedIndicesChange?: (indices: Set<number>) => void;
 }
 
 const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({
@@ -303,6 +305,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({
   hasMore, userCriteria, alternativeMovies, onSelectAlternative,
   searchTags, onRemoveTag, refining, profileConfidence = 0,
   currentIndex = 0, totalCount = 1, onNext, onPrevious,
+  visitedIndices: externalVisited, onVisitedIndicesChange,
 }, ref) => {
   const [providers, setProviders] = useState<{ name: string; logo_path: string; provider_id: number }[]>([]);
   const [credits, setCredits] = useState<MovieCredits | null>(null);
@@ -322,17 +325,24 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({
   const [rejectReaction, setRejectReaction] = useState<string | null>(null);
   const [showRefineSheet, setShowRefineSheet] = useState(false);
   const [showReviewSheet, setShowReviewSheet] = useState(false);
-  const [visitedIndices, setVisitedIndices] = useState<Set<number>>(() => new Set([currentIndex]));
+  const [internalVisited, setInternalVisited] = useState<Set<number>>(() => new Set([currentIndex]));
+  const visitedIndices = externalVisited ?? internalVisited;
+  const setVisitedIndices = (updater: Set<number> | ((prev: Set<number>) => Set<number>)) => {
+    const newVal = typeof updater === "function" ? updater(visitedIndices) : updater;
+    if (onVisitedIndicesChange) {
+      onVisitedIndicesChange(newVal);
+    } else {
+      setInternalVisited(newVal);
+    }
+  };
   const { user } = useAuth();
 
   // Track visited indices
   useEffect(() => {
-    setVisitedIndices(prev => {
-      if (prev.has(currentIndex)) return prev;
-      const next = new Set(prev);
-      next.add(currentIndex);
-      return next;
-    });
+    if (visitedIndices.has(currentIndex)) return;
+    const next = new Set(visitedIndices);
+    next.add(currentIndex);
+    setVisitedIndices(next);
   }, [currentIndex]);
 
   // Reset visited indices when a new batch is loaded (totalCount or first movie changes)
