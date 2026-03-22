@@ -37,6 +37,7 @@ interface HomeScreenProps {
   forceCloseTrainer?: boolean;
   onTrainerOpened?: () => void;
   chatSuggestedMovies?: MovieDetail[] | null;
+  chatSuggestedStartIndex?: number;
   onChatSuggestedConsumed?: () => void;
   activationTrainerMode?: boolean;
   onActivationTrainingComplete?: () => void;
