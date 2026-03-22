@@ -86,12 +86,21 @@ const Index = () => {
   useEffect(() => {
     if ((window as any).__pickForceResetHome) {
       (window as any).__pickForceResetHome = false;
-      resetToHomeView();
+      setStep("home");
+      setResults([]);
+      setCurrentResultIndex(0);
+      setResultIndexHistory([]);
+      setSearchTags([]);
+      setShowChat(false);
+      setChatInitialMessages(undefined);
+      setChatSuggestedMovies(null);
       window.history.replaceState({}, "", "/app");
-      return;
     }
+  }, [location.search, location.pathname]);
 
+  useEffect(() => {
     const state = (location.state as any) || {};
+
     if (state.openTrainer) {
       setOpenTrainerOnMount(true);
       window.history.replaceState({}, "", "/app");
