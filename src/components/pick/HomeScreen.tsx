@@ -254,7 +254,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
     }, 500);
 
     try {
-      let movie: MovieDetail;
+      let batch: MovieDetail[] = [];
 
       if (user) {
         const liked = await getLikedMovies();
@@ -270,39 +270,44 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
             avoidanceVector: multiProfile?.avoidanceVector || null,
             platformIds: userPlatformIds, excludedPlatformIds: userExcludedPlatformIds, excludedGenres: userExcludedGenres, minRating: userMinRating,
             outOfComfortZone: true, excludeIds: historyExcludeIds,
-            count: 5,
+            count: RECOMMENDATION_BATCH_SIZE,
           });
-          if (data?.movies && data.movies.length > 0) {
-            const allMovies = data.movies.map((m: any) => { const mv = m.movie as MovieDetail; (mv as any)._surpriseComfortZone = true; return mv; });
-            clearInterval(msgInterval);
-            setSurpriseMsg("✨ Trouvé !");
-            await new Promise(r => setTimeout(r, 400));
-            onSurprise(allMovies);
-            return;
-          }
-          movie = data.movie as MovieDetail;
-          (movie as any)._surpriseComfortZone = true;
+          batch = await ensureRecommendationBatch(extractRecommendationMovies(data), {
+            excludeIds: historyExcludeIds,
+            platformIds: userPlatformIds,
+            minRating: userMinRating,
+            excludedGenres: userExcludedGenres,
+            size: RECOMMENDATION_BATCH_SIZE,
+          });
+          batch.forEach((movie) => {
+            (movie as any)._surpriseComfortZone = true;
+          });
         } else {
-          movie = await getSurpriseRecommendation([], { platformIds: userPlatformIds, minRating: userMinRating, excludedGenres: userExcludedGenres });
+          batch = await ensureRecommendationBatch([], {
+            excludeIds: historyExcludeIds,
+            platformIds: userPlatformIds,
+            minRating: userMinRating,
+            excludedGenres: userExcludedGenres,
+            size: RECOMMENDATION_BATCH_SIZE,
+          });
         }
       } else {
-        movie = await getSurpriseRecommendation([], { platformIds: userPlatformIds, minRating: userMinRating, excludedGenres: userExcludedGenres });
+        batch = await ensureRecommendationBatch([], {
+          platformIds: userPlatformIds,
+          minRating: userMinRating,
+          excludedGenres: userExcludedGenres,
+          size: RECOMMENDATION_BATCH_SIZE,
+        });
       }
 
       clearInterval(msgInterval);
       setSurpriseMsg("✨ Trouvé !");
       await new Promise(r => setTimeout(r, 400));
-      onSurprise([movie]);
+      onSurprise(batch);
     } catch (e) {
       console.error(e);
-      try {
-        const movie = await getSurpriseRecommendation([], { platformIds: userPlatformIds, minRating: userMinRating, excludedGenres: userExcludedGenres });
-        clearInterval(msgInterval);
-        onSurprise([movie]);
-      } catch {
-        clearInterval(msgInterval);
-      }
     } finally {
+      clearInterval(msgInterval);
       setIsSurprising(false);
       setSurpriseMsg("");
     }
