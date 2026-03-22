@@ -296,8 +296,8 @@ interface ResultScreenProps {
   totalCount?: number;
   onNext?: () => void;
   onPrevious?: () => void;
-  visitedIndices?: Set<number>;
-  onVisitedIndicesChange?: (indices: Set<number>) => void;
+  visitedMovieIds?: Set<number>;
+  onVisitedMovieIdsChange?: (movieIds: Set<number>) => void;
 }
 
 const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({
@@ -305,7 +305,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({
   hasMore, userCriteria, alternativeMovies, onSelectAlternative,
   searchTags, onRemoveTag, refining, profileConfidence = 0,
   currentIndex = 0, totalCount = 1, onNext, onPrevious,
-  visitedIndices: externalVisited, onVisitedIndicesChange,
+  visitedMovieIds: externalVisited, onVisitedMovieIdsChange,
 }, ref) => {
   const [providers, setProviders] = useState<{ name: string; logo_path: string; provider_id: number }[]>([]);
   const [credits, setCredits] = useState<MovieCredits | null>(null);
@@ -325,37 +325,37 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({
   const [rejectReaction, setRejectReaction] = useState<string | null>(null);
   const [showRefineSheet, setShowRefineSheet] = useState(false);
   const [showReviewSheet, setShowReviewSheet] = useState(false);
-  const [internalVisited, setInternalVisited] = useState<Set<number>>(() => new Set([currentIndex]));
-  const visitedIndices = externalVisited ?? internalVisited;
-  const setVisitedIndices = (updater: Set<number> | ((prev: Set<number>) => Set<number>)) => {
-    const newVal = typeof updater === "function" ? updater(visitedIndices) : updater;
-    if (onVisitedIndicesChange) {
-      onVisitedIndicesChange(newVal);
+  const [internalVisitedMovieIds, setInternalVisitedMovieIds] = useState<Set<number>>(() => new Set([movie.id]));
+  const visitedMovieIds = externalVisited ?? internalVisitedMovieIds;
+  const setVisitedMovieIds = (updater: Set<number> | ((prev: Set<number>) => Set<number>)) => {
+    const newVal = typeof updater === "function" ? updater(visitedMovieIds) : updater;
+    if (onVisitedMovieIdsChange) {
+      onVisitedMovieIdsChange(newVal);
     } else {
-      setInternalVisited(newVal);
+      setInternalVisitedMovieIds(newVal);
     }
   };
   const { user } = useAuth();
 
-  // Track visited indices
+  // Track unique movies seen across card navigation and detail/back navigation
   useEffect(() => {
-    if (visitedIndices.has(currentIndex)) return;
-    const next = new Set(visitedIndices);
-    next.add(currentIndex);
-    setVisitedIndices(next);
-  }, [currentIndex]);
+    if (visitedMovieIds.has(movie.id)) return;
+    const next = new Set(visitedMovieIds);
+    next.add(movie.id);
+    setVisitedMovieIds(next);
+  }, [movie.id, visitedMovieIds]);
 
-  // Reset visited indices when a new batch is loaded (totalCount or first movie changes)
+  // Reset fallback internal state when a brand-new batch is mounted without parent state
   const batchKeyRef = useRef<string>("");
   useEffect(() => {
     const key = `${totalCount}-${movie.id}`;
-    if (batchKeyRef.current && batchKeyRef.current !== key && currentIndex === 0) {
-      setVisitedIndices(new Set([0]));
+    if (!onVisitedMovieIdsChange && batchKeyRef.current && batchKeyRef.current !== key && currentIndex === 0) {
+      setInternalVisitedMovieIds(new Set([movie.id]));
     }
     batchKeyRef.current = key;
-  }, [totalCount, movie.id, currentIndex]);
+  }, [currentIndex, movie.id, onVisitedMovieIdsChange, totalCount]);
 
-  const allVisited = visitedIndices.size >= totalCount;
+  const allVisited = visitedMovieIds.size >= totalCount;
 
   const isWhyUnlocked = true;
 
@@ -661,7 +661,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({
                       animate={{ opacity: 1 }}
                       className="text-foreground/25 text-[10px] font-sans text-center"
                     >
-                      Parcourez les {totalCount} films pour débloquer ({visitedIndices.size}/{totalCount})
+                       Parcourez les {totalCount} films pour débloquer ({visitedMovieIds.size}/{totalCount})
                     </motion.p>
                   )}
                 </div>

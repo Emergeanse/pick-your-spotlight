@@ -41,13 +41,14 @@ const Index = () => {
   const [loading, setLoading] = useState(false);
   const [currentResultIndex, setCurrentResultIndex] = useState(0);
   const [resultIndexHistory, setResultIndexHistory] = useState<number[]>([]);
-  const [resultVisitedIndices, setResultVisitedIndices] = useState<Set<number>>(new Set([0]));
+  const [resultSeenMovieIds, setResultSeenMovieIds] = useState<Set<number>>(new Set());
   // Track where the result view originated from: "home" (internal), "external" (cross-page nav)
   const [resultOrigin, setResultOrigin] = useState<"home" | "external">("home");
   const [loadingMessage, setLoadingMessage] = useState("");
   const [showChat, setShowChat] = useState(false);
   
   const [chatInitialMessages, setChatInitialMessages] = useState<ChatMessage[] | undefined>(undefined);
+  const [chatSuggestedSeenMovieIds, setChatSuggestedSeenMovieIds] = useState<Set<number>>(new Set());
   const [searchTags, setSearchTags] = useState<string[]>([]);
   const [profilePrefs, setProfilePrefs] = useState<{
     excludedGenres: string[];
@@ -78,11 +79,12 @@ const Index = () => {
     setResults([]);
     setCurrentResultIndex(0);
     setResultIndexHistory([]);
-    setResultVisitedIndices(new Set([0]));
+    setResultSeenMovieIds(new Set());
     setSearchTags([]);
     setShowChat(false);
     setChatInitialMessages(undefined);
     setChatSuggestedMovies(null);
+    setChatSuggestedSeenMovieIds(new Set());
   };
 
   const normalizeRecommendationBatch = useCallback(
@@ -97,11 +99,22 @@ const Index = () => {
   );
 
   const openRecommendationBatch = useCallback(
-    (movies: MovieDetail[], origin: "home" | "external" = "home", startIndex = 0) => {
+    (
+      movies: MovieDetail[],
+      origin: "home" | "external" = "home",
+      startIndex = 0,
+      seenMovieIds?: Set<number>,
+    ) => {
+      const safeStartIndex = Math.min(startIndex, Math.max(movies.length - 1, 0));
+      const initialMovieId = movies[safeStartIndex]?.id;
       setResults(movies);
-      setCurrentResultIndex(Math.min(startIndex, Math.max(movies.length - 1, 0)));
+      setCurrentResultIndex(safeStartIndex);
       setResultIndexHistory([]);
-      setResultVisitedIndices(new Set([Math.min(startIndex, Math.max(movies.length - 1, 0))]));
+      setResultSeenMovieIds(
+        seenMovieIds && seenMovieIds.size > 0
+          ? new Set(seenMovieIds)
+          : new Set(initialMovieId ? [initialMovieId] : []),
+      );
       setResultOrigin(origin);
       setStep("result");
     },
@@ -314,9 +327,9 @@ const Index = () => {
 
   const handleStart = () => {};
 
-  const handleSurprise = async (movies: MovieDetail[], startIndex: number = 0) => {
+  const handleSurprise = async (movies: MovieDetail[], startIndex: number = 0, seenMovieIds?: Set<number>) => {
     const batch = await normalizeRecommendationBatch(movies);
-    openRecommendationBatch(batch, "home", startIndex);
+    openRecommendationBatch(batch, "home", startIndex, seenMovieIds);
   };
 
   const handleMovieSelect = async (movie: MovieDetail) => {
@@ -362,7 +375,8 @@ const Index = () => {
     if (recapTags && recapTags.length > 0) setSearchTags(recapTags);
     setShowChat(false);
     const batch = await normalizeRecommendationBatch(movies);
-    setChatSuggestedMovies(batch);
+      setChatSuggestedMovies(batch);
+      setChatSuggestedSeenMovieIds(new Set(batch[0] ? [batch[0].id] : []));
     setStep("home");
   };
 
@@ -428,6 +442,7 @@ const Index = () => {
       setResults(batch);
       setCurrentResultIndex(0);
       setResultIndexHistory([]);
+      setResultSeenMovieIds(new Set(batch[0] ? [batch[0].id] : []));
     } catch (e) {
       console.error(e);
     } finally {
@@ -447,6 +462,7 @@ const Index = () => {
       setShowChat(false);
       setChatInitialMessages(undefined);
       setChatSuggestedMovies(null);
+      setChatSuggestedSeenMovieIds(new Set());
     };
     window.addEventListener("pick-reset-home", handler);
     return () => window.removeEventListener("pick-reset-home", handler);
@@ -465,7 +481,7 @@ const Index = () => {
           <motion.div key="home" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.4 }}
             className={`absolute inset-0 ${showActivation && !showTour ? "pt-12" : ""} pb-[calc(3.5rem+env(safe-area-inset-bottom))]`}
           >
-            <HomeScreen onStart={handleStart} onOpenChat={handleOpenChat} onSurprise={handleSurprise} onMovieSelect={handleMovieSelect} loading={loading} openTrainerOnMount={openTrainerOnMount} forceCloseTrainer={activeActivationMission === "talk_to_pick"} onTrainerOpened={() => setOpenTrainerOnMount(false)} chatSuggestedMovies={chatSuggestedMovies} chatSuggestedStartIndex={chatSuggestedStartIndex} onChatSuggestedConsumed={() => { setChatSuggestedMovies(null); setChatSuggestedStartIndex(0); }} activationTrainerMode={activeActivationMission === "train_20"} onActivationTrainingComplete={async () => {
+            <HomeScreen onStart={handleStart} onOpenChat={handleOpenChat} onSurprise={handleSurprise} onMovieSelect={handleMovieSelect} loading={loading} openTrainerOnMount={openTrainerOnMount} forceCloseTrainer={activeActivationMission === "talk_to_pick"} onTrainerOpened={() => setOpenTrainerOnMount(false)} chatSuggestedMovies={chatSuggestedMovies} chatSuggestedStartIndex={chatSuggestedStartIndex} chatSuggestedSeenMovieIds={chatSuggestedSeenMovieIds} onChatSuggestedConsumed={() => { setChatSuggestedMovies(null); setChatSuggestedStartIndex(0); setChatSuggestedSeenMovieIds(new Set()); }} activationTrainerMode={activeActivationMission === "train_20"} onActivationTrainingComplete={async () => {
               window.dispatchEvent(new Event("pick-activation-refresh"));
               setActiveActivationMission(null);
               setOpenTrainerOnMount(false);
@@ -491,6 +507,7 @@ const Index = () => {
                   if (results.length > 0) {
                     setChatSuggestedStartIndex(currentResultIndex);
                     setChatSuggestedMovies(results);
+                    setChatSuggestedSeenMovieIds(new Set(resultSeenMovieIds));
                   }
                   setStep("home");
                 }
@@ -525,6 +542,7 @@ const Index = () => {
                     setResults(batch);
                     setCurrentResultIndex(0);
                     setResultIndexHistory([]);
+                    setResultSeenMovieIds(new Set(batch[0] ? [batch[0].id] : []));
                   }
                 } catch (e) { console.error("Refine error:", e); }
                 finally { setLoading(false); setLoadingMessage(""); }
@@ -548,8 +566,8 @@ const Index = () => {
               totalCount={results.length}
               onNext={() => { if (currentResultIndex < results.length - 1) { setResultIndexHistory(h => [...h, currentResultIndex]); setCurrentResultIndex(i => i + 1); } }}
               onPrevious={() => { if (currentResultIndex > 0) { setResultIndexHistory(h => [...h, currentResultIndex]); setCurrentResultIndex(i => i - 1); } }}
-              visitedIndices={resultVisitedIndices}
-              onVisitedIndicesChange={setResultVisitedIndices}
+              visitedMovieIds={resultSeenMovieIds}
+              onVisitedMovieIdsChange={setResultSeenMovieIds}
             />
           </motion.div>
         )}

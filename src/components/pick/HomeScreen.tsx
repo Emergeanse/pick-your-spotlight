@@ -30,7 +30,7 @@ import { useNavigate } from "react-router-dom";
 interface HomeScreenProps {
   onStart: () => void;
   onOpenChat: () => void;
-  onSurprise: (movies: MovieDetail[], startIndex?: number) => void;
+  onSurprise: (movies: MovieDetail[], startIndex?: number, seenMovieIds?: Set<number>) => void;
   onMovieSelect: (movie: MovieDetail) => void;
   loading: boolean;
   openTrainerOnMount?: boolean;
@@ -38,6 +38,7 @@ interface HomeScreenProps {
   onTrainerOpened?: () => void;
   chatSuggestedMovies?: MovieDetail[] | null;
   chatSuggestedStartIndex?: number;
+  chatSuggestedSeenMovieIds?: Set<number>;
   onChatSuggestedConsumed?: () => void;
   activationTrainerMode?: boolean;
   onActivationTrainingComplete?: () => void;
@@ -77,7 +78,7 @@ const LOADING_MESSAGES = [
 
 // Proactive messages are now time-aware — see getProactiveMessages()
 
-const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, openTrainerOnMount, forceCloseTrainer, onTrainerOpened, chatSuggestedMovies, chatSuggestedStartIndex = 0, onChatSuggestedConsumed, activationTrainerMode = false, onActivationTrainingComplete }: HomeScreenProps) => {
+const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, openTrainerOnMount, forceCloseTrainer, onTrainerOpened, chatSuggestedMovies, chatSuggestedStartIndex = 0, chatSuggestedSeenMovieIds, onChatSuggestedConsumed, activationTrainerMode = false, onActivationTrainingComplete }: HomeScreenProps) => {
   const navigate = useNavigate();
   const [isSurprising, setIsSurprising] = useState(false);
   const [surpriseMsg, setSurpriseMsg] = useState("");
@@ -110,7 +111,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
   const [chatMoviesPool, setChatMoviesPool] = useState<MovieDetail[] | null>(null);
   const [movieMatchData, setMovieMatchData] = useState<Record<number, { confidence: number; reason: string }>>({});
   const [tonightPickIndex, setTonightPickIndex] = useState(0);
-  const [tonightVisitedIndices, setTonightVisitedIndices] = useState<Set<number>>(new Set([0]));
+  const [tonightSeenMovieIds, setTonightSeenMovieIds] = useState<Set<number>>(new Set());
   const [quickFilters, setQuickFilters] = useState<QuickFilterState>({ mediaType: "both", maxDuration: null, matchThreshold: 80, minRating: 0 });
   const [profileDefaults, setProfileDefaults] = useState<ProfileDefaults>({ mediaType: "both", maxDuration: null, matchThreshold: 80, minRating: 0 });
   
@@ -119,7 +120,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
   const canGoPrev = tonightPickIndex > 0;
   const canGoNext = tonightPickIndex < tonightPool.length - 1;
 
-  const tonightAllVisited = tonightVisitedIndices.size >= tonightPool.length && tonightPool.length > 0;
+  const tonightAllVisited = tonightSeenMovieIds.size >= tonightPool.length && tonightPool.length > 0;
 
   const navigateTonightPick = (direction: "prev" | "next") => {
     const newIndex = direction === "next"
@@ -127,9 +128,10 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
       : Math.max(tonightPickIndex - 1, 0);
     if (newIndex === tonightPickIndex) return;
     setTonightPickIndex(newIndex);
-    setTonightVisitedIndices(prev => {
+    setTonightSeenMovieIds(prev => {
       const next = new Set(prev);
-      next.add(newIndex);
+      const movieId = tonightPool[newIndex]?.id;
+      if (movieId) next.add(movieId);
       return next;
     });
     const movie = tonightPool[newIndex];
@@ -145,14 +147,18 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
       const targetMovie = chatSuggestedMovies[startIdx];
       setChatMoviesPool(chatSuggestedMovies.slice(0, RECOMMENDATION_BATCH_SIZE));
       setTonightPickIndex(startIdx);
-      setTonightVisitedIndices(new Set([startIdx]));
+      setTonightSeenMovieIds(
+        chatSuggestedSeenMovieIds && chatSuggestedSeenMovieIds.size > 0
+          ? new Set(chatSuggestedSeenMovieIds)
+          : new Set(targetMovie?.id ? [targetMovie.id] : []),
+      );
       setTonightPick(targetMovie);
       setTonightProviders([]);
       const mediaType = targetMovie.first_air_date ? "tv" : "movie";
       getWatchProviders(targetMovie.id, mediaType).then(setTonightProviders).catch(() => {});
       onChatSuggestedConsumed?.();
     }
-  }, [chatSuggestedMovies, chatSuggestedStartIndex, onChatSuggestedConsumed]);
+  }, [chatSuggestedMovies, chatSuggestedSeenMovieIds, chatSuggestedStartIndex, onChatSuggestedConsumed]);
 
   // Open trainer from MyCinema navigation or activation flow
   useEffect(() => {
@@ -397,7 +403,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
       if (movies.length > 0) {
       setChatMoviesPool(movies);
         setTonightPickIndex(0);
-        setTonightVisitedIndices(new Set([0]));
+        setTonightSeenMovieIds(new Set(movies[0] ? [movies[0].id] : []));
         setTonightPick(movies[0]);
         const mediaType = movies[0].first_air_date ? "tv" : "movie";
         getWatchProviders(movies[0].id, mediaType).then(setTonightProviders).catch(() => {});
@@ -685,7 +691,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
                         const moviesToPass = chatMoviesPool && chatMoviesPool.length > 0
                           ? chatMoviesPool
                           : [tonightPick];
-                        onSurprise(moviesToPass, tonightPickIndex);
+                         onSurprise(moviesToPass, tonightPickIndex, tonightSeenMovieIds);
                       }}
                     />
                     <button
@@ -760,7 +766,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
                       const moviesToPass = chatMoviesPool && chatMoviesPool.length > 0
                         ? chatMoviesPool
                         : [tonightPick];
-                      onSurprise(moviesToPass, tonightPickIndex);
+                      onSurprise(moviesToPass, tonightPickIndex, tonightSeenMovieIds);
                     }}
                   >
                     <Tv className="w-5 h-5" />
@@ -812,7 +818,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
                         setTonightPick(null);
                         setChatMoviesPool(null);
                         setTonightPickIndex(0);
-                        setTonightVisitedIndices(new Set([0]));
+                        setTonightSeenMovieIds(new Set());
                         generateTonightPick(nextRejected, rejContext);
                       }}
                       disabled={tonightLoading || !tonightAllVisited}
@@ -831,7 +837,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
                     </button>
                     {!tonightAllVisited && tonightPool.length > 0 && (
                       <p className="text-foreground/25 text-[10px] font-sans text-center">
-                        Parcourez les {tonightPool.length} films pour débloquer ({tonightVisitedIndices.size}/{tonightPool.length})
+                        Parcourez les {tonightPool.length} films pour débloquer ({tonightSeenMovieIds.size}/{tonightPool.length})
                       </p>
                     )}
                   </div>
