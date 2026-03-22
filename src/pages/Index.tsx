@@ -71,14 +71,34 @@ const Index = () => {
   const [talkToPickGuideStep, setTalkToPickGuideStep] = useState<TalkToPickGuideStep>(null);
   const watchlistGuideAwaitingLoad = useRef(false);
 
+  const resetToHomeView = () => {
+    setStep("home");
+    setResults([]);
+    setCurrentResultIndex(0);
+    setResultIndexHistory([]);
+    setSearchTags([]);
+    setShowChat(false);
+    setChatInitialMessages(undefined);
+    setChatSuggestedMovies(null);
+  };
+
   useEffect(() => {
-    if ((location.state as any)?.openTrainer) {
+    const state = (location.state as any) || {};
+
+    if (state.resetHomeAt) {
+      resetToHomeView();
+      window.history.replaceState({}, "", "/app");
+      return;
+    }
+
+    if (state.openTrainer) {
       setOpenTrainerOnMount(true);
       window.history.replaceState({}, "", "/app");
     }
+
     // Handle selectedMovie from external pages (e.g. WatchlistRoute)
-    if ((location.state as any)?.selectedMovie) {
-      const movie = (location.state as any).selectedMovie as MovieDetail;
+    if (state.selectedMovie) {
+      const movie = state.selectedMovie as MovieDetail;
       setResults([movie]);
       setCurrentResultIndex(0);
       setResultOrigin("external");
@@ -421,14 +441,7 @@ const Index = () => {
 
 
   const handleRestart = useCallback(() => {
-    setStep("home");
-    setResults([]);
-    setCurrentResultIndex(0);
-    setResultIndexHistory([]);
-    setSearchTags([]);
-    setShowChat(false);
-    setChatInitialMessages(undefined);
-    setChatSuggestedMovies(null);
+    resetToHomeView();
   }, []);
 
   // Listen for home tab re-tap to reset to homepage
