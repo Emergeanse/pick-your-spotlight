@@ -82,20 +82,13 @@ const Index = () => {
     setChatSuggestedMovies(null);
   };
 
-  // Expose reset function globally for BottomTabBar
   useEffect(() => {
-    (window as any).__pickResetHome = () => {
-      setStep("home");
-      setResults([]);
-      setCurrentResultIndex(0);
-      setResultIndexHistory([]);
-      setSearchTags([]);
-      setShowChat(false);
-      setChatInitialMessages(undefined);
-      setChatSuggestedMovies(null);
-    };
-    return () => { delete (window as any).__pickResetHome; };
-  }, []);
+    const state = (location.state as any) || {};
+
+    if (state.openTrainer) {
+      setOpenTrainerOnMount(true);
+      window.history.replaceState({}, "", "/app");
+    }
 
   useEffect(() => {
     const state = (location.state as any) || {};
