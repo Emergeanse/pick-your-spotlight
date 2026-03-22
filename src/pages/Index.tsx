@@ -406,6 +406,7 @@ const Index = () => {
     setStep("home");
     setResults([]);
     setCurrentResultIndex(0);
+    setResultIndexHistory([]);
     setSearchTags([]);
     setShowChat(false);
     setChatInitialMessages(undefined);
