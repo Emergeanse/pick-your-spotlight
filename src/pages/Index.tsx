@@ -76,6 +76,15 @@ const Index = () => {
       setOpenTrainerOnMount(true);
       window.history.replaceState({}, "", "/app");
     }
+    // Handle selectedMovie from external pages (e.g. WatchlistRoute)
+    if ((location.state as any)?.selectedMovie) {
+      const movie = (location.state as any).selectedMovie as MovieDetail;
+      setResults([movie]);
+      setCurrentResultIndex(0);
+      setResultOrigin("external");
+      setStep("result");
+      window.history.replaceState({}, "", "/app");
+    }
   }, [location.state]);
 
   const loadChatMovie = useCallback(() => {
@@ -85,6 +94,7 @@ const Index = () => {
         const movie = JSON.parse(stored) as MovieDetail;
         setResults([movie]);
         setCurrentResultIndex(0);
+        setResultOrigin("external");
         setStep("result");
       } catch { /* ignore */ }
       sessionStorage.removeItem("pick-fab-movie");
