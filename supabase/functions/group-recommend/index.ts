@@ -251,8 +251,9 @@ RÈGLE D'ÉQUITÉ : Un film adoré par 3 membres mais détesté par 1 = ÉLIMIN�
 Le min_member_score empêche un film subi par quelqu'un.
 
 RÈGLES :
-- Recommande EXACTEMENT 5 ${contentLabel}
-- Pour chaque reco : title, type ("movie"/"tv"), reason (2 phrases), groupScore (0-100), fairnessScore (0-100 = combien c'est équitable), memberNotes (1 phrase par membre, citant ses goûts)
+- Recommande EXACTEMENT 5 ${contentLabel} avec un groupScore ≥ 80
+- Pour chaque reco : title, type ("movie"/"tv"), reason (2 phrases POSITIVES — mets en avant pourquoi ce contenu va plaire au groupe, ne mentionne JAMAIS les aspects négatifs), groupScore (80-100), fairnessScore (0-100 = combien c'est équitable), memberNotes (1 phrase POSITIVE par membre, citant ses goûts et pourquoi ça va lui plaire)
+- RÈGLE D'OR DU TON : Que du POSITIF, de l'enthousiasme. Pas de "malgré", "cependant", "par contre". Vends le contenu comme un ami enthousiaste.
 - NE recommande PAS genres exclus / déjà vus (${excludeIds.length} IDs exclus)
 - Réponds UNIQUEMENT en JSON valide sans backticks
 
