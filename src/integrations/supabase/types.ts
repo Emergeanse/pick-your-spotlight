@@ -352,6 +352,8 @@ export type Database = {
           best_streak: number
           birth_year: number | null
           created_at: string
+          default_max_duration: number | null
+          default_media_type: string
           display_name: string | null
           excluded_genres: string[] | null
           excluded_platforms: number[] | null
@@ -362,6 +364,7 @@ export type Database = {
           id: string
           is_test_account: boolean
           last_recommendation_date: string | null
+          match_threshold: number
           media_preference: string
           min_rating: number | null
           onboarding_completed: boolean
@@ -382,6 +385,8 @@ export type Database = {
           best_streak?: number
           birth_year?: number | null
           created_at?: string
+          default_max_duration?: number | null
+          default_media_type?: string
           display_name?: string | null
           excluded_genres?: string[] | null
           excluded_platforms?: number[] | null
@@ -392,6 +397,7 @@ export type Database = {
           id: string
           is_test_account?: boolean
           last_recommendation_date?: string | null
+          match_threshold?: number
           media_preference?: string
           min_rating?: number | null
           onboarding_completed?: boolean
@@ -412,6 +418,8 @@ export type Database = {
           best_streak?: number
           birth_year?: number | null
           created_at?: string
+          default_max_duration?: number | null
+          default_media_type?: string
           display_name?: string | null
           excluded_genres?: string[] | null
           excluded_platforms?: number[] | null
@@ -422,6 +430,7 @@ export type Database = {
           id?: string
           is_test_account?: boolean
           last_recommendation_date?: string | null
+          match_threshold?: number
           media_preference?: string
           min_rating?: number | null
           onboarding_completed?: boolean

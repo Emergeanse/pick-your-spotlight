@@ -10,6 +10,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdmin } from "@/hooks/use-admin";
+import ProfilePreferences from "@/components/pick/ProfilePreferences";
 
 const ALL_PLATFORMS = [
   { id: 8, label: "Netflix", logo: "https://image.tmdb.org/t/p/original/pbpMk2JmcoNnQwx5JGpXngfoWtp.jpg" },
@@ -29,6 +30,9 @@ const Profile = () => {
   const [profile, setProfile] = useState<any>(null);
   const [selectedPlatforms, setSelectedPlatforms] = useState<number[]>([]);
   const [minRating, setMinRating] = useState<number>(0);
+  const [matchThreshold, setMatchThreshold] = useState<number>(80);
+  const [defaultMediaType, setDefaultMediaType] = useState<"both" | "movie" | "tv">("both");
+  const [defaultMaxDuration, setDefaultMaxDuration] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
   const [profileLoading, setProfileLoading] = useState(true);
   const [displayName, setDisplayName] = useState("");
@@ -50,6 +54,9 @@ const Profile = () => {
       setProfile(data);
       setSelectedPlatforms(data?.preferred_platforms || []);
       setMinRating((data as any)?.min_rating || 0);
+      setMatchThreshold((data as any)?.match_threshold ?? 80);
+      setDefaultMediaType(((data as any)?.default_media_type as any) || "both");
+      setDefaultMaxDuration((data as any)?.default_max_duration ?? null);
       setDisplayName(data?.display_name || user.email?.split("@")[0] || "");
       setAvatarUrl((data as any)?.avatar_url || null);
     } catch (e) { console.error(e); }
@@ -87,9 +94,23 @@ const Profile = () => {
     if (!user) return;
     setSaving(true);
     try {
-      const { error } = await supabase.from("profiles").update({ preferred_platforms: selectedPlatforms, excluded_platforms: [], min_rating: minRating } as any).eq("id", user.id);
+      const { error } = await supabase.from("profiles").update({
+        preferred_platforms: selectedPlatforms,
+        excluded_platforms: [],
+        min_rating: minRating,
+        match_threshold: matchThreshold,
+        default_media_type: defaultMediaType,
+        default_max_duration: defaultMaxDuration,
+      } as any).eq("id", user.id);
       if (error) throw error;
-      setProfile((prev: any) => ({ ...prev, preferred_platforms: [...selectedPlatforms], min_rating: minRating }));
+      setProfile((prev: any) => ({
+        ...prev,
+        preferred_platforms: [...selectedPlatforms],
+        min_rating: minRating,
+        match_threshold: matchThreshold,
+        default_media_type: defaultMediaType,
+        default_max_duration: defaultMaxDuration,
+      }));
       toast({ title: "Préférences enregistrées" });
     } catch (e) { console.error(e); toast({ title: "Erreur", variant: "destructive" }); }
     finally { setSaving(false); }
@@ -97,7 +118,10 @@ const Profile = () => {
 
   const hasChanges = profile && (
     JSON.stringify([...selectedPlatforms].sort()) !== JSON.stringify([...(profile.preferred_platforms || [])].sort()) ||
-    minRating !== ((profile as any)?.min_rating || 0)
+    minRating !== ((profile as any)?.min_rating || 0) ||
+    matchThreshold !== ((profile as any)?.match_threshold ?? 80) ||
+    defaultMediaType !== ((profile as any)?.default_media_type || "both") ||
+    defaultMaxDuration !== ((profile as any)?.default_max_duration ?? null)
   );
 
   if (!isReady || profileLoading) return <div className="fixed inset-0 bg-background flex items-center justify-center"><Loader2 className="w-6 h-6 text-primary animate-spin" /></div>;
@@ -139,8 +163,18 @@ const Profile = () => {
           </div>
         </motion.div>
 
+        {/* ─── Préférences de recherche ─── */}
+        <ProfilePreferences
+          matchThreshold={matchThreshold}
+          onMatchThresholdChange={setMatchThreshold}
+          mediaType={defaultMediaType}
+          onMediaTypeChange={setDefaultMediaType}
+          maxDuration={defaultMaxDuration}
+          onMaxDurationChange={setDefaultMaxDuration}
+        />
+
         {/* ─── Plateformes ─── */}
-        <motion.section initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="mb-8">
+        <motion.section initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="mb-8">
           <h2 className="text-sm font-sans font-semibold text-foreground/50 uppercase tracking-widest mb-3">Tes plateformes</h2>
           <div className="grid grid-cols-4 gap-2">
             {ALL_PLATFORMS.map((p) => {
@@ -159,7 +193,7 @@ const Profile = () => {
         </motion.section>
 
         {/* ─── Note minimale ─── */}
-        <motion.section initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="mb-8">
+        <motion.section initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }} className="mb-8">
           <div className="flex items-center gap-2 mb-3">
             <h2 className="text-sm font-sans font-semibold text-foreground/50 uppercase tracking-widest">Note minimale</h2>
             <TooltipProvider>
@@ -182,7 +216,7 @@ const Profile = () => {
         </motion.section>
 
         {/* ─── Footer actions ─── */}
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.15 }} className="flex flex-col gap-1 pt-4 border-t border-border/5">
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }} className="flex flex-col gap-1 pt-4 border-t border-border/5">
           {isAdmin && (
             <Button variant="ghost" onClick={() => navigate("/admin")} className="justify-start text-primary/50 hover:text-primary text-xs font-sans gap-2 h-10">
               <Shield className="w-3.5 h-3.5" /> Administration
