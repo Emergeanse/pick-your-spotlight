@@ -232,10 +232,13 @@ RÈGLES DE RERANKING FINAL :
 
 RÈGLES JSON :
 - Réponds UNIQUEMENT avec un JSON valide sans backticks
-${requestedCount > 1 ? `- Structure : {"suggestions": [{"title": "<titre>", "reason": "<2-3 phrases POSITIVES — mets en avant pourquoi ça va plaire, ne mentionne JAMAIS les aspects négatifs>", "confidence": <${minMatchScore}-100>, "scores": {"stable_taste": <0-100>, "recent_taste": <0-100>, "context": <0-100>, "rejection_risk": <0-100>, "quality": <0-100>, "novelty": <0-100>, "fatigue": <0-100>}}, ...]}
-- EXACTEMENT ${requestedCount} suggestions DIFFÉRENTES` : `- Structure : {"title": "<titre>", "reason": "<2-3 phrases POSITIVES — mets en avant pourquoi ça va plaire, ne mentionne JAMAIS les aspects négatifs>", "confidence": <${minMatchScore}-100>, "scores": {"stable_taste": <0-100>, "recent_taste": <0-100>, "context": <0-100>, "rejection_risk": <0-100>, "quality": <0-100>, "novelty": <0-100>, "fatigue": <0-100>}}`}
-- SCORE DE CONFIANCE MINIMUM : ${minMatchScore}% — Ne propose QUE des contenus dont tu es confiant à au moins ${minMatchScore}%.
-- RÈGLE D'OR DU TON : La "reason" doit être EXCLUSIVEMENT POSITIVE. Valorise ce qui va plaire, fais le lien entre les goûts de l'utilisateur et les qualités du contenu. Pas de "malgré", "cependant", "par contre". Vends le contenu comme un ami enthousiaste.
+${requestedCount > 1 ? `- Structure : {"suggestions": [{"title": "<titre>", "reason": "<2-3 phrases POSITIVES — mets en avant pourquoi ça va plaire, ne mentionne JAMAIS les aspects négatifs>", "confidence": <0-100>, "scores": {"stable_taste": <0-100>, "recent_taste": <0-100>, "context": <0-100>, "rejection_risk": <0-100>, "quality": <0-100>, "novelty": <0-100>, "fatigue": <0-100>}}, ...]}
+- EXACTEMENT ${requestedCount} suggestions DIFFÉRENTES
+- SCORE HONNÊTE : Donne un confidence SINCÈRE. Match parfait = 85-99, correct = 65-84, faible = <65. Ne gonfle PAS.
+- SEUIL MINIMUM : ${minMatchScore}%. Ne propose QUE des contenus dont le confidence RÉEL est ≥ ${minMatchScore}%. Si tu n'es pas sûr que ça corresponde, ne le propose pas.` : `- Structure : {"title": "<titre>", "reason": "<2-3 phrases POSITIVES — mets en avant pourquoi ça va plaire, ne mentionne JAMAIS les aspects négatifs>", "confidence": <0-100>, "scores": {"stable_taste": <0-100>, "recent_taste": <0-100>, "context": <0-100>, "rejection_risk": <0-100>, "quality": <0-100>, "novelty": <0-100>, "fatigue": <0-100>}}
+- SCORE HONNÊTE : confidence SINCÈRE basé sur la compatibilité réelle.
+- SEUIL MINIMUM : ${minMatchScore}%. Ne propose QUE si le confidence RÉEL est ≥ ${minMatchScore}%.`}
+- RÈGLE D'OR DU TON : La "reason" doit être EXCLUSIVEMENT POSITIVE. Valorise ce qui va plaire. Pas de "malgré", "cependant", "par contre".
 - IDs TMDB exclus : ${normalizedExcludeIds.length > 0 ? normalizedExcludeIds.slice(0, 200).join(", ") : "aucun"}
 ${effectiveOutOfComfortZone ? `- MODE HORS ZONE DE CONFORT ACTIVÉ` : ""}`;
 
@@ -285,15 +288,25 @@ Recommande ${requestedCount > 1 ? `${requestedCount} contenus` : "UN contenu"} a
         const jsonStr = content.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
         const parsed = JSON.parse(jsonStr);
         if (requestedCount > 1 && parsed.suggestions) {
-          suggestions = parsed.suggestions.filter((s: any) => (s.confidence || 0) >= minMatchScore);
-          // If all filtered out, keep the best ones
-          if (suggestions.length === 0) {
-            suggestions = parsed.suggestions
-              .sort((a: any, b: any) => (b.confidence || 0) - (a.confidence || 0))
-              .slice(0, requestedCount);
+          // Keep only suggestions that meet the minimum match score
+          const qualifying = parsed.suggestions.filter((s: any) => (s.confidence || 0) >= minMatchScore);
+          if (qualifying.length >= requestedCount) {
+            suggestions = qualifying.slice(0, requestedCount);
+          } else if (qualifying.length > 0) {
+            // Not enough qualifying — use what we have, fill rest from TMDB discover
+            suggestions = qualifying;
+          } else {
+            // None qualify — use discover fallback entirely (don't force bad matches)
+            console.warn(`All ${parsed.suggestions.length} AI suggestions below ${minMatchScore}% threshold — falling back to discover`);
+            suggestions = [];
           }
         } else if (parsed.title) {
-          suggestions = [parsed];
+          if ((parsed.confidence || 0) >= minMatchScore) {
+            suggestions = [parsed];
+          } else {
+            console.warn(`Single AI suggestion "${parsed.title}" at ${parsed.confidence}% — below ${minMatchScore}% threshold`);
+            suggestions = [];
+          }
         } else { aiFailed = true; }
       } catch { aiFailed = true; }
     }
@@ -437,7 +450,7 @@ Recommande ${requestedCount > 1 ? `${requestedCount} contenus` : "UN contenu"} a
           if (found) {
             const detail = await getMovieDetails(found.id, type);
             foundMovieIds.add(detail.id);
-            movies.push({ movie: detail, reason: `Recommandé par Pick pour diversifier.`, confidence: 50, scores: null });
+            movies.push({ movie: detail, reason: `Recommandé par Pick pour diversifier.`, confidence: minMatchScore, scores: null });
             fireEmbedding(detail);
           }
         }
@@ -446,7 +459,7 @@ Recommande ${requestedCount > 1 ? `${requestedCount} contenus` : "UN contenu"} a
       if (movies.length === 0) {
         const fallback = await discoverFallback();
         if (!fallback) throw new Error("No movie found");
-        movies.push({ movie: fallback, reason: `Ce contenu correspond à tes genres préférés.`, confidence: 50, scores: null });
+        movies.push({ movie: fallback, reason: `Ce contenu correspond à tes genres préférés.`, confidence: minMatchScore, scores: null });
       }
 
       return new Response(JSON.stringify({
@@ -481,7 +494,7 @@ Recommande ${requestedCount > 1 ? `${requestedCount} contenus` : "UN contenu"} a
       reason: aiFailed
         ? `${contentLabel} correspond à tes genres préférés (${topGenres.slice(0, 3).join(", ")}).`
         : singleSuggestion?.reason || `${contentLabel} est recommandé par Pick.`,
-      confidence: aiFailed ? 50 : (singleSuggestion?.confidence || 75),
+      confidence: aiFailed ? minMatchScore : (singleSuggestion?.confidence || minMatchScore),
       isDiscovery: shouldDiscover,
       scores: aiFailed ? null : (singleSuggestion?.scores || null),
       engineMeta: {

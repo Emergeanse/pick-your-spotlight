@@ -226,12 +226,12 @@ const Index = () => {
     setLoading(true);
     try {
       const liked = user ? await getLikedMovies() : [];
-      const excludeIds = results.map(r => r.id);
+      const tasteProfile = user ? await getUserTasteProfile() : null;
+      const excludeIds = [...results.map(r => r.id), ...(tasteProfile?.excludeIds || [])];
       let batch: MovieDetail[] = [];
 
       if (user && liked.length >= 2) {
         const userTasteVector = await computeUserTasteVector(user.id);
-        const tasteProfile = await getUserTasteProfile();
         const data = await invokeSurprisePersonalized({
           likedMovies: liked, userTasteVector, tasteProfile,
           platformIds: profilePrefs.preferredPlatforms,
