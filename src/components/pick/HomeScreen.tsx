@@ -296,6 +296,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
             platformIds: userPlatformIds, excludedPlatformIds: userExcludedPlatformIds, excludedGenres: userExcludedGenres, minRating: userMinRating,
             outOfComfortZone: true, excludeIds: historyExcludeIds,
             count: RECOMMENDATION_BATCH_SIZE,
+            minMatchScore: quickFilters.matchThreshold,
           });
           batch = await ensureRecommendationBatch(extractRecommendationMovies(data), {
             excludeIds: historyExcludeIds,
@@ -368,6 +369,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
             mediaType: quickFilters.mediaType !== "both" ? quickFilters.mediaType : whatChoice,
             maxDuration: quickFilters.maxDuration,
             count: RECOMMENDATION_BATCH_SIZE,
+            minMatchScore: quickFilters.matchThreshold,
           });
           movies = await ensureRecommendationBatch(extractRecommendationMovies(data), {
             excludeIds: allExcludeIds,
