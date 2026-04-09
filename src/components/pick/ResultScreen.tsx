@@ -639,7 +639,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({
                   On regarde ?
                 </Button>
 
-                <MovieActionBar movie={movie} onInteraction={(type) => {
+                <MovieActionBar key={movie.id} movie={movie} onInteraction={(type) => {
                   if (type === "already_seen" || type === "dislike") {
                     // Mark this movie as rejected in the batch
                     const nextRejected = new Set<number>(externalRejected || []);
