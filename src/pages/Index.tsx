@@ -547,7 +547,7 @@ const Index = () => {
                     setCurrentResultIndex(0);
                     setResultIndexHistory([]);
                     setResultSeenMovieIds(new Set(batch[0] ? [batch[0].id] : []));
-                  }
+                    setBatchRejectedIds(new Set());
                 } catch (e) { console.error("Refine error:", e); }
                 finally { setLoading(false); setLoadingMessage(""); }
               }}
@@ -572,6 +572,8 @@ const Index = () => {
               onPrevious={() => { if (currentResultIndex > 0) { setResultIndexHistory(h => [...h, currentResultIndex]); setCurrentResultIndex(i => i - 1); } }}
               visitedMovieIds={resultSeenMovieIds}
               onVisitedMovieIdsChange={setResultSeenMovieIds}
+              batchRejectedIds={batchRejectedIds}
+              onBatchRejectedIdsChange={setBatchRejectedIds}
             />
           </motion.div>
         )}
