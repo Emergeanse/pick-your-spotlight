@@ -714,6 +714,12 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({
       <RejectSheet open={showRejectReasons} onClose={() => setShowRejectReasons(false)} movie={movie} mediaType={mediaType} userCriteria={userCriteria}
         onShowAnother={onShowAnother} rejectReaction={rejectReaction} onRejectReaction={setRejectReaction} onFeedbackGiven={setFeedbackGiven} />
       <ReviewSheet open={showReviewSheet} onClose={() => setShowReviewSheet(false)} movieId={movie.id} userCriteria={userCriteria} />
+      <FlipCardDetail
+        item={personDetail.item}
+        type="person"
+        isOpen={personDetail.isOpen}
+        onClose={() => setPersonDetail({ item: null, isOpen: false })}
+      />
     </div>
   );
 });
