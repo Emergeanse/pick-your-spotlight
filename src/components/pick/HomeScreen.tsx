@@ -778,6 +778,31 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
                    <MovieActionBar movie={tonightPick} onInteraction={(type) => {
                      if (!tonightPick) return;
                      if (type === "already_seen" || type === "dislike") {
+                       // Track this movie as rejected in the tonight pool
+                       const rejectedInBatch = new Set<number>(tonightSeenMovieIds);
+                       rejectedInBatch.add(tonightPick.id);
+
+                       // Count how many in the pool are rejected (seen/disliked)
+                       // We track rejection separately from "visited" for display
+                       const nextRejected = [...rejectedIds, tonightPick.id];
+                       setRejectedIds(nextRejected);
+
+                       // Check if ALL movies in pool are rejected
+                       const allRejected = tonightPool.every(m => nextRejected.includes(m.id));
+                       if (allRejected) {
+                         const rejContext = {
+                           reason: type === "already_seen" ? "seen" as const : "not_my_style" as const,
+                           rejectedGenres: (tonightPick.genres || []).map(g => g.name),
+                           rejectedTitle: getDisplayTitle(tonightPick),
+                         };
+                         setTonightPick(null);
+                         setChatMoviesPool(null);
+                         setTonightPickIndex(0);
+                         generateTonightPick(nextRejected, rejContext);
+                         return;
+                       }
+
+                       // Otherwise advance to next unrejected movie
                        if (tonightPool.length > 1 && tonightPickIndex < tonightPool.length - 1) {
                          const newIndex = tonightPickIndex + 1;
                          setTonightPickIndex(newIndex);
@@ -786,18 +811,14 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
                          setTonightProviders([]);
                          const mediaType = nextMovie.first_air_date ? "tv" : "movie";
                          getWatchProviders(nextMovie.id, mediaType).then(setTonightProviders).catch(() => {});
-                       } else {
-                         const nextRejected = [...rejectedIds, tonightPick.id];
-                         const rejContext = {
-                           reason: type === "already_seen" ? "seen" as const : "not_my_style" as const,
-                           rejectedGenres: (tonightPick.genres || []).map(g => g.name),
-                           rejectedTitle: getDisplayTitle(tonightPick),
-                         };
-                         setRejectedIds(nextRejected);
-                         setTonightPick(null);
-                         setChatMoviesPool(null);
-                         setTonightPickIndex(0);
-                         generateTonightPick(nextRejected, rejContext);
+                       } else if (tonightPickIndex > 0) {
+                         const newIndex = tonightPickIndex - 1;
+                         setTonightPickIndex(newIndex);
+                         const prevMovie = tonightPool[newIndex];
+                         setTonightPick(prevMovie);
+                         setTonightProviders([]);
+                         const mediaType = prevMovie.first_air_date ? "tv" : "movie";
+                         getWatchProviders(prevMovie.id, mediaType).then(setTonightProviders).catch(() => {});
                        }
                      }
                    }} />
