@@ -539,8 +539,11 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({
                 </p>
                 <div className="rounded-xl bg-foreground/[0.04] border border-border/15 p-3.5">
                   {credits.director && (
-                    <div className="flex items-center gap-2.5 mb-3">
-                      <div className="w-9 h-9 rounded-full bg-primary/15 border border-primary/25 flex items-center justify-center overflow-hidden shrink-0">
+                    <button
+                      onClick={() => setPersonDetail({ item: { id: credits.director!.id, name: credits.director!.name, profile_path: credits.director!.profile_path }, isOpen: true })}
+                      className="flex items-center gap-2.5 mb-3 group cursor-pointer w-full text-left"
+                    >
+                      <div className="w-9 h-9 rounded-full bg-primary/15 border border-primary/25 flex items-center justify-center overflow-hidden shrink-0 group-hover:border-primary/40 transition-colors">
                         {credits.director.profile_path ? (
                           <img src={`${IMG_BASE}/w185${credits.director.profile_path}`} alt={credits.director.name} className="w-full h-full object-cover" />
                         ) : (
@@ -548,14 +551,20 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({
                         )}
                       </div>
                       <div className="min-w-0">
-                        <p className="text-foreground/80 text-[13px] font-sans font-semibold leading-tight truncate">{credits.director.name}</p>
+                        <p className="text-foreground/80 text-[13px] font-sans font-semibold leading-tight truncate group-hover:text-primary transition-colors">{credits.director.name}</p>
                         <p className="text-primary/50 text-[10px] font-sans font-medium uppercase tracking-wider">Réalisateur</p>
                       </div>
-                    </div>
+                    </button>
                   )}
                   {credits.cast.length > 0 && (
                     <div className="flex gap-3 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-hide">
-                      {credits.cast.map((actor) => <ActorCard key={actor.id} actor={actor} />)}
+                      {credits.cast.map((actor) => (
+                        <ActorCard
+                          key={actor.id}
+                          actor={actor}
+                          onClick={() => setPersonDetail({ item: { id: actor.id, name: actor.name, profile_path: actor.profile_path }, isOpen: true })}
+                        />
+                      ))}
                     </div>
                   )}
                 </div>
