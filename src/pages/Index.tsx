@@ -117,6 +117,7 @@ const Index = () => {
           ? new Set(seenMovieIds)
           : new Set(initialMovieId ? [initialMovieId] : []),
       );
+      setBatchRejectedIds(new Set());
       setResultOrigin(origin);
       setStep("result");
     },
