@@ -298,6 +298,8 @@ interface ResultScreenProps {
   onPrevious?: () => void;
   visitedMovieIds?: Set<number>;
   onVisitedMovieIdsChange?: (movieIds: Set<number>) => void;
+  batchRejectedIds?: Set<number>;
+  onBatchRejectedIdsChange?: (ids: Set<number>) => void;
 }
 
 const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({
@@ -306,6 +308,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({
   searchTags, onRemoveTag, refining, profileConfidence = 0,
   currentIndex = 0, totalCount = 1, onNext, onPrevious,
   visitedMovieIds: externalVisited, onVisitedMovieIdsChange,
+  batchRejectedIds: externalRejected, onBatchRejectedIdsChange,
 }, ref) => {
   const [providers, setProviders] = useState<{ name: string; logo_path: string; provider_id: number }[]>([]);
   const [credits, setCredits] = useState<MovieCredits | null>(null);
@@ -627,10 +630,24 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({
 
                 <MovieActionBar movie={movie} onInteraction={(type) => {
                   if (type === "already_seen" || type === "dislike") {
-                    if (currentIndex < totalCount - 1 && onNext) {
+                    // Mark this movie as rejected in the batch
+                    const nextRejected = new Set<number>(externalRejected || []);
+                    nextRejected.add(movie.id);
+                    onBatchRejectedIdsChange?.(nextRejected);
+
+                    // Check if ALL movies in the batch are now rejected
+                    if (nextRejected.size >= totalCount) {
+                      // All rejected → auto-trigger new batch
+                      setTimeout(() => onShowAnother(type === "dislike" ? "dislike" : "seen", movie), 400);
+                      return;
+                    }
+
+                    // Otherwise advance to next unrejected movie
+                    if (onNext && currentIndex < totalCount - 1) {
                       setTimeout(() => onNext(), 250);
-                    } else {
-                      setTimeout(() => onShowAnother(type === "dislike" ? "dislike" : "seen", movie), 250);
+                    } else if (onPrevious && currentIndex > 0) {
+                      // At end, go backward to find an unrejected movie
+                      setTimeout(() => onPrevious!(), 250);
                     }
                   }
                 }} />

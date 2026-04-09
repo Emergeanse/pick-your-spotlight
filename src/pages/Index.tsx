@@ -42,6 +42,7 @@ const Index = () => {
   const [currentResultIndex, setCurrentResultIndex] = useState(0);
   const [resultIndexHistory, setResultIndexHistory] = useState<number[]>([]);
   const [resultSeenMovieIds, setResultSeenMovieIds] = useState<Set<number>>(new Set());
+  const [batchRejectedIds, setBatchRejectedIds] = useState<Set<number>>(new Set());
   // Track where the result view originated from: "home" (internal), "external" (cross-page nav)
   const [resultOrigin, setResultOrigin] = useState<"home" | "external">("home");
   const [loadingMessage, setLoadingMessage] = useState("");
@@ -80,6 +81,7 @@ const Index = () => {
     setCurrentResultIndex(0);
     setResultIndexHistory([]);
     setResultSeenMovieIds(new Set());
+    setBatchRejectedIds(new Set());
     setSearchTags([]);
     setShowChat(false);
     setChatInitialMessages(undefined);
@@ -115,6 +117,7 @@ const Index = () => {
           ? new Set(seenMovieIds)
           : new Set(initialMovieId ? [initialMovieId] : []),
       );
+      setBatchRejectedIds(new Set());
       setResultOrigin(origin);
       setStep("result");
     },
@@ -443,6 +446,7 @@ const Index = () => {
       setCurrentResultIndex(0);
       setResultIndexHistory([]);
       setResultSeenMovieIds(new Set(batch[0] ? [batch[0].id] : []));
+      setBatchRejectedIds(new Set());
     } catch (e) {
       console.error(e);
     } finally {
@@ -543,6 +547,7 @@ const Index = () => {
                     setCurrentResultIndex(0);
                     setResultIndexHistory([]);
                     setResultSeenMovieIds(new Set(batch[0] ? [batch[0].id] : []));
+                    setBatchRejectedIds(new Set());
                   }
                 } catch (e) { console.error("Refine error:", e); }
                 finally { setLoading(false); setLoadingMessage(""); }
@@ -568,6 +573,8 @@ const Index = () => {
               onPrevious={() => { if (currentResultIndex > 0) { setResultIndexHistory(h => [...h, currentResultIndex]); setCurrentResultIndex(i => i - 1); } }}
               visitedMovieIds={resultSeenMovieIds}
               onVisitedMovieIdsChange={setResultSeenMovieIds}
+              batchRejectedIds={batchRejectedIds}
+              onBatchRejectedIdsChange={setBatchRejectedIds}
             />
           </motion.div>
         )}
