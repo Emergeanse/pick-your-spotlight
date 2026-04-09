@@ -72,8 +72,7 @@ const FlipCardDetail = ({ item, type, isOpen, onClose }: FlipCardDetailProps) =>
     setCurrentType(prev.type);
   }, [navStack, onClose]);
 
-  if (!isOpen) return null;
-
+  if (!isOpen || !currentItem) return null;
   const director = detail?.credits?.crew?.find((c: any) => c.job === "Director");
   const cast = detail?.credits?.cast?.slice(0, 6) || [];
   const filmography = detail?.movie_credits?.cast?.slice(0, 12) || detail?.movie_credits?.crew?.filter((c: any) => c.job === "Director").slice(0, 12) || [];
