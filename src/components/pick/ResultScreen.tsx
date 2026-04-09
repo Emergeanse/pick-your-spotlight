@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { computeUserTasteVector, ensureMovieEmbedding } from "@/lib/taste-engine";
 import { Button } from "@/components/ui/button";
 import MovieActionBar from "@/components/pick/MovieActionBar";
+import FlipCardDetail from "@/components/pick/FlipCardDetail";
 import BrandHeader from "./BrandHeader";
 import PickCharacter from "./PickCharacter";
 
@@ -39,9 +40,9 @@ interface MatchData {
   pickNote?: string | null;
 }
 
-const ActorCard = ({ actor }: { actor: CastMember }) => (
-  <div className="flex flex-col items-center gap-1.5 min-w-[56px]">
-    <div className="w-11 h-11 rounded-full bg-foreground/[0.06] border border-border/15 overflow-hidden shrink-0">
+const ActorCard = ({ actor, onClick }: { actor: CastMember; onClick?: () => void }) => (
+  <button onClick={onClick} className="flex flex-col items-center gap-1.5 min-w-[56px] group cursor-pointer">
+    <div className="w-11 h-11 rounded-full bg-foreground/[0.06] border border-border/15 overflow-hidden shrink-0 group-hover:border-primary/30 transition-colors">
       {actor.profile_path ? (
         <img src={`${IMG_BASE}/w185${actor.profile_path}`} alt={actor.name} className="w-full h-full object-cover" />
       ) : (
@@ -51,10 +52,10 @@ const ActorCard = ({ actor }: { actor: CastMember }) => (
       )}
     </div>
     <div className="text-center min-w-0 max-w-[64px]">
-      <p className="text-foreground/70 text-[10px] font-sans font-medium leading-tight truncate">{actor.name}</p>
+      <p className="text-foreground/70 text-[10px] font-sans font-medium leading-tight truncate group-hover:text-primary transition-colors">{actor.name}</p>
       <p className="text-foreground/30 text-[9px] font-sans leading-tight truncate">{actor.character}</p>
     </div>
-  </div>
+  </button>
 );
 
 const MatchAnalysis = ({ matchData, mediaType }: { matchData: MatchData; mediaType: string; movieId: number }) => {
@@ -328,6 +329,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({
   const [rejectReaction, setRejectReaction] = useState<string | null>(null);
   const [showRefineSheet, setShowRefineSheet] = useState(false);
   const [showReviewSheet, setShowReviewSheet] = useState(false);
+  const [personDetail, setPersonDetail] = useState<{ item: any; isOpen: boolean }>({ item: null, isOpen: false });
   const [internalVisitedMovieIds, setInternalVisitedMovieIds] = useState<Set<number>>(() => new Set([movie.id]));
   const visitedMovieIds = externalVisited ?? internalVisitedMovieIds;
   const setVisitedMovieIds = (updater: Set<number> | ((prev: Set<number>) => Set<number>)) => {
@@ -537,8 +539,11 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({
                 </p>
                 <div className="rounded-xl bg-foreground/[0.04] border border-border/15 p-3.5">
                   {credits.director && (
-                    <div className="flex items-center gap-2.5 mb-3">
-                      <div className="w-9 h-9 rounded-full bg-primary/15 border border-primary/25 flex items-center justify-center overflow-hidden shrink-0">
+                    <button
+                      onClick={() => setPersonDetail({ item: { id: credits.director!.id, name: credits.director!.name, profile_path: credits.director!.profile_path }, isOpen: true })}
+                      className="flex items-center gap-2.5 mb-3 group cursor-pointer w-full text-left"
+                    >
+                      <div className="w-9 h-9 rounded-full bg-primary/15 border border-primary/25 flex items-center justify-center overflow-hidden shrink-0 group-hover:border-primary/40 transition-colors">
                         {credits.director.profile_path ? (
                           <img src={`${IMG_BASE}/w185${credits.director.profile_path}`} alt={credits.director.name} className="w-full h-full object-cover" />
                         ) : (
@@ -546,14 +551,20 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({
                         )}
                       </div>
                       <div className="min-w-0">
-                        <p className="text-foreground/80 text-[13px] font-sans font-semibold leading-tight truncate">{credits.director.name}</p>
+                        <p className="text-foreground/80 text-[13px] font-sans font-semibold leading-tight truncate group-hover:text-primary transition-colors">{credits.director.name}</p>
                         <p className="text-primary/50 text-[10px] font-sans font-medium uppercase tracking-wider">Réalisateur</p>
                       </div>
-                    </div>
+                    </button>
                   )}
                   {credits.cast.length > 0 && (
                     <div className="flex gap-3 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-hide">
-                      {credits.cast.map((actor) => <ActorCard key={actor.id} actor={actor} />)}
+                      {credits.cast.map((actor) => (
+                        <ActorCard
+                          key={actor.id}
+                          actor={actor}
+                          onClick={() => setPersonDetail({ item: { id: actor.id, name: actor.name, profile_path: actor.profile_path }, isOpen: true })}
+                        />
+                      ))}
                     </div>
                   )}
                 </div>
@@ -703,6 +714,12 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({
       <RejectSheet open={showRejectReasons} onClose={() => setShowRejectReasons(false)} movie={movie} mediaType={mediaType} userCriteria={userCriteria}
         onShowAnother={onShowAnother} rejectReaction={rejectReaction} onRejectReaction={setRejectReaction} onFeedbackGiven={setFeedbackGiven} />
       <ReviewSheet open={showReviewSheet} onClose={() => setShowReviewSheet(false)} movieId={movie.id} userCriteria={userCriteria} />
+      <FlipCardDetail
+        item={personDetail.item}
+        type="person"
+        isOpen={personDetail.isOpen}
+        onClose={() => setPersonDetail({ item: null, isOpen: false })}
+      />
     </div>
   );
 });
