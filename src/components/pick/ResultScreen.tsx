@@ -630,10 +630,24 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({
 
                 <MovieActionBar movie={movie} onInteraction={(type) => {
                   if (type === "already_seen" || type === "dislike") {
-                    if (currentIndex < totalCount - 1 && onNext) {
+                    // Mark this movie as rejected in the batch
+                    const nextRejected = new Set(externalRejected || new Set());
+                    nextRejected.add(movie.id);
+                    onBatchRejectedIdsChange?.(nextRejected);
+
+                    // Check if ALL movies in the batch are now rejected
+                    if (nextRejected.size >= totalCount) {
+                      // All rejected → auto-trigger new batch
+                      setTimeout(() => onShowAnother(type === "dislike" ? "dislike" : "seen", movie), 400);
+                      return;
+                    }
+
+                    // Otherwise advance to next unrejected movie
+                    if (onNext && currentIndex < totalCount - 1) {
                       setTimeout(() => onNext(), 250);
-                    } else {
-                      setTimeout(() => onShowAnother(type === "dislike" ? "dislike" : "seen", movie), 250);
+                    } else if (onPrevious && currentIndex > 0) {
+                      // At end, go backward to find an unrejected movie
+                      setTimeout(() => onPrevious!(), 250);
                     }
                   }
                 }} />
