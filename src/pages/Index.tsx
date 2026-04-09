@@ -42,6 +42,7 @@ const Index = () => {
   const [currentResultIndex, setCurrentResultIndex] = useState(0);
   const [resultIndexHistory, setResultIndexHistory] = useState<number[]>([]);
   const [resultSeenMovieIds, setResultSeenMovieIds] = useState<Set<number>>(new Set());
+  const [batchRejectedIds, setBatchRejectedIds] = useState<Set<number>>(new Set());
   // Track where the result view originated from: "home" (internal), "external" (cross-page nav)
   const [resultOrigin, setResultOrigin] = useState<"home" | "external">("home");
   const [loadingMessage, setLoadingMessage] = useState("");
@@ -80,6 +81,7 @@ const Index = () => {
     setCurrentResultIndex(0);
     setResultIndexHistory([]);
     setResultSeenMovieIds(new Set());
+    setBatchRejectedIds(new Set());
     setSearchTags([]);
     setShowChat(false);
     setChatInitialMessages(undefined);
