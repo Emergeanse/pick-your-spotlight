@@ -40,9 +40,9 @@ interface MatchData {
   pickNote?: string | null;
 }
 
-const ActorCard = ({ actor }: { actor: CastMember }) => (
-  <div className="flex flex-col items-center gap-1.5 min-w-[56px]">
-    <div className="w-11 h-11 rounded-full bg-foreground/[0.06] border border-border/15 overflow-hidden shrink-0">
+const ActorCard = ({ actor, onClick }: { actor: CastMember; onClick?: () => void }) => (
+  <button onClick={onClick} className="flex flex-col items-center gap-1.5 min-w-[56px] group cursor-pointer">
+    <div className="w-11 h-11 rounded-full bg-foreground/[0.06] border border-border/15 overflow-hidden shrink-0 group-hover:border-primary/30 transition-colors">
       {actor.profile_path ? (
         <img src={`${IMG_BASE}/w185${actor.profile_path}`} alt={actor.name} className="w-full h-full object-cover" />
       ) : (
@@ -52,10 +52,10 @@ const ActorCard = ({ actor }: { actor: CastMember }) => (
       )}
     </div>
     <div className="text-center min-w-0 max-w-[64px]">
-      <p className="text-foreground/70 text-[10px] font-sans font-medium leading-tight truncate">{actor.name}</p>
+      <p className="text-foreground/70 text-[10px] font-sans font-medium leading-tight truncate group-hover:text-primary transition-colors">{actor.name}</p>
       <p className="text-foreground/30 text-[9px] font-sans leading-tight truncate">{actor.character}</p>
     </div>
-  </div>
+  </button>
 );
 
 const MatchAnalysis = ({ matchData, mediaType }: { matchData: MatchData; mediaType: string; movieId: number }) => {
