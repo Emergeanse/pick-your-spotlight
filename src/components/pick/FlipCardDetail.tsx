@@ -18,7 +18,7 @@ type NavEntry = { item: any; type: "movie" | "person" };
 
 const FlipCardDetail = ({ item, type, isOpen, onClose }: FlipCardDetailProps) => {
   const [navStack, setNavStack] = useState<NavEntry[]>([]);
-  const [currentItem, setCurrentItem] = useState<any>(item);
+  const [currentItem, setCurrentItem] = useState<any>(null);
   const [currentType, setCurrentType] = useState<"movie" | "person">(type);
   const [detail, setDetail] = useState<any>(null);
   const [loading, setLoading] = useState(false);
@@ -30,6 +30,10 @@ const FlipCardDetail = ({ item, type, isOpen, onClose }: FlipCardDetailProps) =>
       setCurrentType(type);
       setNavStack([]);
       setDetail(null);
+    }
+    if (!isOpen) {
+      setCurrentItem(null);
+      setNavStack([]);
     }
   }, [isOpen, item?.id, type]);
 
