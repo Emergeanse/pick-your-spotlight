@@ -329,6 +329,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({
   const [rejectReaction, setRejectReaction] = useState<string | null>(null);
   const [showRefineSheet, setShowRefineSheet] = useState(false);
   const [showReviewSheet, setShowReviewSheet] = useState(false);
+  const [personDetail, setPersonDetail] = useState<{ item: any; isOpen: boolean }>({ item: null, isOpen: false });
   const [internalVisitedMovieIds, setInternalVisitedMovieIds] = useState<Set<number>>(() => new Set([movie.id]));
   const visitedMovieIds = externalVisited ?? internalVisitedMovieIds;
   const setVisitedMovieIds = (updater: Set<number> | ((prev: Set<number>) => Set<number>)) => {
