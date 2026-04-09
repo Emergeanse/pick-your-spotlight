@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Bookmark, Heart, Eye, ThumbsDown } from "lucide-react";
+import { Bookmark, Heart, Eye, ThumbsDown, HelpCircle } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
 import { likeMovie, unlikeMovie, isMovieLiked } from "@/lib/liked-movies";
@@ -66,6 +66,14 @@ const MovieActionBar = ({ movie, size = "md", className = "", onInteraction }: M
         setLiked(true);
         toast.success("Ajouté aux favoris !");
         trackInteraction(movie.id, "liked");
+        // Auto-add to watchlist if not already seen
+        if (!bookmarked) {
+          try {
+            await addToWatchlist(movie);
+            setBookmarked(true);
+            window.dispatchEvent(new CustomEvent("pick-watchlist-added"));
+          } catch { /* already in watchlist */ }
+        }
       }
     } catch { toast.error("Erreur"); }
     finally { setLikeLoading(false); }
@@ -86,6 +94,13 @@ const MovieActionBar = ({ movie, size = "md", className = "", onInteraction }: M
     });
     toast.success("Noté — Pick en tiendra compte");
     onInteraction?.("dislike");
+  };
+
+  const handleUnknown = () => {
+    if (!requireAuth()) return;
+    trackInteraction(movie.id, "unknown", {});
+    toast.success("Noté — on en tiendra compte");
+    onInteraction?.("unknown");
   };
 
   const iconSize = size === "sm" ? "w-3 h-3" : "w-3.5 h-3.5";
@@ -124,6 +139,17 @@ const MovieActionBar = ({ movie, size = "md", className = "", onInteraction }: M
           <Heart className={`${iconSize} ${liked ? "fill-primary" : ""}`} />
         </button>
         <span className={`${fontSize} text-foreground/30 font-sans`}>J'aime</span>
+      </div>
+
+      <div className="flex flex-col items-center gap-0.5">
+        <button
+          onClick={handleUnknown}
+          className={`${btnSize} rounded-full border border-border/25 text-foreground/40 hover:text-accent-foreground hover:border-accent/25 flex items-center justify-center transition-all active:scale-90`}
+          title="Je ne connais pas"
+        >
+          <HelpCircle className={iconSize} />
+        </button>
+        <span className={`${fontSize} text-foreground/30 font-sans`}>Inconnu</span>
       </div>
 
       <div className="flex flex-col items-center gap-0.5">

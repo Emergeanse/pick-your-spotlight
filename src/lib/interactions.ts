@@ -11,6 +11,7 @@ export type ActionType =
   | "searched"
   | "already_seen"
   | "unsure"
+  | "unknown"
   | "watch_clicked"
   | "reviewed"
   // New enriched rejection types
