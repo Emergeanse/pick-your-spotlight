@@ -522,7 +522,13 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
                       className="w-full max-w-lg mx-4 mb-8 rounded-2xl bg-card border border-border/50 shadow-2xl p-5 flex flex-col gap-3"
                       onClick={(e) => e.stopPropagation()}
                     >
-                      <h3 className="text-center text-base font-sans font-semibold text-foreground mb-1">Comment veux-tu chercher ?</h3>
+                      <h3 className="text-center text-base font-sans font-semibold text-foreground mb-1">
+                        {quickFilters.mediaType === "movie"
+                          ? "Tu veux regarder un film ?"
+                          : quickFilters.mediaType === "tv"
+                            ? "Tu veux regarder une série ?"
+                            : "Tu veux regarder quelque chose ?"}
+                      </h3>
 
                       {/* Option 1: Auto pick — direct to Tonight's Pick */}
                       <motion.button
@@ -543,8 +549,8 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
                             <span className="text-lg">🍿</span>
                           </div>
                           <div>
-                            <h4 className="text-sm font-sans font-semibold text-foreground">{getAutoPickLabel()}</h4>
-                            <p className="text-foreground/45 text-xs font-sans">{getAutoPickSubtitle()}</p>
+                            <h4 className="text-sm font-sans font-semibold text-foreground">Laisse-moi choisir pour toi !</h4>
+                             <p className="text-foreground/45 text-xs font-sans">{getAutoPickSubtitle()}</p>
                           </div>
                         </div>
                       </motion.button>
@@ -564,8 +570,8 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
                             <Mic className="w-5 h-5 text-primary" />
                           </div>
                           <div>
-                            <h4 className="text-sm font-sans font-semibold text-foreground">Parle à Pick</h4>
-                            <p className="text-foreground/45 text-xs font-sans">Dis-moi ce que tu veux ou comment tu te sens.</p>
+                            <h4 className="text-sm font-sans font-semibold text-foreground">Décris-moi ce que tu voudrais !</h4>
+                             <p className="text-foreground/45 text-xs font-sans">Dis-moi ce que tu veux ou comment tu te sens.</p>
                           </div>
                         </div>
                       </motion.button>
