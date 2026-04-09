@@ -548,6 +548,7 @@ const Index = () => {
                     setResultIndexHistory([]);
                     setResultSeenMovieIds(new Set(batch[0] ? [batch[0].id] : []));
                     setBatchRejectedIds(new Set());
+                  }
                 } catch (e) { console.error("Refine error:", e); }
                 finally { setLoading(false); setLoadingMessage(""); }
               }}
