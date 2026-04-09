@@ -14,6 +14,51 @@ export type Database = {
   }
   public: {
     Tables: {
+      catalog_item_relations: {
+        Row: {
+          character_name: string | null
+          created_at: string
+          display_order: number | null
+          id: string
+          item_id: string
+          person_item_id: string
+          relation_type: string
+        }
+        Insert: {
+          character_name?: string | null
+          created_at?: string
+          display_order?: number | null
+          id?: string
+          item_id: string
+          person_item_id: string
+          relation_type: string
+        }
+        Update: {
+          character_name?: string | null
+          created_at?: string
+          display_order?: number | null
+          id?: string
+          item_id?: string
+          person_item_id?: string
+          relation_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "catalog_item_relations_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "catalog_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "catalog_item_relations_person_item_id_fkey"
+            columns: ["person_item_id"]
+            isOneToOne: false
+            referencedRelation: "catalog_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       catalog_item_tags: {
         Row: {
           created_at: string
@@ -922,6 +967,41 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      user_wishlist: {
+        Row: {
+          created_at: string
+          id: string
+          item_id: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          item_id: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          item_id?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_wishlist_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "catalog_items"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       watchlist: {
         Row: {
