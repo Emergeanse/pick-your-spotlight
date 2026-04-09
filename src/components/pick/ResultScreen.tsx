@@ -298,6 +298,8 @@ interface ResultScreenProps {
   onPrevious?: () => void;
   visitedMovieIds?: Set<number>;
   onVisitedMovieIdsChange?: (movieIds: Set<number>) => void;
+  batchRejectedIds?: Set<number>;
+  onBatchRejectedIdsChange?: (ids: Set<number>) => void;
 }
 
 const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({
