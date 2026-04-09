@@ -631,7 +631,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({
                 <MovieActionBar movie={movie} onInteraction={(type) => {
                   if (type === "already_seen" || type === "dislike") {
                     // Mark this movie as rejected in the batch
-                    const nextRejected = new Set(externalRejected || new Set());
+                    const nextRejected = new Set<number>(externalRejected || []);
                     nextRejected.add(movie.id);
                     onBatchRejectedIdsChange?.(nextRejected);
 
