@@ -14,6 +14,90 @@ export type Database = {
   }
   public: {
     Tables: {
+      catalog_item_tags: {
+        Row: {
+          created_at: string
+          id: string
+          item_id: string
+          tag_id: string
+          weight: number | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          item_id: string
+          tag_id: string
+          weight?: number | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          item_id?: string
+          tag_id?: string
+          weight?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "catalog_item_tags_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "catalog_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "catalog_item_tags_tag_id_fkey"
+            columns: ["tag_id"]
+            isOneToOne: false
+            referencedRelation: "preference_tags"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      catalog_items: {
+        Row: {
+          created_at: string
+          id: string
+          media_type: string
+          overview: string | null
+          popularity: number | null
+          poster_path: string | null
+          runtime: number | null
+          title: string
+          tmdb_id: number
+          updated_at: string
+          vote_average: number | null
+          year: number | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          media_type?: string
+          overview?: string | null
+          popularity?: number | null
+          poster_path?: string | null
+          runtime?: number | null
+          title: string
+          tmdb_id: number
+          updated_at?: string
+          vote_average?: number | null
+          year?: number | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          media_type?: string
+          overview?: string | null
+          popularity?: number | null
+          poster_path?: string | null
+          runtime?: number | null
+          title?: string
+          tmdb_id?: number
+          updated_at?: string
+          vote_average?: number | null
+          year?: number | null
+        }
+        Relationships: []
+      }
       cinematic_profiles: {
         Row: {
           distinctions: Json
@@ -343,6 +427,33 @@ export type Database = {
         }
         Relationships: []
       }
+      preference_tags: {
+        Row: {
+          category: string
+          created_at: string
+          id: string
+          key: string
+          label: string
+          metadata: Json | null
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          id?: string
+          key: string
+          label: string
+          metadata?: Json | null
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          id?: string
+          key?: string
+          label?: string
+          metadata?: Json | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           accepted_recommendations: number
@@ -499,6 +610,75 @@ export type Database = {
         }
         Relationships: []
       }
+      recommendation_session_overrides: {
+        Row: {
+          created_at: string
+          id: string
+          override_weight: number
+          session_id: string
+          tag_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          override_weight: number
+          session_id: string
+          tag_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          override_weight?: number
+          session_id?: string
+          tag_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recommendation_session_overrides_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "recommendation_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recommendation_session_overrides_tag_id_fkey"
+            columns: ["tag_id"]
+            isOneToOne: false
+            referencedRelation: "preference_tags"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      recommendation_sessions: {
+        Row: {
+          created_at: string
+          filters_snapshot: Json | null
+          id: string
+          results: Json | null
+          source: string
+          taste_snapshot: Json | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          filters_snapshot?: Json | null
+          id?: string
+          results?: Json | null
+          source?: string
+          taste_snapshot?: Json | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          filters_snapshot?: Json | null
+          id?: string
+          results?: Json | null
+          source?: string
+          taste_snapshot?: Json | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       subscriptions: {
         Row: {
           created_at: string
@@ -565,6 +745,47 @@ export type Database = {
         }
         Relationships: []
       }
+      user_item_feedback: {
+        Row: {
+          action: string
+          context: Json | null
+          created_at: string
+          id: string
+          item_id: string
+          label: string | null
+          score: number | null
+          user_id: string
+        }
+        Insert: {
+          action: string
+          context?: Json | null
+          created_at?: string
+          id?: string
+          item_id: string
+          label?: string | null
+          score?: number | null
+          user_id: string
+        }
+        Update: {
+          action?: string
+          context?: Json | null
+          created_at?: string
+          id?: string
+          item_id?: string
+          label?: string | null
+          score?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_item_feedback_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "catalog_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_people_preferences: {
         Row: {
           created_at: string
@@ -600,6 +821,44 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      user_preferences: {
+        Row: {
+          created_at: string
+          id: string
+          source: string
+          tag_id: string
+          updated_at: string
+          user_id: string
+          weight: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          source?: string
+          tag_id: string
+          updated_at?: string
+          user_id: string
+          weight?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          source?: string
+          tag_id?: string
+          updated_at?: string
+          user_id?: string
+          weight?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_preferences_tag_id_fkey"
+            columns: ["tag_id"]
+            isOneToOne: false
+            referencedRelation: "preference_tags"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
