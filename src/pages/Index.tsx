@@ -446,6 +446,7 @@ const Index = () => {
       setCurrentResultIndex(0);
       setResultIndexHistory([]);
       setResultSeenMovieIds(new Set(batch[0] ? [batch[0].id] : []));
+      setBatchRejectedIds(new Set());
     } catch (e) {
       console.error(e);
     } finally {
