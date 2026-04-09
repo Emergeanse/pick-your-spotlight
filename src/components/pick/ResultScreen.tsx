@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { computeUserTasteVector, ensureMovieEmbedding } from "@/lib/taste-engine";
 import { Button } from "@/components/ui/button";
 import MovieActionBar from "@/components/pick/MovieActionBar";
+import FlipCardDetail from "@/components/pick/FlipCardDetail";
 import BrandHeader from "./BrandHeader";
 import PickCharacter from "./PickCharacter";
 
