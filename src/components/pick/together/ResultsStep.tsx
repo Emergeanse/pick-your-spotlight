@@ -139,7 +139,7 @@ const ResultsStep = ({ hero, alternatives, selectedCount, heroReaction, onReject
       {/* Action bar */}
       <div className="px-6 pb-2">
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.9 }}>
-          <MovieActionBar movie={hero.movie} />
+          <MovieActionBar key={hero.movie.id} movie={hero.movie} />
         </motion.div>
       </div>
 

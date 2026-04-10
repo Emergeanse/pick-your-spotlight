@@ -781,7 +781,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
                     On regarde ?
                   </Button>
 
-                   <MovieActionBar movie={tonightPick} onInteraction={(type) => {
+                   <MovieActionBar key={tonightPick.id} movie={tonightPick} onInteraction={(type) => {
                      if (!tonightPick) return;
                      if (type === "already_seen" || type === "dislike") {
                        // Track this movie as rejected in the tonight pool

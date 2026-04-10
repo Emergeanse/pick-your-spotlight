@@ -1,11 +1,11 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Bookmark, Heart, Eye, ThumbsDown, HelpCircle } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
 import { likeMovie, unlikeMovie } from "@/lib/liked-movies";
 import { addToWatchlist, removeFromWatchlist, isInWatchlist } from "@/lib/watchlist";
 import { trackInteraction } from "@/lib/interactions";
-import { getFeedback, setFeedback, type FeedbackLabel } from "@/lib/feedback";
+import { clearFeedback, getFeedback, setFeedback, type FeedbackLabel } from "@/lib/feedback";
 import type { MovieDetail } from "@/lib/tmdb";
 
 interface MovieActionBarProps {
@@ -16,11 +16,9 @@ interface MovieActionBarProps {
   initialFeedback?: FeedbackLabel | null;
 }
 
-/** Exclusive group: only one of these can be active at a time */
-const EXCLUSIVE_GROUP: FeedbackLabel[] = ["seen", "not_for_me", "unknown"];
-
 const MovieActionBar = ({ movie, size = "md", className = "", onInteraction, initialFeedback }: MovieActionBarProps) => {
   const { user } = useAuth();
+  const currentMovieIdRef = useRef(movie.id);
 
   // Per-item state — keyed internally to movie.id via React key prop
   const [liked, setLiked] = useState(false);
@@ -28,10 +26,25 @@ const MovieActionBar = ({ movie, size = "md", className = "", onInteraction, ini
   const [activeFeedback, setActiveFeedback] = useState<FeedbackLabel | null>(null);
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    currentMovieIdRef.current = movie.id;
+    setLiked(false);
+    setBookmarked(false);
+    setActiveFeedback(null);
+    setLoading(false);
+  }, [movie.id]);
+
   // Load persisted state on mount (runs once per movie thanks to key={movie.id})
   useEffect(() => {
-    if (!user) return;
+    if (!user) {
+      setLiked(false);
+      setBookmarked(false);
+      setActiveFeedback(null);
+      return;
+    }
+
     let cancelled = false;
+    const movieId = movie.id;
 
     const load = async () => {
       try {
@@ -42,12 +55,11 @@ const MovieActionBar = ({ movie, size = "md", className = "", onInteraction, ini
           isInWatchlist(movie.id),
         ]);
 
-        if (cancelled) return;
+        if (cancelled || currentMovieIdRef.current !== movieId) return;
+
         setBookmarked(inWl);
-        if (fb) {
-          setActiveFeedback(fb.label);
-          setLiked(fb.label === "like" || fb.label === "love");
-        }
+        setActiveFeedback(fb?.label ?? null);
+        setLiked(fb?.label === "like" || fb?.label === "love");
       } catch {
         // ignore
       }
@@ -67,12 +79,13 @@ const MovieActionBar = ({ movie, size = "md", className = "", onInteraction, ini
     media_type: movie.first_air_date ? "tv" : "movie",
   };
 
+  const isCurrentMovie = useCallback((movieId: number) => currentMovieIdRef.current === movieId, []);
+
   // ── Toggle helpers ──
 
   const persistFeedback = useCallback(async (label: FeedbackLabel | null) => {
     if (!label) {
-      // Clear feedback — set to "unknown" with score 0 as a neutral reset
-      // We don't have a "delete" in our feedback lib, so we just leave it
+      await clearFeedback(movie.id);
       return;
     }
     await setFeedback(movie.id, label, movieMeta);
@@ -85,35 +98,47 @@ const MovieActionBar = ({ movie, size = "md", className = "", onInteraction, ini
   const handleExclusiveToggle = async (label: FeedbackLabel) => {
     if (!requireAuth()) return;
 
+    const movieId = movie.id;
     const isCurrentlyActive = activeFeedback === label;
     const newLabel = isCurrentlyActive ? null : label;
+    const previousFeedback = activeFeedback;
+    const previousLiked = liked;
+    const previousBookmarked = bookmarked;
 
+    setLoading(true);
     setActiveFeedback(newLabel);
+    setLiked(false);
+    if (newLabel === "seen") setBookmarked(false);
 
-    // If activating "seen", remove from watchlist
-    if (newLabel === "seen" && bookmarked) {
-      try {
-        await removeFromWatchlist(movie.id);
-        setBookmarked(false);
-      } catch { /* ignore */ }
-    }
-
-    // If deactivating, we just clear UI state
-    if (newLabel) {
+    try {
       await persistFeedback(newLabel);
-      trackInteraction(movie.id, label === "seen" ? "already_seen" : label === "not_for_me" ? "skipped" : "unknown", {});
-    }
+      if (!isCurrentMovie(movieId)) return;
 
-    const toastMap: Record<FeedbackLabel, string> = {
-      seen: isCurrentlyActive ? "Statut retiré" : "Marqué comme déjà vu",
-      not_for_me: isCurrentlyActive ? "Statut retiré" : "Noté — Pick en tiendra compte",
-      unknown: isCurrentlyActive ? "Statut retiré" : "Noté — on en tiendra compte",
-      like: "",
-      love: "",
-      dislike: "",
-    };
-    toast.success(toastMap[label] || "Mis à jour");
-    onInteraction?.(label);
+      if (newLabel) {
+        trackInteraction(movie.id, label === "seen" ? "already_seen" : label === "not_for_me" ? "skipped" : "unknown", {});
+      }
+
+      const toastMap: Record<FeedbackLabel, string> = {
+        seen: isCurrentlyActive ? "Statut retiré" : "Marqué comme déjà vu",
+        not_for_me: isCurrentlyActive ? "Statut retiré" : "Noté — Pick en tiendra compte",
+        unknown: isCurrentlyActive ? "Statut retiré" : "Noté — on en tiendra compte",
+        like: "",
+        love: "",
+        dislike: "",
+      };
+      toast.success(toastMap[label] || "Mis à jour");
+      onInteraction?.(label);
+    } catch {
+      if (!isCurrentMovie(movieId)) return;
+      setActiveFeedback(previousFeedback);
+      setLiked(previousLiked);
+      setBookmarked(previousBookmarked);
+      toast.error("Erreur");
+    } finally {
+      if (isCurrentMovie(movieId)) {
+        setLoading(false);
+      }
+    }
   };
 
   // ── Watchlist toggle ──
@@ -142,33 +167,53 @@ const MovieActionBar = ({ movie, size = "md", className = "", onInteraction, ini
 
   const handleToggleLike = async () => {
     if (!requireAuth()) return;
+    const movieId = movie.id;
+    const previousLiked = liked;
+    const previousFeedback = activeFeedback;
+    const previousBookmarked = bookmarked;
+
     setLoading(true);
     try {
       if (liked) {
         await unlikeMovie(movie.id);
+        await persistFeedback(null);
+        if (!isCurrentMovie(movieId)) return;
+
         setLiked(false);
         setActiveFeedback(null);
         toast.success("Retiré des favoris");
         trackInteraction(movie.id, "unliked");
       } else {
         await likeMovie(movie);
-        setLiked(true);
-        // Like clears exclusive group
-        setActiveFeedback("like");
         await persistFeedback("like");
+        if (!isCurrentMovie(movieId)) return;
+
+        setLiked(true);
+        setActiveFeedback("like");
         toast.success("Ajouté aux favoris !");
         trackInteraction(movie.id, "liked");
         // Auto-add to watchlist if not bookmarked and not seen
-        if (!bookmarked && activeFeedback !== "seen") {
+        if (!previousBookmarked && previousFeedback !== "seen") {
           try {
             await addToWatchlist(movie);
+            if (!isCurrentMovie(movieId)) return;
             setBookmarked(true);
             window.dispatchEvent(new CustomEvent("pick-watchlist-added"));
           } catch { /* already in watchlist */ }
         }
       }
-    } catch { toast.error("Erreur"); }
-    finally { setLoading(false); }
+    } catch {
+      if (isCurrentMovie(movieId)) {
+        setLiked(previousLiked);
+        setActiveFeedback(previousFeedback);
+        setBookmarked(previousBookmarked);
+      }
+      toast.error("Erreur");
+    } finally {
+      if (isCurrentMovie(movieId)) {
+        setLoading(false);
+      }
+    }
   };
 
   // ── Render ──
@@ -224,6 +269,7 @@ const MovieActionBar = ({ movie, size = "md", className = "", onInteraction, ini
       <div className="flex flex-col items-center gap-0.5">
         <button
           onClick={() => handleExclusiveToggle("unknown")}
+          disabled={loading}
           className={`${btnSize} rounded-full border flex items-center justify-center transition-all active:scale-90 ${exclusiveClass("unknown")}`}
           title="Je ne connais pas"
         >
@@ -236,6 +282,7 @@ const MovieActionBar = ({ movie, size = "md", className = "", onInteraction, ini
       <div className="flex flex-col items-center gap-0.5">
         <button
           onClick={() => handleExclusiveToggle("seen")}
+          disabled={loading}
           className={`${btnSize} rounded-full border flex items-center justify-center transition-all active:scale-90 ${exclusiveClass("seen")}`}
           title="Déjà vu"
         >
@@ -248,6 +295,7 @@ const MovieActionBar = ({ movie, size = "md", className = "", onInteraction, ini
       <div className="flex flex-col items-center gap-0.5">
         <button
           onClick={() => handleExclusiveToggle("not_for_me")}
+          disabled={loading}
           className={`${btnSize} rounded-full border flex items-center justify-center transition-all active:scale-90 ${
             isExclusiveActive("not_for_me")
               ? "bg-destructive/15 border-destructive/30 text-destructive"

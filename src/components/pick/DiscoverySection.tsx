@@ -57,7 +57,7 @@ const DiscoveryMovieCard = ({ movie, onSelect }: { movie: Movie; onSelect: (m: M
       </motion.button>
       {showActions && detail && (
         <motion.div initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} className="mt-1">
-          <MovieActionBar movie={detail} size="sm" />
+          <MovieActionBar key={detail.id} movie={detail} size="sm" />
         </motion.div>
       )}
     </div>

@@ -129,6 +129,25 @@ export async function setFeedback(
   }
 }
 
+export async function clearFeedback(tmdbId: number): Promise<void> {
+  const userId = (await supabase.auth.getUser()).data.user?.id;
+  if (!userId) return;
+
+  const { data: existing } = await supabase
+    .from("catalog_items")
+    .select("id")
+    .eq("tmdb_id", tmdbId)
+    .maybeSingle();
+
+  if (!existing?.id) return;
+
+  await supabase
+    .from("user_item_feedback")
+    .delete()
+    .eq("user_id", userId)
+    .eq("item_id", existing.id);
+}
+
 // ── Helpers ──
 
 async function getOrCreateCatalogItemId(
@@ -158,6 +177,15 @@ async function getOrCreateCatalogItemId(
     .select("id")
     .single();
 
-  if (error || !created) return null;
+  if (error || !created) {
+    const { data: fallback } = await supabase
+      .from("catalog_items")
+      .select("id")
+      .eq("tmdb_id", tmdbId)
+      .maybeSingle();
+
+    return fallback?.id ?? null;
+  }
+
   return created.id;
 }
