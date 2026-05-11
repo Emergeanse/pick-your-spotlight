@@ -98,6 +98,84 @@ export async function getFeedbackBatch(
   return result;
 }
 
+// ── Unified per-movie interaction state (V1 SSOT) ────────────────────────────
+
+export type PrimaryStatus = "love" | "like" | "seen" | "not_for_me" | "dislike" | "skip" | "unknown";
+
+export interface MovieInteractionState {
+  /** Exclusive primary status (love/like/seen/not_for_me/...). Watchlist is NOT primary. */
+  primaryStatus: PrimaryStatus | null;
+  loved: boolean;
+  liked: boolean;        // true if primaryStatus is 'like' OR 'love'
+  seen: boolean;
+  notForMe: boolean;
+  /** Additive: a movie can be "liked" AND in watchlist. */
+  watchlist: boolean;
+  hasInteraction: boolean;
+}
+
+const PRIMARY_RANK: Record<PrimaryStatus, number> = {
+  love: 7, like: 6, seen: 5, not_for_me: 4, dislike: 3, skip: 2, unknown: 1,
+};
+
+export const EMPTY_INTERACTION_STATE: MovieInteractionState = {
+  primaryStatus: null, loved: false, liked: false, seen: false,
+  notForMe: false, watchlist: false, hasInteraction: false,
+};
+
+/**
+ * Aggregate ALL feedback rows per movie into a structured interaction state.
+ * Single source of truth for UI badges/buttons across the whole app.
+ */
+export async function getInteractionStateBatch(
+  tmdbIds: number[]
+): Promise<Record<number, MovieInteractionState>> {
+  const userId = (await supabase.auth.getUser()).data.user?.id;
+  if (!userId || !tmdbIds.length) return {};
+
+  const idMap = await getCatalogItemIds(tmdbIds);
+  const itemIds = Object.values(idMap);
+  if (!itemIds.length) return {};
+
+  const reverse: Record<string, number> = {};
+  for (const [tmdb, itemId] of Object.entries(idMap)) reverse[itemId] = Number(tmdb);
+
+  const { data } = await supabase
+    .from("user_item_feedback")
+    .select("item_id, feedback_type, label, created_at")
+    .eq("user_id", userId)
+    .in("item_id", itemIds)
+    .order("created_at", { ascending: false });
+
+  const out: Record<number, MovieInteractionState> = {};
+  for (const row of data ?? []) {
+    const tmdbId = reverse[row.item_id];
+    if (tmdbId === undefined) continue;
+    const type = (row.feedback_type ?? row.label) as FeedbackType;
+    if (!type) continue;
+
+    const state = out[tmdbId] ?? { ...EMPTY_INTERACTION_STATE };
+
+    if (type === "watchlist") {
+      state.watchlist = true;
+    } else {
+      const candidate = type as PrimaryStatus;
+      const currentRank = state.primaryStatus ? PRIMARY_RANK[state.primaryStatus] : 0;
+      const newRank = PRIMARY_RANK[candidate] ?? 0;
+      if (newRank > currentRank) state.primaryStatus = candidate;
+    }
+
+    state.loved = state.primaryStatus === "love";
+    state.liked = state.primaryStatus === "like" || state.primaryStatus === "love";
+    state.seen = state.primaryStatus === "seen";
+    state.notForMe = state.primaryStatus === "not_for_me";
+    state.hasInteraction = !!state.primaryStatus || state.watchlist;
+
+    out[tmdbId] = state;
+  }
+  return out;
+}
+
 /**
  * Set feedback. Idempotent per (user, item, feedback_type).
  * Side-effects: marking 'seen' or 'not_for_me' removes any existing watchlist row.
