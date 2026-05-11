@@ -348,6 +348,8 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({
     }
   };
   const { user } = useAuth();
+  const feedbackMap = useFeedbackMap([movie.id]);
+  const currentFeedback = feedbackMap[movie.id] ?? null;
 
   // Track unique movies seen across card navigation and detail/back navigation
   useEffect(() => {
