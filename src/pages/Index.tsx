@@ -80,6 +80,12 @@ const Index = () => {
   const watchlistGuideAwaitingLoad = useRef(false);
 
   const resetToHomeView = () => {
+    // Abandon any active solo session
+    if (currentSessionId) {
+      abandonSession(currentSessionId).catch(() => {});
+    }
+    setCurrentSessionId(null);
+    loggedEventsRef.current = new Set();
     setStep("home");
     setResults([]);
     setCurrentResultIndex(0);
