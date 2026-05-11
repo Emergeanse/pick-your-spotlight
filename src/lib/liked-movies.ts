@@ -5,7 +5,7 @@
 import type { MovieDetail } from "@/lib/tmdb";
 import { ensureMovieEmbedding } from "@/lib/taste-engine";
 import { setFeedback, clearFeedbackType, hasFeedbackType, listFeedbackByType, getFeedback } from "@/lib/feedback";
-import type { CatalogMeta } from "@/lib/catalog";
+import { normalizeCatalogMediaType, type CatalogMediaType, type CatalogMeta } from "@/lib/catalog";
 
 function metaFromMovie(m: MovieDetail): CatalogMeta {
   const isTv = !!(m as any).first_air_date;
@@ -35,12 +35,12 @@ export async function likeMovie(movie: MovieDetail) {
   );
 }
 
-export async function unlikeMovie(tmdbId: number) {
-  await clearFeedbackType(tmdbId, ["like", "love"]);
+export async function unlikeMovie(tmdbId: number, mediaType: CatalogMediaType = "movie") {
+  await clearFeedbackType(tmdbId, ["like", "love"], normalizeCatalogMediaType(mediaType));
 }
 
-export async function isMovieLiked(tmdbId: number): Promise<boolean> {
-  const fb = await getFeedback(tmdbId);
+export async function isMovieLiked(tmdbId: number, mediaType: CatalogMediaType = "movie"): Promise<boolean> {
+  const fb = await getFeedback(tmdbId, normalizeCatalogMediaType(mediaType));
   return fb?.feedback_type === "like" || fb?.feedback_type === "love";
 }
 
@@ -69,6 +69,6 @@ export async function getLikedMovies() {
     .filter(Boolean) as any[];
 }
 
-export async function isMovieLoved(tmdbId: number): Promise<boolean> {
-  return hasFeedbackType(tmdbId, "love");
+export async function isMovieLoved(tmdbId: number, mediaType: CatalogMediaType = "movie"): Promise<boolean> {
+  return hasFeedbackType(tmdbId, "love", normalizeCatalogMediaType(mediaType));
 }

@@ -1,5 +1,14 @@
 import { supabase } from "@/integrations/supabase/client";
-import { getOrCreateCatalogItem, getCatalogItemIds, type CatalogMeta } from "@/lib/catalog";
+import {
+  catalogLookupKey,
+  getCatalogItemIds,
+  getCatalogItemIdsByLookup,
+  getOrCreateCatalogItem,
+  normalizeCatalogMediaType,
+  type CatalogItemLookup,
+  type CatalogMediaType,
+  type CatalogMeta,
+} from "@/lib/catalog";
 
 export type FeedbackType =
   | "like"
@@ -37,14 +46,26 @@ export interface FeedbackContext {
   source?: string;
 }
 
+function toCatalogLookups(
+  input: number[] | CatalogItemLookup[],
+  fallbackMediaType: CatalogMediaType = "movie"
+): CatalogItemLookup[] {
+  const normalizedFallback = normalizeCatalogMediaType(fallbackMediaType);
+  return (input as Array<number | CatalogItemLookup>)
+    .map((item) => typeof item === "number"
+      ? { tmdbId: item, mediaType: normalizedFallback }
+      : { tmdbId: item.tmdbId, mediaType: normalizeCatalogMediaType(item.mediaType) })
+    .filter((lookup) => lookup.tmdbId > 0);
+}
+
 /**
  * Get latest feedback for a movie by tmdb_id.
  */
-export async function getFeedback(tmdbId: number): Promise<FeedbackState | null> {
+export async function getFeedback(tmdbId: number, mediaType: CatalogMediaType = "movie"): Promise<FeedbackState | null> {
   const userId = (await supabase.auth.getUser()).data.user?.id;
   if (!userId) return null;
 
-  const ids = await getCatalogItemIds([tmdbId]);
+  const ids = await getCatalogItemIds([tmdbId], mediaType);
   const itemId = ids[tmdbId];
   if (!itemId) return null;
 
@@ -66,17 +87,22 @@ export async function getFeedback(tmdbId: number): Promise<FeedbackState | null>
  * Batch feedback lookup. Returns latest feedback per tmdb_id.
  */
 export async function getFeedbackBatch(
-  tmdbIds: number[]
+  tmdbIds: number[],
+  mediaType: CatalogMediaType = "movie"
 ): Promise<Record<number, FeedbackState>> {
   const userId = (await supabase.auth.getUser()).data.user?.id;
   if (!userId || !tmdbIds.length) return {};
 
-  const idMap = await getCatalogItemIds(tmdbIds);
+  const lookups = toCatalogLookups(tmdbIds, mediaType);
+  const idMap = await getCatalogItemIdsByLookup(lookups);
   const itemIds = Object.values(idMap);
   if (!itemIds.length) return {};
 
   const reverse: Record<string, number> = {};
-  for (const [tmdb, itemId] of Object.entries(idMap)) reverse[itemId] = Number(tmdb);
+  for (const lookup of lookups) {
+    const itemId = idMap[catalogLookupKey(lookup.tmdbId, lookup.mediaType)];
+    if (itemId) reverse[itemId] = lookup.tmdbId;
+  }
 
   const { data } = await supabase
     .from("user_item_feedback")
@@ -128,17 +154,22 @@ export const EMPTY_INTERACTION_STATE: MovieInteractionState = {
  * Single source of truth for UI badges/buttons across the whole app.
  */
 export async function getInteractionStateBatch(
-  tmdbIds: number[]
+  input: number[] | CatalogItemLookup[],
+  fallbackMediaType: CatalogMediaType = "movie"
 ): Promise<Record<number, MovieInteractionState>> {
   const userId = (await supabase.auth.getUser()).data.user?.id;
-  if (!userId || !tmdbIds.length) return {};
+  const lookups = toCatalogLookups(input, fallbackMediaType);
+  if (!userId || !lookups.length) return {};
 
-  const idMap = await getCatalogItemIds(tmdbIds);
+  const idMap = await getCatalogItemIdsByLookup(lookups);
   const itemIds = Object.values(idMap);
   if (!itemIds.length) return {};
 
-  const reverse: Record<string, number> = {};
-  for (const [tmdb, itemId] of Object.entries(idMap)) reverse[itemId] = Number(tmdb);
+  const reverse: Record<string, CatalogItemLookup> = {};
+  for (const lookup of lookups) {
+    const itemId = idMap[catalogLookupKey(lookup.tmdbId, lookup.mediaType)];
+    if (itemId) reverse[itemId] = lookup;
+  }
 
   const { data } = await supabase
     .from("user_item_feedback")
@@ -149,8 +180,9 @@ export async function getInteractionStateBatch(
 
   const out: Record<number, MovieInteractionState> = {};
   for (const row of data ?? []) {
-    const tmdbId = reverse[row.item_id];
-    if (tmdbId === undefined) continue;
+    const lookup = reverse[row.item_id];
+    if (!lookup) continue;
+    const tmdbId = lookup.tmdbId;
     const type = (row.feedback_type ?? row.label) as FeedbackType;
     if (!type) continue;
 
@@ -189,7 +221,8 @@ export async function setFeedback(
   const userId = (await supabase.auth.getUser()).data.user?.id;
   if (!userId) return;
 
-  const itemId = await getOrCreateCatalogItem(tmdbId, meta);
+  const normalizedMeta = meta ? { ...meta, media_type: normalizeCatalogMediaType(meta.media_type) } : { media_type: "movie" as CatalogMediaType };
+  const itemId = await getOrCreateCatalogItem(tmdbId, normalizedMeta);
   if (!itemId) return;
 
   const score = SCORE_MAP[type];
@@ -235,20 +268,20 @@ export async function setFeedback(
     context_id: ctx?.context_id ?? null,
   } as any);
 
-  emitFeedbackChange(tmdbId, type);
+  emitFeedbackChange(tmdbId, type, normalizedMeta.media_type);
 }
 
 /** Broadcast a feedback change so any list/card on screen can refresh. */
-function emitFeedbackChange(tmdbId: number, type: FeedbackType | null) {
+function emitFeedbackChange(tmdbId: number, type: FeedbackType | null, mediaType?: CatalogMediaType) {
   if (typeof window === "undefined") return;
-  window.dispatchEvent(new CustomEvent("pick-feedback-changed", { detail: { tmdbId, type } }));
+  window.dispatchEvent(new CustomEvent("pick-feedback-changed", { detail: { tmdbId, type, mediaType } }));
 }
 
 /** Remove a specific feedback type (e.g., toggle off "like" or "watchlist"). */
-export async function clearFeedbackType(tmdbId: number, types: FeedbackType[]): Promise<void> {
+export async function clearFeedbackType(tmdbId: number, types: FeedbackType[], mediaType: CatalogMediaType = "movie"): Promise<void> {
   const userId = (await supabase.auth.getUser()).data.user?.id;
   if (!userId || !types.length) return;
-  const ids = await getCatalogItemIds([tmdbId]);
+  const ids = await getCatalogItemIds([tmdbId], mediaType);
   const itemId = ids[tmdbId];
   if (!itemId) return;
   await supabase
@@ -257,15 +290,15 @@ export async function clearFeedbackType(tmdbId: number, types: FeedbackType[]): 
     .eq("user_id", userId)
     .eq("item_id", itemId)
     .in("feedback_type", types);
-  emitFeedbackChange(tmdbId, null);
+  emitFeedbackChange(tmdbId, null, mediaType);
 }
 
 /** Clear all feedback for an item (toggle off). */
-export async function clearFeedback(tmdbId: number): Promise<void> {
+export async function clearFeedback(tmdbId: number, mediaType: CatalogMediaType = "movie"): Promise<void> {
   const userId = (await supabase.auth.getUser()).data.user?.id;
   if (!userId) return;
 
-  const ids = await getCatalogItemIds([tmdbId]);
+  const ids = await getCatalogItemIds([tmdbId], mediaType);
   const itemId = ids[tmdbId];
   if (!itemId) return;
 
@@ -274,14 +307,14 @@ export async function clearFeedback(tmdbId: number): Promise<void> {
     .delete()
     .eq("user_id", userId)
     .eq("item_id", itemId);
-  emitFeedbackChange(tmdbId, null);
+  emitFeedbackChange(tmdbId, null, mediaType);
 }
 
 /** Check if a specific feedback type is active for an item. */
-export async function hasFeedbackType(tmdbId: number, type: FeedbackType): Promise<boolean> {
+export async function hasFeedbackType(tmdbId: number, type: FeedbackType, mediaType: CatalogMediaType = "movie"): Promise<boolean> {
   const userId = (await supabase.auth.getUser()).data.user?.id;
   if (!userId) return false;
-  const ids = await getCatalogItemIds([tmdbId]);
+  const ids = await getCatalogItemIds([tmdbId], mediaType);
   const itemId = ids[tmdbId];
   if (!itemId) return false;
   const { data } = await supabase

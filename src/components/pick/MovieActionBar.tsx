@@ -7,6 +7,7 @@ import { clearFeedbackType, setFeedback, type FeedbackLabel } from "@/lib/feedba
 import type { MovieDetail } from "@/lib/tmdb";
 import { ensureMovieEmbedding } from "@/lib/taste-engine";
 import { useMovieInteraction } from "@/hooks/use-movie-interactions";
+import { inferCatalogMediaType } from "@/lib/catalog";
 
 interface MovieActionBarProps {
   movie: MovieDetail;
@@ -22,7 +23,8 @@ interface MovieActionBarProps {
 const MovieActionBar = ({ movie, size = "md", className = "", onInteraction, initialFeedback, sessionId, contextType }: MovieActionBarProps) => {
   const { user } = useAuth();
   const currentMovieIdRef = useRef(movie.id);
-  const interaction = useMovieInteraction(movie.id);
+  const mediaType = inferCatalogMediaType(movie);
+  const interaction = useMovieInteraction(movie.id, mediaType);
 
   const liked = interaction.liked;
   const bookmarked = interaction.watchlist;
@@ -42,8 +44,8 @@ const MovieActionBar = ({ movie, size = "md", className = "", onInteraction, ini
   const movieMeta = useMemo(() => ({
     title: movie.title || movie.name || "Sans titre",
     poster_path: movie.poster_path || undefined,
-    media_type: movie.first_air_date ? "tv" : "movie",
-  }), [movie.first_air_date, movie.name, movie.poster_path, movie.title]);
+    media_type: mediaType,
+  }), [mediaType, movie.name, movie.poster_path, movie.title]);
 
   const isCurrentMovie = useCallback((movieId: number) => currentMovieIdRef.current === movieId, []);
 
@@ -71,7 +73,7 @@ const MovieActionBar = ({ movie, size = "md", className = "", onInteraction, ini
 
     try {
       if (newLabel) await persistFeedback(newLabel);
-      else await clearFeedbackType(movie.id, [label]);
+      else await clearFeedbackType(movie.id, [label], mediaType);
       if (!isCurrentMovie(movieId)) return;
 
       if (newLabel) {
@@ -107,7 +109,7 @@ const MovieActionBar = ({ movie, size = "md", className = "", onInteraction, ini
     setLoading(true);
     try {
       if (bookmarked) {
-        await clearFeedbackType(movie.id, ["watchlist"]);
+        await clearFeedbackType(movie.id, ["watchlist"], mediaType);
         toast.success("Retiré de ta watchlist");
         trackInteraction(movie.id, "unsaved");
       } else {
@@ -129,7 +131,7 @@ const MovieActionBar = ({ movie, size = "md", className = "", onInteraction, ini
     setLoading(true);
     try {
       if (liked) {
-        await clearFeedbackType(movie.id, ["like", "love"]);
+        await clearFeedbackType(movie.id, ["like", "love"], mediaType);
         if (!isCurrentMovie(movieId)) return;
 
         toast.success("Retiré des favoris");
