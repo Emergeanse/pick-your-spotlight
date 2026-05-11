@@ -4,6 +4,9 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { Movie, MovieDetail } from "@/lib/tmdb";
 import { getPosterUrl, getDisplayTitle, getWatchProviders, getMovieDetails } from "@/lib/tmdb";
 import MovieActionBar from "./MovieActionBar";
+import FeedbackBadge from "./FeedbackBadge";
+import { useFeedbackMap } from "@/hooks/use-feedback-map";
+import type { FeedbackType } from "@/lib/feedback";
 
 interface TrendingRowProps {
   title: string;
