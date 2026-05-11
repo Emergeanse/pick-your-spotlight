@@ -586,12 +586,16 @@ const WatchlistPage = ({ onMovieSelect }: WatchlistPageProps) => {
                   <Trash2 className="w-5 h-5 text-destructive/60" />
                 </div>
                 <h3 className="text-base font-serif mb-1">
-                  {activeTab === "watchlist" ? "Vider ta watchlist ?" : "Réinitialiser tes coups de cœur ?"}
+                  {activeTab === "watchlist" ? "Vider ta watchlist ?" :
+                   activeTab === "liked" ? "Réinitialiser tes coups de cœur ?" :
+                   "Effacer ton historique vu ?"}
                 </h3>
                 <p className="text-foreground/40 text-sm font-sans">
                   {activeTab === "watchlist"
                     ? `${watchlistItems.length} titre${watchlistItems.length > 1 ? "s" : ""} seront supprimés. Cette action est irréversible.`
-                    : `${likedItems.length} titre${likedItems.length > 1 ? "s" : ""} seront retirés. Tes recommandations seront recalibrées.`}
+                    : activeTab === "liked"
+                    ? `${likedItems.length} titre${likedItems.length > 1 ? "s" : ""} seront retirés. Tes recommandations seront recalibrées.`
+                    : `${seenItems.length} titre${seenItems.length > 1 ? "s" : ""} disparaîtront de ton historique vu.`}
                 </p>
               </div>
               <div className="flex gap-3">
