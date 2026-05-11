@@ -378,6 +378,7 @@ const PickTogether = () => {
             alternatives={alternatives}
             selectedCount={selectedCount}
             heroReaction={heroReaction}
+            sessionId={recoSessionId}
             onReject={handleReject}
             onSelectMovie={handleSelectMovie}
             onAddToWatchlist={handleAddToWatchlist}
