@@ -404,6 +404,17 @@ const PickTogether = () => {
     <div className="fixed inset-0 bg-background overflow-hidden">
       <BrandHeader showBack onBack={goBack} />
 
+      {step === "who" && scheduledFor && (
+        <div className="absolute top-[60px] left-0 right-0 z-20 px-4">
+          <div className="max-w-md mx-auto rounded-xl bg-primary/10 border border-primary/30 px-3 py-2 text-center text-xs text-primary">
+            Salon d'attente · Séance prévue le{" "}
+            {new Date(scheduledFor).toLocaleString("fr-FR", {
+              day: "numeric", month: "short", hour: "2-digit", minute: "2-digit",
+            })}
+          </div>
+        </div>
+      )}
+
       <AnimatePresence mode="wait">
         {step === "landing" && (
           <LandingStep onCreateSoiree={handleCreateSoiree} creating={creatingSession} />
