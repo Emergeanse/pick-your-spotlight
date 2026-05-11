@@ -1,5 +1,4 @@
 import { supabase } from "@/integrations/supabase/client";
-import { removeFromWatchlist, isInWatchlist } from "@/lib/watchlist";
 import { getOrCreateCatalogItem, getCatalogItemIds, type CatalogMeta } from "@/lib/catalog";
 
 export type FeedbackType =
@@ -101,7 +100,7 @@ export async function getFeedbackBatch(
 
 /**
  * Set feedback. Idempotent per (user, item, feedback_type).
- * Side-effects: marking 'seen' removes from watchlist.
+ * Side-effects: marking 'seen' or 'not_for_me' removes any existing watchlist row.
  */
 export async function setFeedback(
   tmdbId: number,
@@ -117,7 +116,7 @@ export async function setFeedback(
 
   const score = SCORE_MAP[type];
 
-  // Remove other exclusive feedback types for this item (one canonical state at a time)
+  // Exclusive: only one of these can be active for a (user,item) at a time.
   const exclusive: FeedbackType[] = ["like", "love", "seen", "not_for_me", "skip", "unknown", "dislike"];
   if (exclusive.includes(type)) {
     await supabase
@@ -126,8 +125,18 @@ export async function setFeedback(
       .eq("user_id", userId)
       .eq("item_id", itemId)
       .in("feedback_type", exclusive);
+
+    // 'seen' / 'not_for_me' should also clear any saved watchlist row.
+    if (type === "seen" || type === "not_for_me") {
+      await supabase
+        .from("user_item_feedback")
+        .delete()
+        .eq("user_id", userId)
+        .eq("item_id", itemId)
+        .eq("feedback_type", "watchlist");
+    }
   } else {
-    // For 'watchlist' (additive), just delete same-type
+    // For 'watchlist' (additive), just delete same-type to keep idempotent.
     await supabase
       .from("user_item_feedback")
       .delete()
@@ -147,15 +156,21 @@ export async function setFeedback(
     context_type: ctx?.context_type ?? "browse",
     context_id: ctx?.context_id ?? null,
   } as any);
+}
 
-  // Side effect: 'seen' removes from watchlist
-  if (type === "seen") {
-    try {
-      if (await isInWatchlist(tmdbId)) await removeFromWatchlist(tmdbId);
-    } catch {
-      /* ignore */
-    }
-  }
+/** Remove a specific feedback type (e.g., toggle off "like" or "watchlist"). */
+export async function clearFeedbackType(tmdbId: number, types: FeedbackType[]): Promise<void> {
+  const userId = (await supabase.auth.getUser()).data.user?.id;
+  if (!userId || !types.length) return;
+  const ids = await getCatalogItemIds([tmdbId]);
+  const itemId = ids[tmdbId];
+  if (!itemId) return;
+  await supabase
+    .from("user_item_feedback")
+    .delete()
+    .eq("user_id", userId)
+    .eq("item_id", itemId)
+    .in("feedback_type", types);
 }
 
 /** Clear all feedback for an item (toggle off). */
@@ -174,6 +189,24 @@ export async function clearFeedback(tmdbId: number): Promise<void> {
     .eq("item_id", itemId);
 }
 
+/** Check if a specific feedback type is active for an item. */
+export async function hasFeedbackType(tmdbId: number, type: FeedbackType): Promise<boolean> {
+  const userId = (await supabase.auth.getUser()).data.user?.id;
+  if (!userId) return false;
+  const ids = await getCatalogItemIds([tmdbId]);
+  const itemId = ids[tmdbId];
+  if (!itemId) return false;
+  const { data } = await supabase
+    .from("user_item_feedback")
+    .select("id")
+    .eq("user_id", userId)
+    .eq("item_id", itemId)
+    .eq("feedback_type", type)
+    .limit(1)
+    .maybeSingle();
+  return !!data;
+}
+
 /** List all items with a given feedback_type for the current user. */
 export async function listFeedbackByType(type: FeedbackType) {
   const userId = (await supabase.auth.getUser()).data.user?.id;
@@ -181,7 +214,7 @@ export async function listFeedbackByType(type: FeedbackType) {
 
   const { data } = await supabase
     .from("user_item_feedback")
-    .select("item_id, score, created_at, catalog_items:item_id(id, tmdb_id, title, poster_path, media_type, year)")
+    .select("item_id, score, created_at, catalog_items:item_id(id, tmdb_id, title, poster_path, media_type, year, runtime, overview, vote_average)")
     .eq("user_id", userId)
     .eq("feedback_type", type)
     .order("created_at", { ascending: false });
