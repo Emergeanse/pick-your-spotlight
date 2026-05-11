@@ -179,6 +179,7 @@ export async function clearFeedbackType(tmdbId: number, types: FeedbackType[]): 
     .eq("user_id", userId)
     .eq("item_id", itemId)
     .in("feedback_type", types);
+  emitFeedbackChange(tmdbId, null);
 }
 
 /** Clear all feedback for an item (toggle off). */
