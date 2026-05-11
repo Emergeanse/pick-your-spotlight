@@ -17,7 +17,7 @@ interface WatchlistPageProps {
 }
 
 type MediaFilter = "all" | "movie" | "tv";
-type ActiveTab = "watchlist" | "liked";
+type ActiveTab = "watchlist" | "liked" | "seen";
 
 const PICK_COMMENTS = [
   "Tu l'as sauvegardé, c'est qu'il te fait de l'œil.",
