@@ -208,6 +208,33 @@ const PickTogether = () => {
     }, 3000);
 
     try {
+      // Persist guests on the group session (best-effort)
+      if (groupSessionId && guests.length > 0) {
+        for (const g of guests) {
+          try {
+            await addGuestMember(groupSessionId, {
+              name: g.name,
+              age_range: g.age ? `${g.age}` : undefined,
+              profile_text: g.gender || undefined,
+              preferences: { favoriteGenres: g.favoriteGenres, gender: g.gender, age: g.age },
+            });
+          } catch { /* ignore */ }
+        }
+      }
+
+      // Create a recommendation_session linked to the group
+      let recoId = recoSessionId;
+      try {
+        recoId = await createRecommendationSession({
+          audience_type: "group",
+          decision_mode: "instant",
+          group_session_id: groupSessionId,
+          source: "group",
+          filters_snapshot: { mediaType: mediaChoice, mood: skipMood ? null : mood },
+        });
+        setRecoSessionId(recoId);
+      } catch (e) { console.warn("createRecommendationSession failed", e); }
+
       const memberIds = [user.id, ...selectedFriendIds];
       const guestProfiles = guests.map(g => ({
         name: g.name, age: g.age, gender: g.gender, favoriteGenres: g.favoriteGenres,
@@ -224,6 +251,18 @@ const PickTogether = () => {
       if (error) throw error;
       if (data?.recommendations?.length > 0) {
         setRecommendations(data.recommendations);
+        if (recoId) {
+          data.recommendations.forEach((rec: GroupRecommendation, idx: number) => {
+            logRecommendationEvent({
+              session_id: recoId,
+              tmdb_id: rec.movie.id,
+              title: rec.movie.title || rec.movie.name || "",
+              rank_position: idx + 1,
+              source: "group",
+              context: { groupScore: rec.groupScore },
+            }).catch(() => {});
+          });
+        }
         setStep("results");
       } else {
         toast.error("Aucune recommandation trouvée");
