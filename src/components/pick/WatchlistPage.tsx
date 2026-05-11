@@ -542,8 +542,12 @@ const WatchlistPage = ({ onMovieSelect }: WatchlistPageProps) => {
               item={item}
               index={i}
               onSelect={() => handlePreview(item)}
-              onRemove={() => activeTab === "watchlist" ? handleRemoveWatchlist(item.tmdb_id) : handleRemoveLiked(item.tmdb_id)}
-              comments={activeTab === "watchlist" ? PICK_COMMENTS : LIKED_COMMENTS}
+              onRemove={() =>
+                activeTab === "watchlist" ? handleRemoveWatchlist(item.tmdb_id) :
+                activeTab === "liked" ? handleRemoveLiked(item.tmdb_id) :
+                handleRemoveSeen(item.tmdb_id)
+              }
+              comments={activeTab === "watchlist" ? PICK_COMMENTS : activeTab === "liked" ? LIKED_COMMENTS : PICK_COMMENTS}
               feedbackType={feedbackMap[item.tmdb_id] ?? null}
               fallbackWatchlist={activeTab === "watchlist"}
             />
