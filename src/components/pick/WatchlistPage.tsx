@@ -10,14 +10,14 @@ import { toast } from "sonner";
 import PickCharacter from "./PickCharacter";
 import FeedbackBadge from "./FeedbackBadge";
 import { useFeedbackMap } from "@/hooks/use-feedback-map";
-import type { FeedbackType } from "@/lib/feedback";
+import { listFeedbackByType, clearFeedbackType, type FeedbackType } from "@/lib/feedback";
 
 interface WatchlistPageProps {
   onMovieSelect: (movie: MovieDetail) => void;
 }
 
 type MediaFilter = "all" | "movie" | "tv";
-type ActiveTab = "watchlist" | "liked";
+type ActiveTab = "watchlist" | "liked" | "seen";
 
 const PICK_COMMENTS = [
   "Tu l'as sauvegardé, c'est qu'il te fait de l'œil.",
@@ -45,6 +45,9 @@ const getPickBubbleMessage = (tab: ActiveTab, count: number, hour: number): stri
   if (count === 0) return "";
   if (tab === "liked") {
     return `${count} titre${count > 1 ? "s" : ""} dans tes coups de cœur. Tes goûts parlent d'eux-mêmes !`;
+  }
+  if (tab === "seen") {
+    return `${count} titre${count > 1 ? "s" : ""} déjà vu${count > 1 ? "s" : ""}. Tu en as parcouru du chemin !`;
   }
   if (hour >= 18 || hour < 4) {
     return `${count} titre${count > 1 ? "s" : ""} t'attend${count > 1 ? "ent" : ""}. Lequel ce soir ?`;
@@ -190,6 +193,7 @@ const WatchlistPage = ({ onMovieSelect }: WatchlistPageProps) => {
   const [activeTab, setActiveTab] = useState<ActiveTab>("watchlist");
   const [watchlistItems, setWatchlistItems] = useState<any[]>([]);
   const [likedItems, setLikedItems] = useState<any[]>([]);
+  const [seenItems, setSeenItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [mediaFilter, setMediaFilter] = useState<MediaFilter>("all");
   const [searchQuery, setSearchQuery] = useState("");
@@ -207,14 +211,37 @@ const WatchlistPage = ({ onMovieSelect }: WatchlistPageProps) => {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [watchlist, liked] = await Promise.all([getWatchlist(), getLikedMovies()]);
+      const [watchlist, liked, seenRaw] = await Promise.all([
+        getWatchlist(),
+        getLikedMovies(),
+        listFeedbackByType("seen"),
+      ]);
       setWatchlistItems(watchlist);
       setLikedItems(liked);
-    } catch { setWatchlistItems([]); setLikedItems([]); }
+      setSeenItems(
+        (seenRaw as any[])
+          .map((row: any) => row.catalog_items ? {
+            id: row.item_id,
+            tmdb_id: row.catalog_items.tmdb_id,
+            title: row.catalog_items.title,
+            poster_path: row.catalog_items.poster_path,
+            media_type: row.catalog_items.media_type,
+            runtime: row.catalog_items.runtime,
+            overview: row.catalog_items.overview,
+            vote_average: row.catalog_items.vote_average,
+            genres: [] as string[],
+            added_at: row.created_at,
+          } : null)
+          .filter(Boolean)
+      );
+    } catch { setWatchlistItems([]); setLikedItems([]); setSeenItems([]); }
     finally { setLoading(false); }
   };
 
-  const currentItems = activeTab === "watchlist" ? watchlistItems : likedItems;
+  const currentItems =
+    activeTab === "watchlist" ? watchlistItems :
+    activeTab === "liked" ? likedItems :
+    seenItems;
 
   // Compute available genres from current items
   const availableGenres = useMemo(() => {
@@ -272,25 +299,34 @@ const WatchlistPage = ({ onMovieSelect }: WatchlistPageProps) => {
     catch { toast.error("Erreur"); }
   };
 
+  const handleRemoveSeen = async (tmdbId: number) => {
+    try {
+      await clearFeedbackType(tmdbId, ["seen"]);
+      setSeenItems(prev => prev.filter(i => i.tmdb_id !== tmdbId));
+      toast.success("Retiré de tes vus");
+    } catch { toast.error("Erreur"); }
+  };
+
   const handleResetAll = async () => {
     if (!currentItems.length) return;
     setResetting(true);
     try {
-      const { data: { user } } = await (await import("@/integrations/supabase/client")).supabase.auth.getUser();
+      const { supabase } = await import("@/integrations/supabase/client");
+      const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
-      if (activeTab === "watchlist") {
-        const { error } = await (await import("@/integrations/supabase/client")).supabase
-          .from("watchlist").delete().eq("user_id", user.id);
-        if (error) throw error;
-        setWatchlistItems([]);
-        toast.success("Watchlist vidée");
-      } else {
-        const { error } = await (await import("@/integrations/supabase/client")).supabase
-          .from("liked_movies").delete().eq("user_id", user.id);
-        if (error) throw error;
-        setLikedItems([]);
-        toast.success("Coups de cœur réinitialisés");
-      }
+      const targetType: FeedbackType[] =
+        activeTab === "watchlist" ? ["watchlist"] :
+        activeTab === "liked" ? ["like", "love"] :
+        ["seen"];
+      const { error } = await supabase
+        .from("user_item_feedback")
+        .delete()
+        .eq("user_id", user.id)
+        .in("feedback_type", targetType);
+      if (error) throw error;
+      if (activeTab === "watchlist") { setWatchlistItems([]); toast.success("Watchlist vidée"); }
+      else if (activeTab === "liked") { setLikedItems([]); toast.success("Coups de cœur réinitialisés"); }
+      else { setSeenItems([]); toast.success("Historique vu effacé"); }
     } catch { toast.error("Erreur lors de la réinitialisation"); }
     finally { setResetting(false); setShowResetConfirm(false); }
   };
@@ -383,6 +419,12 @@ const WatchlistPage = ({ onMovieSelect }: WatchlistPageProps) => {
           Coups de cœur
           {likedItems.length > 0 && <span className="text-[10px] font-sans text-primary/60 font-medium px-1.5 py-0.5 rounded-full bg-primary/8">{likedItems.length}</span>}
         </button>
+        <button onClick={() => { setActiveTab("seen"); setMediaFilter("all"); setSearchQuery(""); setGenreFilter(null); }}
+          className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-[12px] font-sans font-medium transition-all ${activeTab === "seen" ? "bg-card shadow-sm text-foreground border border-border/20" : "text-foreground/40 hover:text-foreground/60"}`}>
+          <Tv className="w-3.5 h-3.5" />
+          Vus
+          {seenItems.length > 0 && <span className="text-[10px] font-sans text-primary/60 font-medium px-1.5 py-0.5 rounded-full bg-primary/8">{seenItems.length}</span>}
+        </button>
       </motion.div>
 
       {/* Pick comment + time estimation */}
@@ -464,14 +506,18 @@ const WatchlistPage = ({ onMovieSelect }: WatchlistPageProps) => {
         <div className="flex flex-col items-center justify-center py-20 text-center">
           <PickCharacter
             mood="wave"
-            message={activeTab === "watchlist"
-              ? "Sauvegarde des titres et retrouve-les ici !"
-              : "Like des films et séries pour construire tes goûts !"}
+            message={
+              activeTab === "watchlist" ? "Sauvegarde des titres et retrouve-les ici !" :
+              activeTab === "liked" ? "Like des films et séries pour construire tes goûts !" :
+              "Marque ce que tu as déjà vu pour affiner tes recommandations !"
+            }
             size="md"
             animate
           />
           <p className="text-foreground/25 text-xs font-sans mt-4">
-            {activeTab === "watchlist" ? "Ta watchlist est vide" : "Aucun coup de cœur pour l'instant"}
+            {activeTab === "watchlist" ? "Ta watchlist est vide" :
+             activeTab === "liked" ? "Aucun coup de cœur pour l'instant" :
+             "Aucun titre marqué comme vu"}
           </p>
           <Button
             onClick={() => window.dispatchEvent(new CustomEvent("pick-navigate-home"))}
@@ -496,8 +542,12 @@ const WatchlistPage = ({ onMovieSelect }: WatchlistPageProps) => {
               item={item}
               index={i}
               onSelect={() => handlePreview(item)}
-              onRemove={() => activeTab === "watchlist" ? handleRemoveWatchlist(item.tmdb_id) : handleRemoveLiked(item.tmdb_id)}
-              comments={activeTab === "watchlist" ? PICK_COMMENTS : LIKED_COMMENTS}
+              onRemove={() =>
+                activeTab === "watchlist" ? handleRemoveWatchlist(item.tmdb_id) :
+                activeTab === "liked" ? handleRemoveLiked(item.tmdb_id) :
+                handleRemoveSeen(item.tmdb_id)
+              }
+              comments={activeTab === "watchlist" ? PICK_COMMENTS : activeTab === "liked" ? LIKED_COMMENTS : PICK_COMMENTS}
               feedbackType={feedbackMap[item.tmdb_id] ?? null}
               fallbackWatchlist={activeTab === "watchlist"}
             />
@@ -536,12 +586,16 @@ const WatchlistPage = ({ onMovieSelect }: WatchlistPageProps) => {
                   <Trash2 className="w-5 h-5 text-destructive/60" />
                 </div>
                 <h3 className="text-base font-serif mb-1">
-                  {activeTab === "watchlist" ? "Vider ta watchlist ?" : "Réinitialiser tes coups de cœur ?"}
+                  {activeTab === "watchlist" ? "Vider ta watchlist ?" :
+                   activeTab === "liked" ? "Réinitialiser tes coups de cœur ?" :
+                   "Effacer ton historique vu ?"}
                 </h3>
                 <p className="text-foreground/40 text-sm font-sans">
                   {activeTab === "watchlist"
                     ? `${watchlistItems.length} titre${watchlistItems.length > 1 ? "s" : ""} seront supprimés. Cette action est irréversible.`
-                    : `${likedItems.length} titre${likedItems.length > 1 ? "s" : ""} seront retirés. Tes recommandations seront recalibrées.`}
+                    : activeTab === "liked"
+                    ? `${likedItems.length} titre${likedItems.length > 1 ? "s" : ""} seront retirés. Tes recommandations seront recalibrées.`
+                    : `${seenItems.length} titre${seenItems.length > 1 ? "s" : ""} disparaîtront de ton historique vu.`}
                 </p>
               </div>
               <div className="flex gap-3">
