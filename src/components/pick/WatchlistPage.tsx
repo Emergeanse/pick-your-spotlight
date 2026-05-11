@@ -419,7 +419,12 @@ const WatchlistPage = ({ onMovieSelect }: WatchlistPageProps) => {
           Coups de cœur
           {likedItems.length > 0 && <span className="text-[10px] font-sans text-primary/60 font-medium px-1.5 py-0.5 rounded-full bg-primary/8">{likedItems.length}</span>}
         </button>
-      </motion.div>
+        <button onClick={() => { setActiveTab("seen"); setMediaFilter("all"); setSearchQuery(""); setGenreFilter(null); }}
+          className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-[12px] font-sans font-medium transition-all ${activeTab === "seen" ? "bg-card shadow-sm text-foreground border border-border/20" : "text-foreground/40 hover:text-foreground/60"}`}>
+          <Tv className="w-3.5 h-3.5" />
+          Vus
+          {seenItems.length > 0 && <span className="text-[10px] font-sans text-primary/60 font-medium px-1.5 py-0.5 rounded-full bg-primary/8">{seenItems.length}</span>}
+        </button>
 
       {/* Pick comment + time estimation */}
       {currentItems.length > 0 && (
