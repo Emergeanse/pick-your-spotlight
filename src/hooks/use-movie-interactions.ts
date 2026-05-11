@@ -5,14 +5,26 @@ import {
   type MovieInteractionState,
 } from "@/lib/feedback";
 import { useAuth } from "@/hooks/use-auth";
+import { catalogLookupKey, normalizeCatalogMediaType, type CatalogItemLookup, type CatalogMediaType } from "@/lib/catalog";
 
-const interactionCache = new Map<number, MovieInteractionState>();
+const interactionCache = new Map<string, MovieInteractionState>();
 
-function readCachedState(tmdbIds: number[]): Record<number, MovieInteractionState> {
-  const out: Record<number, MovieInteractionState> = {};
-  for (const id of tmdbIds) {
-    const cached = interactionCache.get(id);
-    if (cached) out[id] = cached;
+function normalizeInput(input: number[] | CatalogItemLookup[], fallbackMediaType: CatalogMediaType): CatalogItemLookup[] {
+  const mediaType = normalizeCatalogMediaType(fallbackMediaType);
+  return (input as Array<number | CatalogItemLookup>)
+    .map((item) => typeof item === "number" ? { tmdbId: item, mediaType } : { tmdbId: item.tmdbId, mediaType: normalizeCatalogMediaType(item.mediaType) })
+    .filter((lookup) => lookup.tmdbId > 0);
+}
+
+function readCachedState(lookups: CatalogItemLookup[]): Record<string, MovieInteractionState> {
+  const out: Record<string, MovieInteractionState> = {};
+  for (const lookup of lookups) {
+    const key = catalogLookupKey(lookup.tmdbId, lookup.mediaType);
+    const cached = interactionCache.get(key);
+    if (cached) {
+      out[key] = cached;
+      out[lookup.tmdbId] = cached;
+    }
   }
   return out;
 }
@@ -25,40 +37,48 @@ function readCachedState(tmdbIds: number[]): Record<number, MovieInteractionStat
  * `pick-feedback-changed` / `pick-watchlist-added` window events.
  */
 export function useMovieInteractions(
-  tmdbIds: number[]
-): Record<number, MovieInteractionState> {
+  input: number[] | CatalogItemLookup[],
+  fallbackMediaType: CatalogMediaType = "movie"
+): Record<string, MovieInteractionState> {
   const { user } = useAuth();
-  const key = useMemo(() => Array.from(new Set(tmdbIds.filter(Boolean))).sort((a, b) => a - b).join(","), [tmdbIds.join(",")]);
-  const ids = useMemo(() => key ? key.split(",").map(Number) : [], [key]);
-  const [map, setMap] = useState<Record<number, MovieInteractionState>>(() => readCachedState(ids));
+  const lookups = useMemo(() => normalizeInput(input, fallbackMediaType), [JSON.stringify(input), fallbackMediaType]);
+  const key = useMemo(() => Array.from(new Set(lookups.map((lookup) => catalogLookupKey(lookup.tmdbId, lookup.mediaType)))).sort().join(","), [lookups]);
+  const uniqueLookups = useMemo(() => key ? key.split(",").map((entry) => {
+    const [tmdbId, mediaType] = entry.split(":");
+    return { tmdbId: Number(tmdbId), mediaType: normalizeCatalogMediaType(mediaType) };
+  }) : [], [key]);
+  const [map, setMap] = useState<Record<string, MovieInteractionState>>(() => readCachedState(uniqueLookups));
 
   const refresh = useCallback(async () => {
-    if (!user || !ids.length) {
+    if (!user || !uniqueLookups.length) {
       setMap({});
       return;
     }
-    setMap(readCachedState(ids));
+    setMap(readCachedState(uniqueLookups));
     try {
-      const fresh = await getInteractionStateBatch(ids);
-      const hydrated: Record<number, MovieInteractionState> = {};
-      for (const id of ids) {
-        if (fresh[id]) {
+      const fresh = await getInteractionStateBatch(uniqueLookups);
+      const hydrated: Record<string, MovieInteractionState> = {};
+      for (const lookup of uniqueLookups) {
+        const cacheKey = catalogLookupKey(lookup.tmdbId, lookup.mediaType);
+        if (fresh[lookup.tmdbId]) {
           // Real interaction found → refresh cache + UI.
-          interactionCache.set(id, fresh[id]);
-          hydrated[id] = fresh[id];
+          interactionCache.set(cacheKey, fresh[lookup.tmdbId]);
+          hydrated[cacheKey] = fresh[lookup.tmdbId];
+          hydrated[lookup.tmdbId] = fresh[lookup.tmdbId];
         } else {
           // No row returned. Could mean "never interacted" OR transient miss
           // (catalog row not yet linked, network blip). Prefer cached truth
           // when present so a known badge never disappears between renders.
-          const cached = interactionCache.get(id);
-          hydrated[id] = cached ?? EMPTY_INTERACTION_STATE;
+          const cached = interactionCache.get(cacheKey);
+          hydrated[cacheKey] = cached ?? EMPTY_INTERACTION_STATE;
+          hydrated[lookup.tmdbId] = cached ?? EMPTY_INTERACTION_STATE;
         }
       }
       setMap(hydrated);
     } catch {
       // Keep the cached state visible instead of flashing a neutral card.
     }
-  }, [ids, user?.id]);
+  }, [uniqueLookups, user?.id]);
 
   useEffect(() => {
     refresh();
@@ -66,13 +86,15 @@ export function useMovieInteractions(
 
   useEffect(() => {
     if (!user) return;
-    const watchedIds = new Set(ids);
+    const watchedKeys = new Set(uniqueLookups.map((lookup) => catalogLookupKey(lookup.tmdbId, lookup.mediaType)));
     const onChange = (e: Event) => {
-      const detail = (e as CustomEvent).detail as { tmdbId?: number } | undefined;
+      const detail = (e as CustomEvent).detail as { tmdbId?: number; mediaType?: CatalogMediaType } | undefined;
       // Invalidate cache for the mutated id so post-mutation truth wins
       // (e.g. an "unlike" must clear a stale cached "liked" badge).
-      if (detail?.tmdbId) interactionCache.delete(detail.tmdbId);
-      if (!detail?.tmdbId || watchedIds.has(detail.tmdbId)) refresh();
+      if (detail?.tmdbId && detail.mediaType) interactionCache.delete(catalogLookupKey(detail.tmdbId, normalizeCatalogMediaType(detail.mediaType)));
+      else if (detail?.tmdbId) Array.from(interactionCache.keys()).filter((cacheKey) => cacheKey.startsWith(`${detail.tmdbId}:`)).forEach((cacheKey) => interactionCache.delete(cacheKey));
+      const changedKey = detail?.tmdbId && detail.mediaType ? catalogLookupKey(detail.tmdbId, normalizeCatalogMediaType(detail.mediaType)) : null;
+      if (!detail?.tmdbId || (changedKey ? watchedKeys.has(changedKey) : uniqueLookups.some((lookup) => lookup.tmdbId === detail.tmdbId))) refresh();
     };
     window.addEventListener("pick-feedback-changed", onChange);
     window.addEventListener("pick-watchlist-added", refresh);
@@ -80,14 +102,14 @@ export function useMovieInteractions(
       window.removeEventListener("pick-feedback-changed", onChange);
       window.removeEventListener("pick-watchlist-added", refresh);
     };
-  }, [ids, user?.id, refresh]);
+  }, [uniqueLookups, user?.id, refresh]);
 
   return map;
 }
 
 /** Convenience: state for a single movie (never null — empty state if unknown). */
-export function useMovieInteraction(tmdbId: number | null | undefined): MovieInteractionState {
-  const ids = useMemo(() => (tmdbId ? [tmdbId] : []), [tmdbId]);
+export function useMovieInteraction(tmdbId: number | null | undefined, mediaType: CatalogMediaType = "movie"): MovieInteractionState {
+  const ids = useMemo(() => (tmdbId ? [{ tmdbId, mediaType: normalizeCatalogMediaType(mediaType) }] : []), [tmdbId, mediaType]);
   const map = useMovieInteractions(ids);
   if (!tmdbId) return EMPTY_INTERACTION_STATE;
   return map[tmdbId] ?? EMPTY_INTERACTION_STATE;

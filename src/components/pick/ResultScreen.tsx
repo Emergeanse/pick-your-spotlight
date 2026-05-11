@@ -19,6 +19,7 @@ import BrandHeader from "./BrandHeader";
 import PickCharacter from "./PickCharacter";
 import FeedbackBadge from "./FeedbackBadge";
 import { useMovieInteractions, useMovieInteraction } from "@/hooks/use-movie-interactions";
+import { inferCatalogMediaType } from "@/lib/catalog";
 
 const IMG_BASE = "https://image.tmdb.org/t/p";
 const CONFIDENCE_THRESHOLD = 30;
@@ -256,7 +257,7 @@ const ReviewSheet = ({ open, onClose, movieId, userCriteria }: { open: boolean; 
 };
 
 const AlternativeMovies = ({ movies, onSelect }: { movies: MovieDetail[]; onSelect: (m: MovieDetail) => void }) => {
-  const interactions = useMovieInteractions(movies.map(m => m.id));
+  const interactions = useMovieInteractions(movies.map(m => ({ tmdbId: m.id, mediaType: inferCatalogMediaType(m) })));
   if (movies.length === 0) return null;
   return (
     <div className="px-5 py-6 md:px-12">
@@ -352,7 +353,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({
     }
   };
   const { user } = useAuth();
-  const interaction = useMovieInteraction(movie.id);
+  const interaction = useMovieInteraction(movie.id, inferCatalogMediaType(movie));
   const currentFeedback = interaction.primaryStatus;
   const bookmarked = interaction.watchlist;
 

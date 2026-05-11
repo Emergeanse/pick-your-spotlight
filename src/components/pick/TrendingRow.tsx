@@ -7,6 +7,7 @@ import MovieActionBar from "./MovieActionBar";
 import FeedbackBadge from "./FeedbackBadge";
 import { useMovieInteractions } from "@/hooks/use-movie-interactions";
 import type { MovieInteractionState } from "@/lib/feedback";
+import { inferCatalogMediaType } from "@/lib/catalog";
 
 interface TrendingRowProps {
   title: string;
@@ -94,7 +95,7 @@ const MovieCard = ({ movie, index, onMovieClick, interaction }: { movie: Movie; 
 const TrendingRow = ({ title, fetchFn, onMovieClick }: TrendingRowProps) => {
   const [movies, setMovies] = useState<Movie[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const interactions = useMovieInteractions(movies.map(m => m.id));
+  const interactions = useMovieInteractions(movies.map(m => ({ tmdbId: m.id, mediaType: inferCatalogMediaType(m) })));
 
   useEffect(() => {
     fetchFn().then(setMovies).catch(() => {});

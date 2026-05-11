@@ -7,6 +7,7 @@ import MovieActionBar from "./MovieActionBar";
 import FeedbackBadge from "./FeedbackBadge";
 import { useMovieInteractions } from "@/hooks/use-movie-interactions";
 import type { MovieInteractionState } from "@/lib/feedback";
+import { inferCatalogMediaType } from "@/lib/catalog";
 
 interface DiscoverySectionProps {
   onMovieSelect: (movie: MovieDetail) => void;
@@ -83,7 +84,7 @@ const MovieRow = ({
   movies: Movie[];
   onSelect: (movie: Movie) => void;
 }) => {
-  const interactions = useMovieInteractions(movies.map(m => m.id));
+  const interactions = useMovieInteractions(movies.map(m => ({ tmdbId: m.id, mediaType: inferCatalogMediaType(m) })));
   return (
     <div className="mb-6">
       <div className="flex items-center gap-2 mb-3 px-1">
