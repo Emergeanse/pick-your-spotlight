@@ -8,8 +8,9 @@ import { buildStreamingLinks, type StreamingLink } from "@/lib/streaming-links";
 import type { Mood, Context, TimeAvailable } from "@/lib/tmdb";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
-import { likeMovie, unlikeMovie, isMovieLiked, getLikedMovies } from "@/lib/liked-movies";
-import { addToWatchlist, removeFromWatchlist, isInWatchlist } from "@/lib/watchlist";
+import { likeMovie, unlikeMovie, getLikedMovies } from "@/lib/liked-movies";
+import { addToWatchlist, removeFromWatchlist } from "@/lib/watchlist";
+import { setFeedback, clearFeedbackType } from "@/lib/feedback";
 import { trackInteraction, getUserTasteProfile, trackRecommendationEvent, updateRecommendationReaction } from "@/lib/interactions";
 import { toast } from "sonner";
 import { computeUserTasteVector, ensureMovieEmbedding } from "@/lib/taste-engine";
@@ -19,7 +20,7 @@ import FlipCardDetail from "@/components/pick/FlipCardDetail";
 import BrandHeader from "./BrandHeader";
 import PickCharacter from "./PickCharacter";
 import FeedbackBadge from "./FeedbackBadge";
-import { useFeedbackMap } from "@/hooks/use-feedback-map";
+import { useMovieInteractions, useMovieInteraction } from "@/hooks/use-movie-interactions";
 
 const IMG_BASE = "https://image.tmdb.org/t/p";
 const CONFIDENCE_THRESHOLD = 30;
@@ -257,14 +258,14 @@ const ReviewSheet = ({ open, onClose, movieId, userCriteria }: { open: boolean; 
 };
 
 const AlternativeMovies = ({ movies, onSelect }: { movies: MovieDetail[]; onSelect: (m: MovieDetail) => void }) => {
-  const feedbackMap = useFeedbackMap(movies.map(m => m.id));
+  const interactions = useMovieInteractions(movies.map(m => m.id));
   if (movies.length === 0) return null;
   return (
     <div className="px-5 py-6 md:px-12">
       <p className="text-[10px] uppercase tracking-widest text-foreground/30 font-sans font-semibold mb-3">Autres suggestions</p>
       <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
         {movies.map((movie) => {
-          const fb = feedbackMap[movie.id] ?? null;
+          const state = interactions[movie.id];
           return (
             <motion.button key={movie.id} whileTap={{ scale: 0.95 }} onClick={() => onSelect(movie)} className="flex-shrink-0 w-28 group">
               <div className="relative w-28 h-[168px] rounded-xl overflow-hidden border border-border/15 mb-2">
@@ -273,9 +274,9 @@ const AlternativeMovies = ({ movies, onSelect }: { movies: MovieDetail[]; onSele
                 ) : (
                   <div className="w-full h-full bg-foreground/[0.04] flex items-center justify-center"><span className="text-foreground/20 text-xs font-sans">No img</span></div>
                 )}
-                {fb && (
+                {state?.hasInteraction && (
                   <div className="absolute top-1.5 left-1.5">
-                    <FeedbackBadge type={fb} />
+                    <FeedbackBadge type={state.primaryStatus} inWatchlist={state.watchlist} />
                   </div>
                 )}
               </div>
@@ -333,9 +334,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({
   const [trailerUrl, setTrailerUrl] = useState<string | null>(null);
   const [matchData, setMatchData] = useState<MatchData | null>(null);
   const [matchLoading, setMatchLoading] = useState(false);
-  const [liked, setLiked] = useState(false);
   const [likeLoading, setLikeLoading] = useState(false);
-  const [bookmarked, setBookmarked] = useState(false);
   const [bookmarkLoading, setBookmarkLoading] = useState(false);
   const [synopsisExpanded, setSynopsisExpanded] = useState(false);
   const [showOptions, setShowOptions] = useState(false);
@@ -357,8 +356,10 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({
     }
   };
   const { user } = useAuth();
-  const feedbackMap = useFeedbackMap([movie.id]);
-  const currentFeedback = feedbackMap[movie.id] ?? null;
+  const interaction = useMovieInteraction(movie.id);
+  const currentFeedback = interaction.primaryStatus;
+  const liked = interaction.liked;
+  const bookmarked = interaction.watchlist;
 
   // Track unique movies seen across card navigation and detail/back navigation
   useEffect(() => {
@@ -442,28 +443,6 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({
     });
   }, [movie.id]);
 
-  useEffect(() => {
-    if (!user) { setLiked(false); setBookmarked(false); return; }
-    let cancelled = false;
-    const movieId = movie.id;
-    const load = () => {
-      isMovieLiked(movieId).then(v => { if (!cancelled) setLiked(v); }).catch(() => {});
-      isInWatchlist(movieId).then(v => { if (!cancelled) setBookmarked(v); }).catch(() => {});
-    };
-    load();
-    const onChange = (e: Event) => {
-      const detail = (e as CustomEvent).detail as { tmdbId?: number } | undefined;
-      if (!detail?.tmdbId || detail.tmdbId === movieId) load();
-    };
-    window.addEventListener("pick-feedback-changed", onChange);
-    window.addEventListener("pick-watchlist-added", load);
-    return () => {
-      cancelled = true;
-      window.removeEventListener("pick-feedback-changed", onChange);
-      window.removeEventListener("pick-watchlist-added", load);
-    };
-  }, [movie.id, user]);
-
   // Restore prior interaction state when navigating between movies in the batch
   useEffect(() => {
     const fb = currentFeedback;
@@ -478,9 +457,25 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({
     if (!user) { toast.info("Connecte-toi pour sauvegarder tes films !"); return; }
     setLikeLoading(true);
     try {
-      if (liked) { await unlikeMovie(movie.id); setLiked(false); toast.success("Retiré des favoris"); trackInteraction(movie.id, "unliked"); }
-      else {
-        await likeMovie(movie); setLiked(true); toast.success("Ajouté aux favoris !");
+      if (liked) {
+        // Clear via SSOT — also mirrors to legacy liked_movies for compat.
+        await unlikeMovie(movie.id);
+        await clearFeedbackType(movie.id, ["like", "love"]);
+        toast.success("Retiré des favoris");
+        trackInteraction(movie.id, "unliked");
+      } else {
+        await likeMovie(movie);
+        await setFeedback(
+          movie.id,
+          "like",
+          {
+            title: movie.title || (movie as any).name || "Sans titre",
+            poster_path: movie.poster_path ?? null,
+            media_type: mediaType,
+          },
+          { context_type: sessionId ? "solo_session" : "browse", context_id: sessionId ?? null }
+        );
+        toast.success("Ajouté aux favoris !");
         trackInteraction(movie.id, "liked");
         updateRecommendationReaction(movie.id, "accepted", "liked");
       }
@@ -492,9 +487,13 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({
     if (!user) { toast.info("Connecte-toi pour ta watchlist !"); return; }
     setBookmarkLoading(true);
     try {
-      if (bookmarked) { await removeFromWatchlist(movie.id); setBookmarked(false); toast.success("Retiré de ta watchlist"); trackInteraction(movie.id, "unsaved"); }
-      else {
-        await addToWatchlist(movie); setBookmarked(true); toast.success("Ajouté à ta watchlist !");
+      if (bookmarked) {
+        await removeFromWatchlist(movie.id);
+        toast.success("Retiré de ta watchlist");
+        trackInteraction(movie.id, "unsaved");
+      } else {
+        await addToWatchlist(movie);
+        toast.success("Ajouté à ta watchlist !");
         trackInteraction(movie.id, "saved");
         updateRecommendationReaction(movie.id, "accepted", "saved_to_watchlist");
         window.dispatchEvent(new CustomEvent("pick-watchlist-added"));

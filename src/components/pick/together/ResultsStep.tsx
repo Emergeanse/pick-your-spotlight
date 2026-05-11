@@ -5,7 +5,7 @@ import type { MovieDetail } from "@/lib/tmdb";
 import { getPosterUrl, getDisplayTitle, getYear, getBackdropUrl } from "@/lib/tmdb";
 import MovieActionBar from "@/components/pick/MovieActionBar";
 import FeedbackBadge from "@/components/pick/FeedbackBadge";
-import { useFeedbackMap } from "@/hooks/use-feedback-map";
+import { useMovieInteractions } from "@/hooks/use-movie-interactions";
 
 interface GroupRecommendation {
   movie: MovieDetail;
@@ -30,8 +30,8 @@ interface ResultsStepProps {
 const ResultsStep = ({ hero, alternatives, selectedCount, heroReaction, sessionId, onReject, onSelectMovie, onAddToWatchlist, onRestart }: ResultsStepProps) => {
   const [showAlternatives, setShowAlternatives] = useState(false);
   const allIds = [hero.movie.id, ...alternatives.map(a => a.movie.id)];
-  const feedbackMap = useFeedbackMap(allIds);
-  const heroFb = feedbackMap[hero.movie.id] ?? null;
+  const interactions = useMovieInteractions(allIds);
+  const heroState = interactions[hero.movie.id];
 
   return (
     <motion.div key="results" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
@@ -65,9 +65,9 @@ const ResultsStep = ({ hero, alternatives, selectedCount, heroReaction, sessionI
                 alt={getDisplayTitle(hero.movie)}
                 className="w-40 h-60 md:w-48 md:h-72 rounded-2xl object-cover shadow-2xl border border-border/20"
               />
-              {heroFb && (
+              {heroState?.hasInteraction && (
                 <div className="absolute top-2 left-2">
-                  <FeedbackBadge type={heroFb} size="sm" />
+                  <FeedbackBadge type={heroState.primaryStatus} inWatchlist={heroState.watchlist} size="sm" />
                 </div>
               )}
             </motion.div>
@@ -194,7 +194,7 @@ const ResultsStep = ({ hero, alternatives, selectedCount, heroReaction, sessionI
             {showAlternatives && (
               <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="space-y-3 overflow-hidden">
                 {alternatives.map((rec, idx) => {
-                  const altFb = feedbackMap[rec.movie.id] ?? null;
+                  const altState = interactions[rec.movie.id];
                   return (
                   <motion.button key={rec.movie.id} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: idx * 0.1 }}
                     whileTap={{ scale: 0.98 }} onClick={() => onSelectMovie(rec)}
@@ -204,9 +204,9 @@ const ResultsStep = ({ hero, alternatives, selectedCount, heroReaction, sessionI
                       <div className="relative shrink-0">
                         <img src={getPosterUrl(rec.movie.poster_path, "w92") || ""} alt={getDisplayTitle(rec.movie)}
                           className="w-14 h-20 rounded-xl object-cover" />
-                        {altFb && (
+                        {altState?.hasInteraction && (
                           <div className="absolute top-1 left-1">
-                            <FeedbackBadge type={altFb} />
+                            <FeedbackBadge type={altState.primaryStatus} inWatchlist={altState.watchlist} />
                           </div>
                         )}
                       </div>
