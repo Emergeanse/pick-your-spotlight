@@ -5,8 +5,8 @@ import type { Movie, MovieDetail } from "@/lib/tmdb";
 import { getPosterUrl, getDisplayTitle, getWatchProviders, getMovieDetails } from "@/lib/tmdb";
 import MovieActionBar from "./MovieActionBar";
 import FeedbackBadge from "./FeedbackBadge";
-import { useFeedbackMap } from "@/hooks/use-feedback-map";
-import type { FeedbackType } from "@/lib/feedback";
+import { useMovieInteractions } from "@/hooks/use-movie-interactions";
+import type { MovieInteractionState } from "@/lib/feedback";
 
 interface TrendingRowProps {
   title: string;
@@ -16,7 +16,7 @@ interface TrendingRowProps {
 
 const IMG_BASE = "https://image.tmdb.org/t/p";
 
-const MovieCard = ({ movie, index, onMovieClick, feedbackType }: { movie: Movie; index: number; onMovieClick?: (m: Movie) => void; feedbackType?: FeedbackType }) => {
+const MovieCard = ({ movie, index, onMovieClick, interaction }: { movie: Movie; index: number; onMovieClick?: (m: Movie) => void; interaction?: MovieInteractionState }) => {
   const [provider, setProvider] = useState<{ name: string; logo_path: string } | null>(null);
   const [detail, setDetail] = useState<MovieDetail | null>(null);
   const [showActions, setShowActions] = useState(false);
@@ -72,9 +72,9 @@ const MovieCard = ({ movie, index, onMovieClick, feedbackType }: { movie: Movie;
             </div>
           )}
 
-          {feedbackType && (
+          {interaction?.hasInteraction && (
             <div className="absolute top-1.5 left-1.5 md:top-2 md:left-2">
-              <FeedbackBadge type={feedbackType} />
+              <FeedbackBadge type={interaction.primaryStatus} inWatchlist={interaction.watchlist} />
             </div>
           )}
         </div>
@@ -94,7 +94,7 @@ const MovieCard = ({ movie, index, onMovieClick, feedbackType }: { movie: Movie;
 const TrendingRow = ({ title, fetchFn, onMovieClick }: TrendingRowProps) => {
   const [movies, setMovies] = useState<Movie[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const feedbackMap = useFeedbackMap(movies.map(m => m.id));
+  const interactions = useMovieInteractions(movies.map(m => m.id));
 
   useEffect(() => {
     fetchFn().then(setMovies).catch(() => {});
@@ -128,7 +128,7 @@ const TrendingRow = ({ title, fetchFn, onMovieClick }: TrendingRowProps) => {
           style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
         >
           {movies.map((movie, i) => (
-            <MovieCard key={movie.id} movie={movie} index={i} onMovieClick={onMovieClick} feedbackType={feedbackMap[movie.id]} />
+            <MovieCard key={movie.id} movie={movie} index={i} onMovieClick={onMovieClick} interaction={interactions[movie.id]} />
           ))}
         </div>
 
