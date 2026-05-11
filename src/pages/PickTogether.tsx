@@ -101,14 +101,13 @@ const PickTogether = () => {
     if (!user) return;
     setCreatingSession(true);
     try {
-      const { data, error } = await supabase
-        .from("group_sessions" as any)
-        .insert({ creator_id: user.id, name: "Soirée ciné" } as any)
-        .select("id, invite_code")
-        .single();
-      if (error) throw error;
-      const sessionId = (data as any).id;
-      const inviteCode = (data as any).invite_code;
+      const session = await createGroupSession({
+        title: "Soirée ciné",
+        decision_mode: "instant",
+      });
+      const sessionId = (session as any).id;
+      const inviteCode = (session as any).invite_code;
+      setGroupSessionId(sessionId);
       setSessionInviteCode(inviteCode);
 
       supabase
@@ -121,7 +120,7 @@ const PickTogether = () => {
         }, async (payload: any) => {
           const memberId = payload.new.user_id;
           const guestName = payload.new.guest_name;
-          if (memberId) {
+          if (memberId && memberId !== user.id) {
             const { data: prof } = await supabase
               .from("profiles")
               .select("display_name")
@@ -132,7 +131,6 @@ const PickTogether = () => {
             toast.success(`${name} a rejoint la soirée !`);
           } else if (guestName) {
             setRealtimeMembers(prev => [...prev, { id: `guest-${Date.now()}`, name: guestName }]);
-            toast.success(`${guestName} a rejoint la soirée !`);
           }
         })
         .subscribe();
