@@ -553,6 +553,7 @@ const Index = () => {
         {step === "result" && results.length > 0 && (
           <motion.div key="result" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.4 }} className="absolute inset-0">
             <ResultScreen
+              sessionId={currentSessionId}
               movie={results[currentResultIndex]}
               onShowAnother={handleShowAnother}
               onRestart={() => {
