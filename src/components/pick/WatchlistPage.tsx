@@ -56,9 +56,10 @@ const getPickBubbleMessage = (tab: ActiveTab, count: number, hour: number): stri
 };
 
 const SwipeableCard = ({
-  item, index, onSelect, onRemove, comments,
+  item, index, onSelect, onRemove, comments, feedbackType, fallbackWatchlist,
 }: {
   item: any; index: number; onSelect: () => void; onRemove: () => void; comments: string[];
+  feedbackType?: FeedbackType | null; fallbackWatchlist?: boolean;
 }) => {
   const x = useMotionValue(0);
   const removeBgOpacity = useTransform(x, [-120, 0], [1, 0]);
