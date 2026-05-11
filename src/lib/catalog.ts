@@ -67,14 +67,15 @@ export async function getOrCreateCatalogItem(
 /** Batch lookup: tmdb_id -> catalog_items.id. Does not create missing items. */
 export async function getCatalogItemIds(
   tmdbIds: number[],
-  mediaType: "movie" | "tv" | "person" = "movie"
+  mediaType?: "movie" | "tv" | "person"
 ): Promise<Record<number, string>> {
   if (!tmdbIds.length) return {};
-  const { data } = await supabase
+  let query = supabase
     .from("catalog_items")
     .select("id, tmdb_id")
-    .in("tmdb_id", tmdbIds)
-    .eq("media_type", mediaType);
+    .in("tmdb_id", tmdbIds);
+  if (mediaType) query = query.eq("media_type", mediaType);
+  const { data } = await query;
   const map: Record<number, string> = {};
   for (const row of data ?? []) map[row.tmdb_id] = row.id;
   return map;

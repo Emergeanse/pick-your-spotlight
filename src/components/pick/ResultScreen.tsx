@@ -8,9 +8,7 @@ import { buildStreamingLinks, type StreamingLink } from "@/lib/streaming-links";
 import type { Mood, Context, TimeAvailable } from "@/lib/tmdb";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
-import { likeMovie, unlikeMovie, getLikedMovies } from "@/lib/liked-movies";
-import { addToWatchlist, removeFromWatchlist } from "@/lib/watchlist";
-import { setFeedback, clearFeedbackType } from "@/lib/feedback";
+import { getLikedMovies } from "@/lib/liked-movies";
 import { trackInteraction, getUserTasteProfile, trackRecommendationEvent, updateRecommendationReaction } from "@/lib/interactions";
 import { toast } from "sonner";
 import { computeUserTasteVector, ensureMovieEmbedding } from "@/lib/taste-engine";
@@ -334,8 +332,6 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({
   const [trailerUrl, setTrailerUrl] = useState<string | null>(null);
   const [matchData, setMatchData] = useState<MatchData | null>(null);
   const [matchLoading, setMatchLoading] = useState(false);
-  const [likeLoading, setLikeLoading] = useState(false);
-  const [bookmarkLoading, setBookmarkLoading] = useState(false);
   const [synopsisExpanded, setSynopsisExpanded] = useState(false);
   const [showOptions, setShowOptions] = useState(false);
   const [showRejectReasons, setShowRejectReasons] = useState(false);
@@ -358,7 +354,6 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({
   const { user } = useAuth();
   const interaction = useMovieInteraction(movie.id);
   const currentFeedback = interaction.primaryStatus;
-  const liked = interaction.liked;
   const bookmarked = interaction.watchlist;
 
   // Track unique movies seen across card navigation and detail/back navigation
@@ -452,55 +447,6 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({
     setMarkedSeen(fb === "seen");
     setRejectReaction(fb === "not_for_me" ? "not_for_me" : fb === "seen" ? "seen" : null);
   }, [movie.id, currentFeedback]);
-
-  const handleToggleLike = async () => {
-    if (!user) { toast.info("Connecte-toi pour sauvegarder tes films !"); return; }
-    setLikeLoading(true);
-    try {
-      if (liked) {
-        // Clear via SSOT — also mirrors to legacy liked_movies for compat.
-        await unlikeMovie(movie.id);
-        await clearFeedbackType(movie.id, ["like", "love"]);
-        toast.success("Retiré des favoris");
-        trackInteraction(movie.id, "unliked");
-      } else {
-        await likeMovie(movie);
-        await setFeedback(
-          movie.id,
-          "like",
-          {
-            title: movie.title || (movie as any).name || "Sans titre",
-            poster_path: movie.poster_path ?? null,
-            media_type: mediaType,
-          },
-          { context_type: sessionId ? "solo_session" : "browse", context_id: sessionId ?? null }
-        );
-        toast.success("Ajouté aux favoris !");
-        trackInteraction(movie.id, "liked");
-        updateRecommendationReaction(movie.id, "accepted", "liked");
-      }
-    } catch { toast.error("Erreur lors de la sauvegarde"); }
-    finally { setLikeLoading(false); }
-  };
-
-  const handleToggleBookmark = async () => {
-    if (!user) { toast.info("Connecte-toi pour ta watchlist !"); return; }
-    setBookmarkLoading(true);
-    try {
-      if (bookmarked) {
-        await removeFromWatchlist(movie.id);
-        toast.success("Retiré de ta watchlist");
-        trackInteraction(movie.id, "unsaved");
-      } else {
-        await addToWatchlist(movie);
-        toast.success("Ajouté à ta watchlist !");
-        trackInteraction(movie.id, "saved");
-        updateRecommendationReaction(movie.id, "accepted", "saved_to_watchlist");
-        window.dispatchEvent(new CustomEvent("pick-watchlist-added"));
-      }
-    } catch { toast.error("Erreur lors de la sauvegarde"); }
-    finally { setBookmarkLoading(false); }
-  };
 
   return (
     <div ref={ref} className="h-full w-full overflow-x-hidden overflow-y-auto">

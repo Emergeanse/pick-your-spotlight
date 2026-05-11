@@ -9,8 +9,8 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import PickCharacter from "./PickCharacter";
 import FeedbackBadge from "./FeedbackBadge";
-import { useFeedbackMap } from "@/hooks/use-feedback-map";
-import { listFeedbackByType, clearFeedbackType, type FeedbackType } from "@/lib/feedback";
+import { useMovieInteraction, useMovieInteractions } from "@/hooks/use-movie-interactions";
+import { listFeedbackByType, clearFeedbackType, type FeedbackType, type MovieInteractionState } from "@/lib/feedback";
 
 interface WatchlistPageProps {
   onMovieSelect: (movie: MovieDetail) => void;
@@ -59,10 +59,10 @@ const getPickBubbleMessage = (tab: ActiveTab, count: number, hour: number): stri
 };
 
 const SwipeableCard = ({
-  item, index, onSelect, onRemove, comments, feedbackType, fallbackWatchlist,
+  item, index, onSelect, onRemove, comments, interaction,
 }: {
   item: any; index: number; onSelect: () => void; onRemove: () => void; comments: string[];
-  feedbackType?: FeedbackType | null; fallbackWatchlist?: boolean;
+  interaction?: MovieInteractionState;
 }) => {
   const x = useMotionValue(0);
   const removeBgOpacity = useTransform(x, [-120, 0], [1, 0]);
@@ -81,15 +81,19 @@ const SwipeableCard = ({
           {item.poster_path ? (
             <div className="relative shrink-0">
               <img src={getPosterUrl(item.poster_path, "w185")} alt={item.title} className="w-14 h-[84px] rounded-lg object-cover border border-border/20" loading="lazy" />
-              <div className="absolute -top-1 -left-1">
-                <FeedbackBadge type={feedbackType ?? null} inWatchlist={fallbackWatchlist} />
-              </div>
+              {interaction?.hasInteraction && (
+                <div className="absolute -top-1 -left-1">
+                  <FeedbackBadge type={interaction.primaryStatus} inWatchlist={interaction.watchlist} />
+                </div>
+              )}
             </div>
           ) : (
             <div className="relative w-14 h-[84px] rounded-lg bg-foreground/5 shrink-0">
-              <div className="absolute -top-1 -left-1">
-                <FeedbackBadge type={feedbackType ?? null} inWatchlist={fallbackWatchlist} />
-              </div>
+              {interaction?.hasInteraction && (
+                <div className="absolute -top-1 -left-1">
+                  <FeedbackBadge type={interaction.primaryStatus} inWatchlist={interaction.watchlist} />
+                </div>
+              )}
             </div>
           )}
           <div className="flex-1 min-w-0 py-0.5">
@@ -130,6 +134,7 @@ const MoviePreviewSheet = ({
   const rating = movie.vote_average || 0;
   const backdrop = getBackdropUrl(movie.backdrop_path);
   const poster = getPosterUrl(movie.poster_path, "w342");
+  const interaction = useMovieInteraction(movie.id);
 
   return (
     <>
@@ -145,7 +150,16 @@ const MoviePreviewSheet = ({
             <X className="w-4 h-4" />
           </button>
           <div className="absolute bottom-0 left-0 right-0 px-5 pb-4 flex items-end gap-4">
-            {poster && <img src={poster} alt={title} className="w-20 h-[120px] rounded-xl object-cover border border-border/20 shadow-xl shrink-0 -mb-2" />}
+            {poster && (
+              <div className="relative shrink-0 -mb-2">
+                <img src={poster} alt={title} className="w-20 h-[120px] rounded-xl object-cover border border-border/20 shadow-xl" />
+                {interaction.hasInteraction && (
+                  <div className="absolute top-1.5 left-1.5">
+                    <FeedbackBadge type={interaction.primaryStatus} inWatchlist={interaction.watchlist} size="sm" />
+                  </div>
+                )}
+              </div>
+            )}
             <div className="flex-1 min-w-0 pb-1">
               <h2 className="text-xl font-serif text-foreground leading-tight line-clamp-2">{title}</h2>
               <div className="flex items-center gap-3 mt-1 text-foreground/50 text-[11px] font-sans">
@@ -281,7 +295,7 @@ const WatchlistPage = ({ onMovieSelect }: WatchlistPageProps) => {
     () => filteredItems.map((i: any) => i.tmdb_id).filter(Boolean),
     [filteredItems]
   );
-  const feedbackMap = useFeedbackMap(visibleTmdbIds);
+  const interactions = useMovieInteractions(visibleTmdbIds);
 
   const mediaFilters: { id: MediaFilter; label: string }[] = [
     { id: "all", label: "Tout" },
@@ -548,8 +562,7 @@ const WatchlistPage = ({ onMovieSelect }: WatchlistPageProps) => {
                 handleRemoveSeen(item.tmdb_id)
               }
               comments={activeTab === "watchlist" ? PICK_COMMENTS : activeTab === "liked" ? LIKED_COMMENTS : PICK_COMMENTS}
-              feedbackType={feedbackMap[item.tmdb_id] ?? null}
-              fallbackWatchlist={activeTab === "watchlist"}
+              interaction={interactions[item.tmdb_id]}
             />
           ))}
         </div>

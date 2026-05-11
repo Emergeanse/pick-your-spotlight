@@ -5,8 +5,8 @@ import { getTrendingMovies, getHiddenGems, getTonightsPick, getPosterUrl, getDis
 import type { Movie, MovieDetail } from "@/lib/tmdb";
 import MovieActionBar from "./MovieActionBar";
 import FeedbackBadge from "./FeedbackBadge";
-import { useFeedbackMap } from "@/hooks/use-feedback-map";
-import type { FeedbackType } from "@/lib/feedback";
+import { useMovieInteractions } from "@/hooks/use-movie-interactions";
+import type { MovieInteractionState } from "@/lib/feedback";
 
 interface DiscoverySectionProps {
   onMovieSelect: (movie: MovieDetail) => void;
@@ -16,7 +16,7 @@ interface DiscoverySectionProps {
   excludedGenres?: string[];
 }
 
-const DiscoveryMovieCard = ({ movie, onSelect, feedbackType }: { movie: Movie; onSelect: (m: Movie) => void; feedbackType?: FeedbackType }) => {
+const DiscoveryMovieCard = ({ movie, onSelect, interaction }: { movie: Movie; onSelect: (m: Movie) => void; interaction?: MovieInteractionState }) => {
   const [detail, setDetail] = useState<MovieDetail | null>(null);
   const [showActions, setShowActions] = useState(false);
 
@@ -53,9 +53,9 @@ const DiscoveryMovieCard = ({ movie, onSelect, feedbackType }: { movie: Movie; o
               </span>
             </div>
           )}
-          {feedbackType && (
+          {interaction?.hasInteraction && (
             <div className="absolute top-1.5 left-1.5">
-              <FeedbackBadge type={feedbackType} />
+              <FeedbackBadge type={interaction.primaryStatus} inWatchlist={interaction.watchlist} />
             </div>
           )}
         </div>
@@ -83,7 +83,7 @@ const MovieRow = ({
   movies: Movie[];
   onSelect: (movie: Movie) => void;
 }) => {
-  const feedbackMap = useFeedbackMap(movies.map(m => m.id));
+  const interactions = useMovieInteractions(movies.map(m => m.id));
   return (
     <div className="mb-6">
       <div className="flex items-center gap-2 mb-3 px-1">
@@ -92,7 +92,7 @@ const MovieRow = ({
       </div>
       <div className="flex gap-2.5 overflow-x-auto pb-2 scrollbar-hide">
         {movies.map((movie) => (
-          <DiscoveryMovieCard key={movie.id} movie={movie} onSelect={onSelect} feedbackType={feedbackMap[movie.id]} />
+          <DiscoveryMovieCard key={movie.id} movie={movie} onSelect={onSelect} interaction={interactions[movie.id]} />
         ))}
       </div>
     </div>

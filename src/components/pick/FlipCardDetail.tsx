@@ -4,6 +4,8 @@ import { X, Loader2, Film, User, Clapperboard, ChevronLeft } from "lucide-react"
 import { getPosterUrl, getDisplayTitle } from "@/lib/tmdb";
 import { getPersonPhotoUrl, fetchPersonDetail } from "@/lib/people-preferences";
 import type { Movie } from "@/lib/tmdb";
+import FeedbackBadge from "@/components/pick/FeedbackBadge";
+import { useMovieInteraction, useMovieInteractions } from "@/hooks/use-movie-interactions";
 
 interface FlipCardDetailProps {
   item: Movie | any;
@@ -145,14 +147,23 @@ const FlipCardDetail = ({ item, type, isOpen, onClose }: FlipCardDetailProps) =>
 const MovieDetailContent = ({ item, detail, director, cast, onPersonClick }: {
   item: any; detail: any; director: any; cast: any[];
   onPersonClick: (person: any) => void;
-}) => (
-  <div className="px-5 pb-8 pt-2">
-    <div className="flex gap-4 mb-4">
-      <img
-        src={getPosterUrl(item.poster_path, "w185")}
-        alt={getDisplayTitle(item)}
-        className="h-32 w-auto rounded-xl shadow-lg"
-      />
+}) => {
+  const interaction = useMovieInteraction(item?.id);
+  return (
+    <div className="px-5 pb-8 pt-2">
+      <div className="flex gap-4 mb-4">
+        <div className="relative shrink-0">
+          <img
+            src={getPosterUrl(item.poster_path, "w185")}
+            alt={getDisplayTitle(item)}
+            className="h-32 w-auto rounded-xl shadow-lg"
+          />
+          {interaction.hasInteraction && (
+            <div className="absolute top-1.5 left-1.5">
+              <FeedbackBadge type={interaction.primaryStatus} inWatchlist={interaction.watchlist} size="sm" />
+            </div>
+          )}
+        </div>
       <div className="flex-1 min-w-0">
         <h3 className="text-lg font-serif font-bold leading-tight text-foreground">
           {getDisplayTitle(item)}
@@ -173,7 +184,7 @@ const MovieDetailContent = ({ item, detail, director, cast, onPersonClick }: {
           </div>
         )}
       </div>
-    </div>
+      </div>
 
     {detail?.overview && (
       <div className="mb-5">
@@ -220,8 +231,9 @@ const MovieDetailContent = ({ item, detail, director, cast, onPersonClick }: {
         </div>
       </div>
     )}
-  </div>
-);
+    </div>
+  );
+};
 
 /* ── Person Detail Sub-component ── */
 const PersonDetailContent = ({ item, detail, filmography, onMovieClick }: {
