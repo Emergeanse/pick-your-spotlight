@@ -71,6 +71,74 @@ const PickTogether = () => {
     loadFriends();
   }, [user]);
 
+  // Resume an existing group_sessions row when ?session= is provided
+  useEffect(() => {
+    if (!user || !resumeSessionId || groupSessionId) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const { data: session, error } = await supabase
+          .from("group_sessions")
+          .select("id, invite_code, status, scheduled_for, decision_mode, name, title")
+          .eq("id", resumeSessionId)
+          .maybeSingle();
+        if (error || !session || cancelled) return;
+        setGroupSessionId(session.id as string);
+        setSessionInviteCode((session as any).invite_code ?? null);
+
+        // Hydrate already-joined members
+        const members = await listMembers(session.id as string);
+        const others = (members as any[]).filter((m) => m.user_id && m.user_id !== user.id);
+        const guestMembers = (members as any[]).filter((m) => !m.user_id && m.guest_name);
+        if (others.length > 0) {
+          const { data: profs } = await supabase
+            .from("profiles")
+            .select("id, display_name")
+            .in("id", others.map((m: any) => m.user_id));
+          const list = (profs ?? []).map((p: any) => ({
+            id: p.id,
+            name: p.display_name || "Quelqu'un",
+          }));
+          setRealtimeMembers(list);
+        }
+        if (guestMembers.length > 0) {
+          setGuests(guestMembers.map((m: any) => ({
+            id: m.id,
+            name: m.guest_name,
+            favoriteGenres: [],
+          })));
+        }
+        // Subscribe to realtime joins
+        supabase
+          .channel(`session-${session.id}-resume`)
+          .on("postgres_changes", {
+            event: "INSERT",
+            schema: "public",
+            table: "group_session_members",
+            filter: `session_id=eq.${session.id}`,
+          }, async (payload: any) => {
+            const memberId = payload.new.user_id;
+            const guestName = payload.new.guest_name;
+            if (memberId && memberId !== user.id) {
+              const { data: prof } = await supabase
+                .from("profiles").select("display_name").eq("id", memberId).single();
+              const name = (prof as any)?.display_name || "Quelqu'un";
+              setRealtimeMembers(prev => prev.find(p => p.id === memberId) ? prev : [...prev, { id: memberId, name }]);
+              toast.success(`${name} a rejoint la soirée !`);
+            } else if (guestName) {
+              setRealtimeMembers(prev => [...prev, { id: `guest-${Date.now()}`, name: guestName }]);
+            }
+          })
+          .subscribe();
+
+        setStep("who");
+      } catch (e) {
+        console.warn("Failed to resume group session", e);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [user, resumeSessionId, groupSessionId]);
+
   const loadFriends = async () => {
     if (!user) return;
     const { data: friendships } = await supabase
