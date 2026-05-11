@@ -3,8 +3,9 @@ import { AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import BrandHeader from "@/components/pick/BrandHeader";
+import { listMembers } from "@/lib/group-sessions";
 
 import type { MovieDetail } from "@/lib/tmdb";
 import { addToWatchlist } from "@/lib/watchlist";
@@ -46,6 +47,8 @@ const LOADING_MESSAGES = [
 const PickTogether = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const resumeSessionId = searchParams.get("session");
   const [step, setStep] = useState<FlowStep>("landing");
   const [friends, setFriends] = useState<Friend[]>([]);
   const [selectedFriendIds, setSelectedFriendIds] = useState<Set<string>>(new Set());
@@ -62,11 +65,81 @@ const PickTogether = () => {
   const [creatingSession, setCreatingSession] = useState(false);
   const [realtimeMembers, setRealtimeMembers] = useState<{ id: string; name: string }[]>([]);
   const [mediaStep, setMediaStep] = useState(false);
+  const [scheduledFor, setScheduledFor] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
     loadFriends();
   }, [user]);
+
+  // Resume an existing group_sessions row when ?session= is provided
+  useEffect(() => {
+    if (!user || !resumeSessionId || groupSessionId) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const { data: session, error } = await supabase
+          .from("group_sessions")
+          .select("id, invite_code, status, scheduled_for, decision_mode, name, title")
+          .eq("id", resumeSessionId)
+          .maybeSingle();
+        if (error || !session || cancelled) return;
+        setGroupSessionId(session.id as string);
+        setSessionInviteCode((session as any).invite_code ?? null);
+        setScheduledFor((session as any).scheduled_for ?? null);
+
+        // Hydrate already-joined members
+        const members = await listMembers(session.id as string);
+        const others = (members as any[]).filter((m) => m.user_id && m.user_id !== user.id);
+        const guestMembers = (members as any[]).filter((m) => !m.user_id && m.guest_name);
+        if (others.length > 0) {
+          const { data: profs } = await supabase
+            .from("profiles")
+            .select("id, display_name")
+            .in("id", others.map((m: any) => m.user_id));
+          const list = (profs ?? []).map((p: any) => ({
+            id: p.id,
+            name: p.display_name || "Quelqu'un",
+          }));
+          setRealtimeMembers(list);
+        }
+        if (guestMembers.length > 0) {
+          setGuests(guestMembers.map((m: any) => ({
+            id: m.id,
+            name: m.guest_name,
+            favoriteGenres: [],
+          })));
+        }
+        // Subscribe to realtime joins
+        supabase
+          .channel(`session-${session.id}-resume`)
+          .on("postgres_changes", {
+            event: "INSERT",
+            schema: "public",
+            table: "group_session_members",
+            filter: `session_id=eq.${session.id}`,
+          }, async (payload: any) => {
+            const memberId = payload.new.user_id;
+            const guestName = payload.new.guest_name;
+            if (memberId && memberId !== user.id) {
+              const { data: prof } = await supabase
+                .from("profiles").select("display_name").eq("id", memberId).single();
+              const name = (prof as any)?.display_name || "Quelqu'un";
+              setRealtimeMembers(prev => prev.find(p => p.id === memberId) ? prev : [...prev, { id: memberId, name }]);
+              toast.success(`${name} a rejoint la soirée !`);
+            } else if (guestName) {
+              setRealtimeMembers(prev => [...prev, { id: `guest-${Date.now()}`, name: guestName }]);
+            }
+          })
+          .subscribe();
+
+        setStep("who");
+      } catch (e) {
+        console.warn("Failed to resume group session", e);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [user, resumeSessionId, groupSessionId]);
 
   const loadFriends = async () => {
     if (!user) return;
@@ -330,6 +403,17 @@ const PickTogether = () => {
   return (
     <div className="fixed inset-0 bg-background overflow-hidden">
       <BrandHeader showBack onBack={goBack} />
+
+      {step === "who" && scheduledFor && (
+        <div className="absolute top-[60px] left-0 right-0 z-20 px-4">
+          <div className="max-w-md mx-auto rounded-xl bg-primary/10 border border-primary/30 px-3 py-2 text-center text-xs text-primary">
+            Salon d'attente · Séance prévue le{" "}
+            {new Date(scheduledFor).toLocaleString("fr-FR", {
+              day: "numeric", month: "short", hour: "2-digit", minute: "2-digit",
+            })}
+          </div>
+        </div>
+      )}
 
       <AnimatePresence mode="wait">
         {step === "landing" && (

@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { createRecommendationSession } from "@/lib/sessions";
-import { createGroupSession } from "@/lib/group-sessions";
+import { createGroupSession, addGuestMember } from "@/lib/group-sessions";
+import { parsePickPrompt } from "@/lib/parse-prompt";
 import { useAuth } from "@/hooks/use-auth";
 
 /**
@@ -39,15 +40,46 @@ const PlanSession = () => {
     try {
       const scheduledIso = new Date(`${date}T${time || "21:00"}:00`).toISOString();
 
-      if (audience === "group") {
+      // Try to parse the free-form prompt to extract structured intent
+      const parsed = prompt.trim() ? await parsePickPrompt(prompt) : null;
+      const filtersSnapshot: Record<string, unknown> = parsed
+        ? {
+            mediaType: parsed.mediaType,
+            mood: parsed.mood,
+            genres: parsed.genres,
+            excludedGenres: parsed.excludedGenres,
+            maxDuration: parsed.maxDuration,
+            platforms: parsed.platforms,
+            keywords: parsed.keywords,
+          }
+        : {};
+
+      // Override audience if the prompt clearly suggests a group
+      const finalAudience = parsed?.audience === "group" ? "group" : audience;
+
+      if (finalAudience === "group") {
         const session = await createGroupSession({
           title: title || "Soirée ciné",
           decision_mode: "planned",
           scheduled_for: scheduledIso,
-          context_json: { prompt },
+          mood: parsed?.mood ?? null,
+          context_json: { prompt, parsed },
         });
+        // Pre-add detected guests on a best-effort basis
+        if (parsed?.guests?.length) {
+          for (const g of parsed.guests) {
+            if (!g.name) continue;
+            try {
+              await addGuestMember((session as any).id, {
+                name: g.name,
+                age_range: g.ageHint ?? undefined,
+                profile_text: g.relation ?? undefined,
+              });
+            } catch { /* ignore */ }
+          }
+        }
         toast.success("Séance planifiée — ajoute les participants");
-        navigate(`/app/pick-together?session=${session.id}`);
+        navigate(`/app/pick-together?session=${(session as any).id}`);
         return;
       }
 
@@ -57,9 +89,10 @@ const PlanSession = () => {
         scheduled_for: scheduledIso,
         prompt_text: prompt || null,
         source: "planned",
+        filters_snapshot: filtersSnapshot,
       });
       toast.success("Séance planifiée");
-      navigate("/app");
+      navigate("/app/history");
     } catch (e) {
       console.error(e);
       toast.error("Impossible de planifier la séance");
