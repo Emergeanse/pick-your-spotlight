@@ -502,6 +502,13 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
                   </div>
                 </motion.button>
 
+                <a
+                  href="/app/plan"
+                  className="text-[12px] font-sans text-foreground/50 hover:text-foreground/80 transition-colors flex items-center gap-1.5"
+                >
+                  📅 Planifier une séance pour plus tard
+                </a>
+
               </div>
 
               {/* Choice overlay */}
