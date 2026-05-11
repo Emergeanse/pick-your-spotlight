@@ -287,7 +287,21 @@ const PickTogether = () => {
     }, 800);
   };
 
-  const handleSelectMovie = (rec: GroupRecommendation) => {
+  const handleSelectMovie = async (rec: GroupRecommendation) => {
+    const meta = {
+      title: rec.movie.title || rec.movie.name || "Sans titre",
+      media_type: ((rec.movie as any).media_type === "tv" ? "tv" : "movie") as "movie" | "tv",
+      poster_path: rec.movie.poster_path ?? null,
+      overview: rec.movie.overview ?? null,
+      year: rec.movie.release_date ? parseInt(rec.movie.release_date.slice(0, 4)) : null,
+      runtime: rec.movie.runtime ?? null,
+      vote_average: rec.movie.vote_average ?? null,
+      popularity: (rec.movie as any).popularity ?? null,
+    };
+    try {
+      if (groupSessionId) await selectGroupSessionFilm(groupSessionId, rec.movie.id, meta);
+      if (recoSessionId) await completeSession(recoSessionId, rec.movie.id, meta);
+    } catch (e) { console.warn("complete group session failed", e); }
     sessionStorage.setItem("pick-fab-movie", JSON.stringify(rec.movie));
     navigate("/app?from=pick-chat");
   };
