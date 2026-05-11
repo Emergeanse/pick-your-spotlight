@@ -140,7 +140,7 @@ const ResultsStep = ({ hero, alternatives, selectedCount, heroReaction, sessionI
       {/* Action bar */}
       <div className="px-6 pb-2">
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.9 }}>
-          <MovieActionBar key={hero.movie.id} movie={hero.movie} />
+          <MovieActionBar key={hero.movie.id} movie={hero.movie} sessionId={sessionId} contextType="group_session" />
         </motion.div>
       </div>
 
