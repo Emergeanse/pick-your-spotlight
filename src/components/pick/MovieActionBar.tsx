@@ -147,7 +147,7 @@ const MovieActionBar = ({ movie, size = "md", className = "", onInteraction, ini
         toast.success("Ajouté aux favoris !");
         trackInteraction(movie.id, "liked");
         // Auto-add to watchlist if not bookmarked and not seen
-        if (!previousBookmarked && previousFeedback !== "seen") {
+        if (!bookmarked && previousFeedback !== "seen") {
           try {
             await persistFeedback("watchlist");
             if (!isCurrentMovie(movieId)) return;
