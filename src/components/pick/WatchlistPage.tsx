@@ -506,14 +506,18 @@ const WatchlistPage = ({ onMovieSelect }: WatchlistPageProps) => {
         <div className="flex flex-col items-center justify-center py-20 text-center">
           <PickCharacter
             mood="wave"
-            message={activeTab === "watchlist"
-              ? "Sauvegarde des titres et retrouve-les ici !"
-              : "Like des films et séries pour construire tes goûts !"}
+            message={
+              activeTab === "watchlist" ? "Sauvegarde des titres et retrouve-les ici !" :
+              activeTab === "liked" ? "Like des films et séries pour construire tes goûts !" :
+              "Marque ce que tu as déjà vu pour affiner tes recommandations !"
+            }
             size="md"
             animate
           />
           <p className="text-foreground/25 text-xs font-sans mt-4">
-            {activeTab === "watchlist" ? "Ta watchlist est vide" : "Aucun coup de cœur pour l'instant"}
+            {activeTab === "watchlist" ? "Ta watchlist est vide" :
+             activeTab === "liked" ? "Aucun coup de cœur pour l'instant" :
+             "Aucun titre marqué comme vu"}
           </p>
           <Button
             onClick={() => window.dispatchEvent(new CustomEvent("pick-navigate-home"))}
