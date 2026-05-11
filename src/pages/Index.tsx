@@ -31,6 +31,7 @@ import { getLikedMovies } from "@/lib/liked-movies";
 import { computeUserTasteVector } from "@/lib/taste-engine";
 import { extractRecommendationMovies, ensureRecommendationBatch } from "@/lib/recommendation-batch";
 import { usePresenceTracker } from "@/hooks/use-presence";
+import { createRecommendationSession, logRecommendationEvent, completeSession, abandonSession } from "@/lib/sessions";
 
 type Step = "home" | "result";
 
@@ -47,6 +48,9 @@ const Index = () => {
   const [resultOrigin, setResultOrigin] = useState<"home" | "external">("home");
   const [loadingMessage, setLoadingMessage] = useState("");
   const [showChat, setShowChat] = useState(false);
+  // V1: current solo recommendation session
+  const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
+  const loggedEventsRef = useRef<Set<number>>(new Set());
   
   const [chatInitialMessages, setChatInitialMessages] = useState<ChatMessage[] | undefined>(undefined);
   const [chatSuggestedSeenMovieIds, setChatSuggestedSeenMovieIds] = useState<Set<number>>(new Set());
@@ -76,6 +80,12 @@ const Index = () => {
   const watchlistGuideAwaitingLoad = useRef(false);
 
   const resetToHomeView = () => {
+    // Abandon any active solo session
+    if (currentSessionId) {
+      abandonSession(currentSessionId).catch(() => {});
+    }
+    setCurrentSessionId(null);
+    loggedEventsRef.current = new Set();
     setStep("home");
     setResults([]);
     setCurrentResultIndex(0);
@@ -120,9 +130,56 @@ const Index = () => {
       setBatchRejectedIds(new Set());
       setResultOrigin(origin);
       setStep("result");
+
+      // V1: spin up a solo recommendation_session
+      loggedEventsRef.current = new Set();
+      if (user) {
+        createRecommendationSession({
+          audience_type: "solo",
+          decision_mode: "instant",
+          source: origin === "external" ? "external" : "surprise",
+          filters_snapshot: {
+            platformIds: profilePrefs.preferredPlatforms,
+            minRating: profilePrefs.minRating,
+            excludedGenres: profilePrefs.excludedGenres,
+          },
+        })
+          .then((id) => {
+            setCurrentSessionId(id);
+            const first = movies[safeStartIndex];
+            if (first && !loggedEventsRef.current.has(first.id)) {
+              loggedEventsRef.current.add(first.id);
+              logRecommendationEvent({
+                session_id: id,
+                tmdb_id: first.id,
+                title: first.title || first.name || "",
+                rank_position: safeStartIndex + 1,
+                source: "solo_session",
+              }).catch(() => {});
+            }
+          })
+          .catch(() => setCurrentSessionId(null));
+      } else {
+        setCurrentSessionId(null);
+      }
     },
-    [],
+    [user, profilePrefs.excludedGenres, profilePrefs.minRating, profilePrefs.preferredPlatforms],
   );
+
+  // Log each new movie shown as a recommendation_event (once per session)
+  useEffect(() => {
+    if (step !== "result" || !currentSessionId) return;
+    const m = results[currentResultIndex];
+    if (!m || loggedEventsRef.current.has(m.id)) return;
+    loggedEventsRef.current.add(m.id);
+    logRecommendationEvent({
+      session_id: currentSessionId,
+      tmdb_id: m.id,
+      title: m.title || m.name || "",
+      rank_position: currentResultIndex + 1,
+      source: "solo_session",
+    }).catch(() => {});
+  }, [step, currentSessionId, results, currentResultIndex]);
 
   useEffect(() => {
     const state = (location.state as any) || {};
@@ -496,6 +553,17 @@ const Index = () => {
         {step === "result" && results.length > 0 && (
           <motion.div key="result" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.4 }} className="absolute inset-0">
             <ResultScreen
+              sessionId={currentSessionId}
+              onFeedback={(type, m) => {
+                if ((type === "love" || type === "like") && currentSessionId) {
+                  completeSession(currentSessionId, m.id, {
+                    title: m.title || m.name || "",
+                    poster_path: m.poster_path || null,
+                    media_type: m.first_air_date ? "tv" : "movie",
+                  }).catch(() => {});
+                  setCurrentSessionId(null);
+                }
+              }}
               movie={results[currentResultIndex]}
               onShowAnother={handleShowAnother}
               onRestart={() => {

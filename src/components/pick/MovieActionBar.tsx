@@ -14,9 +14,12 @@ interface MovieActionBarProps {
   className?: string;
   onInteraction?: (type: string) => void;
   initialFeedback?: FeedbackLabel | null;
+  /** V1: link feedback to a recommendation/group session */
+  sessionId?: string | null;
+  contextType?: "solo_session" | "group_session" | "browse";
 }
 
-const MovieActionBar = ({ movie, size = "md", className = "", onInteraction, initialFeedback }: MovieActionBarProps) => {
+const MovieActionBar = ({ movie, size = "md", className = "", onInteraction, initialFeedback, sessionId, contextType }: MovieActionBarProps) => {
   const { user } = useAuth();
   const currentMovieIdRef = useRef(movie.id);
 
@@ -88,8 +91,13 @@ const MovieActionBar = ({ movie, size = "md", className = "", onInteraction, ini
       await clearFeedback(movie.id);
       return;
     }
-    await setFeedback(movie.id, label, { ...movieMeta, media_type: (movieMeta?.media_type as "movie" | "tv") ?? "movie" });
-  }, [movie.id, movieMeta]);
+    await setFeedback(
+      movie.id,
+      label,
+      { ...movieMeta, media_type: (movieMeta?.media_type as "movie" | "tv") ?? "movie" },
+      { context_type: contextType ?? (sessionId ? "solo_session" : "browse"), context_id: sessionId ?? null }
+    );
+  }, [movie.id, movieMeta, sessionId, contextType]);
 
   /**
    * Toggle an exclusive feedback (seen / not_for_me / unknown).
