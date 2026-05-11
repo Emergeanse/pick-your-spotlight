@@ -23,7 +23,9 @@ import TasteTrainer from "./TasteTrainer";
 import TrainingProgress from "./TrainingProgress";
 import DiscoverySection from "./DiscoverySection";
 import MovieActionBar from "./MovieActionBar";
+import FeedbackBadge from "./FeedbackBadge";
 import { getMainCTALabel, getMainCTASubtitle, getAutoPickLabel, getAutoPickSubtitle, getTonightPickLabel, getProactiveMessages } from "@/lib/time-context";
+import { useMovieInteraction } from "@/hooks/use-movie-interactions";
 
 import { useNavigate } from "react-router-dom";
 
@@ -117,6 +119,7 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
   
 
   const tonightPool: MovieDetail[] = chatMoviesPool || [];
+  const tonightInteraction = useMovieInteraction(tonightPick?.id);
   const canGoPrev = tonightPickIndex > 0;
   const canGoNext = tonightPickIndex < tonightPool.length - 1;
 
