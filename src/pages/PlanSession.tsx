@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { createRecommendationSession } from "@/lib/sessions";
-import { createGroupSession } from "@/lib/group-sessions";
+import { createGroupSession, addGuestMember } from "@/lib/group-sessions";
+import { parsePickPrompt } from "@/lib/parse-prompt";
 import { useAuth } from "@/hooks/use-auth";
 
 /**
