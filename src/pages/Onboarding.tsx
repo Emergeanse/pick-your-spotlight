@@ -68,9 +68,10 @@ const Onboarding = () => {
     try {
       const userId = (await supabase.auth.getUser()).data.user?.id;
       if (userId) {
+        const genres = Array.from(selectedGenres).slice(0, 8);
         await supabase.from("profiles").update({
           onboarding_completed: true,
-          favorite_genres: Array.from(selectedGenres).slice(0, 8),
+          favorite_genres: genres,
           preferred_platforms: selectedPlatforms,
           birth_year: birthYear,
           media_preference: mediaPreference,
@@ -78,6 +79,16 @@ const Onboarding = () => {
           activation_completed: false,
           activation_step: "train_20",
         } as any).eq("id", userId);
+
+        // Mirror to V1 normalized preferences
+        try {
+          const { setLikedGenres, setLikedPlatforms, setSinglePreference } = await import("@/lib/preferences");
+          await Promise.all([
+            setLikedGenres(genres, "onboarding"),
+            setLikedPlatforms(selectedPlatforms, "onboarding"),
+            setSinglePreference("media_type", mediaPreference || "both", "onboarding"),
+          ]);
+        } catch (e) { console.warn("preferences mirror failed", e); }
       }
       sessionStorage.setItem("pick_force_tour", "1");
       navigate("/app", { state: { showTour: true } });
