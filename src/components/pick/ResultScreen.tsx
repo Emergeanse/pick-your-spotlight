@@ -19,7 +19,7 @@ import FlipCardDetail from "@/components/pick/FlipCardDetail";
 import BrandHeader from "./BrandHeader";
 import PickCharacter from "./PickCharacter";
 import FeedbackBadge from "./FeedbackBadge";
-import { useFeedbackMap } from "@/hooks/use-feedback-map";
+import { useMovieInteractions, useMovieInteraction } from "@/hooks/use-movie-interactions";
 
 const IMG_BASE = "https://image.tmdb.org/t/p";
 const CONFIDENCE_THRESHOLD = 30;
