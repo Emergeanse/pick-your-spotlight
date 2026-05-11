@@ -65,9 +65,9 @@ const ResultsStep = ({ hero, alternatives, selectedCount, heroReaction, sessionI
                 alt={getDisplayTitle(hero.movie)}
                 className="w-40 h-60 md:w-48 md:h-72 rounded-2xl object-cover shadow-2xl border border-border/20"
               />
-              {heroFb && (
+              {heroState?.hasInteraction && (
                 <div className="absolute top-2 left-2">
-                  <FeedbackBadge type={heroFb} size="sm" />
+                  <FeedbackBadge type={heroState.primaryStatus} inWatchlist={heroState.watchlist} size="sm" />
                 </div>
               )}
             </motion.div>
