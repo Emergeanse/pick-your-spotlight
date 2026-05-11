@@ -299,25 +299,34 @@ const WatchlistPage = ({ onMovieSelect }: WatchlistPageProps) => {
     catch { toast.error("Erreur"); }
   };
 
+  const handleRemoveSeen = async (tmdbId: number) => {
+    try {
+      await clearFeedbackType(tmdbId, ["seen"]);
+      setSeenItems(prev => prev.filter(i => i.tmdb_id !== tmdbId));
+      toast.success("Retiré de tes vus");
+    } catch { toast.error("Erreur"); }
+  };
+
   const handleResetAll = async () => {
     if (!currentItems.length) return;
     setResetting(true);
     try {
-      const { data: { user } } = await (await import("@/integrations/supabase/client")).supabase.auth.getUser();
+      const { supabase } = await import("@/integrations/supabase/client");
+      const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
-      if (activeTab === "watchlist") {
-        const { error } = await (await import("@/integrations/supabase/client")).supabase
-          .from("watchlist").delete().eq("user_id", user.id);
-        if (error) throw error;
-        setWatchlistItems([]);
-        toast.success("Watchlist vidée");
-      } else {
-        const { error } = await (await import("@/integrations/supabase/client")).supabase
-          .from("liked_movies").delete().eq("user_id", user.id);
-        if (error) throw error;
-        setLikedItems([]);
-        toast.success("Coups de cœur réinitialisés");
-      }
+      const targetType: FeedbackType[] =
+        activeTab === "watchlist" ? ["watchlist"] :
+        activeTab === "liked" ? ["like", "love"] :
+        ["seen"];
+      const { error } = await supabase
+        .from("user_item_feedback")
+        .delete()
+        .eq("user_id", user.id)
+        .in("feedback_type", targetType);
+      if (error) throw error;
+      if (activeTab === "watchlist") { setWatchlistItems([]); toast.success("Watchlist vidée"); }
+      else if (activeTab === "liked") { setLikedItems([]); toast.success("Coups de cœur réinitialisés"); }
+      else { setSeenItems([]); toast.success("Historique vu effacé"); }
     } catch { toast.error("Erreur lors de la réinitialisation"); }
     finally { setResetting(false); setShowResetConfirm(false); }
   };
