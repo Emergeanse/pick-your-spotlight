@@ -194,7 +194,7 @@ const ResultsStep = ({ hero, alternatives, selectedCount, heroReaction, sessionI
             {showAlternatives && (
               <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="space-y-3 overflow-hidden">
                 {alternatives.map((rec, idx) => {
-                  const altFb = feedbackMap[rec.movie.id] ?? null;
+                  const altState = interactions[rec.movie.id];
                   return (
                   <motion.button key={rec.movie.id} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: idx * 0.1 }}
                     whileTap={{ scale: 0.98 }} onClick={() => onSelectMovie(rec)}
@@ -204,9 +204,9 @@ const ResultsStep = ({ hero, alternatives, selectedCount, heroReaction, sessionI
                       <div className="relative shrink-0">
                         <img src={getPosterUrl(rec.movie.poster_path, "w92") || ""} alt={getDisplayTitle(rec.movie)}
                           className="w-14 h-20 rounded-xl object-cover" />
-                        {altFb && (
+                        {altState?.hasInteraction && (
                           <div className="absolute top-1 left-1">
-                            <FeedbackBadge type={altFb} />
+                            <FeedbackBadge type={altState.primaryStatus} inWatchlist={altState.watchlist} />
                           </div>
                         )}
                       </div>
