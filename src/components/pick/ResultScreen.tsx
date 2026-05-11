@@ -437,6 +437,16 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({
     if (user) { isMovieLiked(movie.id).then(setLiked).catch(() => {}); isInWatchlist(movie.id).then(setBookmarked).catch(() => {}); }
   }, [movie.id, user]);
 
+  // Restore prior interaction state when navigating between movies in the batch
+  useEffect(() => {
+    const fb = currentFeedback;
+    if (fb === "like" || fb === "love") setFeedbackGiven("good");
+    else if (fb === "not_for_me" || fb === "dislike") setFeedbackGiven("bad");
+    else setFeedbackGiven(null);
+    setMarkedSeen(fb === "seen");
+    setRejectReaction(fb === "not_for_me" ? "not_for_me" : fb === "seen" ? "seen" : null);
+  }, [movie.id, currentFeedback]);
+
   const handleToggleLike = async () => {
     if (!user) { toast.info("Connecte-toi pour sauvegarder tes films !"); return; }
     setLikeLoading(true);
