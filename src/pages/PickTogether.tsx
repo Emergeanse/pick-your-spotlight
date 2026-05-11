@@ -9,6 +9,17 @@ import BrandHeader from "@/components/pick/BrandHeader";
 import type { MovieDetail } from "@/lib/tmdb";
 import { addToWatchlist } from "@/lib/watchlist";
 import { likeMovie } from "@/lib/liked-movies";
+import {
+  createGroupSession,
+  addGuestMember,
+  selectGroupSessionFilm,
+} from "@/lib/group-sessions";
+import {
+  createRecommendationSession,
+  logRecommendationEvent,
+  completeSession,
+  abandonSession,
+} from "@/lib/sessions";
 
 // Sub-components
 import LandingStep from "@/components/pick/together/LandingStep";
