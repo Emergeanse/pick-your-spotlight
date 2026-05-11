@@ -4,6 +4,9 @@ import { Star, TrendingUp, Gem, Sparkles } from "lucide-react";
 import { getTrendingMovies, getHiddenGems, getTonightsPick, getPosterUrl, getDisplayTitle, getMovieDetails } from "@/lib/tmdb";
 import type { Movie, MovieDetail } from "@/lib/tmdb";
 import MovieActionBar from "./MovieActionBar";
+import FeedbackBadge from "./FeedbackBadge";
+import { useFeedbackMap } from "@/hooks/use-feedback-map";
+import type { FeedbackType } from "@/lib/feedback";
 
 interface DiscoverySectionProps {
   onMovieSelect: (movie: MovieDetail) => void;
