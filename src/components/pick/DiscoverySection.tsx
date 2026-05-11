@@ -53,6 +53,11 @@ const DiscoveryMovieCard = ({ movie, onSelect, feedbackType }: { movie: Movie; o
               </span>
             </div>
           )}
+          {feedbackType && (
+            <div className="absolute top-1.5 left-1.5">
+              <FeedbackBadge type={feedbackType} />
+            </div>
+          )}
         </div>
         <p className="text-[11px] font-sans text-foreground/70 line-clamp-1 leading-tight px-0.5">
           {getDisplayTitle(movie)}
