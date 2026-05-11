@@ -76,9 +76,18 @@ const SwipeableCard = ({
         className="relative flex items-start gap-3 p-3 bg-card/40 rounded-xl border border-border/10 hover:bg-card/60 transition-colors">
         <button onClick={onSelect} className="flex items-start gap-3 flex-1 min-w-0 text-left">
           {item.poster_path ? (
-            <img src={getPosterUrl(item.poster_path, "w185")} alt={item.title} className="w-14 h-[84px] rounded-lg object-cover border border-border/20 shrink-0" loading="lazy" />
+            <div className="relative shrink-0">
+              <img src={getPosterUrl(item.poster_path, "w185")} alt={item.title} className="w-14 h-[84px] rounded-lg object-cover border border-border/20" loading="lazy" />
+              <div className="absolute -top-1 -left-1">
+                <FeedbackBadge type={feedbackType ?? null} inWatchlist={fallbackWatchlist} />
+              </div>
+            </div>
           ) : (
-            <div className="w-14 h-[84px] rounded-lg bg-foreground/5 shrink-0" />
+            <div className="relative w-14 h-[84px] rounded-lg bg-foreground/5 shrink-0">
+              <div className="absolute -top-1 -left-1">
+                <FeedbackBadge type={feedbackType ?? null} inWatchlist={fallbackWatchlist} />
+              </div>
+            </div>
           )}
           <div className="flex-1 min-w-0 py-0.5">
             <p className="text-sm font-sans font-medium text-foreground line-clamp-1 mb-0.5">{item.title}</p>
