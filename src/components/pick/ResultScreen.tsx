@@ -257,14 +257,14 @@ const ReviewSheet = ({ open, onClose, movieId, userCriteria }: { open: boolean; 
 };
 
 const AlternativeMovies = ({ movies, onSelect }: { movies: MovieDetail[]; onSelect: (m: MovieDetail) => void }) => {
-  const feedbackMap = useFeedbackMap(movies.map(m => m.id));
+  const interactions = useMovieInteractions(movies.map(m => m.id));
   if (movies.length === 0) return null;
   return (
     <div className="px-5 py-6 md:px-12">
       <p className="text-[10px] uppercase tracking-widest text-foreground/30 font-sans font-semibold mb-3">Autres suggestions</p>
       <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
         {movies.map((movie) => {
-          const fb = feedbackMap[movie.id] ?? null;
+          const state = interactions[movie.id];
           return (
             <motion.button key={movie.id} whileTap={{ scale: 0.95 }} onClick={() => onSelect(movie)} className="flex-shrink-0 w-28 group">
               <div className="relative w-28 h-[168px] rounded-xl overflow-hidden border border-border/15 mb-2">
@@ -273,9 +273,9 @@ const AlternativeMovies = ({ movies, onSelect }: { movies: MovieDetail[]; onSele
                 ) : (
                   <div className="w-full h-full bg-foreground/[0.04] flex items-center justify-center"><span className="text-foreground/20 text-xs font-sans">No img</span></div>
                 )}
-                {fb && (
+                {state?.hasInteraction && (
                   <div className="absolute top-1.5 left-1.5">
-                    <FeedbackBadge type={fb} />
+                    <FeedbackBadge type={state.primaryStatus} inWatchlist={state.watchlist} />
                   </div>
                 )}
               </div>
