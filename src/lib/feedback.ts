@@ -196,6 +196,7 @@ export async function clearFeedback(tmdbId: number): Promise<void> {
     .delete()
     .eq("user_id", userId)
     .eq("item_id", itemId);
+  emitFeedbackChange(tmdbId, null);
 }
 
 /** Check if a specific feedback type is active for an item. */
