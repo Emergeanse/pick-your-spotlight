@@ -16,7 +16,7 @@ interface DiscoverySectionProps {
   excludedGenres?: string[];
 }
 
-const DiscoveryMovieCard = ({ movie, onSelect }: { movie: Movie; onSelect: (m: Movie) => void }) => {
+const DiscoveryMovieCard = ({ movie, onSelect, feedbackType }: { movie: Movie; onSelect: (m: Movie) => void; feedbackType?: FeedbackType }) => {
   const [detail, setDetail] = useState<MovieDetail | null>(null);
   const [showActions, setShowActions] = useState(false);
 
