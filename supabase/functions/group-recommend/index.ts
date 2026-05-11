@@ -93,11 +93,11 @@ serve(async (req) => {
         .select("user_id, taste_vector, avoidance_vector, recent_taste_vector, rejected_clusters, fatigue_state, stable_confidence")
         .in("user_id", memberIds),
       supabase.from("user_item_feedback")
-        .select("user_id, item_id, action, label, score, catalog_items!inner(tmdb_id, title, media_type)")
+        .select("user_id, item_id, action, label, score")
         .in("user_id", memberIds)
         .limit(1500),
       supabase.from("user_preferences")
-        .select("user_id, weight, source, preference_tags!inner(key, label, category)")
+        .select("user_id, tag_id, weight, source")
         .in("user_id", memberIds)
         .limit(1500),
     ]);
@@ -107,24 +107,41 @@ serve(async (req) => {
     const feedbackRows: any[] = (feedbackRes.data as any[]) || [];
     const prefsRows: any[] = (prefsRes.data as any[]) || [];
 
-    // Exclude already-seen / rejected via persistent feedback (single source of truth)
+    // Resolve item_id -> tmdb_id for exclusions
+    const itemIds = [...new Set(feedbackRows.map((f) => f.item_id).filter(Boolean))];
+    let itemMap = new Map<string, { tmdb_id: number; media_type: string }>();
+    if (itemIds.length > 0) {
+      const { data: items } = await supabase
+        .from("catalog_items")
+        .select("id, tmdb_id, media_type")
+        .in("id", itemIds);
+      (items || []).forEach((it: any) => itemMap.set(it.id, { tmdb_id: it.tmdb_id, media_type: it.media_type }));
+    }
+
     const seenIds = new Set<number>();
     for (const f of feedbackRows) {
-      const ci = f.catalog_items;
-      if (!ci?.tmdb_id) continue;
-      if (["seen", "not_for_me", "love", "like", "watchlist"].includes(f.action)) {
-        seenIds.add(ci.tmdb_id);
-      }
+      if (!["seen", "not_for_me", "love", "like", "watchlist"].includes(f.action)) continue;
+      const ci = itemMap.get(f.item_id);
+      if (ci?.tmdb_id) seenIds.add(ci.tmdb_id);
     }
     const excludeIds = [...seenIds];
 
-    // Tag-based taste per member (preferences are durable truth)
+    // Resolve tag_id -> label/category
+    const tagIds = [...new Set(prefsRows.map((p) => p.tag_id).filter(Boolean))];
+    let tagMap = new Map<string, { label: string; category: string }>();
+    if (tagIds.length > 0) {
+      const { data: tags } = await supabase
+        .from("preference_tags")
+        .select("id, key, label, category")
+        .in("id", tagIds);
+      (tags || []).forEach((t: any) => tagMap.set(t.id, { label: t.label || t.key, category: t.category }));
+    }
     const memberTags = new Map<string, { label: string; category: string; weight: number }[]>();
     for (const row of prefsRows) {
-      const t = row.preference_tags;
+      const t = tagMap.get(row.tag_id);
       if (!t) continue;
       const arr = memberTags.get(row.user_id) || [];
-      arr.push({ label: t.label || t.key, category: t.category, weight: Number(row.weight) || 1 });
+      arr.push({ label: t.label, category: t.category, weight: Number(row.weight) || 1 });
       memberTags.set(row.user_id, arr);
     }
 
