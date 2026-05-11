@@ -103,6 +103,22 @@ const Profile = () => {
         default_max_duration: defaultMaxDuration,
       } as any).eq("id", user.id);
       if (error) throw error;
+
+      // Mirror to V1 normalized preferences
+      try {
+        const { setLikedPlatforms, setSinglePreference } = await import("@/lib/preferences");
+        const ratingKey = minRating >= 8 ? "excellent" : minRating >= 7 ? "great" : minRating >= 6 ? "good" : "any";
+        const durationKey = defaultMaxDuration == null
+          ? "any"
+          : defaultMaxDuration <= 90 ? "short" : defaultMaxDuration <= 120 ? "medium" : "long";
+        await Promise.all([
+          setLikedPlatforms(selectedPlatforms, "explicit"),
+          setSinglePreference("media_type", defaultMediaType || "both", "explicit"),
+          setSinglePreference("rating_threshold", ratingKey, "explicit"),
+          setSinglePreference("duration", durationKey, "explicit"),
+        ]);
+      } catch (e) { console.warn("preferences mirror failed", e); }
+
       setProfile((prev: any) => ({
         ...prev,
         preferred_platforms: [...selectedPlatforms],
