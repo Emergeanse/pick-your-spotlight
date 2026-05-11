@@ -156,6 +156,14 @@ export async function setFeedback(
     context_type: ctx?.context_type ?? "browse",
     context_id: ctx?.context_id ?? null,
   } as any);
+
+  emitFeedbackChange(tmdbId, type);
+}
+
+/** Broadcast a feedback change so any list/card on screen can refresh. */
+function emitFeedbackChange(tmdbId: number, type: FeedbackType | null) {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(new CustomEvent("pick-feedback-changed", { detail: { tmdbId, type } }));
 }
 
 /** Remove a specific feedback type (e.g., toggle off "like" or "watchlist"). */
