@@ -712,6 +712,11 @@ const HomeScreen = ({ onStart, onOpenChat, onSurprise, onMovieSelect, loading, o
                          onSurprise(moviesToPass, tonightPickIndex, tonightSeenMovieIds);
                       }}
                     />
+                    {tonightInteraction.hasInteraction && (
+                      <div className="absolute top-2 left-14 md:left-16">
+                        <FeedbackBadge type={tonightInteraction.primaryStatus} inWatchlist={tonightInteraction.watchlist} size="sm" />
+                      </div>
+                    )}
                     <button
                       onClick={() => navigateTonightPick("next")}
                       disabled={!canGoNext}
