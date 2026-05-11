@@ -190,6 +190,7 @@ const WatchlistPage = ({ onMovieSelect }: WatchlistPageProps) => {
   const [activeTab, setActiveTab] = useState<ActiveTab>("watchlist");
   const [watchlistItems, setWatchlistItems] = useState<any[]>([]);
   const [likedItems, setLikedItems] = useState<any[]>([]);
+  const [seenItems, setSeenItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [mediaFilter, setMediaFilter] = useState<MediaFilter>("all");
   const [searchQuery, setSearchQuery] = useState("");
@@ -207,14 +208,37 @@ const WatchlistPage = ({ onMovieSelect }: WatchlistPageProps) => {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [watchlist, liked] = await Promise.all([getWatchlist(), getLikedMovies()]);
+      const [watchlist, liked, seenRaw] = await Promise.all([
+        getWatchlist(),
+        getLikedMovies(),
+        listFeedbackByType("seen"),
+      ]);
       setWatchlistItems(watchlist);
       setLikedItems(liked);
-    } catch { setWatchlistItems([]); setLikedItems([]); }
+      setSeenItems(
+        (seenRaw as any[])
+          .map((row: any) => row.catalog_items ? {
+            id: row.item_id,
+            tmdb_id: row.catalog_items.tmdb_id,
+            title: row.catalog_items.title,
+            poster_path: row.catalog_items.poster_path,
+            media_type: row.catalog_items.media_type,
+            runtime: row.catalog_items.runtime,
+            overview: row.catalog_items.overview,
+            vote_average: row.catalog_items.vote_average,
+            genres: [] as string[],
+            added_at: row.created_at,
+          } : null)
+          .filter(Boolean)
+      );
+    } catch { setWatchlistItems([]); setLikedItems([]); setSeenItems([]); }
     finally { setLoading(false); }
   };
 
-  const currentItems = activeTab === "watchlist" ? watchlistItems : likedItems;
+  const currentItems =
+    activeTab === "watchlist" ? watchlistItems :
+    activeTab === "liked" ? likedItems :
+    seenItems;
 
   // Compute available genres from current items
   const availableGenres = useMemo(() => {
