@@ -645,6 +645,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({
                 </Button>
 
                 <MovieActionBar key={movie.id} movie={movie} sessionId={sessionId ?? null} contextType={sessionId ? "solo_session" : "browse"} onInteraction={(type) => {
+                  onFeedback?.(type, movie);
                   if (type === "already_seen" || type === "dislike") {
                     // Mark this movie as rejected in the batch
                     const nextRejected = new Set<number>(externalRejected || []);
