@@ -16,7 +16,7 @@ interface TrendingRowProps {
 
 const IMG_BASE = "https://image.tmdb.org/t/p";
 
-const MovieCard = ({ movie, index, onMovieClick }: { movie: Movie; index: number; onMovieClick?: (m: Movie) => void }) => {
+const MovieCard = ({ movie, index, onMovieClick, feedbackType }: { movie: Movie; index: number; onMovieClick?: (m: Movie) => void; feedbackType?: FeedbackType }) => {
   const [provider, setProvider] = useState<{ name: string; logo_path: string } | null>(null);
   const [detail, setDetail] = useState<MovieDetail | null>(null);
   const [showActions, setShowActions] = useState(false);
