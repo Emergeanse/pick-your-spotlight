@@ -5,7 +5,7 @@ import type { MovieDetail } from "@/lib/tmdb";
 import { getPosterUrl, getDisplayTitle, getYear, getBackdropUrl } from "@/lib/tmdb";
 import MovieActionBar from "@/components/pick/MovieActionBar";
 import FeedbackBadge from "@/components/pick/FeedbackBadge";
-import { useFeedbackMap } from "@/hooks/use-feedback-map";
+import { useMovieInteractions } from "@/hooks/use-movie-interactions";
 
 interface GroupRecommendation {
   movie: MovieDetail;
