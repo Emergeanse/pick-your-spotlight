@@ -4,6 +4,8 @@ import { Sparkles, Star, Clock, ChevronRight, ThumbsUp, ThumbsDown, Bookmark } f
 import type { MovieDetail } from "@/lib/tmdb";
 import { getPosterUrl, getDisplayTitle, getYear, getBackdropUrl } from "@/lib/tmdb";
 import MovieActionBar from "@/components/pick/MovieActionBar";
+import FeedbackBadge from "@/components/pick/FeedbackBadge";
+import { useFeedbackMap } from "@/hooks/use-feedback-map";
 
 interface GroupRecommendation {
   movie: MovieDetail;
@@ -27,6 +29,9 @@ interface ResultsStepProps {
 
 const ResultsStep = ({ hero, alternatives, selectedCount, heroReaction, sessionId, onReject, onSelectMovie, onAddToWatchlist, onRestart }: ResultsStepProps) => {
   const [showAlternatives, setShowAlternatives] = useState(false);
+  const allIds = [hero.movie.id, ...alternatives.map(a => a.movie.id)];
+  const feedbackMap = useFeedbackMap(allIds);
+  const heroFb = feedbackMap[hero.movie.id] ?? null;
 
   return (
     <motion.div key="results" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
@@ -49,14 +54,23 @@ const ResultsStep = ({ hero, alternatives, selectedCount, heroReaction, sessionI
           </motion.div>
 
           {hero.movie.poster_path && (
-            <motion.img
+            <motion.div
               initial={{ opacity: 0, scale: 0.85, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               transition={{ delay: 0.3, type: "spring", stiffness: 180 }}
-              src={getPosterUrl(hero.movie.poster_path, "w342") || ""}
-              alt={getDisplayTitle(hero.movie)}
-              className="w-40 h-60 md:w-48 md:h-72 rounded-2xl object-cover shadow-2xl border border-border/20 mb-5"
-            />
+              className="relative mb-5"
+            >
+              <img
+                src={getPosterUrl(hero.movie.poster_path, "w342") || ""}
+                alt={getDisplayTitle(hero.movie)}
+                className="w-40 h-60 md:w-48 md:h-72 rounded-2xl object-cover shadow-2xl border border-border/20"
+              />
+              {heroFb && (
+                <div className="absolute top-2 left-2">
+                  <FeedbackBadge type={heroFb} size="sm" />
+                </div>
+              )}
+            </motion.div>
           )}
 
           <motion.h1 initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}
@@ -179,14 +193,23 @@ const ResultsStep = ({ hero, alternatives, selectedCount, heroReaction, sessionI
           <AnimatePresence>
             {showAlternatives && (
               <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="space-y-3 overflow-hidden">
-                {alternatives.map((rec, idx) => (
+                {alternatives.map((rec, idx) => {
+                  const altFb = feedbackMap[rec.movie.id] ?? null;
+                  return (
                   <motion.button key={rec.movie.id} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: idx * 0.1 }}
                     whileTap={{ scale: 0.98 }} onClick={() => onSelectMovie(rec)}
                     className="w-full flex items-center gap-4 p-3.5 rounded-2xl bg-card/40 backdrop-blur-sm border border-border/10 hover:border-border/25 transition-all text-left"
                   >
                     {rec.movie.poster_path && (
-                      <img src={getPosterUrl(rec.movie.poster_path, "w92") || ""} alt={getDisplayTitle(rec.movie)}
-                        className="w-14 h-20 rounded-xl object-cover shrink-0" />
+                      <div className="relative shrink-0">
+                        <img src={getPosterUrl(rec.movie.poster_path, "w92") || ""} alt={getDisplayTitle(rec.movie)}
+                          className="w-14 h-20 rounded-xl object-cover" />
+                        {altFb && (
+                          <div className="absolute top-1 left-1">
+                            <FeedbackBadge type={altFb} />
+                          </div>
+                        )}
+                      </div>
                     )}
                     <div className="flex-1 min-w-0">
                       <h3 className="text-sm font-serif text-foreground leading-tight mb-1 truncate">{getDisplayTitle(rec.movie)}</h3>
@@ -205,7 +228,8 @@ const ResultsStep = ({ hero, alternatives, selectedCount, heroReaction, sessionI
                     </div>
                     <ChevronRight className="w-4 h-4 text-foreground/15 shrink-0" />
                   </motion.button>
-                ))}
+                  );
+                })}
               </motion.div>
             )}
           </AnimatePresence>

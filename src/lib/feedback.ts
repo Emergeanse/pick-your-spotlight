@@ -156,6 +156,14 @@ export async function setFeedback(
     context_type: ctx?.context_type ?? "browse",
     context_id: ctx?.context_id ?? null,
   } as any);
+
+  emitFeedbackChange(tmdbId, type);
+}
+
+/** Broadcast a feedback change so any list/card on screen can refresh. */
+function emitFeedbackChange(tmdbId: number, type: FeedbackType | null) {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(new CustomEvent("pick-feedback-changed", { detail: { tmdbId, type } }));
 }
 
 /** Remove a specific feedback type (e.g., toggle off "like" or "watchlist"). */
@@ -171,6 +179,7 @@ export async function clearFeedbackType(tmdbId: number, types: FeedbackType[]): 
     .eq("user_id", userId)
     .eq("item_id", itemId)
     .in("feedback_type", types);
+  emitFeedbackChange(tmdbId, null);
 }
 
 /** Clear all feedback for an item (toggle off). */
@@ -187,6 +196,7 @@ export async function clearFeedback(tmdbId: number): Promise<void> {
     .delete()
     .eq("user_id", userId)
     .eq("item_id", itemId);
+  emitFeedbackChange(tmdbId, null);
 }
 
 /** Check if a specific feedback type is active for an item. */
