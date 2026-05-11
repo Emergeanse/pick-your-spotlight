@@ -498,6 +498,8 @@ const WatchlistPage = ({ onMovieSelect }: WatchlistPageProps) => {
               onSelect={() => handlePreview(item)}
               onRemove={() => activeTab === "watchlist" ? handleRemoveWatchlist(item.tmdb_id) : handleRemoveLiked(item.tmdb_id)}
               comments={activeTab === "watchlist" ? PICK_COMMENTS : LIKED_COMMENTS}
+              feedbackType={feedbackMap[item.tmdb_id] ?? null}
+              fallbackWatchlist={activeTab === "watchlist"}
             />
           ))}
         </div>
