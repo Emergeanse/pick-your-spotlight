@@ -8,6 +8,9 @@ import type { MovieDetail } from "@/lib/tmdb";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import PickCharacter from "./PickCharacter";
+import FeedbackBadge from "./FeedbackBadge";
+import { useFeedbackMap } from "@/hooks/use-feedback-map";
+import type { FeedbackType } from "@/lib/feedback";
 
 interface WatchlistPageProps {
   onMovieSelect: (movie: MovieDetail) => void;
