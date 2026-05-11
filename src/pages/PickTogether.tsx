@@ -65,6 +65,7 @@ const PickTogether = () => {
   const [creatingSession, setCreatingSession] = useState(false);
   const [realtimeMembers, setRealtimeMembers] = useState<{ id: string; name: string }[]>([]);
   const [mediaStep, setMediaStep] = useState(false);
+  const [scheduledFor, setScheduledFor] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
