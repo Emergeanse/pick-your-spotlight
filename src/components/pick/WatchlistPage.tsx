@@ -425,6 +425,7 @@ const WatchlistPage = ({ onMovieSelect }: WatchlistPageProps) => {
           Vus
           {seenItems.length > 0 && <span className="text-[10px] font-sans text-primary/60 font-medium px-1.5 py-0.5 rounded-full bg-primary/8">{seenItems.length}</span>}
         </button>
+      </motion.div>
 
       {/* Pick comment + time estimation */}
       {currentItems.length > 0 && (
