@@ -94,6 +94,7 @@ const MovieCard = ({ movie, index, onMovieClick, feedbackType }: { movie: Movie;
 const TrendingRow = ({ title, fetchFn, onMovieClick }: TrendingRowProps) => {
   const [movies, setMovies] = useState<Movie[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const feedbackMap = useFeedbackMap(movies.map(m => m.id));
 
   useEffect(() => {
     fetchFn().then(setMovies).catch(() => {});
