@@ -280,21 +280,30 @@ export type Database = {
       }
       group_session_members: {
         Row: {
+          guest_age_range: string | null
           guest_name: string | null
+          guest_preferences_json: Json
+          guest_profile_text: string | null
           id: string
           joined_at: string
           session_id: string
           user_id: string | null
         }
         Insert: {
+          guest_age_range?: string | null
           guest_name?: string | null
+          guest_preferences_json?: Json
+          guest_profile_text?: string | null
           id?: string
           joined_at?: string
           session_id: string
           user_id?: string | null
         }
         Update: {
+          guest_age_range?: string | null
           guest_name?: string | null
+          guest_preferences_json?: Json
+          guest_profile_text?: string | null
           id?: string
           joined_at?: string
           session_id?: string
@@ -313,33 +322,51 @@ export type Database = {
       group_sessions: {
         Row: {
           context: string | null
+          context_json: Json
           created_at: string
           creator_id: string
+          decision_mode: string
           id: string
           invite_code: string | null
           mood: string | null
           name: string
+          scheduled_for: string | null
+          selected_catalog_item_id: string | null
+          status: string
           time_available: string | null
+          title: string | null
         }
         Insert: {
           context?: string | null
+          context_json?: Json
           created_at?: string
           creator_id: string
+          decision_mode?: string
           id?: string
           invite_code?: string | null
           mood?: string | null
           name?: string
+          scheduled_for?: string | null
+          selected_catalog_item_id?: string | null
+          status?: string
           time_available?: string | null
+          title?: string | null
         }
         Update: {
           context?: string | null
+          context_json?: Json
           created_at?: string
           creator_id?: string
+          decision_mode?: string
           id?: string
           invite_code?: string | null
           mood?: string | null
           name?: string
+          scheduled_for?: string | null
+          selected_catalog_item_id?: string | null
+          status?: string
           time_available?: string | null
+          title?: string | null
         }
         Relationships: []
       }
@@ -696,29 +723,50 @@ export type Database = {
       }
       recommendation_sessions: {
         Row: {
+          audience_type: string
           created_at: string
+          decision_mode: string
           filters_snapshot: Json | null
+          group_session_id: string | null
           id: string
+          prompt_text: string | null
           results: Json | null
+          scheduled_for: string | null
+          selected_catalog_item_id: string | null
           source: string
+          status: string
           taste_snapshot: Json | null
           user_id: string
         }
         Insert: {
+          audience_type?: string
           created_at?: string
+          decision_mode?: string
           filters_snapshot?: Json | null
+          group_session_id?: string | null
           id?: string
+          prompt_text?: string | null
           results?: Json | null
+          scheduled_for?: string | null
+          selected_catalog_item_id?: string | null
           source?: string
+          status?: string
           taste_snapshot?: Json | null
           user_id: string
         }
         Update: {
+          audience_type?: string
           created_at?: string
+          decision_mode?: string
           filters_snapshot?: Json | null
+          group_session_id?: string | null
           id?: string
+          prompt_text?: string | null
           results?: Json | null
+          scheduled_for?: string | null
+          selected_catalog_item_id?: string | null
           source?: string
+          status?: string
           taste_snapshot?: Json | null
           user_id?: string
         }
@@ -794,31 +842,43 @@ export type Database = {
         Row: {
           action: string
           context: Json | null
+          context_id: string | null
+          context_type: string | null
           created_at: string
+          feedback_type: string | null
           id: string
           item_id: string
           label: string | null
           score: number | null
+          source: string
           user_id: string
         }
         Insert: {
           action: string
           context?: Json | null
+          context_id?: string | null
+          context_type?: string | null
           created_at?: string
+          feedback_type?: string | null
           id?: string
           item_id: string
           label?: string | null
           score?: number | null
+          source?: string
           user_id: string
         }
         Update: {
           action?: string
           context?: Json | null
+          context_id?: string | null
+          context_type?: string | null
           created_at?: string
+          feedback_type?: string | null
           id?: string
           item_id?: string
           label?: string | null
           score?: number | null
+          source?: string
           user_id?: string
         }
         Relationships: [

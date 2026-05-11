@@ -88,7 +88,7 @@ const MovieActionBar = ({ movie, size = "md", className = "", onInteraction, ini
       await clearFeedback(movie.id);
       return;
     }
-    await setFeedback(movie.id, label, movieMeta);
+    await setFeedback(movie.id, label, { ...movieMeta, media_type: (movieMeta?.media_type as "movie" | "tv") ?? "movie" });
   }, [movie.id, movieMeta]);
 
   /**
@@ -125,6 +125,8 @@ const MovieActionBar = ({ movie, size = "md", className = "", onInteraction, ini
         like: "",
         love: "",
         dislike: "",
+        skip: "",
+        watchlist: "",
       };
       toast.success(toastMap[label] || "Mis à jour");
       onInteraction?.(label);
