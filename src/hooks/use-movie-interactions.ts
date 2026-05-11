@@ -6,6 +6,17 @@ import {
 } from "@/lib/feedback";
 import { useAuth } from "@/hooks/use-auth";
 
+const interactionCache = new Map<number, MovieInteractionState>();
+
+function readCachedState(tmdbIds: number[]): Record<number, MovieInteractionState> {
+  const out: Record<number, MovieInteractionState> = {};
+  for (const id of tmdbIds) {
+    const cached = interactionCache.get(id);
+    if (cached) out[id] = cached;
+  }
+  return out;
+}
+
 /**
  * Single source of truth for movie interaction state across the whole app.
  *
@@ -17,19 +28,29 @@ export function useMovieInteractions(
   tmdbIds: number[]
 ): Record<number, MovieInteractionState> {
   const { user } = useAuth();
-  const [map, setMap] = useState<Record<number, MovieInteractionState>>({});
-  const key = tmdbIds.join(",");
+  const key = useMemo(() => Array.from(new Set(tmdbIds.filter(Boolean))).sort((a, b) => a - b).join(","), [tmdbIds.join(",")]);
+  const ids = useMemo(() => key ? key.split(",").map(Number) : [], [key]);
+  const [map, setMap] = useState<Record<number, MovieInteractionState>>(() => readCachedState(ids));
 
-  const refresh = useCallback(() => {
-    if (!user || !tmdbIds.length) {
+  const refresh = useCallback(async () => {
+    if (!user || !ids.length) {
       setMap({});
       return;
     }
-    getInteractionStateBatch(tmdbIds)
-      .then(setMap)
-      .catch(() => {});
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [key, user?.id]);
+    setMap(readCachedState(ids));
+    try {
+      const fresh = await getInteractionStateBatch(ids);
+      const hydrated: Record<number, MovieInteractionState> = {};
+      for (const id of ids) {
+        const state = fresh[id] ?? EMPTY_INTERACTION_STATE;
+        interactionCache.set(id, state);
+        hydrated[id] = state;
+      }
+      setMap(hydrated);
+    } catch {
+      // Keep the cached state visible instead of flashing a neutral card.
+    }
+  }, [ids, user?.id]);
 
   useEffect(() => {
     refresh();
@@ -37,10 +58,10 @@ export function useMovieInteractions(
 
   useEffect(() => {
     if (!user) return;
-    const ids = new Set(tmdbIds);
+    const watchedIds = new Set(ids);
     const onChange = (e: Event) => {
       const detail = (e as CustomEvent).detail as { tmdbId?: number } | undefined;
-      if (!detail?.tmdbId || ids.has(detail.tmdbId)) refresh();
+      if (!detail?.tmdbId || watchedIds.has(detail.tmdbId)) refresh();
     };
     window.addEventListener("pick-feedback-changed", onChange);
     window.addEventListener("pick-watchlist-added", refresh);
@@ -48,7 +69,7 @@ export function useMovieInteractions(
       window.removeEventListener("pick-feedback-changed", onChange);
       window.removeEventListener("pick-watchlist-added", refresh);
     };
-  }, [key, user?.id, refresh]);
+  }, [ids, user?.id, refresh]);
 
   return map;
 }
