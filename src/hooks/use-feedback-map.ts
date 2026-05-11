@@ -1,42 +1,22 @@
-import { useEffect, useState, useCallback } from "react";
-import { getFeedbackBatch, type FeedbackType } from "@/lib/feedback";
-import { useAuth } from "@/hooks/use-auth";
+import { useMemo } from "react";
+import type { FeedbackType } from "@/lib/feedback";
+import { useMovieInteractions } from "@/hooks/use-movie-interactions";
 
 /**
- * Batch-fetch latest feedback for a list of tmdb ids.
- * Refreshes when the id list changes OR when any item's feedback is mutated
- * (via the global `pick-feedback-changed` event).
+ * @deprecated Use `useMovieInteractions` from `@/hooks/use-movie-interactions`
+ * for full structured state (primary status + watchlist + flags).
+ *
+ * Kept for backward compat: returns only the primary status per tmdb id
+ * (watchlist is NOT surfaced here — callers should switch to the unified hook).
  */
 export function useFeedbackMap(tmdbIds: number[]): Record<number, FeedbackType> {
-  const { user } = useAuth();
-  const [map, setMap] = useState<Record<number, FeedbackType>>({});
-  const key = tmdbIds.join(",");
-
-  const refresh = useCallback(() => {
-    if (!user || !tmdbIds.length) { setMap({}); return; }
-    getFeedbackBatch(tmdbIds).then(res => {
-      const out: Record<number, FeedbackType> = {};
-      for (const [id, fb] of Object.entries(res)) out[Number(id)] = fb.feedback_type;
-      setMap(out);
-    }).catch(() => {});
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [key, user?.id]);
-
-  useEffect(() => {
-    refresh();
-  }, [refresh]);
-
-  useEffect(() => {
-    if (!user) return;
-    const ids = new Set(tmdbIds);
-    const onChange = (e: Event) => {
-      const detail = (e as CustomEvent).detail as { tmdbId?: number } | undefined;
-      // If we don't know which id changed, refresh anyway.
-      if (!detail?.tmdbId || ids.has(detail.tmdbId)) refresh();
-    };
-    window.addEventListener("pick-feedback-changed", onChange);
-    return () => window.removeEventListener("pick-feedback-changed", onChange);
-  }, [key, user?.id, refresh]);
-
-  return map;
+  const states = useMovieInteractions(tmdbIds);
+  return useMemo(() => {
+    const out: Record<number, FeedbackType> = {};
+    for (const [id, s] of Object.entries(states)) {
+      if (s.primaryStatus) out[Number(id)] = s.primaryStatus;
+      else if (s.watchlist) out[Number(id)] = "watchlist";
+    }
+    return out;
+  }, [states]);
 }
