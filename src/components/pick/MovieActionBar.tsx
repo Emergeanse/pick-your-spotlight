@@ -1,12 +1,12 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { Bookmark, Heart, Eye, ThumbsDown, HelpCircle } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
-import { likeMovie, unlikeMovie } from "@/lib/liked-movies";
-import { addToWatchlist, removeFromWatchlist, isInWatchlist } from "@/lib/watchlist";
 import { trackInteraction } from "@/lib/interactions";
-import { clearFeedback, getFeedback, setFeedback, type FeedbackLabel } from "@/lib/feedback";
+import { clearFeedbackType, setFeedback, type FeedbackLabel, type PrimaryStatus } from "@/lib/feedback";
 import type { MovieDetail } from "@/lib/tmdb";
+import { ensureMovieEmbedding } from "@/lib/taste-engine";
+import { useMovieInteraction } from "@/hooks/use-movie-interactions";
 
 interface MovieActionBarProps {
   movie: MovieDetail;
@@ -22,67 +22,17 @@ interface MovieActionBarProps {
 const MovieActionBar = ({ movie, size = "md", className = "", onInteraction, initialFeedback, sessionId, contextType }: MovieActionBarProps) => {
   const { user } = useAuth();
   const currentMovieIdRef = useRef(movie.id);
+  const interaction = useMovieInteraction(movie.id);
 
-  // Per-item state — keyed internally to movie.id via React key prop
-  const [liked, setLiked] = useState(false);
-  const [bookmarked, setBookmarked] = useState(false);
-  const [activeFeedback, setActiveFeedback] = useState<FeedbackLabel | null>(null);
+  const liked = interaction.liked;
+  const bookmarked = interaction.watchlist;
+  const activeFeedback = interaction.primaryStatus;
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     currentMovieIdRef.current = movie.id;
-    setLiked(false);
-    setBookmarked(false);
-    setActiveFeedback(null);
     setLoading(false);
   }, [movie.id]);
-
-  // Load persisted state on mount (runs once per movie thanks to key={movie.id})
-  useEffect(() => {
-    if (!user) {
-      setLiked(false);
-      setBookmarked(false);
-      setActiveFeedback(null);
-      return;
-    }
-
-    let cancelled = false;
-    const movieId = movie.id;
-
-    const load = async () => {
-      try {
-        const [fb, inWl] = await Promise.all([
-          getFeedback(movie.id),
-          isInWatchlist(movie.id),
-        ]);
-
-        if (cancelled || currentMovieIdRef.current !== movieId) return;
-
-        const label = fb?.label ?? null;
-        // 'watchlist' is additive: don't surface it as the exclusive activeFeedback
-        setActiveFeedback(label && label !== "watchlist" ? label : null);
-        setBookmarked(inWl || label === "watchlist");
-        setLiked(label === "like" || label === "love");
-      } catch {
-        // ignore
-      }
-    };
-    load();
-
-    // Re-sync whenever feedback for this movie changes anywhere in the app.
-    const onChange = (e: Event) => {
-      const detail = (e as CustomEvent).detail as { tmdbId?: number } | undefined;
-      if (!detail?.tmdbId || detail.tmdbId === movieId) load();
-    };
-    window.addEventListener("pick-feedback-changed", onChange);
-    window.addEventListener("pick-watchlist-added", load);
-
-    return () => {
-      cancelled = true;
-      window.removeEventListener("pick-feedback-changed", onChange);
-      window.removeEventListener("pick-watchlist-added", load);
-    };
-  }, [movie.id, user]);
 
   const requireAuth = () => {
     if (!user) { toast.info("Connecte-toi pour enrichir ton profil !"); return false; }
