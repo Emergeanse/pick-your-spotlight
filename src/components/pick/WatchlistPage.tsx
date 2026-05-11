@@ -10,7 +10,7 @@ import { toast } from "sonner";
 import PickCharacter from "./PickCharacter";
 import FeedbackBadge from "./FeedbackBadge";
 import { useFeedbackMap } from "@/hooks/use-feedback-map";
-import type { FeedbackType } from "@/lib/feedback";
+import { listFeedbackByType, clearFeedbackType, type FeedbackType } from "@/lib/feedback";
 
 interface WatchlistPageProps {
   onMovieSelect: (movie: MovieDetail) => void;
