@@ -443,7 +443,25 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({
   }, [movie.id]);
 
   useEffect(() => {
-    if (user) { isMovieLiked(movie.id).then(setLiked).catch(() => {}); isInWatchlist(movie.id).then(setBookmarked).catch(() => {}); }
+    if (!user) { setLiked(false); setBookmarked(false); return; }
+    let cancelled = false;
+    const movieId = movie.id;
+    const load = () => {
+      isMovieLiked(movieId).then(v => { if (!cancelled) setLiked(v); }).catch(() => {});
+      isInWatchlist(movieId).then(v => { if (!cancelled) setBookmarked(v); }).catch(() => {});
+    };
+    load();
+    const onChange = (e: Event) => {
+      const detail = (e as CustomEvent).detail as { tmdbId?: number } | undefined;
+      if (!detail?.tmdbId || detail.tmdbId === movieId) load();
+    };
+    window.addEventListener("pick-feedback-changed", onChange);
+    window.addEventListener("pick-watchlist-added", load);
+    return () => {
+      cancelled = true;
+      window.removeEventListener("pick-feedback-changed", onChange);
+      window.removeEventListener("pick-watchlist-added", load);
+    };
   }, [movie.id, user]);
 
   // Restore prior interaction state when navigating between movies in the batch
