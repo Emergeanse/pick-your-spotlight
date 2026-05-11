@@ -3,8 +3,9 @@ import { AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import BrandHeader from "@/components/pick/BrandHeader";
+import { listMembers } from "@/lib/group-sessions";
 
 import type { MovieDetail } from "@/lib/tmdb";
 import { addToWatchlist } from "@/lib/watchlist";
