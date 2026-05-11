@@ -442,28 +442,6 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({
     });
   }, [movie.id]);
 
-  useEffect(() => {
-    if (!user) { setLiked(false); setBookmarked(false); return; }
-    let cancelled = false;
-    const movieId = movie.id;
-    const load = () => {
-      isMovieLiked(movieId).then(v => { if (!cancelled) setLiked(v); }).catch(() => {});
-      isInWatchlist(movieId).then(v => { if (!cancelled) setBookmarked(v); }).catch(() => {});
-    };
-    load();
-    const onChange = (e: Event) => {
-      const detail = (e as CustomEvent).detail as { tmdbId?: number } | undefined;
-      if (!detail?.tmdbId || detail.tmdbId === movieId) load();
-    };
-    window.addEventListener("pick-feedback-changed", onChange);
-    window.addEventListener("pick-watchlist-added", load);
-    return () => {
-      cancelled = true;
-      window.removeEventListener("pick-feedback-changed", onChange);
-      window.removeEventListener("pick-watchlist-added", load);
-    };
-  }, [movie.id, user]);
-
   // Restore prior interaction state when navigating between movies in the batch
   useEffect(() => {
     const fb = currentFeedback;
@@ -478,9 +456,25 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({
     if (!user) { toast.info("Connecte-toi pour sauvegarder tes films !"); return; }
     setLikeLoading(true);
     try {
-      if (liked) { await unlikeMovie(movie.id); setLiked(false); toast.success("Retiré des favoris"); trackInteraction(movie.id, "unliked"); }
-      else {
-        await likeMovie(movie); setLiked(true); toast.success("Ajouté aux favoris !");
+      if (liked) {
+        // Clear via SSOT — also mirrors to legacy liked_movies for compat.
+        await unlikeMovie(movie.id);
+        await clearFeedbackType(movie.id, ["like", "love"]);
+        toast.success("Retiré des favoris");
+        trackInteraction(movie.id, "unliked");
+      } else {
+        await likeMovie(movie);
+        await setFeedback(
+          movie.id,
+          "like",
+          {
+            title: movie.title || (movie as any).name || "Sans titre",
+            poster_path: movie.poster_path ?? null,
+            media_type: mediaType,
+          },
+          { context_type: sessionId ? "solo_session" : "browse", context_id: sessionId ?? null }
+        );
+        toast.success("Ajouté aux favoris !");
         trackInteraction(movie.id, "liked");
         updateRecommendationReaction(movie.id, "accepted", "liked");
       }
@@ -492,9 +486,13 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({
     if (!user) { toast.info("Connecte-toi pour ta watchlist !"); return; }
     setBookmarkLoading(true);
     try {
-      if (bookmarked) { await removeFromWatchlist(movie.id); setBookmarked(false); toast.success("Retiré de ta watchlist"); trackInteraction(movie.id, "unsaved"); }
-      else {
-        await addToWatchlist(movie); setBookmarked(true); toast.success("Ajouté à ta watchlist !");
+      if (bookmarked) {
+        await removeFromWatchlist(movie.id);
+        toast.success("Retiré de ta watchlist");
+        trackInteraction(movie.id, "unsaved");
+      } else {
+        await addToWatchlist(movie);
+        toast.success("Ajouté à ta watchlist !");
         trackInteraction(movie.id, "saved");
         updateRecommendationReaction(movie.id, "accepted", "saved_to_watchlist");
         window.dispatchEvent(new CustomEvent("pick-watchlist-added"));
