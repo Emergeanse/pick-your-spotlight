@@ -11,6 +11,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useScribe } from "@elevenlabs/react";
 import { usePickPlus } from "@/hooks/use-pick-plus";
 import PickPlusPaywall from "@/components/pick/PickPlusPaywall";
+import FeedbackBadge from "@/components/pick/FeedbackBadge";
+import { useMovieInteraction } from "@/hooks/use-movie-interactions";
 import squirrelImg from "@/assets/pick-squirrel.png";
 
 interface ChatMsg {
@@ -550,6 +552,7 @@ export default function PickChatOverlay() {
 
 /** Inline movie recommendation card */
 function MovieCard({ movie, onClick }: { movie: any; onClick: () => void }) {
+  const interaction = useMovieInteraction(movie?.id);
   const posterUrl = movie.poster_path
     ? `https://image.tmdb.org/t/p/w154${movie.poster_path}`
     : null;
@@ -563,7 +566,14 @@ function MovieCard({ movie, onClick }: { movie: any; onClick: () => void }) {
       className="mt-2 flex items-center gap-3 w-full p-2 rounded-xl bg-secondary/40 border border-border/15 text-left hover:bg-secondary/60 transition-all active:scale-[0.98]"
     >
       {posterUrl && (
-        <img src={posterUrl} alt={movieTitle} className="w-10 h-14 rounded-lg object-cover flex-shrink-0" />
+        <div className="relative flex-shrink-0">
+          <img src={posterUrl} alt={movieTitle} className="w-10 h-14 rounded-lg object-cover" />
+          {interaction.hasInteraction && (
+            <div className="absolute -top-1 -left-1">
+              <FeedbackBadge type={interaction.primaryStatus} inWatchlist={interaction.watchlist} />
+            </div>
+          )}
+        </div>
       )}
       <div className="flex-1 min-w-0">
         <p className="text-[13px] font-serif font-medium truncate">{movieTitle}</p>
