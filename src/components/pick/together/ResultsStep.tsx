@@ -228,7 +228,8 @@ const ResultsStep = ({ hero, alternatives, selectedCount, heroReaction, sessionI
                     </div>
                     <ChevronRight className="w-4 h-4 text-foreground/15 shrink-0" />
                   </motion.button>
-                ))}
+                  );
+                })}
               </motion.div>
             )}
           </AnimatePresence>
