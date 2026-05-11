@@ -193,14 +193,23 @@ const ResultsStep = ({ hero, alternatives, selectedCount, heroReaction, sessionI
           <AnimatePresence>
             {showAlternatives && (
               <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="space-y-3 overflow-hidden">
-                {alternatives.map((rec, idx) => (
+                {alternatives.map((rec, idx) => {
+                  const altFb = feedbackMap[rec.movie.id] ?? null;
+                  return (
                   <motion.button key={rec.movie.id} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: idx * 0.1 }}
                     whileTap={{ scale: 0.98 }} onClick={() => onSelectMovie(rec)}
                     className="w-full flex items-center gap-4 p-3.5 rounded-2xl bg-card/40 backdrop-blur-sm border border-border/10 hover:border-border/25 transition-all text-left"
                   >
                     {rec.movie.poster_path && (
-                      <img src={getPosterUrl(rec.movie.poster_path, "w92") || ""} alt={getDisplayTitle(rec.movie)}
-                        className="w-14 h-20 rounded-xl object-cover shrink-0" />
+                      <div className="relative shrink-0">
+                        <img src={getPosterUrl(rec.movie.poster_path, "w92") || ""} alt={getDisplayTitle(rec.movie)}
+                          className="w-14 h-20 rounded-xl object-cover" />
+                        {altFb && (
+                          <div className="absolute top-1 left-1">
+                            <FeedbackBadge type={altFb} />
+                          </div>
+                        )}
+                      </div>
                     )}
                     <div className="flex-1 min-w-0">
                       <h3 className="text-sm font-serif text-foreground leading-tight mb-1 truncate">{getDisplayTitle(rec.movie)}</h3>
