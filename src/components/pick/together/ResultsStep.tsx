@@ -237,12 +237,17 @@ const ResultsStep = ({ hero, alternatives, selectedCount, heroReaction, sessionI
                     )}
                     <div className="flex-1 min-w-0">
                       <h3 className="text-sm font-serif text-foreground leading-tight mb-1 truncate">{getDisplayTitle(rec.movie)}</h3>
-                      <div className="flex items-center gap-1.5 text-foreground/30 text-[10px] font-sans mb-1.5">
+                      <div className="flex items-center gap-1.5 text-foreground/30 text-[10px] font-sans mb-1">
                         <span>{getYear(rec.movie)}</span>
                         {rec.movie.vote_average > 0 && (
                           <span className="flex items-center gap-0.5"><Star className="w-2.5 h-2.5 fill-gold text-gold" />{rec.movie.vote_average.toFixed(1)}</span>
                         )}
                       </div>
+                      {rec.reasonType && (
+                        <div className="text-primary/70 text-[10px] font-sans font-medium mb-1.5 truncate">
+                          {REASON_LABELS[rec.reasonType]}
+                        </div>
+                      )}
                       <div className="flex items-center gap-2">
                         <div className="flex-1 h-1 rounded-full bg-muted overflow-hidden">
                           <div className="h-full rounded-full bg-primary/60" style={{ width: `${rec.groupScore}%` }} />
