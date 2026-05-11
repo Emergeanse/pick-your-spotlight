@@ -30,8 +30,8 @@ interface ResultsStepProps {
 const ResultsStep = ({ hero, alternatives, selectedCount, heroReaction, sessionId, onReject, onSelectMovie, onAddToWatchlist, onRestart }: ResultsStepProps) => {
   const [showAlternatives, setShowAlternatives] = useState(false);
   const allIds = [hero.movie.id, ...alternatives.map(a => a.movie.id)];
-  const feedbackMap = useFeedbackMap(allIds);
-  const heroFb = feedbackMap[hero.movie.id] ?? null;
+  const interactions = useMovieInteractions(allIds);
+  const heroState = interactions[hero.movie.id];
 
   return (
     <motion.div key="results" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
