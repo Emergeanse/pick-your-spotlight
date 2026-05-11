@@ -21,6 +21,7 @@ import PickTogether from "./pages/PickTogether.tsx";
 import JoinSession from "./pages/JoinSession.tsx";
 import Admin from "./pages/Admin.tsx";
 import PlanSession from "./pages/PlanSession.tsx";
+import History from "./pages/History.tsx";
 
 const queryClient = new QueryClient();
 
