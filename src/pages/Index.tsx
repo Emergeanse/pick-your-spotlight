@@ -31,6 +31,7 @@ import { getLikedMovies } from "@/lib/liked-movies";
 import { computeUserTasteVector } from "@/lib/taste-engine";
 import { extractRecommendationMovies, ensureRecommendationBatch } from "@/lib/recommendation-batch";
 import { usePresenceTracker } from "@/hooks/use-presence";
+import { createRecommendationSession, logRecommendationEvent, completeSession, abandonSession } from "@/lib/sessions";
 
 type Step = "home" | "result";
 
@@ -47,6 +48,9 @@ const Index = () => {
   const [resultOrigin, setResultOrigin] = useState<"home" | "external">("home");
   const [loadingMessage, setLoadingMessage] = useState("");
   const [showChat, setShowChat] = useState(false);
+  // V1: current solo recommendation session
+  const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
+  const loggedEventsRef = useRef<Set<number>>(new Set());
   
   const [chatInitialMessages, setChatInitialMessages] = useState<ChatMessage[] | undefined>(undefined);
   const [chatSuggestedSeenMovieIds, setChatSuggestedSeenMovieIds] = useState<Set<number>>(new Set());
