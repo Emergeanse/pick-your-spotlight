@@ -301,6 +301,8 @@ interface ResultScreenProps {
   onVisitedMovieIdsChange?: (movieIds: Set<number>) => void;
   batchRejectedIds?: Set<number>;
   onBatchRejectedIdsChange?: (ids: Set<number>) => void;
+  /** V1: link this view to a recommendation_sessions row */
+  sessionId?: string | null;
 }
 
 const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({
@@ -310,6 +312,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({
   currentIndex = 0, totalCount = 1, onNext, onPrevious,
   visitedMovieIds: externalVisited, onVisitedMovieIdsChange,
   batchRejectedIds: externalRejected, onBatchRejectedIdsChange,
+  sessionId,
 }, ref) => {
   const [providers, setProviders] = useState<{ name: string; logo_path: string; provider_id: number }[]>([]);
   const [credits, setCredits] = useState<MovieCredits | null>(null);
@@ -639,7 +642,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({
                   On regarde ?
                 </Button>
 
-                <MovieActionBar key={movie.id} movie={movie} onInteraction={(type) => {
+                <MovieActionBar key={movie.id} movie={movie} sessionId={sessionId ?? null} contextType={sessionId ? "solo_session" : "browse"} onInteraction={(type) => {
                   if (type === "already_seen" || type === "dislike") {
                     // Mark this movie as rejected in the batch
                     const nextRejected = new Set<number>(externalRejected || []);
