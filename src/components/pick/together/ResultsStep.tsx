@@ -54,14 +54,23 @@ const ResultsStep = ({ hero, alternatives, selectedCount, heroReaction, sessionI
           </motion.div>
 
           {hero.movie.poster_path && (
-            <motion.img
+            <motion.div
               initial={{ opacity: 0, scale: 0.85, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               transition={{ delay: 0.3, type: "spring", stiffness: 180 }}
-              src={getPosterUrl(hero.movie.poster_path, "w342") || ""}
-              alt={getDisplayTitle(hero.movie)}
-              className="w-40 h-60 md:w-48 md:h-72 rounded-2xl object-cover shadow-2xl border border-border/20 mb-5"
-            />
+              className="relative mb-5"
+            >
+              <img
+                src={getPosterUrl(hero.movie.poster_path, "w342") || ""}
+                alt={getDisplayTitle(hero.movie)}
+                className="w-40 h-60 md:w-48 md:h-72 rounded-2xl object-cover shadow-2xl border border-border/20"
+              />
+              {heroFb && (
+                <div className="absolute top-2 left-2">
+                  <FeedbackBadge type={heroFb} size="sm" />
+                </div>
+              )}
+            </motion.div>
           )}
 
           <motion.h1 initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}
