@@ -9,6 +9,17 @@ import BrandHeader from "@/components/pick/BrandHeader";
 import type { MovieDetail } from "@/lib/tmdb";
 import { addToWatchlist } from "@/lib/watchlist";
 import { likeMovie } from "@/lib/liked-movies";
+import {
+  createGroupSession,
+  addGuestMember,
+  selectGroupSessionFilm,
+} from "@/lib/group-sessions";
+import {
+  createRecommendationSession,
+  logRecommendationEvent,
+  completeSession,
+  abandonSession,
+} from "@/lib/sessions";
 
 // Sub-components
 import LandingStep from "@/components/pick/together/LandingStep";
@@ -46,6 +57,8 @@ const PickTogether = () => {
   const [recommendations, setRecommendations] = useState<GroupRecommendation[]>([]);
   const [heroReaction, setHeroReaction] = useState<"like" | "meh" | "reject" | null>(null);
   const [sessionInviteCode, setSessionInviteCode] = useState<string | null>(null);
+  const [groupSessionId, setGroupSessionId] = useState<string | null>(null);
+  const [recoSessionId, setRecoSessionId] = useState<string | null>(null);
   const [creatingSession, setCreatingSession] = useState(false);
   const [realtimeMembers, setRealtimeMembers] = useState<{ id: string; name: string }[]>([]);
   const [mediaStep, setMediaStep] = useState(false);
@@ -88,14 +101,13 @@ const PickTogether = () => {
     if (!user) return;
     setCreatingSession(true);
     try {
-      const { data, error } = await supabase
-        .from("group_sessions" as any)
-        .insert({ creator_id: user.id, name: "Soirée ciné" } as any)
-        .select("id, invite_code")
-        .single();
-      if (error) throw error;
-      const sessionId = (data as any).id;
-      const inviteCode = (data as any).invite_code;
+      const session = await createGroupSession({
+        title: "Soirée ciné",
+        decision_mode: "instant",
+      });
+      const sessionId = (session as any).id;
+      const inviteCode = (session as any).invite_code;
+      setGroupSessionId(sessionId);
       setSessionInviteCode(inviteCode);
 
       supabase
@@ -108,7 +120,7 @@ const PickTogether = () => {
         }, async (payload: any) => {
           const memberId = payload.new.user_id;
           const guestName = payload.new.guest_name;
-          if (memberId) {
+          if (memberId && memberId !== user.id) {
             const { data: prof } = await supabase
               .from("profiles")
               .select("display_name")
@@ -119,7 +131,6 @@ const PickTogether = () => {
             toast.success(`${name} a rejoint la soirée !`);
           } else if (guestName) {
             setRealtimeMembers(prev => [...prev, { id: `guest-${Date.now()}`, name: guestName }]);
-            toast.success(`${guestName} a rejoint la soirée !`);
           }
         })
         .subscribe();
@@ -197,6 +208,33 @@ const PickTogether = () => {
     }, 3000);
 
     try {
+      // Persist guests on the group session (best-effort)
+      if (groupSessionId && guests.length > 0) {
+        for (const g of guests) {
+          try {
+            await addGuestMember(groupSessionId, {
+              name: g.name,
+              age_range: g.age ? `${g.age}` : undefined,
+              profile_text: g.gender || undefined,
+              preferences: { favoriteGenres: g.favoriteGenres, gender: g.gender, age: g.age },
+            });
+          } catch { /* ignore */ }
+        }
+      }
+
+      // Create a recommendation_session linked to the group
+      let recoId = recoSessionId;
+      try {
+        recoId = await createRecommendationSession({
+          audience_type: "group",
+          decision_mode: "instant",
+          group_session_id: groupSessionId,
+          source: "group",
+          filters_snapshot: { mediaType: mediaChoice, mood: skipMood ? null : mood },
+        });
+        setRecoSessionId(recoId);
+      } catch (e) { console.warn("createRecommendationSession failed", e); }
+
       const memberIds = [user.id, ...selectedFriendIds];
       const guestProfiles = guests.map(g => ({
         name: g.name, age: g.age, gender: g.gender, favoriteGenres: g.favoriteGenres,
@@ -213,6 +251,18 @@ const PickTogether = () => {
       if (error) throw error;
       if (data?.recommendations?.length > 0) {
         setRecommendations(data.recommendations);
+        if (recoId) {
+          data.recommendations.forEach((rec: GroupRecommendation, idx: number) => {
+            logRecommendationEvent({
+              session_id: recoId,
+              tmdb_id: rec.movie.id,
+              title: rec.movie.title || rec.movie.name || "",
+              rank_position: idx + 1,
+              source: "group",
+              context: { groupScore: rec.groupScore },
+            }).catch(() => {});
+          });
+        }
         setStep("results");
       } else {
         toast.error("Aucune recommandation trouvée");
@@ -237,7 +287,21 @@ const PickTogether = () => {
     }, 800);
   };
 
-  const handleSelectMovie = (rec: GroupRecommendation) => {
+  const handleSelectMovie = async (rec: GroupRecommendation) => {
+    const meta = {
+      title: rec.movie.title || rec.movie.name || "Sans titre",
+      media_type: ((rec.movie as any).media_type === "tv" ? "tv" : "movie") as "movie" | "tv",
+      poster_path: rec.movie.poster_path ?? null,
+      overview: rec.movie.overview ?? null,
+      year: rec.movie.release_date ? parseInt(rec.movie.release_date.slice(0, 4)) : null,
+      runtime: rec.movie.runtime ?? null,
+      vote_average: rec.movie.vote_average ?? null,
+      popularity: (rec.movie as any).popularity ?? null,
+    };
+    try {
+      if (groupSessionId) await selectGroupSessionFilm(groupSessionId, rec.movie.id, meta);
+      if (recoSessionId) await completeSession(recoSessionId, rec.movie.id, meta);
+    } catch (e) { console.warn("complete group session failed", e); }
     sessionStorage.setItem("pick-fab-movie", JSON.stringify(rec.movie));
     navigate("/app?from=pick-chat");
   };
@@ -314,6 +378,7 @@ const PickTogether = () => {
             alternatives={alternatives}
             selectedCount={selectedCount}
             heroReaction={heroReaction}
+            sessionId={recoSessionId}
             onReject={handleReject}
             onSelectMovie={handleSelectMovie}
             onAddToWatchlist={handleAddToWatchlist}

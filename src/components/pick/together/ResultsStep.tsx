@@ -18,13 +18,14 @@ interface ResultsStepProps {
   alternatives: GroupRecommendation[];
   selectedCount: number;
   heroReaction: "like" | "meh" | "reject" | null;
+  sessionId?: string | null;
   onReject: () => void;
   onSelectMovie: (rec: GroupRecommendation) => void;
   onAddToWatchlist: (movie: MovieDetail) => void;
   onRestart: () => void;
 }
 
-const ResultsStep = ({ hero, alternatives, selectedCount, heroReaction, onReject, onSelectMovie, onAddToWatchlist, onRestart }: ResultsStepProps) => {
+const ResultsStep = ({ hero, alternatives, selectedCount, heroReaction, sessionId, onReject, onSelectMovie, onAddToWatchlist, onRestart }: ResultsStepProps) => {
   const [showAlternatives, setShowAlternatives] = useState(false);
 
   return (
@@ -139,7 +140,7 @@ const ResultsStep = ({ hero, alternatives, selectedCount, heroReaction, onReject
       {/* Action bar */}
       <div className="px-6 pb-2">
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.9 }}>
-          <MovieActionBar key={hero.movie.id} movie={hero.movie} />
+          <MovieActionBar key={hero.movie.id} movie={hero.movie} sessionId={sessionId} contextType="group_session" />
         </motion.div>
       </div>
 
