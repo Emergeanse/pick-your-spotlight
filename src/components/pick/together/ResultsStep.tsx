@@ -128,10 +128,19 @@ const ResultsStep = ({ hero, alternatives, selectedCount, heroReaction, sessionI
             </div>
           </motion.div>
 
+          {hero.reasonType && (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.65 }}
+              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 mb-2"
+            >
+              <span className="text-primary text-[10px] font-sans font-semibold uppercase tracking-wide">
+                {REASON_LABELS[hero.reasonType]}
+              </span>
+            </motion.div>
+          )}
           <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.7 }}
             className="text-foreground/50 text-[13px] font-sans text-center leading-relaxed max-w-sm mb-3 italic"
           >
-            "{hero.reason}"
+            "{hero.reasonText || hero.reason}"
           </motion.p>
 
           {hero.providers && hero.providers.length > 0 && (
