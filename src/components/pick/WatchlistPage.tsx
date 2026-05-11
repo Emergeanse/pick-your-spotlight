@@ -46,6 +46,9 @@ const getPickBubbleMessage = (tab: ActiveTab, count: number, hour: number): stri
   if (tab === "liked") {
     return `${count} titre${count > 1 ? "s" : ""} dans tes coups de cœur. Tes goûts parlent d'eux-mêmes !`;
   }
+  if (tab === "seen") {
+    return `${count} titre${count > 1 ? "s" : ""} déjà vu${count > 1 ? "s" : ""}. Tu en as parcouru du chemin !`;
+  }
   if (hour >= 18 || hour < 4) {
     return `${count} titre${count > 1 ? "s" : ""} t'attend${count > 1 ? "ent" : ""}. Lequel ce soir ?`;
   }
