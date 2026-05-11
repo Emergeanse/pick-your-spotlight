@@ -501,9 +501,16 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(({
             {/* Poster + Title */}
             <div className="flex items-end gap-4 mb-3">
               {movie.poster_path && (
-                <motion.img initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.3, type: "spring", stiffness: 200 }}
-                  src={getPosterUrl(movie.poster_path, "w342") || ""} alt={title}
-                  className="w-20 h-[120px] md:w-28 md:h-[168px] rounded-xl object-cover shadow-2xl border border-border/20 shrink-0" />
+                <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.3, type: "spring", stiffness: 200 }}
+                  className="relative shrink-0">
+                  <img src={getPosterUrl(movie.poster_path, "w342") || ""} alt={title}
+                    className="w-20 h-[120px] md:w-28 md:h-[168px] rounded-xl object-cover shadow-2xl border border-border/20" />
+                  {(currentFeedback || bookmarked) && (
+                    <div className="absolute top-1.5 left-1.5">
+                      <FeedbackBadge type={currentFeedback} inWatchlist={bookmarked} size="sm" />
+                    </div>
+                  )}
+                </motion.div>
               )}
               <div className="flex-1 min-w-0">
                 <h1 className="text-2xl md:text-4xl lg:text-5xl font-serif mb-1.5 leading-[1.05]">{title}</h1>
