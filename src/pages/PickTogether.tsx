@@ -86,6 +86,7 @@ const PickTogether = () => {
         if (error || !session || cancelled) return;
         setGroupSessionId(session.id as string);
         setSessionInviteCode((session as any).invite_code ?? null);
+        setScheduledFor((session as any).scheduled_for ?? null);
 
         // Hydrate already-joined members
         const members = await listMembers(session.id as string);
