@@ -42,9 +42,17 @@ export function useMovieInteractions(
       const fresh = await getInteractionStateBatch(ids);
       const hydrated: Record<number, MovieInteractionState> = {};
       for (const id of ids) {
-        const state = fresh[id] ?? EMPTY_INTERACTION_STATE;
-        interactionCache.set(id, state);
-        hydrated[id] = state;
+        if (fresh[id]) {
+          // Real interaction found → refresh cache + UI.
+          interactionCache.set(id, fresh[id]);
+          hydrated[id] = fresh[id];
+        } else {
+          // No row returned. Could mean "never interacted" OR transient miss
+          // (catalog row not yet linked, network blip). Prefer cached truth
+          // when present so a known badge never disappears between renders.
+          const cached = interactionCache.get(id);
+          hydrated[id] = cached ?? EMPTY_INTERACTION_STATE;
+        }
       }
       setMap(hydrated);
     } catch {
@@ -61,6 +69,9 @@ export function useMovieInteractions(
     const watchedIds = new Set(ids);
     const onChange = (e: Event) => {
       const detail = (e as CustomEvent).detail as { tmdbId?: number } | undefined;
+      // Invalidate cache for the mutated id so post-mutation truth wins
+      // (e.g. an "unlike" must clear a stale cached "liked" badge).
+      if (detail?.tmdbId) interactionCache.delete(detail.tmdbId);
       if (!detail?.tmdbId || watchedIds.has(detail.tmdbId)) refresh();
     };
     window.addEventListener("pick-feedback-changed", onChange);
