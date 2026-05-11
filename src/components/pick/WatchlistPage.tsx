@@ -247,14 +247,14 @@ const WatchlistPage = ({ onMovieSelect }: WatchlistPageProps) => {
         if (!item.genres || !item.genres.includes(genreFilter)) return false;
       }
       return true;
-  });
+    });
+  }, [currentItems, mediaFilter, searchQuery, genreFilter]);
 
   const visibleTmdbIds = useMemo(
     () => filteredItems.map((i: any) => i.tmdb_id).filter(Boolean),
     [filteredItems]
   );
   const feedbackMap = useFeedbackMap(visibleTmdbIds);
-  }, [currentItems, mediaFilter, searchQuery, genreFilter]);
 
   const mediaFilters: { id: MediaFilter; label: string }[] = [
     { id: "all", label: "Tout" },
