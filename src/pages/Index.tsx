@@ -130,9 +130,56 @@ const Index = () => {
       setBatchRejectedIds(new Set());
       setResultOrigin(origin);
       setStep("result");
+
+      // V1: spin up a solo recommendation_session
+      loggedEventsRef.current = new Set();
+      if (user) {
+        createRecommendationSession({
+          audience_type: "solo",
+          decision_mode: "instant",
+          source: origin === "external" ? "external" : "surprise",
+          filters_snapshot: {
+            platformIds: profilePrefs.preferredPlatforms,
+            minRating: profilePrefs.minRating,
+            excludedGenres: profilePrefs.excludedGenres,
+          },
+        })
+          .then((id) => {
+            setCurrentSessionId(id);
+            const first = movies[safeStartIndex];
+            if (first && !loggedEventsRef.current.has(first.id)) {
+              loggedEventsRef.current.add(first.id);
+              logRecommendationEvent({
+                session_id: id,
+                tmdb_id: first.id,
+                title: first.title || first.name || "",
+                rank_position: safeStartIndex + 1,
+                source: "solo_session",
+              }).catch(() => {});
+            }
+          })
+          .catch(() => setCurrentSessionId(null));
+      } else {
+        setCurrentSessionId(null);
+      }
     },
-    [],
+    [user, profilePrefs.excludedGenres, profilePrefs.minRating, profilePrefs.preferredPlatforms],
   );
+
+  // Log each new movie shown as a recommendation_event (once per session)
+  useEffect(() => {
+    if (step !== "result" || !currentSessionId) return;
+    const m = results[currentResultIndex];
+    if (!m || loggedEventsRef.current.has(m.id)) return;
+    loggedEventsRef.current.add(m.id);
+    logRecommendationEvent({
+      session_id: currentSessionId,
+      tmdb_id: m.id,
+      title: m.title || m.name || "",
+      rank_position: currentResultIndex + 1,
+      source: "solo_session",
+    }).catch(() => {});
+  }, [step, currentSessionId, results, currentResultIndex]);
 
   useEffect(() => {
     const state = (location.state as any) || {};
