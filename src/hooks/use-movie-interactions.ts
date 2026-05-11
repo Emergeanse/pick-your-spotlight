@@ -42,9 +42,17 @@ export function useMovieInteractions(
       const fresh = await getInteractionStateBatch(ids);
       const hydrated: Record<number, MovieInteractionState> = {};
       for (const id of ids) {
-        const state = fresh[id] ?? EMPTY_INTERACTION_STATE;
-        interactionCache.set(id, state);
-        hydrated[id] = state;
+        if (fresh[id]) {
+          // Real interaction found → refresh cache + UI.
+          interactionCache.set(id, fresh[id]);
+          hydrated[id] = fresh[id];
+        } else {
+          // No row returned. Could mean "never interacted" OR transient miss
+          // (catalog row not yet linked, network blip). Prefer cached truth
+          // when present so a known badge never disappears between renders.
+          const cached = interactionCache.get(id);
+          hydrated[id] = cached ?? EMPTY_INTERACTION_STATE;
+        }
       }
       setMap(hydrated);
     } catch {
