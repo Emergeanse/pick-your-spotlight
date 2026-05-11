@@ -7,13 +7,28 @@ import MovieActionBar from "@/components/pick/MovieActionBar";
 import FeedbackBadge from "@/components/pick/FeedbackBadge";
 import { useMovieInteractions } from "@/hooks/use-movie-interactions";
 
+export type RecommendationReasonType =
+  | "session_wish"
+  | "taste_match"
+  | "constraint_ok"
+  | "tonight_fit";
+
 interface GroupRecommendation {
   movie: MovieDetail;
   groupScore: number;
   reason: string;
+  reasonType?: RecommendationReasonType;
+  reasonText?: string;
   memberNotes: Record<string, string>;
   providers: { name: string; logo_path: string; provider_id: number }[];
 }
+
+const REASON_LABELS: Record<RecommendationReasonType, string> = {
+  session_wish: "Envie du moment respectée",
+  taste_match: "Goût compatible",
+  constraint_ok: "Contrainte respectée",
+  tonight_fit: "Bon match pour ce soir",
+};
 
 interface ResultsStepProps {
   hero: GroupRecommendation;
