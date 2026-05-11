@@ -128,7 +128,7 @@ const TrendingRow = ({ title, fetchFn, onMovieClick }: TrendingRowProps) => {
           style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
         >
           {movies.map((movie, i) => (
-            <MovieCard key={movie.id} movie={movie} index={i} onMovieClick={onMovieClick} />
+            <MovieCard key={movie.id} movie={movie} index={i} onMovieClick={onMovieClick} feedbackType={feedbackMap[movie.id]} />
           ))}
         </div>
 
