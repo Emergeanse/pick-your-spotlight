@@ -57,6 +57,8 @@ const PickTogether = () => {
   const [recommendations, setRecommendations] = useState<GroupRecommendation[]>([]);
   const [heroReaction, setHeroReaction] = useState<"like" | "meh" | "reject" | null>(null);
   const [sessionInviteCode, setSessionInviteCode] = useState<string | null>(null);
+  const [groupSessionId, setGroupSessionId] = useState<string | null>(null);
+  const [recoSessionId, setRecoSessionId] = useState<string | null>(null);
   const [creatingSession, setCreatingSession] = useState(false);
   const [realtimeMembers, setRealtimeMembers] = useState<{ id: string; name: string }[]>([]);
   const [mediaStep, setMediaStep] = useState(false);
