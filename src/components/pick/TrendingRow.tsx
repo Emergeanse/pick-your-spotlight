@@ -71,6 +71,12 @@ const MovieCard = ({ movie, index, onMovieClick, feedbackType }: { movie: Movie;
               />
             </div>
           )}
+
+          {feedbackType && (
+            <div className="absolute top-1.5 left-1.5 md:top-2 md:left-2">
+              <FeedbackBadge type={feedbackType} />
+            </div>
+          )}
         </div>
         <p className="mt-1.5 md:mt-2 text-[11px] md:text-sm font-sans text-foreground/70 truncate w-28 md:w-40 text-left">
           {getDisplayTitle(movie)}
