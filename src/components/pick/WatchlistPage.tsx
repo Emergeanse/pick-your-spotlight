@@ -8,6 +8,9 @@ import type { MovieDetail } from "@/lib/tmdb";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import PickCharacter from "./PickCharacter";
+import FeedbackBadge from "./FeedbackBadge";
+import { useFeedbackMap } from "@/hooks/use-feedback-map";
+import type { FeedbackType } from "@/lib/feedback";
 
 interface WatchlistPageProps {
   onMovieSelect: (movie: MovieDetail) => void;
@@ -53,9 +56,10 @@ const getPickBubbleMessage = (tab: ActiveTab, count: number, hour: number): stri
 };
 
 const SwipeableCard = ({
-  item, index, onSelect, onRemove, comments,
+  item, index, onSelect, onRemove, comments, feedbackType, fallbackWatchlist,
 }: {
   item: any; index: number; onSelect: () => void; onRemove: () => void; comments: string[];
+  feedbackType?: FeedbackType | null; fallbackWatchlist?: boolean;
 }) => {
   const x = useMotionValue(0);
   const removeBgOpacity = useTransform(x, [-120, 0], [1, 0]);
@@ -72,9 +76,18 @@ const SwipeableCard = ({
         className="relative flex items-start gap-3 p-3 bg-card/40 rounded-xl border border-border/10 hover:bg-card/60 transition-colors">
         <button onClick={onSelect} className="flex items-start gap-3 flex-1 min-w-0 text-left">
           {item.poster_path ? (
-            <img src={getPosterUrl(item.poster_path, "w185")} alt={item.title} className="w-14 h-[84px] rounded-lg object-cover border border-border/20 shrink-0" loading="lazy" />
+            <div className="relative shrink-0">
+              <img src={getPosterUrl(item.poster_path, "w185")} alt={item.title} className="w-14 h-[84px] rounded-lg object-cover border border-border/20" loading="lazy" />
+              <div className="absolute -top-1 -left-1">
+                <FeedbackBadge type={feedbackType ?? null} inWatchlist={fallbackWatchlist} />
+              </div>
+            </div>
           ) : (
-            <div className="w-14 h-[84px] rounded-lg bg-foreground/5 shrink-0" />
+            <div className="relative w-14 h-[84px] rounded-lg bg-foreground/5 shrink-0">
+              <div className="absolute -top-1 -left-1">
+                <FeedbackBadge type={feedbackType ?? null} inWatchlist={fallbackWatchlist} />
+              </div>
+            </div>
           )}
           <div className="flex-1 min-w-0 py-0.5">
             <p className="text-sm font-sans font-medium text-foreground line-clamp-1 mb-0.5">{item.title}</p>
@@ -236,6 +249,12 @@ const WatchlistPage = ({ onMovieSelect }: WatchlistPageProps) => {
       return true;
     });
   }, [currentItems, mediaFilter, searchQuery, genreFilter]);
+
+  const visibleTmdbIds = useMemo(
+    () => filteredItems.map((i: any) => i.tmdb_id).filter(Boolean),
+    [filteredItems]
+  );
+  const feedbackMap = useFeedbackMap(visibleTmdbIds);
 
   const mediaFilters: { id: MediaFilter; label: string }[] = [
     { id: "all", label: "Tout" },
@@ -479,6 +498,8 @@ const WatchlistPage = ({ onMovieSelect }: WatchlistPageProps) => {
               onSelect={() => handlePreview(item)}
               onRemove={() => activeTab === "watchlist" ? handleRemoveWatchlist(item.tmdb_id) : handleRemoveLiked(item.tmdb_id)}
               comments={activeTab === "watchlist" ? PICK_COMMENTS : LIKED_COMMENTS}
+              feedbackType={feedbackMap[item.tmdb_id] ?? null}
+              fallbackWatchlist={activeTab === "watchlist"}
             />
           ))}
         </div>
