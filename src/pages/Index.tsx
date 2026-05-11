@@ -554,6 +554,16 @@ const Index = () => {
           <motion.div key="result" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.4 }} className="absolute inset-0">
             <ResultScreen
               sessionId={currentSessionId}
+              onFeedback={(type, m) => {
+                if ((type === "love" || type === "like") && currentSessionId) {
+                  completeSession(currentSessionId, m.id, {
+                    title: m.title || m.name || "",
+                    poster_path: m.poster_path || null,
+                    media_type: m.first_air_date ? "tv" : "movie",
+                  }).catch(() => {});
+                  setCurrentSessionId(null);
+                }
+              }}
               movie={results[currentResultIndex]}
               onShowAnother={handleShowAnother}
               onRestart={() => {
