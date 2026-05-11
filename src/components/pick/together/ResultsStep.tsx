@@ -18,13 +18,14 @@ interface ResultsStepProps {
   alternatives: GroupRecommendation[];
   selectedCount: number;
   heroReaction: "like" | "meh" | "reject" | null;
+  sessionId?: string | null;
   onReject: () => void;
   onSelectMovie: (rec: GroupRecommendation) => void;
   onAddToWatchlist: (movie: MovieDetail) => void;
   onRestart: () => void;
 }
 
-const ResultsStep = ({ hero, alternatives, selectedCount, heroReaction, onReject, onSelectMovie, onAddToWatchlist, onRestart }: ResultsStepProps) => {
+const ResultsStep = ({ hero, alternatives, selectedCount, heroReaction, sessionId, onReject, onSelectMovie, onAddToWatchlist, onRestart }: ResultsStepProps) => {
   const [showAlternatives, setShowAlternatives] = useState(false);
 
   return (
