@@ -1,213 +1,111 @@
+# Refactor Pick V1 — Plan structuré
 
-
-# Audit du modèle de données Pick — Rapport & Plan de migration
-
-## ⚠️ Note importante
-
-Votre prompt contient des **placeholders vides** pour le schéma cible (`[PASTE EXACT profiles TABLE SPEC HERE]`, etc.). Il n'y a donc pas de spec concrète à comparer. L'audit ci-dessous est basé sur les **principes architecturaux** que vous avez énoncés.
+Refactor majeur autour du schéma cible V1. Pour limiter le risque (12 utilisateurs actifs, 15+ edge functions, code client massif), je propose un découpage en **5 phases livrables indépendamment**, chacune testable. Tu valides phase par phase.
 
 ---
 
-## 1. Rapport d'audit — Violations des principes
+## Phase 1 — Schéma DB cible (migration non destructive)
 
-### 🔴 Violation critique : Préférences stockées dans `profiles`
+Aligner les tables existantes sur les besoins V1, **sans supprimer le legacy** (rollback safe).
 
-La table `profiles` contient **12+ colonnes de préférences** directement :
-- `favorite_genres`, `excluded_genres` (text[])
-- `preferred_platforms`, `excluded_platforms` (int[])
-- `media_preference`, `default_media_type`, `default_max_duration`
-- `min_rating`, `match_threshold`
-- `ritual_enabled`, `ritual_time`
+### 1.1 Étendre `recommendation_sessions`
+Ajouter colonnes :
+- `audience_type` text CHECK (`solo`|`group`) DEFAULT `solo`
+- `decision_mode` text CHECK (`instant`|`planned`) DEFAULT `instant`
+- `group_session_id` uuid (nullable)
+- `prompt_text` text
+- `scheduled_for` timestamptz
+- `status` text CHECK (`active`|`completed`|`abandoned`) DEFAULT `active`
+- `selected_catalog_item_id` uuid
 
-**Principe violé** : "NEVER store preferences as boolean columns" / "strict separation of concerns" / "tag-based extensible system"
+### 1.2 Étendre `group_sessions`
+Renommer/aligner :
+- `creator_id` → garder, ajouter alias logique `created_by_user_id` (vue ou usage code)
+- Ajouter : `title` text, `decision_mode`, `status`, `scheduled_for`, `context_json` jsonb, `selected_catalog_item_id` uuid
 
-**Problème** : Chaque nouvelle préférence = `ALTER TABLE profiles`. Pas extensible, pas pondérable.
+### 1.3 Étendre `group_session_members` (invités légers)
+Ajouter :
+- `guest_age_range` text
+- `guest_profile_text` text
+- `guest_preferences_json` jsonb DEFAULT `{}`
 
-### 🔴 Aucune foreign key dans tout le schéma
+### 1.4 Étendre `user_item_feedback`
+Ajouter :
+- `feedback_type` text CHECK (`like`|`love`|`seen`|`not_for_me`|`watchlist`|`skip`|`dislike`) — colonne canonique (mappe `label` actuel)
+- `source` text DEFAULT `manual`
+- `context_type` text (`solo_session`|`group_session`|`browse`)
+- `context_id` uuid
+- Index unique `(user_id, item_id, feedback_type)` pour idempotence
 
-**0 foreign keys** détectées. Toutes les relations (`user_id`, `session_id`, `tmdb_id`) sont des colonnes sans contraintes référentielles. Cela permet :
-- Des orphelins (interactions sans user, membres sans session)
-- Aucune cascade de suppression automatique
-- Incohérence de données garantie
+### 1.5 Foreign keys (ajout prudent)
+Ajouter FK manquantes vers `auth.users` et `catalog_items` sur les tables cœur V1. Nettoyage des orphelins avant.
 
-### 🟡 `user_interactions` — feedback non structuré
-
-- `action_type` est un `text` libre sans CHECK constraint
-- Pas de score numérique (juste des labels comme "liked", "skipped")
-- Le `context` JSONB est un fourre-tout non validé
-
-**Principe violé** : "ALL scoring signals must be numeric"
-
-### 🟡 Pas de table de catalogue unifiée
-
-Les films sont référencés par `tmdb_id` dans 5 tables différentes (`liked_movies`, `watchlist`, `user_interactions`, `recommendation_events`, `movie_embeddings`) sans table pivot. Les métadonnées (titre, genres, poster) sont **dupliquées** dans `liked_movies` et `watchlist`.
-
-### 🟡 Pas de sessions de recommandation
-
-Aucune table `recommendation_sessions` ni `session_overrides`. Les overrides (filtres rapides) sont purement client-side et ne sont pas persistés ni snapshot-és.
-
-### 🟢 Points conformes
-- `user_roles` séparée (correct)
-- `user_taste_vectors` séparée (correct)
-- `movie_embeddings` avec index IVFFlat (correct)
-- Timestamps sur toutes les tables (correct)
-- RLS activé partout (correct)
+**⚠️ Ne touche pas** : `liked_movies`, `watchlist`, colonnes preferences de `profiles` (Phase 5).
 
 ---
 
-## 2. Plan de migration proposé
+## Phase 2 — Couche d'accès unifiée (libs TS)
 
-### Phase 1 — Tables structurelles (non-destructif)
+Créer/refactorer les modules `src/lib/` pour exposer une API V1 propre. **Le code legacy continue de fonctionner via wrappers.**
 
-**A. Créer `preference_tags`** — catalogue extensible de tags de préférence
-```sql
-CREATE TABLE preference_tags (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  category text NOT NULL, -- 'genre', 'platform', 'mood', 'duration', 'rating_threshold'
-  key text NOT NULL,       -- 'action', 'netflix', 'short', etc.
-  label text NOT NULL,     -- Libellé FR affiché
-  metadata jsonb DEFAULT '{}',
-  UNIQUE(category, key)
-);
-```
+- `src/lib/feedback.ts` (refactor) → utilise `feedback_type`, `context_type/id`, batch
+- `src/lib/wishlist.ts` (nouveau) → wrapper sur `user_item_feedback` avec `feedback_type='watchlist'`. Remplace progressivement `watchlist.ts`
+- `src/lib/preferences.ts` (nouveau) → CRUD `user_preferences` + `preference_tags`, lecture pondérée
+- `src/lib/sessions.ts` (nouveau) → créer/lire/clore `recommendation_sessions` (solo + group), logguer `recommendation_events`
+- `src/lib/group-sessions.ts` (nouveau) → créer session groupe, ajouter membres inscrits/invités, sélectionner film final
+- `src/lib/catalog.ts` (nouveau) → `getOrCreateCatalogItem(tmdbId, meta)` centralisé (déduplique la logique éparpillée)
 
-**B. Créer `user_preferences`** — préférences pondérées par tag
-```sql
-CREATE TABLE user_preferences (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  tag_id uuid NOT NULL REFERENCES preference_tags(id) ON DELETE CASCADE,
-  weight numeric NOT NULL DEFAULT 1.0 CHECK (weight BETWEEN -100 AND 100),
-  source text NOT NULL DEFAULT 'explicit', -- 'explicit', 'inferred', 'onboarding'
-  created_at timestamptz DEFAULT now(),
-  updated_at timestamptz DEFAULT now(),
-  UNIQUE(user_id, tag_id)
-);
-```
-
-**C. Créer `catalog_items`** — table pivot unifiée films/séries/personnes
-```sql
-CREATE TABLE catalog_items (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  tmdb_id integer NOT NULL,
-  media_type text NOT NULL DEFAULT 'movie' CHECK (media_type IN ('movie','tv','person')),
-  title text NOT NULL,
-  poster_path text,
-  vote_average numeric,
-  popularity numeric,
-  runtime integer,
-  year integer,
-  overview text,
-  created_at timestamptz DEFAULT now(),
-  updated_at timestamptz DEFAULT now(),
-  UNIQUE(tmdb_id, media_type)
-);
-```
-
-**D. Créer `catalog_item_tags`** — métadonnées extensibles par item
-```sql
-CREATE TABLE catalog_item_tags (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  item_id uuid NOT NULL REFERENCES catalog_items(id) ON DELETE CASCADE,
-  tag_id uuid NOT NULL REFERENCES preference_tags(id) ON DELETE CASCADE,
-  weight numeric DEFAULT 1.0,
-  UNIQUE(item_id, tag_id)
-);
-```
-
-**E. Créer `user_item_feedback`** — feedback structuré et scoré
-```sql
-CREATE TABLE user_item_feedback (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  item_id uuid NOT NULL REFERENCES catalog_items(id) ON DELETE CASCADE,
-  action text NOT NULL CHECK (action IN ('liked','disliked','watched','skipped','saved','unsaved','rejected')),
-  score numeric CHECK (score BETWEEN -100 AND 100),
-  label text,                    -- ex: 'rejected_too_long', 'post_watch_loved'
-  context jsonb DEFAULT '{}',
-  created_at timestamptz DEFAULT now(),
-  UNIQUE(user_id, item_id, action)
-);
-```
-
-**F. Créer `recommendation_sessions`** — snapshot de chaque recherche
-```sql
-CREATE TABLE recommendation_sessions (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  source text NOT NULL DEFAULT 'surprise',
-  taste_snapshot jsonb DEFAULT '{}',    -- copie du profil au moment T
-  filters_snapshot jsonb DEFAULT '{}',  -- filtres appliqués
-  results jsonb DEFAULT '[]',           -- les 5 films retournés + scores
-  created_at timestamptz DEFAULT now()
-);
-```
-
-**G. Créer `recommendation_session_overrides`** — surcharges par session
-```sql
-CREATE TABLE recommendation_session_overrides (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  session_id uuid NOT NULL REFERENCES recommendation_sessions(id) ON DELETE CASCADE,
-  tag_id uuid NOT NULL REFERENCES preference_tags(id) ON DELETE CASCADE,
-  override_weight numeric NOT NULL CHECK (override_weight BETWEEN -100 AND 100),
-  UNIQUE(session_id, tag_id)
-);
-```
-
-### Phase 2 — Migration de données
-
-- Backfill `catalog_items` depuis `movie_embeddings` + `liked_movies` + `watchlist`
-- Backfill `user_preferences` depuis les colonnes de `profiles` (`favorite_genres` → tags genre avec weight +80, `excluded_genres` → weight -100, etc.)
-- Backfill `user_item_feedback` depuis `user_interactions` + `liked_movies` + `watchlist`
-
-### Phase 3 — Foreign keys sur tables existantes
-
-Ajouter des FK sur les tables existantes qui n'en ont pas (approche prudente) :
-- `liked_movies.user_id` → `auth.users(id) ON DELETE CASCADE`
-- `watchlist.user_id` → `auth.users(id) ON DELETE CASCADE`
-- `user_interactions.user_id` → `auth.users(id) ON DELETE CASCADE`
-- `cinematic_profiles.user_id` → `auth.users(id) ON DELETE CASCADE`
-- etc.
-
-### Phase 4 — Nettoyage (différé, après migration du code)
-
-- Supprimer les colonnes de préférences de `profiles` (une fois le code migré)
-- Déprécier `liked_movies` et `watchlist` au profit de `user_item_feedback`
+Wrappers de compat : `addToWatchlist()` legacy continue d'écrire dans `watchlist` ET `user_item_feedback` pendant la transition.
 
 ---
 
-## 3. Risques et recommandations
+## Phase 3 — Refactor parcours solo
 
-| Risque | Impact | Mitigation |
-|--------|--------|------------|
-| 15+ edge functions + code client lisent `profiles.favorite_genres` etc. | Cassure immédiate si on supprime les colonnes | Phase 4 différée, garder les colonnes en lecture seule pendant la transition |
-| 1490 interactions à backfiller | Temps de migration | Script batch, pas de downtime |
-| Pas de FK = orphelins existants possibles | Échec d'ajout de FK | Nettoyer les orphelins avant d'ajouter les FK |
-| Code client utilise `tmdb_id` partout, pas `catalog_items.id` | Refactoring massif | Garder `tmdb_id` comme clé de lookup, utiliser `catalog_items` comme jointure |
+- `HomeScreen.tsx` : entrée NL + 2 CTA clairs (`Maintenant` / `Planifier`)
+- `ResultScreen.tsx` : crée une `recommendation_session` (audience=solo, mode=instant), logue chaque film via `recommendation_events`, enregistre `selected_catalog_item_id` au choix final
+- `MovieActionBar.tsx` : utilise nouveau `feedback.ts` avec `context_type='solo_session'`
+- Nouveau `PlanSessionScreen.tsx` : choix date/heure → `decision_mode='planned'`
 
 ---
 
-## 4. Indexes recommandés
+## Phase 4 — Refactor parcours groupe + invités
 
-```sql
-CREATE INDEX idx_user_preferences_user ON user_preferences(user_id);
-CREATE INDEX idx_user_preferences_tag ON user_preferences(tag_id);
-CREATE INDEX idx_catalog_items_tmdb ON catalog_items(tmdb_id, media_type);
-CREATE INDEX idx_user_item_feedback_user ON user_item_feedback(user_id);
-CREATE INDEX idx_user_item_feedback_item ON user_item_feedback(item_id);
-CREATE INDEX idx_reco_sessions_user ON recommendation_sessions(user_id);
-CREATE INDEX idx_catalog_item_tags_item ON catalog_item_tags(item_id);
-```
+- `PickTogether.tsx` + `together/*` : refactor sur `group_sessions` + `recommendation_sessions` liées
+- Nouveau composant `AddGuestForm.tsx` : prénom + âge + texte libre + tags (UI minimaliste, pas de formulaire lourd)
+- `WhoStep.tsx` : permet d'ajouter inscrits **et** invités dans la même liste
+- `ResultsStep.tsx` : agrège prefs (registered via `user_preferences`, guests via `guest_preferences_json`), enregistre film final
+- Mode planifié : `scheduled_for` + notification simple via `notifications`
 
 ---
 
-## 5. Décision requise
+## Phase 5 — Nettoyage legacy (différé, après QA des phases 1-4)
 
-Ce refactoring est **majeur** (7 nouvelles tables, migration de données, refactoring de tout le code client et des edge functions). Avant de lancer les migrations :
+- Migration de données : `liked_movies` + `watchlist` → `user_item_feedback`
+- Migration : colonnes `favorite_genres`, `excluded_genres`, `preferred_platforms` de `profiles` → `user_preferences` (avec `preference_tags`)
+- Edge functions : remplacer toutes les lectures `profiles.favorite_genres` etc. par `user_preferences`
+- Drop des colonnes/tables legacy
+- Suppression des wrappers de compat
 
-1. **Voulez-vous procéder en une seule phase** (tout d'un coup) ou **itérativement** (nouvelles tables d'abord, puis migration progressive du code) ?
-2. **Voulez-vous fournir le schéma cible complet** (les sections `[PASTE ...]`) pour que je puisse faire un diff exact plutôt qu'une interprétation des principes ?
-3. **Priorité** : Commencer par le catalogue unifié ? Les préférences tag-based ? Les sessions de recommandation ?
+---
 
-La migration itérative (Phase 1 → tester → Phase 2 → etc.) est fortement recommandée pour un projet en production avec 12 utilisateurs actifs.
+## Détails techniques
 
+**RLS** : toutes nouvelles colonnes héritent des policies existantes. Pour `group_session_members` invités (user_id NULL), policies déjà OK (`is_session_member` + creator).
+
+**Edge functions impactées** (à mettre à jour Phase 3-4) : `group-recommend`, `surprise-personalized`, `movie-match`, `pick-chat`, `companion-chat`, `cinematic-profile`.
+
+**Compat ascendante** : pendant phases 2-4, code legacy continue de tourner. Aucun downtime.
+
+**Tests** : à chaque phase, smoke test manuel des parcours clés (solo instant, solo planned, group instant, group planned avec invité).
+
+---
+
+## Question avant de démarrer
+
+Ce refactor est lourd (~30-50 fichiers touchés, 5 migrations, refactor edge functions). Pour avancer proprement :
+
+**Veux-tu que je démarre par la Phase 1 (migration DB cible non destructive) seule**, qu'on valide le schéma en preview, puis qu'on enchaîne phase par phase ?
+
+Ou préfères-tu **Phase 1 + Phase 2 (libs)** en un seul lot, pour avoir tout de suite l'infra de code prête sans encore toucher l'UI ?
+
+Je te recommande **Phase 1 seule en premier** : 1 migration validée = base saine pour tout le reste, et tu peux relire le SQL avant exécution.
