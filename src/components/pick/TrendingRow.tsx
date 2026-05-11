@@ -4,6 +4,9 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { Movie, MovieDetail } from "@/lib/tmdb";
 import { getPosterUrl, getDisplayTitle, getWatchProviders, getMovieDetails } from "@/lib/tmdb";
 import MovieActionBar from "./MovieActionBar";
+import FeedbackBadge from "./FeedbackBadge";
+import { useFeedbackMap } from "@/hooks/use-feedback-map";
+import type { FeedbackType } from "@/lib/feedback";
 
 interface TrendingRowProps {
   title: string;
@@ -13,7 +16,7 @@ interface TrendingRowProps {
 
 const IMG_BASE = "https://image.tmdb.org/t/p";
 
-const MovieCard = ({ movie, index, onMovieClick }: { movie: Movie; index: number; onMovieClick?: (m: Movie) => void }) => {
+const MovieCard = ({ movie, index, onMovieClick, feedbackType }: { movie: Movie; index: number; onMovieClick?: (m: Movie) => void; feedbackType?: FeedbackType }) => {
   const [provider, setProvider] = useState<{ name: string; logo_path: string } | null>(null);
   const [detail, setDetail] = useState<MovieDetail | null>(null);
   const [showActions, setShowActions] = useState(false);
@@ -68,6 +71,12 @@ const MovieCard = ({ movie, index, onMovieClick }: { movie: Movie; index: number
               />
             </div>
           )}
+
+          {feedbackType && (
+            <div className="absolute top-1.5 left-1.5 md:top-2 md:left-2">
+              <FeedbackBadge type={feedbackType} />
+            </div>
+          )}
         </div>
         <p className="mt-1.5 md:mt-2 text-[11px] md:text-sm font-sans text-foreground/70 truncate w-28 md:w-40 text-left">
           {getDisplayTitle(movie)}
@@ -85,6 +94,7 @@ const MovieCard = ({ movie, index, onMovieClick }: { movie: Movie; index: number
 const TrendingRow = ({ title, fetchFn, onMovieClick }: TrendingRowProps) => {
   const [movies, setMovies] = useState<Movie[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const feedbackMap = useFeedbackMap(movies.map(m => m.id));
 
   useEffect(() => {
     fetchFn().then(setMovies).catch(() => {});
@@ -118,7 +128,7 @@ const TrendingRow = ({ title, fetchFn, onMovieClick }: TrendingRowProps) => {
           style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
         >
           {movies.map((movie, i) => (
-            <MovieCard key={movie.id} movie={movie} index={i} onMovieClick={onMovieClick} />
+            <MovieCard key={movie.id} movie={movie} index={i} onMovieClick={onMovieClick} feedbackType={feedbackMap[movie.id]} />
           ))}
         </div>
 

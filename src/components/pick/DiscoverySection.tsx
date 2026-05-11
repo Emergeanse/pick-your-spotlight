@@ -4,6 +4,9 @@ import { Star, TrendingUp, Gem, Sparkles } from "lucide-react";
 import { getTrendingMovies, getHiddenGems, getTonightsPick, getPosterUrl, getDisplayTitle, getMovieDetails } from "@/lib/tmdb";
 import type { Movie, MovieDetail } from "@/lib/tmdb";
 import MovieActionBar from "./MovieActionBar";
+import FeedbackBadge from "./FeedbackBadge";
+import { useFeedbackMap } from "@/hooks/use-feedback-map";
+import type { FeedbackType } from "@/lib/feedback";
 
 interface DiscoverySectionProps {
   onMovieSelect: (movie: MovieDetail) => void;
@@ -13,7 +16,7 @@ interface DiscoverySectionProps {
   excludedGenres?: string[];
 }
 
-const DiscoveryMovieCard = ({ movie, onSelect }: { movie: Movie; onSelect: (m: Movie) => void }) => {
+const DiscoveryMovieCard = ({ movie, onSelect, feedbackType }: { movie: Movie; onSelect: (m: Movie) => void; feedbackType?: FeedbackType }) => {
   const [detail, setDetail] = useState<MovieDetail | null>(null);
   const [showActions, setShowActions] = useState(false);
 
@@ -50,6 +53,11 @@ const DiscoveryMovieCard = ({ movie, onSelect }: { movie: Movie; onSelect: (m: M
               </span>
             </div>
           )}
+          {feedbackType && (
+            <div className="absolute top-1.5 left-1.5">
+              <FeedbackBadge type={feedbackType} />
+            </div>
+          )}
         </div>
         <p className="text-[11px] font-sans text-foreground/70 line-clamp-1 leading-tight px-0.5">
           {getDisplayTitle(movie)}
@@ -64,29 +72,32 @@ const DiscoveryMovieCard = ({ movie, onSelect }: { movie: Movie; onSelect: (m: M
   );
 };
 
-const MovieRow = ({ 
-  title, 
-  icon: Icon, 
-  movies, 
-  onSelect 
-}: { 
-  title: string; 
-  icon: React.ElementType; 
-  movies: Movie[]; 
+const MovieRow = ({
+  title,
+  icon: Icon,
+  movies,
+  onSelect
+}: {
+  title: string;
+  icon: React.ElementType;
+  movies: Movie[];
   onSelect: (movie: Movie) => void;
-}) => (
-  <div className="mb-6">
-    <div className="flex items-center gap-2 mb-3 px-1">
-      <Icon className="w-4 h-4 text-primary" />
-      <h3 className="text-sm font-sans font-semibold text-foreground/80 tracking-wide">{title}</h3>
+}) => {
+  const feedbackMap = useFeedbackMap(movies.map(m => m.id));
+  return (
+    <div className="mb-6">
+      <div className="flex items-center gap-2 mb-3 px-1">
+        <Icon className="w-4 h-4 text-primary" />
+        <h3 className="text-sm font-sans font-semibold text-foreground/80 tracking-wide">{title}</h3>
+      </div>
+      <div className="flex gap-2.5 overflow-x-auto pb-2 scrollbar-hide">
+        {movies.map((movie) => (
+          <DiscoveryMovieCard key={movie.id} movie={movie} onSelect={onSelect} feedbackType={feedbackMap[movie.id]} />
+        ))}
+      </div>
     </div>
-    <div className="flex gap-2.5 overflow-x-auto pb-2 scrollbar-hide">
-      {movies.map((movie) => (
-        <DiscoveryMovieCard key={movie.id} movie={movie} onSelect={onSelect} />
-      ))}
-    </div>
-  </div>
-);
+  );
+};
 
 const DiscoverySection = ({ onMovieSelect, platformIds = [], favoriteGenres = [], minRating = 0, excludedGenres = [] }: DiscoverySectionProps) => {
   const [trending, setTrending] = useState<Movie[]>([]);
