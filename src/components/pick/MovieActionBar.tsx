@@ -52,24 +52,37 @@ const MovieActionBar = ({ movie, size = "md", className = "", onInteraction, ini
     const load = async () => {
       try {
         const [fb, inWl] = await Promise.all([
-          initialFeedback !== undefined && initialFeedback !== null
-            ? Promise.resolve({ label: initialFeedback, score: 0 })
-            : getFeedback(movie.id),
+          getFeedback(movie.id),
           isInWatchlist(movie.id),
         ]);
 
         if (cancelled || currentMovieIdRef.current !== movieId) return;
 
-        setBookmarked(inWl);
-        setActiveFeedback(fb?.label ?? null);
-        setLiked(fb?.label === "like" || fb?.label === "love");
+        const label = fb?.label ?? null;
+        // 'watchlist' is additive: don't surface it as the exclusive activeFeedback
+        setActiveFeedback(label && label !== "watchlist" ? label : null);
+        setBookmarked(inWl || label === "watchlist");
+        setLiked(label === "like" || label === "love");
       } catch {
         // ignore
       }
     };
     load();
-    return () => { cancelled = true; };
-  }, [movie.id, user, initialFeedback]);
+
+    // Re-sync whenever feedback for this movie changes anywhere in the app.
+    const onChange = (e: Event) => {
+      const detail = (e as CustomEvent).detail as { tmdbId?: number } | undefined;
+      if (!detail?.tmdbId || detail.tmdbId === movieId) load();
+    };
+    window.addEventListener("pick-feedback-changed", onChange);
+    window.addEventListener("pick-watchlist-added", load);
+
+    return () => {
+      cancelled = true;
+      window.removeEventListener("pick-feedback-changed", onChange);
+      window.removeEventListener("pick-watchlist-added", load);
+    };
+  }, [movie.id, user]);
 
   const requireAuth = () => {
     if (!user) { toast.info("Connecte-toi pour enrichir ton profil !"); return false; }
