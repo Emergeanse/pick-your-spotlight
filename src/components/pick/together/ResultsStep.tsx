@@ -7,13 +7,28 @@ import MovieActionBar from "@/components/pick/MovieActionBar";
 import FeedbackBadge from "@/components/pick/FeedbackBadge";
 import { useMovieInteractions } from "@/hooks/use-movie-interactions";
 
+export type RecommendationReasonType =
+  | "session_wish"
+  | "taste_match"
+  | "constraint_ok"
+  | "tonight_fit";
+
 interface GroupRecommendation {
   movie: MovieDetail;
   groupScore: number;
   reason: string;
+  reasonType?: RecommendationReasonType;
+  reasonText?: string;
   memberNotes: Record<string, string>;
   providers: { name: string; logo_path: string; provider_id: number }[];
 }
+
+const REASON_LABELS: Record<RecommendationReasonType, string> = {
+  session_wish: "Envie du moment respectée",
+  taste_match: "Goût compatible",
+  constraint_ok: "Contrainte respectée",
+  tonight_fit: "Bon match pour ce soir",
+};
 
 interface ResultsStepProps {
   hero: GroupRecommendation;
@@ -113,10 +128,19 @@ const ResultsStep = ({ hero, alternatives, selectedCount, heroReaction, sessionI
             </div>
           </motion.div>
 
+          {hero.reasonType && (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.65 }}
+              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 mb-2"
+            >
+              <span className="text-primary text-[10px] font-sans font-semibold uppercase tracking-wide">
+                {REASON_LABELS[hero.reasonType]}
+              </span>
+            </motion.div>
+          )}
           <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.7 }}
             className="text-foreground/50 text-[13px] font-sans text-center leading-relaxed max-w-sm mb-3 italic"
           >
-            "{hero.reason}"
+            "{hero.reasonText || hero.reason}"
           </motion.p>
 
           {hero.providers && hero.providers.length > 0 && (
@@ -213,12 +237,17 @@ const ResultsStep = ({ hero, alternatives, selectedCount, heroReaction, sessionI
                     )}
                     <div className="flex-1 min-w-0">
                       <h3 className="text-sm font-serif text-foreground leading-tight mb-1 truncate">{getDisplayTitle(rec.movie)}</h3>
-                      <div className="flex items-center gap-1.5 text-foreground/30 text-[10px] font-sans mb-1.5">
+                      <div className="flex items-center gap-1.5 text-foreground/30 text-[10px] font-sans mb-1">
                         <span>{getYear(rec.movie)}</span>
                         {rec.movie.vote_average > 0 && (
                           <span className="flex items-center gap-0.5"><Star className="w-2.5 h-2.5 fill-gold text-gold" />{rec.movie.vote_average.toFixed(1)}</span>
                         )}
                       </div>
+                      {rec.reasonType && (
+                        <div className="text-primary/70 text-[10px] font-sans font-medium mb-1.5 truncate">
+                          {REASON_LABELS[rec.reasonType]}
+                        </div>
+                      )}
                       <div className="flex items-center gap-2">
                         <div className="flex-1 h-1 rounded-full bg-muted overflow-hidden">
                           <div className="h-full rounded-full bg-primary/60" style={{ width: `${rec.groupScore}%` }} />

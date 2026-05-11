@@ -5,43 +5,45 @@ import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import BrandHeader from "@/components/pick/BrandHeader";
-import { listMembers } from "@/lib/group-sessions";
 
 import type { MovieDetail } from "@/lib/tmdb";
 import { addToWatchlist } from "@/lib/watchlist";
-import { likeMovie } from "@/lib/liked-movies";
 import {
   createGroupSession,
   addGuestMember,
   selectGroupSessionFilm,
+  setSessionContext,
+  updateGroupSessionStatus,
+  listMembers,
 } from "@/lib/group-sessions";
 import {
   createRecommendationSession,
   logRecommendationEvent,
   completeSession,
-  abandonSession,
 } from "@/lib/sessions";
+import { parsePickPrompt, type ParsedPickPrompt } from "@/lib/parse-prompt";
 
-// Sub-components
 import LandingStep from "@/components/pick/together/LandingStep";
-import WhoStep from "@/components/pick/together/WhoStep";
-import type { Friend, Guest } from "@/components/pick/together/WhoStep";
-import MediaStep from "@/components/pick/together/MediaStep";
-import type { MediaChoice } from "@/components/pick/together/MediaStep";
-import MoodStep from "@/components/pick/together/MoodStep";
+import PromptStep, { type QuickGuest } from "@/components/pick/together/PromptStep";
+import ReformulationStep from "@/components/pick/together/ReformulationStep";
+import ClarifyStep from "@/components/pick/together/ClarifyStep";
 import LoadingStep from "@/components/pick/together/LoadingStep";
-import ResultsStep from "@/components/pick/together/ResultsStep";
-import type { GroupRecommendation } from "@/components/pick/together/ResultsStep";
+import ResultsStep, { type GroupRecommendation } from "@/components/pick/together/ResultsStep";
+import DecisionStep from "@/components/pick/together/DecisionStep";
 
-type FlowStep = "landing" | "who" | "mood" | "loading" | "results";
+type FlowStep =
+  | "landing"
+  | "prompt"
+  | "reformulate"
+  | "clarify"
+  | "loading"
+  | "results"
+  | "decision";
 
 const LOADING_MESSAGES = [
-  "J'analyse vos profils cinématographiques…",
-  "Je croise vos goûts et vos envies…",
-  "Le compromis parfait, ça se mérite…",
-  "Je cherche LE film qui plaira à tout le monde…",
-  "Presque… je peaufine ma sélection…",
-  "Voilà, j'ai trouvé quelque chose de spécial…",
+  "Pick croise vos envies…",
+  "On cherche le bon compromis…",
+  "Presque, je peaufine la sélection…",
 ];
 
 const PickTogether = () => {
@@ -49,279 +51,195 @@ const PickTogether = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const resumeSessionId = searchParams.get("session");
+
   const [step, setStep] = useState<FlowStep>("landing");
-  const [friends, setFriends] = useState<Friend[]>([]);
-  const [selectedFriendIds, setSelectedFriendIds] = useState<Set<string>>(new Set());
-  const [guests, setGuests] = useState<Guest[]>([]);
-  const [mood, setMood] = useState<string | null>(null);
-  const [mediaChoice, setMediaChoice] = useState<MediaChoice>("both");
-  const [loading, setLoading] = useState(false);
-  const [loadingMsg, setLoadingMsg] = useState("");
-  const [recommendations, setRecommendations] = useState<GroupRecommendation[]>([]);
-  const [heroReaction, setHeroReaction] = useState<"like" | "meh" | "reject" | null>(null);
-  const [sessionInviteCode, setSessionInviteCode] = useState<string | null>(null);
   const [groupSessionId, setGroupSessionId] = useState<string | null>(null);
   const [recoSessionId, setRecoSessionId] = useState<string | null>(null);
   const [creatingSession, setCreatingSession] = useState(false);
-  const [realtimeMembers, setRealtimeMembers] = useState<{ id: string; name: string }[]>([]);
-  const [mediaStep, setMediaStep] = useState(false);
-  const [scheduledFor, setScheduledFor] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!user) return;
-    loadFriends();
-  }, [user]);
+  const [prompt, setPrompt] = useState("");
+  const [guests, setGuests] = useState<QuickGuest[]>([]);
+  const [parsed, setParsed] = useState<ParsedPickPrompt | null>(null);
+  const [parseLoading, setParseLoading] = useState(false);
 
-  // Resume an existing group_sessions row when ?session= is provided
+  const [loadingMsg, setLoadingMsg] = useState("");
+  const [recommendations, setRecommendations] = useState<GroupRecommendation[]>([]);
+  const [heroReaction, setHeroReaction] = useState<"like" | "meh" | "reject" | null>(null);
+  const [chosen, setChosen] = useState<GroupRecommendation | null>(null);
+
+  // Resume an existing session via ?session=
   useEffect(() => {
     if (!user || !resumeSessionId || groupSessionId) return;
-    let cancelled = false;
     (async () => {
       try {
         const { data: session, error } = await supabase
           .from("group_sessions")
-          .select("id, invite_code, status, scheduled_for, decision_mode, name, title")
+          .select("id, status, context_json")
           .eq("id", resumeSessionId)
           .maybeSingle();
-        if (error || !session || cancelled) return;
+        if (error || !session) return;
         setGroupSessionId(session.id as string);
-        setSessionInviteCode((session as any).invite_code ?? null);
-        setScheduledFor((session as any).scheduled_for ?? null);
-
-        // Hydrate already-joined members
-        const members = await listMembers(session.id as string);
-        const others = (members as any[]).filter((m) => m.user_id && m.user_id !== user.id);
-        const guestMembers = (members as any[]).filter((m) => !m.user_id && m.guest_name);
-        if (others.length > 0) {
-          const { data: profs } = await supabase
-            .from("profiles")
-            .select("id, display_name")
-            .in("id", others.map((m: any) => m.user_id));
-          const list = (profs ?? []).map((p: any) => ({
-            id: p.id,
-            name: p.display_name || "Quelqu'un",
-          }));
-          setRealtimeMembers(list);
-        }
-        if (guestMembers.length > 0) {
-          setGuests(guestMembers.map((m: any) => ({
-            id: m.id,
-            name: m.guest_name,
-            favoriteGenres: [],
-          })));
-        }
-        // Subscribe to realtime joins
-        supabase
-          .channel(`session-${session.id}-resume`)
-          .on("postgres_changes", {
-            event: "INSERT",
-            schema: "public",
-            table: "group_session_members",
-            filter: `session_id=eq.${session.id}`,
-          }, async (payload: any) => {
-            const memberId = payload.new.user_id;
-            const guestName = payload.new.guest_name;
-            if (memberId && memberId !== user.id) {
-              const { data: prof } = await supabase
-                .from("profiles").select("display_name").eq("id", memberId).single();
-              const name = (prof as any)?.display_name || "Quelqu'un";
-              setRealtimeMembers(prev => prev.find(p => p.id === memberId) ? prev : [...prev, { id: memberId, name }]);
-              toast.success(`${name} a rejoint la soirée !`);
-            } else if (guestName) {
-              setRealtimeMembers(prev => [...prev, { id: `guest-${Date.now()}`, name: guestName }]);
-            }
-          })
-          .subscribe();
-
-        setStep("who");
+        const ctx = ((session as any).context_json ?? {}) as any;
+        if (ctx.prompt) setPrompt(ctx.prompt as string);
+        if (ctx.parsed) setParsed(ctx.parsed as ParsedPickPrompt);
+        // Hydrate guests from members table
+        try {
+          const members = await listMembers(session.id as string);
+          const guestMembers = (members as any[]).filter((m) => !m.user_id && m.guest_name);
+          if (guestMembers.length > 0) {
+            setGuests(
+              guestMembers.map((m: any) => ({
+                id: m.id,
+                name: m.guest_name,
+                hint: (m.guest_preferences_json?.favoriteGenres ?? [])[0],
+              }))
+            );
+          }
+        } catch { /* ignore */ }
+        setStep(ctx.parsed ? "reformulate" : "prompt");
       } catch (e) {
         console.warn("Failed to resume group session", e);
       }
     })();
-    return () => { cancelled = true; };
   }, [user, resumeSessionId, groupSessionId]);
 
-  const loadFriends = async () => {
-    if (!user) return;
-    const { data: friendships } = await supabase
-      .from("friendships" as any)
-      .select("id, requester_id, addressee_id, status")
-      .eq("status", "accepted")
-      .or(`requester_id.eq.${user.id},addressee_id.eq.${user.id}`);
-
-    if (!friendships || friendships.length === 0) { setFriends([]); return; }
-
-    const otherIds = (friendships as any[]).map((f: any) =>
-      f.requester_id === user.id ? f.addressee_id : f.requester_id
-    );
-
-    const { data: profiles } = await supabase
-      .from("profiles")
-      .select("id, display_name, friend_code, avatar_url")
-      .in("id", otherIds);
-
-    setFriends(
-      (profiles || []).map((p: any) => ({
-        id: p.id,
-        displayName: p.display_name || "Ami",
-        friendCode: p.friend_code || "",
-        avatarUrl: p.avatar_url,
-      }))
-    );
+  const ensureGroupSession = async (): Promise<string> => {
+    if (groupSessionId) return groupSessionId;
+    const session = await createGroupSession({
+      title: "Soirée ciné",
+      decision_mode: "instant",
+    });
+    const sid = (session as any).id as string;
+    setGroupSessionId(sid);
+    await updateGroupSessionStatus(sid, "draft");
+    return sid;
   };
 
-  const handleCreateSoiree = async () => {
+  const handleStart = async () => {
     if (!user) return;
     setCreatingSession(true);
     try {
-      const session = await createGroupSession({
-        title: "Soirée ciné",
-        decision_mode: "instant",
-      });
-      const sessionId = (session as any).id;
-      const inviteCode = (session as any).invite_code;
-      setGroupSessionId(sessionId);
-      setSessionInviteCode(inviteCode);
-
-      supabase
-        .channel(`session-${sessionId}`)
-        .on("postgres_changes", {
-          event: "INSERT",
-          schema: "public",
-          table: "group_session_members",
-          filter: `session_id=eq.${sessionId}`,
-        }, async (payload: any) => {
-          const memberId = payload.new.user_id;
-          const guestName = payload.new.guest_name;
-          if (memberId && memberId !== user.id) {
-            const { data: prof } = await supabase
-              .from("profiles")
-              .select("display_name")
-              .eq("id", memberId)
-              .single();
-            const name = (prof as any)?.display_name || "Quelqu'un";
-            setRealtimeMembers(prev => [...prev, { id: memberId, name }]);
-            toast.success(`${name} a rejoint la soirée !`);
-          } else if (guestName) {
-            setRealtimeMembers(prev => [...prev, { id: `guest-${Date.now()}`, name: guestName }]);
-          }
-        })
-        .subscribe();
-
-      setStep("who");
+      await ensureGroupSession();
+      setStep("prompt");
     } catch (e) {
       console.error(e);
-      toast.error("Erreur lors de la création de la session");
+      toast.error("Impossible de démarrer la soirée");
     } finally {
       setCreatingSession(false);
     }
   };
 
-  const sessionInviteUrl = sessionInviteCode
-    ? `https://pick-your-spotlight.lovable.app/join?session=${sessionInviteCode}`
-    : "";
-
-  const handleShareSession = async () => {
-    if (!sessionInviteUrl) return;
-    if (navigator.share) {
-      try { await navigator.share({ title: "Soirée ciné Pick", text: "Rejoins ma soirée ciné ! 🍿", url: sessionInviteUrl }); } catch {}
-    } else {
-      navigator.clipboard.writeText(sessionInviteUrl);
-      toast.success("Lien copié !");
+  const handlePromptSubmit = async (text: string, quickGuests: QuickGuest[]) => {
+    if (!user) return;
+    setPrompt(text);
+    setGuests(quickGuests);
+    setParseLoading(true);
+    try {
+      const sid = await ensureGroupSession();
+      const result = await parsePickPrompt(text);
+      if (!result) {
+        toast.error("Pick n'a pas compris, reformule en quelques mots ?");
+        setParseLoading(false);
+        return;
+      }
+      setParsed(result);
+      await setSessionContext(sid, {
+        prompt: text,
+        sessionWish: result.sessionWish,
+        parsed: result,
+      });
+      await updateGroupSessionStatus(sid, "collecting_preferences");
+      // Persist guests as session-only members
+      for (const g of quickGuests) {
+        try {
+          await addGuestMember(sid, {
+            name: g.name,
+            preferences: g.hint ? { favoriteGenres: [g.hint] } : {},
+          });
+        } catch { /* ignore */ }
+      }
+      if (result.blocking) {
+        setStep("clarify");
+      } else {
+        setStep("reformulate");
+      }
+    } catch (e) {
+      console.error(e);
+      toast.error("Erreur en analysant ton envie");
+    } finally {
+      setParseLoading(false);
     }
   };
 
-  const handleCopyLink = () => {
-    if (!sessionInviteUrl) return;
-    navigator.clipboard.writeText(sessionInviteUrl);
-    toast.success("Lien copié !");
+  const handleClarifyAnswer = async (answer: string) => {
+    // Re-parse with appended clarification
+    const merged = `${prompt}. ${answer}`;
+    setPrompt(merged);
+    setParseLoading(true);
+    try {
+      const result = await parsePickPrompt(merged);
+      if (!result) {
+        toast.error("Pick n'a pas compris");
+        return;
+      }
+      setParsed(result);
+      if (groupSessionId) {
+        await setSessionContext(groupSessionId, {
+          prompt: merged,
+          sessionWish: result.sessionWish,
+          parsed: result,
+        });
+      }
+      setStep("reformulate");
+    } finally {
+      setParseLoading(false);
+    }
   };
 
-  const toggleFriend = (id: string) => {
-    const totalOthers = selectedFriendIds.size + guests.length;
-    setSelectedFriendIds(prev => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else if (totalOthers < 5) next.add(id);
-      else toast.info("Maximum 6 personnes");
-      return next;
-    });
-  };
-
-  const addGuest = (guest: Guest) => {
-    const totalOthers = selectedFriendIds.size + guests.length;
-    if (totalOthers >= 5) { toast.info("Maximum 6 personnes"); return; }
-    setGuests(prev => [...prev, guest]);
-  };
-
-  const removeGuest = (id: string) => {
-    setGuests(prev => prev.filter(g => g.id !== id));
-  };
-
-  const handleContinueFromWho = () => {
-    if (selectedFriendIds.size === 0 && guests.length === 0) return;
-    setMediaStep(true);
-  };
-
-  const handleMediaSelect = (choice: MediaChoice) => {
-    setMediaChoice(choice);
-    setMediaStep(false);
-    setStep("mood");
-  };
-
-  const handleStartSearch = async (skipMood = false) => {
-    if (!user || (selectedFriendIds.size === 0 && guests.length === 0)) return;
+  const handleConfirmAndSearch = async () => {
+    if (!user || !parsed) return;
     setStep("loading");
-    setLoading(true);
-    let msgIdx = 0;
     setLoadingMsg(LOADING_MESSAGES[0]);
-    const msgInterval = setInterval(() => {
-      msgIdx = (msgIdx + 1) % LOADING_MESSAGES.length;
-      setLoadingMsg(LOADING_MESSAGES[msgIdx]);
-    }, 3000);
+    let i = 0;
+    const tick = setInterval(() => {
+      i = (i + 1) % LOADING_MESSAGES.length;
+      setLoadingMsg(LOADING_MESSAGES[i]);
+    }, 2200);
 
     try {
-      // Persist guests on the group session (best-effort)
-      if (groupSessionId && guests.length > 0) {
-        for (const g of guests) {
-          try {
-            await addGuestMember(groupSessionId, {
-              name: g.name,
-              age_range: g.age ? `${g.age}` : undefined,
-              profile_text: g.gender || undefined,
-              preferences: { favoriteGenres: g.favoriteGenres, gender: g.gender, age: g.age },
-            });
-          } catch { /* ignore */ }
-        }
-      }
-
-      // Create a recommendation_session linked to the group
+      const sid = await ensureGroupSession();
+      // Create reco session for tracking
       let recoId = recoSessionId;
       try {
         recoId = await createRecommendationSession({
           audience_type: "group",
           decision_mode: "instant",
-          group_session_id: groupSessionId,
-          source: "group",
-          filters_snapshot: { mediaType: mediaChoice, mood: skipMood ? null : mood },
+          group_session_id: sid,
+          source: "group_now",
+          prompt_text: prompt,
+          filters_snapshot: {
+            mediaType: parsed.mediaType,
+            sessionWish: parsed.sessionWish,
+            participantHints: parsed.participantHints,
+          },
         });
         setRecoSessionId(recoId);
       } catch (e) { console.warn("createRecommendationSession failed", e); }
 
-      const memberIds = [user.id, ...selectedFriendIds];
-      const guestProfiles = guests.map(g => ({
-        name: g.name, age: g.age, gender: g.gender, favoriteGenres: g.favoriteGenres,
-      }));
       const { data, error } = await supabase.functions.invoke("group-recommend", {
         body: {
-          memberIds,
-          guests: guestProfiles.length > 0 ? guestProfiles : undefined,
-          mood: skipMood ? undefined : mood || undefined,
-          mediaType: mediaChoice,
+          memberIds: [user.id],
+          guests: guests.map((g) => ({ name: g.name, hint: g.hint })),
+          mediaType: parsed.mediaType,
+          mood: parsed.sessionWish.mood,
+          sessionWish: parsed.sessionWish,
+          participantHints: parsed.participantHints,
+          audience: "group_now",
         },
       });
-      clearInterval(msgInterval);
+      clearInterval(tick);
       if (error) throw error;
+
       if (data?.recommendations?.length > 0) {
         setRecommendations(data.recommendations);
         if (recoId) {
@@ -331,24 +249,25 @@ const PickTogether = () => {
               tmdb_id: rec.movie.id,
               title: rec.movie.title || rec.movie.name || "",
               rank_position: idx + 1,
-              source: "group",
-              context: { groupScore: rec.groupScore },
+              source: "group_now",
+              context: { groupScore: rec.groupScore, reasonType: (rec as any).reasonType },
             }).catch(() => {});
           });
         }
+        await updateGroupSessionStatus(sid, "ready");
         setStep("results");
       } else {
         toast.error("Aucune recommandation trouvée");
-        setStep("who");
+        setStep("reformulate");
       }
     } catch (e: any) {
-      clearInterval(msgInterval);
+      clearInterval(tick);
       const msg = e?.message || "";
       if (msg.includes("429")) toast.error("Trop de requêtes, réessaie dans un instant.");
       else if (msg.includes("402")) toast.error("Crédits IA épuisés.");
       else toast.error("Erreur lors de la recherche");
-      setStep("who");
-    } finally { setLoading(false); }
+      setStep("reformulate");
+    }
   };
 
   const handleReject = () => {
@@ -356,11 +275,12 @@ const PickTogether = () => {
     setTimeout(() => {
       setHeroReaction(null);
       setRecommendations([]);
-      handleStartSearch();
-    }, 800);
+      handleConfirmAndSearch();
+    }, 600);
   };
 
   const handleSelectMovie = async (rec: GroupRecommendation) => {
+    setChosen(rec);
     const meta = {
       title: rec.movie.title || rec.movie.name || "Sans titre",
       media_type: ((rec.movie as any).media_type === "tv" ? "tv" : "movie") as "movie" | "tv",
@@ -372,10 +292,18 @@ const PickTogether = () => {
       popularity: (rec.movie as any).popularity ?? null,
     };
     try {
-      if (groupSessionId) await selectGroupSessionFilm(groupSessionId, rec.movie.id, meta);
+      if (groupSessionId) {
+        await selectGroupSessionFilm(groupSessionId, rec.movie.id, meta);
+        await updateGroupSessionStatus(groupSessionId, "completed");
+      }
       if (recoSessionId) await completeSession(recoSessionId, rec.movie.id, meta);
     } catch (e) { console.warn("complete group session failed", e); }
-    sessionStorage.setItem("pick-fab-movie", JSON.stringify(rec.movie));
+    setStep("decision");
+  };
+
+  const handleLaunch = () => {
+    if (!chosen) return;
+    sessionStorage.setItem("pick-fab-movie", JSON.stringify(chosen.movie));
     navigate("/app?from=pick-chat");
   };
 
@@ -383,84 +311,70 @@ const PickTogether = () => {
     if (!user) return;
     try {
       await addToWatchlist(movie);
-      toast.success("Ajouté à ta watchlist !");
+      toast.success("Ajouté à ta watclhist !");
     } catch { toast.error("Erreur"); }
   };
 
-  const selectedCount = selectedFriendIds.size + guests.length + 1;
-  const hero = recommendations[0];
-  const alternatives = recommendations.slice(1, 3);
-  const selectedFriends = friends.filter(f => selectedFriendIds.has(f.id));
-
   const goBack = () => {
-    if (step === "results") { setStep("who"); setRecommendations([]); setHeroReaction(null); }
-    else if (step === "mood") { setStep("who"); }
-    else if (mediaStep) { setMediaStep(false); }
-    else if (step === "who") { setStep("landing"); }
+    if (step === "decision") setStep("results");
+    else if (step === "results") { setStep("reformulate"); setRecommendations([]); setHeroReaction(null); }
+    else if (step === "clarify" || step === "reformulate") setStep("prompt");
+    else if (step === "prompt") setStep("landing");
     else navigate(-1);
   };
+
+  const participantNames = [
+    user?.user_metadata?.display_name || "Toi",
+    ...guests.map((g) => g.name),
+  ];
+
+  const hero = recommendations[0];
+  const alternatives = recommendations.slice(1, 5);
 
   return (
     <div className="fixed inset-0 bg-background overflow-hidden">
       <BrandHeader showBack onBack={goBack} />
 
-      {step === "who" && scheduledFor && (
-        <div className="absolute top-[60px] left-0 right-0 z-20 px-4">
-          <div className="max-w-md mx-auto rounded-xl bg-primary/10 border border-primary/30 px-3 py-2 text-center text-xs text-primary">
-            Salon d'attente · Séance prévue le{" "}
-            {new Date(scheduledFor).toLocaleString("fr-FR", {
-              day: "numeric", month: "short", hour: "2-digit", minute: "2-digit",
-            })}
-          </div>
-        </div>
-      )}
-
       <AnimatePresence mode="wait">
         {step === "landing" && (
-          <LandingStep onCreateSoiree={handleCreateSoiree} creating={creatingSession} />
+          <LandingStep onCreateSoiree={handleStart} creating={creatingSession} />
         )}
 
-        {step === "who" && !mediaStep && (
-          <WhoStep
-            friends={friends}
-            selectedFriendIds={selectedFriendIds}
-            guests={guests}
-            sessionInviteCode={sessionInviteCode}
-            sessionInviteUrl={sessionInviteUrl}
-            realtimeMembers={realtimeMembers}
-            onToggleFriend={toggleFriend}
-            onAddGuest={addGuest}
-            onRemoveGuest={removeGuest}
-            onContinue={handleContinueFromWho}
-            onShareSession={handleShareSession}
-            onCopyLink={handleCopyLink}
-            onNavigateToProfile={() => navigate("/app/profile")}
+        {step === "prompt" && (
+          <PromptStep
+            initialPrompt={prompt}
+            initialGuests={guests}
+            loading={parseLoading}
+            onSubmit={handlePromptSubmit}
           />
         )}
 
-        {step === "who" && mediaStep && (
-          <MediaStep onSelect={handleMediaSelect} />
+        {step === "reformulate" && parsed && (
+          <ReformulationStep
+            parsed={parsed}
+            loading={parseLoading}
+            onConfirm={handleConfirmAndSearch}
+            onEdit={() => setStep("prompt")}
+          />
         )}
 
-        {step === "mood" && (
-          <MoodStep
-            mood={mood}
-            onSetMood={setMood}
-            onStart={handleStartSearch}
-            selectedCount={selectedCount}
-            selectedFriends={selectedFriends}
+        {step === "clarify" && (
+          <ClarifyStep
+            question={parsed?.blocking || "Pick a besoin d'une précision."}
+            onAnswer={handleClarifyAnswer}
+            onSkip={() => setStep("reformulate")}
           />
         )}
 
         {step === "loading" && (
-          <LoadingStep message={loadingMsg} selectedFriends={selectedFriends} />
+          <LoadingStep message={loadingMsg} selectedFriends={[]} />
         )}
 
         {step === "results" && hero && (
           <ResultsStep
             hero={hero}
             alternatives={alternatives}
-            selectedCount={selectedCount}
+            selectedCount={participantNames.length}
             heroReaction={heroReaction}
             sessionId={recoSessionId}
             onReject={handleReject}
@@ -469,13 +383,20 @@ const PickTogether = () => {
             onRestart={() => {
               setRecommendations([]);
               setHeroReaction(null);
-              setStep("who");
+              setStep("prompt");
             }}
           />
         )}
-      </AnimatePresence>
 
-      
+        {step === "decision" && chosen && (
+          <DecisionStep
+            movie={chosen.movie}
+            participantNames={participantNames}
+            onLaunch={handleLaunch}
+            onChangeMind={() => setStep("results")}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 };

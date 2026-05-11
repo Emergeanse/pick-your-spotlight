@@ -1,6 +1,58 @@
 import { supabase } from "@/integrations/supabase/client";
 import { getOrCreateCatalogItem, type CatalogMeta } from "@/lib/catalog";
 import type { DecisionMode } from "@/lib/sessions";
+import type { ParsedPickPrompt, SessionWish } from "@/lib/parse-prompt";
+
+/**
+ * Business statuses for group_sessions (free-form text column).
+ * draft -> collecting_preferences -> ready -> completed | cancelled
+ * (scheduled is reserved for PlanSession-driven sessions)
+ */
+export type GroupSessionStatus =
+  | "draft"
+  | "collecting_preferences"
+  | "ready"
+  | "scheduled"
+  | "active"
+  | "completed"
+  | "cancelled";
+
+/** Update business status of a group session. */
+export async function updateGroupSessionStatus(sessionId: string, status: GroupSessionStatus) {
+  const { error } = await supabase
+    .from("group_sessions")
+    .update({ status } as any)
+    .eq("id", sessionId);
+  if (error) throw error;
+}
+
+/**
+ * Persist the EPHEMERAL session wish (envie du moment) into context_json.
+ * NEVER write this into user_preferences — it is a one-shot intent.
+ */
+export async function setSessionContext(
+  sessionId: string,
+  payload: { prompt?: string | null; sessionWish?: SessionWish | null; parsed?: ParsedPickPrompt | null }
+) {
+  const { data: existing } = await supabase
+    .from("group_sessions")
+    .select("context_json")
+    .eq("id", sessionId)
+    .maybeSingle();
+  const prev = ((existing as any)?.context_json ?? {}) as Record<string, unknown>;
+  const merged = {
+    ...prev,
+    ...(payload.prompt !== undefined ? { prompt: payload.prompt } : {}),
+    ...(payload.sessionWish !== undefined ? { session_wish: payload.sessionWish } : {}),
+    ...(payload.parsed !== undefined ? { parsed: payload.parsed } : {}),
+  };
+  const { error } = await supabase
+    .from("group_sessions")
+    .update({ context_json: merged } as any)
+    .eq("id", sessionId);
+  if (error) throw error;
+}
+
 
 export interface CreateGroupSessionInput {
   title?: string;

@@ -1,24 +1,38 @@
 import { supabase } from "@/integrations/supabase/client";
 
+export interface SessionWish {
+  summary: string | null;
+  genres: string[];
+  mood: string | null;
+  keywords: string[];
+  era: string | null;
+  maxDuration: number | null;
+}
+
+export interface ParticipantHint {
+  name: string | null;
+  ageHint: string | null;
+  relation: string | null;
+  genres: string[];
+  excludedGenres: string[];
+  era: string | null;
+  notes: string | null;
+}
+
 export interface ParsedPickPrompt {
   audience: "solo" | "group";
   mediaType: "movie" | "tv" | "both";
-  mood: string | null;
-  genres: string[];
-  excludedGenres: string[];
-  maxDuration: number | null;
+  sessionWish: SessionWish;
+  participantHints: ParticipantHint[];
   timeOfDay: "now" | "tonight" | "later" | null;
   scheduledHint: string | null;
-  guests: { name: string | null; ageHint: string | null; relation: string | null }[];
-  groupSize: number | null;
   platforms: string[];
-  keywords: string[];
+  blocking: string | null;
 }
 
 /**
- * Calls the parse-pick-prompt edge function to extract structured intent
- * from a free-form user phrase. Returns null on error so the caller can
- * fall back gracefully (the original prompt remains stored as raw text).
+ * Calls parse-pick-prompt edge function. Separates session wish (ephemeral)
+ * from participant hints (durable preference candidates — never auto-persisted).
  */
 export async function parsePickPrompt(prompt: string): Promise<ParsedPickPrompt | null> {
   const trimmed = prompt?.trim();

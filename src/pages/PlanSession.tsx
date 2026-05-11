@@ -45,12 +45,9 @@ const PlanSession = () => {
       const filtersSnapshot: Record<string, unknown> = parsed
         ? {
             mediaType: parsed.mediaType,
-            mood: parsed.mood,
-            genres: parsed.genres,
-            excludedGenres: parsed.excludedGenres,
-            maxDuration: parsed.maxDuration,
+            sessionWish: parsed.sessionWish,
+            participantHints: parsed.participantHints,
             platforms: parsed.platforms,
-            keywords: parsed.keywords,
           }
         : {};
 
@@ -62,12 +59,12 @@ const PlanSession = () => {
           title: title || "Soirée ciné",
           decision_mode: "planned",
           scheduled_for: scheduledIso,
-          mood: parsed?.mood ?? null,
-          context_json: { prompt, parsed },
+          mood: parsed?.sessionWish?.mood ?? null,
+          context_json: { prompt, parsed, session_wish: parsed?.sessionWish ?? null },
         });
-        // Pre-add detected guests on a best-effort basis
-        if (parsed?.guests?.length) {
-          for (const g of parsed.guests) {
+        // Pre-add detected participants as guests (best-effort) — hints are session-only
+        if (parsed?.participantHints?.length) {
+          for (const g of parsed.participantHints) {
             if (!g.name) continue;
             try {
               await addGuestMember((session as any).id, {
