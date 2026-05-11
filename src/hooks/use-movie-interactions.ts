@@ -69,6 +69,9 @@ export function useMovieInteractions(
     const watchedIds = new Set(ids);
     const onChange = (e: Event) => {
       const detail = (e as CustomEvent).detail as { tmdbId?: number } | undefined;
+      // Invalidate cache for the mutated id so post-mutation truth wins
+      // (e.g. an "unlike" must clear a stale cached "liked" badge).
+      if (detail?.tmdbId) interactionCache.delete(detail.tmdbId);
       if (!detail?.tmdbId || watchedIds.has(detail.tmdbId)) refresh();
     };
     window.addEventListener("pick-feedback-changed", onChange);
