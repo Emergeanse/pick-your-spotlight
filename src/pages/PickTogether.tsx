@@ -47,6 +47,8 @@ const LOADING_MESSAGES = [
 const PickTogether = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const resumeSessionId = searchParams.get("session");
   const [step, setStep] = useState<FlowStep>("landing");
   const [friends, setFriends] = useState<Friend[]>([]);
   const [selectedFriendIds, setSelectedFriendIds] = useState<Set<string>>(new Set());
