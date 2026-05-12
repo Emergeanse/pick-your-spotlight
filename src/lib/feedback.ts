@@ -149,7 +149,7 @@ export async function getFeedbackBatch(
   return result;
 }
 
-export type PrimaryStatus = "love" | "like" | "seen" | "not_for_me" | "dislike" | "skip" | "unknown";
+export type PrimaryStatus = "love" | "like" | "not_for_me" | "dislike" | "skip" | "unknown";
 
 export interface MovieInteractionState {
   primaryStatus: PrimaryStatus | null;
@@ -162,9 +162,8 @@ export interface MovieInteractionState {
 }
 
 const PRIMARY_RANK: Record<PrimaryStatus, number> = {
-  love: 7,
-  like: 6,
-  seen: 5,
+  love: 6,
+  like: 5,
   not_for_me: 4,
   dislike: 3,
   skip: 2,
@@ -222,6 +221,8 @@ export async function getInteractionStateBatch(
 
     if (type === "watchlist") {
       state.watchlist = true;
+    } else if (type === "seen") {
+      state.seen = true;
     } else {
       const candidate = type as PrimaryStatus;
       const currentRank = state.primaryStatus ? PRIMARY_RANK[state.primaryStatus] : 0;
@@ -231,7 +232,6 @@ export async function getInteractionStateBatch(
 
     state.loved = state.primaryStatus === "love";
     state.liked = state.primaryStatus === "like" || state.primaryStatus === "love";
-    state.seen = state.primaryStatus === "seen";
     state.notForMe = state.primaryStatus === "not_for_me";
     state.hasInteraction = !!state.primaryStatus || state.watchlist;
 
