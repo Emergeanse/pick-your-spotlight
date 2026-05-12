@@ -12,7 +12,8 @@ interface DecisionStepProps {
   onChangeMind: () => void;
 }
 
-const DecisionStep = ({ movie, participantNames, onLaunch, onChangeMind }: DecisionStepProps) => (
+const DecisionStep = ({ movie, participantNames, onLaunch, onChangeMind }: DecisionStepProps) => {
+const interaction = useMovieInteraction(movie.id);
   <motion.div
     key="decision"
     initial={{ opacity: 0, scale: 0.96 }}
