@@ -37,6 +37,17 @@ export interface FeedbackContext {
   source?: string;
 }
 
+const DEBUG_FEEDBACK = false;
+
+function feedbackLog(message: string, payload?: unknown) {
+  if (!DEBUG_FEEDBACK) return;
+  console.log(`[feedback] ${message}`, payload ?? "");
+}
+
+function feedbackError(message: string, payload?: unknown) {
+  console.error(`[feedback] ${message}`, payload ?? "");
+}
+
 function toLegacyAction(type: FeedbackType): string {
   switch (type) {
     case "love":
@@ -51,7 +62,6 @@ function toLegacyAction(type: FeedbackType): string {
     case "skip":
       return "skipped";
     case "unknown":
-      return "skipped";
     default:
       return "skipped";
   }
@@ -95,7 +105,12 @@ export async function getFeedback(
     .limit(1)
     .maybeSingle();
 
-  if (error || !data) return null;
+  if (error) {
+    feedbackError("getFeedback failed", { tmdbId, itemId, mediaType, error });
+    return null;
+  }
+
+  if (!data) return null;
 
   const type = (data.feedback_type ?? data.label) as FeedbackType;
   return { label: type, feedback_type: type, score: data.score ?? 0 };
@@ -126,7 +141,10 @@ export async function getFeedbackBatch(
     .in("item_id", itemIds)
     .order("created_at", { ascending: false });
 
-  if (error) return {};
+  if (error) {
+    feedbackError("getFeedbackBatch failed", { tmdbIds, mediaType, error });
+    return {};
+  }
 
   const result: Record<number, FeedbackState> = {};
   const seen = new Set<string>();
@@ -205,7 +223,14 @@ export async function getInteractionStateBatch(
     .in("item_id", itemIds)
     .order("created_at", { ascending: false });
 
-  if (error) return {};
+  if (error) {
+    feedbackError("getInteractionStateBatch failed", {
+      lookups,
+      itemIds,
+      error,
+    });
+    return {};
+  }
 
   const out: Record<number, MovieInteractionState> = {};
 
@@ -244,6 +269,8 @@ export async function getInteractionStateBatch(
 function emitFeedbackChange(tmdbId: number, type: FeedbackType | null, mediaType?: CatalogMediaType) {
   if (typeof window === "undefined") return;
 
+  feedbackLog("emitFeedbackChange", { tmdbId, type, mediaType });
+
   window.dispatchEvent(
     new CustomEvent("pick-feedback-changed", {
       detail: { tmdbId, type, mediaType },
@@ -258,7 +285,10 @@ export async function setFeedback(
   ctx?: FeedbackContext,
 ): Promise<void> {
   const userId = (await supabase.auth.getUser()).data.user?.id;
-  if (!userId) throw new Error("No authenticated user");
+  if (!userId) {
+    feedbackError("setFeedback aborted: no user", { tmdbId, type });
+    throw new Error("No authenticated user");
+  }
 
   const normalizedMeta = meta
     ? { ...meta, media_type: normalizeCatalogMediaType(meta.media_type) }
@@ -266,11 +296,26 @@ export async function setFeedback(
 
   const itemId = await getOrCreateCatalogItem(tmdbId, normalizedMeta);
   if (!itemId) {
+    feedbackError("setFeedback aborted: no catalog item", {
+      tmdbId,
+      type,
+      normalizedMeta,
+    });
     throw new Error(`Unable to resolve catalog item for tmdbId=${tmdbId} mediaType=${normalizedMeta.media_type}`);
   }
 
   const score = SCORE_MAP[type];
   const legacyAction = toLegacyAction(type);
+
+  feedbackLog("setFeedback:start", {
+    userId,
+    tmdbId,
+    itemId,
+    type,
+    legacyAction,
+    mediaType: normalizedMeta.media_type,
+    ctx,
+  });
 
   const exclusive: FeedbackType[] = ["like", "love", "not_for_me", "skip", "unknown", "dislike"];
 
@@ -282,7 +327,15 @@ export async function setFeedback(
       .eq("item_id", itemId)
       .in("feedback_type", exclusive);
 
-    if (deleteExclusiveError) throw deleteExclusiveError;
+    if (deleteExclusiveError) {
+      feedbackError("setFeedback delete exclusive failed", {
+        tmdbId,
+        itemId,
+        exclusive,
+        deleteExclusiveError,
+      });
+      throw deleteExclusiveError;
+    }
 
     if (type === "not_for_me") {
       const { error: deleteWatchlistError } = await supabase
@@ -292,7 +345,14 @@ export async function setFeedback(
         .eq("item_id", itemId)
         .eq("feedback_type", "watchlist");
 
-      if (deleteWatchlistError) throw deleteWatchlistError;
+      if (deleteWatchlistError) {
+        feedbackError("setFeedback delete watchlist failed", {
+          tmdbId,
+          itemId,
+          deleteWatchlistError,
+        });
+        throw deleteWatchlistError;
+      }
     }
   } else {
     const { error: deleteSameTypeError } = await supabase
@@ -302,10 +362,18 @@ export async function setFeedback(
       .eq("item_id", itemId)
       .eq("feedback_type", type);
 
-    if (deleteSameTypeError) throw deleteSameTypeError;
+    if (deleteSameTypeError) {
+      feedbackError("setFeedback delete same type failed", {
+        tmdbId,
+        itemId,
+        type,
+        deleteSameTypeError,
+      });
+      throw deleteSameTypeError;
+    }
   }
 
-  const { error: insertError } = await supabase.from("user_item_feedback").insert({
+  const payload = {
     user_id: userId,
     item_id: itemId,
     action: legacyAction,
@@ -315,9 +383,29 @@ export async function setFeedback(
     source: ctx?.source ?? "manual",
     context_type: ctx?.context_type ?? "browse",
     context_id: ctx?.context_id ?? null,
-  } as any);
+  };
 
-  if (insertError) throw insertError;
+  feedbackLog("setFeedback:insert payload", payload);
+
+  const { error: insertError } = await supabase.from("user_item_feedback").insert(payload as any);
+
+  if (insertError) {
+    feedbackError("setFeedback insert failed", {
+      tmdbId,
+      itemId,
+      type,
+      payload,
+      insertError,
+    });
+    throw insertError;
+  }
+
+  feedbackLog("setFeedback:success", {
+    tmdbId,
+    itemId,
+    type,
+    mediaType: normalizedMeta.media_type,
+  });
 
   emitFeedbackChange(tmdbId, type, normalizedMeta.media_type);
 }
@@ -341,7 +429,16 @@ export async function clearFeedbackType(
     .eq("item_id", itemId)
     .in("feedback_type", types);
 
-  if (error) throw error;
+  if (error) {
+    feedbackError("clearFeedbackType failed", {
+      tmdbId,
+      itemId,
+      types,
+      mediaType,
+      error,
+    });
+    throw error;
+  }
 
   emitFeedbackChange(tmdbId, null, mediaType);
 }
@@ -356,7 +453,15 @@ export async function clearFeedback(tmdbId: number, mediaType: CatalogMediaType 
 
   const { error } = await supabase.from("user_item_feedback").delete().eq("user_id", userId).eq("item_id", itemId);
 
-  if (error) throw error;
+  if (error) {
+    feedbackError("clearFeedback failed", {
+      tmdbId,
+      itemId,
+      mediaType,
+      error,
+    });
+    throw error;
+  }
 
   emitFeedbackChange(tmdbId, null, mediaType);
 }
@@ -382,7 +487,10 @@ export async function hasFeedbackType(
     .limit(1)
     .maybeSingle();
 
-  if (error) return false;
+  if (error) {
+    feedbackError("hasFeedbackType failed", { tmdbId, itemId, type, error });
+    return false;
+  }
 
   return !!data;
 }
@@ -400,7 +508,10 @@ export async function listFeedbackByType(type: FeedbackType) {
     .eq("feedback_type", type)
     .order("created_at", { ascending: false });
 
-  if (error) return [];
+  if (error) {
+    feedbackError("listFeedbackByType failed", { type, error });
+    return [];
+  }
 
   return data ?? [];
 }
