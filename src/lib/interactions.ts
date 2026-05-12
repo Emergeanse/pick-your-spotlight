@@ -1,26 +1,25 @@
 import { supabase } from "@/integrations/supabase/client";
+import { getPreferencesSnapshot } from "@/lib/preferences";
 
-export type ActionType = 
-  | "liked" 
-  | "unliked" 
-  | "saved" 
-  | "unsaved" 
-  | "watched" 
-  | "skipped" 
-  | "opened" 
+export type ActionType =
+  | "liked"
+  | "unliked"
+  | "saved"
+  | "unsaved"
+  | "watched"
+  | "skipped"
+  | "opened"
   | "searched"
   | "already_seen"
   | "unsure"
   | "unknown"
   | "watch_clicked"
   | "reviewed"
-  // New enriched rejection types
-  | "rejected_style"     // "Pas mon style"
-  | "rejected_too_long"  // "Trop long"
-  | "rejected_not_tonight" // "Pas ce soir"
-  | "rejected_too_slow"  // "Trop lent"
-  | "rejected_too_intense" // "Trop intense"
-  // Post-watch feedback
+  | "rejected_style"
+  | "rejected_too_long"
+  | "rejected_not_tonight"
+  | "rejected_too_slow"
+  | "rejected_too_intense"
   | "post_watch_loved"
   | "post_watch_good"
   | "post_watch_meh"
@@ -40,11 +39,45 @@ export interface InteractionContext {
   [key: string]: unknown;
 }
 
-export async function trackInteraction(
-  tmdbId: number,
-  actionType: ActionType,
-  context: InteractionContext = {}
-) {
+type InteractionRow = {
+  id?: string;
+  tmdb_id: number;
+  action_type: string;
+  context?: InteractionContext | null;
+  created_at: string;
+};
+
+type FeedbackCatalogItem = {
+  id: string;
+  tmdb_id: number;
+  title: string;
+  media_type: string;
+  poster_path?: string | null;
+  runtime?: number | null;
+  year?: number | null;
+  overview?: string | null;
+};
+
+type FeedbackRow = {
+  item_id: string;
+  action: string;
+  feedback_type?: string | null;
+  score?: number | null;
+  created_at: string;
+  catalog_items?: FeedbackCatalogItem | null;
+};
+
+interface SkipPattern {
+  skippedGenres: Record<string, number>;
+  avgSkipRate: number;
+  recentSkipStreak: number;
+  contextualRejections: {
+    timeOfDay: Record<string, string[]>;
+    withWho: Record<string, string[]>;
+  };
+}
+
+export async function trackInteraction(tmdbId: number, actionType: ActionType, context: InteractionContext = {}) {
   try {
     const userId = (await supabase.auth.getUser()).data.user?.id;
     if (!userId) return;
@@ -60,9 +93,6 @@ export async function trackInteraction(
   }
 }
 
-/**
- * Track a recommendation event (what was shown and how user reacted)
- */
 export async function trackRecommendationEvent(params: {
   tmdbId: number;
   title: string;
@@ -89,26 +119,22 @@ export async function trackRecommendationEvent(params: {
   }
 }
 
-/**
- * Update a recommendation event with user's reaction
- */
 export async function updateRecommendationReaction(
   tmdbId: number,
   reaction: "accepted" | "skipped" | "rejected" | "watched",
-  reactionDetail?: string
+  reactionDetail?: string,
 ) {
   try {
     const userId = (await supabase.auth.getUser()).data.user?.id;
     if (!userId) return;
 
-    // Find the most recent reco event for this movie
     const { data: events } = await supabase
       .from("recommendation_events" as any)
       .select("id")
       .eq("user_id", userId)
       .eq("tmdb_id", tmdbId)
       .order("shown_at", { ascending: false })
-      .limit(1) as any;
+      .limit(1);
 
     if (events && events.length > 0) {
       await supabase
@@ -127,36 +153,26 @@ export async function updateRecommendationReaction(
   }
 }
 
-// ── Temporal weighting ──
-function recencyWeight(dateStr: string): number {
-  const daysAgo = (Date.now() - new Date(dateStr).getTime()) / (1000 * 60 * 60 * 24);
-  return Math.exp(-0.0077 * daysAgo); // half-life ~90 days
-}
+function analyzeSkipPatterns(interactions: InteractionRow[]): SkipPattern {
+  const skipActionTypes = [
+    "skipped",
+    "rejected_style",
+    "rejected_too_long",
+    "rejected_not_tonight",
+    "rejected_too_slow",
+    "rejected_too_intense",
+  ];
 
-// ── Skip pattern analysis ──
-interface SkipPattern {
-  skippedGenres: Record<string, number>;
-  avgSkipRate: number;
-  recentSkipStreak: number;
-  contextualRejections: {
-    timeOfDay: Record<string, string[]>; // e.g., "evening" -> ["horror", "dark"]
-    withWho: Record<string, string[]>;   // e.g., "couple" -> ["violence"]
-  };
-}
-
-function analyzeSkipPatterns(interactions: any[]): SkipPattern {
-  const skips = interactions.filter(i => 
-    ["skipped", "rejected_style", "rejected_too_long", "rejected_not_tonight", "rejected_too_slow", "rejected_too_intense"].includes(i.action_type)
-  );
-  const watches = interactions.filter(i => i.action_type === "watched");
+  const skips = interactions.filter((i) => skipActionTypes.includes(i.action_type));
+  const watches = interactions.filter((i) => ["watched", "already_seen"].includes(i.action_type));
 
   const decisionCount = skips.length + watches.length;
   const avgSkipRate = decisionCount > 0 ? skips.length / decisionCount : 0.5;
 
   let recentSkipStreak = 0;
   for (const i of interactions) {
-    if (skips.some(s => s.id === i.id)) recentSkipStreak++;
-    else if (["watched", "liked"].includes(i.action_type)) break;
+    if (skipActionTypes.includes(i.action_type)) recentSkipStreak++;
+    else if (["watched", "already_seen", "liked", "saved"].includes(i.action_type)) break;
   }
 
   const skippedGenres: Record<string, number> = {};
@@ -167,35 +183,36 @@ function analyzeSkipPatterns(interactions: any[]): SkipPattern {
 
   for (const s of skips) {
     const ctx = s.context || {};
-    // Track skipped genres
-    if (ctx.genres) {
-      (ctx.genres as string[]).forEach((g: string) => {
+
+    if (Array.isArray(ctx.genres)) {
+      ctx.genres.forEach((g) => {
         skippedGenres[g] = (skippedGenres[g] || 0) + 1;
       });
     }
-    if (ctx.mood) {
+
+    if (typeof ctx.mood === "string" && ctx.mood) {
       skippedGenres[ctx.mood] = (skippedGenres[ctx.mood] || 0) + 1;
     }
-    // Contextual rejection memory
-    if (ctx.time && ctx.genres) {
+
+    if (typeof ctx.time === "string" && ctx.time && Array.isArray(ctx.genres)) {
       if (!contextualRejections.timeOfDay[ctx.time]) {
         contextualRejections.timeOfDay[ctx.time] = [];
       }
-      contextualRejections.timeOfDay[ctx.time].push(...(ctx.genres as string[]));
+      contextualRejections.timeOfDay[ctx.time].push(...ctx.genres);
     }
-    if (ctx.context && ctx.genres) {
+
+    if (typeof ctx.context === "string" && ctx.context && Array.isArray(ctx.genres)) {
       if (!contextualRejections.withWho[ctx.context]) {
         contextualRejections.withWho[ctx.context] = [];
       }
-      contextualRejections.withWho[ctx.context].push(...(ctx.genres as string[]));
+      contextualRejections.withWho[ctx.context].push(...ctx.genres);
     }
   }
 
   return { skippedGenres, avgSkipRate, recentSkipStreak, contextualRejections };
 }
 
-// ── Confidence score ──
-function computeConfidence(totalInteractions: number, likeCount: number): {
+function computeConfidence(totalInteractions: number): {
   score: number;
   discoveryRatio: number;
 } {
@@ -204,7 +221,27 @@ function computeConfidence(totalInteractions: number, likeCount: number): {
   return { score: Math.round(rawConfidence), discoveryRatio };
 }
 
-// ── Acceptance rate ──
+function inferClusters(genreCounts: Record<string, number>): Record<string, number> {
+  const genreMap: Record<string, string[]> = {
+    Thriller: ["dark / intense", "suspense"],
+    Horreur: ["dark / intense", "tension"],
+    Comédie: ["feel good", "léger"],
+    Romance: ["feel good", "émotionnel"],
+    Drame: ["émotionnel", "slow burn"],
+    "Science-Fiction": ["mind blowing", "cérébral"],
+    Action: ["adrénaline", "spectaculaire"],
+    Aventure: ["évasion", "spectaculaire"],
+  };
+
+  const clusters: Record<string, number> = {};
+  for (const [genre, count] of Object.entries(genreCounts)) {
+    (genreMap[genre] || []).forEach((cluster) => {
+      clusters[cluster] = (clusters[cluster] || 0) + count;
+    });
+  }
+  return clusters;
+}
+
 export async function getAcceptanceRate(): Promise<number> {
   const userId = (await supabase.auth.getUser()).data.user?.id;
   if (!userId) return 0;
@@ -213,110 +250,120 @@ export async function getAcceptanceRate(): Promise<number> {
     .from("user_interactions" as any)
     .select("action_type")
     .eq("user_id", userId)
-    .in("action_type", ["watched", "skipped"]) as any;
+    .in("action_type", ["watched", "already_seen", "skipped"]);
 
   if (!interactions || interactions.length === 0) return 0;
-  const watched = interactions.filter((i: any) => i.action_type === "watched").length;
+
+  const watched = interactions.filter((i: any) => ["watched", "already_seen"].includes(i.action_type)).length;
+
   return Math.round((watched / interactions.length) * 100);
 }
 
-// ── Main taste profile builder (enriched) ──
 export async function getUserTasteProfile() {
   const userId = (await supabase.auth.getUser()).data.user?.id;
   if (!userId) return null;
 
-  const [
-    { data: likedMovies },
-    { data: interactions },
-    { data: profile },
-    { data: watchlist },
-    { data: vectorData },
-    { data: peoplePrefs },
-  ] = await Promise.all([
-    supabase.from("liked_movies")
-      .select("tmdb_id, genres, title, liked_at")
-      .eq("user_id", userId),
-    supabase.from("user_interactions" as any)
-      .select("tmdb_id, action_type, context, created_at")
-      .eq("user_id", userId)
-      .order("created_at", { ascending: false })
-      .limit(500) as any,
-    supabase.from("profiles")
-      .select("favorite_genres, preferred_platforms")
-      .eq("id", userId)
-      .single(),
-    supabase.from("watchlist")
-      .select("tmdb_id")
-      .eq("user_id", userId),
-    supabase.from("user_taste_vectors" as any)
-      .select("avoidance_vector, recent_taste_vector, stable_confidence, novelty_tolerance, fatigue_state, top_clusters, rejected_clusters")
-      .eq("user_id", userId)
-      .maybeSingle(),
-    (supabase.from("user_people_preferences" as any) as any)
-      .select("person_name, person_type, preference, known_for")
-      .eq("user_id", userId),
-  ]);
+  const [prefs, { data: feedbackRows }, { data: interactions }, { data: vectorData }, { data: peoplePrefs }] =
+    await Promise.all([
+      getPreferencesSnapshot(),
+      supabase
+        .from("user_item_feedback")
+        .select(
+          `
+        item_id,
+        action,
+        feedback_type,
+        score,
+        created_at,
+        catalog_items:item_id (
+          id,
+          tmdb_id,
+          title,
+          media_type,
+          poster_path,
+          runtime,
+          year,
+          overview
+        )
+      `,
+        )
+        .eq("user_id", userId),
+      supabase
+        .from("user_interactions" as any)
+        .select("id, tmdb_id, action_type, context, created_at")
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false })
+        .limit(500),
+      supabase
+        .from("user_taste_vectors" as any)
+        .select(
+          "avoidance_vector, recent_taste_vector, stable_confidence, novelty_tolerance, fatigue_state, top_clusters, rejected_clusters",
+        )
+        .eq("user_id", userId)
+        .maybeSingle(),
+      (supabase.from("user_people_preferences" as any) as any)
+        .select("person_name, person_type, preference, known_for")
+        .eq("user_id", userId),
+    ]);
 
-  // Temporally weighted genre counts
+  const allFeedback = ((feedbackRows || []) as any[]).filter((row) => row?.catalog_items?.tmdb_id) as FeedbackRow[];
+  const allInteractions = (interactions || []) as InteractionRow[];
+
+  const positiveRows = allFeedback.filter((r) => ["like", "love"].includes(r.feedback_type ?? r.action));
+  const seenRows = allFeedback.filter((r) => (r.feedback_type ?? r.action) === "seen");
+  const watchlistRows = allFeedback.filter((r) => (r.feedback_type ?? r.action) === "watchlist");
+  const skipRows = allFeedback.filter((r) => (r.feedback_type ?? r.action) === "skip");
+  const rejectedRows = allFeedback.filter((r) => ["not_for_me", "dislike"].includes(r.feedback_type ?? r.action));
+
   const genreCounts: Record<string, number> = {};
-  (likedMovies || []).forEach(m => {
-    const weight = recencyWeight(m.liked_at);
-    (m.genres || []).forEach((g: string) => {
-      genreCounts[g] = (genreCounts[g] || 0) + weight;
-    });
-  });
-
   const roundedGenreCounts: Record<string, number> = {};
   for (const [g, c] of Object.entries(genreCounts)) {
     roundedGenreCounts[g] = Math.round(c * 100) / 100;
   }
 
-  // Interaction analysis
-  const allInteractions = (interactions || []) as any[];
-  const skipCount = allInteractions.filter((i: any) => 
-    ["skipped", "rejected_style", "rejected_too_long", "rejected_not_tonight", "rejected_too_slow", "rejected_too_intense"].includes(i.action_type)
-  ).length;
-  const watchCount = allInteractions.filter((i: any) => i.action_type === "watched").length;
-  const openCount = allInteractions.filter((i: any) => i.action_type === "opened").length;
-  const likeCount = (likedMovies || []).length;
+  const skipCount = skipRows.length;
+  const watchCount = seenRows.length;
+  const openCount = allInteractions.filter((i) => i.action_type === "opened").length;
+  const likeCount = positiveRows.length;
 
   const skipPatterns = analyzeSkipPatterns(allInteractions);
   const totalSignals = likeCount + watchCount + skipCount;
-  const confidence = computeConfidence(totalSignals, likeCount);
+  const confidence = computeConfidence(totalSignals);
 
-  // ID sets for exclusion
-  const skippedIds = allInteractions
-    .filter((i: any) => ["skipped", "rejected_style", "rejected_too_long"].includes(i.action_type))
-    .map((i: any) => i.tmdb_id);
-  const watchedIds = allInteractions
-    .filter((i: any) => i.action_type === "watched")
-    .map((i: any) => i.tmdb_id);
-  const alreadySeenIds = allInteractions
-    .filter((i: any) => i.action_type === "already_seen")
-    .map((i: any) => i.tmdb_id);
-  const likedIds = (likedMovies || []).map(m => m.tmdb_id);
-  const watchlistIds = (watchlist || []).map(w => w.tmdb_id);
+  const likedIds = positiveRows.map((r) => r.catalog_items?.tmdb_id).filter(Boolean) as number[];
 
-  const topGenres = Object.entries(roundedGenreCounts)
-    .sort(([, a], [, b]) => b - a)
-    .slice(0, 8)
-    .map(([g]) => g);
+  const skippedIds = skipRows.map((r) => r.catalog_items?.tmdb_id).filter(Boolean) as number[];
 
-  // Session context
-  const recentContexts = allInteractions.slice(0, 5).map((i: any) => i.context).filter(Boolean);
-  const sessionMood = recentContexts.find((c: any) => c.mood)?.mood || null;
-  const sessionContext = recentContexts.find((c: any) => c.context)?.context || null;
-  const sessionTime = recentContexts.find((c: any) => c.time)?.time || null;
+  const watchedIds = seenRows.map((r) => r.catalog_items?.tmdb_id).filter(Boolean) as number[];
 
-  // Acceptance rate
+  const watchlistIds = watchlistRows.map((r) => r.catalog_items?.tmdb_id).filter(Boolean) as number[];
+
+  const rejectedIds = rejectedRows.map((r) => r.catalog_items?.tmdb_id).filter(Boolean) as number[];
+
+  const topGenres =
+    prefs.genres.liked.length > 0
+      ? prefs.genres.liked.slice(0, 8)
+      : Object.entries(roundedGenreCounts)
+          .sort(([, a], [, b]) => b - a)
+          .slice(0, 8)
+          .map(([g]) => g);
+
+  const recentContexts = allInteractions
+    .slice(0, 5)
+    .map((i) => i.context)
+    .filter(Boolean) as InteractionContext[];
+
+  const sessionMood = recentContexts.find((c) => typeof c.mood === "string" && c.mood)?.mood || null;
+  const sessionContext = recentContexts.find((c) => typeof c.context === "string" && c.context)?.context || null;
+  const sessionTime = recentContexts.find((c) => typeof c.time === "string" && c.time)?.time || null;
+
   const decisionCount = watchCount + skipCount;
   const acceptanceRate = decisionCount > 0 ? Math.round((watchCount / decisionCount) * 100) : 0;
 
-  // Multi-vector data from cache
   const multiVectorData = vectorData as any;
 
-  // Clusters from cache or genre inference
-  const topClusters = multiVectorData?.top_clusters || 
+  const topClusters =
+    multiVectorData?.top_clusters ||
     Object.entries(inferClusters(roundedGenreCounts))
       .sort(([, a], [, b]) => (b as number) - (a as number))
       .slice(0, 8)
@@ -325,29 +372,25 @@ export async function getUserTasteProfile() {
   const rejectedClusters = multiVectorData?.rejected_clusters || [];
   const fatigueState = multiVectorData?.fatigue_state || {};
 
-  // Cluster inference helper (local)
-  function inferClusters(gc: Record<string, number>): Record<string, number> {
-    const GENRE_MAP: Record<string, string[]> = {
-      "Thriller": ["dark / intense", "suspense"], "Horreur": ["dark / intense", "tension"],
-      "Comédie": ["feel good", "léger"], "Romance": ["feel good", "émotionnel"],
-      "Drame": ["émotionnel", "slow burn"], "Science-Fiction": ["mind blowing", "cérébral"],
-      "Action": ["adrénaline", "spectaculaire"], "Aventure": ["évasion", "spectaculaire"],
-    };
-    const clusters: Record<string, number> = {};
-    for (const [genre, count] of Object.entries(gc)) {
-      (GENRE_MAP[genre] || []).forEach(c => { clusters[c] = (clusters[c] || 0) + count; });
-    }
-    return clusters;
-  }
-
-  // People preferences
   const allPeoplePrefs = (peoplePrefs || []) as any[];
-  const lovedActors = allPeoplePrefs.filter((p: any) => p.person_type === "actor" && p.preference === "loved").map((p: any) => p.person_name);
-  const likedActors = allPeoplePrefs.filter((p: any) => p.person_type === "actor" && p.preference === "liked").map((p: any) => p.person_name);
-  const dislikedActors = allPeoplePrefs.filter((p: any) => p.person_type === "actor" && p.preference === "disliked").map((p: any) => p.person_name);
-  const lovedDirectors = allPeoplePrefs.filter((p: any) => p.person_type === "director" && p.preference === "loved").map((p: any) => p.person_name);
-  const likedDirectors = allPeoplePrefs.filter((p: any) => p.person_type === "director" && p.preference === "liked").map((p: any) => p.person_name);
-  const dislikedDirectors = allPeoplePrefs.filter((p: any) => p.person_type === "director" && p.preference === "disliked").map((p: any) => p.person_name);
+  const lovedActors = allPeoplePrefs
+    .filter((p) => p.person_type === "actor" && p.preference === "loved")
+    .map((p) => p.person_name);
+  const likedActors = allPeoplePrefs
+    .filter((p) => p.person_type === "actor" && p.preference === "liked")
+    .map((p) => p.person_name);
+  const dislikedActors = allPeoplePrefs
+    .filter((p) => p.person_type === "actor" && p.preference === "disliked")
+    .map((p) => p.person_name);
+  const lovedDirectors = allPeoplePrefs
+    .filter((p) => p.person_type === "director" && p.preference === "loved")
+    .map((p) => p.person_name);
+  const likedDirectors = allPeoplePrefs
+    .filter((p) => p.person_type === "director" && p.preference === "liked")
+    .map((p) => p.person_name);
+  const dislikedDirectors = allPeoplePrefs
+    .filter((p) => p.person_type === "director" && p.preference === "disliked")
+    .map((p) => p.person_name);
 
   return {
     topGenres,
@@ -356,18 +399,27 @@ export async function getUserTasteProfile() {
     rejectedClusters,
     fatigueState,
 
-    likedTitles: (likedMovies || []).map(m => m.title).slice(0, 20),
+    likedTitles: positiveRows
+      .map((r) => r.catalog_items?.title)
+      .filter(Boolean)
+      .slice(0, 20),
 
     likedIds,
     skippedIds,
     watchedIds,
-    alreadySeenIds,
+    alreadySeenIds: watchedIds,
     watchlistIds,
-    excludeIds: [...new Set([...skippedIds, ...watchedIds, ...likedIds, ...alreadySeenIds, ...watchlistIds])],
+    rejectedIds,
+    excludeIds: [...new Set([...skippedIds, ...watchedIds, ...likedIds, ...watchlistIds, ...rejectedIds])],
 
-    preferredPlatforms: profile?.preferred_platforms || [],
+    preferredPlatforms: prefs.platforms.liked,
+    excludedPlatforms: prefs.platforms.excluded,
+    favoriteGenres: prefs.genres.liked,
+    excludedGenres: prefs.genres.excluded,
+    mediaPreference: prefs.mediaType,
+    maxDuration: prefs.maxDuration,
+    minRating: prefs.minRating,
 
-    // People preferences
     peoplePreferences: {
       lovedActors,
       likedActors,
@@ -382,6 +434,8 @@ export async function getUserTasteProfile() {
       watchCount,
       skipCount,
       openCount,
+      watchlistCount: watchlistRows.length,
+      rejectedCount: rejectedRows.length,
       acceptanceRate,
     },
 
@@ -389,6 +443,7 @@ export async function getUserTasteProfile() {
       score: multiVectorData?.stable_confidence || confidence.score,
       discoveryRatio: multiVectorData?.novelty_tolerance || confidence.discoveryRatio,
     },
+
     skipPatterns,
 
     session: {
@@ -402,11 +457,11 @@ export async function getUserTasteProfile() {
 
     scoringWeights: {
       stable_taste: 0.16,
-      recent_taste: 0.10,
+      recent_taste: 0.1,
       session_context: 0.16,
-      embedding_similarity: 0.10,
-      acceptance_likelihood: 0.10,
-      rejection_risk: -0.10,
+      embedding_similarity: 0.1,
+      acceptance_likelihood: 0.1,
+      rejection_risk: -0.1,
       quality_score: 0.06,
       novelty_fit: 0.05,
       availability: 0.04,
