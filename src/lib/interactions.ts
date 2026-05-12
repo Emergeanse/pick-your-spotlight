@@ -136,7 +136,9 @@ export async function updateRecommendationReaction(
       .order("shown_at", { ascending: false })
       .limit(1);
 
-    if (events && events.length > 0) {
+    const latestEvent = (events as Array<{ id: string }> | null)?.[0];
+
+    if (latestEvent?.id) {
       await supabase
         .from("recommendation_events" as any)
         .update({
@@ -146,7 +148,7 @@ export async function updateRecommendationReaction(
           reaction: reactionDetail || reaction,
           reaction_at: new Date().toISOString(),
         } as any)
-        .eq("id", events[0].id);
+        .eq("id", latestEvent.id);
     }
   } catch (e) {
     console.error("Failed to update reco reaction:", e);
@@ -306,8 +308,8 @@ export async function getUserTasteProfile() {
         .eq("user_id", userId),
     ]);
 
-  const allFeedback = ((feedbackRows || []) as any[]).filter((row) => row?.catalog_items?.tmdb_id) as FeedbackRow[];
-  const allInteractions = (interactions || []) as InteractionRow[];
+  const allFeedback = ((feedbackRows || []) as unknown as FeedbackRow[]).filter((row) => row?.catalog_items?.tmdb_id);
+  const allInteractions = (interactions || []) as unknown as InteractionRow[];
 
   const positiveRows = allFeedback.filter((r) => ["like", "love"].includes(r.feedback_type ?? r.action));
   const seenRows = allFeedback.filter((r) => (r.feedback_type ?? r.action) === "seen");
