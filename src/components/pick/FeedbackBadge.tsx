@@ -11,51 +11,59 @@ interface FeedbackBadgeProps {
 type BadgeMeta = {
   icon: typeof Heart;
   label: string;
-  className: string;
+  badgeClass: string;
+  iconClass?: string;
 };
 
 const META: Record<FeedbackType, BadgeMeta> = {
   love: {
     icon: Sparkles,
     label: "Adoré",
-    className: "bg-pink-500/95 text-white border border-pink-300/60 shadow-[0_0_24px_rgba(236,72,153,0.45)]",
+    badgeClass:
+      "bg-gradient-to-br from-pink-500 to-fuchsia-500 text-white border border-pink-300/70 shadow-[0_0_26px_rgba(236,72,153,0.55)] ring-1 ring-white/20",
+    iconClass: "fill-current",
   },
   like: {
     icon: Heart,
     label: "Aimé",
-    className:
-      "bg-primary/95 text-primary-foreground border border-primary/60 shadow-[0_0_24px_hsl(var(--primary)/0.45)]",
+    badgeClass:
+      "bg-primary text-primary-foreground border border-primary/80 shadow-[0_0_24px_hsl(var(--primary)/0.5)] ring-1 ring-white/15",
+    iconClass: "fill-current",
   },
   watchlist: {
     icon: Bookmark,
     label: "À voir",
-    className: "bg-amber-500/95 text-white border border-amber-300/60 shadow-[0_0_24px_rgba(245,158,11,0.4)]",
+    badgeClass:
+      "bg-sky-500 text-white border border-sky-300/70 shadow-[0_0_24px_rgba(14,165,233,0.48)] ring-1 ring-white/15",
+    iconClass: "fill-current",
   },
   seen: {
     icon: Eye,
     label: "Déjà vu",
-    className: "bg-emerald-600/95 text-white border border-emerald-300/60 shadow-[0_0_24px_rgba(5,150,105,0.4)]",
+    badgeClass:
+      "bg-emerald-500 text-white border border-emerald-300/70 shadow-[0_0_24px_rgba(16,185,129,0.45)] ring-1 ring-white/15",
   },
   not_for_me: {
     icon: EyeOff,
     label: "Pas pour moi",
-    className: "bg-rose-600/95 text-white border border-rose-300/60 shadow-[0_0_24px_rgba(225,29,72,0.42)]",
+    badgeClass:
+      "bg-rose-600 text-white border border-rose-300/70 shadow-[0_0_24px_rgba(225,29,72,0.5)] ring-1 ring-white/10",
   },
   unknown: {
     icon: HelpCircle,
     label: "Inconnu",
-    className: "bg-foreground/80 text-background border border-foreground/30 shadow-[0_0_18px_rgba(255,255,255,0.12)]",
+    badgeClass: "bg-foreground/85 text-background border border-white/15 shadow-[0_0_18px_rgba(255,255,255,0.12)]",
   },
   skip: {
     icon: EyeOff,
     label: "Passé",
-    className: "bg-muted-foreground/90 text-background border border-white/20 shadow-[0_0_18px_rgba(255,255,255,0.10)]",
+    badgeClass: "bg-zinc-600 text-white border border-zinc-300/30 shadow-[0_0_18px_rgba(255,255,255,0.08)]",
   },
   dislike: {
     icon: EyeOff,
     label: "Détesté",
-    className:
-      "bg-destructive/95 text-destructive-foreground border border-destructive/60 shadow-[0_0_24px_hsl(var(--destructive)/0.45)]",
+    badgeClass:
+      "bg-destructive text-destructive-foreground border border-destructive/80 shadow-[0_0_24px_hsl(var(--destructive)/0.5)] ring-1 ring-white/10",
   },
 };
 
@@ -77,9 +85,9 @@ const FeedbackBadge = ({ type, inWatchlist, size = "xs", className = "" }: Feedb
   return (
     <div
       title={meta.label}
-      className={`inline-flex items-center rounded-full font-sans font-semibold backdrop-blur-md ring-1 ring-white/10 ${meta.className} ${sizeClass} ${className}`}
+      className={`inline-flex items-center rounded-full font-sans font-bold backdrop-blur-md transition-all ${meta.badgeClass} ${sizeClass} ${className}`}
     >
-      <Icon />
+      <Icon className={meta.iconClass ?? ""} />
       <span>{meta.label}</span>
     </div>
   );
