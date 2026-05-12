@@ -233,7 +233,7 @@ export async function getInteractionStateBatch(
     state.loved = state.primaryStatus === "love";
     state.liked = state.primaryStatus === "like" || state.primaryStatus === "love";
     state.notForMe = state.primaryStatus === "not_for_me";
-    state.hasInteraction = !!state.primaryStatus || state.watchlist;
+    state.hasInteraction = !!state.primaryStatus || state.watchlist || state.seen;
 
     out[tmdbId] = state;
   }
