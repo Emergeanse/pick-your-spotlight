@@ -2,6 +2,8 @@ import { motion } from "framer-motion";
 import { PartyPopper, Play, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getPosterUrl, getDisplayTitle, type MovieDetail } from "@/lib/tmdb";
+import FeedbackBadge from "@/components/pick/FeedbackBadge";
+import { useMovieInteraction } from "@/hooks/use-movie-interactions";
 
 interface DecisionStepProps {
   movie: MovieDetail;
@@ -27,12 +29,8 @@ const DecisionStep = ({ movie, participantNames, onLaunch, onChangeMind }: Decis
       <PartyPopper className="w-6 h-6 text-primary" />
     </motion.div>
 
-    <p className="text-foreground/45 text-[12px] font-sans uppercase tracking-wider mb-2">
-      Ce soir on regarde
-    </p>
-    <h1 className="text-2xl md:text-3xl font-serif mb-5 leading-tight max-w-xs">
-      {getDisplayTitle(movie)}
-    </h1>
+    <p className="text-foreground/45 text-[12px] font-sans uppercase tracking-wider mb-2">Ce soir on regarde</p>
+    <h1 className="text-2xl md:text-3xl font-serif mb-5 leading-tight max-w-xs">{getDisplayTitle(movie)}</h1>
 
     {movie.poster_path && (
       <motion.img
@@ -46,9 +44,7 @@ const DecisionStep = ({ movie, participantNames, onLaunch, onChangeMind }: Decis
     )}
 
     {participantNames.length > 0 && (
-      <p className="text-foreground/55 text-[12px] font-sans mb-8 max-w-xs">
-        Avec {participantNames.join(", ")}
-      </p>
+      <p className="text-foreground/55 text-[12px] font-sans mb-8 max-w-xs">Avec {participantNames.join(", ")}</p>
     )}
 
     <div className="w-full max-w-sm flex flex-col gap-2">
