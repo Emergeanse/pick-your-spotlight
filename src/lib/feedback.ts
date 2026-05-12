@@ -272,7 +272,7 @@ export async function setFeedback(
   const score = SCORE_MAP[type];
   const legacyAction = toLegacyAction(type);
 
-  const exclusive: FeedbackType[] = ["like", "love", "seen", "not_for_me", "skip", "unknown", "dislike"];
+  const exclusive: FeedbackType[] = ["like", "love", "not_for_me", "skip", "unknown", "dislike"];
 
   if (exclusive.includes(type)) {
     const { error: deleteExclusiveError } = await supabase
