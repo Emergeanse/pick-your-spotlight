@@ -425,14 +425,18 @@ const HomeScreen = ({
   const handleMovieAction = async (type: "already_seen" | "dislike" | string) => {
     if (!tonightPick) return;
 
-    if (type !== "already_seen" && type !== "dislike") return;
+    if (type === "already_seen") {
+      return;
+    }
+
+    if (type !== "dislike") return;
 
     const nextRejected = [...rejectedIds, tonightPick.id];
     setRejectedIds(nextRejected);
 
     const allRejected = tonightPool.every((m) => nextRejected.includes(m.id));
     if (allRejected) {
-      await handleRejectAndRefresh(tonightPick, type === "already_seen" ? "seen" : "not_my_style");
+      await handleRejectAndRefresh(tonightPick, "not_my_style");
       return;
     }
 
