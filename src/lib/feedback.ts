@@ -284,7 +284,7 @@ export async function setFeedback(
 
     if (deleteExclusiveError) throw deleteExclusiveError;
 
-    if (type === "seen" || type === "not_for_me") {
+    if (type === "not_for_me") {
       const { error: deleteWatchlistError } = await supabase
         .from("user_item_feedback")
         .delete()
