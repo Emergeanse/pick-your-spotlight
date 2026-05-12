@@ -19,6 +19,11 @@ interface MovieActionBarProps {
   contextType?: "solo_session" | "group_session" | "browse";
 }
 
+const DEBUG = true;
+const debugLog = (...args: unknown[]) => {
+  if (DEBUG) console.log("[MovieActionBar]", ...args);
+};
+
 const MovieActionBar = ({
   movie,
   size = "md",
@@ -41,9 +46,41 @@ const MovieActionBar = ({
   useEffect(() => {
     currentMovieIdRef.current = movie.id;
     setLoading(false);
-  }, [movie.id]);
+    debugLog("movie changed", {
+      movieId: movie.id,
+      title: movie.title || movie.name,
+      mediaType,
+    });
+  }, [movie.id, movie.title, movie.name, mediaType]);
+
+  useEffect(() => {
+    debugLog("interaction state updated", {
+      movieId: movie.id,
+      mediaType,
+      interaction,
+      liked,
+      bookmarked,
+      activeFeedback,
+      initialFeedback,
+    });
+  }, [movie.id, mediaType, interaction, liked, bookmarked, activeFeedback, initialFeedback]);
+
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      debugLog("pick-feedback-changed event received", detail);
+    };
+    window.addEventListener("pick-feedback-changed", handler);
+    return () => window.removeEventListener("pick-feedback-changed", handler);
+  }, []);
 
   const requireAuth = () => {
+    const hasUser = !!user;
+    debugLog("requireAuth", {
+      hasUser,
+      userId: user?.id ?? null,
+      email: user?.email ?? null,
+    });
     if (!user) {
       toast.info("Connecte-toi pour enrichir ton profil !");
       return false;
@@ -64,6 +101,16 @@ const MovieActionBar = ({
 
   const persistFeedback = useCallback(
     async (label: FeedbackLabel) => {
+      debugLog("persistFeedback:start", {
+        movieId: movie.id,
+        label,
+        mediaType,
+        movieMeta,
+        sessionId,
+        contextType,
+        userId: user?.id ?? null,
+      });
+
       await setFeedback(
         movie.id,
         label,
@@ -76,8 +123,13 @@ const MovieActionBar = ({
           context_id: sessionId ?? null,
         },
       );
+
+      debugLog("persistFeedback:done", {
+        movieId: movie.id,
+        label,
+      });
     },
-    [movie.id, movieMeta, sessionId, contextType],
+    [movie.id, movieMeta, sessionId, contextType, mediaType, user?.id],
   );
 
   const handleExclusiveToggle = async (label: FeedbackLabel) => {
@@ -87,12 +139,36 @@ const MovieActionBar = ({
     const isCurrentlyActive = activeFeedback === label;
     const newLabel = isCurrentlyActive ? null : label;
 
+    debugLog("handleExclusiveToggle", {
+      movieId,
+      label,
+      activeFeedback,
+      isCurrentlyActive,
+      newLabel,
+    });
+
     setLoading(true);
 
     try {
-      if (newLabel) await persistFeedback(newLabel);
-      else await clearFeedbackType(movie.id, [label], mediaType);
-      if (!isCurrentMovie(movieId)) return;
+      if (newLabel) {
+        await persistFeedback(newLabel);
+      } else {
+        debugLog("clearFeedbackType:start", {
+          movieId: movie.id,
+          labels: [label],
+          mediaType,
+        });
+        await clearFeedbackType(movie.id, [label], mediaType);
+        debugLog("clearFeedbackType:done", {
+          movieId: movie.id,
+          labels: [label],
+        });
+      }
+
+      if (!isCurrentMovie(movieId)) {
+        debugLog("handleExclusiveToggle:aborted stale movie", { movieId });
+        return;
+      }
 
       if (newLabel) {
         trackInteraction(
@@ -115,7 +191,8 @@ const MovieActionBar = ({
 
       toast.success(toastMap[label] || "Mis à jour");
       onInteraction?.(label === "seen" ? "already_seen" : label === "not_for_me" ? "dislike" : label);
-    } catch {
+    } catch (error) {
+      debugLog("handleExclusiveToggle:error", error);
       if (!isCurrentMovie(movieId)) return;
       toast.error("Erreur");
     } finally {
@@ -127,10 +204,26 @@ const MovieActionBar = ({
 
   const handleToggleBookmark = async () => {
     if (!requireAuth()) return;
+
+    debugLog("handleToggleBookmark", {
+      movieId: movie.id,
+      bookmarkedBefore: bookmarked,
+      activeFeedback,
+    });
+
     setLoading(true);
     try {
       if (bookmarked) {
+        debugLog("clearFeedbackType:start", {
+          movieId: movie.id,
+          labels: ["watchlist"],
+          mediaType,
+        });
         await clearFeedbackType(movie.id, ["watchlist"], mediaType);
+        debugLog("clearFeedbackType:done", {
+          movieId: movie.id,
+          labels: ["watchlist"],
+        });
         toast.success("Retiré de ta watchlist");
         trackInteraction(movie.id, "unsaved");
       } else {
@@ -138,7 +231,8 @@ const MovieActionBar = ({
         toast.success("Ajouté à ta watchlist !");
         trackInteraction(movie.id, "saved");
       }
-    } catch {
+    } catch (error) {
+      debugLog("handleToggleBookmark:error", error);
       toast.error("Erreur");
     } finally {
       setLoading(false);
@@ -147,40 +241,68 @@ const MovieActionBar = ({
 
   const handleToggleLike = async () => {
     if (!requireAuth()) return;
+
     const movieId = movie.id;
     const previousFeedback = activeFeedback;
+
+    debugLog("handleToggleLike", {
+      movieId,
+      likedBefore: liked,
+      bookmarkedBefore: bookmarked,
+      previousFeedback,
+    });
 
     setLoading(true);
     try {
       if (liked) {
+        debugLog("clearFeedbackType:start", {
+          movieId: movie.id,
+          labels: ["like", "love"],
+          mediaType,
+        });
         await clearFeedbackType(movie.id, ["like", "love"], mediaType);
-        if (!isCurrentMovie(movieId)) return;
+        debugLog("clearFeedbackType:done", {
+          movieId: movie.id,
+          labels: ["like", "love"],
+        });
+
+        if (!isCurrentMovie(movieId)) {
+          debugLog("handleToggleLike:aborted stale movie", { movieId });
+          return;
+        }
 
         toast.success("Retiré des favoris");
         trackInteraction(movie.id, "unliked");
       } else {
         await persistFeedback("like");
+
         ensureMovieEmbedding(
           movie.id,
           movie.title || (movie as any).name || "",
           movie.overview || "",
           (movie.genres || []).map((g) => g.name),
         );
-        if (!isCurrentMovie(movieId)) return;
+
+        if (!isCurrentMovie(movieId)) {
+          debugLog("handleToggleLike:aborted stale movie", { movieId });
+          return;
+        }
 
         toast.success("Ajouté aux favoris !");
         trackInteraction(movie.id, "liked");
 
         if (!bookmarked && previousFeedback !== "seen") {
           try {
+            debugLog("auto-add watchlist after like", { movieId });
             await persistFeedback("watchlist");
             if (!isCurrentMovie(movieId)) return;
-          } catch {
-            // already in watchlist
+          } catch (error) {
+            debugLog("auto-add watchlist:error", error);
           }
         }
       }
-    } catch {
+    } catch (error) {
+      debugLog("handleToggleLike:error", error);
       toast.error("Erreur");
     } finally {
       if (isCurrentMovie(movieId)) {
