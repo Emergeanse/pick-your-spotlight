@@ -206,11 +206,13 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
   const genreMap = isSeries ? TV_GENRE_MAP : GENRE_MAP;
   const isMediaCategory = selectedCategory === "movies" || selectedCategory === "series";
 
+  const trainerMediaType: "movie" | "tv" = isSeries ? "tv" : "movie";
+
   const interactions = useMovieInteractions(
     isMediaCategory
       ? movies.map((movie) => ({
           tmdbId: movie.id,
-          mediaType: isSeries ? "tv" : "movie",
+          mediaType: trainerMediaType,
         }))
       : [],
   );
