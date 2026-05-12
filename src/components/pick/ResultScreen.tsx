@@ -825,7 +825,12 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
                     />
                     {(currentFeedback || bookmarked) && (
                       <div className="absolute top-1.5 left-1.5">
-                        <FeedbackBadge type={currentFeedback} inWatchlist={bookmarked} size="sm" />
+                        <FeedbackBadge
+                          type={currentFeedback}
+                          inWatchlist={bookmarked}
+                          seen={interaction.seen}
+                          size="sm"
+                        />
                       </div>
                     )}
                   </motion.div>
