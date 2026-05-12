@@ -4,6 +4,7 @@ import type { FeedbackType } from "@/lib/feedback";
 interface FeedbackBadgeProps {
   type: FeedbackType | null | undefined;
   inWatchlist?: boolean;
+  seen?: boolean;
   size?: "xs" | "sm";
   className?: string;
 }
@@ -67,28 +68,45 @@ const META: Record<FeedbackType, BadgeMeta> = {
   },
 };
 
-const FeedbackBadge = ({ type, inWatchlist, size = "xs", className = "" }: FeedbackBadgeProps) => {
+const FeedbackBadge = ({ type, inWatchlist, seen = false, size = "xs", className = "" }: FeedbackBadgeProps) => {
   const effectiveType: FeedbackType | null = type ?? (inWatchlist ? "watchlist" : null);
-
-  if (!effectiveType) return null;
-
-  const meta = META[effectiveType];
-  if (!meta) return null;
-
-  const Icon = meta.icon;
 
   const sizeClass =
     size === "sm"
       ? "text-[11px] px-2.5 py-1 gap-1.5 [&>svg]:w-3.5 [&>svg]:h-3.5"
       : "text-[9px] px-2 py-0.5 gap-1 [&>svg]:w-3 [&>svg]:h-3";
 
+  const seenSizeClass =
+    size === "sm"
+      ? "text-[10px] px-2 py-0.5 gap-1 [&>svg]:w-3 [&>svg]:h-3"
+      : "text-[8px] px-1.5 py-0.5 gap-1 [&>svg]:w-2.5 [&>svg]:h-2.5";
+
+  const meta = effectiveType ? META[effectiveType] : null;
+  const Icon = meta?.icon;
+
+  if (!meta && !seen) return null;
+
   return (
-    <div
-      title={meta.label}
-      className={`inline-flex items-center rounded-full font-sans font-bold backdrop-blur-md transition-all ${meta.badgeClass} ${sizeClass} ${className}`}
-    >
-      <Icon className={meta.iconClass ?? ""} />
-      <span>{meta.label}</span>
+    <div className={`flex flex-col items-start gap-1 ${className}`}>
+      {meta && Icon && (
+        <div
+          title={meta.label}
+          className={`inline-flex items-center rounded-full font-sans font-bold backdrop-blur-md transition-all ${meta.badgeClass} ${sizeClass}`}
+        >
+          <Icon className={meta.iconClass ?? ""} />
+          <span>{meta.label}</span>
+        </div>
+      )}
+
+      {seen && (
+        <div
+          title="Déjà vu"
+          className={`inline-flex items-center rounded-full font-sans font-bold backdrop-blur-md transition-all bg-emerald-500 text-white border border-emerald-300/70 shadow-[0_0_18px_rgba(16,185,129,0.35)] ring-1 ring-white/10 ${seenSizeClass}`}
+        >
+          <Eye />
+          <span>Déjà vu</span>
+        </div>
+      )}
     </div>
   );
 };
