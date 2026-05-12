@@ -136,7 +136,7 @@ export async function updateRecommendationReaction(
       .order("shown_at", { ascending: false })
       .limit(1);
 
-    const latestEvent = (events as Array<{ id: string }> | null)?.[0];
+    const latestEvent = (events as unknown as Array<{ id: string }> | null)?.[0];
 
     if (latestEvent?.id) {
       await supabase
