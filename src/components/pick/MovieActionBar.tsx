@@ -290,16 +290,6 @@ const MovieActionBar = ({
 
         toast.success("Ajouté aux favoris !");
         trackInteraction(movie.id, "liked");
-
-        if (!bookmarked && previousFeedback !== "seen") {
-          try {
-            debugLog("auto-add watchlist after like", { movieId });
-            await persistFeedback("watchlist");
-            if (!isCurrentMovie(movieId)) return;
-          } catch (error) {
-            debugLog("auto-add watchlist:error", error);
-          }
-        }
       }
     } catch (error) {
       debugLog("handleToggleLike:error", error);
