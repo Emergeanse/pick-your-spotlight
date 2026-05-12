@@ -45,14 +45,15 @@ function toLegacyAction(type: FeedbackType): string {
     case "watchlist":
       return "saved";
     case "seen":
-      return "already_seen";
+      return "watched";
     case "not_for_me":
     case "dislike":
     case "skip":
       return "skipped";
     case "unknown":
+      return "skipped";
     default:
-      return "unsure";
+      return "skipped";
   }
 }
 
