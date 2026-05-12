@@ -460,16 +460,25 @@ const ReviewSheet = ({
 };
 
 const AlternativeMovies = ({ movies, onSelect }: { movies: MovieDetail[]; onSelect: (m: MovieDetail) => void }) => {
-  const interactions = useMovieInteractions(movies.map((m) => ({ tmdbId: m.id, mediaType: inferCatalogMediaType(m) })));
+  const interactions = useMovieInteractions(
+    movies.map((m) => ({
+      tmdbId: m.id,
+      mediaType: inferCatalogMediaType(m),
+    })),
+  );
+
   if (movies.length === 0) return null;
+
   return (
     <div className="px-5 py-6 md:px-12">
       <p className="text-[10px] uppercase tracking-widest text-foreground/30 font-sans font-semibold mb-3">
         Autres suggestions
       </p>
+
       <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
         {movies.map((movie) => {
           const state = interactions[movie.id];
+
           return (
             <motion.button
               key={movie.id}
@@ -489,12 +498,14 @@ const AlternativeMovies = ({ movies, onSelect }: { movies: MovieDetail[]; onSele
                     <span className="text-foreground/20 text-xs font-sans">No img</span>
                   </div>
                 )}
+
                 {state?.hasInteraction && (
                   <div className="absolute top-1.5 left-1.5">
-                    <FeedbackBadge type={state.primaryStatus} inWatchlist={state.watchlist} />
+                    <FeedbackBadge type={state.primaryStatus} inWatchlist={state.watchlist} seen={state.seen} />
                   </div>
                 )}
               </div>
+
               <p className="text-foreground/60 text-[11px] font-sans font-medium leading-tight truncate">
                 {getDisplayTitle(movie)}
               </p>
@@ -505,7 +516,6 @@ const AlternativeMovies = ({ movies, onSelect }: { movies: MovieDetail[]; onSele
     </div>
   );
 };
-
 // ── Main Component ──────────────────────────────────────────────────
 
 interface ResultScreenProps {
