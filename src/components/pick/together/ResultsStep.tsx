@@ -9,7 +9,7 @@ import { useMovieInteractions } from "@/hooks/use-movie-interactions";
 
 export type RecommendationReasonType = "session_wish" | "taste_match" | "constraint_ok" | "tonight_fit";
 
-interface GroupRecommendation {
+export interface GroupRecommendation {
   movie: MovieDetail;
   groupScore: number;
   reason: string;
