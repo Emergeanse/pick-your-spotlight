@@ -606,7 +606,7 @@ const VoiceChat = ({ onClose, onMovieSuggested, initialMessages, showMicGuide = 
                   }}
                 >
                   <Users className="w-5 h-5" />
-                  Lancer Pick Together
+                  Lancer Pick Ensemble
                 </Button>
               </motion.div>
 
