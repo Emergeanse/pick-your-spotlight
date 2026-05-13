@@ -209,10 +209,7 @@ const MovieDetailContent = ({
   const interaction = useMovieInteraction(item?.id);
 
   const summary =
-    recommendationText?.detailedExplanation ||
-    recommendationText?.whyItMatches ||
-    recommendationText?.summary ||
-    null;
+    recommendationText?.detailedExplanation || recommendationText?.whyItMatches || recommendationText?.summary || null;
 
   const headline = recommendationText?.headline || null;
   const reasons = recommendationText?.matchingReasons || recommendationText?.reasons || [];
@@ -243,9 +240,7 @@ const MovieDetailContent = ({
         </div>
 
         <div className="flex-1 min-w-0">
-          <h3 className="text-lg font-serif font-bold leading-tight text-foreground">
-            {getDisplayTitle(item)}
-          </h3>
+          <h3 className="text-lg font-serif font-bold leading-tight text-foreground">{getDisplayTitle(item)}</h3>
 
           {detail?.release_date && (
             <p className="mt-1 text-xs text-foreground/40">
@@ -447,4 +442,3 @@ const PersonDetailContent = ({
 );
 
 export default FlipCardDetail;
-```
