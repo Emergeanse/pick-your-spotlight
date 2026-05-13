@@ -406,9 +406,6 @@ const WatchlistPage = ({ onMovieSelect }: WatchlistPageProps) => {
       const mediaType = item.media_type || (item.first_air_date ? "tv" : "movie");
       const movie = await getMovieDetails(item.tmdb_id, mediaType);
       setPreviewMovie(movie);
-      getWatchProviders(movie.id, mediaType)
-        .then(setPreviewProviders)
-        .catch(() => setPreviewProviders([]));
       generatePersonalNote(movie).then(setPreviewNote);
     } catch (e) {
       console.error(e);
