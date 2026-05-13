@@ -1,17 +1,17 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence, useMotionValue, useTransform, PanInfo } from "framer-motion";
-import { Bookmark, Heart, Loader2, Sparkles, X, Tv, Star, Clock, Search, Filter, Timer, Trash2 } from "lucide-react";
+import { Bookmark, Heart, Loader2, Sparkles, X, Tv, Clock, Search, Filter, Timer, Trash2 } from "lucide-react";
 import { getWatchlist, removeFromWatchlist } from "@/lib/watchlist";
-import { getPosterUrl, getBackdropUrl, getMovieDetails, getDisplayTitle, getYear, getWatchProviders } from "@/lib/tmdb";
+import { getPosterUrl, getMovieDetails } from "@/lib/tmdb";
 import { getLikedMovies, unlikeMovie } from "@/lib/liked-movies";
 import type { MovieDetail } from "@/lib/tmdb";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import PickCharacter from "./PickCharacter";
 import FeedbackBadge from "./FeedbackBadge";
-import MovieActionBar from "./MovieActionBar";
 import FlipCardDetail from "./FlipCardDetail";
-import { useMovieInteraction, useMovieInteractions } from "@/hooks/use-movie-interactions";
+import RecommendationMovieCard from "./RecommendationMovieCard";
+import { useMovieInteractions } from "@/hooks/use-movie-interactions";
 import { listFeedbackByType, clearFeedbackType, type FeedbackType, type MovieInteractionState } from "@/lib/feedback";
 
 interface WatchlistPageProps {
@@ -178,169 +178,8 @@ const SwipeableCard = ({
   );
 };
 
-const MoviePreviewSheet = ({
-  movie,
-  providers,
-  personalNote,
-  onWatch,
-  onClose,
-  onOpenDetails,
-}: {
-  movie: MovieDetail;
-  providers: { name: string; logo_path: string }[];
-  personalNote: string;
-  onWatch: () => void;
-  onClose: () => void;
-  onOpenDetails: () => void;
-}) => {
-  const title = getDisplayTitle(movie);
-  const year = getYear(movie);
-  const runtime = movie.runtime || movie.episode_run_time?.[0] || 0;
-  const rating = movie.vote_average || 0;
-  const backdrop = getBackdropUrl(movie.backdrop_path);
-  const poster = getPosterUrl(movie.poster_path, "w342");
-  const interaction = useMovieInteraction(movie.id);
-
-  return (
-    <>
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        onClick={onClose}
-        className="fixed inset-0 z-[55] bg-black/60 backdrop-blur-sm"
-      />
-
-      <motion.div
-        initial={{ y: "100%" }}
-        animate={{ y: 0 }}
-        exit={{ y: "100%" }}
-        transition={{ type: "spring", damping: 30, stiffness: 300 }}
-        className="fixed bottom-0 left-0 right-0 z-[56] max-h-[85vh] rounded-t-3xl bg-card overflow-hidden flex flex-col pb-safe"
-      >
-        <div className="relative h-44 shrink-0 overflow-hidden">
-          {backdrop ? (
-            <img src={backdrop} alt="" className="w-full h-full object-cover" />
-          ) : poster ? (
-            <img src={poster} alt="" className="w-full h-full object-cover blur-sm scale-110" />
-          ) : (
-            <div className="w-full h-full bg-foreground/5" />
-          )}
-
-          <div className="absolute inset-0 bg-gradient-to-t from-card via-card/60 to-transparent" />
-
-          <button
-            onClick={onClose}
-            className="absolute top-4 right-4 w-8 h-8 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center text-white/70 hover:text-white transition-colors"
-          >
-            <X className="w-4 h-4" />
-          </button>
-
-          <button
-            onClick={onOpenDetails}
-            className="absolute bottom-0 left-0 right-0 px-5 pb-4 flex items-end gap-4 text-left"
-          >
-            {poster && (
-              <div className="relative shrink-0 -mb-2">
-                <img
-                  src={poster}
-                  alt={title}
-                  className="w-20 h-[120px] rounded-xl object-cover border border-border/20 shadow-xl"
-                />
-                {interaction.hasInteraction && (
-                  <div className="absolute top-1.5 left-1.5">
-                    <FeedbackBadge
-                      type={interaction.primaryStatus}
-                      inWatchlist={interaction.watchlist}
-                      seen={interaction.seen}
-                      size="sm"
-                    />
-                  </div>
-                )}
-              </div>
-            )}
-
-            <div className="flex-1 min-w-0 pb-1">
-              <h2 className="text-xl font-serif text-foreground leading-tight line-clamp-2">{title}</h2>
-              <div className="flex items-center gap-3 mt-1 text-foreground/50 text-[11px] font-sans">
-                {year && <span>{year}</span>}
-                {runtime > 0 && (
-                  <span className="flex items-center gap-0.5">
-                    <Clock className="w-3 h-3" />
-                    {runtime} min
-                  </span>
-                )}
-                {rating > 0 && (
-                  <span className="flex items-center gap-0.5 text-primary">
-                    <Star className="w-3 h-3 fill-primary" />
-                    {rating.toFixed(1)}
-                  </span>
-                )}
-              </div>
-            </div>
-          </button>
-        </div>
-
-        <div className="flex-1 overflow-y-auto px-5 py-4">
-          <div className="mb-5">
-            <MovieActionBar key={movie.id} movie={movie} size="md" />
-          </div>
-
-          {movie.genres && movie.genres.length > 0 && (
-            <div className="flex flex-wrap gap-1.5 mb-4">
-              {movie.genres.map((g) => (
-                <span
-                  key={g.id}
-                  className="px-2.5 py-1 rounded-full bg-primary/8 border border-primary/15 text-primary/70 text-[11px] font-sans"
-                >
-                  {g.name}
-                </span>
-              ))}
-            </div>
-          )}
-
-          {personalNote && (
-            <div className="flex items-start gap-2 mb-4 px-3 py-2.5 rounded-xl bg-primary/5 border border-primary/15">
-              <Sparkles className="w-3.5 h-3.5 text-primary shrink-0 mt-0.5" />
-              <p className="text-primary/70 text-[12px] font-sans leading-relaxed italic">{personalNote}</p>
-            </div>
-          )}
-
-          {movie.overview && (
-            <p className="text-foreground/55 text-sm font-sans leading-relaxed mb-5">{movie.overview}</p>
-          )}
-
-          {providers.length > 0 && (
-            <div className="flex items-center gap-2 mb-5">
-              <span className="text-foreground/30 text-[11px] font-sans">Dispo sur</span>
-              <div className="flex gap-1.5">
-                {providers.map((p) => (
-                  <img
-                    key={p.name}
-                    src={`https://image.tmdb.org/t/p/w92${p.logo_path}`}
-                    alt={p.name}
-                    className="w-6 h-6 rounded-md object-cover border border-border/20"
-                  />
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-
-        <div className="shrink-0 px-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] pt-3 border-t border-border/10 bg-card">
-          <Button
-            size="lg"
-            className="w-full rounded-2xl bg-primary text-primary-foreground hover:bg-primary/90 font-sans font-semibold h-12 gap-2.5 text-base neon-glow transition-all active:scale-[0.97]"
-            onClick={onWatch}
-          >
-            <Tv className="w-4 h-4" />
-            Je regarde
-          </Button>
-        </div>
-      </motion.div>
-    </>
-  );
-};
+// MoviePreviewSheet removed — "Mes films" now reuses RecommendationMovieCard,
+// the same vignette rendered in the main recommendation flow.
 
 const WatchlistPage = ({ onMovieSelect }: WatchlistPageProps) => {
   const [activeTab, setActiveTab] = useState<ActiveTab>("watchlist");
@@ -353,7 +192,7 @@ const WatchlistPage = ({ onMovieSelect }: WatchlistPageProps) => {
   const [genreFilter, setGenreFilter] = useState<string | null>(null);
   const [showGenreFilter, setShowGenreFilter] = useState(false);
   const [previewMovie, setPreviewMovie] = useState<MovieDetail | null>(null);
-  const [previewProviders, setPreviewProviders] = useState<{ name: string; logo_path: string }[]>([]);
+  
   const [previewLoading, setPreviewLoading] = useState(false);
   const [previewNote, setPreviewNote] = useState("");
   const [detailMovie, setDetailMovie] = useState<MovieDetail | null>(null);
@@ -567,9 +406,6 @@ const WatchlistPage = ({ onMovieSelect }: WatchlistPageProps) => {
       const mediaType = item.media_type || (item.first_air_date ? "tv" : "movie");
       const movie = await getMovieDetails(item.tmdb_id, mediaType);
       setPreviewMovie(movie);
-      getWatchProviders(movie.id, mediaType)
-        .then(setPreviewProviders)
-        .catch(() => setPreviewProviders([]));
       generatePersonalNote(movie).then(setPreviewNote);
     } catch (e) {
       console.error(e);
@@ -903,18 +739,30 @@ const WatchlistPage = ({ onMovieSelect }: WatchlistPageProps) => {
 
       <AnimatePresence>
         {previewMovie && (
-          <MoviePreviewSheet
-            movie={previewMovie}
-            providers={previewProviders}
-            personalNote={previewNote}
-            onWatch={handleWatchFromPreview}
-            onOpenDetails={handleOpenFullDetail}
-            onClose={() => {
-              setPreviewMovie(null);
-              setPreviewProviders([]);
-              setPreviewNote("");
-            }}
-          />
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[55] bg-background overflow-y-auto"
+          >
+            <button
+              type="button"
+              onClick={() => {
+                setPreviewMovie(null);
+                setPreviewNote("");
+              }}
+              className="fixed top-[calc(env(safe-area-inset-top)+0.75rem)] right-4 z-[60] w-9 h-9 rounded-full bg-card/70 backdrop-blur-md border border-border/30 flex items-center justify-center text-foreground/70 hover:text-foreground transition-colors"
+              aria-label="Fermer"
+            >
+              <X className="w-4 h-4" />
+            </button>
+            <RecommendationMovieCard
+              movie={previewMovie}
+              onOpenDetails={handleOpenFullDetail}
+              onPrimaryAction={handleWatchFromPreview}
+              primaryActionLabel="Je regarde"
+            />
+          </motion.div>
         )}
       </AnimatePresence>
 

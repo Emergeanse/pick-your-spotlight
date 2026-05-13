@@ -48,6 +48,7 @@ import FlipCardDetail from "@/components/pick/FlipCardDetail";
 import BrandHeader from "./BrandHeader";
 import PickCharacter from "./PickCharacter";
 import FeedbackBadge from "./FeedbackBadge";
+import { RecommendationMovieCardHeader } from "./RecommendationMovieCard";
 import { useMovieInteractions, useMovieInteraction } from "@/hooks/use-movie-interactions";
 import { inferCatalogMediaType } from "@/lib/catalog";
 
@@ -809,86 +810,8 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
                 </motion.div>
               )}
 
-              {/* Poster + Title */}
-              <div className="flex items-end gap-4 mb-3">
-                {movie.poster_path && (
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: 0.3, type: "spring", stiffness: 200 }}
-                    className="relative shrink-0"
-                  >
-                    <img
-                      src={getPosterUrl(movie.poster_path, "w342") || ""}
-                      alt={title}
-                      className="w-20 h-[120px] md:w-28 md:h-[168px] rounded-xl object-cover shadow-2xl border border-border/20"
-                    />
-                    {(currentFeedback || bookmarked) && (
-                      <div className="absolute top-1.5 left-1.5">
-                        <FeedbackBadge
-                          type={currentFeedback}
-                          inWatchlist={bookmarked}
-                          seen={interaction.seen}
-                          size="sm"
-                        />
-                      </div>
-                    )}
-                  </motion.div>
-                )}
-                <div className="flex-1 min-w-0">
-                  <h1 className="text-2xl md:text-4xl lg:text-5xl font-serif mb-1.5 leading-[1.05]">{title}</h1>
-                  <div className="flex items-center gap-2 text-foreground/50 text-xs font-sans mb-1 flex-wrap">
-                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-primary/10 text-primary text-[10px] font-sans font-semibold uppercase tracking-wide">
-                      {mediaLabel}
-                    </span>
-                    {year && <span className="font-medium text-foreground/70">{year}</span>}
-                    {mediaType === "tv" && seasons && seasons > 0 && (
-                      <>
-                        <span className="text-foreground/20">•</span>
-                        <span>
-                          {seasons} saison{seasons > 1 ? "s" : ""}
-                        </span>
-                      </>
-                    )}
-                    {runtime > 0 && (
-                      <>
-                        <span className="text-foreground/20">•</span>
-                        <span className="flex items-center gap-1">
-                          <Clock className="w-3 h-3" />
-                          {runtime} min
-                        </span>
-                      </>
-                    )}
-                    {movie.vote_average > 0 && (
-                      <>
-                        <span className="text-foreground/20">•</span>
-                        <span className="flex items-center gap-1 text-primary font-medium">
-                          <Star className="w-3 h-3 fill-primary" />
-                          {movie.vote_average.toFixed(1)}
-                        </span>
-                      </>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2 flex-wrap">
-                    {genres && (
-                      <p className="text-primary/60 text-[10px] md:text-xs tracking-[0.12em] uppercase font-sans font-medium">
-                        {genres}
-                      </p>
-                    )}
-                    {(movie as any)._surpriseComfortZone && (
-                      <motion.div
-                        initial={{ opacity: 0, scale: 0.8 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
-                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30"
-                      >
-                        <Zap className="w-2.5 h-2.5 text-amber-400" />
-                        <span className="text-amber-400 text-[10px] font-sans font-semibold">Hors de ta zone</span>
-                      </motion.div>
-                    )}
-                  </div>
-                </div>
-              </div>
+              {/* Poster + Title (shared vignette header) */}
+              <RecommendationMovieCardHeader movie={movie} />
 
               <StreamingSection streamingLinks={streamingLinks} />
 
