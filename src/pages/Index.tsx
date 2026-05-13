@@ -356,7 +356,7 @@ const Index = () => {
         setShowChat(false);
         setChatInitialMessages(undefined);
         setOpenTrainerOnMount(false);
-        setWatchlistGuideStep("save-3");
+        setWatchlistGuideStep("sauvegarder");
         break;
       default:
         break;
@@ -695,30 +695,24 @@ const Index = () => {
       {showTour && <PlatformTour onComplete={handleTourComplete} />}
       {showActivation && !showTour && (
         <ActivationFlow
-          onMissionClick={handleActivationMission}
+          onStartMission={handleActivationMission}
           onComplete={handleActivationComplete}
-          activeMission={activeActivationMission}
-          watchlistGuideDone={watchlistGuideDone}
-          watchlistSavedCount={watchlistSavedCount}
         />
       )}
 
       {watchlistGuideStep && (
         <WatchlistMissionGuide
           step={watchlistGuideStep}
-          onClose={() => setWatchlistGuideStep(null)}
-          onDone={() => {
-            setWatchlistGuideDone(true);
-            setWatchlistGuideStep(null);
-          }}
+          savedCount={watchlistSavedCount}
+          target={3}
         />
       )}
 
       {talkToPickGuideStep && (
-        <TalkToPickMissionGuide step={talkToPickGuideStep} onClose={() => setTalkToPickGuideStep(null)} />
+        <TalkToPickMissionGuide step={talkToPickGuideStep} />
       )}
 
-      {loading && <RevealAnimation message={loadingMessage || "Pick prépare tes recommandations…"} />}
+      {loading && <RevealAnimation active message={loadingMessage || "Pick prépare tes recommandations…"} />}
     </div>
   );
 };
