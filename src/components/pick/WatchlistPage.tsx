@@ -212,28 +212,35 @@ const WatchlistPage = ({ onMovieSelect }: WatchlistPageProps) => {
         listFeedbackByType("seen"),
       ]);
 
+      const seenList = (seenRaw as any[])
+        .map((row: any) =>
+          row.catalog_items
+            ? {
+                id: row.item_id,
+                tmdb_id: row.catalog_items.tmdb_id,
+                title: row.catalog_items.title,
+                poster_path: row.catalog_items.poster_path,
+                media_type: row.catalog_items.media_type,
+                runtime: row.catalog_items.runtime,
+                overview: row.catalog_items.overview,
+                vote_average: row.catalog_items.vote_average,
+                genres: [] as string[],
+                added_at: row.created_at,
+              }
+            : null,
+        )
+        .filter(Boolean) as any[];
+
       setWatchlistItems(watchlist);
       setLikedItems(liked);
-      setSeenItems(
-        (seenRaw as any[])
-          .map((row: any) =>
-            row.catalog_items
-              ? {
-                  id: row.item_id,
-                  tmdb_id: row.catalog_items.tmdb_id,
-                  title: row.catalog_items.title,
-                  poster_path: row.catalog_items.poster_path,
-                  media_type: row.catalog_items.media_type,
-                  runtime: row.catalog_items.runtime,
-                  overview: row.catalog_items.overview,
-                  vote_average: row.catalog_items.vote_average,
-                  genres: [] as string[],
-                  added_at: row.created_at,
-                }
-              : null,
-          )
-          .filter(Boolean),
-      );
+      setSeenItems(seenList);
+
+      // Hydrate missing posters from TMDB (older catalog rows may have null poster_path).
+      hydrateMissingPosters([
+        { items: watchlist, setter: setWatchlistItems },
+        { items: liked, setter: setLikedItems },
+        { items: seenList, setter: setSeenItems },
+      ]);
     } catch {
       setWatchlistItems([]);
       setLikedItems([]);
