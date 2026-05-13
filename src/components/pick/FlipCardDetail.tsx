@@ -1,31 +1,58 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Loader2, Film, User, Clapperboard, ChevronLeft } from "lucide-react";
+import { X, Loader2, Film, User, Clapperboard, ChevronLeft, Sparkles } from "lucide-react";
 import { getPosterUrl, getDisplayTitle } from "@/lib/tmdb";
 import { getPersonPhotoUrl, fetchPersonDetail } from "@/lib/people-preferences";
 import type { Movie } from "@/lib/tmdb";
 import FeedbackBadge from "@/components/pick/FeedbackBadge";
-import { useMovieInteraction, useMovieInteractions } from "@/hooks/use-movie-interactions";
+import { useMovieInteraction } from "@/hooks/use-movie-interactions";
+
+type MatchData = {
+  matchScore?: number;
+  score?: number;
+  headline?: string;
+  whyItMatches?: string;
+  detailedExplanation?: string;
+  emotionalJourney?: string;
+  perfectFor?: string;
+  funFact?: string;
+  summary?: string;
+  reasons?: string[];
+  tone?: string;
+  matchingReasons?: string[];
+  pickNote?: string | null;
+};
 
 interface FlipCardDetailProps {
   item: Movie | any;
   type: "movie" | "person";
   isOpen: boolean;
   onClose: () => void;
+  recommendationTexts?: MatchData | null;
+  recommendationTextsByMovieId?: Record<number, MatchData | undefined>;
 }
 
 const TMDB_API_KEY = "2dca580c2a14b55200e784d157207b4d";
 
-type NavEntry = { item: any; type: "movie" | "person" };
+type NavEntry = {
+  item: any;
+  type: "movie" | "person";
+};
 
-const FlipCardDetail = ({ item, type, isOpen, onClose }: FlipCardDetailProps) => {
+const FlipCardDetail = ({
+  item,
+  type,
+  isOpen,
+  onClose,
+  recommendationTexts,
+  recommendationTextsByMovieId,
+}: FlipCardDetailProps) => {
   const [navStack, setNavStack] = useState<NavEntry[]>([]);
   const [currentItem, setCurrentItem] = useState<any>(null);
   const [currentType, setCurrentType] = useState<"movie" | "person">(type);
   const [detail, setDetail] = useState<any>(null);
   const [loading, setLoading] = useState(false);
 
-  // Sync with props when opened fresh
   useEffect(() => {
     if (isOpen && item) {
       setCurrentItem(item);
@@ -33,51 +60,67 @@ const FlipCardDetail = ({ item, type, isOpen, onClose }: FlipCardDetailProps) =>
       setNavStack([]);
       setDetail(null);
     }
+
     if (!isOpen) {
       setCurrentItem(null);
       setNavStack([]);
     }
   }, [isOpen, item?.id, type]);
 
-  // Fetch detail for current item
   useEffect(() => {
     if (!isOpen || !currentItem) return;
+
     setLoading(true);
     setDetail(null);
 
     if (currentType === "movie") {
-      fetch(`https://api.themoviedb.org/3/movie/${currentItem.id}?api_key=${TMDB_API_KEY}&language=fr-FR&append_to_response=credits`)
-        .then(r => r.json())
-        .then(d => setDetail(d))
+      fetch(
+        `https://api.themoviedb.org/3/movie/${currentItem.id}?api_key=${TMDB_API_KEY}&language=fr-FR&append_to_response=credits`,
+      )
+        .then((r) => r.json())
+        .then((d) => setDetail(d))
         .finally(() => setLoading(false));
     } else {
       fetchPersonDetail(currentItem.id)
-        .then(d => setDetail(d))
+        .then((d) => setDetail(d))
         .finally(() => setLoading(false));
     }
   }, [isOpen, currentItem?.id, currentType]);
 
-  const navigateTo = useCallback((newItem: any, newType: "movie" | "person") => {
-    setNavStack(prev => [...prev, { item: currentItem, type: currentType }]);
-    setCurrentItem(newItem);
-    setCurrentType(newType);
-  }, [currentItem, currentType]);
+  const navigateTo = useCallback(
+    (newItem: any, newType: "movie" | "person") => {
+      setNavStack((prev) => [...prev, { item: currentItem, type: currentType }]);
+      setCurrentItem(newItem);
+      setCurrentType(newType);
+    },
+    [currentItem, currentType],
+  );
 
   const navigateBack = useCallback(() => {
     if (navStack.length === 0) {
       onClose();
       return;
     }
+
     const prev = navStack[navStack.length - 1];
-    setNavStack(s => s.slice(0, -1));
+    setNavStack((s) => s.slice(0, -1));
     setCurrentItem(prev.item);
     setCurrentType(prev.type);
   }, [navStack, onClose]);
 
+  const currentRecommendationText = useMemo(() => {
+    if (currentType !== "movie" || !currentItem?.id) return null;
+    return recommendationTextsByMovieId?.[currentItem.id] ?? recommendationTexts ?? null;
+  }, [currentType, currentItem?.id, recommendationTexts, recommendationTextsByMovieId]);
+
   if (!isOpen || !currentItem) return null;
+
   const director = detail?.credits?.crew?.find((c: any) => c.job === "Director");
   const cast = detail?.credits?.cast?.slice(0, 6) || [];
-  const filmography = detail?.movie_credits?.cast?.slice(0, 12) || detail?.movie_credits?.crew?.filter((c: any) => c.job === "Director").slice(0, 12) || [];
+  const filmography =
+    detail?.movie_credits?.cast?.slice(0, 12) ||
+    detail?.movie_credits?.crew?.filter((c: any) => c.job === "Director").slice(0, 12) ||
+    [];
 
   return (
     <AnimatePresence>
@@ -96,19 +139,23 @@ const FlipCardDetail = ({ item, type, isOpen, onClose }: FlipCardDetailProps) =>
             exit={{ y: "100%" }}
             transition={{ type: "spring", damping: 28, stiffness: 300 }}
             className="relative w-full max-w-md max-h-[85dvh] overflow-y-auto overscroll-contain rounded-t-3xl border-t border-border/30 bg-card/95 backdrop-blur-xl shadow-2xl"
-            onClick={e => e.stopPropagation()}
+            onClick={(e) => e.stopPropagation()}
           >
-            {/* Header with back / close */}
             <div className="sticky top-0 z-10 flex items-center justify-between bg-card/90 px-5 pt-4 pb-2 backdrop-blur-md">
               <div className="flex-1 flex items-center">
                 {navStack.length > 0 && (
-                  <button onClick={navigateBack} className="flex items-center gap-1 text-foreground/50 hover:text-foreground text-xs font-sans transition-colors mr-2">
+                  <button
+                    onClick={navigateBack}
+                    className="flex items-center gap-1 text-foreground/50 hover:text-foreground text-xs font-sans transition-colors mr-2"
+                  >
                     <ChevronLeft className="h-4 w-4" />
                     Retour
                   </button>
                 )}
               </div>
+
               <div className="h-1 w-10 rounded-full bg-foreground/10 mx-auto" />
+
               <div className="flex-1 flex justify-end">
                 <button onClick={onClose} className="rounded-full bg-foreground/5 p-1.5">
                   <X className="h-4 w-4 text-foreground/40" />
@@ -126,6 +173,7 @@ const FlipCardDetail = ({ item, type, isOpen, onClose }: FlipCardDetailProps) =>
                 detail={detail}
                 director={director}
                 cast={cast}
+                recommendationText={currentRecommendationText}
                 onPersonClick={(person) => navigateTo(person, "person")}
               />
             ) : (
@@ -143,12 +191,33 @@ const FlipCardDetail = ({ item, type, isOpen, onClose }: FlipCardDetailProps) =>
   );
 };
 
-/* ── Movie Detail Sub-component ── */
-const MovieDetailContent = ({ item, detail, director, cast, onPersonClick }: {
-  item: any; detail: any; director: any; cast: any[];
+const MovieDetailContent = ({
+  item,
+  detail,
+  director,
+  cast,
+  recommendationText,
+  onPersonClick,
+}: {
+  item: any;
+  detail: any;
+  director: any;
+  cast: any[];
+  recommendationText?: MatchData | null;
   onPersonClick: (person: any) => void;
 }) => {
   const interaction = useMovieInteraction(item?.id);
+
+  const summary =
+    recommendationText?.detailedExplanation || recommendationText?.whyItMatches || recommendationText?.summary || null;
+
+  const headline = recommendationText?.headline || null;
+  const reasons = recommendationText?.matchingReasons || recommendationText?.reasons || [];
+  const perfectFor = recommendationText?.perfectFor || null;
+  const funFact = recommendationText?.funFact || null;
+  const pickNote = recommendationText?.pickNote || null;
+  const score = recommendationText?.matchScore ?? recommendationText?.score ?? null;
+
   return (
     <div className="px-5 pb-8 pt-2">
       <div className="flex gap-4 mb-4">
@@ -160,84 +229,157 @@ const MovieDetailContent = ({ item, detail, director, cast, onPersonClick }: {
           />
           {interaction.hasInteraction && (
             <div className="absolute top-1.5 left-1.5">
-              <FeedbackBadge type={interaction.primaryStatus} inWatchlist={interaction.watchlist} size="sm" />
+              <FeedbackBadge
+                type={interaction.primaryStatus}
+                inWatchlist={interaction.watchlist}
+                seen={interaction.seen}
+                size="sm"
+              />
             </div>
           )}
         </div>
-      <div className="flex-1 min-w-0">
-        <h3 className="text-lg font-serif font-bold leading-tight text-foreground">
-          {getDisplayTitle(item)}
-        </h3>
-        {detail?.release_date && (
-          <p className="mt-1 text-xs text-foreground/40">{detail.release_date.substring(0, 4)} • {detail?.runtime}min</p>
-        )}
-        {detail?.vote_average > 0 && (
-          <p className="mt-1 text-xs text-foreground/50">
-            <span className="text-primary">★</span> {detail.vote_average.toFixed(1)}/10
-          </p>
-        )}
-        {detail?.genres && (
-          <div className="mt-2 flex flex-wrap gap-1">
-            {detail.genres.slice(0, 4).map((g: any) => (
-              <span key={g.id} className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] text-primary/70">{g.name}</span>
-            ))}
-          </div>
-        )}
-      </div>
-      </div>
 
-    {detail?.overview && (
-      <div className="mb-5">
-        <h4 className="mb-1.5 text-xs font-sans font-semibold uppercase tracking-wider text-foreground/30">Synopsis</h4>
-        <p className="text-sm leading-relaxed text-foreground/60">{detail.overview}</p>
-      </div>
-    )}
+        <div className="flex-1 min-w-0">
+          <h3 className="text-lg font-serif font-bold leading-tight text-foreground">{getDisplayTitle(item)}</h3>
 
-    {director && (
-      <div className="mb-4">
-        <h4 className="mb-1.5 text-xs font-sans font-semibold uppercase tracking-wider text-foreground/30">
-          <Clapperboard className="inline h-3 w-3 mr-1" />Réalisateur
-        </h4>
-        <button
-          onClick={() => onPersonClick({ id: director.id, name: director.name, profile_path: director.profile_path })}
-          className="text-sm text-foreground/70 hover:text-primary transition-colors cursor-pointer"
-        >
-          {director.name} →
-        </button>
-      </div>
-    )}
+          {detail?.release_date && (
+            <p className="mt-1 text-xs text-foreground/40">
+              {detail.release_date.substring(0, 4)} • {detail?.runtime}min
+            </p>
+          )}
 
-    {cast.length > 0 && (
-      <div>
-        <h4 className="mb-2 text-xs font-sans font-semibold uppercase tracking-wider text-foreground/30">
-          <User className="inline h-3 w-3 mr-1" />Casting
-        </h4>
-        <div className="grid grid-cols-3 gap-2">
-          {cast.map((c: any) => (
-            <button
-              key={c.id}
-              onClick={() => onPersonClick({ id: c.id, name: c.name, profile_path: c.profile_path })}
-              className="flex flex-col items-center gap-1 group cursor-pointer"
-            >
-              <img
-                src={c.profile_path ? `https://image.tmdb.org/t/p/w92${c.profile_path}` : "/placeholder.svg"}
-                alt={c.name}
-                className="h-14 w-14 rounded-full object-cover border border-border/20 group-hover:border-primary/30 transition-colors"
-              />
-              <span className="text-center text-[10px] text-foreground/50 leading-tight group-hover:text-primary transition-colors">{c.name}</span>
-              <span className="text-center text-[9px] text-foreground/25 leading-tight">{c.character}</span>
-            </button>
-          ))}
+          {detail?.vote_average > 0 && (
+            <p className="mt-1 text-xs text-foreground/50">
+              <span className="text-primary">★</span> {detail.vote_average.toFixed(1)}/10
+            </p>
+          )}
+
+          {detail?.genres && (
+            <div className="mt-2 flex flex-wrap gap-1">
+              {detail.genres.slice(0, 4).map((g: any) => (
+                <span key={g.id} className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] text-primary/70">
+                  {g.name}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
       </div>
-    )}
+
+      {(headline || summary || reasons.length > 0 || perfectFor || funFact || pickNote) && (
+        <div className="mb-5 rounded-2xl bg-primary/[0.04] border border-primary/15 p-4">
+          <div className="flex items-start gap-3">
+            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
+              <Sparkles className="w-4 h-4 text-primary" />
+            </div>
+
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-1 flex-wrap">
+                <p className="text-[10px] uppercase tracking-widest text-primary/60 font-sans font-semibold">
+                  Pourquoi Pick te le recommande
+                </p>
+                {score != null && (
+                  <span className="text-[10px] font-sans font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded-full">
+                    {score}%
+                  </span>
+                )}
+              </div>
+
+              {headline && <p className="text-foreground/80 text-[13px] font-sans font-semibold mb-1">{headline}</p>}
+
+              {summary && <p className="text-foreground/70 text-sm leading-relaxed mb-2">{summary}</p>}
+
+              {reasons.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 mb-2">
+                  {reasons.map((reason: string, i: number) => (
+                    <span
+                      key={`${reason}-${i}`}
+                      className="text-[10px] font-sans text-primary/70 bg-primary/8 px-2 py-0.5 rounded-full border border-primary/10"
+                    >
+                      {reason}
+                    </span>
+                  ))}
+                </div>
+              )}
+
+              {perfectFor && <p className="text-foreground/50 text-[11px] font-sans italic mb-1">{perfectFor}</p>}
+
+              {pickNote && <p className="text-primary/70 text-[12px] font-sans italic mb-1">{pickNote}</p>}
+
+              {funFact && (
+                <p className="text-foreground/40 text-[11px] font-sans mt-2 leading-snug">
+                  <span className="text-primary/50">💡</span> {funFact}
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {detail?.overview && (
+        <div className="mb-5">
+          <h4 className="mb-1.5 text-xs font-sans font-semibold uppercase tracking-wider text-foreground/30">
+            Synopsis
+          </h4>
+          <p className="text-sm leading-relaxed text-foreground/60">{detail.overview}</p>
+        </div>
+      )}
+
+      {director && (
+        <div className="mb-4">
+          <h4 className="mb-1.5 text-xs font-sans font-semibold uppercase tracking-wider text-foreground/30">
+            <Clapperboard className="inline h-3 w-3 mr-1" />
+            Réalisateur
+          </h4>
+          <button
+            onClick={() => onPersonClick({ id: director.id, name: director.name, profile_path: director.profile_path })}
+            className="text-sm text-foreground/70 hover:text-primary transition-colors cursor-pointer"
+          >
+            {director.name} →
+          </button>
+        </div>
+      )}
+
+      {cast.length > 0 && (
+        <div>
+          <h4 className="mb-2 text-xs font-sans font-semibold uppercase tracking-wider text-foreground/30">
+            <User className="inline h-3 w-3 mr-1" />
+            Casting
+          </h4>
+          <div className="grid grid-cols-3 gap-2">
+            {cast.map((c: any) => (
+              <button
+                key={c.id}
+                onClick={() => onPersonClick({ id: c.id, name: c.name, profile_path: c.profile_path })}
+                className="flex flex-col items-center gap-1 group cursor-pointer"
+              >
+                <img
+                  src={c.profile_path ? `https://image.tmdb.org/t/p/w92${c.profile_path}` : "/placeholder.svg"}
+                  alt={c.name}
+                  className="h-14 w-14 rounded-full object-cover border border-border/20 group-hover:border-primary/30 transition-colors"
+                />
+                <span className="text-center text-[10px] text-foreground/50 leading-tight group-hover:text-primary transition-colors">
+                  {c.name}
+                </span>
+                <span className="text-center text-[9px] text-foreground/25 leading-tight">{c.character}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
 
-/* ── Person Detail Sub-component ── */
-const PersonDetailContent = ({ item, detail, filmography, onMovieClick }: {
-  item: any; detail: any; filmography: any[];
+const PersonDetailContent = ({
+  item,
+  detail,
+  filmography,
+  onMovieClick,
+}: {
+  item: any;
+  detail: any;
+  filmography: any[];
   onMovieClick: (movie: any) => void;
 }) => (
   <div className="px-5 pb-8 pt-2">
@@ -259,9 +401,7 @@ const PersonDetailContent = ({ item, detail, filmography, onMovieClick }: {
             Né(e) le {new Date(detail.birthday).toLocaleDateString("fr-FR")}
           </p>
         )}
-        {detail?.place_of_birth && (
-          <p className="mt-0.5 text-xs text-foreground/25">{detail.place_of_birth}</p>
-        )}
+        {detail?.place_of_birth && <p className="mt-0.5 text-xs text-foreground/25">{detail.place_of_birth}</p>}
       </div>
     </div>
 
@@ -275,7 +415,8 @@ const PersonDetailContent = ({ item, detail, filmography, onMovieClick }: {
     {filmography.length > 0 && (
       <div>
         <h4 className="mb-2 text-xs font-sans font-semibold uppercase tracking-wider text-foreground/30">
-          <Film className="inline h-3 w-3 mr-1" />Filmographie
+          <Film className="inline h-3 w-3 mr-1" />
+          Filmographie
         </h4>
         <div className="grid grid-cols-4 gap-2">
           {filmography.map((f: any) => (
@@ -289,7 +430,9 @@ const PersonDetailContent = ({ item, detail, filmography, onMovieClick }: {
                 alt={f.title}
                 className="w-full aspect-[2/3] rounded-lg object-cover border border-border/20 group-hover:border-primary/30 transition-colors"
               />
-              <span className="text-center text-[9px] text-foreground/50 leading-tight line-clamp-2 group-hover:text-primary transition-colors">{f.title}</span>
+              <span className="text-center text-[9px] text-foreground/50 leading-tight line-clamp-2 group-hover:text-primary transition-colors">
+                {f.title}
+              </span>
             </button>
           ))}
         </div>
