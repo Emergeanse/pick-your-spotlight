@@ -17,7 +17,17 @@ interface TrendingRowProps {
 
 const IMG_BASE = "https://image.tmdb.org/t/p";
 
-const MovieCard = ({ movie, index, onMovieClick, interaction }: { movie: Movie; index: number; onMovieClick?: (m: Movie) => void; interaction?: MovieInteractionState }) => {
+const MovieCard = ({
+  movie,
+  index,
+  onMovieClick,
+  interaction,
+}: {
+  movie: Movie;
+  index: number;
+  onMovieClick?: (m: Movie) => void;
+  interaction?: MovieInteractionState;
+}) => {
   const [provider, setProvider] = useState<{ name: string; logo_path: string } | null>(null);
   const [detail, setDetail] = useState<MovieDetail | null>(null);
   const [showActions, setShowActions] = useState(false);
@@ -25,14 +35,21 @@ const MovieCard = ({ movie, index, onMovieClick, interaction }: { movie: Movie; 
   useEffect(() => {
     const mediaType = movie.first_air_date ? "tv" : "movie";
     getWatchProviders(movie.id, mediaType)
-      .then(providers => { if (providers.length > 0) setProvider(providers[0]); })
+      .then((providers) => {
+        if (providers.length > 0) setProvider(providers[0]);
+      })
       .catch(() => {});
   }, [movie.id]);
 
   const handleLongPress = () => {
     if (!detail) {
       const mediaType = movie.first_air_date ? "tv" : "movie";
-      getMovieDetails(movie.id, mediaType).then(d => { setDetail(d); setShowActions(true); }).catch(() => {});
+      getMovieDetails(movie.id, mediaType)
+        .then((d) => {
+          setDetail(d);
+          setShowActions(true);
+        })
+        .catch(() => {});
     } else {
       setShowActions(!showActions);
     }
@@ -45,7 +62,10 @@ const MovieCard = ({ movie, index, onMovieClick, interaction }: { movie: Movie; 
         animate={{ opacity: 1, scale: 1 }}
         transition={{ delay: index * 0.05, duration: 0.3 }}
         onClick={() => onMovieClick?.(movie)}
-        onContextMenu={(e) => { e.preventDefault(); handleLongPress(); }}
+        onContextMenu={(e) => {
+          e.preventDefault();
+          handleLongPress();
+        }}
         className="group/card cursor-pointer"
       >
         <div className="relative w-28 md:w-40 aspect-[2/3] rounded-lg md:rounded-xl overflow-hidden">
@@ -75,7 +95,11 @@ const MovieCard = ({ movie, index, onMovieClick, interaction }: { movie: Movie; 
 
           {interaction?.hasInteraction && (
             <div className="absolute top-1.5 left-1.5 md:top-2 md:left-2">
-              <FeedbackBadge type={interaction.primaryStatus} inWatchlist={interaction.watchlist} />
+              <FeedbackBadge
+                type={interaction.primaryStatus}
+                inWatchlist={interaction.watchlist}
+                seen={interaction.seen}
+              />
             </div>
           )}
         </div>
@@ -95,10 +119,12 @@ const MovieCard = ({ movie, index, onMovieClick, interaction }: { movie: Movie; 
 const TrendingRow = ({ title, fetchFn, onMovieClick }: TrendingRowProps) => {
   const [movies, setMovies] = useState<Movie[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const interactions = useMovieInteractions(movies.map(m => ({ tmdbId: m.id, mediaType: inferCatalogMediaType(m) })));
+  const interactions = useMovieInteractions(movies.map((m) => ({ tmdbId: m.id, mediaType: inferCatalogMediaType(m) })));
 
   useEffect(() => {
-    fetchFn().then(setMovies).catch(() => {});
+    fetchFn()
+      .then(setMovies)
+      .catch(() => {});
   }, []);
 
   const scroll = (dir: "left" | "right") => {
@@ -129,7 +155,13 @@ const TrendingRow = ({ title, fetchFn, onMovieClick }: TrendingRowProps) => {
           style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
         >
           {movies.map((movie, i) => (
-            <MovieCard key={movie.id} movie={movie} index={i} onMovieClick={onMovieClick} interaction={interactions[movie.id]} />
+            <MovieCard
+              key={movie.id}
+              movie={movie}
+              index={i}
+              onMovieClick={onMovieClick}
+              interaction={interactions[movie.id]}
+            />
           ))}
         </div>
 
