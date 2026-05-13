@@ -4,12 +4,12 @@ import { Loader2, Heart, ThumbsDown, Star, SkipForward, ChevronLeft, ChevronRigh
 import { useAuth } from "@/hooks/use-auth";
 import {
   fetchPopularPeople,
-  getPersonPhotoUrl,
   savePersonPreference,
   fetchPersonDetail,
   type PreferenceValue,
 } from "@/lib/people-preferences";
 import FlipCardDetail from "./FlipCardDetail";
+import RecommendationPersonCard from "./RecommendationPersonCard";
 
 interface PeopleTrainerProps {
   onBack?: () => void;
@@ -40,22 +40,6 @@ const RATING_BUTTONS = [
   },
 ];
 
-function computeAge(birthday: string | null): number | null {
-  if (!birthday) return null;
-  const birth = new Date(birthday);
-  const today = new Date();
-  let age = today.getFullYear() - birth.getFullYear();
-  const m = today.getMonth() - birth.getMonth();
-  if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
-  return age;
-}
-
-function extractNationality(placeOfBirth: string | null): string | null {
-  if (!placeOfBirth) return null;
-  const parts = placeOfBirth.split(",").map((s) => s.trim());
-  return parts[parts.length - 1] || null;
-}
-
 const PeopleTrainer = ({ onBack, filterDepartment }: PeopleTrainerProps) => {
   const { user } = useAuth();
   const [people, setPeople] = useState<any[]>([]);
@@ -65,9 +49,9 @@ const PeopleTrainer = ({ onBack, filterDepartment }: PeopleTrainerProps) => {
   const [page, setPage] = useState(1);
   const [history, setHistory] = useState<number[]>([]);
   const [ratedCount, setRatedCount] = useState(0);
-  const [miniBios, setMiniBios] = useState<Record<number, any>>({});
   const [detailPerson, setDetailPerson] = useState<any | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
+  const [hydratedPeople, setHydratedPeople] = useState<Record<number, any>>({});
   const actionsRef = useRef({ likes: 0, dislikes: 0 });
 
   const loadPeople = useCallback(
@@ -96,7 +80,7 @@ const PeopleTrainer = ({ onBack, filterDepartment }: PeopleTrainerProps) => {
     setCurrentIndex(0);
     setHistory([]);
     setPage(1);
-    setMiniBios({});
+    setHydratedPeople({});
     loadPeople(1);
   }, [filterDepartment]);
 
@@ -114,29 +98,17 @@ const PeopleTrainer = ({ onBack, filterDepartment }: PeopleTrainerProps) => {
   useEffect(() => {
     const ids = [currentPerson?.id, nextPerson?.id].filter(Boolean);
     ids.forEach((id) => {
-      if (id && !miniBios[id]) {
+      if (id && !hydratedPeople[id]) {
         fetchPersonDetail(id)
           .then((detail) => {
-            setMiniBios((prev) => ({ ...prev, [id]: detail }));
+            setHydratedPeople((prev) => ({ ...prev, [id]: detail }));
           })
           .catch(() => {});
       }
     });
-  }, [currentPerson?.id, nextPerson?.id]);
+  }, [currentPerson?.id, nextPerson?.id, hydratedPeople]);
 
-  const bio = currentPerson ? miniBios[currentPerson.id] : null;
-  const age = computeAge(bio?.birthday);
-  const nationality = extractNationality(bio?.place_of_birth);
-  const shortBio = bio?.biography?.split(".").slice(0, 2).join(".").trim();
-  const knownForTitles = (currentPerson?.known_for || [])
-    .map((m: any) => m.title || m.name)
-    .filter(Boolean)
-    .slice(0, 3);
-  const isDirector = currentPerson?.known_for_department === "Directing";
-
-  const infoChips: string[] = [];
-  if (age) infoChips.push(`${age} ans`);
-  if (nationality) infoChips.push(nationality);
+  const currentPersonDetail = currentPerson ? (hydratedPeople[currentPerson.id] ?? currentPerson) : null;
 
   const handleRate = async (preference: PreferenceValue) => {
     if (!currentPerson || !user) return;
@@ -151,6 +123,7 @@ const PeopleTrainer = ({ onBack, filterDepartment }: PeopleTrainerProps) => {
         preference,
         known_for: knownFor.slice(0, 5),
       });
+
       setRatedCount((c) => c + 1);
       if (preference === "liked" || preference === "loved") actionsRef.current.likes += 1;
       if (preference === "disliked") actionsRef.current.dislikes += 1;
@@ -178,8 +151,8 @@ const PeopleTrainer = ({ onBack, filterDepartment }: PeopleTrainerProps) => {
   };
 
   const openPersonDetail = () => {
-    if (!currentPerson) return;
-    setDetailPerson(currentPerson);
+    if (!currentPersonDetail) return;
+    setDetailPerson(currentPersonDetail);
     setDetailOpen(true);
   };
 
@@ -197,77 +170,15 @@ const PeopleTrainer = ({ onBack, filterDepartment }: PeopleTrainerProps) => {
             <Loader2 className="h-6 w-6 animate-spin text-primary/50" />
             <p className="text-sm font-sans text-foreground/30">Chargement…</p>
           </div>
-        ) : !currentPerson ? (
+        ) : !currentPersonDetail ? (
           <div className="flex flex-col items-center gap-4 text-center">
             <p className="text-sm font-sans text-foreground/50">Plus de personnes pour le moment</p>
           </div>
         ) : (
-          <div className="relative mx-auto w-full max-w-[280px]" style={{ width: "min(68vw, 30vh, 280px)" }}>
-            {nextPerson && (
-              <div className="absolute inset-0 -z-10">
-                <div className="h-full w-full translate-y-3 scale-[0.94] overflow-hidden rounded-[1.75rem] border border-white/10 opacity-50 aspect-[3/4]">
-                  <img
-                    src={getPersonPhotoUrl(nextPerson.profile_path, "w342")}
-                    alt=""
-                    className="h-full w-full object-cover brightness-[1.2] saturate-[1.2]"
-                  />
-                </div>
-              </div>
-            )}
+          <div className="w-full max-w-xl">
+            <RecommendationPersonCard person={currentPersonDetail} onOpenDetails={openPersonDetail} />
 
-            <AnimatePresence mode="popLayout">
-              <motion.button
-                key={currentPerson.id}
-                type="button"
-                initial={{ scale: 0.95, opacity: 0, y: 20 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.9 }}
-                transition={{ type: "spring", stiffness: 260, damping: 24 }}
-                className="relative aspect-[3/4] w-full select-none text-left"
-                onClick={openPersonDetail}
-              >
-                <div className="absolute inset-0 rounded-[1.75rem] overflow-hidden shadow-[0_24px_80px_hsl(var(--background)/0.72)] cursor-pointer">
-                  <img
-                    src={getPersonPhotoUrl(currentPerson.profile_path, "w780")}
-                    alt={currentPerson.name}
-                    className="absolute inset-0 h-full w-full object-cover brightness-[1.3] contrast-[1.08] saturate-[1.3]"
-                    draggable={false}
-                  />
-                  <div className="pointer-events-none absolute inset-0 rounded-[1.75rem] ring-1 ring-inset ring-white/10 z-[1]" />
-
-                  <div className="absolute inset-x-0 bottom-0 z-[2] bg-gradient-to-t from-background via-background/70 to-transparent px-4 pt-24 pb-4">
-                    <h3 className="mb-0.5 text-lg font-serif font-bold text-white drop-shadow-md leading-tight">
-                      {currentPerson.name}
-                    </h3>
-                    <p className="mb-1 text-[11px] font-sans text-white/55">
-                      {isDirector ? "Réalisateur/Réalisatrice" : "Acteur/Actrice"}
-                      {infoChips.length > 0 && ` · ${infoChips.join(" · ")}`}
-                    </p>
-                    {shortBio && (
-                      <p className="mb-2 text-[10px] font-sans leading-snug text-white/40 line-clamp-2">{shortBio}.</p>
-                    )}
-                    {knownForTitles.length > 0 && (
-                      <div className="flex flex-wrap gap-1">
-                        {knownForTitles.map((t: string) => (
-                          <span
-                            key={t}
-                            className="rounded-full bg-white/10 px-2 py-0.5 text-[9px] text-white/65 backdrop-blur-sm"
-                          >
-                            {t}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="absolute top-3 right-3 z-[2] rounded-full bg-background/30 px-2 py-1 backdrop-blur-sm">
-                    <span className="text-[9px] font-sans text-white/50">Tap pour détails</span>
-                  </div>
-                </div>
-              </motion.button>
-            </AnimatePresence>
-
-            <div className="absolute inset-y-0 -left-10 flex items-center">
+            <div className="absolute inset-y-0 left-0 flex items-center -translate-x-4 md:-translate-x-10">
               <button
                 onClick={goBack}
                 disabled={history.length === 0}
@@ -276,7 +187,7 @@ const PeopleTrainer = ({ onBack, filterDepartment }: PeopleTrainerProps) => {
                 <ChevronLeft className="h-5 w-5" />
               </button>
             </div>
-            <div className="absolute inset-y-0 -right-10 flex items-center">
+            <div className="absolute inset-y-0 right-0 flex items-center translate-x-4 md:translate-x-10">
               <button
                 onClick={skip}
                 className="rounded-full bg-foreground/5 p-1.5 text-foreground/30 transition-all hover:bg-foreground/10"
