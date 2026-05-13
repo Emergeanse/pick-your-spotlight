@@ -442,7 +442,7 @@ const Landing = () => {
             <div className="text-center md:text-left">
               <span className="text-[10px] uppercase tracking-[0.2em] text-gold/50 font-sans font-semibold">À plusieurs</span>
               <h2 className="text-3xl md:text-4xl font-serif mb-4 mt-1">
-                Pick <span className="text-gold">Together</span>
+                Pick <span className="text-gold">Ensemble</span>
               </h2>
               <p className="text-foreground/40 font-sans text-sm md:text-base leading-relaxed mb-5">
                 Fini les 30 minutes de débat. Pick croise vos profils cinématographiques
@@ -562,7 +562,7 @@ const Landing = () => {
               <p className="text-foreground/35 text-sm font-sans mb-1">L'expérience complète</p>
               <div className="flex items-baseline gap-1 mb-5"><p className="text-3xl font-serif text-foreground">3,99€</p><span className="text-foreground/35 text-sm font-sans">/mois</span></div>
               <div className="space-y-3">
-                {["Tout le plan Gratuit", "Recommandations illimitées", "Chatbot complet", "Mode Compagnon illimité", "ADN Cinéma avancé", "Pick Together", "Profils multiples"].map((f) => (
+                {["Tout le plan Gratuit", "Recommandations illimitées", "Chatbot complet", "Mode Compagnon illimité", "ADN Cinéma avancé", "Pick Ensemble", "Profils multiples"].map((f) => (
                   <div key={f} className="flex items-center gap-2.5"><Check className="w-4 h-4 text-gold shrink-0" /><span className="text-foreground/60 text-sm font-sans">{f}</span></div>
                 ))}
               </div>

@@ -20,7 +20,7 @@ const TOUR_STEPS: TourStep[] = [
   },
   {
     selector: '[data-tour="tab-together"]',
-    title: "Pick Together 👥",
+    title: "Pick Ensemble 👥",
     desc: "Vous êtes plusieurs ? Pick croise vos profils et trouve LE film qui plaît à tout le monde.",
     position: "top",
   },
