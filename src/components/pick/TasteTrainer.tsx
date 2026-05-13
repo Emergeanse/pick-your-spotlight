@@ -1,21 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import {
-  ChevronLeft,
-  ChevronRight,
-  Loader2,
-  Sparkles,
-  ArrowRight,
-  SkipForward,
-  Film,
-  Users,
-  Tv,
-  Clapperboard,
-} from "lucide-react";
+import { ChevronLeft, Loader2, Sparkles, ArrowRight, SkipForward, Film, Users, Tv, Clapperboard } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { getPosterUrl, getDisplayTitle } from "@/lib/tmdb";
-import { likeMovie } from "@/lib/liked-movies";
-import { trackInteraction } from "@/lib/interactions";
+import { getDisplayTitle } from "@/lib/tmdb";
 import { recordAcceptedRecommendation, recordSkippedRecommendation } from "@/lib/engagement";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -26,6 +13,7 @@ import PeopleTrainer from "./PeopleTrainer";
 import FeedbackBadge from "./FeedbackBadge";
 import FlipCardDetail from "./FlipCardDetail";
 import RecommendationMovieCard from "./RecommendationMovieCard";
+import MovieActionBar from "./MovieActionBar";
 import { useMovieInteractions } from "@/hooks/use-movie-interactions";
 
 const TMDB_API_KEY = "2dca580c2a14b55200e784d157207b4d";
@@ -37,46 +25,6 @@ interface TasteTrainerProps {
 }
 
 type SelectedCategory = null | "movies" | "series" | "actors" | "directors";
-
-const GENRE_MAP: Record<number, string> = {
-  28: "Action",
-  12: "Aventure",
-  16: "Animation",
-  35: "Comédie",
-  80: "Crime",
-  99: "Documentaire",
-  18: "Drame",
-  10751: "Famille",
-  14: "Fantastique",
-  36: "Histoire",
-  27: "Horreur",
-  10402: "Musique",
-  9648: "Mystère",
-  10749: "Romance",
-  878: "Science-Fiction",
-  53: "Thriller",
-  10752: "Guerre",
-  37: "Western",
-};
-
-const TV_GENRE_MAP: Record<number, string> = {
-  10759: "Action",
-  16: "Animation",
-  35: "Comédie",
-  80: "Crime",
-  99: "Documentaire",
-  18: "Drame",
-  10751: "Famille",
-  10762: "Enfants",
-  9648: "Mystère",
-  10763: "Actualités",
-  10764: "Téléréalité",
-  10765: "Sci-Fi & Fantasy",
-  10766: "Soap",
-  10767: "Talk",
-  10768: "Guerre & Politique",
-  37: "Western",
-};
 
 async function fetchTrainingMovies(page: number): Promise<Movie[]> {
   const res = await fetch(
@@ -114,39 +62,6 @@ async function fetchSeriesDetail(id: number): Promise<MovieDetail> {
     media_type: "tv",
   } as MovieDetail;
 }
-
-const RATING_BUTTONS = [
-  {
-    value: 5,
-    label: "Pas pour moi",
-    toneClass:
-      "bg-[hsl(var(--destructive)/0.18)] border-[hsl(var(--destructive)/0.34)] text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.28)] shadow-[0_12px_32px_hsl(var(--destructive)/0.12)]",
-  },
-  {
-    value: 25,
-    label: "Bof",
-    toneClass:
-      "bg-[hsl(var(--surprise)/0.18)] border-[hsl(var(--surprise)/0.32)] text-[hsl(var(--surprise))] hover:bg-[hsl(var(--surprise)/0.28)] shadow-[0_12px_32px_hsl(var(--surprise)/0.10)]",
-  },
-  {
-    value: 50,
-    label: "Correct",
-    toneClass:
-      "bg-[hsl(var(--gold)/0.16)] border-[hsl(var(--gold)/0.30)] text-[hsl(var(--gold))] hover:bg-[hsl(var(--gold)/0.24)] shadow-[0_12px_32px_hsl(var(--gold)/0.10)]",
-  },
-  {
-    value: 75,
-    label: "J'aime bien",
-    toneClass:
-      "bg-[hsl(var(--train)/0.18)] border-[hsl(var(--train)/0.30)] text-[hsl(var(--train))] hover:bg-[hsl(var(--train)/0.26)] shadow-[0_12px_32px_hsl(var(--train)/0.10)]",
-  },
-  {
-    value: 100,
-    label: "Chef-d'œuvre",
-    toneClass:
-      "bg-[hsl(var(--primary)/0.18)] border-[hsl(var(--primary)/0.30)] text-primary hover:bg-[hsl(var(--primary)/0.26)] shadow-[0_12px_32px_hsl(var(--primary)/0.14)]",
-  },
-];
 
 const CATEGORIES = [
   {
@@ -212,9 +127,10 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
   const [currentMovieDetail, setCurrentMovieDetail] = useState<MovieDetail | null>(null);
   const [cardLoading, setCardLoading] = useState(false);
   const milestoneTimeout = useRef<ReturnType<typeof setTimeout>>();
+  const advancedMovieIdsRef = useRef<Set<number>>(new Set());
+  const actionsRef = useRef({ likes: 0, skips: 0 });
 
   const isSeries = selectedCategory === "series";
-  const genreMap = isSeries ? TV_GENRE_MAP : GENRE_MAP;
   const isMediaCategory = selectedCategory === "movies" || selectedCategory === "series";
   const trainerMediaType: "movie" | "tv" = isSeries ? "tv" : "movie";
 
@@ -252,6 +168,7 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
     setHistory([]);
     setPage(1);
     setCurrentMovieDetail(null);
+    advancedMovieIdsRef.current = new Set();
     loadMovies(1, selectedCategory!);
   }, [selectedCategory]);
 
@@ -277,8 +194,6 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
 
   const currentMovie = movies[currentIndex];
   const currentInteraction = currentMovie ? interactions[currentMovie.id] : undefined;
-  const actionsRef = useRef({ likes: 0, skips: 0 });
-
   const totalProcessed = likedCount + skippedCount;
   const cumulativeTotal = totalEvaluated + totalProcessed;
   const sessionTarget = Math.max(0, THRESHOLDS.ideal - totalEvaluated);
@@ -325,48 +240,45 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
     };
   }, [currentMovie?.id, isSeries, isMediaCategory]);
 
-  const handleRate = async (overrideValue?: number) => {
-    if (!currentMovie || !user) return;
-    const rating = overrideValue ?? 50;
-    const isPositive = rating > 50;
-    const actionType = rating <= 50 ? "skipped" : "liked";
+  const advanceAfterTrainingInteraction = useCallback(
+    async (mode: "liked" | "skipped") => {
+      if (!currentMovie || !user) return;
+      if (advancedMovieIdsRef.current.has(currentMovie.id)) return;
 
-    try {
-      const genres = (currentMovie.genre_ids || []).map((gid) => genreMap[gid]).filter(Boolean);
-      const source = isSeries ? "taste_trainer_series" : "taste_trainer";
-      if (rating > 50) {
-        if (!isSeries) {
-          const detail = currentMovieDetail ?? (await fetchMovieDetail(currentMovie.id));
-          await likeMovie(detail);
-        }
-        await trackInteraction(currentMovie.id, actionType, {
-          source,
-          genres,
-          rating,
-          media_type: isSeries ? "tv" : "movie",
-        });
-        await recordAcceptedRecommendation(user.id);
+      advancedMovieIdsRef.current.add(currentMovie.id);
+
+      if (mode === "liked") {
         setLikedCount((c) => c + 1);
-        actionsRef.current.likes++;
+        actionsRef.current.likes += 1;
+        await recordAcceptedRecommendation(user.id).catch(() => {});
       } else {
-        await trackInteraction(currentMovie.id, actionType, {
-          source,
-          genres,
-          rating,
-          media_type: isSeries ? "tv" : "movie",
-        });
-        await recordSkippedRecommendation(user.id);
         setSkippedCount((c) => c + 1);
-        actionsRef.current.skips++;
+        actionsRef.current.skips += 1;
+        await recordSkippedRecommendation(user.id).catch(() => {});
       }
-    } catch (e) {
-      console.error("Failed to rate:", e);
-    }
 
-    setHistory((prev) => [...prev, currentIndex]);
-    setProcessedIds((prev) => new Set(prev).add(currentMovie.id));
-    setCurrentIndex((i) => i + 1);
-  };
+      setHistory((prev) => [...prev, currentIndex]);
+      setProcessedIds((prev) => new Set(prev).add(currentMovie.id));
+      setCurrentIndex((i) => i + 1);
+    },
+    [currentMovie, currentIndex, user],
+  );
+
+  const handleTrainerInteraction = useCallback(
+    async (type: string) => {
+      if (!currentMovie) return;
+
+      if (type === "like") {
+        await advanceAfterTrainingInteraction("liked");
+        return;
+      }
+
+      if (type === "already_seen" || type === "dislike" || type === "unknown") {
+        await advanceAfterTrainingInteraction("skipped");
+      }
+    },
+    [currentMovie, advanceAfterTrainingInteraction],
+  );
 
   const handleClose = () => {
     const { likes, skips } = actionsRef.current;
@@ -389,15 +301,17 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
   const goBack = () => {
     if (history.length === 0) return;
     const prevIndex = history[history.length - 1];
+    const prevMovie = movies[prevIndex];
+    if (prevMovie) {
+      advancedMovieIdsRef.current.delete(prevMovie.id);
+    }
     setHistory((prev) => prev.slice(0, -1));
     setCurrentIndex(prevIndex);
   };
 
-  const skipMovie = () => {
+  const skipMovie = async () => {
     if (!currentMovie) return;
-    setHistory((prev) => [...prev, currentIndex]);
-    setProcessedIds((prev) => new Set(prev).add(currentMovie.id));
-    setCurrentIndex((i) => i + 1);
+    await advanceAfterTrainingInteraction("skipped");
   };
 
   const openMovieDetail = async () => {
@@ -609,22 +523,20 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
               onClick={skipMovie}
               className="rounded-full bg-foreground/5 p-2 text-foreground/30 transition-all hover:bg-foreground/10"
             >
-              <ChevronRight className="h-5 w-5" />
+              <SkipForward className="h-5 w-5" />
             </button>
           </div>
 
-          <div className="grid grid-cols-5 gap-1.5">
-            {RATING_BUTTONS.map((btn) => (
-              <motion.button
-                key={btn.value}
-                whileTap={{ scale: 0.94 }}
-                onClick={() => handleRate(btn.value)}
-                className={`min-h-11 rounded-xl border px-1 py-3 text-center font-sans text-[11px] font-medium leading-tight transition-all active:scale-95 ${btn.toneClass}`}
-              >
-                {btn.label}
-              </motion.button>
-            ))}
-          </div>
+          {currentMovieDetail && (
+            <div className="flex items-center justify-center">
+              <MovieActionBar
+                key={`${currentMovieDetail.id}-${currentIndex}`}
+                movie={currentMovieDetail}
+                size="md"
+                onInteraction={handleTrainerInteraction}
+              />
+            </div>
+          )}
 
           <button
             onClick={skipMovie}
