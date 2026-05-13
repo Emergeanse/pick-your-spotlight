@@ -581,6 +581,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
     const [streamingLinks, setStreamingLinks] = useState<StreamingLink[]>([]);
     const [trailerUrl, setTrailerUrl] = useState<string | null>(null);
     const [matchData, setMatchData] = useState<MatchData | null>(null);
+    const [prefetchedMatchData, setPrefetchedMatchData] = useState<Record<number, MatchData>>({});
     const [matchLoading, setMatchLoading] = useState(false);
     const [synopsisExpanded, setSynopsisExpanded] = useState(false);
     const [showOptions, setShowOptions] = useState(false);
