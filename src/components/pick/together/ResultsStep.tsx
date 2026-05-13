@@ -81,7 +81,7 @@ const ResultsStep = ({
           >
             <Sparkles className="w-3.5 h-3.5 text-primary/70" />
             <span className="text-primary/80 text-[11px] font-sans font-semibold tracking-wide uppercase">
-              Together
+              Ensemble
             </span>
           </motion.div>
 
