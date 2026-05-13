@@ -1,7 +1,14 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Star, TrendingUp, Gem, Sparkles } from "lucide-react";
-import { getTrendingMovies, getHiddenGems, getTonightsPick, getPosterUrl, getDisplayTitle, getMovieDetails } from "@/lib/tmdb";
+import {
+  getTrendingMovies,
+  getHiddenGems,
+  getTonightsPick,
+  getPosterUrl,
+  getDisplayTitle,
+  getMovieDetails,
+} from "@/lib/tmdb";
 import type { Movie, MovieDetail } from "@/lib/tmdb";
 import MovieActionBar from "./MovieActionBar";
 import FeedbackBadge from "./FeedbackBadge";
@@ -17,7 +24,15 @@ interface DiscoverySectionProps {
   excludedGenres?: string[];
 }
 
-const DiscoveryMovieCard = ({ movie, onSelect, interaction }: { movie: Movie; onSelect: (m: Movie) => void; interaction?: MovieInteractionState }) => {
+const DiscoveryMovieCard = ({
+  movie,
+  onSelect,
+  interaction,
+}: {
+  movie: Movie;
+  onSelect: (m: Movie) => void;
+  interaction?: MovieInteractionState;
+}) => {
   const [detail, setDetail] = useState<MovieDetail | null>(null);
   const [showActions, setShowActions] = useState(false);
 
@@ -25,7 +40,12 @@ const DiscoveryMovieCard = ({ movie, onSelect, interaction }: { movie: Movie; on
     e.stopPropagation();
     if (!detail) {
       const mediaType = movie.first_air_date ? "tv" : "movie";
-      getMovieDetails(movie.id, mediaType).then(d => { setDetail(d); setShowActions(true); }).catch(() => {});
+      getMovieDetails(movie.id, mediaType)
+        .then((d) => {
+          setDetail(d);
+          setShowActions(true);
+        })
+        .catch(() => {});
     } else {
       setShowActions(!showActions);
     }
@@ -36,7 +56,10 @@ const DiscoveryMovieCard = ({ movie, onSelect, interaction }: { movie: Movie; on
       <motion.button
         whileTap={{ scale: 0.95 }}
         onClick={() => onSelect(movie)}
-        onContextMenu={(e) => { e.preventDefault(); handleToggleActions(e); }}
+        onContextMenu={(e) => {
+          e.preventDefault();
+          handleToggleActions(e);
+        }}
         className="cursor-pointer group w-full"
       >
         <div className="aspect-[2/3] rounded-xl overflow-hidden mb-1.5 relative">
@@ -56,7 +79,11 @@ const DiscoveryMovieCard = ({ movie, onSelect, interaction }: { movie: Movie; on
           )}
           {interaction?.hasInteraction && (
             <div className="absolute top-1.5 left-1.5">
-              <FeedbackBadge type={interaction.primaryStatus} inWatchlist={interaction.watchlist} />
+              <FeedbackBadge
+                type={interaction.primaryStatus}
+                inWatchlist={interaction.watchlist}
+                seen={interaction.seen}
+              />
             </div>
           )}
         </div>
@@ -77,14 +104,14 @@ const MovieRow = ({
   title,
   icon: Icon,
   movies,
-  onSelect
+  onSelect,
 }: {
   title: string;
   icon: React.ElementType;
   movies: Movie[];
   onSelect: (movie: Movie) => void;
 }) => {
-  const interactions = useMovieInteractions(movies.map(m => ({ tmdbId: m.id, mediaType: inferCatalogMediaType(m) })));
+  const interactions = useMovieInteractions(movies.map((m) => ({ tmdbId: m.id, mediaType: inferCatalogMediaType(m) })));
   return (
     <div className="mb-6">
       <div className="flex items-center gap-2 mb-3 px-1">
@@ -100,7 +127,13 @@ const MovieRow = ({
   );
 };
 
-const DiscoverySection = ({ onMovieSelect, platformIds = [], favoriteGenres = [], minRating = 0, excludedGenres = [] }: DiscoverySectionProps) => {
+const DiscoverySection = ({
+  onMovieSelect,
+  platformIds = [],
+  favoriteGenres = [],
+  minRating = 0,
+  excludedGenres = [],
+}: DiscoverySectionProps) => {
   const [trending, setTrending] = useState<Movie[]>([]);
   const [gems, setGems] = useState<Movie[]>([]);
   const filterOpts = { minRating, excludedGenres };
@@ -125,9 +158,7 @@ const DiscoverySection = ({ onMovieSelect, platformIds = [], favoriteGenres = []
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.6, duration: 0.5 }}
       className="w-full"
-    >
-
-    </motion.div>
+    ></motion.div>
   );
 };
 
