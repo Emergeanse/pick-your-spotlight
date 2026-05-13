@@ -55,8 +55,6 @@ import { inferCatalogMediaType } from "@/lib/catalog";
 const IMG_BASE = "https://image.tmdb.org/t/p";
 const CONFIDENCE_THRESHOLD = 30;
 
-// ── Inlined sub-components ──────────────────────────────────────────
-
 interface MatchData {
   matchScore?: number;
   score?: number;
@@ -588,6 +586,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
     const [rejectReaction, setRejectReaction] = useState<string | null>(null);
     const [showRefineSheet, setShowRefineSheet] = useState(false);
     const [showReviewSheet, setShowReviewSheet] = useState(false);
+    const [movieDetailOpen, setMovieDetailOpen] = useState(false);
     const [personDetail, setPersonDetail] = useState<{ item: any; isOpen: boolean }>({ item: null, isOpen: false });
     const [internalVisitedMovieIds, setInternalVisitedMovieIds] = useState<Set<number>>(() => new Set([movie.id]));
     const visitedMovieIds = externalVisited ?? internalVisitedMovieIds;
@@ -613,6 +612,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
         return true;
       });
     }, [movie, alternativeMovies]);
+    const currentRecommendationText = prefetchedMatchData[movie.id] ?? matchData ?? null;
 
     useEffect(() => {
       if (visitedMovieIds.has(movie.id)) return;
@@ -639,7 +639,6 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
     const overview = movie.overview || "Aucune description disponible.";
     const mediaType = movie.first_air_date ? "tv" : "movie";
     const isDocumentary = movie.genres?.some((g) => g.id === 99);
-    const mediaLabel = isDocumentary ? "Documentaire" : mediaType === "tv" ? "Série" : "Film";
     const bgImage = backdrop || poster;
 
     useEffect(() => {
@@ -894,7 +893,9 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
                 </motion.div>
               )}
 
-              <RecommendationMovieCardHeader movie={movie} />
+              <button type="button" onClick={() => setMovieDetailOpen(true)} className="block w-full text-left">
+                <RecommendationMovieCardHeader movie={movie} />
+              </button>
 
               <StreamingSection streamingLinks={streamingLinks} />
 
@@ -1180,6 +1181,14 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
           onClose={() => setShowReviewSheet(false)}
           movieId={movie.id}
           userCriteria={userCriteria}
+        />
+        <FlipCardDetail
+          item={movie}
+          type="movie"
+          isOpen={movieDetailOpen}
+          onClose={() => setMovieDetailOpen(false)}
+          recommendationTexts={currentRecommendationText}
+          recommendationTextsByMovieId={prefetchedMatchData}
         />
         <FlipCardDetail
           item={personDetail.item}
