@@ -606,6 +606,16 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
     const interaction = useMovieInteraction(movie.id, inferCatalogMediaType(movie));
     const currentFeedback = interaction.primaryStatus;
     const bookmarked = interaction.watchlist;
+    const recommendationCandidates = useMemo(() => {
+      const all = [movie, ...(alternativeMovies || [])].filter(Boolean);
+      const seen = new Set<number>();
+
+      return all.filter((candidate) => {
+        if (!candidate?.id || seen.has(candidate.id)) return false;
+        seen.add(candidate.id);
+        return true;
+      });
+    }, [movie, alternativeMovies]);
 
     // Track unique movies seen across card navigation and detail/back navigation
     useEffect(() => {
