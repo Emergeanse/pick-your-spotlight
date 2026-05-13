@@ -562,7 +562,7 @@ const Landing = () => {
               <p className="text-foreground/35 text-sm font-sans mb-1">L'expérience complète</p>
               <div className="flex items-baseline gap-1 mb-5"><p className="text-3xl font-serif text-foreground">3,99€</p><span className="text-foreground/35 text-sm font-sans">/mois</span></div>
               <div className="space-y-3">
-                {["Tout le plan Gratuit", "Recommandations illimitées", "Chatbot complet", "Mode Compagnon illimité", "ADN Cinéma avancé", "Pick Together", "Profils multiples"].map((f) => (
+                {["Tout le plan Gratuit", "Recommandations illimitées", "Chatbot complet", "Mode Compagnon illimité", "ADN Cinéma avancé", "Pick Ensemble", "Profils multiples"].map((f) => (
                   <div key={f} className="flex items-center gap-2.5"><Check className="w-4 h-4 text-gold shrink-0" /><span className="text-foreground/60 text-sm font-sans">{f}</span></div>
                 ))}
               </div>
