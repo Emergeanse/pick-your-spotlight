@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { motion, AnimatePresence, PanInfo, useMotionValue, useTransform } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   ChevronLeft,
   ChevronRight,
@@ -11,7 +11,6 @@ import {
   Users,
   Tv,
   Clapperboard,
-  RotateCcw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getPosterUrl, getDisplayTitle } from "@/lib/tmdb";
@@ -23,9 +22,10 @@ import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
 import type { Movie, MovieDetail } from "@/lib/tmdb";
 import { THRESHOLDS } from "./TrainingProgress";
-import FlipCardBack from "./FlipCardBack";
 import PeopleTrainer from "./PeopleTrainer";
 import FeedbackBadge from "./FeedbackBadge";
+import FlipCardDetail from "./FlipCardDetail";
+import RecommendationMovieCard from "./RecommendationMovieCard";
 import { useMovieInteractions } from "@/hooks/use-movie-interactions";
 
 const TMDB_API_KEY = "2dca580c2a14b55200e784d157207b4d";
@@ -102,6 +102,17 @@ async function fetchTrainingSeries(page: number): Promise<Movie[]> {
 async function fetchMovieDetail(id: number): Promise<MovieDetail> {
   const res = await fetch(`https://api.themoviedb.org/3/movie/${id}?api_key=${TMDB_API_KEY}&language=fr-FR`);
   return res.json();
+}
+
+async function fetchSeriesDetail(id: number): Promise<MovieDetail> {
+  const res = await fetch(`https://api.themoviedb.org/3/tv/${id}?api_key=${TMDB_API_KEY}&language=fr-FR`);
+  const data = await res.json();
+  return {
+    ...data,
+    title: data.name,
+    release_date: data.first_air_date,
+    media_type: "tv",
+  } as MovieDetail;
 }
 
 const RATING_BUTTONS = [
@@ -188,24 +199,23 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
   const [movies, setMovies] = useState<Movie[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [swiping, setSwiping] = useState<"left" | "right" | null>(null);
   const [processedIds, setProcessedIds] = useState<Set<number>>(new Set());
   const [likedCount, setLikedCount] = useState(0);
   const [skippedCount, setSkippedCount] = useState(0);
   const [page, setPage] = useState(1);
   const [totalEvaluated, setTotalEvaluated] = useState(0);
-  const [sliderValue, setSliderValue] = useState(50);
   const [milestoneMsg, setMilestoneMsg] = useState<string | null>(null);
   const [showActivationCTA, setShowActivationCTA] = useState(false);
   const [history, setHistory] = useState<number[]>([]);
-  const [flipped, setFlipped] = useState(false);
+  const [detailMovie, setDetailMovie] = useState<MovieDetail | null>(null);
+  const [detailOpen, setDetailOpen] = useState(false);
+  const [currentMovieDetail, setCurrentMovieDetail] = useState<MovieDetail | null>(null);
+  const [cardLoading, setCardLoading] = useState(false);
   const milestoneTimeout = useRef<ReturnType<typeof setTimeout>>();
-  const x = useMotionValue(0);
 
   const isSeries = selectedCategory === "series";
   const genreMap = isSeries ? TV_GENRE_MAP : GENRE_MAP;
   const isMediaCategory = selectedCategory === "movies" || selectedCategory === "series";
-
   const trainerMediaType: "movie" | "tv" = isSeries ? "tv" : "movie";
 
   const interactions = useMovieInteractions(
@@ -240,8 +250,8 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
     setMovies([]);
     setCurrentIndex(0);
     setHistory([]);
-    setFlipped(false);
     setPage(1);
+    setCurrentMovieDetail(null);
     loadMovies(1, selectedCategory!);
   }, [selectedCategory]);
 
@@ -266,19 +276,14 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
   }, [currentIndex, movies.length, loading, page, isMediaCategory]);
 
   const currentMovie = movies[currentIndex];
-  const nextMovie = movies[currentIndex + 1];
   const currentInteraction = currentMovie ? interactions[currentMovie.id] : undefined;
-  const nextInteraction = nextMovie ? interactions[nextMovie.id] : undefined;
   const actionsRef = useRef({ likes: 0, skips: 0 });
 
   const totalProcessed = likedCount + skippedCount;
   const cumulativeTotal = totalEvaluated + totalProcessed;
   const sessionTarget = Math.max(0, THRESHOLDS.ideal - totalEvaluated);
   const sessionProgress = Math.min(totalProcessed, sessionTarget);
-
-  const rotate = useTransform(x, [-200, 0, 200], [-8, 0, 8]);
-  const likeOpacity = useTransform(x, [0, 80, 200], [0, 0.6, 1]);
-  const skipOpacity = useTransform(x, [-200, -80, 0], [1, 0.6, 0]);
+  const progressPercent = sessionTarget > 0 ? Math.min(100, Math.round((sessionProgress / sessionTarget) * 100)) : 100;
 
   useEffect(() => {
     const msg = getMilestoneMessage(cumulativeTotal);
@@ -293,20 +298,45 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
     }
   }, [cumulativeTotal, isActivation, showActivationCTA]);
 
+  useEffect(() => {
+    if (!currentMovie || !isMediaCategory) {
+      setCurrentMovieDetail(null);
+      return;
+    }
+
+    let cancelled = false;
+    setCardLoading(true);
+
+    const loader = async () => {
+      try {
+        const detail = isSeries ? await fetchSeriesDetail(currentMovie.id) : await fetchMovieDetail(currentMovie.id);
+        if (!cancelled) setCurrentMovieDetail(detail);
+      } catch (e) {
+        console.error("Failed to load current training detail:", e);
+        if (!cancelled) setCurrentMovieDetail(currentMovie as unknown as MovieDetail);
+      } finally {
+        if (!cancelled) setCardLoading(false);
+      }
+    };
+
+    loader();
+    return () => {
+      cancelled = true;
+    };
+  }, [currentMovie?.id, isSeries, isMediaCategory]);
+
   const handleRate = async (overrideValue?: number) => {
     if (!currentMovie || !user) return;
-    const rating = overrideValue ?? sliderValue;
+    const rating = overrideValue ?? 50;
     const isPositive = rating > 50;
     const actionType = rating <= 50 ? "skipped" : "liked";
-
-    setSwiping(isPositive ? "right" : "left");
 
     try {
       const genres = (currentMovie.genre_ids || []).map((gid) => genreMap[gid]).filter(Boolean);
       const source = isSeries ? "taste_trainer_series" : "taste_trainer";
       if (rating > 50) {
         if (!isSeries) {
-          const detail = await fetchMovieDetail(currentMovie.id);
+          const detail = currentMovieDetail ?? (await fetchMovieDetail(currentMovie.id));
           await likeMovie(detail);
         }
         await trackInteraction(currentMovie.id, actionType, {
@@ -335,18 +365,7 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
 
     setHistory((prev) => [...prev, currentIndex]);
     setProcessedIds((prev) => new Set(prev).add(currentMovie.id));
-    setTimeout(() => {
-      setSwiping(null);
-      setSliderValue(50);
-      setFlipped(false);
-      setCurrentIndex((i) => i + 1);
-      x.set(0);
-    }, 300);
-  };
-
-  const handleDragEnd = (_: any, info: PanInfo) => {
-    if (info.offset.x > 100) handleRate(80);
-    else if (info.offset.x < -100) handleRate(15);
+    setCurrentIndex((i) => i + 1);
   };
 
   const handleClose = () => {
@@ -372,8 +391,6 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
     const prevIndex = history[history.length - 1];
     setHistory((prev) => prev.slice(0, -1));
     setCurrentIndex(prevIndex);
-    setFlipped(false);
-    x.set(0);
   };
 
   const skipMovie = () => {
@@ -381,11 +398,24 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
     setHistory((prev) => [...prev, currentIndex]);
     setProcessedIds((prev) => new Set(prev).add(currentMovie.id));
     setCurrentIndex((i) => i + 1);
-    setFlipped(false);
-    x.set(0);
   };
 
-  const progressPercent = sessionTarget > 0 ? Math.min(100, Math.round((sessionProgress / sessionTarget) * 100)) : 100;
+  const openMovieDetail = async () => {
+    if (!currentMovie) return;
+    if (currentMovieDetail) {
+      setDetailMovie(currentMovieDetail);
+      setDetailOpen(true);
+      return;
+    }
+    try {
+      const detail = isSeries ? await fetchSeriesDetail(currentMovie.id) : await fetchMovieDetail(currentMovie.id);
+      setCurrentMovieDetail(detail);
+      setDetailMovie(detail);
+      setDetailOpen(true);
+    } catch (e) {
+      console.error("Failed to open detail:", e);
+    }
+  };
 
   if (selectedCategory === null) {
     return (
@@ -521,187 +551,74 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
             <Loader2 className="h-6 w-6 animate-spin text-primary/50" />
             <p className="text-sm font-sans text-foreground/30">Chargement…</p>
           </div>
-        ) : !currentMovie ? (
+        ) : !currentMovie || !currentMovieDetail ? (
           <div className="flex flex-col items-center gap-4 text-center">
-            <Sparkles className="h-8 w-8 text-primary/40" />
-            <p className="text-sm font-sans text-foreground/50">
-              {isSeries ? "Plus de séries pour le moment" : "Plus de films pour le moment"}
-            </p>
-            <Button variant="outline" onClick={() => setSelectedCategory(null)} className="rounded-full text-sm">
-              Retour
-            </Button>
-          </div>
-        ) : (
-          <div
-            className="relative mx-auto w-full max-w-[320px]"
-            style={{ width: "min(72vw, 34vh, 320px)", perspective: "1200px" }}
-          >
-            {nextMovie && !flipped && (
-              <div className="absolute inset-0 -z-10">
-                <div className="relative h-full w-full translate-y-3 scale-[0.94] overflow-hidden rounded-[1.75rem] border border-white/10 opacity-50 aspect-[2/3]">
-                  <img
-                    src={getPosterUrl(nextMovie.poster_path, "w342")}
-                    alt=""
-                    className="h-full w-full object-cover brightness-[1.2] saturate-[1.2]"
-                  />
-                  {nextInteraction?.hasInteraction && (
-                    <div className="absolute top-2 left-2 opacity-100">
-                      <FeedbackBadge
-                        type={nextInteraction.primaryStatus}
-                        inWatchlist={nextInteraction.watchlist}
-                        size="sm"
-                      />
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-
-            <AnimatePresence mode="popLayout">
-              <motion.div
-                key={currentMovie.id}
-                drag={flipped ? false : "x"}
-                dragConstraints={{ left: 0, right: 0 }}
-                dragElastic={0.7}
-                onDragEnd={handleDragEnd}
-                animate={
-                  swiping === "right"
-                    ? { x: 400, opacity: 0, rotate: 15 }
-                    : swiping === "left"
-                      ? { x: -400, opacity: 0, rotate: -15 }
-                      : { opacity: 1, scale: 1, y: 0 }
-                }
-                initial={{ scale: 0.95, opacity: 0, y: 20 }}
-                exit={{ opacity: 0, scale: 0.9 }}
-                transition={
-                  swiping ? { duration: 0.3, ease: "easeOut" } : { type: "spring", stiffness: 260, damping: 24 }
-                }
-                className="relative aspect-[2/3] w-full select-none"
-                style={{ x, rotate: flipped ? 0 : rotate, touchAction: "none" }}
-                onClick={() => !swiping && setFlipped((f) => !f)}
-              >
-                {!flipped ? (
-                  <div className="absolute inset-0 rounded-[1.75rem] overflow-hidden shadow-[0_24px_80px_hsl(var(--background)/0.72)] cursor-pointer">
-                    <img
-                      src={getPosterUrl(currentMovie.poster_path, "w780")}
-                      alt={getDisplayTitle(currentMovie)}
-                      className="absolute inset-0 h-full w-full object-cover brightness-[1.3] contrast-[1.08] saturate-[1.3]"
-                      draggable={false}
-                    />
-                    <div className="pointer-events-none absolute inset-0 rounded-[1.75rem] ring-1 ring-inset ring-white/10" />
-
-                    {currentInteraction?.hasInteraction && (
-                      <div className="absolute top-3 left-3 z-20">
-                        <FeedbackBadge
-                          type={currentInteraction.primaryStatus}
-                          inWatchlist={currentInteraction.watchlist}
-                          size="sm"
-                        />
-                      </div>
-                    )}
-
-                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-background via-background/38 to-transparent px-5 pt-24 pb-5">
-                      <h3 className="mb-1.5 text-xl font-serif font-bold leading-[1.05] text-white drop-shadow-md">
-                        {getDisplayTitle(currentMovie)}
-                      </h3>
-                      <div className="mb-2.5 flex items-center gap-3 text-xs font-sans text-white/70">
-                        {currentMovie.vote_average > 0 && (
-                          <span className="flex items-center gap-1">
-                            <span className="text-primary">★</span>
-                            {currentMovie.vote_average.toFixed(1)}
-                          </span>
-                        )}
-                        {currentMovie.release_date && <span>{currentMovie.release_date.substring(0, 4)}</span>}
-                      </div>
-                      <div className="flex flex-wrap gap-1.5">
-                        {(currentMovie.genre_ids || [])
-                          .slice(0, 3)
-                          .map((gid) => genreMap[gid])
-                          .filter(Boolean)
-                          .map((g) => (
-                            <span
-                              key={g}
-                              className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] font-sans text-white/70 backdrop-blur-sm"
-                            >
-                              {g}
-                            </span>
-                          ))}
-                      </div>
-                    </div>
-
-                    <div className="absolute top-3 right-3 rounded-full bg-background/30 px-2 py-1 backdrop-blur-sm">
-                      <span className="text-[9px] font-sans text-white/50">Tap pour détails</span>
-                    </div>
-
-                    <motion.div
-                      className="absolute top-5 left-5 z-30 rounded-xl border-2 border-[hsl(var(--destructive)/0.6)] px-4 py-2 -rotate-12"
-                      style={{ opacity: skipOpacity }}
-                    >
-                      <span className="text-sm font-sans font-bold tracking-wide text-[hsl(var(--destructive))]">
-                        PASSE
-                      </span>
-                    </motion.div>
-                    <motion.div
-                      className="absolute top-5 right-5 z-30 rounded-xl border-2 border-[hsl(var(--train)/0.6)] px-4 py-2 rotate-12"
-                      style={{ opacity: likeOpacity }}
-                    >
-                      <span className="text-sm font-sans font-bold tracking-wide text-[hsl(var(--train))]">J'AIME</span>
-                    </motion.div>
-                  </div>
-                ) : (
-                  <div className="absolute inset-0 rounded-[1.75rem] overflow-hidden border border-border/20 bg-background shadow-[0_24px_80px_hsl(var(--background)/0.72)]">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setFlipped(false);
-                      }}
-                      className="absolute top-3 left-3 z-30 flex items-center gap-1 rounded-full bg-foreground/10 px-2.5 py-1.5 text-[10px] font-sans font-medium text-foreground/60 backdrop-blur-sm transition-all hover:bg-foreground/15"
-                    >
-                      <RotateCcw className="h-3 w-3" />
-                      Retour
-                    </button>
-                    <FlipCardBack item={currentMovie} type={isSeries ? "tv" : "movie"} />
-                  </div>
-                )}
-              </motion.div>
-            </AnimatePresence>
-
-            {!flipped && (
+            {cardLoading ? (
               <>
-                <div className="absolute inset-y-0 -left-10 flex items-center">
-                  <button
-                    onClick={goBack}
-                    disabled={history.length === 0}
-                    className="rounded-full bg-foreground/5 p-1.5 text-foreground/30 transition-all hover:bg-foreground/10 disabled:opacity-20"
-                  >
-                    <ChevronLeft className="h-5 w-5" />
-                  </button>
-                </div>
-                <div className="absolute inset-y-0 -right-10 flex items-center">
-                  <button
-                    onClick={skipMovie}
-                    className="rounded-full bg-foreground/5 p-1.5 text-foreground/30 transition-all hover:bg-foreground/10"
-                  >
-                    <ChevronRight className="h-5 w-5" />
-                  </button>
-                </div>
+                <Loader2 className="h-6 w-6 animate-spin text-primary/50" />
+                <p className="text-sm font-sans text-foreground/30">Préparation de la vignette…</p>
+              </>
+            ) : (
+              <>
+                <Sparkles className="h-8 w-8 text-primary/40" />
+                <p className="text-sm font-sans text-foreground/50">
+                  {isSeries ? "Plus de séries pour le moment" : "Plus de films pour le moment"}
+                </p>
+                <Button variant="outline" onClick={() => setSelectedCategory(null)} className="rounded-full text-sm">
+                  Retour
+                </Button>
               </>
             )}
+          </div>
+        ) : (
+          <div className="w-full max-w-3xl">
+            <RecommendationMovieCard
+              movie={currentMovieDetail}
+              contextType="browse"
+              showPrimaryAction={false}
+              onOpenDetails={openMovieDetail}
+              className="min-h-0"
+            />
           </div>
         )}
       </div>
 
       {currentMovie && !showActivationCTA && (
         <div className="relative z-20 border-t border-border/20 bg-background/84 px-4 pt-3 pb-[calc(1rem+env(safe-area-inset-bottom))] backdrop-blur-xl shadow-[0_-18px_40px_hsl(var(--background)/0.32)]">
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <button
+              onClick={goBack}
+              disabled={history.length === 0}
+              className="rounded-full bg-foreground/5 p-2 text-foreground/30 transition-all hover:bg-foreground/10 disabled:opacity-20"
+            >
+              <ChevronLeft className="h-5 w-5" />
+            </button>
+
+            <div className="flex items-center gap-2 text-center">
+              {currentInteraction?.hasInteraction && (
+                <FeedbackBadge
+                  type={currentInteraction.primaryStatus}
+                  inWatchlist={currentInteraction.watchlist}
+                  seen={currentInteraction.seen}
+                  size="sm"
+                />
+              )}
+            </div>
+
+            <button
+              onClick={skipMovie}
+              className="rounded-full bg-foreground/5 p-2 text-foreground/30 transition-all hover:bg-foreground/10"
+            >
+              <ChevronRight className="h-5 w-5" />
+            </button>
+          </div>
+
           <div className="grid grid-cols-5 gap-1.5">
             {RATING_BUTTONS.map((btn) => (
               <motion.button
                 key={btn.value}
                 whileTap={{ scale: 0.94 }}
-                onClick={() => {
-                  setSliderValue(btn.value);
-                  setTimeout(() => handleRate(btn.value), 100);
-                }}
+                onClick={() => handleRate(btn.value)}
                 className={`min-h-11 rounded-xl border px-1 py-3 text-center font-sans text-[11px] font-medium leading-tight transition-all active:scale-95 ${btn.toneClass}`}
               >
                 {btn.label}
@@ -749,6 +666,13 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
           </motion.div>
         )}
       </AnimatePresence>
+
+      <FlipCardDetail
+        item={detailMovie}
+        type="movie"
+        isOpen={detailOpen && !!detailMovie}
+        onClose={() => setDetailOpen(false)}
+      />
     </motion.div>
   );
 };
