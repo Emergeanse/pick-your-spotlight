@@ -739,18 +739,30 @@ const WatchlistPage = ({ onMovieSelect }: WatchlistPageProps) => {
 
       <AnimatePresence>
         {previewMovie && (
-          <MoviePreviewSheet
-            movie={previewMovie}
-            providers={previewProviders}
-            personalNote={previewNote}
-            onWatch={handleWatchFromPreview}
-            onOpenDetails={handleOpenFullDetail}
-            onClose={() => {
-              setPreviewMovie(null);
-              setPreviewProviders([]);
-              setPreviewNote("");
-            }}
-          />
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[55] bg-background overflow-y-auto"
+          >
+            <button
+              type="button"
+              onClick={() => {
+                setPreviewMovie(null);
+                setPreviewNote("");
+              }}
+              className="fixed top-[calc(env(safe-area-inset-top)+0.75rem)] right-4 z-[60] w-9 h-9 rounded-full bg-card/70 backdrop-blur-md border border-border/30 flex items-center justify-center text-foreground/70 hover:text-foreground transition-colors"
+              aria-label="Fermer"
+            >
+              <X className="w-4 h-4" />
+            </button>
+            <RecommendationMovieCard
+              movie={previewMovie}
+              onOpenDetails={handleOpenFullDetail}
+              onPrimaryAction={handleWatchFromPreview}
+              primaryActionLabel="Je regarde"
+            />
+          </motion.div>
         )}
       </AnimatePresence>
 
