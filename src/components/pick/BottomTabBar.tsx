@@ -6,7 +6,7 @@ export type TabId = "home" | "watchlist" | "together" | "cinema" | "profile";
 
 const tabs: { id: TabId; label: string; icon: typeof Home; path: string }[] = [
   { id: "home", label: "Accueil", icon: Home, path: "/app" },
-  { id: "mesfilms", label: "Mes Films", icon: Bookmark, path: "/app/watchlist" },
+  { id: "watchlist", label: "Mes films", icon: Bookmark, path: "/app/watchlist" },
   { id: "cinema", label: "Mon Cinéma", icon: Clapperboard, path: "/app/my-cinema" },
   { id: "together", label: "Together", icon: Users, path: "/app/pick-together" },
   { id: "profile", label: "Profil", icon: User, path: "/app/profile" },
@@ -24,6 +24,7 @@ const BottomTabBar = () => {
         {tabs.map((tab) => {
           const isActive = currentTab === tab.id;
           const Icon = tab.icon;
+
           return (
             <button
               key={tab.id}
@@ -31,7 +32,6 @@ const BottomTabBar = () => {
               onClick={() => {
                 if (tab.id === "home") {
                   if (location.pathname === "/app") {
-                    // Force full reset — reload clears all state
                     window.location.href = "/app";
                   } else {
                     navigate("/app");
@@ -57,6 +57,7 @@ const BottomTabBar = () => {
                   />
                 )}
               </div>
+
               <span
                 className={`text-[10px] font-sans font-medium transition-colors duration-200 ${
                   isActive ? "text-primary" : "text-foreground/30"
