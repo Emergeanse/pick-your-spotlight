@@ -181,6 +181,69 @@ const SwipeableCard = ({
 // MoviePreviewSheet removed — "Mes films" now reuses RecommendationMovieCard,
 // the same vignette rendered in the main recommendation flow.
 
+async function hydrateMissingPosters(
+  groups: { items: any[]; setter: React.Dispatch<React.SetStateAction<any[]>> }[],
+) {
+  const seen = new Map<string, { mediaType: "movie" | "tv"; tmdbId: number }>();
+  for (const { items } of groups) {
+    for (const it of items) {
+      if (it && !it.poster_path && it.tmdb_id) {
+        const mt = (it.media_type || (it.first_air_date ? "tv" : "movie")) as "movie" | "tv";
+        seen.set(`${it.tmdb_id}:${mt}`, { mediaType: mt, tmdbId: it.tmdb_id });
+      }
+    }
+  }
+  if (seen.size === 0) return;
+
+  const resolved = new Map<string, string | null>();
+  await Promise.all(
+    Array.from(seen.values()).map(async ({ tmdbId, mediaType }) => {
+      try {
+        const detail = await getMovieDetails(tmdbId, mediaType);
+        resolved.set(`${tmdbId}:${mediaType}`, detail?.poster_path ?? null);
+      } catch {
+        resolved.set(`${tmdbId}:${mediaType}`, null);
+      }
+    }),
+  );
+
+  for (const { items, setter } of groups) {
+    let changed = false;
+    const next = items.map((it: any) => {
+      if (it && !it.poster_path && it.tmdb_id) {
+        const mt = it.media_type || (it.first_air_date ? "tv" : "movie");
+        const p = resolved.get(`${it.tmdb_id}:${mt}`);
+        if (p) {
+          changed = true;
+          return { ...it, poster_path: p };
+        }
+      }
+      return it;
+    });
+    if (changed) setter(next);
+  }
+
+  // Best-effort persist to catalog_items so the next load is instant.
+  try {
+    const { supabase } = await import("@/integrations/supabase/client");
+    await Promise.all(
+      Array.from(resolved.entries())
+        .filter(([, p]) => !!p)
+        .map(([key, p]) => {
+          const [tmdbIdStr, mt] = key.split(":");
+          return supabase
+            .from("catalog_items")
+            .update({ poster_path: p })
+            .eq("tmdb_id", Number(tmdbIdStr))
+            .eq("media_type", mt)
+            .is("poster_path", null);
+        }),
+    );
+  } catch {
+    // ignore — UI hydration already happened
+  }
+}
+
 const WatchlistPage = ({ onMovieSelect }: WatchlistPageProps) => {
   const [activeTab, setActiveTab] = useState<ActiveTab>("watchlist");
   const [watchlistItems, setWatchlistItems] = useState<any[]>([]);
