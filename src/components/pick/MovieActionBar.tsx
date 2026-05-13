@@ -40,7 +40,10 @@ const MovieActionBar = ({
 
   const liked = interaction.liked;
   const bookmarked = interaction.watchlist;
-  const activeFeedback: FeedbackLabel | null = interaction.primaryStatus ?? (interaction.seen ? "seen" : null);
+  const seenActive = interaction.seen;
+  const activeFeedback = interaction.primaryStatus;
+  const unknownActive = activeFeedback === "unknown";
+
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -60,10 +63,11 @@ const MovieActionBar = ({
       interaction,
       liked,
       bookmarked,
+      seenActive,
       activeFeedback,
       initialFeedback,
     });
-  }, [movie.id, mediaType, interaction, liked, bookmarked, activeFeedback, initialFeedback]);
+  }, [movie.id, mediaType, interaction, liked, bookmarked, seenActive, activeFeedback, initialFeedback]);
 
   useEffect(() => {
     const handler = (e: Event) => {
@@ -81,6 +85,7 @@ const MovieActionBar = ({
       userId: user?.id ?? null,
       email: user?.email ?? null,
     });
+
     if (!user) {
       toast.info("Connecte-toi pour enrichir ton profil !");
       return false;
@@ -132,14 +137,14 @@ const MovieActionBar = ({
     [movie.id, movieMeta, sessionId, contextType, mediaType, user?.id],
   );
 
-  const handleExclusiveToggle = async (label: FeedbackLabel) => {
+  const handlePrimaryToggle = async (label: Exclude<FeedbackLabel, "watchlist" | "seen">) => {
     if (!requireAuth()) return;
 
     const movieId = movie.id;
     const isCurrentlyActive = activeFeedback === label;
     const newLabel = isCurrentlyActive ? null : label;
 
-    debugLog("handleExclusiveToggle", {
+    debugLog("handlePrimaryToggle", {
       movieId,
       label,
       activeFeedback,
@@ -152,47 +157,68 @@ const MovieActionBar = ({
     try {
       if (newLabel) {
         await persistFeedback(newLabel);
+
+        if (newLabel === "unknown" && seenActive) {
+          await clearFeedbackType(movie.id, ["seen"], mediaType);
+        }
       } else {
-        debugLog("clearFeedbackType:start", {
-          movieId: movie.id,
-          labels: [label],
-          mediaType,
-        });
         await clearFeedbackType(movie.id, [label], mediaType);
-        debugLog("clearFeedbackType:done", {
-          movieId: movie.id,
-          labels: [label],
-        });
       }
 
-      if (!isCurrentMovie(movieId)) {
-        debugLog("handleExclusiveToggle:aborted stale movie", { movieId });
-        return;
-      }
+      if (!isCurrentMovie(movieId)) return;
 
-      if (newLabel) {
-        trackInteraction(
-          movie.id,
-          label === "seen" ? "already_seen" : label === "not_for_me" ? "skipped" : "unknown",
-          {},
-        );
-      }
-
-      const toastMap: Record<FeedbackLabel, string> = {
-        seen: isCurrentlyActive ? "Statut retiré" : "Marqué comme déjà vu",
-        not_for_me: isCurrentlyActive ? "Statut retiré" : "Noté — Pick en tiendra compte",
+      const toastMap: Partial<Record<FeedbackLabel, string>> = {
         unknown: isCurrentlyActive ? "Statut retiré" : "Noté — on en tiendra compte",
-        like: "",
-        love: "",
-        dislike: "",
-        skip: "",
-        watchlist: "",
+        not_for_me: isCurrentlyActive ? "Statut retiré" : "Noté — Pick en tiendra compte",
       };
 
       toast.success(toastMap[label] || "Mis à jour");
-      onInteraction?.(label === "seen" ? "already_seen" : label === "not_for_me" ? "dislike" : label);
+      onInteraction?.(label === "not_for_me" ? "dislike" : label);
     } catch (error) {
-      debugLog("handleExclusiveToggle:error", error);
+      debugLog("handlePrimaryToggle:error", error);
+      if (!isCurrentMovie(movieId)) return;
+      toast.error("Erreur");
+    } finally {
+      if (isCurrentMovie(movieId)) {
+        setLoading(false);
+      }
+    }
+  };
+
+  const handleToggleSeen = async () => {
+    if (!requireAuth()) return;
+
+    const movieId = movie.id;
+    const isSeenActive = seenActive;
+
+    debugLog("handleToggleSeen", {
+      movieId,
+      seenActive: isSeenActive,
+      unknownActive,
+      activeFeedback,
+    });
+
+    setLoading(true);
+
+    try {
+      if (isSeenActive) {
+        await clearFeedbackType(movie.id, ["seen"], mediaType);
+      } else {
+        await persistFeedback("seen");
+
+        if (unknownActive) {
+          await clearFeedbackType(movie.id, ["unknown"], mediaType);
+        }
+
+        trackInteraction(movie.id, "already_seen", {});
+      }
+
+      if (!isCurrentMovie(movieId)) return;
+
+      toast.success(isSeenActive ? "Statut retiré" : "Marqué comme déjà vu");
+      onInteraction?.("already_seen");
+    } catch (error) {
+      debugLog("handleToggleSeen:error", error);
       if (!isCurrentMovie(movieId)) return;
       toast.error("Erreur");
     } finally {
@@ -214,16 +240,7 @@ const MovieActionBar = ({
     setLoading(true);
     try {
       if (bookmarked) {
-        debugLog("clearFeedbackType:start", {
-          movieId: movie.id,
-          labels: ["watchlist"],
-          mediaType,
-        });
         await clearFeedbackType(movie.id, ["watchlist"], mediaType);
-        debugLog("clearFeedbackType:done", {
-          movieId: movie.id,
-          labels: ["watchlist"],
-        });
         toast.success("Retiré de ta watchlist");
         trackInteraction(movie.id, "unsaved");
       } else {
@@ -243,33 +260,21 @@ const MovieActionBar = ({
     if (!requireAuth()) return;
 
     const movieId = movie.id;
-    const previousFeedback = activeFeedback;
 
     debugLog("handleToggleLike", {
       movieId,
       likedBefore: liked,
       bookmarkedBefore: bookmarked,
-      previousFeedback,
+      activeFeedback,
+      seenActive,
     });
 
     setLoading(true);
     try {
       if (liked) {
-        debugLog("clearFeedbackType:start", {
-          movieId: movie.id,
-          labels: ["like", "love"],
-          mediaType,
-        });
         await clearFeedbackType(movie.id, ["like", "love"], mediaType);
-        debugLog("clearFeedbackType:done", {
-          movieId: movie.id,
-          labels: ["like", "love"],
-        });
 
-        if (!isCurrentMovie(movieId)) {
-          debugLog("handleToggleLike:aborted stale movie", { movieId });
-          return;
-        }
+        if (!isCurrentMovie(movieId)) return;
 
         toast.success("Retiré des favoris");
         trackInteraction(movie.id, "unliked");
@@ -283,10 +288,7 @@ const MovieActionBar = ({
           (movie.genres || []).map((g) => g.name),
         );
 
-        if (!isCurrentMovie(movieId)) {
-          debugLog("handleToggleLike:aborted stale movie", { movieId });
-          return;
-        }
+        if (!isCurrentMovie(movieId)) return;
 
         toast.success("Ajouté aux favoris !");
         trackInteraction(movie.id, "liked");
@@ -303,9 +305,6 @@ const MovieActionBar = ({
 
   const iconSize = size === "sm" ? "w-3 h-3" : "w-3.5 h-3.5";
   const btnSize = size === "sm" ? "w-7 h-7" : "w-8 h-8";
-  const fontSize = size === "sm" ? "text-[8px]" : "text-[9px]";
-
-  const isExclusiveActive = (label: FeedbackLabel) => activeFeedback === label;
 
   const inactiveClass = "bg-transparent border-border/25 text-foreground/40 hover:text-primary hover:border-primary/25";
 
@@ -321,13 +320,18 @@ const MovieActionBar = ({
   const notForMeFilledClass =
     "bg-rose-600 border-rose-300/70 text-white ring-1 ring-white/10 shadow-[0_0_24px_rgba(225,29,72,0.45)]";
 
+  const unknownFilledClass =
+    "bg-foreground/85 border-white/15 text-background shadow-[0_0_18px_rgba(255,255,255,0.12)]";
+
   return (
     <div className={`flex items-center gap-1.5 ${className}`}>
       <button
         type="button"
         disabled={loading}
         onClick={handleToggleLike}
-        className={`${btnSize} rounded-full border transition-all flex items-center justify-center ${liked ? likeFilledClass : inactiveClass}`}
+        className={`${btnSize} rounded-full border transition-all flex items-center justify-center ${
+          liked ? likeFilledClass : inactiveClass
+        }`}
         title="Aimé"
       >
         <Heart className={`${iconSize} ${liked ? "fill-current" : ""}`} />
@@ -337,7 +341,9 @@ const MovieActionBar = ({
         type="button"
         disabled={loading}
         onClick={handleToggleBookmark}
-        className={`${btnSize} rounded-full border transition-all flex items-center justify-center ${bookmarked ? watchlistFilledClass : inactiveClass}`}
+        className={`${btnSize} rounded-full border transition-all flex items-center justify-center ${
+          bookmarked ? watchlistFilledClass : inactiveClass
+        }`}
         title="À voir"
       >
         <Bookmark className={`${iconSize} ${bookmarked ? "fill-current" : ""}`} />
@@ -346,8 +352,10 @@ const MovieActionBar = ({
       <button
         type="button"
         disabled={loading}
-        onClick={() => handleExclusiveToggle("seen")}
-        className={`${btnSize} rounded-full border transition-all flex items-center justify-center ${isExclusiveActive("seen") ? seenFilledClass : inactiveClass}`}
+        onClick={handleToggleSeen}
+        className={`${btnSize} rounded-full border transition-all flex items-center justify-center ${
+          seenActive ? seenFilledClass : inactiveClass
+        }`}
         title="Déjà vu"
       >
         <Eye className={iconSize} />
@@ -356,8 +364,10 @@ const MovieActionBar = ({
       <button
         type="button"
         disabled={loading}
-        onClick={() => handleExclusiveToggle("not_for_me")}
-        className={`${btnSize} rounded-full border transition-all flex items-center justify-center ${isExclusiveActive("not_for_me") ? notForMeFilledClass : inactiveClass}`}
+        onClick={() => handlePrimaryToggle("not_for_me")}
+        className={`${btnSize} rounded-full border transition-all flex items-center justify-center ${
+          activeFeedback === "not_for_me" ? notForMeFilledClass : inactiveClass
+        }`}
         title="Pas pour moi"
       >
         <ThumbsDown className={iconSize} />
@@ -366,9 +376,11 @@ const MovieActionBar = ({
       <button
         type="button"
         disabled={loading}
-        onClick={() => handleExclusiveToggle("unknown")}
-        className={`${btnSize} rounded-full border transition-all flex items-center justify-center ${isExclusiveActive("unknown") ? "bg-foreground/85 border-white/15 text-background shadow-[0_0_18px_rgba(255,255,255,0.12)]" : inactiveClass}`}
-        title="Je ne sais pas"
+        onClick={() => handlePrimaryToggle("unknown")}
+        className={`${btnSize} rounded-full border transition-all flex items-center justify-center ${
+          unknownActive ? unknownFilledClass : inactiveClass
+        }`}
+        title="Inconnu"
       >
         <HelpCircle className={iconSize} />
       </button>
