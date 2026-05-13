@@ -442,7 +442,7 @@ const Landing = () => {
             <div className="text-center md:text-left">
               <span className="text-[10px] uppercase tracking-[0.2em] text-gold/50 font-sans font-semibold">À plusieurs</span>
               <h2 className="text-3xl md:text-4xl font-serif mb-4 mt-1">
-                Pick <span className="text-gold">Together</span>
+                Pick <span className="text-gold">Ensemble</span>
               </h2>
               <p className="text-foreground/40 font-sans text-sm md:text-base leading-relaxed mb-5">
                 Fini les 30 minutes de débat. Pick croise vos profils cinématographiques
