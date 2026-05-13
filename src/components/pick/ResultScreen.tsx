@@ -48,6 +48,7 @@ import FlipCardDetail from "@/components/pick/FlipCardDetail";
 import BrandHeader from "./BrandHeader";
 import PickCharacter from "./PickCharacter";
 import FeedbackBadge from "./FeedbackBadge";
+import { RecommendationMovieCardHeader } from "./RecommendationMovieCard";
 import { useMovieInteractions, useMovieInteraction } from "@/hooks/use-movie-interactions";
 import { inferCatalogMediaType } from "@/lib/catalog";
 
