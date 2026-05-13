@@ -1,9 +1,15 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { motion, AnimatePresence, useMotionValue, useTransform, PanInfo } from "framer-motion";
-import { Loader2, Heart, ThumbsDown, Star, SkipForward, ChevronLeft, ChevronRight, RotateCcw } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Loader2, Heart, ThumbsDown, Star, SkipForward, ChevronLeft, ChevronRight } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
-import { fetchPopularPeople, getPersonPhotoUrl, savePersonPreference, fetchPersonDetail, type PreferenceValue } from "@/lib/people-preferences";
-import FlipCardBack from "./FlipCardBack";
+import {
+  fetchPopularPeople,
+  getPersonPhotoUrl,
+  savePersonPreference,
+  fetchPersonDetail,
+  type PreferenceValue,
+} from "@/lib/people-preferences";
+import FlipCardDetail from "./FlipCardDetail";
 
 interface PeopleTrainerProps {
   onBack?: () => void;
@@ -11,12 +17,27 @@ interface PeopleTrainerProps {
 }
 
 const RATING_BUTTONS = [
-  { value: "disliked" as PreferenceValue, label: "Pas fan", icon: ThumbsDown,
-    toneClass: "bg-[hsl(var(--destructive)/0.18)] border-[hsl(var(--destructive)/0.34)] text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.28)]" },
-  { value: "liked" as PreferenceValue, label: "J'aime", icon: Heart,
-    toneClass: "bg-[hsl(var(--train)/0.18)] border-[hsl(var(--train)/0.30)] text-[hsl(var(--train))] hover:bg-[hsl(var(--train)/0.26)]" },
-  { value: "loved" as PreferenceValue, label: "J'adore", icon: Star,
-    toneClass: "bg-[hsl(var(--primary)/0.18)] border-[hsl(var(--primary)/0.30)] text-primary hover:bg-[hsl(var(--primary)/0.26)]" },
+  {
+    value: "disliked" as PreferenceValue,
+    label: "Pas fan",
+    icon: ThumbsDown,
+    toneClass:
+      "bg-[hsl(var(--destructive)/0.18)] border-[hsl(var(--destructive)/0.34)] text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.28)]",
+  },
+  {
+    value: "liked" as PreferenceValue,
+    label: "J'aime",
+    icon: Heart,
+    toneClass:
+      "bg-[hsl(var(--train)/0.18)] border-[hsl(var(--train)/0.30)] text-[hsl(var(--train))] hover:bg-[hsl(var(--train)/0.26)]",
+  },
+  {
+    value: "loved" as PreferenceValue,
+    label: "J'adore",
+    icon: Star,
+    toneClass:
+      "bg-[hsl(var(--primary)/0.18)] border-[hsl(var(--primary)/0.30)] text-primary hover:bg-[hsl(var(--primary)/0.26)]",
+  },
 ];
 
 function computeAge(birthday: string | null): number | null {
@@ -31,7 +52,7 @@ function computeAge(birthday: string | null): number | null {
 
 function extractNationality(placeOfBirth: string | null): string | null {
   if (!placeOfBirth) return null;
-  const parts = placeOfBirth.split(",").map(s => s.trim());
+  const parts = placeOfBirth.split(",").map((s) => s.trim());
   return parts[parts.length - 1] || null;
 }
 
@@ -40,38 +61,40 @@ const PeopleTrainer = ({ onBack, filterDepartment }: PeopleTrainerProps) => {
   const [people, setPeople] = useState<any[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [swiping, setSwiping] = useState<"left" | "right" | null>(null);
   const [processedIds, setProcessedIds] = useState<Set<number>>(new Set());
   const [page, setPage] = useState(1);
   const [history, setHistory] = useState<number[]>([]);
-  const [flipped, setFlipped] = useState(false);
   const [ratedCount, setRatedCount] = useState(0);
   const [miniBios, setMiniBios] = useState<Record<number, any>>({});
-  const x = useMotionValue(0);
+  const [detailPerson, setDetailPerson] = useState<any | null>(null);
+  const [detailOpen, setDetailOpen] = useState(false);
+  const actionsRef = useRef({ likes: 0, dislikes: 0 });
 
-  const loadPeople = useCallback(async (p: number) => {
-    setLoading(true);
-    try {
-      const randomPage = Math.floor(Math.random() * 30) + p;
-      const results = await fetchPopularPeople(randomPage);
-      const filtered = results.filter(person => {
-        if (processedIds.has(person.id)) return false;
-        if (filterDepartment && person.known_for_department !== filterDepartment) return false;
-        return true;
-      });
-      setPeople(prev => [...prev, ...filtered]);
-    } catch (e) {
-      console.error("Failed to load people:", e);
-    } finally {
-      setLoading(false);
-    }
-  }, [processedIds, filterDepartment]);
+  const loadPeople = useCallback(
+    async (p: number) => {
+      setLoading(true);
+      try {
+        const randomPage = Math.floor(Math.random() * 30) + p;
+        const results = await fetchPopularPeople(randomPage);
+        const filtered = results.filter((person) => {
+          if (processedIds.has(person.id)) return false;
+          if (filterDepartment && person.known_for_department !== filterDepartment) return false;
+          return true;
+        });
+        setPeople((prev) => [...prev, ...filtered]);
+      } catch (e) {
+        console.error("Failed to load people:", e);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [processedIds, filterDepartment],
+  );
 
   useEffect(() => {
     setPeople([]);
     setCurrentIndex(0);
     setHistory([]);
-    setFlipped(false);
     setPage(1);
     setMiniBios({});
     loadPeople(1);
@@ -85,17 +108,18 @@ const PeopleTrainer = ({ onBack, filterDepartment }: PeopleTrainerProps) => {
     }
   }, [currentIndex, people.length, loading, page]);
 
-  // Prefetch mini bio for current + next person
   const currentPerson = people[currentIndex];
   const nextPerson = people[currentIndex + 1];
 
   useEffect(() => {
     const ids = [currentPerson?.id, nextPerson?.id].filter(Boolean);
-    ids.forEach(id => {
+    ids.forEach((id) => {
       if (id && !miniBios[id]) {
-        fetchPersonDetail(id).then(detail => {
-          setMiniBios(prev => ({ ...prev, [id]: detail }));
-        }).catch(() => {});
+        fetchPersonDetail(id)
+          .then((detail) => {
+            setMiniBios((prev) => ({ ...prev, [id]: detail }));
+          })
+          .catch(() => {});
       }
     });
   }, [currentPerson?.id, nextPerson?.id]);
@@ -104,14 +128,18 @@ const PeopleTrainer = ({ onBack, filterDepartment }: PeopleTrainerProps) => {
   const age = computeAge(bio?.birthday);
   const nationality = extractNationality(bio?.place_of_birth);
   const shortBio = bio?.biography?.split(".").slice(0, 2).join(".").trim();
+  const knownForTitles = (currentPerson?.known_for || [])
+    .map((m: any) => m.title || m.name)
+    .filter(Boolean)
+    .slice(0, 3);
+  const isDirector = currentPerson?.known_for_department === "Directing";
 
-  const rotate = useTransform(x, [-200, 0, 200], [-8, 0, 8]);
-  const likeOpacity = useTransform(x, [0, 80, 200], [0, 0.6, 1]);
-  const skipOpacity = useTransform(x, [-200, -80, 0], [1, 0.6, 0]);
+  const infoChips: string[] = [];
+  if (age) infoChips.push(`${age} ans`);
+  if (nationality) infoChips.push(nationality);
 
   const handleRate = async (preference: PreferenceValue) => {
     if (!currentPerson || !user) return;
-    setSwiping(preference === "disliked" ? "left" : "right");
 
     try {
       const knownFor = (currentPerson.known_for || []).map((m: any) => m.title || m.name).filter(Boolean);
@@ -123,62 +151,46 @@ const PeopleTrainer = ({ onBack, filterDepartment }: PeopleTrainerProps) => {
         preference,
         known_for: knownFor.slice(0, 5),
       });
-      setRatedCount(c => c + 1);
+      setRatedCount((c) => c + 1);
+      if (preference === "liked" || preference === "loved") actionsRef.current.likes += 1;
+      if (preference === "disliked") actionsRef.current.dislikes += 1;
     } catch (e) {
       console.error("Failed to rate person:", e);
     }
 
-    setHistory(prev => [...prev, currentIndex]);
-    setProcessedIds(prev => new Set(prev).add(currentPerson.id));
-    setTimeout(() => {
-      setSwiping(null);
-      setFlipped(false);
-      setCurrentIndex(i => i + 1);
-      x.set(0);
-    }, 300);
-  };
-
-  const handleDragEnd = (_: any, info: PanInfo) => {
-    if (info.offset.x > 100) handleRate("liked");
-    else if (info.offset.x < -100) handleRate("disliked");
+    setHistory((prev) => [...prev, currentIndex]);
+    setProcessedIds((prev) => new Set(prev).add(currentPerson.id));
+    setCurrentIndex((i) => i + 1);
   };
 
   const goBack = () => {
     if (history.length === 0) return;
     const prevIndex = history[history.length - 1];
-    setHistory(prev => prev.slice(0, -1));
+    setHistory((prev) => prev.slice(0, -1));
     setCurrentIndex(prevIndex);
-    setFlipped(false);
-    x.set(0);
   };
 
   const skip = () => {
     if (!currentPerson) return;
-    setHistory(prev => [...prev, currentIndex]);
-    setProcessedIds(prev => new Set(prev).add(currentPerson.id));
-    setCurrentIndex(i => i + 1);
-    setFlipped(false);
-    x.set(0);
+    setHistory((prev) => [...prev, currentIndex]);
+    setProcessedIds((prev) => new Set(prev).add(currentPerson.id));
+    setCurrentIndex((i) => i + 1);
   };
 
-  const knownForTitles = (currentPerson?.known_for || []).map((m: any) => m.title || m.name).filter(Boolean).slice(0, 3);
-  const isDirector = currentPerson?.known_for_department === "Directing";
-
-  // Build mini info line
-  const infoChips: string[] = [];
-  if (age) infoChips.push(`${age} ans`);
-  if (nationality) infoChips.push(nationality);
+  const openPersonDetail = () => {
+    if (!currentPerson) return;
+    setDetailPerson(currentPerson);
+    setDetailOpen(true);
+  };
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      {/* Counter */}
       <div className="px-4 pb-2">
         <p className="text-center text-[11px] font-sans text-foreground/25">
           {ratedCount} évalué{ratedCount > 1 ? "s" : ""}
         </p>
       </div>
 
-      {/* Card area */}
       <div className="relative flex min-h-0 flex-1 items-center justify-center px-4 py-3">
         {loading && people.length === 0 ? (
           <div className="flex flex-col items-center gap-4">
@@ -190,120 +202,96 @@ const PeopleTrainer = ({ onBack, filterDepartment }: PeopleTrainerProps) => {
             <p className="text-sm font-sans text-foreground/50">Plus de personnes pour le moment</p>
           </div>
         ) : (
-          <div className="relative mx-auto w-full max-w-[280px]" style={{ width: "min(68vw, 30vh, 280px)", perspective: "1200px" }}>
-            {nextPerson && !flipped && (
+          <div className="relative mx-auto w-full max-w-[280px]" style={{ width: "min(68vw, 30vh, 280px)" }}>
+            {nextPerson && (
               <div className="absolute inset-0 -z-10">
                 <div className="h-full w-full translate-y-3 scale-[0.94] overflow-hidden rounded-[1.75rem] border border-white/10 opacity-50 aspect-[3/4]">
-                  <img src={getPersonPhotoUrl(nextPerson.profile_path, "w342")} alt="" className="h-full w-full object-cover brightness-[1.2] saturate-[1.2]" />
+                  <img
+                    src={getPersonPhotoUrl(nextPerson.profile_path, "w342")}
+                    alt=""
+                    className="h-full w-full object-cover brightness-[1.2] saturate-[1.2]"
+                  />
                 </div>
               </div>
             )}
 
             <AnimatePresence mode="popLayout">
-              <motion.div
+              <motion.button
                 key={currentPerson.id}
-                drag={flipped ? false : "x"}
-                dragConstraints={{ left: 0, right: 0 }}
-                dragElastic={0.7}
-                onDragEnd={handleDragEnd}
-                animate={
-                  swiping === "right" ? { x: 400, opacity: 0, rotate: 15 } :
-                  swiping === "left" ? { x: -400, opacity: 0, rotate: -15 } :
-                  { opacity: 1, scale: 1, y: 0 }
-                }
+                type="button"
                 initial={{ scale: 0.95, opacity: 0, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.9 }}
-                transition={swiping ? { duration: 0.3, ease: "easeOut" } : { type: "spring", stiffness: 260, damping: 24 }}
-                className="relative aspect-[3/4] w-full select-none"
-                style={{ x, rotate: flipped ? 0 : rotate, touchAction: "none" }}
-                onClick={() => !swiping && setFlipped(f => !f)}
+                transition={{ type: "spring", stiffness: 260, damping: 24 }}
+                className="relative aspect-[3/4] w-full select-none text-left"
+                onClick={openPersonDetail}
               >
-                {!flipped ? (
-                  <div className="absolute inset-0 rounded-[1.75rem] overflow-hidden shadow-[0_24px_80px_hsl(var(--background)/0.72)] cursor-pointer">
-                    <img
-                      src={getPersonPhotoUrl(currentPerson.profile_path, "w780")}
-                      alt={currentPerson.name}
-                      className="absolute inset-0 h-full w-full object-cover brightness-[1.3] contrast-[1.08] saturate-[1.3]"
-                      draggable={false}
-                    />
-                    <div className="pointer-events-none absolute inset-0 rounded-[1.75rem] ring-1 ring-inset ring-white/10 z-[1]" />
+                <div className="absolute inset-0 rounded-[1.75rem] overflow-hidden shadow-[0_24px_80px_hsl(var(--background)/0.72)] cursor-pointer">
+                  <img
+                    src={getPersonPhotoUrl(currentPerson.profile_path, "w780")}
+                    alt={currentPerson.name}
+                    className="absolute inset-0 h-full w-full object-cover brightness-[1.3] contrast-[1.08] saturate-[1.3]"
+                    draggable={false}
+                  />
+                  <div className="pointer-events-none absolute inset-0 rounded-[1.75rem] ring-1 ring-inset ring-white/10 z-[1]" />
 
-                    <div className="absolute inset-x-0 bottom-0 z-[2] bg-gradient-to-t from-background via-background/70 to-transparent px-4 pt-24 pb-4">
-                      <h3 className="mb-0.5 text-lg font-serif font-bold text-white drop-shadow-md leading-tight">{currentPerson.name}</h3>
-                      <p className="mb-1 text-[11px] font-sans text-white/55">
-                        {isDirector ? "Réalisateur/Réalisatrice" : "Acteur/Actrice"}
-                        {infoChips.length > 0 && ` · ${infoChips.join(" · ")}`}
-                      </p>
-                      {shortBio && (
-                        <p className="mb-2 text-[10px] font-sans leading-snug text-white/40 line-clamp-2">{shortBio}.</p>
-                      )}
-                      {knownForTitles.length > 0 && (
-                        <div className="flex flex-wrap gap-1">
-                          {knownForTitles.map((t: string) => (
-                            <span key={t} className="rounded-full bg-white/10 px-2 py-0.5 text-[9px] text-white/65 backdrop-blur-sm">{t}</span>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="absolute top-3 right-3 z-[2] rounded-full bg-background/30 px-2 py-1 backdrop-blur-sm">
-                      <span className="text-[9px] font-sans text-white/50">Tap pour détails</span>
-                    </div>
-
-                    <motion.div className="absolute top-5 left-5 z-30 rounded-xl border-2 border-[hsl(var(--destructive)/0.6)] px-4 py-2 -rotate-12" style={{ opacity: skipOpacity }}>
-                      <span className="text-sm font-sans font-bold text-[hsl(var(--destructive))]">PASSE</span>
-                    </motion.div>
-                    <motion.div className="absolute top-5 right-5 z-30 rounded-xl border-2 border-[hsl(var(--train)/0.6)] px-4 py-2 rotate-12" style={{ opacity: likeOpacity }}>
-                      <span className="text-sm font-sans font-bold text-[hsl(var(--train))]">J'AIME</span>
-                    </motion.div>
+                  <div className="absolute inset-x-0 bottom-0 z-[2] bg-gradient-to-t from-background via-background/70 to-transparent px-4 pt-24 pb-4">
+                    <h3 className="mb-0.5 text-lg font-serif font-bold text-white drop-shadow-md leading-tight">
+                      {currentPerson.name}
+                    </h3>
+                    <p className="mb-1 text-[11px] font-sans text-white/55">
+                      {isDirector ? "Réalisateur/Réalisatrice" : "Acteur/Actrice"}
+                      {infoChips.length > 0 && ` · ${infoChips.join(" · ")}`}
+                    </p>
+                    {shortBio && (
+                      <p className="mb-2 text-[10px] font-sans leading-snug text-white/40 line-clamp-2">{shortBio}.</p>
+                    )}
+                    {knownForTitles.length > 0 && (
+                      <div className="flex flex-wrap gap-1">
+                        {knownForTitles.map((t: string) => (
+                          <span
+                            key={t}
+                            className="rounded-full bg-white/10 px-2 py-0.5 text-[9px] text-white/65 backdrop-blur-sm"
+                          >
+                            {t}
+                          </span>
+                        ))}
+                      </div>
+                    )}
                   </div>
-                ) : (
-                  <div className="absolute inset-0 rounded-[1.75rem] overflow-hidden border border-border/20 bg-background shadow-[0_24px_80px_hsl(var(--background)/0.72)]">
-                    {/* Back button on flipped card */}
-                    <button
-                      onClick={(e) => { e.stopPropagation(); setFlipped(false); }}
-                      className="absolute top-3 left-3 z-30 flex items-center gap-1 rounded-full bg-foreground/10 px-2.5 py-1.5 text-[10px] font-sans font-medium text-foreground/60 backdrop-blur-sm transition-all hover:bg-foreground/15"
-                    >
-                      <RotateCcw className="h-3 w-3" />
-                      Retour
-                    </button>
-                    <FlipCardBack item={currentPerson} type="person" />
+
+                  <div className="absolute top-3 right-3 z-[2] rounded-full bg-background/30 px-2 py-1 backdrop-blur-sm">
+                    <span className="text-[9px] font-sans text-white/50">Tap pour détails</span>
                   </div>
-                )}
-              </motion.div>
+                </div>
+              </motion.button>
             </AnimatePresence>
 
-            {/* Navigation arrows */}
-            {!flipped && (
-              <>
-                <div className="absolute inset-y-0 -left-10 flex items-center">
-                  <button
-                    onClick={goBack}
-                    disabled={history.length === 0}
-                    className="rounded-full bg-foreground/5 p-1.5 text-foreground/30 transition-all hover:bg-foreground/10 disabled:opacity-20"
-                  >
-                    <ChevronLeft className="h-5 w-5" />
-                  </button>
-                </div>
-                <div className="absolute inset-y-0 -right-10 flex items-center">
-                  <button
-                    onClick={skip}
-                    className="rounded-full bg-foreground/5 p-1.5 text-foreground/30 transition-all hover:bg-foreground/10"
-                  >
-                    <ChevronRight className="h-5 w-5" />
-                  </button>
-                </div>
-              </>
-            )}
+            <div className="absolute inset-y-0 -left-10 flex items-center">
+              <button
+                onClick={goBack}
+                disabled={history.length === 0}
+                className="rounded-full bg-foreground/5 p-1.5 text-foreground/30 transition-all hover:bg-foreground/10 disabled:opacity-20"
+              >
+                <ChevronLeft className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="absolute inset-y-0 -right-10 flex items-center">
+              <button
+                onClick={skip}
+                className="rounded-full bg-foreground/5 p-1.5 text-foreground/30 transition-all hover:bg-foreground/10"
+              >
+                <ChevronRight className="h-5 w-5" />
+              </button>
+            </div>
           </div>
         )}
       </div>
 
-      {/* Rating buttons */}
       {currentPerson && (
         <div className="border-t border-border/20 bg-background/84 px-4 pt-3 pb-[calc(1rem+env(safe-area-inset-bottom))] backdrop-blur-xl">
           <div className="grid grid-cols-3 gap-2">
-            {RATING_BUTTONS.map(btn => (
+            {RATING_BUTTONS.map((btn) => (
               <motion.button
                 key={btn.value}
                 whileTap={{ scale: 0.94 }}
@@ -325,6 +313,13 @@ const PeopleTrainer = ({ onBack, filterDepartment }: PeopleTrainerProps) => {
           </button>
         </div>
       )}
+
+      <FlipCardDetail
+        item={detailPerson}
+        type="person"
+        isOpen={detailOpen && !!detailPerson}
+        onClose={() => setDetailOpen(false)}
+      />
     </div>
   );
 };
