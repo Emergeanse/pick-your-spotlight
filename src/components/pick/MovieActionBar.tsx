@@ -316,92 +316,62 @@ const MovieActionBar = ({
     "bg-sky-500 border-sky-300/70 text-white ring-1 ring-white/15 shadow-[0_0_24px_rgba(14,165,233,0.45)]";
 
   const seenFilledClass =
-    "bg-emerald-500 border-emerald-300/70 text-white ring-1 ring-white/15 shadow-[0_0_24px_rgba(16,185,129,0.42)]";
-
-  const unknownFilledClass = "bg-zinc-600 border-zinc-300/30 text-white shadow-[0_0_18px_rgba(255,255,255,0.08)]";
+    "bg-emerald-500 border-emerald-300/70 text-white ring-1 ring-white/15 shadow-[0_0_24px_rgba(16,185,129,0.45)]";
 
   const notForMeFilledClass =
-    "bg-destructive border-destructive/80 text-destructive-foreground ring-1 ring-white/10 shadow-[0_0_24px_hsl(var(--destructive)/0.45)]";
-
-  const exclusiveClass = (label: FeedbackLabel) => {
-    if (!isExclusiveActive(label)) {
-      return label === "not_for_me"
-        ? "bg-transparent border-border/25 text-foreground/40 hover:text-destructive hover:border-destructive/25"
-        : inactiveClass;
-    }
-
-    if (label === "seen") return seenFilledClass;
-    if (label === "not_for_me") return notForMeFilledClass;
-    if (label === "unknown") return unknownFilledClass;
-
-    return inactiveClass;
-  };
+    "bg-rose-600 border-rose-300/70 text-white ring-1 ring-white/10 shadow-[0_0_24px_rgba(225,29,72,0.45)]";
 
   return (
-    <div className={`flex items-center justify-center gap-3 sm:gap-4 ${className}`}>
-      <div className="flex flex-col items-center gap-0.5">
-        <button
-          onClick={handleToggleBookmark}
-          disabled={loading}
-          className={`${btnSize} rounded-full border flex items-center justify-center transition-all active:scale-90 ${
-            bookmarked ? watchlistFilledClass : inactiveClass
-          }`}
-          title="Watchlist"
-        >
-          <Bookmark className={`${iconSize} ${bookmarked ? "fill-current" : ""}`} />
-        </button>
-        <span className={`${fontSize} text-foreground/30 font-sans`}>Watchlist</span>
-      </div>
+    <div className={`flex items-center gap-1.5 ${className}`}>
+      <button
+        type="button"
+        disabled={loading}
+        onClick={handleToggleLike}
+        className={`${btnSize} rounded-full border transition-all flex items-center justify-center ${liked ? likeFilledClass : inactiveClass}`}
+        title="Aimé"
+      >
+        <Heart className={`${iconSize} ${liked ? "fill-current" : ""}`} />
+      </button>
 
-      <div className="flex flex-col items-center gap-0.5">
-        <button
-          onClick={handleToggleLike}
-          disabled={loading}
-          className={`${btnSize} rounded-full border flex items-center justify-center transition-all active:scale-90 ${
-            liked ? likeFilledClass : inactiveClass
-          }`}
-          title="J'aime"
-        >
-          <Heart className={`${iconSize} ${liked ? "fill-current" : ""}`} />
-        </button>
-        <span className={`${fontSize} text-foreground/30 font-sans`}>J'aime</span>
-      </div>
+      <button
+        type="button"
+        disabled={loading}
+        onClick={handleToggleBookmark}
+        className={`${btnSize} rounded-full border transition-all flex items-center justify-center ${bookmarked ? watchlistFilledClass : inactiveClass}`}
+        title="À voir"
+      >
+        <Bookmark className={`${iconSize} ${bookmarked ? "fill-current" : ""}`} />
+      </button>
 
-      <div className="flex flex-col items-center gap-0.5">
-        <button
-          onClick={() => handleExclusiveToggle("unknown")}
-          disabled={loading}
-          className={`${btnSize} rounded-full border flex items-center justify-center transition-all active:scale-90 ${exclusiveClass("unknown")}`}
-          title="Je ne connais pas"
-        >
-          <HelpCircle className={iconSize} />
-        </button>
-        <span className={`${fontSize} text-foreground/30 font-sans`}>Inconnu</span>
-      </div>
+      <button
+        type="button"
+        disabled={loading}
+        onClick={() => handleExclusiveToggle("seen")}
+        className={`${btnSize} rounded-full border transition-all flex items-center justify-center ${isExclusiveActive("seen") ? seenFilledClass : inactiveClass}`}
+        title="Déjà vu"
+      >
+        <Eye className={iconSize} />
+      </button>
 
-      <div className="flex flex-col items-center gap-0.5">
-        <button
-          onClick={() => handleExclusiveToggle("seen")}
-          disabled={loading}
-          className={`${btnSize} rounded-full border flex items-center justify-center transition-all active:scale-90 ${exclusiveClass("seen")}`}
-          title="Déjà vu"
-        >
-          <Eye className={iconSize} />
-        </button>
-        <span className={`${fontSize} text-foreground/30 font-sans`}>Déjà vu</span>
-      </div>
+      <button
+        type="button"
+        disabled={loading}
+        onClick={() => handleExclusiveToggle("not_for_me")}
+        className={`${btnSize} rounded-full border transition-all flex items-center justify-center ${isExclusiveActive("not_for_me") ? notForMeFilledClass : inactiveClass}`}
+        title="Pas pour moi"
+      >
+        <ThumbsDown className={iconSize} />
+      </button>
 
-      <div className="flex flex-col items-center gap-0.5">
-        <button
-          onClick={() => handleExclusiveToggle("not_for_me")}
-          disabled={loading}
-          className={`${btnSize} rounded-full border flex items-center justify-center transition-all active:scale-90 ${exclusiveClass("not_for_me")}`}
-          title="Pas pour moi"
-        >
-          <ThumbsDown className={iconSize} />
-        </button>
-        <span className={`${fontSize} text-foreground/30 font-sans`}>Pas pour moi</span>
-      </div>
+      <button
+        type="button"
+        disabled={loading}
+        onClick={() => handleExclusiveToggle("unknown")}
+        className={`${btnSize} rounded-full border transition-all flex items-center justify-center ${isExclusiveActive("unknown") ? "bg-foreground/85 border-white/15 text-background shadow-[0_0_18px_rgba(255,255,255,0.12)]" : inactiveClass}`}
+        title="Je ne sais pas"
+      >
+        <HelpCircle className={iconSize} />
+      </button>
     </div>
   );
 };
