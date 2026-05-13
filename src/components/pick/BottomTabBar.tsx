@@ -6,7 +6,7 @@ export type TabId = "home" | "watchlist" | "together" | "cinema" | "profile";
 
 const tabs: { id: TabId; label: string; icon: typeof Home; path: string }[] = [
   { id: "home", label: "Accueil", icon: Home, path: "/app" },
-  { id: "watchlist", label: "Watchlist", icon: Bookmark, path: "/app/watchlist" },
+  { id: "mesfilms", label: "Mes Films", icon: Bookmark, path: "/app/watchlist" },
   { id: "cinema", label: "Mon Cinéma", icon: Clapperboard, path: "/app/my-cinema" },
   { id: "together", label: "Together", icon: Users, path: "/app/pick-together" },
   { id: "profile", label: "Profil", icon: User, path: "/app/profile" },
@@ -16,7 +16,7 @@ const BottomTabBar = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const currentTab = tabs.find(t => location.pathname === t.path)?.id || "home";
+  const currentTab = tabs.find((t) => location.pathname === t.path)?.id || "home";
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-40 bg-background/80 backdrop-blur-xl border-t border-border/10 pb-[env(safe-area-inset-bottom)]">
