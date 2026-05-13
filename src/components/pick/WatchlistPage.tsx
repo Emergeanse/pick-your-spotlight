@@ -1,17 +1,17 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence, useMotionValue, useTransform, PanInfo } from "framer-motion";
-import { Bookmark, Heart, Loader2, Sparkles, X, Tv, Star, Clock, Search, Filter, Timer, Trash2 } from "lucide-react";
+import { Bookmark, Heart, Loader2, Sparkles, X, Tv, Clock, Search, Filter, Timer, Trash2 } from "lucide-react";
 import { getWatchlist, removeFromWatchlist } from "@/lib/watchlist";
-import { getPosterUrl, getBackdropUrl, getMovieDetails, getDisplayTitle, getYear, getWatchProviders } from "@/lib/tmdb";
+import { getPosterUrl, getMovieDetails } from "@/lib/tmdb";
 import { getLikedMovies, unlikeMovie } from "@/lib/liked-movies";
 import type { MovieDetail } from "@/lib/tmdb";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import PickCharacter from "./PickCharacter";
 import FeedbackBadge from "./FeedbackBadge";
-import MovieActionBar from "./MovieActionBar";
 import FlipCardDetail from "./FlipCardDetail";
-import { useMovieInteraction, useMovieInteractions } from "@/hooks/use-movie-interactions";
+import RecommendationMovieCard from "./RecommendationMovieCard";
+import { useMovieInteractions } from "@/hooks/use-movie-interactions";
 import { listFeedbackByType, clearFeedbackType, type FeedbackType, type MovieInteractionState } from "@/lib/feedback";
 
 interface WatchlistPageProps {
