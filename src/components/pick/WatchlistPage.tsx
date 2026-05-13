@@ -181,6 +181,69 @@ const SwipeableCard = ({
 // MoviePreviewSheet removed — "Mes films" now reuses RecommendationMovieCard,
 // the same vignette rendered in the main recommendation flow.
 
+async function hydrateMissingPosters(
+  groups: { items: any[]; setter: React.Dispatch<React.SetStateAction<any[]>> }[],
+) {
+  const seen = new Map<string, { mediaType: "movie" | "tv"; tmdbId: number }>();
+  for (const { items } of groups) {
+    for (const it of items) {
+      if (it && !it.poster_path && it.tmdb_id) {
+        const mt = (it.media_type || (it.first_air_date ? "tv" : "movie")) as "movie" | "tv";
+        seen.set(`${it.tmdb_id}:${mt}`, { mediaType: mt, tmdbId: it.tmdb_id });
+      }
+    }
+  }
+  if (seen.size === 0) return;
+
+  const resolved = new Map<string, string | null>();
+  await Promise.all(
+    Array.from(seen.values()).map(async ({ tmdbId, mediaType }) => {
+      try {
+        const detail = await getMovieDetails(tmdbId, mediaType);
+        resolved.set(`${tmdbId}:${mediaType}`, detail?.poster_path ?? null);
+      } catch {
+        resolved.set(`${tmdbId}:${mediaType}`, null);
+      }
+    }),
+  );
+
+  for (const { items, setter } of groups) {
+    let changed = false;
+    const next = items.map((it: any) => {
+      if (it && !it.poster_path && it.tmdb_id) {
+        const mt = it.media_type || (it.first_air_date ? "tv" : "movie");
+        const p = resolved.get(`${it.tmdb_id}:${mt}`);
+        if (p) {
+          changed = true;
+          return { ...it, poster_path: p };
+        }
+      }
+      return it;
+    });
+    if (changed) setter(next);
+  }
+
+  // Best-effort persist to catalog_items so the next load is instant.
+  try {
+    const { supabase } = await import("@/integrations/supabase/client");
+    await Promise.all(
+      Array.from(resolved.entries())
+        .filter(([, p]) => !!p)
+        .map(([key, p]) => {
+          const [tmdbIdStr, mt] = key.split(":");
+          return supabase
+            .from("catalog_items")
+            .update({ poster_path: p })
+            .eq("tmdb_id", Number(tmdbIdStr))
+            .eq("media_type", mt)
+            .is("poster_path", null);
+        }),
+    );
+  } catch {
+    // ignore — UI hydration already happened
+  }
+}
+
 const WatchlistPage = ({ onMovieSelect }: WatchlistPageProps) => {
   const [activeTab, setActiveTab] = useState<ActiveTab>("watchlist");
   const [watchlistItems, setWatchlistItems] = useState<any[]>([]);
@@ -212,28 +275,35 @@ const WatchlistPage = ({ onMovieSelect }: WatchlistPageProps) => {
         listFeedbackByType("seen"),
       ]);
 
+      const seenList = (seenRaw as any[])
+        .map((row: any) =>
+          row.catalog_items
+            ? {
+                id: row.item_id,
+                tmdb_id: row.catalog_items.tmdb_id,
+                title: row.catalog_items.title,
+                poster_path: row.catalog_items.poster_path,
+                media_type: row.catalog_items.media_type,
+                runtime: row.catalog_items.runtime,
+                overview: row.catalog_items.overview,
+                vote_average: row.catalog_items.vote_average,
+                genres: [] as string[],
+                added_at: row.created_at,
+              }
+            : null,
+        )
+        .filter(Boolean) as any[];
+
       setWatchlistItems(watchlist);
       setLikedItems(liked);
-      setSeenItems(
-        (seenRaw as any[])
-          .map((row: any) =>
-            row.catalog_items
-              ? {
-                  id: row.item_id,
-                  tmdb_id: row.catalog_items.tmdb_id,
-                  title: row.catalog_items.title,
-                  poster_path: row.catalog_items.poster_path,
-                  media_type: row.catalog_items.media_type,
-                  runtime: row.catalog_items.runtime,
-                  overview: row.catalog_items.overview,
-                  vote_average: row.catalog_items.vote_average,
-                  genres: [] as string[],
-                  added_at: row.created_at,
-                }
-              : null,
-          )
-          .filter(Boolean),
-      );
+      setSeenItems(seenList);
+
+      // Hydrate missing posters from TMDB (older catalog rows may have null poster_path).
+      hydrateMissingPosters([
+        { items: watchlist, setter: setWatchlistItems },
+        { items: liked, setter: setLikedItems },
+        { items: seenList, setter: setSeenItems },
+      ]);
     } catch {
       setWatchlistItems([]);
       setLikedItems([]);
