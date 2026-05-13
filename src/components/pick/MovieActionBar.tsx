@@ -40,7 +40,7 @@ const MovieActionBar = ({
 
   const liked = interaction.liked;
   const bookmarked = interaction.watchlist;
-  const activeFeedback = interaction.primaryStatus;
+  const activeFeedback: FeedbackLabel | null = interaction.primaryStatus ?? (interaction.seen ? "seen" : null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
