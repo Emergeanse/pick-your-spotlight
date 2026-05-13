@@ -517,7 +517,6 @@ const AlternativeMovies = ({ movies, onSelect }: { movies: MovieDetail[]; onSele
     </div>
   );
 };
-// ── Main Component ──────────────────────────────────────────────────
 
 interface ResultScreenProps {
   movie: MovieDetail;
@@ -541,9 +540,7 @@ interface ResultScreenProps {
   onVisitedMovieIdsChange?: (movieIds: Set<number>) => void;
   batchRejectedIds?: Set<number>;
   onBatchRejectedIdsChange?: (ids: Set<number>) => void;
-  /** V1: link this view to a recommendation_sessions row */
   sessionId?: string | null;
-  /** V1: parent-level feedback hook (e.g. to complete a session on 'love') */
   onFeedback?: (type: string, movie: MovieDetail) => void;
 }
 
@@ -594,6 +591,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
     const [personDetail, setPersonDetail] = useState<{ item: any; isOpen: boolean }>({ item: null, isOpen: false });
     const [internalVisitedMovieIds, setInternalVisitedMovieIds] = useState<Set<number>>(() => new Set([movie.id]));
     const visitedMovieIds = externalVisited ?? internalVisitedMovieIds;
+
     const setVisitedMovieIds = (updater: Set<number> | ((prev: Set<number>) => Set<number>)) => {
       const newVal = typeof updater === "function" ? updater(visitedMovieIds) : updater;
       if (onVisitedMovieIdsChange) {
@@ -602,14 +600,13 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
         setInternalVisitedMovieIds(newVal);
       }
     };
+
     const { user } = useAuth();
     const interaction = useMovieInteraction(movie.id, inferCatalogMediaType(movie));
     const currentFeedback = interaction.primaryStatus;
-    const bookmarked = interaction.watchlist;
     const recommendationCandidates = useMemo(() => {
       const all = [movie, ...(alternativeMovies || [])].filter(Boolean);
       const seen = new Set<number>();
-
       return all.filter((candidate) => {
         if (!candidate?.id || seen.has(candidate.id)) return false;
         seen.add(candidate.id);
@@ -617,7 +614,6 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
       });
     }, [movie, alternativeMovies]);
 
-    // Track unique movies seen across card navigation and detail/back navigation
     useEffect(() => {
       if (visitedMovieIds.has(movie.id)) return;
       const next = new Set(visitedMovieIds);
@@ -625,7 +621,6 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
       setVisitedMovieIds(next);
     }, [movie.id, visitedMovieIds]);
 
-    // Reset fallback internal state when a brand-new batch is mounted without parent state
     const batchKeyRef = useRef<string>("");
     useEffect(() => {
       const key = `${totalCount}-${movie.id}`;
@@ -636,20 +631,15 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
     }, [currentIndex, movie.id, onVisitedMovieIdsChange, totalCount]);
 
     const allVisited = visitedMovieIds.size >= totalCount;
-
     const isWhyUnlocked = true;
 
     const title = getDisplayTitle(movie);
-    const year = getYear(movie);
     const backdrop = getBackdropUrl(movie.backdrop_path);
     const poster = getPosterUrl(movie.poster_path, "w780");
-    const runtime = movie.runtime || movie.episode_run_time?.[0] || 0;
-    const genres = movie.genres?.map((g) => g.name).join(" · ") || "";
     const overview = movie.overview || "Aucune description disponible.";
     const mediaType = movie.first_air_date ? "tv" : "movie";
     const isDocumentary = movie.genres?.some((g) => g.id === 99);
     const mediaLabel = isDocumentary ? "Documentaire" : mediaType === "tv" ? "Série" : "Film";
-    const seasons = (movie as any).number_of_seasons;
     const bgImage = backdrop || poster;
 
     useEffect(() => {
@@ -670,62 +660,62 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
           setProviders([]);
           setStreamingLinks([]);
         });
+
       getMovieTrailerUrl(movie.id, mediaType)
         .then(setTrailerUrl)
         .catch(() => setTrailerUrl(null));
+
       getMovieCredits(movie.id, mediaType)
         .then(setCredits)
         .catch(() => setCredits(null));
-    }, [movie.id, mediaType]);
+    }, [movie.id, mediaType, title]);
 
-    useEffect(() => {
-      setMatchData(null);
-      setCredits(null);
-      setMatchLoading(true);
-      setShowOptions(false);
-      setMarkedSeen(false);
-      setFeedbackGiven(null);
-      ensureMovieEmbedding(
-        movie.id,
-        movie.title || movie.name || "",
-        movie.overview || "",
-        (movie.genres || []).map((g) => g.name),
-      );
-      Promise.all([
-        getUserTasteProfile(),
-        user ? computeUserTasteVector(user.id) : Promise.resolve(null),
-        user ? getLikedMovies().catch(() => []) : Promise.resolve([]),
-        user
-          ? supabase
-              .from("cinematic_profiles" as any)
-              .select("personality_title, narrative, taste_traits")
-              .eq("user_id", user.id)
-              .maybeSingle()
-              .then((r) => r.data)
-          : Promise.resolve(null),
-        user
-          ? supabase
-              .from("user_taste_vectors" as any)
-              .select("avoidance_vector, recent_taste_vector")
-              .eq("user_id", user.id)
-              .maybeSingle()
-              .then((r) => r.data)
-          : Promise.resolve(null),
-      ]).then(([tasteProfile, userTasteVector, likedMovies, cinematicProfile, vectorData]) => {
-        const likedMovieTitles = (likedMovies || []).map((m: any) => m.title);
-        // Enrich tasteProfile with multi-vector data for movie-match
-        const enrichedProfile = tasteProfile
-          ? {
-              ...tasteProfile,
-              recentTasteVector: (vectorData as any)?.recent_taste_vector || null,
-              avoidanceVector: (vectorData as any)?.avoidance_vector || null,
-            }
-          : null;
-        const peoplePreferences = tasteProfile?.peoplePreferences || null;
-        supabase.functions
-          .invoke("movie-match", {
+    const fetchMatchDataForMovie = useCallback(
+      async (targetMovie: MovieDetail): Promise<MatchData | null> => {
+        try {
+          ensureMovieEmbedding(
+            targetMovie.id,
+            targetMovie.title || targetMovie.name || "",
+            targetMovie.overview || "",
+            (targetMovie.genres || []).map((g) => g.name),
+          );
+
+          const [tasteProfile, userTasteVector, likedMovies, cinematicProfile, vectorData] = await Promise.all([
+            getUserTasteProfile(),
+            user ? computeUserTasteVector(user.id) : Promise.resolve(null),
+            user ? getLikedMovies().catch(() => []) : Promise.resolve([]),
+            user
+              ? supabase
+                  .from("cinematic_profiles" as any)
+                  .select("personality_title, narrative, taste_traits")
+                  .eq("user_id", user.id)
+                  .maybeSingle()
+                  .then((r) => r.data)
+              : Promise.resolve(null),
+            user
+              ? supabase
+                  .from("user_taste_vectors" as any)
+                  .select("avoidance_vector, recent_taste_vector")
+                  .eq("user_id", user.id)
+                  .maybeSingle()
+                  .then((r) => r.data)
+              : Promise.resolve(null),
+          ]);
+
+          const likedMovieTitles = (likedMovies || []).map((m: any) => m.title);
+          const enrichedProfile = tasteProfile
+            ? {
+                ...tasteProfile,
+                recentTasteVector: (vectorData as any)?.recent_taste_vector || null,
+                avoidanceVector: (vectorData as any)?.avoidance_vector || null,
+              }
+            : null;
+
+          const peoplePreferences = tasteProfile?.peoplePreferences || null;
+
+          const { data, error } = await supabase.functions.invoke("movie-match", {
             body: {
-              movie,
+              movie: targetMovie,
               userCriteria,
               tasteProfile: enrichedProfile,
               userTasteVector,
@@ -735,32 +725,116 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
               peoplePreferences,
               userName: user?.user_metadata?.display_name || user?.email?.split("@")[0] || null,
             },
-          })
-          .then(({ data, error }) => {
-            if (error) {
-              console.error("Match error:", error);
-              setMatchLoading(false);
-              return;
-            }
-            setMatchData(data as MatchData);
-            setMatchLoading(false);
-            // Track recommendation event
-            if (user && data) {
-              trackRecommendationEvent({
-                tmdbId: movie.id,
-                title: movie.title || movie.name || "",
-                source: "result_screen",
-                scoreBreakdown: (data as any).scores || {},
-              });
-            }
           });
-      });
-    }, [movie.id]);
 
-    // Restore prior interaction state when navigating between movies in the batch
+          if (error) {
+            console.error("Match error:", error);
+            return null;
+          }
+
+          return (data as MatchData) ?? null;
+        } catch (error) {
+          console.error("fetchMatchDataForMovie failed:", error);
+          return null;
+        }
+      },
+      [user, userCriteria, searchTags],
+    );
+
+    useEffect(() => {
+      let cancelled = false;
+
+      const preloadAllRecommendationTexts = async () => {
+        const missingMovies = recommendationCandidates.filter(
+          (candidate) => candidate?.id && !prefetchedMatchData[candidate.id],
+        );
+
+        if (!missingMovies.length) return;
+
+        const results = await Promise.all(
+          missingMovies.map(async (candidate) => ({
+            movieId: candidate.id,
+            data: await fetchMatchDataForMovie(candidate),
+          })),
+        );
+
+        if (cancelled) return;
+
+        setPrefetchedMatchData((prev) => {
+          const next = { ...prev };
+          for (const result of results) {
+            if (result.data) next[result.movieId] = result.data;
+          }
+          return next;
+        });
+      };
+
+      preloadAllRecommendationTexts();
+
+      return () => {
+        cancelled = true;
+      };
+    }, [recommendationCandidates, prefetchedMatchData, fetchMatchDataForMovie]);
+
+    useEffect(() => {
+      let cancelled = false;
+
+      setCredits(null);
+      setShowOptions(false);
+      setMarkedSeen(false);
+      setFeedbackGiven(null);
+
+      const loadCurrentMatchData = async () => {
+        const cached = prefetchedMatchData[movie.id];
+
+        if (cached) {
+          setMatchData(cached);
+          setMatchLoading(false);
+
+          if (user) {
+            trackRecommendationEvent({
+              tmdbId: movie.id,
+              title: movie.title || movie.name || "",
+              source: "result_screen",
+              scoreBreakdown: (cached as any).scores || {},
+            });
+          }
+          return;
+        }
+
+        setMatchData(null);
+        setMatchLoading(true);
+
+        const data = await fetchMatchDataForMovie(movie);
+
+        if (cancelled) return;
+
+        if (data) {
+          setMatchData(data);
+          setPrefetchedMatchData((prev) => ({ ...prev, [movie.id]: data }));
+
+          if (user) {
+            trackRecommendationEvent({
+              tmdbId: movie.id,
+              title: movie.title || movie.name || "",
+              source: "result_screen",
+              scoreBreakdown: (data as any).scores || {},
+            });
+          }
+        }
+
+        setMatchLoading(false);
+      };
+
+      loadCurrentMatchData();
+
+      return () => {
+        cancelled = true;
+      };
+    }, [movie.id, movie, prefetchedMatchData, fetchMatchDataForMovie, user]);
+
     useEffect(() => {
       const fb = currentFeedback;
-
       if (fb === "like" || fb === "love") setFeedbackGiven("good");
       else if (fb === "not_for_me" || fb === "dislike") setFeedbackGiven("bad");
       else setFeedbackGiven(null);
@@ -793,7 +867,6 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
               transition={{ duration: 0.6, delay: 0.2 }}
               className="max-w-xl"
             >
-              {/* Navigation counter */}
               {totalCount >= 1 && (
                 <motion.div
                   initial={{ opacity: 0, y: -10 }}
@@ -821,12 +894,10 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
                 </motion.div>
               )}
 
-              {/* Poster + Title (shared vignette header) */}
               <RecommendationMovieCardHeader movie={movie} />
 
               <StreamingSection streamingLinks={streamingLinks} />
 
-              {/* Synopsis */}
               <div className="mb-4">
                 <p
                   className={`text-foreground/60 text-[13px] md:text-sm leading-relaxed font-sans font-light ${!synopsisExpanded ? "line-clamp-2" : ""}`}
@@ -844,7 +915,6 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
                 )}
               </div>
 
-              {/* Cast & Crew */}
               {credits && (credits.director || credits.cast.length > 0) && (
                 <motion.div
                   initial={{ opacity: 0, y: 8 }}
@@ -913,7 +983,6 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
                 </motion.div>
               )}
 
-              {/* Trailer */}
               {trailerUrl && (
                 <motion.button
                   initial={{ opacity: 0 }}
@@ -933,7 +1002,6 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
                 </motion.button>
               )}
 
-              {/* Match Analysis */}
               <AnimatePresence>
                 {matchLoading && (
                   <motion.div
@@ -993,7 +1061,6 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
                 )}
               </AnimatePresence>
 
-              {/* Primary Actions */}
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -1025,23 +1092,18 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
                     onInteraction={(type) => {
                       onFeedback?.(type, movie);
                       if (type === "already_seen" || type === "dislike") {
-                        // Mark this movie as rejected in the batch
                         const nextRejected = new Set<number>(externalRejected || []);
                         nextRejected.add(movie.id);
                         onBatchRejectedIdsChange?.(nextRejected);
 
-                        // Check if ALL movies in the batch are now rejected
                         if (nextRejected.size >= totalCount) {
-                          // All rejected → auto-trigger new batch
                           setTimeout(() => onShowAnother(type === "dislike" ? "dislike" : "seen", movie), 400);
                           return;
                         }
 
-                        // Otherwise advance to next unrejected movie
                         if (onNext && currentIndex < totalCount - 1) {
                           setTimeout(() => onNext(), 250);
                         } else if (onPrevious && currentIndex > 0) {
-                          // At end, go backward to find an unrejected movie
                           setTimeout(() => onPrevious!(), 250);
                         }
                       }
