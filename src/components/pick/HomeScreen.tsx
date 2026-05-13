@@ -14,6 +14,7 @@ import {
   RECOMMENDATION_BATCH_SIZE,
 } from "@/lib/recommendation-batch";
 import { getEngagementData, getProgressionMessage, type EngagementData } from "@/lib/engagement";
+import { listFeedbackByType } from "@/lib/feedback";
 
 import BrandHeader from "./BrandHeader";
 import PickCharacter from "./PickCharacter";
@@ -49,6 +50,47 @@ type RejectionContext = {
   reason: string;
   rejectedGenres: string[];
   rejectedTitle: string;
+};
+
+const extractTmdbIdsFromFeedbackRows = (rows: any[]): number[] =>
+  rows.map((row) => row?.catalog_items?.tmdb_id).filter((id): id is number => typeof id === "number" && id > 0);
+
+const loadUnifiedUserFeedbackState = async () => {
+  const [likedRows, lovedRows, seenRows, watchlistRows, notForMeRows, dislikeRows, skipRows, unknownRows] =
+    await Promise.all([
+      listFeedbackByType("like"),
+      listFeedbackByType("love"),
+      listFeedbackByType("seen"),
+      listFeedbackByType("watchlist"),
+      listFeedbackByType("not_for_me"),
+      listFeedbackByType("dislike"),
+      listFeedbackByType("skip"),
+      listFeedbackByType("unknown"),
+    ]);
+
+  const excludeIds = [
+    ...extractTmdbIdsFromFeedbackRows(likedRows as any[]),
+    ...extractTmdbIdsFromFeedbackRows(lovedRows as any[]),
+    ...extractTmdbIdsFromFeedbackRows(seenRows as any[]),
+    ...extractTmdbIdsFromFeedbackRows(watchlistRows as any[]),
+    ...extractTmdbIdsFromFeedbackRows(notForMeRows as any[]),
+    ...extractTmdbIdsFromFeedbackRows(dislikeRows as any[]),
+  ];
+
+  const evaluatedIds = [
+    ...extractTmdbIdsFromFeedbackRows(likedRows as any[]),
+    ...extractTmdbIdsFromFeedbackRows(lovedRows as any[]),
+    ...extractTmdbIdsFromFeedbackRows(seenRows as any[]),
+    ...extractTmdbIdsFromFeedbackRows(notForMeRows as any[]),
+    ...extractTmdbIdsFromFeedbackRows(dislikeRows as any[]),
+    ...extractTmdbIdsFromFeedbackRows(skipRows as any[]),
+    ...extractTmdbIdsFromFeedbackRows(unknownRows as any[]),
+  ];
+
+  return {
+    excludeIds: [...new Set(excludeIds)],
+    evaluatedCount: [...new Set(evaluatedIds)].length,
+  };
 };
 
 const LOADING_MESSAGES = [
@@ -219,24 +261,9 @@ const HomeScreen = ({
         setQuickFilters(defaults);
       });
 
-    Promise.all([
-      supabase
-        .from("user_interactions")
-        .select("tmdb_id")
-        .eq("user_id", user.id)
-        .in("action_type", ["watched", "skipped", "already_seen", "liked", "unsure"])
-        .limit(500),
-      supabase.from("liked_movies").select("tmdb_id").eq("user_id", user.id).limit(500),
-      supabase.from("watchlist").select("tmdb_id").eq("user_id", user.id).limit(500),
-    ]).then(([interactionsRes, likedRes, watchlistRes]) => {
-      const ids = [
-        ...(interactionsRes.data || []).map((d) => d.tmdb_id),
-        ...(likedRes.data || []).map((d) => d.tmdb_id),
-        ...(watchlistRes.data || []).map((d) => d.tmdb_id),
-      ];
-      const uniqueIds = [...new Set(ids)];
-      setHistoryExcludeIds(uniqueIds);
-      setTotalEvaluated(uniqueIds.length);
+    loadUnifiedUserFeedbackState().then(({ excludeIds, evaluatedCount }) => {
+      setHistoryExcludeIds(excludeIds);
+      setTotalEvaluated(evaluatedCount);
     });
   }, [user]);
 
@@ -645,16 +672,10 @@ const HomeScreen = ({
 
               if (!user) return;
 
-              supabase
-                .from("user_interactions")
-                .select("tmdb_id")
-                .eq("user_id", user.id)
-                .in("action_type", ["watched", "skipped", "already_seen", "liked", "unsure"])
-                .limit(500)
-                .then(({ data }) => {
-                  if (!data) return;
-                  setTotalEvaluated([...new Set(data.map((d) => d.tmdb_id))].length);
-                });
+              loadUnifiedUserFeedbackState().then(({ evaluatedCount, excludeIds }) => {
+                setTotalEvaluated(evaluatedCount);
+                setHistoryExcludeIds(excludeIds);
+              });
             }}
           />
         )}
