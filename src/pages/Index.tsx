@@ -154,6 +154,20 @@ const Index = () => {
   );
 
   useEffect(() => {
+    if (step !== "result") return;
+
+    const currentMovie = results[currentResultIndex];
+    if (!currentMovie?.id) return;
+
+    setResultSeenMovieIds((prev) => {
+      if (prev.has(currentMovie.id)) return prev;
+      const next = new Set(prev);
+      next.add(currentMovie.id);
+      return next;
+    });
+  }, [step, results, currentResultIndex]);
+
+  useEffect(() => {
     if (step !== "result" || !currentSessionId) return;
     const m = results[currentResultIndex];
     if (!m || loggedEventsRef.current.has(m.id)) return;
@@ -694,23 +708,14 @@ const Index = () => {
 
       {showTour && <PlatformTour onComplete={handleTourComplete} />}
       {showActivation && !showTour && (
-        <ActivationFlow
-          onStartMission={handleActivationMission}
-          onComplete={handleActivationComplete}
-        />
+        <ActivationFlow onStartMission={handleActivationMission} onComplete={handleActivationComplete} />
       )}
 
       {watchlistGuideStep && (
-        <WatchlistMissionGuide
-          step={watchlistGuideStep}
-          savedCount={watchlistSavedCount}
-          target={3}
-        />
+        <WatchlistMissionGuide step={watchlistGuideStep} savedCount={watchlistSavedCount} target={3} />
       )}
 
-      {talkToPickGuideStep && (
-        <TalkToPickMissionGuide step={talkToPickGuideStep} />
-      )}
+      {talkToPickGuideStep && <TalkToPickMissionGuide step={talkToPickGuideStep} />}
 
       {loading && <RevealAnimation active message={loadingMessage || "Pick prépare tes recommandations…"} />}
     </div>
