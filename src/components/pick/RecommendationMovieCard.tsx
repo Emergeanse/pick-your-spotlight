@@ -12,12 +12,6 @@ import { buildStreamingLinks, type StreamingLink } from "@/lib/streaming-links";
 
 const IMG_BASE = "https://image.tmdb.org/t/p";
 
-/**
- * Shared header block (poster + title + meta + FeedbackBadge) for the
- * recommendation vignette. Used inline in ResultScreen and inside the
- * full RecommendationMovieCard so there is a single source of truth for
- * the visual identity of a recommended movie tile.
- */
 export const RecommendationMovieCardHeader = ({
   movie,
   onOpenDetails,
@@ -73,11 +67,7 @@ export const RecommendationMovieCardHeader = ({
       )}
       <div className="flex-1 min-w-0">
         {onOpenDetails ? (
-          <button
-            type="button"
-            onClick={onOpenDetails}
-            className="text-left w-full cursor-pointer"
-          >
+          <button type="button" onClick={onOpenDetails} className="text-left w-full cursor-pointer">
             <h1 className="text-2xl md:text-4xl lg:text-5xl font-serif mb-1.5 leading-[1.05]">{title}</h1>
           </button>
         ) : (
@@ -149,12 +139,6 @@ export interface RecommendationMovieCardProps {
   className?: string;
 }
 
-/**
- * Full recommendation vignette as shown in the main flow:
- * backdrop + header (poster/title/meta/badge) + synopsis + streaming
- * providers + primary CTA + MovieActionBar. Reused in WatchlistPage so
- * "Mes films" mirrors the main recommendation flow exactly.
- */
 const RecommendationMovieCard = ({
   movie,
   sessionId,
@@ -199,9 +183,14 @@ const RecommendationMovieCard = ({
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.2 }}
-          className="max-w-xl"
+          className={`max-w-xl ${onOpenDetails ? "cursor-pointer" : ""}`}
+          onClick={onOpenDetails}
         >
           <RecommendationMovieCardHeader movie={movie} onOpenDetails={onOpenDetails} />
+
+          <p className="text-sm md:text-base text-foreground/78 leading-relaxed font-sans line-clamp-4 mb-5">
+            {overview}
+          </p>
 
           {streamingLinks.length > 0 && (
             <motion.div
@@ -209,6 +198,7 @@ const RecommendationMovieCard = ({
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.35 }}
               className="mb-4"
+              onClick={(e) => e.stopPropagation()}
             >
               <p className="text-[10px] uppercase tracking-widest text-foreground/30 font-sans font-semibold mb-2">
                 Où regarder
@@ -221,6 +211,7 @@ const RecommendationMovieCard = ({
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-foreground/[0.04] border border-border/15 hover:border-primary/25 hover:bg-foreground/[0.08] transition-all group"
+                    onClick={(e) => e.stopPropagation()}
                   >
                     {link.logo_path && (
                       <img
@@ -232,45 +223,24 @@ const RecommendationMovieCard = ({
                     <span className="text-foreground/60 text-[12px] font-sans font-medium group-hover:text-foreground transition-colors">
                       {link.name}
                     </span>
-                    <ExternalLink className="w-3 h-3 text-foreground/20" />
+                    <ExternalLink className="w-3 h-3 text-foreground/30 group-hover:text-primary transition-colors" />
                   </a>
                 ))}
               </div>
             </motion.div>
           )}
 
-          <div className="mb-4">
-            <p className="text-foreground/60 text-[13px] md:text-sm leading-relaxed font-sans font-light line-clamp-4">
-              {overview}
-            </p>
-          </div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.6 }}
-            className="space-y-4"
-          >
-            <div className="flex flex-col items-center gap-4 w-full">
-              {showPrimaryAction && (
-                <Button
-                  size="lg"
-                  className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90 font-sans font-semibold px-8 h-12 gap-2 text-base neon-glow transition-all active:scale-[0.97] w-full max-w-xs"
-                  onClick={onPrimaryAction}
-                >
-                  <Tv className="w-5 h-5" />
-                  {primaryActionLabel}
-                </Button>
-              )}
-
-              <MovieActionBar
-                key={movie.id}
-                movie={movie}
-                sessionId={sessionId ?? null}
-                contextType={contextType ?? (sessionId ? "solo_session" : "browse")}
-              />
+          {showPrimaryAction && onPrimaryAction && (
+            <div className="mb-4" onClick={(e) => e.stopPropagation()}>
+              <Button variant="hero" size="xl" className="w-full md:w-auto" onClick={onPrimaryAction}>
+                {primaryActionLabel}
+              </Button>
             </div>
-          </motion.div>
+          )}
+
+          <div onClick={(e) => e.stopPropagation()}>
+            <MovieActionBar movie={movie} sessionId={sessionId} contextType={contextType} />
+          </div>
         </motion.div>
       </div>
     </div>
