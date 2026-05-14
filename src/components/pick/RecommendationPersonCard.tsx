@@ -84,7 +84,7 @@ const RecommendationPersonCard = ({ person, onOpenDetails, onPrevious, onNext, c
           </button>
         </>
       )}
-      <div className="grid gap-4 p-4 sm:grid-cols-[110px_1fr]">
+      <div className="grid gap-4 p-4 sm:grid-cols-[140px_1fr]">
         <div className="overflow-hidden rounded-3xl bg-slate-950/10 shadow-inner">
           <img
             src={personImage}
@@ -126,7 +126,7 @@ const RecommendationPersonCard = ({ person, onOpenDetails, onPrevious, onNext, c
   );
 
   return (
-    <div className={`relative mx-auto w-full max-w-[280px] ${className}`} style={{ width: "min(68vw, 30vh, 280px)" }}>
+    <div className={`relative mx-auto w-full max-w-[400px] ${className}`} style={{ width: "min(68vw, 30vh, 400px)" }}>
       <AnimatePresence mode="popLayout">
         <motion.div
           key={person.id}

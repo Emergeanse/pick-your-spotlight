@@ -193,7 +193,7 @@ const PeopleTrainer = ({ onBack, filterDepartment }: PeopleTrainerProps) => {
             <p className="text-sm font-sans text-foreground/50">Plus de personnes pour le moment</p>
           </div>
         ) : (
-          <div className="w-full max-w-xl">
+          <div className="w-full max-w-3xl">
             <RecommendationPersonCard
               person={currentPersonDetail}
               onOpenDetails={openPersonDetail}
