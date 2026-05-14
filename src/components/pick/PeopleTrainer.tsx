@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { motion } from "framer-motion";
-import { Loader2, Heart, ThumbsDown, Star, SkipForward, ChevronLeft, ChevronRight, HelpCircle } from "lucide-react";
+import { Loader2, Heart, ThumbsDown, Star, SkipForward, HelpCircle } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import {
   fetchPopularPeople,
@@ -194,27 +194,14 @@ const PeopleTrainer = ({ onBack, filterDepartment }: PeopleTrainerProps) => {
           </div>
         ) : (
           <div className="w-full max-w-xl">
-            <RecommendationPersonCard person={currentPersonDetail} onOpenDetails={openPersonDetail} />
-
-            <div className="absolute inset-y-0 left-0 z-20 flex items-center -translate-x-4 md:-translate-x-10">
-              <button
-                onClick={goBack}
-                disabled={history.length === 0}
-                className="rounded-full bg-foreground/5 p-1.5 text-foreground/30 transition-all hover:bg-foreground/10 disabled:opacity-20"
-                aria-label="Précédent"
-              >
-                <ChevronLeft className="h-5 w-5" />
-              </button>
-            </div>
-            <div className="absolute inset-y-0 right-0 z-20 flex items-center translate-x-4 md:translate-x-10">
-              <button
-                onClick={skip}
-                className="rounded-full bg-foreground/5 p-1.5 text-foreground/30 transition-all hover:bg-foreground/10"
-                aria-label="Suivant"
-              >
-                <ChevronRight className="h-5 w-5" />
-              </button>
-            </div>
+            <RecommendationPersonCard
+              person={currentPersonDetail}
+              onOpenDetails={openPersonDetail}
+              onPrevious={goBack}
+              onNext={skip}
+              canGoPrevious={history.length > 0}
+              canGoNext={true}
+            />
           </div>
         )}
       </div>

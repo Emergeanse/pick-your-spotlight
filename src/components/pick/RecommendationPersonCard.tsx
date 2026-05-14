@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { Film, User, Clapperboard } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { getPersonPhotoUrl } from "@/lib/people-preferences";
 
 type PersonLike = {
@@ -16,6 +16,10 @@ type PersonLike = {
 export interface RecommendationPersonCardProps {
   person: PersonLike;
   onOpenDetails?: () => void;
+  onPrevious?: () => void;
+  onNext?: () => void;
+  canGoPrevious?: boolean;
+  canGoNext?: boolean;
   className?: string;
 }
 
@@ -35,7 +39,7 @@ function extractNationality(placeOfBirth: string | null | undefined): string | n
   return parts[parts.length - 1] || null;
 }
 
-const RecommendationPersonCard = ({ person, onOpenDetails, className = "" }: RecommendationPersonCardProps) => {
+const RecommendationPersonCard = ({ person, onOpenDetails, onPrevious, onNext, canGoPrevious = true, canGoNext = true, className = "" }: RecommendationPersonCardProps) => {
   const isDirector = person.known_for_department === "Directing";
   const age = computeAge(person.birthday);
   const nationality = extractNationality(person.place_of_birth);
@@ -52,6 +56,34 @@ const RecommendationPersonCard = ({ person, onOpenDetails, className = "" }: Rec
   const personImage = getPersonPhotoUrl(person.profile_path, "w342");
   const content = (
     <div className="group relative overflow-hidden rounded-[1.75rem] border border-border/20 bg-background shadow-[0_24px_80px_hsl(var(--background)/0.12)] transition hover:-translate-y-0.5 hover:shadow-[0_32px_90px_hsl(var(--background)/0.16)]">
+      {(onPrevious || onNext) && (
+        <>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onPrevious?.();
+            }}
+            disabled={!canGoPrevious}
+            className="absolute left-3 top-1/2 z-20 -translate-y-1/2 rounded-full border border-border/20 bg-background/80 p-2 text-foreground/60 shadow-sm transition hover:bg-foreground/10 disabled:cursor-not-allowed disabled:opacity-30"
+            aria-label="Précédent"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </button>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onNext?.();
+            }}
+            disabled={!canGoNext}
+            className="absolute right-3 top-1/2 z-20 -translate-y-1/2 rounded-full border border-border/20 bg-background/80 p-2 text-foreground/60 shadow-sm transition hover:bg-foreground/10 disabled:cursor-not-allowed disabled:opacity-30"
+            aria-label="Suivant"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </button>
+        </>
+      )}
       <div className="grid gap-4 p-4 sm:grid-cols-[110px_1fr]">
         <div className="overflow-hidden rounded-3xl bg-slate-950/10 shadow-inner">
           <img
@@ -105,9 +137,20 @@ const RecommendationPersonCard = ({ person, onOpenDetails, className = "" }: Rec
           className="relative w-full select-none"
         >
           {onOpenDetails ? (
-            <button type="button" onClick={onOpenDetails} className="block w-full text-left">
+            <div
+              role="button"
+              tabIndex={0}
+              onClick={onOpenDetails}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  onOpenDetails();
+                }
+              }}
+              className="block w-full text-left"
+            >
               {content}
-            </button>
+            </div>
           ) : (
             content
           )}
