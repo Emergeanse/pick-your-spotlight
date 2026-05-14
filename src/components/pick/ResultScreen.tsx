@@ -606,10 +606,9 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
             trackRecommendationEvent({
               tmdbId: movie.id,
               title,
-              mode: "shown",
-              score: cached.matchScore ?? cached.score,
-              context: sessionId ? "session" : "browse",
-              sessionId,
+              source: sessionId ? "session" : "browse",
+              scoreBreakdown: { match: cached.matchScore ?? cached.score ?? 0 },
+              context: { sessionId: sessionId ?? null },
             }).catch(() => {});
           }
           return;
