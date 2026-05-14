@@ -668,7 +668,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
     };
 
     const cast = credits?.cast?.slice(0, 10) || [];
-    const director = credits?.crew?.find((c: any) => c.job === "Director");
+    const director = credits?.director;
 
     return (
       <div ref={ref} className="relative h-full w-full overflow-y-auto overflow-x-hidden bg-background">
