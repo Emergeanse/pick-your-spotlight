@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { motion } from "framer-motion";
-import { Loader2, Heart, ThumbsDown, Star, SkipForward, ChevronLeft, ChevronRight } from "lucide-react";
+import { Loader2, Heart, ThumbsDown, Star, SkipForward, ChevronLeft, ChevronRight, HelpCircle } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import {
   fetchPopularPeople,
@@ -16,30 +16,6 @@ interface PeopleTrainerProps {
   onBack?: () => void;
   filterDepartment?: "Acting" | "Directing";
 }
-
-const RATING_BUTTONS = [
-  {
-    value: "disliked" as PreferenceValue,
-    label: "Pas fan",
-    icon: ThumbsDown,
-    toneClass:
-      "bg-[hsl(var(--destructive)/0.18)] border-[hsl(var(--destructive)/0.34)] text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.28)]",
-  },
-  {
-    value: "liked" as PreferenceValue,
-    label: "J'aime",
-    icon: Heart,
-    toneClass:
-      "bg-[hsl(var(--train)/0.18)] border-[hsl(var(--train)/0.30)] text-[hsl(var(--train))] hover:bg-[hsl(var(--train)/0.26)]",
-  },
-  {
-    value: "loved" as PreferenceValue,
-    label: "J'adore",
-    icon: Star,
-    toneClass:
-      "bg-[hsl(var(--primary)/0.18)] border-[hsl(var(--primary)/0.30)] text-primary hover:bg-[hsl(var(--primary)/0.26)]",
-  },
-];
 
 const PeopleTrainer = ({ onBack, filterDepartment }: PeopleTrainerProps) => {
   const { user } = useAuth();
@@ -194,6 +170,18 @@ const PeopleTrainer = ({ onBack, filterDepartment }: PeopleTrainerProps) => {
     setDetailOpen(true);
   };
 
+  const iconSize = "w-3.5 h-3.5";
+  const btnSize = "w-8 h-8";
+  const inactiveClass = "bg-transparent border-border/25 text-foreground/40 hover:text-primary hover:border-primary/25";
+  const likeFilledClass =
+    "bg-primary border-primary/80 text-primary-foreground ring-1 ring-white/15 shadow-[0_0_24px_hsl(var(--primary)/0.45)]";
+  const loveFilledClass =
+    "bg-gradient-to-br from-pink-500 to-fuchsia-500 border-pink-300/70 text-white ring-1 ring-white/20 shadow-[0_0_26px_rgba(236,72,153,0.55)]";
+  const dislikeFilledClass =
+    "bg-rose-600 border-rose-300/70 text-white ring-1 ring-white/10 shadow-[0_0_24px_rgba(225,29,72,0.45)]";
+  const unknownFilledClass =
+    "bg-foreground/85 border-white/15 text-background shadow-[0_0_18px_rgba(255,255,255,0.12)]";
+
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <div className="px-4 pb-2">
@@ -239,18 +227,46 @@ const PeopleTrainer = ({ onBack, filterDepartment }: PeopleTrainerProps) => {
 
       {currentPerson && (
         <div className="border-t border-border/20 bg-background/84 px-4 pt-3 pb-[calc(1rem+env(safe-area-inset-bottom))] backdrop-blur-xl">
-          <div className="grid grid-cols-3 gap-2">
-            {RATING_BUTTONS.map((btn) => (
-              <motion.button
-                key={btn.value}
-                whileTap={{ scale: 0.94 }}
-                onClick={() => handleRate(btn.value)}
-                className={`flex min-h-12 flex-col items-center justify-center gap-1 rounded-xl border px-2 py-2.5 text-center font-sans text-[11px] font-medium leading-tight transition-all active:scale-95 ${btn.toneClass}`}
-              >
-                <btn.icon className="h-4 w-4" />
-                {btn.label}
-              </motion.button>
-            ))}
+          <div className="mb-3 flex items-center justify-center gap-1.5">
+            <button
+              type="button"
+              onClick={() => handleRate("liked")}
+              className={`${btnSize} rounded-full border transition-all flex items-center justify-center ${likeFilledClass}`}
+              title="Aimé"
+              aria-label="Aimé"
+            >
+              <Heart className={`${iconSize} fill-current`} />
+            </button>
+
+            <button
+              type="button"
+              onClick={skip}
+              className={`${btnSize} rounded-full border transition-all flex items-center justify-center ${unknownFilledClass}`}
+              title="Je ne connais pas"
+              aria-label="Je ne connais pas"
+            >
+              <HelpCircle className={iconSize} />
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleRate("loved")}
+              className={`${btnSize} rounded-full border transition-all flex items-center justify-center ${loveFilledClass}`}
+              title="J'adore"
+              aria-label="J'adore"
+            >
+              <Star className={`${iconSize} fill-current`} />
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleRate("disliked")}
+              className={`${btnSize} rounded-full border transition-all flex items-center justify-center ${dislikeFilledClass}`}
+              title="Pas fan"
+              aria-label="Pas fan"
+            >
+              <ThumbsDown className={iconSize} />
+            </button>
           </div>
 
           <button
