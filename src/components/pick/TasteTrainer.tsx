@@ -15,6 +15,7 @@ import FlipCardDetail from "./FlipCardDetail";
 import RecommendationMovieCard from "./RecommendationMovieCard";
 import MovieActionBar from "./MovieActionBar";
 import { useMovieInteractions } from "@/hooks/use-movie-interactions";
+import { getInteractionStateBatch } from "@/lib/feedback";
 
 const TMDB_API_KEY = "2dca580c2a14b55200e784d157207b4d";
 
@@ -146,12 +147,26 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
   const loadMovies = useCallback(
     async (p: number, mode?: string) => {
       const m = mode || selectedCategory;
+      if (!m || (m !== "movies" && m !== "series")) return;
+
       setLoading(true);
       try {
         const randomPage = Math.floor(Math.random() * 20) + p;
         const results = m === "series" ? await fetchTrainingSeries(randomPage) : await fetchTrainingMovies(randomPage);
-        const filtered = results.filter((mv) => !processedIds.has(mv.id) && mv.poster_path);
-        setMovies((prev) => [...prev, ...filtered]);
+        const deduped = results.filter((mv) => !processedIds.has(mv.id) && mv.poster_path);
+
+        const interactionState = await getInteractionStateBatch(
+          deduped.map((mv) => ({ tmdbId: mv.id, mediaType: m === "series" ? "tv" : "movie" })),
+          m === "series" ? "tv" : "movie",
+        );
+
+        const filtered = deduped.filter((mv) => !interactionState[mv.id]?.hasInteraction);
+
+        setMovies((prev) => {
+          const prevIds = new Set(prev.map((item) => item.id));
+          const newItems = filtered.filter((item) => !prevIds.has(item.id));
+          return [...prev, ...newItems];
+        });
       } catch (e) {
         console.error("Failed to load training content:", e);
       } finally {
