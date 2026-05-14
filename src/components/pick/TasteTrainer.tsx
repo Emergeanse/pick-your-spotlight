@@ -155,9 +155,10 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
         const results = m === "series" ? await fetchTrainingSeries(randomPage) : await fetchTrainingMovies(randomPage);
         const deduped = results.filter((mv) => !processedIds.has(mv.id) && mv.poster_path);
 
+        const mt: "movie" | "tv" = m === "series" ? "tv" : "movie";
         const interactionState = await getInteractionStateBatch(
-          deduped.map((mv) => ({ tmdbId: mv.id, mediaType: m === "series" ? "tv" : "movie" })),
-          m === "series" ? "tv" : "movie",
+          deduped.map((mv) => ({ tmdbId: mv.id, mediaType: mt })),
+          mt,
         );
 
         const filtered = deduped.filter((mv) => !interactionState[mv.id]?.hasInteraction);
