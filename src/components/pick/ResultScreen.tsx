@@ -646,10 +646,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
       toast.success("Bien noté, Pick affine ses choix");
 
       try {
-        await updateRecommendationReaction(movie.id, sessionId, {
-          reaction: "rejected",
-          reason: reasonId,
-        });
+        await updateRecommendationReaction(movie.id, "rejected", reasonId);
       } catch {}
 
       const nextRejected = new Set<number>(externalRejected || []);
