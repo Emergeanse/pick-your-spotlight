@@ -49,42 +49,46 @@ const RecommendationPersonCard = ({ person, onOpenDetails, className = "" }: Rec
   if (age) infoChips.push(`${age} ans`);
   if (nationality) infoChips.push(nationality);
 
-  const CardContent = (
-    <div className="absolute inset-0 rounded-[1.75rem] overflow-hidden shadow-[0_24px_80px_hsl(var(--background)/0.72)] cursor-pointer">
-      <img
-        src={getPersonPhotoUrl(person.profile_path, "w780")}
-        alt={person.name}
-        className="absolute inset-0 h-full w-full object-cover brightness-[1.3] contrast-[1.08] saturate-[1.3]"
-        draggable={false}
-      />
-      <div className="pointer-events-none absolute inset-0 rounded-[1.75rem] ring-1 ring-inset ring-white/10 z-[1]" />
+  const personImage = getPersonPhotoUrl(person.profile_path, "w342");
+  const content = (
+    <div className="group relative overflow-hidden rounded-[1.75rem] border border-border/20 bg-background shadow-[0_24px_80px_hsl(var(--background)/0.12)] transition hover:-translate-y-0.5 hover:shadow-[0_32px_90px_hsl(var(--background)/0.16)]">
+      <div className="grid gap-4 p-4 sm:grid-cols-[110px_1fr]">
+        <div className="overflow-hidden rounded-3xl bg-slate-950/10 shadow-inner">
+          <img
+            src={personImage}
+            alt={person.name}
+            className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.02]"
+            draggable={false}
+          />
+        </div>
 
-      <div className="absolute inset-x-0 bottom-0 z-[2] bg-gradient-to-t from-background via-background/70 to-transparent px-4 pt-24 pb-4">
-        <h3 className="mb-0.5 text-lg font-serif font-bold text-white drop-shadow-md leading-tight">{person.name}</h3>
-        <p className="mb-1 text-[11px] font-sans text-white/55">
-          {isDirector ? "Réalisateur/Réalisatrice" : "Acteur/Actrice"}
-          {infoChips.length > 0 && ` · ${infoChips.join(" · ")}`}
-        </p>
-        {shortBio && <p className="mb-2 text-[10px] font-sans leading-snug text-white/40 line-clamp-2">{shortBio}.</p>}
-        {knownForTitles.length > 0 && (
-          <div className="flex flex-wrap gap-1">
-            {knownForTitles.map((t) => (
-              <span key={t} className="rounded-full bg-white/10 px-2 py-0.5 text-[9px] text-white/65 backdrop-blur-sm">
-                {t}
+        <div className="flex flex-col justify-between gap-3">
+          <div>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="rounded-full bg-primary/10 px-2 py-1 text-[10px] font-sans font-semibold uppercase tracking-[0.18em] text-primary">
+                {isDirector ? "Réalisateur/Réalisatrice" : "Acteur/Actrice"}
               </span>
-            ))}
+              {infoChips.map((chip) => (
+                <span key={chip} className="rounded-full bg-foreground/5 px-2 py-1 text-[10px] font-sans text-foreground/70">
+                  {chip}
+                </span>
+              ))}
+            </div>
+
+            <h3 className="mt-3 text-xl font-serif font-bold text-foreground leading-tight">{person.name}</h3>
+            {shortBio && <p className="mt-2 text-sm leading-relaxed text-foreground/70 line-clamp-3">{shortBio}.</p>}
           </div>
-        )}
-      </div>
 
-      <div className="absolute top-3 left-3 z-[2] rounded-full bg-background/30 px-2 py-1 backdrop-blur-sm flex items-center gap-1.5">
-        {isDirector ? <Clapperboard className="h-3 w-3 text-white/65" /> : <User className="h-3 w-3 text-white/65" />}
-        <span className="text-[9px] font-sans text-white/50">Vignette</span>
-      </div>
-
-      <div className="absolute top-3 right-3 z-[2] rounded-full bg-background/30 px-2 py-1 backdrop-blur-sm flex items-center gap-1.5">
-        <Film className="h-3 w-3 text-white/65" />
-        <span className="text-[9px] font-sans text-white/50">Tap pour détails</span>
+          {knownForTitles.length > 0 && (
+            <div className="mt-2 flex flex-wrap gap-2">
+              {knownForTitles.map((title) => (
+                <span key={title} className="rounded-full bg-foreground/5 px-2.5 py-1 text-[10px] font-sans text-foreground/70">
+                  {title}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -98,14 +102,14 @@ const RecommendationPersonCard = ({ person, onOpenDetails, className = "" }: Rec
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.9 }}
           transition={{ type: "spring", stiffness: 260, damping: 24 }}
-          className="relative aspect-[3/4] w-full select-none"
+          className="relative w-full select-none"
         >
           {onOpenDetails ? (
-            <button type="button" onClick={onOpenDetails} className="absolute inset-0 block w-full text-left">
-              {CardContent}
+            <button type="button" onClick={onOpenDetails} className="block w-full text-left">
+              {content}
             </button>
           ) : (
-            CardContent
+            content
           )}
         </motion.div>
       </AnimatePresence>
