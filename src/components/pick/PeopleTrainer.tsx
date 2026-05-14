@@ -172,7 +172,6 @@ const PeopleTrainer = ({ onBack, filterDepartment }: PeopleTrainerProps) => {
 
   const iconSize = "w-3.5 h-3.5";
   const btnSize = "w-8 h-8";
-  const inactiveClass = "bg-transparent border-border/25 text-foreground/40 hover:text-primary hover:border-primary/25";
   const likeFilledClass =
     "bg-primary border-primary/80 text-primary-foreground ring-1 ring-white/15 shadow-[0_0_24px_hsl(var(--primary)/0.45)]";
   const loveFilledClass =
@@ -227,39 +226,58 @@ const PeopleTrainer = ({ onBack, filterDepartment }: PeopleTrainerProps) => {
 
       {currentPerson && (
         <div className="relative z-20 border-t border-border/20 bg-background/84 px-4 pt-3 pb-[calc(1rem+env(safe-area-inset-bottom))] backdrop-blur-xl shadow-[0_-18px_40px_hsl(var(--background)/0.32)]">
-          <div className="flex items-center justify-center gap-1.5">
-            <motion.button
-              type="button"
-              whileTap={{ scale: 0.94 }}
-              onClick={() => handleRate("liked")}
-              className={`${btnSize} rounded-full border transition-all flex items-center justify-center ${likeFilledClass}`}
-              title="Aimé"
-              aria-label="Aimé"
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <button
+              onClick={goBack}
+              disabled={history.length === 0}
+              className="rounded-full bg-foreground/5 p-2 text-foreground/30 transition-all hover:bg-foreground/10 disabled:opacity-20"
+              aria-label="Précédent"
             >
-              <Heart className={`${iconSize} fill-current`} />
-            </motion.button>
+              <ChevronLeft className="h-5 w-5" />
+            </button>
 
-            <motion.button
-              type="button"
-              whileTap={{ scale: 0.94 }}
-              onClick={() => handleRate("loved")}
-              className={`${btnSize} rounded-full border transition-all flex items-center justify-center ${loveFilledClass}`}
-              title="J'adore"
-              aria-label="J'adore"
-            >
-              <Star className={`${iconSize} fill-current`} />
-            </motion.button>
+            <div className="flex items-center gap-1.5 text-center">
+              <motion.button
+                type="button"
+                whileTap={{ scale: 0.94 }}
+                onClick={() => handleRate("liked")}
+                className={`${btnSize} rounded-full border transition-all flex items-center justify-center ${likeFilledClass}`}
+                title="Aimé"
+                aria-label="Aimé"
+              >
+                <Heart className={`${iconSize} fill-current`} />
+              </motion.button>
 
-            <motion.button
-              type="button"
-              whileTap={{ scale: 0.94 }}
-              onClick={() => handleRate("disliked")}
-              className={`${btnSize} rounded-full border transition-all flex items-center justify-center ${dislikeFilledClass}`}
-              title="Pas fan"
-              aria-label="Pas fan"
+              <motion.button
+                type="button"
+                whileTap={{ scale: 0.94 }}
+                onClick={() => handleRate("loved")}
+                className={`${btnSize} rounded-full border transition-all flex items-center justify-center ${loveFilledClass}`}
+                title="J'adore"
+                aria-label="J'adore"
+              >
+                <Star className={`${iconSize} fill-current`} />
+              </motion.button>
+
+              <motion.button
+                type="button"
+                whileTap={{ scale: 0.94 }}
+                onClick={() => handleRate("disliked")}
+                className={`${btnSize} rounded-full border transition-all flex items-center justify-center ${dislikeFilledClass}`}
+                title="Pas fan"
+                aria-label="Pas fan"
+              >
+                <ThumbsDown className={iconSize} />
+              </motion.button>
+            </div>
+
+            <button
+              onClick={skip}
+              className="rounded-full bg-foreground/5 p-2 text-foreground/30 transition-all hover:bg-foreground/10"
+              aria-label="Suivant"
             >
-              <ThumbsDown className={iconSize} />
-            </motion.button>
+              <ChevronRight className="h-5 w-5" />
+            </button>
           </div>
         </div>
       )}
