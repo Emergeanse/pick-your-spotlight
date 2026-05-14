@@ -61,3 +61,26 @@ export async function getUserPeoplePreferences(): Promise<PersonPreference[]> {
 
   return (data || []) as PersonPreference[];
 }
+
+export async function deletePersonPreference(personId: number): Promise<void> {
+  const userId = (await supabase.auth.getUser()).data.user?.id;
+  if (!userId) return;
+
+  await (supabase.from("user_people_preferences" as any) as any)
+    .delete()
+    .eq("user_id", userId)
+    .eq("person_id", personId);
+}
+
+export async function getPersonPreference(personId: number): Promise<PreferenceValue | null> {
+  const userId = (await supabase.auth.getUser()).data.user?.id;
+  if (!userId) return null;
+
+  const { data } = await (supabase.from("user_people_preferences" as any) as any)
+    .select("preference")
+    .eq("user_id", userId)
+    .eq("person_id", personId)
+    .single();
+
+  return (data?.preference as PreferenceValue) || null;
+}

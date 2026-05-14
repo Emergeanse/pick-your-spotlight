@@ -1,13 +1,16 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { getPersonPhotoUrl } from "@/lib/people-preferences";
+import { useState, useEffect } from "react";
+import { getPersonPhotoUrl, getPersonPreference, type PreferenceValue } from "@/lib/people-preferences";
+import { getBackdropUrl } from "@/lib/tmdb";
+import PersonActionBar from "./PersonActionBar";
 
 type PersonLike = {
   id: number;
   name: string;
   profile_path?: string | null;
   known_for_department?: string | null;
-  known_for?: Array<{ title?: string; name?: string }>;
+  known_for?: Array<{ title?: string; name?: string; backdrop_path?: string | null }>;
   birthday?: string | null;
   place_of_birth?: string | null;
   biography?: string | null;
@@ -40,6 +43,20 @@ function extractNationality(placeOfBirth: string | null | undefined): string | n
 }
 
 const RecommendationPersonCard = ({ person, onOpenDetails, onPrevious, onNext, canGoPrevious = true, canGoNext = true, className = "" }: RecommendationPersonCardProps) => {
+  const [currentPreference, setCurrentPreference] = useState<PreferenceValue | null>(null);
+
+  useEffect(() => {
+    const loadPreference = async () => {
+      try {
+        const pref = await getPersonPreference(person.id);
+        setCurrentPreference(pref);
+      } catch (error) {
+        console.error("Error loading person preference:", error);
+      }
+    };
+    loadPreference();
+  }, [person.id]);
+
   const isDirector = person.known_for_department === "Directing";
   const age = computeAge(person.birthday);
   const nationality = extractNationality(person.place_of_birth);
@@ -54,7 +71,11 @@ const RecommendationPersonCard = ({ person, onOpenDetails, onPrevious, onNext, c
   if (nationality) infoChips.push(nationality);
 
   const personImage = getPersonPhotoUrl(person.profile_path, "w342");
-  const bgImage = getPersonPhotoUrl(person.profile_path, "w780");
+  // Use backdrop from first known film, fallback to person photo
+  const firstKnownFilm = person.known_for?.[0];
+  const bgImage = firstKnownFilm?.backdrop_path 
+    ? getBackdropUrl(firstKnownFilm.backdrop_path)
+    : getPersonPhotoUrl(person.profile_path, "w780");
 
   const cardContent = (
     <div className="group relative overflow-hidden rounded-[1.75rem] border border-border/20 bg-background shadow-[0_24px_80px_hsl(var(--background)/0.12)] transition hover:-translate-y-0.5 hover:shadow-[0_32px_90px_hsl(var(--background)/0.16)]">
@@ -122,6 +143,10 @@ const RecommendationPersonCard = ({ person, onOpenDetails, onPrevious, onNext, c
               ))}
             </div>
           )}
+
+          <div className="mt-4 pt-3 border-t border-border/10" onClick={(e) => e.stopPropagation()}>
+            <PersonActionBar person={person} currentPreference={currentPreference} />
+          </div>
         </div>
       </div>
     </div>

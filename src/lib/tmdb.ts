@@ -454,7 +454,7 @@ export interface PersonDetails {
   place_of_birth: string | null;
   profile_path: string | null;
   known_for_department: string;
-  knownFor: { id: number; title: string; year: string; poster_path: string | null; media_type: string }[];
+  knownFor: { id: number; title: string; year: string; poster_path: string | null; backdrop_path: string | null; media_type: string }[];
 }
 
 export async function getPersonDetails(personId: number): Promise<PersonDetails> {
@@ -472,6 +472,7 @@ export async function getPersonDetails(personId: number): Promise<PersonDetails>
       title: c.title || c.name || "",
       year: (c.release_date || c.first_air_date || "").slice(0, 4),
       poster_path: c.poster_path,
+      backdrop_path: c.backdrop_path || null,
       media_type: c.media_type || "movie",
     }));
 
