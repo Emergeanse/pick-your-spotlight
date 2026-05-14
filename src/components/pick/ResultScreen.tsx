@@ -606,9 +606,10 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
             trackRecommendationEvent({
               tmdbId: movie.id,
               title,
-              source: sessionId ? "session" : "browse",
-              scoreBreakdown: { match: cached.matchScore ?? cached.score ?? 0 },
-              context: { sessionId: sessionId ?? null },
+              mode: "shown",
+              score: cached.matchScore ?? cached.score,
+              context: sessionId ? "session" : "browse",
+              sessionId,
             }).catch(() => {});
           }
           return;
@@ -626,9 +627,10 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
             trackRecommendationEvent({
               tmdbId: movie.id,
               title,
-              source: sessionId ? "session" : "browse",
-              scoreBreakdown: { match: data.matchScore ?? data.score ?? 0 },
-              context: { sessionId: sessionId ?? null },
+              mode: "shown",
+              score: data.matchScore ?? data.score,
+              context: sessionId ? "session" : "browse",
+              sessionId,
             }).catch(() => {});
           }
         }
@@ -646,7 +648,10 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
       toast.success("Bien noté, Pick affine ses choix");
 
       try {
-        await updateRecommendationReaction(movie.id, "rejected", reasonId);
+        await updateRecommendationReaction(movie.id, sessionId, {
+          reaction: "rejected",
+          reason: reasonId,
+        });
       } catch {}
 
       const nextRejected = new Set<number>(externalRejected || []);
@@ -668,7 +673,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
     };
 
     const cast = credits?.cast?.slice(0, 10) || [];
-    const director = credits?.director;
+    const director = credits?.crew?.find((c: any) => c.job === "Director");
 
     return (
       <div ref={ref} className="relative h-full w-full overflow-y-auto overflow-x-hidden bg-background">
