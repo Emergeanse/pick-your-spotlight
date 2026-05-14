@@ -1,4 +1,4 @@
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Film, User, Clapperboard } from "lucide-react";
 import { getPersonPhotoUrl } from "@/lib/people-preferences";
 
@@ -35,11 +35,7 @@ function extractNationality(placeOfBirth: string | null | undefined): string | n
   return parts[parts.length - 1] || null;
 }
 
-const RecommendationPersonCard = ({
-  person,
-  onOpenDetails,
-  className = "",
-}: RecommendationPersonCardProps) => {
+const RecommendationPersonCard = ({ person, onOpenDetails, className = "" }: RecommendationPersonCardProps) => {
   const isDirector = person.known_for_department === "Directing";
   const age = computeAge(person.birthday);
   const nationality = extractNationality(person.place_of_birth);
@@ -69,9 +65,7 @@ const RecommendationPersonCard = ({
           {isDirector ? "Réalisateur/Réalisatrice" : "Acteur/Actrice"}
           {infoChips.length > 0 && ` · ${infoChips.join(" · ")}`}
         </p>
-        {shortBio && (
-          <p className="mb-2 text-[10px] font-sans leading-snug text-white/40 line-clamp-2">{shortBio}.</p>
-        )}
+        {shortBio && <p className="mb-2 text-[10px] font-sans leading-snug text-white/40 line-clamp-2">{shortBio}.</p>}
         {knownForTitles.length > 0 && (
           <div className="flex flex-wrap gap-1">
             {knownForTitles.map((t) => (
