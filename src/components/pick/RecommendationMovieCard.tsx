@@ -168,8 +168,8 @@ const RecommendationMovieCard = ({
     <div className={`relative min-h-screen w-full overflow-hidden ${className}`}>
       {bgImage && (
         <motion.div
-          initial={{ opacity: 0, scale: 1.05 }}
-          animate={{ opacity: 1, scale: 1 }}
+          initial={{ opacity: 0, scale: 1.15 }}
+          animate={{ opacity: 0.6, scale: 0.85 }}
           transition={{ duration: 1.2 }}
           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
           style={{ backgroundImage: `url(${bgImage})` }}

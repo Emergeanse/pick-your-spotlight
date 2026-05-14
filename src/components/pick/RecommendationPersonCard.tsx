@@ -54,7 +54,9 @@ const RecommendationPersonCard = ({ person, onOpenDetails, onPrevious, onNext, c
   if (nationality) infoChips.push(nationality);
 
   const personImage = getPersonPhotoUrl(person.profile_path, "w342");
-  const content = (
+  const bgImage = getPersonPhotoUrl(person.profile_path, "w780");
+
+  const cardContent = (
     <div className="group relative overflow-hidden rounded-[1.75rem] border border-border/20 bg-background shadow-[0_24px_80px_hsl(var(--background)/0.12)] transition hover:-translate-y-0.5 hover:shadow-[0_32px_90px_hsl(var(--background)/0.16)]">
       {(onPrevious || onNext) && (
         <>
@@ -126,15 +128,26 @@ const RecommendationPersonCard = ({ person, onOpenDetails, onPrevious, onNext, c
   );
 
   return (
-    <div className={`relative mx-auto w-full max-w-[400px] ${className}`} style={{ width: "min(68vw, 30vh, 400px)" }}>
-      <AnimatePresence mode="popLayout">
+    <div className={`relative min-h-screen w-full overflow-hidden ${className}`}>
+      {bgImage && (
         <motion.div
-          key={person.id}
-          initial={{ scale: 0.95, opacity: 0, y: 20 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.9 }}
-          transition={{ type: "spring", stiffness: 260, damping: 24 }}
-          className="relative w-full select-none"
+          initial={{ opacity: 0, scale: 1.15 }}
+          animate={{ opacity: 1, scale: 0.85 }}
+          transition={{ duration: 1.2 }}
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          style={{ backgroundImage: `url(${bgImage})` }}
+        />
+      )}
+      <div className="absolute inset-0 poster-gradient" />
+      <div className="absolute inset-0 bg-gradient-to-r from-background/90 via-background/60 to-transparent" />
+
+      <div className="relative z-10 flex flex-col items-center justify-center min-h-screen px-5 py-[calc(1.5rem+env(safe-area-inset-top))] md:px-12 lg:px-16">
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+          className={`w-full ${onOpenDetails ? "cursor-pointer" : ""}`}
+          onClick={onOpenDetails}
         >
           {onOpenDetails ? (
             <div
@@ -147,15 +160,15 @@ const RecommendationPersonCard = ({ person, onOpenDetails, onPrevious, onNext, c
                   onOpenDetails();
                 }
               }}
-              className="block w-full text-left"
+              className="block w-full text-center"
             >
-              {content}
+              {cardContent}
             </div>
           ) : (
-            content
+            cardContent
           )}
         </motion.div>
-      </AnimatePresence>
+      </div>
     </div>
   );
 };
