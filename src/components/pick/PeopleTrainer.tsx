@@ -173,14 +173,6 @@ const PeopleTrainer = ({ onBack, filterDepartment }: PeopleTrainerProps) => {
   const iconSize = "w-3.5 h-3.5";
   const btnSize = "w-8 h-8";
   const inactiveClass = "bg-transparent border-border/25 text-foreground/40 hover:text-primary hover:border-primary/25";
-  const likeFilledClass =
-    "bg-primary border-primary/80 text-primary-foreground ring-1 ring-white/15 shadow-[0_0_24px_hsl(var(--primary)/0.45)]";
-  const loveFilledClass =
-    "bg-gradient-to-br from-pink-500 to-fuchsia-500 border-pink-300/70 text-white ring-1 ring-white/20 shadow-[0_0_26px_rgba(236,72,153,0.55)]";
-  const dislikeFilledClass =
-    "bg-rose-600 border-rose-300/70 text-white ring-1 ring-white/10 shadow-[0_0_24px_rgba(225,29,72,0.45)]";
-  const unknownFilledClass =
-    "bg-foreground/85 border-white/15 text-background shadow-[0_0_18px_rgba(255,255,255,0.12)]";
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
@@ -204,19 +196,21 @@ const PeopleTrainer = ({ onBack, filterDepartment }: PeopleTrainerProps) => {
           <div className="w-full max-w-xl">
             <RecommendationPersonCard person={currentPersonDetail} onOpenDetails={openPersonDetail} />
 
-            <div className="absolute inset-y-0 left-0 flex items-center -translate-x-4 md:-translate-x-10">
+            <div className="absolute inset-y-0 left-0 z-20 flex items-center -translate-x-4 md:-translate-x-10">
               <button
                 onClick={goBack}
                 disabled={history.length === 0}
                 className="rounded-full bg-foreground/5 p-1.5 text-foreground/30 transition-all hover:bg-foreground/10 disabled:opacity-20"
+                aria-label="Précédent"
               >
                 <ChevronLeft className="h-5 w-5" />
               </button>
             </div>
-            <div className="absolute inset-y-0 right-0 flex items-center translate-x-4 md:translate-x-10">
+            <div className="absolute inset-y-0 right-0 z-20 flex items-center translate-x-4 md:translate-x-10">
               <button
                 onClick={skip}
                 className="rounded-full bg-foreground/5 p-1.5 text-foreground/30 transition-all hover:bg-foreground/10"
+                aria-label="Suivant"
               >
                 <ChevronRight className="h-5 w-5" />
               </button>
@@ -228,45 +222,49 @@ const PeopleTrainer = ({ onBack, filterDepartment }: PeopleTrainerProps) => {
       {currentPerson && (
         <div className="border-t border-border/20 bg-background/84 px-4 pt-3 pb-[calc(1rem+env(safe-area-inset-bottom))] backdrop-blur-xl">
           <div className="mb-3 flex items-center justify-center gap-1.5">
-            <button
+            <motion.button
               type="button"
+              whileTap={{ scale: 0.94 }}
               onClick={() => handleRate("liked")}
-              className={`${btnSize} rounded-full border transition-all flex items-center justify-center ${likeFilledClass}`}
+              className={`${btnSize} rounded-full border transition-all flex items-center justify-center ${inactiveClass}`}
               title="Aimé"
               aria-label="Aimé"
             >
-              <Heart className={`${iconSize} fill-current`} />
-            </button>
+              <Heart className={iconSize} />
+            </motion.button>
 
-            <button
+            <motion.button
               type="button"
+              whileTap={{ scale: 0.94 }}
               onClick={skip}
-              className={`${btnSize} rounded-full border transition-all flex items-center justify-center ${unknownFilledClass}`}
+              className={`${btnSize} rounded-full border transition-all flex items-center justify-center ${inactiveClass}`}
               title="Je ne connais pas"
               aria-label="Je ne connais pas"
             >
               <HelpCircle className={iconSize} />
-            </button>
+            </motion.button>
 
-            <button
+            <motion.button
               type="button"
+              whileTap={{ scale: 0.94 }}
               onClick={() => handleRate("loved")}
-              className={`${btnSize} rounded-full border transition-all flex items-center justify-center ${loveFilledClass}`}
+              className={`${btnSize} rounded-full border transition-all flex items-center justify-center ${inactiveClass}`}
               title="J'adore"
               aria-label="J'adore"
             >
-              <Star className={`${iconSize} fill-current`} />
-            </button>
+              <Star className={iconSize} />
+            </motion.button>
 
-            <button
+            <motion.button
               type="button"
+              whileTap={{ scale: 0.94 }}
               onClick={() => handleRate("disliked")}
-              className={`${btnSize} rounded-full border transition-all flex items-center justify-center ${dislikeFilledClass}`}
+              className={`${btnSize} rounded-full border transition-all flex items-center justify-center ${inactiveClass}`}
               title="Pas fan"
               aria-label="Pas fan"
             >
               <ThumbsDown className={iconSize} />
-            </button>
+            </motion.button>
           </div>
 
           <button
