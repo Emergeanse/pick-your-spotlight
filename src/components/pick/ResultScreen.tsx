@@ -316,205 +316,10 @@ const REJECT_REASONS = [
   { id: "seen", label: "Déjà vu", emoji: "👀" },
   { id: "not-mood", label: "Pas dans le mood", emoji: "😐" },
   { id: "not-genre", label: "Pas le genre", emoji: "🎭" },
-  { id: "too-long", label: "Trop long", emoji: "⏱️" },
+  { id: "too-long", label: "Trop long", emoji: "⏳" },
+  { id: "too-intense", label: "Trop intense", emoji: "⚡" },
+  { id: "dislike", label: "Pas pour moi", emoji: "👎" },
 ];
-
-const RejectSheet = ({
-  open,
-  onClose,
-  movie,
-  mediaType,
-  onShowAnother,
-  onRejectReaction,
-  onFeedbackGiven,
-}: {
-  open: boolean;
-  onClose: () => void;
-  movie: MovieDetail;
-  mediaType: string;
-  userCriteria?: { mood: Mood | null; context: Context | null; time: TimeAvailable | null };
-  onShowAnother: (reason?: string, movie?: MovieDetail) => void;
-  rejectReaction: string | null;
-  onRejectReaction: (r: string | null) => void;
-  onFeedbackGiven: (f: "good" | "bad" | null) => void;
-}) => {
-  if (!open) return null;
-  const handleReject = (reasonId: string) => {
-    onRejectReaction(reasonId);
-    onFeedbackGiven("bad");
-    trackInteraction(movie.id, "skipped", { reason: reasonId });
-    onClose();
-    onShowAnother(reasonId, movie);
-  };
-  return (
-    <AnimatePresence>
-      {open && (
-        <>
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={onClose}
-            className="fixed inset-0 bg-background/60 backdrop-blur-sm z-50"
-          />
-          <motion.div
-            initial={{ y: "100%" }}
-            animate={{ y: 0 }}
-            exit={{ y: "100%" }}
-            transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t border-border/20 rounded-t-2xl p-5 pb-[calc(1.5rem+env(safe-area-inset-bottom))]"
-          >
-            <div className="w-10 h-1 rounded-full bg-foreground/10 mx-auto mb-4" />
-            <p className="text-foreground/80 text-sm font-sans font-semibold mb-3">
-              Pourquoi pas {mediaType === "tv" ? "cette série" : "ce film"} ?
-            </p>
-            <div className="grid grid-cols-2 gap-2">
-              {REJECT_REASONS.map((reason) => (
-                <button
-                  key={reason.id}
-                  onClick={() => handleReject(reason.id)}
-                  className="flex items-center gap-2 px-4 py-3 rounded-xl bg-foreground/[0.04] border border-border/15 hover:bg-foreground/[0.08] transition-all"
-                >
-                  <span>{reason.emoji}</span>
-                  <span className="text-foreground/70 text-sm font-sans font-medium">{reason.label}</span>
-                </button>
-              ))}
-            </div>
-          </motion.div>
-        </>
-      )}
-    </AnimatePresence>
-  );
-};
-
-const ReviewSheet = ({
-  open,
-  onClose,
-  movieId,
-  userCriteria,
-}: {
-  open: boolean;
-  onClose: () => void;
-  movieId: number;
-  userCriteria?: { mood: Mood | null; context: Context | null; time: TimeAvailable | null };
-}) => {
-  const [rating, setRating] = useState(0);
-  const [hoveredStar, setHoveredStar] = useState(0);
-  if (!open) return null;
-  const handleSubmit = () => {
-    if (rating > 0) {
-      trackInteraction(movieId, "reviewed", { rating, ...userCriteria });
-      toast.success("Avis enregistré !");
-      onClose();
-      setRating(0);
-    }
-  };
-  return (
-    <AnimatePresence>
-      {open && (
-        <>
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={onClose}
-            className="fixed inset-0 bg-background/60 backdrop-blur-sm z-50"
-          />
-          <motion.div
-            initial={{ y: "100%" }}
-            animate={{ y: 0 }}
-            exit={{ y: "100%" }}
-            transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t border-border/20 rounded-t-2xl p-5 pb-[calc(1.5rem+env(safe-area-inset-bottom))]"
-          >
-            <div className="w-10 h-1 rounded-full bg-foreground/10 mx-auto mb-4" />
-            <p className="text-foreground/80 text-sm font-sans font-semibold mb-3">Note ce film</p>
-            <div className="flex items-center gap-2 justify-center mb-4">
-              {[1, 2, 3, 4, 5].map((star) => (
-                <button
-                  key={star}
-                  onMouseEnter={() => setHoveredStar(star)}
-                  onMouseLeave={() => setHoveredStar(0)}
-                  onClick={() => setRating(star)}
-                  className="transition-transform hover:scale-110"
-                >
-                  <Star
-                    className={`w-8 h-8 ${star <= (hoveredStar || rating) ? "text-primary fill-primary" : "text-foreground/20"}`}
-                  />
-                </button>
-              ))}
-            </div>
-            <button
-              onClick={handleSubmit}
-              disabled={rating === 0}
-              className="w-full h-10 rounded-xl bg-primary text-primary-foreground text-sm font-sans font-semibold disabled:opacity-40 transition-opacity"
-            >
-              Enregistrer
-            </button>
-          </motion.div>
-        </>
-      )}
-    </AnimatePresence>
-  );
-};
-
-const AlternativeMovies = ({ movies, onSelect }: { movies: MovieDetail[]; onSelect: (m: MovieDetail) => void }) => {
-  const interactions = useMovieInteractions(
-    movies.map((m) => ({
-      tmdbId: m.id,
-      mediaType: inferCatalogMediaType(m),
-    })),
-  );
-
-  if (movies.length === 0) return null;
-
-  return (
-    <div className="px-5 py-6 md:px-12">
-      <p className="text-[10px] uppercase tracking-widest text-foreground/30 font-sans font-semibold mb-3">
-        Autres suggestions
-      </p>
-
-      <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
-        {movies.map((movie) => {
-          const state = interactions[movie.id];
-
-          return (
-            <motion.button
-              key={movie.id}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => onSelect(movie)}
-              className="flex-shrink-0 w-28 group"
-            >
-              <div className="relative w-28 h-[168px] rounded-xl overflow-hidden border border-border/15 mb-2">
-                {movie.poster_path ? (
-                  <img
-                    src={getPosterUrl(movie.poster_path, "w342") || ""}
-                    alt={getDisplayTitle(movie)}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                  />
-                ) : (
-                  <div className="w-full h-full bg-foreground/[0.04] flex items-center justify-center">
-                    <span className="text-foreground/20 text-xs font-sans">No img</span>
-                  </div>
-                )}
-
-                {state?.hasInteraction && (
-                  <div className="absolute top-1.5 left-1.5">
-                    <FeedbackBadge type={state.primaryStatus} inWatchlist={state.watchlist} seen={state.seen} />
-                  </div>
-                )}
-              </div>
-
-              <p className="text-foreground/60 text-[11px] font-sans font-medium leading-tight truncate">
-                {getDisplayTitle(movie)}
-              </p>
-            </motion.button>
-          );
-        })}
-      </div>
-    </div>
-  );
-};
 
 interface ResultScreenProps {
   movie: MovieDetail;
@@ -540,6 +345,7 @@ interface ResultScreenProps {
   onBatchRejectedIdsChange?: (ids: Set<number>) => void;
   sessionId?: string | null;
   onFeedback?: (type: string, movie: MovieDetail) => void;
+  recommendationBatch?: MovieDetail[];
 }
 
 const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
@@ -568,6 +374,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
       onBatchRejectedIdsChange,
       sessionId,
       onFeedback,
+      recommendationBatch,
     },
     ref,
   ) => {
@@ -604,14 +411,19 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
     const interaction = useMovieInteraction(movie.id, inferCatalogMediaType(movie));
     const currentFeedback = interaction.primaryStatus;
     const recommendationCandidates = useMemo(() => {
-      const all = [movie, ...(alternativeMovies || [])].filter(Boolean);
+      const source =
+        recommendationBatch && recommendationBatch.length > 0
+          ? recommendationBatch
+          : [movie, ...(alternativeMovies || [])];
+
+      const all = source.filter(Boolean);
       const seen = new Set<number>();
       return all.filter((candidate) => {
         if (!candidate?.id || seen.has(candidate.id)) return false;
         seen.add(candidate.id);
         return true;
       });
-    }, [movie, alternativeMovies]);
+    }, [recommendationBatch, movie, alternativeMovies]);
     const currentRecommendationText = prefetchedMatchData[movie.id] ?? matchData ?? null;
 
     useEffect(() => {
@@ -793,365 +605,242 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
           if (user) {
             trackRecommendationEvent({
               tmdbId: movie.id,
-              title: movie.title || movie.name || "",
-              source: "result_screen",
-              scoreBreakdown: (cached as any).scores || {},
-            });
+              title,
+              mode: "shown",
+              score: cached.matchScore ?? cached.score,
+              context: sessionId ? "session" : "browse",
+              sessionId,
+            }).catch(() => {});
           }
           return;
         }
 
-        setMatchData(null);
         setMatchLoading(true);
-
         const data = await fetchMatchDataForMovie(movie);
-
         if (cancelled) return;
+        setMatchData(data);
+        setMatchLoading(false);
 
         if (data) {
-          setMatchData(data);
           setPrefetchedMatchData((prev) => ({ ...prev, [movie.id]: data }));
-
           if (user) {
             trackRecommendationEvent({
               tmdbId: movie.id,
-              title: movie.title || movie.name || "",
-              source: "result_screen",
-              scoreBreakdown: (data as any).scores || {},
-            });
+              title,
+              mode: "shown",
+              score: data.matchScore ?? data.score,
+              context: sessionId ? "session" : "browse",
+              sessionId,
+            }).catch(() => {});
           }
         }
-
-        setMatchLoading(false);
       };
 
       loadCurrentMatchData();
-
       return () => {
         cancelled = true;
       };
-    }, [movie.id, movie, prefetchedMatchData, fetchMatchDataForMovie, user]);
+    }, [movie.id, fetchMatchDataForMovie, prefetchedMatchData, sessionId, title, user]);
 
-    useEffect(() => {
-      const fb = currentFeedback;
-      if (fb === "like" || fb === "love") setFeedbackGiven("good");
-      else if (fb === "not_for_me" || fb === "dislike") setFeedbackGiven("bad");
-      else setFeedbackGiven(null);
+    const handleRejectWithReason = async (reasonId: string) => {
+      setRejectReaction(reasonId);
+      setFeedbackGiven("bad");
+      toast.success("Bien noté, Pick affine ses choix");
 
-      setMarkedSeen(interaction.seen);
-      setRejectReaction(fb === "not_for_me" ? "not_for_me" : interaction.seen ? "seen" : null);
-    }, [movie.id, currentFeedback, interaction.seen]);
+      try {
+        await updateRecommendationReaction(movie.id, sessionId, {
+          reaction: "rejected",
+          reason: reasonId,
+        });
+      } catch {}
+
+      const nextRejected = new Set<number>(externalRejected || []);
+      nextRejected.add(movie.id);
+      onBatchRejectedIdsChange?.(nextRejected);
+
+      setShowRejectReasons(false);
+
+      if (nextRejected.size >= totalCount) {
+        setTimeout(() => onShowAnother(reasonId === "dislike" ? "dislike" : "seen", movie), 400);
+        return;
+      }
+
+      if (onNext && currentIndex < totalCount - 1) {
+        setTimeout(() => onNext(), 250);
+      } else if (onPrevious && currentIndex > 0) {
+        setTimeout(() => onPrevious(), 250);
+      }
+    };
+
+    const cast = credits?.cast?.slice(0, 10) || [];
+    const director = credits?.crew?.find((c: any) => c.job === "Director");
 
     return (
-      <div ref={ref} className="h-full w-full overflow-x-hidden overflow-y-auto">
-        <BrandHeader showBack onBack={onRestart} />
+      <div ref={ref} className="relative h-full w-full overflow-y-auto overflow-x-hidden bg-background">
+        {bgImage && (
+          <motion.div
+            initial={{ opacity: 0, scale: 1.03 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.9 }}
+            className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+            style={{ backgroundImage: `url(${bgImage})` }}
+          />
+        )}
+        <div className="absolute inset-0 poster-gradient" />
+        <div className="absolute inset-0 bg-gradient-to-r from-background/90 via-background/60 to-transparent" />
 
-        <div className="relative min-h-screen w-full overflow-hidden">
-          {bgImage && (
-            <motion.div
-              initial={{ opacity: 0, scale: 1.05 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 1.2 }}
-              className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-              style={{ backgroundImage: `url(${bgImage})` }}
-            />
-          )}
-          <div className="absolute inset-0 poster-gradient" />
-          <div className="absolute inset-0 bg-gradient-to-r from-background/90 via-background/60 to-transparent" />
+        <div className="relative z-10 min-h-full px-5 pt-[calc(1rem+env(safe-area-inset-top))] pb-[calc(1.25rem+env(safe-area-inset-bottom))] md:px-8 lg:px-12">
+          <BrandHeader />
 
-          <div className="relative z-10 flex flex-col justify-end min-h-screen px-5 pb-[calc(1.5rem+env(safe-area-inset-bottom))] md:px-12 lg:px-16 md:pb-12">
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-              className="max-w-xl"
-            >
-              {totalCount >= 1 && (
-                <motion.div
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.15 }}
-                  className="flex items-center justify-center gap-4 mb-5"
+          <div className="max-w-xl pt-4 md:pt-6">
+            <RecommendationMovieCardHeader movie={movie} onOpenDetails={() => setMovieDetailOpen(true)} />
+
+            {matchLoading ? (
+              <div className="mb-5 flex items-center gap-2 text-foreground/40 text-sm font-sans">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Analyse de Pick…
+              </div>
+            ) : currentRecommendationText ? (
+              <MatchAnalysis matchData={currentRecommendationText} mediaType={mediaType} movieId={movie.id} />
+            ) : null}
+
+            <StreamingSection streamingLinks={streamingLinks} />
+
+            {overview && (
+              <div className="mb-4 max-w-xl">
+                <button
+                  onClick={() => setSynopsisExpanded((v) => !v)}
+                  className="flex items-center gap-2 text-[10px] uppercase tracking-widest text-foreground/30 font-sans font-semibold mb-2"
                 >
-                  <button
-                    onClick={onPrevious}
-                    disabled={currentIndex <= 0}
-                    className="w-10 h-10 rounded-full bg-card/60 backdrop-blur-md border border-border/30 flex items-center justify-center transition-all active:scale-90 disabled:opacity-30 disabled:cursor-not-allowed shadow-lg"
-                  >
-                    <ChevronLeft className="w-5 h-5 text-foreground" />
-                  </button>
-                  <span className="text-foreground text-sm font-sans font-semibold tabular-nums px-3 py-1 rounded-full bg-card/60 backdrop-blur-md border border-border/30 shadow-lg">
-                    {currentIndex + 1} / {totalCount}
-                  </span>
-                  <button
-                    onClick={onNext}
-                    disabled={currentIndex >= totalCount - 1}
-                    className="w-10 h-10 rounded-full bg-card/60 backdrop-blur-md border border-border/30 flex items-center justify-center transition-all active:scale-90 disabled:opacity-30 disabled:cursor-not-allowed shadow-lg"
-                  >
-                    <ChevronRight className="w-5 h-5 text-foreground" />
-                  </button>
-                </motion.div>
-              )}
-
-              <button type="button" onClick={() => setMovieDetailOpen(true)} className="block w-full text-left">
-                <RecommendationMovieCardHeader movie={movie} />
-              </button>
-
-              <StreamingSection streamingLinks={streamingLinks} />
-
-              <div className="mb-4">
-                <p
-                  className={`text-foreground/60 text-[13px] md:text-sm leading-relaxed font-sans font-light ${!synopsisExpanded ? "line-clamp-2" : ""}`}
-                >
+                  Synopsis
+                  {synopsisExpanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                </button>
+                <p className={`text-sm text-foreground/72 leading-relaxed ${synopsisExpanded ? "" : "line-clamp-4"}`}>
                   {overview}
                 </p>
-                {overview.length > 120 && (
-                  <button
-                    onClick={() => setSynopsisExpanded(!synopsisExpanded)}
-                    className="text-primary/70 text-[11px] font-sans font-medium mt-1 flex items-center gap-0.5 hover:text-primary transition-colors"
-                  >
-                    {synopsisExpanded ? "Moins" : "Lire plus"}
-                    {synopsisExpanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-                  </button>
-                )}
+              </div>
+            )}
+
+            {cast.length > 0 && (
+              <div className="mb-4">
+                <p className="text-[10px] uppercase tracking-widest text-foreground/30 font-sans font-semibold mb-2">
+                  Casting
+                </p>
+                <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
+                  {cast.map((actor) => (
+                    <ActorCard
+                      key={actor.id}
+                      actor={actor}
+                      onClick={() => setPersonDetail({ item: actor, isOpen: true })}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="mt-6">
+              {trailerUrl ? (
+                <a
+                  href={trailerUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-4 py-3 rounded-xl bg-primary text-primary-foreground text-sm font-sans font-semibold shadow-lg hover:opacity-95 transition-opacity"
+                >
+                  <Play className="w-4 h-4 fill-current" />
+                  Voir la bande-annonce
+                </a>
+              ) : null}
+            </div>
+          </div>
+
+          <div className="fixed left-0 right-0 bottom-0 z-20 border-t border-border/20 bg-background/84 px-4 pt-3 pb-[calc(1rem+env(safe-area-inset-bottom))] backdrop-blur-xl shadow-[0_-18px_40px_hsl(var(--background)/0.32)]">
+            <div className="mx-auto max-w-md">
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <button
+                  onClick={onRestart}
+                  className="rounded-full bg-foreground/5 p-2 text-foreground/30 transition-all hover:bg-foreground/10"
+                  aria-label="Revenir"
+                >
+                  <ChevronLeft className="h-5 w-5" />
+                </button>
+
+                <div className="flex items-center gap-2 text-center">
+                  {currentFeedback || interaction.watchlist || interaction.seen ? (
+                    <FeedbackBadge
+                      type={currentFeedback}
+                      inWatchlist={interaction.watchlist}
+                      seen={interaction.seen}
+                      size="sm"
+                    />
+                  ) : null}
+                </div>
+
+                <button
+                  onClick={() => setShowOptions(true)}
+                  className="rounded-full bg-foreground/5 p-2 text-foreground/30 transition-all hover:bg-foreground/10"
+                  aria-label="Options"
+                >
+                  <Dices className="h-5 w-5" />
+                </button>
               </div>
 
-              {credits && (credits.director || credits.cast.length > 0) && (
-                <motion.div
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.42 }}
-                  className="mb-4"
-                >
-                  <p className="text-[10px] uppercase tracking-widest text-foreground/30 font-sans font-semibold mb-2.5">
-                    {mediaType === "tv" ? "Équipe de la série" : "Équipe du film"}
-                  </p>
-                  <div className="rounded-xl bg-foreground/[0.04] border border-border/15 p-3.5">
-                    {credits.director && (
-                      <button
-                        onClick={() =>
-                          setPersonDetail({
-                            item: {
-                              id: credits.director!.id,
-                              name: credits.director!.name,
-                              profile_path: credits.director!.profile_path,
-                            },
-                            isOpen: true,
-                          })
-                        }
-                        className="flex items-center gap-2.5 mb-3 group cursor-pointer w-full text-left"
-                      >
-                        <div className="w-9 h-9 rounded-full bg-primary/15 border border-primary/25 flex items-center justify-center overflow-hidden shrink-0 group-hover:border-primary/40 transition-colors">
-                          {credits.director.profile_path ? (
-                            <img
-                              src={`${IMG_BASE}/w185${credits.director.profile_path}`}
-                              alt={credits.director.name}
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <span className="text-primary text-[11px] font-sans font-bold">
-                              {credits.director.name.charAt(0)}
-                            </span>
-                          )}
-                        </div>
-                        <div className="min-w-0">
-                          <p className="text-foreground/80 text-[13px] font-sans font-semibold leading-tight truncate group-hover:text-primary transition-colors">
-                            {credits.director.name}
-                          </p>
-                          <p className="text-primary/50 text-[10px] font-sans font-medium uppercase tracking-wider">
-                            Réalisateur
-                          </p>
-                        </div>
-                      </button>
-                    )}
-                    {credits.cast.length > 0 && (
-                      <div className="flex gap-3 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-hide">
-                        {credits.cast.map((actor) => (
-                          <ActorCard
-                            key={actor.id}
-                            actor={actor}
-                            onClick={() =>
-                              setPersonDetail({
-                                item: { id: actor.id, name: actor.name, profile_path: actor.profile_path },
-                                isOpen: true,
-                              })
-                            }
-                          />
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </motion.div>
-              )}
+              <MovieActionBar
+                movie={movie}
+                sessionId={sessionId}
+                contextType={sessionId ? "solo_session" : "browse"}
+                onInteraction={(type) => {
+                  onFeedback?.(type, movie);
+                  if (type === "already_seen" || type === "dislike") {
+                    const nextRejected = new Set<number>(externalRejected || []);
+                    nextRejected.add(movie.id);
+                    onBatchRejectedIdsChange?.(nextRejected);
 
-              {trailerUrl && (
-                <motion.button
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.45 }}
-                  whileTap={{ scale: 0.97 }}
-                  onClick={() => window.open(trailerUrl, "_blank")}
-                  className="mb-4 inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-foreground/[0.05] border border-border/15 hover:border-primary/25 hover:bg-foreground/[0.08] transition-all group cursor-pointer"
-                >
-                  <div className="w-7 h-7 rounded-full bg-primary/15 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-                    <Play className="w-3 h-3 text-primary fill-primary ml-0.5" />
-                  </div>
-                  <span className="text-foreground/60 text-[13px] font-sans font-medium group-hover:text-foreground transition-colors">
-                    Voir le trailer
-                  </span>
-                  <ExternalLink className="w-3 h-3 text-foreground/20" />
-                </motion.button>
-              )}
+                    if (nextRejected.size >= totalCount) {
+                      setTimeout(() => onShowAnother(type === "dislike" ? "dislike" : "seen", movie), 400);
+                      return;
+                    }
 
-              <AnimatePresence>
-                {matchLoading && (
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    className="mb-4 flex items-center gap-2"
+                    if (onNext && currentIndex < totalCount - 1) {
+                      setTimeout(() => onNext(), 250);
+                    } else if (onPrevious && currentIndex > 0) {
+                      setTimeout(() => onPrevious!(), 250);
+                    }
+                  }
+                }}
+              />
+
+              <div className="flex flex-col items-center gap-1.5 mt-2">
+                <div className="relative group">
+                  <button
+                    data-tour="autre-suggestion"
+                    onClick={() => onShowAnother()}
+                    disabled={refining || !allVisited}
+                    className={`text-[12px] font-sans transition-all flex items-center gap-1.5 ${
+                      allVisited
+                        ? "text-foreground/40 hover:text-foreground/60"
+                        : "text-foreground/20 cursor-not-allowed"
+                    } disabled:opacity-50`}
                   >
-                    <Loader2 className="w-3.5 h-3.5 animate-spin text-primary/60" />
-                    <span className="text-foreground/40 text-xs font-sans">Analyse en cours…</span>
-                  </motion.div>
-                )}
-                {!matchLoading && !isWhyUnlocked && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.1, duration: 0.4 }}
-                    className="mb-5 max-w-md"
-                  >
-                    <div className="p-3 sm:p-4 rounded-xl bg-muted/40 border border-border/30 backdrop-blur-sm">
-                      <div className="flex items-center gap-3">
-                        <div className="relative flex-shrink-0">
-                          <div className="w-14 h-14 rounded-full bg-muted border-2 border-border/40 flex items-center justify-center">
-                            <Lock className="w-5 h-5 text-muted-foreground" />
-                          </div>
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-[10px] uppercase tracking-widest text-muted-foreground/80 font-sans font-semibold mb-0.5">
-                            Pourquoi {mediaType === "tv" ? "cette série" : "ce film"}
-                          </p>
-                          <p className="text-muted-foreground text-[12px] sm:text-[13px] font-sans leading-snug">
-                            Utilise Pick un peu plus pour débloquer l'analyse personnalisée.
-                          </p>
-                        </div>
-                      </div>
-                      <div className="mt-3">
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="text-[10px] text-muted-foreground/60 font-sans">Confiance du profil</span>
-                          <span className="text-[10px] text-muted-foreground/60 font-sans font-medium">
-                            {profileConfidence}%
-                          </span>
-                        </div>
-                        <div className="h-1.5 rounded-full bg-muted overflow-hidden">
-                          <motion.div
-                            initial={{ width: 0 }}
-                            animate={{ width: `${Math.min((profileConfidence / CONFIDENCE_THRESHOLD) * 100, 100)}%` }}
-                            transition={{ delay: 0.3, duration: 0.8, ease: "easeOut" }}
-                            className="h-full rounded-full bg-primary/40"
-                          />
-                        </div>
-                      </div>
+                    {refining ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}5
+                    autres suggestions
+                  </button>
+                  {!allVisited && (
+                    <div className="pointer-events-none absolute left-1/2 -translate-x-1/2 bottom-full mb-2 hidden group-hover:block whitespace-nowrap rounded-lg bg-background/95 border border-border/20 px-2.5 py-1.5 shadow-xl">
+                      <p className="text-[10px] text-foreground/50 font-sans">
+                        Parcours les {totalCount} suggestions d'abord
+                      </p>
                     </div>
-                  </motion.div>
-                )}
-                {matchData && !matchLoading && isWhyUnlocked && (
-                  <MatchAnalysis matchData={matchData} mediaType={mediaType} movieId={movie.id} />
-                )}
-              </AnimatePresence>
-
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.6 }}
-                className="space-y-4"
-              >
-                <div className="flex flex-col items-center gap-4 w-full">
-                  <Button
-                    size="lg"
-                    className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90 font-sans font-semibold px-8 h-12 gap-2 text-base neon-glow transition-all active:scale-[0.97] w-full max-w-xs"
-                    onClick={() => {
-                      trackInteraction(movie.id, "watched", {
-                        mood: userCriteria?.mood,
-                        context: userCriteria?.context,
-                      });
-                      updateRecommendationReaction(movie.id, "accepted", "on_regarde");
-                      toast.success("Bon visionnage ! 🍿");
-                    }}
-                  >
-                    <Tv className="w-5 h-5" />
-                    On regarde ?
-                  </Button>
-
-                  <MovieActionBar
-                    key={movie.id}
-                    movie={movie}
-                    sessionId={sessionId ?? null}
-                    contextType={sessionId ? "solo_session" : "browse"}
-                    onInteraction={(type) => {
-                      onFeedback?.(type, movie);
-                      if (type === "already_seen" || type === "dislike") {
-                        const nextRejected = new Set<number>(externalRejected || []);
-                        nextRejected.add(movie.id);
-                        onBatchRejectedIdsChange?.(nextRejected);
-
-                        if (nextRejected.size >= totalCount) {
-                          setTimeout(() => onShowAnother(type === "dislike" ? "dislike" : "seen", movie), 400);
-                          return;
-                        }
-
-                        if (onNext && currentIndex < totalCount - 1) {
-                          setTimeout(() => onNext(), 250);
-                        } else if (onPrevious && currentIndex > 0) {
-                          setTimeout(() => onPrevious!(), 250);
-                        }
-                      }
-                    }}
-                  />
-
-                  <div className="flex flex-col items-center gap-1.5 mt-2">
-                    <div className="relative group">
-                      <button
-                        data-tour="autre-suggestion"
-                        onClick={() => onShowAnother()}
-                        disabled={refining || !allVisited}
-                        className={`text-[12px] font-sans transition-all flex items-center gap-1.5 ${
-                          allVisited
-                            ? "text-foreground/40 hover:text-foreground/60"
-                            : "text-foreground/20 cursor-not-allowed"
-                        } disabled:opacity-50`}
-                      >
-                        {refining ? <Loader2 className="w-3 h-3 animate-spin" /> : <Dices className="w-3 h-3" />}5
-                        autres suggestions
-                      </button>
-                    </div>
-                    {!allVisited && (
-                      <motion.p
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        className="text-foreground/25 text-[10px] font-sans text-center"
-                      >
-                        Parcourez les {totalCount} films pour débloquer ({visitedMovieIds.size}/{totalCount})
-                      </motion.p>
-                    )}
-                  </div>
-
-                  {refining && (
-                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="pt-3">
-                      <PickCharacter mood="think" message="Attends, je cherche mieux…" size="sm" animate={false} />
-                    </motion.div>
                   )}
                 </div>
-              </motion.div>
-            </motion.div>
+                {totalCount > 1 && (
+                  <p className="text-[10px] text-foreground/25 font-sans">
+                    {visitedMovieIds.size}/{totalCount} vues
+                  </p>
+                )}
+              </div>
+            </div>
           </div>
         </div>
-
-        {alternativeMovies && alternativeMovies.length > 0 && onSelectAlternative && (
-          <AlternativeMovies movies={alternativeMovies.filter((_, i) => i < 2)} onSelect={onSelectAlternative} />
-        )}
 
         <RefineSheet
           open={showRefineSheet}
@@ -1165,23 +854,43 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
           onShowAnother={() => onShowAnother()}
           onRefineWithVoice={onRefineWithVoice}
         />
-        <RejectSheet
-          open={showRejectReasons}
-          onClose={() => setShowRejectReasons(false)}
-          movie={movie}
-          mediaType={mediaType}
-          userCriteria={userCriteria}
-          onShowAnother={onShowAnother}
-          rejectReaction={rejectReaction}
-          onRejectReaction={setRejectReaction}
-          onFeedbackGiven={setFeedbackGiven}
-        />
-        <ReviewSheet
-          open={showReviewSheet}
-          onClose={() => setShowReviewSheet(false)}
-          movieId={movie.id}
-          userCriteria={userCriteria}
-        />
+
+        <AnimatePresence>
+          {showRejectReasons && (
+            <>
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setShowRejectReasons(false)}
+                className="fixed inset-0 z-50 bg-background/60 backdrop-blur-sm"
+              />
+              <motion.div
+                initial={{ y: "100%" }}
+                animate={{ y: 0 }}
+                exit={{ y: "100%" }}
+                transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t border-border/20 rounded-t-2xl p-5 pb-[calc(1.5rem+env(safe-area-inset-bottom))]"
+              >
+                <div className="w-10 h-1 rounded-full bg-foreground/10 mx-auto mb-4" />
+                <p className="text-foreground/80 text-sm font-sans font-semibold mb-3">Pourquoi pas ?</p>
+                <div className="grid grid-cols-2 gap-2">
+                  {REJECT_REASONS.map((reason) => (
+                    <button
+                      key={reason.id}
+                      onClick={() => handleRejectWithReason(reason.id)}
+                      className="flex items-center gap-2 px-3 py-3 rounded-xl bg-foreground/[0.04] border border-border/15 hover:bg-foreground/[0.08] transition-all text-left"
+                    >
+                      <span>{reason.emoji}</span>
+                      <span className="text-foreground/70 text-sm font-sans font-medium">{reason.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>
+
         <FlipCardDetail
           item={movie}
           type="movie"
