@@ -386,6 +386,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
     ref,
   ) => {
     const [providers, setProviders] = useState<{ name: string; logo_path: string; provider_id: number }[]>([]);
+    const displayedTotal = Math.max(totalCount ?? 1, suggestionCount ?? (totalCount ?? 1));
     const [credits, setCredits] = useState<MovieCredits | null>(null);
     const [streamingLinks, setStreamingLinks] = useState<StreamingLink[]>([]);
     const [trailerUrl, setTrailerUrl] = useState<string | null>(null);
@@ -903,19 +904,19 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
                     } disabled:opacity-50`}
                   >
                     {refining ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
-                  {Math.max((totalCount ?? 1) - 1, 1)} autre{Math.max((totalCount ?? 1) - 1, 1) > 1 ? "s" : ""} suggestion{Math.max((totalCount ?? 1) - 1, 1) > 1 ? "s" : ""}
+                  {Math.max(displayedTotal - 1, 1)} autre{Math.max(displayedTotal - 1, 1) > 1 ? "s" : ""} suggestion{Math.max(displayedTotal - 1, 1) > 1 ? "s" : ""}
                   </button>
                   {!allVisited && (
                     <div className="pointer-events-none absolute left-1/2 -translate-x-1/2 bottom-full mb-2 hidden group-hover:block whitespace-nowrap rounded-lg bg-background/95 border border-border/20 px-2.5 py-1.5 shadow-xl">
                       <p className="text-[10px] text-foreground/50 font-sans">
-                        Parcours les {totalCount} suggestions d'abord
+                        Parcours les {displayedTotal} suggestions d'abord
                       </p>
                     </div>
                   )}
                 </div>
-                {totalCount > 1 && (
+                {displayedTotal > 1 && (
                   <p className="text-[10px] text-foreground/25 font-sans">
-                    {visitedMovieIds.size}/{totalCount} vues
+                    {visitedMovieIds.size}/{displayedTotal} vues
                   </p>
                 )}
               </div>

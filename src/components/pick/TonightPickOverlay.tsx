@@ -38,6 +38,7 @@ interface TonightPickOverlayProps {
   onConfirm: () => void;
   onInteraction: (type: string) => void;
   onMoreSuggestions: () => void;
+  expectedCount?: number;
 }
 
 const TonightPickOverlay = ({
@@ -58,8 +59,10 @@ const TonightPickOverlay = ({
   onConfirm,
   onInteraction,
   onMoreSuggestions,
+  expectedCount,
 }: TonightPickOverlayProps) => {
   const interaction = useMovieInteraction(movie?.id);
+  const displayCount = expectedCount ?? tonightPool.length;
 
   if (!movie) return null;
 
@@ -236,13 +239,13 @@ const TonightPickOverlay = ({
                     ) : (
                       <Dices className="w-3 h-3" />
                     )}
-                    {Math.max((tonightPool.length || 1) - 1, 1)} autre{Math.max((tonightPool.length || 1) - 1, 1) > 1 ? "s" : ""} suggestion{Math.max((tonightPool.length || 1) - 1, 1) > 1 ? "s" : ""}
+                    {Math.max(displayCount - 1, 1)} autre{Math.max(displayCount - 1, 1) > 1 ? "s" : ""} suggestion{Math.max(displayCount - 1, 1) > 1 ? "s" : ""}
                   </button>
 
                   {!tonightAllVisited && tonightPool.length > 0 && (
                     <p className="text-foreground/25 text-[10px] font-sans text-center">
-                      Parcourez les {tonightPool.length} films pour débloquer (
-                      {tonightSeenMovieIds.size}/{tonightPool.length})
+                      Parcourez les {displayCount} films pour débloquer (
+                      {tonightSeenMovieIds.size}/{displayCount})
                     </p>
                   )}
                 </div>

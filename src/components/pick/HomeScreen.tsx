@@ -678,6 +678,7 @@ const HomeScreen = ({
         onConfirm={handleOpenSurpriseFlow}
         onInteraction={(type) => void handleMovieAction(type)}
         onMoreSuggestions={() => void handleMoreSuggestions()}
+        expectedCount={userRecommendationCount}
       />
 
       <AnimatePresence>
