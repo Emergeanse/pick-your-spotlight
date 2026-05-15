@@ -11,6 +11,7 @@ import type { MissionId } from "@/components/pick/ActivationFlow";
 import WatchlistMissionGuide from "@/components/pick/WatchlistMissionGuide";
 import type { WatchlistGuideStep } from "@/components/pick/WatchlistMissionGuide";
 import TalkToPickMissionGuide from "@/components/pick/TalkToPickMissionGuide";
+normalizeRecommendationBatch;
 import type { TalkToPickGuideStep } from "@/components/pick/TalkToPickMissionGuide";
 import type { ChatMessage } from "@/components/pick/VoiceChat";
 import { toast } from "sonner";
@@ -113,14 +114,13 @@ const Index = () => {
         excludedGenres: profilePrefs.excludedGenres,
         searchTags,
         userCriteria: { mood: null, context: null, time: null },
-        size: profilePrefs.recommendationCount || RECOMMENDATION_BATCH_SIZE,
-        preloadMatchTexts: true,
+        size: profilePrefs.recommendationBatchSize,
       }),
     [
       profilePrefs.excludedGenres,
       profilePrefs.minRating,
       profilePrefs.preferredPlatforms,
-      profilePrefs.recommendationCount,
+      profilePrefs.recommendationBatchSize,
       searchTags,
     ],
   );
