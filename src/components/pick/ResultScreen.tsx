@@ -264,7 +264,7 @@ const OptionsSheet = ({
   onRefineWithVoice?: () => void;
   suggestionCount?: number;
 }) => {
-  const otherSuggestions = Math.max((suggestionCount ?? 1) - 1, 1);
+  const nextBatchCount = Math.max(suggestionCount ?? 1, 1);
   if (!open) return null;
   return (
     <AnimatePresence>
@@ -295,7 +295,7 @@ const OptionsSheet = ({
               >
                 <RefreshCw className="w-4 h-4 text-foreground/40" />
                 <span className="text-foreground/70 text-sm font-sans font-medium">
-                  {otherSuggestions} autre{otherSuggestions > 1 ? "s" : ""} suggestion{otherSuggestions > 1 ? "s" : ""}
+                  {nextBatchCount} autre{nextBatchCount > 1 ? "s" : ""} suggestion{nextBatchCount > 1 ? "s" : ""}
                 </span>
               </button>
               {onRefineWithVoice && (
@@ -905,7 +905,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
                     } disabled:opacity-50`}
                   >
                     {refining ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
-                  {Math.max(displayedTotal - 1, 1)} autre{Math.max(displayedTotal - 1, 1) > 1 ? "s" : ""} suggestion{Math.max(displayedTotal - 1, 1) > 1 ? "s" : ""}
+                  {displayedTotal} autre{displayedTotal > 1 ? "s" : ""} suggestion{displayedTotal > 1 ? "s" : ""}
                   </button>
                   {!allVisited && (
                     <div className="pointer-events-none absolute left-1/2 -translate-x-1/2 bottom-full mb-2 hidden group-hover:block whitespace-nowrap rounded-lg bg-background/95 border border-border/20 px-2.5 py-1.5 shadow-xl">
