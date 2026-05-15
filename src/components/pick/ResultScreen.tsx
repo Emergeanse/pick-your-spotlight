@@ -427,6 +427,18 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
     const currentRecommendationText = prefetchedMatchData[movie.id] ?? matchData ?? null;
 
     useEffect(() => {
+      const initialTextData: Record<number, MatchData> = {};
+      recommendationCandidates.forEach((candidate) => {
+        if (candidate?.id && candidate.recommendationTexts) {
+          initialTextData[candidate.id] = candidate.recommendationTexts;
+        }
+      });
+      if (Object.keys(initialTextData).length > 0) {
+        setPrefetchedMatchData((prev) => ({ ...prev, ...initialTextData }));
+      }
+    }, [recommendationCandidates]);
+
+    useEffect(() => {
       if (visitedMovieIds.has(movie.id)) return;
       const next = new Set(visitedMovieIds);
       next.add(movie.id);
