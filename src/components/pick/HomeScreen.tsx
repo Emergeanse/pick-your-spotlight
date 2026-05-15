@@ -353,13 +353,25 @@ const HomeScreen = ({
             count: userRecommendationCount || RECOMMENDATION_BATCH_SIZE,
             minMatchScore: quickFilters.matchThreshold,
           });
-
-          movies = await ensureRecommendationBatch(extractRecommendationMovies(data), {
+          // Ensure we end up with at least the requested count
+          let extracted = extractRecommendationMovies(data);
+          const desiredCount = userRecommendationCount || RECOMMENDATION_BATCH_SIZE;
+          if ((extracted?.length || 0) < desiredCount) {
+            extracted = await ensureRecommendationBatch(extracted, {
+              excludeIds: allExcludeIds,
+              platformIds: userPlatformIds,
+              minRating: userMinRating,
+              excludedGenres: userExcludedGenres,
+              size: desiredCount,
+              preloadMatchTexts: true,
+            });
+          }
+          movies = await ensureRecommendationBatch(extracted, {
             excludeIds: allExcludeIds,
             platformIds: userPlatformIds,
             minRating: userMinRating,
             excludedGenres: userExcludedGenres,
-            size: userRecommendationCount || RECOMMENDATION_BATCH_SIZE,
+            size: desiredCount,
             preloadMatchTexts: true,
           });
 

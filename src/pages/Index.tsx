@@ -314,7 +314,20 @@ const Index = () => {
           excludeIds,
           count: profilePrefs.recommendationCount || RECOMMENDATION_BATCH_SIZE,
         });
-        batch = await normalizeRecommendationBatch(extractRecommendationMovies(data), excludeIds);
+        // Extract movies and ensure we have at least the requested count
+        let extracted = extractRecommendationMovies(data);
+        const desiredCount = profilePrefs.recommendationCount || RECOMMENDATION_BATCH_SIZE;
+        if ((extracted?.length || 0) < desiredCount) {
+          extracted = await ensureRecommendationBatch(extracted, {
+            excludeIds,
+            platformIds: profilePrefs.preferredPlatforms,
+            minRating: profilePrefs.minRating,
+            excludedGenres: profilePrefs.excludedGenres,
+            size: desiredCount,
+            preloadMatchTexts: true,
+          });
+        }
+        batch = await normalizeRecommendationBatch(extracted, excludeIds);
       } else {
         batch = await normalizeRecommendationBatch([], excludeIds);
       }
@@ -477,7 +490,19 @@ const Index = () => {
             rejectionContext,
             count: profilePrefs.recommendationCount || RECOMMENDATION_BATCH_SIZE,
           });
-          batch = await normalizeRecommendationBatch(extractRecommendationMovies(data), excludeIds);
+          let extracted = extractRecommendationMovies(data);
+          const desiredCount = profilePrefs.recommendationCount || RECOMMENDATION_BATCH_SIZE;
+          if ((extracted?.length || 0) < desiredCount) {
+            extracted = await ensureRecommendationBatch(extracted, {
+              excludeIds,
+              platformIds: profilePrefs.preferredPlatforms,
+              minRating: profilePrefs.minRating,
+              excludedGenres: profilePrefs.excludedGenres,
+              size: desiredCount,
+              preloadMatchTexts: true,
+            });
+          }
+          batch = await normalizeRecommendationBatch(extracted, excludeIds);
         } else {
           batch = await normalizeRecommendationBatch([], excludeIds);
         }
