@@ -153,7 +153,7 @@ const TonightPickOverlay = ({
               )}
 
               <p className="text-foreground text-sm font-sans font-semibold tabular-nums px-3 py-1 rounded-full bg-card/60 backdrop-blur-md border border-border/30 shadow-lg mb-2">
-                {tonightPickIndex + 1} / {tonightPool.length || 5}
+                {tonightPickIndex + 1} / {displayCount}
               </p>
 
               <h2 className="text-lg md:text-xl font-serif text-foreground mb-0.5">
