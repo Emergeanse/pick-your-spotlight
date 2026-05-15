@@ -5,7 +5,7 @@ import { getUserTasteProfile } from "@/lib/interactions";
 import { getLikedMovies } from "@/lib/liked-movies";
 import { computeUserTasteVector } from "@/lib/taste-engine";
 
-export const RECOMMENDATION_BATCH_SIZE = 5;
+export const RECOMMENDATION_BATCH_SIZE = 3;
 
 export type RecommendationMatchData = {
   matchScore?: number;
@@ -214,13 +214,11 @@ export async function ensureRecommendationBatch(
     attempts += 1;
 
     try {
-      const movie = await getSurpriseRecommendation({
-        excludeIds: Array.from(usedIds),
+      const movie = await getSurpriseRecommendation(Array.from(usedIds), {
         platformIds: options.platformIds,
         minRating: options.minRating,
         excludedGenres: options.excludedGenres,
-        tags: options.searchTags,
-      } as any);
+      });
 
       if (!movie?.id || usedIds.has(movie.id)) continue;
 
