@@ -5,7 +5,7 @@ import { getUserTasteProfile } from "@/lib/interactions";
 import { getLikedMovies } from "@/lib/liked-movies";
 import { computeUserTasteVector } from "@/lib/taste-engine";
 
-export const RECOMMENDATION_BATCH_SIZE = 3;
+export const RECOMMENDATION_BATCH_SIZE = 5;
 
 export type RecommendationMatchData = {
   matchScore?: number;
