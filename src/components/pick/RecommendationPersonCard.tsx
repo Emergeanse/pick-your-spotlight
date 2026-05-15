@@ -1,16 +1,12 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronLeft, ChevronRight } from "lucide-react";
-import { useState, useEffect } from "react";
-import { getPersonPhotoUrl, getPersonPreference, type PreferenceValue } from "@/lib/people-preferences";
-import { getBackdropUrl } from "@/lib/tmdb";
-import PersonActionBar from "./PersonActionBar";
+import { getPersonPhotoUrl } from "@/lib/people-preferences";
 
 type PersonLike = {
   id: number;
   name: string;
   profile_path?: string | null;
   known_for_department?: string | null;
-  known_for?: Array<{ title?: string; name?: string; backdrop_path?: string | null }>;
+  known_for?: Array<{ title?: string; name?: string }>;
   birthday?: string | null;
   place_of_birth?: string | null;
   biography?: string | null;
@@ -19,10 +15,6 @@ type PersonLike = {
 export interface RecommendationPersonCardProps {
   person: PersonLike;
   onOpenDetails?: () => void;
-  onPrevious?: () => void;
-  onNext?: () => void;
-  canGoPrevious?: boolean;
-  canGoNext?: boolean;
   className?: string;
 }
 
@@ -42,21 +34,7 @@ function extractNationality(placeOfBirth: string | null | undefined): string | n
   return parts[parts.length - 1] || null;
 }
 
-const RecommendationPersonCard = ({ person, onOpenDetails, onPrevious, onNext, canGoPrevious = true, canGoNext = true, className = "" }: RecommendationPersonCardProps) => {
-  const [currentPreference, setCurrentPreference] = useState<PreferenceValue | null>(null);
-
-  useEffect(() => {
-    const loadPreference = async () => {
-      try {
-        const pref = await getPersonPreference(person.id);
-        setCurrentPreference(pref);
-      } catch (error) {
-        console.error("Error loading person preference:", error);
-      }
-    };
-    loadPreference();
-  }, [person.id]);
-
+const RecommendationPersonCard = ({ person, onOpenDetails, className = "" }: RecommendationPersonCardProps) => {
   const isDirector = person.known_for_department === "Directing";
   const age = computeAge(person.birthday);
   const nationality = extractNationality(person.place_of_birth);
@@ -70,130 +48,56 @@ const RecommendationPersonCard = ({ person, onOpenDetails, onPrevious, onNext, c
   if (age) infoChips.push(`${age} ans`);
   if (nationality) infoChips.push(nationality);
 
-  const personImage = getPersonPhotoUrl(person.profile_path, "w342");
-  // Use backdrop from first known film, fallback to person photo
-  const firstKnownFilm = person.known_for?.[0];
-  const bgImage = firstKnownFilm?.backdrop_path 
-    ? getBackdropUrl(firstKnownFilm.backdrop_path)
-    : getPersonPhotoUrl(person.profile_path, "w780");
+  const CardContent = (
+    <div className="absolute inset-0 rounded-[1.75rem] overflow-hidden shadow-[0_24px_80px_hsl(var(--background)/0.72)] cursor-pointer">
+      <img
+        src={getPersonPhotoUrl(person.profile_path, "w780")}
+        alt={person.name}
+        className="absolute inset-0 h-full w-full object-cover brightness-[1.3] contrast-[1.08] saturate-[1.3]"
+        draggable={false}
+      />
+      <div className="pointer-events-none absolute inset-0 rounded-[1.75rem] ring-1 ring-inset ring-white/10 z-[1]" />
 
-  const cardContent = (
-    <div className="group relative overflow-hidden rounded-[1.75rem] border border-border/20 bg-background shadow-[0_24px_80px_hsl(var(--background)/0.12)] transition hover:-translate-y-0.5 hover:shadow-[0_32px_90px_hsl(var(--background)/0.16)]">
-      {(onPrevious || onNext) && (
-        <>
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onPrevious?.();
-            }}
-            disabled={!canGoPrevious}
-            className="absolute left-3 top-1/2 z-20 -translate-y-1/2 rounded-full border border-border/20 bg-background/80 p-2 text-foreground/60 shadow-sm transition hover:bg-foreground/10 disabled:cursor-not-allowed disabled:opacity-30"
-            aria-label="Précédent"
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </button>
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onNext?.();
-            }}
-            disabled={!canGoNext}
-            className="absolute right-3 top-1/2 z-20 -translate-y-1/2 rounded-full border border-border/20 bg-background/80 p-2 text-foreground/60 shadow-sm transition hover:bg-foreground/10 disabled:cursor-not-allowed disabled:opacity-30"
-            aria-label="Suivant"
-          >
-            <ChevronRight className="h-4 w-4" />
-          </button>
-        </>
-      )}
-      <div className="grid gap-4 p-4 sm:grid-cols-[140px_1fr]">
-        <div className="overflow-hidden rounded-3xl bg-slate-950/10 shadow-inner">
-          <img
-            src={personImage}
-            alt={person.name}
-            className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.02]"
-            draggable={false}
-          />
-        </div>
-
-        <div className="flex flex-col justify-between gap-3">
-          <div>
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="rounded-full bg-primary/10 px-2 py-1 text-[10px] font-sans font-semibold uppercase tracking-[0.18em] text-primary">
-                {isDirector ? "Réalisateur/Réalisatrice" : "Acteur/Actrice"}
+      <div className="absolute inset-x-0 bottom-0 z-[2] bg-gradient-to-t from-background via-background/70 to-transparent px-4 pt-24 pb-4">
+        <h3 className="mb-0.5 text-lg font-serif font-bold text-white drop-shadow-md leading-tight">{person.name}</h3>
+        <p className="mb-1 text-[11px] font-sans text-white/55">
+          {isDirector ? "Réalisateur/Réalisatrice" : "Acteur/Actrice"}
+          {infoChips.length > 0 && ` · ${infoChips.join(" · ")}`}
+        </p>
+        {shortBio && <p className="mb-2 text-[10px] font-sans leading-snug text-white/40 line-clamp-2">{shortBio}.</p>}
+        {knownForTitles.length > 0 && (
+          <div className="flex flex-wrap gap-1">
+            {knownForTitles.map((t) => (
+              <span key={t} className="rounded-full bg-white/10 px-2 py-0.5 text-[9px] text-white/65 backdrop-blur-sm">
+                {t}
               </span>
-              {infoChips.map((chip) => (
-                <span key={chip} className="rounded-full bg-foreground/5 px-2 py-1 text-[10px] font-sans text-foreground/70">
-                  {chip}
-                </span>
-              ))}
-            </div>
-
-            <h3 className="mt-3 text-xl font-serif font-bold text-foreground leading-tight">{person.name}</h3>
-            {shortBio && <p className="mt-2 text-sm leading-relaxed text-foreground/70 line-clamp-3">{shortBio}.</p>}
+            ))}
           </div>
-
-          {knownForTitles.length > 0 && (
-            <div className="mt-2 flex flex-wrap gap-2">
-              {knownForTitles.map((title) => (
-                <span key={title} className="rounded-full bg-foreground/5 px-2.5 py-1 text-[10px] font-sans text-foreground/70">
-                  {title}
-                </span>
-              ))}
-            </div>
-          )}
-
-          <div className="mt-4 pt-3 border-t border-border/10" onClick={(e) => e.stopPropagation()}>
-            <PersonActionBar person={person} currentPreference={currentPreference} />
-          </div>
-        </div>
+        )}
       </div>
     </div>
   );
 
   return (
-    <div className={`relative min-h-screen w-full overflow-hidden ${className}`}>
-      {bgImage && (
+    <div className={`relative mx-auto w-full max-w-[280px] ${className}`} style={{ width: "min(68vw, 30vh, 280px)" }}>
+      <AnimatePresence mode="popLayout">
         <motion.div
-          initial={{ opacity: 0, scale: 1.15 }}
-          animate={{ opacity: 1, scale: 0.85 }}
-          transition={{ duration: 1.2 }}
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-          style={{ backgroundImage: `url(${bgImage})` }}
-        />
-      )}
-      <div className="absolute inset-0 poster-gradient" />
-      <div className="absolute inset-0 bg-gradient-to-r from-background/90 via-background/60 to-transparent" />
-
-      <div className="relative z-10 flex flex-col items-center justify-center min-h-screen px-5 py-[calc(1.5rem+env(safe-area-inset-top))] md:px-12 lg:px-16">
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-          className={`w-full ${onOpenDetails ? "cursor-pointer" : ""}`}
-          onClick={onOpenDetails}
+          key={person.id}
+          initial={{ scale: 0.95, opacity: 0, y: 20 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.9 }}
+          transition={{ type: "spring", stiffness: 260, damping: 24 }}
+          className="relative aspect-[3/4] w-full select-none"
         >
           {onOpenDetails ? (
-            <div
-              role="button"
-              tabIndex={0}
-              onClick={onOpenDetails}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  e.preventDefault();
-                  onOpenDetails();
-                }
-              }}
-              className="block w-full text-center"
-            >
-              {cardContent}
-            </div>
+            <button type="button" onClick={onOpenDetails} className="absolute inset-0 block w-full text-left">
+              {CardContent}
+            </button>
           ) : (
-            cardContent
+            CardContent
           )}
         </motion.div>
-      </div>
+      </AnimatePresence>
     </div>
   );
 };
