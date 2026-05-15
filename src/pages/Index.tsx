@@ -678,7 +678,8 @@ const Index = () => {
               refining={loading}
               profileConfidence={profilePrefs.profileConfidence}
               alternativeMovies={results.filter((_, i) => i !== currentResultIndex).slice(0, 2)}
-            recommendationBatch={results}
+              recommendationBatch={results}
+              suggestionCount={profilePrefs.recommendationCount}
               onSelectAlternative={(movie) => {
                 const idx = results.findIndex((r) => r.id === movie.id);
                 if (idx >= 0) {

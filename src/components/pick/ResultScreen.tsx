@@ -342,6 +342,7 @@ interface ResultScreenProps {
   profileConfidence?: number;
   currentIndex?: number;
   totalCount?: number;
+  suggestionCount?: number;
   onNext?: () => void;
   onPrevious?: () => void;
   visitedMovieIds?: Set<number>;
@@ -380,6 +381,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
       sessionId,
       onFeedback,
       recommendationBatch,
+      suggestionCount,
     },
     ref,
   ) => {
