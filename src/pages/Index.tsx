@@ -55,7 +55,8 @@ const Index = () => {
     minRating: number;
     preferredPlatforms: number[];
     profileConfidence: number;
-  }>({ excludedGenres: [], excludedPlatforms: [], minRating: 0, preferredPlatforms: [], profileConfidence: 0 });
+    recommendationCount: number;
+  }>({ excludedGenres: [], excludedPlatforms: [], minRating: 0, preferredPlatforms: [], profileConfidence: 0, recommendationCount: RECOMMENDATION_BATCH_SIZE });
   const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -101,10 +102,10 @@ const Index = () => {
         excludedGenres: profilePrefs.excludedGenres,
         searchTags,
         userCriteria: { mood: null, context: null, time: null },
-        size: RECOMMENDATION_BATCH_SIZE,
+        size: profilePrefs.recommendationCount || RECOMMENDATION_BATCH_SIZE,
         preloadMatchTexts: true,
       }),
-    [profilePrefs.excludedGenres, profilePrefs.minRating, profilePrefs.preferredPlatforms, searchTags],
+    [profilePrefs.excludedGenres, profilePrefs.minRating, profilePrefs.preferredPlatforms, profilePrefs.recommendationCount, searchTags],
   );
 
   const openRecommendationBatch = useCallback(
@@ -217,7 +218,7 @@ const Index = () => {
     supabase
       .from("profiles")
       .select(
-        "onboarding_completed, preferred_platforms, excluded_platforms, favorite_genres, excluded_genres, min_rating, profile_confidence, tour_completed, activation_completed",
+        "onboarding_completed, preferred_platforms, excluded_platforms, favorite_genres, excluded_genres, min_rating, profile_confidence, tour_completed, activation_completed, default_recommendation_count",
       )
       .eq("id", user.id)
       .single()
@@ -233,6 +234,7 @@ const Index = () => {
             minRating: (data as any).min_rating || 0,
             preferredPlatforms: data.preferred_platforms || [],
             profileConfidence: (data as any).profile_confidence || 0,
+            recommendationCount: (data as any).default_recommendation_count || RECOMMENDATION_BATCH_SIZE,
           });
 
           const tourDone = (data as any).tour_completed;
@@ -310,7 +312,7 @@ const Index = () => {
           excludedGenres: profilePrefs.excludedGenres,
           minRating: profilePrefs.minRating,
           excludeIds,
-          count: 5,
+          count: profilePrefs.recommendationCount || RECOMMENDATION_BATCH_SIZE,
         });
         batch = await normalizeRecommendationBatch(extractRecommendationMovies(data), excludeIds);
       } else {

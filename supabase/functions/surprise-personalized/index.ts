@@ -386,7 +386,21 @@ Recommande ${requestedCount > 1 ? `${requestedCount} contenus` : "UN contenu"} a
       }
     };
 
-    if (requestedCount > 1 && suggestions.length > 0) {
+    const buildFallbackMovies = async (targetCount: number): Promise<any[]> => {
+      const movies: any[] = [];
+      let attempts = 0;
+      while (movies.length < targetCount && attempts < targetCount * 8) {
+        attempts += 1;
+        const fallback = await discoverFallback();
+        if (!fallback || foundMovieIds.has(fallback.id)) continue;
+        foundMovieIds.add(fallback.id);
+        movies.push({ movie: fallback, reason: `Ce contenu correspond à tes genres préférés.`, confidence: minMatchScore, scores: null });
+        fireEmbedding(fallback);
+      }
+      return movies;
+    };
+
+    if (requestedCount > 1) {
       // For "both" mode: enforce a true mix (3 movies, 2 series for count=5; ceil/floor for other counts)
       const isMixed = mediaType === "both";
       const targetMovies = isMixed ? Math.ceil(requestedCount * 0.6) : (mediaType === "movie" ? requestedCount : 0);
@@ -407,30 +421,32 @@ Recommande ${requestedCount > 1 ? `${requestedCount} contenus` : "UN contenu"} a
       const movies: any[] = [];
       let movieCount = 0, tvCount = 0;
 
-      for (const sug of suggestions) {
-        if (movies.length >= requestedCount) break;
-        // Decide which type to search for this suggestion
-        let type: "movie" | "tv" = searchType;
-        if (isMixed) {
-          if (movieCount < targetMovies && tvCount < targetTV) {
-            type = movieCount <= tvCount ? "movie" : "tv";
-          } else if (movieCount < targetMovies) {
-            type = "movie";
-          } else {
-            type = "tv";
+      if (suggestions.length > 0) {
+        for (const sug of suggestions) {
+          if (movies.length >= requestedCount) break;
+          // Decide which type to search for this suggestion
+          let type: "movie" | "tv" = searchType;
+          if (isMixed) {
+            if (movieCount < targetMovies && tvCount < targetTV) {
+              type = movieCount <= tvCount ? "movie" : "tv";
+            } else if (movieCount < targetMovies) {
+              type = "movie";
+            } else {
+              type = "tv";
+            }
           }
-        }
-        const result = await searchSuggestionTyped(sug, type);
-        if (result && !foundMovieIds.has(result.movie.id)) {
-          foundMovieIds.add(result.movie.id);
-          movies.push({
-            movie: result.movie,
-            reason: result.suggestion.reason || `Ce contenu est recommandé par Pick.`,
-            confidence: result.suggestion.confidence || 75,
-            scores: result.suggestion.scores || null,
-          });
-          fireEmbedding(result.movie);
-          if (type === "movie") movieCount++; else tvCount++;
+          const result = await searchSuggestionTyped(sug, type);
+          if (result && !foundMovieIds.has(result.movie.id)) {
+            foundMovieIds.add(result.movie.id);
+            movies.push({
+              movie: result.movie,
+              reason: result.suggestion.reason || `Ce contenu est recommandé par Pick.`,
+              confidence: result.suggestion.confidence || 75,
+              scores: result.suggestion.scores || null,
+            });
+            fireEmbedding(result.movie);
+            if (type === "movie") movieCount++; else tvCount++;
+          }
         }
       }
 
@@ -452,8 +468,14 @@ Recommande ${requestedCount > 1 ? `${requestedCount} contenus` : "UN contenu"} a
             foundMovieIds.add(detail.id);
             movies.push({ movie: detail, reason: `Recommandé par Pick pour diversifier.`, confidence: minMatchScore, scores: null });
             fireEmbedding(detail);
+            if (type === "movie") movieCount++; else tvCount++;
           }
         }
+      }
+
+      if (movies.length < requestedCount) {
+        const fallbackMovies = await buildFallbackMovies(requestedCount - movies.length);
+        movies.push(...fallbackMovies);
       }
 
       if (movies.length === 0) {

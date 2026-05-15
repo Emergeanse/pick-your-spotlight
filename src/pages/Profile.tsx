@@ -33,6 +33,7 @@ const Profile = () => {
   const [matchThreshold, setMatchThreshold] = useState<number>(80);
   const [defaultMediaType, setDefaultMediaType] = useState<"both" | "movie" | "tv">("both");
   const [defaultMaxDuration, setDefaultMaxDuration] = useState<number | null>(null);
+  const [recommendationCount, setRecommendationCount] = useState<number>(5);
   const [saving, setSaving] = useState(false);
   const [profileLoading, setProfileLoading] = useState(true);
   const [displayName, setDisplayName] = useState("");
@@ -59,6 +60,7 @@ const Profile = () => {
       setDefaultMaxDuration((data as any)?.default_max_duration ?? null);
       setDisplayName(data?.display_name || user.email?.split("@")[0] || "");
       setAvatarUrl((data as any)?.avatar_url || null);
+      setRecommendationCount((data as any)?.default_recommendation_count ?? 5);
     } catch (e) { console.error(e); }
     finally { setProfileLoading(false); }
   };
@@ -101,6 +103,7 @@ const Profile = () => {
         match_threshold: matchThreshold,
         default_media_type: defaultMediaType,
         default_max_duration: defaultMaxDuration,
+        default_recommendation_count: recommendationCount,
       } as any).eq("id", user.id);
       if (error) throw error;
 
@@ -126,6 +129,7 @@ const Profile = () => {
         match_threshold: matchThreshold,
         default_media_type: defaultMediaType,
         default_max_duration: defaultMaxDuration,
+        default_recommendation_count: recommendationCount,
       }));
       toast({ title: "Préférences enregistrées" });
     } catch (e) { console.error(e); toast({ title: "Erreur", variant: "destructive" }); }
@@ -137,7 +141,8 @@ const Profile = () => {
     minRating !== ((profile as any)?.min_rating || 0) ||
     matchThreshold !== ((profile as any)?.match_threshold ?? 80) ||
     defaultMediaType !== ((profile as any)?.default_media_type || "both") ||
-    defaultMaxDuration !== ((profile as any)?.default_max_duration ?? null)
+    defaultMaxDuration !== ((profile as any)?.default_max_duration ?? null) ||
+    recommendationCount !== ((profile as any)?.default_recommendation_count ?? 5)
   );
 
   if (!isReady || profileLoading) return <div className="fixed inset-0 bg-background flex items-center justify-center"><Loader2 className="w-6 h-6 text-primary animate-spin" /></div>;
@@ -188,6 +193,21 @@ const Profile = () => {
           maxDuration={defaultMaxDuration}
           onMaxDurationChange={setDefaultMaxDuration}
         />
+
+        <motion.section initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.16 }} className="mb-8">
+          <div className="flex items-center gap-2 mb-3">
+            <Star className="w-3.5 h-3.5 text-primary/60" />
+            <h2 className="text-sm font-sans font-semibold text-foreground/50 uppercase tracking-widest">Nombre de recommandations</h2>
+          </div>
+          <div className="bg-card rounded-xl p-4">
+            <div className="flex items-center justify-between mb-3">
+              <span className="font-sans text-sm font-medium">{recommendationCount} propositions</span>
+              <span className="text-[10px] text-foreground/50">1 à 10</span>
+            </div>
+            <Slider value={[recommendationCount]} onValueChange={([value]) => setRecommendationCount(value)} min={1} max={10} step={1} className="w-full" />
+            <p className="text-[11px] text-foreground/50 mt-3">Choisis combien de recommandations Pick te propose par défaut.</p>
+          </div>
+        </motion.section>
 
         {/* ─── Plateformes ─── */}
         <motion.section initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="mb-8">

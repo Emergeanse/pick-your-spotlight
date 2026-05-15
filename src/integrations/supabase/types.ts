@@ -537,6 +537,7 @@ export type Database = {
           created_at: string
           default_max_duration: number | null
           default_media_type: string
+          default_recommendation_count: number
           display_name: string | null
           excluded_genres: string[] | null
           excluded_platforms: number[] | null
@@ -570,6 +571,7 @@ export type Database = {
           created_at?: string
           default_max_duration?: number | null
           default_media_type?: string
+          default_recommendation_count?: number
           display_name?: string | null
           excluded_genres?: string[] | null
           excluded_platforms?: number[] | null
@@ -603,6 +605,7 @@ export type Database = {
           created_at?: string
           default_max_duration?: number | null
           default_media_type?: string
+          default_recommendation_count?: number
           display_name?: string | null
           excluded_genres?: string[] | null
           excluded_platforms?: number[] | null

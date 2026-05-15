@@ -140,6 +140,7 @@ const HomeScreen = ({
   const [userGenres, setUserGenres] = useState<string[]>([]);
   const [userExcludedGenres, setUserExcludedGenres] = useState<string[]>([]);
   const [userMinRating, setUserMinRating] = useState<number>(0);
+  const [userRecommendationCount, setUserRecommendationCount] = useState<number>(RECOMMENDATION_BATCH_SIZE);
 
   const [rejectedIds, setRejectedIds] = useState<number[]>([]);
   const [, setEngagement] = useState<EngagementData | null>(null);
@@ -201,7 +202,8 @@ const HomeScreen = ({
         ? new Set(chatSuggestedSeenMovieIds)
         : new Set(targetMovie?.id ? [targetMovie.id] : []);
 
-    setChatMoviesPool(chatSuggestedMovies.slice(0, RECOMMENDATION_BATCH_SIZE));
+    const effectiveCount = userRecommendationCount || RECOMMENDATION_BATCH_SIZE;
+    setChatMoviesPool(chatSuggestedMovies.slice(0, effectiveCount));
     void setCurrentTonightMovie(targetMovie, startIdx, seenIds);
     onChatSuggestedConsumed?.();
   }, [chatSuggestedMovies, chatSuggestedSeenMovieIds, chatSuggestedStartIndex, onChatSuggestedConsumed]);
@@ -233,7 +235,7 @@ const HomeScreen = ({
     supabase
       .from("profiles")
       .select(
-        "preferred_platforms, excluded_platforms, favorite_genres, excluded_genres, min_rating, default_media_type, default_max_duration, match_threshold",
+        "preferred_platforms, excluded_platforms, favorite_genres, excluded_genres, min_rating, default_media_type, default_max_duration, match_threshold, default_recommendation_count",
       )
       .eq("id", user.id)
       .single()
@@ -256,6 +258,7 @@ const HomeScreen = ({
           matchThreshold: (data as any)?.match_threshold ?? 80,
           minRating: (data as any)?.min_rating ?? 0,
         };
+        setUserRecommendationCount((data as any)?.default_recommendation_count ?? RECOMMENDATION_BATCH_SIZE);
 
         setProfileDefaults(defaults);
         setQuickFilters(defaults);
@@ -347,7 +350,7 @@ const HomeScreen = ({
             explorationLevel,
             mediaType: quickFilters.mediaType !== "both" ? quickFilters.mediaType : "both",
             maxDuration: quickFilters.maxDuration,
-            count: RECOMMENDATION_BATCH_SIZE,
+            count: userRecommendationCount || RECOMMENDATION_BATCH_SIZE,
             minMatchScore: quickFilters.matchThreshold,
           });
 
@@ -356,7 +359,7 @@ const HomeScreen = ({
             platformIds: userPlatformIds,
             minRating: userMinRating,
             excludedGenres: userExcludedGenres,
-            size: RECOMMENDATION_BATCH_SIZE,
+            size: userRecommendationCount || RECOMMENDATION_BATCH_SIZE,
             preloadMatchTexts: true,
           });
 
@@ -385,7 +388,7 @@ const HomeScreen = ({
           platformIds: userPlatformIds,
           minRating: userMinRating,
           excludedGenres: userExcludedGenres,
-          size: RECOMMENDATION_BATCH_SIZE,
+          size: userRecommendationCount || RECOMMENDATION_BATCH_SIZE,
           preloadMatchTexts: true,
         });
       }
