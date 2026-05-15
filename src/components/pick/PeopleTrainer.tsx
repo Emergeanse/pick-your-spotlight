@@ -211,7 +211,7 @@ const PeopleTrainer = ({ onBack, filterDepartment }: PeopleTrainerProps) => {
               <ChevronLeft className="h-5 w-5" />
             </button>
 
-            <div className="flex items-center gap-1.5 text-center">
+            <div className="flex items-center gap-2 text-center">
               <motion.button
                 type="button"
                 whileTap={{ scale: 0.94 }}
