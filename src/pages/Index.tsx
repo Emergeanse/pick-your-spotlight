@@ -11,7 +11,7 @@ import type { MissionId } from "@/components/pick/ActivationFlow";
 import WatchlistMissionGuide from "@/components/pick/WatchlistMissionGuide";
 import type { WatchlistGuideStep } from "@/components/pick/WatchlistMissionGuide";
 import TalkToPickMissionGuide from "@/components/pick/TalkToPickMissionGuide";
-normalizeRecommendationBatch;
+const normalizeRecommendationBatch = async (batch: MovieDetail[], _excludeIds: number[]) => batch;
 import type { TalkToPickGuideStep } from "@/components/pick/TalkToPickMissionGuide";
 import type { ChatMessage } from "@/components/pick/VoiceChat";
 import { toast } from "sonner";
@@ -329,11 +329,11 @@ const Index = () => {
           excludedGenres: profilePrefs.excludedGenres,
           minRating: profilePrefs.minRating,
           excludeIds,
-          count: profilePrefs.recommendationCount || RECOMMENDATION_BATCH_SIZE,
+          count: profilePrefs.recommendationBatchSize || RECOMMENDATION_BATCH_SIZE,
         });
         // Extract movies and ensure we have at least the requested count
         let extracted = extractRecommendationMovies(data);
-        const desiredCount = profilePrefs.recommendationCount || RECOMMENDATION_BATCH_SIZE;
+        const desiredCount = profilePrefs.recommendationBatchSize || RECOMMENDATION_BATCH_SIZE;
         if ((extracted?.length || 0) < desiredCount) {
           extracted = await ensureRecommendationBatch(extracted, {
             excludeIds,
@@ -390,7 +390,7 @@ const Index = () => {
         setShowChat(false);
         setChatInitialMessages(undefined);
         setOpenTrainerOnMount(false);
-        setWatchlistGuideStep("save-3");
+        setWatchlistGuideStep("sauvegarder");
         break;
       default:
         break;
@@ -505,10 +505,10 @@ const Index = () => {
             minRating: profilePrefs.minRating,
             excludeIds,
             rejectionContext,
-            count: profilePrefs.recommendationCount || RECOMMENDATION_BATCH_SIZE,
+            count: profilePrefs.recommendationBatchSize || RECOMMENDATION_BATCH_SIZE,
           });
           let extracted = extractRecommendationMovies(data);
-          const desiredCount = profilePrefs.recommendationCount || RECOMMENDATION_BATCH_SIZE;
+          const desiredCount = profilePrefs.recommendationBatchSize || RECOMMENDATION_BATCH_SIZE;
           if ((extracted?.length || 0) < desiredCount) {
             extracted = await ensureRecommendationBatch(extracted, {
               excludeIds,
@@ -696,7 +696,7 @@ const Index = () => {
               profileConfidence={profilePrefs.profileConfidence}
               alternativeMovies={results.filter((_, i) => i !== currentResultIndex).slice(0, 2)}
               recommendationBatch={results}
-              suggestionCount={profilePrefs.recommendationCount}
+              suggestionCount={profilePrefs.recommendationBatchSize}
               onSelectAlternative={(movie) => {
                 const idx = results.findIndex((r) => r.id === movie.id);
                 if (idx >= 0) {
@@ -743,30 +743,24 @@ const Index = () => {
       {showTour && <PlatformTour onComplete={handleTourComplete} />}
       {showActivation && !showTour && (
         <ActivationFlow
-          onMissionClick={handleActivationMission}
+          onStartMission={handleActivationMission}
           onComplete={handleActivationComplete}
-          activeMission={activeActivationMission}
-          watchlistGuideDone={watchlistGuideDone}
-          watchlistSavedCount={watchlistSavedCount}
         />
       )}
 
       {watchlistGuideStep && (
         <WatchlistMissionGuide
           step={watchlistGuideStep}
-          onClose={() => setWatchlistGuideStep(null)}
-          onDone={() => {
-            setWatchlistGuideDone(true);
-            setWatchlistGuideStep(null);
-          }}
+          savedCount={watchlistSavedCount}
+          target={3}
         />
       )}
 
       {talkToPickGuideStep && (
-        <TalkToPickMissionGuide step={talkToPickGuideStep} onClose={() => setTalkToPickGuideStep(null)} />
+        <TalkToPickMissionGuide step={talkToPickGuideStep} />
       )}
 
-      {loading && <RevealAnimation message={loadingMessage || "Pick prépare tes recommandations…"} />}
+      {loading && <RevealAnimation active message={loadingMessage || "Pick prépare tes recommandations…"} />}
     </div>
   );
 };
