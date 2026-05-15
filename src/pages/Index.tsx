@@ -9,8 +9,8 @@ import {
   getUserPeoplePreferences,
   type PreferenceValue,
 } from "@/lib/people-preferences";
-import FlipCardDetail from "./FlipCardDetail";
-import RecommendationPersonCard from "./RecommendationPersonCard";
+import FlipCardDetail from "@/components/pick/FlipCardDetail";
+import RecommendationPersonCard from "@/components/pick/RecommendationPersonCard";
 
 interface PeopleTrainerProps {
   onBack?: () => void;
