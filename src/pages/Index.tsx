@@ -26,7 +26,11 @@ import { getTimeContextForPrompt } from "@/lib/time-context";
 import PickPlusPaywall from "@/components/pick/PickPlusPaywall";
 import { getLikedMovies } from "@/lib/liked-movies";
 import { computeUserTasteVector } from "@/lib/taste-engine";
-import { extractRecommendationMovies, ensureRecommendationBatch, RECOMMENDATION_BATCH_SIZE } from "@/lib/recommendation-batch";
+import {
+  extractRecommendationMovies,
+  ensureRecommendationBatch,
+  RECOMMENDATION_BATCH_SIZE,
+} from "@/lib/recommendation-batch";
 import { usePresenceTracker } from "@/hooks/use-presence";
 import { createRecommendationSession, logRecommendationEvent, completeSession, abandonSession } from "@/lib/sessions";
 
@@ -55,8 +59,15 @@ const Index = () => {
     minRating: number;
     preferredPlatforms: number[];
     profileConfidence: number;
-    recommendationCount: number;
-  }>({ excludedGenres: [], excludedPlatforms: [], minRating: 0, preferredPlatforms: [], profileConfidence: 0, recommendationCount: RECOMMENDATION_BATCH_SIZE });
+    recommendationBatchSize: number;
+  }>({
+    excludedGenres: [],
+    excludedPlatforms: [],
+    minRating: 0,
+    preferredPlatforms: [],
+    profileConfidence: 0,
+    recommendationBatchSize: 5,
+  });
   const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -105,7 +116,13 @@ const Index = () => {
         size: profilePrefs.recommendationCount || RECOMMENDATION_BATCH_SIZE,
         preloadMatchTexts: true,
       }),
-    [profilePrefs.excludedGenres, profilePrefs.minRating, profilePrefs.preferredPlatforms, profilePrefs.recommendationCount, searchTags],
+    [
+      profilePrefs.excludedGenres,
+      profilePrefs.minRating,
+      profilePrefs.preferredPlatforms,
+      profilePrefs.recommendationCount,
+      searchTags,
+    ],
   );
 
   const openRecommendationBatch = useCallback(
