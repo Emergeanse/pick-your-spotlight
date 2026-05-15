@@ -357,7 +357,6 @@ const HomeScreen = ({
             minRating: userMinRating,
             excludedGenres: userExcludedGenres,
             size: RECOMMENDATION_BATCH_SIZE,
-            preloadMatchTexts: true,
           });
 
           const matchMap: Record<number, RecommendationMatch> = {};
@@ -376,7 +375,6 @@ const HomeScreen = ({
             minRating: userMinRating,
             excludedGenres: userExcludedGenres,
             size: RECOMMENDATION_BATCH_SIZE,
-            preloadMatchTexts: true,
           });
         }
       } else {
@@ -386,7 +384,6 @@ const HomeScreen = ({
           minRating: userMinRating,
           excludedGenres: userExcludedGenres,
           size: RECOMMENDATION_BATCH_SIZE,
-          preloadMatchTexts: true,
         });
       }
 

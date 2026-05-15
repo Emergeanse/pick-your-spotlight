@@ -15,6 +15,7 @@ import FlipCardDetail from "./FlipCardDetail";
 import RecommendationMovieCard from "./RecommendationMovieCard";
 import MovieActionBar from "./MovieActionBar";
 import { useMovieInteractions } from "@/hooks/use-movie-interactions";
+import { getInteractionStateBatch } from "@/lib/feedback";
 
 const TMDB_API_KEY = "2dca580c2a14b55200e784d157207b4d";
 
@@ -94,13 +95,6 @@ const CATEGORIES = [
   },
 ];
 
-const getPickLevelLabel = (count: number): string => {
-  if (count < 5) return "Pick Novice";
-  if (count < 12) return "Pick Confirmé";
-  if (count < 20) return "Pick Expert";
-  return "Pick Maître";
-};
-
 const getMilestoneMessage = (count: number): string | null => {
   if (count === 3) return "Ça commence à prendre forme…";
   if (count === 5) return "Pick apprend vite avec toi !";
@@ -126,7 +120,6 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
   const [skippedCount, setSkippedCount] = useState(0);
   const [page, setPage] = useState(1);
   const [totalEvaluated, setTotalEvaluated] = useState(0);
-  const [totalPeopleEvaluated, setTotalPeopleEvaluated] = useState(0);
   const [milestoneMsg, setMilestoneMsg] = useState<string | null>(null);
   const [showActivationCTA, setShowActivationCTA] = useState(false);
   const [history, setHistory] = useState<number[]>([]);
@@ -154,12 +147,27 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
   const loadMovies = useCallback(
     async (p: number, mode?: string) => {
       const m = mode || selectedCategory;
+      if (!m || (m !== "movies" && m !== "series")) return;
+
       setLoading(true);
       try {
         const randomPage = Math.floor(Math.random() * 20) + p;
         const results = m === "series" ? await fetchTrainingSeries(randomPage) : await fetchTrainingMovies(randomPage);
-        const filtered = results.filter((mv) => !processedIds.has(mv.id) && mv.poster_path);
-        setMovies((prev) => [...prev, ...filtered]);
+        const deduped = results.filter((mv) => !processedIds.has(mv.id) && mv.poster_path);
+
+        const mt: "movie" | "tv" = m === "series" ? "tv" : "movie";
+        const interactionState = await getInteractionStateBatch(
+          deduped.map((mv) => ({ tmdbId: mv.id, mediaType: mt })),
+          mt,
+        );
+
+        const filtered = deduped.filter((mv) => !interactionState[mv.id]?.hasInteraction);
+
+        setMovies((prev) => {
+          const prevIds = new Set(prev.map((item) => item.id));
+          const newItems = filtered.filter((item) => !prevIds.has(item.id));
+          return [...prev, ...newItems];
+        });
       } catch (e) {
         console.error("Failed to load training content:", e);
       } finally {
@@ -181,19 +189,14 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
   }, [selectedCategory]);
 
   useEffect(() => {
-    if (!user) return;
-
-    Promise.all([
+    if (user) {
       supabase
         .from("user_interactions")
         .select("id", { count: "exact", head: true })
         .eq("user_id", user.id)
-        .in("action_type", ["liked", "skipped", "unsure"]),
-      supabase.from("user_people_preferences").select("id", { count: "exact", head: true }).eq("user_id", user.id),
-    ]).then(([movieResult, peopleResult]) => {
-      setTotalEvaluated(movieResult.count || 0);
-      setTotalPeopleEvaluated(peopleResult.count || 0);
-    });
+        .in("action_type", ["liked", "skipped", "unsure"])
+        .then(({ count }) => setTotalEvaluated(count || 0));
+    }
   }, [user]);
 
   useEffect(() => {
@@ -208,9 +211,8 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
   const currentMovie = movies[currentIndex];
   const currentInteraction = currentMovie ? interactions[currentMovie.id] : undefined;
   const totalProcessed = likedCount + skippedCount;
-  const baselinePersonalizationCount = totalEvaluated + totalPeopleEvaluated;
-  const cumulativeTotal = baselinePersonalizationCount + totalProcessed;
-  const sessionTarget = Math.max(0, THRESHOLDS.ideal - baselinePersonalizationCount);
+  const cumulativeTotal = totalEvaluated + totalProcessed;
+  const sessionTarget = Math.max(0, THRESHOLDS.ideal - totalEvaluated);
   const sessionProgress = Math.min(totalProcessed, sessionTarget);
   const progressPercent = sessionTarget > 0 ? Math.min(100, Math.round((sessionProgress / sessionTarget) * 100)) : 100;
 
@@ -454,13 +456,9 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
             />
           </div>
           <span className="shrink-0 text-[11px] font-sans tabular-nums text-foreground/25">
-            {cumulativeTotal} signaux
+            {cumulativeTotal} évalué{cumulativeTotal > 1 ? "s" : ""}
           </span>
         </div>
-
-        <p className="mt-2 text-center text-[11px] font-sans font-medium text-primary/70">
-          {getPickLevelLabel(cumulativeTotal)}
-        </p>
 
         <AnimatePresence mode="wait">
           {milestoneMsg && (
