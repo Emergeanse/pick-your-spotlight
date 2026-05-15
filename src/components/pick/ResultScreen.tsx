@@ -19,6 +19,7 @@ import {
   Dices,
 } from "lucide-react";
 import type { MovieDetail } from "@/lib/tmdb";
+import type { RecommendationMovieDetail } from "@/lib/recommendation-batch";
 import {
   getDisplayTitle,
   getYear,
@@ -327,14 +328,14 @@ const REJECT_REASONS = [
 ];
 
 interface ResultScreenProps {
-  movie: MovieDetail;
+  movie: RecommendationMovieDetail;
   onShowAnother: (rejectReason?: string, rejectedMovie?: MovieDetail) => void;
   onRestart: () => void;
   onRefineWithVoice?: () => void;
   onRefineWithMessage?: (message: string) => void;
   hasMore: boolean;
   userCriteria?: { mood: Mood | null; context: Context | null; time: TimeAvailable | null };
-  alternativeMovies?: MovieDetail[];
+  alternativeMovies?: RecommendationMovieDetail[];
   onSelectAlternative?: (movie: MovieDetail) => void;
   searchTags?: string[];
   onRemoveTag?: (tag: string) => void;
@@ -351,7 +352,7 @@ interface ResultScreenProps {
   onBatchRejectedIdsChange?: (ids: Set<number>) => void;
   sessionId?: string | null;
   onFeedback?: (type: string, movie: MovieDetail) => void;
-  recommendationBatch?: MovieDetail[];
+  recommendationBatch?: RecommendationMovieDetail[];
 }
 
 const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
@@ -438,7 +439,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
       return source.filter((candidate) => candidate?.id && candidate.id !== movie.id).slice(0, 5);
     }, [recommendationBatch, movie, alternativeMovies]);
 
-    const getRecommendationTeaser = (candidate: MovieDetail) => {
+    const getRecommendationTeaser = (candidate: RecommendationMovieDetail) => {
       const text =
         candidate.recommendationTexts?.headline ||
         candidate.recommendationTexts?.whyItMatches ||
