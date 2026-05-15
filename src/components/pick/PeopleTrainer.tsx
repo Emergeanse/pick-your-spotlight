@@ -155,6 +155,7 @@ const PeopleTrainer = ({ onBack, filterDepartment }: PeopleTrainerProps) => {
       });
 
       setPreferencesById((prev) => ({ ...prev, [currentPerson.id]: preference }));
+      setExistingPreferenceIds((prev) => new Set(prev).add(currentPerson.id));
       setRatedCount((c) => c + 1);
       if (preference === "liked") actionsRef.current.likes += 1;
       if (preference === "disliked") actionsRef.current.dislikes += 1;
@@ -168,6 +169,7 @@ const PeopleTrainer = ({ onBack, filterDepartment }: PeopleTrainerProps) => {
   const handleUnknown = () => {
     if (!currentPerson) return;
     setPreferencesById((prev) => ({ ...prev, [currentPerson.id]: "unknown" }));
+    setExistingPreferenceIds((prev) => new Set(prev).add(currentPerson.id));
     advancePerson();
   };
 
