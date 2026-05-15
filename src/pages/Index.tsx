@@ -475,7 +475,7 @@ const Index = () => {
             minRating: profilePrefs.minRating,
             excludeIds,
             rejectionContext,
-            count: 5,
+            count: profilePrefs.recommendationCount || RECOMMENDATION_BATCH_SIZE,
           });
           batch = await normalizeRecommendationBatch(extractRecommendationMovies(data), excludeIds);
         } else {

@@ -378,7 +378,7 @@ const HomeScreen = ({
             platformIds: userPlatformIds,
             minRating: userMinRating,
             excludedGenres: userExcludedGenres,
-            size: RECOMMENDATION_BATCH_SIZE,
+            size: userRecommendationCount || RECOMMENDATION_BATCH_SIZE,
             preloadMatchTexts: true,
           });
         }

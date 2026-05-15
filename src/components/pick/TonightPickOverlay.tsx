@@ -236,7 +236,7 @@ const TonightPickOverlay = ({
                     ) : (
                       <Dices className="w-3 h-3" />
                     )}
-                    5 autres suggestions
+                    {Math.max((tonightPool.length || 1) - 1, 1)} autre{Math.max((tonightPool.length || 1) - 1, 1) > 1 ? "s" : ""} suggestion{Math.max((tonightPool.length || 1) - 1, 1) > 1 ? "s" : ""}
                   </button>
 
                   {!tonightAllVisited && tonightPool.length > 0 && (
