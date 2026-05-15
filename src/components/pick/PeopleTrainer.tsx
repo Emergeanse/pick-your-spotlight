@@ -27,6 +27,7 @@ const PeopleTrainer = ({ onBack, filterDepartment }: PeopleTrainerProps) => {
   const [loading, setLoading] = useState(true);
   const [processedIds, setProcessedIds] = useState<Set<number>>(new Set());
   const [existingPreferenceIds, setExistingPreferenceIds] = useState<Set<number>>(new Set());
+  const [preferencesById, setPreferencesById] = useState<Record<number, PreferenceValue>>({});
   const [page, setPage] = useState(1);
   const [history, setHistory] = useState<number[]>([]);
   const [ratedCount, setRatedCount] = useState(0);
@@ -79,16 +80,18 @@ const PeopleTrainer = ({ onBack, filterDepartment }: PeopleTrainerProps) => {
 
         const expectedType =
           filterDepartment === "Directing" ? "director" : filterDepartment === "Acting" ? "actor" : null;
-        const prefIds = new Set(
-          prefs.filter((pref) => !expectedType || pref.person_type === expectedType).map((pref) => pref.person_id),
-        );
+        const filteredPrefs = prefs.filter((pref) => !expectedType || pref.person_type === expectedType);
+        const prefIds = new Set(filteredPrefs.map((pref) => pref.person_id));
+        const prefMap = Object.fromEntries(filteredPrefs.map((pref) => [pref.person_id, pref.preference]));
 
         setExistingPreferenceIds(prefIds);
+        setPreferencesById(prefMap);
         await loadPeople(1, prefIds);
       } catch (e) {
         console.error("Failed to bootstrap people trainer:", e);
         if (!cancelled) {
           setExistingPreferenceIds(new Set());
+          setPreferencesById({});
           await loadPeople(1, new Set());
         }
       }
@@ -111,6 +114,7 @@ const PeopleTrainer = ({ onBack, filterDepartment }: PeopleTrainerProps) => {
 
   const currentPerson = people[currentIndex];
   const nextPerson = people[currentIndex + 1];
+  const currentPreference = currentPerson ? preferencesById[currentPerson.id] : undefined;
 
   useEffect(() => {
     const ids = [currentPerson?.id, nextPerson?.id].filter(Boolean);
@@ -141,6 +145,7 @@ const PeopleTrainer = ({ onBack, filterDepartment }: PeopleTrainerProps) => {
         known_for: knownFor.slice(0, 5),
       });
 
+      setPreferencesById((prev) => ({ ...prev, [currentPerson.id]: preference }));
       setRatedCount((c) => c + 1);
       if (preference === "liked" || preference === "loved") actionsRef.current.likes += 1;
       if (preference === "disliked") actionsRef.current.dislikes += 1;
@@ -176,6 +181,12 @@ const PeopleTrainer = ({ onBack, filterDepartment }: PeopleTrainerProps) => {
   const iconSize = "w-3.5 h-3.5";
   const btnSize = "w-8 h-8";
   const inactiveClass = "bg-transparent border-border/25 text-foreground/40 hover:text-primary hover:border-primary/25";
+  const likeFilledClass =
+    "bg-primary border-primary/80 text-primary-foreground ring-1 ring-white/15 shadow-[0_0_24px_hsl(var(--primary)/0.45)]";
+  const loveFilledClass =
+    "bg-gradient-to-br from-pink-500 to-fuchsia-500 border-pink-300/70 text-white ring-1 ring-white/20 shadow-[0_0_26px_rgba(236,72,153,0.55)]";
+  const dislikeFilledClass =
+    "bg-rose-600 border-rose-300/70 text-white ring-1 ring-white/10 shadow-[0_0_24px_rgba(225,29,72,0.45)]";
 
   return (
     <div
@@ -228,29 +239,29 @@ const PeopleTrainer = ({ onBack, filterDepartment }: PeopleTrainerProps) => {
                   type="button"
                   whileTap={{ scale: 0.94 }}
                   onClick={() => handleRate("liked")}
-                  className={`${btnSize} rounded-full border transition-all flex items-center justify-center ${inactiveClass}`}
+                  className={`${btnSize} rounded-full border transition-all flex items-center justify-center ${currentPreference === "liked" ? likeFilledClass : inactiveClass}`}
                   title="Aimé"
                   aria-label="Aimé"
                 >
-                  <Heart className={iconSize} />
+                  <Heart className={`${iconSize} ${currentPreference === "liked" ? "fill-current" : ""}`} />
                 </motion.button>
 
                 <motion.button
                   type="button"
                   whileTap={{ scale: 0.94 }}
                   onClick={() => handleRate("loved")}
-                  className={`${btnSize} rounded-full border transition-all flex items-center justify-center ${inactiveClass}`}
+                  className={`${btnSize} rounded-full border transition-all flex items-center justify-center ${currentPreference === "loved" ? loveFilledClass : inactiveClass}`}
                   title="J'adore"
                   aria-label="J'adore"
                 >
-                  <Star className={iconSize} />
+                  <Star className={`${iconSize} ${currentPreference === "loved" ? "fill-current" : ""}`} />
                 </motion.button>
 
                 <motion.button
                   type="button"
                   whileTap={{ scale: 0.94 }}
                   onClick={() => handleRate("disliked")}
-                  className={`${btnSize} rounded-full border transition-all flex items-center justify-center ${inactiveClass}`}
+                  className={`${btnSize} rounded-full border transition-all flex items-center justify-center ${currentPreference === "disliked" ? dislikeFilledClass : inactiveClass}`}
                   title="Pas fan"
                   aria-label="Pas fan"
                 >
