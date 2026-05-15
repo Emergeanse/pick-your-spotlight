@@ -251,7 +251,7 @@ const Index = () => {
             minRating: (data as any).min_rating || 0,
             preferredPlatforms: data.preferred_platforms || [],
             profileConfidence: (data as any).profile_confidence || 0,
-            recommendationCount: (data as any).default_recommendation_count || RECOMMENDATION_BATCH_SIZE,
+            recommendationBatchSize: Math.min(Math.max((data as any).recommendation_batch_size || 5, 3), 10),
           });
 
           const tourDone = (data as any).tour_completed;
