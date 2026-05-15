@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { motion } from "framer-motion";
-import { Loader2, Heart, ThumbsDown, Star, ChevronLeft, ChevronRight } from "lucide-react";
+import { Loader2, Heart, ThumbsDown, HelpCircle, ChevronLeft, ChevronRight } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import {
   fetchPopularPeople,
@@ -20,6 +20,8 @@ interface PeopleTrainerProps {
 const SITE_BOTTOM_NAV_HEIGHT = 88;
 const TRAINING_BAR_HEIGHT = 84;
 
+type PersonUiPreference = PreferenceValue | "unknown";
+
 const PeopleTrainer = ({ onBack, filterDepartment }: PeopleTrainerProps) => {
   const { user } = useAuth();
   const [people, setPeople] = useState<any[]>([]);
@@ -27,7 +29,7 @@ const PeopleTrainer = ({ onBack, filterDepartment }: PeopleTrainerProps) => {
   const [loading, setLoading] = useState(true);
   const [processedIds, setProcessedIds] = useState<Set<number>>(new Set());
   const [existingPreferenceIds, setExistingPreferenceIds] = useState<Set<number>>(new Set());
-  const [preferencesById, setPreferencesById] = useState<Record<number, PreferenceValue>>({});
+  const [preferencesById, setPreferencesById] = useState<Record<number, PersonUiPreference>>({});
   const [page, setPage] = useState(1);
   const [history, setHistory] = useState<number[]>([]);
   const [ratedCount, setRatedCount] = useState(0);
@@ -131,6 +133,13 @@ const PeopleTrainer = ({ onBack, filterDepartment }: PeopleTrainerProps) => {
 
   const currentPersonDetail = currentPerson ? (hydratedPeople[currentPerson.id] ?? currentPerson) : null;
 
+  const advancePerson = () => {
+    if (!currentPerson) return;
+    setHistory((prev) => [...prev, currentIndex]);
+    setProcessedIds((prev) => new Set(prev).add(currentPerson.id));
+    setCurrentIndex((i) => i + 1);
+  };
+
   const handleRate = async (preference: PreferenceValue) => {
     if (!currentPerson || !user) return;
 
@@ -147,15 +156,19 @@ const PeopleTrainer = ({ onBack, filterDepartment }: PeopleTrainerProps) => {
 
       setPreferencesById((prev) => ({ ...prev, [currentPerson.id]: preference }));
       setRatedCount((c) => c + 1);
-      if (preference === "liked" || preference === "loved") actionsRef.current.likes += 1;
+      if (preference === "liked") actionsRef.current.likes += 1;
       if (preference === "disliked") actionsRef.current.dislikes += 1;
     } catch (e) {
       console.error("Failed to rate person:", e);
     }
 
-    setHistory((prev) => [...prev, currentIndex]);
-    setProcessedIds((prev) => new Set(prev).add(currentPerson.id));
-    setCurrentIndex((i) => i + 1);
+    advancePerson();
+  };
+
+  const handleUnknown = () => {
+    if (!currentPerson) return;
+    setPreferencesById((prev) => ({ ...prev, [currentPerson.id]: "unknown" }));
+    advancePerson();
   };
 
   const goBack = () => {
@@ -167,9 +180,7 @@ const PeopleTrainer = ({ onBack, filterDepartment }: PeopleTrainerProps) => {
 
   const skip = () => {
     if (!currentPerson) return;
-    setHistory((prev) => [...prev, currentIndex]);
-    setProcessedIds((prev) => new Set(prev).add(currentPerson.id));
-    setCurrentIndex((i) => i + 1);
+    advancePerson();
   };
 
   const openPersonDetail = () => {
@@ -183,10 +194,10 @@ const PeopleTrainer = ({ onBack, filterDepartment }: PeopleTrainerProps) => {
   const inactiveClass = "bg-transparent border-border/25 text-foreground/40 hover:text-primary hover:border-primary/25";
   const likeFilledClass =
     "bg-primary border-primary/80 text-primary-foreground ring-1 ring-white/15 shadow-[0_0_24px_hsl(var(--primary)/0.45)]";
-  const loveFilledClass =
-    "bg-gradient-to-br from-pink-500 to-fuchsia-500 border-pink-300/70 text-white ring-1 ring-white/20 shadow-[0_0_26px_rgba(236,72,153,0.55)]";
   const dislikeFilledClass =
     "bg-rose-600 border-rose-300/70 text-white ring-1 ring-white/10 shadow-[0_0_24px_rgba(225,29,72,0.45)]";
+  const unknownFilledClass =
+    "bg-foreground/85 border-white/15 text-background shadow-[0_0_18px_rgba(255,255,255,0.12)]";
 
   return (
     <div
@@ -240,8 +251,8 @@ const PeopleTrainer = ({ onBack, filterDepartment }: PeopleTrainerProps) => {
                   whileTap={{ scale: 0.94 }}
                   onClick={() => handleRate("liked")}
                   className={`${btnSize} rounded-full border transition-all flex items-center justify-center ${currentPreference === "liked" ? likeFilledClass : inactiveClass}`}
-                  title="Aimé"
-                  aria-label="Aimé"
+                  title="Like"
+                  aria-label="Like"
                 >
                   <Heart className={`${iconSize} ${currentPreference === "liked" ? "fill-current" : ""}`} />
                 </motion.button>
@@ -249,12 +260,12 @@ const PeopleTrainer = ({ onBack, filterDepartment }: PeopleTrainerProps) => {
                 <motion.button
                   type="button"
                   whileTap={{ scale: 0.94 }}
-                  onClick={() => handleRate("loved")}
-                  className={`${btnSize} rounded-full border transition-all flex items-center justify-center ${currentPreference === "loved" ? loveFilledClass : inactiveClass}`}
-                  title="J'adore"
-                  aria-label="J'adore"
+                  onClick={handleUnknown}
+                  className={`${btnSize} rounded-full border transition-all flex items-center justify-center ${currentPreference === "unknown" ? unknownFilledClass : inactiveClass}`}
+                  title="Connais pas"
+                  aria-label="Connais pas"
                 >
-                  <Star className={`${iconSize} ${currentPreference === "loved" ? "fill-current" : ""}`} />
+                  <HelpCircle className={iconSize} />
                 </motion.button>
 
                 <motion.button
@@ -262,8 +273,8 @@ const PeopleTrainer = ({ onBack, filterDepartment }: PeopleTrainerProps) => {
                   whileTap={{ scale: 0.94 }}
                   onClick={() => handleRate("disliked")}
                   className={`${btnSize} rounded-full border transition-all flex items-center justify-center ${currentPreference === "disliked" ? dislikeFilledClass : inactiveClass}`}
-                  title="Pas fan"
-                  aria-label="Pas fan"
+                  title="N'aime pas"
+                  aria-label="N'aime pas"
                 >
                   <ThumbsDown className={iconSize} />
                 </motion.button>
