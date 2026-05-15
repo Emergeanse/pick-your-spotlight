@@ -936,7 +936,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
           onClose={() => setShowOptions(false)}
           onShowAnother={() => onShowAnother()}
           onRefineWithVoice={onRefineWithVoice}
-          suggestionCount={totalCount}
+          suggestionCount={suggestionCount ?? totalCount}
         />
 
         <AnimatePresence>
