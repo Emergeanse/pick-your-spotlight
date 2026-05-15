@@ -26,7 +26,7 @@ import { getTimeContextForPrompt } from "@/lib/time-context";
 import PickPlusPaywall from "@/components/pick/PickPlusPaywall";
 import { getLikedMovies } from "@/lib/liked-movies";
 import { computeUserTasteVector } from "@/lib/taste-engine";
-import { extractRecommendationMovies, ensureRecommendationBatch } from "@/lib/recommendation-batch";
+import { extractRecommendationMovies, ensureRecommendationBatch, RECOMMENDATION_BATCH_SIZE } from "@/lib/recommendation-batch";
 import { usePresenceTracker } from "@/hooks/use-presence";
 import { createRecommendationSession, logRecommendationEvent, completeSession, abandonSession } from "@/lib/sessions";
 
@@ -101,6 +101,7 @@ const Index = () => {
         excludedGenres: profilePrefs.excludedGenres,
         searchTags,
         userCriteria: { mood: null, context: null, time: null },
+        size: RECOMMENDATION_BATCH_SIZE,
       }),
     [profilePrefs.excludedGenres, profilePrefs.minRating, profilePrefs.preferredPlatforms, searchTags],
   );
