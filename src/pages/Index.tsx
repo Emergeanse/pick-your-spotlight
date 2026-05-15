@@ -102,6 +102,7 @@ const Index = () => {
         searchTags,
         userCriteria: { mood: null, context: null, time: null },
         size: RECOMMENDATION_BATCH_SIZE,
+        preloadMatchTexts: true,
       }),
     [profilePrefs.excludedGenres, profilePrefs.minRating, profilePrefs.preferredPlatforms, searchTags],
   );

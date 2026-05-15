@@ -608,11 +608,14 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
       setFeedbackGiven(null);
 
       const loadCurrentMatchData = async () => {
-        const cached = prefetchedMatchData[movie.id];
+        const cached = prefetchedMatchData[movie.id] ?? movie.recommendationTexts ?? null;
 
         if (cached) {
           setMatchData(cached);
           setMatchLoading(false);
+          if (!prefetchedMatchData[movie.id] && movie.recommendationTexts) {
+            setPrefetchedMatchData((prev) => ({ ...prev, [movie.id]: movie.recommendationTexts! }));
+          }
 
           if (user) {
             trackRecommendationEvent({
