@@ -36,6 +36,7 @@ import { usePresenceTracker } from "@/hooks/use-presence";
 import { createRecommendationSession, logRecommendationEvent, completeSession, abandonSession } from "@/lib/sessions";
 
 type Step = "home" | "result";
+const DEFAULT_RECOMMENDATION_COUNT = 3;
 
 const Index = () => {
   usePresenceTracker();
@@ -67,7 +68,7 @@ const Index = () => {
     minRating: 0,
     preferredPlatforms: [],
     profileConfidence: 0,
-    recommendationBatchSize: 5,
+    recommendationBatchSize: DEFAULT_RECOMMENDATION_COUNT,
   });
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -251,7 +252,10 @@ const Index = () => {
             minRating: (data as any).min_rating || 0,
             preferredPlatforms: data.preferred_platforms || [],
             profileConfidence: (data as any).profile_confidence || 0,
-            recommendationBatchSize: Math.min(Math.max((data as any).default_recommendation_count || 5, 1), 10),
+            recommendationBatchSize: Math.min(
+              Math.max((data as any).default_recommendation_count || DEFAULT_RECOMMENDATION_COUNT, 1),
+              10,
+            ),
           });
 
           const tourDone = (data as any).tour_completed;
