@@ -387,7 +387,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
     ref,
   ) => {
     const [providers, setProviders] = useState<{ name: string; logo_path: string; provider_id: number }[]>([]);
-    const displayedTotal = Math.max(totalCount ?? 1, suggestionCount ?? (totalCount ?? 1));
+    const displayedTotal = suggestionCount ?? totalCount ?? 1;
     const [credits, setCredits] = useState<MovieCredits | null>(null);
     const [streamingLinks, setStreamingLinks] = useState<StreamingLink[]>([]);
     const [trailerUrl, setTrailerUrl] = useState<string | null>(null);
@@ -474,14 +474,14 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
 
     const batchKeyRef = useRef<string>("");
     useEffect(() => {
-      const key = `${totalCount}-${movie.id}`;
+      const key = `${displayedTotal}-${movie.id}`;
       if (!onVisitedMovieIdsChange && batchKeyRef.current && batchKeyRef.current !== key && currentIndex === 0) {
         setInternalVisitedMovieIds(new Set([movie.id]));
       }
       batchKeyRef.current = key;
-    }, [currentIndex, movie.id, onVisitedMovieIdsChange, totalCount]);
+    }, [currentIndex, movie.id, onVisitedMovieIdsChange, displayedTotal]);
 
-    const allVisited = visitedMovieIds.size >= totalCount;
+    const allVisited = visitedMovieIds.size >= displayedTotal;
     const isWhyUnlocked = true;
 
     const title = getDisplayTitle(movie);
@@ -697,7 +697,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
 
       setShowRejectReasons(false);
 
-      if (nextRejected.size >= totalCount) {
+      if (nextRejected.size >= displayedTotal) {
         setTimeout(() => onShowAnother(reasonId === "dislike" ? "dislike" : "seen", movie), 400);
         return;
       }
