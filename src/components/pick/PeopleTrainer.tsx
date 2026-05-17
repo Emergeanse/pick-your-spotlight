@@ -9,6 +9,7 @@ import {
   getUserPeoplePreferences,
   type PreferenceValue,
 } from "@/lib/people-preferences";
+import { getBackdropUrl, getPosterUrl } from "@/lib/tmdb";
 import FlipCardDetail from "./FlipCardDetail";
 import RecommendationPersonCard from "./RecommendationPersonCard";
 
@@ -133,6 +134,17 @@ const PeopleTrainer = ({ onBack, filterDepartment }: PeopleTrainerProps) => {
 
   const currentPersonDetail = currentPerson ? (hydratedPeople[currentPerson.id] ?? currentPerson) : null;
 
+  const getPersonFeaturedBackground = (person: any) => {
+    const knownFor = person?.known_for || [];
+    const credits = person?.movie_credits?.cast || person?.movie_credits?.crew || [];
+    const entries = [...knownFor, ...credits];
+    const featured = entries.find((item: any) => item.backdrop_path || item.poster_path);
+    if (!featured) return null;
+    return getBackdropUrl(featured.backdrop_path) || getPosterUrl(featured.poster_path, "w780");
+  };
+
+  const featuredBackground = getPersonFeaturedBackground(currentPersonDetail);
+
   const advancePerson = () => {
     if (!currentPerson) return;
     setHistory((prev) => [...prev, currentIndex]);
@@ -203,11 +215,21 @@ const PeopleTrainer = ({ onBack, filterDepartment }: PeopleTrainerProps) => {
 
   return (
     <div
-      className="flex min-h-0 flex-1 flex-col"
+      className="relative flex min-h-0 flex-1 flex-col overflow-hidden"
       style={{
         paddingBottom: `calc(${SITE_BOTTOM_NAV_HEIGHT + TRAINING_BAR_HEIGHT}px + env(safe-area-inset-bottom))`,
       }}
     >
+      {featuredBackground && (
+        <div
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          style={{ backgroundImage: `url(${featuredBackground})` }}
+        />
+      )}
+      {featuredBackground && <div className="absolute inset-0 poster-gradient" />}
+      {featuredBackground && (
+        <div className="absolute inset-0 bg-gradient-to-r from-background/90 via-background/60 to-transparent" />
+      )}
       <div className="px-4 pb-2">
         <p className="text-center text-[11px] font-sans text-foreground/25">
           {ratedCount} évalué{ratedCount > 1 ? "s" : ""}
