@@ -248,17 +248,19 @@ const Index = () => {
           return;
         }
         if (data) {
+          const recommendationBatchSize = Math.min(
+            Math.max((data as any).default_recommendation_count || RECOMMENDATION_BATCH_SIZE, 1),
+            10,
+          );
           setProfilePrefs({
             excludedGenres: (data as any).excluded_genres || [],
             excludedPlatforms: (data as any).excluded_platforms || [],
             minRating: (data as any).min_rating || 0,
             preferredPlatforms: data.preferred_platforms || [],
             profileConfidence: (data as any).profile_confidence || 0,
-            recommendationBatchSize: Math.min(
-              Math.max((data as any).default_recommendation_count || RECOMMENDATION_BATCH_SIZE, 1),
-              10,
-            ),
+            recommendationBatchSize,
           });
+          setResultSuggestionCount(recommendationBatchSize);
 
           const tourDone = (data as any).tour_completed;
           const activationDone = (data as any).activation_completed;
