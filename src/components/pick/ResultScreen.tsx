@@ -452,6 +452,9 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
     };
 
     const currentRecommendationText = prefetchedMatchData[movie.id] ?? matchData ?? movie.recommendationTexts ?? null;
+    const currentRecommendationTeaser = currentRecommendationText
+      ? getRecommendationTeaser({ ...movie, recommendationTexts: currentRecommendationText })
+      : "";
 
     useEffect(() => {
       const initialTextData: Record<number, MatchData> = {};
@@ -738,7 +741,14 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
                 Analyse de Pick…
               </div>
             ) : currentRecommendationText ? (
-              <MatchAnalysis matchData={currentRecommendationText} mediaType={mediaType} movieId={movie.id} />
+              <>
+                {currentRecommendationTeaser && (
+                  <div className="mb-4 rounded-3xl border border-white/10 bg-background/70 p-4 text-sm leading-6 text-foreground/80 shadow-lg">
+                    <p className="line-clamp-3">{currentRecommendationTeaser}</p>
+                  </div>
+                )}
+                <MatchAnalysis matchData={currentRecommendationText} mediaType={mediaType} movieId={movie.id} />
+              </>
             ) : null}
 
             {batchPreview.length > 0 && (
