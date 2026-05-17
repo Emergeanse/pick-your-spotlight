@@ -264,7 +264,7 @@ const OptionsSheet = ({
   onRefineWithVoice?: () => void;
   suggestionCount?: number;
 }) => {
-  const nextBatchCount = Math.max(suggestionCount ?? 1, 1);
+  const nextBatchCount = suggestionCount ?? 5;
   if (!open) return null;
   return (
     <AnimatePresence>
@@ -936,7 +936,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
           onClose={() => setShowOptions(false)}
           onShowAnother={() => onShowAnother()}
           onRefineWithVoice={onRefineWithVoice}
-          suggestionCount={suggestionCount ?? totalCount}
+          suggestionCount={suggestionCount}
         />
 
         <AnimatePresence>
