@@ -553,6 +553,7 @@ const Index = () => {
     const handler = () => {
       setStep("home");
       setResults([]);
+      setResultSuggestionCount(profilePrefs.recommendationBatchSize);
       setCurrentResultIndex(0);
       setResultIndexHistory([]);
       setSearchTags([]);
@@ -563,7 +564,7 @@ const Index = () => {
     };
     window.addEventListener("pick-reset-home", handler);
     return () => window.removeEventListener("pick-reset-home", handler);
-  }, []);
+  }, [profilePrefs.recommendationBatchSize]);
 
   const handleRemoveTag = (tag: string) => {
     setSearchTags((prev) => prev.filter((t) => t !== tag));
@@ -684,8 +685,10 @@ const Index = () => {
                     const batch = await normalizeRecommendationBatch(
                       newMovies,
                       results.map((result) => result.id),
+                      profilePrefs.recommendationBatchSize || RECOMMENDATION_BATCH_SIZE,
                     );
                     setResults(batch);
+                    setResultSuggestionCount(profilePrefs.recommendationBatchSize || RECOMMENDATION_BATCH_SIZE);
                     setCurrentResultIndex(0);
                     setResultIndexHistory([]);
                     setResultSeenMovieIds(new Set(batch[0] ? [batch[0].id] : []));
@@ -706,7 +709,7 @@ const Index = () => {
               profileConfidence={profilePrefs.profileConfidence}
               alternativeMovies={results.filter((_, i) => i !== currentResultIndex).slice(0, 2)}
               recommendationBatch={results}
-              suggestionCount={profilePrefs.recommendationBatchSize}
+              suggestionCount={resultSuggestionCount}
               onSelectAlternative={(movie) => {
                 const idx = results.findIndex((r) => r.id === movie.id);
                 if (idx >= 0) {
