@@ -418,13 +418,15 @@ const Index = () => {
   const handleStart = () => {};
 
   const handleSurprise = async (movies: MovieDetail[], startIndex: number = 0, seenMovieIds?: Set<number>) => {
-    const batch = await normalizeRecommendationBatch(movies);
-    openRecommendationBatch(batch, "home", startIndex, seenMovieIds);
+    const desiredCount = profilePrefs.recommendationBatchSize || RECOMMENDATION_BATCH_SIZE;
+    const batch = await normalizeRecommendationBatch(movies, [], desiredCount);
+    openRecommendationBatch(batch, "home", startIndex, seenMovieIds, desiredCount);
   };
 
   const handleMovieSelect = async (movie: MovieDetail) => {
-    const batch = await normalizeRecommendationBatch([movie], [movie.id]);
-    openRecommendationBatch(batch, "home");
+    const desiredCount = profilePrefs.recommendationBatchSize || RECOMMENDATION_BATCH_SIZE;
+    const batch = await normalizeRecommendationBatch([movie], [movie.id], desiredCount);
+    openRecommendationBatch(batch, "home", 0, undefined, desiredCount);
   };
 
   const handleOpenChat = () => {
@@ -526,7 +528,7 @@ const Index = () => {
               preloadMatchTexts: true,
             });
           }
-          batch = await normalizeRecommendationBatch(extracted, excludeIds);
+          batch = await normalizeRecommendationBatch(extracted, excludeIds, desiredCount);
         } else {
           batch = await normalizeRecommendationBatch([], excludeIds);
         }
@@ -535,6 +537,7 @@ const Index = () => {
       }
 
       setResults(batch);
+      setResultSuggestionCount(profilePrefs.recommendationBatchSize || RECOMMENDATION_BATCH_SIZE);
       setCurrentResultIndex(0);
       setResultIndexHistory([]);
       setResultSeenMovieIds(new Set(batch[0] ? [batch[0].id] : []));
