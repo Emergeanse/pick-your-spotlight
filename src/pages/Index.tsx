@@ -47,6 +47,7 @@ const Index = () => {
   const [resultSeenMovieIds, setResultSeenMovieIds] = useState<Set<number>>(new Set());
   const [batchRejectedIds, setBatchRejectedIds] = useState<Set<number>>(new Set());
   const [resultOrigin, setResultOrigin] = useState<"home" | "external">("home");
+  const [resultSuggestionCount, setResultSuggestionCount] = useState(RECOMMENDATION_BATCH_SIZE);
   const [loadingMessage, setLoadingMessage] = useState("");
   const [showChat, setShowChat] = useState(false);
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
@@ -94,6 +95,7 @@ const Index = () => {
     loggedEventsRef.current = new Set();
     setStep("home");
     setResults([]);
+    setResultSuggestionCount(profilePrefs.recommendationBatchSize);
     setCurrentResultIndex(0);
     setResultIndexHistory([]);
     setResultSeenMovieIds(new Set());
@@ -106,7 +108,7 @@ const Index = () => {
   };
 
   const normalizeRecommendationBatch = useCallback(
-    (movies: MovieDetail[], excludeIds: number[] = []) =>
+    (movies: MovieDetail[], excludeIds: number[] = [], size = profilePrefs.recommendationBatchSize) =>
       ensureRecommendationBatch(movies, {
         excludeIds,
         platformIds: profilePrefs.preferredPlatforms,
@@ -114,7 +116,7 @@ const Index = () => {
         excludedGenres: profilePrefs.excludedGenres,
         searchTags,
         userCriteria: { mood: null, context: null, time: null },
-        size: profilePrefs.recommendationBatchSize,
+        size,
       }),
     [
       profilePrefs.excludedGenres,
@@ -126,10 +128,11 @@ const Index = () => {
   );
 
   const openRecommendationBatch = useCallback(
-    (movies: MovieDetail[], origin: "home" | "external" = "home", startIndex = 0, seenMovieIds?: Set<number>) => {
+    (movies: MovieDetail[], origin: "home" | "external" = "home", startIndex = 0, seenMovieIds?: Set<number>, suggestionCount?: number) => {
       const safeStartIndex = Math.min(startIndex, Math.max(movies.length - 1, 0));
       const initialMovieId = movies[safeStartIndex]?.id;
       setResults(movies);
+      setResultSuggestionCount(suggestionCount ?? movies.length ?? profilePrefs.recommendationBatchSize);
       setCurrentResultIndex(safeStartIndex);
       setResultIndexHistory([]);
       setResultSeenMovieIds(
@@ -170,7 +173,7 @@ const Index = () => {
         setCurrentSessionId(null);
       }
     },
-    [user, profilePrefs.excludedGenres, profilePrefs.minRating, profilePrefs.preferredPlatforms],
+    [user, profilePrefs.excludedGenres, profilePrefs.minRating, profilePrefs.preferredPlatforms, profilePrefs.recommendationBatchSize],
   );
 
   useEffect(() => {
@@ -245,17 +248,19 @@ const Index = () => {
           return;
         }
         if (data) {
+          const recommendationBatchSize = Math.min(
+            Math.max((data as any).default_recommendation_count || RECOMMENDATION_BATCH_SIZE, 1),
+            10,
+          );
           setProfilePrefs({
             excludedGenres: (data as any).excluded_genres || [],
             excludedPlatforms: (data as any).excluded_platforms || [],
             minRating: (data as any).min_rating || 0,
             preferredPlatforms: data.preferred_platforms || [],
             profileConfidence: (data as any).profile_confidence || 0,
-            recommendationBatchSize: Math.min(
-              Math.max((data as any).default_recommendation_count || RECOMMENDATION_BATCH_SIZE, 1),
-              10,
-            ),
+            recommendationBatchSize,
           });
+          setResultSuggestionCount(recommendationBatchSize);
 
           const tourDone = (data as any).tour_completed;
           const activationDone = (data as any).activation_completed;
@@ -347,12 +352,12 @@ const Index = () => {
             preloadMatchTexts: true,
           });
         }
-        batch = await normalizeRecommendationBatch(extracted, excludeIds);
+        batch = await normalizeRecommendationBatch(extracted, excludeIds, desiredCount);
       } else {
         batch = await normalizeRecommendationBatch([], excludeIds);
       }
 
-      openRecommendationBatch(batch);
+      openRecommendationBatch(batch, "home", 0, undefined, profilePrefs.recommendationBatchSize || RECOMMENDATION_BATCH_SIZE);
     } catch (e) {
       console.error(e);
     } finally {
@@ -365,6 +370,7 @@ const Index = () => {
     profilePrefs.excludedPlatforms,
     profilePrefs.minRating,
     profilePrefs.preferredPlatforms,
+    profilePrefs.recommendationBatchSize,
     results,
     user,
   ]);
@@ -414,13 +420,15 @@ const Index = () => {
   const handleStart = () => {};
 
   const handleSurprise = async (movies: MovieDetail[], startIndex: number = 0, seenMovieIds?: Set<number>) => {
-    const batch = await normalizeRecommendationBatch(movies);
-    openRecommendationBatch(batch, "home", startIndex, seenMovieIds);
+    const desiredCount = profilePrefs.recommendationBatchSize || RECOMMENDATION_BATCH_SIZE;
+    const batch = await normalizeRecommendationBatch(movies, [], desiredCount);
+    openRecommendationBatch(batch, "home", startIndex, seenMovieIds, desiredCount);
   };
 
   const handleMovieSelect = async (movie: MovieDetail) => {
-    const batch = await normalizeRecommendationBatch([movie], [movie.id]);
-    openRecommendationBatch(batch, "home");
+    const desiredCount = profilePrefs.recommendationBatchSize || RECOMMENDATION_BATCH_SIZE;
+    const batch = await normalizeRecommendationBatch([movie], [movie.id], desiredCount);
+    openRecommendationBatch(batch, "home", 0, undefined, desiredCount);
   };
 
   const handleOpenChat = () => {
@@ -522,7 +530,7 @@ const Index = () => {
               preloadMatchTexts: true,
             });
           }
-          batch = await normalizeRecommendationBatch(extracted, excludeIds);
+          batch = await normalizeRecommendationBatch(extracted, excludeIds, desiredCount);
         } else {
           batch = await normalizeRecommendationBatch([], excludeIds);
         }
@@ -531,6 +539,7 @@ const Index = () => {
       }
 
       setResults(batch);
+      setResultSuggestionCount(profilePrefs.recommendationBatchSize || RECOMMENDATION_BATCH_SIZE);
       setCurrentResultIndex(0);
       setResultIndexHistory([]);
       setResultSeenMovieIds(new Set(batch[0] ? [batch[0].id] : []));
@@ -546,6 +555,7 @@ const Index = () => {
     const handler = () => {
       setStep("home");
       setResults([]);
+      setResultSuggestionCount(profilePrefs.recommendationBatchSize);
       setCurrentResultIndex(0);
       setResultIndexHistory([]);
       setSearchTags([]);
@@ -556,7 +566,7 @@ const Index = () => {
     };
     window.addEventListener("pick-reset-home", handler);
     return () => window.removeEventListener("pick-reset-home", handler);
-  }, []);
+  }, [profilePrefs.recommendationBatchSize]);
 
   const handleRemoveTag = (tag: string) => {
     setSearchTags((prev) => prev.filter((t) => t !== tag));
@@ -677,8 +687,10 @@ const Index = () => {
                     const batch = await normalizeRecommendationBatch(
                       newMovies,
                       results.map((result) => result.id),
+                      profilePrefs.recommendationBatchSize || RECOMMENDATION_BATCH_SIZE,
                     );
                     setResults(batch);
+                    setResultSuggestionCount(profilePrefs.recommendationBatchSize || RECOMMENDATION_BATCH_SIZE);
                     setCurrentResultIndex(0);
                     setResultIndexHistory([]);
                     setResultSeenMovieIds(new Set(batch[0] ? [batch[0].id] : []));
@@ -699,7 +711,7 @@ const Index = () => {
               profileConfidence={profilePrefs.profileConfidence}
               alternativeMovies={results.filter((_, i) => i !== currentResultIndex).slice(0, 2)}
               recommendationBatch={results}
-              suggestionCount={profilePrefs.recommendationBatchSize}
+              suggestionCount={resultSuggestionCount}
               onSelectAlternative={(movie) => {
                 const idx = results.findIndex((r) => r.id === movie.id);
                 if (idx >= 0) {
