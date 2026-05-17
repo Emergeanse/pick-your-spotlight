@@ -95,6 +95,7 @@ const Index = () => {
     loggedEventsRef.current = new Set();
     setStep("home");
     setResults([]);
+    setResultSuggestionCount(profilePrefs.recommendationBatchSize);
     setCurrentResultIndex(0);
     setResultIndexHistory([]);
     setResultSeenMovieIds(new Set());
@@ -349,12 +350,12 @@ const Index = () => {
             preloadMatchTexts: true,
           });
         }
-        batch = await normalizeRecommendationBatch(extracted, excludeIds);
+        batch = await normalizeRecommendationBatch(extracted, excludeIds, desiredCount);
       } else {
         batch = await normalizeRecommendationBatch([], excludeIds);
       }
 
-      openRecommendationBatch(batch);
+      openRecommendationBatch(batch, "home", 0, undefined, profilePrefs.recommendationBatchSize || RECOMMENDATION_BATCH_SIZE);
     } catch (e) {
       console.error(e);
     } finally {
@@ -367,6 +368,7 @@ const Index = () => {
     profilePrefs.excludedPlatforms,
     profilePrefs.minRating,
     profilePrefs.preferredPlatforms,
+    profilePrefs.recommendationBatchSize,
     results,
     user,
   ]);
