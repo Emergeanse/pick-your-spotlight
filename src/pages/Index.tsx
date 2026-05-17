@@ -47,6 +47,7 @@ const Index = () => {
   const [resultSeenMovieIds, setResultSeenMovieIds] = useState<Set<number>>(new Set());
   const [batchRejectedIds, setBatchRejectedIds] = useState<Set<number>>(new Set());
   const [resultOrigin, setResultOrigin] = useState<"home" | "external">("home");
+  const [resultSuggestionCount, setResultSuggestionCount] = useState(RECOMMENDATION_BATCH_SIZE);
   const [loadingMessage, setLoadingMessage] = useState("");
   const [showChat, setShowChat] = useState(false);
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
@@ -106,7 +107,7 @@ const Index = () => {
   };
 
   const normalizeRecommendationBatch = useCallback(
-    (movies: MovieDetail[], excludeIds: number[] = []) =>
+    (movies: MovieDetail[], excludeIds: number[] = [], size = profilePrefs.recommendationBatchSize) =>
       ensureRecommendationBatch(movies, {
         excludeIds,
         platformIds: profilePrefs.preferredPlatforms,
@@ -114,7 +115,7 @@ const Index = () => {
         excludedGenres: profilePrefs.excludedGenres,
         searchTags,
         userCriteria: { mood: null, context: null, time: null },
-        size: profilePrefs.recommendationBatchSize,
+        size,
       }),
     [
       profilePrefs.excludedGenres,
@@ -126,10 +127,11 @@ const Index = () => {
   );
 
   const openRecommendationBatch = useCallback(
-    (movies: MovieDetail[], origin: "home" | "external" = "home", startIndex = 0, seenMovieIds?: Set<number>) => {
+    (movies: MovieDetail[], origin: "home" | "external" = "home", startIndex = 0, seenMovieIds?: Set<number>, suggestionCount?: number) => {
       const safeStartIndex = Math.min(startIndex, Math.max(movies.length - 1, 0));
       const initialMovieId = movies[safeStartIndex]?.id;
       setResults(movies);
+      setResultSuggestionCount(suggestionCount ?? movies.length ?? profilePrefs.recommendationBatchSize);
       setCurrentResultIndex(safeStartIndex);
       setResultIndexHistory([]);
       setResultSeenMovieIds(
@@ -170,7 +172,7 @@ const Index = () => {
         setCurrentSessionId(null);
       }
     },
-    [user, profilePrefs.excludedGenres, profilePrefs.minRating, profilePrefs.preferredPlatforms],
+    [user, profilePrefs.excludedGenres, profilePrefs.minRating, profilePrefs.preferredPlatforms, profilePrefs.recommendationBatchSize],
   );
 
   useEffect(() => {
