@@ -208,8 +208,7 @@ const MovieDetailContent = ({
 }) => {
   const interaction = useMovieInteraction(item?.id);
 
-  const summary =
-    recommendationText?.detailedExplanation || recommendationText?.whyItMatches || recommendationText?.summary || null;
+  const summary = recommendationText?.detailedExplanation || recommendationText?.whyItMatches || null;
 
   const headline = recommendationText?.headline || null;
   const reasons = recommendationText?.matchingReasons || recommendationText?.reasons || [];
