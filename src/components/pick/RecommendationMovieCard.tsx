@@ -19,6 +19,7 @@ export const RecommendationMovieCardHeader = ({
 }: {
   movie: MovieDetail;
   onOpenDetails?: () => void;
+  RecommendationMovieCard;
   matchScore?: number | null;
 }) => {
   const interaction = useMovieInteraction(movie.id, inferCatalogMediaType(movie));
@@ -167,6 +168,7 @@ const RecommendationMovieCard = ({
   onPrimaryAction,
   primaryActionLabel = "On regarde ?",
   className = "",
+  matchScore,
 }: RecommendationMovieCardProps) => {
   const [streamingLinks, setStreamingLinks] = useState<StreamingLink[]>([]);
 
