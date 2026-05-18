@@ -1,11 +1,18 @@
 import type { MovieDetail } from "@/lib/tmdb";
-import { getSurpriseRecommendation } from "@/lib/tmdb";
+import { getSurpriseRecommendation, getWatchProviders } from "@/lib/tmdb";
 import { supabase } from "@/integrations/supabase/client";
 import { getUserTasteProfile } from "@/lib/interactions";
 import { getLikedMovies } from "@/lib/liked-movies";
 import { computeUserTasteVector } from "@/lib/taste-engine";
 
 export const RECOMMENDATION_BATCH_SIZE = 5;
+
+export type WatchProviderSummary = {
+  name: string;
+  logo_path: string;
+  provider_id: number;
+  tmdb_link?: string;
+};
 
 export type RecommendationMatchData = {
   matchScore?: number;
