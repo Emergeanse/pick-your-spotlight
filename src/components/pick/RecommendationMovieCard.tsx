@@ -70,6 +70,11 @@ export const RecommendationMovieCardHeader = ({
           ) : (
             <div className="relative">{PosterEl}</div>
           )}
+          {score != null && (
+            <div className="mt-2 rounded-2xl bg-background/90 px-3 py-1 text-[11px] font-semibold text-primary shadow-sm border border-primary/10 text-center">
+              Adhésion {score}%
+            </div>
+          )}
         </motion.div>
       )}
       <div className="flex-1 min-w-0">

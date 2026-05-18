@@ -470,6 +470,8 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
         : null) ??
       null;
 
+    const currentRecommendationTeaser = getRecommendationTeaser(currentRecommendationText);
+
     useEffect(() => {
       const initialTextData: Record<number, MatchData> = {};
       recommendationCandidates.forEach((candidate) => {
@@ -752,6 +754,12 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
               onOpenDetails={() => setMovieDetailOpen(true)}
               matchScore={currentRecommendationText?.matchScore ?? currentRecommendationText?.score ?? null}
             />
+
+            {currentRecommendationTeaser && (
+              <div className="mb-4 rounded-3xl border border-white/10 bg-background/70 p-4 text-sm leading-6 text-foreground/80 shadow-lg max-w-xl">
+                <p className="line-clamp-3">{currentRecommendationTeaser}</p>
+              </div>
+            )}
 
             {overview && (
               <div className="mb-4 max-w-xl">
