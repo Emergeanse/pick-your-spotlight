@@ -19,7 +19,6 @@ export const RecommendationMovieCardHeader = ({
 }: {
   movie: MovieDetail;
   onOpenDetails?: () => void;
-  RecommendationMovieCard;
   matchScore?: number | null;
 }) => {
   const interaction = useMovieInteraction(movie.id, inferCatalogMediaType(movie));
