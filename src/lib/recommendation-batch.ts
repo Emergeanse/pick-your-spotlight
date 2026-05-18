@@ -46,6 +46,9 @@ const normalizeRecommendationTexts = (data: RecommendationMatchData): Recommenda
   };
 };
 
+const hasRecommendationScore = (data: RecommendationMatchData | null | undefined) =>
+  data?.matchScore != null || data?.score != null || data?.confidence != null;
+
 export type RecommendationMovieDetail = MovieDetail & {
   recommendationTexts?: RecommendationMatchData | null;
   watchProviders?: WatchProviderSummary[];
@@ -207,7 +210,7 @@ export async function enrichRecommendationBatchWithTexts(
   movies: RecommendationMovieDetail[],
   options: RecommendationBatchOptions = {},
 ): Promise<RecommendationMovieDetail[]> {
-  const moviesNeedingTexts = movies.filter((movie) => !movie.recommendationTexts);
+  const moviesNeedingTexts = movies.filter((movie) => !hasRecommendationScore(movie.recommendationTexts));
   if (!moviesNeedingTexts.length) return movies;
 
   const context = await buildMatchContext(options);
@@ -223,7 +226,7 @@ export async function enrichRecommendationBatchWithTexts(
   );
 
   return movies.map((movie) => {
-    if (movie.recommendationTexts) return movie;
+    if (hasRecommendationScore(movie.recommendationTexts)) return movie;
     const recommendationTexts = byId.get(movie.id) ?? null;
     return recommendationTexts ? { ...movie, recommendationTexts } : movie;
   });
