@@ -175,6 +175,11 @@ const HomeScreen = ({
   const tonightAllVisited = tonightSeenMovieIds.size >= tonightPool.length && tonightPool.length > 0;
 
   const loadProviders = async (movie: MovieDetail) => {
+    const cached = (movie as any).watchProviders as { name: string; logo_path: string; provider_id?: number }[] | undefined;
+    if (cached && Array.isArray(cached)) {
+      setTonightProviders(cached);
+      return;
+    }
     const mediaType = movie.first_air_date ? "tv" : "movie";
     try {
       const providers = await getWatchProviders(movie.id, mediaType);
@@ -364,6 +369,8 @@ const HomeScreen = ({
               excludedGenres: userExcludedGenres,
               size: desiredCount,
               preloadMatchTexts: true,
+              preloadProviders: true,
+              minMatchScore: quickFilters.matchThreshold,
             });
           }
           movies = await ensureRecommendationBatch(extracted, {
@@ -373,6 +380,8 @@ const HomeScreen = ({
             excludedGenres: userExcludedGenres,
             size: desiredCount,
             preloadMatchTexts: true,
+            preloadProviders: true,
+            minMatchScore: quickFilters.matchThreshold,
           });
 
           const matchMap: Record<number, RecommendationMatch> = {};
@@ -392,6 +401,8 @@ const HomeScreen = ({
             excludedGenres: userExcludedGenres,
             size: userRecommendationCount || RECOMMENDATION_BATCH_SIZE,
             preloadMatchTexts: true,
+            preloadProviders: true,
+            minMatchScore: quickFilters.matchThreshold,
           });
         }
       } else {
@@ -402,6 +413,8 @@ const HomeScreen = ({
           excludedGenres: userExcludedGenres,
           size: userRecommendationCount || RECOMMENDATION_BATCH_SIZE,
           preloadMatchTexts: true,
+          preloadProviders: true,
+          minMatchScore: quickFilters.matchThreshold,
         });
       }
 
