@@ -369,6 +369,8 @@ const HomeScreen = ({
               excludedGenres: userExcludedGenres,
               size: desiredCount,
               preloadMatchTexts: true,
+              preloadProviders: true,
+              minMatchScore: quickFilters.matchThreshold,
             });
           }
           movies = await ensureRecommendationBatch(extracted, {
@@ -378,6 +380,8 @@ const HomeScreen = ({
             excludedGenres: userExcludedGenres,
             size: desiredCount,
             preloadMatchTexts: true,
+            preloadProviders: true,
+            minMatchScore: quickFilters.matchThreshold,
           });
 
           const matchMap: Record<number, RecommendationMatch> = {};
@@ -397,6 +401,8 @@ const HomeScreen = ({
             excludedGenres: userExcludedGenres,
             size: userRecommendationCount || RECOMMENDATION_BATCH_SIZE,
             preloadMatchTexts: true,
+            preloadProviders: true,
+            minMatchScore: quickFilters.matchThreshold,
           });
         }
       } else {
@@ -407,6 +413,8 @@ const HomeScreen = ({
           excludedGenres: userExcludedGenres,
           size: userRecommendationCount || RECOMMENDATION_BATCH_SIZE,
           preloadMatchTexts: true,
+          preloadProviders: true,
+          minMatchScore: quickFilters.matchThreshold,
         });
       }
 
