@@ -59,6 +59,7 @@ const CONFIDENCE_THRESHOLD = 30;
 interface MatchData {
   matchScore?: number;
   score?: number;
+  confidence?: number;
   headline?: string;
   whyItMatches?: string;
   detailedExplanation?: string;
@@ -66,6 +67,7 @@ interface MatchData {
   perfectFor?: string;
   funFact?: string;
   summary?: string;
+  reason?: string;
   reasons?: string[];
   tone?: string;
   matchingReasons?: string[];
@@ -93,8 +95,8 @@ const ActorCard = ({ actor, onClick }: { actor: CastMember; onClick?: () => void
 );
 
 const MatchAnalysis = ({ matchData, mediaType }: { matchData: MatchData; mediaType: string; movieId: number }) => {
-  const score = matchData.matchScore ?? matchData.score;
-  const summary = matchData.detailedExplanation || matchData.whyItMatches || matchData.summary;
+  const score = matchData.matchScore ?? matchData.score ?? matchData.confidence;
+  const summary = matchData.detailedExplanation || matchData.whyItMatches || matchData.summary || matchData.reason;
   const headline = matchData.headline;
   const reasons = matchData.matchingReasons || matchData.reasons;
   const funFact = matchData.funFact;
