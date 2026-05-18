@@ -743,7 +743,11 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
           <BrandHeader />
 
           <div className="max-w-xl pt-4 md:pt-6">
-            <RecommendationMovieCardHeader movie={movie} onOpenDetails={() => setMovieDetailOpen(true)} />
+            <RecommendationMovieCardHeader
+              movie={movie}
+              onOpenDetails={() => setMovieDetailOpen(true)}
+              matchScore={currentRecommendationText?.matchScore ?? currentRecommendationText?.score ?? null}
+            />
 
             {matchLoading ? (
               <div className="mb-5 flex items-center gap-2 text-foreground/40 text-sm font-sans">
@@ -775,34 +779,44 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
                   </span>
                 </div>
                 <div className="grid gap-3 sm:grid-cols-2">
-                  {batchPreview.map((candidate) => (
-                    <button
-                      key={candidate.id}
-                      type="button"
-                      onClick={() => onSelectAlternative?.(candidate)}
-                      className="group rounded-3xl border border-border/20 bg-background/95 p-3 text-left transition hover:border-primary/40 hover:bg-background/90"
-                    >
-                      <div className="flex items-start gap-3">
-                        {candidate.poster_path ? (
-                          <img
-                            src={getPosterUrl(candidate.poster_path, "w185")}
-                            alt={getDisplayTitle(candidate)}
-                            className="w-16 min-w-[64px] rounded-2xl object-cover"
-                          />
-                        ) : (
-                          <div className="w-16 h-24 rounded-2xl bg-foreground/5" />
-                        )}
-                        <div className="min-w-0">
-                          <p className="text-sm font-semibold text-foreground truncate">
-                            {getDisplayTitle(candidate)}
-                          </p>
-                          <p className="text-[11px] leading-snug text-foreground/70 line-clamp-4 mt-2">
-                            {getRecommendationTeaser(candidate) || "Un teaser Pick pour découvrir pourquoi cette proposition te parle."}
-                          </p>
+                  {batchPreview.map((candidate) => {
+                    const candidateScore = candidate.recommendationTexts?.matchScore ?? candidate.recommendationTexts?.score;
+                    return (
+                      <button
+                        key={candidate.id}
+                        type="button"
+                        onClick={() => onSelectAlternative?.(candidate)}
+                        className="group rounded-3xl border border-border/20 bg-background/95 p-3 text-left transition hover:border-primary/40 hover:bg-background/90"
+                      >
+                        <div className="flex items-start gap-3">
+                          {candidate.poster_path ? (
+                            <img
+                              src={getPosterUrl(candidate.poster_path, "w185")}
+                              alt={getDisplayTitle(candidate)}
+                              className="w-16 min-w-[64px] rounded-2xl object-cover"
+                            />
+                          ) : (
+                            <div className="w-16 h-24 rounded-2xl bg-foreground/5" />
+                          )}
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2">
+                              <p className="text-sm font-semibold text-foreground truncate">
+                                {getDisplayTitle(candidate)}
+                              </p>
+                              {candidateScore != null && (
+                                <span className="inline-flex rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary">
+                                  {candidateScore}%
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-[11px] leading-snug text-foreground/70 line-clamp-4 mt-2">
+                              {getRecommendationTeaser(candidate) || "Un teaser Pick pour découvrir pourquoi cette proposition te parle."}
+                            </p>
+                          </div>
                         </div>
-                      </div>
-                    </button>
-                  ))}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             )}

@@ -15,9 +15,11 @@ const IMG_BASE = "https://image.tmdb.org/t/p";
 export const RecommendationMovieCardHeader = ({
   movie,
   onOpenDetails,
+  matchScore,
 }: {
   movie: MovieDetail;
   onOpenDetails?: () => void;
+  matchScore?: number | null;
 }) => {
   const interaction = useMovieInteraction(movie.id, inferCatalogMediaType(movie));
   const currentFeedback = interaction.primaryStatus;
@@ -31,6 +33,11 @@ export const RecommendationMovieCardHeader = ({
   const isDocumentary = movie.genres?.some((g) => g.id === 99);
   const mediaLabel = isDocumentary ? "Documentaire" : mediaType === "tv" ? "Série" : "Film";
   const seasons = (movie as any).number_of_seasons;
+  const score =
+    matchScore ??
+    (movie as any).recommendationTexts?.matchScore ??
+    (movie as any).recommendationTexts?.score ??
+    null;
 
   const PosterEl = (
     <>
@@ -92,6 +99,15 @@ export const RecommendationMovieCardHeader = ({
               <span className="flex items-center gap-1">
                 <Clock className="w-3 h-3" />
                 {runtime} min
+              </span>
+            </>
+          )}
+          {score != null && (
+            <>
+              <span className="text-foreground/20">•</span>
+              <span className="flex items-center gap-1 text-primary font-medium">
+                <Star className="w-3 h-3 fill-primary" />
+                {score}%
               </span>
             </>
           )}
