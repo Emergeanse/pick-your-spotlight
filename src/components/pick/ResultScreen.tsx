@@ -439,9 +439,14 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
       return source.filter((candidate) => candidate?.id && candidate.id !== movie.id).slice(0, 5);
     }, [recommendationBatch, movie, alternativeMovies]);
 
+    const truncateTeaser = (value: string, maxLength = 100) => {
+      if (value.length <= maxLength) return value;
+      return `${value.substring(0, maxLength).trimEnd()}…`;
+    };
+
     const getRecommendationTeaser = (matchData: MatchData | null) => {
       if (!matchData) return "";
-      return (
+      const raw =
         matchData.summary ||
         matchData.detailedExplanation ||
         matchData.pickNote ||
@@ -449,8 +454,8 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
         matchData.headline ||
         (matchData.reasons && matchData.reasons.length > 0 ? matchData.reasons[0] : "") ||
         (matchData.matchingReasons && matchData.matchingReasons.length > 0 ? matchData.matchingReasons[0] : "") ||
-        ""
-      );
+        "";
+      return truncateTeaser(raw, 100);
     };
 
     const currentRecommendationText =
@@ -780,7 +785,11 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
                 </div>
                 <div className="grid gap-3 sm:grid-cols-2">
                   {batchPreview.map((candidate) => {
-                    const candidateScore = candidate.recommendationTexts?.matchScore ?? candidate.recommendationTexts?.score;
+                    const candidateMatchData =
+                      candidate.recommendationTexts ??
+                      prefetchedMatchData[candidate.id] ??
+                      null;
+                    const candidateScore = candidateMatchData?.matchScore ?? candidateMatchData?.score;
                     return (
                       <button
                         key={candidate.id}
@@ -810,7 +819,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
                               )}
                             </div>
                             <p className="text-[11px] leading-snug text-foreground/70 line-clamp-4 mt-2">
-                              {getRecommendationTeaser(candidate) || "Un teaser Pick pour découvrir pourquoi cette proposition te parle."}
+                              {getRecommendationTeaser(candidateMatchData) || "Un teaser Pick pour découvrir pourquoi cette proposition te parle."}
                             </p>
                           </div>
                         </div>

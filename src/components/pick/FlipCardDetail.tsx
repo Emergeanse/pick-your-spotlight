@@ -215,7 +215,6 @@ const MovieDetailContent = ({
   const reasons = recommendationText?.matchingReasons || recommendationText?.reasons || [];
   const perfectFor = recommendationText?.perfectFor || null;
   const funFact = recommendationText?.funFact || null;
-  const pickNote = recommendationText?.pickNote || null;
   const score = recommendationText?.matchScore ?? recommendationText?.score ?? null;
 
   return (
@@ -272,6 +271,48 @@ const MovieDetailContent = ({
             Synopsis
           </h4>
           <p className="text-sm leading-relaxed text-foreground/60">{detail.overview}</p>
+        </div>
+      )}
+
+      {(headline || summary || reasons.length > 0 || perfectFor || funFact) && (
+        <div className="mb-5 rounded-2xl bg-primary/[0.04] border border-primary/15 p-4">
+          <div className="flex items-start gap-3">
+            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
+              <Sparkles className="w-4 h-4 text-primary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-1">
+                <p className="text-[10px] uppercase tracking-widest text-primary/60 font-sans font-semibold">
+                  Recommandation complète
+                </p>
+                {score != null && (
+                  <span className="text-[10px] font-sans font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded-full">
+                    {score}%
+                  </span>
+                )}
+              </div>
+              {headline && <p className="text-foreground/80 text-[13px] font-sans font-semibold mb-1">{headline}</p>}
+              {summary && <p className="text-foreground/70 text-[12px] sm:text-[13px] font-sans leading-snug mb-2">{summary}</p>}
+              {reasons.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 mb-2">
+                  {reasons.map((reason: string, i: number) => (
+                    <span
+                      key={i}
+                      className="text-[10px] font-sans text-primary/70 bg-primary/8 px-2 py-0.5 rounded-full border border-primary/10"
+                    >
+                      {reason}
+                    </span>
+                  ))}
+                </div>
+              )}
+              {perfectFor && <p className="text-foreground/50 text-[11px] font-sans italic mb-1">{perfectFor}</p>}
+              {funFact && (
+                <p className="text-foreground/40 text-[11px] font-sans mt-2 leading-snug">
+                  <span className="text-primary/50">💡</span> {funFact}
+                </p>
+              )}
+            </div>
+          </div>
         </div>
       )}
 
