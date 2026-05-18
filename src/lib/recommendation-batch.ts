@@ -32,6 +32,7 @@ export type RecommendationMatchData = {
 
 export type RecommendationMovieDetail = MovieDetail & {
   recommendationTexts?: RecommendationMatchData | null;
+  watchProviders?: WatchProviderSummary[];
 };
 
 type RecommendationBatchOptions = {
@@ -47,6 +48,8 @@ type RecommendationBatchOptions = {
     time: string | null;
   };
   preloadMatchTexts?: boolean;
+  preloadProviders?: boolean;
+  minMatchScore?: number;
 };
 
 const extractInlineRecommendationTexts = (entry: any): RecommendationMatchData | null => {
