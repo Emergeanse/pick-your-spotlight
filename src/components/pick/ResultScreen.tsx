@@ -796,44 +796,60 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
                   </span>
                 </div>
                 <div className="grid gap-3 sm:grid-cols-2">
-                  {batchPreview.map((candidate) => {
-                    const candidateMatchData =
-                      prefetchedMatchData[candidate.id] ?? candidate.recommendationTexts ?? null;
+  {batchPreview.map((candidate) => {
+    const candidateMatchData =
+      prefetchedMatchData[candidate.id] ??
+      candidate.recommendationTexts ??
+      null;
 
-                    const candidateScore = candidateMatchData?.matchScore ?? candidateMatchData?.score ?? null;
+    const candidateScore =
+      candidateMatchData?.matchScore ??
+      candidateMatchData?.score ??
+      null;
 
-                    return (
-                      <button
-                        key={candidate.id}
-                        type="button"
-                        onClick={() => onSelectAlternative?.(candidate)}
-                        className="group rounded-3xl border border-border/20 bg-background/95 p-3 text-left transition hover:border-primary/40 hover:bg-background/90"
-                      >
-                        <div className="flex items-start gap-3">
-                          <div className="flex w-16 min-w-[64px] flex-col items-center">
-                            {candidate.poster_path ? (
-                              <img
-                                src={getPosterUrl(candidate.poster_path, "w185")}
-                                alt={getDisplayTitle(candidate)}
-                                className="w-16 h-24 rounded-2xl object-cover"
-                              />
-                            ) : (
-                              <div className="w-16 h-24 rounded-2xl bg-foreground/5" />
-                            )}
+    return (
+      <button
+        key={candidate.id}
+        type="button"
+        onClick={() => onSelectAlternative?.(candidate)}
+        className="group rounded-3xl border border-border/20 bg-background/95 p-3 text-left transition hover:border-primary/40 hover:bg-background/90"
+      >
+        <div className="flex items-start gap-3">
+          <div className="flex w-16 min-w-[64px] flex-col items-center">
+            {candidate.poster_path ? (
+              <img
+                src={getPosterUrl(candidate.poster_path, "w185")}
+                alt={getDisplayTitle(candidate)}
+                className="w-16 h-24 rounded-2xl object-cover"
+              />
+            ) : (
+              <div className="w-16 h-24 rounded-2xl bg-foreground/5" />
+            )}
 
-                            {candidateScore != null && (
-                              <div className="mt-2 w-full rounded-2xl bg-background/90 px-2 py-1 text-center text-[10px] font-semibold text-primary border border-primary/10 shadow-sm">
-                                Adhésion {candidateScore}%
-                              </div>
-                            )}
-                          </div>
+            {candidateScore != null && (
+              <div className="mt-2 w-full rounded-2xl border border-primary/10 bg-background/90 px-2 py-1 text-center text-[10px] font-semibold text-primary shadow-sm">
+                Adhésion {candidateScore}%
+              </div>
+            )}
+          </div>
 
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-2">
-                              <p className="text-sm font-semibold text-foreground truncate">
-                                {getDisplayTitle(candidate)}
-                              </p>
-                            </div>
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2">
+              <p className="text-sm font-semibold text-foreground truncate">
+                {getDisplayTitle(candidate)}
+              </p>
+            </div>
+
+            <p className="mt-2 text-[11px] leading-snug text-foreground/70 line-clamp-4">
+              {getRecommendationTeaser(candidateMatchData) ||
+                "Un teaser Pick pour découvrir pourquoi cette proposition te parle."}
+            </p>
+          </div>
+        </div>
+      </button>
+    );
+  })}
+</div>
 
                             <p className="mt-2 text-[11px] leading-snug text-foreground/70 line-clamp-4">
                               {getRecommendationTeaser(candidateMatchData) ||
