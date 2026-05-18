@@ -175,6 +175,11 @@ const HomeScreen = ({
   const tonightAllVisited = tonightSeenMovieIds.size >= tonightPool.length && tonightPool.length > 0;
 
   const loadProviders = async (movie: MovieDetail) => {
+    const cached = (movie as any).watchProviders as { name: string; logo_path: string; provider_id?: number }[] | undefined;
+    if (cached && Array.isArray(cached)) {
+      setTonightProviders(cached);
+      return;
+    }
     const mediaType = movie.first_air_date ? "tv" : "movie";
     try {
       const providers = await getWatchProviders(movie.id, mediaType);
