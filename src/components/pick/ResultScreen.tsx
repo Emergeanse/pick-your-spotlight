@@ -435,7 +435,10 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
     }, [recommendationBatch, movie, alternativeMovies]);
 
     const batchPreview = useMemo(() => {
-      const source = recommendationBatch && recommendationBatch.length > 0 ? recommendationBatch : [movie, ...(alternativeMovies || [])];
+      const source =
+        recommendationBatch && recommendationBatch.length > 0
+          ? recommendationBatch
+          : [movie, ...(alternativeMovies || [])];
       return source.filter((candidate) => candidate?.id && candidate.id !== movie.id).slice(0, 5);
     }, [recommendationBatch, movie, alternativeMovies]);
 
@@ -795,10 +798,10 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
                 <div className="grid gap-3 sm:grid-cols-2">
                   {batchPreview.map((candidate) => {
                     const candidateMatchData =
-                      candidate.recommendationTexts ??
-                      prefetchedMatchData[candidate.id] ??
-                      null;
-                    const candidateScore = candidateMatchData?.matchScore ?? candidateMatchData?.score;
+                      prefetchedMatchData[candidate.id] ?? candidate.recommendationTexts ?? null;
+
+                    const candidateScore = candidateMatchData?.matchScore ?? candidateMatchData?.score ?? null;
+
                     return (
                       <button
                         key={candidate.id}
@@ -807,28 +810,34 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
                         className="group rounded-3xl border border-border/20 bg-background/95 p-3 text-left transition hover:border-primary/40 hover:bg-background/90"
                       >
                         <div className="flex items-start gap-3">
-                          {candidate.poster_path ? (
-                            <img
-                              src={getPosterUrl(candidate.poster_path, "w185")}
-                              alt={getDisplayTitle(candidate)}
-                              className="w-16 min-w-[64px] rounded-2xl object-cover"
-                            />
-                          ) : (
-                            <div className="w-16 h-24 rounded-2xl bg-foreground/5" />
-                          )}
-                          <div className="min-w-0">
+                          <div className="flex w-16 min-w-[64px] flex-col items-center">
+                            {candidate.poster_path ? (
+                              <img
+                                src={getPosterUrl(candidate.poster_path, "w185")}
+                                alt={getDisplayTitle(candidate)}
+                                className="w-16 h-24 rounded-2xl object-cover"
+                              />
+                            ) : (
+                              <div className="w-16 h-24 rounded-2xl bg-foreground/5" />
+                            )}
+
+                            {candidateScore != null && (
+                              <div className="mt-2 w-full rounded-2xl bg-background/90 px-2 py-1 text-center text-[10px] font-semibold text-primary border border-primary/10 shadow-sm">
+                                Adhésion {candidateScore}%
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="min-w-0 flex-1">
                             <div className="flex items-center gap-2">
                               <p className="text-sm font-semibold text-foreground truncate">
                                 {getDisplayTitle(candidate)}
                               </p>
-                              {candidateScore != null && (
-                                <span className="inline-flex rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary">
-                                  {candidateScore}%
-                                </span>
-                              )}
                             </div>
-                            <p className="text-[11px] leading-snug text-foreground/70 line-clamp-4 mt-2">
-                              {getRecommendationTeaser(candidateMatchData) || "Un teaser Pick pour découvrir pourquoi cette proposition te parle."}
+
+                            <p className="mt-2 text-[11px] leading-snug text-foreground/70 line-clamp-4">
+                              {getRecommendationTeaser(candidateMatchData) ||
+                                "Un teaser Pick pour découvrir pourquoi cette proposition te parle."}
                             </p>
                           </div>
                         </div>
@@ -942,7 +951,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
                     } disabled:opacity-50`}
                   >
                     {refining ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
-                  {displayedTotal} autre{displayedTotal > 1 ? "s" : ""} suggestion{displayedTotal > 1 ? "s" : ""}
+                    {displayedTotal} autre{displayedTotal > 1 ? "s" : ""} suggestion{displayedTotal > 1 ? "s" : ""}
                   </button>
                   {!allVisited && (
                     <div className="pointer-events-none absolute left-1/2 -translate-x-1/2 bottom-full mb-2 hidden group-hover:block whitespace-nowrap rounded-lg bg-background/95 border border-border/20 px-2.5 py-1.5 shadow-xl">
