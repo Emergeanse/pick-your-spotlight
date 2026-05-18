@@ -207,7 +207,7 @@ const RecommendationMovieCard = ({
           className={`max-w-xl ${onOpenDetails ? "cursor-pointer" : ""}`}
           onClick={onOpenDetails}
         >
-          <RecommendationMovieCardHeader movie={movie} onOpenDetails={onOpenDetails} />
+          <RecommendationMovieCardHeader movie={movie} onOpenDetails={onOpenDetails} matchScore={matchScore} />
 
           <p className="text-sm md:text-base text-foreground/78 leading-relaxed font-sans line-clamp-3 mb-5">
             {overview}
