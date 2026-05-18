@@ -850,17 +850,6 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
     );
   })}
 </div>
-
-                            <p className="mt-2 text-[11px] leading-snug text-foreground/70 line-clamp-4">
-                              {getRecommendationTeaser(candidateMatchData) ||
-                                "Un teaser Pick pour découvrir pourquoi cette proposition te parle."}
-                            </p>
-                          </div>
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
               </div>
             )}
 
