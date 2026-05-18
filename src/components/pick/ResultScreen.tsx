@@ -680,7 +680,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
               tmdbId: movie.id,
               title,
               source: sessionId ? "session" : "browse",
-              scoreBreakdown: { match: cached.matchScore ?? cached.score ?? 0 },
+              scoreBreakdown: { match: getRecommendationScore(cached) ?? 0 },
               context: { sessionId: sessionId ?? null },
             }).catch(() => {});
           }
@@ -700,7 +700,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
               tmdbId: movie.id,
               title,
               source: sessionId ? "session" : "browse",
-              scoreBreakdown: { match: data.matchScore ?? data.score ?? 0 },
+              scoreBreakdown: { match: getRecommendationScore(data) ?? 0 },
               context: { sessionId: sessionId ?? null },
             }).catch(() => {});
           }
@@ -764,7 +764,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
             <RecommendationMovieCardHeader
               movie={movie}
               onOpenDetails={() => setMovieDetailOpen(true)}
-              matchScore={currentRecommendationText?.matchScore ?? currentRecommendationText?.score ?? null}
+              matchScore={getRecommendationScore(currentRecommendationText)}
             />
 
             {overview && (
@@ -813,10 +813,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
       candidate.recommendationTexts ??
       null;
 
-    const candidateScore =
-      candidateMatchData?.matchScore ??
-      candidateMatchData?.score ??
-      null;
+    const candidateScore = getRecommendationScore(candidateMatchData);
 
     return (
       <button
