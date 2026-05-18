@@ -187,7 +187,8 @@ async function hydrateMissingPosters(
   const seen = new Map<string, { mediaType: "movie" | "tv"; tmdbId: number }>();
   for (const { items } of groups) {
     for (const it of items) {
-      if (it && !it.poster_path && it.tmdb_id) {
+      // Collect entries missing poster or having a placeholder/invalid title
+      if (it && ( !it.poster_path || !it.title || /^TMDB #\d+$/.test(String(it.title)) ) && it.tmdb_id) {
         const mt = (it.media_type || (it.first_air_date ? "tv" : "movie")) as "movie" | "tv";
         seen.set(`${it.tmdb_id}:${mt}`, { mediaType: mt, tmdbId: it.tmdb_id });
       }
@@ -196,13 +197,16 @@ async function hydrateMissingPosters(
   if (seen.size === 0) return;
 
   const resolved = new Map<string, string | null>();
+  const resolvedTitle = new Map<string, string | null>();
   await Promise.all(
     Array.from(seen.values()).map(async ({ tmdbId, mediaType }) => {
       try {
         const detail = await getMovieDetails(tmdbId, mediaType);
         resolved.set(`${tmdbId}:${mediaType}`, detail?.poster_path ?? null);
+        resolvedTitle.set(`${tmdbId}:${mediaType}`, detail?.title || (detail as any).name || null);
       } catch {
         resolved.set(`${tmdbId}:${mediaType}`, null);
+        resolvedTitle.set(`${tmdbId}:${mediaType}`, null);
       }
     }),
   );
@@ -215,7 +219,18 @@ async function hydrateMissingPosters(
         const p = resolved.get(`${it.tmdb_id}:${mt}`);
         if (p) {
           changed = true;
-          return { ...it, poster_path: p };
+          // Also hydrate title if it was missing or a TMDB placeholder
+          const t = resolvedTitle.get(`${it.tmdb_id}:${mt}`) ?? it.title;
+          return { ...it, poster_path: p, title: t || it.title };
+        }
+      }
+      // If poster was present but title was a placeholder, still replace title
+      if (it && it.tmdb_id && (!it.title || /^TMDB #\d+$/.test(String(it.title)))) {
+        const mt = it.media_type || (it.first_air_date ? "tv" : "movie");
+        const t = resolvedTitle.get(`${it.tmdb_id}:${mt}`);
+        if (t) {
+          changed = true;
+          return { ...it, title: t };
         }
       }
       return it;
@@ -231,9 +246,12 @@ async function hydrateMissingPosters(
         .filter(([, p]) => !!p)
         .map(([key, p]) => {
           const [tmdbIdStr, mt] = key.split(":");
+          const title = resolvedTitle.get(key);
+          const updates: Record<string, unknown> = { poster_path: p };
+          if (title) updates.title = title;
           return supabase
             .from("catalog_items")
-            .update({ poster_path: p })
+            .update(updates)
             .eq("tmdb_id", Number(tmdbIdStr))
             .eq("media_type", mt)
             .is("poster_path", null);

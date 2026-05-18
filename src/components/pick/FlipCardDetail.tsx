@@ -287,7 +287,7 @@ const MovieDetailContent = ({
 
               {headline && <p className="text-foreground/80 text-[13px] font-sans font-semibold mb-1">{headline}</p>}
 
-              {summary && <p className="text-foreground/70 text-sm leading-relaxed mb-2">{summary}</p>}
+              {/* teaser/short summary moved to vignette — avoid duplicating it here */}
 
               {reasons.length > 0 && (
                 <div className="flex flex-wrap gap-1.5 mb-2">
@@ -304,7 +304,7 @@ const MovieDetailContent = ({
 
               {perfectFor && <p className="text-foreground/50 text-[11px] font-sans italic mb-1">{perfectFor}</p>}
 
-              {pickNote && <p className="text-primary/70 text-[12px] font-sans italic mb-1">{pickNote}</p>}
+              {/* pickNote shown under vignette only; omit here to avoid duplication */}
 
               {funFact && (
                 <p className="text-foreground/40 text-[11px] font-sans mt-2 leading-snug">
