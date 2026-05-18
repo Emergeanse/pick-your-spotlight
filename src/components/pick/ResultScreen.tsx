@@ -850,6 +850,20 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
               {getRecommendationTeaser(candidateMatchData) ||
                 "Un teaser Pick pour découvrir pourquoi cette proposition te parle."}
             </p>
+
+            {candidate.watchProviders && candidate.watchProviders.length > 0 && (
+              <div className="mt-2 flex flex-wrap gap-1">
+                {candidate.watchProviders.slice(0, 4).map((p) => (
+                  <img
+                    key={p.provider_id}
+                    src={`${IMG_BASE}/w92${p.logo_path}`}
+                    alt={p.name}
+                    title={p.name}
+                    className="w-4 h-4 rounded object-contain"
+                  />
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </button>
