@@ -439,22 +439,22 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
       return source.filter((candidate) => candidate?.id && candidate.id !== movie.id).slice(0, 5);
     }, [recommendationBatch, movie, alternativeMovies]);
 
-    const getRecommendationTeaser = (candidate: RecommendationMovieDetail) => {
-      const text =
-        candidate.recommendationTexts?.headline ||
-        candidate.recommendationTexts?.whyItMatches ||
-        candidate.recommendationTexts?.summary ||
-        candidate.recommendationTexts?.detailedExplanation ||
-        candidate.recommendationTexts?.perfectFor ||
-        candidate.recommendationTexts?.pickNote ||
-        "";
-      return text;
+    const getRecommendationTeaser = (matchData: MatchData | null) => {
+      if (!matchData) return "";
+      return (
+        matchData.summary ||
+        matchData.detailedExplanation ||
+        matchData.pickNote ||
+        matchData.whyItMatches ||
+        matchData.headline ||
+        (matchData.reasons && matchData.reasons.length > 0 ? matchData.reasons[0] : "") ||
+        (matchData.matchingReasons && matchData.matchingReasons.length > 0 ? matchData.matchingReasons[0] : "") ||
+        ""
+      );
     };
 
     const currentRecommendationText = prefetchedMatchData[movie.id] ?? matchData ?? movie.recommendationTexts ?? null;
-    const currentRecommendationTeaser = currentRecommendationText
-      ? getRecommendationTeaser({ ...movie, recommendationTexts: currentRecommendationText })
-      : "";
+    const currentRecommendationTeaser = getRecommendationTeaser(currentRecommendationText);
 
     useEffect(() => {
       const initialTextData: Record<number, MatchData> = {};
