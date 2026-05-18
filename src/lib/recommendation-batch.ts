@@ -17,6 +17,7 @@ export type WatchProviderSummary = {
 export type RecommendationMatchData = {
   matchScore?: number;
   score?: number;
+  confidence?: number;
   headline?: string;
   whyItMatches?: string;
   detailedExplanation?: string;
@@ -24,11 +25,29 @@ export type RecommendationMatchData = {
   perfectFor?: string;
   funFact?: string;
   summary?: string;
+  reason?: string;
   reasons?: string[];
   tone?: string;
   matchingReasons?: string[];
   pickNote?: string | null;
 };
+
+const normalizeRecommendationTexts = (data: RecommendationMatchData): RecommendationMatchData => {
+  const score = data.matchScore ?? data.score ?? data.confidence;
+  const reason = data.summary ?? data.detailedExplanation ?? data.whyItMatches ?? data.reason ?? data.pickNote ?? null;
+
+  return {
+    ...data,
+    matchScore: score,
+    score,
+    whyItMatches: data.whyItMatches ?? data.reason,
+    summary: data.summary ?? reason ?? undefined,
+    pickNote: data.pickNote ?? reason,
+  };
+};
+
+const hasRecommendationScore = (data: RecommendationMatchData | null | undefined) =>
+  data?.matchScore != null || data?.score != null || data?.confidence != null;
 
 export type RecommendationMovieDetail = MovieDetail & {
   recommendationTexts?: RecommendationMatchData | null;
@@ -56,25 +75,27 @@ const extractInlineRecommendationTexts = (entry: any): RecommendationMatchData |
   if (!entry || typeof entry !== "object") return null;
 
   const direct = entry.recommendationTexts || entry.matchData || entry.match_data || null;
-  if (direct) return direct as RecommendationMatchData;
+  if (direct) return normalizeRecommendationTexts(direct as RecommendationMatchData);
 
   const candidate: RecommendationMatchData = {
-    matchScore: entry.matchScore,
-    score: entry.score,
+    matchScore: entry.matchScore ?? entry.confidence,
+    score: entry.score ?? entry.confidence,
+    confidence: entry.confidence,
     headline: entry.headline,
-    whyItMatches: entry.whyItMatches,
+    whyItMatches: entry.whyItMatches ?? entry.reason,
     detailedExplanation: entry.detailedExplanation,
     emotionalJourney: entry.emotionalJourney,
     perfectFor: entry.perfectFor,
     funFact: entry.funFact,
-    summary: entry.summary,
+    summary: entry.summary ?? entry.reason,
+    reason: entry.reason,
     reasons: entry.reasons,
     tone: entry.tone,
     matchingReasons: entry.matchingReasons,
-    pickNote: entry.pickNote,
+    pickNote: entry.pickNote ?? entry.reason,
   };
 
-  return Object.values(candidate).some((value) => value != null) ? candidate : null;
+  return Object.values(candidate).some((value) => value != null) ? normalizeRecommendationTexts(candidate) : null;
 };
 
 const dedupeMovies = (movies: RecommendationMovieDetail[]) => {
@@ -189,7 +210,7 @@ export async function enrichRecommendationBatchWithTexts(
   movies: RecommendationMovieDetail[],
   options: RecommendationBatchOptions = {},
 ): Promise<RecommendationMovieDetail[]> {
-  const moviesNeedingTexts = movies.filter((movie) => !movie.recommendationTexts);
+  const moviesNeedingTexts = movies.filter((movie) => !hasRecommendationScore(movie.recommendationTexts));
   if (!moviesNeedingTexts.length) return movies;
 
   const context = await buildMatchContext(options);
@@ -205,7 +226,7 @@ export async function enrichRecommendationBatchWithTexts(
   );
 
   return movies.map((movie) => {
-    if (movie.recommendationTexts) return movie;
+    if (hasRecommendationScore(movie.recommendationTexts)) return movie;
     const recommendationTexts = byId.get(movie.id) ?? null;
     return recommendationTexts ? { ...movie, recommendationTexts } : movie;
   });

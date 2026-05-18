@@ -59,6 +59,7 @@ const CONFIDENCE_THRESHOLD = 30;
 interface MatchData {
   matchScore?: number;
   score?: number;
+  confidence?: number;
   headline?: string;
   whyItMatches?: string;
   detailedExplanation?: string;
@@ -66,6 +67,7 @@ interface MatchData {
   perfectFor?: string;
   funFact?: string;
   summary?: string;
+  reason?: string;
   reasons?: string[];
   tone?: string;
   matchingReasons?: string[];
@@ -93,8 +95,8 @@ const ActorCard = ({ actor, onClick }: { actor: CastMember; onClick?: () => void
 );
 
 const MatchAnalysis = ({ matchData, mediaType }: { matchData: MatchData; mediaType: string; movieId: number }) => {
-  const score = matchData.matchScore ?? matchData.score;
-  const summary = matchData.detailedExplanation || matchData.whyItMatches || matchData.summary;
+  const score = matchData.matchScore ?? matchData.score ?? matchData.confidence;
+  const summary = matchData.detailedExplanation || matchData.whyItMatches || matchData.summary || matchData.reason;
   const headline = matchData.headline;
   const reasons = matchData.matchingReasons || matchData.reasons;
   const funFact = matchData.funFact;
@@ -454,6 +456,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
         matchData.detailedExplanation ||
         matchData.pickNote ||
         matchData.whyItMatches ||
+        matchData.reason ||
         matchData.headline ||
         (matchData.reasons && matchData.reasons.length > 0 ? matchData.reasons[0] : "") ||
         (matchData.matchingReasons && matchData.matchingReasons.length > 0 ? matchData.matchingReasons[0] : "") ||
@@ -461,9 +464,9 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
       return truncateTeaser(raw, 100);
     };
 
+    const getRecommendationScore = (data: MatchData | null | undefined) => data?.matchScore ?? data?.score ?? data?.confidence ?? null;
+
     const currentRecommendationText =
-      prefetchedMatchData[movie.id] ??
-      matchData ??
       movie.recommendationTexts ??
       (recommendationBatch && recommendationBatch.find((m) => m.id === movie.id && m.recommendationTexts)
         ? (recommendationBatch.find((m) => m.id === movie.id && m.recommendationTexts) as any).recommendationTexts
@@ -471,6 +474,8 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
       (alternativeMovies && alternativeMovies.find((m) => m.id === movie.id && m.recommendationTexts)
         ? (alternativeMovies.find((m) => m.id === movie.id && m.recommendationTexts) as any).recommendationTexts
         : null) ??
+      prefetchedMatchData[movie.id] ??
+      matchData ??
       null;
 
     useEffect(() => {
@@ -675,7 +680,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
               tmdbId: movie.id,
               title,
               source: sessionId ? "session" : "browse",
-              scoreBreakdown: { match: cached.matchScore ?? cached.score ?? 0 },
+              scoreBreakdown: { match: getRecommendationScore(cached) ?? 0 },
               context: { sessionId: sessionId ?? null },
             }).catch(() => {});
           }
@@ -695,7 +700,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
               tmdbId: movie.id,
               title,
               source: sessionId ? "session" : "browse",
-              scoreBreakdown: { match: data.matchScore ?? data.score ?? 0 },
+              scoreBreakdown: { match: getRecommendationScore(data) ?? 0 },
               context: { sessionId: sessionId ?? null },
             }).catch(() => {});
           }
@@ -759,7 +764,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
             <RecommendationMovieCardHeader
               movie={movie}
               onOpenDetails={() => setMovieDetailOpen(true)}
-              matchScore={currentRecommendationText?.matchScore ?? currentRecommendationText?.score ?? null}
+              matchScore={getRecommendationScore(currentRecommendationText)}
             />
 
             {overview && (
@@ -808,10 +813,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
       candidate.recommendationTexts ??
       null;
 
-    const candidateScore =
-      candidateMatchData?.matchScore ??
-      candidateMatchData?.score ??
-      null;
+    const candidateScore = getRecommendationScore(candidateMatchData);
 
     return (
       <button
