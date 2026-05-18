@@ -20,6 +20,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { recordAcceptedRecommendation, recordSkippedRecommendation } from "@/lib/engagement";
 import type { MovieDetail } from "@/lib/tmdb";
+import type { RecommendationMovieDetail } from "@/lib/recommendation-batch";
 import { getDisplayTitle } from "@/lib/tmdb";
 import { trackInteraction, getUserTasteProfile } from "@/lib/interactions";
 import { usePickPlus } from "@/hooks/use-pick-plus";
@@ -40,7 +41,7 @@ type Step = "home" | "result";
 const Index = () => {
   usePresenceTracker();
   const [step, setStep] = useState<Step>("home");
-  const [results, setResults] = useState<MovieDetail[]>([]);
+  const [results, setResults] = useState<RecommendationMovieDetail[]>([]);
   const [loading, setLoading] = useState(false);
   const [currentResultIndex, setCurrentResultIndex] = useState(0);
   const [resultIndexHistory, setResultIndexHistory] = useState<number[]>([]);
@@ -108,7 +109,7 @@ const Index = () => {
   };
 
   const normalizeRecommendationBatch = useCallback(
-    (movies: MovieDetail[], excludeIds: number[] = [], size = profilePrefs.recommendationBatchSize) =>
+    (movies: RecommendationMovieDetail[], excludeIds: number[] = [], size = profilePrefs.recommendationBatchSize) =>
       ensureRecommendationBatch(movies, {
         excludeIds,
         platformIds: profilePrefs.preferredPlatforms,
@@ -117,6 +118,8 @@ const Index = () => {
         searchTags,
         userCriteria: { mood: null, context: null, time: null },
         size,
+        preloadMatchTexts: true,
+        preloadProviders: true,
       }),
     [
       profilePrefs.excludedGenres,
