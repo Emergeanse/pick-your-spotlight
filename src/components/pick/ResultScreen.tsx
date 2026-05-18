@@ -456,6 +456,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
         matchData.detailedExplanation ||
         matchData.pickNote ||
         matchData.whyItMatches ||
+        matchData.reason ||
         matchData.headline ||
         (matchData.reasons && matchData.reasons.length > 0 ? matchData.reasons[0] : "") ||
         (matchData.matchingReasons && matchData.matchingReasons.length > 0 ? matchData.matchingReasons[0] : "") ||
@@ -463,9 +464,9 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
       return truncateTeaser(raw, 100);
     };
 
+    const getRecommendationScore = (data: MatchData | null | undefined) => data?.matchScore ?? data?.score ?? data?.confidence ?? null;
+
     const currentRecommendationText =
-      prefetchedMatchData[movie.id] ??
-      matchData ??
       movie.recommendationTexts ??
       (recommendationBatch && recommendationBatch.find((m) => m.id === movie.id && m.recommendationTexts)
         ? (recommendationBatch.find((m) => m.id === movie.id && m.recommendationTexts) as any).recommendationTexts
@@ -473,6 +474,8 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
       (alternativeMovies && alternativeMovies.find((m) => m.id === movie.id && m.recommendationTexts)
         ? (alternativeMovies.find((m) => m.id === movie.id && m.recommendationTexts) as any).recommendationTexts
         : null) ??
+      prefetchedMatchData[movie.id] ??
+      matchData ??
       null;
 
     useEffect(() => {
