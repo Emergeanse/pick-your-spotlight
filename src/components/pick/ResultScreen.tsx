@@ -469,7 +469,6 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
         ? (alternativeMovies.find((m) => m.id === movie.id && m.recommendationTexts) as any).recommendationTexts
         : null) ??
       null;
-    const currentRecommendationTeaser = getRecommendationTeaser(currentRecommendationText);
 
     useEffect(() => {
       const initialTextData: Record<number, MatchData> = {};
@@ -754,6 +753,21 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
               matchScore={currentRecommendationText?.matchScore ?? currentRecommendationText?.score ?? null}
             />
 
+            {overview && (
+              <div className="mb-4 max-w-xl">
+                <button
+                  onClick={() => setSynopsisExpanded((v) => !v)}
+                  className="flex items-center gap-2 text-[10px] uppercase tracking-widest text-foreground/30 font-sans font-semibold mb-2"
+                >
+                  Synopsis
+                  {synopsisExpanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                </button>
+                <p className={`text-sm text-foreground/72 leading-relaxed ${synopsisExpanded ? "" : "line-clamp-4"}`}>
+                  {overview}
+                </p>
+              </div>
+            )}
+
             {matchLoading ? (
               <div className="mb-5 flex items-center gap-2 text-foreground/40 text-sm font-sans">
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -761,11 +775,6 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
               </div>
             ) : currentRecommendationText ? (
               <>
-                {currentRecommendationTeaser && (
-                  <div className="mb-4 rounded-3xl border border-white/10 bg-background/70 p-4 text-sm leading-6 text-foreground/80 shadow-lg">
-                    <p className="line-clamp-3">{currentRecommendationTeaser}</p>
-                  </div>
-                )}
                 <MatchAnalysis matchData={currentRecommendationText} mediaType={mediaType} movieId={movie.id} />
               </>
             ) : null}
@@ -831,21 +840,6 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
             )}
 
             <StreamingSection streamingLinks={streamingLinks} />
-
-            {overview && (
-              <div className="mb-4 max-w-xl">
-                <button
-                  onClick={() => setSynopsisExpanded((v) => !v)}
-                  className="flex items-center gap-2 text-[10px] uppercase tracking-widest text-foreground/30 font-sans font-semibold mb-2"
-                >
-                  Synopsis
-                  {synopsisExpanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-                </button>
-                <p className={`text-sm text-foreground/72 leading-relaxed ${synopsisExpanded ? "" : "line-clamp-4"}`}>
-                  {overview}
-                </p>
-              </div>
-            )}
 
             {cast.length > 0 && (
               <div className="mb-4">
