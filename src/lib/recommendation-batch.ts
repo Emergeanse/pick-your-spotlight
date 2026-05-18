@@ -211,6 +211,28 @@ export async function enrichRecommendationBatchWithTexts(
   });
 }
 
+export async function enrichRecommendationBatchWithProviders(
+  movies: RecommendationMovieDetail[],
+): Promise<RecommendationMovieDetail[]> {
+  const needs = movies.filter((m) => !m.watchProviders);
+  if (!needs.length) return movies;
+
+  const results = await Promise.all(
+    needs.map(async (m) => {
+      const mediaType = m.first_air_date ? "tv" : "movie";
+      try {
+        const providers = await getWatchProviders(m.id, mediaType);
+        return { id: m.id, providers: providers as WatchProviderSummary[] };
+      } catch {
+        return { id: m.id, providers: [] as WatchProviderSummary[] };
+      }
+    }),
+  );
+
+  const byId = new Map<number, WatchProviderSummary[]>(results.map((r) => [r.id, r.providers]));
+  return movies.map((m) => (m.watchProviders ? m : { ...m, watchProviders: byId.get(m.id) ?? [] }));
+}
+
 export async function ensureRecommendationBatch(
   initialMovies: RecommendationMovieDetail[],
   options: RecommendationBatchOptions = {},
@@ -240,11 +262,16 @@ export async function ensureRecommendationBatch(
     }
   }
 
-  const finalBatch = dedupeMovies(batch).slice(0, size);
+  let finalBatch = dedupeMovies(batch).slice(0, size);
 
   if (options.preloadMatchTexts) {
-    return enrichRecommendationBatchWithTexts(finalBatch, options);
+    finalBatch = await enrichRecommendationBatchWithTexts(finalBatch, options);
+  }
+
+  if (options.preloadProviders) {
+    finalBatch = await enrichRecommendationBatchWithProviders(finalBatch);
   }
 
   return finalBatch;
 }
+
