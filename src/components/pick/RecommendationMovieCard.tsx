@@ -34,10 +34,7 @@ export const RecommendationMovieCardHeader = ({
   const mediaLabel = isDocumentary ? "Documentaire" : mediaType === "tv" ? "Série" : "Film";
   const seasons = (movie as any).number_of_seasons;
   const score =
-    matchScore ??
-    (movie as any).recommendationTexts?.matchScore ??
-    (movie as any).recommendationTexts?.score ??
-    null;
+    matchScore ?? (movie as any).recommendationTexts?.matchScore ?? (movie as any).recommendationTexts?.score ?? null;
 
   const PosterEl = (
     <>
@@ -158,6 +155,7 @@ export interface RecommendationMovieCardProps {
   onPrimaryAction?: () => void;
   primaryActionLabel?: string;
   className?: string;
+  matchScore?: number | null;
 }
 
 const RecommendationMovieCard = ({
