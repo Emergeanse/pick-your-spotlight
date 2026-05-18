@@ -521,15 +521,21 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
     }, [movie.id]);
 
     useEffect(() => {
-      getWatchProviders(movie.id, mediaType)
-        .then((p) => {
-          setProviders(p);
-          setStreamingLinks(buildStreamingLinks(p, title));
-        })
-        .catch(() => {
-          setProviders([]);
-          setStreamingLinks([]);
-        });
+      const cached = (movie as any).watchProviders as typeof providers | undefined;
+      if (cached && Array.isArray(cached)) {
+        setProviders(cached);
+        setStreamingLinks(buildStreamingLinks(cached, title));
+      } else {
+        getWatchProviders(movie.id, mediaType)
+          .then((p) => {
+            setProviders(p);
+            setStreamingLinks(buildStreamingLinks(p, title));
+          })
+          .catch(() => {
+            setProviders([]);
+            setStreamingLinks([]);
+          });
+      }
 
       getMovieTrailerUrl(movie.id, mediaType)
         .then(setTrailerUrl)
