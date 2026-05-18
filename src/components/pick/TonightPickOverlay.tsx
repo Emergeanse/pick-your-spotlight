@@ -1,20 +1,7 @@
 import { motion, AnimatePresence } from "framer-motion";
-import {
-  ChevronLeft,
-  ChevronRight,
-  Dices,
-  Loader2,
-  Sparkles,
-  Target,
-  Tv,
-} from "lucide-react";
+import { ChevronLeft, ChevronRight, Dices, Loader2, Sparkles, Target, Tv } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  getBackdropUrl,
-  getDisplayTitle,
-  getPosterUrl,
-  type MovieDetail,
-} from "@/lib/tmdb";
+import { getBackdropUrl, getDisplayTitle, getPosterUrl, type MovieDetail } from "@/lib/tmdb";
 import { getTonightPickLabel } from "@/lib/time-context";
 import { useMovieInteraction } from "@/hooks/use-movie-interactions";
 import MovieActionBar from "./MovieActionBar";
@@ -80,10 +67,7 @@ const TonightPickOverlay = ({
           <div
             className="absolute inset-0 bg-cover bg-center bg-no-repeat"
             style={{
-              backgroundImage: `url(${
-                getBackdropUrl(movie.backdrop_path) ||
-                getPosterUrl(movie.poster_path, "w780")
-              })`,
+              backgroundImage: `url(${getBackdropUrl(movie.backdrop_path) || getPosterUrl(movie.poster_path, "w780")})`,
             }}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-background via-background/85 to-background/50" />
@@ -106,9 +90,7 @@ const TonightPickOverlay = ({
             >
               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/15 border border-primary/25 mb-3">
                 <Sparkles className="w-3 h-3 text-primary" />
-                <span className="text-primary text-[11px] font-sans font-semibold">
-                  {getTonightPickLabel()}
-                </span>
+                <span className="text-primary text-[11px] font-sans font-semibold">{getTonightPickLabel()}</span>
               </div>
 
               {movie.poster_path && (
@@ -134,11 +116,7 @@ const TonightPickOverlay = ({
 
                   {interaction.hasInteraction && (
                     <div className="absolute top-2 left-14 md:left-16">
-                      <FeedbackBadge
-                        type={interaction.primaryStatus}
-                        inWatchlist={interaction.watchlist}
-                        size="sm"
-                      />
+                      <FeedbackBadge type={interaction.primaryStatus} inWatchlist={interaction.watchlist} size="sm" />
                     </div>
                   )}
 
@@ -156,9 +134,7 @@ const TonightPickOverlay = ({
                 {tonightPickIndex + 1} / {displayCount}
               </p>
 
-              <h2 className="text-lg md:text-xl font-serif text-foreground mb-0.5">
-                {getDisplayTitle(movie)}
-              </h2>
+              <h2 className="text-lg md:text-xl font-serif text-foreground mb-0.5">{getDisplayTitle(movie)}</h2>
 
               {movie.genres && (
                 <p className="text-primary/60 text-[10px] tracking-[0.12em] uppercase font-sans font-medium mb-2">
@@ -168,9 +144,7 @@ const TonightPickOverlay = ({
 
               {tonightProviders.length > 0 && (
                 <div className="flex items-center gap-2 mb-3">
-                  <span className="text-foreground/30 text-[10px] font-sans">
-                    Dispo sur
-                  </span>
+                  <span className="text-foreground/30 text-[10px] font-sans">Dispo sur</span>
                   <div className="flex gap-1.5">
                     {tonightProviders.map((p) => (
                       <img
@@ -188,19 +162,25 @@ const TonightPickOverlay = ({
                 const recFromMovie: any = (movie as any).recommendationTexts || null;
                 const recFromPool =
                   (tonightPool || []).find((m) => m?.id === movie.id && (m as any).recommendationTexts) || null;
-                const rec: any = recFromMovie || (recFromPool ? (recFromPool as any).recommendationTexts : null) || null;
+                const rec: any =
+                  recFromMovie || (recFromPool ? (recFromPool as any).recommendationTexts : null) || null;
                 const teaser =
-                  rec?.summary || rec?.detailedExplanation || rec?.pickNote || rec?.whyItMatches || rec?.headline ||
-                  matchInfo?.reason || null;
+                  rec?.summary ||
+                  rec?.detailedExplanation ||
+                  rec?.pickNote ||
+                  rec?.whyItMatches ||
+                  rec?.headline ||
+                  matchInfo?.reason ||
+                  null;
 
                 if (matchInfo?.confidence || teaser) {
                   return (
                     <div className="flex flex-col items-center gap-1.5 mb-3">
-                      {matchInfo?.confidence && (
+                      {adhesionScore != null && (
                         <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 border border-primary/20">
                           <Target className="w-3 h-3 text-primary/70" />
                           <span className="text-primary/90 text-[12px] font-sans font-semibold">
-                            {matchInfo.confidence}% match
+                            {adhesionScore}% d’adhésion
                           </span>
                         </div>
                       )}
@@ -215,11 +195,7 @@ const TonightPickOverlay = ({
 
                 return (
                   <p className="text-foreground/40 text-[12px] font-sans italic mb-3">
-                    Pick pense que{" "}
-                    {movie.first_air_date
-                      ? "cette série est parfaite"
-                      : "ce film est parfait"}{" "}
-                    pour toi.
+                    Pick pense que {movie.first_air_date ? "cette série est parfaite" : "ce film est parfait"} pour toi.
                   </p>
                 );
               })()}
@@ -234,11 +210,7 @@ const TonightPickOverlay = ({
                   On regarde ?
                 </Button>
 
-                <MovieActionBar
-                  key={movie.id}
-                  movie={movie}
-                  onInteraction={onInteraction}
-                />
+                <MovieActionBar key={movie.id} movie={movie} onInteraction={onInteraction} />
 
                 <div className="flex flex-col items-center gap-1.5 mt-2">
                   <button
@@ -250,18 +222,13 @@ const TonightPickOverlay = ({
                         : "text-foreground/20 cursor-not-allowed"
                     } disabled:opacity-50`}
                   >
-                    {tonightLoading ? (
-                      <Loader2 className="w-3 h-3 animate-spin" />
-                    ) : (
-                      <Dices className="w-3 h-3" />
-                    )}
+                    {tonightLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Dices className="w-3 h-3" />}
                     {displayCount} autre{displayCount > 1 ? "s" : ""} suggestion{displayCount > 1 ? "s" : ""}
                   </button>
 
                   {!tonightAllVisited && tonightPool.length > 0 && (
                     <p className="text-foreground/25 text-[10px] font-sans text-center">
-                      Parcourez les {displayCount} films pour débloquer (
-                      {tonightSeenMovieIds.size}/{displayCount})
+                      Parcourez les {displayCount} films pour débloquer ({tonightSeenMovieIds.size}/{displayCount})
                     </p>
                   )}
                 </div>
