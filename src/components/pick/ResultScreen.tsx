@@ -453,7 +453,17 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
       );
     };
 
-    const currentRecommendationText = prefetchedMatchData[movie.id] ?? matchData ?? movie.recommendationTexts ?? null;
+    const currentRecommendationText =
+      prefetchedMatchData[movie.id] ??
+      matchData ??
+      movie.recommendationTexts ??
+      (recommendationBatch && recommendationBatch.find((m) => m.id === movie.id && m.recommendationTexts)
+        ? (recommendationBatch.find((m) => m.id === movie.id && m.recommendationTexts) as any).recommendationTexts
+        : null) ??
+      (alternativeMovies && alternativeMovies.find((m) => m.id === movie.id && m.recommendationTexts)
+        ? (alternativeMovies.find((m) => m.id === movie.id && m.recommendationTexts) as any).recommendationTexts
+        : null) ??
+      null;
     const currentRecommendationTeaser = getRecommendationTeaser(currentRecommendationText);
 
     useEffect(() => {

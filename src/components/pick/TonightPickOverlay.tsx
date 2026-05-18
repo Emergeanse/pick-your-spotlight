@@ -184,29 +184,45 @@ const TonightPickOverlay = ({
                 </div>
               )}
 
-              {matchInfo?.confidence ? (
-                <div className="flex flex-col items-center gap-1.5 mb-3">
-                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 border border-primary/20">
-                    <Target className="w-3 h-3 text-primary/70" />
-                    <span className="text-primary/90 text-[12px] font-sans font-semibold">
-                      {matchInfo.confidence}% match
-                    </span>
-                  </div>
-                  {matchInfo.reason && (
-                    <p className="text-foreground/50 text-[11px] font-sans text-center leading-snug max-w-[260px]">
-                      {matchInfo.reason}
-                    </p>
-                  )}
-                </div>
-              ) : (
-                <p className="text-foreground/40 text-[12px] font-sans italic mb-3">
-                  Pick pense que{" "}
-                  {movie.first_air_date
-                    ? "cette série est parfaite"
-                    : "ce film est parfait"}{" "}
-                  pour toi.
-                </p>
-              )}
+              {(() => {
+                const recFromMovie: any = (movie as any).recommendationTexts || null;
+                const recFromPool =
+                  (tonightPool || []).find((m) => m?.id === movie.id && (m as any).recommendationTexts) || null;
+                const rec: any = recFromMovie || (recFromPool ? (recFromPool as any).recommendationTexts : null) || null;
+                const teaser =
+                  rec?.summary || rec?.detailedExplanation || rec?.pickNote || rec?.whyItMatches || rec?.headline ||
+                  matchInfo?.reason || null;
+
+                if (matchInfo?.confidence || teaser) {
+                  return (
+                    <div className="flex flex-col items-center gap-1.5 mb-3">
+                      {matchInfo?.confidence && (
+                        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 border border-primary/20">
+                          <Target className="w-3 h-3 text-primary/70" />
+                          <span className="text-primary/90 text-[12px] font-sans font-semibold">
+                            {matchInfo.confidence}% match
+                          </span>
+                        </div>
+                      )}
+                      {teaser && (
+                        <p className="text-foreground/50 text-[11px] font-sans text-center leading-snug max-w-[260px]">
+                          {teaser}
+                        </p>
+                      )}
+                    </div>
+                  );
+                }
+
+                return (
+                  <p className="text-foreground/40 text-[12px] font-sans italic mb-3">
+                    Pick pense que{" "}
+                    {movie.first_air_date
+                      ? "cette série est parfaite"
+                      : "ce film est parfait"}{" "}
+                    pour toi.
+                  </p>
+                );
+              })()}
 
               <div className="flex flex-col items-center gap-4 w-full">
                 <Button
