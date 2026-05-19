@@ -74,9 +74,11 @@ const FlipCardDetail = ({
     setDetail(null);
 
     if (currentType === "movie") {
-      fetch(
-        `https://api.themoviedb.org/3/movie/${currentItem.id}?api_key=${TMDB_API_KEY}&language=fr-FR&append_to_response=credits`,
-      )
+      const isTV = !!currentItem.first_air_date;
+      const endpoint = isTV
+        ? `https://api.themoviedb.org/3/tv/${currentItem.id}?api_key=${TMDB_API_KEY}&language=fr-FR&append_to_response=credits`
+        : `https://api.themoviedb.org/3/movie/${currentItem.id}?api_key=${TMDB_API_KEY}&language=fr-FR&append_to_response=credits`;
+      fetch(endpoint)
         .then((r) => r.json())
         .then((d) => setDetail(d))
         .finally(() => setLoading(false));
@@ -115,7 +117,10 @@ const FlipCardDetail = ({
 
   if (!isOpen || !currentItem) return null;
 
-  const director = detail?.credits?.crew?.find((c: any) => c.job === "Director");
+  const isTV = !!currentItem.first_air_date;
+  const director = isTV
+    ? (detail?.created_by?.[0] ?? detail?.credits?.crew?.find((c: any) => c.job === "Executive Producer"))
+    : detail?.credits?.crew?.find((c: any) => c.job === "Director");
   const cast = detail?.credits?.cast?.slice(0, 6) || [];
   const filmography =
     detail?.movie_credits?.cast?.slice(0, 12) ||
@@ -170,6 +175,7 @@ const FlipCardDetail = ({
                 detail={detail}
                 director={director}
                 cast={cast}
+                isTV={isTV}
                 recommendationText={currentRecommendationText}
                 onPersonClick={(person) => navigateTo(person, "person")}
               />
@@ -193,6 +199,7 @@ const MovieDetailContent = ({
   detail,
   director,
   cast,
+  isTV,
   recommendationText,
   onPersonClick,
 }: {
@@ -200,6 +207,7 @@ const MovieDetailContent = ({
   detail: any;
   director: any;
   cast: any[];
+  isTV?: boolean;
   recommendationText?: MatchData | null;
   onPersonClick: (person: any) => void;
 }) => {
@@ -237,9 +245,16 @@ const MovieDetailContent = ({
         <div className="flex-1 min-w-0">
           <h3 className="text-lg font-serif font-bold leading-tight text-foreground">{getDisplayTitle(item)}</h3>
 
-          {detail?.release_date && (
+          {(detail?.release_date || detail?.first_air_date) && (
             <p className="mt-1 text-xs text-foreground/40">
-              {detail.release_date.substring(0, 4)} • {detail?.runtime}min
+              {(detail.release_date || detail.first_air_date).substring(0, 4)}
+              {isTV
+                ? detail?.number_of_seasons
+                  ? ` • ${detail.number_of_seasons} saison${detail.number_of_seasons > 1 ? "s" : ""}`
+                  : ""
+                : detail?.runtime
+                  ? ` • ${detail.runtime}min`
+                  : ""}
             </p>
           )}
 
@@ -316,7 +331,7 @@ const MovieDetailContent = ({
         <div className="mb-4">
           <h4 className="mb-1.5 text-xs font-sans font-semibold uppercase tracking-wider text-foreground/30">
             <Clapperboard className="inline h-3 w-3 mr-1" />
-            Réalisateur
+            {isTV ? "Créateur" : "Réalisateur"}
           </h4>
           <button
             onClick={() => onPersonClick({ id: director.id, name: director.name, profile_path: director.profile_path })}

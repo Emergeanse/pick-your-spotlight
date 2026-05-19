@@ -473,6 +473,7 @@ const HomeScreen = ({
           platformIds: userPlatformIds,
           minRating: userMinRating,
           excludedGenres: userExcludedGenres,
+          mediaType: quickFilters.mediaType,
           size: userRecommendationCount || RECOMMENDATION_BATCH_SIZE,
           preloadMatchTexts: true,
           preloadProviders: true,
