@@ -293,63 +293,92 @@ export async function ensureRecommendationBatch(
     }
   }
 
+  const minMatchScore = options.minMatchScore ?? 0;
+
   let finalBatch = dedupeMovies(batch).slice(0, size);
 
   if (options.preloadMatchTexts) {
-    const shouldForceRescore = (options.minMatchScore ?? 0) > 0;
-    finalBatch = await enrichRecommendationBatchWithTexts(finalBatch, { ...options, forceRescore: shouldForceRescore });
+    // Only score movies that don't already have a score (TMDB refills)
+    finalBatch = await enrichRecommendationBatchWithTexts(finalBatch, { ...options, forceRescore: false });
   }
 
   if (options.preloadProviders) {
     finalBatch = await enrichRecommendationBatchWithProviders(finalBatch);
   }
 
-  const minMatchScore = options.minMatchScore ?? 0;
-
   if (minMatchScore > 0) {
-    finalBatch = finalBatch.filter((movie) => {
+    // Filter by score — trust AI confidence for surprise-personalized movies,
+    // use movie-match scores for TMDB refills. Include movies with no score
+    // (movie-match failed) so we never return empty.
+    const passing = finalBatch.filter((movie) => {
       const score = getRecommendationScore(movie.recommendationTexts);
-      return score != null && score >= minMatchScore;
+      if (score == null) return true; // keep unscored movies as fallback
+      return score >= minMatchScore;
     });
 
-    let refillAttempts = 0;
+    if (passing.length >= size) {
+      return dedupeMovies(passing).slice(0, size);
+    }
 
-    while (finalBatch.length < size && refillAttempts < size * 8) {
-      refillAttempts += 1;
+    // Refill: fetch TMDB movies, score in batches of 4, keep those passing threshold
+    const REFILL_BATCH_SIZE = 4;
+    const MAX_ROUNDS = Math.ceil((size * 4) / REFILL_BATCH_SIZE);
+    let rounds = 0;
+    const filledPassing = [...passing];
 
-      try {
-        const extraMovie = await getSurpriseRecommendation(Array.from(usedIds), {
-          platformIds: options.platformIds,
-          minRating: options.minRating,
-          excludedGenres: options.excludedGenres,
+    while (filledPassing.length < size && rounds < MAX_ROUNDS) {
+      rounds += 1;
+
+      const candidates: RecommendationMovieDetail[] = [];
+      for (let i = 0; i < REFILL_BATCH_SIZE; i++) {
+        try {
+          const extraMovie = await getSurpriseRecommendation(Array.from(usedIds), {
+            platformIds: options.platformIds,
+            minRating: options.minRating,
+            excludedGenres: options.excludedGenres,
+          });
+          if (!extraMovie?.id || usedIds.has(extraMovie.id)) continue;
+          usedIds.add(extraMovie.id);
+          candidates.push(extraMovie as RecommendationMovieDetail);
+        } catch (error) {
+          console.error("ensureRecommendationBatch refill fetch failed:", error);
+        }
+      }
+
+      if (!candidates.length) break;
+
+      let scoredCandidates = candidates;
+      if (options.preloadMatchTexts) {
+        scoredCandidates = await enrichRecommendationBatchWithTexts(candidates, {
+          ...options,
+          forceRescore: false,
         });
+      }
+      if (options.preloadProviders) {
+        scoredCandidates = await enrichRecommendationBatchWithProviders(scoredCandidates);
+      }
 
-        if (!extraMovie?.id || usedIds.has(extraMovie.id)) continue;
-
-        usedIds.add(extraMovie.id);
-
-        let candidate: RecommendationMovieDetail = extraMovie as RecommendationMovieDetail;
-
-        if (options.preloadMatchTexts) {
-          const enriched = await enrichRecommendationBatchWithTexts([candidate], options);
-          candidate = enriched[0];
-        }
-
-        if (options.preloadProviders) {
-          const enriched = await enrichRecommendationBatchWithProviders([candidate]);
-          candidate = enriched[0];
-        }
-
+      for (const candidate of scoredCandidates) {
         const candidateScore = getRecommendationScore(candidate.recommendationTexts);
-
-        if (candidateScore != null && candidateScore >= minMatchScore) {
-          finalBatch.push(candidate);
+        if (candidateScore == null || candidateScore >= minMatchScore) {
+          filledPassing.push(candidate);
+          if (filledPassing.length >= size) break;
         }
-      } catch (error) {
-        console.error("ensureRecommendationBatch threshold refill failed:", error);
-        break;
       }
     }
+
+    // Fallback: if still not enough, return best available sorted by score
+    if (filledPassing.length < size) {
+      const allAvailable = dedupeMovies([...filledPassing, ...finalBatch]);
+      allAvailable.sort(
+        (a, b) =>
+          (getRecommendationScore(b.recommendationTexts) ?? 0) -
+          (getRecommendationScore(a.recommendationTexts) ?? 0),
+      );
+      return allAvailable.slice(0, size);
+    }
+
+    return dedupeMovies(filledPassing).slice(0, size);
   }
 
   return dedupeMovies(finalBatch).slice(0, size);
