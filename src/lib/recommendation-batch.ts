@@ -73,6 +73,7 @@ type RecommendationBatchOptions = {
   preloadMatchTexts?: boolean;
   preloadProviders?: boolean;
   minMatchScore?: number;
+  forceRescore?: boolean;
 };
 
 const extractInlineRecommendationTexts = (entry: any): RecommendationMatchData | null => {
@@ -216,7 +217,10 @@ export async function enrichRecommendationBatchWithTexts(
   movies: RecommendationMovieDetail[],
   options: RecommendationBatchOptions = {},
 ): Promise<RecommendationMovieDetail[]> {
-  const moviesNeedingTexts = movies.filter((movie) => !hasRecommendationScore(movie.recommendationTexts));
+  const forceRescore = options.forceRescore ?? false;
+  const moviesNeedingTexts = forceRescore
+    ? movies
+    : movies.filter((movie) => !hasRecommendationScore(movie.recommendationTexts));
   if (!moviesNeedingTexts.length) return movies;
 
   const context = await buildMatchContext(options);
@@ -232,8 +236,8 @@ export async function enrichRecommendationBatchWithTexts(
   );
 
   return movies.map((movie) => {
-    if (hasRecommendationScore(movie.recommendationTexts)) return movie;
-    const recommendationTexts = byId.get(movie.id) ?? null;
+    if (!forceRescore && hasRecommendationScore(movie.recommendationTexts)) return movie;
+    const recommendationTexts = byId.get(movie.id) ?? (forceRescore ? movie.recommendationTexts : null) ?? null;
     return recommendationTexts ? { ...movie, recommendationTexts } : movie;
   });
 }
@@ -292,7 +296,8 @@ export async function ensureRecommendationBatch(
   let finalBatch = dedupeMovies(batch).slice(0, size);
 
   if (options.preloadMatchTexts) {
-    finalBatch = await enrichRecommendationBatchWithTexts(finalBatch, options);
+    const shouldForceRescore = (options.minMatchScore ?? 0) > 0;
+    finalBatch = await enrichRecommendationBatchWithTexts(finalBatch, { ...options, forceRescore: shouldForceRescore });
   }
 
   if (options.preloadProviders) {

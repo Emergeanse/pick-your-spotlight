@@ -625,9 +625,15 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
     useEffect(() => {
       let cancelled = false;
 
+      const hasExistingScore = (t: MatchData | null | undefined): boolean =>
+        t?.matchScore != null || t?.score != null || t?.confidence != null;
+
       const preloadAllRecommendationTexts = async () => {
         const missingMovies = recommendationCandidates.filter(
-          (candidate) => candidate?.id && !prefetchedMatchData[candidate.id],
+          (candidate) =>
+            candidate?.id &&
+            !prefetchedMatchData[candidate.id] &&
+            !hasExistingScore(candidate.recommendationTexts as MatchData),
         );
 
         if (!missingMovies.length) return;
@@ -644,7 +650,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
         setPrefetchedMatchData((prev) => {
           const next = { ...prev };
           for (const result of results) {
-            if (result.data) next[result.movieId] = result.data;
+            if (result.data && !next[result.movieId]) next[result.movieId] = result.data;
           }
           return next;
         });
