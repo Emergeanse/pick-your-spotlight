@@ -572,30 +572,33 @@ const HomeScreen = ({
 
   const handleMovieAction = async (type: "already_seen" | "dislike" | string) => {
     if (!tonightPick) return;
-
-    if (type === "already_seen") {
-      return;
-    }
-
+    if (type === "already_seen") return;
     if (type !== "dislike") return;
 
     const nextRejected = [...rejectedIds, tonightPick.id];
     setRejectedIds(nextRejected);
 
-    const allRejected = tonightPool.every((m) => nextRejected.includes(m.id));
-    if (allRejected) {
-      await handleRejectAndRefresh(tonightPick, "not_my_style");
-      return;
-    }
+    // Mark as seen so "X autres suggestions" unlocks when all films are disliked
+    const nextSeen = new Set(tonightSeenMovieIds);
+    nextSeen.add(tonightPick.id);
 
+    // Navigate within the existing pool — no auto-search, user must press "X autres suggestions"
     if (tonightPool.length > 1 && tonightPickIndex < tonightPool.length - 1) {
-      await setCurrentTonightMovie(tonightPool[tonightPickIndex + 1], tonightPickIndex + 1);
+      const nextSeen2 = new Set(nextSeen);
+      nextSeen2.add(tonightPool[tonightPickIndex + 1]?.id);
+      await setCurrentTonightMovie(tonightPool[tonightPickIndex + 1], tonightPickIndex + 1, nextSeen2);
       return;
     }
 
     if (tonightPickIndex > 0) {
-      await setCurrentTonightMovie(tonightPool[tonightPickIndex - 1], tonightPickIndex - 1);
+      const nextSeen2 = new Set(nextSeen);
+      nextSeen2.add(tonightPool[tonightPickIndex - 1]?.id);
+      await setCurrentTonightMovie(tonightPool[tonightPickIndex - 1], tonightPickIndex - 1, nextSeen2);
+      return;
     }
+
+    // Last film in pool — update seen so the button unlocks
+    setTonightSeenMovieIds(nextSeen);
   };
 
   const handleMoreSuggestions = async () => {
