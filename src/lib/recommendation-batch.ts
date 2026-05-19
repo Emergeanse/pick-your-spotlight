@@ -269,8 +269,14 @@ export async function ensureRecommendationBatch(
   options: RecommendationBatchOptions = {},
 ): Promise<RecommendationMovieDetail[]> {
   const size = options.size ?? RECOMMENDATION_BATCH_SIZE;
-  const batch = dedupeMovies(initialMovies);
-  const usedIds = new Set<number>([...(options.excludeIds ?? []), ...batch.map((movie) => movie.id)]);
+  const excludeSet = new Set(options.excludeIds ?? []);
+  const minRating = options.minRating ?? 0;
+  // Hard filter: remove excluded movies and those below the minimum rating,
+  // even if the edge function returned them.
+  const batch = dedupeMovies(initialMovies).filter(
+    (movie) => !excludeSet.has(movie.id) && (minRating <= 0 || (movie.vote_average ?? 0) >= minRating),
+  );
+  const usedIds = new Set<number>([...excludeSet, ...batch.map((movie) => movie.id)]);
 
   if (batch.length < size) {
     const needed = size - batch.length;
@@ -307,22 +313,19 @@ export async function ensureRecommendationBatch(
   }
 
   if (minMatchScore > 0) {
-    // Filter by score — trust AI confidence for surprise-personalized movies,
-    // use movie-match scores for TMDB refills. Include movies with no score
-    // (movie-match failed) so we never return empty.
+    // Strict filter: movies must have a score AND meet the threshold.
+    // Unscored movies never bypass the threshold.
     const passing = finalBatch.filter((movie) => {
       const score = getRecommendationScore(movie.recommendationTexts);
-      if (score == null) return true; // keep unscored movies as fallback
-      return score >= minMatchScore;
+      return score != null && score >= minMatchScore;
     });
 
     if (passing.length >= size) {
       return dedupeMovies(passing).slice(0, size);
     }
 
-    // Refill: fetch TMDB movies in parallel batches until the slot is filled.
-    // We do NOT call movie-match here — TMDB refill movies have no score (null),
-    // and null scores pass the filter by design, so scoring them is wasted work.
+    // Refill: fetch TMDB candidates, score them with movie-match, accept only those
+    // that genuinely meet the threshold. Quality over quantity.
     const REFILL_BATCH_SIZE = 4;
     const MAX_ROUNDS = Math.ceil((size * 4) / REFILL_BATCH_SIZE);
     let rounds = 0;
@@ -331,7 +334,6 @@ export async function ensureRecommendationBatch(
     while (filledPassing.length < size && rounds < MAX_ROUNDS) {
       rounds += 1;
 
-      // Fetch candidates in parallel — pass the current usedIds snapshot to all.
       const needed = size - filledPassing.length;
       const fetchCount = Math.max(needed, REFILL_BATCH_SIZE);
       const usedSnapshot = Array.from(usedIds);
@@ -356,28 +358,22 @@ export async function ensureRecommendationBatch(
 
       if (!candidates.length) break;
 
-      // Fetch providers in parallel for display — skip movie-match (null score passes filter).
+      // Score candidates against the threshold before accepting.
+      const scored = await enrichRecommendationBatchWithTexts(candidates, options);
       const enriched = options.preloadProviders
-        ? await enrichRecommendationBatchWithProviders(candidates)
-        : candidates;
+        ? await enrichRecommendationBatchWithProviders(scored)
+        : scored;
 
       for (const candidate of enriched) {
-        filledPassing.push(candidate);
-        if (filledPassing.length >= size) break;
+        const score = getRecommendationScore(candidate.recommendationTexts);
+        if (score != null && score >= minMatchScore) {
+          filledPassing.push(candidate);
+          if (filledPassing.length >= size) break;
+        }
       }
     }
 
-    // Fallback: if still not enough, return best available sorted by score
-    if (filledPassing.length < size) {
-      const allAvailable = dedupeMovies([...filledPassing, ...finalBatch]);
-      allAvailable.sort(
-        (a, b) =>
-          (getRecommendationScore(b.recommendationTexts) ?? 0) -
-          (getRecommendationScore(a.recommendationTexts) ?? 0),
-      );
-      return allAvailable.slice(0, size);
-    }
-
+    // Return only qualifying movies — may be fewer than size if threshold is strict.
     return dedupeMovies(filledPassing).slice(0, size);
   }
 
