@@ -162,19 +162,22 @@ const TonightPickOverlay = ({
                 const recFromMovie: any = (movie as any).recommendationTexts || null;
                 const recFromPool =
                   (tonightPool || []).find((m) => m?.id === movie.id && (m as any).recommendationTexts) || null;
+
                 const rec: any =
                   recFromMovie || (recFromPool ? (recFromPool as any).recommendationTexts : null) || null;
+
+                const adhesionScore = rec?.matchScore ?? rec?.score ?? rec?.confidence ?? matchInfo?.confidence ?? null;
+
                 const teaser =
                   rec?.summary ||
                   rec?.detailedExplanation ||
                   rec?.pickNote ||
                   rec?.whyItMatches ||
                   rec?.headline ||
+                  rec?.reason ||
                   matchInfo?.reason ||
                   null;
 
-                const adhesionScore =
-                  rec?.matchScore ?? rec?.score ?? rec?.confidence ?? matchInfo?.confidence ?? null;
                 if (adhesionScore != null || teaser) {
                   return (
                     <div className="flex flex-col items-center gap-1.5 mb-3">
@@ -182,7 +185,7 @@ const TonightPickOverlay = ({
                         <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 border border-primary/20">
                           <Target className="w-3 h-3 text-primary/70" />
                           <span className="text-primary/90 text-[12px] font-sans font-semibold">
-                            {Math.round(adhesionScore)}% d’adhésion
+                            {adhesionScore}% d’adhésion
                           </span>
                         </div>
                       )}
