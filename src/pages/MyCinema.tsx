@@ -8,6 +8,7 @@ import { getEngagementData, type EngagementData } from "@/lib/engagement";
 import { getLikedMovies } from "@/lib/liked-movies";
 import CinemaDNA from "@/components/pick/CinemaDNA";
 import TasteTrainer from "@/components/pick/TasteTrainer";
+import GenrePreferences from "@/components/pick/GenrePreferences";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { RadarChart, PolarGrid, PolarAngleAxis, Radar, ResponsiveContainer } from "recharts";
 
@@ -243,6 +244,15 @@ const MyCinema = () => {
             </div>
           </motion.div>
         )}
+
+        {/* ─── Genre preferences ─── */}
+        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }}>
+          <h3 className="text-xs font-sans font-semibold text-foreground/35 uppercase tracking-widest mb-1">Mes genres & styles</h3>
+          <p className="text-[10px] text-foreground/20 font-sans mb-3">Sélectionne les styles que tu aimes — Pick s'en sert pour tes recommandations</p>
+          <div className="rounded-2xl bg-card/30 border border-border/8 p-4">
+            <GenrePreferences />
+          </div>
+        </motion.div>
 
         {/* ─── Stats table ─── */}
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
