@@ -374,6 +374,16 @@ const HomeScreen = ({
               minMatchScore: quickFilters.matchThreshold,
             });
           }
+          const matchMap: Record<number, RecommendationMatch> = {};
+          (data?.movies || []).forEach((m: any) => {
+            if (!m.movie?.id) return;
+            matchMap[m.movie.id] = {
+              confidence: m.confidence || 75,
+              reason: m.reason || "",
+            };
+          });
+          setMovieMatchData((prev) => ({ ...prev, ...matchMap }));
+
           movies = await ensureRecommendationBatch(extracted, {
             excludeIds: allExcludeIds,
             platformIds: userPlatformIds,
@@ -385,15 +395,20 @@ const HomeScreen = ({
             minMatchScore: quickFilters.matchThreshold,
           });
 
-          const matchMap: Record<number, RecommendationMatch> = {};
-          (data?.movies || []).forEach((m: any) => {
-            if (!m.movie?.id) return;
-            matchMap[m.movie.id] = {
-              confidence: m.confidence || 75,
-              reason: m.reason || "",
-            };
+          const actualScoreMap: Record<number, RecommendationMatch> = {};
+          (movies as any[]).forEach((m: any) => {
+            const texts = m.recommendationTexts;
+            const score = texts?.matchScore ?? texts?.score ?? texts?.confidence;
+            if (m.id && score != null) {
+              actualScoreMap[m.id] = {
+                confidence: score,
+                reason: texts?.reason ?? texts?.whyItMatches ?? texts?.summary ?? matchMap[m.id]?.reason ?? "",
+              };
+            }
           });
-          setMovieMatchData((prev) => ({ ...prev, ...matchMap }));
+          if (Object.keys(actualScoreMap).length > 0) {
+            setMovieMatchData((prev) => ({ ...prev, ...actualScoreMap }));
+          }
         } else {
           movies = await ensureRecommendationBatch([], {
             excludeIds: allExcludeIds,
@@ -405,6 +420,20 @@ const HomeScreen = ({
             preloadProviders: true,
             minMatchScore: quickFilters.matchThreshold,
           });
+          const scoreMapB: Record<number, RecommendationMatch> = {};
+          (movies as any[]).forEach((m: any) => {
+            const texts = m.recommendationTexts;
+            const score = texts?.matchScore ?? texts?.score ?? texts?.confidence;
+            if (m.id && score != null) {
+              scoreMapB[m.id] = {
+                confidence: score,
+                reason: texts?.reason ?? texts?.whyItMatches ?? texts?.summary ?? "",
+              };
+            }
+          });
+          if (Object.keys(scoreMapB).length > 0) {
+            setMovieMatchData((prev) => ({ ...prev, ...scoreMapB }));
+          }
         }
       } else {
         movies = await ensureRecommendationBatch([], {
@@ -417,6 +446,20 @@ const HomeScreen = ({
           preloadProviders: true,
           minMatchScore: quickFilters.matchThreshold,
         });
+        const scoreMapC: Record<number, RecommendationMatch> = {};
+        (movies as any[]).forEach((m: any) => {
+          const texts = m.recommendationTexts;
+          const score = texts?.matchScore ?? texts?.score ?? texts?.confidence;
+          if (m.id && score != null) {
+            scoreMapC[m.id] = {
+              confidence: score,
+              reason: texts?.reason ?? texts?.whyItMatches ?? texts?.summary ?? "",
+            };
+          }
+        });
+        if (Object.keys(scoreMapC).length > 0) {
+          setMovieMatchData((prev) => ({ ...prev, ...scoreMapC }));
+        }
       }
 
       clearInterval(msgInterval);
