@@ -272,24 +272,24 @@ export async function ensureRecommendationBatch(
   const batch = dedupeMovies(initialMovies);
   const usedIds = new Set<number>([...(options.excludeIds ?? []), ...batch.map((movie) => movie.id)]);
 
-  let attempts = 0;
-  while (batch.length < size && attempts < size * 6) {
-    attempts += 1;
-
-    try {
-      const movie = await getSurpriseRecommendation(Array.from(usedIds), {
-        platformIds: options.platformIds,
-        minRating: options.minRating,
-        excludedGenres: options.excludedGenres,
-      });
-
-      if (!movie?.id || usedIds.has(movie.id)) continue;
-
-      usedIds.add(movie.id);
-      batch.push(movie as RecommendationMovieDetail);
-    } catch (error) {
-      console.error("ensureRecommendationBatch fallback fetch failed:", error);
-      break;
+  if (batch.length < size) {
+    const needed = size - batch.length;
+    const usedSnapshot = Array.from(usedIds);
+    const rawResults = await Promise.allSettled(
+      Array.from({ length: needed * 2 }, () =>
+        getSurpriseRecommendation(usedSnapshot, {
+          platformIds: options.platformIds,
+          minRating: options.minRating,
+          excludedGenres: options.excludedGenres,
+        }),
+      ),
+    );
+    for (const result of rawResults) {
+      if (batch.length >= size) break;
+      if (result.status !== "fulfilled" || !result.value?.id) continue;
+      if (usedIds.has(result.value.id)) continue;
+      usedIds.add(result.value.id);
+      batch.push(result.value as RecommendationMovieDetail);
     }
   }
 
@@ -320,7 +320,9 @@ export async function ensureRecommendationBatch(
       return dedupeMovies(passing).slice(0, size);
     }
 
-    // Refill: fetch TMDB movies, score in batches of 4, keep those passing threshold
+    // Refill: fetch TMDB movies in parallel batches until the slot is filled.
+    // We do NOT call movie-match here — TMDB refill movies have no score (null),
+    // and null scores pass the filter by design, so scoring them is wasted work.
     const REFILL_BATCH_SIZE = 4;
     const MAX_ROUNDS = Math.ceil((size * 4) / REFILL_BATCH_SIZE);
     let rounds = 0;
@@ -329,41 +331,39 @@ export async function ensureRecommendationBatch(
     while (filledPassing.length < size && rounds < MAX_ROUNDS) {
       rounds += 1;
 
-      const candidates: RecommendationMovieDetail[] = [];
-      for (let i = 0; i < REFILL_BATCH_SIZE; i++) {
-        try {
-          const extraMovie = await getSurpriseRecommendation(Array.from(usedIds), {
+      // Fetch candidates in parallel — pass the current usedIds snapshot to all.
+      const needed = size - filledPassing.length;
+      const fetchCount = Math.max(needed, REFILL_BATCH_SIZE);
+      const usedSnapshot = Array.from(usedIds);
+      const rawResults = await Promise.allSettled(
+        Array.from({ length: fetchCount }, () =>
+          getSurpriseRecommendation(usedSnapshot, {
             platformIds: options.platformIds,
             minRating: options.minRating,
             excludedGenres: options.excludedGenres,
-          });
-          if (!extraMovie?.id || usedIds.has(extraMovie.id)) continue;
-          usedIds.add(extraMovie.id);
-          candidates.push(extraMovie as RecommendationMovieDetail);
-        } catch (error) {
-          console.error("ensureRecommendationBatch refill fetch failed:", error);
-        }
+          }),
+        ),
+      );
+
+      const candidates: RecommendationMovieDetail[] = [];
+      for (const result of rawResults) {
+        if (result.status !== "fulfilled" || !result.value?.id) continue;
+        const movie = result.value;
+        if (usedIds.has(movie.id)) continue;
+        usedIds.add(movie.id);
+        candidates.push(movie as RecommendationMovieDetail);
       }
 
       if (!candidates.length) break;
 
-      let scoredCandidates = candidates;
-      if (options.preloadMatchTexts) {
-        scoredCandidates = await enrichRecommendationBatchWithTexts(candidates, {
-          ...options,
-          forceRescore: false,
-        });
-      }
-      if (options.preloadProviders) {
-        scoredCandidates = await enrichRecommendationBatchWithProviders(scoredCandidates);
-      }
+      // Fetch providers in parallel for display — skip movie-match (null score passes filter).
+      const enriched = options.preloadProviders
+        ? await enrichRecommendationBatchWithProviders(candidates)
+        : candidates;
 
-      for (const candidate of scoredCandidates) {
-        const candidateScore = getRecommendationScore(candidate.recommendationTexts);
-        if (candidateScore == null || candidateScore >= minMatchScore) {
-          filledPassing.push(candidate);
-          if (filledPassing.length >= size) break;
-        }
+      for (const candidate of enriched) {
+        filledPassing.push(candidate);
+        if (filledPassing.length >= size) break;
       }
     }
 
