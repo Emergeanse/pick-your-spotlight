@@ -11,6 +11,7 @@ import { computeMultiVectorProfile } from "@/lib/taste-engine";
 import {
   extractRecommendationMovies,
   ensureRecommendationBatch,
+  getRecommendationScore,
   RECOMMENDATION_BATCH_SIZE,
 } from "@/lib/recommendation-batch";
 import { getEngagementData, getProgressionMessage, type EngagementData } from "@/lib/engagement";
@@ -402,7 +403,7 @@ const HomeScreen = ({
           const actualScoreMap: Record<number, RecommendationMatch> = {};
           (movies as any[]).forEach((m: any) => {
             const texts = m.recommendationTexts;
-            const score = texts?.matchScore ?? texts?.score ?? texts?.confidence;
+            const score = getRecommendationScore(texts);
             if (m.id && score != null) {
               actualScoreMap[m.id] = {
                 confidence: score,
@@ -427,7 +428,7 @@ const HomeScreen = ({
           const scoreMapB: Record<number, RecommendationMatch> = {};
           (movies as any[]).forEach((m: any) => {
             const texts = m.recommendationTexts;
-            const score = texts?.matchScore ?? texts?.score ?? texts?.confidence;
+            const score = getRecommendationScore(texts);
             if (m.id && score != null) {
               scoreMapB[m.id] = {
                 confidence: score,
@@ -453,7 +454,7 @@ const HomeScreen = ({
         const scoreMapC: Record<number, RecommendationMatch> = {};
         (movies as any[]).forEach((m: any) => {
           const texts = m.recommendationTexts;
-          const score = texts?.matchScore ?? texts?.score ?? texts?.confidence;
+          const score = getRecommendationScore(texts);
           if (m.id && score != null) {
             scoreMapC[m.id] = {
               confidence: score,

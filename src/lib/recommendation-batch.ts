@@ -50,7 +50,7 @@ const normalizeRecommendationTexts = (data: RecommendationMatchData): Recommenda
 const hasRecommendationScore = (data: RecommendationMatchData | null | undefined) =>
   data?.matchScore != null || data?.score != null || data?.confidence != null;
 
-const getRecommendationScore = (data: RecommendationMatchData | null | undefined) =>
+export const getRecommendationScore = (data: RecommendationMatchData | null | undefined) =>
   data?.matchScore ?? data?.score ?? data?.confidence ?? null;
 
 export type RecommendationMovieDetail = MovieDetail & {

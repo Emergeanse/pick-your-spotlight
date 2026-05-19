@@ -7,7 +7,28 @@ import {
 import { useAuth } from "@/hooks/use-auth";
 import { catalogLookupKey, normalizeCatalogMediaType, type CatalogItemLookup, type CatalogMediaType } from "@/lib/catalog";
 
-const interactionCache = new Map<string, MovieInteractionState>();
+const CACHE_MAX = 500;
+
+// LRU cache: Map preserves insertion order; on access, entry is moved to end.
+// When size exceeds CACHE_MAX, the oldest (first) entry is evicted.
+const interactionCache = {
+  _map: new Map<string, MovieInteractionState>(),
+  get(key: string): MovieInteractionState | undefined {
+    const value = this._map.get(key);
+    if (value === undefined) return undefined;
+    this._map.delete(key);
+    this._map.set(key, value);
+    return value;
+  },
+  set(key: string, value: MovieInteractionState): void {
+    this._map.delete(key);
+    this._map.set(key, value);
+    if (this._map.size > CACHE_MAX) this._map.delete(this._map.keys().next().value!);
+  },
+  delete(key: string): void { this._map.delete(key); },
+  has(key: string): boolean { return this._map.has(key); },
+  keys(): IterableIterator<string> { return this._map.keys(); },
+};
 
 function normalizeInput(input: number[] | CatalogItemLookup[], fallbackMediaType: CatalogMediaType): CatalogItemLookup[] {
   const mediaType = normalizeCatalogMediaType(fallbackMediaType);
