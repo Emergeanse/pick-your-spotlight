@@ -40,7 +40,6 @@ const normalizeRecommendationTexts = (data: RecommendationMatchData): Recommenda
     ...data,
     matchScore: score,
     score,
-    confidence: data.confidence ?? score ?? undefined,
     whyItMatches: data.whyItMatches ?? data.reason,
     summary: data.summary ?? reason ?? undefined,
     pickNote: data.pickNote ?? reason,
@@ -49,9 +48,6 @@ const normalizeRecommendationTexts = (data: RecommendationMatchData): Recommenda
 
 const hasRecommendationScore = (data: RecommendationMatchData | null | undefined) =>
   data?.matchScore != null || data?.score != null || data?.confidence != null;
-
-const getRecommendationScore = (data: RecommendationMatchData | null | undefined) =>
-  data?.matchScore ?? data?.score ?? data?.confidence ?? null;
 
 export type RecommendationMovieDetail = MovieDetail & {
   recommendationTexts?: RecommendationMatchData | null;
@@ -182,7 +178,6 @@ async function buildMatchContext(options: RecommendationBatchOptions) {
 async function fetchRecommendationTextsForMovie(
   movie: RecommendationMovieDetail,
   context: Awaited<ReturnType<typeof buildMatchContext>>,
-  options: RecommendationBatchOptions = {},
 ): Promise<RecommendationMatchData | null> {
   try {
     const { data, error } = await supabase.functions.invoke("movie-match", {
@@ -196,7 +191,6 @@ async function fetchRecommendationTextsForMovie(
         cinematicProfile: context.cinematicProfile,
         peoplePreferences: context.peoplePreferences,
         userName: context.user?.user_metadata?.display_name || context.user?.email?.split("@")[0] || null,
-        minMatchScore: options.minMatchScore ?? 80,
       },
     });
 
@@ -205,7 +199,7 @@ async function fetchRecommendationTextsForMovie(
       return null;
     }
 
-    return data ? normalizeRecommendationTexts(data as RecommendationMatchData) : null;
+    return (data as RecommendationMatchData) ?? null;
   } catch (error) {
     console.error("fetchRecommendationTextsForMovie failed:", error);
     return null;
@@ -223,7 +217,7 @@ export async function enrichRecommendationBatchWithTexts(
   const generated = await Promise.all(
     moviesNeedingTexts.map(async (movie) => ({
       id: movie.id,
-      recommendationTexts: await fetchRecommendationTextsForMovie(movie, context, options),
+      recommendationTexts: await fetchRecommendationTextsForMovie(movie, context),
     })),
   );
 
@@ -299,53 +293,6 @@ export async function ensureRecommendationBatch(
     finalBatch = await enrichRecommendationBatchWithProviders(finalBatch);
   }
 
-  const minMatchScore = options.minMatchScore ?? 0;
-
-  if (minMatchScore > 0) {
-    finalBatch = finalBatch.filter((movie) => {
-      const score = getRecommendationScore(movie.recommendationTexts);
-      return score != null && score >= minMatchScore;
-    });
-
-    let refillAttempts = 0;
-
-    while (finalBatch.length < size && refillAttempts < size * 8) {
-      refillAttempts += 1;
-
-      try {
-        const extraMovie = await getSurpriseRecommendation(Array.from(usedIds), {
-          platformIds: options.platformIds,
-          minRating: options.minRating,
-          excludedGenres: options.excludedGenres,
-        });
-
-        if (!extraMovie?.id || usedIds.has(extraMovie.id)) continue;
-
-        usedIds.add(extraMovie.id);
-
-        let candidate: RecommendationMovieDetail = extraMovie as RecommendationMovieDetail;
-
-        if (options.preloadMatchTexts) {
-          const enriched = await enrichRecommendationBatchWithTexts([candidate], options);
-          candidate = enriched[0];
-        }
-
-        if (options.preloadProviders) {
-          const enriched = await enrichRecommendationBatchWithProviders([candidate]);
-          candidate = enriched[0];
-        }
-
-        const candidateScore = getRecommendationScore(candidate.recommendationTexts);
-
-        if (candidateScore != null && candidateScore >= minMatchScore) {
-          finalBatch.push(candidate);
-        }
-      } catch (error) {
-        console.error("ensureRecommendationBatch threshold refill failed:", error);
-        break;
-      }
-    }
-  }
-
-  return dedupeMovies(finalBatch).slice(0, size);
+  return finalBatch;
 }
+
