@@ -12,7 +12,11 @@ const STYLE_KEYS = new Set([
   "film-noir",
 ]);
 
-const GenrePreferences = () => {
+interface GenrePreferencesProps {
+  onCountChange?: (count: number) => void;
+}
+
+const GenrePreferences = ({ onCountChange }: GenrePreferencesProps) => {
   const [tags, setTags] = useState<PreferenceTag[]>([]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
@@ -27,13 +31,13 @@ const GenrePreferences = () => {
           getMyPreferences(),
         ]);
         setTags(allTags);
-        setSelected(
-          new Set(
-            userPrefs
-              .filter((p) => p.tag.category === "genre" && p.weight > 0)
-              .map((p) => p.tag.key),
-          ),
+        const initialSelected = new Set(
+          userPrefs
+            .filter((p) => p.tag.category === "genre" && p.weight > 0)
+            .map((p) => p.tag.key),
         );
+        setSelected(initialSelected);
+        onCountChange?.(initialSelected.size);
       } finally {
         setLoading(false);
       }
@@ -50,6 +54,7 @@ const GenrePreferences = () => {
         const next = new Set(prev);
         if (wasSelected) next.delete(tag.key);
         else next.add(tag.key);
+        onCountChange?.(next.size);
         return next;
       });
       setPending((prev) => new Set(prev).add(tag.key));
@@ -66,6 +71,7 @@ const GenrePreferences = () => {
           const next = new Set(prev);
           if (wasSelected) next.add(tag.key);
           else next.delete(tag.key);
+          onCountChange?.(next.size);
           return next;
         });
       } finally {
