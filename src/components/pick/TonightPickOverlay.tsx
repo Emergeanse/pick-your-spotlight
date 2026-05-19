@@ -22,6 +22,7 @@ interface TonightPickOverlayProps {
   onClose: () => void;
   onPrev: () => void;
   onNext: () => void;
+  onOpenDetail: () => void;
   onConfirm: () => void;
   onInteraction: (type: string) => void;
   onMoreSuggestions: () => void;
@@ -43,6 +44,7 @@ const TonightPickOverlay = ({
   onClose,
   onPrev,
   onNext,
+  onOpenDetail,
   onConfirm,
   onInteraction,
   onMoreSuggestions,
@@ -111,7 +113,7 @@ const TonightPickOverlay = ({
                     src={getPosterUrl(movie.poster_path, "w342") || ""}
                     alt={getDisplayTitle(movie)}
                     className="w-32 h-48 md:w-40 md:h-56 rounded-xl object-cover shadow-2xl border border-border/20 cursor-pointer active:scale-95 transition-transform"
-                    onClick={onConfirm}
+                    onClick={onOpenDetail}
                   />
 
                   {interaction.hasInteraction && (

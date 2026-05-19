@@ -26,6 +26,7 @@ import TasteTrainer from "./TasteTrainer";
 import DiscoverySection from "./DiscoverySection";
 import HomeScreenChoiceModal from "./HomeScreenChoiceModal";
 import TonightPickOverlay from "./TonightPickOverlay";
+import FlipCardDetail from "./FlipCardDetail";
 
 interface HomeScreenProps {
   onStart: () => void;
@@ -159,6 +160,8 @@ const HomeScreen = ({
   const [movieMatchData, setMovieMatchData] = useState<Record<number, RecommendationMatch>>({});
   const [tonightPickIndex, setTonightPickIndex] = useState(0);
   const [tonightSeenMovieIds, setTonightSeenMovieIds] = useState<Set<number>>(new Set());
+
+  const [flipDetailMovie, setFlipDetailMovie] = useState<MovieDetail | null>(null);
 
   const [quickFilters, setQuickFilters] = useState<QuickFilterState>({
     mediaType: "both",
@@ -539,10 +542,14 @@ const HomeScreen = ({
     await setCurrentTonightMovie(tonightPool[newIndex], newIndex, nextSeen);
   };
 
-  const handleOpenSurpriseFlow = () => {
+  const handleOpenMovieDetail = () => {
+    if (!tonightPick) return;
+    setFlipDetailMovie(tonightPick);
+  };
+
+  const handleWatchNow = () => {
     if (!tonightPick) return;
     const moviesToPass = chatMoviesPool && chatMoviesPool.length > 0 ? chatMoviesPool : [tonightPick];
-
     onSurprise(moviesToPass, tonightPickIndex, tonightSeenMovieIds);
   };
 
@@ -757,7 +764,7 @@ const HomeScreen = ({
       </AnimatePresence>
 
       <TonightPickOverlay
-        open={!!tonightPick}
+        open={!!tonightPick && !flipDetailMovie}
         movie={tonightPick}
         tonightPool={tonightPool}
         tonightPickIndex={tonightPickIndex}
@@ -771,10 +778,25 @@ const HomeScreen = ({
         onClose={handleCloseTonightPick}
         onPrev={() => void handleNavigateTonightPick("prev")}
         onNext={() => void handleNavigateTonightPick("next")}
-        onConfirm={handleOpenSurpriseFlow}
+        onOpenDetail={handleOpenMovieDetail}
+        onConfirm={handleWatchNow}
         onInteraction={(type) => void handleMovieAction(type)}
         onMoreSuggestions={() => void handleMoreSuggestions()}
         expectedCount={userRecommendationCount}
+      />
+
+      <FlipCardDetail
+        item={flipDetailMovie}
+        type="movie"
+        isOpen={!!flipDetailMovie}
+        onClose={() => setFlipDetailMovie(null)}
+        recommendationTextsByMovieId={
+          Object.fromEntries(
+            (chatMoviesPool ?? [])
+              .filter((m): m is RecommendationMovieDetail => !!(m as RecommendationMovieDetail).recommendationTexts)
+              .map((m) => [m.id, (m as RecommendationMovieDetail).recommendationTexts])
+          )
+        }
       />
 
       <AnimatePresence>
