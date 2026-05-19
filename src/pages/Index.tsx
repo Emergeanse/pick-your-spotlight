@@ -432,7 +432,9 @@ const Index = () => {
 
   const handleSurprise = async (movies: MovieDetail[], startIndex: number = 0, seenMovieIds?: Set<number>) => {
     const desiredCount = profilePrefs.recommendationBatchSize || RECOMMENDATION_BATCH_SIZE;
-    const batch = await normalizeRecommendationBatch(movies, [], desiredCount);
+    const tasteProfile = user ? await getUserTasteProfile() : null;
+    const excludeIds = [...movies.map((m) => m.id), ...(tasteProfile?.excludeIds ?? [])];
+    const batch = await normalizeRecommendationBatch(movies, excludeIds, desiredCount);
     openRecommendationBatch(batch, "home", startIndex, seenMovieIds, desiredCount);
   };
 

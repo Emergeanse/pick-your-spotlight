@@ -36,7 +36,19 @@ export async function likeMovie(movie: MovieDetail) {
 }
 
 export async function unlikeMovie(tmdbId: number, mediaType: CatalogMediaType = "movie") {
-  await clearFeedbackType(tmdbId, ["like", "love"], normalizeCatalogMediaType(mediaType));
+  const normalizedType = normalizeCatalogMediaType(mediaType);
+  // Set "skip" first — setFeedback internally deletes exclusive types (like, love) before inserting.
+  // The catalog item already exists (created when liked), so the placeholder title is only a fallback.
+  await setFeedback(tmdbId, "skip", {
+    title: ".",
+    media_type: normalizedType,
+    poster_path: null,
+    year: null,
+    overview: null,
+    vote_average: null,
+    popularity: null,
+    runtime: null,
+  });
 }
 
 export async function isMovieLiked(tmdbId: number, mediaType: CatalogMediaType = "movie"): Promise<boolean> {

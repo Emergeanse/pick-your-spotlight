@@ -75,6 +75,7 @@ const loadUnifiedUserFeedbackState = async () => {
     ...extractTmdbIdsFromFeedbackRows(watchlistRows as any[]),
     ...extractTmdbIdsFromFeedbackRows(notForMeRows as any[]),
     ...extractTmdbIdsFromFeedbackRows(dislikeRows as any[]),
+    ...extractTmdbIdsFromFeedbackRows(skipRows as any[]),
   ];
 
   const evaluatedIds = [

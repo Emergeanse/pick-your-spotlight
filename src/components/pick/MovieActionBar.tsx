@@ -272,7 +272,18 @@ const MovieActionBar = ({
     setLoading(true);
     try {
       if (liked) {
-        await clearFeedbackType(movie.id, ["like", "love"], mediaType);
+        // setFeedback("skip") deletes exclusive types (like, love) internally before inserting skip,
+        // so the movie is excluded from future recommendations.
+        await setFeedback(movie.id, "skip", {
+          title: movie.title || (movie as any).name || ".",
+          media_type: mediaType,
+          poster_path: movie.poster_path ?? null,
+          year: null,
+          overview: movie.overview ?? null,
+          vote_average: movie.vote_average ?? null,
+          popularity: (movie as any).popularity ?? null,
+          runtime: movie.runtime ?? null,
+        });
 
         if (!isCurrentMovie(movieId)) return;
 
