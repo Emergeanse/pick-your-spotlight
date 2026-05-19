@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(Get-ChildItem -Path \"c:\\\\Users\\\\cbill\\\\pick-your-spotlight\\\\src\" -Recurse -File | Where-Object { $_.Extension -match '\\\\.\\(ts|tsx|js|jsx\\)$' } | Select-Object -ExpandProperty FullName | Sort-Object)"
+    ]
+  }
+}
