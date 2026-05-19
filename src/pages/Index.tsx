@@ -63,6 +63,7 @@ const Index = () => {
     preferredPlatforms: number[];
     profileConfidence: number;
     recommendationBatchSize: number;
+    matchThreshold: number;
   }>({
     excludedGenres: [],
     excludedPlatforms: [],
@@ -70,6 +71,7 @@ const Index = () => {
     preferredPlatforms: [],
     profileConfidence: 0,
     recommendationBatchSize: RECOMMENDATION_BATCH_SIZE,
+    matchThreshold: 80,
   });
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -115,6 +117,7 @@ const Index = () => {
         platformIds: profilePrefs.preferredPlatforms,
         minRating: profilePrefs.minRating,
         excludedGenres: profilePrefs.excludedGenres,
+        minMatchScore: profilePrefs.matchThreshold,
         searchTags,
         userCriteria: { mood: null, context: null, time: null },
         size,
@@ -126,6 +129,7 @@ const Index = () => {
       profilePrefs.minRating,
       profilePrefs.preferredPlatforms,
       profilePrefs.recommendationBatchSize,
+      profilePrefs.matchThreshold,
       searchTags,
     ],
   );
@@ -241,7 +245,7 @@ const Index = () => {
     supabase
       .from("profiles")
       .select(
-        "onboarding_completed, preferred_platforms, excluded_platforms, favorite_genres, excluded_genres, min_rating, profile_confidence, tour_completed, activation_completed, default_recommendation_count",
+        "onboarding_completed, preferred_platforms, excluded_platforms, favorite_genres, excluded_genres, min_rating, profile_confidence, tour_completed, activation_completed, default_recommendation_count, match_threshold",
       )
       .eq("id", user.id)
       .single()
@@ -262,6 +266,7 @@ const Index = () => {
             preferredPlatforms: data.preferred_platforms || [],
             profileConfidence: (data as any).profile_confidence || 0,
             recommendationBatchSize,
+            matchThreshold: (data as any).match_threshold ?? 80,
           });
           setResultSuggestionCount(recommendationBatchSize);
 
@@ -339,6 +344,7 @@ const Index = () => {
           excludedPlatformIds: profilePrefs.excludedPlatforms,
           excludedGenres: profilePrefs.excludedGenres,
           minRating: profilePrefs.minRating,
+          minMatchScore: profilePrefs.matchThreshold,
           excludeIds,
           count: profilePrefs.recommendationBatchSize || RECOMMENDATION_BATCH_SIZE,
         });
@@ -351,6 +357,7 @@ const Index = () => {
             platformIds: profilePrefs.preferredPlatforms,
             minRating: profilePrefs.minRating,
             excludedGenres: profilePrefs.excludedGenres,
+            minMatchScore: profilePrefs.matchThreshold,
             size: desiredCount,
             preloadMatchTexts: true,
           });
@@ -374,6 +381,7 @@ const Index = () => {
     profilePrefs.minRating,
     profilePrefs.preferredPlatforms,
     profilePrefs.recommendationBatchSize,
+    profilePrefs.matchThreshold,
     results,
     user,
   ]);
@@ -517,6 +525,7 @@ const Index = () => {
             excludedPlatformIds: profilePrefs.excludedPlatforms,
             excludedGenres: profilePrefs.excludedGenres,
             minRating: profilePrefs.minRating,
+            minMatchScore: profilePrefs.matchThreshold,
             excludeIds,
             rejectionContext,
             count: profilePrefs.recommendationBatchSize || RECOMMENDATION_BATCH_SIZE,
@@ -529,6 +538,7 @@ const Index = () => {
               platformIds: profilePrefs.preferredPlatforms,
               minRating: profilePrefs.minRating,
               excludedGenres: profilePrefs.excludedGenres,
+              minMatchScore: profilePrefs.matchThreshold,
               size: desiredCount,
               preloadMatchTexts: true,
             });
