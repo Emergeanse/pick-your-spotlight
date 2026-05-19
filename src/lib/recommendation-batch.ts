@@ -63,6 +63,7 @@ type RecommendationBatchOptions = {
   platformIds?: number[];
   minRating?: number;
   excludedGenres?: string[];
+  mediaType?: "movie" | "tv" | "both";
   size?: number;
   searchTags?: string[];
   userCriteria?: {
@@ -292,6 +293,7 @@ export async function ensureRecommendationBatch(
           platformIds: options.platformIds,
           minRating: options.minRating,
           excludedGenres: options.excludedGenres,
+          mediaType: options.mediaType,
         }),
       ),
     );
@@ -348,6 +350,7 @@ export async function ensureRecommendationBatch(
             platformIds: options.platformIds,
             minRating: options.minRating,
             excludedGenres: options.excludedGenres,
+            mediaType: options.mediaType,
           }),
         ),
       );

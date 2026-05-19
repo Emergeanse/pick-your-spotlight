@@ -37,6 +37,14 @@ const genreNameToId: Record<string, number> = {
   "Romance": 10749, "Science-Fiction": 878, "Thriller": 53, "Guerre": 10752, "Western": 37,
 };
 
+// TV genre IDs differ from movie genre IDs on TMDB
+const tvGenreNameToId: Record<string, number> = {
+  "Action": 10759, "Aventure": 10759, "Animation": 16, "Comédie": 35, "Crime": 80,
+  "Documentaire": 99, "Drame": 18, "Famille": 10751, "Fantastique": 10765,
+  "Mystère": 9648, "Romance": 10749, "Science-Fiction": 10765, "Thriller": 53,
+  "Guerre": 10768, "Western": 37, "Horreur": 9648,
+};
+
 function genreNamesToIds(names: string[]): number[] {
   return names.map(n => genreNameToId[n]).filter(Boolean);
 }
@@ -199,11 +207,23 @@ export async function getWatchProviders(id: number, mediaType: string): Promise<
 
 export async function getSurpriseRecommendation(
   excludeIds: number[] = [],
-  options: { platformIds?: number[]; minRating?: number; excludedGenres?: string[] } = {}
+  options: { platformIds?: number[]; minRating?: number; excludedGenres?: string[]; mediaType?: "movie" | "tv" | "both" } = {}
 ): Promise<MovieDetail> {
+  // When "both", alternate randomly so the pool stays balanced
+  const resolvedType: "movie" | "tv" =
+    options.mediaType === "tv" ? "tv" :
+    options.mediaType === "both" ? (Math.random() < 0.5 ? "movie" : "tv") :
+    "movie";
+
+  const isTV = resolvedType === "tv";
+  const genreMap = isTV ? tvGenreNameToId : genreNameToId;
   const excluded = new Set(excludeIds);
-  const excludedGenreIds = (options.excludedGenres || []).map(n => genreNameToId[n]).filter(Boolean);
+  const excludedGenreIds = (options.excludedGenres || []).map(n => genreMap[n]).filter(Boolean);
   const minRating = options.minRating || 0;
+
+  const discoverEndpoint = isTV ? "/discover/tv" : "/discover/movie";
+  const topRatedEndpoint = isTV ? "/tv/top_rated" : "/movie/top_rated";
+  const popularEndpoint = isTV ? "/tv/popular" : "/movie/popular";
 
   const isAllowed = (m: Movie) => {
     if (excluded.has(m.id)) return false;
@@ -226,11 +246,11 @@ export async function getSurpriseRecommendation(
         params.watch_region = "FR";
       }
       if (excludedGenreIds.length > 0) params.without_genres = excludedGenreIds.join(",");
-      const data = await fetchFromTMDB("/discover/movie", params);
+      const data = await fetchFromTMDB(discoverEndpoint, params);
       const results: Movie[] = (data.results || []).filter(isAllowed);
       if (results.length > 0) {
         const pick = results[Math.floor(Math.random() * results.length)];
-        return getMovieDetails(pick.id, "movie");
+        return getMovieDetails(pick.id, resolvedType);
       }
     }
   }
@@ -238,19 +258,19 @@ export async function getSurpriseRecommendation(
   // Fallback to top_rated with client-side filtering
   for (let attempt = 0; attempt < 5; attempt++) {
     const page = Math.floor(Math.random() * 5) + 1;
-    const data = await fetchFromTMDB("/movie/top_rated", { page: String(page) });
+    const data = await fetchFromTMDB(topRatedEndpoint, { page: String(page) });
     const results: Movie[] = (data.results || []).filter(isAllowed);
     if (results.length > 0) {
       const pick = results[Math.floor(Math.random() * results.length)];
-      return getMovieDetails(pick.id, "movie");
+      return getMovieDetails(pick.id, resolvedType);
     }
   }
 
-  const fallbackData = await fetchFromTMDB("/movie/popular", { page: "1" });
+  const fallbackData = await fetchFromTMDB(popularEndpoint, { page: "1" });
   const fallbackResults: Movie[] = (fallbackData.results || []).filter(isAllowed);
   const fallbackPick = fallbackResults[0] || (fallbackData.results || [])[0];
-  if (!fallbackPick) throw new Error("No movie available for surprise recommendation");
-  return getMovieDetails(fallbackPick.id, "movie");
+  if (!fallbackPick) throw new Error("No recommendation available");
+  return getMovieDetails(fallbackPick.id, resolvedType);
 }
 
 export async function getTrendingMovie(): Promise<MovieDetail> {
