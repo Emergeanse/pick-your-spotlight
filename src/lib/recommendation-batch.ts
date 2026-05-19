@@ -271,11 +271,16 @@ export async function ensureRecommendationBatch(
   const size = options.size ?? RECOMMENDATION_BATCH_SIZE;
   const excludeSet = new Set(options.excludeIds ?? []);
   const minRating = options.minRating ?? 0;
-  // Hard filter: remove excluded movies and those below the minimum rating,
+  const excludedGenreSet = new Set((options.excludedGenres ?? []).map((g) => g.toLowerCase()));
+  // Hard filter: remove excluded movies, those below the minimum rating,
+  // and those whose genres overlap with the user's excluded genres —
   // even if the edge function returned them.
-  const batch = dedupeMovies(initialMovies).filter(
-    (movie) => !excludeSet.has(movie.id) && (minRating <= 0 || (movie.vote_average ?? 0) >= minRating),
-  );
+  const batch = dedupeMovies(initialMovies).filter((movie) => {
+    if (excludeSet.has(movie.id)) return false;
+    if (minRating > 0 && (movie.vote_average ?? 0) < minRating) return false;
+    if (excludedGenreSet.size > 0 && movie.genres?.some((g) => excludedGenreSet.has(g.name.toLowerCase()))) return false;
+    return true;
+  });
   const usedIds = new Set<number>([...excludeSet, ...batch.map((movie) => movie.id)]);
 
   if (batch.length < size) {

@@ -178,6 +178,7 @@ const HomeScreen = ({
 
   const isMountedRef = useRef(true);
   const msgIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const historyExcludeIdsRef = useRef<number[]>([]);
 
   useEffect(() => {
     isMountedRef.current = true;
@@ -289,8 +290,27 @@ const HomeScreen = ({
 
     loadUnifiedUserFeedbackState().then(({ excludeIds, evaluatedCount }) => {
       setHistoryExcludeIds(excludeIds);
+      historyExcludeIdsRef.current = excludeIds;
       setTotalEvaluated(evaluatedCount);
     });
+  }, [user]);
+
+  // Refresh exclusion list whenever the user interacts with any movie so that
+  // fresh likes / dislikes / not-for-me ratings are excluded from the next batch.
+  useEffect(() => {
+    if (!user) return;
+    const refresh = () => {
+      loadUnifiedUserFeedbackState().then(({ excludeIds }) => {
+        setHistoryExcludeIds(excludeIds);
+        historyExcludeIdsRef.current = excludeIds;
+      });
+    };
+    window.addEventListener("pick-feedback-changed", refresh);
+    window.addEventListener("pick-watchlist-added", refresh);
+    return () => {
+      window.removeEventListener("pick-feedback-changed", refresh);
+      window.removeEventListener("pick-watchlist-added", refresh);
+    };
   }, [user]);
 
   useEffect(() => {
@@ -331,7 +351,7 @@ const HomeScreen = ({
   };
 
   const generateTonightPick = async (excludeList: number[] = rejectedIds, rejectionContext?: RejectionContext) => {
-    const allExcludeIds = [...new Set([...excludeList, ...historyExcludeIds])];
+    const allExcludeIds = [...new Set([...excludeList, ...historyExcludeIdsRef.current])];
 
     setTonightLoading(true);
     setTonightProviders([]);
