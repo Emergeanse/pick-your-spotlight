@@ -11,8 +11,10 @@ import { computeMultiVectorProfile } from "@/lib/taste-engine";
 import {
   extractRecommendationMovies,
   ensureRecommendationBatch,
+  enrichRecommendationBatchWithTexts,
   getRecommendationScore,
   RECOMMENDATION_BATCH_SIZE,
+  type RecommendationMovieDetail,
 } from "@/lib/recommendation-batch";
 import { getEngagementData, getProgressionMessage, type EngagementData } from "@/lib/engagement";
 import { listFeedbackByType } from "@/lib/feedback";
@@ -470,6 +472,37 @@ const HomeScreen = ({
       if (isMountedRef.current && movies.length > 0) {
         setChatMoviesPool(movies);
         await setCurrentTonightMovie(movies[0], 0, new Set(movies[0] ? [movies[0].id] : []));
+
+        // Background enrichment: call movie-match to get rich personalized teasers.
+        // Runs after display so the overlay appears immediately, text updates when ready.
+        const moviesToEnrich = movies as RecommendationMovieDetail[];
+        void (async () => {
+          try {
+            const enriched = await enrichRecommendationBatchWithTexts(moviesToEnrich, {
+              forceRescore: true,
+              preloadMatchTexts: true,
+            });
+            if (!isMountedRef.current) return;
+            setChatMoviesPool(enriched);
+            // Update movieMatchData with richer text for the overlay's matchInfo fallback
+            const richMap: Record<number, RecommendationMatch> = {};
+            enriched.forEach((m: any) => {
+              const t = m.recommendationTexts;
+              const score = getRecommendationScore(t);
+              if (m.id && score != null) {
+                richMap[m.id] = {
+                  confidence: score,
+                  reason: t?.summary ?? t?.whyItMatches ?? t?.detailedExplanation ?? t?.reason ?? "",
+                };
+              }
+            });
+            if (Object.keys(richMap).length > 0) {
+              setMovieMatchData((prev) => ({ ...prev, ...richMap }));
+            }
+          } catch {
+            // Silent fail — keep original text
+          }
+        })();
       }
     } catch (e) {
       console.error(e);

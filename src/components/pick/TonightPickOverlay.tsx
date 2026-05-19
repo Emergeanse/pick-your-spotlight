@@ -159,23 +159,30 @@ const TonightPickOverlay = ({
               )}
 
               {(() => {
+                // recFromPool is updated by background enrichment — prefer it over recFromMovie
+                // so the personalized movie-match text replaces the generic surprise-personalized reason.
+                const recFromPool = (tonightPool || []).find(
+                  (m) => m?.id === movie.id && (m as any).recommendationTexts,
+                );
                 const recFromMovie: any = (movie as any).recommendationTexts || null;
-                const recFromPool =
-                  (tonightPool || []).find((m) => m?.id === movie.id && (m as any).recommendationTexts) || null;
 
                 const rec: any =
-                  recFromMovie || (recFromPool ? (recFromPool as any).recommendationTexts : null) || null;
+                  (recFromPool ? (recFromPool as any).recommendationTexts : null) || recFromMovie || null;
 
                 const adhesionScore = rec?.matchScore ?? rec?.score ?? rec?.confidence ?? matchInfo?.confidence ?? null;
 
-                const teaser =
+                const richTeaser =
                   rec?.summary ||
                   rec?.detailedExplanation ||
-                  rec?.pickNote ||
                   rec?.whyItMatches ||
                   rec?.headline ||
-                  rec?.reason ||
-                  matchInfo?.reason ||
+                  rec?.pickNote;
+
+                // Only fall back to generic reason/matchInfo if no rich text is available
+                const teaser =
+                  richTeaser ||
+                  (rec?.reason && rec.reason.length > 40 ? rec.reason : null) ||
+                  (matchInfo?.reason && matchInfo.reason.length > 40 ? matchInfo.reason : null) ||
                   null;
 
                 if (adhesionScore != null || teaser) {
