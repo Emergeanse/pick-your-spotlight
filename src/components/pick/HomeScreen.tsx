@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 import type { Movie, MovieDetail } from "@/lib/tmdb";
@@ -170,6 +170,17 @@ const HomeScreen = ({
     minRating: 0,
   });
 
+  const isMountedRef = useRef(true);
+  const msgIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+      if (msgIntervalRef.current !== null) clearInterval(msgIntervalRef.current);
+    };
+  }, []);
+
   const tonightPool = useMemo(() => chatMoviesPool || [], [chatMoviesPool]);
   const canGoPrev = tonightPickIndex > 0;
   const canGoNext = tonightPickIndex < tonightPool.length - 1;
@@ -323,9 +334,11 @@ const HomeScreen = ({
     setTonightLoadingMsg(LOADING_MESSAGES[0]);
 
     const msgInterval = setInterval(() => {
+      if (!isMountedRef.current) return;
       msgIndex = (msgIndex + 1) % LOADING_MESSAGES.length;
       setTonightLoadingMsg(LOADING_MESSAGES[msgIndex]);
     }, 2000);
+    msgIntervalRef.current = msgInterval;
 
     try {
       let movies: MovieDetail[] = [];
@@ -453,18 +466,19 @@ const HomeScreen = ({
         }
       }
 
-      clearInterval(msgInterval);
-
-      if (movies.length > 0) {
+      if (isMountedRef.current && movies.length > 0) {
         setChatMoviesPool(movies);
         await setCurrentTonightMovie(movies[0], 0, new Set(movies[0] ? [movies[0].id] : []));
       }
     } catch (e) {
       console.error(e);
-      clearInterval(msgInterval);
     } finally {
-      setTonightLoading(false);
-      setTonightLoadingMsg("");
+      clearInterval(msgInterval);
+      msgIntervalRef.current = null;
+      if (isMountedRef.current) {
+        setTonightLoading(false);
+        setTonightLoadingMsg("");
+      }
     }
   };
 
