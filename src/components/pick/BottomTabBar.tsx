@@ -36,6 +36,12 @@ const BottomTabBar = () => {
                   } else {
                     navigate("/app");
                   }
+                } else if (tab.id === "cinema") {
+                  if (location.pathname === "/app/my-cinema") {
+                    window.dispatchEvent(new CustomEvent("cinema-reset"));
+                  } else {
+                    navigate(tab.path);
+                  }
                 } else {
                   navigate(tab.path);
                 }

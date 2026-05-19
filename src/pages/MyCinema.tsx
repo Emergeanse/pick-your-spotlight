@@ -85,6 +85,12 @@ const MyCinema = () => {
     loadData();
   }, [user, isReady]);
 
+  useEffect(() => {
+    const handleReset = () => { setShowTrainer(false); setShowDNA(false); };
+    window.addEventListener("cinema-reset", handleReset);
+    return () => window.removeEventListener("cinema-reset", handleReset);
+  }, []);
+
   const loadData = async () => {
     if (!user) return;
     setLoading(true);
