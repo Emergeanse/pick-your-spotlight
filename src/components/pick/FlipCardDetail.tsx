@@ -126,45 +126,42 @@ const FlipCardDetail = ({
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[110] flex items-end justify-center bg-background/80 backdrop-blur-md"
-          onClick={navigateBack}
+          key={`${currentType}-${currentItem?.id}`}
+          initial={{ y: "100%" }}
+          animate={{ y: 0 }}
+          exit={{ y: "100%" }}
+          transition={{ type: "spring", damping: 28, stiffness: 300 }}
+          className="fixed inset-0 z-[110] flex flex-col bg-background"
         >
-          <motion.div
-            key={`${currentType}-${currentItem?.id}`}
-            initial={{ y: "100%" }}
-            animate={{ y: 0 }}
-            exit={{ y: "100%" }}
-            transition={{ type: "spring", damping: 28, stiffness: 300 }}
-            className="relative w-full max-w-md max-h-[85dvh] overflow-y-auto overscroll-contain rounded-t-3xl border-t border-border/30 bg-card/95 backdrop-blur-xl shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="sticky top-0 z-10 flex items-center justify-between bg-card/90 px-5 pt-4 pb-2 backdrop-blur-md">
-              <div className="flex-1 flex items-center">
-                {navStack.length > 0 && (
-                  <button
-                    onClick={navigateBack}
-                    className="flex items-center gap-1 text-foreground/50 hover:text-foreground text-xs font-sans transition-colors mr-2"
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                    Retour
-                  </button>
-                )}
-              </div>
-
-              <div className="h-1 w-10 rounded-full bg-foreground/10 mx-auto" />
-
-              <div className="flex-1 flex justify-end">
-                <button onClick={onClose} className="rounded-full bg-foreground/5 p-1.5">
-                  <X className="h-4 w-4 text-foreground/40" />
+          <div className="sticky top-0 z-10 flex items-center justify-between bg-background/95 backdrop-blur-md border-b border-border/20 px-5 pt-[calc(0.75rem+env(safe-area-inset-top))] pb-3">
+            <div className="flex-1 flex items-center">
+              {navStack.length > 0 ? (
+                <button
+                  onClick={navigateBack}
+                  className="flex items-center gap-1 text-foreground/50 hover:text-foreground text-xs font-sans transition-colors"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                  Retour
                 </button>
-              </div>
+              ) : (
+                <button
+                  onClick={onClose}
+                  className="flex items-center gap-1 text-foreground/50 hover:text-foreground text-xs font-sans transition-colors"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                  Retour
+                </button>
+              )}
             </div>
 
+            <button onClick={onClose} className="rounded-full bg-foreground/5 hover:bg-foreground/10 p-1.5 transition-colors">
+              <X className="h-4 w-4 text-foreground/40" />
+            </button>
+          </div>
+
+          <div className="flex-1 overflow-y-auto overscroll-contain pb-[calc(2rem+env(safe-area-inset-bottom))]">
             {loading ? (
-              <div className="flex items-center justify-center py-16">
+              <div className="flex items-center justify-center py-24">
                 <Loader2 className="h-6 w-6 animate-spin text-primary/50" />
               </div>
             ) : currentType === "movie" ? (
@@ -184,7 +181,7 @@ const FlipCardDetail = ({
                 onMovieClick={(movie) => navigateTo(movie, "movie")}
               />
             )}
-          </motion.div>
+          </div>
         </motion.div>
       )}
     </AnimatePresence>
@@ -217,13 +214,13 @@ const MovieDetailContent = ({
   const score = recommendationText?.matchScore ?? recommendationText?.score ?? null;
 
   return (
-    <div className="px-5 pb-8 pt-2">
-      <div className="flex gap-4 mb-4">
+    <div className="px-5 pb-8 pt-4 max-w-2xl mx-auto">
+      <div className="flex gap-4 mb-5">
         <div className="relative shrink-0">
           <img
-            src={getPosterUrl(item.poster_path, "w185")}
+            src={getPosterUrl(item.poster_path, "w342")}
             alt={getDisplayTitle(item)}
-            className="h-32 w-auto rounded-xl shadow-lg"
+            className="h-40 w-auto rounded-xl shadow-lg"
           />
           {interaction.hasInteraction && (
             <div className="absolute top-1.5 left-1.5">
@@ -372,12 +369,12 @@ const PersonDetailContent = ({
   filmography: any[];
   onMovieClick: (movie: any) => void;
 }) => (
-  <div className="px-5 pb-8 pt-2">
-    <div className="flex gap-4 mb-4">
+  <div className="px-5 pb-8 pt-4 max-w-2xl mx-auto">
+    <div className="flex gap-4 mb-5">
       <img
         src={getPersonPhotoUrl(item.profile_path, "w185")}
         alt={item.name}
-        className="h-32 w-auto rounded-xl shadow-lg object-cover"
+        className="h-40 w-auto rounded-xl shadow-lg object-cover"
       />
       <div className="flex-1 min-w-0">
         <h3 className="text-lg font-serif font-bold leading-tight text-foreground">{item.name}</h3>
