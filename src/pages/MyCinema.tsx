@@ -27,37 +27,37 @@ function computeDetailedConfidence(data: {
   likedCount: number;
   watchlistCount: number;
   streakCount: number;
-  genreCount: number;
+  peopleEvaluated: number;
 }) {
-  const { totalRecos, acceptedRecos, likedCount, watchlistCount, streakCount, genreCount } = data;
-  
+  const { totalRecos, acceptedRecos, likedCount, watchlistCount, streakCount, peopleEvaluated } = data;
+
   // 1. Data volume (max 30pts) — more data = better knowledge
   const totalSignals = totalRecos + likedCount + watchlistCount;
   const volumeScore = Math.min(Math.sqrt(totalSignals) * 4, 30);
-  
+
   // 2. Acceptance rate (max 25pts) — how well Pick matches
   const acceptRate = totalRecos > 0 ? acceptedRecos / totalRecos : 0;
   const acceptScore = Math.min(acceptRate * 25, 25);
-  
-  // 3. Genre diversity (max 20pts) — broader taste profile = better understanding
-  const diversityScore = Math.min(genreCount * 3, 20);
-  
-  // 4. Engagement consistency (max 15pts) — streak shows ongoing calibration
+
+  // 3. Engagement consistency (max 15pts) — streak shows ongoing calibration
   const streakScore = Math.min(streakCount * 2.5, 15);
-  
-  // 5. Taste training (max 10pts) — liked movies are explicit signals
-  const trainingScore = Math.min(likedCount * 1.5, 10);
-  
-  const total = Math.round(volumeScore + acceptScore + diversityScore + streakScore + trainingScore);
-  
+
+  // 4. Films & series training (max 15pts) — explicit evaluations are strong signals
+  const trainingScore = Math.min(likedCount * 1.5, 15);
+
+  // 5. People preferences (actors & directors) (max 15pts) — taste for people drives personalization
+  const peopleScore = Math.min(Math.sqrt(peopleEvaluated) * 3, 15);
+
+  const total = Math.round(volumeScore + acceptScore + streakScore + trainingScore + peopleScore);
+
   return {
     total: Math.min(total, 100),
     breakdown: [
       { label: "Données collectées", score: Math.round(volumeScore), max: 30, detail: `${totalSignals} interactions` },
       { label: "Taux de satisfaction", score: Math.round(acceptScore), max: 25, detail: totalRecos > 0 ? `${Math.round(acceptRate * 100)}% de recos validées` : "Pas encore de données" },
-      { label: "Diversité des genres", score: Math.round(diversityScore), max: 20, detail: `${genreCount} genres identifiés` },
       { label: "Régularité", score: Math.round(streakScore), max: 15, detail: streakCount > 0 ? `Série de ${streakCount}` : "Commence une série" },
-      { label: "Entraînement goûts", score: Math.round(trainingScore), max: 10, detail: `${likedCount} films évalués` },
+      { label: "Films & séries évalués", score: Math.round(trainingScore), max: 15, detail: `${likedCount} titres évalués` },
+      { label: "Acteurs & Réalisateurs", score: Math.round(peopleScore), max: 15, detail: peopleEvaluated > 0 ? `${peopleEvaluated} personnes évaluées` : "Entraîne tes préférences" },
     ],
   };
 }
@@ -77,6 +77,7 @@ const MyCinema = () => {
   const [genreStats, setGenreStats] = useState<{ genre: string; count: number }[]>([]);
   const [movieVsSeries, setMovieVsSeries] = useState({ movies: 0, series: 0 });
   const [showConfidenceDetail, setShowConfidenceDetail] = useState(false);
+  const [peopleEvaluated, setPeopleEvaluated] = useState(0);
 
   useEffect(() => {
     if (!isReady) return;
@@ -88,15 +89,17 @@ const MyCinema = () => {
     if (!user) return;
     setLoading(true);
     try {
-      const [engData, likedData, dnaData, { count: wlCount }] = await Promise.all([
+      const [engData, likedData, dnaData, { count: wlCount }, { count: peopleCount }] = await Promise.all([
         getEngagementData(user.id),
         getLikedMovies().catch(() => []),
         supabase.from("cinematic_profiles" as any).select("personality_title, dna_archetype, global_level").eq("user_id", user.id).maybeSingle(),
         supabase.from("watchlist").select("id", { count: "exact", head: true }).eq("user_id", user.id),
+        supabase.from("user_people_preferences" as any).select("id", { count: "exact", head: true }).eq("user_id", user.id),
       ]);
       setEngagement(engData);
       setLikedMovies(likedData);
       setWatchlistCount(wlCount || 0);
+      setPeopleEvaluated(peopleCount || 0);
       if (dnaData.data) {
         const d = dnaData.data as any;
         setDnaTitle(d.personality_title || null);
@@ -137,9 +140,9 @@ const MyCinema = () => {
       likedCount: likedMovies.length,
       watchlistCount,
       streakCount: engagement.streakCount,
-      genreCount: genreStats.length,
+      peopleEvaluated,
     });
-  }, [engagement, likedMovies.length, watchlistCount, genreStats.length]);
+  }, [engagement, likedMovies.length, watchlistCount, peopleEvaluated]);
 
   if (!isReady || loading) return <div className="fixed inset-0 bg-background flex items-center justify-center"><Loader2 className="w-6 h-6 text-primary animate-spin" /></div>;
   if (!user) return null;
