@@ -198,7 +198,7 @@ const TonightPickOverlay = ({
                       )}
                       {teaser && (
                         <p className="text-foreground/50 text-[11px] font-sans text-center leading-snug max-w-[260px]">
-                          {teaser}
+                          {teaser.length > 100 ? `${teaser.substring(0, 100).trimEnd()}…` : teaser}
                         </p>
                       )}
                     </div>
