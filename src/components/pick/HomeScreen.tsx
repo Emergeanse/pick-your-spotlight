@@ -359,21 +359,10 @@ const HomeScreen = ({
             count: userRecommendationCount || RECOMMENDATION_BATCH_SIZE,
             minMatchScore: quickFilters.matchThreshold,
           });
-          // Ensure we end up with at least the requested count
-          let extracted = extractRecommendationMovies(data);
+          const extracted = extractRecommendationMovies(data);
           const desiredCount = userRecommendationCount || RECOMMENDATION_BATCH_SIZE;
-          if ((extracted?.length || 0) < desiredCount) {
-            extracted = await ensureRecommendationBatch(extracted, {
-              excludeIds: allExcludeIds,
-              platformIds: userPlatformIds,
-              minRating: userMinRating,
-              excludedGenres: userExcludedGenres,
-              size: desiredCount,
-              preloadMatchTexts: true,
-              preloadProviders: true,
-              minMatchScore: quickFilters.matchThreshold,
-            });
-          }
+
+          // Fallback AI confidence scores — shown immediately while movie-match scores load
           const matchMap: Record<number, RecommendationMatch> = {};
           (data?.movies || []).forEach((m: any) => {
             if (!m.movie?.id) return;
@@ -384,6 +373,7 @@ const HomeScreen = ({
           });
           setMovieMatchData((prev) => ({ ...prev, ...matchMap }));
 
+          // Single call: fills to desiredCount, scores, filters by threshold
           movies = await ensureRecommendationBatch(extracted, {
             excludeIds: allExcludeIds,
             platformIds: userPlatformIds,
@@ -395,6 +385,7 @@ const HomeScreen = ({
             minMatchScore: quickFilters.matchThreshold,
           });
 
+          // Override with actual movie-match scores now that they're available
           const actualScoreMap: Record<number, RecommendationMatch> = {};
           (movies as any[]).forEach((m: any) => {
             const texts = m.recommendationTexts;

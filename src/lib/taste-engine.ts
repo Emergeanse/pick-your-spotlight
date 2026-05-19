@@ -181,7 +181,12 @@ export async function computeMultiVectorProfile(
     const watchlistIds = allWatchlist.map(w => w.tmdb_id).sort().join(",");
     const interactionCount = allInteractions.length;
     const fingerprint = `${likedIds}|${watchlistIds}|${interactionCount}`;
-    const fingerprintHash = fingerprint.length;
+    // djb2 hash — much lower collision rate than fingerprint.length
+    let fingerprintHash = 5381;
+    for (let i = 0; i < fingerprint.length; i++) {
+      fingerprintHash = (Math.imul(fingerprintHash, 33) ^ fingerprint.charCodeAt(i)) | 0;
+    }
+    fingerprintHash = Math.abs(fingerprintHash);
     const totalCount = allLiked.length + allWatchlist.length;
 
     if (cached && (cached as any).liked_count === totalCount + fingerprintHash) {
