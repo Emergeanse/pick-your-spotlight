@@ -88,6 +88,7 @@ const MyCinema = () => {
   const [peopleEvaluated, setPeopleEvaluated] = useState(0);
   const [genresSelected, setGenresSelected] = useState(0);
   const [showGenres, setShowGenres] = useState(false);
+  const [showStats, setShowStats] = useState(false);
 
   useEffect(() => {
     if (!isReady) return;
@@ -313,16 +314,18 @@ const MyCinema = () => {
 
         {/* ─── Stats table ─── */}
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-          <h3 className="text-xs font-sans font-semibold text-foreground/35 uppercase tracking-widest mb-3">Statistiques</h3>
+          <button
+            onClick={() => setShowStats((v) => !v)}
+            className="w-full flex items-center justify-between mb-3 group"
+          >
+            <h3 className="text-xs font-sans font-semibold text-foreground/35 uppercase tracking-widest">Statistiques</h3>
+            <ChevronDown className={`w-3.5 h-3.5 text-foreground/25 transition-transform duration-200 ${showStats ? "rotate-180" : ""}`} />
+          </button>
           <div className="rounded-2xl bg-card/30 border border-border/8 overflow-hidden divide-y divide-border/5">
             {[
               { icon: <Eye className="w-3.5 h-3.5 text-primary/40" />, label: "Recommandations reçues", value: totalRecos },
               { icon: <Heart className="w-3.5 h-3.5 text-destructive/40" />, label: "Films évalués / likés", value: likedMovies.length },
               { icon: <Bookmark className="w-3.5 h-3.5 text-primary/40" />, label: "En watchlist", value: watchlistCount },
-              { icon: <Film className="w-3.5 h-3.5 text-primary/40" />, label: "Films", value: movieVsSeries.movies },
-              { icon: <Tv className="w-3.5 h-3.5 text-primary/40" />, label: "Séries", value: movieVsSeries.series },
-              { icon: <Users className="w-3.5 h-3.5 text-primary/40" />, label: "Acteurs & réalisateurs évalués", value: peopleEvaluated },
-              { icon: <TrendingUp className="w-3.5 h-3.5 text-primary/40" />, label: "Meilleure série", value: `${engagement?.bestStreak || 0} d'affilée` },
             ].map((row, i) => (
               <div key={i} className="flex items-center justify-between px-4 py-3">
                 <div className="flex items-center gap-2.5">
@@ -332,6 +335,32 @@ const MyCinema = () => {
                 <span className="text-sm font-sans font-semibold text-foreground tabular-nums">{row.value}</span>
               </div>
             ))}
+            <AnimatePresence initial={false}>
+              {showStats && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.25, ease: "easeInOut" }}
+                  className="overflow-hidden divide-y divide-border/5"
+                >
+                  {[
+                    { icon: <Film className="w-3.5 h-3.5 text-primary/40" />, label: "Films", value: movieVsSeries.movies },
+                    { icon: <Tv className="w-3.5 h-3.5 text-primary/40" />, label: "Séries", value: movieVsSeries.series },
+                    { icon: <Users className="w-3.5 h-3.5 text-primary/40" />, label: "Acteurs & réalisateurs évalués", value: peopleEvaluated },
+                    { icon: <TrendingUp className="w-3.5 h-3.5 text-primary/40" />, label: "Meilleure série", value: `${engagement?.bestStreak || 0} d'affilée` },
+                  ].map((row, i) => (
+                    <div key={i} className="flex items-center justify-between px-4 py-3">
+                      <div className="flex items-center gap-2.5">
+                        {row.icon}
+                        <span className="text-sm font-sans text-foreground/60">{row.label}</span>
+                      </div>
+                      <span className="text-sm font-sans font-semibold text-foreground tabular-nums">{row.value}</span>
+                    </div>
+                  ))}
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         </motion.div>
 
