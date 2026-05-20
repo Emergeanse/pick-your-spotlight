@@ -173,18 +173,23 @@ const TonightPickOverlay = ({
 
                 const adhesionScore = rec?.matchScore ?? rec?.score ?? rec?.confidence ?? matchInfo?.confidence ?? null;
 
+                const asStr = (v: unknown): string | null =>
+                  typeof v === "string" && v.length > 0 ? v : null;
+
                 const richTeaser =
-                  rec?.summary ||
-                  rec?.detailedExplanation ||
-                  rec?.whyItMatches ||
-                  rec?.headline ||
-                  rec?.pickNote;
+                  asStr(rec?.summary) ||
+                  asStr(rec?.detailedExplanation) ||
+                  asStr(rec?.whyItMatches) ||
+                  asStr(rec?.headline) ||
+                  asStr(rec?.pickNote);
 
                 // Only fall back to generic reason/matchInfo if no rich text is available
+                const recReason = asStr(rec?.reason);
+                const matchReason = asStr(matchInfo?.reason);
                 const teaser =
                   richTeaser ||
-                  (rec?.reason && rec.reason.length > 40 ? rec.reason : null) ||
-                  (matchInfo?.reason && matchInfo.reason.length > 40 ? matchInfo.reason : null) ||
+                  (recReason && recReason.length > 40 ? recReason : null) ||
+                  (matchReason && matchReason.length > 40 ? matchReason : null) ||
                   null;
 
                 if (adhesionScore != null || teaser) {

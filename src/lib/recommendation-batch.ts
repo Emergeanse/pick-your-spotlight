@@ -32,18 +32,34 @@ export type RecommendationMatchData = {
   pickNote?: string | null;
 };
 
+const toStr = (v: unknown): string | undefined =>
+  typeof v === "string" && v.length > 0 ? v : undefined;
+
 const normalizeRecommendationTexts = (data: RecommendationMatchData): RecommendationMatchData => {
   const score = data.matchScore ?? data.score ?? data.confidence;
-  const reason = data.summary ?? data.detailedExplanation ?? data.whyItMatches ?? data.reason ?? data.pickNote ?? null;
+  const reason =
+    toStr(data.summary) ??
+    toStr(data.detailedExplanation) ??
+    toStr(data.whyItMatches) ??
+    toStr(data.reason) ??
+    toStr(data.pickNote) ??
+    null;
 
   return {
     ...data,
     matchScore: score,
     score,
     confidence: data.confidence ?? score ?? undefined,
-    whyItMatches: data.whyItMatches ?? data.reason ?? reason ?? undefined,
-    summary: data.summary ?? reason ?? undefined,
-    pickNote: data.pickNote ?? reason,
+    headline: toStr(data.headline),
+    whyItMatches: toStr(data.whyItMatches) ?? toStr(data.reason) ?? reason ?? undefined,
+    detailedExplanation: toStr(data.detailedExplanation),
+    emotionalJourney: toStr(data.emotionalJourney),
+    perfectFor: toStr(data.perfectFor),
+    funFact: toStr(data.funFact),
+    summary: toStr(data.summary) ?? reason ?? undefined,
+    reason: toStr(data.reason),
+    tone: toStr(data.tone),
+    pickNote: toStr(data.pickNote) ?? reason,
   };
 };
 

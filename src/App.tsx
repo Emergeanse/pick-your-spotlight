@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/use-auth";
 
 import AppLayout from "@/components/pick/AppLayout";
+import ErrorBoundary from "@/components/ErrorBoundary";
 import Landing from "./pages/Landing.tsx";
 import Index from "./pages/Index.tsx";
 import Auth from "./pages/Auth.tsx";
@@ -52,6 +53,7 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
+          <ErrorBoundary>
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/app" element={<ProtectedRoute><AppLayout><Index /></AppLayout></ProtectedRoute>} />
@@ -71,6 +73,7 @@ const App = () => (
             <Route path="/profile" element={<Navigate to="/app/profile" replace />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
+          </ErrorBoundary>
         </BrowserRouter>
       </>
     </TooltipProvider>
