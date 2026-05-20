@@ -10,6 +10,7 @@ import { getMyPreferences } from "@/lib/preferences";
 import CinemaDNA from "@/components/pick/CinemaDNA";
 import TasteTrainer from "@/components/pick/TasteTrainer";
 import GenrePreferences from "@/components/pick/GenrePreferences";
+import CinemaAvatar from "@/components/pick/CinemaAvatar";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { RadarChart, PolarGrid, PolarAngleAxis, Radar, ResponsiveContainer } from "recharts";
 
@@ -210,21 +211,34 @@ const MyCinema = () => {
         <motion.button initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
           onClick={() => setShowDNA(true)}
           className="w-full text-left rounded-2xl p-5 border border-primary/15 bg-gradient-to-br from-card via-card to-primary/[0.03] hover:border-primary/30 transition-all group relative overflow-hidden active:scale-[0.98]">
-          <div className="relative z-10">
-            <p className="text-[10px] uppercase tracking-[0.2em] text-primary/40 font-sans font-semibold mb-2">Ton ADN Cinéma</p>
-            {dnaTitle ? (
-              <>
-                <h2 className="text-xl font-serif mb-1 group-hover:text-primary/90 transition-colors">{dnaTitle}</h2>
-                {dnaArchetype && <p className="text-primary/50 text-xs font-sans mb-1">{dnaArchetype}</p>}
-                {dnaLevel && <span className="inline-block text-[10px] px-2 py-0.5 rounded-full bg-primary/8 text-primary/60 font-sans">{dnaLevel}</span>}
-              </>
-            ) : (
-              <h2 className="text-base font-serif text-foreground/50">Découvre ton profil cinématographique</h2>
-            )}
-            <div className="flex items-center gap-1 mt-3 text-primary/30 group-hover:text-primary/50 transition-colors">
-              <span className="text-[11px] font-sans">Explorer</span>
-              <ChevronRight className="w-3 h-3" />
+          <div className="relative z-10 flex items-center gap-4">
+            <div className="flex-1 min-w-0">
+              <p className="text-[10px] uppercase tracking-[0.2em] text-primary/40 font-sans font-semibold mb-2">Ton ADN Cinéma</p>
+              {dnaTitle ? (
+                <>
+                  <h2 className="text-xl font-serif mb-1 group-hover:text-primary/90 transition-colors leading-tight">{dnaTitle}</h2>
+                  {dnaArchetype && <p className="text-primary/50 text-xs font-sans mb-1">{dnaArchetype}</p>}
+                  {dnaLevel && <span className="inline-block text-[10px] px-2 py-0.5 rounded-full bg-primary/8 text-primary/60 font-sans">{dnaLevel}</span>}
+                </>
+              ) : (
+                <h2 className="text-base font-serif text-foreground/50">Découvre ton profil cinématographique</h2>
+              )}
+              <div className="flex items-center gap-1 mt-3 text-primary/30 group-hover:text-primary/50 transition-colors">
+                <span className="text-[11px] font-sans">Explorer</span>
+                <ChevronRight className="w-3 h-3" />
+              </div>
             </div>
+
+            {dnaTitle && (
+              <div className="shrink-0 rounded-full overflow-hidden shadow-[0_0_20px_rgba(139,92,246,0.3)] ring-1 ring-white/10">
+                <CinemaAvatar
+                  personalityTitle={dnaTitle}
+                  dnaArchetype={dnaArchetype}
+                  globalLevel={dnaLevel ?? ""}
+                  size={64}
+                />
+              </div>
+            )}
           </div>
         </motion.button>
 
