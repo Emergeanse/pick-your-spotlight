@@ -375,7 +375,10 @@ Recommande ${requestedCount > 1 ? `${requestedCount} contenus` : "UN contenu"} a
         const res = await fetch(`https://api.themoviedb.org/3/discover/${searchType}?${params}`);
         const data = await res.json();
         const movie = (data.results || []).find((r: any) => isMovieAllowed(r));
-        if (movie) return await getMovieDetails(movie.id, searchType);
+        if (movie) {
+          const detail = await getMovieDetails(movie.id, searchType);
+          if (detail) return detail;
+        }
       }
       // Ultimate fallback: trending
       const res = await fetch(`https://api.themoviedb.org/3/trending/${searchType}/week?api_key=${TMDB_API_KEY}&language=fr-FR`);
