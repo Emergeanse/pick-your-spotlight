@@ -26,7 +26,7 @@ import { usePickPlus } from "@/hooks/use-pick-plus";
 import { getTimeContextForPrompt } from "@/lib/time-context";
 import PickPlusPaywall from "@/components/pick/PickPlusPaywall";
 import { getLikedMovies } from "@/lib/liked-movies";
-import { computeUserTasteVector } from "@/lib/taste-engine";
+import { computeMultiVectorProfile } from "@/lib/taste-engine";
 import {
   extractRecommendationMovies,
   ensureRecommendationBatch,
@@ -334,10 +334,14 @@ const Index = () => {
       let batch: RecommendationMovieDetail[] = [];
 
       if (user && liked.length >= 2) {
-        const userTasteVector = await computeUserTasteVector(user.id);
+        const multiVec = await computeMultiVectorProfile(user.id);
+        const confidenceScore = tasteProfile?.confidence?.score ?? profilePrefs.profileConfidence ?? 50;
+        const explorationLevel = confidenceScore >= 70 ? 3 : confidenceScore >= 40 ? 5 : 7;
         const data = await invokeSurprisePersonalized({
           likedMovies: liked,
-          userTasteVector,
+          userTasteVector: multiVec?.stableTasteVector ?? null,
+          recentTasteVector: multiVec?.recentTasteVector ?? null,
+          avoidanceVector: multiVec?.avoidanceVector ?? null,
           tasteProfile,
           platformIds: profilePrefs.preferredPlatforms,
           excludedPlatformIds: profilePrefs.excludedPlatforms,
@@ -345,6 +349,7 @@ const Index = () => {
           minRating: profilePrefs.minRating,
           minMatchScore: profilePrefs.matchThreshold,
           excludeIds,
+          explorationLevel,
           count: profilePrefs.recommendationBatchSize || RECOMMENDATION_BATCH_SIZE,
         });
         // Extract movies and ensure we have at least the requested count
@@ -517,10 +522,12 @@ const Index = () => {
       if (user) {
         const liked = await getLikedMovies();
         if (liked.length >= 2) {
-          const [userTasteVector] = await Promise.all([computeUserTasteVector(user.id)]);
+          const multiVec = await computeMultiVectorProfile(user.id);
           const data = await invokeSurprisePersonalized({
             likedMovies: liked,
-            userTasteVector,
+            userTasteVector: multiVec?.stableTasteVector ?? null,
+            recentTasteVector: multiVec?.recentTasteVector ?? null,
+            avoidanceVector: multiVec?.avoidanceVector ?? null,
             tasteProfile,
             platformIds: profilePrefs.preferredPlatforms,
             excludedPlatformIds: profilePrefs.excludedPlatforms,

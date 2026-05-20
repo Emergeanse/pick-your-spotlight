@@ -317,7 +317,20 @@ export async function getUserTasteProfile() {
   const skipRows = allFeedback.filter((r) => (r.feedback_type ?? r.action) === "skip");
   const rejectedRows = allFeedback.filter((r) => ["not_for_me", "dislike"].includes(r.feedback_type ?? r.action));
 
+  // Build genre counts from positive interactions (context.genres) with a like/watch bonus
   const genreCounts: Record<string, number> = {};
+  for (const i of allInteractions) {
+    const ctx = i.context as any;
+    if (!Array.isArray(ctx?.genres)) continue;
+    const weight =
+      i.action_type === "liked" || i.action_type === "post_watch_loved" ? 2 :
+      i.action_type === "watched" || i.action_type === "already_seen" || i.action_type === "post_watch_good" ? 1.5 :
+      i.action_type === "saved" ? 1 : 0;
+    if (weight === 0) continue;
+    for (const g of ctx.genres as string[]) {
+      genreCounts[g] = (genreCounts[g] || 0) + weight;
+    }
+  }
   const roundedGenreCounts: Record<string, number> = {};
   for (const [g, c] of Object.entries(genreCounts)) {
     roundedGenreCounts[g] = Math.round(c * 100) / 100;
