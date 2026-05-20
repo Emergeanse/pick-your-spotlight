@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Loader2, Sparkles, ChevronRight, ChevronDown, Brain, Film, Tv, Trophy, Eye, Heart, Bookmark, TrendingUp, Info } from "lucide-react";
+import { ArrowLeft, Loader2, Sparkles, ChevronRight, ChevronDown, Brain, Film, Tv, Trophy, Eye, Heart, Bookmark, TrendingUp, Info, Users } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
@@ -307,6 +307,7 @@ const MyCinema = () => {
               { icon: <Bookmark className="w-3.5 h-3.5 text-primary/40" />, label: "En watchlist", value: watchlistCount },
               { icon: <Film className="w-3.5 h-3.5 text-primary/40" />, label: "Films", value: movieVsSeries.movies },
               { icon: <Tv className="w-3.5 h-3.5 text-primary/40" />, label: "Séries", value: movieVsSeries.series },
+              { icon: <Users className="w-3.5 h-3.5 text-primary/40" />, label: "Acteurs & réalisateurs évalués", value: peopleEvaluated },
               { icon: <TrendingUp className="w-3.5 h-3.5 text-primary/40" />, label: "Meilleure série", value: `${engagement?.bestStreak || 0} d'affilée` },
             ].map((row, i) => (
               <div key={i} className="flex items-center justify-between px-4 py-3">
