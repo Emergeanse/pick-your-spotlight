@@ -10,6 +10,7 @@ import { getUserTasteProfile } from "@/lib/interactions";
 import { getLikedMovies } from "@/lib/liked-movies";
 import { getPosterUrl } from "@/lib/tmdb";
 import pickLogo from "@/assets/pick-logo.png";
+import CinemaAvatar from "@/components/pick/CinemaAvatar";
 
 // ── Types ──
 interface TasteSignature {
@@ -291,19 +292,33 @@ const CinemaDNA = ({ userId, teaser, onOpenFull }: CinemaDNAProps) => {
         transition={{ delay: 0.1 }}
         className="text-center mb-8"
       >
-        <p className="text-[10px] uppercase tracking-[0.25em] text-gold/50 font-sans font-semibold mb-2">
+        <p className="text-[10px] uppercase tracking-[0.25em] text-gold/50 font-sans font-semibold mb-4">
           🧬 Ton ADN Cinéma
         </p>
 
-        {/* Global Level Badge */}
-        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gold/8 border border-gold/15 mb-4">
-          <div className="w-1.5 h-1.5 rounded-full bg-gold/60" />
-          <span className="text-[10px] font-sans font-semibold text-gold/70 uppercase tracking-wider">
-            {profile.global_level}
-          </span>
+        {/* Avatar */}
+        <div className="flex justify-center mb-4">
+          <div className="relative">
+            <div className="rounded-full overflow-hidden shadow-[0_0_32px_rgba(139,92,246,0.25)] ring-1 ring-white/8">
+              <CinemaAvatar
+                personalityTitle={profile.personality_title}
+                dnaArchetype={profile.dna_archetype}
+                tasteTaits={profile.taste_traits}
+                globalLevel={profile.global_level}
+                size={128}
+              />
+            </div>
+            {/* Level badge overlaid on avatar */}
+            <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-background/90 border border-gold/20 shadow-sm whitespace-nowrap">
+              <div className="w-1.5 h-1.5 rounded-full bg-gold/60 shrink-0" />
+              <span className="text-[9px] font-sans font-semibold text-gold/70 uppercase tracking-wider">
+                {profile.global_level}
+              </span>
+            </div>
+          </div>
         </div>
 
-        <h2 className="font-serif text-3xl md:text-4xl text-foreground leading-tight mb-2">
+        <h2 className="font-serif text-3xl md:text-4xl text-foreground leading-tight mb-2 mt-3">
           {dnaName}
         </h2>
 
