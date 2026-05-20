@@ -370,7 +370,7 @@ Recommande ${requestedCount > 1 ? `${requestedCount} contenus` : "UN contenu"} a
       if (!sug?.title) return null;
       const searchUrl = `https://api.themoviedb.org/3/search/${searchType}?api_key=${TMDB_API_KEY}&language=fr-FR&query=${encodeURIComponent(sug.title)}&page=1`;
       const searchData = await safeFetchJson(searchUrl);
-      const found = (searchData.results || []).find((r: any) => isMovieAllowed(r));
+      const found = (searchData?.results || []).find((r: any) => isMovieAllowed(r));
       if (!found) return null;
       const detail = await getMovieDetails(found.id, searchType);
       if (!detail) return null;
@@ -447,7 +447,7 @@ Recommande ${requestedCount > 1 ? `${requestedCount} contenus` : "UN contenu"} a
         if (!sug?.title) return null;
         const searchUrl = `https://api.themoviedb.org/3/search/${forceType}?api_key=${TMDB_API_KEY}&language=fr-FR&query=${encodeURIComponent(sug.title)}&page=1`;
         const searchData = await safeFetchJson(searchUrl);
-        const found = (searchData.results || []).find((r: any) => isMovieAllowed(r) && !foundMovieIds.has(r.id));
+        const found = (searchData?.results || []).find((r: any) => isMovieAllowed(r) && !foundMovieIds.has(r.id));
         if (!found) return null;
         const detail = await getMovieDetails(found.id, forceType);
         if (!detail) return null;
