@@ -24,7 +24,9 @@
       "Read(//c/Users/cbill/AppData/Local/**)",
       "Read(//c/Users/cbill/**)",
       "PowerShell(Get-ChildItem \"C:\\\\Users\\\\cbill\\\\AppData\\\\Roaming\" -ErrorAction SilentlyContinue | Where-Object Name -in @\\(\"npm\", \"nvm\", \"node\"\\) | Select-Object Name, FullName)",
-      "PowerShell(New-Item -ItemType Directory -Force \"C:\\\\Users\\\\cbill\\\\pick-your-spotlight\\\\supabase\\\\functions\\\\seed-embeddings\")"
+      "PowerShell(New-Item -ItemType Directory -Force \"C:\\\\Users\\\\cbill\\\\pick-your-spotlight\\\\supabase\\\\functions\\\\seed-embeddings\")",
+      "PowerShell($response = Invoke-WebRequest -Uri \"https://lrjhpflvkrebbngfnaif.supabase.co/rest/v1/movie_embeddings?select=count\" -Headers @{ \"Authorization\" = \"Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyamhwZmx2a3JlYmJuZ2ZuYWlmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMxODMwODMsImV4cCI6MjA4ODc1OTA4M30.uqrxehgcnJTHmhGcmSKpu8GNngUkSE5iuHUcw7z4tPk\"; \"apikey\" = \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyamhwZmx2a3JlYmJuZ2ZuYWlmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMxODMwODMsImV4cCI6MjA4ODc1OTA4M30.uqrxehgcnJTHmhGcmSKpu8GNngUkSE5iuHUcw7z4tPk\"; \"Prefer\" = \"count=exact\" }; $response.Headers[\"Content-Range\"])",
+      "PowerShell($r = Invoke-RestMethod -Uri \"https://lrjhpflvkrebbngfnaif.supabase.co/rest/v1/movie_embeddings?select=tmdb_id&limit=1\" -Headers @{ \"Authorization\" = \"Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyamhwZmx2a3JlYmJuZ2ZuYWlmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMxODMwODMsImV4cCI6MjA4ODc1OTA4M30.uqrxehgcnJTHmhGcmSKpu8GNngUkSE5iuHUcw7z4tPk\"; \"apikey\" = \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyamhwZmx2a3JlYmJuZ2ZuYWlmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMxODMwODMsImV4cCI6MjA4ODc1OTA4M30.uqrxehgcnJTHmhGcmSKpu8GNngUkSE5iuHUcw7z4tPk\" }; Write-Host \"Résultat: $\\($r | ConvertTo-Json -Depth 1\\)\")"
     ]
   }
 }
