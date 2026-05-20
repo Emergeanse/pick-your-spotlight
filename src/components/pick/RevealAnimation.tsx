@@ -7,10 +7,13 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, Film, Clapperboard } from "lucide-react";
 import PickCharacter from "./PickCharacter";
 
+export type CinemaAnecdote = { text: string; mood: "think" | "wave" | "default" };
+
 interface RevealAnimationProps {
   active: boolean;
   message?: string;
   phase?: "searching" | "found" | "revealing";
+  dynamicAnecdotes?: CinemaAnecdote[];
 }
 
 const SEARCH_PHASES = [
@@ -39,12 +42,22 @@ const CINEMA_ANECDOTES = [
   { text: "Tom Hanks a été le premier acteur à remporter l'Oscar du meilleur acteur deux années consécutives depuis Spencer Tracy en 1937-38.", mood: "think" as const },
 ];
 
-const RevealAnimation = ({ active, message }: RevealAnimationProps) => {
+const RevealAnimation = ({ active, message, dynamicAnecdotes }: RevealAnimationProps) => {
   const [phaseIndex, setPhaseIndex] = useState(0);
   const [particles, setParticles] = useState<number[]>([]);
   const [anecdoteIndex, setAnecdoteIndex] = useState(0);
   const [showAnecdote, setShowAnecdote] = useState(false);
   const startIndexRef = useRef(Math.floor(Math.random() * CINEMA_ANECDOTES.length));
+  // Once dynamic anecdotes arrive, latch onto them and restart from index 0
+  const [dynamicLocked, setDynamicLocked] = useState<CinemaAnecdote[] | null>(null);
+
+  // Switch to dynamic anecdotes as soon as they're available and we're in anecdote mode
+  useEffect(() => {
+    if (dynamicAnecdotes && dynamicAnecdotes.length > 0 && !dynamicLocked) {
+      setDynamicLocked(dynamicAnecdotes);
+      if (showAnecdote) setAnecdoteIndex(0);
+    }
+  }, [dynamicAnecdotes, dynamicLocked, showAnecdote]);
 
   useEffect(() => {
     if (!active) {
@@ -52,6 +65,7 @@ const RevealAnimation = ({ active, message }: RevealAnimationProps) => {
       setParticles([]);
       setShowAnecdote(false);
       setAnecdoteIndex(0);
+      setDynamicLocked(null);
       startIndexRef.current = Math.floor(Math.random() * CINEMA_ANECDOTES.length);
       return;
     }
@@ -78,17 +92,20 @@ const RevealAnimation = ({ active, message }: RevealAnimationProps) => {
 
   useEffect(() => {
     if (!showAnecdote || !active) return;
-    setAnecdoteIndex(startIndexRef.current);
+    setAnecdoteIndex(dynamicLocked ? 0 : startIndexRef.current);
+    const pool = dynamicLocked ?? CINEMA_ANECDOTES;
     const interval = setInterval(() => {
-      setAnecdoteIndex(prev => (prev + 1) % CINEMA_ANECDOTES.length);
+      setAnecdoteIndex(prev => (prev + 1) % pool.length);
     }, 5000);
     return () => clearInterval(interval);
-  }, [showAnecdote, active]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showAnecdote, active, dynamicLocked]);
 
   if (!active) return null;
 
+  const activePool = dynamicLocked ?? CINEMA_ANECDOTES;
   const currentPhase = SEARCH_PHASES[phaseIndex];
-  const currentAnecdote = CINEMA_ANECDOTES[anecdoteIndex];
+  const currentAnecdote = activePool[anecdoteIndex % activePool.length];
   const characterMood = showAnecdote ? currentAnecdote.mood : currentPhase.mood;
   const progress = ((phaseIndex + 1) / SEARCH_PHASES.length) * 100;
 

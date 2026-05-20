@@ -4,7 +4,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import HomeScreen from "@/components/pick/HomeScreen";
 import ResultScreen from "@/components/pick/ResultScreen";
 import VoiceChat from "@/components/pick/VoiceChat";
-import RevealAnimation from "@/components/pick/RevealAnimation";
+import RevealAnimation, { type CinemaAnecdote } from "@/components/pick/RevealAnimation";
 import PlatformTour from "@/components/pick/PlatformTour";
 import ActivationFlow from "@/components/pick/ActivationFlow";
 import type { MissionId } from "@/components/pick/ActivationFlow";
@@ -49,6 +49,7 @@ const Index = () => {
   const [resultOrigin, setResultOrigin] = useState<"home" | "external">("home");
   const [resultSuggestionCount, setResultSuggestionCount] = useState(RECOMMENDATION_BATCH_SIZE);
   const [loadingMessage, setLoadingMessage] = useState("");
+  const [dynamicAnecdotes, setDynamicAnecdotes] = useState<CinemaAnecdote[]>([]);
   const [showChat, setShowChat] = useState(false);
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
   const loggedEventsRef = useRef<Set<number>>(new Set());
@@ -108,6 +109,15 @@ const Index = () => {
     setChatSuggestedMovies(null);
     setChatSuggestedSeenMovieIds(new Set());
   };
+
+  const fetchCinemaAnecdotes = useCallback(async (context?: { genre?: string; mood?: string; mediaType?: string }) => {
+    try {
+      const { data } = await supabase.functions.invoke("cinema-anecdotes", { body: context ?? {} });
+      if (data?.anecdotes?.length) setDynamicAnecdotes(data.anecdotes);
+    } catch {
+      // Fallback silently to static pool — non-critical
+    }
+  }, []);
 
   const normalizeRecommendationBatch = useCallback(
     (movies: RecommendationMovieDetail[], excludeIds: number[] = [], size = profilePrefs.recommendationBatchSize) =>
@@ -327,6 +337,8 @@ const Index = () => {
 
   const triggerSurpriseForMission = useCallback(async () => {
     setLoading(true);
+    setDynamicAnecdotes([]);
+    fetchCinemaAnecdotes({ genre: searchTags[0] });
     try {
       const [liked, tasteProfile, multiVec] = user
         ? await Promise.all([getLikedMovies(), getUserTasteProfile(), computeMultiVectorProfile(user.id)])
@@ -504,6 +516,8 @@ const Index = () => {
     if (currentMovie && user) recordSkippedRecommendation(user.id);
 
     setLoading(true);
+    setDynamicAnecdotes([]);
+    fetchCinemaAnecdotes({ genre: searchTags[0] });
     try {
       const [liked, tasteProfile, multiVec] = user
         ? await Promise.all([getLikedMovies(), getUserTasteProfile(), computeMultiVectorProfile(user.id)])
@@ -681,6 +695,8 @@ const Index = () => {
                 const shortLabel = message.replace(/^(Je veux |Je préfère |Montre-moi )/i, "").toLowerCase();
                 setSearchTags((prev) => (prev.includes(shortLabel) ? prev : [...prev, shortLabel]));
                 setLoading(true);
+                setDynamicAnecdotes([]);
+                fetchCinemaAnecdotes({ genre: shortLabel });
                 setLoadingMessage("Pick cherche mieux…");
                 try {
                   const contextMessages = [
@@ -799,7 +815,7 @@ const Index = () => {
         <TalkToPickMissionGuide step={talkToPickGuideStep} />
       )}
 
-      {loading && <RevealAnimation active message={loadingMessage || "Pick prépare tes recommandations…"} />}
+      {loading && <RevealAnimation active message={loadingMessage || "Pick prépare tes recommandations…"} dynamicAnecdotes={dynamicAnecdotes.length > 0 ? dynamicAnecdotes : undefined} />}
     </div>
   );
 };
