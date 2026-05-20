@@ -523,6 +523,8 @@ const Index = () => {
         const liked = await getLikedMovies();
         if (liked.length >= 2) {
           const multiVec = await computeMultiVectorProfile(user.id);
+          const confidenceScore = tasteProfile?.confidence?.score ?? profilePrefs.profileConfidence ?? 50;
+          const explorationLevel = confidenceScore >= 70 ? 3 : confidenceScore >= 40 ? 5 : 7;
           const data = await invokeSurprisePersonalized({
             likedMovies: liked,
             userTasteVector: multiVec?.stableTasteVector ?? null,
@@ -536,6 +538,7 @@ const Index = () => {
             minMatchScore: profilePrefs.matchThreshold,
             excludeIds,
             rejectionContext,
+            explorationLevel,
             count: profilePrefs.recommendationBatchSize || RECOMMENDATION_BATCH_SIZE,
           });
           let extracted = extractRecommendationMovies(data);
