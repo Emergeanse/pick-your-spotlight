@@ -10,8 +10,19 @@ const corsHeaders = {
 const TMDB_API_KEY = "2dca580c2a14b55200e784d157207b4d";
 
 async function getMovieDetails(id: number, type: "movie" | "tv" = "movie"): Promise<any> {
-  const res = await fetch(`https://api.themoviedb.org/3/${type}/${id}?api_key=${TMDB_API_KEY}&language=fr-FR`);
-  return res.json();
+  try {
+    const res = await fetch(`https://api.themoviedb.org/3/${type}/${id}?api_key=${TMDB_API_KEY}&language=fr-FR`);
+    if (!res.ok) {
+      console.error(`TMDB ${type}/${id} returned ${res.status}`);
+      return null;
+    }
+    const text = await res.text();
+    if (!text) return null;
+    try { return JSON.parse(text); } catch { return null; }
+  } catch (e) {
+    console.error(`getMovieDetails ${type}/${id} failed:`, e);
+    return null;
+  }
 }
 
 function cosineSimilarity(a: number[], b: number[]): number {
