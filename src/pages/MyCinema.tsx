@@ -19,45 +19,52 @@ const TROPHY_CATEGORIES = [
     key: "recos",
     label: "Recommandations reçues",
     milestones: [
-      { count: 1,   label: "Premier pick",   icon: "🎬" },
-      { count: 10,  label: "Habitué",         icon: "📽️" },
-      { count: 50,  label: "Explorateur",     icon: "🧭" },
-      { count: 100, label: "Connaisseur",     icon: "🎪" },
-      { count: 250, label: "Cinéphile",       icon: "⭐" },
-      { count: 500, label: "Maître",          icon: "👑" },
+      { count: 1,    label: "Premier pick",     icon: "🎬" },
+      { count: 10,   label: "Habitué",           icon: "🎞️" },
+      { count: 50,   label: "Explorateur",       icon: "🎟️" },
+      { count: 100,  label: "Connaisseur",       icon: "📽️" },
+      { count: 250,  label: "Cinéphile",         icon: "🎦" },
+      { count: 500,  label: "Critique d'art",    icon: "🏆" },
+      { count: 1000, label: "Maître absolu",     icon: "👑" },
     ],
   },
   {
     key: "liked",
     label: "Films & séries likés",
     milestones: [
-      { count: 3,   label: "Coup de cœur",   icon: "❤️" },
-      { count: 10,  label: "Passionné",       icon: "💛" },
-      { count: 25,  label: "Critique",        icon: "🌟" },
-      { count: 50,  label: "Collectionneur",  icon: "💎" },
-      { count: 100, label: "Oracle du goût",  icon: "🔮" },
+      { count: 3,   label: "Coup de cœur",      icon: "🍿" },
+      { count: 10,  label: "Passionné",          icon: "🎟️" },
+      { count: 25,  label: "Critique",           icon: "🎭" },
+      { count: 50,  label: "Collectionneur",     icon: "📽️" },
+      { count: 100, label: "Oracle du goût",     icon: "🌟" },
+      { count: 200, label: "Légende",            icon: "🏆" },
+      { count: 500, label: "Panthéon",           icon: "👑" },
     ],
   },
   {
     key: "people",
     label: "Acteurs & réalisateurs",
     milestones: [
-      { count: 1,  label: "Premier favori",  icon: "⭐" },
-      { count: 5,  label: "Fan",              icon: "🎭" },
-      { count: 15, label: "Fin connaisseur", icon: "🎥" },
-      { count: 30, label: "Expert casting",  icon: "🏆" },
-      { count: 50, label: "Maître des talents", icon: "🎓" },
+      { count: 1,   label: "Premier favori",    icon: "🎭" },
+      { count: 5,   label: "Fan",               icon: "🎬" },
+      { count: 15,  label: "Fin connaisseur",   icon: "🎥" },
+      { count: 30,  label: "Expert casting",    icon: "🎞️" },
+      { count: 50,  label: "Talent scouter",    icon: "🌟" },
+      { count: 100, label: "Maître des talents", icon: "🏆" },
+      { count: 200, label: "Légende du 7e art", icon: "👑" },
     ],
   },
   {
     key: "seen",
     label: "Films lancés via Pick",
     milestones: [
-      { count: 1,  label: "1er visionnage",  icon: "▶️" },
-      { count: 5,  label: "Soirée ciné",     icon: "🎞️" },
-      { count: 15, label: "Ciné-club",       icon: "🍿" },
-      { count: 30, label: "Cinémathèque",    icon: "🏛️" },
-      { count: 75, label: "Vidéothèque",     icon: "📼" },
+      { count: 1,   label: "1er visionnage",    icon: "📺" },
+      { count: 5,   label: "Soirée ciné",       icon: "🎞️" },
+      { count: 15,  label: "Ciné-club",         icon: "🍿" },
+      { count: 30,  label: "Cinémathèque",      icon: "🎦" },
+      { count: 75,  label: "Vidéothèque",       icon: "📼" },
+      { count: 150, label: "Archives Pick",     icon: "🏛️" },
+      { count: 300, label: "Grand écran",       icon: "👑" },
     ],
   },
 ];
@@ -128,6 +135,7 @@ const MyCinema = () => {
   const [genresSelected, setGenresSelected] = useState(0);
   const [showGenres, setShowGenres] = useState(false);
   const [showStats, setShowStats] = useState(false);
+  const [showTrophies, setShowTrophies] = useState(false);
   const [seenCount, setSeenCount] = useState(0);
 
   useEffect(() => {
@@ -493,47 +501,92 @@ const MyCinema = () => {
 
         {/* ─── Trophées ─── */}
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
-          <div className="flex items-center gap-2 mb-3">
-            <Trophy className="w-3.5 h-3.5 text-primary/30" />
-            <h3 className="text-xs font-sans font-semibold text-foreground/35 uppercase tracking-widest">Trophées</h3>
-          </div>
-          <div className="space-y-4">
-            {TROPHY_CATEGORIES.map((cat) => {
-              const value = trophyValues[cat.key] ?? 0;
-              const nextM = cat.milestones.find((m) => value < m.count);
-              return (
-                <div key={cat.key}>
-                  <p className="text-[9px] font-sans text-foreground/20 uppercase tracking-widest mb-2">{cat.label}</p>
-                  <div className="grid grid-cols-3 gap-2">
-                    {cat.milestones.map((m) => {
-                      const reached = value >= m.count;
-                      return (
-                        <div
-                          key={m.count}
-                          className={`flex flex-col items-center gap-1 p-2.5 rounded-xl border transition-all ${
-                            reached ? "bg-primary/[0.04] border-primary/15" : "bg-card/20 border-border/5"
-                          }`}
-                        >
-                          <span className={`text-base ${reached ? "" : "grayscale opacity-20"}`}>{m.icon}</span>
-                          <span className={`text-[9px] font-sans text-center leading-tight ${reached ? "text-foreground/60" : "text-foreground/15"}`}>
-                            {reached ? m.label : "???"}
-                          </span>
-                          <span className={`text-[8px] font-sans tabular-nums ${reached ? "text-primary/50" : "text-foreground/10"}`}>
-                            {m.count}
-                          </span>
-                        </div>
-                      );
-                    })}
+          {(() => {
+            const allUnlocked = TROPHY_CATEGORIES.flatMap((cat) =>
+              cat.milestones.filter((m) => (trophyValues[cat.key] ?? 0) >= m.count)
+            );
+            const totalUnlocked = allUnlocked.length;
+            const totalMilestones = TROPHY_CATEGORIES.reduce((s, c) => s + c.milestones.length, 0);
+
+            return (
+              <>
+                <button
+                  onClick={() => setShowTrophies((v) => !v)}
+                  className="w-full flex items-center justify-between mb-3 group"
+                >
+                  <div className="flex items-center gap-2">
+                    <Trophy className="w-3.5 h-3.5 text-primary/30" />
+                    <h3 className="text-xs font-sans font-semibold text-foreground/35 uppercase tracking-widest">Trophées</h3>
+                    <span className="text-[10px] font-sans text-primary/40 tabular-nums">
+                      {totalUnlocked}/{totalMilestones}
+                    </span>
                   </div>
-                  {nextM && (
-                    <p className="text-foreground/20 text-[10px] font-sans mt-1.5 text-center">
-                      Plus que {nextM.count - value} pour "{nextM.label}"
-                    </p>
+                  <div className="flex items-center gap-1.5">
+                    {!showTrophies && allUnlocked.slice(-5).map((m, i) => (
+                      <span key={i} className="text-sm">{m.icon}</span>
+                    ))}
+                    <ChevronDown className={`w-4 h-4 text-foreground/20 transition-transform duration-300 ${showTrophies ? "rotate-180" : ""}`} />
+                  </div>
+                </button>
+
+                <AnimatePresence>
+                  {showTrophies && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      exit={{ opacity: 0, height: 0 }}
+                      transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
+                      className="overflow-hidden"
+                    >
+                      <div className="space-y-5">
+                        {TROPHY_CATEGORIES.map((cat) => {
+                          const value = trophyValues[cat.key] ?? 0;
+                          const nextM = cat.milestones.find((m) => value < m.count);
+                          const unlockedCount = cat.milestones.filter((m) => value >= m.count).length;
+                          return (
+                            <div key={cat.key}>
+                              <div className="flex items-center justify-between mb-2">
+                                <p className="text-[9px] font-sans text-foreground/20 uppercase tracking-widest">{cat.label}</p>
+                                <span className="text-[9px] font-sans text-primary/30 tabular-nums">{unlockedCount}/{cat.milestones.length}</span>
+                              </div>
+                              <div className="grid grid-cols-4 gap-1.5">
+                                {cat.milestones.map((m) => {
+                                  const reached = value >= m.count;
+                                  return (
+                                    <div
+                                      key={m.count}
+                                      className={`flex flex-col items-center gap-1 p-2 rounded-xl border transition-all ${
+                                        reached
+                                          ? "bg-primary/[0.06] border-primary/20 shadow-[0_0_12px_rgba(139,92,246,0.08)]"
+                                          : "bg-card/20 border-border/5"
+                                      }`}
+                                    >
+                                      <span className={`text-xl leading-none ${reached ? "" : "grayscale opacity-15"}`}>{m.icon}</span>
+                                      <span className={`text-[8px] font-sans text-center leading-tight mt-0.5 ${reached ? "text-foreground/55" : "text-foreground/12"}`}>
+                                        {reached ? m.label : "???"}
+                                      </span>
+                                      <span className={`text-[7px] font-sans tabular-nums ${reached ? "text-primary/45" : "text-foreground/8"}`}>
+                                        {m.count}
+                                      </span>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                              {nextM && (
+                                <p className="text-foreground/20 text-[10px] font-sans mt-1.5 text-center">
+                                  Plus que <span className="text-primary/30 tabular-nums">{nextM.count - value}</span> pour « {nextM.label} »
+                                </p>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </motion.div>
                   )}
-                </div>
-              );
-            })}
-          </div>
+                </AnimatePresence>
+              </>
+            );
+          })()}
         </motion.div>
 
       </div>
