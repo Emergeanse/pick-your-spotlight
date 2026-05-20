@@ -96,7 +96,7 @@ const ActorCard = ({ actor, onClick }: { actor: CastMember; onClick?: () => void
 
 const MatchAnalysis = ({ matchData, mediaType }: { matchData: MatchData; mediaType: string; movieId: number }) => {
   const score = matchData.matchScore ?? matchData.score ?? matchData.confidence;
-  const summary = matchData.detailedExplanation || matchData.whyItMatches || matchData.summary || matchData.reason;
+  const summary = matchData.summary || matchData.detailedExplanation || matchData.whyItMatches || matchData.pickNote || matchData.reason;
   const headline = matchData.headline;
   const reasons = matchData.matchingReasons || matchData.reasons;
   const funFact = matchData.funFact;

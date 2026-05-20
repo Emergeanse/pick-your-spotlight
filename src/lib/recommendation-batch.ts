@@ -41,7 +41,7 @@ const normalizeRecommendationTexts = (data: RecommendationMatchData): Recommenda
     matchScore: score,
     score,
     confidence: data.confidence ?? score ?? undefined,
-    whyItMatches: data.whyItMatches ?? data.reason,
+    whyItMatches: data.whyItMatches ?? data.reason ?? reason ?? undefined,
     summary: data.summary ?? reason ?? undefined,
     pickNote: data.pickNote ?? reason,
   };
