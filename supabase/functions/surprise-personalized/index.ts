@@ -272,7 +272,8 @@ Recommande ${requestedCount > 1 ? `${requestedCount} contenus` : "UN contenu"} a
       method: "POST",
       headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
+        model: "google/gemini-2.0-flash-001",
+        max_tokens: requestedCount > 1 ? 1600 : 800,
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt },
@@ -289,13 +290,21 @@ Recommande ${requestedCount > 1 ? `${requestedCount} contenus` : "UN contenu"} a
           status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
+      console.error("AI gateway non-OK:", response.status);
       aiFailed = true;
     }
 
     if (!aiFailed) {
-      const aiData = await response.json();
-      const content = aiData.choices?.[0]?.message?.content || "";
+      let aiData: any;
       try {
+        const rawText = await response.text();
+        aiData = JSON.parse(rawText);
+      } catch (e) {
+        console.error("Failed to parse AI gateway response body:", e);
+        aiFailed = true;
+      }
+      const content = aiFailed ? "" : (aiData?.choices?.[0]?.message?.content || "");
+      if (!aiFailed) try {
         const jsonStr = content.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
         const parsed = JSON.parse(jsonStr);
         if (requestedCount > 1 && parsed.suggestions) {
