@@ -308,7 +308,7 @@ const WatchlistPage = ({ onMovieSelect }: WatchlistPageProps) => {
   const [loading, setLoading] = useState(true);
   const [mediaFilter, setMediaFilter] = useState<MediaFilter>("all");
   const [searchQuery, setSearchQuery] = useState("");
-  const [genreFilter, setGenreFilter] = useState<string | null>(null);
+  const [genreFilter, setGenreFilter] = useState<string[]>([]);
   const [previewMovie, setPreviewMovie] = useState<MovieDetail | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [previewNote, setPreviewNote] = useState("");
@@ -406,7 +406,7 @@ const WatchlistPage = ({ onMovieSelect }: WatchlistPageProps) => {
       if (searchQuery.trim()) {
         if (!item.title?.toLowerCase().includes(searchQuery.toLowerCase())) return false;
       }
-      if (genreFilter && (!item.genres || !item.genres.includes(genreFilter))) return false;
+      if (genreFilter.length > 0 && (!item.genres || !genreFilter.every((g) => item.genres.includes(g)))) return false;
       return true;
     });
   }, [currentItems, mediaFilter, searchQuery, genreFilter]);
@@ -418,7 +418,7 @@ const WatchlistPage = ({ onMovieSelect }: WatchlistPageProps) => {
     setActiveTab(tab);
     setMediaFilter("all");
     setSearchQuery("");
-    setGenreFilter(null);
+    setGenreFilter([]);
   };
 
   const handleRemoveWatchlist = async (tmdbId: number) => {
@@ -681,29 +681,37 @@ const WatchlistPage = ({ onMovieSelect }: WatchlistPageProps) => {
             )}
 
             {/* Genre chips — always visible, scroll horizontally */}
-            {availableGenres.map((g) => (
-              <button
-                key={g}
-                onClick={() => setGenreFilter(genreFilter === g ? null : g)}
-                className={`shrink-0 px-3 py-1.5 rounded-full text-[11px] font-sans font-medium border transition-all ${
-                  genreFilter === g
-                    ? "bg-primary/15 border-primary/30 text-primary"
-                    : "bg-card/40 border-border/15 text-foreground/35 hover:text-foreground/60"
-                }`}
-              >
-                {g}
-              </button>
-            ))}
+            {availableGenres.map((g) => {
+              const active = genreFilter.includes(g);
+              return (
+                <button
+                  key={g}
+                  onClick={() =>
+                    setGenreFilter((prev) =>
+                      active ? prev.filter((x) => x !== g) : [...prev, g]
+                    )
+                  }
+                  className={`shrink-0 px-3 py-1.5 rounded-full text-[11px] font-sans font-medium border transition-all ${
+                    active
+                      ? "bg-primary/15 border-primary/30 text-primary"
+                      : "bg-card/40 border-border/15 text-foreground/35 hover:text-foreground/60"
+                  }`}
+                >
+                  {g}
+                </button>
+              );
+            })}
           </div>
 
           {/* Active filter summary */}
-          {(genreFilter || mediaFilter !== "all") && (
-            <div className="flex items-center gap-2">
+          {(genreFilter.length > 0 || mediaFilter !== "all") && (
+            <div className="flex items-center gap-2 flex-wrap">
               <p className="text-[10px] font-sans text-foreground/30">
                 {filteredItems.length} résultat{filteredItems.length > 1 ? "s" : ""}
+                {genreFilter.length > 0 && ` · ${genreFilter.join(", ")}`}
               </p>
               <button
-                onClick={() => { setMediaFilter("all"); setGenreFilter(null); }}
+                onClick={() => { setMediaFilter("all"); setGenreFilter([]); }}
                 className="text-[10px] font-sans text-primary/50 hover:text-primary transition-colors"
               >
                 Tout afficher
@@ -749,7 +757,7 @@ const WatchlistPage = ({ onMovieSelect }: WatchlistPageProps) => {
             Aucun résultat{searchQuery ? ` pour "${searchQuery}"` : " avec ces filtres"}
           </p>
           <button
-            onClick={() => { setMediaFilter("all"); setSearchQuery(""); setGenreFilter(null); }}
+            onClick={() => { setMediaFilter("all"); setSearchQuery(""); setGenreFilter([]); }}
             className="mt-3 text-primary text-xs font-sans underline"
           >
             Réinitialiser les filtres
