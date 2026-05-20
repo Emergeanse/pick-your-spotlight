@@ -328,13 +328,13 @@ const Index = () => {
   const triggerSurpriseForMission = useCallback(async () => {
     setLoading(true);
     try {
-      const liked = user ? await getLikedMovies() : [];
-      const tasteProfile = user ? await getUserTasteProfile() : null;
-      const excludeIds = [...results.map((r) => r.id), ...(tasteProfile?.excludeIds || [])];
+      const [liked, tasteProfile, multiVec] = user
+        ? await Promise.all([getLikedMovies(), getUserTasteProfile(), computeMultiVectorProfile(user.id)])
+        : [[], null, null] as const;
+      const excludeIds = [...results.map((r: RecommendationMovieDetail) => r.id), ...((tasteProfile as any)?.excludeIds || [])];
       let batch: RecommendationMovieDetail[] = [];
 
       if (user && liked.length >= 2) {
-        const multiVec = await computeMultiVectorProfile(user.id);
         const confidenceScore = tasteProfile?.confidence?.score ?? profilePrefs.profileConfidence ?? 50;
         const explorationLevel = confidenceScore >= 70 ? 3 : confidenceScore >= 40 ? 5 : 7;
         const data = await invokeSurprisePersonalized({

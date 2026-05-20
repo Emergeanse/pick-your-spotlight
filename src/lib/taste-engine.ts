@@ -127,17 +127,24 @@ export interface MultiVectorProfile {
   fatigueState: Record<string, number>;
 }
 
+// Short-lived in-memory cache — avoids repeated 5-query DB round-trips within the same session.
+const _profileCache = new Map<string, { data: MultiVectorProfile; ts: number }>();
+const PROFILE_CACHE_TTL = 90_000; // 90 seconds
+
 /**
  * Computes 3 separate taste vectors:
  * 1. Stable taste vector — full history, long decay
  * 2. Recent taste vector — last 30 days, short decay
  * 3. Avoidance vector — from skips/rejections, medium decay
- * 
+ *
  * Also computes clusters, fatigue state, and confidence.
  */
 export async function computeMultiVectorProfile(
   userId: string
 ): Promise<MultiVectorProfile | null> {
+  const hit = _profileCache.get(userId);
+  if (hit && Date.now() - hit.ts < PROFILE_CACHE_TTL) return hit.data;
+
   try {
     const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
     const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
@@ -442,7 +449,7 @@ export async function computeMultiVectorProfile(
         { onConflict: "user_id" }
       );
 
-    return {
+    const profile: MultiVectorProfile = {
       stableTasteVector,
       recentTasteVector,
       avoidanceVector,
@@ -452,6 +459,8 @@ export async function computeMultiVectorProfile(
       noveltyTolerance,
       fatigueState,
     };
+    _profileCache.set(userId, { data: profile, ts: Date.now() });
+    return profile;
   } catch (e) {
     console.error("Failed to compute multi-vector profile:", e);
     return null;

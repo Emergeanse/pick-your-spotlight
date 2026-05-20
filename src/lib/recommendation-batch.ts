@@ -3,7 +3,7 @@ import { getSurpriseRecommendation, getWatchProviders } from "@/lib/tmdb";
 import { supabase } from "@/integrations/supabase/client";
 import { getUserTasteProfile } from "@/lib/interactions";
 import { getLikedMovies } from "@/lib/liked-movies";
-import { computeUserTasteVector } from "@/lib/taste-engine";
+import { computeMultiVectorProfile } from "@/lib/taste-engine";
 
 export const RECOMMENDATION_BATCH_SIZE = 5;
 
@@ -162,9 +162,10 @@ async function buildMatchContext(options: RecommendationBatchOptions) {
   const { data: authData } = await supabase.auth.getUser();
   const user = authData.user;
 
-  const [tasteProfile, userTasteVector, likedMovies, cinematicProfile, vectorData] = await Promise.all([
+  // computeMultiVectorProfile is cached in memory — second call within ~90s is instant.
+  const [tasteProfile, multiVecProfile, likedMovies, cinematicProfile] = await Promise.all([
     getUserTasteProfile().catch(() => null),
-    user ? computeUserTasteVector(user.id).catch(() => null) : Promise.resolve(null),
+    user ? computeMultiVectorProfile(user.id).catch(() => null) : Promise.resolve(null),
     user ? getLikedMovies().catch(() => []) : Promise.resolve([]),
     user
       ? supabase
@@ -174,21 +175,13 @@ async function buildMatchContext(options: RecommendationBatchOptions) {
           .maybeSingle()
           .then((r) => r.data)
       : Promise.resolve(null),
-    user
-      ? supabase
-          .from("user_taste_vectors" as any)
-          .select("avoidance_vector, recent_taste_vector")
-          .eq("user_id", user.id)
-          .maybeSingle()
-          .then((r) => r.data)
-      : Promise.resolve(null),
   ]);
 
   const enrichedProfile = tasteProfile
     ? {
         ...tasteProfile,
-        recentTasteVector: (vectorData as any)?.recent_taste_vector || null,
-        avoidanceVector: (vectorData as any)?.avoidance_vector || null,
+        recentTasteVector: multiVecProfile?.recentTasteVector ?? null,
+        avoidanceVector: multiVecProfile?.avoidanceVector ?? null,
       }
     : null;
 
@@ -196,7 +189,7 @@ async function buildMatchContext(options: RecommendationBatchOptions) {
     user,
     userCriteria: options.userCriteria ?? { mood: null, context: null, time: null },
     searchTags: options.searchTags ?? [],
-    userTasteVector,
+    userTasteVector: multiVecProfile?.stableTasteVector ?? null,
     likedMovieTitles: (likedMovies || []).map((m: any) => m.title),
     tasteProfile: enrichedProfile,
     cinematicProfile,
