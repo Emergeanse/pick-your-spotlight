@@ -23,7 +23,8 @@
       "PowerShell(npm --version)",
       "Read(//c/Users/cbill/AppData/Local/**)",
       "Read(//c/Users/cbill/**)",
-      "PowerShell(Get-ChildItem \"C:\\\\Users\\\\cbill\\\\AppData\\\\Roaming\" -ErrorAction SilentlyContinue | Where-Object Name -in @\\(\"npm\", \"nvm\", \"node\"\\) | Select-Object Name, FullName)"
+      "PowerShell(Get-ChildItem \"C:\\\\Users\\\\cbill\\\\AppData\\\\Roaming\" -ErrorAction SilentlyContinue | Where-Object Name -in @\\(\"npm\", \"nvm\", \"node\"\\) | Select-Object Name, FullName)",
+      "PowerShell(New-Item -ItemType Directory -Force \"C:\\\\Users\\\\cbill\\\\pick-your-spotlight\\\\supabase\\\\functions\\\\seed-embeddings\")"
     ]
   }
 }
