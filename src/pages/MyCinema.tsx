@@ -275,30 +275,26 @@ const MyCinema = () => {
             />
           </button>
 
-          {/* Chips sélectionnées toujours visibles (mode replié) */}
-          {!showGenres && genresSelected > 0 && (
-            <div className="rounded-2xl bg-card/30 border border-border/8 px-4 py-3">
-              <GenrePreferences onCountChange={setGenresSelected} collapsed />
+          {/* Une seule instance — collapsed contrôle l'affichage */}
+          <div className={showGenres || genresSelected > 0 ? "" : "hidden"}>
+            <div className={`rounded-2xl bg-card/30 border border-border/8 transition-all ${showGenres ? "p-4" : "px-4 py-3"}`}>
+              <AnimatePresence initial={false}>
+                {showGenres && (
+                  <motion.p
+                    key="desc"
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="text-[10px] text-foreground/20 font-sans overflow-hidden mb-3"
+                  >
+                    Sélectionne les styles que tu aimes — Pick s'en sert pour tes recommandations
+                  </motion.p>
+                )}
+              </AnimatePresence>
+              <GenrePreferences onCountChange={setGenresSelected} collapsed={!showGenres} />
             </div>
-          )}
-
-          {/* Section complète dépliée */}
-          <AnimatePresence initial={false}>
-            {showGenres && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: "auto", opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: 0.25, ease: "easeInOut" }}
-                className="overflow-hidden"
-              >
-                <p className="text-[10px] text-foreground/20 font-sans mb-3">Sélectionne les styles que tu aimes — Pick s'en sert pour tes recommandations</p>
-                <div className="rounded-2xl bg-card/30 border border-border/8 p-4">
-                  <GenrePreferences onCountChange={setGenresSelected} />
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+          </div>
         </motion.div>
 
         {/* ─── Stats table ─── */}
