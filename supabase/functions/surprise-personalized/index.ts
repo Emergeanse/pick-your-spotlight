@@ -481,10 +481,12 @@ Recommande ${requestedCount > 1 ? `${requestedCount} contenus` : "UN contenu"} a
           const found = (data.results || []).find((r: any) => isMovieAllowed(r) && !foundMovieIds.has(r.id));
           if (found) {
             const detail = await getMovieDetails(found.id, type);
-            foundMovieIds.add(detail.id);
-            movies.push({ movie: detail, reason: `Recommandé par Pick pour diversifier.`, confidence: minMatchScore, scores: null });
-            fireEmbedding(detail);
-            if (type === "movie") movieCount++; else tvCount++;
+            if (detail) {
+              foundMovieIds.add(detail.id);
+              movies.push({ movie: detail, reason: `Recommandé par Pick pour diversifier.`, confidence: minMatchScore, scores: null });
+              fireEmbedding(detail);
+              if (type === "movie") movieCount++; else tvCount++;
+            }
           }
         }
       }
