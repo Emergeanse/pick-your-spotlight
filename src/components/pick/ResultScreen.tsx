@@ -695,8 +695,9 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
           if (!hasRichTexts(cached)) {
             fetchMatchDataForMovie(movie).then((richData) => {
               if (cancelled || !richData) return;
-              setPrefetchedMatchData((prev) => ({ ...prev, [movie.id]: richData }));
-              setMatchData(richData);
+              const merged = { ...richData, confidence: cached.confidence ?? richData.confidence };
+              setPrefetchedMatchData((prev) => ({ ...prev, [movie.id]: merged }));
+              setMatchData(merged);
             });
           }
           return;
