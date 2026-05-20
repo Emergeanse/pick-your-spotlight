@@ -14,13 +14,52 @@ import CinemaAvatar from "@/components/pick/CinemaAvatar";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { RadarChart, PolarGrid, PolarAngleAxis, Radar, ResponsiveContainer } from "recharts";
 
-const MILESTONES = [
-  { count: 1, label: "Premier film", icon: "🎬" },
-  { count: 5, label: "Cinéphile débutant", icon: "🍿" },
-  { count: 10, label: "Fidèle spectateur", icon: "📽️" },
-  { count: 20, label: "Explorateur", icon: "🧭" },
-  { count: 50, label: "Connaisseur", icon: "🎪" },
-  { count: 100, label: "Maître cinéphile", icon: "👑" },
+const TROPHY_CATEGORIES = [
+  {
+    key: "recos",
+    label: "Recommandations reçues",
+    milestones: [
+      { count: 1,   label: "Premier pick",   icon: "🎬" },
+      { count: 10,  label: "Habitué",         icon: "📽️" },
+      { count: 50,  label: "Explorateur",     icon: "🧭" },
+      { count: 100, label: "Connaisseur",     icon: "🎪" },
+      { count: 250, label: "Cinéphile",       icon: "⭐" },
+      { count: 500, label: "Maître",          icon: "👑" },
+    ],
+  },
+  {
+    key: "liked",
+    label: "Films & séries likés",
+    milestones: [
+      { count: 3,   label: "Coup de cœur",   icon: "❤️" },
+      { count: 10,  label: "Passionné",       icon: "💛" },
+      { count: 25,  label: "Critique",        icon: "🌟" },
+      { count: 50,  label: "Collectionneur",  icon: "💎" },
+      { count: 100, label: "Oracle du goût",  icon: "🔮" },
+    ],
+  },
+  {
+    key: "people",
+    label: "Acteurs & réalisateurs",
+    milestones: [
+      { count: 1,  label: "Premier favori",  icon: "⭐" },
+      { count: 5,  label: "Fan",              icon: "🎭" },
+      { count: 15, label: "Fin connaisseur", icon: "🎥" },
+      { count: 30, label: "Expert casting",  icon: "🏆" },
+      { count: 50, label: "Maître des talents", icon: "🎓" },
+    ],
+  },
+  {
+    key: "seen",
+    label: "Films lancés via Pick",
+    milestones: [
+      { count: 1,  label: "1er visionnage",  icon: "▶️" },
+      { count: 5,  label: "Soirée ciné",     icon: "🎞️" },
+      { count: 15, label: "Ciné-club",       icon: "🍿" },
+      { count: 30, label: "Cinémathèque",    icon: "🏛️" },
+      { count: 75, label: "Vidéothèque",     icon: "📼" },
+    ],
+  },
 ];
 
 /** Calculate a detailed confidence score with breakdown */
@@ -89,6 +128,7 @@ const MyCinema = () => {
   const [genresSelected, setGenresSelected] = useState(0);
   const [showGenres, setShowGenres] = useState(false);
   const [showStats, setShowStats] = useState(false);
+  const [seenCount, setSeenCount] = useState(0);
 
   useEffect(() => {
     if (!isReady) return;
@@ -106,18 +146,20 @@ const MyCinema = () => {
     if (!user) return;
     setLoading(true);
     try {
-      const [engData, likedData, dnaData, { count: wlCount }, { count: peopleCount }, myPrefs] = await Promise.all([
+      const [engData, likedData, dnaData, { count: wlCount }, { count: peopleCount }, myPrefs, { count: seenCnt }] = await Promise.all([
         getEngagementData(user.id),
         getLikedMovies().catch(() => []),
         supabase.from("cinematic_profiles" as any).select("personality_title, dna_archetype, global_level").eq("user_id", user.id).maybeSingle(),
         supabase.from("watchlist").select("id", { count: "exact", head: true }).eq("user_id", user.id),
         supabase.from("user_people_preferences" as any).select("id", { count: "exact", head: true }).eq("user_id", user.id),
         getMyPreferences().catch(() => []),
+        supabase.from("user_item_feedback").select("id", { count: "exact", head: true }).eq("user_id", user.id).eq("feedback_type", "seen"),
       ]);
       setEngagement(engData);
       setLikedMovies(likedData);
       setWatchlistCount(wlCount || 0);
       setPeopleEvaluated(peopleCount || 0);
+      setSeenCount(seenCnt || 0);
       setGenresSelected(myPrefs.filter((p) => p.tag.category === "genre" && p.weight > 0).length);
       if (dnaData.data) {
         const d = dnaData.data as any;
@@ -194,8 +236,12 @@ const MyCinema = () => {
   }
 
   const totalRecos = engagement?.totalRecommendations || 0;
-  const reachedMilestones = MILESTONES.filter(m => totalRecos >= m.count);
-  const nextMilestone = MILESTONES.find(m => totalRecos < m.count);
+  const trophyValues: Record<string, number> = {
+    recos: totalRecos,
+    liked: likedMovies.length,
+    people: peopleEvaluated,
+    seen: seenCount,
+  };
   const confidenceTotal = confidence?.total || 0;
   const confidenceLabel = confidenceTotal < 20 ? "Apprentissage" : confidenceTotal < 45 ? "En progression" : confidenceTotal < 70 ? "Bien calibré" : confidenceTotal < 90 ? "Très précis" : "Expert";
   const confidenceColor = confidenceTotal < 20 ? "text-foreground/40" : confidenceTotal < 45 ? "text-yellow-500/70" : confidenceTotal < 70 ? "text-primary/70" : "text-primary";
@@ -451,28 +497,43 @@ const MyCinema = () => {
             <Trophy className="w-3.5 h-3.5 text-primary/30" />
             <h3 className="text-xs font-sans font-semibold text-foreground/35 uppercase tracking-widest">Trophées</h3>
           </div>
-          <div className="grid grid-cols-3 gap-2">
-            {MILESTONES.map(m => {
-              const reached = totalRecos >= m.count;
+          <div className="space-y-4">
+            {TROPHY_CATEGORIES.map((cat) => {
+              const value = trophyValues[cat.key] ?? 0;
+              const nextM = cat.milestones.find((m) => value < m.count);
               return (
-                <div key={m.count}
-                  className={`flex flex-col items-center gap-1 p-3 rounded-xl border transition-all ${
-                    reached ? "bg-primary/[0.04] border-primary/15" : "bg-card/20 border-border/5"
-                  }`}>
-                  <span className={`text-lg ${reached ? "" : "grayscale opacity-20"}`}>{m.icon}</span>
-                  <span className={`text-[10px] font-sans text-center leading-tight ${reached ? "text-foreground/60" : "text-foreground/15"}`}>
-                    {reached ? m.label : "???"}
-                  </span>
-                  <span className={`text-[9px] font-sans ${reached ? "text-primary/50" : "text-foreground/10"}`}>{m.count} recos</span>
+                <div key={cat.key}>
+                  <p className="text-[9px] font-sans text-foreground/20 uppercase tracking-widest mb-2">{cat.label}</p>
+                  <div className="grid grid-cols-3 gap-2">
+                    {cat.milestones.map((m) => {
+                      const reached = value >= m.count;
+                      return (
+                        <div
+                          key={m.count}
+                          className={`flex flex-col items-center gap-1 p-2.5 rounded-xl border transition-all ${
+                            reached ? "bg-primary/[0.04] border-primary/15" : "bg-card/20 border-border/5"
+                          }`}
+                        >
+                          <span className={`text-base ${reached ? "" : "grayscale opacity-20"}`}>{m.icon}</span>
+                          <span className={`text-[9px] font-sans text-center leading-tight ${reached ? "text-foreground/60" : "text-foreground/15"}`}>
+                            {reached ? m.label : "???"}
+                          </span>
+                          <span className={`text-[8px] font-sans tabular-nums ${reached ? "text-primary/50" : "text-foreground/10"}`}>
+                            {m.count}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  {nextM && (
+                    <p className="text-foreground/20 text-[10px] font-sans mt-1.5 text-center">
+                      Plus que {nextM.count - value} pour "{nextM.label}"
+                    </p>
+                  )}
                 </div>
               );
             })}
           </div>
-          {nextMilestone && (
-            <p className="text-foreground/20 text-[11px] font-sans mt-2 text-center">
-              Plus que {nextMilestone.count - totalRecos} reco{nextMilestone.count - totalRecos > 1 ? "s" : ""} pour "{nextMilestone.label}"
-            </p>
-          )}
         </motion.div>
 
       </div>
