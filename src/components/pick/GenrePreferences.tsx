@@ -14,9 +14,10 @@ const STYLE_KEYS = new Set([
 
 interface GenrePreferencesProps {
   onCountChange?: (count: number) => void;
+  collapsed?: boolean;
 }
 
-const GenrePreferences = ({ onCountChange }: GenrePreferencesProps) => {
+const GenrePreferences = ({ onCountChange, collapsed = false }: GenrePreferencesProps) => {
   const [tags, setTags] = useState<PreferenceTag[]>([]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
@@ -96,6 +97,9 @@ const GenrePreferences = ({ onCountChange }: GenrePreferencesProps) => {
   const standard = tags.filter((t) => !STYLE_KEYS.has(t.key));
   const styles = tags.filter((t) => STYLE_KEYS.has(t.key));
 
+  const visibleStandard = collapsed ? standard.filter((t) => selected.has(t.key)) : standard;
+  const visibleStyles = collapsed ? styles.filter((t) => selected.has(t.key)) : styles;
+
   const renderChip = (tag: PreferenceTag, i: number) => {
     const isSelected = selected.has(tag.key);
     const isPending = pending.has(tag.key);
@@ -125,24 +129,30 @@ const GenrePreferences = ({ onCountChange }: GenrePreferencesProps) => {
     );
   };
 
+  if (collapsed && visibleStandard.length === 0 && visibleStyles.length === 0) return null;
+
   return (
     <div className="space-y-3">
-      <div className="flex flex-wrap gap-2">
-        {standard.map((tag, i) => renderChip(tag, i))}
-      </div>
+      {visibleStandard.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {visibleStandard.map((tag, i) => renderChip(tag, i))}
+        </div>
+      )}
 
-      {styles.length > 0 && (
+      {visibleStyles.length > 0 && (
         <div>
-          <p className="text-[9px] font-sans text-foreground/20 uppercase tracking-widest mb-2">
-            Styles cinématographiques
-          </p>
+          {!collapsed && (
+            <p className="text-[9px] font-sans text-foreground/20 uppercase tracking-widest mb-2">
+              Styles cinématographiques
+            </p>
+          )}
           <div className="flex flex-wrap gap-2">
-            {styles.map((tag, i) => renderChip(tag, standard.length + i))}
+            {visibleStyles.map((tag, i) => renderChip(tag, visibleStandard.length + i))}
           </div>
         </div>
       )}
 
-      {selected.size > 0 && (
+      {!collapsed && selected.size > 0 && (
         <p className="text-[10px] font-sans text-primary/40 mt-1">
           {selected.size} style{selected.size > 1 ? "s" : ""} sélectionné{selected.size > 1 ? "s" : ""} · utilisé{selected.size > 1 ? "s" : ""} pour tes recommandations
         </p>

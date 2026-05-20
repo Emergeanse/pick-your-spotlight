@@ -260,7 +260,7 @@ const MyCinema = () => {
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }}>
           <button
             onClick={() => setShowGenres((v) => !v)}
-            className="w-full flex items-center justify-between mb-1 group"
+            className="w-full flex items-center justify-between mb-2 group"
           >
             <div className="flex items-center gap-2">
               <h3 className="text-xs font-sans font-semibold text-foreground/35 uppercase tracking-widest">Mes genres & styles</h3>
@@ -274,6 +274,12 @@ const MyCinema = () => {
               className={`w-3.5 h-3.5 text-foreground/25 transition-transform duration-200 ${showGenres ? "rotate-180" : ""}`}
             />
           </button>
+
+          {/* Chips sélectionnées toujours visibles + tous les chips quand déplié */}
+          <div className={`rounded-2xl bg-card/30 border border-border/8 p-4 ${!showGenres && genresSelected === 0 ? "hidden" : ""}`}>
+            <GenrePreferences onCountChange={setGenresSelected} collapsed={!showGenres} />
+          </div>
+
           <AnimatePresence initial={false}>
             {showGenres && (
               <motion.div
@@ -283,10 +289,7 @@ const MyCinema = () => {
                 transition={{ duration: 0.25, ease: "easeInOut" }}
                 className="overflow-hidden"
               >
-                <p className="text-[10px] text-foreground/20 font-sans mb-3">Sélectionne les styles que tu aimes — Pick s'en sert pour tes recommandations</p>
-                <div className="rounded-2xl bg-card/30 border border-border/8 p-4">
-                  <GenrePreferences onCountChange={setGenresSelected} />
-                </div>
+                <p className="text-[10px] text-foreground/20 font-sans mt-2">Sélectionne les styles que tu aimes — Pick s'en sert pour tes recommandations</p>
               </motion.div>
             )}
           </AnimatePresence>
