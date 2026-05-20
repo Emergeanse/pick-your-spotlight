@@ -25,6 +25,22 @@ async function getMovieDetails(id: number, type: "movie" | "tv" = "movie"): Prom
   }
 }
 
+async function safeFetchJson(url: string): Promise<any> {
+  try {
+    const res = await fetch(url);
+    if (!res.ok) {
+      console.error(`safeFetchJson ${url} returned ${res.status}`);
+      return null;
+    }
+    const text = await res.text();
+    if (!text) return null;
+    try { return JSON.parse(text); } catch { return null; }
+  } catch (e) {
+    console.error(`safeFetchJson ${url} failed:`, e);
+    return null;
+  }
+}
+
 function cosineSimilarity(a: number[], b: number[]): number {
   if (!a || !b || a.length !== b.length) return 0;
   let dot = 0, magA = 0, magB = 0;
@@ -381,18 +397,16 @@ Recommande ${requestedCount > 1 ? `${requestedCount} contenus` : "UN contenu"} a
           params.set("with_watch_providers", platformIds.join("|"));
           params.set("watch_region", "FR");
         }
-        const res = await fetch(`https://api.themoviedb.org/3/discover/${searchType}?${params}`);
-        const data = await res.json();
-        const movie = (data.results || []).find((r: any) => isMovieAllowed(r));
+        const data = await safeFetchJson(`https://api.themoviedb.org/3/discover/${searchType}?${params}`);
+        const movie = (data?.results || []).find((r: any) => isMovieAllowed(r));
         if (movie) {
           const detail = await getMovieDetails(movie.id, searchType);
           if (detail) return detail;
         }
       }
       // Ultimate fallback: trending
-      const res = await fetch(`https://api.themoviedb.org/3/trending/${searchType}/week?api_key=${TMDB_API_KEY}&language=fr-FR`);
-      const data = await res.json();
-      const movie = (data.results || []).find((r: any) => !excludedSet.has(r.id));
+      const data = await safeFetchJson(`https://api.themoviedb.org/3/trending/${searchType}/week?api_key=${TMDB_API_KEY}&language=fr-FR`);
+      const movie = (data?.results || []).find((r: any) => !excludedSet.has(r.id));
       return movie ? await getMovieDetails(movie.id, searchType) : null;
     };
 
