@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
-import { motion } from "framer-motion";
-import { ArrowLeft, Loader2, Sparkles, ChevronRight, Brain, Film, Tv, Trophy, Eye, Heart, Bookmark, TrendingUp, Info } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { ArrowLeft, Loader2, Sparkles, ChevronRight, ChevronDown, Brain, Film, Tv, Trophy, Eye, Heart, Bookmark, TrendingUp, Info } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
@@ -86,6 +86,7 @@ const MyCinema = () => {
   const [showConfidenceDetail, setShowConfidenceDetail] = useState(false);
   const [peopleEvaluated, setPeopleEvaluated] = useState(0);
   const [genresSelected, setGenresSelected] = useState(0);
+  const [showGenres, setShowGenres] = useState(false);
 
   useEffect(() => {
     if (!isReady) return;
@@ -257,11 +258,38 @@ const MyCinema = () => {
 
         {/* ─── Genre preferences ─── */}
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }}>
-          <h3 className="text-xs font-sans font-semibold text-foreground/35 uppercase tracking-widest mb-1">Mes genres & styles</h3>
-          <p className="text-[10px] text-foreground/20 font-sans mb-3">Sélectionne les styles que tu aimes — Pick s'en sert pour tes recommandations</p>
-          <div className="rounded-2xl bg-card/30 border border-border/8 p-4">
-            <GenrePreferences onCountChange={setGenresSelected} />
-          </div>
+          <button
+            onClick={() => setShowGenres((v) => !v)}
+            className="w-full flex items-center justify-between mb-1 group"
+          >
+            <div className="flex items-center gap-2">
+              <h3 className="text-xs font-sans font-semibold text-foreground/35 uppercase tracking-widest">Mes genres & styles</h3>
+              {genresSelected > 0 && (
+                <span className="text-[9px] font-sans px-1.5 py-0.5 rounded-full bg-primary/15 text-primary/70 border border-primary/20">
+                  {genresSelected} sélectionné{genresSelected > 1 ? "s" : ""}
+                </span>
+              )}
+            </div>
+            <ChevronDown
+              className={`w-3.5 h-3.5 text-foreground/25 transition-transform duration-200 ${showGenres ? "rotate-180" : ""}`}
+            />
+          </button>
+          <AnimatePresence initial={false}>
+            {showGenres && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.25, ease: "easeInOut" }}
+                className="overflow-hidden"
+              >
+                <p className="text-[10px] text-foreground/20 font-sans mb-3">Sélectionne les styles que tu aimes — Pick s'en sert pour tes recommandations</p>
+                <div className="rounded-2xl bg-card/30 border border-border/8 p-4">
+                  <GenrePreferences onCountChange={setGenresSelected} />
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </motion.div>
 
         {/* ─── Stats table ─── */}
