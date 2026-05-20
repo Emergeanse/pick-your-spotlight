@@ -275,11 +275,14 @@ const MyCinema = () => {
             />
           </button>
 
-          {/* Chips sélectionnées toujours visibles + tous les chips quand déplié */}
-          <div className={`rounded-2xl bg-card/30 border border-border/8 p-4 ${!showGenres && genresSelected === 0 ? "hidden" : ""}`}>
-            <GenrePreferences onCountChange={setGenresSelected} collapsed={!showGenres} />
-          </div>
+          {/* Chips sélectionnées toujours visibles (mode replié) */}
+          {!showGenres && genresSelected > 0 && (
+            <div className="rounded-2xl bg-card/30 border border-border/8 px-4 py-3">
+              <GenrePreferences onCountChange={setGenresSelected} collapsed />
+            </div>
+          )}
 
+          {/* Section complète dépliée */}
           <AnimatePresence initial={false}>
             {showGenres && (
               <motion.div
@@ -289,7 +292,10 @@ const MyCinema = () => {
                 transition={{ duration: 0.25, ease: "easeInOut" }}
                 className="overflow-hidden"
               >
-                <p className="text-[10px] text-foreground/20 font-sans mt-2">Sélectionne les styles que tu aimes — Pick s'en sert pour tes recommandations</p>
+                <p className="text-[10px] text-foreground/20 font-sans mb-3">Sélectionne les styles que tu aimes — Pick s'en sert pour tes recommandations</p>
+                <div className="rounded-2xl bg-card/30 border border-border/8 p-4">
+                  <GenrePreferences onCountChange={setGenresSelected} />
+                </div>
               </motion.div>
             )}
           </AnimatePresence>
