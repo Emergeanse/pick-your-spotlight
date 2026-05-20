@@ -369,8 +369,7 @@ Recommande ${requestedCount > 1 ? `${requestedCount} contenus` : "UN contenu"} a
     const searchSuggestionOnTMDB = async (sug: any): Promise<any | null> => {
       if (!sug?.title) return null;
       const searchUrl = `https://api.themoviedb.org/3/search/${searchType}?api_key=${TMDB_API_KEY}&language=fr-FR&query=${encodeURIComponent(sug.title)}&page=1`;
-      const searchRes = await fetch(searchUrl);
-      const searchData = await searchRes.json();
+      const searchData = await safeFetchJson(searchUrl);
       const found = (searchData.results || []).find((r: any) => isMovieAllowed(r));
       if (!found) return null;
       const detail = await getMovieDetails(found.id, searchType);
@@ -447,8 +446,7 @@ Recommande ${requestedCount > 1 ? `${requestedCount} contenus` : "UN contenu"} a
       const searchSuggestionTyped = async (sug: any, forceType: "movie" | "tv"): Promise<any | null> => {
         if (!sug?.title) return null;
         const searchUrl = `https://api.themoviedb.org/3/search/${forceType}?api_key=${TMDB_API_KEY}&language=fr-FR&query=${encodeURIComponent(sug.title)}&page=1`;
-        const searchRes = await fetch(searchUrl);
-        const searchData = await searchRes.json();
+        const searchData = await safeFetchJson(searchUrl);
         const found = (searchData.results || []).find((r: any) => isMovieAllowed(r) && !foundMovieIds.has(r.id));
         if (!found) return null;
         const detail = await getMovieDetails(found.id, forceType);
@@ -499,9 +497,8 @@ Recommande ${requestedCount > 1 ? `${requestedCount} contenus` : "UN contenu"} a
             "vote_count.gte": "100", page: String(Math.floor(Math.random() * 10) + 1),
           });
           if (minRating > 0) params.set("vote_average.gte", String(minRating));
-          const res = await fetch(`https://api.themoviedb.org/3/discover/${type}?${params}`);
-          const data = await res.json();
-          const found = (data.results || []).find((r: any) => isMovieAllowed(r) && !foundMovieIds.has(r.id));
+          const data = await safeFetchJson(`https://api.themoviedb.org/3/discover/${type}?${params}`);
+          const found = (data?.results || []).find((r: any) => isMovieAllowed(r) && !foundMovieIds.has(r.id));
           if (found) {
             const detail = await getMovieDetails(found.id, type);
             if (detail) {
