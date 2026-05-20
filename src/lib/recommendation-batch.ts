@@ -49,7 +49,7 @@ const normalizeRecommendationTexts = (data: RecommendationMatchData): Recommenda
     ...data,
     matchScore: score,
     score,
-    confidence: data.confidence ?? score ?? undefined,
+    confidence: data.confidence,
     headline: toStr(data.headline),
     whyItMatches: toStr(data.whyItMatches) ?? toStr(data.reason) ?? reason ?? undefined,
     detailedExplanation: toStr(data.detailedExplanation),
@@ -259,7 +259,7 @@ export async function enrichRecommendationBatchWithTexts(
     // threshold filter to reject a movie that was already pre-screened at a high score.
     const originalConfidence = movie.recommendationTexts?.confidence;
     const recommendationTexts = newTexts
-      ? { ...newTexts, confidence: newTexts.confidence ?? originalConfidence }
+      ? { ...newTexts, confidence: originalConfidence ?? newTexts.confidence }
       : movie.recommendationTexts ?? null;
     return recommendationTexts ? { ...movie, recommendationTexts } : movie;
   });
