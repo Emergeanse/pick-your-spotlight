@@ -429,6 +429,7 @@ Recommande ${requestedCount > 1 ? `${requestedCount} contenus` : "UN contenu"} a
         const found = (searchData.results || []).find((r: any) => isMovieAllowed(r) && !foundMovieIds.has(r.id));
         if (!found) return null;
         const detail = await getMovieDetails(found.id, forceType);
+        if (!detail) return null;
         if (maxDuration && forceType === "movie" && detail.runtime > maxDuration) return null;
         return { movie: detail, suggestion: sug };
       };
