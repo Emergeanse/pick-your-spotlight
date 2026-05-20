@@ -7,7 +7,9 @@
       "PowerShell(npm run build 2>&1)",
       "Read(//mnt/c/Users/cbill/**)",
       "Bash(npx tsc *)",
-      "Bash(npx supabase *)"
+      "Bash(npx supabase *)",
+      "Read(//usr/local/bin/**)",
+      "Read(//c/Users/cbill/.nvm/**)"
     ]
   }
 }
