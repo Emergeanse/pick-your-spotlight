@@ -329,16 +329,22 @@ export async function ensureRecommendationBatch(
 
   let finalBatch = dedupeMovies(batch).slice(0, size);
 
-  if (options.preloadMatchTexts) {
-    // When a threshold is active, force-rescore movies that only have a basic confidence
-    // from surprise-personalized (no rich texts). This ensures the displayed movie-match
-    // score is the same one used for filtering — preventing sub-threshold films appearing.
+  if (options.preloadMatchTexts || options.preloadProviders) {
     const forceRescore = minMatchScore > 0;
-    finalBatch = await enrichRecommendationBatchWithTexts(finalBatch, { ...options, forceRescore });
-  }
-
-  if (options.preloadProviders) {
-    finalBatch = await enrichRecommendationBatchWithProviders(finalBatch);
+    const [textsResult, providersResult] = await Promise.all([
+      options.preloadMatchTexts
+        ? enrichRecommendationBatchWithTexts(finalBatch, { ...options, forceRescore })
+        : Promise.resolve(null),
+      options.preloadProviders
+        ? enrichRecommendationBatchWithProviders(finalBatch)
+        : Promise.resolve(null),
+    ]);
+    if (textsResult && providersResult) {
+      const providerMap = new Map(providersResult.map((m) => [m.id, m.watchProviders]));
+      finalBatch = textsResult.map((m) => ({ ...m, watchProviders: providerMap.get(m.id) ?? m.watchProviders }));
+    } else {
+      finalBatch = textsResult ?? providersResult ?? finalBatch;
+    }
   }
 
   if (minMatchScore > 0) {
@@ -388,10 +394,16 @@ export async function ensureRecommendationBatch(
 
       if (!candidates.length) break;
 
-      // Score candidates against the threshold before accepting.
-      const scored = await enrichRecommendationBatchWithTexts(candidates, options);
-      const enriched = options.preloadProviders
-        ? await enrichRecommendationBatchWithProviders(scored)
+      // Score candidates against the threshold before accepting — texts and providers in parallel.
+      const [scored, refillProviders] = await Promise.all([
+        enrichRecommendationBatchWithTexts(candidates, options),
+        options.preloadProviders ? enrichRecommendationBatchWithProviders(candidates) : Promise.resolve(null),
+      ]);
+      const enriched = refillProviders
+        ? (() => {
+            const providerMap = new Map(refillProviders.map((m) => [m.id, m.watchProviders]));
+            return scored.map((m) => ({ ...m, watchProviders: providerMap.get(m.id) ?? m.watchProviders }));
+          })()
         : scored;
 
       for (const candidate of enriched) {
