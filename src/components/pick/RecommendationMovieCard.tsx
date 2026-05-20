@@ -35,9 +35,9 @@ export const RecommendationMovieCardHeader = ({
   const seasons = (movie as any).number_of_seasons;
   const score =
     matchScore ??
+    (movie as any).recommendationTexts?.confidence ??
     (movie as any).recommendationTexts?.matchScore ??
     (movie as any).recommendationTexts?.score ??
-    (movie as any).recommendationTexts?.confidence ??
     null;
 
   const PosterEl = (

@@ -95,7 +95,7 @@ const ActorCard = ({ actor, onClick }: { actor: CastMember; onClick?: () => void
 );
 
 const MatchAnalysis = ({ matchData, mediaType }: { matchData: MatchData; mediaType: string; movieId: number }) => {
-  const score = matchData.matchScore ?? matchData.score ?? matchData.confidence;
+  const score = matchData.confidence ?? matchData.matchScore ?? matchData.score;
   const summary = matchData.summary || matchData.detailedExplanation || matchData.whyItMatches || matchData.pickNote || matchData.reason;
   const headline = matchData.headline;
   const reasons = matchData.matchingReasons || matchData.reasons;
@@ -464,7 +464,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
       return truncateTeaser(raw, 100);
     };
 
-    const getRecommendationScore = (data: MatchData | null | undefined) => data?.matchScore ?? data?.score ?? data?.confidence ?? null;
+    const getRecommendationScore = (data: MatchData | null | undefined) => data?.confidence ?? data?.matchScore ?? data?.score ?? null;
 
     const currentRecommendationText =
       prefetchedMatchData[movie.id] ??
