@@ -352,10 +352,13 @@ export async function ensureRecommendationBatch(
   }
 
   if (minMatchScore > 0) {
-    // Strict filter: movies must have a score AND meet the threshold.
-    // Unscored movies never bypass the threshold.
     const passing = finalBatch.filter((movie) => {
-      const score = getRecommendationScore(movie.recommendationTexts);
+      const t = movie.recommendationTexts;
+      if (!t) return false;
+      // Trust surprise-personalized confidence: a movie pre-screened at this threshold
+      // passes even if movie-match scored it lower. movie-match is for display, not gating.
+      if (t.confidence != null && t.confidence >= minMatchScore) return true;
+      const score = getRecommendationScore(t);
       return score != null && score >= minMatchScore;
     });
 
@@ -413,8 +416,14 @@ export async function ensureRecommendationBatch(
       }
     }
 
-    // Return only qualifying movies — may be fewer than size if threshold is strict.
-    return dedupeMovies(filledPassing).slice(0, size);
+    if (filledPassing.length > 0) {
+      return dedupeMovies(filledPassing).slice(0, size);
+    }
+    // Last resort: threshold eliminated everything — return the best-scoring movies
+    // from the initial batch rather than an empty array.
+    return dedupeMovies([...finalBatch].sort(
+      (a, b) => (getRecommendationScore(b.recommendationTexts) ?? 0) - (getRecommendationScore(a.recommendationTexts) ?? 0)
+    )).slice(0, size);
   }
 
   return dedupeMovies(finalBatch).slice(0, size);

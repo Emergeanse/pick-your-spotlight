@@ -364,20 +364,8 @@ const Index = () => {
           explorationLevel,
           count: profilePrefs.recommendationBatchSize || RECOMMENDATION_BATCH_SIZE,
         });
-        // Extract movies and ensure we have at least the requested count
-        let extracted = extractRecommendationMovies(data);
+        const extracted = extractRecommendationMovies(data);
         const desiredCount = profilePrefs.recommendationBatchSize || RECOMMENDATION_BATCH_SIZE;
-        if ((extracted?.length || 0) < desiredCount) {
-          extracted = await ensureRecommendationBatch(extracted, {
-            excludeIds,
-            platformIds: profilePrefs.preferredPlatforms,
-            minRating: profilePrefs.minRating,
-            excludedGenres: profilePrefs.excludedGenres,
-            minMatchScore: profilePrefs.matchThreshold,
-            size: desiredCount,
-            preloadMatchTexts: true,
-          });
-        }
         batch = await normalizeRecommendationBatch(extracted, excludeIds, desiredCount);
       } else {
         batch = await normalizeRecommendationBatch([], excludeIds);
@@ -555,19 +543,8 @@ const Index = () => {
             explorationLevel,
             count: profilePrefs.recommendationBatchSize || RECOMMENDATION_BATCH_SIZE,
           });
-          let extracted = extractRecommendationMovies(data);
+          const extracted = extractRecommendationMovies(data);
           const desiredCount = profilePrefs.recommendationBatchSize || RECOMMENDATION_BATCH_SIZE;
-          if ((extracted?.length || 0) < desiredCount) {
-            extracted = await ensureRecommendationBatch(extracted, {
-              excludeIds,
-              platformIds: profilePrefs.preferredPlatforms,
-              minRating: profilePrefs.minRating,
-              excludedGenres: profilePrefs.excludedGenres,
-              minMatchScore: profilePrefs.matchThreshold,
-              size: desiredCount,
-              preloadMatchTexts: true,
-            });
-          }
           batch = await normalizeRecommendationBatch(extracted, excludeIds, desiredCount);
         } else {
           batch = await normalizeRecommendationBatch([], excludeIds);
