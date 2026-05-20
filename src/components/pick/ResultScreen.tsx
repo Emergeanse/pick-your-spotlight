@@ -706,11 +706,15 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
         setMatchLoading(true);
         const data = await fetchMatchDataForMovie(movie);
         if (cancelled) return;
-        setMatchData(data);
+        const originalConfidence = movie.recommendationTexts?.confidence;
+        const mergedData = data && originalConfidence != null
+          ? { ...data, confidence: originalConfidence }
+          : data;
+        setMatchData(mergedData);
         setMatchLoading(false);
 
-        if (data) {
-          setPrefetchedMatchData((prev) => ({ ...prev, [movie.id]: data }));
+        if (mergedData) {
+          setPrefetchedMatchData((prev) => ({ ...prev, [movie.id]: mergedData }));
           if (user) {
             trackRecommendationEvent({
               tmdbId: movie.id,
@@ -780,7 +784,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
             <RecommendationMovieCardHeader
               movie={movie}
               onOpenDetails={() => setMovieDetailOpen(true)}
-              matchScore={getRecommendationScore(currentRecommendationText)}
+              matchScore={movie.recommendationTexts?.confidence ?? getRecommendationScore(currentRecommendationText)}
             />
 
             {overview && (
@@ -805,7 +809,13 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
               </div>
             ) : currentRecommendationText ? (
               <>
-                <MatchAnalysis matchData={currentRecommendationText} mediaType={mediaType} movieId={movie.id} />
+                <MatchAnalysis
+                  matchData={movie.recommendationTexts?.confidence != null
+                    ? { ...currentRecommendationText, confidence: movie.recommendationTexts.confidence }
+                    : currentRecommendationText}
+                  mediaType={mediaType}
+                  movieId={movie.id}
+                />
               </>
             ) : null}
 
