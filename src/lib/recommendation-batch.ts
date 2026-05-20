@@ -68,8 +68,10 @@ const hasRecommendationScore = (data: RecommendationMatchData | null | undefined
 
 // True only when movie-match already produced rich fields (headline / explanation / etc.)
 // A movie from surprise-personalized only has confidence + reason — no rich texts.
+// NOTE: whyItMatches is intentionally excluded — normalizeRecommendationTexts promotes the basic
+// "reason" field from surprise-personalized into whyItMatches, which would cause false positives.
 const hasRichMatchTexts = (data: RecommendationMatchData | null | undefined): boolean =>
-  !!(data?.headline || data?.detailedExplanation || data?.whyItMatches || data?.emotionalJourney);
+  !!(data?.headline || data?.detailedExplanation || data?.emotionalJourney);
 
 export const getRecommendationScore = (data: RecommendationMatchData | null | undefined) =>
   data?.matchScore ?? data?.score ?? data?.confidence ?? null;

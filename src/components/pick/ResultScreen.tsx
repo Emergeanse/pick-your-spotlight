@@ -467,6 +467,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
     const getRecommendationScore = (data: MatchData | null | undefined) => data?.matchScore ?? data?.score ?? data?.confidence ?? null;
 
     const currentRecommendationText =
+      prefetchedMatchData[movie.id] ??
       movie.recommendationTexts ??
       (recommendationBatch && recommendationBatch.find((m) => m.id === movie.id && m.recommendationTexts)
         ? (recommendationBatch.find((m) => m.id === movie.id && m.recommendationTexts) as any).recommendationTexts
@@ -474,7 +475,6 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
       (alternativeMovies && alternativeMovies.find((m) => m.id === movie.id && m.recommendationTexts)
         ? (alternativeMovies.find((m) => m.id === movie.id && m.recommendationTexts) as any).recommendationTexts
         : null) ??
-      prefetchedMatchData[movie.id] ??
       matchData ??
       null;
 
@@ -510,7 +510,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
     const isWhyUnlocked = true;
 
     const hasRichTexts = (t: MatchData | null | undefined): boolean =>
-      !!(t?.headline || t?.detailedExplanation || t?.whyItMatches || t?.emotionalJourney);
+      !!(t?.headline || t?.detailedExplanation || t?.emotionalJourney);
 
     const title = getDisplayTitle(movie);
     const backdrop = getBackdropUrl(movie.backdrop_path);
