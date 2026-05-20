@@ -15,15 +15,18 @@ const hashStr = (s: string): number => {
   return h;
 };
 
+// Shared dark base — distinct from the app background so the circle is always visible
+const BASE_BG = "#111118";
+
 const COLOR_PALETTES = [
-  { primary: "#f97316", secondary: "#dc2626", mid: "#b45309", bg: "#120500" },
-  { primary: "#06b6d4", secondary: "#6366f1", mid: "#0284c7", bg: "#00080f" },
-  { primary: "#a855f7", secondary: "#ec4899", mid: "#7c3aed", bg: "#0a0310" },
-  { primary: "#eab308", secondary: "#d97706", mid: "#ca8a04", bg: "#0f0900" },
-  { primary: "#22c55e", secondary: "#14b8a6", mid: "#0d9488", bg: "#000f07" },
-  { primary: "#f43f5e", secondary: "#e11d48", mid: "#be123c", bg: "#110008" },
-  { primary: "#94a3b8", secondary: "#475569", mid: "#334155", bg: "#050810" },
-  { primary: "#8b5cf6", secondary: "#4f46e5", mid: "#6d28d9", bg: "#06010f" },
+  { primary: "#f97316", secondary: "#dc2626", mid: "#b45309" },
+  { primary: "#06b6d4", secondary: "#6366f1", mid: "#0284c7" },
+  { primary: "#a855f7", secondary: "#ec4899", mid: "#7c3aed" },
+  { primary: "#eab308", secondary: "#d97706", mid: "#ca8a04" },
+  { primary: "#22c55e", secondary: "#14b8a6", mid: "#0d9488" },
+  { primary: "#f43f5e", secondary: "#e11d48", mid: "#be123c" },
+  { primary: "#94a3b8", secondary: "#64748b", mid: "#475569" },
+  { primary: "#8b5cf6", secondary: "#4f46e5", mid: "#6d28d9" },
 ];
 
 // Map archetype keywords to a glyph style
@@ -99,9 +102,9 @@ const CinemaAvatar: FC<CinemaAvatarProps> = ({
     <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ display: "block" }}>
       <defs>
         <radialGradient id={gradId} cx="38%" cy="32%" r="75%">
-          <stop offset="0%" stopColor={palette.primary} stopOpacity="0.28" />
-          <stop offset="55%" stopColor={palette.secondary} stopOpacity="0.12" />
-          <stop offset="100%" stopColor={palette.bg} stopOpacity="1" />
+          <stop offset="0%" stopColor={palette.primary} stopOpacity="0.45" />
+          <stop offset="50%" stopColor={palette.secondary} stopOpacity="0.2" />
+          <stop offset="100%" stopColor="#000000" stopOpacity="0" />
         </radialGradient>
         <filter id={glowId} x="-20%" y="-20%" width="140%" height="140%">
           <feGaussianBlur stdDeviation="2.5" result="blur" />
@@ -112,18 +115,18 @@ const CinemaAvatar: FC<CinemaAvatarProps> = ({
         </clipPath>
       </defs>
 
-      {/* Base dark circle */}
-      <circle cx={cx} cy={cy} r={R} fill={palette.bg} />
+      {/* Base circle — fixed dark color distinct from app background */}
+      <circle cx={cx} cy={cy} r={R} fill={BASE_BG} />
 
-      {/* Gradient overlay */}
+      {/* Colored gradient overlay */}
       <circle cx={cx} cy={cy} r={R} fill={`url(#${gradId})`} />
 
       {/* Film strip band */}
-      <circle cx={cx} cy={cy} r={bandR} fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="10" />
+      <circle cx={cx} cy={cy} r={bandR} fill="none" stroke="rgba(255,255,255,0.07)" strokeWidth="10" />
 
       {/* Film strip holes */}
       {filmHoles.map((h, i) => (
-        <circle key={i} cx={h.x} cy={h.y} r={2.2} fill={palette.bg} />
+        <circle key={i} cx={h.x} cy={h.y} r={2.2} fill={BASE_BG} />
       ))}
 
       {/* Thin separator ring */}

@@ -299,7 +299,7 @@ const CinemaDNA = ({ userId, teaser, onOpenFull }: CinemaDNAProps) => {
         {/* Avatar */}
         <div className="flex justify-center mb-4">
           <div className="relative">
-            <div className="rounded-full overflow-hidden shadow-[0_0_32px_rgba(139,92,246,0.25)] ring-1 ring-white/8">
+            <div className="rounded-full overflow-hidden shadow-[0_0_40px_rgba(139,92,246,0.35)] ring-2 ring-white/12">
               <CinemaAvatar
                 personalityTitle={profile.personality_title}
                 dnaArchetype={profile.dna_archetype}
