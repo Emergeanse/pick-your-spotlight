@@ -74,7 +74,7 @@ const hasRichMatchTexts = (data: RecommendationMatchData | null | undefined): bo
   !!(data?.headline || data?.detailedExplanation || data?.emotionalJourney);
 
 export const getRecommendationScore = (data: RecommendationMatchData | null | undefined) =>
-  data?.matchScore ?? data?.score ?? data?.confidence ?? null;
+  data?.confidence ?? data?.matchScore ?? data?.score ?? null;
 
 export type RecommendationMovieDetail = MovieDetail & {
   recommendationTexts?: RecommendationMatchData | null;
