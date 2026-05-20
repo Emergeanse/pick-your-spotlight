@@ -224,7 +224,7 @@ async function hydrateMissingPosters(
   const seen = new Map<string, { mediaType: "movie" | "tv"; tmdbId: number }>();
   for (const { items } of groups) {
     for (const it of items) {
-      if (it && (!it.poster_path || !it.title || /^TMDB #\d+$/.test(String(it.title))) && it.tmdb_id) {
+      if (it && it.tmdb_id && (!it.poster_path || !it.title || /^TMDB #\d+$/.test(String(it.title)) || !it.genres || it.genres.length === 0)) {
         const mt = (it.media_type || (it.first_air_date ? "tv" : "movie")) as "movie" | "tv";
         seen.set(`${it.tmdb_id}:${mt}`, { mediaType: mt, tmdbId: it.tmdb_id });
       }
@@ -658,9 +658,8 @@ const WatchlistPage = ({ onMovieSelect }: WatchlistPageProps) => {
             />
           </div>
 
-          {/* Type + Genre chips — single scrollable row */}
+          {/* Type chips */}
           <div className="flex gap-1.5 overflow-x-auto scrollbar-hide pb-0.5">
-            {/* Type chips */}
             {(["all", "movie", "tv"] as MediaFilter[]).map((f) => (
               <button
                 key={f}
@@ -674,34 +673,33 @@ const WatchlistPage = ({ onMovieSelect }: WatchlistPageProps) => {
                 {f === "all" ? "Tout" : f === "movie" ? "Films" : "Séries"}
               </button>
             ))}
-
-            {/* Separator */}
-            {availableGenres.length > 0 && (
-              <div className="shrink-0 w-px bg-border/20 self-stretch my-0.5" />
-            )}
-
-            {/* Genre chips — always visible, scroll horizontally */}
-            {availableGenres.map((g) => {
-              const active = genreFilter.includes(g);
-              return (
-                <button
-                  key={g}
-                  onClick={() =>
-                    setGenreFilter((prev) =>
-                      active ? prev.filter((x) => x !== g) : [...prev, g]
-                    )
-                  }
-                  className={`shrink-0 px-3 py-1.5 rounded-full text-[11px] font-sans font-medium border transition-all ${
-                    active
-                      ? "bg-primary/15 border-primary/30 text-primary"
-                      : "bg-card/40 border-border/15 text-foreground/35 hover:text-foreground/60"
-                  }`}
-                >
-                  {g}
-                </button>
-              );
-            })}
           </div>
+
+          {/* Genre chips — wrap to multiple lines */}
+          {availableGenres.length > 0 && (
+            <div className="flex flex-wrap gap-1.5">
+              {availableGenres.map((g) => {
+                const active = genreFilter.includes(g);
+                return (
+                  <button
+                    key={g}
+                    onClick={() =>
+                      setGenreFilter((prev) =>
+                        active ? prev.filter((x) => x !== g) : [...prev, g]
+                      )
+                    }
+                    className={`px-3 py-1.5 rounded-full text-[11px] font-sans font-medium border transition-all ${
+                      active
+                        ? "bg-primary/15 border-primary/30 text-primary"
+                        : "bg-card/40 border-border/15 text-foreground/35 hover:text-foreground/60"
+                    }`}
+                  >
+                    {g}
+                  </button>
+                );
+              })}
+            </div>
+          )}
 
           {/* Active filter summary */}
           {(genreFilter.length > 0 || mediaFilter !== "all") && (
