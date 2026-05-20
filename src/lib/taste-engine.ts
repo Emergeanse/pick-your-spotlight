@@ -148,6 +148,7 @@ export async function computeMultiVectorProfile(
       { data: watchlistItems },
       { data: interactions },
       { data: cached },
+      { data: rejectedFeedback },
     ] = await Promise.all([
       supabase
         .from("liked_movies")
@@ -170,17 +171,25 @@ export async function computeMultiVectorProfile(
         .select("*")
         .eq("user_id", userId)
         .maybeSingle(),
+      // Explicit permanent rejections (not_for_me / dislike) — strongest avoidance signals
+      supabase
+        .from("user_item_feedback")
+        .select("feedback_type, created_at, catalog_items:item_id(tmdb_id)")
+        .eq("user_id", userId)
+        .in("feedback_type", ["not_for_me", "dislike"]) as any,
     ]);
 
     const allLiked = likedMovies || [];
     const allWatchlist = watchlistItems || [];
     const allInteractions = (interactions || []) as any[];
+    const allRejectedFeedback = ((rejectedFeedback || []) as any[]).filter(r => r?.catalog_items?.tmdb_id);
 
     // Check if cache is fresh (fingerprint-based)
     const likedIds = allLiked.map(m => m.tmdb_id).sort().join(",");
     const watchlistIds = allWatchlist.map(w => w.tmdb_id).sort().join(",");
     const interactionCount = allInteractions.length;
-    const fingerprint = `${likedIds}|${watchlistIds}|${interactionCount}`;
+    const rejectedCount = allRejectedFeedback.length;
+    const fingerprint = `${likedIds}|${watchlistIds}|${interactionCount}|${rejectedCount}`;
     // djb2 hash — much lower collision rate than fingerprint.length
     let fingerprintHash = 5381;
     for (let i = 0; i < fingerprint.length; i++) {
@@ -207,16 +216,19 @@ export async function computeMultiVectorProfile(
     const likedTmdbIds = new Set(allLiked.map(m => m.tmdb_id));
     const uniqueWatchlist = allWatchlist.filter(w => !likedTmdbIds.has(w.tmdb_id));
 
-    // Skipped/rejected interactions with tmdb_ids
-    const skippedInteractions = allInteractions.filter(
-      (i: any) => ["skipped", "already_seen", "unsure"].includes(i.action_type)
+    // Interactions that carry avoidance signal (already_seen intentionally excluded)
+    const avoidanceActionTypes = ["skipped", "unsure", "rejected_style", "rejected_too_long",
+      "rejected_not_tonight", "rejected_too_slow", "rejected_too_intense"];
+    const avoidanceInteractions = allInteractions.filter(
+      (i: any) => avoidanceActionTypes.includes(i.action_type)
     );
-    const skippedTmdbIds = skippedInteractions.map((i: any) => i.tmdb_id);
+    const rejectedFeedbackTmdbIds = allRejectedFeedback.map(r => r.catalog_items.tmdb_id);
 
     const allTmdbIds = [
       ...allLiked.map(m => m.tmdb_id),
       ...uniqueWatchlist.map(w => w.tmdb_id),
-      ...skippedTmdbIds,
+      ...avoidanceInteractions.map((i: any) => i.tmdb_id),
+      ...rejectedFeedbackTmdbIds,
     ];
 
     if (allTmdbIds.length === 0) return null;
@@ -284,28 +296,44 @@ export async function computeMultiVectorProfile(
 
     const recentTasteVector = weightedAverageVector(recentItems);
 
-    // ── 3. AVOIDANCE VECTOR (from skips, dislikes, rejections) ──
+    // ── 3. AVOIDANCE VECTOR ──
+    // Weights reflect how strong and permanent the rejection signal is.
+    // "already_seen" is intentionally excluded: seeing a film is neutral, not negative.
+    const avoidanceWeights: Record<string, number> = {
+      rejected_style: 1.5,       // "pas mon style" → fort signal de style
+      skipped: 1.0,              // skip en session
+      rejected_too_intense: 0.8, // trop intense → pénalise les films sombres/violents
+      rejected_too_slow: 0.8,    // trop lent → pénalise slow-burn
+      rejected_too_long: 0.6,    // durée, pas le style → signal plus faible
+      rejected_not_tonight: 0.4, // temporaire, pas permanent
+      unsure: 0.4,
+    };
+
     const avoidanceItems: { vec: number[]; weight: number }[] = [];
-    
-    skippedInteractions.forEach((i: any) => {
+
+    // Session-level rejections from user_interactions
+    avoidanceInteractions.forEach((i: any) => {
       const vec = embMap.get(i.tmdb_id);
       if (!vec) return;
-      // Different action types have different avoidance weights
-      const actionWeight = i.action_type === "skipped" ? 1.0 
-        : i.action_type === "already_seen" ? 0.3 
-        : 0.5; // unsure
-      const w = actionWeight * decayWeight(i.created_at, AVOIDANCE_HALF_LIFE);
+      const w = (avoidanceWeights[i.action_type] ?? 0.5) * decayWeight(i.created_at, AVOIDANCE_HALF_LIFE);
       avoidanceItems.push({ vec, weight: w });
     });
 
-    // "unliked" actions are strong avoidance signals
-    const unlikedInteractions = allInteractions.filter(
-      (i: any) => i.action_type === "unliked"
-    );
-    unlikedInteractions.forEach((i: any) => {
-      const vec = embMap.get(i.tmdb_id);
+    // "unliked" = like retiré → signal fort
+    allInteractions
+      .filter((i: any) => i.action_type === "unliked")
+      .forEach((i: any) => {
+        const vec = embMap.get(i.tmdb_id);
+        if (!vec) return;
+        avoidanceItems.push({ vec, weight: 1.5 * decayWeight(i.created_at, AVOIDANCE_HALF_LIFE) });
+      });
+
+    // Explicit permanent rejections from user_item_feedback — strongest signals
+    allRejectedFeedback.forEach((r: any) => {
+      const vec = embMap.get(r.catalog_items.tmdb_id);
       if (!vec) return;
-      avoidanceItems.push({ vec, weight: 1.5 * decayWeight(i.created_at, AVOIDANCE_HALF_LIFE) });
+      const w = (r.feedback_type === "dislike" ? 2.0 : 1.8) * decayWeight(r.created_at, AVOIDANCE_HALF_LIFE);
+      avoidanceItems.push({ vec, weight: w });
     });
 
     const avoidanceVector = weightedAverageVector(avoidanceItems);
@@ -325,17 +353,22 @@ export async function computeMultiVectorProfile(
       .slice(0, 8)
       .map(([c]) => c);
 
-    // Rejected clusters from skipped interactions context
+    // Rejected clusters: from session rejections + explicit not_for_me/dislike feedback
     const rejectionGenreCounts: Record<string, number> = {};
-    skippedInteractions.forEach((i: any) => {
+    // Style/content rejections carry more genre signal than duration/timing ones
+    const strongRejections = allInteractions.filter(
+      (i: any) => ["rejected_style", "rejected_too_intense", "rejected_too_slow", "skipped"].includes(i.action_type)
+    );
+    strongRejections.forEach((i: any) => {
       const ctx = i.context || {};
+      const weight = i.action_type === "rejected_style" ? 2 : 1;
       if (ctx.genres) {
         (ctx.genres as string[]).forEach((g: string) => {
-          rejectionGenreCounts[g] = (rejectionGenreCounts[g] || 0) + 1;
+          rejectionGenreCounts[g] = (rejectionGenreCounts[g] || 0) + weight;
         });
       }
       if (ctx.mood) {
-        rejectionGenreCounts[ctx.mood] = (rejectionGenreCounts[ctx.mood] || 0) + 1;
+        rejectionGenreCounts[ctx.mood] = (rejectionGenreCounts[ctx.mood] || 0) + weight;
       }
     });
     const rejectedClusters = Object.entries(rejectionGenreCounts)
