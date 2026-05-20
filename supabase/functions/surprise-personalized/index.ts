@@ -530,7 +530,12 @@ Recommande ${requestedCount > 1 ? `${requestedCount} contenus` : "UN contenu"} a
 
       if (movies.length === 0) {
         const fallback = await discoverFallback();
-        if (!fallback) throw new Error("No movie found");
+        if (!fallback) {
+          console.warn("discoverFallback returned null — returning empty movies array");
+          return new Response(JSON.stringify({ movies: [], engineMeta: { aiFallback: true, mode: "empty" } }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
         movies.push({ movie: fallback, reason: `Ce contenu correspond à tes genres préférés.`, confidence: minMatchScore, scores: null });
       }
 
@@ -557,7 +562,12 @@ Recommande ${requestedCount > 1 ? `${requestedCount} contenus` : "UN contenu"} a
       if (result) selectedMovie = result.movie;
     }
     if (!selectedMovie) selectedMovie = await discoverFallback();
-    if (!selectedMovie) throw new Error("No movie found");
+    if (!selectedMovie) {
+      console.warn("No movie found for single mode — returning empty");
+      return new Response(JSON.stringify({ movies: [], engineMeta: { aiFallback: true, mode: "empty" } }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     fireEmbedding(selectedMovie);
 

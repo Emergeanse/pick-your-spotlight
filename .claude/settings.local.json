@@ -9,7 +9,21 @@
       "Bash(npx tsc *)",
       "Bash(npx supabase *)",
       "Read(//usr/local/bin/**)",
-      "Read(//c/Users/cbill/.nvm/**)"
+      "Read(//c/Users/cbill/.nvm/**)",
+      "Bash(where supabase *)",
+      "Read(//c/Users/cbill/.supabase/**)",
+      "Read(//usr/bin/**)",
+      "Bash(find /usr -name \"supabase\")",
+      "Read(//c/Users/cbill/.local/bin/**)",
+      "Read(//c/Users/cbill/bin/**)",
+      "PowerShell(Get-Command supabase -ErrorAction SilentlyContinue)",
+      "Bash(npm --version)",
+      "Bash(npx --version)",
+      "PowerShell(node --version)",
+      "PowerShell(npm --version)",
+      "Read(//c/Users/cbill/AppData/Local/**)",
+      "Read(//c/Users/cbill/**)",
+      "PowerShell(Get-ChildItem \"C:\\\\Users\\\\cbill\\\\AppData\\\\Roaming\" -ErrorAction SilentlyContinue | Where-Object Name -in @\\(\"npm\", \"nvm\", \"node\"\\) | Select-Object Name, FullName)"
     ]
   }
 }
