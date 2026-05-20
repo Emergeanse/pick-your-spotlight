@@ -349,6 +349,7 @@ Recommande ${requestedCount > 1 ? `${requestedCount} contenus` : "UN contenu"} a
       const found = (searchData.results || []).find((r: any) => isMovieAllowed(r));
       if (!found) return null;
       const detail = await getMovieDetails(found.id, searchType);
+      if (!detail) return null;
       if (maxDuration && searchType === "movie" && detail.runtime > maxDuration) return null;
       return { movie: detail, suggestion: sug };
     };
@@ -374,7 +375,10 @@ Recommande ${requestedCount > 1 ? `${requestedCount} contenus` : "UN contenu"} a
         const res = await fetch(`https://api.themoviedb.org/3/discover/${searchType}?${params}`);
         const data = await res.json();
         const movie = (data.results || []).find((r: any) => isMovieAllowed(r));
-        if (movie) return await getMovieDetails(movie.id, searchType);
+        if (movie) {
+          const detail = await getMovieDetails(movie.id, searchType);
+          if (detail) return detail;
+        }
       }
       // Ultimate fallback: trending
       const res = await fetch(`https://api.themoviedb.org/3/trending/${searchType}/week?api_key=${TMDB_API_KEY}&language=fr-FR`);
@@ -425,6 +429,7 @@ Recommande ${requestedCount > 1 ? `${requestedCount} contenus` : "UN contenu"} a
         const found = (searchData.results || []).find((r: any) => isMovieAllowed(r) && !foundMovieIds.has(r.id));
         if (!found) return null;
         const detail = await getMovieDetails(found.id, forceType);
+        if (!detail) return null;
         if (maxDuration && forceType === "movie" && detail.runtime > maxDuration) return null;
         return { movie: detail, suggestion: sug };
       };
@@ -476,10 +481,12 @@ Recommande ${requestedCount > 1 ? `${requestedCount} contenus` : "UN contenu"} a
           const found = (data.results || []).find((r: any) => isMovieAllowed(r) && !foundMovieIds.has(r.id));
           if (found) {
             const detail = await getMovieDetails(found.id, type);
-            foundMovieIds.add(detail.id);
-            movies.push({ movie: detail, reason: `Recommandé par Pick pour diversifier.`, confidence: minMatchScore, scores: null });
-            fireEmbedding(detail);
-            if (type === "movie") movieCount++; else tvCount++;
+            if (detail) {
+              foundMovieIds.add(detail.id);
+              movies.push({ movie: detail, reason: `Recommandé par Pick pour diversifier.`, confidence: minMatchScore, scores: null });
+              fireEmbedding(detail);
+              if (type === "movie") movieCount++; else tvCount++;
+            }
           }
         }
       }
