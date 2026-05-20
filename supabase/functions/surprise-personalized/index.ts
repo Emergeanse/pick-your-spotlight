@@ -381,18 +381,16 @@ Recommande ${requestedCount > 1 ? `${requestedCount} contenus` : "UN contenu"} a
           params.set("with_watch_providers", platformIds.join("|"));
           params.set("watch_region", "FR");
         }
-        const res = await fetch(`https://api.themoviedb.org/3/discover/${searchType}?${params}`);
-        const data = await res.json();
-        const movie = (data.results || []).find((r: any) => isMovieAllowed(r));
+        const data = await safeFetchJson(`https://api.themoviedb.org/3/discover/${searchType}?${params}`);
+        const movie = (data?.results || []).find((r: any) => isMovieAllowed(r));
         if (movie) {
           const detail = await getMovieDetails(movie.id, searchType);
           if (detail) return detail;
         }
       }
       // Ultimate fallback: trending
-      const res = await fetch(`https://api.themoviedb.org/3/trending/${searchType}/week?api_key=${TMDB_API_KEY}&language=fr-FR`);
-      const data = await res.json();
-      const movie = (data.results || []).find((r: any) => !excludedSet.has(r.id));
+      const data = await safeFetchJson(`https://api.themoviedb.org/3/trending/${searchType}/week?api_key=${TMDB_API_KEY}&language=fr-FR`);
+      const movie = (data?.results || []).find((r: any) => !excludedSet.has(r.id));
       return movie ? await getMovieDetails(movie.id, searchType) : null;
     };
 
