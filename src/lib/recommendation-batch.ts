@@ -97,7 +97,6 @@ type RecommendationBatchOptions = {
   preloadMatchTexts?: boolean;
   preloadProviders?: boolean;
   minMatchScore?: number;
-  forceRescore?: boolean;
 };
 
 const extractInlineRecommendationTexts = (entry: any): RecommendationMatchData | null => {
@@ -234,18 +233,9 @@ export async function enrichRecommendationBatchWithTexts(
   movies: RecommendationMovieDetail[],
   options: RecommendationBatchOptions = {},
 ): Promise<RecommendationMovieDetail[]> {
-  const forceRescore = options.forceRescore ?? false;
-  const moviesNeedingTexts = forceRescore
-    ? movies.filter((movie) => {
-        if (hasRichMatchTexts(movie.recommendationTexts)) return false;
-        // When the movie's existing score comfortably clears the threshold (by 20+ pts),
-        // trust the surprise-personalized confidence and skip the expensive movie-match call.
-        const existingScore = getRecommendationScore(movie.recommendationTexts);
-        const threshold = options.minMatchScore ?? 0;
-        if (threshold > 0 && existingScore != null && existingScore >= threshold + 20) return false;
-        return true;
-      })
-    : movies.filter((movie) => !hasRecommendationScore(movie.recommendationTexts));
+  // Call movie-match only for display texts — never for filtering.
+  // surprise-personalized already pre-screened candidates; we just need rich texts.
+  const moviesNeedingTexts = movies.filter((movie) => !hasRichMatchTexts(movie.recommendationTexts));
   if (!moviesNeedingTexts.length) return movies;
 
   const context = await buildMatchContext(options);
@@ -263,7 +253,14 @@ export async function enrichRecommendationBatchWithTexts(
   return movies.map((movie) => {
     // Skip movies that were not selected for scoring
     if (!byId.has(movie.id)) return movie;
-    const recommendationTexts = byId.get(movie.id) ?? movie.recommendationTexts ?? null;
+    const newTexts = byId.get(movie.id);
+    // Preserve the original confidence from surprise-personalized: movie-match is for
+    // display text only and doesn't emit a confidence field — losing it would cause the
+    // threshold filter to reject a movie that was already pre-screened at a high score.
+    const originalConfidence = movie.recommendationTexts?.confidence;
+    const recommendationTexts = newTexts
+      ? { ...newTexts, confidence: newTexts.confidence ?? originalConfidence }
+      : movie.recommendationTexts ?? null;
     return recommendationTexts ? { ...movie, recommendationTexts } : movie;
   });
 }
@@ -331,17 +328,15 @@ export async function ensureRecommendationBatch(
     }
   }
 
-  const minMatchScore = options.minMatchScore ?? 0;
-
   let finalBatch = dedupeMovies(batch).slice(0, size);
 
+  // Enrich with display texts and providers in parallel.
+  // movie-match is for display only — surprise-personalized already pre-screened quality.
   if (options.preloadMatchTexts) {
-    const forceRescore = minMatchScore > 0;
-    // Start provider fetch in parallel with text enrichment — they're independent.
     const providersPromise = options.preloadProviders
       ? enrichRecommendationBatchWithProviders(finalBatch)
       : null;
-    finalBatch = await enrichRecommendationBatchWithTexts(finalBatch, { ...options, forceRescore });
+    finalBatch = await enrichRecommendationBatchWithTexts(finalBatch, options);
     if (providersPromise) {
       const providersBatch = await providersPromise;
       const providerMap = new Map(providersBatch.map((m) => [m.id, m.watchProviders]));
@@ -349,81 +344,6 @@ export async function ensureRecommendationBatch(
     }
   } else if (options.preloadProviders) {
     finalBatch = await enrichRecommendationBatchWithProviders(finalBatch);
-  }
-
-  if (minMatchScore > 0) {
-    const passing = finalBatch.filter((movie) => {
-      const t = movie.recommendationTexts;
-      if (!t) return false;
-      // Trust surprise-personalized confidence: a movie pre-screened at this threshold
-      // passes even if movie-match scored it lower. movie-match is for display, not gating.
-      if (t.confidence != null && t.confidence >= minMatchScore) return true;
-      const score = getRecommendationScore(t);
-      return score != null && score >= minMatchScore;
-    });
-
-    if (passing.length >= size) {
-      return dedupeMovies(passing).slice(0, size);
-    }
-
-    // Refill: fetch TMDB candidates, score them with movie-match, accept only those
-    // that genuinely meet the threshold. Quality over quantity.
-    const REFILL_BATCH_SIZE = 4;
-    const MAX_ROUNDS = 3;
-    let rounds = 0;
-    const filledPassing = [...passing];
-
-    while (filledPassing.length < size && rounds < MAX_ROUNDS) {
-      rounds += 1;
-
-      const needed = size - filledPassing.length;
-      const fetchCount = Math.max(needed, REFILL_BATCH_SIZE);
-      const usedSnapshot = Array.from(usedIds);
-      const rawResults = await Promise.allSettled(
-        Array.from({ length: fetchCount }, () =>
-          getSurpriseRecommendation(usedSnapshot, {
-            platformIds: options.platformIds,
-            minRating: options.minRating,
-            excludedGenres: options.excludedGenres,
-            mediaType: options.mediaType,
-          }),
-        ),
-      );
-
-      const candidates: RecommendationMovieDetail[] = [];
-      for (const result of rawResults) {
-        if (result.status !== "fulfilled" || !result.value?.id) continue;
-        const movie = result.value;
-        if (usedIds.has(movie.id)) continue;
-        usedIds.add(movie.id);
-        candidates.push(movie as RecommendationMovieDetail);
-      }
-
-      if (!candidates.length) break;
-
-      // Score candidates against the threshold before accepting.
-      const scored = await enrichRecommendationBatchWithTexts(candidates, options);
-      const enriched = options.preloadProviders
-        ? await enrichRecommendationBatchWithProviders(scored)
-        : scored;
-
-      for (const candidate of enriched) {
-        const score = getRecommendationScore(candidate.recommendationTexts);
-        if (score != null && score >= minMatchScore) {
-          filledPassing.push(candidate);
-          if (filledPassing.length >= size) break;
-        }
-      }
-    }
-
-    if (filledPassing.length > 0) {
-      return dedupeMovies(filledPassing).slice(0, size);
-    }
-    // Last resort: threshold eliminated everything — return the best-scoring movies
-    // from the initial batch rather than an empty array.
-    return dedupeMovies([...finalBatch].sort(
-      (a, b) => (getRecommendationScore(b.recommendationTexts) ?? 0) - (getRecommendationScore(a.recommendationTexts) ?? 0)
-    )).slice(0, size);
   }
 
   return dedupeMovies(finalBatch).slice(0, size);
