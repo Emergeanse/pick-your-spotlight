@@ -406,7 +406,7 @@ const WatchlistPage = ({ onMovieSelect }: WatchlistPageProps) => {
       if (searchQuery.trim()) {
         if (!item.title?.toLowerCase().includes(searchQuery.toLowerCase())) return false;
       }
-      if (genreFilter.length > 0 && (!item.genres || !genreFilter.every((g) => item.genres.includes(g)))) return false;
+      if (genreFilter.length > 0 && (!item.genres || !genreFilter.some((g) => item.genres.includes(g)))) return false;
       return true;
     });
   }, [currentItems, mediaFilter, searchQuery, genreFilter]);
