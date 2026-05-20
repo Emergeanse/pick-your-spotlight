@@ -236,9 +236,15 @@ export async function enrichRecommendationBatchWithTexts(
 ): Promise<RecommendationMovieDetail[]> {
   const forceRescore = options.forceRescore ?? false;
   const moviesNeedingTexts = forceRescore
-    // With forceRescore, only skip movies that already have full movie-match rich texts.
-    // Movies with only a basic confidence score (from surprise-personalized) are rescored.
-    ? movies.filter((movie) => !hasRichMatchTexts(movie.recommendationTexts))
+    ? movies.filter((movie) => {
+        if (hasRichMatchTexts(movie.recommendationTexts)) return false;
+        // When the movie's existing score comfortably clears the threshold (by 20+ pts),
+        // trust the surprise-personalized confidence and skip the expensive movie-match call.
+        const existingScore = getRecommendationScore(movie.recommendationTexts);
+        const threshold = options.minMatchScore ?? 0;
+        if (threshold > 0 && existingScore != null && existingScore >= threshold + 20) return false;
+        return true;
+      })
     : movies.filter((movie) => !hasRecommendationScore(movie.recommendationTexts));
   if (!moviesNeedingTexts.length) return movies;
 
@@ -330,14 +336,18 @@ export async function ensureRecommendationBatch(
   let finalBatch = dedupeMovies(batch).slice(0, size);
 
   if (options.preloadMatchTexts) {
-    // When a threshold is active, force-rescore movies that only have a basic confidence
-    // from surprise-personalized (no rich texts). This ensures the displayed movie-match
-    // score is the same one used for filtering — preventing sub-threshold films appearing.
     const forceRescore = minMatchScore > 0;
+    // Start provider fetch in parallel with text enrichment — they're independent.
+    const providersPromise = options.preloadProviders
+      ? enrichRecommendationBatchWithProviders(finalBatch)
+      : null;
     finalBatch = await enrichRecommendationBatchWithTexts(finalBatch, { ...options, forceRescore });
-  }
-
-  if (options.preloadProviders) {
+    if (providersPromise) {
+      const providersBatch = await providersPromise;
+      const providerMap = new Map(providersBatch.map((m) => [m.id, m.watchProviders]));
+      finalBatch = finalBatch.map((m) => ({ ...m, watchProviders: providerMap.get(m.id) ?? m.watchProviders }));
+    }
+  } else if (options.preloadProviders) {
     finalBatch = await enrichRecommendationBatchWithProviders(finalBatch);
   }
 
@@ -356,7 +366,7 @@ export async function ensureRecommendationBatch(
     // Refill: fetch TMDB candidates, score them with movie-match, accept only those
     // that genuinely meet the threshold. Quality over quantity.
     const REFILL_BATCH_SIZE = 4;
-    const MAX_ROUNDS = Math.ceil((size * 4) / REFILL_BATCH_SIZE);
+    const MAX_ROUNDS = 3;
     let rounds = 0;
     const filledPassing = [...passing];
 
