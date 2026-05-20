@@ -25,6 +25,22 @@ async function getMovieDetails(id: number, type: "movie" | "tv" = "movie"): Prom
   }
 }
 
+async function safeFetchJson(url: string): Promise<any> {
+  try {
+    const res = await fetch(url);
+    if (!res.ok) {
+      console.error(`safeFetchJson ${url} returned ${res.status}`);
+      return null;
+    }
+    const text = await res.text();
+    if (!text) return null;
+    try { return JSON.parse(text); } catch { return null; }
+  } catch (e) {
+    console.error(`safeFetchJson ${url} failed:`, e);
+    return null;
+  }
+}
+
 function cosineSimilarity(a: number[], b: number[]): number {
   if (!a || !b || a.length !== b.length) return 0;
   let dot = 0, magA = 0, magB = 0;
