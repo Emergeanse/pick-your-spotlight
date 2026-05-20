@@ -66,6 +66,11 @@ const normalizeRecommendationTexts = (data: RecommendationMatchData): Recommenda
 const hasRecommendationScore = (data: RecommendationMatchData | null | undefined) =>
   data?.matchScore != null || data?.score != null || data?.confidence != null;
 
+// True only when movie-match already produced rich fields (headline / explanation / etc.)
+// A movie from surprise-personalized only has confidence + reason — no rich texts.
+const hasRichMatchTexts = (data: RecommendationMatchData | null | undefined): boolean =>
+  !!(data?.headline || data?.detailedExplanation || data?.whyItMatches || data?.emotionalJourney);
+
 export const getRecommendationScore = (data: RecommendationMatchData | null | undefined) =>
   data?.matchScore ?? data?.score ?? data?.confidence ?? null;
 
@@ -236,7 +241,9 @@ export async function enrichRecommendationBatchWithTexts(
 ): Promise<RecommendationMovieDetail[]> {
   const forceRescore = options.forceRescore ?? false;
   const moviesNeedingTexts = forceRescore
-    ? movies
+    // With forceRescore, only skip movies that already have full movie-match rich texts.
+    // Movies with only a basic confidence score (from surprise-personalized) are rescored.
+    ? movies.filter((movie) => !hasRichMatchTexts(movie.recommendationTexts))
     : movies.filter((movie) => !hasRecommendationScore(movie.recommendationTexts));
   if (!moviesNeedingTexts.length) return movies;
 
@@ -253,8 +260,9 @@ export async function enrichRecommendationBatchWithTexts(
   );
 
   return movies.map((movie) => {
-    if (!forceRescore && hasRecommendationScore(movie.recommendationTexts)) return movie;
-    const recommendationTexts = byId.get(movie.id) ?? (forceRescore ? movie.recommendationTexts : null) ?? null;
+    // Skip movies that were not selected for scoring
+    if (!byId.has(movie.id)) return movie;
+    const recommendationTexts = byId.get(movie.id) ?? movie.recommendationTexts ?? null;
     return recommendationTexts ? { ...movie, recommendationTexts } : movie;
   });
 }
@@ -327,8 +335,11 @@ export async function ensureRecommendationBatch(
   let finalBatch = dedupeMovies(batch).slice(0, size);
 
   if (options.preloadMatchTexts) {
-    // Only score movies that don't already have a score (TMDB refills)
-    finalBatch = await enrichRecommendationBatchWithTexts(finalBatch, { ...options, forceRescore: false });
+    // When a threshold is active, force-rescore movies that only have a basic confidence
+    // from surprise-personalized (no rich texts). This ensures the displayed movie-match
+    // score is the same one used for filtering — preventing sub-threshold films appearing.
+    const forceRescore = minMatchScore > 0;
+    finalBatch = await enrichRecommendationBatchWithTexts(finalBatch, { ...options, forceRescore });
   }
 
   if (options.preloadProviders) {
