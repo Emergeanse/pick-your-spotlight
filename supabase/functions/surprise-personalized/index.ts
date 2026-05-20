@@ -403,10 +403,22 @@ Recommande ${requestedCount > 1 ? `${requestedCount} contenus` : "UN contenu"} a
           if (detail) return detail;
         }
       }
-      // Ultimate fallback: trending
-      const data = await safeFetchJson(`https://api.themoviedb.org/3/trending/${searchType}/week?api_key=${TMDB_API_KEY}&language=fr-FR`);
-      const movie = (data?.results || []).find((r: any) => !excludedSet.has(r.id));
-      return movie ? await getMovieDetails(movie.id, searchType) : null;
+      // Ultimate fallback: trending, then popular — no filters, accept anything not excluded
+      for (const url of [
+        `https://api.themoviedb.org/3/trending/${searchType}/week?api_key=${TMDB_API_KEY}&language=fr-FR`,
+        `https://api.themoviedb.org/3/trending/${searchType}/day?api_key=${TMDB_API_KEY}&language=fr-FR`,
+        `https://api.themoviedb.org/3/${searchType}/popular?api_key=${TMDB_API_KEY}&language=fr-FR&page=1`,
+        `https://api.themoviedb.org/3/${searchType}/top_rated?api_key=${TMDB_API_KEY}&language=fr-FR&page=1`,
+      ]) {
+        const data = await safeFetchJson(url);
+        const results = (data?.results || []) as any[];
+        const movie = results.find((r: any) => !excludedSet.has(r.id)) || results[0];
+        if (movie) {
+          const detail = await getMovieDetails(movie.id, searchType);
+          if (detail) return detail;
+        }
+      }
+      return null;
     };
 
     const contentLabel = searchType === "tv" ? "Cette série" : "Ce film";
