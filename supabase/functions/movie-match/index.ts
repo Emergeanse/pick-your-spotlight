@@ -274,7 +274,8 @@ Génère la fiche de match multi-vecteur.`;
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
+        model: "google/gemini-2.0-flash-001",
+        max_tokens: 1200,
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt },
@@ -288,8 +289,15 @@ Génère la fiche de match multi-vecteur.`;
       throw new Error("AI error");
     }
 
-    const aiData = await response.json();
-    const content = aiData.choices?.[0]?.message?.content || "";
+    let aiData: any;
+    try {
+      const rawText = await response.text();
+      aiData = JSON.parse(rawText);
+    } catch (e) {
+      console.error("Failed to parse movie-match response body:", e);
+      throw new Error("AI response parse error");
+    }
+    const content = aiData?.choices?.[0]?.message?.content || "";
 
     let matchData;
     try {

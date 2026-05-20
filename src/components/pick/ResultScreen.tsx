@@ -509,6 +509,9 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
     const allVisited = visitedMovieIds.size >= displayedTotal;
     const isWhyUnlocked = true;
 
+    const hasRichTexts = (t: MatchData | null | undefined): boolean =>
+      !!(t?.headline || t?.detailedExplanation || t?.whyItMatches || t?.emotionalJourney);
+
     const title = getDisplayTitle(movie);
     const backdrop = getBackdropUrl(movie.backdrop_path);
     const poster = getPosterUrl(movie.poster_path, "w780");
@@ -625,16 +628,12 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
     useEffect(() => {
       let cancelled = false;
 
-      const hasExistingScore = (t: MatchData | null | undefined): boolean =>
-        t?.matchScore != null || t?.score != null || t?.confidence != null;
-
       const preloadAllRecommendationTexts = async () => {
-        const missingMovies = recommendationCandidates.filter(
-          (candidate) =>
-            candidate?.id &&
-            !prefetchedMatchData[candidate.id] &&
-            !hasExistingScore(candidate.recommendationTexts as MatchData),
-        );
+        const missingMovies = recommendationCandidates.filter((candidate) => {
+          if (!candidate?.id) return false;
+          const existing = prefetchedMatchData[candidate.id] ?? (candidate.recommendationTexts as MatchData | null);
+          return !hasRichTexts(existing);
+        });
 
         if (!missingMovies.length) return;
 
@@ -675,6 +674,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
         const cached = prefetchedMatchData[movie.id] ?? movie.recommendationTexts ?? null;
 
         if (cached) {
+          // Show basic data immediately (prevents spinner on navigation)
           setMatchData(cached);
           setMatchLoading(false);
           if (!prefetchedMatchData[movie.id] && movie.recommendationTexts) {
@@ -689,6 +689,15 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
               scoreBreakdown: { match: getRecommendationScore(cached) ?? 0 },
               context: { sessionId: sessionId ?? null },
             }).catch(() => {});
+          }
+
+          // If data is basic (no rich texts), enrich in background via movie-match
+          if (!hasRichTexts(cached)) {
+            fetchMatchDataForMovie(movie).then((richData) => {
+              if (cancelled || !richData) return;
+              setPrefetchedMatchData((prev) => ({ ...prev, [movie.id]: richData }));
+              setMatchData(richData);
+            });
           }
           return;
         }
