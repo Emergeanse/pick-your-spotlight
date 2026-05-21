@@ -395,7 +395,7 @@ const HomeScreen = ({
             explorationLevel,
             mediaType: quickFilters.mediaType !== "both" ? quickFilters.mediaType : "both",
             maxDuration: quickFilters.maxDuration,
-            count: (userRecommendationCount || RECOMMENDATION_BATCH_SIZE) + 5,
+            count: (userRecommendationCount || RECOMMENDATION_BATCH_SIZE) * 2 + 3,
             minMatchScore: quickFilters.matchThreshold,
           });
           const extracted = extractRecommendationMovies(data);

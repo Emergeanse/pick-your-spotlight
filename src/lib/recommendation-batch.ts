@@ -324,7 +324,10 @@ export async function ensureRecommendationBatch(
     }
   }
 
-  let finalBatch = dedupeMovies(batch).slice(0, size);
+  // Enrich more candidates than needed so filtering has a buffer.
+  // For size=3, enrich up to 6 movies → filter → keep best 3.
+  const enrichCount = Math.min(dedupeMovies(batch).length, size * 2);
+  let finalBatch = dedupeMovies(batch).slice(0, enrichCount);
 
   // Enrich with match texts first, then filter by precise matchScore, then load providers.
   if (options.preloadMatchTexts) {
@@ -336,7 +339,7 @@ export async function ensureRecommendationBatch(
 
     // Filter out films whose movie-match score falls clearly below the user threshold.
     // 10pt buffer accounts for movie-match conservatism on films without DB embeddings.
-    // Guarantee at least 1 result so the UI never goes empty.
+    // Guarantee at least `size` results (or all if fewer pass).
     const scoreFloor = (options.minMatchScore ?? 60) - 10;
     const aboveFloor = finalBatch.filter((m) => {
       const score = getRecommendationScore(m.recommendationTexts);
