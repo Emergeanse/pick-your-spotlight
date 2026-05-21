@@ -167,17 +167,14 @@ ${peoplePreferences?.lovedDirectors?.length > 0 ? `- ❤️ Réalisateurs adoré
 ${peoplePreferences?.likedDirectors?.length > 0 ? `- 👍 Réalisateurs appréciés : ${peoplePreferences.likedDirectors.join(", ")}` : ""}
 ${peoplePreferences?.dislikedDirectors?.length > 0 ? `- 👎 Réalisateurs pas aimés : ${peoplePreferences.dislikedDirectors.join(", ")} — PÉNALISER` : ""}
 
-SYSTÈME DE SCORING MULTI-CRITÈRE :
-Le matchScore FINAL doit être la combinaison pondérée de :
-- stable_taste (${scoringWeights.stable_taste || 0.16}) : similarité avec le goût profond${embeddingSimilarity !== null ? ` (brut: ${Math.round(embeddingSimilarity * 100)})` : ""}
-- recent_taste (${scoringWeights.recent_taste || 0.10}) : tendances récentes${recentSimilarity !== null ? ` (brut: ${Math.round(recentSimilarity * 100)})` : ""}
-- session_context (${scoringWeights.session_context || 0.16}) : adéquation session
-- people_affinity (${scoringWeights.people_affinity || 0.11}) : boost si acteur/réal aimé, pénalité si détesté
-- acceptance_likelihood (${scoringWeights.acceptance_likelihood || 0.10}) : probabilité d'acceptation
-- rejection_risk (${scoringWeights.rejection_risk || -0.10}) : PÉNALITÉ${avoidanceSimilarity !== null ? ` (brut: ${Math.round(avoidanceSimilarity * 100)})` : ""}
-- quality_score (${scoringWeights.quality_score || 0.06}) : note critique
-- novelty_fit (${scoringWeights.novelty_fit || 0.05}) : découverte calibrée
-- fatigue_penalty (${scoringWeights.fatigue_penalty || -0.03}) : pénalité si genre sur-exposé
+FACTEURS D'ÉVALUATION (à peser qualitativement, pas mathématiquement) :
+- Goût profond : alignement avec les préférences stables${embeddingSimilarity !== null ? ` [similarité: ${Math.round(embeddingSimilarity * 100)}%]` : ""}
+- Session actuelle : adéquation avec l'humeur/genre demandé aujourd'hui
+- Tendances récentes : envies des 30 derniers jours${recentSimilarity !== null ? ` [similarité: ${Math.round(recentSimilarity * 100)}%]` : ""}
+- Affinité personnes : acteurs/réalisateurs aimés = +boost notable, détestés = pénalité
+- Risque rejet : si le film ressemble à ceux évités${avoidanceSimilarity !== null ? ` [${Math.round(avoidanceSimilarity * 100)}%]` : ""}
+- Qualité : note critique
+- Fatigue : genre vu trop souvent cette semaine
 ${cinematicProfile ? `\nPROFIL CINÉMATOGRAPHIQUE :\n- Personnalité : "${cinematicProfile.personality_title}"\n- Description : ${cinematicProfile.narrative}\n- Traits : ${(cinematicProfile.taste_traits || []).join(", ")}\nUtilise ce profil pour enrichir tes explications.` : ""}` : "";
 
     const contentType = isYouTube ? "vidéo YouTube" : "film";
@@ -219,14 +216,16 @@ TON : Tu parles comme un pote cinéphile — chaleureux, direct, jamais robotiqu
 
 RÈGLE D'OR : Tu es un ami qui RECOMMANDE avec conviction. Pas de "malgré", "cependant", "par contre", "attention", "même si". Que du positif, de l'enthousiasme et des raisons concrètes d'aimer ce contenu.
 
+⚠️ RÈGLE ABSOLUE DU SCORE : Le matchScore est un JUGEMENT DIRECT (0-99). Ce n'est PAS une formule — ne multiplie PAS les sous-scores par leurs poids. Ces films ont été pré-sélectionnés comme candidats compatibles : score de base ≥ 60 sauf incompatibilité évidente (genre explicitement rejeté, cluster proscrit). Plage normale : 62-85%.
+
 SCORING MULTI-VECTEUR :
 - La SESSION prime sur le profil global quand elle est explicite
 - Le score STABLE ancre le goût profond
 - Le score RÉCENT capte les envies du moment
-- Le score d'ÉVITEMENT PÉNALISE fortement (un film proche du vecteur de rejet = score bas)
-- La FATIGUE pénalise les genres sur-exposés cette semaine
-${embeddingSimilarity !== null ? `- Similarité stable (${Math.round(embeddingSimilarity * 100)}%) : >80% = très bon, <40% = décalage` : ""}
-${avoidanceSimilarity !== null ? `- Similarité évitement (${Math.round(avoidanceSimilarity * 100)}%) : >60% = forte pénalité, <30% = OK` : ""}
+- Le score d'ÉVITEMENT signale un risque de rejet (si > 60% : pénalise modérément)
+- La FATIGUE pénalise légèrement les genres sur-exposés
+${embeddingSimilarity !== null ? `- Similarité stable (${Math.round(embeddingSimilarity * 100)}%) : >80% = excellent alignement, 60-80% = bon, <50% = décalage notable` : ""}
+${avoidanceSimilarity !== null ? `- Similarité évitement (${Math.round(avoidanceSimilarity * 100)}%) : >70% = pénalité forte (-10 à -15pts), 50-70% = modérée (-5pts), <50% = OK` : ""}
 
 RÈGLES :
 - Réponds UNIQUEMENT avec un JSON valide, sans markdown, sans backticks
@@ -255,10 +254,8 @@ RÈGLES :
 }
 - "scores.rejection_risk" : 0 = aucun risque, 100 = certain rejet.
 - "scores.fatigue" : 0 = aucune fatigue, 100 = genre totalement sur-exposé.
-- SCORE CALIBRÉ : Les films que tu reçois ont déjà été présélectionnés comme candidats. Ton rôle est d'affiner la compatibilité précise. Seuil de recommandation : ${minMatchScore}%.
-- Match excellent (goûts parfaitement alignés) = 80-99. Match bon (clairement recommandable) = 65-79. Match correct (au-dessus du seuil) = ${minMatchScore}-64. Insuffisant = <${minMatchScore}.
-- La plage normale pour un candidat pré-sélectionné est 60-85%. Évite les scores < 55 sauf inadéquation évidente.
-- Profil peu développé (confiance < 40) = utilise 62-72 comme base par défaut, pas de forte pénalité.`;
+- RAPPEL SCORE : matchScore = jugement direct 0-99. Plage normale candidat pré-sélectionné : 62-85%. Seuil : ${minMatchScore}%. Match excellent = 80-99. Bon = 65-79. Correct = ${minMatchScore}-64. En dessous du seuil = <${minMatchScore} (rare, seulement si rejet évident).
+- Profil peu développé (confiance < 40) = 62-72 par défaut.`;
 
     const youtubeExtra = isYouTube ? `\nChaîne YouTube : ${youtubeData.channelTitle || "inconnue"}\nVues : ${youtubeData.viewCount || 0}\nDurée : ${runtime} min` : "";
 

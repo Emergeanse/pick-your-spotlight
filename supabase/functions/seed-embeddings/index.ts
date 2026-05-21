@@ -231,7 +231,6 @@ serve(async (req: Request) => {
             if (!detailRes.ok) return false;
             const detail = await detailRes.json();
             const ok = await generateEmbeddingWithGoogleAI(detail, type, GOOGLE_AI_KEY, supabase);
-            if (ok) console.log(`✓ ${detail.title || detail.name}`);
             return ok;
           } catch (e) {
             console.error(`Error processing movie ${movie.id}:`, e);
