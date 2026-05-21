@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl *)",
+      "PowerShell(Invoke-RestMethod *)",
+      "PowerShell(*)"
+    ]
+  }
+}
