@@ -186,6 +186,7 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
       "whyItMatches": "<1 phrase positive, tutoiement, ce qui va plaire>",
       "detailedExplanation": "<2-3 phrases positives reliant le film au profil>",
       "perfectFor": "<1 phrase ex: Parfait pour une soirée...>",
+      "funFact": "<1 anecdote courte et intéressante sur le film ou sa réalisation>",
       "matchingReasons": ["<2-4 mots>", "<2-4 mots>", "<2-4 mots>"]
     }
   ]
@@ -252,6 +253,7 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
             whyItMatches: r.sel.whyItMatches || null,
             detailedExplanation: r.sel.detailedExplanation || null,
             perfectFor: r.sel.perfectFor || null,
+            funFact: r.sel.funFact || null,
             matchingReasons: r.sel.matchingReasons || [],
           },
         });
