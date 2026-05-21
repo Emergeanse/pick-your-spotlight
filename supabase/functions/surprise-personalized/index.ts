@@ -129,7 +129,7 @@ serve(async (req) => {
 
     // ── ÉTAPE 2 : LLM — sélection + scoring + textes complets ──
     let llmSelections: any[] = [];
-    const targetLLMCount = requestedCount;
+    const targetLLMCount = requestedCount + 1;
 
     if (candidates.length >= 1) {
       const candidateList = candidates
