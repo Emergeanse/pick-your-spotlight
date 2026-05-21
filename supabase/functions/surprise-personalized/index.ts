@@ -201,7 +201,7 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
           method: "POST",
           headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
           body: JSON.stringify({
-            model: "google/gemini-2.0-flash-001",
+            model: "google/gemini-2.5-flash",
             max_tokens: 3000,
             messages: [
               { role: "system", content: systemPrompt },
