@@ -112,12 +112,12 @@ serve(async (req) => {
           match_count: 50,
           exclude_ids: normalizedExcludeIds,
           filter_media_type: mediaType === "both" ? null : searchType,
+          min_rating: minRating,
         });
         if (rpcError) console.error("SQL RPC error:", rpcError);
         if (data) {
           candidates = data.filter((c: any) =>
-            (excludedGenres || []).every((eg: string) => !(c.genres || []).includes(eg)) &&
-            (minRating === 0 || c.vote_average === 0 || !c.vote_average || c.vote_average >= minRating)
+            (excludedGenres || []).every((eg: string) => !(c.genres || []).includes(eg))
           );
         }
         console.log(`[SP] SQL candidates: ${candidates.length} (userTasteVector: ${!!userTasteVector}, excludeIds: ${normalizedExcludeIds.length})`);
