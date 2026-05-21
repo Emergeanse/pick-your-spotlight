@@ -1133,6 +1133,26 @@ export type Database = {
           tmdb_id: number
         }[]
       }
+      match_movies_for_recommendation: {
+        Args: {
+          exclude_ids?: number[]
+          filter_media_type?: string
+          match_count?: number
+          query_vector: string
+        }
+        Returns: {
+          cluster_labels: string[]
+          genres: string[]
+          media_type: string
+          popularity: number
+          similarity: number
+          taste_tags: string[]
+          title: string
+          tmdb_id: number
+          vote_average: number
+          year: string
+        }[]
+      }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
