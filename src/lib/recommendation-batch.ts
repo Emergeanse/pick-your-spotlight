@@ -213,7 +213,7 @@ async function fetchRecommendationTextsForMovie(
         cinematicProfile: context.cinematicProfile,
         peoplePreferences: context.peoplePreferences,
         userName: context.user?.user_metadata?.display_name || context.user?.email?.split("@")[0] || null,
-        minMatchScore: options.minMatchScore ?? 80,
+        minMatchScore: options.minMatchScore ?? 60,
       },
     });
 
@@ -338,10 +338,11 @@ export async function ensureRecommendationBatch(
       : null;
     finalBatch = await enrichRecommendationBatchWithTexts(finalBatch, options);
 
-    // Post-enrichment filter: drop films whose precise matchScore is below the user threshold.
+    // Post-enrichment filter: drop films clearly below threshold.
+    // 10-point tolerance accounts for movie-match scoring conservatively vs surprise-personalized.
     // Films where enrichment failed (no matchScore) are kept to avoid empty results.
     if (options.minMatchScore) {
-      const minScore = options.minMatchScore;
+      const minScore = options.minMatchScore - 10;
       finalBatch = finalBatch.filter((m) => {
         const ms = m.recommendationTexts?.matchScore ?? m.recommendationTexts?.score;
         return ms == null || ms >= minScore;
