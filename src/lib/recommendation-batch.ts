@@ -338,9 +338,13 @@ export async function ensureRecommendationBatch(
       : null;
     finalBatch = await enrichRecommendationBatchWithTexts(finalBatch, options);
 
-    // Note: post-enrichment matchScore filtering is intentionally disabled.
-    // surprise-personalized already pre-screens candidates at the user threshold.
-    // movie-match is used for display only until its scoring calibration stabilizes.
+    // Filter out films whose movie-match score falls below the user threshold.
+    // 5pt buffer to absorb edge cases where movie-match scores slightly conservative.
+    const scoreFloor = (options.minMatchScore ?? 60) - 5;
+    finalBatch = finalBatch.filter((m) => {
+      const score = getRecommendationScore(m.recommendationTexts);
+      return score === null || score >= scoreFloor;
+    });
 
     if (providersPromise) {
       const providersBatch = await providersPromise;
