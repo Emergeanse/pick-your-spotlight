@@ -104,6 +104,7 @@ serve(async (req) => {
     let stableCandidates: string[] = [];
     let recentCandidates: string[] = [];
     let avoidanceCandidateIds: number[] = [];
+    let richCandidates: any[] = []; // retrieve→rerank pool
 
     if (SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) {
       const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
@@ -157,6 +158,26 @@ serve(async (req) => {
               .map((m: any) => m.tmdb_id);
           }
         } catch (e) { console.error("Avoidance search failed:", e); }
+      }
+
+      // Pool 4: Rich candidates for retrieve→rerank
+      // Excludes: liked, seen, disliked (normalizedExcludeIds) + avoidance pool
+      // Allows: watchlist films (not in excludeIds unless already watched)
+      if (userTasteVector && explorationLevel < 9 && !outOfComfortZone) {
+        try {
+          const allExcludeForPool = [...new Set([...normalizedExcludeIds, ...avoidanceCandidateIds])];
+          const { data: poolData } = await supabase.rpc("match_movies_for_recommendation", {
+            query_vector: `[${userTasteVector.join(",")}]`,
+            match_count: 30,
+            exclude_ids: allExcludeForPool,
+            filter_media_type: searchType,
+          });
+          if (poolData) {
+            richCandidates = poolData.filter((c: any) =>
+              (excludedGenres || []).every((eg: string) => !(c.genres || []).includes(eg))
+            );
+          }
+        } catch (e) { console.error("Rich candidates fetch failed:", e); }
       }
     }
 
@@ -238,12 +259,20 @@ ${heavilySkippedGenres.length > 0 ? `- Genres souvent refusés (3+): ${heavilySk
 ${fatiguedGenres.length > 0 ? `- FATIGUE DÉTECTÉE : ${fatiguedGenres.join(", ")} → Pénalise ces genres, diversifie.` : ""}
 ${minRating > 0 ? `- Note minimale TMDB: ${minRating}/10` : ""}
 
-CANDIDATS PAR VECTEUR STABLE (les plus proches du goût profond) :
+${richCandidates.length >= 8
+  ? `⚡ MODE SÉLECTION : ${richCandidates.length} films pré-validés mathématiquement. Sélectionne UNIQUEMENT parmi eux — aucun film hors liste.
+
+CANDIDATS (classés par affinité) :
+${richCandidates.map((c, i) => `[${i + 1}] id=${c.tmdb_id} | "${c.title}" (${c.year || "?"}) | ${(c.genres || []).slice(0, 3).join(", ")} | ⭐${c.vote_average?.toFixed(1) ?? "?"}/10 | affinité: ${Math.round(c.similarity * 100)}%`).join("\n")}
+
+Réponse attendue — ajoute tmdb_id dans chaque suggestion : {"suggestions": [{"title": "...", "tmdb_id": <id>, "reason": "...", "confidence": <0-100>, "scores": {...}}, ...]}`
+  : `CANDIDATS PAR VECTEUR STABLE (les plus proches du goût profond) :
 ${stableCandidates.length > 0 ? stableCandidates.map((c, i) => `${i + 1}. ${c}`).join("\n") : "Aucun candidat vectoriel stable."}
 
 ${recentCandidates.length > 0 ? `CANDIDATS PAR VECTEUR RÉCENT (tendances des 30 derniers jours) :\n${recentCandidates.map((c, i) => `${i + 1}. ${c}`).join("\n")}` : ""}
 
-${avoidanceCandidateIds.length > 0 ? `⚠️ IDs TMDB À ÉVITER (proches du vecteur de rejet) : ${avoidanceCandidateIds.join(", ")}` : ""}
+${avoidanceCandidateIds.length > 0 ? `⚠️ IDs TMDB À ÉVITER (proches du vecteur de rejet) : ${avoidanceCandidateIds.join(", ")}` : ""}`
+}
 
 TYPE : ${searchType === "tv" ? "SÉRIE TV uniquement" : "FILM uniquement"}
 ${maxDuration ? `DURÉE MAX : ${maxDuration} min (ABSOLU)` : ""}
@@ -368,6 +397,18 @@ Recommande ${requestedCount > 1 ? `${requestedCount} contenus` : "UN contenu"} a
 
     const searchSuggestionOnTMDB = async (sug: any): Promise<any | null> => {
       if (!sug?.title) return null;
+
+      // Fast path: direct ID lookup when tmdb_id is provided (retrieve→rerank mode)
+      if (sug.tmdb_id) {
+        const detail = await getMovieDetails(sug.tmdb_id, searchType);
+        if (detail && isMovieAllowed(detail)) {
+          if (maxDuration && searchType === "movie" && (detail.runtime || 0) > maxDuration) return null;
+          return { movie: detail, suggestion: sug };
+        }
+        return null;
+      }
+
+      // Fallback: title search (free-generation mode)
       const searchUrl = `https://api.themoviedb.org/3/search/${searchType}?api_key=${TMDB_API_KEY}&language=fr-FR&query=${encodeURIComponent(sug.title)}&page=1`;
       const searchData = await safeFetchJson(searchUrl);
       const found = (searchData?.results || []).find((r: any) => isMovieAllowed(r));
