@@ -107,26 +107,30 @@ serve(async (req) => {
     if (SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY && userTasteVector) {
       try {
         const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-        const { data } = await supabase.rpc("match_movies_for_recommendation", {
+        const { data, error: rpcError } = await supabase.rpc("match_movies_for_recommendation", {
           query_vector: `[${userTasteVector.join(",")}]`,
           match_count: 30,
           exclude_ids: normalizedExcludeIds,
           filter_media_type: mediaType === "both" ? null : searchType,
         });
+        if (rpcError) console.error("SQL RPC error:", rpcError);
         if (data) {
           candidates = data.filter((c: any) =>
             (excludedGenres || []).every((eg: string) => !(c.genres || []).includes(eg)) &&
             (minRating === 0 || c.vote_average === 0 || !c.vote_average || c.vote_average >= minRating)
           );
         }
+        console.log(`[SP] SQL candidates: ${candidates.length} (userTasteVector: ${!!userTasteVector}, excludeIds: ${normalizedExcludeIds.length})`);
       } catch (e) {
         console.error("SQL vector search failed:", e);
       }
+    } else {
+      console.log(`[SP] SQL skipped — userTasteVector: ${!!userTasteVector}, SUPABASE_URL: ${!!SUPABASE_URL}`);
     }
 
     // ── ÉTAPE 2 : LLM — sélection + scoring + textes complets ──
     let llmSelections: any[] = [];
-    const targetLLMCount = Math.min(requestedCount * 2, 8); // buffer : demande 2x, garde requestedCount
+    const targetLLMCount = 6; // demande toujours 6, requestedCount est géré côté client
 
     if (candidates.length >= 3) {
       const candidateList = candidates
@@ -213,16 +217,23 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
           const jsonStr = content.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
           const parsed = JSON.parse(jsonStr);
           if (parsed.selections && Array.isArray(parsed.selections)) {
-            // Validate: tmdb_id must be in our candidate list, score must meet floor
-            const validIds = new Set(candidates.map((c: any) => c.tmdb_id));
+            // Normalize tmdb_id to number (LLM sometimes returns strings)
+            const validIds = new Set(candidates.map((c: any) => Number(c.tmdb_id)));
             llmSelections = parsed.selections.filter((s: any) =>
-              s.tmdb_id && validIds.has(s.tmdb_id) && (s.matchScore || 0) >= minMatchScore
+              s.tmdb_id && validIds.has(Number(s.tmdb_id)) && (s.matchScore || 0) >= minMatchScore
             );
+            // Normalize tmdb_id to number for downstream TMDB calls
+            llmSelections = llmSelections.map((s: any) => ({ ...s, tmdb_id: Number(s.tmdb_id) }));
+            console.log(`[SP] LLM raw selections: ${parsed.selections.length}, valid: ${llmSelections.length}, minMatchScore: ${minMatchScore}`);
           }
+        } else {
+          console.error(`[SP] LLM gateway error: ${response.status}`);
         }
       } catch (e) {
         console.error("LLM selection failed:", e);
       }
+    } else {
+      console.log(`[SP] LLM skipped — not enough candidates: ${candidates.length}`);
     }
 
     // ── ÉTAPE 3 : TMDB — enrichissement en batch pour les films sélectionnés ──
@@ -260,23 +271,20 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
       }
     }
 
-    // ── ÉTAPE 4 : Fallback discover si pas assez de résultats ──
+    // ── ÉTAPE 4 : Fallback si pas assez de résultats ──
+    // Max 4 tentatives discover ciblées, puis trending sans filtre
     if (movies.length < requestedCount) {
-      const needed = requestedCount - movies.length;
-      for (let attempt = 0; attempt < needed * 6 && movies.length < requestedCount; attempt++) {
+      console.log(`[SP] Fallback needed: have ${movies.length}/${requestedCount}`);
+      for (let attempt = 0; attempt < 4 && movies.length < requestedCount; attempt++) {
         const params = new URLSearchParams({
           api_key: TMDB_API_KEY, language: "fr-FR", sort_by: "popularity.desc",
-          "vote_count.gte": attempt < 3 ? "100" : "20",
-          page: String(Math.floor(Math.random() * 10) + 1),
+          "vote_count.gte": "50",
+          page: String(Math.floor(Math.random() * 5) + 1),
         });
-        if (minRating > 0 && attempt < 4) params.set("vote_average.gte", String(minRating));
+        if (minRating > 0) params.set("vote_average.gte", String(minRating));
         if (maxDuration && searchType === "movie") params.set("with_runtime.lte", String(maxDuration));
-        if (excludedGenreIds.size > 0 && attempt < 4) params.set("without_genres", [...excludedGenreIds].join(","));
-        if (topGenres.length > 0 && explorationLevel < 7 && attempt < 3) {
-          const gids = topGenres.map((g: string) => genreNameToId[g]).filter(Boolean).slice(0, 3);
-          if (gids.length > 0) params.set("with_genres", gids.join("|"));
-        }
-        if (platformIds?.length > 0 && attempt < 4) {
+        if (excludedGenreIds.size > 0) params.set("without_genres", [...excludedGenreIds].join(","));
+        if (platformIds?.length > 0 && attempt < 2) {
           params.set("with_watch_providers", platformIds.join("|"));
           params.set("watch_region", "FR");
         }
@@ -287,31 +295,29 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
         if (!detail || usedIds.has(detail.id)) continue;
         usedIds.add(detail.id);
         fireEmbedding(detail);
-        movies.push({
-          movie: detail,
-          reason: "Ce film correspond à tes genres préférés.",
-          confidence: minMatchScore,
-          recommendationTexts: null,
-        });
+        movies.push({ movie: detail, reason: "Ce film correspond à tes genres préférés.", confidence: minMatchScore, recommendationTexts: null });
       }
     }
 
-    // Ultimate fallback: trending
-    if (movies.length === 0) {
-      for (const url of [
-        `https://api.themoviedb.org/3/trending/${searchType}/week?api_key=${TMDB_API_KEY}&language=fr-FR`,
-        `https://api.themoviedb.org/3/${searchType}/popular?api_key=${TMDB_API_KEY}&language=fr-FR&page=1`,
-      ]) {
-        if (movies.length > 0) break;
-        const data = await safeFetchJson(url);
-        const found = (data?.results || []).find((r: any) => !excludedSet.has(r.id));
-        if (!found) continue;
-        const detail = await getMovieDetails(found.id, searchType);
-        if (detail) {
-          movies.push({ movie: detail, reason: "Tendance du moment.", confidence: minMatchScore, recommendationTexts: null });
-        }
+    // Fallback ultime : trending sans aucun filtre
+    for (const url of [
+      `https://api.themoviedb.org/3/trending/${searchType}/week?api_key=${TMDB_API_KEY}&language=fr-FR`,
+      `https://api.themoviedb.org/3/${searchType}/popular?api_key=${TMDB_API_KEY}&language=fr-FR&page=1`,
+      `https://api.themoviedb.org/3/${searchType}/top_rated?api_key=${TMDB_API_KEY}&language=fr-FR&page=1`,
+    ]) {
+      if (movies.length >= requestedCount) break;
+      const data = await safeFetchJson(url);
+      for (const r of (data?.results || [])) {
+        if (movies.length >= requestedCount) break;
+        if (usedIds.has(r.id)) continue;
+        const detail = await getMovieDetails(r.id, searchType);
+        if (!detail) continue;
+        usedIds.add(detail.id);
+        movies.push({ movie: detail, reason: "Tendance du moment.", confidence: minMatchScore, recommendationTexts: null });
       }
     }
+
+    console.log(`[SP] Final: ${movies.length} movies, mode: ${llmSelections.length > 0 ? "retrieve-rerank" : "fallback"}`);
 
     return new Response(JSON.stringify({
       movies,
