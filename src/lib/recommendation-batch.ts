@@ -338,13 +338,15 @@ export async function ensureRecommendationBatch(
       : null;
     finalBatch = await enrichRecommendationBatchWithTexts(finalBatch, options);
 
-    // Filter out films whose movie-match score falls below the user threshold.
-    // 5pt buffer to absorb edge cases where movie-match scores slightly conservative.
-    const scoreFloor = (options.minMatchScore ?? 60) - 5;
-    finalBatch = finalBatch.filter((m) => {
+    // Filter out films whose movie-match score falls clearly below the user threshold.
+    // 10pt buffer accounts for movie-match conservatism on films without DB embeddings.
+    // Guarantee at least 1 result so the UI never goes empty.
+    const scoreFloor = (options.minMatchScore ?? 60) - 10;
+    const aboveFloor = finalBatch.filter((m) => {
       const score = getRecommendationScore(m.recommendationTexts);
       return score === null || score >= scoreFloor;
     });
+    if (aboveFloor.length > 0) finalBatch = aboveFloor;
 
     if (providersPromise) {
       const providersBatch = await providersPromise;
