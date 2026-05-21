@@ -171,7 +171,7 @@ const TonightPickOverlay = ({
                 const rec: any =
                   (recFromPool ? (recFromPool as any).recommendationTexts : null) || recFromMovie || null;
 
-                const adhesionScore = rec?.confidence ?? matchInfo?.confidence ?? rec?.matchScore ?? rec?.score ?? null;
+                const adhesionScore = rec?.matchScore ?? rec?.score ?? rec?.confidence ?? matchInfo?.confidence ?? null;
 
                 const asStr = (v: unknown): string | null =>
                   typeof v === "string" && v.length > 0 ? v : null;

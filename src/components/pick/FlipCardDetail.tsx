@@ -225,7 +225,7 @@ const MovieDetailContent = ({
   const reasons = recommendationText?.matchingReasons || recommendationText?.reasons || [];
   const perfectFor = recommendationText?.perfectFor || null;
   const funFact = recommendationText?.funFact || null;
-  const score = recommendationText?.confidence ?? recommendationText?.matchScore ?? recommendationText?.score ?? null;
+  const score = recommendationText?.matchScore ?? recommendationText?.score ?? recommendationText?.confidence ?? null;
 
   return (
     <div className="px-5 pb-8 pt-4 max-w-2xl mx-auto">

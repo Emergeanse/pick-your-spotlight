@@ -464,7 +464,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
       return truncateTeaser(raw, 100);
     };
 
-    const getRecommendationScore = (data: MatchData | null | undefined) => data?.confidence ?? data?.matchScore ?? data?.score ?? null;
+    const getRecommendationScore = (data: MatchData | null | undefined) => data?.matchScore ?? data?.score ?? data?.confidence ?? null;
 
     const currentRecommendationText =
       prefetchedMatchData[movie.id] ??
@@ -784,7 +784,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
             <RecommendationMovieCardHeader
               movie={movie}
               onOpenDetails={() => setMovieDetailOpen(true)}
-              matchScore={movie.recommendationTexts?.confidence ?? getRecommendationScore(currentRecommendationText)}
+              matchScore={getRecommendationScore(currentRecommendationText) ?? movie.recommendationTexts?.confidence ?? null}
             />
 
             {overview && (
