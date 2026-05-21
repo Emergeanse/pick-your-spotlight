@@ -242,9 +242,11 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
     if (llmSelections.length > 0) {
       const tmdbResults = await Promise.all(
         llmSelections.map(async (sel: any) => {
-          const detail = await getMovieDetails(sel.tmdb_id, searchType);
+          const candidate = candidates.find((c: any) => Number(c.tmdb_id) === Number(sel.tmdb_id));
+          const itemType = (candidate?.media_type as "movie" | "tv") || searchType;
+          const detail = await getMovieDetails(sel.tmdb_id, itemType);
           if (!detail || usedIds.has(detail.id)) return null;
-          if (maxDuration && searchType === "movie" && (detail.runtime || 0) > maxDuration) return null;
+          if (maxDuration && itemType === "movie" && (detail.runtime || 0) > maxDuration) return null;
           return { detail, sel };
         })
       );
