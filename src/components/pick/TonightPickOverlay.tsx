@@ -112,7 +112,7 @@ const TonightPickOverlay = ({
                     transition={{ duration: 0.3, type: "spring", stiffness: 200 }}
                     src={getPosterUrl(movie.poster_path, "w342") || ""}
                     alt={getDisplayTitle(movie)}
-                    className="w-32 h-48 md:w-40 md:h-56 rounded-xl object-cover shadow-2xl border border-border/20 cursor-pointer active:scale-95 transition-transform"
+                    className="w-40 h-60 md:w-48 md:h-72 rounded-xl object-cover shadow-2xl border border-border/20 cursor-pointer active:scale-95 transition-transform"
                     onClick={onOpenDetail}
                   />
 
