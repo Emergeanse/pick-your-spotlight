@@ -339,14 +339,13 @@ export async function ensureRecommendationBatch(
     finalBatch = await enrichRecommendationBatchWithTexts(finalBatch, options);
 
     // Post-enrichment filter: drop films whose precise matchScore is below the user threshold.
-    // If enrichment failed (no matchScore), keep the film rather than show nothing.
+    // Films where enrichment failed (no matchScore) are kept to avoid empty results.
     if (options.minMatchScore) {
       const minScore = options.minMatchScore;
-      const qualified = finalBatch.filter((m) => {
+      finalBatch = finalBatch.filter((m) => {
         const ms = m.recommendationTexts?.matchScore ?? m.recommendationTexts?.score;
         return ms == null || ms >= minScore;
       });
-      if (qualified.length > 0) finalBatch = qualified;
     }
 
     if (providersPromise) {
