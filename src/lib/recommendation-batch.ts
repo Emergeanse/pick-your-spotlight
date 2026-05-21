@@ -324,10 +324,7 @@ export async function ensureRecommendationBatch(
     }
   }
 
-  // Enrich more candidates than needed so filtering has a buffer.
-  // For size=3, enrich up to 6 movies → filter → keep best 3.
-  const enrichCount = Math.min(dedupeMovies(batch).length, size * 2);
-  let finalBatch = dedupeMovies(batch).slice(0, enrichCount);
+  let finalBatch = dedupeMovies(batch).slice(0, size);
 
   // Enrich with match texts first, then filter by precise matchScore, then load providers.
   if (options.preloadMatchTexts) {

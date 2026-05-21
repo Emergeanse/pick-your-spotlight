@@ -362,7 +362,7 @@ const Index = () => {
           minMatchScore: profilePrefs.matchThreshold,
           excludeIds,
           explorationLevel,
-          count: (profilePrefs.recommendationBatchSize || RECOMMENDATION_BATCH_SIZE) * 2 + 3,
+          count: (profilePrefs.recommendationBatchSize || RECOMMENDATION_BATCH_SIZE) + 5,
         });
         const extracted = extractRecommendationMovies(data);
         const desiredCount = profilePrefs.recommendationBatchSize || RECOMMENDATION_BATCH_SIZE;
@@ -541,7 +541,7 @@ const Index = () => {
             excludeIds,
             rejectionContext,
             explorationLevel,
-            count: (profilePrefs.recommendationBatchSize || RECOMMENDATION_BATCH_SIZE) * 2 + 3,
+            count: (profilePrefs.recommendationBatchSize || RECOMMENDATION_BATCH_SIZE) + 5,
           });
           const extracted = extractRecommendationMovies(data);
           const desiredCount = profilePrefs.recommendationBatchSize || RECOMMENDATION_BATCH_SIZE;
