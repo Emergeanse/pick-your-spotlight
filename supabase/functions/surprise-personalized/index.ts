@@ -113,12 +113,11 @@ serve(async (req) => {
           exclude_ids: normalizedExcludeIds,
           filter_media_type: mediaType === "both" ? null : searchType,
           min_rating: minRating,
+          excluded_genres: excludedGenres || [],
         });
         if (rpcError) console.error("SQL RPC error:", rpcError);
         if (data) {
-          candidates = data.filter((c: any) =>
-            (excludedGenres || []).every((eg: string) => !(c.genres || []).includes(eg))
-          );
+          candidates = data;
         }
         console.log(`[SP] SQL candidates: ${candidates.length} (userTasteVector: ${!!userTasteVector}, excludeIds: ${normalizedExcludeIds.length})`);
       } catch (e) {
@@ -130,8 +129,7 @@ serve(async (req) => {
 
     // ── ÉTAPE 2 : LLM — sélection + scoring + textes complets ──
     let llmSelections: any[] = [];
-    // Ask 2x more than needed so filtering by minMatchScore still leaves enough results
-    const targetLLMCount = Math.min(requestedCount * 2, 6);
+    const targetLLMCount = requestedCount;
 
     if (candidates.length >= 1) {
       const candidateList = candidates
@@ -221,7 +219,7 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
             // Normalize tmdb_id to number (LLM sometimes returns strings)
             const validIds = new Set(candidates.map((c: any) => Number(c.tmdb_id)));
             llmSelections = parsed.selections.filter((s: any) =>
-              s.tmdb_id && validIds.has(Number(s.tmdb_id)) && (s.matchScore || 0) >= minMatchScore
+              s.tmdb_id && validIds.has(Number(s.tmdb_id))
             );
             // Normalize tmdb_id to number for downstream TMDB calls
             llmSelections = llmSelections.map((s: any) => ({ ...s, tmdb_id: Number(s.tmdb_id) }));
@@ -243,9 +241,9 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
 
     if (llmSelections.length > 0) {
       const tmdbResults = await Promise.all(
-        llmSelections.slice(0, requestedCount + 3).map(async (sel: any) => {
+        llmSelections.map(async (sel: any) => {
           const detail = await getMovieDetails(sel.tmdb_id, searchType);
-          if (!detail || !isMovieAllowed(detail) || usedIds.has(detail.id)) return null;
+          if (!detail || usedIds.has(detail.id)) return null;
           if (maxDuration && searchType === "movie" && (detail.runtime || 0) > maxDuration) return null;
           return { detail, sel };
         })
