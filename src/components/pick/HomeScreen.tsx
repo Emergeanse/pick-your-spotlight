@@ -510,15 +510,10 @@ const HomeScreen = ({
             });
             if (!isMountedRef.current) return;
 
-            // Re-filter by threshold using precise movie-match scores.
-            const finalPool =
-              enrichmentThreshold > 0
-                ? enriched.filter((m) => {
-                    const score = getRecommendationScore((m as RecommendationMovieDetail).recommendationTexts);
-                    return score == null || score >= enrichmentThreshold;
-                  })
-                : enriched;
-            setChatMoviesPool(finalPool);
+            // Use enriched pool as-is — surprise-personalized already pre-screened at threshold.
+            // matchScore from movie-match is for display; filtering will be re-enabled once
+            // movie-match scoring calibration stabilizes.
+            setChatMoviesPool(enriched);
 
             // Update movieMatchData with richer text for the overlay's matchInfo fallback
             const richMap: Record<number, RecommendationMatch> = {};

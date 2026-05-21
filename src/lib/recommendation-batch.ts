@@ -338,16 +338,9 @@ export async function ensureRecommendationBatch(
       : null;
     finalBatch = await enrichRecommendationBatchWithTexts(finalBatch, options);
 
-    // Post-enrichment filter: only drop films clearly below threshold (20pt margin).
-    // Wide tolerance while movie-match calibration converges; tighten once scores stabilize.
-    // Films where enrichment failed (no matchScore) are always kept.
-    if (options.minMatchScore) {
-      const minScore = options.minMatchScore - 20;
-      finalBatch = finalBatch.filter((m) => {
-        const ms = m.recommendationTexts?.matchScore ?? m.recommendationTexts?.score;
-        return ms == null || ms >= minScore;
-      });
-    }
+    // Note: post-enrichment matchScore filtering is intentionally disabled.
+    // surprise-personalized already pre-screens candidates at the user threshold.
+    // movie-match is used for display only until its scoring calibration stabilizes.
 
     if (providersPromise) {
       const providersBatch = await providersPromise;
