@@ -130,8 +130,7 @@ serve(async (req) => {
 
     // ── ÉTAPE 2 : LLM — sélection + scoring + textes complets ──
     let llmSelections: any[] = [];
-    // +1 buffer in case one TMDB fetch fails or a movie is filtered
-    const targetLLMCount = Math.min(requestedCount + 1, 5);
+    const targetLLMCount = requestedCount;
 
     if (candidates.length >= 3) {
       const candidateList = candidates
