@@ -425,6 +425,12 @@ const HomeScreen = ({
             minMatchScore: quickFilters.matchThreshold,
           });
 
+          // Safety net: if batch processing filtered everything but edge function returned results,
+          // display them directly so the user always sees something.
+          if (movies.length === 0 && extracted.length > 0) {
+            movies = extracted.slice(0, desiredCount) as MovieDetail[];
+          }
+
           // Override with actual movie-match scores now that they're available
           const actualScoreMap: Record<number, RecommendationMatch> = {};
           (movies as any[]).forEach((m: any) => {
