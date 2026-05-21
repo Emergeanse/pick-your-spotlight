@@ -330,13 +330,25 @@ export async function ensureRecommendationBatch(
 
   let finalBatch = dedupeMovies(batch).slice(0, size);
 
-  // Enrich with display texts and providers in parallel.
-  // movie-match is for display only — surprise-personalized already pre-screened quality.
+  // Enrich with match texts first, then filter by precise matchScore, then load providers.
   if (options.preloadMatchTexts) {
+    // Start providers in parallel with enrichment — we'll apply them after filtering.
     const providersPromise = options.preloadProviders
       ? enrichRecommendationBatchWithProviders(finalBatch)
       : null;
     finalBatch = await enrichRecommendationBatchWithTexts(finalBatch, options);
+
+    // Post-enrichment filter: drop films whose precise matchScore is below the user threshold.
+    // If enrichment failed (no matchScore), keep the film rather than show nothing.
+    if (options.minMatchScore) {
+      const minScore = options.minMatchScore;
+      const qualified = finalBatch.filter((m) => {
+        const ms = m.recommendationTexts?.matchScore ?? m.recommendationTexts?.score;
+        return ms == null || ms >= minScore;
+      });
+      if (qualified.length > 0) finalBatch = qualified;
+    }
+
     if (providersPromise) {
       const providersBatch = await providersPromise;
       const providerMap = new Map(providersBatch.map((m) => [m.id, m.watchProviders]));

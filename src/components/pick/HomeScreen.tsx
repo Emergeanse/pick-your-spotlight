@@ -506,20 +506,18 @@ const HomeScreen = ({
         void (async () => {
           try {
             const enriched = await enrichRecommendationBatchWithTexts(moviesToEnrich, {
-              forceRescore: true,
-              preloadMatchTexts: true,
+              minMatchScore: enrichmentThreshold || undefined,
             });
             if (!isMountedRef.current) return;
 
-            // Re-filter by threshold now that we have accurate movie-match scores.
-            const qualified =
+            // Re-filter by threshold using precise movie-match scores.
+            const finalPool =
               enrichmentThreshold > 0
                 ? enriched.filter((m) => {
                     const score = getRecommendationScore((m as RecommendationMovieDetail).recommendationTexts);
                     return score == null || score >= enrichmentThreshold;
                   })
                 : enriched;
-            const finalPool = qualified.length > 0 ? qualified : enriched;
             setChatMoviesPool(finalPool);
 
             // Update movieMatchData with richer text for the overlay's matchInfo fallback
