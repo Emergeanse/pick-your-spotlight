@@ -250,29 +250,13 @@ export async function enrichRecommendationBatchWithTexts(
     generated.map((entry) => [entry.id, entry.recommendationTexts]),
   );
 
-  const minScore = options.minMatchScore ?? 60;
-
   return movies.map((movie) => {
     if (!byId.has(movie.id)) return movie;
     const newTexts = byId.get(movie.id);
     const originalConfidence = movie.recommendationTexts?.confidence;
-    let recommendationTexts = newTexts
+    const recommendationTexts = newTexts
       ? { ...newTexts, confidence: originalConfidence ?? newTexts.confidence }
       : movie.recommendationTexts ?? null;
-
-    // If surprise-personalized pre-screened this film at >= threshold, movie-match
-    // cannot lower the displayed score below that threshold. The pre-screening is the
-    // authoritative qualification; movie-match adds context but doesn't invalidate it.
-    if (
-      recommendationTexts &&
-      originalConfidence != null &&
-      originalConfidence >= minScore &&
-      recommendationTexts.matchScore != null &&
-      recommendationTexts.matchScore < minScore
-    ) {
-      recommendationTexts = { ...recommendationTexts, matchScore: minScore };
-    }
-
     return recommendationTexts ? { ...movie, recommendationTexts } : movie;
   });
 }
