@@ -60,7 +60,7 @@ const Profile = () => {
       setDefaultMaxDuration((data as any)?.default_max_duration ?? null);
       setDisplayName(data?.display_name || user.email?.split("@")[0] || "");
       setAvatarUrl((data as any)?.avatar_url || null);
-      setRecommendationCount((data as any)?.default_recommendation_count ?? 5);
+      setRecommendationCount(Math.min((data as any)?.default_recommendation_count ?? 3, 3));
     } catch (e) { console.error(e); }
     finally { setProfileLoading(false); }
   };
@@ -202,9 +202,9 @@ const Profile = () => {
           <div className="bg-card rounded-xl p-4">
             <div className="flex items-center justify-between mb-3">
               <span className="font-sans text-sm font-medium">{recommendationCount} propositions</span>
-              <span className="text-[10px] text-foreground/50">1 à 10</span>
+              <span className="text-[10px] text-foreground/50">1 à 3</span>
             </div>
-            <Slider value={[recommendationCount]} onValueChange={([value]) => setRecommendationCount(value)} min={1} max={10} step={1} className="w-full" />
+            <Slider value={[recommendationCount]} onValueChange={([value]) => setRecommendationCount(value)} min={1} max={3} step={1} className="w-full" />
             <p className="text-[11px] text-foreground/50 mt-3">Choisis combien de recommandations Pick te propose par défaut.</p>
           </div>
         </motion.section>
