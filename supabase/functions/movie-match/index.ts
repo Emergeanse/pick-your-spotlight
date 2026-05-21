@@ -35,7 +35,7 @@ serve(async (req) => {
 
   try {
     const { movie, userCriteria, tasteProfile, userTasteVector, likedMovieTitles, searchTags, cinematicProfile, peoplePreferences, userName, minMatchScore: rawMinMatchScore } = await req.json();
-    const minMatchScore = typeof rawMinMatchScore === "number" ? Math.max(0, Math.min(100, rawMinMatchScore)) : 80;
+    const minMatchScore = typeof rawMinMatchScore === "number" ? Math.max(0, Math.min(100, rawMinMatchScore)) : 60;
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
@@ -255,9 +255,10 @@ RÈGLES :
 }
 - "scores.rejection_risk" : 0 = aucun risque, 100 = certain rejet.
 - "scores.fatigue" : 0 = aucune fatigue, 100 = genre totalement sur-exposé.
-- SCORE HONNÊTE : Donne un matchScore SINCÈRE basé sur la compatibilité réelle avec le profil multi-vecteur. Match parfait = 85-99. Match correct = 65-84. Match faible = 40-64. Inadapté = <40.
-- Ne gonfle PAS le score. Un film qui ne correspond pas aux goûts ne doit PAS avoir 80%+.
-- Profil jeune (confiance < 40) = scores plus modérés, évaluation prudente.`;
+- SCORE CALIBRÉ : Les films que tu reçois ont déjà été présélectionnés comme candidats. Ton rôle est d'affiner la compatibilité précise. Seuil de recommandation : ${minMatchScore}%.
+- Match excellent (goûts parfaitement alignés) = 80-99. Match bon (clairement recommandable) = 65-79. Match correct (au-dessus du seuil) = ${minMatchScore}-64. Insuffisant = <${minMatchScore}.
+- La plage normale pour un candidat pré-sélectionné est 60-85%. Évite les scores < 55 sauf inadéquation évidente.
+- Profil peu développé (confiance < 40) = utilise 62-72 comme base par défaut, pas de forte pénalité.`;
 
     const youtubeExtra = isYouTube ? `\nChaîne YouTube : ${youtubeData.channelTitle || "inconnue"}\nVues : ${youtubeData.viewCount || 0}\nDurée : ${runtime} min` : "";
 
