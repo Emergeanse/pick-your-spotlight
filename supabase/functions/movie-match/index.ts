@@ -216,13 +216,24 @@ TON : Tu parles comme un pote cinéphile — chaleureux, direct, jamais robotiqu
 
 RÈGLE D'OR : Tu es un ami qui RECOMMANDE avec conviction. Pas de "malgré", "cependant", "par contre", "attention", "même si". Que du positif, de l'enthousiasme et des raisons concrètes d'aimer ce contenu.
 
-⚠️ RÈGLE ABSOLUE DU SCORE : Le matchScore est un JUGEMENT DIRECT (0-99). Ce n'est PAS une formule — ne multiplie PAS les sous-scores par leurs poids. Ces films ont été pré-sélectionnés comme candidats compatibles : score de base ≥ 60 sauf incompatibilité évidente (genre explicitement rejeté, cluster proscrit). Plage normale : 62-85%.
+⚠️ MÉTHODE DE SCORING — ANCRAGE POSITIF :
+Ce film a été pré-sélectionné parmi des milliers de candidats — il est déjà dans le top 5% de compatibilité.
+Point de départ : **75%**. Ajuste ensuite :
+- HAUSSE (+5 à +20pts) si : genres adorés, acteur/réalisateur favoris, embedding stable >80%, session parfaitement alignée, film très populaire et noté
+- BAISSE (-5 à -15pts) si : genre dans les rejets explicites de l'utilisateur, cluster proscrit, film vu trop récemment (fatigue)
+- Plage normale : **68-88%** pour un candidat standard. 88-99% pour un match remarquable.
+- EN DESSOUS DE ${minMatchScore}% : SEULEMENT si un genre ou cluster est EXPLICITEMENT dans les rejets. La similarité embedding basse SEULE ne suffit pas.
 
-LECTURE DES SIGNAUX VECTORIELS :
-${embeddingSimilarity !== null ? `- 🎯 Goût stable (${Math.round(embeddingSimilarity * 100)}%) : >80% = fort alignement, 60-80% = bon, <50% = décalage` : ""}
-${recentSimilarity !== null ? `- 🔄 Goût récent (${Math.round(recentSimilarity * 100)}%) : reflète les envies du moment` : ""}
-${avoidanceSimilarity !== null ? `- ⚠️ Risque rejet (${Math.round(avoidanceSimilarity * 100)}%) : >80% = attention (film proche de ceux évités), <60% = aucun problème` : ""}
-Ces signaux ORIENTENT ton jugement — ils ne sont PAS des facteurs à multiplier ou à soustraire.
+EXEMPLES DE CALIBRATION :
+- Top genre de l'utilisateur + acteur favori + note 8/10 → 88-92%
+- Genre aimé + bonne note + peu de données profil → 72-78%
+- Genre neutre + profil peu développé → 68-72%
+- Genre dans les rejets explicites → peut descendre sous ${minMatchScore}%
+
+LECTURE DES SIGNAUX VECTORIELS (orientation, pas calcul) :
+${embeddingSimilarity !== null ? `- 🎯 Goût stable : ${Math.round(embeddingSimilarity * 100)}% → >80% booste vers 80-88%, 60-80% = base solide 70-78%` : ""}
+${recentSimilarity !== null ? `- 🔄 Goût récent : ${Math.round(recentSimilarity * 100)}% → si élevé, l'utilisateur est dans cet état d'esprit en ce moment` : ""}
+${avoidanceSimilarity !== null ? `- ⚠️ Risque rejet : ${Math.round(avoidanceSimilarity * 100)}% → >85% = pénalise (-10pts max), <70% = ignore` : ""}
 
 RÈGLES :
 - Réponds UNIQUEMENT avec un JSON valide, sans markdown, sans backticks
@@ -251,9 +262,9 @@ RÈGLES :
 }
 - "scores.rejection_risk" : 0 = aucun risque, 100 = certain rejet.
 - "scores.fatigue" : 0 = aucune fatigue, 100 = genre totalement sur-exposé.
-- RAPPEL SCORE : matchScore = jugement direct 0-99. Plage normale candidat pré-sélectionné : 65-85%. Match excellent = 80-99. Bon = 65-79. Correct = ${minMatchScore}-64.
-- PLANCHER : Un film pré-sélectionné NE PEUT PAS avoir un score < ${minMatchScore} sauf si son genre ou cluster est EXPLICITEMENT dans les rejets de l'utilisateur. Une similarité embedding basse seule n'est PAS suffisante pour passer sous le seuil.
-- Profil peu développé (confiance < 40) → 65-72 par défaut.`;
+- RAPPEL : matchScore part de 75, ajuste selon les signaux. Plage normale : 68-88%. Excellent : 88-99%.
+- PLANCHER absolu : ${minMatchScore}% — ne descends PAS en dessous sauf rejet explicite du genre.
+- Profil peu développé (confiance < 40) → reste entre 68-74%, pas moins.`;
 
     const youtubeExtra = isYouTube ? `\nChaîne YouTube : ${youtubeData.channelTitle || "inconnue"}\nVues : ${youtubeData.viewCount || 0}\nDurée : ${runtime} min` : "";
 
