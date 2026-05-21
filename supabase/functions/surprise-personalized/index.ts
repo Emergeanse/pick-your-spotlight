@@ -130,8 +130,8 @@ serve(async (req) => {
 
     // ── ÉTAPE 2 : LLM — sélection + scoring + textes complets ──
     let llmSelections: any[] = [];
-    // +1 ensures we have a spare if one TMDB fetch fails
-    const targetLLMCount = Math.min(requestedCount + 1, 5);
+    // Ask 2x more than needed so filtering by minMatchScore still leaves enough results
+    const targetLLMCount = Math.min(requestedCount * 2, 6);
 
     if (candidates.length >= 3) {
       const candidateList = candidates
@@ -220,10 +220,8 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
           if (parsed.selections && Array.isArray(parsed.selections)) {
             // Normalize tmdb_id to number (LLM sometimes returns strings)
             const validIds = new Set(candidates.map((c: any) => Number(c.tmdb_id)));
-            // Only validate tmdb_id — the LLM was already instructed on the score floor.
-            // Filtering by score here drops films when the LLM is slightly off, causing < requestedCount results.
             llmSelections = parsed.selections.filter((s: any) =>
-              s.tmdb_id && validIds.has(Number(s.tmdb_id))
+              s.tmdb_id && validIds.has(Number(s.tmdb_id)) && (s.matchScore || 0) >= minMatchScore
             );
             // Normalize tmdb_id to number for downstream TMDB calls
             llmSelections = llmSelections.map((s: any) => ({ ...s, tmdb_id: Number(s.tmdb_id) }));
