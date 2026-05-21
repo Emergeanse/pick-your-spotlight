@@ -109,7 +109,7 @@ serve(async (req) => {
         const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
         const { data, error: rpcError } = await supabase.rpc("match_movies_for_recommendation", {
           query_vector: `[${userTasteVector.join(",")}]`,
-          match_count: 30,
+          match_count: 50,
           exclude_ids: normalizedExcludeIds,
           filter_media_type: mediaType === "both" ? null : searchType,
         });
@@ -133,7 +133,7 @@ serve(async (req) => {
     // Ask 2x more than needed so filtering by minMatchScore still leaves enough results
     const targetLLMCount = Math.min(requestedCount * 2, 6);
 
-    if (candidates.length >= 3) {
+    if (candidates.length >= 1) {
       const candidateList = candidates
         .map((c, i) => `[${i + 1}] id=${c.tmdb_id} | "${c.title}" (${c.year || "?"}) | ${(c.genres || []).slice(0, 3).join(", ")} | ⭐${c.vote_average > 0 ? c.vote_average.toFixed(1) : "?"}/10`)
         .join("\n");
