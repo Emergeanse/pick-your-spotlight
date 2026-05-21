@@ -296,7 +296,7 @@ export async function ensureRecommendationBatch(
   // even if the edge function returned them.
   const batch = dedupeMovies(initialMovies).filter((movie) => {
     if (excludeSet.has(movie.id)) return false;
-    if (minRating > 0 && (movie.vote_average ?? 0) < minRating) return false;
+    if (minRating > 0 && (movie.vote_average ?? 0) > 0 && (movie.vote_average ?? 0) < minRating) return false;
     if (excludedGenreSet.size > 0 && movie.genres?.some((g) => excludedGenreSet.has(g.name.toLowerCase()))) return false;
     return true;
   });
