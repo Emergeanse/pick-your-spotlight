@@ -355,6 +355,11 @@ export async function getUserTasteProfile() {
 
   const rejectedIds = rejectedRows.map((r) => r.catalog_items?.tmdb_id).filter(Boolean) as number[];
 
+  const unlikedIds = allInteractions
+    .filter((i: any) => i.action_type === "unliked")
+    .map((i: any) => i.tmdb_id)
+    .filter((id): id is number => typeof id === "number" && id > 0);
+
   const topGenres =
     prefs.genres.liked.length > 0
       ? prefs.genres.liked.slice(0, 8)
@@ -425,7 +430,7 @@ export async function getUserTasteProfile() {
     alreadySeenIds: watchedIds,
     watchlistIds,
     rejectedIds,
-    excludeIds: [...new Set([...skippedIds, ...watchedIds, ...likedIds, ...watchlistIds, ...rejectedIds])],
+    excludeIds: [...new Set([...skippedIds, ...watchedIds, ...likedIds, ...watchlistIds, ...rejectedIds, ...unlikedIds])],
 
     preferredPlatforms: prefs.platforms.liked,
     excludedPlatforms: prefs.platforms.excluded,

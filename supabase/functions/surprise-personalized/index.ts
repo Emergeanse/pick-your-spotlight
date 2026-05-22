@@ -129,7 +129,7 @@ serve(async (req) => {
 
     // ── ÉTAPE 2 : LLM — sélection + scoring + textes complets ──
     let llmSelections: any[] = [];
-    const targetLLMCount = requestedCount + 1;
+    const targetLLMCount = requestedCount + 2;
 
     if (candidates.length >= 1) {
       const candidateList = candidates
@@ -219,7 +219,7 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
             // Normalize tmdb_id to number (LLM sometimes returns strings)
             const validIds = new Set(candidates.map((c: any) => Number(c.tmdb_id)));
             llmSelections = parsed.selections.filter((s: any) =>
-              s.tmdb_id && validIds.has(Number(s.tmdb_id))
+              s.tmdb_id && validIds.has(Number(s.tmdb_id)) && (s.matchScore || 0) >= minMatchScore
             );
             // Normalize tmdb_id to number for downstream TMDB calls
             llmSelections = llmSelections.map((s: any) => ({ ...s, tmdb_id: Number(s.tmdb_id) }));

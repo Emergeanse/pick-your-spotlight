@@ -351,7 +351,8 @@ const HomeScreen = ({
   };
 
   const generateTonightPick = async (excludeList: number[] = rejectedIds, rejectionContext?: RejectionContext) => {
-    const allExcludeIds = [...new Set([...excludeList, ...historyExcludeIdsRef.current])];
+    const poolIds = (chatMoviesPool || []).map((m) => m.id).filter(Number.isFinite);
+    const allExcludeIds = [...new Set([...excludeList, ...poolIds, ...historyExcludeIdsRef.current])];
 
     setTonightLoading(true);
     setTonightProviders([]);
@@ -517,7 +518,7 @@ const HomeScreen = ({
             if (!isMountedRef.current) return;
 
             // Filter out films where movie-match scored below the user threshold.
-            const scoreFloor = (enrichmentThreshold ?? 60) - 10;
+            const scoreFloor = enrichmentThreshold ?? 60;
             const aboveFloor = enriched.filter((m: RecommendationMovieDetail) => {
               const score = getRecommendationScore(m.recommendationTexts);
               return score === null || score >= scoreFloor;
