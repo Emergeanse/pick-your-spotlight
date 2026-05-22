@@ -255,12 +255,10 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
             // Normalize tmdb_id to number (LLM sometimes returns strings)
             const validIds = new Set(top10.map((c: any) => Number(c.tmdb_id)));
             const idValid = parsed.selections.filter((s: any) => s.tmdb_id && validIds.has(Number(s.tmdb_id)));
-            llmSelections = idValid.filter((s: any) => (s.matchScore || 0) >= minMatchScore);
-            // Track if threshold filtered ALL valid selections (useful for user feedback)
-            if (llmSelections.length === 0 && idValid.length > 0) llmFilteredAll = true;
-            // Normalize tmdb_id to number for downstream TMDB calls
-            llmSelections = llmSelections.map((s: any) => ({ ...s, tmdb_id: Number(s.tmdb_id) }));
-            console.log(`[SP] LLM raw selections: ${parsed.selections.length}, valid: ${llmSelections.length}, minMatchScore: ${minMatchScore}${llmFilteredAll ? " (ALL filtered by threshold)" : ""}`);
+            // Pass ALL valid LLM selections to movie-match — it is the authoritative scorer.
+            // The LLM's own matchScore is only used for ordering, not as a gate.
+            llmSelections = idValid.map((s: any) => ({ ...s, tmdb_id: Number(s.tmdb_id) }));
+            console.log(`[SP] LLM raw selections: ${parsed.selections.length}, valid: ${llmSelections.length}, minMatchScore (used by movie-match): ${minMatchScore}`);
           }
         } else {
           console.error(`[SP] LLM gateway error: ${response.status}`);
@@ -361,6 +359,16 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
 
     console.log(`[SP] Final: ${movies.length} movies, mode: ${llmSelections.length > 0 ? "retrieve-rerank" : "fallback"}`);
 
+    const toDebugRow = (c: any) => ({
+      id: c.tmdb_id,
+      title: c.title,
+      year: c.year || "?",
+      note: c.vote_average > 0 ? Math.round(c.vote_average * 10) / 10 : null,
+      sim: c.similarity != null ? Math.round(c.similarity * 1000) / 10 : null,
+      genres: (c.genres || []).slice(0, 4),
+      type: c.media_type,
+    });
+
     return new Response(JSON.stringify({
       movies,
       movie: movies[0]?.movie || null,
@@ -372,10 +380,25 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
         candidatesFound: candidates.length,
         llmSelected: llmSelections.length,
         finalCount: movies.length,
-        // Filter diagnostic flags — used by the frontend to show user-facing messages
         noSQLCandidates: candidates.length === 0,
         llmFilteredAll,
         filtersRelaxed: llmFilteredAll || (candidates.length === 0 && minRating > 0),
+      },
+      debugData: {
+        filters: {
+          excludeCount: normalizedExcludeIds.length,
+          minRating,
+          likedGenres: likedWithTv,
+          effectiveExcludedGenres,
+        },
+        sql50: candidates.map(toDebugRow),
+        top10: candidates.slice(0, 10).map(toDebugRow),
+        llmSelections: llmSelections.map((s: any) => ({
+          id: s.tmdb_id,
+          title: candidates.find((c: any) => Number(c.tmdb_id) === Number(s.tmdb_id))?.title || "?",
+          matchScore: s.matchScore,
+          reason: s.reason,
+        })),
       },
     }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
 

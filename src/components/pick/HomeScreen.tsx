@@ -415,9 +415,55 @@ const HomeScreen = ({
             minMatchScore: quickFilters.matchThreshold,
           });
           engineMetaResult = data?.engineMeta ?? null;
-          console.log("[PICK-DEBUG] ─── Réponse edge function ───");
+          const dbg = data?.debugData;
+
+          console.group("[PICK-DEBUG] ═══ Pipeline de recommandation ═══");
+
+          // ── Étape 1 : SQL — 50 candidats ──
+          if (dbg?.sql50?.length) {
+            const f = dbg.filters;
+            console.group(`[PICK-DEBUG] 1️⃣ SQL — ${dbg.sql50.length} candidats (${f?.excludeCount ?? 0} films exclus — déjà interagis)`);
+            console.log(`   Filtres : note min=${f?.minRating ?? 0} | genres aimés=[${(f?.likedGenres || []).join(", ")}] | exclus=[${(f?.effectiveExcludedGenres || []).join(", ")}]`);
+            console.table(dbg.sql50.map((c: any, i: number) => ({
+              "#": i + 1,
+              "Titre": c.title,
+              "Année": c.year,
+              "Note": c.note ?? "–",
+              "Sim%": c.sim ?? "–",
+              "Genres": (c.genres || []).join(", "),
+              "Type": c.type,
+            })));
+            console.groupEnd();
+          }
+
+          // ── Étape 2 : Top 10 envoyés au LLM ──
+          if (dbg?.top10?.length) {
+            console.group(`[PICK-DEBUG] 2️⃣ Top 10 envoyés au LLM (meilleurs par similarité vectorielle)`);
+            console.table(dbg.top10.map((c: any, i: number) => ({
+              "#": i + 1,
+              "Titre": c.title,
+              "Année": c.year,
+              "Note": c.note ?? "–",
+              "Sim%": c.sim ?? "–",
+              "Genres": (c.genres || []).join(", "),
+            })));
+            console.groupEnd();
+          }
+
+          // ── Étape 3 : Sélections LLM ──
+          if (dbg?.llmSelections?.length) {
+            console.group(`[PICK-DEBUG] 3️⃣ Sélections LLM (${dbg.llmSelections.length} films → movie-match va scorer)`);
+            console.table(dbg.llmSelections.map((s: any, i: number) => ({
+              "#": i + 1,
+              "Titre": s.title,
+              "Score LLM": `${s.matchScore}%`,
+              "Raison": s.reason,
+            })));
+            console.groupEnd();
+          }
+
           console.log("[PICK-DEBUG] engineMeta:", data?.engineMeta);
-          console.log("[PICK-DEBUG] Films retournés par LLM:", (data?.movies || []).map((m: any) => `${m.movie?.title} (id:${m.movie?.id}, score:${m.confidence}%)`));
+          console.groupEnd();
           const extracted = extractRecommendationMovies(data);
           const desiredCount = userRecommendationCount || RECOMMENDATION_BATCH_SIZE;
 
@@ -445,8 +491,14 @@ const HomeScreen = ({
             minMatchScore: quickFilters.matchThreshold,
           });
 
-          console.log("[PICK-DEBUG] ─── Après ensureRecommendationBatch ───");
-          console.log("[PICK-DEBUG] Films finaux affichés:", movies.map((m: any) => `${m.title} (id:${m.id}, score:${getRecommendationScore(m.recommendationTexts)}%, fallback:${!m.recommendationTexts?.headline ? "oui" : "non"})`));
+          console.group("[PICK-DEBUG] 4️⃣ Résultat final après movie-match");
+          console.table(movies.map((m: any, i: number) => ({
+            "#": i + 1,
+            "Titre": m.title,
+            "Score movie-match": `${getRecommendationScore(m.recommendationTexts) ?? "–"}%`,
+            "Rich texts": m.recommendationTexts?.headline ? "oui" : "non",
+          })));
+          console.groupEnd();
 
           // Safety net: if batch processing filtered everything but edge function returned results,
           // display them directly so the user always sees something.
