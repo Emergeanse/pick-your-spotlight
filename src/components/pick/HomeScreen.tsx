@@ -149,7 +149,7 @@ const HomeScreen = ({
 
 
   const [rejectedIds, setRejectedIds] = useState<number[]>([]);
-  const [lastSql50Ids, setLastSql50Ids] = useState<number[]>([]);
+  const [lastSql100Ids, setLastSql50Ids] = useState<number[]>([]);
   const [, setEngagement] = useState<EngagementData | null>(null);
   const [, setProgressionMsg] = useState<string | null>(null);
   const [historyExcludeIds, setHistoryExcludeIds] = useState<number[]>([]);
@@ -804,7 +804,7 @@ const HomeScreen = ({
     // Exclure les 50 candidats SQL du dernier appel + le pool courant
     // pour garantir que SQL retourne des films entièrement nouveaux.
     const currentPoolIds = (chatMoviesPool || []).map((m) => m.id).filter(Number.isFinite);
-    const nextRejected = [...new Set([...rejectedIds, ...currentPoolIds, ...lastSql50Ids])];
+    const nextRejected = [...new Set([...rejectedIds, ...currentPoolIds, ...lastSql100Ids])];
     setRejectedIds(nextRejected);
 
     const rejContext: RejectionContext = {
