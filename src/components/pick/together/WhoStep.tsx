@@ -81,7 +81,7 @@ const WhoStep = ({
 
   return (
     <motion.div key="who" initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -40 }}
-      className="h-full overflow-y-auto pt-16 pb-[calc(6rem+env(safe-area-inset-bottom))] px-5"
+      className="h-full overflow-y-auto pt-16 pb-[calc(10rem+env(safe-area-inset-bottom))] px-5"
     >
       <div className="max-w-lg mx-auto">
         {/* Conversational header */}
@@ -266,13 +266,13 @@ const WhoStep = ({
                 <div>
                   <label className="text-[10px] font-sans font-semibold text-foreground/30 uppercase tracking-widest block mb-1.5">Prénom *</label>
                   <input type="text" value={guestName} onChange={e => setGuestName(e.target.value)} placeholder="Ex: Sarah" maxLength={30}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-background/60 border border-border/15 text-foreground text-sm font-sans placeholder:text-foreground/20 focus:outline-none focus:border-primary/40 transition-colors" />
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-background/60 border border-border/15 text-foreground text-base md:text-sm font-sans placeholder:text-foreground/20 focus:outline-none focus:border-primary/40 transition-colors" />
                 </div>
                 <div className="flex gap-3">
                   <div className="flex-1">
                     <label className="text-[10px] font-sans font-semibold text-foreground/30 uppercase tracking-widest block mb-1.5">Âge</label>
                     <input type="number" value={guestAge} onChange={e => setGuestAge(e.target.value)} placeholder="25" min={5} max={99}
-                      className="w-full px-3.5 py-2.5 rounded-xl bg-background/60 border border-border/15 text-foreground text-sm font-sans placeholder:text-foreground/20 focus:outline-none focus:border-primary/40 transition-colors" />
+                      className="w-full px-3.5 py-2.5 rounded-xl bg-background/60 border border-border/15 text-foreground text-base md:text-sm font-sans placeholder:text-foreground/20 focus:outline-none focus:border-primary/40 transition-colors" />
                   </div>
                   <div className="flex-1">
                     <label className="text-[10px] font-sans font-semibold text-foreground/30 uppercase tracking-widest block mb-1.5">Genre</label>
@@ -319,7 +319,7 @@ const WhoStep = ({
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 20 }}
-              className="fixed bottom-0 left-0 right-0 p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] bg-gradient-to-t from-background via-background to-transparent z-20"
+              className="fixed bottom-[calc(3.5rem+env(safe-area-inset-bottom))] left-0 right-0 p-5 bg-gradient-to-t from-background via-background to-transparent z-30"
             >
               <Button onClick={onContinue}
                 className="w-full max-w-lg mx-auto block rounded-2xl h-14 gap-2 bg-primary text-primary-foreground hover:bg-primary/90 font-sans text-base neon-glow shadow-[0_0_30px_-5px_hsl(var(--primary)/0.4)]"

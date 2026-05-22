@@ -98,7 +98,7 @@ const MoodStep = ({ mood, onSetMood, onStart, selectedCount, selectedFriends }: 
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.45 }}
-        className="sticky bottom-0 -mx-5 space-y-3 bg-gradient-to-t from-background via-background/95 to-transparent px-5 pt-4 pb-[calc(1rem+env(safe-area-inset-bottom))]"
+        className="sticky bottom-[calc(3.5rem+env(safe-area-inset-bottom))] -mx-5 space-y-3 bg-gradient-to-t from-background via-background/95 to-transparent px-5 pt-4 pb-4"
       >
         <Button onClick={() => onStart(false)}
           className="w-full rounded-2xl h-14 gap-2 bg-primary text-primary-foreground hover:bg-primary/90 font-sans text-[15px] font-medium neon-glow shadow-[0_0_30px_-5px_hsl(var(--primary)/0.4)]"

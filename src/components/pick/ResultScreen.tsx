@@ -777,7 +777,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
         <div className="absolute inset-0 poster-gradient" />
         <div className="absolute inset-0 bg-gradient-to-r from-background/90 via-background/60 to-transparent" />
 
-        <div className="relative z-10 min-h-full px-5 pt-[calc(1rem+env(safe-area-inset-top))] pb-[calc(1.25rem+env(safe-area-inset-bottom))] md:px-8 lg:px-12">
+        <div className="relative z-10 min-h-full px-5 pt-[calc(1rem+env(safe-area-inset-top))] pb-[calc(14rem+env(safe-area-inset-bottom))] md:px-8 lg:px-12">
           <BrandHeader />
 
           <div className="max-w-xl pt-4 md:pt-6">
@@ -935,7 +935,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
             </div>
           </div>
 
-          <div className="fixed left-0 right-0 bottom-0 z-20 border-t border-border/20 bg-background/84 px-4 pt-3 pb-[calc(1rem+env(safe-area-inset-bottom))] backdrop-blur-xl shadow-[0_-18px_40px_hsl(var(--background)/0.32)]">
+          <div className="fixed left-0 right-0 bottom-[calc(3.5rem+env(safe-area-inset-bottom))] z-30 border-t border-border/20 bg-background/84 px-4 pt-3 pb-4 backdrop-blur-xl shadow-[0_-18px_40px_hsl(var(--background)/0.32)]">
             <div className="mx-auto max-w-md">
               <div className="mb-3 flex items-center justify-between gap-3">
                 <button

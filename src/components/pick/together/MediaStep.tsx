@@ -15,7 +15,7 @@ const OPTIONS: { value: MediaChoice; icon: React.ElementType; label: string; des
 
 const MediaStep = ({ onSelect }: MediaStepProps) => (
   <motion.div key="media" initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -40 }}
-    className="h-full overflow-y-auto pt-16 pb-8 px-5"
+    className="h-full overflow-y-auto pt-16 pb-[calc(4rem+env(safe-area-inset-bottom))] px-5"
   >
     <div className="max-w-lg mx-auto flex flex-col items-center justify-center min-h-[70vh]">
       <motion.div

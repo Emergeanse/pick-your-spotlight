@@ -261,7 +261,7 @@ const Friends = () => {
                   <p className="text-foreground/40 text-sm font-sans mb-3">Entre l'adresse email de ton ami</p>
                   <div className="flex gap-3">
                     <input type="email" value={addEmail} onChange={(e) => setAddEmail(e.target.value)} placeholder="ami@exemple.com"
-                      className="flex-1 h-12 rounded-xl bg-background border border-border/20 px-4 font-sans text-sm text-foreground placeholder:text-foreground/15 focus:outline-none focus:border-primary/40 transition-colors" />
+                      className="flex-1 h-12 rounded-xl bg-background border border-border/20 px-4 font-sans text-base text-foreground placeholder:text-foreground/15 focus:outline-none focus:border-primary/40 transition-colors" />
                     <Button onClick={handleAddFriend} disabled={addingFriend || !addEmail.includes("@")} className="rounded-xl h-12 px-6">
                       {addingFriend ? <Loader2 className="w-4 h-4 animate-spin" /> : <UserPlus className="w-4 h-4" />}
                     </Button>

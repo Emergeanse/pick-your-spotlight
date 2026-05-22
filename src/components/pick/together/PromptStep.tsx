@@ -40,7 +40,7 @@ const PromptStep = ({ initialPrompt = "", initialGuests = [], loading, onSubmit 
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -12 }}
-      className="h-full overflow-y-auto px-5 pt-20 pb-[calc(env(safe-area-inset-bottom)+24px)]"
+      className="h-full overflow-y-auto px-5 pt-20 pb-[calc(4rem+env(safe-area-inset-bottom))]"
     >
       <div className="max-w-md mx-auto">
         <h1 className="text-2xl md:text-3xl font-serif mb-2 leading-tight">
