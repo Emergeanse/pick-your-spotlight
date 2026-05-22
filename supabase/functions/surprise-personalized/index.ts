@@ -76,15 +76,54 @@ serve(async (req) => {
       .filter(([k, v]) => k.startsWith("genre_") && (v as number) >= 3)
       .map(([k]) => k.replace("genre_", ""));
 
-    // Genre ID map for discover fallback
+    // Genre ID map for discover/trending fallback (TMDB movie genre IDs)
     const genreNameToId: Record<string, number> = {
       "Action": 28, "Aventure": 12, "Animation": 16, "Comédie": 35, "Crime": 80,
-      "Documentaire": 99, "Drame": 18, "Famille": 10751, "Fantastique": 14,
+      "Documentaire": 99, "Drame": 18, "Famille": 10751, "Familial": 10751, "Fantastique": 14,
       "Histoire": 36, "Horreur": 27, "Musique": 10402, "Mystère": 9648,
       "Romance": 10749, "Science-Fiction": 878, "Thriller": 53, "Guerre": 10752, "Western": 37,
     };
-    const excludedGenreIds = new Set((excludedGenres || []).map((g: string) => genreNameToId[g]).filter(Boolean));
-    // Genre IDs the user actively likes — used to filter trending fallback
+
+    // TV shows in movie_embeddings use different genre names (TMDB TV genre system).
+    // Map each movie genre to its TV equivalents so SQL filters work for both types.
+    const tvGenreEquivalents: Record<string, string[]> = {
+      "Action":          ["Action & Adventure"],
+      "Aventure":        ["Action & Adventure"],
+      "Science-Fiction": ["Science-Fiction & Fantastique", "Sci-Fi & Fantasy"],
+      "Fantastique":     ["Science-Fiction & Fantastique", "Sci-Fi & Fantasy"],
+      "Animation":       ["Kids", "Animation"],
+      "Famille":         ["Kids", "Familial"],
+      "Familial":        ["Kids", "Famille"],
+      "Guerre":          ["War & Politics"],
+      "Crime":           ["Crime"],
+      "Horreur":         ["Horreur"],
+    };
+
+    // All genre names known to exist in movie_embeddings (from diagnostic)
+    const allKnownGenres = [
+      "Drame","Comédie","Action","Thriller","Animation","Crime","Aventure","Romance",
+      "Mystère","Familial","Science-Fiction & Fantastique","Horreur","Action & Adventure",
+      "Fantastique","Science-Fiction","Histoire","Guerre","Kids","Musique","Documentaire",
+      "Western","Téléfilm","Reality","Soap","Sci-Fi & Fantasy","War & Politics","Famille",
+      "Talk","News",
+    ];
+
+    // Expand liked genres to include TV equivalents
+    const likedWithTv = topGenres.length >= 2
+      ? [...new Set([
+          ...(topGenres as string[]),
+          ...(topGenres as string[]).flatMap((g) => tvGenreEquivalents[g] ?? []),
+        ])]
+      : [];
+
+    // Auto-exclude all genres NOT in liked (genres the user didn't select = unwanted)
+    const autoExcluded = topGenres.length >= 2
+      ? allKnownGenres.filter((g) => !likedWithTv.includes(g))
+      : [];
+    const effectiveExcludedGenres = [...new Set([...(excludedGenres || []), ...autoExcluded])];
+
+    const excludedGenreIds = new Set(effectiveExcludedGenres.map((g: string) => genreNameToId[g]).filter(Boolean));
+    // Genre IDs the user actively likes — used to filter trending/discover fallback
     const likedGenreIds = new Set((topGenres as string[]).map((g) => genreNameToId[g]).filter(Boolean));
 
     const isMovieAllowed = (movie: any): boolean => {
@@ -115,25 +154,20 @@ serve(async (req) => {
     if (SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY && userTasteVector) {
       try {
         const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-        const rpcBase = {
+        // Request 100 so IVFFlat ANN scan + filters still yield 50, then slice.
+        const { data, error: rpcError } = await supabase.rpc("match_movies_for_recommendation", {
           query_vector: `[${userTasteVector.join(",")}]`,
+          match_count: 100,
           exclude_ids: normalizedExcludeIds,
           filter_media_type: mediaType === "both" ? null : searchType,
           min_rating: minRating,
-          excluded_genres: excludedGenres || [],
-        };
-
-        const useGenreFilter = topGenres.length >= 2;
-        // Request 100 so IVFFlat + genre filter still yields 50 after filtering, then slice.
-        const { data, error: rpcError } = await supabase.rpc("match_movies_for_recommendation", {
-          ...rpcBase,
-          match_count: 100,
-          liked_genres: useGenreFilter ? topGenres : [],
+          excluded_genres: effectiveExcludedGenres,
+          liked_genres: likedWithTv,
         });
         if (rpcError) console.error("SQL RPC error:", rpcError);
         if (data) candidates = (data as any[]).slice(0, 50);
 
-        console.log(`[SP] SQL candidates: ${candidates.length}/100 requested (liked_genres: [${useGenreFilter ? topGenres.join(", ") : "none"}], excludeIds: ${normalizedExcludeIds.length})`);
+        console.log(`[SP] SQL candidates: ${candidates.length} | liked: [${likedWithTv.slice(0, 4).join(", ")}...] | excluded: ${effectiveExcludedGenres.length} genres | excludeIds: ${normalizedExcludeIds.length}`);
       } catch (e) {
         console.error("SQL vector search failed:", e);
       }
