@@ -234,7 +234,6 @@ serve(async (req) => {
     // ── ÉTAPE 2 : LLM — sélection + scoring ──
     let llmSelections: any[] = [];
     let llmFilteredAll = false;
-    const targetLLMCount = requestedCount;
     const llmPoolSize = 20;
     let llmPool: any[] = [];
 
@@ -257,6 +256,8 @@ serve(async (req) => {
         topPool = filtered.length >= requestedCount ? filtered : topPool;
       }
       llmPool = topPool;
+      // LLM sélectionne 3× le nombre souhaité pour absorber les pertes à l'enrichissement
+      const targetLLMCount = Math.min(requestedCount * 3, topPool.length);
 
       const candidateList = topPool
         .map(
@@ -499,8 +500,11 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
       }
     }
 
+    // Garde au maximum le nombre souhaité par l'utilisateur
+    const finalMovies = movies.slice(0, requestedCount);
+
     console.log(
-      `[SP] Final: ${movies.length} movies, mode: ${llmSelections.length > 0 ? "retrieve-rerank" : "fallback"}`,
+      `[SP] Final: ${finalMovies.length}/${movies.length} movies kept (requested ${requestedCount}), mode: ${llmSelections.length > 0 ? "retrieve-rerank" : "fallback"}`,
     );
 
     const toDebugRow = (c: any) => ({
@@ -515,16 +519,16 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
 
     return new Response(
       JSON.stringify({
-        movies,
-        movie: movies[0]?.movie || null,
-        reason: movies[0]?.reason || "",
-        confidence: movies[0]?.confidence || minMatchScore,
+        movies: finalMovies,
+        movie: finalMovies[0]?.movie || null,
+        reason: finalMovies[0]?.reason || "",
+        confidence: finalMovies[0]?.confidence || minMatchScore,
         engineMeta: {
           profileConfidence: confidence.score,
           mode: llmSelections.length > 0 ? "retrieve-rerank" : "discover-fallback",
           candidatesFound: candidates.length,
           llmSelected: llmSelections.length,
-          finalCount: movies.length,
+          finalCount: finalMovies.length,
           noSQLCandidates: candidates.length === 0,
           llmFilteredAll,
           filtersRelaxed: llmFilteredAll || (candidates.length === 0 && minRating > 0),
