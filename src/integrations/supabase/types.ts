@@ -1220,6 +1220,30 @@ export type Database = {
               year: string
             }[]
           }
+        | {
+            Args: {
+              exclude_ids?: number[]
+              excluded_genres?: string[]
+              filter_media_type?: string
+              liked_genres?: string[]
+              match_count?: number
+              max_duration?: number
+              min_rating?: number
+              query_vector: string
+            }
+            Returns: {
+              cluster_labels: string[]
+              genres: string[]
+              media_type: string
+              popularity: number
+              similarity: number
+              taste_tags: string[]
+              title: string
+              tmdb_id: number
+              vote_average: number
+              year: string
+            }[]
+          }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
