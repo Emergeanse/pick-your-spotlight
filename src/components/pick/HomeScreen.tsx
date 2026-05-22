@@ -636,8 +636,9 @@ const HomeScreen = ({
 
       if (isMountedRef.current && movies.length > 0) {
         setNoResultsInfo(null);
+        const displayCount = quickFilters.recommendationCount || RECOMMENDATION_BATCH_SIZE;
         const withProviders = movies.filter((m) => ((m as any).watchProviders as unknown[])?.length > 0);
-        const poolMovies = withProviders.length > 0 ? withProviders : movies;
+        const poolMovies = (withProviders.length > 0 ? withProviders : movies).slice(0, displayCount);
         setChatMoviesPool(poolMovies);
         await setCurrentTonightMovie(poolMovies[0], 0, new Set(poolMovies[0] ? [poolMovies[0].id] : []));
 
@@ -660,7 +661,7 @@ const HomeScreen = ({
             });
             const rawFinalPool = aboveFloor.length >= moviesToEnrich.length ? aboveFloor : enriched;
             const withProvidersFinal = rawFinalPool.filter((m: any) => (m.watchProviders as unknown[])?.length > 0);
-            const finalPool = withProvidersFinal.length > 0 ? withProvidersFinal : rawFinalPool;
+            const finalPool = (withProvidersFinal.length > 0 ? withProvidersFinal : rawFinalPool).slice(0, displayCount);
             setChatMoviesPool(finalPool);
 
             // Update movieMatchData with richer text for the overlay's matchInfo fallback
