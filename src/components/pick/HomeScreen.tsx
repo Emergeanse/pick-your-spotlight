@@ -146,7 +146,7 @@ const HomeScreen = ({
   const [userGenres, setUserGenres] = useState<string[]>([]);
   const [userExcludedGenres, setUserExcludedGenres] = useState<string[]>([]);
   const [userMinRating, setUserMinRating] = useState<number>(0);
-  const [userRecommendationCount, setUserRecommendationCount] = useState<number>(RECOMMENDATION_BATCH_SIZE);
+
 
   const [rejectedIds, setRejectedIds] = useState<number[]>([]);
   const [, setEngagement] = useState<EngagementData | null>(null);
@@ -174,6 +174,7 @@ const HomeScreen = ({
     maxDuration: null,
     matchThreshold: 80,
     minRating: 0,
+    recommendationCount: RECOMMENDATION_BATCH_SIZE,
   });
   const [profileDefaults, setProfileDefaults] = useState<ProfileDefaults>({
     mediaType: "both",
@@ -232,7 +233,7 @@ const HomeScreen = ({
         ? new Set(chatSuggestedSeenMovieIds)
         : new Set(targetMovie?.id ? [targetMovie.id] : []);
 
-    const effectiveCount = userRecommendationCount || RECOMMENDATION_BATCH_SIZE;
+    const effectiveCount = quickFilters.recommendationCount || RECOMMENDATION_BATCH_SIZE;
     setChatMoviesPool(chatSuggestedMovies.slice(0, effectiveCount));
     void setCurrentTonightMovie(targetMovie, startIdx, seenIds);
     onChatSuggestedConsumed?.();
@@ -287,8 +288,8 @@ const HomeScreen = ({
           maxDuration: (data as any)?.default_max_duration ?? null,
           matchThreshold: (data as any)?.match_threshold ?? 80,
           minRating: (data as any)?.min_rating ?? 0,
+          recommendationCount: (data as any)?.default_recommendation_count ?? RECOMMENDATION_BATCH_SIZE,
         };
-        setUserRecommendationCount((data as any)?.default_recommendation_count ?? RECOMMENDATION_BATCH_SIZE);
 
         setProfileDefaults(defaults);
         setQuickFilters(defaults);
@@ -411,7 +412,7 @@ const HomeScreen = ({
             explorationLevel,
             mediaType: quickFilters.mediaType !== "both" ? quickFilters.mediaType : "both",
             maxDuration: quickFilters.maxDuration,
-            count: userRecommendationCount || RECOMMENDATION_BATCH_SIZE,
+            count: quickFilters.recommendationCount || RECOMMENDATION_BATCH_SIZE,
             minMatchScore: quickFilters.matchThreshold,
           });
           engineMetaResult = data?.engineMeta ?? null;
@@ -483,7 +484,7 @@ const HomeScreen = ({
           console.log("[PICK-DEBUG] engineMeta:", data?.engineMeta);
           console.groupEnd();
           const extracted = extractRecommendationMovies(data);
-          const desiredCount = userRecommendationCount || RECOMMENDATION_BATCH_SIZE;
+          const desiredCount = quickFilters.recommendationCount || RECOMMENDATION_BATCH_SIZE;
 
           // Fallback AI confidence scores — shown immediately while movie-match scores load
           const matchMap: Record<number, RecommendationMatch> = {};
@@ -547,7 +548,7 @@ const HomeScreen = ({
             minRating: userMinRating,
             excludedGenres: userExcludedGenres,
             mediaType: quickFilters.mediaType,
-            size: userRecommendationCount || RECOMMENDATION_BATCH_SIZE,
+            size: quickFilters.recommendationCount || RECOMMENDATION_BATCH_SIZE,
             preloadMatchTexts: true,
             preloadProviders: true,
             minMatchScore: quickFilters.matchThreshold,
@@ -574,7 +575,7 @@ const HomeScreen = ({
           minRating: userMinRating,
           excludedGenres: userExcludedGenres,
           mediaType: quickFilters.mediaType,
-          size: userRecommendationCount || RECOMMENDATION_BATCH_SIZE,
+          size: quickFilters.recommendationCount || RECOMMENDATION_BATCH_SIZE,
           preloadMatchTexts: true,
           preloadProviders: true,
           minMatchScore: quickFilters.matchThreshold,
@@ -1009,7 +1010,7 @@ const HomeScreen = ({
         onConfirm={handleWatchNow}
         onInteraction={(type) => void handleMovieAction(type)}
         onMoreSuggestions={() => void handleMoreSuggestions()}
-        expectedCount={userRecommendationCount}
+        expectedCount={quickFilters.recommendationCount}
       />
 
       <FlipCardDetail

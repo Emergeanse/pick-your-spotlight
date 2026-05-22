@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { SlidersHorizontal, Film, Tv, Clapperboard, Clock, RotateCcw, Target, Star } from "lucide-react";
+import { SlidersHorizontal, Film, Tv, Clapperboard, Clock, RotateCcw, Target, Star, Hash } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 
 export interface QuickFilterState {
@@ -8,6 +8,7 @@ export interface QuickFilterState {
   maxDuration: number | null;
   matchThreshold: number;
   minRating: number;
+  recommendationCount: number;
 }
 
 export interface ProfileDefaults {
@@ -15,6 +16,7 @@ export interface ProfileDefaults {
   maxDuration: number | null;
   matchThreshold: number;
   minRating: number;
+  recommendationCount: number;
 }
 
 const DURATION_OPTIONS = [
@@ -38,13 +40,14 @@ interface QuickFiltersProps {
 
 const QuickFilters = ({ filters, onFiltersChange, profileDefaults }: QuickFiltersProps) => {
   const [open, setOpen] = useState(false);
-  const hasActiveFilters = filters.mediaType !== "both" || filters.maxDuration !== null || filters.matchThreshold !== 80 || filters.minRating !== 0;
+  const hasActiveFilters = filters.mediaType !== "both" || filters.maxDuration !== null || filters.matchThreshold !== 80 || filters.minRating !== 0 || filters.recommendationCount !== 5;
 
   const isOverridden = profileDefaults && (
     filters.mediaType !== profileDefaults.mediaType ||
     filters.maxDuration !== profileDefaults.maxDuration ||
     filters.matchThreshold !== profileDefaults.matchThreshold ||
-    filters.minRating !== profileDefaults.minRating
+    filters.minRating !== profileDefaults.minRating ||
+    filters.recommendationCount !== profileDefaults.recommendationCount
   );
 
   const handleResetToProfile = () => {
@@ -54,6 +57,7 @@ const QuickFilters = ({ filters, onFiltersChange, profileDefaults }: QuickFilter
         maxDuration: profileDefaults.maxDuration,
         matchThreshold: profileDefaults.matchThreshold,
         minRating: profileDefaults.minRating,
+        recommendationCount: profileDefaults.recommendationCount,
       });
     }
   };
@@ -105,7 +109,7 @@ const QuickFilters = ({ filters, onFiltersChange, profileDefaults }: QuickFilter
                   )}
                   {hasActiveFilters && (
                     <button
-                      onClick={() => onFiltersChange({ mediaType: "both", maxDuration: null, matchThreshold: 80, minRating: 0 })}
+                      onClick={() => onFiltersChange({ mediaType: "both", maxDuration: null, matchThreshold: 80, minRating: 0, recommendationCount: 5 })}
                       className="text-foreground/40 text-[11px] font-sans font-medium hover:underline"
                     >
                       Tout effacer
@@ -188,6 +192,32 @@ const QuickFilters = ({ filters, onFiltersChange, profileDefaults }: QuickFilter
                     </div>
                   </div>
                 )}
+
+                {/* Recommendation count */}
+                <div>
+                  <div className="flex items-center gap-1.5 mb-2">
+                    <Hash className="w-3 h-3 text-foreground/40" />
+                    <p className="text-foreground/50 text-[11px] font-sans font-medium uppercase tracking-wider">Nombre de suggestions</p>
+                  </div>
+                  <div className="flex gap-1.5">
+                    {[3, 5, 8, 10].map((n) => {
+                      const active = filters.recommendationCount === n;
+                      return (
+                        <button
+                          key={n}
+                          onClick={() => onFiltersChange({ ...filters, recommendationCount: n })}
+                          className={`flex-1 py-2 rounded-lg text-[12px] font-sans font-semibold transition-all active:scale-[0.97] ${
+                            active
+                              ? "bg-primary/15 text-primary border border-primary/30"
+                              : "bg-foreground/5 text-foreground/50 border border-transparent hover:bg-foreground/8"
+                          }`}
+                        >
+                          {n}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
 
                 {/* Min rating */}
                 <div>
