@@ -764,7 +764,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
     const director = credits?.director ? { name: credits.director } : undefined;
 
     return (
-      <div ref={ref} className="relative h-full w-full overflow-y-auto overflow-x-hidden bg-background">
+      <div ref={ref} className="relative h-full w-full overflow-y-auto overscroll-y-contain touch-pan-y bg-background">
         {bgImage && (
           <motion.div
             initial={{ opacity: 0, scale: 1.03 }}

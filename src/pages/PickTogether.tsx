@@ -332,7 +332,7 @@ const PickTogether = () => {
   const alternatives = recommendations.slice(1, 5);
 
   return (
-    <div className="fixed inset-0 bg-background overflow-hidden">
+    <div className="fixed inset-0 bg-background overflow-x-hidden">
       <BrandHeader showBack onBack={goBack} />
 
       <AnimatePresence mode="wait">

@@ -16,7 +16,7 @@ const particles = [
 
 const StepLayout = ({ children, currentStep, totalSteps }: StepLayoutProps) => {
   return (
-    <div className="relative h-full w-full overflow-hidden">
+    <div className="relative h-full w-full overflow-x-hidden">
       {/* Ambient gradient background */}
       <div className="absolute inset-0">
         <motion.div
@@ -60,7 +60,7 @@ const StepLayout = ({ children, currentStep, totalSteps }: StepLayoutProps) => {
 
       <StepProgress current={currentStep} total={totalSteps} />
 
-      <div className="relative z-10 h-full pt-12 md:pt-14 overflow-y-auto">{children}</div>
+      <div className="relative z-10 h-full pt-12 md:pt-14 overflow-y-auto overscroll-y-contain touch-pan-y">{children}</div>
     </div>
   );
 };

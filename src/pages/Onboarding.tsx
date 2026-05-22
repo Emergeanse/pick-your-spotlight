@@ -110,7 +110,7 @@ const Onboarding = () => {
   );
 
   return (
-    <div className="fixed inset-0 bg-background flex flex-col">
+    <div className="fixed inset-0 bg-background flex flex-col overflow-y-auto overscroll-y-contain touch-pan-y">
       <AnimatePresence mode="wait">
         {/* ── Welcome ── */}
         {step === "welcome" && (

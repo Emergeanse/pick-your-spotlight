@@ -588,7 +588,7 @@ const Index = () => {
   };
 
   return (
-    <div className="fixed inset-0 bg-background overflow-hidden">
+    <div className="fixed inset-0 bg-background overflow-x-hidden">
       <AnimatePresence mode="wait">
         {step === "home" && (
           <motion.div

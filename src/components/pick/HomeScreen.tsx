@@ -783,7 +783,7 @@ const HomeScreen = ({
   };
 
   return (
-    <div className="relative w-full h-full overflow-hidden">
+    <div className="relative w-full h-full overflow-x-hidden">
       <BrandHeader
         extraActions={
           <QuickFilters filters={quickFilters} onFiltersChange={setQuickFilters} profileDefaults={profileDefaults} />
@@ -805,7 +805,7 @@ const HomeScreen = ({
       <div className="absolute inset-0 bg-gradient-to-r from-background/50 via-transparent to-background/50" />
       <div className="absolute inset-0 bg-background/30" />
 
-      <div className="relative z-10 h-full overflow-y-auto">
+      <div className="relative z-10 h-full overflow-y-auto overscroll-y-contain touch-pan-y">
         <div className="min-h-[85vh] md:min-h-[80vh] flex flex-col items-center justify-center text-center px-5 pt-16">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
