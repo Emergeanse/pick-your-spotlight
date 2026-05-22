@@ -279,19 +279,17 @@ const TonightPickOverlay = ({
                   On regarde ?
                 </Button>
 
-                <MovieActionBar key={movie.id} movie={movie} onInteraction={onInteraction} />
-
-                <div className="flex flex-col items-center gap-1 mt-1">
+                <div className="flex flex-col items-center gap-1">
                   <button
                     onClick={onMoreSuggestions}
                     disabled={tonightLoading || !tonightAllVisited}
-                    className={`text-[12px] font-sans transition-all flex items-center gap-1.5 ${
+                    className={`text-sm font-sans transition-all flex items-center gap-1.5 ${
                       tonightAllVisited
                         ? "text-foreground/45 hover:text-foreground/65"
                         : "text-foreground/20 cursor-not-allowed"
                     } disabled:opacity-50`}
                   >
-                    {tonightLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Dices className="w-3 h-3" />}
+                    {tonightLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Dices className="w-3.5 h-3.5" />}
                     {displayCount} autre{displayCount > 1 ? "s" : ""} suggestion{displayCount > 1 ? "s" : ""}
                   </button>
 
@@ -301,6 +299,8 @@ const TonightPickOverlay = ({
                     </p>
                   )}
                 </div>
+
+                <MovieActionBar key={movie.id} movie={movie} onInteraction={onInteraction} />
               </div>
             </motion.div>
           </div>
