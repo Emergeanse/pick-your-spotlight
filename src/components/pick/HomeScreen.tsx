@@ -576,24 +576,18 @@ const HomeScreen = ({
             });
             if (!isMountedRef.current) return;
 
-            // Hard floor: always drop movies with a clearly unacceptable score.
-            // Soft floor: only apply if we retain enough movies to keep navigation active.
-            const hardFloor = 45;
-            const softFloor = enrichmentThreshold ?? 60;
-            const afterHardFilter = enriched.filter((m: RecommendationMovieDetail) => {
+            // Soft floor: only reduce pool if we retain the full requested count.
+            const scoreFloor = enrichmentThreshold ?? 60;
+            const aboveFloor = enriched.filter((m: RecommendationMovieDetail) => {
               const score = getRecommendationScore(m.recommendationTexts);
-              return score === null || score >= hardFloor;
+              return score === null || score >= scoreFloor;
             });
-            const aboveFloor = afterHardFilter.filter((m: RecommendationMovieDetail) => {
-              const score = getRecommendationScore(m.recommendationTexts);
-              return score === null || score >= softFloor;
-            });
-            const finalPool = aboveFloor.length >= desiredCount ? aboveFloor : afterHardFilter;
+            const finalPool = aboveFloor.length >= desiredCount ? aboveFloor : enriched;
             setChatMoviesPool(finalPool);
 
             // Update movieMatchData with richer text for the overlay's matchInfo fallback
             const richMap: Record<number, RecommendationMatch> = {};
-            finalPool.forEach((m: any) => {
+            (aboveFloor.length >= desiredCount ? aboveFloor : enriched).forEach((m: any) => {
               const t = m.recommendationTexts;
               const score = getRecommendationScore(t);
               if (m.id && score != null) {

@@ -141,7 +141,23 @@ serve(async (req) => {
     const targetLLMCount = requestedCount + 2;
 
     if (candidates.length >= 1) {
-      const candidateList = candidates
+      // Pre-filter: keep only candidates with at least one liked genre.
+      // "Not selected" genres are treated as unwanted — the LLM must never pick them.
+      // Relax only if filtering leaves too few candidates for the LLM to work with.
+      let filteredCandidates = candidates;
+      if (topGenres.length >= 2) {
+        const withLikedGenre = candidates.filter((c: any) =>
+          (c.genres || []).some((g: string) => (topGenres as string[]).includes(g))
+        );
+        if (withLikedGenre.length >= Math.ceil(targetLLMCount / 2)) {
+          filteredCandidates = withLikedGenre;
+          console.log(`[SP] Genre pre-filter: ${candidates.length} → ${filteredCandidates.length} candidates`);
+        } else {
+          console.log(`[SP] Genre pre-filter skipped (would leave only ${withLikedGenre.length} candidates)`);
+        }
+      }
+
+      const candidateList = filteredCandidates
         .map((c, i) => `[${i + 1}] id=${c.tmdb_id} | "${c.title}" (${c.year || "?"}) | ${(c.genres || []).slice(0, 3).join(", ")} | ⭐${c.vote_average > 0 ? c.vote_average.toFixed(1) : "?"}/10`)
         .join("\n");
 
@@ -226,7 +242,8 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
           const parsed = JSON.parse(jsonStr);
           if (parsed.selections && Array.isArray(parsed.selections)) {
             // Normalize tmdb_id to number (LLM sometimes returns strings)
-            const validIds = new Set(candidates.map((c: any) => Number(c.tmdb_id)));
+            // validIds is built from filteredCandidates so the LLM can't select non-liked genres
+            const validIds = new Set(filteredCandidates.map((c: any) => Number(c.tmdb_id)));
             const idValid = parsed.selections.filter((s: any) => s.tmdb_id && validIds.has(Number(s.tmdb_id)));
             llmSelections = idValid.filter((s: any) => (s.matchScore || 0) >= minMatchScore);
             // Track if threshold filtered ALL valid selections (useful for user feedback)
@@ -252,7 +269,7 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
     if (llmSelections.length > 0) {
       const tmdbResults = await Promise.all(
         llmSelections.map(async (sel: any) => {
-          const candidate = candidates.find((c: any) => Number(c.tmdb_id) === Number(sel.tmdb_id));
+          const candidate = filteredCandidates.find((c: any) => Number(c.tmdb_id) === Number(sel.tmdb_id));
           const rawType = candidate?.media_type;
           const itemType: "movie" | "tv" = rawType === "tv" ? "tv" : rawType === "movie" ? "movie" : searchType;
           const detail = await getMovieDetails(sel.tmdb_id, itemType);
