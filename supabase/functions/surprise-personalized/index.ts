@@ -243,34 +243,40 @@ serve(async (req) => {
       // ── ÉTAPE 1.5 : Pré-filtrage plateforme avant LLM ──
       let topPool = candidates.slice(0, llmPoolSize);
       if (platformIds?.length > 0) {
-        // Vérifie les 20 premiers en parallèle
+        console.log(`[SP] Pré-filtre plateforme: recherche sur plateformes [${platformIds.join(",")}]`);
+
+        // Vérifie les 20 premiers en parallèle avec log détaillé
         const first20 = candidates.slice(0, llmPoolSize);
         const first20Checks = await Promise.all(
           first20.map(async (c: any) => {
             const itemType: "movie" | "tv" = c.media_type === "tv" ? "tv" : "movie";
             const available = await getProviderIdsFR(Number(c.tmdb_id), itemType);
-            return available.some((pid: number) => platformIds.includes(pid)) ? c : null;
+            const ok = available.some((pid: number) => platformIds.includes(pid));
+            console.log(`[SP]   ${ok ? "✓" : "✗"} ${c.title} (id=${c.tmdb_id}, ${itemType}) — providers FR: [${available.join(",")}]`);
+            return ok ? c : null;
           }),
         );
         let filtered = first20Checks.filter(Boolean) as any[];
 
         // Si pas assez trouvés dans le top-20, étend aux candidats 21-50
         if (filtered.length < requestedCount && candidates.length > llmPoolSize) {
+          console.log(`[SP] Seulement ${filtered.length}/${requestedCount} trouvés sur top-20, extension aux candidats 21-50...`);
           const extended = candidates.slice(llmPoolSize);
           const extendedChecks = await Promise.all(
             extended.map(async (c: any) => {
               const itemType: "movie" | "tv" = c.media_type === "tv" ? "tv" : "movie";
               const available = await getProviderIdsFR(Number(c.tmdb_id), itemType);
-              return available.some((pid: number) => platformIds.includes(pid)) ? c : null;
+              const ok = available.some((pid: number) => platformIds.includes(pid));
+              console.log(`[SP]   ${ok ? "✓" : "✗"} ${c.title} (id=${c.tmdb_id}, ${itemType}) — providers FR: [${available.join(",")}]`);
+              return ok ? c : null;
             }),
           );
           filtered = [...filtered, ...(extendedChecks.filter(Boolean) as any[])].slice(0, llmPoolSize);
         }
 
-        console.log(
-          `[SP] Pré-filtre plateforme: ${Math.min(candidates.length, filtered.length < requestedCount ? candidates.length : llmPoolSize)} vérifiés → ${filtered.length} disponibles sur plateformes [${platformIds.join(",")}]`,
-        );
+        console.log(`[SP] Pré-filtre plateforme: ${filtered.length} films retenus sur ${Math.min(candidates.length, filtered.length < requestedCount ? candidates.length : llmPoolSize)} vérifiés`);
         topPool = filtered.length > 0 ? filtered : candidates.slice(0, llmPoolSize);
+        if (filtered.length === 0) console.log(`[SP] ⚠️ Aucun film sur plateformes — pool non filtré envoyé au LLM`);
       }
       llmPool = topPool;
       // LLM évalue et score tous les films du pool — l'enrichissement filtre ensuite
