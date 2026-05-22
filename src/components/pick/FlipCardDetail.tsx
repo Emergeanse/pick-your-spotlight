@@ -133,42 +133,34 @@ const FlipCardDetail = ({
       {isOpen && (
         <motion.div
           key={`${currentType}-${currentItem?.id}`}
-          initial={{ y: "100%" }}
-          animate={{ y: 0 }}
-          exit={{ y: "100%" }}
-          transition={{ type: "spring", damping: 28, stiffness: 300 }}
+          initial={{ y: "100%", opacity: 0.6 }}
+          animate={{ y: 0, opacity: 1 }}
+          exit={{ y: "100%", opacity: 0.6 }}
+          transition={{ type: "spring", damping: 30, stiffness: 320 }}
           className="fixed inset-0 z-[110] flex flex-col bg-background"
         >
-          <div className="sticky top-0 z-10 flex items-center justify-between bg-background/95 backdrop-blur-md border-b border-border/20 px-5 pt-[calc(0.75rem+env(safe-area-inset-top))] pb-3">
-            <div className="flex-1 flex items-center">
-              {navStack.length > 0 ? (
-                <button
-                  onClick={navigateBack}
-                  className="flex items-center gap-1 text-foreground/50 hover:text-foreground text-xs font-sans transition-colors"
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                  Retour
-                </button>
-              ) : (
-                <button
-                  onClick={onClose}
-                  className="flex items-center gap-1 text-foreground/50 hover:text-foreground text-xs font-sans transition-colors"
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                  Retour
-                </button>
-              )}
-            </div>
+          {/* Sticky top bar */}
+          <div className="sticky top-0 z-10 flex items-center justify-between bg-background/95 backdrop-blur-md border-b border-border/15 px-4 pt-[calc(0.75rem+env(safe-area-inset-top))] pb-3">
+            <button
+              onClick={navigateBack}
+              className="flex items-center gap-1.5 text-foreground/55 hover:text-foreground text-sm font-sans transition-colors px-1 py-0.5"
+            >
+              <ChevronLeft className="h-4 w-4" />
+              {navStack.length > 0 ? "Retour" : "Fermer"}
+            </button>
 
-            <button onClick={onClose} className="rounded-full bg-foreground/5 hover:bg-foreground/10 p-1.5 transition-colors">
-              <X className="h-4 w-4 text-foreground/40" />
+            <button
+              onClick={onClose}
+              className="rounded-full bg-foreground/8 hover:bg-foreground/12 p-2 transition-colors"
+            >
+              <X className="h-4 w-4 text-foreground/50" />
             </button>
           </div>
 
           <div className="flex-1 overflow-y-auto overscroll-contain pb-[calc(2rem+env(safe-area-inset-bottom))]">
             {loading ? (
-              <div className="flex items-center justify-center py-24">
-                <Loader2 className="h-6 w-6 animate-spin text-primary/50" />
+              <div className="flex items-center justify-center py-32">
+                <Loader2 className="h-7 w-7 animate-spin text-primary/40" />
               </div>
             ) : currentType === "movie" ? (
               <MovieDetailContent
@@ -228,16 +220,17 @@ const MovieDetailContent = ({
   const score = recommendationText?.matchScore ?? recommendationText?.score ?? recommendationText?.confidence ?? null;
 
   return (
-    <div className="px-5 pb-8 pt-4 max-w-2xl mx-auto">
-      <div className="flex gap-4 mb-5">
+    <div className="pb-8 max-w-2xl mx-auto">
+      {/* Hero poster + metadata — larger, more cinematic */}
+      <div className="flex gap-4 px-5 pt-5 mb-5">
         <div className="relative shrink-0">
           <img
             src={getPosterUrl(item.poster_path, "w342")}
             alt={getDisplayTitle(item)}
-            className="h-40 w-auto rounded-xl shadow-lg"
+            className="h-52 w-auto rounded-2xl shadow-[0_16px_40px_-8px_rgba(0,0,0,0.5)] border border-white/8"
           />
           {interaction.hasInteraction && (
-            <div className="absolute top-1.5 left-1.5">
+            <div className="absolute top-2 left-2">
               <FeedbackBadge
                 type={interaction.primaryStatus}
                 inWatchlist={interaction.watchlist}
@@ -248,32 +241,46 @@ const MovieDetailContent = ({
           )}
         </div>
 
-        <div className="flex-1 min-w-0">
-          <h3 className="text-lg font-serif font-bold leading-tight text-foreground">{getDisplayTitle(item)}</h3>
+        <div className="flex-1 min-w-0 pt-1">
+          <h3 className="text-xl font-serif font-bold leading-tight text-foreground mb-1.5">
+            {getDisplayTitle(item)}
+          </h3>
 
+          {/* Year + runtime/seasons */}
           {(detail?.release_date || detail?.first_air_date) && (
-            <p className="mt-1 text-xs text-foreground/40">
+            <p className="text-sm text-foreground/50 font-sans mb-1.5">
               {(detail.release_date || detail.first_air_date).substring(0, 4)}
               {isTV
                 ? detail?.number_of_seasons
-                  ? ` • ${detail.number_of_seasons} saison${detail.number_of_seasons > 1 ? "s" : ""}`
+                  ? ` · ${detail.number_of_seasons} saison${detail.number_of_seasons > 1 ? "s" : ""}`
                   : ""
                 : detail?.runtime
-                  ? ` • ${detail.runtime}min`
+                  ? ` · ${detail.runtime} min`
                   : ""}
             </p>
           )}
 
+          {/* TMDB rating */}
           {detail?.vote_average > 0 && (
-            <p className="mt-1 text-xs text-foreground/50">
-              <span className="text-primary">★</span> {detail.vote_average.toFixed(1)}/10
+            <p className="text-sm text-foreground/55 font-sans mb-2">
+              <span className="text-yellow-400">★</span> {detail.vote_average.toFixed(1)}
+              <span className="text-foreground/30">/10</span>
             </p>
           )}
 
+          {/* Match score badge — if available */}
+          {score != null && (
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary/15 border border-primary/25 mb-2">
+              <Sparkles className="w-3 h-3 text-primary" />
+              <span className="text-primary text-xs font-sans font-bold">{score}% d'adhésion</span>
+            </div>
+          )}
+
+          {/* Genre tags */}
           {detail?.genres && (
-            <div className="mt-2 flex flex-wrap gap-1">
+            <div className="flex flex-wrap gap-1">
               {detail.genres.slice(0, 4).map((g: any) => (
-                <span key={g.id} className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] text-primary/70">
+                <span key={g.id} className="rounded-full bg-foreground/8 px-2.5 py-0.5 text-[11px] text-foreground/55 font-sans">
                   {g.name}
                 </span>
               ))}
@@ -282,94 +289,105 @@ const MovieDetailContent = ({
         </div>
       </div>
 
-      {detail?.overview && (
-        <div className="mb-5">
-          <h4 className="mb-1.5 text-xs font-sans font-semibold uppercase tracking-wider text-foreground/30">
-            Synopsis
-          </h4>
-          <p className="text-sm leading-relaxed text-foreground/60">{detail.overview}</p>
-        </div>
-      )}
+      {/* Divider */}
+      <div className="border-t border-border/10 mx-5 mb-5" />
 
+      {/* AI recommendation block — visually impactful */}
       {(headline || summary || reasons.length > 0 || perfectFor || funFact) && (
-        <div className="mb-5 rounded-2xl bg-primary/[0.04] border border-primary/15 p-4">
-          <div className="flex items-start gap-3">
-            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
-              <Sparkles className="w-4 h-4 text-primary" />
+        <div className="mx-5 mb-5 rounded-2xl bg-primary/[0.06] border border-primary/20 overflow-hidden">
+          {/* Header strip */}
+          <div className="flex items-center gap-2 px-4 py-3 border-b border-primary/10 bg-primary/[0.04]">
+            <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
+              <Sparkles className="w-3.5 h-3.5 text-primary" />
             </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-1">
-                <p className="text-[10px] uppercase tracking-widest text-primary/60 font-sans font-semibold">
-                  Recommandation complète
-                </p>
-                {score != null && (
-                  <span className="text-[10px] font-sans font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded-full">
-                    {score}%
+            <p className="text-[11px] uppercase tracking-widest text-primary/70 font-sans font-semibold flex-1">
+              Pourquoi ce film pour toi
+            </p>
+          </div>
+          {/* Body */}
+          <div className="px-4 py-3.5">
+            {headline && (
+              <p className="text-foreground/90 text-[14px] font-sans font-semibold leading-snug mb-2">{headline}</p>
+            )}
+            {summary && (
+              <p className="text-foreground/65 text-[13px] font-sans leading-relaxed mb-2.5">{summary}</p>
+            )}
+            {reasons.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 mb-2.5">
+                {reasons.map((reason: string, i: number) => (
+                  <span
+                    key={i}
+                    className="text-[11px] font-sans text-primary/80 bg-primary/10 px-2.5 py-0.5 rounded-full border border-primary/15"
+                  >
+                    {reason}
                   </span>
-                )}
+                ))}
               </div>
-              {headline && <p className="text-foreground/80 text-[13px] font-sans font-semibold mb-1">{headline}</p>}
-              {summary && <p className="text-foreground/70 text-[12px] sm:text-[13px] font-sans leading-snug mb-2">{summary}</p>}
-              {reasons.length > 0 && (
-                <div className="flex flex-wrap gap-1.5 mb-2">
-                  {reasons.map((reason: string, i: number) => (
-                    <span
-                      key={i}
-                      className="text-[10px] font-sans text-primary/70 bg-primary/8 px-2 py-0.5 rounded-full border border-primary/10"
-                    >
-                      {reason}
-                    </span>
-                  ))}
-                </div>
-              )}
-              {perfectFor && <p className="text-foreground/50 text-[11px] font-sans italic mb-1">{perfectFor}</p>}
-              {funFact && (
-                <p className="text-foreground/40 text-[11px] font-sans mt-2 leading-snug">
-                  <span className="text-primary/50">💡</span> {funFact}
-                </p>
-              )}
-            </div>
+            )}
+            {perfectFor && (
+              <p className="text-foreground/50 text-[12px] font-sans italic mb-1.5">{perfectFor}</p>
+            )}
+            {funFact && (
+              <p className="text-foreground/45 text-[12px] font-sans leading-snug mt-1">
+                💡 {funFact}
+              </p>
+            )}
           </div>
         </div>
       )}
 
+      {/* Synopsis */}
+      {detail?.overview && (
+        <div className="px-5 mb-5">
+          <h4 className="mb-2 text-[11px] font-sans font-semibold uppercase tracking-wider text-foreground/35 flex items-center gap-1.5">
+            <span className="w-4 h-px bg-foreground/20 inline-block" />
+            Synopsis
+          </h4>
+          <p className="text-[13px] leading-relaxed text-foreground/60">{detail.overview}</p>
+        </div>
+      )}
+
+      {/* Director */}
       {director && (
-        <div className="mb-4">
-          <h4 className="mb-1.5 text-xs font-sans font-semibold uppercase tracking-wider text-foreground/30">
-            <Clapperboard className="inline h-3 w-3 mr-1" />
+        <div className="px-5 mb-4">
+          <h4 className="mb-2 text-[11px] font-sans font-semibold uppercase tracking-wider text-foreground/35 flex items-center gap-1.5">
+            <Clapperboard className="h-3 w-3" />
             {isTV ? "Créateur" : "Réalisateur"}
           </h4>
           <button
             onClick={() => onPersonClick({ id: director.id, name: director.name, profile_path: director.profile_path })}
-            className="text-sm text-foreground/70 hover:text-primary transition-colors cursor-pointer"
+            className="text-[13px] text-foreground/65 hover:text-primary transition-colors cursor-pointer font-sans"
           >
             {director.name} →
           </button>
         </div>
       )}
 
+      {/* Cast grid */}
       {cast.length > 0 && (
-        <div>
-          <h4 className="mb-2 text-xs font-sans font-semibold uppercase tracking-wider text-foreground/30">
-            <User className="inline h-3 w-3 mr-1" />
+        <div className="px-5">
+          <h4 className="mb-3 text-[11px] font-sans font-semibold uppercase tracking-wider text-foreground/35 flex items-center gap-1.5">
+            <User className="h-3 w-3" />
             Casting
           </h4>
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-3 gap-3">
             {cast.map((c: any) => (
               <button
                 key={c.id}
                 onClick={() => onPersonClick({ id: c.id, name: c.name, profile_path: c.profile_path })}
-                className="flex flex-col items-center gap-1 group cursor-pointer"
+                className="flex flex-col items-center gap-1.5 group cursor-pointer"
               >
                 <img
                   src={c.profile_path ? `https://image.tmdb.org/t/p/w92${c.profile_path}` : "/placeholder.svg"}
                   alt={c.name}
-                  className="h-14 w-14 rounded-full object-cover border border-border/20 group-hover:border-primary/30 transition-colors"
+                  className="h-16 w-16 rounded-full object-cover border-2 border-border/15 group-hover:border-primary/40 transition-colors shadow-sm"
                 />
-                <span className="text-center text-[10px] text-foreground/50 leading-tight group-hover:text-primary transition-colors">
+                <span className="text-center text-[11px] text-foreground/55 leading-tight group-hover:text-primary transition-colors font-sans">
                   {c.name}
                 </span>
-                <span className="text-center text-[9px] text-foreground/25 leading-tight">{c.character}</span>
+                {c.character && (
+                  <span className="text-center text-[10px] text-foreground/25 leading-tight font-sans">{c.character}</span>
+                )}
               </button>
             ))}
           </div>
@@ -390,55 +408,63 @@ const PersonDetailContent = ({
   filmography: any[];
   onMovieClick: (movie: any) => void;
 }) => (
-  <div className="px-5 pb-8 pt-4 max-w-2xl mx-auto">
-    <div className="flex gap-4 mb-5">
+  <div className="pb-8 max-w-2xl mx-auto">
+    {/* Hero section */}
+    <div className="flex gap-4 px-5 pt-5 mb-5">
       <img
         src={getPersonPhotoUrl(item.profile_path, "w185")}
         alt={item.name}
-        className="h-40 w-auto rounded-xl shadow-lg object-cover"
+        className="h-52 w-auto rounded-2xl shadow-[0_16px_40px_-8px_rgba(0,0,0,0.5)] object-cover border border-white/8"
       />
-      <div className="flex-1 min-w-0">
-        <h3 className="text-lg font-serif font-bold leading-tight text-foreground">{item.name}</h3>
+      <div className="flex-1 min-w-0 pt-1">
+        <h3 className="text-xl font-serif font-bold leading-tight text-foreground mb-1.5">{item.name}</h3>
         {detail?.known_for_department && (
-          <p className="mt-1 text-xs text-foreground/40">
-            {detail.known_for_department === "Acting" ? "Acteur/Actrice" : "Réalisateur/Réalisatrice"}
+          <p className="text-sm text-foreground/50 font-sans mb-1">
+            {detail.known_for_department === "Acting" ? "Acteur / Actrice" : "Réalisateur / Réalisatrice"}
           </p>
         )}
         {detail?.birthday && (
-          <p className="mt-0.5 text-xs text-foreground/30">
+          <p className="text-[12px] text-foreground/35 font-sans">
             Né(e) le {new Date(detail.birthday).toLocaleDateString("fr-FR")}
           </p>
         )}
-        {detail?.place_of_birth && <p className="mt-0.5 text-xs text-foreground/25">{detail.place_of_birth}</p>}
+        {detail?.place_of_birth && (
+          <p className="text-[11px] text-foreground/25 font-sans mt-0.5">{detail.place_of_birth}</p>
+        )}
       </div>
     </div>
 
+    <div className="border-t border-border/10 mx-5 mb-5" />
+
     {detail?.biography && (
-      <div className="mb-5">
-        <h4 className="mb-1.5 text-xs font-sans font-semibold uppercase tracking-wider text-foreground/30">Bio</h4>
-        <p className="text-sm leading-relaxed text-foreground/60 line-clamp-6">{detail.biography}</p>
+      <div className="px-5 mb-5">
+        <h4 className="mb-2 text-[11px] font-sans font-semibold uppercase tracking-wider text-foreground/35 flex items-center gap-1.5">
+          <span className="w-4 h-px bg-foreground/20 inline-block" />
+          Biographie
+        </h4>
+        <p className="text-[13px] leading-relaxed text-foreground/60 line-clamp-6">{detail.biography}</p>
       </div>
     )}
 
     {filmography.length > 0 && (
-      <div>
-        <h4 className="mb-2 text-xs font-sans font-semibold uppercase tracking-wider text-foreground/30">
-          <Film className="inline h-3 w-3 mr-1" />
+      <div className="px-5">
+        <h4 className="mb-3 text-[11px] font-sans font-semibold uppercase tracking-wider text-foreground/35 flex items-center gap-1.5">
+          <Film className="h-3 w-3" />
           Filmographie
         </h4>
-        <div className="grid grid-cols-4 gap-2">
+        <div className="grid grid-cols-4 gap-2.5">
           {filmography.map((f: any) => (
             <button
               key={`${f.id}-${f.character || f.job}`}
               onClick={() => onMovieClick({ id: f.id, title: f.title, poster_path: f.poster_path })}
-              className="flex flex-col items-center gap-1 group cursor-pointer"
+              className="flex flex-col items-center gap-1.5 group cursor-pointer"
             >
               <img
                 src={f.poster_path ? `https://image.tmdb.org/t/p/w92${f.poster_path}` : "/placeholder.svg"}
                 alt={f.title}
-                className="w-full aspect-[2/3] rounded-lg object-cover border border-border/20 group-hover:border-primary/30 transition-colors"
+                className="w-full aspect-[2/3] rounded-xl object-cover border border-border/15 group-hover:border-primary/35 transition-colors shadow-sm"
               />
-              <span className="text-center text-[9px] text-foreground/50 leading-tight line-clamp-2 group-hover:text-primary transition-colors">
+              <span className="text-center text-[10px] text-foreground/50 leading-tight line-clamp-2 group-hover:text-primary/80 transition-colors font-sans">
                 {f.title}
               </span>
             </button>

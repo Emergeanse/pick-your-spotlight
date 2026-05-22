@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronLeft, ChevronRight, Dices, Loader2, Sparkles, Target, Tv } from "lucide-react";
+import { ChevronLeft, ChevronRight, Dices, Loader2, Sparkles, Target, Tv, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getBackdropUrl, getDisplayTitle, getPosterUrl, type MovieDetail } from "@/lib/tmdb";
 import { getTonightPickLabel } from "@/lib/time-context";
@@ -64,102 +64,151 @@ const TonightPickOverlay = ({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
+          transition={{ duration: 0.4 }}
           className="absolute inset-0 z-40 flex flex-col"
         >
+          {/* Cinematic background — backdrop bleeds full screen */}
           <div
-            className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+            className="absolute inset-0 bg-cover bg-center bg-no-repeat scale-105"
             style={{
               backgroundImage: `url(${getBackdropUrl(movie.backdrop_path) || getPosterUrl(movie.poster_path, "w780")})`,
             }}
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/85 to-background/50" />
+          {/* Deep gradient: transparent top → near-opaque bottom for legibility */}
+          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/70 to-transparent" />
+          {/* Subtle vignette sides */}
+          <div className="absolute inset-0 bg-gradient-to-r from-background/40 via-transparent to-background/40" />
 
+          {/* Top bar — Retour + label */}
           <div className="relative z-10 flex justify-between items-center px-5 pt-[calc(1rem+env(safe-area-inset-top))]">
             <button
               onClick={onClose}
-              className="text-foreground/50 hover:text-foreground text-xs font-sans transition-colors"
+              className="flex items-center gap-1.5 text-foreground/60 hover:text-foreground text-xs font-sans transition-colors backdrop-blur-sm bg-background/20 px-3 py-1.5 rounded-full border border-border/20"
             >
-              ← Retour
+              <ChevronLeft className="w-3.5 h-3.5" />
+              Retour
             </button>
+            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/20 border border-primary/30 backdrop-blur-md">
+              <Sparkles className="w-3 h-3 text-primary" />
+              <span className="text-primary text-[11px] font-sans font-semibold">{getTonightPickLabel()}</span>
+            </div>
           </div>
 
-          <div className="relative z-10 flex-1 flex flex-col items-center justify-center px-6 pb-[calc(5rem+env(safe-area-inset-bottom))]">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className="flex flex-col items-center text-center max-w-sm"
-            >
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/15 border border-primary/25 mb-3">
-                <Sparkles className="w-3 h-3 text-primary" />
-                <span className="text-primary text-[11px] font-sans font-semibold">{getTonightPickLabel()}</span>
-              </div>
+          {/* Main content — anchored to bottom half (Netflix style) */}
+          <div className="relative z-10 flex-1 flex flex-col justify-end px-5 pb-[calc(4.5rem+env(safe-area-inset-bottom))]">
 
-              {movie.poster_path && (
-                <div className="relative flex items-center gap-3 mb-3">
-                  <button
+            {/* Poster + nav — dominant hero image */}
+            {movie.poster_path && (
+              <div className="flex justify-center mb-5">
+                <div className="relative flex items-center gap-4">
+                  <motion.button
                     onClick={onPrev}
                     disabled={!canGoPrev}
-                    className="w-10 h-10 rounded-full bg-card/60 backdrop-blur-md border border-border/30 flex items-center justify-center transition-all active:scale-90 disabled:opacity-30 disabled:cursor-not-allowed shadow-lg"
+                    whileTap={{ scale: 0.88 }}
+                    className="w-11 h-11 rounded-full bg-background/50 backdrop-blur-md border border-border/30 flex items-center justify-center transition-all disabled:opacity-20 disabled:cursor-not-allowed shadow-xl"
                   >
                     <ChevronLeft className="w-5 h-5 text-foreground" />
-                  </button>
+                  </motion.button>
 
-                  <motion.img
-                    key={movie.id}
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ duration: 0.3, type: "spring", stiffness: 200 }}
-                    src={getPosterUrl(movie.poster_path, "w342") || ""}
-                    alt={getDisplayTitle(movie)}
-                    className="w-40 h-60 md:w-48 md:h-72 rounded-xl object-cover shadow-2xl border border-border/20 cursor-pointer active:scale-95 transition-transform"
-                    onClick={onOpenDetail}
-                  />
-
-                  {interaction.hasInteraction && (
-                    <div className="absolute top-2 left-14 md:left-16">
-                      <FeedbackBadge type={interaction.primaryStatus} inWatchlist={interaction.watchlist} size="sm" />
+                  <div className="relative">
+                    <motion.img
+                      key={movie.id}
+                      initial={{ opacity: 0, scale: 0.92, y: 12 }}
+                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.92, y: -8 }}
+                      transition={{ duration: 0.35, type: "spring", stiffness: 260, damping: 24 }}
+                      src={getPosterUrl(movie.poster_path, "w500") || ""}
+                      alt={getDisplayTitle(movie)}
+                      className="w-52 h-[312px] md:w-60 md:h-[360px] rounded-2xl object-cover shadow-[0_24px_60px_-8px_rgba(0,0,0,0.7)] border border-white/10 cursor-pointer active:scale-[0.97] transition-transform"
+                      onClick={onOpenDetail}
+                    />
+                    {/* "Tap pour détails" hint */}
+                    <div className="absolute bottom-2.5 right-2.5 bg-background/60 backdrop-blur-md rounded-full p-1.5 border border-border/20 pointer-events-none">
+                      <Info className="w-3.5 h-3.5 text-foreground/50" />
                     </div>
-                  )}
+                    {interaction.hasInteraction && (
+                      <div className="absolute top-2.5 left-2.5">
+                        <FeedbackBadge type={interaction.primaryStatus} inWatchlist={interaction.watchlist} size="sm" />
+                      </div>
+                    )}
+                  </div>
 
-                  <button
+                  <motion.button
                     onClick={onNext}
                     disabled={!canGoNext}
-                    className="w-10 h-10 rounded-full bg-card/60 backdrop-blur-md border border-border/30 flex items-center justify-center transition-all active:scale-90 disabled:opacity-30 disabled:cursor-not-allowed shadow-lg"
+                    whileTap={{ scale: 0.88 }}
+                    className="w-11 h-11 rounded-full bg-background/50 backdrop-blur-md border border-border/30 flex items-center justify-center transition-all disabled:opacity-20 disabled:cursor-not-allowed shadow-xl"
                   >
                     <ChevronRight className="w-5 h-5 text-foreground" />
-                  </button>
+                  </motion.button>
+                </div>
+              </div>
+            )}
+
+            {/* Film info block */}
+            <motion.div
+              key={movie.id}
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: 0.05 }}
+              className="flex flex-col items-center text-center"
+            >
+              {/* Pagination dots */}
+              {tonightPool.length > 1 && (
+                <div className="flex items-center gap-1.5 mb-3">
+                  {tonightPool.map((_, i) => (
+                    <span
+                      key={i}
+                      className={`block rounded-full transition-all duration-300 ${
+                        i === tonightPickIndex
+                          ? "w-4 h-1.5 bg-primary"
+                          : "w-1.5 h-1.5 bg-foreground/25"
+                      }`}
+                    />
+                  ))}
                 </div>
               )}
 
-              <p className="text-foreground text-sm font-sans font-semibold tabular-nums px-3 py-1 rounded-full bg-card/60 backdrop-blur-md border border-border/30 shadow-lg mb-2">
-                {tonightPickIndex + 1} / {displayCount}
-              </p>
+              {/* Title — large, serif, cinematic */}
+              <h2 className="text-2xl md:text-3xl font-serif font-bold text-foreground leading-tight mb-1 px-2">
+                {getDisplayTitle(movie)}
+              </h2>
 
-              <h2 className="text-lg md:text-xl font-serif text-foreground mb-0.5">{getDisplayTitle(movie)}</h2>
+              {/* Genres + year */}
+              <div className="flex items-center gap-2 flex-wrap justify-center mb-2">
+                {movie.genres && (
+                  <p className="text-foreground/50 text-[11px] tracking-[0.1em] uppercase font-sans font-medium">
+                    {movie.genres.map((g) => g.name).join(" · ")}
+                  </p>
+                )}
+                {(movie.release_date || (movie as any).first_air_date) && (
+                  <>
+                    <span className="text-foreground/20 text-[10px]">·</span>
+                    <span className="text-foreground/40 text-[11px] font-sans">
+                      {((movie.release_date || (movie as any).first_air_date) as string).substring(0, 4)}
+                    </span>
+                  </>
+                )}
+              </div>
 
-              {movie.genres && (
-                <p className="text-primary/60 text-[10px] tracking-[0.12em] uppercase font-sans font-medium mb-2">
-                  {movie.genres.map((g) => g.name).join(" · ")}
-                </p>
-              )}
-
+              {/* Streaming platforms */}
               {tonightProviders.length > 0 && (
                 <div className="flex items-center gap-2 mb-3">
-                  <span className="text-foreground/30 text-[10px] font-sans">Dispo sur</span>
+                  <span className="text-foreground/30 text-[10px] font-sans uppercase tracking-wider">Dispo sur</span>
                   <div className="flex gap-1.5">
                     {tonightProviders.map((p) => (
                       <img
                         key={p.name}
                         src={`https://image.tmdb.org/t/p/w92${p.logo_path}`}
                         alt={p.name}
-                        className="w-5 h-5 rounded-md object-cover border border-border/20"
+                        className="w-6 h-6 rounded-lg object-cover border border-border/20 shadow-sm"
                       />
                     ))}
                   </div>
                 </div>
               )}
 
+              {/* AI score + teaser — prominent block */}
               {(() => {
                 // recFromPool is updated by background enrichment — prefer it over recFromMovie
                 // so the personalized movie-match text replaces the generic surprise-personalized reason.
@@ -194,18 +243,18 @@ const TonightPickOverlay = ({
 
                 if (adhesionScore != null || teaser) {
                   return (
-                    <div className="flex flex-col items-center gap-1.5 mb-3">
+                    <div className="w-full max-w-xs flex flex-col items-center gap-2 mb-4">
                       {adhesionScore != null && (
-                        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 border border-primary/20">
-                          <Target className="w-3 h-3 text-primary/70" />
-                          <span className="text-primary/90 text-[12px] font-sans font-semibold">
+                        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/15 border border-primary/30 backdrop-blur-md shadow-sm">
+                          <Target className="w-3.5 h-3.5 text-primary" />
+                          <span className="text-primary text-sm font-sans font-bold tracking-wide">
                             {adhesionScore}% d’adhésion
                           </span>
                         </div>
                       )}
                       {teaser && (
-                        <p className="text-foreground/50 text-[11px] font-sans text-center leading-snug max-w-[260px]">
-                          {teaser.length > 100 ? `${teaser.substring(0, 100).trimEnd()}…` : teaser}
+                        <p className="text-foreground/65 text-[12px] font-sans text-center leading-relaxed max-w-[280px]">
+                          {teaser.length > 130 ? `${teaser.substring(0, 130).trimEnd()}…` : teaser}
                         </p>
                       )}
                     </div>
@@ -213,16 +262,17 @@ const TonightPickOverlay = ({
                 }
 
                 return (
-                  <p className="text-foreground/40 text-[12px] font-sans italic mb-3">
+                  <p className="text-foreground/35 text-[12px] font-sans italic mb-4">
                     Pick pense que {movie.first_air_date ? "cette série est parfaite" : "ce film est parfait"} pour toi.
                   </p>
                 );
               })()}
 
-              <div className="flex flex-col items-center gap-4 w-full">
+              {/* Actions */}
+              <div className="flex flex-col items-center gap-3 w-full max-w-xs">
                 <Button
                   size="lg"
-                  className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90 font-sans font-semibold px-8 h-12 gap-2 text-base neon-glow transition-all active:scale-[0.97] w-full max-w-xs"
+                  className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90 font-sans font-semibold px-8 h-12 gap-2 text-base neon-glow transition-all active:scale-[0.97] w-full shadow-lg"
                   onClick={onConfirm}
                 >
                   <Tv className="w-5 h-5" />
@@ -231,13 +281,13 @@ const TonightPickOverlay = ({
 
                 <MovieActionBar key={movie.id} movie={movie} onInteraction={onInteraction} />
 
-                <div className="flex flex-col items-center gap-1.5 mt-2">
+                <div className="flex flex-col items-center gap-1 mt-1">
                   <button
                     onClick={onMoreSuggestions}
                     disabled={tonightLoading || !tonightAllVisited}
                     className={`text-[12px] font-sans transition-all flex items-center gap-1.5 ${
                       tonightAllVisited
-                        ? "text-foreground/40 hover:text-foreground/60"
+                        ? "text-foreground/45 hover:text-foreground/65"
                         : "text-foreground/20 cursor-not-allowed"
                     } disabled:opacity-50`}
                   >
