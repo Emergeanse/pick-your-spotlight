@@ -240,46 +240,27 @@ serve(async (req) => {
     let llmPool: any[] = [];
 
     if (candidates.length >= 1) {
-      // ── ÉTAPE 1.5 : Pré-filtrage plateforme avant LLM ──
+      // ── ÉTAPE 1.5 : Pré-filtrage plateforme sur l'ensemble des 50 candidats SQL ──
+      // On cherche jusqu'à llmPoolSize films sur les plateformes de l'utilisateur
+      // parmi TOUS les candidats SQL (pas seulement le top-20).
       let topPool = candidates.slice(0, llmPoolSize);
       if (platformIds?.length > 0) {
-        console.log(`[SP] Pré-filtre plateforme: recherche sur plateformes [${platformIds.join(",")}]`);
-
-        // Vérifie les 20 premiers en parallèle avec log détaillé
-        const first20 = candidates.slice(0, llmPoolSize);
-        const first20Checks = await Promise.all(
-          first20.map(async (c: any) => {
+        console.log(`[SP] Pré-filtre plateforme: vérification de ${candidates.length} candidats sur plateformes [${platformIds.join(",")}]`);
+        const allChecks = await Promise.all(
+          candidates.map(async (c: any) => {
             const itemType: "movie" | "tv" = c.media_type === "tv" ? "tv" : "movie";
             const available = await getProviderIdsFR(Number(c.tmdb_id), itemType);
             const ok = available.some((pid: number) => platformIds.includes(pid));
-            console.log(`[SP]   ${ok ? "✓" : "✗"} ${c.title} (id=${c.tmdb_id}, ${itemType}) — providers FR: [${available.join(",")}]`);
+            console.log(`[SP]   ${ok ? "✓" : "✗"} ${c.title} (id=${c.tmdb_id}) — providers FR: [${available.join(",")}]`);
             return ok ? c : null;
           }),
         );
-        let filtered = first20Checks.filter(Boolean) as any[];
-
-        // Si pas assez trouvés dans le top-20, étend aux candidats 21-50
-        if (filtered.length < requestedCount && candidates.length > llmPoolSize) {
-          console.log(`[SP] Seulement ${filtered.length}/${requestedCount} trouvés sur top-20, extension aux candidats 21-50...`);
-          const extended = candidates.slice(llmPoolSize);
-          const extendedChecks = await Promise.all(
-            extended.map(async (c: any) => {
-              const itemType: "movie" | "tv" = c.media_type === "tv" ? "tv" : "movie";
-              const available = await getProviderIdsFR(Number(c.tmdb_id), itemType);
-              const ok = available.some((pid: number) => platformIds.includes(pid));
-              console.log(`[SP]   ${ok ? "✓" : "✗"} ${c.title} (id=${c.tmdb_id}, ${itemType}) — providers FR: [${available.join(",")}]`);
-              return ok ? c : null;
-            }),
-          );
-          filtered = [...filtered, ...(extendedChecks.filter(Boolean) as any[])].slice(0, llmPoolSize);
-        }
-
-        console.log(`[SP] Pré-filtre plateforme: ${filtered.length} films retenus sur ${Math.min(candidates.length, filtered.length < requestedCount ? candidates.length : llmPoolSize)} vérifiés`);
+        const filtered = (allChecks.filter(Boolean) as any[]).slice(0, llmPoolSize);
+        console.log(`[SP] Pré-filtre plateforme: ${filtered.length}/${candidates.length} films sur plateformes`);
+        if (filtered.length === 0) console.log(`[SP] ⚠️ Aucun film sur plateformes — pool non filtré utilisé`);
         topPool = filtered.length > 0 ? filtered : candidates.slice(0, llmPoolSize);
-        if (filtered.length === 0) console.log(`[SP] ⚠️ Aucun film sur plateformes — pool non filtré envoyé au LLM`);
       }
       llmPool = topPool;
-      // LLM évalue et score tous les films du pool — l'enrichissement filtre ensuite
       const targetLLMCount = topPool.length;
 
       const candidateList = topPool
