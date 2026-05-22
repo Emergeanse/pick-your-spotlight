@@ -123,17 +123,17 @@ serve(async (req) => {
           excluded_genres: excludedGenres || [],
         };
 
-        // First pass: with liked_genres filter (genres not in user preferences are excluded)
         const useGenreFilter = topGenres.length >= 2;
+        // Request 100 so IVFFlat + genre filter still yields 50 after filtering, then slice.
         const { data, error: rpcError } = await supabase.rpc("match_movies_for_recommendation", {
           ...rpcBase,
-          match_count: 50,
+          match_count: 100,
           liked_genres: useGenreFilter ? topGenres : [],
         });
         if (rpcError) console.error("SQL RPC error:", rpcError);
-        if (data) candidates = data;
+        if (data) candidates = (data as any[]).slice(0, 50);
 
-        console.log(`[SP] SQL candidates: ${candidates.length} (liked_genres: ${useGenreFilter ? topGenres.slice(0, 3).join(",") : "none"}, excludeIds: ${normalizedExcludeIds.length})`);
+        console.log(`[SP] SQL candidates: ${candidates.length}/100 requested (liked_genres: [${useGenreFilter ? topGenres.join(", ") : "none"}], excludeIds: ${normalizedExcludeIds.length})`);
       } catch (e) {
         console.error("SQL vector search failed:", e);
       }
