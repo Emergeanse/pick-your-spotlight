@@ -292,7 +292,7 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
             return null;
           }
           if (maxDuration && itemType === "movie" && (detail.runtime || 0) > maxDuration) {
-            tmdbDiag.push({ id: sel.tmdb_id, title: candidate?.title || "?", type: itemType, ok: false, reason: `runtime ${detail.runtime}min > max ${maxDuration}min` });
+            tmdbDiag.push({ id: sel.tmdb_id, title: candidate?.title || "?", type: itemType, ok: false, reason: `${detail.runtime}min > limite ${maxDuration}min` });
             return null;
           }
           tmdbDiag.push({ id: sel.tmdb_id, title: candidate?.title || "?", type: itemType, ok: true });
@@ -397,6 +397,7 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
         filters: {
           excludeCount: normalizedExcludeIds.length,
           minRating,
+          maxDuration: maxDuration ?? null,
           likedGenres: likedWithTv,
           effectiveExcludedGenres,
         },

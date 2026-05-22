@@ -423,7 +423,7 @@ const HomeScreen = ({
           if (dbg?.sql50?.length) {
             const f = dbg.filters;
             console.group(`[PICK-DEBUG] 1️⃣ SQL — ${dbg.sql50.length} candidats (${f?.excludeCount ?? 0} films exclus — déjà interagis)`);
-            console.log(`   Filtres : note min=${f?.minRating ?? 0} | genres aimés=[${(f?.likedGenres || []).join(", ")}] | exclus=[${(f?.effectiveExcludedGenres || []).join(", ")}]`);
+            console.log(`   Filtres : note min=${f?.minRating ?? 0}${f?.maxDuration ? ` | durée max=${f.maxDuration}min` : ""} | genres aimés=[${(f?.likedGenres || []).join(", ")}] | exclus=[${(f?.effectiveExcludedGenres || []).join(", ")}]`);
             console.table(dbg.sql50.map((c: any, i: number) => ({
               "#": i + 1,
               "Titre": c.title,
