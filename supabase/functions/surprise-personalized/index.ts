@@ -268,12 +268,10 @@ serve(async (req) => {
       console.log(
         `[SP] Filtre plateforme: ${platformFiltered.length}/${candidates.length} candidats sur les plateformes [${platformIds.join(",")}]`,
       );
-      if (platformFiltered.length >= 3) {
-        filteredCandidates = platformFiltered;
-      } else {
-        console.log(
-          `[SP] Filtre plateforme insuffisant (${platformFiltered.length} films) — candidats complets utilisés`,
-        );
+      // Même 1 seul film sur plateforme est suffisant — ne jamais revenir aux candidats non filtrés
+      filteredCandidates = platformFiltered;
+      if (platformFiltered.length === 0) {
+        console.log(`[SP] Aucun candidat SQL sur les plateformes user — fallback TMDB discover utilisé`);
       }
     }
 
@@ -471,7 +469,7 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
         if (maxDuration && searchType === "movie") params.set("with_runtime.lte", String(maxDuration));
         if (excludedGenreIds.size > 0) params.set("without_genres", [...excludedGenreIds].join(","));
         if (likedGenreIds.size > 0) params.set("with_genres", [...likedGenreIds].join("|"));
-        if (platformIds?.length > 0 && attempt < 2) {
+        if (platformIds?.length > 0) {
           params.set("with_watch_providers", platformIds.join("|"));
           params.set("watch_region", "FR");
         }
@@ -493,54 +491,87 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
       }
     }
 
-    for (const url of [
-      `https://api.themoviedb.org/3/trending/${searchType}/week?api_key=${TMDB_API_KEY}&language=fr-FR`,
-      `https://api.themoviedb.org/3/${searchType}/popular?api_key=${TMDB_API_KEY}&language=fr-FR&page=1`,
-      `https://api.themoviedb.org/3/${searchType}/top_rated?api_key=${TMDB_API_KEY}&language=fr-FR&page=1`,
-    ]) {
-      if (movies.length >= requestedCount) break;
-      const data = await safeFetchJson(url);
-      for (const r of data?.results || []) {
-        if (movies.length >= requestedCount) break;
-        if (usedIds.has(r.id) || !isMovieAllowed(r) || !isGenreCompatibleForFallback(r)) continue;
-        const detail = await getMovieDetails(r.id, searchType);
-        if (!detail || usedIds.has(detail.id)) continue;
-        usedIds.add(detail.id);
-        fireEmbedding(detail);
-        movies.push({
-          movie: detail,
-          reason: "Tendance du moment.",
-          confidence: minMatchScore,
-          recommendationTexts: null,
-        });
-      }
-    }
-
-    // ── FALLBACK NUCLÉAIRE : si toujours 0 film, on ignore tous les filtres ──
-    // Uniquement les films déjà interagis par l'utilisateur restent exclus.
-    if (movies.length === 0) {
-      console.log(`[SP] Fallback nucléaire — tous les filtres levés sauf exclusions utilisateur`);
-      llmFilteredAll = true;
-      const nuclearUrls = [
-        `https://api.themoviedb.org/3/${searchType}/popular?api_key=${TMDB_API_KEY}&language=fr-FR&page=1`,
-        `https://api.themoviedb.org/3/${searchType}/popular?api_key=${TMDB_API_KEY}&language=fr-FR&page=2`,
+    // Fallback trending/popular — ignoré si l'utilisateur a des plateformes sélectionnées
+    // (les URLs trending ne supportent pas le filtre watch_providers)
+    if (!platformIds?.length) {
+      for (const url of [
         `https://api.themoviedb.org/3/trending/${searchType}/week?api_key=${TMDB_API_KEY}&language=fr-FR`,
-      ];
-      for (const url of nuclearUrls) {
+        `https://api.themoviedb.org/3/${searchType}/popular?api_key=${TMDB_API_KEY}&language=fr-FR&page=1`,
+        `https://api.themoviedb.org/3/${searchType}/top_rated?api_key=${TMDB_API_KEY}&language=fr-FR&page=1`,
+      ]) {
         if (movies.length >= requestedCount) break;
         const data = await safeFetchJson(url);
         for (const r of data?.results || []) {
           if (movies.length >= requestedCount) break;
-          if (usedIds.has(r.id) || excludedSet.has(r.id)) continue;
+          if (usedIds.has(r.id) || !isMovieAllowed(r) || !isGenreCompatibleForFallback(r)) continue;
           const detail = await getMovieDetails(r.id, searchType);
           if (!detail || usedIds.has(detail.id)) continue;
           usedIds.add(detail.id);
+          fireEmbedding(detail);
           movies.push({
             movie: detail,
-            reason: "Film populaire du moment — tes filtres ont été assouplis.",
-            confidence: 60,
+            reason: "Tendance du moment.",
+            confidence: minMatchScore,
             recommendationTexts: null,
           });
+        }
+      }
+    }
+
+    // ── FALLBACK NUCLÉAIRE : si toujours 0 film, on lève genre/note mais JAMAIS la plateforme ──
+    if (movies.length === 0) {
+      console.log(`[SP] Fallback nucléaire — genre/note levés, plateforme conservée`);
+      llmFilteredAll = true;
+      if (platformIds?.length > 0) {
+        // Avec plateformes : discover filtré par plateforme, tous genres/notes acceptés
+        for (let page = 1; page <= 3 && movies.length < requestedCount; page++) {
+          const params = new URLSearchParams({
+            api_key: TMDB_API_KEY,
+            language: "fr-FR",
+            sort_by: "popularity.desc",
+            "vote_count.gte": "10",
+            with_watch_providers: platformIds.join("|"),
+            watch_region: "FR",
+            page: String(page),
+          });
+          const data = await safeFetchJson(`https://api.themoviedb.org/3/discover/${searchType}?${params}`);
+          for (const r of data?.results || []) {
+            if (movies.length >= requestedCount) break;
+            if (usedIds.has(r.id) || excludedSet.has(r.id)) continue;
+            const detail = await getMovieDetails(r.id, searchType);
+            if (!detail || usedIds.has(detail.id)) continue;
+            usedIds.add(detail.id);
+            movies.push({
+              movie: detail,
+              reason: "Film populaire sur tes plateformes — tes filtres de genre ont été assouplis.",
+              confidence: 60,
+              recommendationTexts: null,
+            });
+          }
+        }
+      } else {
+        // Sans plateformes : trending/popular, tous filtres levés
+        const nuclearUrls = [
+          `https://api.themoviedb.org/3/${searchType}/popular?api_key=${TMDB_API_KEY}&language=fr-FR&page=1`,
+          `https://api.themoviedb.org/3/${searchType}/popular?api_key=${TMDB_API_KEY}&language=fr-FR&page=2`,
+          `https://api.themoviedb.org/3/trending/${searchType}/week?api_key=${TMDB_API_KEY}&language=fr-FR`,
+        ];
+        for (const url of nuclearUrls) {
+          if (movies.length >= requestedCount) break;
+          const data = await safeFetchJson(url);
+          for (const r of data?.results || []) {
+            if (movies.length >= requestedCount) break;
+            if (usedIds.has(r.id) || excludedSet.has(r.id)) continue;
+            const detail = await getMovieDetails(r.id, searchType);
+            if (!detail || usedIds.has(detail.id)) continue;
+            usedIds.add(detail.id);
+            movies.push({
+              movie: detail,
+              reason: "Film populaire du moment — tes filtres ont été assouplis.",
+              confidence: 60,
+              recommendationTexts: null,
+            });
+          }
         }
       }
       console.log(`[SP] Fallback nucléaire: ${movies.length} film(s) trouvé(s)`);
