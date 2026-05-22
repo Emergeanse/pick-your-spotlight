@@ -206,7 +206,6 @@ serve(async (req) => {
           liked_genres: likedWithTv,
           max_duration: maxDuration ?? null,
           p_user_id: userId ?? null,
-          p_platform_ids: platformIds?.length > 0 ? platformIds : null,
         });
         if (rpcError) console.error("SQL RPC error:", rpcError);
         if (data) candidates = data as any[];
