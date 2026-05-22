@@ -63,11 +63,21 @@ serve(async (req) => {
     // Check cache first
     const { data: existing } = await supabase
       .from("movie_embeddings")
-      .select("embedding, taste_tags, semantic_axes, safety_tags, suitability_tags, cluster_labels")
+      .select("embedding, taste_tags, semantic_axes, safety_tags, suitability_tags, cluster_labels, runtime, year, vote_average, popularity")
       .eq("tmdb_id", tmdbId)
       .maybeSingle();
 
     if (existing) {
+      // Patch missing metadata without re-running the AI (embedding stays unchanged)
+      const patch: Record<string, any> = {};
+      if (runtime && !(existing as any).runtime) patch.runtime = runtime;
+      if (year && !(existing as any).year) patch.year = year;
+      if (voteAverage && !(existing as any).vote_average) patch.vote_average = voteAverage;
+      if (popularity && !(existing as any).popularity) patch.popularity = popularity;
+      if (Object.keys(patch).length > 0) {
+        await supabase.from("movie_embeddings").update(patch).eq("tmdb_id", tmdbId);
+      }
+
       return new Response(JSON.stringify({
         embedding: existing.embedding,
         tasteTags: existing.taste_tags,
