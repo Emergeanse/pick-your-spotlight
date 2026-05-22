@@ -220,7 +220,7 @@ serve(async (req) => {
           match_count: 200,
           exclude_ids: normalizedExcludeIds,
           filter_media_type: mediaType === "both" ? null : searchType,
-          min_rating: minRating,
+          min_rating: 0, // Pas de filtre note en SQL — le score d'adhésion (LLM + movie-match) fait office de filtre qualité
           excluded_genres: effectiveExcludedGenres,
           liked_genres: likedWithTv,
           max_duration: maxDuration ?? null,
