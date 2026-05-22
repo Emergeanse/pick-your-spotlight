@@ -253,9 +253,17 @@ export async function enrichRecommendationBatchWithTexts(
   return movies.map((movie) => {
     if (!byId.has(movie.id)) return movie;
     const newTexts = byId.get(movie.id);
+    // Preserve the original LLM score — movie-match is authoritative for rich texts only,
+    // not for overriding the score that drove the recommendation selection.
+    const originalScore = getRecommendationScore(movie.recommendationTexts);
     const originalConfidence = movie.recommendationTexts?.confidence;
     const recommendationTexts = newTexts
-      ? { ...newTexts, confidence: originalConfidence ?? newTexts.confidence }
+      ? {
+          ...newTexts,
+          confidence: originalConfidence ?? newTexts.confidence,
+          matchScore: originalScore ?? newTexts.matchScore,
+          score: originalScore ?? newTexts.score,
+        }
       : movie.recommendationTexts ?? null;
     return recommendationTexts ? { ...movie, recommendationTexts } : movie;
   });

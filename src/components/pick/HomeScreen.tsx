@@ -462,6 +462,24 @@ const HomeScreen = ({
             console.groupEnd();
           }
 
+          // ── Étape 3.5 : Enrichissement TMDB ──
+          if (dbg?.tmdbEnrichment?.length) {
+            const failed = dbg.tmdbEnrichment.filter((t: any) => !t.ok);
+            const ok = dbg.tmdbEnrichment.filter((t: any) => t.ok);
+            console.group(`[PICK-DEBUG] 3️⃣.5 TMDB enrichissement — ✅ ${ok.length} OK / ❌ ${failed.length} échoués`);
+            console.table(dbg.tmdbEnrichment.map((t: any, i: number) => ({
+              "#": i + 1,
+              "Titre": t.title,
+              "ID TMDB": t.id,
+              "Type": t.type,
+              "Statut": t.ok ? "✅ OK" : `❌ ${t.reason || "échec"}`,
+            })));
+            if (failed.length > 0) {
+              console.warn(`[PICK-DEBUG] ⚠️ ${failed.length} film(s) LLM perdus au TMDB lookup → fallback trending activé`);
+            }
+            console.groupEnd();
+          }
+
           console.log("[PICK-DEBUG] engineMeta:", data?.engineMeta);
           console.groupEnd();
           const extracted = extractRecommendationMovies(data);

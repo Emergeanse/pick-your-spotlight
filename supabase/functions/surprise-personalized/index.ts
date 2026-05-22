@@ -273,6 +273,7 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
     // ── ÉTAPE 3 : TMDB — enrichissement en batch pour les films sélectionnés ──
     const movies: any[] = [];
     const usedIds = new Set<number>();
+    const tmdbDiag: { id: number; title: string; type: string; ok: boolean; reason?: string }[] = [];
 
     if (llmSelections.length > 0) {
       const tmdbResults = await Promise.all(
@@ -283,10 +284,18 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
           const detail = await getMovieDetails(sel.tmdb_id, itemType);
           if (!detail) {
             console.warn(`[SP] TMDB null for id=${sel.tmdb_id} type=${itemType} (rawType=${rawType})`);
+            tmdbDiag.push({ id: sel.tmdb_id, title: candidate?.title || "?", type: itemType, ok: false, reason: "TMDB returned null" });
             return null;
           }
-          if (usedIds.has(detail.id)) return null;
-          if (maxDuration && itemType === "movie" && (detail.runtime || 0) > maxDuration) return null;
+          if (usedIds.has(detail.id)) {
+            tmdbDiag.push({ id: sel.tmdb_id, title: candidate?.title || "?", type: itemType, ok: false, reason: "duplicate id" });
+            return null;
+          }
+          if (maxDuration && itemType === "movie" && (detail.runtime || 0) > maxDuration) {
+            tmdbDiag.push({ id: sel.tmdb_id, title: candidate?.title || "?", type: itemType, ok: false, reason: `runtime ${detail.runtime}min > max ${maxDuration}min` });
+            return null;
+          }
+          tmdbDiag.push({ id: sel.tmdb_id, title: candidate?.title || "?", type: itemType, ok: true });
           return { detail, sel };
         })
       );
@@ -393,6 +402,7 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
         },
         sql50: candidates.map(toDebugRow),
         top10: candidates.slice(0, 10).map(toDebugRow),
+        tmdbEnrichment: tmdbDiag,
         llmSelections: llmSelections.map((s: any) => ({
           id: s.tmdb_id,
           title: candidates.find((c: any) => Number(c.tmdb_id) === Number(s.tmdb_id))?.title || "?",
