@@ -26,6 +26,25 @@ async function getMovieDetails(id: number, type: "movie" | "tv" = "movie"): Prom
 }
 
 
+async function getProviderIdsFR(tmdbId: number, mediaType: "movie" | "tv"): Promise<number[]> {
+  try {
+    const res = await fetch(
+      `https://api.themoviedb.org/3/${mediaType}/${tmdbId}/watch/providers?api_key=${TMDB_API_KEY}`,
+    );
+    if (!res.ok) return [];
+    const text = await res.text();
+    if (!text) return [];
+    const data = JSON.parse(text);
+    const fr = data?.results?.FR;
+    if (!fr) return [];
+    return [...(fr.flatrate || []), ...(fr.free || []), ...(fr.ads || [])].map((p: any) =>
+      Number(p.provider_id),
+    );
+  } catch {
+    return [];
+  }
+}
+
 async function safeFetchJson(url: string): Promise<any> {
   try {
     const res = await fetch(url);
@@ -219,15 +238,53 @@ serve(async (req) => {
       console.log(`[SP] SQL skipped — userTasteVector: ${!!userTasteVector}, SUPABASE_URL: ${!!SUPABASE_URL}`);
     }
 
+    // ── ÉTAPE 1.5 : Filtre plateforme sur les 100 candidats SQL ──
+    let filteredCandidates = candidates;
+    if (platformIds?.length > 0 && candidates.length > 0) {
+      const platformSet = new Set((platformIds as number[]).map(Number));
+      const PARALLEL = 30;
+      const platformResults: { tmdb_id: number; onPlatform: boolean }[] = [];
+
+      for (let i = 0; i < candidates.length; i += PARALLEL) {
+        const chunk = candidates.slice(i, i + PARALLEL);
+        const chunkResults = await Promise.all(
+          chunk.map(async (c: any) => {
+            const itemType: "movie" | "tv" = c.media_type === "tv" ? "tv" : "movie";
+            const providerIds = await getProviderIdsFR(Number(c.tmdb_id), itemType);
+            const onPlatform = providerIds.some((pid) => platformSet.has(pid));
+            return { tmdb_id: c.tmdb_id, onPlatform };
+          }),
+        );
+        platformResults.push(...chunkResults);
+        if (i + PARALLEL < candidates.length) {
+          await new Promise((r) => setTimeout(r, 350));
+        }
+      }
+
+      const platformMatchedIds = new Set(
+        platformResults.filter((r) => r.onPlatform).map((r) => r.tmdb_id),
+      );
+      const platformFiltered = candidates.filter((c: any) => platformMatchedIds.has(c.tmdb_id));
+      console.log(
+        `[SP] Filtre plateforme: ${platformFiltered.length}/${candidates.length} candidats sur les plateformes [${platformIds.join(",")}]`,
+      );
+      if (platformFiltered.length >= 3) {
+        filteredCandidates = platformFiltered;
+      } else {
+        console.log(
+          `[SP] Filtre plateforme insuffisant (${platformFiltered.length} films) — candidats complets utilisés`,
+        );
+      }
+    }
+
     // ── ÉTAPE 2 : LLM — sélection + scoring ──
     let llmSelections: any[] = [];
     let llmFilteredAll = false;
     const llmPoolSize = 20;
     let llmPool: any[] = [];
 
-    if (candidates.length >= 1) {
-      // Filtre plateforme déjà appliqué en SQL (p_platform_ids) — plus de pré-filtre à la volée.
-      const topPool = candidates.slice(0, llmPoolSize);
+    if (filteredCandidates.length >= 1) {
+      const topPool = filteredCandidates.slice(0, llmPoolSize);
       llmPool = topPool;
       const targetLLMCount = topPool.length;
 
@@ -330,7 +387,7 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
         console.error("LLM selection failed:", e);
       }
     } else {
-      console.log(`[SP] LLM skipped — not enough candidates: ${candidates.length}`);
+      console.log(`[SP] LLM skipped — not enough candidates: ${filteredCandidates.length} (platform-filtered)`);
     }
 
     // ── ÉTAPE 3 : TMDB — enrichissement en batch ──
