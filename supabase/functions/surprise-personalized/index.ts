@@ -154,6 +154,7 @@ serve(async (req) => {
           min_rating: minRating,
           excluded_genres: effectiveExcludedGenres,
           liked_genres: likedWithTv,
+          max_duration: maxDuration ?? null,
         });
         if (rpcError) console.error("SQL RPC error:", rpcError);
         if (data) candidates = (data as any[]).slice(0, 50);
