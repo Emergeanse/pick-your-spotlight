@@ -181,6 +181,7 @@ const HomeScreen = ({
     maxDuration: null,
     matchThreshold: 80,
     minRating: 0,
+    recommendationCount: 3,
   });
 
   const isMountedRef = useRef(true);
