@@ -317,7 +317,7 @@ const MovieActionBar = ({
   const iconSize = size === "sm" ? "w-3 h-3" : "w-6 h-6";
   const btnSize = size === "sm" ? "w-7 h-7" : "w-12 h-12";
 
-  const inactiveClass = "bg-transparent border-border/25 text-foreground/40 hover:text-primary hover:border-primary/25";
+  const inactiveClass = "bg-white/10 border-white/20 text-white hover:bg-white/20 hover:border-white/30";
 
   const likeFilledClass =
     "bg-primary border-primary/80 text-primary-foreground ring-1 ring-white/15 shadow-[0_0_24px_hsl(var(--primary)/0.45)]";
@@ -345,7 +345,7 @@ const MovieActionBar = ({
         }`}
         title="Aimé"
       >
-        <Heart className={`${iconSize} ${liked ? "fill-current" : ""}`} />
+        <Heart className={`${iconSize} fill-current`} />
       </button>
 
       <button
@@ -357,7 +357,7 @@ const MovieActionBar = ({
         }`}
         title="À voir"
       >
-        <Bookmark className={`${iconSize} ${bookmarked ? "fill-current" : ""}`} />
+        <Bookmark className={`${iconSize} fill-current`} />
       </button>
 
       <button
@@ -369,7 +369,7 @@ const MovieActionBar = ({
         }`}
         title="Déjà vu"
       >
-        <Eye className={iconSize} />
+        <Eye className={`${iconSize} fill-current`} />
       </button>
 
       <button
@@ -381,7 +381,7 @@ const MovieActionBar = ({
         }`}
         title="Pas pour moi"
       >
-        <ThumbsDown className={iconSize} />
+        <ThumbsDown className={`${iconSize} fill-current`} />
       </button>
 
       <button
@@ -393,7 +393,7 @@ const MovieActionBar = ({
         }`}
         title="Inconnu"
       >
-        <HelpCircle className={iconSize} />
+        <HelpCircle className={`${iconSize} fill-current`} />
       </button>
     </div>
   );
