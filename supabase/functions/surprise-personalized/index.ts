@@ -246,7 +246,11 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
           const rawType = candidate?.media_type;
           const itemType: "movie" | "tv" = rawType === "tv" ? "tv" : rawType === "movie" ? "movie" : searchType;
           const detail = await getMovieDetails(sel.tmdb_id, itemType);
-          if (!detail || usedIds.has(detail.id)) return null;
+          if (!detail) {
+            console.warn(`[SP] TMDB null for id=${sel.tmdb_id} type=${itemType} (rawType=${rawType})`);
+            return null;
+          }
+          if (usedIds.has(detail.id)) return null;
           if (maxDuration && itemType === "movie" && (detail.runtime || 0) > maxDuration) return null;
           return { detail, sel };
         })

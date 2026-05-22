@@ -517,17 +517,20 @@ const HomeScreen = ({
             });
             if (!isMountedRef.current) return;
 
-            // Filter out films where movie-match scored below the user threshold.
+            // Update pool with enriched texts. Don't filter here — the pool was already
+            // size-guaranteed by ensureRecommendationBatch; reducing it here causes disabled
+            // navigation arrows when a fallback movie scores just below threshold.
             const scoreFloor = enrichmentThreshold ?? 60;
             const aboveFloor = enriched.filter((m: RecommendationMovieDetail) => {
               const score = getRecommendationScore(m.recommendationTexts);
               return score === null || score >= scoreFloor;
             });
-            setChatMoviesPool(aboveFloor.length > 0 ? aboveFloor : enriched);
+            // Only reduce pool if we retain the full requested count; otherwise keep all.
+            setChatMoviesPool(aboveFloor.length >= desiredCount ? aboveFloor : enriched);
 
             // Update movieMatchData with richer text for the overlay's matchInfo fallback
             const richMap: Record<number, RecommendationMatch> = {};
-            (aboveFloor.length > 0 ? aboveFloor : enriched).forEach((m: any) => {
+            (aboveFloor.length >= desiredCount ? aboveFloor : enriched).forEach((m: any) => {
               const t = m.recommendationTexts;
               const score = getRecommendationScore(t);
               if (m.id && score != null) {

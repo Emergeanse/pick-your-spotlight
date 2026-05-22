@@ -335,14 +335,14 @@ export async function ensureRecommendationBatch(
     finalBatch = await enrichRecommendationBatchWithTexts(finalBatch, options);
 
     // Filter out films whose movie-match score falls clearly below the user threshold.
-    // 10pt buffer accounts for movie-match conservatism on films without DB embeddings.
-    // Guarantee at least `size` results (or all if fewer pass).
+    // Only apply filter if we'd retain at least `size` movies — never reduce the pool below
+    // the requested count, which would cause disabled navigation arrows.
     const scoreFloor = (options.minMatchScore ?? 60) - 10;
     const aboveFloor = finalBatch.filter((m) => {
       const score = getRecommendationScore(m.recommendationTexts);
       return score === null || score >= scoreFloor;
     });
-    if (aboveFloor.length > 0) finalBatch = aboveFloor;
+    if (aboveFloor.length >= size) finalBatch = aboveFloor;
 
     if (providersPromise) {
       const providersBatch = await providersPromise;
