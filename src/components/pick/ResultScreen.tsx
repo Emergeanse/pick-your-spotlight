@@ -935,7 +935,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
             </div>
           </div>
 
-          <div className="fixed left-0 right-0 bottom-[calc(3.5rem+env(safe-area-inset-bottom))] z-30 border-t border-border/20 bg-background/84 px-4 pt-3 pb-4 backdrop-blur-xl shadow-[0_-18px_40px_hsl(var(--background)/0.32)]">
+          <div className="fixed left-0 right-0 bottom-0 z-50 border-t border-border/20 bg-background/84 px-4 pt-3 pb-[calc(1rem+env(safe-area-inset-bottom))] backdrop-blur-xl shadow-[0_-18px_40px_hsl(var(--background)/0.32)]">
             <div className="mx-auto max-w-md">
               <div className="mb-3 flex items-center justify-between gap-3">
                 <button
