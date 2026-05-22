@@ -234,8 +234,11 @@ const HomeScreen = ({
         : new Set(targetMovie?.id ? [targetMovie.id] : []);
 
     const effectiveCount = quickFilters.recommendationCount || RECOMMENDATION_BATCH_SIZE;
-    setChatMoviesPool(chatSuggestedMovies.slice(0, effectiveCount));
-    void setCurrentTonightMovie(targetMovie, startIdx, seenIds);
+    const sliced = chatSuggestedMovies.slice(0, effectiveCount);
+    const withProv = sliced.filter((m) => ((m as any).watchProviders as unknown[])?.length > 0);
+    const poolChat = withProv.length > 0 ? withProv : sliced;
+    setChatMoviesPool(poolChat);
+    void setCurrentTonightMovie(poolChat[startIdx] ?? poolChat[0], startIdx < poolChat.length ? startIdx : 0, seenIds);
     onChatSuggestedConsumed?.();
   }, [chatSuggestedMovies, chatSuggestedSeenMovieIds, chatSuggestedStartIndex, onChatSuggestedConsumed]);
 
@@ -633,8 +636,10 @@ const HomeScreen = ({
 
       if (isMountedRef.current && movies.length > 0) {
         setNoResultsInfo(null);
-        setChatMoviesPool(movies);
-        await setCurrentTonightMovie(movies[0], 0, new Set(movies[0] ? [movies[0].id] : []));
+        const withProviders = movies.filter((m) => ((m as any).watchProviders as unknown[])?.length > 0);
+        const poolMovies = withProviders.length > 0 ? withProviders : movies;
+        setChatMoviesPool(poolMovies);
+        await setCurrentTonightMovie(poolMovies[0], 0, new Set(poolMovies[0] ? [poolMovies[0].id] : []));
 
         // Background enrichment: call movie-match to get rich personalized teasers.
         // Runs after display so the overlay appears immediately, text updates when ready.
@@ -653,7 +658,9 @@ const HomeScreen = ({
               const score = getRecommendationScore(m.recommendationTexts);
               return score === null || score >= scoreFloor;
             });
-            const finalPool = aboveFloor.length >= moviesToEnrich.length ? aboveFloor : enriched;
+            const rawFinalPool = aboveFloor.length >= moviesToEnrich.length ? aboveFloor : enriched;
+            const withProvidersFinal = rawFinalPool.filter((m: any) => (m.watchProviders as unknown[])?.length > 0);
+            const finalPool = withProvidersFinal.length > 0 ? withProvidersFinal : rawFinalPool;
             setChatMoviesPool(finalPool);
 
             // Update movieMatchData with richer text for the overlay's matchInfo fallback

@@ -194,14 +194,14 @@ const TonightPickOverlay = ({
               {/* Streaming platforms */}
               {tonightProviders.length > 0 && (
                 <div className="flex items-center gap-2 mb-3">
-                  <span className="text-foreground/30 text-[10px] font-sans uppercase tracking-wider">Dispo sur</span>
-                  <div className="flex gap-1.5">
+                  <span className="text-foreground/50 text-[11px] font-sans uppercase tracking-wider">Dispo sur</span>
+                  <div className="flex gap-2">
                     {tonightProviders.map((p) => (
                       <img
                         key={p.name}
                         src={`https://image.tmdb.org/t/p/w92${p.logo_path}`}
                         alt={p.name}
-                        className="w-6 h-6 rounded-lg object-cover border border-border/20 shadow-sm"
+                        className="w-8 h-8 rounded-xl object-cover border border-white/15 shadow-md"
                       />
                     ))}
                   </div>
