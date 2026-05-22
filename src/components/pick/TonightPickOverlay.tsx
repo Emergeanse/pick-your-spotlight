@@ -280,24 +280,20 @@ const TonightPickOverlay = ({
                 </Button>
 
                 <div className="flex flex-col items-center gap-1">
-                  <button
-                    onClick={onMoreSuggestions}
-                    disabled={tonightLoading || !tonightAllVisited}
-                    className={`text-sm font-sans transition-all flex items-center gap-1.5 ${
-                      tonightAllVisited
-                        ? "text-foreground/45 hover:text-foreground/65"
-                        : "text-foreground/20 cursor-not-allowed"
-                    } disabled:opacity-50`}
-                  >
-                    {tonightLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Dices className="w-3.5 h-3.5" />}
-                    {displayCount} autre{displayCount > 1 ? "s" : ""} suggestion{displayCount > 1 ? "s" : ""}
-                  </button>
-
-                  {!tonightAllVisited && tonightPool.length > 0 && (
+                  {tonightAllVisited || tonightLoading ? (
+                    <button
+                      onClick={onMoreSuggestions}
+                      disabled={tonightLoading}
+                      className="text-sm font-sans transition-all flex items-center gap-1.5 text-foreground/45 hover:text-foreground/65 disabled:opacity-50"
+                    >
+                      {tonightLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Dices className="w-3.5 h-3.5" />}
+                      {displayCount} autre{displayCount > 1 ? "s" : ""} suggestion{displayCount > 1 ? "s" : ""}
+                    </button>
+                  ) : tonightPool.length > 0 ? (
                     <p className="text-foreground/25 text-[10px] font-sans text-center">
                       Parcourez les {displayCount} films pour débloquer ({tonightSeenMovieIds.size}/{displayCount})
                     </p>
-                  )}
+                  ) : null}
                 </div>
 
                 <MovieActionBar key={movie.id} movie={movie} onInteraction={onInteraction} />
