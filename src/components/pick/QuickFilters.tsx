@@ -40,7 +40,7 @@ interface QuickFiltersProps {
 
 const QuickFilters = ({ filters, onFiltersChange, profileDefaults }: QuickFiltersProps) => {
   const [open, setOpen] = useState(false);
-  const hasActiveFilters = filters.mediaType !== "both" || filters.maxDuration !== null || filters.matchThreshold !== 80 || filters.minRating !== 0 || filters.recommendationCount !== 5;
+  const hasActiveFilters = filters.mediaType !== "both" || filters.maxDuration !== null || filters.matchThreshold !== 80 || filters.minRating !== 0 || filters.recommendationCount !== 3;
 
   const isOverridden = profileDefaults && (
     filters.mediaType !== profileDefaults.mediaType ||
@@ -109,7 +109,7 @@ const QuickFilters = ({ filters, onFiltersChange, profileDefaults }: QuickFilter
                   )}
                   {hasActiveFilters && (
                     <button
-                      onClick={() => onFiltersChange({ mediaType: "both", maxDuration: null, matchThreshold: 80, minRating: 0, recommendationCount: 5 })}
+                      onClick={() => onFiltersChange({ mediaType: "both", maxDuration: null, matchThreshold: 80, minRating: 0, recommendationCount: 3 })}
                       className="text-foreground/40 text-[11px] font-sans font-medium hover:underline"
                     >
                       Tout effacer
@@ -200,7 +200,7 @@ const QuickFilters = ({ filters, onFiltersChange, profileDefaults }: QuickFilter
                     <p className="text-foreground/50 text-[11px] font-sans font-medium uppercase tracking-wider">Nombre de suggestions</p>
                   </div>
                   <div className="flex gap-1.5">
-                    {[3, 5, 8, 10].map((n) => {
+                    {[1, 2, 3].map((n) => {
                       const active = filters.recommendationCount === n;
                       return (
                         <button

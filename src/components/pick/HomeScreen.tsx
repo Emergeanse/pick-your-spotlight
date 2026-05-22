@@ -174,7 +174,7 @@ const HomeScreen = ({
     maxDuration: null,
     matchThreshold: 80,
     minRating: 0,
-    recommendationCount: RECOMMENDATION_BATCH_SIZE,
+    recommendationCount: 3,
   });
   const [profileDefaults, setProfileDefaults] = useState<ProfileDefaults>({
     mediaType: "both",
@@ -288,7 +288,7 @@ const HomeScreen = ({
           maxDuration: (data as any)?.default_max_duration ?? null,
           matchThreshold: (data as any)?.match_threshold ?? 80,
           minRating: (data as any)?.min_rating ?? 0,
-          recommendationCount: (data as any)?.default_recommendation_count ?? RECOMMENDATION_BATCH_SIZE,
+          recommendationCount: Math.min((data as any)?.default_recommendation_count ?? 3, 3),
         };
 
         setProfileDefaults(defaults);
