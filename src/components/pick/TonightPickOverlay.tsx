@@ -65,7 +65,7 @@ const TonightPickOverlay = ({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.4 }}
-          className="absolute inset-0 z-40 flex flex-col"
+          className="fixed inset-0 z-50 flex flex-col"
         >
           {/* Cinematic background — backdrop bleeds full screen */}
           <div
