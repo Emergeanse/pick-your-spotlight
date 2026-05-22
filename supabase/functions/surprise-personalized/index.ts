@@ -129,6 +129,7 @@ serve(async (req) => {
 
     // ── ÉTAPE 2 : LLM — sélection + scoring + textes complets ──
     let llmSelections: any[] = [];
+    let llmFilteredAll = false; // LLM returned candidates but all were below minMatchScore
     const targetLLMCount = requestedCount + 2;
 
     if (candidates.length >= 1) {
@@ -218,12 +219,13 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
           if (parsed.selections && Array.isArray(parsed.selections)) {
             // Normalize tmdb_id to number (LLM sometimes returns strings)
             const validIds = new Set(candidates.map((c: any) => Number(c.tmdb_id)));
-            llmSelections = parsed.selections.filter((s: any) =>
-              s.tmdb_id && validIds.has(Number(s.tmdb_id)) && (s.matchScore || 0) >= minMatchScore
-            );
+            const idValid = parsed.selections.filter((s: any) => s.tmdb_id && validIds.has(Number(s.tmdb_id)));
+            llmSelections = idValid.filter((s: any) => (s.matchScore || 0) >= minMatchScore);
+            // Track if threshold filtered ALL valid selections (useful for user feedback)
+            if (llmSelections.length === 0 && idValid.length > 0) llmFilteredAll = true;
             // Normalize tmdb_id to number for downstream TMDB calls
             llmSelections = llmSelections.map((s: any) => ({ ...s, tmdb_id: Number(s.tmdb_id) }));
-            console.log(`[SP] LLM raw selections: ${parsed.selections.length}, valid: ${llmSelections.length}, minMatchScore: ${minMatchScore}`);
+            console.log(`[SP] LLM raw selections: ${parsed.selections.length}, valid: ${llmSelections.length}, minMatchScore: ${minMatchScore}${llmFilteredAll ? " (ALL filtered by threshold)" : ""}`);
           }
         } else {
           console.error(`[SP] LLM gateway error: ${response.status}`);
@@ -336,6 +338,10 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
         candidatesFound: candidates.length,
         llmSelected: llmSelections.length,
         finalCount: movies.length,
+        // Filter diagnostic flags — used by the frontend to show user-facing messages
+        noSQLCandidates: candidates.length === 0,
+        llmFilteredAll,
+        filtersRelaxed: llmFilteredAll || (candidates.length === 0 && minRating > 0),
       },
     }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
 

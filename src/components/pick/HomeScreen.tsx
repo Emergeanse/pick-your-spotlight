@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { toast } from "sonner";
 
 import type { Movie, MovieDetail } from "@/lib/tmdb";
 import { getTrendingMovies, getBackdropUrl, getWatchProviders } from "@/lib/tmdb";
@@ -162,6 +163,11 @@ const HomeScreen = ({
   const [tonightSeenMovieIds, setTonightSeenMovieIds] = useState<Set<number>>(new Set());
 
   const [flipDetailMovie, setFlipDetailMovie] = useState<MovieDetail | null>(null);
+  const [noResultsInfo, setNoResultsInfo] = useState<{
+    message: string;
+    suggestThreshold?: number;
+    suggestRating?: boolean;
+  } | null>(null);
 
   const [quickFilters, setQuickFilters] = useState<QuickFilterState>({
     mediaType: "both",
@@ -369,6 +375,7 @@ const HomeScreen = ({
 
     try {
       let movies: MovieDetail[] = [];
+      let engineMetaResult: any = null;
 
       if (user) {
         const liked = await getLikedMovies();
@@ -399,6 +406,7 @@ const HomeScreen = ({
             count: userRecommendationCount || RECOMMENDATION_BATCH_SIZE,
             minMatchScore: quickFilters.matchThreshold,
           });
+          engineMetaResult = data?.engineMeta ?? null;
           const extracted = extractRecommendationMovies(data);
           const desiredCount = userRecommendationCount || RECOMMENDATION_BATCH_SIZE;
 
@@ -502,7 +510,43 @@ const HomeScreen = ({
         }
       }
 
+      // ── Diagnostic : filtres trop stricts ──────────────────────────────
+      if (isMountedRef.current) {
+        const engineMeta = engineMetaResult;
+        const threshold = quickFilters.matchThreshold;
+        const rating = userMinRating;
+
+        if (movies.length === 0) {
+          // Aucun film trouvé malgré tous les fallbacks — message explicite
+          let message = "Impossible de trouver des films pour le moment.";
+          let suggestThreshold: number | undefined;
+          let suggestRating: boolean | undefined;
+          if (threshold > 70 && rating > 6) {
+            message = `Seuil à ${threshold}% et note min ${rating}/10 combinés — aucun film ne correspond. Essaie de baisser l'un des deux.`;
+            suggestThreshold = 60;
+            suggestRating = true;
+          } else if (threshold > 70) {
+            message = `Aucun film trouvé à ${threshold}% de correspondance. Essaie de baisser le seuil.`;
+            suggestThreshold = 60;
+          } else if (rating > 6) {
+            message = `Aucun film trouvé avec une note min de ${rating}/10. Essaie d'enlever ou de baisser ce filtre.`;
+            suggestRating = true;
+          }
+          setNoResultsInfo({ message, suggestThreshold, suggestRating });
+          return;
+        }
+
+        // Films trouvés mais depuis le fallback generique (pas via LLM)
+        if (engineMeta?.filtersRelaxed && threshold > 65) {
+          toast.info(
+            `Seuil de ${threshold}% trop strict — les suggestions proposées sont les plus proches trouvées`,
+            { duration: 5000 }
+          );
+        }
+      }
+
       if (isMountedRef.current && movies.length > 0) {
+        setNoResultsInfo(null);
         setChatMoviesPool(movies);
         await setCurrentTonightMovie(movies[0], 0, new Set(movies[0] ? [movies[0].id] : []));
 
@@ -565,6 +609,7 @@ const HomeScreen = ({
     setTonightPick(null);
     setChatMoviesPool(null);
     setTonightPickIndex(0);
+    setNoResultsInfo(null);
     void generateTonightPick(rejectedIds);
   };
 
@@ -607,6 +652,7 @@ const HomeScreen = ({
     setChatMoviesPool(null);
     setTonightPickIndex(0);
     setTonightSeenMovieIds(new Set());
+    setNoResultsInfo(null);
 
     await generateTonightPick(nextRejected, rejContext);
   };
@@ -802,6 +848,60 @@ const HomeScreen = ({
             <div className="absolute inset-0 bg-background/90 backdrop-blur-md" />
             <div className="relative z-10 flex flex-col items-center">
               <PickCharacter mood="think" message={tonightLoadingMsg} size="md" animate />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Panneau "aucun résultat" — filtres trop stricts */}
+      <AnimatePresence>
+        {noResultsInfo && !tonightPick && !tonightLoading && (
+          <motion.div
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 40 }}
+            transition={{ type: "spring", damping: 28, stiffness: 280 }}
+            className="absolute inset-x-4 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-40"
+          >
+            <div className="bg-background/96 backdrop-blur-xl border border-border/20 rounded-2xl p-5 shadow-2xl">
+              <p className="text-foreground/80 text-[13px] font-sans leading-relaxed mb-4">
+                {noResultsInfo.message}
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {noResultsInfo.suggestThreshold && (
+                  <button
+                    onClick={() => {
+                      setQuickFilters((f) => ({ ...f, matchThreshold: noResultsInfo.suggestThreshold! }));
+                      setNoResultsInfo(null);
+                      void generateTonightPick(rejectedIds);
+                    }}
+                    className="px-3.5 py-1.5 rounded-full bg-primary/15 border border-primary/25 text-primary text-[12px] font-sans font-medium hover:bg-primary/25 transition-colors"
+                  >
+                    Baisser le seuil à {noResultsInfo.suggestThreshold}%
+                  </button>
+                )}
+                {noResultsInfo.suggestRating && (
+                  <button
+                    onClick={() => {
+                      setUserMinRating(0);
+                      setNoResultsInfo(null);
+                      void generateTonightPick(rejectedIds);
+                    }}
+                    className="px-3.5 py-1.5 rounded-full bg-foreground/8 border border-border/20 text-foreground/60 text-[12px] font-sans font-medium hover:bg-foreground/12 transition-colors"
+                  >
+                    Enlever la note min
+                  </button>
+                )}
+                <button
+                  onClick={() => {
+                    setNoResultsInfo(null);
+                    void generateTonightPick(rejectedIds);
+                  }}
+                  className="px-3.5 py-1.5 rounded-full bg-foreground/8 border border-border/20 text-foreground/40 text-[12px] font-sans font-medium hover:bg-foreground/12 transition-colors"
+                >
+                  Réessayer
+                </button>
+              </div>
             </div>
           </motion.div>
         )}
