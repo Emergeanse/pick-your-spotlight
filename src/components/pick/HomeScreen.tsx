@@ -582,12 +582,12 @@ const HomeScreen = ({
               const score = getRecommendationScore(m.recommendationTexts);
               return score === null || score >= scoreFloor;
             });
-            const finalPool = aboveFloor.length >= desiredCount ? aboveFloor : enriched;
+            const finalPool = aboveFloor.length >= moviesToEnrich.length ? aboveFloor : enriched;
             setChatMoviesPool(finalPool);
 
             // Update movieMatchData with richer text for the overlay's matchInfo fallback
             const richMap: Record<number, RecommendationMatch> = {};
-            (aboveFloor.length >= desiredCount ? aboveFloor : enriched).forEach((m: any) => {
+            (aboveFloor.length >= moviesToEnrich.length ? aboveFloor : enriched).forEach((m: any) => {
               const t = m.recommendationTexts;
               const score = getRecommendationScore(t);
               if (m.id && score != null) {

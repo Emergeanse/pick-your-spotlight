@@ -99,15 +99,6 @@ serve(async (req) => {
       "Horreur":         ["Horreur"],
     };
 
-    // All genre names known to exist in movie_embeddings (from diagnostic)
-    const allKnownGenres = [
-      "Drame","Comédie","Action","Thriller","Animation","Crime","Aventure","Romance",
-      "Mystère","Familial","Science-Fiction & Fantastique","Horreur","Action & Adventure",
-      "Fantastique","Science-Fiction","Histoire","Guerre","Kids","Musique","Documentaire",
-      "Western","Téléfilm","Reality","Soap","Sci-Fi & Fantasy","War & Politics","Famille",
-      "Talk","News",
-    ];
-
     // Expand liked genres to include TV equivalents
     const likedWithTv = topGenres.length >= 2
       ? [...new Set([
@@ -116,10 +107,10 @@ serve(async (req) => {
         ])]
       : [];
 
-    // Auto-exclude all genres NOT in liked (genres the user didn't select = unwanted)
-    const autoExcluded = topGenres.length >= 2
-      ? allKnownGenres.filter((g) => !likedWithTv.includes(g))
-      : [];
+    // Auto-exclude only low-quality content formats — not narrative genres like Drame/Comédie
+    // which co-occur heavily with liked genres and would eliminate too many good films.
+    const hardExcludedFormats = ["Reality", "Soap", "Talk", "News", "Téléfilm", "Horreur"];
+    const autoExcluded = hardExcludedFormats.filter((g) => !likedWithTv.includes(g));
     const effectiveExcludedGenres = [...new Set([...(excludedGenres || []), ...autoExcluded])];
 
     const excludedGenreIds = new Set(effectiveExcludedGenres.map((g: string) => genreNameToId[g]).filter(Boolean));
@@ -178,13 +169,18 @@ serve(async (req) => {
     // ── ÉTAPE 2 : LLM — sélection + scoring + textes complets ──
     let llmSelections: any[] = [];
     let llmFilteredAll = false; // LLM returned candidates but all were below minMatchScore
-    const targetLLMCount = requestedCount + 2;
+    // LLM evaluates top 10 by vector similarity, selects best N+3 for movie-match to score
+    const targetLLMCount = Math.min(requestedCount + 3, 10);
 
     if (candidates.length >= 1) {
 
-      const candidateList = candidates
+      // Send only top 10 by vector similarity to the LLM — SQL already ranked them best-first
+      const top10 = candidates.slice(0, 10);
+      const candidateList = top10
         .map((c, i) => `[${i + 1}] id=${c.tmdb_id} | "${c.title}" (${c.year || "?"}) | ${(c.genres || []).slice(0, 3).join(", ")} | ⭐${c.vote_average > 0 ? c.vote_average.toFixed(1) : "?"}/10`)
         .join("\n");
+
+      console.log(`[SP] Top 10 envoyés au LLM (sur ${candidates.length} candidats SQL):\n${candidateList}`);
 
       const rejectionNote = rejectionContext
         ? `\nDERNIER FILM REFUSÉ : "${rejectionContext.rejectedTitle}" — Ne propose rien de similaire.`
@@ -196,7 +192,7 @@ serve(async (req) => {
         ? "MODE PRÉCISION : Reste très proche des genres et clusters favoris."
         : "";
 
-      const systemPrompt = `Tu es Pick, moteur de recommandation cinéphile. Sélectionne les meilleurs films depuis une liste pré-validée et génère leurs fiches.
+      const systemPrompt = `Tu es Pick, moteur de recommandation cinéphile. Sélectionne les meilleurs films depuis une liste pré-validée.
 
 PROFIL UTILISATEUR :
 - Genres préférés : ${topGenres.slice(0, 6).join(", ") || "non déterminés"}
@@ -220,27 +216,17 @@ RÈGLES DE SÉLECTION :
 - Évite 2 films de la même franchise ou très similaires
 - Respecte absolument les genres exclus et clusters rejetés
 
-MÉTHODE DE SCORING (matchScore) :
-- Point de départ : 75%
-- HAUSSE (+5 à +15pts) : genre favori, film bien noté (8+), cluster adoré, profil bien développé
-- BAISSE (-5 à -10pts) : cluster rejeté, genre en fatigue, film peu noté (<6)
-- PLANCHER ABSOLU : ${minMatchScore}% — ces films sont déjà pré-validés mathématiquement
-- Cohérence obligatoire : si le texte est positif, le score doit être ≥ 68%
-
-TON : Ami cinéphile enthousiaste. TOUJOURS positif. Jamais "malgré", "cependant", "par contre", "même si".
+SCORING (matchScore) :
+- Base : 75%. Hausse si genre favori / note 8+. Baisse si cluster rejeté / note <6.
+- Donne uniquement des scores honnêtes — un film moyen doit avoir un score moyen.
 
 Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
 {
   "selections": [
     {
       "tmdb_id": <id exact de la liste ci-dessus>,
-      "matchScore": <${minMatchScore}-99>,
-      "headline": "<accroche enthousiaste, 8 mots max>",
-      "whyItMatches": "<1 phrase positive, tutoiement, ce qui va plaire>",
-      "detailedExplanation": "<2-3 phrases positives reliant le film au profil>",
-      "perfectFor": "<1 phrase ex: Parfait pour une soirée...>",
-      "funFact": "<1 anecdote courte et intéressante sur le film ou sa réalisation>",
-      "matchingReasons": ["<2-4 mots>", "<2-4 mots>", "<2-4 mots>"]
+      "matchScore": <50-99>,
+      "reason": "<1 phrase pourquoi ce film correspond au profil>"
     }
   ]
 }`;
@@ -251,10 +237,10 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
           headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
           body: JSON.stringify({
             model: "google/gemini-2.5-flash",
-            max_tokens: 3000,
+            max_tokens: 1200,
             messages: [
               { role: "system", content: systemPrompt },
-              { role: "user", content: `Sélectionne ${targetLLMCount} films et génère leurs fiches.` },
+              { role: "user", content: `Sélectionne ${targetLLMCount} films.` },
             ],
           }),
         });
@@ -267,7 +253,7 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
           const parsed = JSON.parse(jsonStr);
           if (parsed.selections && Array.isArray(parsed.selections)) {
             // Normalize tmdb_id to number (LLM sometimes returns strings)
-            const validIds = new Set(candidates.map((c: any) => Number(c.tmdb_id)));
+            const validIds = new Set(top10.map((c: any) => Number(c.tmdb_id)));
             const idValid = parsed.selections.filter((s: any) => s.tmdb_id && validIds.has(Number(s.tmdb_id)));
             llmSelections = idValid.filter((s: any) => (s.matchScore || 0) >= minMatchScore);
             // Track if threshold filtered ALL valid selections (useful for user feedback)
@@ -308,21 +294,18 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
       );
 
       for (const r of tmdbResults) {
-        if (!r || movies.length >= requestedCount) continue;
+        if (!r) continue;
+        if (usedIds.has(r.detail.id)) continue;
         usedIds.add(r.detail.id);
+        // Return lean texts — no headline/detailedExplanation so movie-match will score all candidates
         movies.push({
           movie: r.detail,
-          reason: r.sel.whyItMatches || "Ce film correspond à tes goûts.",
+          reason: r.sel.reason || "Ce film correspond à tes goûts.",
           confidence: r.sel.matchScore || 75,
           recommendationTexts: {
             matchScore: r.sel.matchScore || 75,
             score: r.sel.matchScore || 75,
-            headline: r.sel.headline || null,
-            whyItMatches: r.sel.whyItMatches || null,
-            detailedExplanation: r.sel.detailedExplanation || null,
-            perfectFor: r.sel.perfectFor || null,
-            funFact: r.sel.funFact || null,
-            matchingReasons: r.sel.matchingReasons || [],
+            whyItMatches: r.sel.reason || null,
           },
         });
       }

@@ -324,33 +324,35 @@ export async function ensureRecommendationBatch(
     }
   }
 
-  let finalBatch = dedupeMovies(batch).slice(0, size);
+  // Score ALL candidates before slicing — movie-match picks the best N
+  let finalBatch = dedupeMovies(batch);
 
-  // Enrich with match texts first, then filter by precise matchScore, then load providers.
   if (options.preloadMatchTexts) {
-    // Start providers in parallel with enrichment — we'll apply them after filtering.
-    const providersPromise = options.preloadProviders
-      ? enrichRecommendationBatchWithProviders(finalBatch)
-      : null;
+    // Score all candidates in parallel via movie-match
     finalBatch = await enrichRecommendationBatchWithTexts(finalBatch, options);
 
-    // Filter out films whose movie-match score falls clearly below the user threshold.
-    // Only apply filter if we'd retain at least `size` movies — never reduce the pool below
-    // the requested count, which would cause disabled navigation arrows.
+    // Sort by score descending, keep top `size`
     const scoreFloor = (options.minMatchScore ?? 60) - 10;
-    const aboveFloor = finalBatch.filter((m) => {
-      const score = getRecommendationScore(m.recommendationTexts);
-      return score === null || score >= scoreFloor;
-    });
-    if (aboveFloor.length >= size) finalBatch = aboveFloor;
+    const scored = finalBatch
+      .filter((m) => {
+        const score = getRecommendationScore(m.recommendationTexts);
+        return score === null || score >= scoreFloor;
+      })
+      .sort((a, b) => {
+        const sa = getRecommendationScore(a.recommendationTexts) ?? 0;
+        const sb = getRecommendationScore(b.recommendationTexts) ?? 0;
+        return sb - sa;
+      });
+    finalBatch = (scored.length >= size ? scored : finalBatch).slice(0, size);
 
-    if (providersPromise) {
-      const providersBatch = await providersPromise;
-      const providerMap = new Map(providersBatch.map((m) => [m.id, m.watchProviders]));
-      finalBatch = finalBatch.map((m) => ({ ...m, watchProviders: providerMap.get(m.id) ?? m.watchProviders }));
+    // Load providers for the actual top N films (after scoring)
+    if (options.preloadProviders) {
+      finalBatch = await enrichRecommendationBatchWithProviders(finalBatch);
     }
   } else if (options.preloadProviders) {
-    finalBatch = await enrichRecommendationBatchWithProviders(finalBatch);
+    finalBatch = await enrichRecommendationBatchWithProviders(finalBatch.slice(0, size));
+  } else {
+    finalBatch = finalBatch.slice(0, size);
   }
 
   return dedupeMovies(finalBatch).slice(0, size);

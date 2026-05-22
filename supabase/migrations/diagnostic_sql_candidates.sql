@@ -34,7 +34,7 @@ BEGIN
   RAISE NOTICE 'min_rating: %', v_min_rating;
 
   -- ── 3. Son vecteur de goût (stable) ──
-  SELECT stable_taste_vector INTO v_taste_vector
+  SELECT taste_vector INTO v_taste_vector
   FROM user_taste_vectors WHERE user_id = v_user_id
   ORDER BY updated_at DESC LIMIT 1;
   RAISE NOTICE 'Taste vector: %', CASE WHEN v_taste_vector IS NOT NULL THEN 'OK (32 dims)' ELSE 'ABSENT — fallback only' END;
@@ -62,17 +62,11 @@ BEGIN
   SELECT ARRAY_AGG(DISTINCT g) INTO v_liked_with_tv FROM unnest(v_liked_with_tv) g;
   RAISE NOTICE 'liked_genres (avec TV): %', v_liked_with_tv;
 
-  -- Auto-excluded = tout ce qui n'est pas dans liked_with_tv
+  -- Auto-excluded = uniquement les formats poubelle (pas les genres narratifs comme Drame/Comédie)
   SELECT ARRAY_AGG(g) INTO v_auto_excluded
-  FROM unnest(ARRAY[
-    'Drame','Comédie','Action','Thriller','Animation','Crime','Aventure','Romance',
-    'Mystère','Familial','Science-Fiction & Fantastique','Horreur','Action & Adventure',
-    'Fantastique','Science-Fiction','Histoire','Guerre','Kids','Musique','Documentaire',
-    'Western','Téléfilm','Reality','Soap','Sci-Fi & Fantasy','War & Politics','Famille',
-    'Talk','News'
-  ]) g
+  FROM unnest(ARRAY['Reality','Soap','Talk','News','Téléfilm','Horreur']) g
   WHERE NOT (g = ANY(v_liked_with_tv));
-  RAISE NOTICE 'Auto-excluded genres (%): %', array_length(v_auto_excluded, 1), v_auto_excluded;
+  RAISE NOTICE 'Auto-excluded formats (%): %', COALESCE(array_length(v_auto_excluded, 1), 0), v_auto_excluded;
 
   v_effective_excl := v_auto_excluded;
 
@@ -106,14 +100,14 @@ BEGIN
 
 END $$;
 
--- ── 8. Les 50 films qui seraient sélectionnés (remplace les arrays manuellement si besoin) ──
--- Récupère le vecteur et les params directement depuis la DB pour afficher les vrais candidats
+-- ── 8. Les 50 films qui seraient sélectionnés ──
+-- Applique exactement la même logique que surprise-personalized (TV expansion + auto-excluded)
 WITH params AS (
   SELECT
     u.id AS user_id,
     p.favorite_genres AS liked_genres,
     COALESCE(p.min_rating, 0) AS min_rating,
-    utv.stable_taste_vector AS taste_vector,
+    utv.taste_vector AS taste_vector,
     ARRAY(
       SELECT DISTINCT ci.tmdb_id
       FROM user_item_feedback uif
@@ -127,20 +121,46 @@ WITH params AS (
   ORDER BY utv.updated_at DESC
   LIMIT 1
 ),
+tv_expanded AS (
+  SELECT
+    p.*,
+    ARRAY(
+      SELECT DISTINCT g FROM unnest(
+        p.liked_genres
+        || CASE WHEN 'Action'          = ANY(p.liked_genres) THEN ARRAY['Action & Adventure']                               ELSE '{}'::text[] END
+        || CASE WHEN 'Aventure'        = ANY(p.liked_genres) THEN ARRAY['Action & Adventure']                               ELSE '{}'::text[] END
+        || CASE WHEN 'Science-Fiction' = ANY(p.liked_genres) THEN ARRAY['Science-Fiction & Fantastique','Sci-Fi & Fantasy'] ELSE '{}'::text[] END
+        || CASE WHEN 'Fantastique'     = ANY(p.liked_genres) THEN ARRAY['Science-Fiction & Fantastique','Sci-Fi & Fantasy'] ELSE '{}'::text[] END
+        || CASE WHEN 'Animation'       = ANY(p.liked_genres) THEN ARRAY['Kids','Animation']                                 ELSE '{}'::text[] END
+        || CASE WHEN 'Famille'         = ANY(p.liked_genres) THEN ARRAY['Kids','Familial','Famille']                       ELSE '{}'::text[] END
+        || CASE WHEN 'Familial'        = ANY(p.liked_genres) THEN ARRAY['Kids','Famille','Familial']                       ELSE '{}'::text[] END
+        || CASE WHEN 'Guerre'          = ANY(p.liked_genres) THEN ARRAY['War & Politics']                                  ELSE '{}'::text[] END
+      ) g
+    ) AS liked_with_tv
+  FROM params p
+),
+effective_params AS (
+  SELECT
+    te.*,
+    ARRAY(
+      SELECT g FROM unnest(ARRAY['Reality','Soap','Talk','News','Téléfilm','Horreur']) g
+      WHERE NOT (g = ANY(te.liked_with_tv))
+    ) AS effective_excl
+  FROM tv_expanded te
+),
 candidates AS (
   SELECT m.*
-  FROM params,
+  FROM effective_params ep,
   match_movies_for_recommendation(
-    query_vector      => params.taste_vector,
+    query_vector      => ep.taste_vector,
     match_count       => 100,
-    exclude_ids       => params.exclude_ids,
+    exclude_ids       => ep.exclude_ids,
     filter_media_type => NULL,
-    min_rating        => params.min_rating,
-    -- Simplified: use liked_genres directly (TV expansion handled above in DO block)
-    excluded_genres   => '{}',
-    liked_genres      => params.liked_genres
+    min_rating        => ep.min_rating,
+    excluded_genres   => ep.effective_excl,
+    liked_genres      => ep.liked_with_tv
   ) m
-  WHERE params.taste_vector IS NOT NULL
+  WHERE ep.taste_vector IS NOT NULL
   LIMIT 50
 )
 SELECT
