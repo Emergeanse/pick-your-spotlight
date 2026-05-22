@@ -789,7 +789,24 @@ const HomeScreen = ({
       genres: (tonightPick.genres || []).map((g) => g.name),
     });
 
-    await handleRejectAndRefresh(tonightPick, "not_my_style");
+    // Exclure tous les films du pool courant (pas seulement le film affiché)
+    // pour éviter que SQL retourne les mêmes films au prochain appel.
+    const currentPoolIds = (chatMoviesPool || []).map((m) => m.id).filter(Number.isFinite);
+    const nextRejected = [...new Set([...rejectedIds, ...currentPoolIds])];
+    setRejectedIds(nextRejected);
+
+    const rejContext: RejectionContext = {
+      reason: "not_my_style",
+      rejectedGenres: (tonightPick.genres || []).map((g) => g.name),
+      rejectedTitle: tonightPick.title || tonightPick.name || "",
+    };
+    setTonightPick(null);
+    setChatMoviesPool(null);
+    setTonightPickIndex(0);
+    setTonightSeenMovieIds(new Set());
+    setNoResultsInfo(null);
+
+    await generateTonightPick(nextRejected, rejContext);
   };
 
   return (
