@@ -154,7 +154,9 @@ serve(async (req) => {
           min_rating: minRating,
           excluded_genres: effectiveExcludedGenres,
           liked_genres: likedWithTv,
-          max_duration: maxDuration ?? null,
+          // max_duration is passed only after migration 20260522180000 is deployed in Supabase.
+          // Until then, runtime filtering happens at TMDB enrichment time (ÉTAPE 3).
+          // max_duration: maxDuration ?? null,
         });
         if (rpcError) console.error("SQL RPC error:", rpcError);
         if (data) candidates = (data as any[]).slice(0, 50);
