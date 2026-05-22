@@ -149,6 +149,7 @@ const HomeScreen = ({
 
 
   const [rejectedIds, setRejectedIds] = useState<number[]>([]);
+  const [lastSql50Ids, setLastSql50Ids] = useState<number[]>([]);
   const [, setEngagement] = useState<EngagementData | null>(null);
   const [, setProgressionMsg] = useState<string | null>(null);
   const [historyExcludeIds, setHistoryExcludeIds] = useState<number[]>([]);
@@ -421,6 +422,12 @@ const HomeScreen = ({
           });
           engineMetaResult = data?.engineMeta ?? null;
           const dbg = data?.debugData;
+
+          // Mémoriser les 50 candidats SQL évalués pour les exclure au prochain appel
+          if (dbg?.sql50?.length) {
+            const sql50Ids = (dbg.sql50 as any[]).map((c) => Number(c.id)).filter(Number.isFinite);
+            setLastSql50Ids(sql50Ids);
+          }
 
           console.group("[PICK-DEBUG] ═══ Pipeline de recommandation ═══");
 
@@ -789,10 +796,10 @@ const HomeScreen = ({
       genres: (tonightPick.genres || []).map((g) => g.name),
     });
 
-    // Exclure tous les films du pool courant (pas seulement le film affiché)
-    // pour éviter que SQL retourne les mêmes films au prochain appel.
+    // Exclure les 50 candidats SQL du dernier appel + le pool courant
+    // pour garantir que SQL retourne des films entièrement nouveaux.
     const currentPoolIds = (chatMoviesPool || []).map((m) => m.id).filter(Number.isFinite);
-    const nextRejected = [...new Set([...rejectedIds, ...currentPoolIds])];
+    const nextRejected = [...new Set([...rejectedIds, ...currentPoolIds, ...lastSql50Ids])];
     setRejectedIds(nextRejected);
 
     const rejContext: RejectionContext = {
