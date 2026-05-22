@@ -255,11 +255,11 @@ serve(async (req) => {
         console.log(
           `[SP] Pré-filtre plateforme: ${topPool.length} → ${filtered.length} disponibles sur plateformes [${platformIds.join(",")}]`,
         );
-        topPool = filtered.length >= requestedCount ? filtered : topPool;
+        topPool = filtered.length > 0 ? filtered : topPool;
       }
       llmPool = topPool;
-      // LLM sélectionne 3× le nombre souhaité pour absorber les pertes à l'enrichissement
-      const targetLLMCount = Math.min(requestedCount * 3, topPool.length);
+      // LLM évalue et score tous les films du pool — l'enrichissement filtre ensuite
+      const targetLLMCount = topPool.length;
 
       const candidateList = topPool
         .map(
@@ -328,7 +328,7 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
           headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
           body: JSON.stringify({
             model: "google/gemini-2.5-flash",
-            max_tokens: 1200,
+            max_tokens: 2500,
             messages: [
               { role: "system", content: systemPrompt },
               { role: "user", content: `Sélectionne ${targetLLMCount} films.` },
