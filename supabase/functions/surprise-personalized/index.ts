@@ -110,25 +110,46 @@ serve(async (req) => {
       }
     };
 
-    // ── ÉTAPE 1 : SQL — top 30 par similarité vectorielle ──
+    // ── ÉTAPE 1 : SQL — top 50 par similarité vectorielle ──
     let candidates: any[] = [];
     if (SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY && userTasteVector) {
       try {
         const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-        const { data, error: rpcError } = await supabase.rpc("match_movies_for_recommendation", {
+        const rpcBase = {
           query_vector: `[${userTasteVector.join(",")}]`,
-          match_count: 50,
           exclude_ids: normalizedExcludeIds,
           filter_media_type: mediaType === "both" ? null : searchType,
           min_rating: minRating,
           excluded_genres: excludedGenres || [],
-          liked_genres: topGenres.length >= 2 ? topGenres : [],
+        };
+
+        // First pass: with liked_genres filter (genres not in user preferences are excluded)
+        const useGenreFilter = topGenres.length >= 2;
+        const { data, error: rpcError } = await supabase.rpc("match_movies_for_recommendation", {
+          ...rpcBase,
+          match_count: 50,
+          liked_genres: useGenreFilter ? topGenres : [],
         });
         if (rpcError) console.error("SQL RPC error:", rpcError);
-        if (data) {
-          candidates = data;
+        if (data) candidates = data;
+
+        // Top-up: if liked_genres was too restrictive, fill remaining slots without genre filter
+        if (useGenreFilter && candidates.length < 40) {
+          const existingIds = candidates.map((c: any) => c.tmdb_id);
+          const needed = 50 - candidates.length;
+          const { data: data2 } = await supabase.rpc("match_movies_for_recommendation", {
+            ...rpcBase,
+            match_count: needed + 10,
+            exclude_ids: [...normalizedExcludeIds, ...existingIds],
+            liked_genres: [],
+          });
+          if (data2) {
+            candidates = [...candidates, ...data2].slice(0, 50);
+            console.log(`[SP] Genre top-up: had ${existingIds.length}, now ${candidates.length} candidates`);
+          }
         }
-        console.log(`[SP] SQL candidates: ${candidates.length} (userTasteVector: ${!!userTasteVector}, excludeIds: ${normalizedExcludeIds.length})`);
+
+        console.log(`[SP] SQL candidates: ${candidates.length} (liked_genres: ${useGenreFilter ? topGenres.slice(0, 3).join(",") : "none"}, excludeIds: ${normalizedExcludeIds.length})`);
       } catch (e) {
         console.error("SQL vector search failed:", e);
       }
