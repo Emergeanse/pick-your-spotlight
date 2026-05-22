@@ -191,7 +191,7 @@ serve(async (req) => {
     // e.g. 2 requested → evaluates top 6, selects 2 best
     //      5 requested → evaluates top 15, selects 5 best
     const targetLLMCount = requestedCount;
-    const llmPoolSize = Math.max(requestedCount * 3, 60);
+    const llmPoolSize = 20; // Always evaluate top 20 from SQL, select targetLLMCount best
 
     if (candidates.length >= 1) {
 
@@ -431,7 +431,7 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
           effectiveExcludedGenres,
         },
         sql50: candidates.map(toDebugRow),
-        top10: candidates.slice(0, llmPoolSize).map(toDebugRow),
+        top20: candidates.slice(0, llmPoolSize).map(toDebugRow),
         tmdbEnrichment: tmdbDiag,
         llmSelections: llmSelections.map((s: any) => ({
           id: s.tmdb_id,

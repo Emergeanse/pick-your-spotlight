@@ -440,10 +440,10 @@ const HomeScreen = ({
             console.groupEnd();
           }
 
-          // ── Étape 2 : Top 10 envoyés au LLM ──
-          if (dbg?.top10?.length) {
-            console.group(`[PICK-DEBUG] 2️⃣ Top 10 envoyés au LLM (meilleurs par similarité vectorielle)`);
-            console.table(dbg.top10.map((c: any, i: number) => ({
+          // ── Étape 2 : Top 20 envoyés au LLM ──
+          if (dbg?.top20?.length) {
+            console.group(`[PICK-DEBUG] 2️⃣ Top 20 envoyés au LLM (meilleurs par similarité vectorielle)`);
+            console.table(dbg.top20.map((c: any, i: number) => ({
               "#": i + 1,
               "Titre": c.title,
               "Année": c.year,
