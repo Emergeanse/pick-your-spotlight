@@ -401,6 +401,7 @@ const HomeScreen = ({
           ]);
 
           const userTasteVector = multiProfile?.stableTasteVector || null;
+          console.log("[PICK-DEBUG] userTasteVector:", userTasteVector ? `✅ ${userTasteVector.length} dims` : "❌ NULL — SQL sera sauté");
 
           const data = await invokeSurprisePersonalized({
             likedMovies: liked,
