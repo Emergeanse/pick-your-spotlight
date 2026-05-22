@@ -314,8 +314,8 @@ const MovieActionBar = ({
     }
   };
 
-  const iconSize = size === "sm" ? "w-3 h-3" : "w-5 h-5";
-  const btnSize = size === "sm" ? "w-7 h-7" : "w-10 h-10";
+  const iconSize = size === "sm" ? "w-3 h-3" : "w-6 h-6";
+  const btnSize = size === "sm" ? "w-7 h-7" : "w-12 h-12";
 
   const inactiveClass = "bg-transparent border-border/25 text-foreground/40 hover:text-primary hover:border-primary/25";
 
