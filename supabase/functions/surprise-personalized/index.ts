@@ -133,22 +133,6 @@ serve(async (req) => {
         if (rpcError) console.error("SQL RPC error:", rpcError);
         if (data) candidates = data;
 
-        // Top-up: if liked_genres was too restrictive, fill remaining slots without genre filter
-        if (useGenreFilter && candidates.length < 40) {
-          const existingIds = candidates.map((c: any) => c.tmdb_id);
-          const needed = 50 - candidates.length;
-          const { data: data2 } = await supabase.rpc("match_movies_for_recommendation", {
-            ...rpcBase,
-            match_count: needed + 10,
-            exclude_ids: [...normalizedExcludeIds, ...existingIds],
-            liked_genres: [],
-          });
-          if (data2) {
-            candidates = [...candidates, ...data2].slice(0, 50);
-            console.log(`[SP] Genre top-up: had ${existingIds.length}, now ${candidates.length} candidates`);
-          }
-        }
-
         console.log(`[SP] SQL candidates: ${candidates.length} (liked_genres: ${useGenreFilter ? topGenres.slice(0, 3).join(",") : "none"}, excludeIds: ${normalizedExcludeIds.length})`);
       } catch (e) {
         console.error("SQL vector search failed:", e);
@@ -323,12 +307,13 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
         if (minRating > 0) params.set("vote_average.gte", String(minRating));
         if (maxDuration && searchType === "movie") params.set("with_runtime.lte", String(maxDuration));
         if (excludedGenreIds.size > 0) params.set("without_genres", [...excludedGenreIds].join(","));
+        if (likedGenreIds.size > 0) params.set("with_genres", [...likedGenreIds].join("|"));
         if (platformIds?.length > 0 && attempt < 2) {
           params.set("with_watch_providers", platformIds.join("|"));
           params.set("watch_region", "FR");
         }
         const data = await safeFetchJson(`https://api.themoviedb.org/3/discover/${searchType}?${params}`);
-        const found = (data?.results || []).find((r: any) => isMovieAllowed(r) && !usedIds.has(r.id));
+        const found = (data?.results || []).find((r: any) => isMovieAllowed(r) && isGenreCompatibleForFallback(r) && !usedIds.has(r.id));
         if (!found) continue;
         const detail = await getMovieDetails(found.id, searchType);
         if (!detail || usedIds.has(detail.id)) continue;
