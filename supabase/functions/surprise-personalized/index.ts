@@ -73,6 +73,16 @@ serve(async (req) => {
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
+    // Extract user_id from the JWT sent by the Supabase client
+    let userId: string | null = null;
+    try {
+      const jwt = req.headers.get("Authorization")?.replace("Bearer ", "");
+      if (jwt) {
+        const payload = JSON.parse(atob(jwt.split(".")[1]));
+        userId = payload.sub ?? null;
+      }
+    } catch { /* anonymous or invalid token — userId stays null */ }
+
     // ── Normalize excluded IDs ──
     const normalizedExcludeIds = [...new Set([
       ...(likedMovies || []).map((m: any) => Number(m.tmdb_id || m.id)).filter(Number.isFinite),
@@ -172,6 +182,7 @@ serve(async (req) => {
           excluded_genres: effectiveExcludedGenres,
           liked_genres: likedWithTv,
           max_duration: maxDuration ?? null,
+          p_user_id: userId ?? null,
         });
         if (rpcError) console.error("SQL RPC error:", rpcError);
         if (data) candidates = (data as any[]).slice(0, 50);
