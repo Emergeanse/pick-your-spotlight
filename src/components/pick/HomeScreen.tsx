@@ -531,8 +531,9 @@ const HomeScreen = ({
           console.groupEnd();
 
           // Safety net: if batch processing filtered everything but edge function returned results,
-          // display them directly so the user always sees something.
-          if (movies.length === 0 && extracted.length > 0) {
+          // display them directly — UNIQUEMENT si aucune plateforme sélectionnée (sinon on risque
+          // de montrer des films absents des plateformes de l'utilisateur).
+          if (movies.length === 0 && extracted.length > 0 && !userPlatformIds?.length) {
             console.log("[PICK-DEBUG] ⚠️ Safety net activé — films filtrés, fallback sur extracted brut");
             movies = extracted.slice(0, desiredCount) as MovieDetail[];
           }
