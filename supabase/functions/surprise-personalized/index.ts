@@ -15,25 +15,29 @@ async function getMovieDetails(id: number, type: "movie" | "tv" = "movie"): Prom
     if (!res.ok) return null;
     const text = await res.text();
     if (!text) return null;
-    try { return JSON.parse(text); } catch { return null; }
-  } catch { return null; }
+    try {
+      return JSON.parse(text);
+    } catch {
+      return null;
+    }
+  } catch {
+    return null;
+  }
 }
 
-// Returns TMDB provider IDs available in France (flatrate + free + ads).
-// Returns empty array on error so callers can decide whether to include the film.
 async function getProviderIdsFR(tmdbId: number, mediaType: "movie" | "tv"): Promise<number[]> {
   try {
-    const res = await fetch(`https://api.themoviedb.org/3/${mediaType}/${tmdbId}/watch/providers?api_key=${TMDB_API_KEY}`);
+    const res = await fetch(
+      `https://api.themoviedb.org/3/${mediaType}/${tmdbId}/watch/providers?api_key=${TMDB_API_KEY}`,
+    );
     if (!res.ok) return [];
     const data = await res.json();
     const fr = data?.results?.FR;
     if (!fr) return [];
-    return [
-      ...(fr.flatrate || []),
-      ...(fr.free    || []),
-      ...(fr.ads     || []),
-    ].map((p: any) => Number(p.provider_id));
-  } catch { return []; }
+    return [...(fr.flatrate || []), ...(fr.free || []), ...(fr.ads || [])].map((p: any) => Number(p.provider_id));
+  } catch {
+    return [];
+  }
 }
 
 async function safeFetchJson(url: string): Promise<any> {
@@ -42,8 +46,14 @@ async function safeFetchJson(url: string): Promise<any> {
     if (!res.ok) return null;
     const text = await res.text();
     if (!text) return null;
-    try { return JSON.parse(text); } catch { return null; }
-  } catch { return null; }
+    try {
+      return JSON.parse(text);
+    } catch {
+      return null;
+    }
+  } catch {
+    return null;
+  }
 }
 
 serve(async (req) => {
@@ -51,19 +61,28 @@ serve(async (req) => {
 
   try {
     const {
-      tasteProfile, userTasteVector,
-      platformIds, excludeIds, excludedPlatformIds, excludedGenres,
-      minRating: rawMinRating, rejectionContext,
-      explorationLevel: rawExplorationLevel, mediaType: rawMediaType,
-      count: rawCount, maxDuration: rawMaxDuration,
+      tasteProfile,
+      userTasteVector,
+      platformIds,
+      excludeIds,
+      excludedPlatformIds,
+      excludedGenres,
+      minRating: rawMinRating,
+      rejectionContext,
+      explorationLevel: rawExplorationLevel,
+      mediaType: rawMediaType,
+      count: rawCount,
+      maxDuration: rawMaxDuration,
       minMatchScore: rawMinMatchScore,
       likedMovies,
     } = await req.json();
 
     const requestedCount = Math.max(1, Math.min(typeof rawCount === "number" ? rawCount : 3, 20));
     const minRating = typeof rawMinRating === "number" ? Math.min(rawMinRating, 8) : 0;
-    const explorationLevel = typeof rawExplorationLevel === "number" ? Math.max(0, Math.min(10, rawExplorationLevel)) : 5;
-    const mediaType: "movie" | "tv" | "both" = rawMediaType === "tv" ? "tv" : rawMediaType === "movie" ? "movie" : "both";
+    const explorationLevel =
+      typeof rawExplorationLevel === "number" ? Math.max(0, Math.min(10, rawExplorationLevel)) : 5;
+    const mediaType: "movie" | "tv" | "both" =
+      rawMediaType === "tv" ? "tv" : rawMediaType === "movie" ? "movie" : "both";
     const minMatchScore = typeof rawMinMatchScore === "number" ? Math.max(0, Math.min(100, rawMinMatchScore)) : 60;
     const maxDuration = typeof rawMaxDuration === "number" && rawMaxDuration > 0 ? rawMaxDuration : null;
     const searchType: "movie" | "tv" = mediaType === "both" ? (Math.random() < 0.5 ? "movie" : "tv") : mediaType;
@@ -73,75 +92,79 @@ serve(async (req) => {
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
-    // Extract user_id from the JWT sent by the Supabase client
-    let userId: string | null = null;
-    try {
-      const jwt = req.headers.get("Authorization")?.replace("Bearer ", "");
-      if (jwt) {
-        const payload = JSON.parse(atob(jwt.split(".")[1]));
-        userId = payload.sub ?? null;
-      }
-    } catch { /* anonymous or invalid token — userId stays null */ }
-
-    // ── Normalize excluded IDs ──
-    const normalizedExcludeIds = [...new Set([
-      ...(likedMovies || []).map((m: any) => Number(m.tmdb_id || m.id)).filter(Number.isFinite),
-      ...((excludeIds || []).map((id: any) => Number(id)).filter(Number.isFinite)),
-      ...(tasteProfile?.excludeIds || []).map((id: any) => Number(id)).filter(Number.isFinite),
-    ])];
+    const normalizedExcludeIds = [
+      ...new Set([
+        ...(likedMovies || []).map((m: any) => Number(m.tmdb_id || m.id)).filter(Number.isFinite),
+        ...(excludeIds || []).map((id: any) => Number(id)).filter(Number.isFinite),
+        ...(tasteProfile?.excludeIds || []).map((id: any) => Number(id)).filter(Number.isFinite),
+      ]),
+    ];
     const excludedSet = new Set(normalizedExcludeIds);
 
-    // ── Profile summary ──
     const topGenres = tasteProfile?.topGenres || [];
     const tasteClusters = tasteProfile?.tasteClusters || [];
     const rejectedClusters = tasteProfile?.rejectedClusters || [];
     const confidence = tasteProfile?.confidence || { score: 50 };
     const stats = tasteProfile?.stats || {};
-    const likedTitles = (likedMovies || []).slice(0, 15).map((m: any) => m.title).filter(Boolean);
+    const likedTitles = (likedMovies || [])
+      .slice(0, 15)
+      .map((m: any) => m.title)
+      .filter(Boolean);
     const fatigueState = tasteProfile?.fatigueState || {};
     const fatiguedGenres = Object.entries(fatigueState)
       .filter(([k, v]) => k.startsWith("genre_") && (v as number) >= 3)
       .map(([k]) => k.replace("genre_", ""));
 
-    // Genre ID map for discover/trending fallback (TMDB movie genre IDs)
     const genreNameToId: Record<string, number> = {
-      "Action": 28, "Aventure": 12, "Animation": 16, "Comédie": 35, "Crime": 80,
-      "Documentaire": 99, "Drame": 18, "Famille": 10751, "Familial": 10751, "Fantastique": 14,
-      "Histoire": 36, "Horreur": 27, "Musique": 10402, "Mystère": 9648,
-      "Romance": 10749, "Science-Fiction": 878, "Thriller": 53, "Guerre": 10752, "Western": 37,
+      Action: 28,
+      Aventure: 12,
+      Animation: 16,
+      Comédie: 35,
+      Crime: 80,
+      Documentaire: 99,
+      Drame: 18,
+      Famille: 10751,
+      Familial: 10751,
+      Fantastique: 14,
+      Histoire: 36,
+      Horreur: 27,
+      Musique: 10402,
+      Mystère: 9648,
+      Romance: 10749,
+      "Science-Fiction": 878,
+      Thriller: 53,
+      Guerre: 10752,
+      Western: 37,
     };
 
-    // TV shows in movie_embeddings use different genre names (TMDB TV genre system).
-    // Map each movie genre to its TV equivalents so SQL filters work for both types.
     const tvGenreEquivalents: Record<string, string[]> = {
-      "Action":          ["Action & Adventure"],
-      "Aventure":        ["Action & Adventure"],
+      Action: ["Action & Adventure"],
+      Aventure: ["Action & Adventure"],
       "Science-Fiction": ["Science-Fiction & Fantastique", "Sci-Fi & Fantasy"],
-      "Fantastique":     ["Science-Fiction & Fantastique", "Sci-Fi & Fantasy"],
-      "Animation":       ["Kids", "Animation"],
-      "Famille":         ["Kids", "Familial"],
-      "Familial":        ["Kids", "Famille"],
-      "Guerre":          ["War & Politics"],
-      "Crime":           ["Crime"],
-      "Horreur":         ["Horreur"],
+      Fantastique: ["Science-Fiction & Fantastique", "Sci-Fi & Fantasy"],
+      Animation: ["Kids", "Animation"],
+      Famille: ["Kids", "Familial"],
+      Familial: ["Kids", "Famille"],
+      Guerre: ["War & Politics"],
+      Crime: ["Crime"],
+      Horreur: ["Horreur"],
     };
 
-    // Expand liked genres to include TV equivalents
-    const likedWithTv = topGenres.length >= 2
-      ? [...new Set([
-          ...(topGenres as string[]),
-          ...(topGenres as string[]).flatMap((g) => tvGenreEquivalents[g] ?? []),
-        ])]
-      : [];
+    const likedWithTv =
+      topGenres.length >= 2
+        ? [
+            ...new Set([
+              ...(topGenres as string[]),
+              ...(topGenres as string[]).flatMap((g) => tvGenreEquivalents[g] ?? []),
+            ]),
+          ]
+        : [];
 
-    // Auto-exclude only low-quality content formats — not narrative genres like Drame/Comédie
-    // which co-occur heavily with liked genres and would eliminate too many good films.
     const hardExcludedFormats = ["Reality", "Soap", "Talk", "News", "Téléfilm", "Horreur"];
     const autoExcluded = hardExcludedFormats.filter((g) => !likedWithTv.includes(g));
     const effectiveExcludedGenres = [...new Set([...(excludedGenres || []), ...autoExcluded])];
 
     const excludedGenreIds = new Set(effectiveExcludedGenres.map((g: string) => genreNameToId[g]).filter(Boolean));
-    // Genre IDs the user actively likes — used to filter trending/discover fallback
     const likedGenreIds = new Set((topGenres as string[]).map((g) => genreNameToId[g]).filter(Boolean));
 
     const isMovieAllowed = (movie: any): boolean => {
@@ -151,7 +174,6 @@ serve(async (req) => {
       return true;
     };
 
-    // Stricter check for trending fallback: genre must overlap with liked genres (if profile is built)
     const isGenreCompatibleForFallback = (movie: any): boolean => {
       if (likedGenreIds.size === 0) return true;
       return movie.genre_ids?.some((gid: number) => likedGenreIds.has(gid)) ?? true;
@@ -162,7 +184,12 @@ serve(async (req) => {
         fetch(`${SUPABASE_URL}/functions/v1/generate-embedding`, {
           method: "POST",
           headers: { "Content-Type": "application/json", Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}` },
-          body: JSON.stringify({ tmdbId: m.id, title: m.title || m.name, overview: m.overview, genres: (m.genres || []).map((g: any) => g.name) }),
+          body: JSON.stringify({
+            tmdbId: m.id,
+            title: m.title || m.name,
+            overview: m.overview,
+            genres: (m.genres || []).map((g: any) => g.name),
+          }),
         }).catch(() => {});
       }
     };
@@ -172,7 +199,6 @@ serve(async (req) => {
     if (SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY && userTasteVector) {
       try {
         const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-        // Request 100 so IVFFlat ANN scan + filters still yield 50, then slice.
         const { data, error: rpcError } = await supabase.rpc("match_movies_for_recommendation", {
           query_vector: `[${userTasteVector.join(",")}]`,
           match_count: 100,
@@ -186,8 +212,9 @@ serve(async (req) => {
         });
         if (rpcError) console.error("SQL RPC error:", rpcError);
         if (data) candidates = (data as any[]).slice(0, 50);
-
-        console.log(`[SP] SQL candidates: ${candidates.length} | liked: [${likedWithTv.slice(0, 4).join(", ")}...] | excluded: ${effectiveExcludedGenres.length} genres | excludeIds: ${normalizedExcludeIds.length}`);
+        console.log(
+          `[SP] SQL candidates: ${candidates.length} | liked: [${likedWithTv.slice(0, 4).join(", ")}...] | excluded: ${effectiveExcludedGenres.length} genres | excludeIds: ${normalizedExcludeIds.length}`,
+        );
       } catch (e) {
         console.error("SQL vector search failed:", e);
       }
@@ -195,18 +222,15 @@ serve(async (req) => {
       console.log(`[SP] SQL skipped — userTasteVector: ${!!userTasteVector}, SUPABASE_URL: ${!!SUPABASE_URL}`);
     }
 
-    // ── ÉTAPE 2 : LLM — sélection + scoring + textes complets ──
+    // ── ÉTAPE 2 : LLM — sélection + scoring ──
     let llmSelections: any[] = [];
     let llmFilteredAll = false;
     const targetLLMCount = requestedCount;
-    const llmPoolSize = 20; // Always evaluate top 20 from SQL, select targetLLMCount best
-    let llmPool: any[] = []; // Pool effectif envoyé au LLM (après pré-filtre plateforme)
+    const llmPoolSize = 20;
+    let llmPool: any[] = [];
 
     if (candidates.length >= 1) {
-
       // ── ÉTAPE 1.5 : Pré-filtrage plateforme avant LLM ──
-      // Fetch platform availability in parallel so the LLM only sees films
-      // that are actually streamable on the user's platforms.
       let topPool = candidates.slice(0, llmPoolSize);
       if (platformIds?.length > 0) {
         const platformChecks = await Promise.all(
@@ -215,30 +239,37 @@ serve(async (req) => {
             const available = await getProviderIdsFR(Number(c.tmdb_id), itemType);
             const ok = available.some((pid: number) => platformIds.includes(pid));
             return ok ? c : null;
-          })
+          }),
         );
         const filtered = platformChecks.filter(Boolean);
-        console.log(`[SP] Pré-filtre plateforme: ${topPool.length} → ${filtered.length} disponibles sur plateformes [${platformIds.join(",")}]`);
-        // If too many are filtered out, relax and keep unfiltered pool (avoid 0 candidates for LLM)
+        console.log(
+          `[SP] Pré-filtre plateforme: ${topPool.length} → ${filtered.length} disponibles sur plateformes [${platformIds.join(",")}]`,
+        );
         topPool = filtered.length >= requestedCount ? filtered : topPool;
       }
       llmPool = topPool;
 
       const candidateList = topPool
-        .map((c: any, i: number) => `[${i + 1}] id=${c.tmdb_id} | "${c.title}" (${c.year || "?"}) | ${(c.genres || []).slice(0, 3).join(", ")} | ⭐${c.vote_average > 0 ? c.vote_average.toFixed(1) : "?"}/10`)
+        .map(
+          (c: any, i: number) =>
+            `[${i + 1}] id=${c.tmdb_id} | "${c.title}" (${c.year || "?"}) | ${(c.genres || []).slice(0, 3).join(", ")} | ⭐${c.vote_average > 0 ? c.vote_average.toFixed(1) : "?"}/10`,
+        )
         .join("\n");
 
-      console.log(`[SP] Top ${topPool.length} envoyés au LLM (sur ${candidates.length} candidats SQL):\n${candidateList}`);
+      console.log(
+        `[SP] Top ${topPool.length} envoyés au LLM (sur ${candidates.length} candidats SQL):\n${candidateList}`,
+      );
 
       const rejectionNote = rejectionContext
         ? `\nDERNIER FILM REFUSÉ : "${rejectionContext.rejectedTitle}" — Ne propose rien de similaire.`
         : "";
 
-      const explorationNote = explorationLevel >= 7
-        ? "MODE DÉCOUVERTE : Privilégie des pépites moins connues ou des genres adjacents."
-        : explorationLevel <= 2
-        ? "MODE PRÉCISION : Reste très proche des genres et clusters favoris."
-        : "";
+      const explorationNote =
+        explorationLevel >= 7
+          ? "MODE DÉCOUVERTE : Privilégie des pépites moins connues ou des genres adjacents."
+          : explorationLevel <= 2
+            ? "MODE PRÉCISION : Reste très proche des genres et clusters favoris."
+            : "";
 
       const systemPrompt = `Tu es Pick, moteur de recommandation cinéphile. Sélectionne les meilleurs films depuis une liste pré-validée.
 
@@ -297,16 +328,18 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
           const raw = await response.text();
           const aiData = JSON.parse(raw);
           const content = aiData?.choices?.[0]?.message?.content || "";
-          const jsonStr = content.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
+          const jsonStr = content
+            .replace(/```json\n?/g, "")
+            .replace(/```\n?/g, "")
+            .trim();
           const parsed = JSON.parse(jsonStr);
           if (parsed.selections && Array.isArray(parsed.selections)) {
-            // Normalize tmdb_id to number (LLM sometimes returns strings)
             const validIds = new Set(topPool.map((c: any) => Number(c.tmdb_id)));
             const idValid = parsed.selections.filter((s: any) => s.tmdb_id && validIds.has(Number(s.tmdb_id)));
-            // Pass ALL valid LLM selections to movie-match — it is the authoritative scorer.
-            // The LLM's own matchScore is only used for ordering, not as a gate.
             llmSelections = idValid.map((s: any) => ({ ...s, tmdb_id: Number(s.tmdb_id) }));
-            console.log(`[SP] LLM raw selections: ${parsed.selections.length}, valid: ${llmSelections.length}, minMatchScore (used by movie-match): ${minMatchScore}`);
+            console.log(
+              `[SP] LLM raw selections: ${parsed.selections.length}, valid: ${llmSelections.length}, minMatchScore (used by movie-match): ${minMatchScore}`,
+            );
           }
         } else {
           console.error(`[SP] LLM gateway error: ${response.status}`);
@@ -318,7 +351,7 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
       console.log(`[SP] LLM skipped — not enough candidates: ${candidates.length}`);
     }
 
-    // ── ÉTAPE 3 : TMDB — enrichissement en batch pour les films sélectionnés ──
+    // ── ÉTAPE 3 : TMDB — enrichissement en batch ──
     const movies: any[] = [];
     const usedIds = new Set<number>();
     const tmdbDiag: { id: number; title: string; type: string; ok: boolean; reason?: string }[] = [];
@@ -332,36 +365,58 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
           const detail = await getMovieDetails(sel.tmdb_id, itemType);
           if (!detail) {
             console.warn(`[SP] TMDB null for id=${sel.tmdb_id} type=${itemType} (rawType=${rawType})`);
-            tmdbDiag.push({ id: sel.tmdb_id, title: candidate?.title || "?", type: itemType, ok: false, reason: "TMDB returned null" });
+            tmdbDiag.push({
+              id: sel.tmdb_id,
+              title: candidate?.title || "?",
+              type: itemType,
+              ok: false,
+              reason: "TMDB returned null",
+            });
             return null;
           }
           if (usedIds.has(detail.id)) {
-            tmdbDiag.push({ id: sel.tmdb_id, title: candidate?.title || "?", type: itemType, ok: false, reason: "duplicate id" });
+            tmdbDiag.push({
+              id: sel.tmdb_id,
+              title: candidate?.title || "?",
+              type: itemType,
+              ok: false,
+              reason: "duplicate id",
+            });
             return null;
           }
           if (maxDuration && itemType === "movie" && (detail.runtime || 0) > maxDuration) {
-            tmdbDiag.push({ id: sel.tmdb_id, title: candidate?.title || "?", type: itemType, ok: false, reason: `${detail.runtime}min > limite ${maxDuration}min` });
+            tmdbDiag.push({
+              id: sel.tmdb_id,
+              title: candidate?.title || "?",
+              type: itemType,
+              ok: false,
+              reason: `${detail.runtime}min > limite ${maxDuration}min`,
+            });
             return null;
           }
-          // Platform check: if the user selected platforms, verify the film is available on at least one.
           if (platformIds?.length > 0) {
             const available = await getProviderIdsFR(sel.tmdb_id, itemType);
             const onPlatform = available.some((pid: number) => platformIds.includes(pid));
             if (!onPlatform) {
-              tmdbDiag.push({ id: sel.tmdb_id, title: candidate?.title || "?", type: itemType, ok: false, reason: "hors plateformes" });
+              tmdbDiag.push({
+                id: sel.tmdb_id,
+                title: candidate?.title || "?",
+                type: itemType,
+                ok: false,
+                reason: "hors plateformes",
+              });
               return null;
             }
           }
           tmdbDiag.push({ id: sel.tmdb_id, title: candidate?.title || "?", type: itemType, ok: true });
           return { detail, sel };
-        })
+        }),
       );
 
       for (const r of tmdbResults) {
         if (!r) continue;
         if (usedIds.has(r.detail.id)) continue;
         usedIds.add(r.detail.id);
-        // Return lean texts — no headline/detailedExplanation so movie-match will score all candidates
         movies.push({
           movie: r.detail,
           reason: r.sel.reason || "Ce film correspond à tes goûts.",
@@ -375,13 +430,14 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
       }
     }
 
-    // ── ÉTAPE 4 : Fallback si pas assez de résultats ──
-    // Max 4 tentatives discover ciblées, puis trending sans filtre
+    // ── ÉTAPE 4 : Fallback ──
     if (movies.length < requestedCount) {
       console.log(`[SP] Fallback needed: have ${movies.length}/${requestedCount}`);
       for (let attempt = 0; attempt < 4 && movies.length < requestedCount; attempt++) {
         const params = new URLSearchParams({
-          api_key: TMDB_API_KEY, language: "fr-FR", sort_by: "popularity.desc",
+          api_key: TMDB_API_KEY,
+          language: "fr-FR",
+          sort_by: "popularity.desc",
           "vote_count.gte": "50",
           page: String(Math.floor(Math.random() * 5) + 1),
         });
@@ -394,17 +450,23 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
           params.set("watch_region", "FR");
         }
         const data = await safeFetchJson(`https://api.themoviedb.org/3/discover/${searchType}?${params}`);
-        const found = (data?.results || []).find((r: any) => isMovieAllowed(r) && isGenreCompatibleForFallback(r) && !usedIds.has(r.id));
+        const found = (data?.results || []).find(
+          (r: any) => isMovieAllowed(r) && isGenreCompatibleForFallback(r) && !usedIds.has(r.id),
+        );
         if (!found) continue;
         const detail = await getMovieDetails(found.id, searchType);
         if (!detail || usedIds.has(detail.id)) continue;
         usedIds.add(detail.id);
         fireEmbedding(detail);
-        movies.push({ movie: detail, reason: "Ce film correspond à tes genres préférés.", confidence: minMatchScore, recommendationTexts: null });
+        movies.push({
+          movie: detail,
+          reason: "Ce film correspond à tes genres préférés.",
+          confidence: minMatchScore,
+          recommendationTexts: null,
+        });
       }
     }
 
-    // Fallback ultime : trending/popular — respecte toujours les exclusions et genres
     for (const url of [
       `https://api.themoviedb.org/3/trending/${searchType}/week?api_key=${TMDB_API_KEY}&language=fr-FR`,
       `https://api.themoviedb.org/3/${searchType}/popular?api_key=${TMDB_API_KEY}&language=fr-FR&page=1`,
@@ -412,18 +474,25 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
     ]) {
       if (movies.length >= requestedCount) break;
       const data = await safeFetchJson(url);
-      for (const r of (data?.results || [])) {
+      for (const r of data?.results || []) {
         if (movies.length >= requestedCount) break;
         if (usedIds.has(r.id) || !isMovieAllowed(r) || !isGenreCompatibleForFallback(r)) continue;
         const detail = await getMovieDetails(r.id, searchType);
         if (!detail || usedIds.has(detail.id)) continue;
         usedIds.add(detail.id);
         fireEmbedding(detail);
-        movies.push({ movie: detail, reason: "Tendance du moment.", confidence: minMatchScore, recommendationTexts: null });
+        movies.push({
+          movie: detail,
+          reason: "Tendance du moment.",
+          confidence: minMatchScore,
+          recommendationTexts: null,
+        });
       }
     }
 
-    console.log(`[SP] Final: ${movies.length} movies, mode: ${llmSelections.length > 0 ? "retrieve-rerank" : "fallback"}`);
+    console.log(
+      `[SP] Final: ${movies.length} movies, mode: ${llmSelections.length > 0 ? "retrieve-rerank" : "fallback"}`,
+    );
 
     const toDebugRow = (c: any) => ({
       id: c.tmdb_id,
@@ -435,41 +504,43 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
       type: c.media_type,
     });
 
-    return new Response(JSON.stringify({
-      movies,
-      movie: movies[0]?.movie || null,
-      reason: movies[0]?.reason || "",
-      confidence: movies[0]?.confidence || minMatchScore,
-      engineMeta: {
-        profileConfidence: confidence.score,
-        mode: llmSelections.length > 0 ? "retrieve-rerank" : "discover-fallback",
-        candidatesFound: candidates.length,
-        llmSelected: llmSelections.length,
-        finalCount: movies.length,
-        noSQLCandidates: candidates.length === 0,
-        llmFilteredAll,
-        filtersRelaxed: llmFilteredAll || (candidates.length === 0 && minRating > 0),
-      },
-      debugData: {
-        filters: {
-          excludeCount: normalizedExcludeIds.length,
-          minRating,
-          maxDuration: maxDuration ?? null,
-          likedGenres: likedWithTv,
-          effectiveExcludedGenres,
+    return new Response(
+      JSON.stringify({
+        movies,
+        movie: movies[0]?.movie || null,
+        reason: movies[0]?.reason || "",
+        confidence: movies[0]?.confidence || minMatchScore,
+        engineMeta: {
+          profileConfidence: confidence.score,
+          mode: llmSelections.length > 0 ? "retrieve-rerank" : "discover-fallback",
+          candidatesFound: candidates.length,
+          llmSelected: llmSelections.length,
+          finalCount: movies.length,
+          noSQLCandidates: candidates.length === 0,
+          llmFilteredAll,
+          filtersRelaxed: llmFilteredAll || (candidates.length === 0 && minRating > 0),
         },
-        sql50: candidates.map(toDebugRow),
-        top20: llmPool.length > 0 ? llmPool.map(toDebugRow) : candidates.slice(0, llmPoolSize).map(toDebugRow),
-        tmdbEnrichment: tmdbDiag,
-        llmSelections: llmSelections.map((s: any) => ({
-          id: s.tmdb_id,
-          title: candidates.find((c: any) => Number(c.tmdb_id) === Number(s.tmdb_id))?.title || "?",
-          matchScore: s.matchScore,
-          reason: s.reason,
-        })),
-      },
-    }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
-
+        debugData: {
+          filters: {
+            excludeCount: normalizedExcludeIds.length,
+            minRating,
+            maxDuration: maxDuration ?? null,
+            likedGenres: likedWithTv,
+            effectiveExcludedGenres,
+          },
+          sql50: candidates.map(toDebugRow),
+          top20: llmPool.length > 0 ? llmPool.map(toDebugRow) : candidates.slice(0, llmPoolSize).map(toDebugRow),
+          tmdbEnrichment: tmdbDiag,
+          llmSelections: llmSelections.map((s: any) => ({
+            id: s.tmdb_id,
+            title: candidates.find((c: any) => Number(c.tmdb_id) === Number(s.tmdb_id))?.title || "?",
+            matchScore: s.matchScore,
+            reason: s.reason,
+          })),
+        },
+      }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+    );
   } catch (e) {
     console.error("surprise-personalized error:", e);
     return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Erreur" }), {
