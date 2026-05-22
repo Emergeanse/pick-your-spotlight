@@ -225,12 +225,12 @@ const QuickFilters = ({ filters, onFiltersChange, profileDefaults }: QuickFilter
                     <Star className="w-3 h-3 text-foreground/40" />
                     <p className="text-foreground/50 text-[11px] font-sans font-medium uppercase tracking-wider">Note minimale</p>
                   </div>
-                  <div className="bg-foreground/5 rounded-lg p-3">
+                  <div className="bg-foreground/5 rounded-lg p-3 opacity-50">
                     <div className="flex items-center justify-between mb-2">
-                      <span className="font-sans text-[12px] font-medium">{filters.minRating === 0 ? "Peu importe" : `${filters.minRating}+ / 10`}</span>
-                      {filters.minRating >= 8 && <span className="text-[10px] font-sans text-destructive/70">Très restrictif</span>}
+                      <span className="font-sans text-[12px] font-medium">6+ / 10</span>
+                      <span className="text-[10px] font-sans text-foreground/40">Géré automatiquement</span>
                     </div>
-                    <Slider value={[filters.minRating]} onValueChange={([v]) => onFiltersChange({ ...filters, minRating: v })} min={0} max={8} step={0.5} className="w-full" />
+                    <Slider value={[6]} min={0} max={8} step={0.5} className="w-full" disabled />
                   </div>
                 </div>
               </div>

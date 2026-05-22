@@ -239,15 +239,15 @@ const Profile = () => {
               </Tooltip>
             </TooltipProvider>
           </div>
-          <div className="bg-card rounded-xl p-4">
+          <div className="bg-card rounded-xl p-4 opacity-50">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
-                <Star className={`w-3.5 h-3.5 ${minRating > 0 ? "text-yellow-500" : "text-foreground/20"}`} />
-                <span className="font-sans text-sm">{minRating === 0 ? "Peu importe" : `${minRating}+ / 10`}</span>
+                <Star className="w-3.5 h-3.5 text-yellow-500" />
+                <span className="font-sans text-sm">6+ / 10</span>
               </div>
-              {minRating >= 8 && <span className="text-[10px] font-sans text-destructive/70">Très restrictif</span>}
+              <span className="text-[10px] font-sans text-foreground/40">Géré automatiquement</span>
             </div>
-            <Slider value={[minRating]} onValueChange={([v]) => setMinRating(v)} min={0} max={8} step={0.5} className="w-full" />
+            <Slider value={[6]} min={0} max={8} step={0.5} className="w-full" disabled />
           </div>
         </motion.section>
 
