@@ -191,7 +191,7 @@ serve(async (req) => {
     // e.g. 2 requested → evaluates top 6, selects 2 best
     //      5 requested → evaluates top 15, selects 5 best
     const targetLLMCount = requestedCount;
-    const llmPoolSize = requestedCount * 3;
+    const llmPoolSize = Math.max(requestedCount * 3, 60);
 
     if (candidates.length >= 1) {
 

@@ -415,7 +415,7 @@ const HomeScreen = ({
             explorationLevel,
             mediaType: quickFilters.mediaType !== "both" ? quickFilters.mediaType : "both",
             maxDuration: quickFilters.maxDuration,
-            count: 20,
+            count: quickFilters.recommendationCount || RECOMMENDATION_BATCH_SIZE,
             minMatchScore: quickFilters.matchThreshold,
           });
           engineMetaResult = data?.engineMeta ?? null;
@@ -487,7 +487,7 @@ const HomeScreen = ({
           console.log("[PICK-DEBUG] engineMeta:", data?.engineMeta);
           console.groupEnd();
           const extracted = extractRecommendationMovies(data);
-          const desiredCount = 20;
+          const desiredCount = quickFilters.recommendationCount || RECOMMENDATION_BATCH_SIZE;
 
           // Fallback AI confidence scores — shown immediately while movie-match scores load
           const matchMap: Record<number, RecommendationMatch> = {};
@@ -551,7 +551,7 @@ const HomeScreen = ({
             minRating: userMinRating,
             excludedGenres: userExcludedGenres,
             mediaType: quickFilters.mediaType,
-            size: 20,
+            size: quickFilters.recommendationCount || RECOMMENDATION_BATCH_SIZE,
             preloadMatchTexts: true,
             preloadProviders: true,
             minMatchScore: quickFilters.matchThreshold,
