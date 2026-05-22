@@ -25,20 +25,6 @@ async function getMovieDetails(id: number, type: "movie" | "tv" = "movie"): Prom
   }
 }
 
-async function getProviderIdsFR(tmdbId: number, mediaType: "movie" | "tv"): Promise<number[]> {
-  try {
-    const res = await fetch(
-      `https://api.themoviedb.org/3/${mediaType}/${tmdbId}/watch/providers?api_key=${TMDB_API_KEY}`,
-    );
-    if (!res.ok) return [];
-    const data = await res.json();
-    const fr = data?.results?.FR;
-    if (!fr) return [];
-    return [...(fr.flatrate || []), ...(fr.free || []), ...(fr.ads || [])].map((p: any) => Number(p.provider_id));
-  } catch {
-    return [];
-  }
-}
 
 async function safeFetchJson(url: string): Promise<any> {
   try {
@@ -220,6 +206,7 @@ serve(async (req) => {
           liked_genres: likedWithTv,
           max_duration: maxDuration ?? null,
           p_user_id: userId ?? null,
+          p_platform_ids: platformIds?.length > 0 ? platformIds : null,
         });
         if (rpcError) console.error("SQL RPC error:", rpcError);
         if (data) candidates = data as any[];
@@ -240,26 +227,8 @@ serve(async (req) => {
     let llmPool: any[] = [];
 
     if (candidates.length >= 1) {
-      // ── ÉTAPE 1.5 : Pré-filtrage plateforme sur l'ensemble des 50 candidats SQL ──
-      // On cherche jusqu'à llmPoolSize films sur les plateformes de l'utilisateur
-      // parmi TOUS les candidats SQL (pas seulement le top-20).
-      let topPool = candidates.slice(0, llmPoolSize);
-      if (platformIds?.length > 0) {
-        console.log(`[SP] Pré-filtre plateforme: vérification de ${candidates.length} candidats sur plateformes [${platformIds.join(",")}]`);
-        const allChecks = await Promise.all(
-          candidates.map(async (c: any) => {
-            const itemType: "movie" | "tv" = c.media_type === "tv" ? "tv" : "movie";
-            const available = await getProviderIdsFR(Number(c.tmdb_id), itemType);
-            const ok = available.some((pid: number) => platformIds.includes(pid));
-            console.log(`[SP]   ${ok ? "✓" : "✗"} ${c.title} (id=${c.tmdb_id}) — providers FR: [${available.join(",")}]`);
-            return ok ? c : null;
-          }),
-        );
-        const filtered = (allChecks.filter(Boolean) as any[]).slice(0, llmPoolSize);
-        console.log(`[SP] Pré-filtre plateforme: ${filtered.length}/${candidates.length} films sur plateformes`);
-        if (filtered.length === 0) console.log(`[SP] ⚠️ Aucun film sur plateformes — pool non filtré utilisé`);
-        topPool = filtered.length > 0 ? filtered : candidates.slice(0, llmPoolSize);
-      }
+      // Filtre plateforme déjà appliqué en SQL (p_platform_ids) — plus de pré-filtre à la volée.
+      const topPool = candidates.slice(0, llmPoolSize);
       llmPool = topPool;
       const targetLLMCount = topPool.length;
 
@@ -408,20 +377,7 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
             });
             return null;
           }
-          if (platformIds?.length > 0) {
-            const available = await getProviderIdsFR(sel.tmdb_id, itemType);
-            const onPlatform = available.some((pid: number) => platformIds.includes(pid));
-            if (!onPlatform) {
-              tmdbDiag.push({
-                id: sel.tmdb_id,
-                title: candidate?.title || "?",
-                type: itemType,
-                ok: false,
-                reason: "hors plateformes",
-              });
-              return null;
-            }
-          }
+          // Filtre plateforme déjà fait en SQL — pas de re-vérification TMDB ici.
           tmdbDiag.push({ id: sel.tmdb_id, title: candidate?.title || "?", type: itemType, ok: true });
           return { detail, sel };
         }),

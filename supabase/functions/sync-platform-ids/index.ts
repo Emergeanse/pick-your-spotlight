@@ -8,9 +8,7 @@ const corsHeaders = {
 };
 
 const TMDB_API_KEY = "2dca580c2a14b55200e784d157207b4d";
-
-// Nombre de films traités en parallèle — TMDB tolère ~40 req/10s
-const PARALLEL_BATCH = 20;
+const PARALLEL = 30; // appels TMDB simultanés — TMDB tolère ~40 req/10s
 
 async function getProviderIdsFR(tmdbId: number, mediaType: "movie" | "tv"): Promise<number[]> {
   try {
@@ -39,23 +37,17 @@ serve(async (req) => {
 
     const body = req.method === "POST" ? await req.json().catch(() => ({})) : {};
     const {
-      // Mode refresh : true = re-vérifie tous les films, false = seulement les vides
+      // forceRefresh=true : re-vérifie tous les films (y compris ceux déjà renseignés)
       forceRefresh = false,
-      // Taille du lot à traiter par appel (pour éviter le timeout des edge functions)
-      batchSize = 200,
-      // Offset pour la pagination (reprendre là où on s'est arrêtés)
-      offset = 0,
     } = body;
 
-    // ── Récupère les films à traiter ──
+    // ── Récupère tous les films à traiter en une seule requête ──
     let query = supabase
       .from("movie_embeddings")
       .select("tmdb_id, media_type, title")
-      .order("tmdb_id", { ascending: true })
-      .range(offset, offset + batchSize - 1);
+      .order("tmdb_id", { ascending: true });
 
     if (!forceRefresh) {
-      // En mode normal : seulement les films dont platform_ids est vide
       query = query.eq("platform_ids", "{}");
     }
 
@@ -64,21 +56,19 @@ serve(async (req) => {
 
     if (!films || films.length === 0) {
       return new Response(
-        JSON.stringify({ message: "Aucun film à mettre à jour.", processed: 0, updated: 0, offset }),
+        JSON.stringify({ message: "Aucun film à mettre à jour — platform_ids déjà renseignés.", processed: 0 }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 
-    console.log(`[SYNC-PLATFORMS] Traitement de ${films.length} films (offset=${offset}, forceRefresh=${forceRefresh})`);
+    console.log(`[SYNC-PLATFORMS] ${films.length} films à traiter (forceRefresh=${forceRefresh})`);
 
-    // ── Traitement par mini-lots parallèles pour respecter le rate limit TMDB ──
-    let updated = 0;
-    let errors = 0;
+    // ── Appels TMDB par lots parallèles de PARALLEL films ──
     const results: { tmdb_id: number; title: string; platform_ids: number[] }[] = [];
+    let tmdbErrors = 0;
 
-    for (let i = 0; i < films.length; i += PARALLEL_BATCH) {
-      const chunk = films.slice(i, i + PARALLEL_BATCH);
-
+    for (let i = 0; i < films.length; i += PARALLEL) {
+      const chunk = films.slice(i, i + PARALLEL);
       const chunkResults = await Promise.all(
         chunk.map(async (film: any) => {
           const itemType: "movie" | "tv" = film.media_type === "tv" ? "tv" : "movie";
@@ -86,54 +76,50 @@ serve(async (req) => {
           return { tmdb_id: film.tmdb_id, title: film.title, platform_ids: platformIds };
         }),
       );
-
       results.push(...chunkResults);
-      console.log(`[SYNC-PLATFORMS] Lot ${Math.floor(i / PARALLEL_BATCH) + 1}: ${chunkResults.length} films vérifiés`);
 
-      // Petite pause entre les lots pour rester dans le rate limit TMDB (40 req/10s)
-      if (i + PARALLEL_BATCH < films.length) {
-        await new Promise((r) => setTimeout(r, 600));
+      const batchNum = Math.floor(i / PARALLEL) + 1;
+      const totalBatches = Math.ceil(films.length / PARALLEL);
+      const withPlatforms = chunkResults.filter((r) => r.platform_ids.length > 0).length;
+      console.log(`[SYNC-PLATFORMS] Lot ${batchNum}/${totalBatches}: ${withPlatforms}/${chunk.length} ont des plateformes`);
+
+      // Pause courte entre les lots pour respecter le rate limit TMDB
+      if (i + PARALLEL < films.length) {
+        await new Promise((r) => setTimeout(r, 350));
       }
     }
 
-    // ── Mise à jour en base par batch d'upserts ──
-    for (const r of results) {
-      const { error: upsertError } = await supabase
-        .from("movie_embeddings")
-        .update({ platform_ids: r.platform_ids })
-        .eq("tmdb_id", r.tmdb_id);
-
-      if (upsertError) {
-        console.error(`[SYNC-PLATFORMS] Erreur update tmdb_id=${r.tmdb_id}: ${upsertError.message}`);
-        errors++;
-      } else {
-        updated++;
-        if (r.platform_ids.length > 0) {
-          console.log(`[SYNC-PLATFORMS] ✓ ${r.title} (${r.tmdb_id}) → [${r.platform_ids.join(",")}]`);
+    // ── Mise à jour en base — tous les résultats en parallèle ──
+    const updateErrors: number[] = [];
+    await Promise.all(
+      results.map(async (r) => {
+        const { error } = await supabase
+          .from("movie_embeddings")
+          .update({ platform_ids: r.platform_ids })
+          .eq("tmdb_id", r.tmdb_id);
+        if (error) {
+          console.error(`[SYNC-PLATFORMS] Update error tmdb_id=${r.tmdb_id}: ${error.message}`);
+          updateErrors.push(r.tmdb_id);
+          tmdbErrors++;
         }
-      }
-    }
+      }),
+    );
 
-    const hasMore = films.length === batchSize;
-    const nextOffset = offset + films.length;
+    const withPlatforms = results.filter((r) => r.platform_ids.length > 0);
+    const withoutPlatforms = results.filter((r) => r.platform_ids.length === 0);
 
     console.log(
-      `[SYNC-PLATFORMS] Terminé: ${updated} mis à jour, ${errors} erreurs. ${hasMore ? `Prochain offset: ${nextOffset}` : "Catalogue complet."}`,
+      `[SYNC-PLATFORMS] Terminé: ${withPlatforms.length} films avec plateformes, ${withoutPlatforms.length} sans plateforme FR, ${tmdbErrors} erreurs DB`,
     );
 
     return new Response(
       JSON.stringify({
-        processed: films.length,
-        updated,
-        errors,
-        hasMore,
-        nextOffset: hasMore ? nextOffset : null,
-        summary: results.map((r) => ({
-          tmdb_id: r.tmdb_id,
-          title: r.title,
-          platform_count: r.platform_ids.length,
-          platform_ids: r.platform_ids,
-        })),
+        processed: results.length,
+        withPlatforms: withPlatforms.length,
+        withoutPlatforms: withoutPlatforms.length,
+        dbErrors: tmdbErrors,
+        // Films sans aucune plateforme FR (candidats à la suppression)
+        toDelete: withoutPlatforms.map((r) => ({ tmdb_id: r.tmdb_id, title: r.title })),
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
