@@ -187,20 +187,37 @@ serve(async (req) => {
     // ── ÉTAPE 2 : LLM — sélection + scoring + textes complets ──
     let llmSelections: any[] = [];
     let llmFilteredAll = false;
-    // Rule: LLM evaluates 3× more films than it must select, taken from the top of the SQL list.
-    // e.g. 2 requested → evaluates top 6, selects 2 best
-    //      5 requested → evaluates top 15, selects 5 best
     const targetLLMCount = requestedCount;
     const llmPoolSize = 20; // Always evaluate top 20 from SQL, select targetLLMCount best
+    let llmPool: any[] = []; // Pool effectif envoyé au LLM (après pré-filtre plateforme)
 
     if (candidates.length >= 1) {
 
-      const topPool = candidates.slice(0, llmPoolSize);
+      // ── ÉTAPE 1.5 : Pré-filtrage plateforme avant LLM ──
+      // Fetch platform availability in parallel so the LLM only sees films
+      // that are actually streamable on the user's platforms.
+      let topPool = candidates.slice(0, llmPoolSize);
+      if (platformIds?.length > 0) {
+        const platformChecks = await Promise.all(
+          topPool.map(async (c: any) => {
+            const itemType: "movie" | "tv" = c.media_type === "tv" ? "tv" : "movie";
+            const available = await getProviderIdsFR(Number(c.tmdb_id), itemType);
+            const ok = available.some((pid: number) => platformIds.includes(pid));
+            return ok ? c : null;
+          })
+        );
+        const filtered = platformChecks.filter(Boolean);
+        console.log(`[SP] Pré-filtre plateforme: ${topPool.length} → ${filtered.length} disponibles sur plateformes [${platformIds.join(",")}]`);
+        // If too many are filtered out, relax and keep unfiltered pool (avoid 0 candidates for LLM)
+        topPool = filtered.length >= requestedCount ? filtered : topPool;
+      }
+      llmPool = topPool;
+
       const candidateList = topPool
         .map((c: any, i: number) => `[${i + 1}] id=${c.tmdb_id} | "${c.title}" (${c.year || "?"}) | ${(c.genres || []).slice(0, 3).join(", ")} | ⭐${c.vote_average > 0 ? c.vote_average.toFixed(1) : "?"}/10`)
         .join("\n");
 
-      console.log(`[SP] Top ${llmPoolSize} envoyés au LLM (sur ${candidates.length} candidats SQL):\n${candidateList}`);
+      console.log(`[SP] Top ${topPool.length} envoyés au LLM (sur ${candidates.length} candidats SQL):\n${candidateList}`);
 
       const rejectionNote = rejectionContext
         ? `\nDERNIER FILM REFUSÉ : "${rejectionContext.rejectedTitle}" — Ne propose rien de similaire.`
@@ -431,7 +448,7 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
           effectiveExcludedGenres,
         },
         sql50: candidates.map(toDebugRow),
-        top20: candidates.slice(0, llmPoolSize).map(toDebugRow),
+        top20: llmPool.length > 0 ? llmPool.map(toDebugRow) : candidates.slice(0, llmPoolSize).map(toDebugRow),
         tmdbEnrichment: tmdbDiag,
         llmSelections: llmSelections.map((s: any) => ({
           id: s.tmdb_id,
