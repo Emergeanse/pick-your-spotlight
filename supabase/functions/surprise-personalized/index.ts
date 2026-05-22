@@ -122,6 +122,7 @@ serve(async (req) => {
           filter_media_type: mediaType === "both" ? null : searchType,
           min_rating: minRating,
           excluded_genres: excludedGenres || [],
+          liked_genres: topGenres.length >= 2 ? topGenres : [],
         });
         if (rpcError) console.error("SQL RPC error:", rpcError);
         if (data) {
@@ -141,21 +142,9 @@ serve(async (req) => {
     const targetLLMCount = requestedCount + 2;
 
     if (candidates.length >= 1) {
-      // Pre-filter: keep only candidates with at least one liked genre.
-      // "Not selected" genres are treated as unwanted — the LLM must never pick them.
-      // Relax only if filtering leaves too few candidates for the LLM to work with.
-      let filteredCandidates = candidates;
-      if (topGenres.length >= 2) {
-        const withLikedGenre = candidates.filter((c: any) =>
-          (c.genres || []).some((g: string) => (topGenres as string[]).includes(g))
-        );
-        if (withLikedGenre.length >= Math.ceil(targetLLMCount / 2)) {
-          filteredCandidates = withLikedGenre;
-          console.log(`[SP] Genre pre-filter: ${candidates.length} → ${filteredCandidates.length} candidates`);
-        } else {
-          console.log(`[SP] Genre pre-filter skipped (would leave only ${withLikedGenre.length} candidates)`);
-        }
-      }
+      // SQL already filtered by liked_genres — all candidates have at least one liked genre.
+      // filteredCandidates alias kept for downstream validIds consistency.
+      const filteredCandidates = candidates;
 
       const candidateList = filteredCandidates
         .map((c, i) => `[${i + 1}] id=${c.tmdb_id} | "${c.title}" (${c.year || "?"}) | ${(c.genres || []).slice(0, 3).join(", ")} | ⭐${c.vote_average > 0 ? c.vote_average.toFixed(1) : "?"}/10`)
