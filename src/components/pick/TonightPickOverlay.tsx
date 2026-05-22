@@ -74,10 +74,10 @@ const TonightPickOverlay = ({
               backgroundImage: `url(${getBackdropUrl(movie.backdrop_path) || getPosterUrl(movie.poster_path, "w780")})`,
             }}
           />
-          {/* Deep gradient: transparent top → semi-opaque bottom for legibility */}
-          <div className="absolute inset-0 bg-gradient-to-t from-background/75 via-background/55 to-transparent" />
-          {/* Subtle vignette sides */}
-          <div className="absolute inset-0 bg-gradient-to-r from-background/40 via-transparent to-background/40" />
+          {/* Dark overlay for legibility — uses black so image texture stays visible */}
+          <div className="absolute inset-0 bg-black/45" />
+          {/* Gradient fades the top lighter and keeps center readable */}
+          <div className="absolute inset-0 bg-gradient-to-t from-transparent via-black/20 to-black/40" />
 
           {/* Top bar — Retour + label */}
           <div className="relative z-10 flex justify-between items-center px-5 pt-[calc(1rem+env(safe-area-inset-top))]">
