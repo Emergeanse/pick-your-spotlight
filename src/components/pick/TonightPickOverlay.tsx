@@ -74,8 +74,8 @@ const TonightPickOverlay = ({
               backgroundImage: `url(${getBackdropUrl(movie.backdrop_path) || getPosterUrl(movie.poster_path, "w780")})`,
             }}
           />
-          {/* Deep gradient: transparent top → near-opaque bottom for legibility */}
-          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/70 to-transparent" />
+          {/* Deep gradient: transparent top → semi-opaque bottom for legibility */}
+          <div className="absolute inset-0 bg-gradient-to-t from-background/75 via-background/55 to-transparent" />
           {/* Subtle vignette sides */}
           <div className="absolute inset-0 bg-gradient-to-r from-background/40 via-transparent to-background/40" />
 
