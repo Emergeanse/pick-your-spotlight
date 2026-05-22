@@ -94,8 +94,9 @@ const TonightPickOverlay = ({
             </div>
           </div>
 
-          {/* Main content — anchored to bottom half (Netflix style) */}
-          <div className="relative z-10 flex-1 flex flex-col justify-end px-5 pb-[calc(4.5rem+env(safe-area-inset-bottom))]">
+          {/* Main content — scrollable, anchored to bottom half (Netflix style) */}
+          <div className="relative z-10 flex-1 overflow-y-auto overscroll-y-contain touch-pan-y">
+            <div className="min-h-full flex flex-col justify-end px-5 pb-[calc(4.5rem+env(safe-area-inset-bottom))]">
 
             {/* Poster + nav — dominant hero image */}
             {movie.poster_path && (
@@ -299,6 +300,7 @@ const TonightPickOverlay = ({
                 <MovieActionBar key={movie.id} movie={movie} onInteraction={onInteraction} />
               </div>
             </motion.div>
+            </div>
           </div>
         </motion.div>
       )}
