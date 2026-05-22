@@ -19,6 +19,23 @@ async function getMovieDetails(id: number, type: "movie" | "tv" = "movie"): Prom
   } catch { return null; }
 }
 
+// Returns TMDB provider IDs available in France (flatrate + free + ads).
+// Returns empty array on error so callers can decide whether to include the film.
+async function getProviderIdsFR(tmdbId: number, mediaType: "movie" | "tv"): Promise<number[]> {
+  try {
+    const res = await fetch(`https://api.themoviedb.org/3/${mediaType}/${tmdbId}/watch/providers?api_key=${TMDB_API_KEY}`);
+    if (!res.ok) return [];
+    const data = await res.json();
+    const fr = data?.results?.FR;
+    if (!fr) return [];
+    return [
+      ...(fr.flatrate || []),
+      ...(fr.free    || []),
+      ...(fr.ads     || []),
+    ].map((p: any) => Number(p.provider_id));
+  } catch { return []; }
+}
+
 async function safeFetchJson(url: string): Promise<any> {
   try {
     const res = await fetch(url);
@@ -297,6 +314,15 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
           if (maxDuration && itemType === "movie" && (detail.runtime || 0) > maxDuration) {
             tmdbDiag.push({ id: sel.tmdb_id, title: candidate?.title || "?", type: itemType, ok: false, reason: `${detail.runtime}min > limite ${maxDuration}min` });
             return null;
+          }
+          // Platform check: if the user selected platforms, verify the film is available on at least one.
+          if (platformIds?.length > 0) {
+            const available = await getProviderIdsFR(sel.tmdb_id, itemType);
+            const onPlatform = available.some((pid: number) => platformIds.includes(pid));
+            if (!onPlatform) {
+              tmdbDiag.push({ id: sel.tmdb_id, title: candidate?.title || "?", type: itemType, ok: false, reason: "hors plateformes" });
+              return null;
+            }
           }
           tmdbDiag.push({ id: sel.tmdb_id, title: candidate?.title || "?", type: itemType, ok: true });
           return { detail, sel };
