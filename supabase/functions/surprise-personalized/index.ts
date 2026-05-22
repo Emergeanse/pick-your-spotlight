@@ -222,7 +222,7 @@ serve(async (req) => {
           p_user_id: userId ?? null,
         });
         if (rpcError) console.error("SQL RPC error:", rpcError);
-        if (data) candidates = (data as any[]).slice(0, 50);
+        if (data) candidates = data as any[];
         console.log(
           `[SP] SQL candidates: ${candidates.length} | liked: [${likedWithTv.slice(0, 4).join(", ")}...] | excluded: ${effectiveExcludedGenres.length} genres | excludeIds: ${normalizedExcludeIds.length}`,
         );
@@ -545,7 +545,7 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
             likedGenres: likedWithTv,
             effectiveExcludedGenres,
           },
-          sql50: candidates.map(toDebugRow),
+          sql50: candidates.map(toDebugRow), // renommé sql100 en pratique
           top20: llmPool.length > 0 ? llmPool.map(toDebugRow) : candidates.slice(0, llmPoolSize).map(toDebugRow),
           tmdbEnrichment: tmdbDiag,
           llmSelections: llmSelections.map((s: any) => ({

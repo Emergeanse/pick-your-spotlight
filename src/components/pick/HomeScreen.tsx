@@ -431,7 +431,7 @@ const HomeScreen = ({
 
           console.group("[PICK-DEBUG] ═══ Pipeline de recommandation ═══");
 
-          // ── Étape 1 : SQL — 50 candidats ──
+          // ── Étape 1 : SQL — jusqu'à 100 candidats ──
           if (dbg?.sql50?.length) {
             const f = dbg.filters;
             console.group(`[PICK-DEBUG] 1️⃣ SQL — ${dbg.sql50.length} candidats (${f?.excludeCount ?? 0} films exclus — déjà interagis)`);
