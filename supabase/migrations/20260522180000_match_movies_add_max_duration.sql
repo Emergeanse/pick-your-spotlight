@@ -51,8 +51,10 @@ BEGIN
     AND (min_rating = 0 OR me.vote_average >= min_rating)
     AND (cardinality(excluded_genres) = 0 OR NOT (me.genres && excluded_genres))
     AND (cardinality(liked_genres) = 0 OR me.genres && liked_genres)
-    -- Runtime filter: only applies to movies (TV shows have no meaningful runtime per episode)
-    AND (max_duration IS NULL OR me.media_type != 'movie' OR me.runtime IS NULL OR me.runtime <= max_duration)
+    -- Runtime filter: only applies to movies (TV shows have no meaningful runtime per episode).
+    -- When max_duration is set, movies with NULL runtime are excluded — better to skip unknowns
+    -- than to surface films the LLM would waste capacity on before rejection.
+    AND (max_duration IS NULL OR me.media_type != 'movie' OR (me.runtime IS NOT NULL AND me.runtime <= max_duration))
   ORDER BY me.embedding <=> query_vector
   LIMIT match_count;
 END;
