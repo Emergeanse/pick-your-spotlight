@@ -298,6 +298,7 @@ const HomeScreen = ({
       setHistoryExcludeIds(excludeIds);
       historyExcludeIdsRef.current = excludeIds;
       setTotalEvaluated(evaluatedCount);
+      console.log("[PICK-DEBUG] ✅ Exclusions chargées au démarrage:", excludeIds.length, "IDs", excludeIds.slice(0, 30));
     });
   }, [user]);
 
@@ -309,6 +310,7 @@ const HomeScreen = ({
       loadUnifiedUserFeedbackState().then(({ excludeIds }) => {
         setHistoryExcludeIds(excludeIds);
         historyExcludeIdsRef.current = excludeIds;
+        console.log("[PICK-DEBUG] 🔄 Exclusions mises à jour après interaction:", excludeIds.length, "IDs", excludeIds.slice(0, 30));
       });
     };
     window.addEventListener("pick-feedback-changed", refresh);
@@ -360,6 +362,12 @@ const HomeScreen = ({
     const poolIds = (chatMoviesPool || []).map((m) => m.id).filter(Number.isFinite);
     const allExcludeIds = [...new Set([...excludeList, ...poolIds, ...historyExcludeIdsRef.current])];
 
+    console.log("[PICK-DEBUG] ═══ generateTonightPick ═══");
+    console.log("[PICK-DEBUG] historyExcludeIds (depuis feedback):", historyExcludeIdsRef.current.length, "IDs", historyExcludeIdsRef.current.slice(0, 20));
+    console.log("[PICK-DEBUG] rejectedIds (session):", excludeList.length, "IDs", excludeList);
+    console.log("[PICK-DEBUG] poolIds (chat pool):", poolIds.length, "IDs");
+    console.log("[PICK-DEBUG] TOTAL allExcludeIds envoyés à l'edge function:", allExcludeIds.length);
+
     setTonightLoading(true);
     setTonightProviders([]);
 
@@ -407,6 +415,9 @@ const HomeScreen = ({
             minMatchScore: quickFilters.matchThreshold,
           });
           engineMetaResult = data?.engineMeta ?? null;
+          console.log("[PICK-DEBUG] ─── Réponse edge function ───");
+          console.log("[PICK-DEBUG] engineMeta:", data?.engineMeta);
+          console.log("[PICK-DEBUG] Films retournés par LLM:", (data?.movies || []).map((m: any) => `${m.movie?.title} (id:${m.movie?.id}, score:${m.confidence}%)`));
           const extracted = extractRecommendationMovies(data);
           const desiredCount = userRecommendationCount || RECOMMENDATION_BATCH_SIZE;
 
@@ -434,9 +445,13 @@ const HomeScreen = ({
             minMatchScore: quickFilters.matchThreshold,
           });
 
+          console.log("[PICK-DEBUG] ─── Après ensureRecommendationBatch ───");
+          console.log("[PICK-DEBUG] Films finaux affichés:", movies.map((m: any) => `${m.title} (id:${m.id}, score:${getRecommendationScore(m.recommendationTexts)}%, fallback:${!m.recommendationTexts?.headline ? "oui" : "non"})`));
+
           // Safety net: if batch processing filtered everything but edge function returned results,
           // display them directly so the user always sees something.
           if (movies.length === 0 && extracted.length > 0) {
+            console.log("[PICK-DEBUG] ⚠️ Safety net activé — films filtrés, fallback sur extracted brut");
             movies = extracted.slice(0, desiredCount) as MovieDetail[];
           }
 
@@ -561,20 +576,24 @@ const HomeScreen = ({
             });
             if (!isMountedRef.current) return;
 
-            // Update pool with enriched texts. Don't filter here — the pool was already
-            // size-guaranteed by ensureRecommendationBatch; reducing it here causes disabled
-            // navigation arrows when a fallback movie scores just below threshold.
-            const scoreFloor = enrichmentThreshold ?? 60;
-            const aboveFloor = enriched.filter((m: RecommendationMovieDetail) => {
+            // Hard floor: always drop movies with a clearly unacceptable score.
+            // Soft floor: only apply if we retain enough movies to keep navigation active.
+            const hardFloor = 45;
+            const softFloor = enrichmentThreshold ?? 60;
+            const afterHardFilter = enriched.filter((m: RecommendationMovieDetail) => {
               const score = getRecommendationScore(m.recommendationTexts);
-              return score === null || score >= scoreFloor;
+              return score === null || score >= hardFloor;
             });
-            // Only reduce pool if we retain the full requested count; otherwise keep all.
-            setChatMoviesPool(aboveFloor.length >= desiredCount ? aboveFloor : enriched);
+            const aboveFloor = afterHardFilter.filter((m: RecommendationMovieDetail) => {
+              const score = getRecommendationScore(m.recommendationTexts);
+              return score === null || score >= softFloor;
+            });
+            const finalPool = aboveFloor.length >= desiredCount ? aboveFloor : afterHardFilter;
+            setChatMoviesPool(finalPool);
 
             // Update movieMatchData with richer text for the overlay's matchInfo fallback
             const richMap: Record<number, RecommendationMatch> = {};
-            (aboveFloor.length >= desiredCount ? aboveFloor : enriched).forEach((m: any) => {
+            finalPool.forEach((m: any) => {
               const t = m.recommendationTexts;
               const score = getRecommendationScore(t);
               if (m.id && score != null) {

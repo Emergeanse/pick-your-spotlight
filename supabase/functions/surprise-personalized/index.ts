@@ -84,12 +84,20 @@ serve(async (req) => {
       "Romance": 10749, "Science-Fiction": 878, "Thriller": 53, "Guerre": 10752, "Western": 37,
     };
     const excludedGenreIds = new Set((excludedGenres || []).map((g: string) => genreNameToId[g]).filter(Boolean));
+    // Genre IDs the user actively likes — used to filter trending fallback
+    const likedGenreIds = new Set((topGenres as string[]).map((g) => genreNameToId[g]).filter(Boolean));
 
     const isMovieAllowed = (movie: any): boolean => {
       if (excludedSet.has(movie.id)) return false;
       if (minRating > 0 && (movie.vote_average || 0) > 0 && (movie.vote_average || 0) < minRating) return false;
       if (excludedGenreIds.size > 0 && movie.genre_ids?.some((gid: number) => excludedGenreIds.has(gid))) return false;
       return true;
+    };
+
+    // Stricter check for trending fallback: genre must overlap with liked genres (if profile is built)
+    const isGenreCompatibleForFallback = (movie: any): boolean => {
+      if (likedGenreIds.size === 0) return true;
+      return movie.genre_ids?.some((gid: number) => likedGenreIds.has(gid)) ?? true;
     };
 
     const fireEmbedding = (m: any) => {
@@ -307,7 +315,7 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
       }
     }
 
-    // Fallback ultime : trending sans aucun filtre
+    // Fallback ultime : trending/popular — respecte toujours les exclusions et genres
     for (const url of [
       `https://api.themoviedb.org/3/trending/${searchType}/week?api_key=${TMDB_API_KEY}&language=fr-FR`,
       `https://api.themoviedb.org/3/${searchType}/popular?api_key=${TMDB_API_KEY}&language=fr-FR&page=1`,
@@ -317,10 +325,11 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
       const data = await safeFetchJson(url);
       for (const r of (data?.results || [])) {
         if (movies.length >= requestedCount) break;
-        if (usedIds.has(r.id)) continue;
+        if (usedIds.has(r.id) || !isMovieAllowed(r) || !isGenreCompatibleForFallback(r)) continue;
         const detail = await getMovieDetails(r.id, searchType);
-        if (!detail) continue;
+        if (!detail || usedIds.has(detail.id)) continue;
         usedIds.add(detail.id);
+        fireEmbedding(detail);
         movies.push({ movie: detail, reason: "Tendance du moment.", confidence: minMatchScore, recommendationTexts: null });
       }
     }

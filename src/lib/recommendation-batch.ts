@@ -334,13 +334,20 @@ export async function ensureRecommendationBatch(
       : null;
     finalBatch = await enrichRecommendationBatchWithTexts(finalBatch, options);
 
-    // Filter out films whose movie-match score falls clearly below the user threshold.
-    // Only apply filter if we'd retain at least `size` movies — never reduce the pool below
-    // the requested count, which would cause disabled navigation arrows.
-    const scoreFloor = (options.minMatchScore ?? 60) - 10;
+    // Two-tier filter after enrichment:
+    // 1. Soft floor (minMatchScore - 10): only applied if we keep >= size movies
+    // 2. Hard floor (45): always applied — a score that far below threshold is never shown
+    const softFloor = (options.minMatchScore ?? 60) - 10;
+    const hardFloor = 45;
+    // Hard filter first: remove anything clearly unacceptable regardless of pool size
+    finalBatch = finalBatch.filter((m) => {
+      const score = getRecommendationScore(m.recommendationTexts);
+      return score === null || score >= hardFloor;
+    });
+    // Soft filter: apply only if we'd still have enough movies
     const aboveFloor = finalBatch.filter((m) => {
       const score = getRecommendationScore(m.recommendationTexts);
-      return score === null || score >= scoreFloor;
+      return score === null || score >= softFloor;
     });
     if (aboveFloor.length >= size) finalBatch = aboveFloor;
 
