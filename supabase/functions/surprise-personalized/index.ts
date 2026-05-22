@@ -169,19 +169,21 @@ serve(async (req) => {
 
     // ── ÉTAPE 2 : LLM — sélection + scoring + textes complets ──
     let llmSelections: any[] = [];
-    let llmFilteredAll = false; // LLM returned candidates but all were below minMatchScore
-    // LLM evaluates top 10 by vector similarity, selects best N+3 for movie-match to score
-    const targetLLMCount = Math.min(requestedCount + 3, 10);
+    let llmFilteredAll = false;
+    // Rule: LLM evaluates 3× more films than it must select, taken from the top of the SQL list.
+    // e.g. 2 requested → evaluates top 6, selects 2 best
+    //      5 requested → evaluates top 15, selects 5 best
+    const targetLLMCount = requestedCount;
+    const llmPoolSize = requestedCount * 3;
 
     if (candidates.length >= 1) {
 
-      // Send only top 10 by vector similarity to the LLM — SQL already ranked them best-first
-      const top10 = candidates.slice(0, 10);
-      const candidateList = top10
-        .map((c, i) => `[${i + 1}] id=${c.tmdb_id} | "${c.title}" (${c.year || "?"}) | ${(c.genres || []).slice(0, 3).join(", ")} | ⭐${c.vote_average > 0 ? c.vote_average.toFixed(1) : "?"}/10`)
+      const topPool = candidates.slice(0, llmPoolSize);
+      const candidateList = topPool
+        .map((c: any, i: number) => `[${i + 1}] id=${c.tmdb_id} | "${c.title}" (${c.year || "?"}) | ${(c.genres || []).slice(0, 3).join(", ")} | ⭐${c.vote_average > 0 ? c.vote_average.toFixed(1) : "?"}/10`)
         .join("\n");
 
-      console.log(`[SP] Top 10 envoyés au LLM (sur ${candidates.length} candidats SQL):\n${candidateList}`);
+      console.log(`[SP] Top ${llmPoolSize} envoyés au LLM (sur ${candidates.length} candidats SQL):\n${candidateList}`);
 
       const rejectionNote = rejectionContext
         ? `\nDERNIER FILM REFUSÉ : "${rejectionContext.rejectedTitle}" — Ne propose rien de similaire.`
@@ -254,7 +256,7 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
           const parsed = JSON.parse(jsonStr);
           if (parsed.selections && Array.isArray(parsed.selections)) {
             // Normalize tmdb_id to number (LLM sometimes returns strings)
-            const validIds = new Set(top10.map((c: any) => Number(c.tmdb_id)));
+            const validIds = new Set(topPool.map((c: any) => Number(c.tmdb_id)));
             const idValid = parsed.selections.filter((s: any) => s.tmdb_id && validIds.has(Number(s.tmdb_id)));
             // Pass ALL valid LLM selections to movie-match — it is the authoritative scorer.
             // The LLM's own matchScore is only used for ordering, not as a gate.
@@ -403,7 +405,7 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
           effectiveExcludedGenres,
         },
         sql50: candidates.map(toDebugRow),
-        top10: candidates.slice(0, 10).map(toDebugRow),
+        top10: candidates.slice(0, llmPoolSize).map(toDebugRow),
         tmdbEnrichment: tmdbDiag,
         llmSelections: llmSelections.map((s: any) => ({
           id: s.tmdb_id,
