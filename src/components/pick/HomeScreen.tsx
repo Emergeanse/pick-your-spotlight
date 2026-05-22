@@ -633,8 +633,13 @@ const HomeScreen = ({
           return;
         }
 
-        // Films trouvés mais depuis le fallback generique (pas via LLM)
-        if (engineMeta?.filtersRelaxed && threshold > 65) {
+        // Films trouvés via fallback nucléaire (tous les filtres levés)
+        if (engineMeta?.filtersRelaxed && engineMeta?.mode === "discover-fallback") {
+          toast.info(
+            "Aucun film trouvé avec tes filtres — voici des suggestions populaires à la place.",
+            { duration: 6000 }
+          );
+        } else if (engineMeta?.filtersRelaxed && threshold > 65) {
           toast.info(
             `Seuil de ${threshold}% trop strict — les suggestions proposées sont les plus proches trouvées`,
             { duration: 5000 }

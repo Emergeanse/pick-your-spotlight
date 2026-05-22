@@ -459,6 +459,36 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
       }
     }
 
+    // ── FALLBACK NUCLÉAIRE : si toujours 0 film, on ignore tous les filtres ──
+    // Uniquement les films déjà interagis par l'utilisateur restent exclus.
+    if (movies.length === 0) {
+      console.log(`[SP] Fallback nucléaire — tous les filtres levés sauf exclusions utilisateur`);
+      llmFilteredAll = true;
+      const nuclearUrls = [
+        `https://api.themoviedb.org/3/${searchType}/popular?api_key=${TMDB_API_KEY}&language=fr-FR&page=1`,
+        `https://api.themoviedb.org/3/${searchType}/popular?api_key=${TMDB_API_KEY}&language=fr-FR&page=2`,
+        `https://api.themoviedb.org/3/trending/${searchType}/week?api_key=${TMDB_API_KEY}&language=fr-FR`,
+      ];
+      for (const url of nuclearUrls) {
+        if (movies.length >= requestedCount) break;
+        const data = await safeFetchJson(url);
+        for (const r of data?.results || []) {
+          if (movies.length >= requestedCount) break;
+          if (usedIds.has(r.id) || excludedSet.has(r.id)) continue;
+          const detail = await getMovieDetails(r.id, searchType);
+          if (!detail || usedIds.has(detail.id)) continue;
+          usedIds.add(detail.id);
+          movies.push({
+            movie: detail,
+            reason: "Film populaire du moment — tes filtres ont été assouplis.",
+            confidence: 60,
+            recommendationTexts: null,
+          });
+        }
+      }
+      console.log(`[SP] Fallback nucléaire: ${movies.length} film(s) trouvé(s)`);
+    }
+
     // Garde au maximum le nombre souhaité par l'utilisateur
     const finalMovies = movies.slice(0, requestedCount);
 
