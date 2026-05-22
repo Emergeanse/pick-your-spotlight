@@ -60,7 +60,7 @@ serve(async (req) => {
       likedMovies,
     } = await req.json();
 
-    const requestedCount = Math.max(1, Math.min(typeof rawCount === "number" ? rawCount : 3, 10));
+    const requestedCount = Math.max(1, Math.min(typeof rawCount === "number" ? rawCount : 3, 20));
     const minRating = typeof rawMinRating === "number" ? Math.min(rawMinRating, 8) : 0;
     const explorationLevel = typeof rawExplorationLevel === "number" ? Math.max(0, Math.min(10, rawExplorationLevel)) : 5;
     const mediaType: "movie" | "tv" | "both" = rawMediaType === "tv" ? "tv" : rawMediaType === "movie" ? "movie" : "both";
