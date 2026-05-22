@@ -92,6 +92,15 @@ serve(async (req) => {
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
+    let userId: string | null = null;
+    try {
+      const jwt = req.headers.get("Authorization")?.replace("Bearer ", "");
+      if (jwt) {
+        const payload = JSON.parse(atob(jwt.split(".")[1]));
+        userId = payload.sub ?? null;
+      }
+    } catch { /* anonymous */ }
+
     const normalizedExcludeIds = [
       ...new Set([
         ...(likedMovies || []).map((m: any) => Number(m.tmdb_id || m.id)).filter(Number.isFinite),
