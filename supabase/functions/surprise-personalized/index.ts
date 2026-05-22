@@ -210,14 +210,14 @@ serve(async (req) => {
       }
     };
 
-    // ── ÉTAPE 1 : SQL — top 50 par similarité vectorielle ──
+    // ── ÉTAPE 1 : SQL — top 200 par similarité vectorielle ──
     let candidates: any[] = [];
     if (SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY && userTasteVector) {
       try {
         const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
         const { data, error: rpcError } = await supabase.rpc("match_movies_for_recommendation", {
           query_vector: `[${userTasteVector.join(",")}]`,
-          match_count: 100,
+          match_count: 200,
           exclude_ids: normalizedExcludeIds,
           filter_media_type: mediaType === "both" ? null : searchType,
           min_rating: minRating,
