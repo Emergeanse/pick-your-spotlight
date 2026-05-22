@@ -99,7 +99,9 @@ serve(async (req) => {
         const payload = JSON.parse(atob(jwt.split(".")[1]));
         userId = payload.sub ?? null;
       }
-    } catch { /* anonymous */ }
+    } catch {
+      /* anonymous */
+    }
 
     const normalizedExcludeIds = [
       ...new Set([
