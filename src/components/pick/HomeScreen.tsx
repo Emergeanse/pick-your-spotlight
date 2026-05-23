@@ -471,16 +471,21 @@ const HomeScreen = ({
           // ── Profil LLM ──
           if (dbg?.llmProfile) {
             const p = dbg.llmProfile;
-            console.group(`[PICK-DEBUG] 🧠 Paramètres envoyés au LLM`);
-            console.log(`   Genres préférés  : [${(p.genresPrefers || []).join(", ")}]`);
+            console.group(`[PICK-DEBUG] 🧠 Profil utilisateur → LLM`);
+            console.log(`   Genres préférés  : [${(p.genresPrefers || []).join(", ") || "—"}]`);
             console.log(`   Genres exclus    : [${(p.genresExclus || []).join(", ") || "—"}]`);
             console.log(`   Origines aimées  : [${(p.originesAimees || []).join(", ") || "—"}]`);
             if (p.originesExclues?.length) console.log(`   Origines exclues : [${p.originesExclues.join(", ")}]`);
-            if (p.genresFatigue?.length) console.log(`   Genres fatigue   : [${p.genresFatigue.join(", ")}]`);
+            if (p.genresFatigue?.length)   console.log(`   Genres fatigue   : [${p.genresFatigue.join(", ")}]`);
             console.log(`   Clusters favoris : [${(p.clusters || []).join(", ") || "—"}]`);
             if (p.clustersRejetes?.length) console.log(`   Clusters rejetés : [${p.clustersRejetes.join(", ")}]`);
             console.log(`   Films aimés      : [${(p.filmsAimes || []).join(", ") || "—"}]`);
-            console.log(`   Confiance profil : ${p.confianceProfil}/100 | Type : ${p.mediaType} | Exploration : ${p.explorationLevel}/10 | Score min : ${p.minMatchScore}%`);
+            console.log(`   Confiance : ${p.confianceProfil}/100 | Type : ${p.mediaType} | Exploration : ${p.explorationLevel}/10 | Score min : ${p.minMatchScore}%`);
+            if (dbg.systemPrompt) {
+              console.group(`   📄 Prompt système complet envoyé au LLM`);
+              console.log(dbg.systemPrompt);
+              console.groupEnd();
+            }
             console.groupEnd();
           }
 

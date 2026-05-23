@@ -301,6 +301,7 @@ serve(async (req) => {
     let llmFilteredAll = false;
     const llmPoolSize = 20;
     let llmPool: any[] = [];
+    let capturedSystemPrompt: string | null = null;
 
     if (filteredCandidates.length >= 1) {
       const compositeScore = (c: any) =>
@@ -389,6 +390,8 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
     }
   ]
 }`;
+
+      capturedSystemPrompt = systemPrompt;
 
       try {
         const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -668,6 +671,7 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
             likedGenres: likedGenresForSQL,
             effectiveExcludedGenres,
           },
+          systemPrompt: capturedSystemPrompt,
           llmProfile: {
             genresPrefers: likedWithTv,
             genresExclus: effectiveExcludedGenres,
