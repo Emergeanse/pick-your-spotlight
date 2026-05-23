@@ -1,9 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
-import { Loader2 } from "lucide-react";
+import { Loader2, Ban } from "lucide-react";
 import { listPreferenceTags, getMyPreferences, setPreference, removePreference, type PreferenceTag } from "@/lib/preferences";
 
-// Keys treated as cinematic origins — shown in "Styles cinématographiques" section
 const ORIGIN_KEYS = new Set([
   "cinema-francais",
   "cinema-americain",
@@ -12,6 +11,8 @@ const ORIGIN_KEYS = new Set([
   "cinema-amerique-du-sud",
 ]);
 
+type BadgeState = "none" | "selected" | "rejected";
+
 interface GenrePreferencesProps {
   onCountChange?: (count: number) => void;
   collapsed?: boolean;
@@ -19,7 +20,7 @@ interface GenrePreferencesProps {
 
 const GenrePreferences = ({ onCountChange, collapsed = false }: GenrePreferencesProps) => {
   const [tags, setTags] = useState<PreferenceTag[]>([]);
-  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [states, setStates] = useState<Map<string, BadgeState>>(new Map());
   const [loading, setLoading] = useState(true);
   const [pending, setPending] = useState<Set<string>>(new Set());
 
@@ -33,22 +34,24 @@ const GenrePreferences = ({ onCountChange, collapsed = false }: GenrePreferences
         ]);
         setTags(allTags);
 
-        const initialSelected = new Set(
-          userPrefs
-            .filter((p) => p.tag.category === "genre" && p.weight > 0)
-            .map((p) => p.tag.key),
-        );
+        const initial = new Map<string, BadgeState>();
+        userPrefs
+          .filter((p) => p.tag.category === "genre")
+          .forEach((p) => {
+            if (p.weight > 0) initial.set(p.tag.key, "selected");
+            else if (p.weight < 0) initial.set(p.tag.key, "rejected");
+          });
 
         // Auto-select all origins on first load if user has never set any origin pref
         const hasAnyOriginPref = userPrefs.some((p) => ORIGIN_KEYS.has(p.tag.key));
         if (!hasAnyOriginPref) {
           const originTags = allTags.filter((t) => ORIGIN_KEYS.has(t.key));
           await Promise.all(originTags.map((t) => setPreference(t.id, 1, "explicit")));
-          originTags.forEach((t) => initialSelected.add(t.key));
+          originTags.forEach((t) => initial.set(t.key, "selected"));
         }
 
-        setSelected(initialSelected);
-        onCountChange?.(initialSelected.size);
+        setStates(initial);
+        onCountChange?.(countSelected(initial));
       } finally {
         setLoading(false);
       }
@@ -56,34 +59,49 @@ const GenrePreferences = ({ onCountChange, collapsed = false }: GenrePreferences
     load();
   }, []);
 
+  const countSelected = (m: Map<string, BadgeState>) =>
+    [...m.values()].filter((s) => s === "selected").length;
+
   const toggle = useCallback(
     async (tag: PreferenceTag) => {
       if (pending.has(tag.key)) return;
-      const wasSelected = selected.has(tag.key);
-      setSelected((prev) => {
-        const next = new Set(prev);
-        if (wasSelected) next.delete(tag.key);
-        else next.add(tag.key);
-        onCountChange?.(next.size);
-        return next;
+      const current = states.get(tag.key) ?? "none";
+
+      // Cycle: none → selected → rejected → none
+      const next: BadgeState =
+        current === "none" ? "selected" : current === "selected" ? "rejected" : "none";
+
+      setStates((prev) => {
+        const m = new Map(prev);
+        if (next === "none") m.delete(tag.key);
+        else m.set(tag.key, next);
+        onCountChange?.(countSelected(m));
+        return m;
       });
       setPending((prev) => new Set(prev).add(tag.key));
+
       try {
-        if (wasSelected) await removePreference(tag.id);
-        else await setPreference(tag.id, 1, "explicit");
+        if (next === "selected") await setPreference(tag.id, 1, "explicit");
+        else if (next === "rejected") await setPreference(tag.id, -1, "explicit");
+        else await removePreference(tag.id);
       } catch {
-        setSelected((prev) => {
-          const next = new Set(prev);
-          if (wasSelected) next.add(tag.key);
-          else next.delete(tag.key);
-          onCountChange?.(next.size);
-          return next;
+        // Rollback
+        setStates((prev) => {
+          const m = new Map(prev);
+          if (current === "none") m.delete(tag.key);
+          else m.set(tag.key, current);
+          onCountChange?.(countSelected(m));
+          return m;
         });
       } finally {
-        setPending((prev) => { const next = new Set(prev); next.delete(tag.key); return next; });
+        setPending((prev) => {
+          const next = new Set(prev);
+          next.delete(tag.key);
+          return next;
+        });
       }
     },
-    [selected, pending],
+    [states, pending],
   );
 
   if (loading) {
@@ -97,12 +115,17 @@ const GenrePreferences = ({ onCountChange, collapsed = false }: GenrePreferences
   const genres = tags.filter((t) => !ORIGIN_KEYS.has(t.key));
   const origins = tags.filter((t) => ORIGIN_KEYS.has(t.key));
 
-  const visibleGenres = collapsed ? genres.filter((t) => selected.has(t.key)) : genres;
-  const visibleOrigins = collapsed ? origins.filter((t) => selected.has(t.key)) : origins;
+  const visibleGenres = collapsed
+    ? genres.filter((t) => states.has(t.key))
+    : genres;
+  const visibleOrigins = collapsed
+    ? origins.filter((t) => states.has(t.key))
+    : origins;
 
   const renderChip = (tag: PreferenceTag, i: number) => {
-    const isSelected = selected.has(tag.key);
+    const state = states.get(tag.key) ?? "none";
     const isPending = pending.has(tag.key);
+
     return (
       <motion.button
         key={tag.key}
@@ -112,15 +135,18 @@ const GenrePreferences = ({ onCountChange, collapsed = false }: GenrePreferences
         whileTap={{ scale: 0.93 }}
         onClick={() => toggle(tag)}
         disabled={isPending}
-        className={`relative px-3 py-1.5 rounded-full text-[11px] font-sans font-medium transition-all duration-200 border ${
-          isSelected
+        className={`relative flex items-center gap-1 px-3 py-1.5 rounded-full text-[11px] font-sans font-medium transition-all duration-200 border ${
+          state === "selected"
             ? "bg-primary/15 border-primary text-primary neon-glow"
+            : state === "rejected"
+            ? "bg-destructive/10 border-destructive/40 text-destructive"
             : "bg-card/50 border-border/20 text-foreground/50 hover:border-primary/30 hover:text-foreground/70"
         } ${isPending ? "opacity-60" : ""}`}
       >
-        {tag.label}
+        {state === "rejected" && <Ban className="w-2.5 h-2.5 shrink-0" />}
+        <span>{tag.label}</span>
         {isPending && (
-          <span className="absolute inset-0 flex items-center justify-center">
+          <span className="absolute inset-0 flex items-center justify-center rounded-full bg-background/40">
             <Loader2 className="w-3 h-3 animate-spin text-primary/60" />
           </span>
         )}
@@ -129,6 +155,9 @@ const GenrePreferences = ({ onCountChange, collapsed = false }: GenrePreferences
   };
 
   if (collapsed && visibleGenres.length === 0 && visibleOrigins.length === 0) return null;
+
+  const selectedCount = countSelected(states);
+  const rejectedCount = [...states.values()].filter((s) => s === "rejected").length;
 
   return (
     <div className="space-y-3">
@@ -142,7 +171,7 @@ const GenrePreferences = ({ onCountChange, collapsed = false }: GenrePreferences
         <div>
           {!collapsed && (
             <p className="text-[9px] font-sans text-foreground/20 uppercase tracking-widest mb-2">
-              Styles cinématographiques · décoche pour exclure une origine
+              Styles cinématographiques · 1 clic = aimé · 2 clics = exclu
             </p>
           )}
           <div className="flex flex-wrap gap-2">
@@ -151,9 +180,15 @@ const GenrePreferences = ({ onCountChange, collapsed = false }: GenrePreferences
         </div>
       )}
 
-      {!collapsed && selected.size > 0 && (
-        <p className="text-[10px] font-sans text-primary/40 mt-1">
-          {selected.size} sélectionné{selected.size > 1 ? "s" : ""} · utilisé{selected.size > 1 ? "s" : ""} pour tes recommandations
+      {!collapsed && (selectedCount > 0 || rejectedCount > 0) && (
+        <p className="text-[10px] font-sans text-foreground/30 mt-1">
+          {selectedCount > 0 && (
+            <span className="text-primary/40">{selectedCount} aimé{selectedCount > 1 ? "s" : ""}</span>
+          )}
+          {selectedCount > 0 && rejectedCount > 0 && " · "}
+          {rejectedCount > 0 && (
+            <span className="text-destructive/40">{rejectedCount} exclu{rejectedCount > 1 ? "s" : ""}</span>
+          )}
         </p>
       )}
     </div>

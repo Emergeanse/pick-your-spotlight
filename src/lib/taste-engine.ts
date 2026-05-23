@@ -364,7 +364,7 @@ export async function computeMultiVectorProfile(
     const rejectionGenreCounts: Record<string, number> = {};
     // Style/content rejections carry more genre signal than duration/timing ones
     const strongRejections = allInteractions.filter(
-      (i: any) => ["rejected_style", "rejected_too_intense", "rejected_too_slow", "skipped"].includes(i.action_type)
+      (i: any) => ["rejected_style", "rejected_too_intense", "rejected_too_slow"].includes(i.action_type)
     );
     strongRejections.forEach((i: any) => {
       const ctx = i.context || {};
@@ -378,8 +378,10 @@ export async function computeMultiVectorProfile(
         rejectionGenreCounts[ctx.mood] = (rejectionGenreCounts[ctx.mood] || 0) + weight;
       }
     });
+    // A genre that appears in liked movies cannot be a rejected cluster —
+    // contradictory signal means the user likes the genre but disliked specific films.
     const rejectedClusters = Object.entries(rejectionGenreCounts)
-      .filter(([, count]) => count >= 3)
+      .filter(([genre, count]) => count >= 3 && !genreCounts[genre])
       .sort(([, a], [, b]) => b - a)
       .slice(0, 6)
       .map(([c]) => c);

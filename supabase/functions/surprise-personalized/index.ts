@@ -445,6 +445,7 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
     const movies: any[] = [];
     const usedIds = new Set<number>();
     const tmdbDiag: { id: number; title: string; type: string; ok: boolean; reason?: string }[] = [];
+    const fallbackTrace: { stage: string; id: number; title: string; type: string }[] = [];
 
     if (llmSelections.length > 0) {
       const tmdbResults = await Promise.all(
@@ -540,7 +541,13 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
         const detail = await getMovieDetails(found.id, searchType);
         if (!detail || usedIds.has(detail.id)) continue;
         usedIds.add(detail.id);
+        if (searchType === "tv") {
+          if (!detail.title && detail.name) detail.title = detail.name;
+          if (!detail.original_title && detail.original_name) detail.original_title = detail.original_name;
+          if (!detail.release_date && detail.first_air_date) detail.release_date = detail.first_air_date;
+        }
         fireEmbedding(detail);
+        fallbackTrace.push({ stage: "discover", id: detail.id, title: detail.title || detail.name || "?", type: searchType });
         movies.push({
           movie: detail,
           reason: "Ce film correspond à tes genres préférés.",
@@ -566,7 +573,13 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
           const detail = await getMovieDetails(r.id, searchType);
           if (!detail || usedIds.has(detail.id)) continue;
           usedIds.add(detail.id);
+          if (searchType === "tv") {
+            if (!detail.title && detail.name) detail.title = detail.name;
+            if (!detail.original_title && detail.original_name) detail.original_title = detail.original_name;
+            if (!detail.release_date && detail.first_air_date) detail.release_date = detail.first_air_date;
+          }
           fireEmbedding(detail);
+          fallbackTrace.push({ stage: "trending", id: detail.id, title: detail.title || detail.name || "?", type: searchType });
           movies.push({
             movie: detail,
             reason: "Tendance du moment.",
@@ -600,6 +613,12 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
             const detail = await getMovieDetails(r.id, searchType);
             if (!detail || usedIds.has(detail.id)) continue;
             usedIds.add(detail.id);
+            if (searchType === "tv") {
+              if (!detail.title && detail.name) detail.title = detail.name;
+              if (!detail.original_title && detail.original_name) detail.original_title = detail.original_name;
+              if (!detail.release_date && detail.first_air_date) detail.release_date = detail.first_air_date;
+            }
+            fallbackTrace.push({ stage: "nuclear-platforms", id: detail.id, title: detail.title || detail.name || "?", type: searchType });
             movies.push({
               movie: detail,
               reason: "Film populaire sur tes plateformes — tes filtres de genre ont été assouplis.",
@@ -624,6 +643,12 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
             const detail = await getMovieDetails(r.id, searchType);
             if (!detail || usedIds.has(detail.id)) continue;
             usedIds.add(detail.id);
+            if (searchType === "tv") {
+              if (!detail.title && detail.name) detail.title = detail.name;
+              if (!detail.original_title && detail.original_name) detail.original_title = detail.original_name;
+              if (!detail.release_date && detail.first_air_date) detail.release_date = detail.first_air_date;
+            }
+            fallbackTrace.push({ stage: "nuclear-popular", id: detail.id, title: detail.title || detail.name || "?", type: searchType });
             movies.push({
               movie: detail,
               reason: "Film populaire du moment — tes filtres ont été assouplis.",
@@ -634,6 +659,34 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
         }
       }
       console.log(`[SP] Fallback nucléaire: ${movies.length} film(s) trouvé(s)`);
+    }
+
+    // Tri par origine : préféré (2) → neutre (1) → exclu (0), puis score décroissant au sein de chaque groupe.
+    // Les films d'origines exclues ne remontent que si rien d'autre ne remplit les slots.
+    if (likedOrigins.length > 0 || excludedOrigins.length > 0) {
+      const ORIGIN_LANGS: Record<string, string[]> = {
+        "français (langue: fr)": ["fr"],
+        "américain/anglophone (langue: en)": ["en"],
+        "asiatique (langues: ko, ja, zh, th)": ["ko", "ja", "zh", "th"],
+        "africain": [],
+        "latino/sud-américain (langues: es, pt)": ["es", "pt"],
+      };
+      const preferredLangs = new Set(likedOrigins.flatMap((o: string) => ORIGIN_LANGS[o] ?? []));
+      const excludedLangs = new Set(excludedOrigins.flatMap((o: string) => ORIGIN_LANGS[o] ?? []));
+      if (preferredLangs.size > 0 || excludedLangs.size > 0) {
+        const originRank = (lang: string): number => {
+          if (preferredLangs.has(lang)) return 2;
+          if (excludedLangs.has(lang)) return 0;
+          return 1;
+        };
+        movies.sort((a: any, b: any) => {
+          const aRank = originRank(a.movie?.original_language || "");
+          const bRank = originRank(b.movie?.original_language || "");
+          if (aRank !== bRank) return bRank - aRank;
+          return (b.confidence || 0) - (a.confidence || 0);
+        });
+        console.log(`[SP] Tri origine : préférées [${[...preferredLangs].join(", ")}] exclues [${[...excludedLangs].join(", ")}] → ${movies.slice(0, requestedCount).map((m: any) => `${m.movie?.title || "?"}(${m.movie?.original_language || "?"})`).join(", ")}`);
+      }
     }
 
     // Garde au maximum le nombre souhaité par l'utilisateur
@@ -699,6 +752,7 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
           sql50: candidates.map(toDebugRow), // renommé sql100 en pratique
           top20: llmPool.length > 0 ? llmPool.map(toDebugRow) : candidates.slice(0, llmPoolSize).map(toDebugRow),
           tmdbEnrichment: tmdbDiag,
+          fallbackTrace,
           llmSelections: llmSelections.map((s: any) => ({
             id: s.tmdb_id,
             title: candidates.find((c: any) => Number(c.tmdb_id) === Number(s.tmdb_id))?.title || "?",

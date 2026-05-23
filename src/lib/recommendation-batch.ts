@@ -340,7 +340,7 @@ export async function ensureRecommendationBatch(
     finalBatch = await enrichRecommendationBatchWithTexts(finalBatch, options);
 
     // Sort by score descending, keep top `size`
-    const scoreFloor = (options.minMatchScore ?? 60) - 10;
+    const scoreFloor = (options.minMatchScore ?? 60) - 5;
     const scored = finalBatch
       .filter((m) => {
         const score = getRecommendationScore(m.recommendationTexts);
@@ -351,7 +351,9 @@ export async function ensureRecommendationBatch(
         const sb = getRecommendationScore(b.recommendationTexts) ?? 0;
         return sb - sa;
       });
-    finalBatch = (scored.length >= size ? scored : finalBatch).slice(0, size);
+    // Never fall back to the unfiltered batch: prefer fewer films above threshold
+    // over showing films the user explicitly doesn't want.
+    finalBatch = scored.slice(0, size);
 
     // Load providers for the actual top N films (after scoring)
     if (options.preloadProviders) {

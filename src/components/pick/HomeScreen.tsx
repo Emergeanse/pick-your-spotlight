@@ -21,6 +21,7 @@ import {
 } from "@/lib/recommendation-batch";
 import { getEngagementData, getProgressionMessage, type EngagementData } from "@/lib/engagement";
 import { listFeedbackByType } from "@/lib/feedback";
+import { getMyPreferences } from "@/lib/preferences";
 
 import BrandHeader from "./BrandHeader";
 import PickCharacter from "./PickCharacter";
@@ -287,6 +288,16 @@ const HomeScreen = ({
         if ((data as any)?.excluded_genres) {
           setUserExcludedGenres((data as any).excluded_genres);
         }
+
+        // Merge rejected genres from the preferences system (weight < 0)
+        getMyPreferences().then((prefs) => {
+          const rejectedLabels = prefs
+            .filter((p) => p.tag.category === "genre" && p.weight < 0)
+            .map((p) => p.tag.label);
+          if (rejectedLabels.length > 0) {
+            setUserExcludedGenres((prev) => [...new Set([...prev, ...rejectedLabels])]);
+          }
+        }).catch(() => {});
         if ((data as any)?.min_rating) {
           setUserMinRating((data as any).min_rating);
         }
@@ -515,6 +526,19 @@ const HomeScreen = ({
               "Titre": s.title,
               "Score LLM": `${s.matchScore}%`,
               "Raison": s.reason,
+            })));
+            console.groupEnd();
+          }
+
+          // ── Étape 3.5b : Fallback trace (mode discover-fallback) ──
+          if (dbg?.fallbackTrace?.length) {
+            console.group(`[PICK-DEBUG] 🔀 Films ajoutés en mode fallback — ${dbg.fallbackTrace.length} film(s) (aucun candidat SQL/LLM disponible)`);
+            console.table(dbg.fallbackTrace.map((t: any, i: number) => ({
+              "#": i + 1,
+              "Titre": t.title,
+              "ID TMDB": t.id,
+              "Type": t.type,
+              "Source": t.stage,
             })));
             console.groupEnd();
           }
