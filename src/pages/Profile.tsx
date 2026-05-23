@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { toast } from "@/hooks/use-toast";
-import { Check, LogOut, Loader2, Star, Info, Camera, Pencil, Shield } from "lucide-react";
+import { Check, ChevronDown, LogOut, Loader2, Star, Info, Camera, Pencil, Shield } from "lucide-react";
+import { AnimatePresence } from "framer-motion";
 import { Slider } from "@/components/ui/slider";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
@@ -25,6 +26,7 @@ const Profile = () => {
   const [defaultMaxDuration, setDefaultMaxDuration] = useState<number | null>(null);
   const [recommendationCount, setRecommendationCount] = useState<number>(5);
   const [saving, setSaving] = useState(false);
+  const [showPlatforms, setShowPlatforms] = useState(false);
   const [profileLoading, setProfileLoading] = useState(true);
   const [displayName, setDisplayName] = useState("");
   const [editingName, setEditingName] = useState(false);
@@ -201,21 +203,61 @@ const Profile = () => {
 
         {/* ─── Plateformes ─── */}
         <motion.section initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="mb-8">
-          <h2 className="text-sm font-sans font-semibold text-foreground/50 uppercase tracking-widest mb-3">Tes plateformes</h2>
-          <div className="grid grid-cols-4 gap-2">
-            {ALL_PLATFORMS.map((p) => {
-              const on = selectedPlatforms.includes(p.id);
-              return (
-                <button key={p.id} onClick={() => togglePlatform(p.id)}
-                  className={`relative bg-card rounded-xl p-2.5 flex flex-col items-center gap-1.5 transition-all active:scale-95 border ${on ? "border-primary/50 bg-primary/5" : "border-transparent hover:border-border/30"}`}>
-                  {on && <div className="absolute top-1 right-1 w-3.5 h-3.5 rounded-full bg-primary flex items-center justify-center"><Check className="w-2 h-2 text-primary-foreground" /></div>}
-                  <img src={p.logo} alt={p.label} className="w-7 h-7 rounded-lg object-cover" />
-                  <span className="font-sans text-[9px] text-foreground/60 leading-tight text-center">{p.label}</span>
-                </button>
-              );
-            })}
-          </div>
-          <p className="text-foreground/20 text-[10px] font-sans mt-2">Aucune sélection = toutes les plateformes</p>
+          <button
+            onClick={() => setShowPlatforms((v) => !v)}
+            className="w-full flex items-center justify-between mb-3 group"
+          >
+            <div className="flex items-center gap-2">
+              <h2 className="text-sm font-sans font-semibold text-foreground/50 uppercase tracking-widest">Tes plateformes</h2>
+              {selectedPlatforms.length > 0 && (
+                <span className="text-[9px] font-sans px-1.5 py-0.5 rounded-full bg-primary/15 text-primary/70 border border-primary/20">
+                  {selectedPlatforms.length} sélectionnée{selectedPlatforms.length > 1 ? "s" : ""}
+                </span>
+              )}
+            </div>
+            <ChevronDown className={`w-3.5 h-3.5 text-foreground/25 transition-transform duration-200 ${showPlatforms ? "rotate-180" : ""}`} />
+          </button>
+
+          {/* Aperçu collapsed : logos sélectionnés seulement */}
+          {!showPlatforms && (
+            <div className="flex flex-wrap gap-1.5">
+              {selectedPlatforms.length === 0 ? (
+                <span className="text-foreground/20 text-[10px] font-sans">Toutes les plateformes</span>
+              ) : (
+                ALL_PLATFORMS.filter((p) => selectedPlatforms.includes(p.id)).map((p) => (
+                  <img key={p.id} src={p.logo} alt={p.label} className="w-7 h-7 rounded-lg object-cover opacity-80" />
+                ))
+              )}
+            </div>
+          )}
+
+          <AnimatePresence initial={false}>
+            {showPlatforms && (
+              <motion.div
+                key="platforms-grid"
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.22 }}
+                className="overflow-hidden"
+              >
+                <div className="grid grid-cols-4 gap-2 pt-1">
+                  {ALL_PLATFORMS.map((p) => {
+                    const on = selectedPlatforms.includes(p.id);
+                    return (
+                      <button key={p.id} onClick={() => togglePlatform(p.id)}
+                        className={`relative bg-card rounded-xl p-2.5 flex flex-col items-center gap-1.5 transition-all active:scale-95 border ${on ? "border-primary/50 bg-primary/5" : "border-transparent hover:border-border/30"}`}>
+                        {on && <div className="absolute top-1 right-1 w-3.5 h-3.5 rounded-full bg-primary flex items-center justify-center"><Check className="w-2 h-2 text-primary-foreground" /></div>}
+                        <img src={p.logo} alt={p.label} className="w-7 h-7 rounded-lg object-cover" />
+                        <span className="font-sans text-[9px] text-foreground/60 leading-tight text-center">{p.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+                <p className="text-foreground/20 text-[10px] font-sans mt-2">Aucune sélection = toutes les plateformes</p>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </motion.section>
 
         {/* ─── Note minimale ─── */}
