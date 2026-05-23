@@ -122,6 +122,7 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [processedIds, setProcessedIds] = useState<Set<number>>(new Set());
+  const allInteractedIds = useRef<Set<number>>(new Set());
   const [likedCount, setLikedCount] = useState(0);
   const [skippedCount, setSkippedCount] = useState(0);
   const [page, setPage] = useState(1);
@@ -158,7 +159,7 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
       try {
         const randomPage = Math.floor(Math.random() * 20) + p;
         const results = m === "series" ? await fetchTrainingSeries(randomPage) : await fetchTrainingMovies(randomPage);
-        const filtered = results.filter((mv) => !processedIds.has(mv.id) && mv.poster_path);
+        const filtered = results.filter((mv) => !processedIds.has(mv.id) && !allInteractedIds.current.has(mv.id) && mv.poster_path);
         setMovies((prev) => [...prev, ...filtered]);
       } catch (e) {
         console.error("Failed to load training content:", e);
@@ -186,12 +187,15 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
     Promise.all([
       supabase
         .from("user_interactions")
-        .select("id", { count: "exact", head: true })
+        .select("tmdb_id")
         .eq("user_id", user.id)
-        .in("action_type", ["liked", "skipped", "unsure"]),
+        .in("action_type", ["liked", "skipped", "unsure", "dislike", "already_seen", "unknown"]),
       supabase.from("user_people_preferences").select("id", { count: "exact", head: true }).eq("user_id", user.id),
     ]).then(([movieResult, peopleResult]) => {
-      setTotalEvaluated(movieResult.count || 0);
+      const ids = new Set<number>((movieResult.data || []).map((r: any) => Number(r.tmdb_id)).filter(Boolean));
+      allInteractedIds.current = ids;
+      setProcessedIds(new Set(ids));
+      setTotalEvaluated(movieResult.data?.length || 0);
       setTotalPeopleEvaluated(peopleResult.count || 0);
     });
   }, [user]);
@@ -271,6 +275,7 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
         await recordSkippedRecommendation(user.id).catch(() => {});
       }
 
+      allInteractedIds.current.add(currentMovie.id);
       setHistory((prev) => [...prev, currentIndex]);
       setProcessedIds((prev) => new Set(prev).add(currentMovie.id));
       setCurrentIndex((i) => i + 1);
