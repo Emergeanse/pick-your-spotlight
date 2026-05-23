@@ -460,6 +460,23 @@ const HomeScreen = ({
             console.groupEnd();
           }
 
+          // ── Profil LLM ──
+          if (dbg?.llmProfile) {
+            const p = dbg.llmProfile;
+            console.group(`[PICK-DEBUG] 🧠 Profil utilisateur envoyé au LLM`);
+            console.log(`   Genres préférés  : [${(p.genresPrefers || []).join(", ")}]`);
+            console.log(`   Genres exclus    : [${(p.genresExclus || []).join(", ")}]`);
+            if (p.genresFatigue?.length) console.log(`   Genres fatigue   : [${p.genresFatigue.join(", ")}]`);
+            console.log(`   Clusters favoris : [${(p.clusters || []).join(", ")}]`);
+            if (p.clustersRejetes?.length) console.log(`   Clusters rejetés : [${p.clustersRejetes.join(", ")}]`);
+            console.log(`   Films aimés      : [${(p.filmsAimes || []).join(", ")}]`);
+            console.log(`   Confiance profil : ${p.confianceProfil}/100`);
+            console.log(`   Type média       : ${p.mediaType}`);
+            console.log(`   Exploration      : ${p.explorationLevel}/10`);
+            console.log(`   Score min requis : ${p.minMatchScore}%`);
+            console.groupEnd();
+          }
+
           // ── Étape 2 : Top 20 envoyés au LLM ──
           if (dbg?.top20?.length) {
             console.group(`[PICK-DEBUG] 2️⃣ Top 20 envoyés au LLM (meilleurs par similarité vectorielle)`);

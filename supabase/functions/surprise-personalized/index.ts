@@ -624,6 +624,18 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
             likedGenres: likedGenresForSQL,
             effectiveExcludedGenres,
           },
+          llmProfile: {
+            genresPrefers: likedWithTv,
+            genresExclus: effectiveExcludedGenres,
+            genresFatigue: fatiguedGenres,
+            clusters: tasteClusters.slice(0, 5),
+            clustersRejetes: rejectedClusters,
+            filmsAimes: likedTitles,
+            confianceProfil: confidence.score,
+            explorationLevel,
+            minMatchScore,
+            mediaType,
+          },
           sql50: candidates.map(toDebugRow), // renommé sql100 en pratique
           top20: llmPool.length > 0 ? llmPool.map(toDebugRow) : candidates.slice(0, llmPoolSize).map(toDebugRow),
           tmdbEnrichment: tmdbDiag,
