@@ -443,17 +443,22 @@ const HomeScreen = ({
 
           console.group("[PICK-DEBUG] ═══ Pipeline de recommandation ═══");
 
-          // ── Étape 1 : SQL — jusqu'à 100 candidats ──
+          // ── Étape 1 : SQL ──
           if (dbg?.sql50?.length) {
             const f = dbg.filters;
-            console.group(`[PICK-DEBUG] 1️⃣ SQL — ${dbg.sql50.length} candidats (${f?.excludeCount ?? 0} films exclus — déjà interagis)`);
-            console.log(`   Filtres : note min=${f?.minRating ?? 0}${f?.maxDuration ? ` | durée max=${f.maxDuration}min` : ""} | genres aimés=[${(f?.likedGenres || []).join(", ")}] | exclus=[${(f?.effectiveExcludedGenres || []).join(", ")}]`);
+            console.group(`[PICK-DEBUG] 1️⃣ SQL — ${dbg.sql50.length} candidats (${f?.excludeCount ?? 0} exclus — déjà vus)`);
+            console.log(`   Paramètres SQL :`);
+            console.log(`     note min      : ${f?.minRating ?? 0}`);
+            console.log(`     durée max     : ${f?.maxDuration ? `${f.maxDuration}min` : "illimitée"}`);
+            console.log(`     genres aimés  : [${(f?.likedGenres || []).join(", ") || "—"}]`);
+            console.log(`     genres exclus : [${(f?.effectiveExcludedGenres || []).join(", ") || "—"}]`);
             console.table(dbg.sql50.map((c: any, i: number) => ({
               "#": i + 1,
               "Titre": c.title,
               "Année": c.year,
-              "Note": c.note ?? "–",
+              "Note /10": c.note ?? "–",
               "Sim%": c.sim ?? "–",
+              "Composite": c.composite ?? "–",
               "Genres": (c.genres || []).join(", "),
               "Type": c.type,
             })));
@@ -463,32 +468,30 @@ const HomeScreen = ({
           // ── Profil LLM ──
           if (dbg?.llmProfile) {
             const p = dbg.llmProfile;
-            console.group(`[PICK-DEBUG] 🧠 Profil utilisateur envoyé au LLM`);
+            console.group(`[PICK-DEBUG] 🧠 Paramètres envoyés au LLM`);
             console.log(`   Genres préférés  : [${(p.genresPrefers || []).join(", ")}]`);
-            console.log(`   Genres exclus    : [${(p.genresExclus || []).join(", ")}]`);
-            if (p.originesAimees?.length) console.log(`   Origines aimées  : [${p.originesAimees.join(", ")}]`);
+            console.log(`   Genres exclus    : [${(p.genresExclus || []).join(", ") || "—"}]`);
+            console.log(`   Origines aimées  : [${(p.originesAimees || []).join(", ") || "—"}]`);
             if (p.originesExclues?.length) console.log(`   Origines exclues : [${p.originesExclues.join(", ")}]`);
             if (p.genresFatigue?.length) console.log(`   Genres fatigue   : [${p.genresFatigue.join(", ")}]`);
-            console.log(`   Clusters favoris : [${(p.clusters || []).join(", ")}]`);
+            console.log(`   Clusters favoris : [${(p.clusters || []).join(", ") || "—"}]`);
             if (p.clustersRejetes?.length) console.log(`   Clusters rejetés : [${p.clustersRejetes.join(", ")}]`);
-            console.log(`   Films aimés      : [${(p.filmsAimes || []).join(", ")}]`);
-            console.log(`   Confiance profil : ${p.confianceProfil}/100`);
-            console.log(`   Type média       : ${p.mediaType}`);
-            console.log(`   Exploration      : ${p.explorationLevel}/10`);
-            console.log(`   Score min requis : ${p.minMatchScore}%`);
+            console.log(`   Films aimés      : [${(p.filmsAimes || []).join(", ") || "—"}]`);
+            console.log(`   Confiance profil : ${p.confianceProfil}/100 | Type : ${p.mediaType} | Exploration : ${p.explorationLevel}/10 | Score min : ${p.minMatchScore}%`);
             console.groupEnd();
           }
 
-          // ── Étape 2 : Top 20 envoyés au LLM ──
+          // ── Étape 2 : Top 20 triés par score composé ──
           if (dbg?.top20?.length) {
-            console.group(`[PICK-DEBUG] 2️⃣ Top 20 envoyés au LLM (meilleurs par similarité vectorielle)`);
+            console.group(`[PICK-DEBUG] 2️⃣ Top ${dbg.top20.length} envoyés au LLM — triés par score composé (sim×100 + note)`);
             console.table(dbg.top20.map((c: any, i: number) => ({
               "#": i + 1,
               "Titre": c.title,
-              "Année": c.year,
-              "Note": c.note ?? "–",
+              "Note /10": c.note ?? "–",
               "Sim%": c.sim ?? "–",
+              "Composite (sim×100+note)": c.composite ?? "–",
               "Genres": (c.genres || []).join(", "),
+              "Type": c.type,
             })));
             console.groupEnd();
           }
