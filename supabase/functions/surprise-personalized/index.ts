@@ -621,7 +621,7 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
             excludeCount: normalizedExcludeIds.length,
             minRating,
             maxDuration: maxDuration ?? null,
-            likedGenres: likedWithTv,
+            likedGenres: likedGenresForSQL,
             effectiveExcludedGenres,
           },
           sql50: candidates.map(toDebugRow), // renommé sql100 en pratique
