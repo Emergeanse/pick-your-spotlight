@@ -299,7 +299,7 @@ serve(async (req) => {
     // ── ÉTAPE 2 : LLM — sélection + scoring ──
     let llmSelections: any[] = [];
     let llmFilteredAll = false;
-    const llmPoolSize = 20;
+    const llmPoolSize = 30;
     let llmPool: any[] = [];
     let capturedSystemPrompt: string | null = null;
 
