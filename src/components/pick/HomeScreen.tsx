@@ -471,22 +471,25 @@ const HomeScreen = ({
           // ── Profil LLM ──
           if (dbg?.llmProfile) {
             const p = dbg.llmProfile;
-            console.group(`[PICK-DEBUG] 🧠 Profil utilisateur → LLM`);
-            console.log(`   Genres préférés  : [${(p.genresPrefers || []).join(", ") || "—"}]`);
-            console.log(`   Genres exclus    : [${(p.genresExclus || []).join(", ") || "—"}]`);
-            console.log(`   Origines aimées  : [${(p.originesAimees || []).join(", ") || "—"}]`);
-            if (p.originesExclues?.length) console.log(`   Origines exclues : [${p.originesExclues.join(", ")}]`);
-            if (p.genresFatigue?.length)   console.log(`   Genres fatigue   : [${p.genresFatigue.join(", ")}]`);
-            console.log(`   Clusters favoris : [${(p.clusters || []).join(", ") || "—"}]`);
-            if (p.clustersRejetes?.length) console.log(`   Clusters rejetés : [${p.clustersRejetes.join(", ")}]`);
-            console.log(`   Films aimés      : [${(p.filmsAimes || []).join(", ") || "—"}]`);
-            console.log(`   Confiance : ${p.confianceProfil}/100 | Type : ${p.mediaType} | Exploration : ${p.explorationLevel}/10 | Score min : ${p.minMatchScore}%`);
+            console.log(`[PICK-DEBUG] 🧠 Profil utilisateur → LLM`);
+            console.log(`   Paramètres LLM :`);
+            console.log(`     genres préférés  : [${(p.genresPrefers || []).join(", ") || "—"}]`);
+            console.log(`     genres exclus    : [${(p.genresExclus || []).join(", ") || "—"}]`);
+            console.log(`     origines aimées  : [${(p.originesAimees || []).join(", ") || "—"}]`);
+            console.log(`     origines exclues : [${(p.originesExclues || []).join(", ") || "—"}]`);
+            console.log(`     genres fatigue   : [${(p.genresFatigue || []).join(", ") || "—"}]`);
+            console.log(`     clusters favoris : [${(p.clusters || []).join(", ") || "—"}]`);
+            console.log(`     clusters rejetés : [${(p.clustersRejetes || []).join(", ") || "—"}]`);
+            console.log(`     films aimés      : [${(p.filmsAimes || []).join(", ") || "—"}]`);
+            console.log(`     confiance profil : ${p.confianceProfil}/100`);
+            console.log(`     type média       : ${p.mediaType}`);
+            console.log(`     exploration      : ${p.explorationLevel}/10`);
+            console.log(`     score min        : ${p.minMatchScore}%`);
             if (dbg.systemPrompt) {
-              console.group(`   📄 Prompt système complet envoyé au LLM`);
+              console.group(`[PICK-DEBUG] 📄 Prompt système complet envoyé au LLM`);
               console.log(dbg.systemPrompt);
               console.groupEnd();
             }
-            console.groupEnd();
           }
 
           // ── Étape 2 : Top 20 triés par score composé ──
