@@ -301,7 +301,7 @@ const MovieDetailContent = ({
               <Sparkles className="w-3.5 h-3.5 text-primary" />
             </div>
             <p className="text-[11px] uppercase tracking-widest text-primary/70 font-sans font-semibold flex-1">
-              Pourquoi ce film pour toi
+              Pourquoi c'est pour toi !
             </p>
           </div>
           {/* Body */}
