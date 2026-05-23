@@ -438,6 +438,10 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
     }
 
     // ── ÉTAPE 3 : TMDB — enrichissement en batch ──
+    // Trier par score LLM décroissant : on enrichit les meilleurs en premier
+    // → slice(0, requestedCount) garde les top-N, pas les premiers de la liste LLM
+    llmSelections.sort((a: any, b: any) => (b.matchScore || 0) - (a.matchScore || 0));
+
     const movies: any[] = [];
     const usedIds = new Set<number>();
     const tmdbDiag: { id: number; title: string; type: string; ok: boolean; reason?: string }[] = [];
@@ -480,8 +484,14 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
             });
             return null;
           }
+          // Normalise les séries TV : TMDB renvoie "name" au lieu de "title"
+          if (itemType === "tv") {
+            if (!detail.title && detail.name) detail.title = detail.name;
+            if (!detail.original_title && detail.original_name) detail.original_title = detail.original_name;
+            if (!detail.release_date && detail.first_air_date) detail.release_date = detail.first_air_date;
+          }
           // Filtre plateforme déjà fait en SQL — pas de re-vérification TMDB ici.
-          tmdbDiag.push({ id: sel.tmdb_id, title: candidate?.title || "?", type: itemType, ok: true });
+          tmdbDiag.push({ id: sel.tmdb_id, title: detail.title || candidate?.title || "?", type: itemType, ok: true });
           return { detail, sel };
         }),
       );
