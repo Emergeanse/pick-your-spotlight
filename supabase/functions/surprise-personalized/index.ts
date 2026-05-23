@@ -286,6 +286,8 @@ serve(async (req) => {
       "Cinéma français": "français (langue: fr)",
       "Cinéma américain": "américain/anglophone (langue: en)",
       "Cinéma asiatique": "asiatique (langues: ko, ja, zh, th)",
+      "Cinéma africain": "africain",
+      "Cinéma Amérique du Sud": "latino/sud-américain (langues: es, pt)",
     };
     const likedOrigins = [...new Set([...likedWithTv, ...(topGenres as string[])])]
       .filter((g) => g in ORIGIN_MAP)

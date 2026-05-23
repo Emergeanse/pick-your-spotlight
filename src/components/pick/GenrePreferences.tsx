@@ -4,16 +4,15 @@ import { Loader2, Heart, X } from "lucide-react";
 import { listPreferenceTags, getMyPreferences, setPreference, removePreference, type PreferenceTag } from "@/lib/preferences";
 
 const STYLE_KEYS = new Set([
-  "films-auteur",
   "comedie-romantique",
-  "cinema-independant",
-  "film-noir",
 ]);
 
 const ORIGIN_KEYS = new Set([
   "cinema-francais",
   "cinema-americain",
   "cinema-asiatique",
+  "cinema-africain",
+  "cinema-amerique-du-sud",
 ]);
 
 interface GenrePreferencesProps {
