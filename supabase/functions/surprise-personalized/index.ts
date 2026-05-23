@@ -313,8 +313,10 @@ serve(async (req) => {
 
       const candidateList = topPool
         .map(
-          (c: any, i: number) =>
-            `[${i + 1}] id=${c.tmdb_id} | "${c.title}" (${c.year || "?"}) | ${(c.genres || []).slice(0, 3).join(", ")} | ⭐${c.vote_average > 0 ? c.vote_average.toFixed(1) : "?"}/10 | sim=${c.similarity != null ? Math.round(c.similarity * 1000) / 10 : "?"}% | composite=${Math.round(compositeScore(c) * 100)}%`,
+          (c: any, i: number) => {
+            const typeLabel = c.media_type === "tv" ? "📺 Série" : "🎬 Film";
+            return `[${i + 1}] id=${c.tmdb_id} | ${typeLabel} | "${c.title}" (${c.year || "?"}) | ${(c.genres || []).slice(0, 3).join(", ")} | ⭐${c.vote_average > 0 ? c.vote_average.toFixed(1) : "?"}/10 | sim=${c.similarity != null ? Math.round(c.similarity * 1000) / 10 : "?"}% | composite=${Math.round(compositeScore(c) * 100)}%`;
+          },
         )
         .join("\n");
 
@@ -365,6 +367,7 @@ ${candidateList}
 MISSION : Sélectionne EXACTEMENT ${targetLLMCount} films parmi cette liste.
 
 RÈGLES DE SÉLECTION :
+- Chaque item est clairement marqué 🎬 Film ou 📺 Série — respecte ce type dans ta réponse (ne dis pas "film" si c'est une série)
 - Diversifie les genres entre les sélections
 - Priorise les films bien notés (⭐7+) si le profil matche
 - Évite 2 films de la même franchise ou très similaires

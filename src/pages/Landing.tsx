@@ -10,6 +10,7 @@ import {
 import pickWave from "@/assets/pick-squirrel-wave.png";
 import pickDefault from "@/assets/pick-squirrel.png";
 import pickLogo from "@/assets/pick-logo.png";
+import { ALL_PLATFORMS } from "@/lib/platforms";
 
 const POSTER_URLS = [
   // Match DEMO_MOVIES: Shawshank, Inception, Interstellar, Dark Knight
@@ -27,15 +28,7 @@ const POSTER_URLS = [
   "https://image.tmdb.org/t/p/w342/rCzpDGLbOoPwLjy3OAm5NUPOTrC.jpg",
 ];
 
-const PLATFORM_LOGOS = [
-  { name: "Netflix", logo: "https://image.tmdb.org/t/p/original/pbpMk2JmcoNnQwx5JGpXngfoWtp.jpg" },
-  { name: "Disney+", logo: "https://image.tmdb.org/t/p/original/97yvRBw1GzX7fXprcF80er19ot.jpg" },
-  { name: "Amazon Prime", logo: "https://image.tmdb.org/t/p/original/pvske1MyAoymrs5bguRfVqYiM9a.jpg" },
-  { name: "Apple TV+", logo: "https://image.tmdb.org/t/p/original/mcbz1LgtErU9p4UdbZ0rG6RTWHX.jpg" },
-  { name: "Canal+", logo: "https://image.tmdb.org/t/p/original/geOzgeKZWpZC3lymAVEHVIk3X0q.jpg" },
-  { name: "HBO", logo: "/logos/hbo.png" },
-  { name: "Paramount+", logo: "/logos/paramount-plus.png" },
-];
+
 
 const fadeUp = {
   hidden: { opacity: 0, y: 24, filter: "blur(4px)" },
@@ -279,12 +272,12 @@ const Landing = () => {
               Trouver mon film
             </Button>
             <div className="flex items-center gap-3">
-              {PLATFORM_LOGOS.slice(0, 5).map((p) => (
-                <div key={p.name} className="w-7 h-7 rounded-md overflow-hidden border border-border/10 opacity-40">
-                  <img src={p.logo} alt={p.name} className="w-full h-full object-cover" />
+              {ALL_PLATFORMS.slice(0, 5).map((p) => (
+                <div key={p.id} className="w-10 h-10 rounded-xl overflow-hidden border border-border/10 opacity-40">
+                  <img src={p.logo} alt={p.label} className="w-full h-full object-cover" />
                 </div>
               ))}
-              <span className="text-foreground/20 text-xs font-sans">+2</span>
+              <span className="text-foreground/20 text-xs font-sans">+15</span>
             </div>
           </motion.div>
         </motion.div>
@@ -518,13 +511,13 @@ const Landing = () => {
             <h2 className="text-3xl md:text-5xl font-serif mb-3">Compatible avec <span className="text-primary">tes abonnements</span></h2>
             <p className="text-foreground/35 font-sans text-sm md:text-base max-w-lg mx-auto mb-8">Pick ne recommande que des films disponibles sur tes plateformes.</p>
           </motion.div>
-          <motion.div variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }} className="flex items-center justify-center gap-5 md:gap-8 flex-wrap">
-            {PLATFORM_LOGOS.map((p, i) => (
-              <motion.div key={p.name} variants={fadeUp} custom={i} className="flex flex-col items-center gap-2">
+          <motion.div variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }} className="flex items-center justify-center gap-4 md:gap-6 flex-wrap">
+            {ALL_PLATFORMS.map((p, i) => (
+              <motion.div key={p.id} variants={fadeUp} custom={i} className="flex flex-col items-center gap-2">
                 <div className="w-14 h-14 md:w-18 md:h-18 rounded-2xl overflow-hidden border border-border/12 hover:border-gold/25 transition-all duration-300 hover:scale-105 shadow-lg">
-                  <img src={p.logo} alt={p.name} className="w-full h-full object-cover" />
+                  <img src={p.logo} alt={p.label} className="w-full h-full object-cover" />
                 </div>
-                <span className="text-[10px] font-sans text-foreground/25">{p.name}</span>
+                <span className="text-[10px] font-sans text-foreground/25">{p.label}</span>
               </motion.div>
             ))}
           </motion.div>
