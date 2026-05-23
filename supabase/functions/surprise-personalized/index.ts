@@ -289,7 +289,7 @@ serve(async (req) => {
 
     if (filteredCandidates.length >= 1) {
       const compositeScore = (c: any) =>
-        (c.similarity ?? 0) * 0.4 + ((c.vote_average ?? 0) / 10) * 0.6;
+        (c.similarity ?? 0) * 100 + (c.vote_average ?? 0);
       const topPool = [...filteredCandidates]
         .sort((a, b) => compositeScore(b) - compositeScore(a))
         .slice(0, llmPoolSize);
@@ -304,7 +304,7 @@ serve(async (req) => {
         .join("\n");
 
       console.log(
-        `[SP] Top ${topPool.length} envoyés au LLM — triés par score composé (sim 40% + note 60%):\n${candidateList}`,
+        `[SP] Top ${topPool.length} envoyés au LLM — triés par score composé (sim×100 + note, max 110):\n${candidateList}`,
       );
 
       const rejectionNote = rejectionContext
@@ -595,7 +595,7 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
     );
 
     const toCompositeScore = (c: any) =>
-      Math.round(((c.similarity ?? 0) * 0.4 + ((c.vote_average ?? 0) / 10) * 0.6) * 100);
+      Math.round(((c.similarity ?? 0) * 100 + (c.vote_average ?? 0)) * 10) / 10;
 
     const toDebugRow = (c: any) => ({
       id: c.tmdb_id,
