@@ -401,7 +401,18 @@ const HomeScreen = ({
           ]);
 
           const userTasteVector = multiProfile?.stableTasteVector || null;
-          console.log("[PICK-DEBUG] userTasteVector:", userTasteVector ? `✅ ${userTasteVector.length} dims` : "❌ NULL — SQL sera sauté");
+
+          console.group("[PICK-DEBUG] 📤 Paramètres envoyés à surprise-personalized");
+          console.log("userTasteVector :", userTasteVector ? `✅ ${userTasteVector.length} dims` : "❌ NULL — SQL sera sauté");
+          console.log("mediaType       :", quickFilters.mediaType);
+          console.log("platformIds     :", userPlatformIds?.length ? userPlatformIds : "aucune");
+          console.log("topGenres       :", tasteProfile?.topGenres?.slice(0, 8) ?? []);
+          console.log("excludedGenres  :", userExcludedGenres?.length ? userExcludedGenres : "aucun");
+          console.log("maxDuration     :", quickFilters.maxDuration ?? "illimitée");
+          console.log("minMatchScore   :", quickFilters.matchThreshold, "%");
+          console.log("count demandé   :", quickFilters.recommendationCount || RECOMMENDATION_BATCH_SIZE);
+          console.log("excludeIds      :", allExcludeIds.length, "IDs");
+          console.groupEnd();
 
           const data = await invokeSurprisePersonalized({
             likedMovies: liked,
