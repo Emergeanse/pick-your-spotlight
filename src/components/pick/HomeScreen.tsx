@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 
+import { ALL_PLATFORMS } from "@/lib/platforms";
 import type { Movie, MovieDetail } from "@/lib/tmdb";
 import { getTrendingMovies, getBackdropUrl, getWatchProviders } from "@/lib/tmdb";
 import { getLikedMovies } from "@/lib/liked-movies";
@@ -933,33 +934,12 @@ const HomeScreen = ({
               className="mt-6 flex flex-col items-center gap-2.5"
             >
               <div className="flex items-center gap-2">
-                {[
-                  {
-                    logo: "https://image.tmdb.org/t/p/original/pbpMk2JmcoNnQwx5JGpXngfoWtp.jpg",
-                    name: "Netflix",
-                  },
-                  {
-                    logo: "https://image.tmdb.org/t/p/original/dQeAar5H991VYporEjUspolDarG.jpg",
-                    name: "Prime",
-                  },
-                  {
-                    logo: "https://image.tmdb.org/t/p/original/7rwgEs15tFwyR9NPQ5vpzxTj19Q.jpg",
-                    name: "Disney+",
-                  },
-                  {
-                    logo: "https://image.tmdb.org/t/p/original/6uhKBfmtzFqOcLousHwZuzcrScK.jpg",
-                    name: "Apple TV+",
-                  },
-                  {
-                    logo: "https://image.tmdb.org/t/p/original/6Q3YKUNA60A4DxOrPaUTDOE4BrU.jpg",
-                    name: "Max",
-                  },
-                ].map((p) => (
+                {ALL_PLATFORMS.slice(0, 5).map((p) => (
                   <img
-                    key={p.name}
+                    key={p.id}
                     src={p.logo}
-                    alt={p.name}
-                    className="w-5 h-5 md:w-6 md:h-6 rounded-md object-cover opacity-50"
+                    alt={p.label}
+                    className="w-7 h-7 md:w-8 md:h-8 rounded-md object-cover opacity-50"
                     loading="lazy"
                   />
                 ))}
