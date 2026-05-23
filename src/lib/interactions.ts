@@ -265,9 +265,14 @@ export async function getUserTasteProfile() {
   const userId = (await supabase.auth.getUser()).data.user?.id;
   if (!userId) return null;
 
-  const [prefs, { data: feedbackRows }, { data: interactions }, { data: vectorData }, { data: peoplePrefs }] =
+  const [prefs, { data: profileData }, { data: feedbackRows }, { data: interactions }, { data: vectorData }, { data: peoplePrefs }] =
     await Promise.all([
       getPreferencesSnapshot(),
+      supabase
+        .from("profiles")
+        .select("favorite_genres, excluded_genres")
+        .eq("id", userId)
+        .single(),
       supabase
         .from("user_item_feedback")
         .select(
@@ -360,9 +365,24 @@ export async function getUserTasteProfile() {
     .map((i: any) => i.tmdb_id)
     .filter((id): id is number => typeof id === "number" && id > 0);
 
+  // Genres explicites : union de "Mon Cinéma" (user_preferences) + profil/onboarding (profiles.favorite_genres)
+  // Fallback sur l'historique d'interactions si aucune préférence explicite n'est définie
+  const explicitLikedGenres = [
+    ...new Set([
+      ...prefs.genres.liked,
+      ...((profileData as any)?.favorite_genres || []),
+    ]),
+  ];
+  const explicitExcludedGenres = [
+    ...new Set([
+      ...prefs.genres.excluded,
+      ...((profileData as any)?.excluded_genres || []),
+    ]),
+  ];
+
   const topGenres =
-    prefs.genres.liked.length > 0
-      ? prefs.genres.liked.slice(0, 8)
+    explicitLikedGenres.length > 0
+      ? explicitLikedGenres.slice(0, 8)
       : Object.entries(roundedGenreCounts)
           .sort(([, a], [, b]) => b - a)
           .slice(0, 8)
@@ -434,8 +454,8 @@ export async function getUserTasteProfile() {
 
     preferredPlatforms: prefs.platforms.liked,
     excludedPlatforms: prefs.platforms.excluded,
-    favoriteGenres: prefs.genres.liked,
-    excludedGenres: prefs.genres.excluded,
+    favoriteGenres: explicitLikedGenres,
+    excludedGenres: explicitExcludedGenres,
     mediaPreference: prefs.mediaType,
     maxDuration: prefs.maxDuration,
     minRating: prefs.minRating,
