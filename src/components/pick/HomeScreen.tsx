@@ -466,6 +466,8 @@ const HomeScreen = ({
             console.group(`[PICK-DEBUG] 🧠 Profil utilisateur envoyé au LLM`);
             console.log(`   Genres préférés  : [${(p.genresPrefers || []).join(", ")}]`);
             console.log(`   Genres exclus    : [${(p.genresExclus || []).join(", ")}]`);
+            if (p.originesAimees?.length) console.log(`   Origines aimées  : [${p.originesAimees.join(", ")}]`);
+            if (p.originesExclues?.length) console.log(`   Origines exclues : [${p.originesExclues.join(", ")}]`);
             if (p.genresFatigue?.length) console.log(`   Genres fatigue   : [${p.genresFatigue.join(", ")}]`);
             console.log(`   Clusters favoris : [${(p.clusters || []).join(", ")}]`);
             if (p.clustersRejetes?.length) console.log(`   Clusters rejetés : [${p.clustersRejetes.join(", ")}]`);

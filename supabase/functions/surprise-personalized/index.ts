@@ -281,6 +281,19 @@ serve(async (req) => {
       }
     }
 
+    // ── Préférences d'origine (calculées une fois, utilisées dans LLM + debug) ──
+    const ORIGIN_MAP: Record<string, string> = {
+      "Cinéma français": "français (langue: fr)",
+      "Cinéma américain": "américain/anglophone (langue: en)",
+      "Cinéma asiatique": "asiatique (langues: ko, ja, zh, th)",
+    };
+    const likedOrigins = [...new Set([...likedWithTv, ...(topGenres as string[])])]
+      .filter((g) => g in ORIGIN_MAP)
+      .map((g) => ORIGIN_MAP[g]);
+    const excludedOrigins = effectiveExcludedGenres
+      .filter((g: string) => g in ORIGIN_MAP)
+      .map((g: string) => ORIGIN_MAP[g]);
+
     // ── ÉTAPE 2 : LLM — sélection + scoring ──
     let llmSelections: any[] = [];
     let llmFilteredAll = false;
@@ -318,6 +331,18 @@ serve(async (req) => {
             ? "MODE PRÉCISION : Reste très proche des genres et clusters favoris."
             : "";
 
+      const originNote = [
+        likedOrigins.length > 0 ? `- Origines préférées : ${likedOrigins.join(", ")}` : "",
+        excludedOrigins.length > 0
+          ? `- ⛔ ORIGINES À ÉVITER ABSOLUMENT : ${excludedOrigins.join(", ")} — n'inclus aucun film de ces origines.`
+          : "",
+        likedOrigins.length > 0 && excludedOrigins.length === 0
+          ? `- Favorise les films des origines listées ci-dessus. Évite de surreprésenter les autres origines.`
+          : "",
+      ]
+        .filter(Boolean)
+        .join("\n");
+
       const systemPrompt = `Tu es Pick, moteur de recommandation cinéphile. Sélectionne les meilleurs films depuis une liste pré-validée.
 
 PROFIL UTILISATEUR :
@@ -328,6 +353,7 @@ ${rejectedClusters.length > 0 ? `- ⛔ Clusters rejetés : ${rejectedClusters.jo
 - Confiance profil : ${confidence.score}/100
 ${fatiguedGenres.length > 0 ? `- Genres en fatigue : ${fatiguedGenres.join(", ")}` : ""}
 ${excludedGenres?.length > 0 ? `- ⛔ GENRES EXCLUS (absolu) : ${excludedGenres.join(", ")}` : ""}
+${originNote}
 ${rejectionNote}
 ${explorationNote}
 
@@ -340,7 +366,7 @@ RÈGLES DE SÉLECTION :
 - Diversifie les genres entre les sélections
 - Priorise les films bien notés (⭐7+) si le profil matche
 - Évite 2 films de la même franchise ou très similaires
-- Respecte absolument les genres exclus et clusters rejetés
+- Respecte absolument les genres exclus, origines exclues et clusters rejetés
 
 SCORING (matchScore) :
 - Base : 75%. Hausse si genre favori / note 8+. Baisse si cluster rejeté / note <6.
@@ -636,6 +662,8 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
             genresPrefers: likedWithTv,
             genresExclus: effectiveExcludedGenres,
             genresFatigue: fatiguedGenres,
+            originesAimees: likedOrigins,
+            originesExclues: excludedOrigins,
             clusters: tasteClusters.slice(0, 5),
             clustersRejetes: rejectedClusters,
             filmsAimes: likedTitles,
