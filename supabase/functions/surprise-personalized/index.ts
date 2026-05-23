@@ -176,6 +176,12 @@ serve(async (req) => {
           ]
         : [];
 
+    // Pour le SQL : uniquement les genres TMDB valides (pas les styles ni les équivalents TV anglais)
+    const likedGenresForSQL =
+      topGenres.length >= 2
+        ? (topGenres as string[]).filter((g) => g in genreNameToId)
+        : [];
+
     const hardExcludedFormats = ["Reality", "Soap", "Talk", "News", "Téléfilm", "Horreur"];
     const autoExcluded = hardExcludedFormats.filter((g) => !likedWithTv.includes(g));
     const effectiveExcludedGenres = [...new Set([...(excludedGenres || []), ...autoExcluded])];
@@ -222,7 +228,7 @@ serve(async (req) => {
           filter_media_type: mediaType === "both" ? null : searchType,
           min_rating: 6, // Plancher fixe — filtre les nanars, le score d'adhésion gère la qualité au-dessus
           excluded_genres: effectiveExcludedGenres,
-          liked_genres: likedWithTv,
+          liked_genres: likedGenresForSQL,
           max_duration: maxDuration ?? null,
           p_user_id: userId ?? null,
         });
