@@ -288,19 +288,23 @@ serve(async (req) => {
     let llmPool: any[] = [];
 
     if (filteredCandidates.length >= 1) {
-      const topPool = filteredCandidates.slice(0, llmPoolSize);
+      const compositeScore = (c: any) =>
+        (c.similarity ?? 0) * 0.5 + ((c.vote_average ?? 0) / 10) * 0.5;
+      const topPool = [...filteredCandidates]
+        .sort((a, b) => compositeScore(b) - compositeScore(a))
+        .slice(0, llmPoolSize);
       llmPool = topPool;
       const targetLLMCount = topPool.length;
 
       const candidateList = topPool
         .map(
           (c: any, i: number) =>
-            `[${i + 1}] id=${c.tmdb_id} | "${c.title}" (${c.year || "?"}) | ${(c.genres || []).slice(0, 3).join(", ")} | ⭐${c.vote_average > 0 ? c.vote_average.toFixed(1) : "?"}/10`,
+            `[${i + 1}] id=${c.tmdb_id} | "${c.title}" (${c.year || "?"}) | ${(c.genres || []).slice(0, 3).join(", ")} | ⭐${c.vote_average > 0 ? c.vote_average.toFixed(1) : "?"}/10 | sim=${c.similarity != null ? Math.round(c.similarity * 1000) / 10 : "?"}% | composite=${Math.round(compositeScore(c) * 100)}%`,
         )
         .join("\n");
 
       console.log(
-        `[SP] Top ${topPool.length} envoyés au LLM (sur ${candidates.length} candidats SQL):\n${candidateList}`,
+        `[SP] Top ${topPool.length} envoyés au LLM — triés par score composé (sim 50% + note 50%):\n${candidateList}`,
       );
 
       const rejectionNote = rejectionContext
@@ -590,12 +594,16 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
       `[SP] Final: ${finalMovies.length}/${movies.length} movies kept (requested ${requestedCount}), mode: ${llmSelections.length > 0 ? "retrieve-rerank" : "fallback"}`,
     );
 
+    const toCompositeScore = (c: any) =>
+      Math.round(((c.similarity ?? 0) * 0.5 + ((c.vote_average ?? 0) / 10) * 0.5) * 100);
+
     const toDebugRow = (c: any) => ({
       id: c.tmdb_id,
       title: c.title,
       year: c.year || "?",
       note: c.vote_average > 0 ? Math.round(c.vote_average * 10) / 10 : null,
       sim: c.similarity != null ? Math.round(c.similarity * 1000) / 10 : null,
+      composite: toCompositeScore(c),
       genres: (c.genres || []).slice(0, 4),
       type: c.media_type,
     });
