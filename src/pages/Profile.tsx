@@ -24,7 +24,7 @@ const Profile = () => {
   const [matchThreshold, setMatchThreshold] = useState<number>(80);
   const [defaultMediaType, setDefaultMediaType] = useState<"both" | "movie" | "tv">("both");
   const [defaultMaxDuration, setDefaultMaxDuration] = useState<number | null>(null);
-  const [recommendationCount, setRecommendationCount] = useState<number>(5);
+  const [recommendationCount, setRecommendationCount] = useState<number>(3);
   const [saving, setSaving] = useState(false);
   const [showPlatforms, setShowPlatforms] = useState(false);
   const [profileLoading, setProfileLoading] = useState(true);
@@ -52,7 +52,7 @@ const Profile = () => {
       setDefaultMaxDuration((data as any)?.default_max_duration ?? null);
       setDisplayName(data?.display_name || user.email?.split("@")[0] || "");
       setAvatarUrl((data as any)?.avatar_url || null);
-      setRecommendationCount(Math.min((data as any)?.default_recommendation_count ?? 3, 5));
+      setRecommendationCount(Math.min((data as any)?.default_recommendation_count ?? 3, 3));
     } catch (e) { console.error(e); }
     finally { setProfileLoading(false); }
   };
@@ -134,7 +134,7 @@ const Profile = () => {
     matchThreshold !== ((profile as any)?.match_threshold ?? 80) ||
     defaultMediaType !== ((profile as any)?.default_media_type || "both") ||
     defaultMaxDuration !== ((profile as any)?.default_max_duration ?? null) ||
-    recommendationCount !== ((profile as any)?.default_recommendation_count ?? 5)
+    recommendationCount !== ((profile as any)?.default_recommendation_count ?? 3)
   );
 
   if (!isReady || profileLoading) return <div className="fixed inset-0 bg-background flex items-center justify-center"><Loader2 className="w-6 h-6 text-primary animate-spin" /></div>;
@@ -194,9 +194,9 @@ const Profile = () => {
           <div className="bg-card rounded-xl p-4">
             <div className="flex items-center justify-between mb-3">
               <span className="font-sans text-sm font-medium">{recommendationCount} propositions</span>
-              <span className="text-[10px] text-foreground/50">1 à 5</span>
+              <span className="text-[10px] text-foreground/50">1 à 3</span>
             </div>
-            <Slider value={[recommendationCount]} onValueChange={([value]) => setRecommendationCount(value)} min={1} max={5} step={1} className="w-full" />
+            <Slider value={[recommendationCount]} onValueChange={([value]) => setRecommendationCount(value)} min={1} max={3} step={1} className="w-full" />
             <p className="text-[11px] text-foreground/50 mt-3">Choisis combien de recommandations Pick te propose par défaut.</p>
           </div>
         </motion.section>
