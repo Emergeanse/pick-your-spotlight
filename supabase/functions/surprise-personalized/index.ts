@@ -374,15 +374,17 @@ RÈGLES DE SÉLECTION :
 - Respecte absolument les genres exclus, origines exclues et clusters rejetés
 
 SCORING (matchScore) :
+- Seuil minimum utilisateur : ${minMatchScore}. N'inclus AUCUN film avec matchScore < ${minMatchScore}.
 - Base : 75%. Hausse si genre favori / note 8+. Baisse si cluster rejeté / note <6.
 - Donne uniquement des scores honnêtes — un film moyen doit avoir un score moyen.
+- Si aucun film de la liste n'atteint ${minMatchScore}, sélectionne les meilleurs disponibles mais indique des scores réalistes.
 
 Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
 {
   "selections": [
     {
       "tmdb_id": <id exact de la liste ci-dessus>,
-      "matchScore": <50-99>,
+      "matchScore": <${minMatchScore}-99>,
       "reason": "<1 phrase pourquoi ce film correspond au profil>"
     }
   ]
@@ -414,7 +416,10 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
           if (parsed.selections && Array.isArray(parsed.selections)) {
             const validIds = new Set(topPool.map((c: any) => Number(c.tmdb_id)));
             const idValid = parsed.selections.filter((s: any) => s.tmdb_id && validIds.has(Number(s.tmdb_id)));
-            llmSelections = idValid.map((s: any) => ({ ...s, tmdb_id: Number(s.tmdb_id) }));
+            // Filtre post-LLM : on accepte jusqu'à 5pts en-dessous du seuil pour éviter les 0 résultats
+            const scoreFiltered = idValid.filter((s: any) => (s.matchScore || 0) >= minMatchScore - 5);
+            llmSelections = (scoreFiltered.length > 0 ? scoreFiltered : idValid)
+              .map((s: any) => ({ ...s, tmdb_id: Number(s.tmdb_id) }));
             console.log(
               `[SP] LLM raw selections: ${parsed.selections.length}, valid: ${llmSelections.length}, minMatchScore (used by movie-match): ${minMatchScore}`,
             );
