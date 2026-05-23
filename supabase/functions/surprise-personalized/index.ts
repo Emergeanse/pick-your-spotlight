@@ -317,7 +317,7 @@ serve(async (req) => {
       const systemPrompt = `Tu es Pick, moteur de recommandation cinéphile. Sélectionne les meilleurs films depuis une liste pré-validée.
 
 PROFIL UTILISATEUR :
-- Genres préférés : ${topGenres.slice(0, 6).join(", ") || "non déterminés"}
+- Genres préférés : ${likedWithTv.join(", ") || "non déterminés"}
 - Clusters favoris : ${tasteClusters.slice(0, 5).join(", ") || "non déterminés"}
 ${rejectedClusters.length > 0 ? `- ⛔ Clusters rejetés : ${rejectedClusters.join(", ")}` : ""}
 - Films aimés : ${likedTitles.join(", ") || "aucun encore"}
