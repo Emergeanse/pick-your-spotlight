@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { SlidersHorizontal, Film, Tv, Clapperboard, Clock, RotateCcw, Target, Star, Hash } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
@@ -40,6 +40,15 @@ interface QuickFiltersProps {
 
 const QuickFilters = ({ filters, onFiltersChange, profileDefaults }: QuickFiltersProps) => {
   const [open, setOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
+
   const hasActiveFilters = filters.mediaType !== "both" || filters.maxDuration !== null || filters.matchThreshold !== 80 || filters.minRating !== 0 || filters.recommendationCount !== 3;
 
   const isOverridden = profileDefaults && (
@@ -81,20 +90,35 @@ const QuickFilters = ({ filters, onFiltersChange, profileDefaults }: QuickFilter
       <AnimatePresence>
         {open && (
           <>
+            {/* Backdrop */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 z-40"
+              className={`fixed inset-0 z-40 ${isMobile ? "bg-black/40" : ""}`}
               onClick={() => setOpen(false)}
             />
+
+            {/* Panel — bottom sheet on mobile, dropdown on desktop */}
             <motion.div
-              initial={{ opacity: 0, y: -8, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -8, scale: 0.95 }}
-              transition={{ duration: 0.2 }}
-              className="absolute right-0 top-full mt-2 z-50 w-80 rounded-2xl bg-card border border-border/20 shadow-xl overflow-hidden max-h-[70vh] overflow-y-auto"
+              initial={isMobile ? { y: "100%" } : { opacity: 0, y: -8, scale: 0.95 }}
+              animate={isMobile ? { y: 0 } : { opacity: 1, y: 0, scale: 1 }}
+              exit={isMobile ? { y: "100%" } : { opacity: 0, y: -8, scale: 0.95 }}
+              transition={{ duration: 0.25, ease: [0.32, 0.72, 0, 1] }}
+              className={
+                isMobile
+                  ? "fixed inset-x-0 bottom-0 z-50 rounded-t-3xl bg-card border-t border-border/20 shadow-2xl overflow-hidden max-h-[88vh] flex flex-col"
+                  : "absolute right-0 top-full mt-2 z-50 w-80 rounded-2xl bg-card border border-border/20 shadow-xl overflow-hidden max-h-[70vh] overflow-y-auto"
+              }
             >
+              {/* Drag handle — mobile only */}
+              {isMobile && (
+                <div className="flex justify-center pt-3 pb-1 shrink-0">
+                  <div className="w-10 h-1 rounded-full bg-foreground/15" />
+                </div>
+              )}
+
+              <div className={`${isMobile ? "overflow-y-auto flex-1 pb-[env(safe-area-inset-bottom)]" : ""}`}>
               <div className="p-3.5 border-b border-border/10 flex items-center justify-between">
                 <h3 className="font-sans font-semibold text-sm text-foreground">Filtres rapides</h3>
                 <div className="flex items-center gap-2">
@@ -234,6 +258,7 @@ const QuickFilters = ({ filters, onFiltersChange, profileDefaults }: QuickFilter
                   </div>
                 </div>
               </div>
+              </div>{/* end scroll wrapper */}
             </motion.div>
           </>
         )}
