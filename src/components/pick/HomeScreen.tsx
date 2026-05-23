@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
 import { ALL_PLATFORMS } from "@/lib/platforms";
@@ -133,6 +134,7 @@ const HomeScreen = ({
   onActivationTrainingComplete,
 }: HomeScreenProps) => {
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   const [bgImages, setBgImages] = useState<string[]>([]);
   const [currentBgIndex, setCurrentBgIndex] = useState(0);
@@ -934,7 +936,10 @@ const HomeScreen = ({
               className="mt-6 flex flex-col items-center gap-2.5"
             >
               <div className="flex items-center gap-2">
-                {ALL_PLATFORMS.slice(0, 5).map((p) => (
+                {(userPlatformIds?.length > 0
+                  ? ALL_PLATFORMS.filter((p) => userPlatformIds.includes(p.id)).slice(0, 5)
+                  : ALL_PLATFORMS.slice(0, 5)
+                ).map((p) => (
                   <img
                     key={p.id}
                     src={p.logo}
@@ -944,9 +949,12 @@ const HomeScreen = ({
                   />
                 ))}
               </div>
-              <p className="text-muted-foreground/40 text-[10px] md:text-[11px] font-sans">
-                Compatible avec toutes les plateformes
-              </p>
+              <button
+                onClick={() => navigate("/app/profile?openPlatforms=1")}
+                className="text-muted-foreground/40 hover:text-muted-foreground/70 text-[10px] md:text-[11px] font-sans underline underline-offset-2 transition-colors"
+              >
+                {userPlatformIds?.length > 0 ? "Modifier mes plateformes" : "Compatible avec toutes les plateformes"}
+              </button>
             </motion.div>
           </motion.div>
         </div>

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { toast } from "@/hooks/use-toast";
 import { Check, ChevronDown, LogOut, Loader2, Star, Info, Camera, Pencil, Shield } from "lucide-react";
@@ -7,7 +7,7 @@ import { Slider } from "@/components/ui/slider";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdmin } from "@/hooks/use-admin";
@@ -17,6 +17,7 @@ import { ALL_PLATFORMS } from "@/lib/platforms";
 const Profile = () => {
   const { user, isReady, signOut } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { isAdmin } = useAdmin();
   const [profile, setProfile] = useState<any>(null);
   const [selectedPlatforms, setSelectedPlatforms] = useState<number[]>([]);
@@ -26,7 +27,8 @@ const Profile = () => {
   const [defaultMaxDuration, setDefaultMaxDuration] = useState<number | null>(null);
   const [recommendationCount, setRecommendationCount] = useState<number>(3);
   const [saving, setSaving] = useState(false);
-  const [showPlatforms, setShowPlatforms] = useState(false);
+  const [showPlatforms, setShowPlatforms] = useState(() => searchParams.get("openPlatforms") === "1");
+  const platformSectionRef = useRef<HTMLElement>(null);
   const [profileLoading, setProfileLoading] = useState(true);
   const [displayName, setDisplayName] = useState("");
   const [editingName, setEditingName] = useState(false);
@@ -38,6 +40,12 @@ const Profile = () => {
     if (!user) { navigate("/auth"); return; }
     loadData();
   }, [user, isReady, navigate]);
+
+  useEffect(() => {
+    if (searchParams.get("openPlatforms") === "1" && platformSectionRef.current) {
+      setTimeout(() => platformSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 400);
+    }
+  }, [searchParams]);
 
   const loadData = async () => {
     if (!user) return;
@@ -202,7 +210,7 @@ const Profile = () => {
         </motion.section>
 
         {/* ─── Plateformes ─── */}
-        <motion.section initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="mb-8">
+        <motion.section ref={platformSectionRef} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="mb-8">
           <button
             onClick={() => setShowPlatforms((v) => !v)}
             className="w-full flex items-center justify-between mb-3 group"
