@@ -266,87 +266,68 @@ serve(async (req) => {
       }
     }
 
+    // ── Langues exclues effectives : profil moins override voix ──
+    // Si la voix demande explicitement une langue exclue dans le profil → la voix prime
+    const effectiveExcludedLangsSet = voiceOriginalLanguage
+      ? new Set([...userExcludedOriginLangs].filter((l) => l !== voiceOriginalLanguage))
+      : userExcludedOriginLangs;
+    const effectiveExcludedLangsArr = [...effectiveExcludedLangsSet];
+
     // ── ÉTAPE 1 : SQL — top 200 par similarité vectorielle ──
+    // Langue, décennie et exclusions d'origine filtrées en SQL (plus de post-filtrage).
+    const buildRpcParams = (opts: { withLang: boolean; withYear: boolean }) => ({
+      query_vector: `[${userTasteVector.join(",")}]`,
+      match_count: 200,
+      exclude_ids: normalizedExcludeIds,
+      filter_media_type: effectiveFilterMediaType,
+      min_rating: 6,
+      excluded_genres: effectiveExcludedGenres,
+      liked_genres: effectiveLikedGenresSQL ?? likedGenresForSQL,
+      max_duration: effectiveMaxDuration ?? null,
+      p_user_id: userId ?? null,
+      p_original_language: opts.withLang ? (voiceOriginalLanguage ?? null) : null,
+      p_min_year: opts.withYear ? (voiceDecade ?? null) : null,
+      p_max_year: opts.withYear ? (voiceDecade != null ? voiceDecade + 9 : null) : null,
+      p_excluded_languages: effectiveExcludedLangsArr,
+    });
+
     let candidates: any[] = [];
     if (SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY && userTasteVector) {
       try {
         const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-        const { data, error: rpcError } = await supabase.rpc("match_movies_for_recommendation", {
-          query_vector: `[${userTasteVector.join(",")}]`,
-          match_count: 200,
-          exclude_ids: normalizedExcludeIds,
-          filter_media_type: effectiveFilterMediaType,
-          min_rating: 6, // Plancher fixe — filtre les nanars, le score d'adhésion gère la qualité au-dessus
-          excluded_genres: effectiveExcludedGenres,
-          liked_genres: effectiveLikedGenresSQL ?? likedGenresForSQL,
-          max_duration: effectiveMaxDuration ?? null,
-          p_user_id: userId ?? null,
-        });
+        const { data, error: rpcError } = await supabase.rpc(
+          "match_movies_for_recommendation",
+          buildRpcParams({ withLang: true, withYear: true }),
+        );
         if (rpcError) console.error("SQL RPC error:", rpcError);
         if (data) candidates = data as any[];
         console.log(
-          `[SP] SQL candidates: ${candidates.length} | liked: [${(effectiveLikedGenresSQL ?? likedWithTv).slice(0, 4).join(", ")}...] | lang: ${voiceOriginalLanguage ?? "profil"} | excluded: ${effectiveExcludedGenres.length} genres | excludeIds: ${normalizedExcludeIds.length}`,
+          `[SP] SQL candidates: ${candidates.length} | liked: [${(effectiveLikedGenresSQL ?? likedWithTv).slice(0, 4).join(", ")}...] | lang: ${voiceOriginalLanguage ?? "profil"} | decade: ${voiceDecade ?? "—"} | excluded_langs: [${effectiveExcludedLangsArr.join(",")}] | excludeIds: ${normalizedExcludeIds.length}`,
         );
+
+        // ── Fallback langue/année : si trop peu de candidats avec filtres voix stricts, relancer sans ──
+        if ((voiceOriginalLanguage || voiceDecade) && candidates.length < 10) {
+          console.log(`[SP] Voice lang/year fallback: ${candidates.length} candidats — relance sans filtre langue/année`);
+          const { data: data2 } = await supabase.rpc(
+            "match_movies_for_recommendation",
+            buildRpcParams({ withLang: false, withYear: false }),
+          );
+          if (data2 && (data2 as any[]).length > candidates.length) {
+            candidates = data2 as any[];
+            console.log(`[SP] Lang/year fallback: ${candidates.length} candidats`);
+          }
+        }
 
         // ── Fallback durée : si très peu de candidats avec contrainte vocale de durée, relancer sans durée ──
         if (voiceMaxDuration && candidates.length < 10) {
           console.log(`[SP] Voice duration fallback: ${candidates.length} candidates with maxDuration=${voiceMaxDuration} — retrying without duration`);
-          const { data: data2 } = await supabase.rpc("match_movies_for_recommendation", {
-            query_vector: `[${userTasteVector.join(",")}]`,
-            match_count: 200,
-            exclude_ids: normalizedExcludeIds,
-            filter_media_type: effectiveFilterMediaType,
-            min_rating: 6,
-            excluded_genres: effectiveExcludedGenres,
-            liked_genres: effectiveLikedGenresSQL ?? likedGenresForSQL,
+          const { data: data3 } = await supabase.rpc("match_movies_for_recommendation", {
+            ...buildRpcParams({ withLang: true, withYear: true }),
             max_duration: null,
-            p_user_id: userId ?? null,
           });
-          if (data2 && (data2 as any[]).length > candidates.length) {
-            candidates = data2 as any[];
+          if (data3 && (data3 as any[]).length > candidates.length) {
+            candidates = data3 as any[];
             console.log(`[SP] Duration fallback: ${candidates.length} candidates`);
-          }
-        }
-
-        // ── Filtre langue (voix) post-SQL — avec fallback si < 5 résultats ──
-        if (voiceOriginalLanguage && candidates.length > 0) {
-          const langFiltered = candidates.filter((c: any) => (c.original_language || "") === voiceOriginalLanguage);
-          if (langFiltered.length >= 5) {
-            candidates = langFiltered;
-            console.log(`[SP] Voice language filter "${voiceOriginalLanguage}": ${langFiltered.length} candidates`);
-          } else {
-            console.log(`[SP] Voice language filter "${voiceOriginalLanguage}" trop restrictif (${langFiltered.length}) — conserve tous les ${candidates.length} candidats`);
-          }
-        }
-
-        // ── Filtre décennie (voix) post-SQL — avec fallback si < 5 résultats ──
-        if (voiceDecade && candidates.length > 0) {
-          const decadeFiltered = candidates.filter((c: any) => {
-            const year = Number(c.year);
-            return year >= voiceDecade && year < voiceDecade + 10;
-          });
-          if (decadeFiltered.length >= 5) {
-            candidates = decadeFiltered;
-            console.log(`[SP] Voice decade filter "${voiceDecade}s": ${decadeFiltered.length} candidates`);
-          } else {
-            console.log(`[SP] Voice decade filter "${voiceDecade}s" trop restrictif (${decadeFiltered.length}) — conserve tous les ${candidates.length} candidats`);
-          }
-        }
-
-        // ── Filtre origines exclues (profil) — hard exclusion post-SQL ──
-        // Si la voix demande explicitement une langue exclue dans le profil → la voix prime
-        if (userExcludedOriginLangs.size > 0 && candidates.length > 0) {
-          const effectiveExcludedLangs = voiceOriginalLanguage
-            ? new Set([...userExcludedOriginLangs].filter((l) => l !== voiceOriginalLanguage))
-            : userExcludedOriginLangs;
-          if (effectiveExcludedLangs.size > 0) {
-            const originFiltered = candidates.filter((c: any) => !effectiveExcludedLangs.has(c.original_language || ""));
-            if (originFiltered.length >= 5) {
-              candidates = originFiltered;
-              console.log(`[SP] Filtre origines exclues [${[...effectiveExcludedLangs].join(",")}]: ${originFiltered.length} candidats`);
-            } else {
-              console.log(`[SP] Filtre origines exclues trop restrictif (${originFiltered.length}) — conserve ${candidates.length} candidats`);
-            }
           }
         }
       } catch (e) {
