@@ -274,11 +274,13 @@ serve(async (req) => {
       : userExcludedOriginLangs;
     const effectiveExcludedLangsArr = [...effectiveExcludedLangsSet];
 
-    // ── ÉTAPE 1 : SQL — top 200 par similarité vectorielle ──
+    // ── ÉTAPE 1 : SQL — top candidats par similarité vectorielle ──
     // Langue, décennie et exclusions d'origine filtrées en SQL (plus de post-filtrage).
+    // 300 candidats quand un filtre plateforme est actif (hit-rate ~7% → besoin de plus de marge).
+    const sqlMatchCount = platformIds?.length > 0 ? 300 : 200;
     const buildRpcParams = (opts: { withLang: boolean; withYear: boolean }) => ({
       query_vector: `[${userTasteVector.join(",")}]`,
-      match_count: 200,
+      match_count: sqlMatchCount,
       exclude_ids: normalizedExcludeIds,
       filter_media_type: effectiveFilterMediaType,
       min_rating: 6,

@@ -253,9 +253,9 @@ const TonightPickOverlay = ({
               On regarde ?
             </motion.button>
 
-            {/* Progress segments + suggestion counter */}
+            {/* Progress segments — uniquement si plusieurs propositions */}
             {tonightPool.length > 1 && (
-              <div className="flex flex-col items-center gap-2.5">
+              <div className="flex flex-col items-center gap-2.5 mb-1">
                 <div className="flex gap-1.5">
                   {tonightPool.map((_, i) => (
                     <button
@@ -275,21 +275,25 @@ const TonightPickOverlay = ({
                 <span className="text-foreground/30 text-[9px] font-sans tracking-[0.3em] uppercase">
                   Suggestion {tonightPickIndex + 1} / {tonightPool.length}
                 </span>
-                {(tonightAllVisited || tonightLoading) && (
-                  <button
-                    onClick={onMoreSuggestions}
-                    disabled={tonightLoading}
-                    className="mt-2 text-xs font-sans transition-all flex items-center gap-1.5 text-foreground/55 hover:text-foreground/80 disabled:opacity-50"
-                  >
-                    {tonightLoading ? (
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                    ) : (
-                      <Dices className="w-3.5 h-3.5" />
-                    )}
-                    {displayCount} autre{displayCount > 1 ? "s" : ""} suggestion{displayCount > 1 ? "s" : ""}
-                  </button>
-                )}
               </div>
+            )}
+
+            {/* Bouton "nouvelles suggestions" :
+                - proposition unique → actif immédiatement (on l'a forcément vue)
+                - plusieurs propositions → actif seulement quand toutes visitées */}
+            {(tonightPool.length <= 1 || tonightAllVisited || tonightLoading) && (
+              <button
+                onClick={onMoreSuggestions}
+                disabled={tonightLoading}
+                className="mt-1 text-xs font-sans transition-all flex items-center gap-1.5 text-foreground/55 hover:text-foreground/80 disabled:opacity-50"
+              >
+                {tonightLoading ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <Dices className="w-3.5 h-3.5" />
+                )}
+                {displayCount} autre{displayCount > 1 ? "s" : ""} suggestion{displayCount > 1 ? "s" : ""}
+              </button>
             )}
           </div>
         </motion.div>
