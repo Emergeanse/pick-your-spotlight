@@ -2,12 +2,13 @@ import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { Bookmark, Heart, Eye, ThumbsDown, HelpCircle } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
-import { trackInteraction } from "@/lib/interactions";
+import type { InteractionContext } from "@/lib/interactions";
 import { clearFeedbackType, setFeedback, type FeedbackLabel } from "@/lib/feedback";
 import type { MovieDetail } from "@/lib/tmdb";
 import { ensureMovieEmbedding } from "@/lib/taste-engine";
 import { useMovieInteraction } from "@/hooks/use-movie-interactions";
 import { inferCatalogMediaType } from "@/lib/catalog";
+
 
 interface MovieActionBarProps {
   movie: MovieDetail;
@@ -104,6 +105,16 @@ const MovieActionBar = ({
 
   const isCurrentMovie = useCallback((movieId: number) => currentMovieIdRef.current === movieId, []);
 
+  const interactionMeta = useMemo<InteractionContext>(
+    () => ({
+      title: movie.title || movie.name || undefined,
+      genres: (movie.genres || []).map((g) => g.name),
+      runtime: movie.runtime ?? undefined,
+      session_id: sessionId ?? undefined,
+    }),
+    [movie.id, movie.title, movie.name, movie.runtime, movie.genres, sessionId],
+  );
+
   const persistFeedback = useCallback(
     async (label: FeedbackLabel) => {
       debugLog("persistFeedback:start", {
@@ -126,6 +137,7 @@ const MovieActionBar = ({
         {
           context_type: contextType ?? (sessionId ? "solo_session" : "browse"),
           context_id: sessionId ?? null,
+          interaction: interactionMeta,
         },
       );
 
@@ -134,8 +146,19 @@ const MovieActionBar = ({
         label,
       });
     },
-    [movie.id, movieMeta, sessionId, contextType, mediaType, user?.id],
+    [movie.id, movieMeta, sessionId, contextType, mediaType, user?.id, interactionMeta],
   );
+
+  const clearLabel = useCallback(
+    (label: FeedbackLabel) =>
+      clearFeedbackType(movie.id, [label], mediaType, {
+        context_type: contextType ?? (sessionId ? "solo_session" : "browse"),
+        context_id: sessionId ?? null,
+        interaction: interactionMeta,
+      }),
+    [movie.id, mediaType, contextType, sessionId, interactionMeta],
+  );
+
 
   const handlePrimaryToggle = async (label: Exclude<FeedbackLabel, "watchlist" | "seen">) => {
     if (!requireAuth()) return;
@@ -159,10 +182,11 @@ const MovieActionBar = ({
         await persistFeedback(newLabel);
 
         if (newLabel === "unknown" && seenActive) {
-          await clearFeedbackType(movie.id, ["seen"], mediaType);
+          await clearLabel("seen");
         }
       } else {
-        await clearFeedbackType(movie.id, [label], mediaType);
+        await clearLabel(label);
+
       }
 
       if (!isCurrentMovie(movieId)) return;
@@ -202,16 +226,15 @@ const MovieActionBar = ({
 
     try {
       if (isSeenActive) {
-        await clearFeedbackType(movie.id, ["seen"], mediaType);
+        await clearLabel("seen");
       } else {
         await persistFeedback("seen");
 
         if (unknownActive) {
-          await clearFeedbackType(movie.id, ["unknown"], mediaType);
+          await clearLabel("unknown");
         }
-
-        trackInteraction(movie.id, "already_seen", {});
       }
+
 
       if (!isCurrentMovie(movieId)) return;
 
@@ -240,14 +263,13 @@ const MovieActionBar = ({
     setLoading(true);
     try {
       if (bookmarked) {
-        await clearFeedbackType(movie.id, ["watchlist"], mediaType);
+        await clearLabel("watchlist");
         toast.success("Retiré de ta watchlist");
-        trackInteraction(movie.id, "unsaved");
       } else {
         await persistFeedback("watchlist");
         toast.success("Ajouté à ta watchlist !");
-        trackInteraction(movie.id, "saved");
       }
+
     } catch (error) {
       debugLog("handleToggleBookmark:error", error);
       toast.error("Erreur");
@@ -274,21 +296,30 @@ const MovieActionBar = ({
       if (liked) {
         // setFeedback("skip") deletes exclusive types (like, love) internally before inserting skip,
         // so the movie is excluded from future recommendations.
-        await setFeedback(movie.id, "skip", {
-          title: movie.title || (movie as any).name || ".",
-          media_type: mediaType,
-          poster_path: movie.poster_path ?? null,
-          year: null,
-          overview: movie.overview ?? null,
-          vote_average: movie.vote_average ?? null,
-          popularity: (movie as any).popularity ?? null,
-          runtime: movie.runtime ?? null,
-        });
+        await setFeedback(
+          movie.id,
+          "skip",
+          {
+            title: movie.title || (movie as any).name || ".",
+            media_type: mediaType,
+            poster_path: movie.poster_path ?? null,
+            year: null,
+            overview: movie.overview ?? null,
+            vote_average: movie.vote_average ?? null,
+            popularity: (movie as any).popularity ?? null,
+            runtime: movie.runtime ?? null,
+          },
+          {
+            context_type: contextType ?? (sessionId ? "solo_session" : "browse"),
+            context_id: sessionId ?? null,
+            interaction: interactionMeta,
+          },
+        );
 
         if (!isCurrentMovie(movieId)) return;
 
         toast.success("Retiré des favoris");
-        trackInteraction(movie.id, "unliked");
+
       } else {
         await persistFeedback("like");
 
@@ -302,8 +333,8 @@ const MovieActionBar = ({
         if (!isCurrentMovie(movieId)) return;
 
         toast.success("Ajouté aux favoris !");
-        trackInteraction(movie.id, "liked");
       }
+
     } catch (error) {
       debugLog("handleToggleLike:error", error);
       toast.error("Erreur");
