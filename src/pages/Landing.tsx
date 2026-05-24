@@ -242,8 +242,9 @@ const Landing = () => {
             transition={{ duration: 0.7, delay: 0.25 }}
             className="text-[2.75rem] md:text-7xl lg:text-8xl font-serif leading-[0.95] mb-5"
           >
-            Fini le scroll.{" "}<br className="md:hidden" />
-            <span className="text-primary">Place au film.</span>
+            <span className="md:whitespace-nowrap">Fini le scroll.</span>
+            <br />
+            <span className="text-primary md:whitespace-nowrap">Place au film.</span>
           </motion.h1>
 
           {/* Subtitle */}
@@ -251,7 +252,7 @@ const Landing = () => {
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.4 }}
-            className="text-foreground/40 text-base md:text-lg font-sans font-light max-w-lg mx-auto mb-8 leading-relaxed"
+            className="text-foreground/65 text-base md:text-lg font-sans font-light max-w-lg mx-auto mb-8 leading-relaxed"
           >
             Pick comprend tes goûts et ton humeur pour te trouver le film parfait en quelques secondes. Plus de débat, plus d'hésitation.
           </motion.p>
@@ -265,19 +266,19 @@ const Landing = () => {
           >
             <Button
               size="lg"
-              className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90 font-sans font-semibold px-8 h-13 gap-2.5 text-base transition-all active:scale-[0.97] shadow-lg shadow-primary/20"
+              className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90 font-sans font-semibold px-8 h-12 gap-2.5 text-base transition-all active:scale-[0.97] shadow-lg shadow-primary/20"
               onClick={() => navigate("/app")}
             >
-              <Clapperboard className="w-4.5 h-4.5" />
+              <Clapperboard className="w-5 h-5" />
               Trouver mon film
             </Button>
             <div className="flex items-center gap-3">
               {ALL_PLATFORMS.slice(0, 5).map((p) => (
-                <div key={p.id} className="w-10 h-10 rounded-xl overflow-hidden border border-border/10 opacity-40">
+                <div key={p.id} className="w-10 h-10 rounded-xl overflow-hidden border border-border/20 bg-card/60">
                   <img src={p.logo} alt={p.label} className="w-full h-full object-cover" />
                 </div>
               ))}
-              <span className="text-foreground/20 text-xs font-sans">+15</span>
+              <span className="text-foreground/55 text-xs font-sans">+15</span>
             </div>
           </motion.div>
         </motion.div>
