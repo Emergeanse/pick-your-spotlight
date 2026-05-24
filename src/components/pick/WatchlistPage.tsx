@@ -585,59 +585,65 @@ const WatchlistPage = ({ onMovieSelect }: WatchlistPageProps) => {
 
   return (
     <div className="h-full overflow-y-auto px-5 pt-[calc(1rem+env(safe-area-inset-top))] pb-24">
-      {/* Header */}
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex items-center justify-between mb-4">
-        <div>
-          <h1 className="text-2xl font-serif">Ma Collection</h1>
-          <p className="text-foreground/30 text-[11px] font-sans mt-0.5">
-            {watchlistItems.length + likedItems.length + seenItems.length + dislikedItems.length} titres au total
-          </p>
-        </div>
-        {currentItems.length > 0 && (
-          <button
-            onClick={() => setShowResetConfirm(true)}
-            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-sans text-destructive/40 hover:text-destructive/70 hover:bg-destructive/5 transition-colors"
-          >
-            <Trash2 className="w-3 h-3" />
-            Vider
-          </button>
-        )}
-      </motion.div>
-
-      {/* Tab bar — scrollable */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.05 }}
-        className="flex gap-1 overflow-x-auto scrollbar-hide mb-4 -mx-1 px-1"
-      >
-        {TABS.map((tab) => {
-          const count = itemsByTab[tab].length;
-          const cfg = TAB_CONFIG[tab];
-          const active = activeTab === tab;
-          return (
+      {/* Sticky header zone — keeps title + tabs visible while scrolling the list */}
+      <div className="sticky -top-4 z-20 -mx-5 px-5 pt-3 pb-3 bg-gradient-to-b from-background via-background/95 to-background/70 backdrop-blur-md">
+        {/* Header */}
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex items-center justify-between mb-4">
+          <div>
+            <h1 className="text-2xl font-serif leading-tight">Ma Collection</h1>
+            <p className="text-foreground/35 text-[11px] font-sans mt-0.5 tabular-nums">
+              {watchlistItems.length + likedItems.length + seenItems.length + dislikedItems.length} titres au total
+            </p>
+          </div>
+          {currentItems.length > 0 && (
             <button
-              key={tab}
-              onClick={() => switchTab(tab)}
-              className={`shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-[12px] font-sans font-medium transition-all border ${
-                active
-                  ? "bg-card shadow-sm text-foreground border-border/20"
-                  : "text-foreground/35 border-transparent hover:text-foreground/55 hover:bg-card/30"
-              }`}
+              onClick={() => setShowResetConfirm(true)}
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-sans text-destructive/50 hover:text-destructive hover:bg-destructive/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-destructive/40 transition-colors"
             >
-              <span className={active ? cfg.color : ""}>{cfg.icon}</span>
-              <span>{cfg.label}</span>
-              {count > 0 && (
-                <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${
-                  active ? "bg-primary/12 text-primary/70" : "bg-foreground/5 text-foreground/30"
-                }`}>
-                  {count}
-                </span>
-              )}
+              <Trash2 className="w-3 h-3" />
+              Vider
             </button>
-          );
-        })}
-      </motion.div>
+          )}
+        </motion.div>
+
+        {/* Tab bar — scrollable */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.05 }}
+          className="flex gap-1 overflow-x-auto scrollbar-hide -mx-1 px-1"
+        >
+          {TABS.map((tab) => {
+            const count = itemsByTab[tab].length;
+            const cfg = TAB_CONFIG[tab];
+            const active = activeTab === tab;
+            return (
+              <button
+                key={tab}
+                onClick={() => switchTab(tab)}
+                className={`shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-[12px] font-sans font-medium transition-all border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 ${
+                  active
+                    ? "bg-card shadow-sm text-foreground border-border/25"
+                    : "text-foreground/40 border-transparent hover:text-foreground/70 hover:bg-card/40"
+                }`}
+                aria-pressed={active}
+              >
+                <span className={active ? cfg.color : ""}>{cfg.icon}</span>
+                <span>{cfg.label}</span>
+                {count > 0 && (
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium tabular-nums ${
+                    active ? "bg-primary/15 text-primary/80" : "bg-foreground/5 text-foreground/35"
+                  }`}>
+                    {count}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </motion.div>
+      </div>
+
+      <div className="h-4" />
 
       {/* Pick bubble */}
       {currentItems.length > 0 && (
