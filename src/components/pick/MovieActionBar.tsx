@@ -2,12 +2,13 @@ import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { Bookmark, Heart, Eye, ThumbsDown, HelpCircle } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
-import { trackInteraction } from "@/lib/interactions";
+import type { InteractionContext } from "@/lib/interactions";
 import { clearFeedbackType, setFeedback, type FeedbackLabel } from "@/lib/feedback";
 import type { MovieDetail } from "@/lib/tmdb";
 import { ensureMovieEmbedding } from "@/lib/taste-engine";
 import { useMovieInteraction } from "@/hooks/use-movie-interactions";
 import { inferCatalogMediaType } from "@/lib/catalog";
+
 
 interface MovieActionBarProps {
   movie: MovieDetail;
@@ -104,6 +105,16 @@ const MovieActionBar = ({
 
   const isCurrentMovie = useCallback((movieId: number) => currentMovieIdRef.current === movieId, []);
 
+  const interactionMeta = useMemo<InteractionContext>(
+    () => ({
+      title: movie.title || movie.name || undefined,
+      genres: (movie.genres || []).map((g) => g.name),
+      runtime: movie.runtime ?? undefined,
+      session_id: sessionId ?? undefined,
+    }),
+    [movie.id, movie.title, movie.name, movie.runtime, movie.genres, sessionId],
+  );
+
   const persistFeedback = useCallback(
     async (label: FeedbackLabel) => {
       debugLog("persistFeedback:start", {
@@ -126,6 +137,7 @@ const MovieActionBar = ({
         {
           context_type: contextType ?? (sessionId ? "solo_session" : "browse"),
           context_id: sessionId ?? null,
+          interaction: interactionMeta,
         },
       );
 
@@ -134,8 +146,19 @@ const MovieActionBar = ({
         label,
       });
     },
-    [movie.id, movieMeta, sessionId, contextType, mediaType, user?.id],
+    [movie.id, movieMeta, sessionId, contextType, mediaType, user?.id, interactionMeta],
   );
+
+  const clearLabel = useCallback(
+    (label: FeedbackLabel) =>
+      clearFeedbackType(movie.id, [label], mediaType, {
+        context_type: contextType ?? (sessionId ? "solo_session" : "browse"),
+        context_id: sessionId ?? null,
+        interaction: interactionMeta,
+      }),
+    [movie.id, mediaType, contextType, sessionId, interactionMeta],
+  );
+
 
   const handlePrimaryToggle = async (label: Exclude<FeedbackLabel, "watchlist" | "seen">) => {
     if (!requireAuth()) return;
