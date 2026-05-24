@@ -216,6 +216,7 @@ const VoiceChat = ({ onClose, onMovieSuggested, onSearchIntent, initialMessages,
         body: {
           messages,
           mode: "discovery",
+          voiceMode: true,
           isPremium: true,
           minRating: userTasteContext?.minRating || 0,
           excludedGenres: userTasteContext?.excludedGenres || [],

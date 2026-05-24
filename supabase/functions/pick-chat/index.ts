@@ -66,6 +66,7 @@ serve(async (req) => {
       messages, mode, movieTitle, movieYear, movieOverview, spoilerMode, movieProgress,
       minRating: userMinRating, excludedGenres, isPremium, timeContext,
       tasteClusters, rejectedClusters, likedMovieTitles, likedOrigins, excludedOrigins, confidence,
+      voiceMode,
     } = body;
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
@@ -346,6 +347,10 @@ ANNÉE EN COURS : ${currentYear}${timeInstruction}`;
       stream: useStreaming,
     };
     if (tools) aiBody.tools = tools;
+    // En mode vocal : forcer extract_search_intent — le LLM ne doit JAMAIS inventer un titre
+    if (voiceMode && tools) {
+      aiBody.tool_choice = { type: "function", function: { name: "extract_search_intent" } };
+    }
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
