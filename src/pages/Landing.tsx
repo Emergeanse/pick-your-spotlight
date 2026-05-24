@@ -202,85 +202,92 @@ const Landing = () => {
         </div>
       </nav>
 
-      {/* ─── HERO — épuré ─── */}
-      <section ref={heroRef} className="relative min-h-screen flex items-center justify-center overflow-hidden pt-14">
-        {/* Poster background — only behind hero */}
-        <div className="absolute inset-0 z-0 opacity-[0.12] pointer-events-none overflow-hidden">
-          <div className="hidden md:flex gap-2 w-full h-full px-4">
-            <PosterColumn posters={col1} className="w-1/6 -mt-20" />
-            <PosterColumn posters={col2} reverse className="w-1/6 mt-10" />
-            <PosterColumn posters={col3} className="w-1/6 -mt-32" />
-            <PosterColumn posters={[...col1].reverse()} reverse className="w-1/6 mt-5" />
-            <PosterColumn posters={[...col2].reverse()} className="w-1/6 -mt-16" />
-            <PosterColumn posters={[...col3].reverse()} reverse className="w-1/6 mt-12" />
-          </div>
-          <div className="flex md:hidden gap-1.5 w-full h-full px-1">
+      {/* ─── HERO — épuré (mobile) / split-screen (desktop) ─── */}
+      <section ref={heroRef} className="relative min-h-dvh flex items-center justify-center overflow-hidden pt-14">
+        {/* Poster background — mobile only (replaced by mockup on desktop) */}
+        <div className="absolute inset-0 z-0 opacity-[0.12] pointer-events-none overflow-hidden md:hidden">
+          <div className="flex gap-1.5 w-full h-full px-1">
             <PosterColumn posters={col1} className="w-1/4 -mt-10" />
             <PosterColumn posters={col2} reverse className="w-1/4 mt-8" />
             <PosterColumn posters={col3} className="w-1/4 -mt-20" />
             <PosterColumn posters={[...col1].reverse()} reverse className="w-1/4 mt-4" />
           </div>
         </div>
-        <div className="absolute inset-0 bg-gradient-to-b from-background via-background/70 to-background" style={{ zIndex: 1 }} />
-        <div className="absolute inset-0 bg-gradient-to-r from-background via-transparent to-background" style={{ zIndex: 1 }} />
+        {/* Desktop ambient glow */}
+        <div className="hidden md:block absolute inset-0 z-0 pointer-events-none">
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] rounded-full bg-primary/10 blur-[160px]" />
+        </div>
+        <div className="absolute inset-0 bg-gradient-to-b from-background via-background/70 to-background md:hidden" style={{ zIndex: 1 }} />
+        <div className="absolute inset-0 bg-gradient-to-r from-background via-transparent to-background md:hidden" style={{ zIndex: 1 }} />
 
-        <motion.div style={{ opacity: heroOpacity }} className="relative z-10 max-w-4xl mx-auto px-5 text-center">
-          {/* Mascot — compact */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.5, delay: 0.1 }}
-            className="mb-5"
-          >
-            <img src={pickWave} alt="Pick, ton expert cinéma" className="w-20 h-20 md:w-24 md:h-24 object-contain mx-auto drop-shadow-xl pick-float" />
-          </motion.div>
+        <motion.div style={{ opacity: heroOpacity }} className="relative z-10 w-full max-w-6xl mx-auto px-5">
+          <div className="grid md:grid-cols-2 gap-10 lg:gap-16 items-center">
+            {/* LEFT — Copy + CTA */}
+            <div className="text-center md:text-left">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.5, delay: 0.1 }}
+                className="mb-5 md:flex md:justify-start"
+              >
+                <img src={pickWave} alt="Pick, ton expert cinéma" className="w-20 h-20 md:w-24 md:h-24 object-contain mx-auto md:mx-0 drop-shadow-xl pick-float" />
+              </motion.div>
 
-          {/* H1 */}
-          <motion.h1
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.25 }}
-            className="text-[2.75rem] md:text-7xl lg:text-8xl font-serif leading-[0.95] mb-5"
-          >
-            <span className="md:whitespace-nowrap">Fini le scroll.</span>
-            <br />
-            <span className="text-primary md:whitespace-nowrap">Place au film.</span>
-          </motion.h1>
+              <motion.h1
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.7, delay: 0.25 }}
+                className="text-[2.75rem] md:text-6xl lg:text-7xl font-serif leading-[0.95] mb-5"
+              >
+                <span className="whitespace-nowrap">Fini le scroll.</span>
+                <br />
+                <span className="text-primary whitespace-nowrap">Place au film.</span>
+              </motion.h1>
 
-          {/* Subtitle */}
-          <motion.p
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.4 }}
-            className="text-foreground/65 text-base md:text-lg font-sans font-light max-w-lg mx-auto mb-8 leading-relaxed"
-          >
-            Pick comprend tes goûts et ton humeur pour te trouver le film parfait en quelques secondes. Plus de débat, plus d'hésitation.
-          </motion.p>
+              <motion.p
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.4 }}
+                className="text-foreground/65 text-base md:text-lg font-sans font-light max-w-lg mx-auto md:mx-0 mb-8 leading-relaxed"
+              >
+                Pick comprend tes goûts et ton humeur pour te trouver le film parfait en quelques secondes. Plus de débat, plus d'hésitation.
+              </motion.p>
 
-          {/* Single CTA */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.55 }}
-            className="flex flex-col items-center gap-4"
-          >
-            <Button
-              size="lg"
-              className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90 font-sans font-semibold px-8 h-12 gap-2.5 text-base transition-all active:scale-[0.97] shadow-lg shadow-primary/20"
-              onClick={() => navigate("/app")}
-            >
-              <Clapperboard className="w-5 h-5" />
-              Trouver mon film
-            </Button>
-            <div className="flex items-center gap-3">
-              {ALL_PLATFORMS.slice(0, 5).map((p) => (
-                <div key={p.id} className="w-10 h-10 rounded-xl overflow-hidden border border-border/20 bg-card/60">
-                  <img src={p.logo} alt={p.label} className="w-full h-full object-cover" />
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.55 }}
+                className="flex flex-col items-center md:items-start gap-4"
+              >
+                <Button
+                  size="lg"
+                  className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90 font-sans font-semibold px-8 h-12 gap-2.5 text-base transition-all active:scale-[0.97] shadow-lg shadow-primary/20"
+                  onClick={() => navigate("/app")}
+                >
+                  <Clapperboard className="w-5 h-5" />
+                  Trouver mon film
+                </Button>
+                <div className="flex items-center gap-3">
+                  {ALL_PLATFORMS.slice(0, 5).map((p) => (
+                    <div key={p.id} className="w-10 h-10 rounded-xl overflow-hidden border border-border/20 bg-card/60">
+                      <img src={p.logo} alt={p.label} className="w-full h-full object-cover" />
+                    </div>
+                  ))}
+                  <span className="text-foreground/55 text-xs font-sans">+15</span>
                 </div>
-              ))}
-              <span className="text-foreground/55 text-xs font-sans">+15</span>
+              </motion.div>
             </div>
-          </motion.div>
+
+            {/* RIGHT — Phone mockup (desktop only) */}
+            <motion.div
+              initial={{ opacity: 0, y: 40, filter: "blur(8px)" }}
+              animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+              transition={{ duration: 0.9, delay: 0.4, ease: [0.16, 1, 0.3, 1] }}
+              className="hidden md:flex justify-center"
+            >
+              <PhoneMockup />
+            </motion.div>
+          </div>
         </motion.div>
 
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.5 }} className="absolute bottom-8 left-1/2 -translate-x-1/2">
@@ -290,17 +297,17 @@ const Landing = () => {
         </motion.div>
       </section>
 
-      {/* ─── DEMO VISUELLE — le produit en action ─── */}
-      <section className="py-12 md:py-16 px-5 relative overflow-hidden">
+      {/* ─── DEMO VISUELLE — mobile only (le mockup est déjà dans le hero sur desktop) ─── */}
+      <section className="md:hidden py-12 px-5 relative overflow-hidden">
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <div className="w-[500px] h-[500px] rounded-full bg-primary/5 blur-[140px]" />
         </div>
         <div className="max-w-5xl mx-auto relative z-10">
           <motion.div variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }} className="text-center mb-10">
-            <h2 className="text-3xl md:text-5xl font-serif mb-3 leading-tight">
+            <h2 className="text-3xl font-serif mb-3 leading-tight">
               Une recommandation.<br /><span className="text-primary">Pas un catalogue.</span>
             </h2>
-            <p className="text-foreground/55 font-sans text-sm md:text-base max-w-md mx-auto">
+            <p className="text-foreground/55 font-sans text-sm max-w-md mx-auto">
               Pas de listes interminables. Pick te propose LE film qui correspond à ton moment.
             </p>
           </motion.div>
