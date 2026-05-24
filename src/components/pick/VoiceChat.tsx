@@ -17,6 +17,7 @@ export type VoiceSearchFilters = {
   originalLanguage: string | null;
   mediaType: "movie" | "tv" | null;
   maxDuration: number | null;
+  decade: number | null;
 };
 
 interface VoiceChatProps {

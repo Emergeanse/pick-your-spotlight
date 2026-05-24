@@ -84,6 +84,7 @@ serve(async (req) => {
       voiceOriginalLanguage: rawVoiceLanguage,
       voiceMediaType: rawVoiceMediaType,
       voiceMaxDuration: rawVoiceDuration,
+      voiceDecade: rawVoiceDecade,
     } = await req.json();
 
     // Voice overrides: what was stated replaces profile; what wasn't keeps profile defaults
@@ -91,6 +92,7 @@ serve(async (req) => {
     const voiceOriginalLanguage: string | null = typeof rawVoiceLanguage === "string" && rawVoiceLanguage.length > 0 ? rawVoiceLanguage : null;
     const voiceMediaType: "movie" | "tv" | null = rawVoiceMediaType === "movie" || rawVoiceMediaType === "tv" ? rawVoiceMediaType : null;
     const voiceMaxDuration: number | null = typeof rawVoiceDuration === "number" && rawVoiceDuration > 0 ? rawVoiceDuration : null;
+    const voiceDecade: number | null = typeof rawVoiceDecade === "number" && rawVoiceDecade >= 1900 ? rawVoiceDecade : null;
 
     const requestedCount = Math.max(1, Math.min(typeof rawCount === "number" ? rawCount : 3, 20));
     const minRating = typeof rawMinRating === "number" ? Math.min(rawMinRating, 8) : 0;
@@ -283,6 +285,20 @@ serve(async (req) => {
             console.log(`[SP] Voice language filter "${voiceOriginalLanguage}": ${langFiltered.length} candidates`);
           } else {
             console.log(`[SP] Voice language filter "${voiceOriginalLanguage}" trop restrictif (${langFiltered.length}) — conserve tous les ${candidates.length} candidats`);
+          }
+        }
+
+        // ── Filtre décennie (voix) post-SQL — avec fallback si < 5 résultats ──
+        if (voiceDecade && candidates.length > 0) {
+          const decadeFiltered = candidates.filter((c: any) => {
+            const year = Number(c.year);
+            return year >= voiceDecade && year < voiceDecade + 10;
+          });
+          if (decadeFiltered.length >= 5) {
+            candidates = decadeFiltered;
+            console.log(`[SP] Voice decade filter "${voiceDecade}s": ${decadeFiltered.length} candidates`);
+          } else {
+            console.log(`[SP] Voice decade filter "${voiceDecade}s" trop restrictif (${decadeFiltered.length}) — conserve tous les ${candidates.length} candidats`);
           }
         }
       } catch (e) {
@@ -781,9 +797,16 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
           filters: {
             excludeCount: normalizedExcludeIds.length,
             minRating,
-            maxDuration: maxDuration ?? null,
-            likedGenres: likedGenresForSQL,
+            maxDuration: effectiveMaxDuration ?? null,
+            likedGenres: effectiveLikedGenresSQL ?? likedGenresForSQL,
             effectiveExcludedGenres,
+            voiceOverrides: {
+              genres: voiceGenres,
+              language: voiceOriginalLanguage,
+              mediaType: voiceMediaType,
+              decade: voiceDecade,
+              maxDuration: voiceMaxDuration,
+            },
           },
           systemPrompt: capturedSystemPrompt,
           llmProfile: {

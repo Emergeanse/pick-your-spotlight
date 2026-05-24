@@ -308,6 +308,10 @@ ANNÉE EN COURS : ${currentYear}${timeInstruction}`;
                 type: "number",
                 description: "Durée maximale en minutes si mentionnée. Exemples : 'court' ou 'pas trop long' → 95, '2h' → 120, '1h30' → 90, 'marathon' → null. null si non mentionné.",
               },
+              decade: {
+                type: "number",
+                description: "Décennie de sortie si mentionnée. Exemples : 'années 80' → 1980, 'années 90' → 1990, 'années 70' → 1970, 'récent' ou 'moderne' → null. null si non mentionné.",
+              },
               recap: {
                 type: "array",
                 items: { type: "string" },
@@ -430,6 +434,7 @@ ANNÉE EN COURS : ${currentYear}${timeInstruction}`;
             originalLanguage: args.originalLanguage ?? null,
             mediaType: args.mediaType ?? null,
             maxDuration: args.maxDuration ?? null,
+            decade: args.decade ?? null,
           },
           recap: args.recap || [],
         }), {

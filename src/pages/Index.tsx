@@ -540,6 +540,7 @@ const Index = () => {
         voiceOriginalLanguage: filters.originalLanguage,
         voiceMediaType: filters.mediaType,
         voiceMaxDuration: filters.maxDuration,
+        voiceDecade: filters.decade,
       });
       console.log("[PICK-DEBUG] 🎤 invokeSurprisePersonalized returned", data);
       const dbg = data?.debugData;
