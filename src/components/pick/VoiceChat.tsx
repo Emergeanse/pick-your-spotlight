@@ -7,7 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useScribe, CommitStrategy } from "@elevenlabs/react";
 import { useAuth } from "@/hooks/use-auth";
 import { getLikedMovies } from "@/lib/liked-movies";
-import { getUserTasteProfile } from "@/lib/taste-engine";
+import { getUserTasteProfile } from "@/lib/interactions";
 import { getMyPreferences } from "@/lib/preferences";
 import type { MovieDetail } from "@/lib/tmdb";
 import PickCharacter from "./PickCharacter";
