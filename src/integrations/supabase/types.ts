@@ -1256,6 +1256,7 @@ export type Database = {
               match_count?: number
               max_duration?: number
               min_rating?: number
+              p_excluded_clusters?: string[]
               p_excluded_languages?: string[]
               p_max_year?: number
               p_min_year?: number
