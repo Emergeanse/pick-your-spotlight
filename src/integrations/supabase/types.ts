@@ -1110,6 +1110,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      find_profile_by_friend_code: {
+        Args: { _code: string }
+        Returns: {
+          avatar_url: string
+          display_name: string
+          id: string
+        }[]
+      }
       generate_friend_code: { Args: never; Returns: string }
       generate_session_code: { Args: never; Returns: string }
       has_role: {

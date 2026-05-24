@@ -36,7 +36,8 @@ const Auth = () => {
 
   const processInvite = async (userId: string, code: string) => {
     try {
-      const { data: found } = await (supabase.from("profiles").select("id") as any).eq("friend_code", code.toUpperCase()).single();
+      const { data: rpc } = await (supabase as any).rpc("find_profile_by_friend_code", { _code: code.toUpperCase() });
+      const found = Array.isArray(rpc) && rpc.length > 0 ? rpc[0] : null;
       if (!found || found.id === userId) return;
       const { data: existing } = await (supabase.from("friendships" as any).select("id") as any)
         .or(`and(requester_id.eq.${userId},addressee_id.eq.${found.id}),and(requester_id.eq.${found.id},addressee_id.eq.${userId})`);
