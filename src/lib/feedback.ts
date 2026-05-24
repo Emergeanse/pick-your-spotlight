@@ -463,13 +463,23 @@ export async function setFeedback(
   });
 
   emitFeedbackChange(tmdbId, type, normalizedMeta.media_type);
+
+  fireInteraction(
+    tmdbId,
+    mapFeedbackToAction(type),
+    ctx,
+    type === "not_for_me" || type === "dislike" ? { rejection_reason: type } : undefined,
+  );
 }
+
 
 export async function clearFeedbackType(
   tmdbId: number,
   types: FeedbackType[],
   mediaType: CatalogMediaType = "movie",
+  ctx?: FeedbackContext,
 ): Promise<void> {
+
   const userId = (await supabase.auth.getUser()).data.user?.id;
   if (!userId || !types.length) return;
 
