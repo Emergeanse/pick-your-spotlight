@@ -506,7 +506,12 @@ export async function clearFeedbackType(
   }
 
   emitFeedbackChange(tmdbId, null, mediaType);
+
+  for (const t of types) {
+    fireInteraction(tmdbId, mapClearToAction(t), ctx);
+  }
 }
+
 
 export async function clearFeedback(tmdbId: number, mediaType: CatalogMediaType = "movie"): Promise<void> {
   const userId = (await supabase.auth.getUser()).data.user?.id;
