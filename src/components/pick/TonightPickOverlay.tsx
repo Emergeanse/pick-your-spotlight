@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronLeft, Dices, Loader2, Info } from "lucide-react";
+import { ChevronLeft, ChevronRight, Dices, Loader2, Info } from "lucide-react";
 import { getBackdropUrl, getDisplayTitle, getPosterUrl, type MovieDetail } from "@/lib/tmdb";
 import { useMovieInteraction } from "@/hooks/use-movie-interactions";
 import MovieActionBar from "./MovieActionBar";
@@ -142,32 +142,52 @@ const TonightPickOverlay = ({
             )}
           </div>
 
-          {/* Poster (tap to open details) — kept discreet, top zone */}
-          {movie.poster_path && (
+          {/* Poster + flèches de navigation de chaque côté */}
+          <div className="relative z-10 flex items-center justify-center gap-4 mt-4">
             <button
-              onClick={onOpenDetail}
-              className="relative z-10 mx-auto mt-4 group active:scale-[0.97] transition-transform"
-              aria-label="Voir les détails"
+              onClick={onPrev}
+              disabled={!canGoPrev}
+              aria-label="Proposition précédente"
+              className="w-10 h-10 rounded-full bg-black/40 backdrop-blur-xl border border-white/10 flex items-center justify-center text-foreground transition-all disabled:opacity-20 hover:bg-black/60"
             >
-              <motion.img
-                key={`poster-${movie.id}`}
-                initial={{ opacity: 0, y: 18 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.15 }}
-                src={getPosterUrl(movie.poster_path, "w500") || ""}
-                alt={getDisplayTitle(movie)}
-                className="w-40 h-60 rounded-2xl object-cover shadow-[0_30px_60px_-15px_rgba(0,0,0,0.8)] border border-white/10"
-              />
-              <div className="absolute bottom-2 right-2 bg-black/60 backdrop-blur-md rounded-full p-1.5 border border-white/10 opacity-0 group-hover:opacity-100 transition-opacity">
-                <Info className="w-3.5 h-3.5 text-foreground/70" />
-              </div>
-              {interaction.hasInteraction && (
-                <div className="absolute top-2 left-2">
-                  <FeedbackBadge type={interaction.primaryStatus} inWatchlist={interaction.watchlist} size="sm" />
-                </div>
-              )}
+              <ChevronLeft className="w-5 h-5" />
             </button>
-          )}
+
+            {movie.poster_path && (
+              <button
+                onClick={onOpenDetail}
+                className="relative group active:scale-[0.97] transition-transform"
+                aria-label="Voir les détails"
+              >
+                <motion.img
+                  key={`poster-${movie.id}`}
+                  initial={{ opacity: 0, y: 18 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: 0.15 }}
+                  src={getPosterUrl(movie.poster_path, "w500") || ""}
+                  alt={getDisplayTitle(movie)}
+                  className="w-40 h-60 rounded-2xl object-cover shadow-[0_30px_60px_-15px_rgba(0,0,0,0.8)] border border-white/10"
+                />
+                <div className="absolute bottom-2 right-2 bg-black/60 backdrop-blur-md rounded-full p-1.5 border border-white/10 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <Info className="w-3.5 h-3.5 text-foreground/70" />
+                </div>
+                {interaction.hasInteraction && (
+                  <div className="absolute top-2 left-2">
+                    <FeedbackBadge type={interaction.primaryStatus} inWatchlist={interaction.watchlist} size="sm" />
+                  </div>
+                )}
+              </button>
+            )}
+
+            <button
+              onClick={onNext}
+              disabled={!canGoNext}
+              aria-label="Proposition suivante"
+              className="w-10 h-10 rounded-full bg-black/40 backdrop-blur-xl border border-white/10 flex items-center justify-center text-foreground transition-all disabled:opacity-20 hover:bg-black/60"
+            >
+              <ChevronRight className="w-5 h-5" />
+            </button>
+          </div>
 
           {/* Bottom-anchored info block */}
           <div className="relative z-10 mt-auto px-7 pb-[calc(5rem+env(safe-area-inset-bottom))]">
