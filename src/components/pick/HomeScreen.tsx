@@ -443,7 +443,7 @@ const HomeScreen = ({
             explorationLevel,
             mediaType: quickFilters.mediaType !== "both" ? quickFilters.mediaType : "both",
             maxDuration: quickFilters.maxDuration,
-            count: quickFilters.recommendationCount || RECOMMENDATION_BATCH_SIZE,
+            count: (quickFilters.recommendationCount || RECOMMENDATION_BATCH_SIZE) * 3,
             minMatchScore: quickFilters.matchThreshold,
           });
           engineMetaResult = data?.engineMeta ?? null;
