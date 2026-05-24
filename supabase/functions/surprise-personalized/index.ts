@@ -334,13 +334,19 @@ serve(async (req) => {
         }
 
         // ── Filtre origines exclues (profil) — hard exclusion post-SQL ──
+        // Si la voix demande explicitement une langue exclue dans le profil → la voix prime
         if (userExcludedOriginLangs.size > 0 && candidates.length > 0) {
-          const originFiltered = candidates.filter((c: any) => !userExcludedOriginLangs.has(c.original_language || ""));
-          if (originFiltered.length >= 5) {
-            candidates = originFiltered;
-            console.log(`[SP] Filtre origines exclues [${[...userExcludedOriginLangs].join(",")}]: ${originFiltered.length} candidats`);
-          } else {
-            console.log(`[SP] Filtre origines exclues trop restrictif (${originFiltered.length}) — conserve ${candidates.length} candidats`);
+          const effectiveExcludedLangs = voiceOriginalLanguage
+            ? new Set([...userExcludedOriginLangs].filter((l) => l !== voiceOriginalLanguage))
+            : userExcludedOriginLangs;
+          if (effectiveExcludedLangs.size > 0) {
+            const originFiltered = candidates.filter((c: any) => !effectiveExcludedLangs.has(c.original_language || ""));
+            if (originFiltered.length >= 5) {
+              candidates = originFiltered;
+              console.log(`[SP] Filtre origines exclues [${[...effectiveExcludedLangs].join(",")}]: ${originFiltered.length} candidats`);
+            } else {
+              console.log(`[SP] Filtre origines exclues trop restrictif (${originFiltered.length}) — conserve ${candidates.length} candidats`);
+            }
           }
         }
       } catch (e) {
