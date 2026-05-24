@@ -90,9 +90,9 @@ const COMMENTS: Record<ActiveTab, string[]> = {
 
 const TAB_CONFIG: Record<ActiveTab, { label: string; icon: React.ReactNode; color: string }> = {
   watchlist: { label: "À voir", icon: <Bookmark className="w-3.5 h-3.5" />, color: "text-blue-400" },
-  liked: { label: "Coups de cœur", icon: <Heart className="w-3.5 h-3.5" />, color: "text-rose-400" },
+  liked: { label: "Favoris", icon: <Heart className="w-3.5 h-3.5" />, color: "text-rose-400" },
   seen: { label: "Vus", icon: <CheckCircle className="w-3.5 h-3.5" />, color: "text-emerald-400" },
-  disliked: { label: "Pas pour moi", icon: <ThumbsDown className="w-3.5 h-3.5" />, color: "text-foreground/30" },
+  disliked: { label: "Écartés", icon: <ThumbsDown className="w-3.5 h-3.5" />, color: "text-foreground/30" },
 };
 
 const SwipeableCard = ({
