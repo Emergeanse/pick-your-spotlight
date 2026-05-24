@@ -235,6 +235,37 @@ serve(async (req) => {
       }
     };
 
+    // ── Préférences d'origine depuis user_preferences (filtre dur) ──
+    const ORIGIN_KEY_LANGS: Record<string, string[]> = {
+      "cinema-francais": ["fr"],
+      "cinema-americain": ["en"],
+      "cinema-asiatique": ["ko", "ja", "zh", "th"],
+      "cinema-africain": [],
+      "cinema-amerique-du-sud": ["es", "pt"],
+    };
+    let userExcludedOriginLangs = new Set<string>();
+    let userPreferredOriginLangs = new Set<string>();
+    if (userId && SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) {
+      try {
+        const sbPrefs = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+        const { data: originPrefs } = await sbPrefs
+          .from("user_preferences")
+          .select("weight, tag:tag_id(key)")
+          .eq("user_id", userId);
+        for (const p of originPrefs || []) {
+          const langs = ORIGIN_KEY_LANGS[(p as any).tag?.key || ""];
+          if (!langs) continue;
+          if ((p as any).weight < 0) langs.forEach((l: string) => userExcludedOriginLangs.add(l));
+          else if ((p as any).weight > 0) langs.forEach((l: string) => userPreferredOriginLangs.add(l));
+        }
+        if (userExcludedOriginLangs.size > 0 || userPreferredOriginLangs.size > 0) {
+          console.log(`[SP] Origines profil — exclues: [${[...userExcludedOriginLangs].join(",")}] préférées: [${[...userPreferredOriginLangs].join(",")}]`);
+        }
+      } catch (e) {
+        console.error("[SP] Origin prefs fetch failed:", e);
+      }
+    }
+
     // ── ÉTAPE 1 : SQL — top 200 par similarité vectorielle ──
     let candidates: any[] = [];
     if (SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY && userTasteVector) {
@@ -299,6 +330,17 @@ serve(async (req) => {
             console.log(`[SP] Voice decade filter "${voiceDecade}s": ${decadeFiltered.length} candidates`);
           } else {
             console.log(`[SP] Voice decade filter "${voiceDecade}s" trop restrictif (${decadeFiltered.length}) — conserve tous les ${candidates.length} candidats`);
+          }
+        }
+
+        // ── Filtre origines exclues (profil) — hard exclusion post-SQL ──
+        if (userExcludedOriginLangs.size > 0 && candidates.length > 0) {
+          const originFiltered = candidates.filter((c: any) => !userExcludedOriginLangs.has(c.original_language || ""));
+          if (originFiltered.length >= 5) {
+            candidates = originFiltered;
+            console.log(`[SP] Filtre origines exclues [${[...userExcludedOriginLangs].join(",")}]: ${originFiltered.length} candidats`);
+          } else {
+            console.log(`[SP] Filtre origines exclues trop restrictif (${originFiltered.length}) — conserve ${candidates.length} candidats`);
           }
         }
       } catch (e) {
@@ -367,8 +409,15 @@ serve(async (req) => {
       "africain": [],
       "latino/sud-américain (langues: es, pt)": ["es", "pt"],
     };
-    const preferredLangsBoost = new Set(likedOrigins.flatMap((o: string) => ORIGIN_LANGS[o] ?? []));
-    const excludedLangsBoost = new Set(excludedOrigins.flatMap((o: string) => ORIGIN_LANGS[o] ?? []));
+    // Merge: boosts from tasteProfile labels + hard exclusions from user_preferences
+    const preferredLangsBoost = new Set([
+      ...likedOrigins.flatMap((o: string) => ORIGIN_LANGS[o] ?? []),
+      ...userPreferredOriginLangs,
+    ]);
+    const excludedLangsBoost = new Set([
+      ...excludedOrigins.flatMap((o: string) => ORIGIN_LANGS[o] ?? []),
+      ...userExcludedOriginLangs,
+    ]);
 
     // ── ÉTAPE 2 : LLM — sélection + scoring ──
     let llmSelections: any[] = [];
