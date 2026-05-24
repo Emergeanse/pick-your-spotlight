@@ -1,83 +1,76 @@
-## Pick Together — flux "groupe maintenant" en langage naturel
+# C5 — Refacto Index.tsx (920 lignes → ~250)
 
-### 1. Nouveau parcours UX (mobile-first)
+## Objectif
 
-Remplace les étapes Who → Media → Mood par un flux conversationnel court qui réutilise l'univers visuel actuel (BrandHeader, dark theme, neon purple, composants `together/*`).
+Réduire le risque de bugs d'état (19 useState, 8 overlays, 3 listeners `window`) sans casser le moindre comportement utilisateur. Pas de XState (overkill, dépendance lourde) — on reste sur React natif avec `useReducer` + hooks de domaine.
 
+**Contrat strict : aucune modification visible côté UX.** Mêmes overlays, mêmes transitions, mêmes appels edge functions, même télémétrie.
+
+## Architecture cible
+
+```text
+src/pages/Index.tsx                          (≈ 250 lignes — composition + JSX)
+src/pages/index/
+  ├── reducer.ts                             (state machine: home | result + flux)
+  ├── use-profile-prefs.ts                   (chargement profil + onboarding redirect)
+  ├── use-recommendation-engine.ts           (surprise, refine, showAnother, openBatch + session logging)
+  ├── use-overlay-orchestrator.ts            (tour, activation, missions, chat, paywall)
+  └── use-external-bridges.ts                (location.state, pick-chat-movie, pick-reset-home, home-reset)
 ```
-Landing → Prompt (langage naturel + invités rapides) → [Clarify si bloquant] → Reformulation → Loading → Results → Décision groupe
+
+## Étapes
+
+### 1. Extraire le reducer (`reducer.ts`)
+Regroupe les 12 useState liés au flux recommandation/chat en un seul state typé :
+```ts
+type IndexState = {
+  step: "home" | "result";
+  results: RecommendationMovieDetail[];
+  currentResultIndex: number;
+  resultIndexHistory: number[];
+  resultSeenMovieIds: Set<number>;
+  batchRejectedIds: Set<number>;
+  resultOrigin: "home" | "external";
+  resultSuggestionCount: number;
+  searchTags: string[];
+  showChat: boolean;
+  chatInitialMessages?: ChatMessage[];
+  chatSuggestedMovies: MovieDetail[] | null;
+  chatSuggestedStartIndex: number;
+  chatSuggestedSeenMovieIds: Set<number>;
+}
 ```
+Actions : `OPEN_BATCH`, `RESET_HOME`, `NEXT`, `PREV`, `GO_TO_INDEX`, `OPEN_CHAT`, `CLOSE_CHAT`, `CONSUME_CHAT_SUGGESTIONS`, `ADD_TAG`, `REMOVE_TAG`, `SET_SEARCH_TAGS`, `REPLACE_BATCH` (pour `handleShowAnother`/refine), `MARK_VISITED`, `MARK_REJECTED`.
 
-Étapes:
-- **PromptStep** (nouveau) : grand textarea "Décris ta soirée…" + chip "Ajouter quelqu'un" (prénom + 1-2 chips genres optionnels). Friends sélectionnables en bas si déjà liés.
-- **ReformulationStep** (nouveau) : Pick reformule en 2-3 lignes avec deux blocs visuels distincts :
-  - "Envie du moment" (envie de session — non persistée)
-  - "Goûts pris en compte" (préférences participants — persistées pour les inscrits)
-  - Bouton "C'est bon" / "Préciser"
-- **ClarifyStep** (nouveau, conditionnel) : affichée uniquement si `parse-pick-prompt` renvoie un blocage (aucun genre commun viable, durée incompatible, etc.). Une question max.
-- **ResultsStep** (refactor) : 3-5 cartes avec :
-  - Raison principale typée (`session_wish` / `taste_match` / `constraint_ok` / `tonight_fit`)
-  - Badges statut user (`useMovieInteractions` déjà unifié — déjà vu / pas pour moi / aimé / watchlist restent visibles)
-  - Réactions rapides 👍 / 👎 / "On garde"
-- **DecisionStep** (nouveau) : écran final "Ce soir on regarde" + récap participants + CTA "Lancer sur la plateforme".
+### 2. `use-profile-prefs.ts`
+Sort le `useEffect` profil (60+ lignes), retourne `{ profilePrefs, profileLoaded, showTour, showActivation, setShowTour, setShowActivation }`. Garde la redirection `/onboarding` et la logique `activation_completed >= 20 interactions`.
 
-### 2. Séparation préférences participant ↔ envie de session
+### 3. `use-recommendation-engine.ts`
+Encapsule `invokeSurprisePersonalized`, `triggerSurpriseForMission`, `handleSurprise`, `handleMovieSelect`, `handleShowAnother`, `handleVoiceSearchIntent`, `handleMovieSuggested`, `handleRefineWithVoice`, plus la création/log/abandon de session. Reçoit `profilePrefs`, `dispatch`, `user`. Retourne les handlers + `{ loading, loadingMessage, dynamicAnecdotes }`.
 
-Règle stricte:
-| Source | Destination | Persistance |
-|---|---|---|
-| Prompt envie commune ("film historique pour ce soir") | `recommendation_sessions.prompt_text` + `group_sessions.context_json.session_wish` | Session uniquement |
-| Préférence participant inscrit ("Elisa aime comédies 80s") | `user_preferences` (tags) si Elisa est inscrite ET a opt-in | Permanent |
-| Préférence participant invité | `group_session_members.guest_preferences_json` | Session uniquement |
-| Réactions hero/alternatives | `user_item_feedback` via `useMovieInteractions` | Permanent |
+### 4. `use-overlay-orchestrator.ts`
+Sort la gestion des missions d'activation (`handleActivationMission`, `handleActivationComplete`, `handleTourComplete`), les guides watchlist/talk-to-pick, et expose `{ activeActivationMission, watchlistGuideStep, talkToPickGuideStep, openTrainerOnMount, ... }`.
 
-Garde-fou : pour un membre inscrit, `parse-pick-prompt` extrait des préférences candidates mais on **ne les écrit jamais en `user_preferences`** sans confirmation explicite (toggle "Mémoriser pour Elisa" plus tard). Pour cette V1, **0 écriture sur `user_preferences` depuis Pick Together**.
+### 5. `use-external-bridges.ts`
+Centralise les 4 `window.addEventListener` + le parsing de `location.state` + `sessionStorage("pick-fab-movie")`. Évite la duplication entre `home-reset` (déjà ajouté) et `pick-reset-home` (legacy, qui fait presque la même chose — on garde les deux, mais dans un seul fichier).
 
-### 3. Statuts métier
+### 6. Index.tsx final
+Devient un composant de composition pure : appel des 4 hooks, branchement sur `<HomeScreen>` / `<ResultScreen>` / overlays. Plus aucune logique métier inline. JSX strictement identique à l'actuel.
 
-- `group_sessions.status` : `draft` → `collecting_preferences` → `ready` → `completed` / `cancelled`. (`scheduled` reste pour PlanSession.)
-- `recommendation_sessions.status` : `active` → `completed` / `abandoned` (déjà en place, on garde simple).
+## Garde-fous
 
-Migration: aucune contrainte CHECK ajoutée (cf. règle "validation triggers, pas check"). Les nouveaux statuts sont utilisés en code uniquement, valeurs libres en base.
+- **Pas de changement de signature** côté `HomeScreen`, `ResultScreen`, `VoiceChat`, `ActivationFlow`, etc.
+- **Pas de changement de timing** : on conserve les `setTimeout(..., 250/400)` des missions.
+- **Pas de changement d'event names** : `home-reset`, `pick-reset-home`, `pick-activation-refresh`, `pick-chat-movie`, `cinema-reset` restent identiques.
+- Tests manuels après refacto : surprise mission, voice search, refine with message, show another, watchlist guide, talk-to-pick guide, navigation deep-link `pick-fab-movie`.
 
-### 4. Edge function `group-recommend`
+## Hors scope (explicitement)
 
-Refactor du payload et de la sortie:
-- Input enrichi : `sessionWish` (string), `parsedIntent` (sortie de `parse-pick-prompt`), `members` (id + display_name), `guests`, `mediaType`, `audience: "group_now"`.
-- Pour chaque film retourné, ajoute `reasonType` ∈ {`session_wish`, `taste_match`, `constraint_ok`, `tonight_fit`} + `reasonText` court.
-- Lecture `user_preferences` (tags) + `user_item_feedback` (exclusions déjà-vu sauf si demandé) pour les inscrits ; `guest_preferences_json` pour les invités. Plus aucune lecture de `liked_movies` / `watchlist` comme source de vérité goût.
+- Ne touche pas à `HomeScreen.tsx`, `ResultScreen.tsx`, `VoiceChat.tsx`.
+- Ne fusionne pas `home-reset` et `pick-reset-home` (legacy code peut en dispatcher) — juste collocalisés.
+- Ne remplace pas `sonner` par `useToast` (= I11, séparé).
+- Pas de skeleton loaders (= I10, séparé).
 
-### 5. Nettoyage dette
+## Effort estimé
 
-- `PickTogether.tsx` : retire `likeMovie` import (non utilisé après refactor).
-- `group-sessions.ts` : ajoute helpers `setSessionWish(sessionId, wish)` et `updateGroupSessionStatus(sessionId, status)`.
-- `parse-pick-prompt` : la fonction edge existe déjà. Vérifier qu'elle renvoie bien la séparation `sessionWish` vs `participantHints[]`. Sinon ajuster le prompt système.
-- Compatibilité legacy `liked_movies` : laissée en place pour `MyCinema` mais **interdite** dans le flux Together.
-
-### 6. Tests de non-régression
-
-Étendre `src/test/movie-interactions.test.tsx` avec un cas : un film retourné par `group-recommend` qui réapparaît après un swipe conserve son badge (`liked` / `seen` / `watchlist`).
-
-### Fichiers touchés
-
-**Nouveaux**
-- `src/components/pick/together/PromptStep.tsx`
-- `src/components/pick/together/ReformulationStep.tsx`
-- `src/components/pick/together/ClarifyStep.tsx`
-- `src/components/pick/together/DecisionStep.tsx`
-
-**Modifiés**
-- `src/pages/PickTogether.tsx` (machine d'états refondue)
-- `src/components/pick/together/ResultsStep.tsx` (raison typée + 5 cartes)
-- `src/lib/group-sessions.ts` (helpers statut + session_wish)
-- `src/lib/parse-prompt.ts` (typage `sessionWish` / `participantHints`)
-- `supabase/functions/parse-pick-prompt/index.ts` (prompt système ajusté)
-- `supabase/functions/group-recommend/index.ts` (raison typée, sources de vérité, pas de legacy)
-- `src/test/movie-interactions.test.tsx` (cas group)
-
-**Conservés tels quels**
-- `WhoStep`, `MediaStep`, `MoodStep`, `LoadingStep`, `LandingStep` (réutilisés ou retirés du flux principal mais gardés pour `PlanSession` programmé).
-
-### Hors scope (à faire dans une itération suivante)
-- Toggle "mémoriser pour ce membre" qui écrirait dans `user_preferences`.
-- Vote multi-membres asynchrone (decision_mode `vote`) — on reste sur `instant` pour le "groupe maintenant".
+3–4 h. Risque modéré : beaucoup de handlers interdépendants. Mitigation : commits logiques étape par étape, JSX inchangé en tout dernier.
