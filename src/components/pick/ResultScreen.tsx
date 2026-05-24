@@ -1096,7 +1096,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
               </div>
             </div>
           </div>
-        </div>
+        </motion.div>
 
         <RefineSheet
           open={showRefineSheet}
