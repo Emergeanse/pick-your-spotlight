@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronLeft, Loader2, Sparkles, ArrowRight, SkipForward, Film, Users, Tv, Clapperboard } from "lucide-react";
+import { ChevronLeft, Loader2, Sparkles, ArrowRight, SkipForward, Film, Users, Tv, Clapperboard, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getDisplayTitle } from "@/lib/tmdb";
 import { recordAcceptedRecommendation, recordSkippedRecommendation } from "@/lib/engagement";
@@ -190,9 +190,18 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
         .select("tmdb_id")
         .eq("user_id", user.id)
         .in("action_type", ["liked", "skipped", "unsure", "dislike", "already_seen", "unknown"]),
+      supabase
+        .from("user_item_feedback")
+        .select("catalog_items(tmdb_id)")
+        .eq("user_id", user.id)
+        .in("feedback_type", ["like", "love", "seen", "not_for_me", "dislike", "watchlist"]) as any,
       supabase.from("user_people_preferences").select("id", { count: "exact", head: true }).eq("user_id", user.id),
-    ]).then(([movieResult, peopleResult]) => {
-      const ids = new Set<number>((movieResult.data || []).map((r: any) => Number(r.tmdb_id)).filter(Boolean));
+    ]).then(([movieResult, feedbackResult, peopleResult]) => {
+      const interactionIds = (movieResult.data || []).map((r: any) => Number(r.tmdb_id)).filter(Boolean);
+      const feedbackIds = ((feedbackResult as any).data || [])
+        .flatMap((r: any) => r.catalog_items ? [Number((r.catalog_items as any).tmdb_id)] : [])
+        .filter(Boolean);
+      const ids = new Set<number>([...interactionIds, ...feedbackIds]);
       allInteractedIds.current = ids;
       setProcessedIds(new Set(ids));
       setTotalEvaluated(movieResult.data?.length || 0);
@@ -417,7 +426,12 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
           <h2 className="text-center text-[11px] font-sans font-medium uppercase tracking-[0.15em] text-foreground/40">
             {selectedCategory === "actors" ? "Acteurs & Actrices" : "Réalisateurs"}
           </h2>
-          <div className="w-8" />
+          <button
+            onClick={() => setSelectedCategory(null)}
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-foreground/5 text-foreground/40 transition-all hover:bg-foreground/10 hover:text-foreground active:scale-95"
+          >
+            <X className="h-4 w-4" />
+          </button>
         </div>
         <PeopleTrainer
           filterDepartment={selectedCategory === "actors" ? "Acting" : "Directing"}
@@ -445,7 +459,12 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
         <h2 className="text-center text-[11px] font-sans font-medium uppercase tracking-[0.15em] text-foreground/40">
           {isActivation ? "Apprends-moi tes goûts" : isSeries ? "Séries TV" : "Films"}
         </h2>
-        <div className="w-8" />
+        <button
+          onClick={() => setSelectedCategory(null)}
+          className="flex h-8 w-8 items-center justify-center rounded-full bg-foreground/5 text-foreground/40 transition-all hover:bg-foreground/10 hover:text-foreground active:scale-95"
+        >
+          <X className="h-4 w-4" />
+        </button>
       </div>
 
       <div className="relative z-10 px-4 pt-1 pb-2">

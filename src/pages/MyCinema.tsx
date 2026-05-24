@@ -357,7 +357,7 @@ const MyCinema = () => {
                     transition={{ duration: 0.2 }}
                     className="text-[10px] text-foreground/20 font-sans overflow-hidden mb-3"
                   >
-                    Sélectionne les styles que tu aimes — Pick s'en sert pour tes recommandations
+                    1 clic = tu aimes · 2 clics = tu n'aimes pas · 3 clics = neutre
                   </motion.p>
                 )}
               </AnimatePresence>

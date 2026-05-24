@@ -211,6 +211,7 @@ serve(async (req) => {
             title: m.title || m.name,
             overview: m.overview,
             genres: (m.genres || []).map((g: any) => g.name),
+            originalLanguage: m.original_language || null,
           }),
         }).catch(() => {});
       }
@@ -296,6 +297,16 @@ serve(async (req) => {
       .filter((g: string) => g in ORIGIN_MAP)
       .map((g: string) => ORIGIN_MAP[g]);
 
+    const ORIGIN_LANGS: Record<string, string[]> = {
+      "français (langue: fr)": ["fr"],
+      "américain/anglophone (langue: en)": ["en"],
+      "asiatique (langues: ko, ja, zh, th)": ["ko", "ja", "zh", "th"],
+      "africain": [],
+      "latino/sud-américain (langues: es, pt)": ["es", "pt"],
+    };
+    const preferredLangsBoost = new Set(likedOrigins.flatMap((o: string) => ORIGIN_LANGS[o] ?? []));
+    const excludedLangsBoost = new Set(excludedOrigins.flatMap((o: string) => ORIGIN_LANGS[o] ?? []));
+
     // ── ÉTAPE 2 : LLM — sélection + scoring ──
     let llmSelections: any[] = [];
     let llmFilteredAll = false;
@@ -304,8 +315,12 @@ serve(async (req) => {
     let capturedSystemPrompt: string | null = null;
 
     if (filteredCandidates.length >= 1) {
-      const compositeScore = (c: any) =>
-        (c.similarity ?? 0) * 100 + (c.vote_average ?? 0);
+      const compositeScore = (c: any) => {
+        let score = (c.similarity ?? 0) * 100 + (c.vote_average ?? 0);
+        if (preferredLangsBoost.size > 0 && preferredLangsBoost.has(c.original_language || "")) score += 15;
+        if (excludedLangsBoost.size > 0 && excludedLangsBoost.has(c.original_language || "")) score -= 20;
+        return score;
+      };
       const topPool = [...filteredCandidates]
         .sort((a, b) => compositeScore(b) - compositeScore(a))
         .slice(0, llmPoolSize);
@@ -663,30 +678,19 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
 
     // Tri par origine : préféré (2) → neutre (1) → exclu (0), puis score décroissant au sein de chaque groupe.
     // Les films d'origines exclues ne remontent que si rien d'autre ne remplit les slots.
-    if (likedOrigins.length > 0 || excludedOrigins.length > 0) {
-      const ORIGIN_LANGS: Record<string, string[]> = {
-        "français (langue: fr)": ["fr"],
-        "américain/anglophone (langue: en)": ["en"],
-        "asiatique (langues: ko, ja, zh, th)": ["ko", "ja", "zh", "th"],
-        "africain": [],
-        "latino/sud-américain (langues: es, pt)": ["es", "pt"],
+    if (preferredLangsBoost.size > 0 || excludedLangsBoost.size > 0) {
+      const originRank = (lang: string): number => {
+        if (preferredLangsBoost.has(lang)) return 2;
+        if (excludedLangsBoost.has(lang)) return 0;
+        return 1;
       };
-      const preferredLangs = new Set(likedOrigins.flatMap((o: string) => ORIGIN_LANGS[o] ?? []));
-      const excludedLangs = new Set(excludedOrigins.flatMap((o: string) => ORIGIN_LANGS[o] ?? []));
-      if (preferredLangs.size > 0 || excludedLangs.size > 0) {
-        const originRank = (lang: string): number => {
-          if (preferredLangs.has(lang)) return 2;
-          if (excludedLangs.has(lang)) return 0;
-          return 1;
-        };
-        movies.sort((a: any, b: any) => {
-          const aRank = originRank(a.movie?.original_language || "");
-          const bRank = originRank(b.movie?.original_language || "");
-          if (aRank !== bRank) return bRank - aRank;
-          return (b.confidence || 0) - (a.confidence || 0);
-        });
-        console.log(`[SP] Tri origine : préférées [${[...preferredLangs].join(", ")}] exclues [${[...excludedLangs].join(", ")}] → ${movies.slice(0, requestedCount).map((m: any) => `${m.movie?.title || "?"}(${m.movie?.original_language || "?"})`).join(", ")}`);
-      }
+      movies.sort((a: any, b: any) => {
+        const aRank = originRank(a.movie?.original_language || "");
+        const bRank = originRank(b.movie?.original_language || "");
+        if (aRank !== bRank) return bRank - aRank;
+        return (b.confidence || 0) - (a.confidence || 0);
+      });
+      console.log(`[SP] Tri origine : préférées [${[...preferredLangsBoost].join(", ")}] exclues [${[...excludedLangsBoost].join(", ")}] → ${movies.slice(0, requestedCount).map((m: any) => `${m.movie?.title || "?"}(${m.movie?.original_language || "?"})`).join(", ")}`);
     }
 
     // Garde au maximum le nombre souhaité par l'utilisateur

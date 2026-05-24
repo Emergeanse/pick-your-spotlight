@@ -49,7 +49,7 @@ serve(async (req) => {
   }
 
   try {
-    const { tmdbId, title, overview, genres, year, runtime, popularity, voteAverage, mediaType, platformIds } = await req.json();
+    const { tmdbId, title, overview, genres, year, runtime, popularity, voteAverage, mediaType, platformIds, originalLanguage } = await req.json();
     
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
@@ -63,7 +63,7 @@ serve(async (req) => {
     // Check cache first
     const { data: existing } = await supabase
       .from("movie_embeddings")
-      .select("embedding, taste_tags, semantic_axes, safety_tags, suitability_tags, cluster_labels, runtime, year, vote_average, popularity")
+      .select("embedding, taste_tags, semantic_axes, safety_tags, suitability_tags, cluster_labels, runtime, year, vote_average, popularity, original_language")
       .eq("tmdb_id", tmdbId)
       .maybeSingle();
 
@@ -74,6 +74,7 @@ serve(async (req) => {
       if (year && !(existing as any).year) patch.year = year;
       if (voteAverage && !(existing as any).vote_average) patch.vote_average = voteAverage;
       if (popularity && !(existing as any).popularity) patch.popularity = popularity;
+      if (originalLanguage && !(existing as any).original_language) patch.original_language = originalLanguage;
       if (Object.keys(patch).length > 0) {
         await supabase.from("movie_embeddings").update(patch).eq("tmdb_id", tmdbId);
       }
@@ -219,6 +220,7 @@ Génère le vecteur de goût 32D, les axes sémantiques, et les métadonnées en
         vote_average: voteAverage || 0,
         media_type: mediaType || "movie",
         platform_ids: platformIds || [],
+        original_language: originalLanguage || null,
       } as any, { onConflict: "tmdb_id" });
 
     if (insertError) {
