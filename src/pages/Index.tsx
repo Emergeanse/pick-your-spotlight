@@ -542,6 +542,37 @@ const Index = () => {
         voiceMaxDuration: filters.maxDuration,
       });
       console.log("[PICK-DEBUG] 🎤 invokeSurprisePersonalized returned", data);
+      const dbg = data?.debugData;
+      if (dbg) {
+        console.group("[PICK-DEBUG] 🎤 ═══ Pipeline vocal — recommandation ═══");
+        if (dbg?.sql50?.length) {
+          const f = dbg.filters;
+          console.group(`[PICK-DEBUG] 1️⃣ SQL — ${dbg.sql50.length} candidats (${f?.excludeCount ?? 0} exclus)`);
+          console.log(`     note min      : ${f?.minRating ?? 0}`);
+          console.log(`     durée max     : ${f?.maxDuration ? `${f.maxDuration}min` : "illimitée"}`);
+          console.log(`     genres aimés  : [${(f?.likedGenres || []).join(", ") || "—"}]`);
+          console.log(`     genres exclus : [${(f?.effectiveExcludedGenres || []).join(", ") || "—"}]`);
+          console.table(dbg.sql50.map((c: any, i: number) => ({ "#": i + 1, "Titre": c.title, "Année": c.year, "Note": c.note ?? "–", "Sim%": c.sim ?? "–", "Type": c.type })));
+          console.groupEnd();
+        }
+        if (dbg?.top20?.length) {
+          console.group(`[PICK-DEBUG] 2️⃣ Top ${dbg.top20.length} → LLM`);
+          console.table(dbg.top20.map((c: any, i: number) => ({ "#": i + 1, "Titre": c.title, "Note": c.note ?? "–", "Sim%": c.sim ?? "–", "Composite": c.composite ?? "–", "Type": c.type })));
+          console.groupEnd();
+        }
+        if (dbg?.llmSelections?.length) {
+          console.group(`[PICK-DEBUG] 3️⃣ Sélections LLM — ${dbg.llmSelections.length} films`);
+          console.table(dbg.llmSelections.map((s: any, i: number) => ({ "#": i + 1, "Titre": s.title, "Score": `${s.matchScore}%`, "Raison": s.reason })));
+          console.groupEnd();
+        }
+        if (dbg?.fallbackTrace?.length) {
+          console.group(`[PICK-DEBUG] 🔀 Fallback — ${dbg.fallbackTrace.length} film(s)`);
+          console.table(dbg.fallbackTrace.map((t: any, i: number) => ({ "#": i + 1, "Titre": t.title, "Source": t.stage })));
+          console.groupEnd();
+        }
+        console.log("[PICK-DEBUG] 🎤 engineMeta:", data?.engineMeta);
+        console.groupEnd();
+      }
       const extracted = extractRecommendationMovies(data);
       console.log("[PICK-DEBUG] 🎤 extracted movies:", extracted.length);
       if (extracted.length > 0) {
