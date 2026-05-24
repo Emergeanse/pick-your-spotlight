@@ -1,715 +1,138 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useReducer } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import HomeScreen from "@/components/pick/HomeScreen";
 import ResultScreen from "@/components/pick/ResultScreen";
 import VoiceChat from "@/components/pick/VoiceChat";
-import RevealAnimation, { type CinemaAnecdote } from "@/components/pick/RevealAnimation";
+import RevealAnimation from "@/components/pick/RevealAnimation";
 import PlatformTour from "@/components/pick/PlatformTour";
 import ActivationFlow from "@/components/pick/ActivationFlow";
-import type { MissionId } from "@/components/pick/ActivationFlow";
 import WatchlistMissionGuide from "@/components/pick/WatchlistMissionGuide";
-import type { WatchlistGuideStep } from "@/components/pick/WatchlistMissionGuide";
 import TalkToPickMissionGuide from "@/components/pick/TalkToPickMissionGuide";
-import type { TalkToPickGuideStep } from "@/components/pick/TalkToPickMissionGuide";
-import type { ChatMessage, VoiceSearchFilters } from "@/components/pick/VoiceChat";
+import type { ChatMessage } from "@/components/pick/VoiceChat";
 import { toast } from "sonner";
-import BrandHeader from "@/components/pick/BrandHeader";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
-import { recordAcceptedRecommendation, recordSkippedRecommendation } from "@/lib/engagement";
+import { getDisplayTitle } from "@/lib/tmdb";
 import type { MovieDetail } from "@/lib/tmdb";
 import type { RecommendationMovieDetail } from "@/lib/recommendation-batch";
-import { getDisplayTitle } from "@/lib/tmdb";
-import { trackInteraction, getUserTasteProfile } from "@/lib/interactions";
 import { usePickPlus } from "@/hooks/use-pick-plus";
-import { getTimeContextForPrompt } from "@/lib/time-context";
 import PickPlusPaywall from "@/components/pick/PickPlusPaywall";
-import { getLikedMovies } from "@/lib/liked-movies";
-import { computeMultiVectorProfile } from "@/lib/taste-engine";
-import {
-  extractRecommendationMovies,
-  ensureRecommendationBatch,
-  RECOMMENDATION_BATCH_SIZE,
-} from "@/lib/recommendation-batch";
 import { usePresenceTracker } from "@/hooks/use-presence";
-import { createRecommendationSession, logRecommendationEvent, completeSession, abandonSession } from "@/lib/sessions";
 
-type Step = "home" | "result";
+import { indexReducer, initialIndexState, resolveSetUpdater } from "./index/reducer";
+import { useProfilePrefs } from "./index/use-profile-prefs";
+import { useRecommendationEngine } from "./index/use-recommendation-engine";
+import { useOverlayOrchestrator } from "./index/use-overlay-orchestrator";
+import { useExternalBridges } from "./index/use-external-bridges";
 
 const Index = () => {
   usePresenceTracker();
-  const [step, setStep] = useState<Step>("home");
-  const [results, setResults] = useState<RecommendationMovieDetail[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [currentResultIndex, setCurrentResultIndex] = useState(0);
-  const [resultIndexHistory, setResultIndexHistory] = useState<number[]>([]);
-  const [resultSeenMovieIds, setResultSeenMovieIds] = useState<Set<number>>(new Set());
-  const [batchRejectedIds, setBatchRejectedIds] = useState<Set<number>>(new Set());
-  const [resultOrigin, setResultOrigin] = useState<"home" | "external">("home");
-  const [resultSuggestionCount, setResultSuggestionCount] = useState(RECOMMENDATION_BATCH_SIZE);
-  const [loadingMessage, setLoadingMessage] = useState("");
-  const [dynamicAnecdotes, setDynamicAnecdotes] = useState<CinemaAnecdote[]>([]);
-  const [showChat, setShowChat] = useState(false);
-  const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
-  const loggedEventsRef = useRef<Set<number>>(new Set());
-  const [chatInitialMessages, setChatInitialMessages] = useState<ChatMessage[] | undefined>(undefined);
-  const [chatSuggestedSeenMovieIds, setChatSuggestedSeenMovieIds] = useState<Set<number>>(new Set());
-  const [searchTags, setSearchTags] = useState<string[]>([]);
-  const [profilePrefs, setProfilePrefs] = useState<{
-    excludedGenres: string[];
-    excludedPlatforms: number[];
-    minRating: number;
-    preferredPlatforms: number[];
-    profileConfidence: number;
-    recommendationBatchSize: number;
-    matchThreshold: number;
-  }>({
-    excludedGenres: [],
-    excludedPlatforms: [],
-    minRating: 0,
-    preferredPlatforms: [],
-    profileConfidence: 0,
-    recommendationBatchSize: RECOMMENDATION_BATCH_SIZE,
-    matchThreshold: 80,
-  });
   const { user } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
   const pickPlus = usePickPlus();
-  const [openTrainerOnMount, setOpenTrainerOnMount] = useState(false);
-  const [showTour, setShowTour] = useState(false);
-  const [showActivation, setShowActivation] = useState(false);
-  const [profileLoaded, setProfileLoaded] = useState(false);
-  const [activeActivationMission, setActiveActivationMission] = useState<MissionId | null>(null);
-  const [watchlistGuideStep, setWatchlistGuideStep] = useState<WatchlistGuideStep>(null);
-  const [watchlistGuideDone, setWatchlistGuideDone] = useState(false);
-  const [watchlistSavedCount, setWatchlistSavedCount] = useState(0);
-  const [talkToPickGuideStep, setTalkToPickGuideStep] = useState<TalkToPickGuideStep>(null);
-  const watchlistGuideAwaitingLoad = useRef(false);
-  const [chatSuggestedMovies, setChatSuggestedMovies] = useState<MovieDetail[] | null>(null);
-  const [chatSuggestedStartIndex, setChatSuggestedStartIndex] = useState(0);
 
-  const resetToHomeView = () => {
-    if (currentSessionId) {
-      abandonSession(currentSessionId).catch(() => {});
-    }
-    setCurrentSessionId(null);
-    loggedEventsRef.current = new Set();
-    setStep("home");
-    setResults([]);
-    setResultSuggestionCount(profilePrefs.recommendationBatchSize);
-    setCurrentResultIndex(0);
-    setResultIndexHistory([]);
-    setResultSeenMovieIds(new Set());
-    setBatchRejectedIds(new Set());
-    setSearchTags([]);
-    setShowChat(false);
-    setChatInitialMessages(undefined);
-    setChatSuggestedMovies(null);
-    setChatSuggestedSeenMovieIds(new Set());
-  };
+  const [state, dispatch] = useReducer(indexReducer, initialIndexState);
 
-  // Soft-reset listener — replaces the previous hard reload from BottomTabBar Home tap.
-  const resetToHomeViewRef = useRef(resetToHomeView);
-  resetToHomeViewRef.current = resetToHomeView;
-  useEffect(() => {
-    const handler = () => resetToHomeViewRef.current();
-    window.addEventListener("home-reset", handler);
-    return () => window.removeEventListener("home-reset", handler);
-  }, []);
-
-
-
-  const fetchCinemaAnecdotes = useCallback(async (context?: { genre?: string; mood?: string; mediaType?: string }) => {
-    try {
-      const { data } = await supabase.functions.invoke("cinema-anecdotes", { body: context ?? {} });
-      if (data?.anecdotes?.length) setDynamicAnecdotes(data.anecdotes);
-    } catch {
-      // Fallback silently to static pool — non-critical
-    }
-  }, []);
-
-  const normalizeRecommendationBatch = useCallback(
-    (movies: RecommendationMovieDetail[], excludeIds: number[] = [], size = profilePrefs.recommendationBatchSize) =>
-      ensureRecommendationBatch(movies, {
-        excludeIds,
-        platformIds: profilePrefs.preferredPlatforms,
-        minRating: profilePrefs.minRating,
-        excludedGenres: profilePrefs.excludedGenres,
-        minMatchScore: profilePrefs.matchThreshold,
-        searchTags,
-        userCriteria: { mood: null, context: null, time: null },
-        size,
-        preloadMatchTexts: true,
-        preloadProviders: true,
-      }),
-    [
-      profilePrefs.excludedGenres,
-      profilePrefs.minRating,
-      profilePrefs.preferredPlatforms,
-      profilePrefs.recommendationBatchSize,
-      profilePrefs.matchThreshold,
-      searchTags,
-    ],
-  );
-
-  const openRecommendationBatch = useCallback(
-    (movies: RecommendationMovieDetail[], origin: "home" | "external" = "home", startIndex = 0, seenMovieIds?: Set<number>, suggestionCount?: number) => {
-      const safeStartIndex = Math.min(startIndex, Math.max(movies.length - 1, 0));
-      const initialMovieId = movies[safeStartIndex]?.id;
-      setResults(movies);
-      setResultSuggestionCount(suggestionCount ?? movies.length ?? profilePrefs.recommendationBatchSize);
-      setCurrentResultIndex(safeStartIndex);
-      setResultIndexHistory([]);
-      setResultSeenMovieIds(
-        seenMovieIds && seenMovieIds.size > 0 ? new Set(seenMovieIds) : new Set(initialMovieId ? [initialMovieId] : []),
-      );
-      setBatchRejectedIds(new Set());
-      setResultOrigin(origin);
-      setStep("result");
-
-      loggedEventsRef.current = new Set();
-      if (user) {
-        createRecommendationSession({
-          audience_type: "solo",
-          decision_mode: "instant",
-          source: origin === "external" ? "external" : "surprise",
-          filters_snapshot: {
-            platformIds: profilePrefs.preferredPlatforms,
-            minRating: profilePrefs.minRating,
-            excludedGenres: profilePrefs.excludedGenres,
-          },
-        })
-          .then((id) => {
-            setCurrentSessionId(id);
-            const first = movies[safeStartIndex];
-            if (first && !loggedEventsRef.current.has(first.id)) {
-              loggedEventsRef.current.add(first.id);
-              logRecommendationEvent({
-                session_id: id,
-                tmdb_id: first.id,
-                title: first.title || first.name || "",
-                rank_position: safeStartIndex + 1,
-                source: "solo_session",
-              }).catch(() => {});
-            }
-          })
-          .catch(() => setCurrentSessionId(null));
-      } else {
-        setCurrentSessionId(null);
-      }
-    },
-    [user, profilePrefs.excludedGenres, profilePrefs.minRating, profilePrefs.preferredPlatforms, profilePrefs.recommendationBatchSize],
-  );
-
-  useEffect(() => {
-    if (step !== "result" || !currentSessionId) return;
-    const m = results[currentResultIndex];
-    if (!m || loggedEventsRef.current.has(m.id)) return;
-    loggedEventsRef.current.add(m.id);
-    logRecommendationEvent({
-      session_id: currentSessionId,
-      tmdb_id: m.id,
-      title: m.title || m.name || "",
-      rank_position: currentResultIndex + 1,
-      source: "solo_session",
-    }).catch(() => {});
-  }, [step, currentSessionId, results, currentResultIndex]);
-
-  useEffect(() => {
-    const state = (location.state as any) || {};
-
-    if (state.openTrainer) {
-      setOpenTrainerOnMount(true);
-      window.history.replaceState({}, "", "/app");
-    }
-
-    if (state.selectedMovie) {
-      const movie = state.selectedMovie as MovieDetail;
-      normalizeRecommendationBatch([movie], [movie.id])
-        .then((batch) => openRecommendationBatch(batch, "external"))
-        .catch(() => openRecommendationBatch([movie], "external"));
-      window.history.replaceState({}, "", "/app");
-    }
-  }, [location.state, normalizeRecommendationBatch, openRecommendationBatch]);
-
-  const loadChatMovie = useCallback(() => {
-    const stored = sessionStorage.getItem("pick-fab-movie");
-    if (stored) {
-      try {
-        const movie = JSON.parse(stored) as MovieDetail;
-        normalizeRecommendationBatch([movie], [movie.id])
-          .then((batch) => openRecommendationBatch(batch, "external"))
-          .catch(() => openRecommendationBatch([movie], "external"));
-      } catch {
-        /* ignore */
-      }
-      sessionStorage.removeItem("pick-fab-movie");
-    }
-    window.history.replaceState({}, "", "/app");
-  }, [normalizeRecommendationBatch, openRecommendationBatch]);
-
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    if (params.get("from") === "pick-chat") {
-      loadChatMovie();
-    }
-    const handler = () => loadChatMovie();
-    window.addEventListener("pick-chat-movie", handler);
-    return () => window.removeEventListener("pick-chat-movie", handler);
-  }, [loadChatMovie]);
-
-  useEffect(() => {
-    if (!user) return;
-    supabase
-      .from("profiles")
-      .select(
-        "onboarding_completed, preferred_platforms, excluded_platforms, favorite_genres, excluded_genres, min_rating, profile_confidence, tour_completed, activation_completed, default_recommendation_count, match_threshold",
-      )
-      .eq("id", user.id)
-      .single()
-      .then(({ data }) => {
-        if (data && !data.onboarding_completed) {
-          navigate("/onboarding");
-          return;
-        }
-        if (data) {
-          const recommendationBatchSize = Math.min(
-            Math.max((data as any).default_recommendation_count || RECOMMENDATION_BATCH_SIZE, 1),
-            10,
-          );
-          setProfilePrefs({
-            excludedGenres: (data as any).excluded_genres || [],
-            excludedPlatforms: (data as any).excluded_platforms || [],
-            minRating: (data as any).min_rating || 0,
-            preferredPlatforms: data.preferred_platforms || [],
-            profileConfidence: (data as any).profile_confidence || 0,
-            recommendationBatchSize,
-            matchThreshold: (data as any).match_threshold ?? 80,
-          });
-          setResultSuggestionCount(recommendationBatchSize);
-
-          const tourDone = (data as any).tour_completed;
-          const activationDone = (data as any).activation_completed;
-          const forceTour = sessionStorage.getItem("pick_force_tour") === "1";
-          const fromOnboarding = Boolean((location.state as any)?.showTour || forceTour);
-
-          if (!tourDone && fromOnboarding) {
-            setShowActivation(false);
-            setShowTour(true);
-            sessionStorage.removeItem("pick_force_tour");
-          } else if (!activationDone) {
-            supabase
-              .from("user_interactions")
-              .select("id", { count: "exact", head: true })
-              .eq("user_id", user.id)
-              .then(({ count }) => {
-                if (count && count >= 20) {
-                  supabase
-                    .from("profiles")
-                    .update({ activation_completed: true } as any)
-                    .eq("id", user.id);
-                } else {
-                  setShowTour(false);
-                  setShowActivation(true);
-                }
-              });
-          }
-
-          setProfileLoaded(true);
-        }
-      });
-  }, [user, navigate, location.state]);
-
-  const handleTourComplete = async () => {
-    setShowTour(false);
-    if (user) {
-      await supabase
-        .from("profiles")
-        .update({ tour_completed: true } as any)
-        .eq("id", user.id);
-    }
-    setShowActivation(true);
-  };
-
-  const invokeSurprisePersonalized = async (body: any, retries = 2): Promise<any> => {
-    const { data, error } = await supabase.functions.invoke("surprise-personalized", { body });
-    if (error) {
-      const errMsg = typeof error === "object" && error?.message ? error.message : String(error);
-      if (retries > 0 && (errMsg.includes("429") || errMsg.includes("Trop de requêtes"))) {
-        await new Promise((r) => setTimeout(r, 2000 + Math.random() * 1000));
-        return invokeSurprisePersonalized(body, retries - 1);
-      }
-      throw error;
-    }
-    return data;
-  };
-
-  const triggerSurpriseForMission = useCallback(async () => {
-    setLoading(true);
-    setDynamicAnecdotes([]);
-    fetchCinemaAnecdotes({ genre: searchTags[0] });
-    try {
-      const [liked, tasteProfile, multiVec] = user
-        ? await Promise.all([getLikedMovies(), getUserTasteProfile(), computeMultiVectorProfile(user.id)])
-        : [[], null, null] as const;
-      const excludeIds = [...results.map((r: RecommendationMovieDetail) => r.id), ...((tasteProfile as any)?.excludeIds || [])];
-      let batch: RecommendationMovieDetail[] = [];
-
-      if (user && liked.length >= 2) {
-        const confidenceScore = tasteProfile?.confidence?.score ?? profilePrefs.profileConfidence ?? 50;
-        const explorationLevel = confidenceScore >= 70 ? 3 : confidenceScore >= 40 ? 5 : 7;
-        const data = await invokeSurprisePersonalized({
-          likedMovies: liked,
-          userTasteVector: multiVec?.stableTasteVector ?? null,
-          recentTasteVector: multiVec?.recentTasteVector ?? null,
-          avoidanceVector: multiVec?.avoidanceVector ?? null,
-          tasteProfile,
-          platformIds: profilePrefs.preferredPlatforms,
-          excludedPlatformIds: profilePrefs.excludedPlatforms,
-          excludedGenres: profilePrefs.excludedGenres,
-          minRating: profilePrefs.minRating,
-          minMatchScore: profilePrefs.matchThreshold,
-          excludeIds,
-          explorationLevel,
-          count: profilePrefs.recommendationBatchSize || RECOMMENDATION_BATCH_SIZE,
-        });
-        const extracted = extractRecommendationMovies(data);
-        const desiredCount = profilePrefs.recommendationBatchSize || RECOMMENDATION_BATCH_SIZE;
-        batch = await normalizeRecommendationBatch(extracted, excludeIds, desiredCount);
-      } else {
-        batch = await normalizeRecommendationBatch([], excludeIds);
-      }
-
-      openRecommendationBatch(batch, "home", 0, undefined, profilePrefs.recommendationBatchSize || RECOMMENDATION_BATCH_SIZE);
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoading(false);
-    }
-  }, [
-    normalizeRecommendationBatch,
-    openRecommendationBatch,
-    profilePrefs.excludedGenres,
-    profilePrefs.excludedPlatforms,
-    profilePrefs.minRating,
-    profilePrefs.preferredPlatforms,
-    profilePrefs.recommendationBatchSize,
-    profilePrefs.matchThreshold,
-    results,
+  const { profilePrefs, showTour, showActivation, setShowTour, setShowActivation } = useProfilePrefs({
     user,
-  ]);
+    onRecommendationBatchSizeChange: (size) => dispatch({ type: "SET_SUGGESTION_COUNT", count: size }),
+  });
 
-  const handleActivationMission = (missionId: MissionId) => {
-    setActiveActivationMission(missionId);
-    switch (missionId) {
-      case "train_20":
-        setOpenTrainerOnMount(true);
-        break;
-      case "first_reco":
-        break;
-      case "talk_to_pick":
-        setStep("home");
-        setResults([]);
-        setCurrentResultIndex(0);
-        setShowChat(false);
-        setChatInitialMessages(undefined);
-        setOpenTrainerOnMount(false);
-        setTimeout(() => setTalkToPickGuideStep("open-chat"), 400);
-        break;
-      case "watchlist_3":
-        setStep("home");
-        setResults([]);
-        setCurrentResultIndex(0);
-        setShowChat(false);
-        setChatInitialMessages(undefined);
-        setOpenTrainerOnMount(false);
-        setWatchlistGuideStep("sauvegarder");
-        break;
-      default:
-        break;
-    }
-  };
+  const engine = useRecommendationEngine({
+    user,
+    state,
+    dispatch,
+    profilePrefs,
+    pickPlusIsPremium: pickPlus.isPremium,
+  });
 
-  const handleActivationComplete = async () => {
-    setShowActivation(false);
-    setActiveActivationMission(null);
-    if (user) {
-      await supabase
-        .from("profiles")
-        .update({ activation_completed: true } as any)
-        .eq("id", user.id);
-    }
-  };
+  const overlays = useOverlayOrchestrator({
+    user,
+    dispatch,
+    recommendationBatchSize: profilePrefs.recommendationBatchSize,
+    setShowActivation,
+    setShowTour,
+  });
 
-  const handleStart = () => {};
+  useExternalBridges({
+    dispatch,
+    recommendationBatchSize: profilePrefs.recommendationBatchSize,
+    normalizeRecommendationBatch: engine.normalizeRecommendationBatch,
+    openRecommendationBatch: engine.openRecommendationBatch,
+    abandonCurrentSession: engine.abandonCurrentSession,
+    onOpenTrainerOnMount: () => overlays.setOpenTrainerOnMount(true),
+  });
 
-  const handleSurprise = async (movies: MovieDetail[], startIndex: number = 0, seenMovieIds?: Set<number>) => {
-    const desiredCount = profilePrefs.recommendationBatchSize || RECOMMENDATION_BATCH_SIZE;
-    const tasteProfile = user ? await getUserTasteProfile() : null;
-    const excludeIds = [...movies.map((m) => m.id), ...(tasteProfile?.excludeIds ?? [])];
-    const batch = await normalizeRecommendationBatch(movies, excludeIds, desiredCount);
-    openRecommendationBatch(batch, "home", startIndex, seenMovieIds, desiredCount);
-  };
-
-  const handleMovieSelect = async (movie: MovieDetail) => {
-    const desiredCount = profilePrefs.recommendationBatchSize || RECOMMENDATION_BATCH_SIZE;
-    const batch = await normalizeRecommendationBatch([movie], [movie.id], desiredCount);
-    openRecommendationBatch(batch, "home", 0, undefined, desiredCount);
-  };
+  // ─── Composition handlers (need both engine + overlay context) ───
 
   const handleOpenChat = () => {
-    setChatInitialMessages(undefined);
-    setShowChat(true);
-    if (activeActivationMission === "talk_to_pick") {
-      setTimeout(() => setTalkToPickGuideStep("mic"), 250);
+    dispatch({ type: "OPEN_CHAT", initialMessages: undefined });
+    if (overlays.activeActivationMission === "talk_to_pick") {
+      setTimeout(() => overlays.setTalkToPickGuideStep("mic"), 250);
     }
   };
 
-  const handleCloseChat = () => setShowChat(false);
+  const handleCloseChat = () => dispatch({ type: "CLOSE_CHAT" });
 
   const handleRefineWithVoice = () => {
-    const currentMovie = results[currentResultIndex];
+    const currentMovie = state.results[state.currentResultIndex];
     if (!currentMovie) return;
-    setChatInitialMessages([
+    const initial: ChatMessage[] = [
       {
         role: "assistant",
         content: `Je t'ai recommandé **${getDisplayTitle(currentMovie)}**. Dis-moi ce qui ne te convient pas et je te trouverai quelque chose de mieux !`,
       },
-    ]);
-    setShowChat(true);
+    ];
+    dispatch({ type: "OPEN_CHAT", initialMessages: initial });
   };
 
   const handleMovieSuggested = async (movies: MovieDetail[], recapTags?: string[]) => {
-    if (activeActivationMission === "talk_to_pick" && showActivation && user) {
+    // Talk-to-Pick mission: just mark usage, close, and return to home (no batch).
+    if (overlays.activeActivationMission === "talk_to_pick" && showActivation && user) {
       const today = new Date().toISOString().split("T")[0];
       await supabase
         .from("daily_usage")
         .upsert({ user_id: user.id, usage_date: today, chat_count: 1 }, { onConflict: "user_id,usage_date" });
-      setTalkToPickGuideStep(null);
-      setShowChat(false);
-      setActiveActivationMission(null);
-      setStep("home");
+      overlays.setTalkToPickGuideStep(null);
+      dispatch({ type: "CLOSE_CHAT" });
+      overlays.setActiveActivationMission(null);
+      dispatch({ type: "SET_STEP_HOME" });
       return;
     }
 
-    console.log("[PICK-DEBUG] 🎤 handleMovieSuggested called — movies:", movies?.length, "recap:", recapTags);
-    if (recapTags && recapTags.length > 0) setSearchTags(recapTags);
-    setShowChat(false);
-    setLoading(true);
-    setLoadingMessage("Pick cherche ton film…");
+    if (recapTags && recapTags.length > 0) dispatch({ type: "SET_SEARCH_TAGS", tags: recapTags });
+    dispatch({ type: "CLOSE_CHAT" });
+    engine.setLoading(true);
+    engine.setLoadingMessage("Pick cherche ton film…");
     try {
-      const desiredCount = profilePrefs.recommendationBatchSize || RECOMMENDATION_BATCH_SIZE;
+      const desiredCount = profilePrefs.recommendationBatchSize || 5;
       const raw = movies as RecommendationMovieDetail[];
       if (raw.length > 0) {
-        openRecommendationBatch(raw, "home", 0, undefined, desiredCount);
+        engine.openRecommendationBatch(raw, "home", 0, undefined, desiredCount);
       } else {
-        setStep("home");
+        dispatch({ type: "SET_STEP_HOME" });
       }
     } catch (e) {
       console.error("[voice] handleMovieSuggested error:", e);
       toast.error("Impossible de charger la suggestion vocale.");
-      setStep("home");
+      dispatch({ type: "SET_STEP_HOME" });
     } finally {
-      setLoading(false);
-      setLoadingMessage("");
+      engine.setLoading(false);
+      engine.setLoadingMessage("");
     }
   };
 
-  const handleVoiceSearchIntent = useCallback(async (filters: VoiceSearchFilters, recapTags: string[]) => {
-    if (recapTags.length > 0) setSearchTags(recapTags);
-    setShowChat(false);
-    setLoading(true);
-    setLoadingMessage("Pick cherche ton film…");
-    try {
-      console.log("[PICK-DEBUG] 🎤 handleVoiceSearchIntent start", filters);
-      const [liked, tasteProfile, multiVec] = user
-        ? await Promise.all([getLikedMovies(), getUserTasteProfile(), computeMultiVectorProfile(user.id)])
-        : [[], null, null] as const;
-      console.log("[PICK-DEBUG] 🎤 profile loaded — liked:", liked.length, "multiVec:", !!multiVec);
-      const excludeIds = [...results.map((r: RecommendationMovieDetail) => r.id), ...((tasteProfile as any)?.excludeIds || [])];
-      const confidenceScore = tasteProfile?.confidence?.score ?? profilePrefs.profileConfidence ?? 50;
-      const explorationLevel = confidenceScore >= 70 ? 3 : confidenceScore >= 40 ? 5 : 7;
-      const desiredCount = profilePrefs.recommendationBatchSize || RECOMMENDATION_BATCH_SIZE;
-      console.log("[PICK-DEBUG] 🎤 calling invokeSurprisePersonalized", { voiceGenres: filters.genres, voiceOriginalLanguage: filters.originalLanguage });
-      const data = await invokeSurprisePersonalized({
-        likedMovies: liked,
-        userTasteVector: multiVec?.stableTasteVector ?? null,
-        recentTasteVector: multiVec?.recentTasteVector ?? null,
-        avoidanceVector: multiVec?.avoidanceVector ?? null,
-        tasteProfile,
-        platformIds: profilePrefs.preferredPlatforms,
-        excludedPlatformIds: profilePrefs.excludedPlatforms,
-        excludedGenres: profilePrefs.excludedGenres,
-        minRating: profilePrefs.minRating,
-        minMatchScore: profilePrefs.matchThreshold,
-        excludeIds,
-        explorationLevel,
-        count: desiredCount,
-        voiceGenres: filters.genres,
-        voiceOriginalLanguage: filters.originalLanguage,
-        voiceMediaType: filters.mediaType,
-        voiceMaxDuration: filters.maxDuration,
-        voiceDecade: filters.decade,
-      });
-      console.log("[PICK-DEBUG] 🎤 invokeSurprisePersonalized returned", data);
-      const dbg = data?.debugData;
-      if (dbg) {
-        console.group("[PICK-DEBUG] 🎤 ═══ Pipeline vocal — recommandation ═══");
-        if (dbg?.sql50?.length) {
-          const f = dbg.filters;
-          console.group(`[PICK-DEBUG] 1️⃣ SQL — ${dbg.sql50.length} candidats (${f?.excludeCount ?? 0} exclus)`);
-          console.log(`     note min      : ${f?.minRating ?? 0}`);
-          console.log(`     durée max     : ${f?.maxDuration ? `${f.maxDuration}min` : "illimitée"}`);
-          console.log(`     genres aimés  : [${(f?.likedGenres || []).join(", ") || "—"}]`);
-          console.log(`     genres exclus : [${(f?.effectiveExcludedGenres || []).join(", ") || "—"}]`);
-          if (f?.voiceOverrides?.language) console.log(`     langue voix   : ${f.voiceOverrides.language} (filtre post-SQL)`);
-          if (f?.voiceOverrides?.decade) console.log(`     décennie voix : ${f.voiceOverrides.decade}s (filtre post-SQL)`);
-          console.table(dbg.sql50.map((c: any, i: number) => ({ "#": i + 1, "Titre": c.title, "Année": c.year, "Note": c.note ?? "–", "Sim%": c.sim ?? "–", "Type": c.type })));
-          console.groupEnd();
-        }
-        if (dbg?.top20?.length) {
-          console.group(`[PICK-DEBUG] 2️⃣ Top ${dbg.top20.length} → LLM`);
-          console.table(dbg.top20.map((c: any, i: number) => ({ "#": i + 1, "Titre": c.title, "Note": c.note ?? "–", "Sim%": c.sim ?? "–", "Composite": c.composite ?? "–", "Type": c.type })));
-          console.groupEnd();
-        }
-        if (dbg?.llmSelections?.length) {
-          console.group(`[PICK-DEBUG] 3️⃣ Sélections LLM — ${dbg.llmSelections.length} films`);
-          console.table(dbg.llmSelections.map((s: any, i: number) => ({ "#": i + 1, "Titre": s.title, "Score": `${s.matchScore}%`, "Raison": s.reason })));
-          console.groupEnd();
-        }
-        if (dbg?.fallbackTrace?.length) {
-          console.group(`[PICK-DEBUG] 🔀 Fallback — ${dbg.fallbackTrace.length} film(s)`);
-          console.table(dbg.fallbackTrace.map((t: any, i: number) => ({ "#": i + 1, "Titre": t.title, "Source": t.stage })));
-          console.groupEnd();
-        }
-        console.log("[PICK-DEBUG] 🎤 engineMeta:", data?.engineMeta);
-        console.groupEnd();
-      }
-      const extracted = extractRecommendationMovies(data);
-      console.log("[PICK-DEBUG] 🎤 extracted movies:", extracted.length);
-      if (extracted.length > 0) {
-        openRecommendationBatch(extracted, "home", 0, undefined, desiredCount);
-      } else {
-        setStep("home");
-      }
-    } catch (e) {
-      console.error("[voice] handleVoiceSearchIntent error:", e);
-      toast.error("Erreur recherche vocale : " + (e instanceof Error ? e.message : "Réessaie dans un instant."));
-      setStep("home");
-    } finally {
-      setLoading(false);
-      setLoadingMessage("");
-    }
-  }, [
-    invokeSurprisePersonalized,
-    openRecommendationBatch,
-    profilePrefs,
-    results,
-    user,
-  ]);
-
-  const handleShowAnother = async (rejectReason?: string, rejectedMovie?: MovieDetail) => {
-    if (watchlistGuideStep === "autre-suggestion") {
-      setWatchlistGuideStep(null);
-      watchlistGuideAwaitingLoad.current = true;
-    }
-
-    const currentMovie = results[currentResultIndex];
-    if (currentMovie && !rejectReason) {
-      trackInteraction(currentMovie.id, "skipped", {});
-    }
-    if (currentMovie && user) recordSkippedRecommendation(user.id);
-
-    setLoading(true);
-    setDynamicAnecdotes([]);
-    fetchCinemaAnecdotes({ genre: searchTags[0] });
-    try {
-      const [liked, tasteProfile, multiVec] = user
-        ? await Promise.all([getLikedMovies(), getUserTasteProfile(), computeMultiVectorProfile(user.id)])
-        : [[], null, null] as const;
-      const excludeIds = [...results.map((r: RecommendationMovieDetail) => r.id), ...((tasteProfile as any)?.excludeIds || [])];
-      const rejectionContext =
-        rejectReason && rejectedMovie
-          ? {
-              reason: rejectReason,
-              rejectedGenres: (rejectedMovie.genres || []).map((g) => g.name),
-              rejectedTitle: getDisplayTitle(rejectedMovie),
-              rejectedRating: rejectedMovie.vote_average,
-              rejectedRuntime: rejectedMovie.runtime,
-            }
-          : undefined;
-
-      let batch: RecommendationMovieDetail[] = [];
-      if (user) {
-        if (liked.length >= 2) {
-          const confidenceScore = tasteProfile?.confidence?.score ?? profilePrefs.profileConfidence ?? 50;
-          const explorationLevel = confidenceScore >= 70 ? 3 : confidenceScore >= 40 ? 5 : 7;
-          const data = await invokeSurprisePersonalized({
-            likedMovies: liked,
-            userTasteVector: multiVec?.stableTasteVector ?? null,
-            recentTasteVector: multiVec?.recentTasteVector ?? null,
-            avoidanceVector: multiVec?.avoidanceVector ?? null,
-            tasteProfile,
-            platformIds: profilePrefs.preferredPlatforms,
-            excludedPlatformIds: profilePrefs.excludedPlatforms,
-            excludedGenres: profilePrefs.excludedGenres,
-            minRating: profilePrefs.minRating,
-            minMatchScore: profilePrefs.matchThreshold,
-            excludeIds,
-            rejectionContext,
-            explorationLevel,
-            count: profilePrefs.recommendationBatchSize || RECOMMENDATION_BATCH_SIZE,
-          });
-          const extracted = extractRecommendationMovies(data);
-          const desiredCount = profilePrefs.recommendationBatchSize || RECOMMENDATION_BATCH_SIZE;
-          batch = await normalizeRecommendationBatch(extracted, excludeIds, desiredCount);
-        } else {
-          batch = await normalizeRecommendationBatch([], excludeIds);
-        }
-      } else {
-        batch = await normalizeRecommendationBatch([], excludeIds);
-      }
-
-      setResults(batch);
-      setResultSuggestionCount(profilePrefs.recommendationBatchSize || RECOMMENDATION_BATCH_SIZE);
-      setCurrentResultIndex(0);
-      setResultIndexHistory([]);
-      setResultSeenMovieIds(new Set(batch[0] ? [batch[0].id] : []));
-      setBatchRejectedIds(new Set());
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    const handler = () => {
-      setStep("home");
-      setResults([]);
-      setResultSuggestionCount(profilePrefs.recommendationBatchSize);
-      setCurrentResultIndex(0);
-      setResultIndexHistory([]);
-      setSearchTags([]);
-      setShowChat(false);
-      setChatInitialMessages(undefined);
-      setChatSuggestedMovies(null);
-      setChatSuggestedSeenMovieIds(new Set());
-    };
-    window.addEventListener("pick-reset-home", handler);
-    return () => window.removeEventListener("pick-reset-home", handler);
-  }, [profilePrefs.recommendationBatchSize]);
-
-  const handleRemoveTag = (tag: string) => {
-    setSearchTags((prev) => prev.filter((t) => t !== tag));
-  };
+  // Wrapper for ResultScreen setState-style handlers (it may pass updater functions).
+  const setVisitedMovieIds = (updater: Set<number> | ((p: Set<number>) => Set<number>)) =>
+    dispatch({ type: "SET_VISITED", ids: resolveSetUpdater(updater, state.resultSeenMovieIds) });
+  const setBatchRejectedIds = (updater: Set<number> | ((p: Set<number>) => Set<number>)) =>
+    dispatch({ type: "SET_BATCH_REJECTED", ids: resolveSetUpdater(updater, state.batchRejectedIds) });
 
   return (
     <div className="fixed inset-0 bg-background overflow-x-hidden">
       <AnimatePresence mode="wait">
-        {step === "home" && (
+        {state.step === "home" && (
           <motion.div
             key="home"
             initial={{ opacity: 0 }}
@@ -719,33 +142,29 @@ const Index = () => {
             className={`absolute inset-0 ${showActivation && !showTour ? "pt-12" : ""} pb-[calc(3.5rem+env(safe-area-inset-bottom))]`}
           >
             <HomeScreen
-              onStart={handleStart}
+              onStart={() => {}}
               onOpenChat={handleOpenChat}
-              onSurprise={handleSurprise}
-              onMovieSelect={handleMovieSelect}
-              loading={loading}
-              openTrainerOnMount={openTrainerOnMount}
-              forceCloseTrainer={activeActivationMission === "talk_to_pick"}
-              onTrainerOpened={() => setOpenTrainerOnMount(false)}
-              chatSuggestedMovies={chatSuggestedMovies}
-              chatSuggestedStartIndex={chatSuggestedStartIndex}
-              chatSuggestedSeenMovieIds={chatSuggestedSeenMovieIds}
-              onChatSuggestedConsumed={() => {
-                setChatSuggestedMovies(null);
-                setChatSuggestedStartIndex(0);
-                setChatSuggestedSeenMovieIds(new Set());
-              }}
-              activationTrainerMode={activeActivationMission === "train_20"}
+              onSurprise={engine.handleSurprise}
+              onMovieSelect={engine.handleMovieSelect}
+              loading={engine.loading}
+              openTrainerOnMount={overlays.openTrainerOnMount}
+              forceCloseTrainer={overlays.activeActivationMission === "talk_to_pick"}
+              onTrainerOpened={() => overlays.setOpenTrainerOnMount(false)}
+              chatSuggestedMovies={state.chatSuggestedMovies}
+              chatSuggestedStartIndex={state.chatSuggestedStartIndex}
+              chatSuggestedSeenMovieIds={state.chatSuggestedSeenMovieIds}
+              onChatSuggestedConsumed={() => dispatch({ type: "CONSUME_CHAT_SUGGESTIONS" })}
+              activationTrainerMode={overlays.activeActivationMission === "train_20"}
               onActivationTrainingComplete={async () => {
                 window.dispatchEvent(new Event("pick-activation-refresh"));
-                setActiveActivationMission(null);
-                setOpenTrainerOnMount(false);
+                overlays.setActiveActivationMission(null);
+                overlays.setOpenTrainerOnMount(false);
               }}
             />
           </motion.div>
         )}
 
-        {step === "result" && results.length > 0 && (
+        {state.step === "result" && state.results.length > 0 && (
           <motion.div
             key="result"
             initial={{ opacity: 0 }}
@@ -755,123 +174,58 @@ const Index = () => {
             className="absolute inset-0"
           >
             <ResultScreen
-              sessionId={currentSessionId}
+              sessionId={engine.currentSessionId}
               onFeedback={(type, m) => {
-                if ((type === "love" || type === "like") && currentSessionId) {
-                  completeSession(currentSessionId, m.id, {
-                    title: m.title || m.name || "",
-                    poster_path: m.poster_path || null,
-                    media_type: m.first_air_date ? "tv" : "movie",
-                  }).catch(() => {});
-                  setCurrentSessionId(null);
-                }
+                if (type === "love" || type === "like") engine.completeSessionForMovie(m);
               }}
-              movie={results[currentResultIndex]}
-              onShowAnother={handleShowAnother}
+              movie={state.results[state.currentResultIndex]}
+              onShowAnother={(reason, rejectedMovie) =>
+                engine.handleShowAnother(reason, rejectedMovie, () => {
+                  if (overlays.watchlistGuideStep === "autre-suggestion") {
+                    overlays.setWatchlistGuideStep(null);
+                  }
+                })
+              }
               onRestart={() => {
-                if (resultIndexHistory.length > 0) {
-                  const prev = resultIndexHistory[resultIndexHistory.length - 1];
-                  setResultIndexHistory((h) => h.slice(0, -1));
-                  setCurrentResultIndex(prev);
-                } else if (resultOrigin === "external") {
+                if (state.resultIndexHistory.length > 0) {
+                  dispatch({ type: "GO_TO_INDEX", index: state.resultIndexHistory[state.resultIndexHistory.length - 1] });
+                } else if (state.resultOrigin === "external") {
                   navigate(-1);
                 } else {
-                  if (results.length > 0) {
-                    setChatSuggestedStartIndex(currentResultIndex);
-                    setChatSuggestedMovies(results);
-                    setChatSuggestedSeenMovieIds(new Set(resultSeenMovieIds));
+                  if (state.results.length > 0) {
+                    dispatch({
+                      type: "GO_HOME_PRESERVE_CHAT_SUGGESTIONS",
+                      movies: state.results,
+                      startIndex: state.currentResultIndex,
+                      seenMovieIds: state.resultSeenMovieIds,
+                    });
+                  } else {
+                    dispatch({ type: "SET_STEP_HOME" });
                   }
-                  setStep("home");
                 }
               }}
               onRefineWithVoice={handleRefineWithVoice}
-              onRefineWithMessage={async (message) => {
-                const currentMovie = results[currentResultIndex];
-                if (!currentMovie) return;
-                const shortLabel = message.replace(/^(Je veux |Je préfère |Montre-moi )/i, "").toLowerCase();
-                setSearchTags((prev) => (prev.includes(shortLabel) ? prev : [...prev, shortLabel]));
-                setLoading(true);
-                setDynamicAnecdotes([]);
-                fetchCinemaAnecdotes({ genre: shortLabel });
-                setLoadingMessage("Pick cherche mieux…");
-                try {
-                  const contextMessages = [
-                    { role: "assistant" as const, content: `Je t'ai recommandé **${getDisplayTitle(currentMovie)}**.` },
-                    { role: "user" as const, content: message },
-                  ];
-                  const { data, error } = await supabase.functions.invoke("pick-chat", {
-                    body: {
-                      messages: contextMessages,
-                      mode: "discovery",
-                      isPremium: pickPlus.isPremium,
-                      minRating: profilePrefs.minRating,
-                      excludedGenres: profilePrefs.excludedGenres,
-                      timeContext: getTimeContextForPrompt(),
-                    },
-                  });
-                  if (error) throw error;
-                  const newMovies = extractRecommendationMovies(data);
-                  if (newMovies.length > 0) {
-                    if (data.recap?.length > 0)
-                      setSearchTags((prev) => {
-                        const merged = [...prev];
-                        data.recap.forEach((t: string) => {
-                          if (!merged.includes(t)) merged.push(t);
-                        });
-                        return merged;
-                      });
-                    const batch = await normalizeRecommendationBatch(
-                      newMovies,
-                      results.map((result) => result.id),
-                      profilePrefs.recommendationBatchSize || RECOMMENDATION_BATCH_SIZE,
-                    );
-                    setResults(batch);
-                    setResultSuggestionCount(profilePrefs.recommendationBatchSize || RECOMMENDATION_BATCH_SIZE);
-                    setCurrentResultIndex(0);
-                    setResultIndexHistory([]);
-                    setResultSeenMovieIds(new Set(batch[0] ? [batch[0].id] : []));
-                    setBatchRejectedIds(new Set());
-                  }
-                } catch (e) {
-                  console.error("Refine error:", e);
-                } finally {
-                  setLoading(false);
-                  setLoadingMessage("");
-                }
-              }}
-              hasMore={currentResultIndex < results.length - 1}
+              onRefineWithMessage={engine.handleRefineWithMessage}
+              hasMore={state.currentResultIndex < state.results.length - 1}
               userCriteria={{ mood: null, context: null, time: null }}
-              searchTags={searchTags}
-              onRemoveTag={handleRemoveTag}
-              refining={loading}
+              searchTags={state.searchTags}
+              onRemoveTag={(tag) => dispatch({ type: "REMOVE_TAG", tag })}
+              refining={engine.loading}
               profileConfidence={profilePrefs.profileConfidence}
-              alternativeMovies={results.filter((_, i) => i !== currentResultIndex).slice(0, 2)}
-              recommendationBatch={results}
-              suggestionCount={resultSuggestionCount}
+              alternativeMovies={state.results.filter((_, i) => i !== state.currentResultIndex).slice(0, 2)}
+              recommendationBatch={state.results}
+              suggestionCount={state.resultSuggestionCount}
               onSelectAlternative={(movie) => {
-                const idx = results.findIndex((r) => r.id === movie.id);
-                if (idx >= 0) {
-                  setResultIndexHistory((h) => [...h, currentResultIndex]);
-                  setCurrentResultIndex(idx);
-                }
+                const idx = state.results.findIndex((r) => r.id === movie.id);
+                if (idx >= 0) dispatch({ type: "GO_TO_INDEX", index: idx });
               }}
-              currentIndex={currentResultIndex}
-              totalCount={results.length}
-              onNext={() => {
-                if (currentResultIndex < results.length - 1) {
-                  setResultIndexHistory((h) => [...h, currentResultIndex]);
-                  setCurrentResultIndex((i) => i + 1);
-                }
-              }}
-              onPrevious={() => {
-                if (currentResultIndex > 0) {
-                  setResultIndexHistory((h) => [...h, currentResultIndex]);
-                  setCurrentResultIndex((i) => i - 1);
-                }
-              }}
-              visitedMovieIds={resultSeenMovieIds}
-              onVisitedMovieIdsChange={setResultSeenMovieIds}
-              batchRejectedIds={batchRejectedIds}
+              currentIndex={state.currentResultIndex}
+              totalCount={state.results.length}
+              onNext={() => dispatch({ type: "NEXT" })}
+              onPrevious={() => dispatch({ type: "PREV" })}
+              visitedMovieIds={state.resultSeenMovieIds}
+              onVisitedMovieIdsChange={setVisitedMovieIds}
+              batchRejectedIds={state.batchRejectedIds}
               onBatchRejectedIdsChange={setBatchRejectedIds}
             />
           </motion.div>
@@ -879,40 +233,46 @@ const Index = () => {
       </AnimatePresence>
 
       <AnimatePresence>
-        {showChat && (
+        {state.showChat && (
           <VoiceChat
             onClose={handleCloseChat}
             onMovieSuggested={handleMovieSuggested}
-            onSearchIntent={handleVoiceSearchIntent}
-            initialMessages={chatInitialMessages}
-            showMicGuide={talkToPickGuideStep === "mic"}
+            onSearchIntent={engine.handleVoiceSearchIntent}
+            initialMessages={state.chatInitialMessages}
+            showMicGuide={overlays.talkToPickGuideStep === "mic"}
           />
         )}
       </AnimatePresence>
 
       <PickPlusPaywall open={pickPlus.shouldShowPaywall} onClose={pickPlus.hidePaywall} trigger="reco_limit" />
 
-      {showTour && <PlatformTour onComplete={handleTourComplete} />}
+      {showTour && <PlatformTour onComplete={overlays.handleTourComplete} />}
       {showActivation && !showTour && (
         <ActivationFlow
-          onStartMission={handleActivationMission}
-          onComplete={handleActivationComplete}
+          onStartMission={overlays.handleActivationMission}
+          onComplete={overlays.handleActivationComplete}
         />
       )}
 
-      {watchlistGuideStep && (
+      {overlays.watchlistGuideStep && (
         <WatchlistMissionGuide
-          step={watchlistGuideStep}
-          savedCount={watchlistSavedCount}
+          step={overlays.watchlistGuideStep}
+          savedCount={overlays.watchlistSavedCount}
           target={3}
         />
       )}
 
-      {talkToPickGuideStep && (
-        <TalkToPickMissionGuide step={talkToPickGuideStep} />
+      {overlays.talkToPickGuideStep && (
+        <TalkToPickMissionGuide step={overlays.talkToPickGuideStep} />
       )}
 
-      {loading && <RevealAnimation active message={loadingMessage || "Pick prépare tes recommandations…"} dynamicAnecdotes={dynamicAnecdotes.length > 0 ? dynamicAnecdotes : undefined} />}
+      {engine.loading && (
+        <RevealAnimation
+          active
+          message={engine.loadingMessage || "Pick prépare tes recommandations…"}
+          dynamicAnecdotes={engine.dynamicAnecdotes.length > 0 ? engine.dynamicAnecdotes : undefined}
+        />
+      )}
     </div>
   );
 };
