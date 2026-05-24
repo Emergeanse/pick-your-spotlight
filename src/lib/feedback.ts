@@ -9,6 +9,8 @@ import {
   type CatalogMediaType,
   type CatalogMeta,
 } from "@/lib/catalog";
+import { trackInteraction, type ActionType, type InteractionContext } from "@/lib/interactions";
+
 
 export type FeedbackType = "like" | "love" | "seen" | "not_for_me" | "watchlist" | "skip" | "dislike" | "unknown";
 
@@ -35,7 +37,60 @@ export interface FeedbackContext {
   context_type?: "solo_session" | "group_session" | "browse";
   context_id?: string | null;
   source?: string;
+  /** Optional interaction payload — when present, an entry is also written to user_interactions. */
+  interaction?: InteractionContext;
 }
+
+function mapFeedbackToAction(type: FeedbackType): ActionType | null {
+  switch (type) {
+    case "love":
+    case "like":
+      return "liked";
+    case "watchlist":
+      return "saved";
+    case "seen":
+      return "already_seen";
+    case "skip":
+      return "skipped";
+    case "not_for_me":
+    case "dislike":
+      return "skipped";
+    case "unknown":
+      return "unsure";
+    default:
+      return null;
+  }
+}
+
+function mapClearToAction(type: FeedbackType): ActionType | null {
+  switch (type) {
+    case "love":
+    case "like":
+      return "unliked";
+    case "watchlist":
+      return "unsaved";
+    default:
+      return null;
+  }
+}
+
+function fireInteraction(
+  tmdbId: number,
+  action: ActionType | null,
+  ctx?: FeedbackContext,
+  extra?: Partial<InteractionContext>,
+) {
+  if (!action) return;
+  const interaction: InteractionContext = {
+    ...(ctx?.interaction ?? {}),
+    ...(extra ?? {}),
+  };
+  if (ctx?.source && !interaction.source) interaction.source = ctx.source;
+  if (ctx?.context_id && !interaction.session_id) interaction.session_id = ctx.context_id;
+  // Fire-and-forget; trackInteraction already swallows its own errors.
+  void trackInteraction(tmdbId, action, interaction);
+}
+
 
 const DEBUG_FEEDBACK = false;
 
