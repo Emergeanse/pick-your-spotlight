@@ -485,10 +485,22 @@ const Index = () => {
 
     if (recapTags && recapTags.length > 0) setSearchTags(recapTags);
     setShowChat(false);
-    const batch = await normalizeRecommendationBatch(movies);
-    setChatSuggestedMovies(batch);
-    setChatSuggestedSeenMovieIds(new Set(batch[0] ? [batch[0].id] : []));
-    setStep("home");
+    setLoading(true);
+    setLoadingMessage("Pick cherche ton film…");
+    try {
+      const desiredCount = profilePrefs.recommendationBatchSize || RECOMMENDATION_BATCH_SIZE;
+      const batch = await normalizeRecommendationBatch(movies as RecommendationMovieDetail[], [], desiredCount);
+      if (batch.length > 0) {
+        openRecommendationBatch(batch, "home", 0, undefined, desiredCount);
+      } else {
+        setStep("home");
+      }
+    } catch {
+      setStep("home");
+    } finally {
+      setLoading(false);
+      setLoadingMessage("");
+    }
   };
 
   const handleShowAnother = async (rejectReason?: string, rejectedMovie?: MovieDetail) => {
