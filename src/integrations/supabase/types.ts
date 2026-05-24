@@ -411,6 +411,7 @@ export type Database = {
           genres: string[] | null
           id: string
           media_type: string
+          original_language: string | null
           platform_ids: number[]
           popularity: number | null
           runtime: number | null
@@ -431,6 +432,7 @@ export type Database = {
           genres?: string[] | null
           id?: string
           media_type?: string
+          original_language?: string | null
           platform_ids?: number[]
           popularity?: number | null
           runtime?: number | null
@@ -451,6 +453,7 @@ export type Database = {
           genres?: string[] | null
           id?: string
           media_type?: string
+          original_language?: string | null
           platform_ids?: number[]
           popularity?: number | null
           runtime?: number | null
@@ -1260,6 +1263,7 @@ export type Database = {
               cluster_labels: string[]
               genres: string[]
               media_type: string
+              original_language: string
               popularity: number
               similarity: number
               taste_tags: string[]
