@@ -24,7 +24,7 @@ $readHeaders = @{
     "Content-Type"  = "application/json"
 }
 
-function Call-Tmdb($tmdbId, $mediaType) {
+function Invoke-Tmdb($tmdbId, $mediaType) {
     $type = if ($mediaType -eq "tv") { "tv" } else { "movie" }
     try {
         return Invoke-RestMethod "https://api.themoviedb.org/3/$type/${tmdbId}?api_key=$TMDB_KEY" -ErrorAction SilentlyContinue
@@ -54,12 +54,12 @@ Write-Host "Démarrage du backfill original_language..." -ForegroundColor Cyan
 do {
     $round++
 
-    # Récupère le prochain batch de films sans original_language
+    # Récupère le prochain batch via RPC SECURITY DEFINER (contourne RLS anon)
     $films = @()
     try {
-        $films = Invoke-RestMethod `
-            "$SUPABASE_URL/rest/v1/movie_embeddings?select=tmdb_id,media_type,year&original_language=is.null&order=tmdb_id.asc&limit=$BatchSize" `
-            -Headers $readHeaders -ErrorAction Stop
+        $films = Invoke-RestMethod "$SUPABASE_URL/rest/v1/rpc/get_movies_needing_language" `
+            -Method POST -Headers $readHeaders `
+            -Body (@{ p_limit = $BatchSize } | ConvertTo-Json -Compress) -ErrorAction Stop
     } catch {
         Write-Host "Erreur lecture Supabase : $_" -ForegroundColor Red
         break
@@ -74,7 +74,7 @@ do {
     $batchErrors  = 0
 
     foreach ($film in $films) {
-        $detail = Call-Tmdb -tmdbId $film.tmdb_id -mediaType $film.media_type
+        $detail = Invoke-Tmdb -tmdbId $film.tmdb_id -mediaType $film.media_type
         if (-not $detail -or -not $detail.original_language) {
             $batchErrors++
             Start-Sleep -Milliseconds $DelayMs
@@ -96,7 +96,7 @@ do {
     $totalUpdated += $batchUpdated
     $totalErrors  += $batchErrors
 
-    Write-Host "Tour $round — traités: $($films.Count) | maj: $batchUpdated | erreurs: $batchErrors | total cumulé: $totalUpdated" `
-        -ForegroundColor $(if ($batchErrors -gt 0) { "Yellow" } else { "Green" })
+    $color = if ($batchErrors -gt 0) { "Yellow" } else { "Green" }
+    Write-Host "Tour $round - traites: $($films.Count) | maj: $batchUpdated | erreurs: $batchErrors | total: $totalUpdated" -ForegroundColor $color
 
 } while ($true)
