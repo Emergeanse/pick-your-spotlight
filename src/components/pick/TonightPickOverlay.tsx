@@ -1,8 +1,6 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronLeft, ChevronRight, Dices, Loader2, Sparkles, Target, Tv, Info } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { ChevronLeft, Dices, Loader2, Info } from "lucide-react";
 import { getBackdropUrl, getDisplayTitle, getPosterUrl, type MovieDetail } from "@/lib/tmdb";
-import { getTonightPickLabel } from "@/lib/time-context";
 import { useMovieInteraction } from "@/hooks/use-movie-interactions";
 import MovieActionBar from "./MovieActionBar";
 import FeedbackBadge from "./FeedbackBadge";
@@ -57,6 +55,36 @@ const TonightPickOverlay = ({
 
   const matchInfo = movieMatchData[movie.id];
 
+  // Resolve rich recommendation text + adhesion score (same logic as before)
+  const recFromPool = (tonightPool || []).find(
+    (m) => m?.id === movie.id && (m as any).recommendationTexts,
+  );
+  const recFromMovie: any = (movie as any).recommendationTexts || null;
+  const rec: any =
+    (recFromPool ? (recFromPool as any).recommendationTexts : null) || recFromMovie || null;
+  const adhesionScore = rec?.matchScore ?? rec?.score ?? rec?.confidence ?? matchInfo?.confidence ?? null;
+  const asStr = (v: unknown): string | null => (typeof v === "string" && v.length > 0 ? v : null);
+  const richTeaser =
+    asStr(rec?.summary) ||
+    asStr(rec?.detailedExplanation) ||
+    asStr(rec?.whyItMatches) ||
+    asStr(rec?.headline) ||
+    asStr(rec?.pickNote);
+  const recReason = asStr(rec?.reason);
+  const matchReason = asStr(matchInfo?.reason);
+  const teaser =
+    richTeaser ||
+    (recReason && recReason.length > 40 ? recReason : null) ||
+    (matchReason && matchReason.length > 40 ? matchReason : null) ||
+    `Pick pense que ${movie.first_air_date ? "cette série est faite" : "ce film est fait"} pour toi.`;
+
+  const year = ((movie.release_date || (movie as any).first_air_date) as string | undefined)?.substring(0, 4);
+  const primaryGenre = movie.genres?.[0]?.name;
+
+  // SVG match ring
+  const ringCirc = 2 * Math.PI * 24;
+  const ringOffset = adhesionScore != null ? ringCirc * (1 - adhesionScore / 100) : ringCirc;
+
   return (
     <AnimatePresence>
       {open && (
@@ -67,240 +95,182 @@ const TonightPickOverlay = ({
           transition={{ duration: 0.4 }}
           className="fixed inset-0 z-50 flex flex-col"
         >
-          {/* Cinematic background — backdrop bleeds full screen */}
-          <div
-            className="absolute inset-0 bg-cover bg-center bg-no-repeat scale-105"
+          {/* Fullscreen cinematic backdrop */}
+          <motion.div
+            key={movie.id}
+            initial={{ scale: 1.08, opacity: 0 }}
+            animate={{ scale: 1.02, opacity: 1 }}
+            transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
+            className="absolute inset-0 bg-cover bg-center bg-no-repeat"
             style={{
               backgroundImage: `url(${getBackdropUrl(movie.backdrop_path) || getPosterUrl(movie.poster_path, "w780")})`,
             }}
           />
-          {/* Dark overlay for legibility — uses black so image texture stays visible */}
-          <div className="absolute inset-0 bg-black/45" />
-          {/* Gradient fades the top lighter and keeps center readable */}
-          <div className="absolute inset-0 bg-gradient-to-t from-transparent via-black/20 to-black/40" />
+          {/* Cinematic gradient — bottom-heavy for legibility */}
+          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/85 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-b from-background/50 via-transparent to-transparent h-32" />
 
-          {/* Top bar — Retour + label */}
-          <div className="relative z-10 flex justify-between items-center px-5 pt-[calc(1rem+env(safe-area-inset-top))]">
+          {/* Top bar: back + match ring */}
+          <div className="relative z-10 flex justify-between items-center px-6 pt-[calc(1rem+env(safe-area-inset-top))]">
             <button
               onClick={onClose}
-              className="flex items-center gap-1.5 text-foreground/60 hover:text-foreground text-xs font-sans transition-colors backdrop-blur-sm bg-background/20 px-3 py-1.5 rounded-full border border-border/20"
+              aria-label="Retour"
+              className="w-11 h-11 rounded-full bg-black/40 backdrop-blur-xl border border-white/10 flex items-center justify-center text-foreground hover:bg-black/60 transition-colors"
             >
-              <ChevronLeft className="w-3.5 h-3.5" />
-              Retour
+              <ChevronLeft className="w-5 h-5" />
             </button>
-            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/20 border border-primary/30 backdrop-blur-md">
-              <Sparkles className="w-3 h-3 text-primary" />
-              <span className="text-primary text-[11px] font-sans font-semibold">{getTonightPickLabel()}</span>
-            </div>
-          </div>
 
-          {/* Main content — scrollable, anchored to bottom half (Netflix style) */}
-          <div className="relative z-10 flex-1 overflow-y-auto overscroll-y-contain touch-pan-y">
-            <div className="min-h-full flex flex-col justify-end px-5 pb-[calc(4.5rem+env(safe-area-inset-bottom))]">
-
-            {/* Poster + nav — dominant hero image */}
-            {movie.poster_path && (
-              <div className="flex justify-center mb-5">
-                <div className="relative flex items-center gap-4">
-                  <motion.button
-                    onClick={onPrev}
-                    disabled={!canGoPrev}
-                    whileTap={{ scale: 0.88 }}
-                    className="w-11 h-11 rounded-full bg-background/50 backdrop-blur-md border border-border/30 flex items-center justify-center transition-all disabled:opacity-20 disabled:cursor-not-allowed shadow-xl"
-                  >
-                    <ChevronLeft className="w-5 h-5 text-foreground" />
-                  </motion.button>
-
-                  <div className="relative">
-                    <motion.img
-                      key={movie.id}
-                      initial={{ opacity: 0, scale: 0.92, y: 12 }}
-                      animate={{ opacity: 1, scale: 1, y: 0 }}
-                      exit={{ opacity: 0, scale: 0.92, y: -8 }}
-                      transition={{ duration: 0.35, type: "spring", stiffness: 260, damping: 24 }}
-                      src={getPosterUrl(movie.poster_path, "w500") || ""}
-                      alt={getDisplayTitle(movie)}
-                      className="w-56 h-[336px] md:w-64 md:h-[384px] rounded-2xl object-cover shadow-[0_24px_60px_-8px_rgba(0,0,0,0.7)] border border-white/10 cursor-pointer active:scale-[0.97] transition-transform"
-                      onClick={onOpenDetail}
-                    />
-                    {/* "Tap pour détails" hint */}
-                    <div className="absolute bottom-2.5 right-2.5 bg-background/60 backdrop-blur-md rounded-full p-1.5 border border-border/20 pointer-events-none">
-                      <Info className="w-3.5 h-3.5 text-foreground/50" />
-                    </div>
-                    {interaction.hasInteraction && (
-                      <div className="absolute top-2.5 left-2.5">
-                        <FeedbackBadge type={interaction.primaryStatus} inWatchlist={interaction.watchlist} size="sm" />
-                      </div>
-                    )}
-                  </div>
-
-                  <motion.button
-                    onClick={onNext}
-                    disabled={!canGoNext}
-                    whileTap={{ scale: 0.88 }}
-                    className="w-11 h-11 rounded-full bg-background/50 backdrop-blur-md border border-border/30 flex items-center justify-center transition-all disabled:opacity-20 disabled:cursor-not-allowed shadow-xl"
-                  >
-                    <ChevronRight className="w-5 h-5 text-foreground" />
-                  </motion.button>
-                </div>
+            {adhesionScore != null && (
+              <div className="relative w-14 h-14 flex items-center justify-center">
+                <svg className="w-full h-full -rotate-90" viewBox="0 0 56 56">
+                  <circle cx="28" cy="28" r="24" stroke="currentColor" strokeWidth="3" fill="transparent" className="text-white/10" />
+                  <circle
+                    cx="28"
+                    cy="28"
+                    r="24"
+                    stroke="currentColor"
+                    strokeWidth="3"
+                    fill="transparent"
+                    strokeDasharray={ringCirc}
+                    strokeDashoffset={ringOffset}
+                    strokeLinecap="round"
+                    className="text-[hsl(var(--success))] transition-all duration-700"
+                  />
+                </svg>
+                <span className="absolute text-[11px] font-bold text-foreground font-sans">{adhesionScore}%</span>
               </div>
             )}
+          </div>
 
-            {/* Film info block */}
-            <motion.div
-              key={movie.id}
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, delay: 0.05 }}
-              className="flex flex-col items-center text-center"
+          {/* Poster (tap to open details) — kept discreet, top zone */}
+          {movie.poster_path && (
+            <button
+              onClick={onOpenDetail}
+              className="relative z-10 mx-auto mt-4 group active:scale-[0.97] transition-transform"
+              aria-label="Voir les détails"
             >
-              {/* Pagination dots */}
-              {tonightPool.length > 1 && (
-                <div className="flex items-center gap-1.5 mb-3">
+              <motion.img
+                key={`poster-${movie.id}`}
+                initial={{ opacity: 0, y: 18 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.15 }}
+                src={getPosterUrl(movie.poster_path, "w500") || ""}
+                alt={getDisplayTitle(movie)}
+                className="w-40 h-60 rounded-2xl object-cover shadow-[0_30px_60px_-15px_rgba(0,0,0,0.8)] border border-white/10"
+              />
+              <div className="absolute bottom-2 right-2 bg-black/60 backdrop-blur-md rounded-full p-1.5 border border-white/10 opacity-0 group-hover:opacity-100 transition-opacity">
+                <Info className="w-3.5 h-3.5 text-foreground/70" />
+              </div>
+              {interaction.hasInteraction && (
+                <div className="absolute top-2 left-2">
+                  <FeedbackBadge type={interaction.primaryStatus} inWatchlist={interaction.watchlist} size="sm" />
+                </div>
+              )}
+            </button>
+          )}
+
+          {/* Bottom-anchored info block */}
+          <div className="relative z-10 mt-auto px-7 pb-[calc(5rem+env(safe-area-inset-bottom))]">
+            {/* Chips: year, genre, first streaming platform */}
+            <div className="flex gap-2 mb-4 flex-wrap">
+              {year && (
+                <span className="px-2.5 py-1.5 bg-white/10 backdrop-blur-xl border border-white/10 rounded-lg text-[9px] text-foreground uppercase tracking-widest font-bold font-sans">
+                  {year}
+                </span>
+              )}
+              {primaryGenre && (
+                <span className="px-2.5 py-1.5 bg-white/10 backdrop-blur-xl border border-white/10 rounded-lg text-[9px] text-foreground uppercase tracking-widest font-bold font-sans">
+                  {primaryGenre}
+                </span>
+              )}
+              {tonightProviders[0] && (
+                <span className="px-2.5 py-1.5 bg-primary/25 backdrop-blur-xl border border-primary/40 rounded-lg text-[9px] text-foreground uppercase tracking-widest font-bold font-sans flex items-center gap-1.5">
+                  <img
+                    src={`https://image.tmdb.org/t/p/w45${tonightProviders[0].logo_path}`}
+                    alt=""
+                    className="w-3.5 h-3.5 rounded object-cover"
+                  />
+                  {tonightProviders[0].name}
+                </span>
+              )}
+            </div>
+
+            {/* Hero serif title */}
+            <motion.h2
+              key={`title-${movie.id}`}
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.45, delay: 0.2 }}
+              className="font-serif text-foreground text-[42px] leading-[0.95] tracking-tight mb-5"
+            >
+              {getDisplayTitle(movie)}
+            </motion.h2>
+
+            {/* Vertical accent bar + italic teaser from Pick */}
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.45, delay: 0.32 }}
+              className="flex items-start gap-3 mb-7"
+            >
+              <div className="w-1 self-stretch min-h-[40px] bg-primary rounded-full shrink-0" />
+              <p className="text-foreground/80 text-[14px] italic font-sans leading-relaxed pt-0.5">
+                {teaser.length > 140 ? `${teaser.substring(0, 140).trimEnd()}…` : teaser}
+              </p>
+            </motion.div>
+
+            {/* Glass action bar (Save / Like / Seen via MovieActionBar) */}
+            <div className="mb-5 rounded-3xl bg-white/5 backdrop-blur-2xl border border-white/[0.06] p-1.5">
+              <MovieActionBar key={movie.id} movie={movie} onInteraction={onInteraction} />
+            </div>
+
+            {/* Primary CTA: white pill — premium contrast */}
+            <motion.button
+              whileTap={{ scale: 0.97 }}
+              onClick={onConfirm}
+              className="w-full py-[18px] bg-foreground text-background rounded-[28px] font-sans font-bold text-[13px] tracking-[0.18em] uppercase mb-5 shadow-[0_18px_50px_-12px_rgba(255,255,255,0.25)]"
+            >
+              On regarde ?
+            </motion.button>
+
+            {/* Progress segments + suggestion counter */}
+            {tonightPool.length > 1 && (
+              <div className="flex flex-col items-center gap-2.5">
+                <div className="flex gap-1.5">
                   {tonightPool.map((_, i) => (
-                    <span
+                    <button
                       key={i}
-                      className={`block rounded-full transition-all duration-300 ${
-                        i === tonightPickIndex
-                          ? "w-4 h-1.5 bg-primary"
-                          : "w-1.5 h-1.5 bg-foreground/25"
+                      onClick={() => {
+                        if (i < tonightPickIndex) onPrev();
+                        else if (i > tonightPickIndex) onNext();
+                      }}
+                      disabled={(i < tonightPickIndex && !canGoPrev) || (i > tonightPickIndex && !canGoNext)}
+                      aria-label={`Suggestion ${i + 1}`}
+                      className={`h-1 rounded-full transition-all duration-300 ${
+                        i === tonightPickIndex ? "w-10 bg-foreground" : "w-2 bg-foreground/20 hover:bg-foreground/40"
                       }`}
                     />
                   ))}
                 </div>
-              )}
-
-              {/* Title — large, serif, cinematic */}
-              <h2 className="text-2xl md:text-3xl font-serif font-bold text-foreground leading-tight mb-1 px-2">
-                {getDisplayTitle(movie)}
-              </h2>
-
-              {/* Genres + year */}
-              <div className="flex items-center gap-2 flex-wrap justify-center mb-2">
-                {movie.genres && (
-                  <p className="text-foreground/50 text-[11px] tracking-[0.1em] uppercase font-sans font-medium">
-                    {movie.genres.map((g) => g.name).join(" · ")}
-                  </p>
-                )}
-                {(movie.release_date || (movie as any).first_air_date) && (
-                  <>
-                    <span className="text-foreground/20 text-[10px]">·</span>
-                    <span className="text-foreground/40 text-[11px] font-sans">
-                      {((movie.release_date || (movie as any).first_air_date) as string).substring(0, 4)}
-                    </span>
-                  </>
+                <span className="text-foreground/30 text-[9px] font-sans tracking-[0.3em] uppercase">
+                  Suggestion {tonightPickIndex + 1} / {tonightPool.length}
+                </span>
+                {(tonightAllVisited || tonightLoading) && (
+                  <button
+                    onClick={onMoreSuggestions}
+                    disabled={tonightLoading}
+                    className="mt-2 text-xs font-sans transition-all flex items-center gap-1.5 text-foreground/55 hover:text-foreground/80 disabled:opacity-50"
+                  >
+                    {tonightLoading ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <Dices className="w-3.5 h-3.5" />
+                    )}
+                    {displayCount} autre{displayCount > 1 ? "s" : ""} suggestion{displayCount > 1 ? "s" : ""}
+                  </button>
                 )}
               </div>
-
-              {/* Streaming platforms */}
-              {tonightProviders.length > 0 && (
-                <div className="flex items-center gap-2 mb-3">
-                  <span className="text-foreground/50 text-[11px] font-sans uppercase tracking-wider">Dispo sur</span>
-                  <div className="flex gap-2">
-                    {tonightProviders.map((p) => (
-                      <img
-                        key={p.name}
-                        src={`https://image.tmdb.org/t/p/w92${p.logo_path}`}
-                        alt={p.name}
-                        className="w-8 h-8 rounded-xl object-cover border border-white/15 shadow-md"
-                      />
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* AI score + teaser — prominent block */}
-              {(() => {
-                // recFromPool is updated by background enrichment — prefer it over recFromMovie
-                // so the personalized movie-match text replaces the generic surprise-personalized reason.
-                const recFromPool = (tonightPool || []).find(
-                  (m) => m?.id === movie.id && (m as any).recommendationTexts,
-                );
-                const recFromMovie: any = (movie as any).recommendationTexts || null;
-
-                const rec: any =
-                  (recFromPool ? (recFromPool as any).recommendationTexts : null) || recFromMovie || null;
-
-                const adhesionScore = rec?.matchScore ?? rec?.score ?? rec?.confidence ?? matchInfo?.confidence ?? null;
-
-                const asStr = (v: unknown): string | null =>
-                  typeof v === "string" && v.length > 0 ? v : null;
-
-                const richTeaser =
-                  asStr(rec?.summary) ||
-                  asStr(rec?.detailedExplanation) ||
-                  asStr(rec?.whyItMatches) ||
-                  asStr(rec?.headline) ||
-                  asStr(rec?.pickNote);
-
-                // Only fall back to generic reason/matchInfo if no rich text is available
-                const recReason = asStr(rec?.reason);
-                const matchReason = asStr(matchInfo?.reason);
-                const teaser =
-                  richTeaser ||
-                  (recReason && recReason.length > 40 ? recReason : null) ||
-                  (matchReason && matchReason.length > 40 ? matchReason : null) ||
-                  null;
-
-                if (adhesionScore != null || teaser) {
-                  return (
-                    <div className="w-full max-w-xs flex flex-col items-center gap-2 mb-4">
-                      {adhesionScore != null && (
-                        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/15 border border-primary/30 backdrop-blur-md shadow-sm">
-                          <Target className="w-3.5 h-3.5 text-primary" />
-                          <span className="text-primary text-sm font-sans font-bold tracking-wide">
-                            {adhesionScore}% d’adhésion
-                          </span>
-                        </div>
-                      )}
-                      {teaser && (
-                        <p className="text-foreground/65 text-[12px] font-sans text-center leading-relaxed max-w-[280px]">
-                          {teaser.length > 130 ? `${teaser.substring(0, 130).trimEnd()}…` : teaser}
-                        </p>
-                      )}
-                    </div>
-                  );
-                }
-
-                return (
-                  <p className="text-foreground/35 text-[12px] font-sans italic mb-4">
-                    Pick pense que {movie.first_air_date ? "cette série est parfaite" : "ce film est parfait"} pour toi.
-                  </p>
-                );
-              })()}
-
-              {/* Actions */}
-              <div className="flex flex-col items-center gap-3 w-full max-w-xs">
-                <Button
-                  size="lg"
-                  className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90 font-sans font-semibold px-8 h-12 gap-2 text-base neon-glow transition-all active:scale-[0.97] w-full shadow-lg"
-                  onClick={onConfirm}
-                >
-                  <Tv className="w-5 h-5" />
-                  On regarde ?
-                </Button>
-
-                <div className="flex flex-col items-center gap-1">
-                  {tonightAllVisited || tonightLoading ? (
-                    <button
-                      onClick={onMoreSuggestions}
-                      disabled={tonightLoading}
-                      className="text-sm font-sans transition-all flex items-center gap-1.5 text-foreground/45 hover:text-foreground/65 disabled:opacity-50"
-                    >
-                      {tonightLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Dices className="w-3.5 h-3.5" />}
-                      {displayCount} autre{displayCount > 1 ? "s" : ""} suggestion{displayCount > 1 ? "s" : ""}
-                    </button>
-                  ) : tonightPool.length > 0 ? (
-                    <p className="text-foreground/25 text-[10px] font-sans text-center">
-                      Parcourez les {displayCount} films pour débloquer ({tonightSeenMovieIds.size}/{displayCount})
-                    </p>
-                  ) : null}
-                </div>
-
-                <MovieActionBar key={movie.id} movie={movie} onInteraction={onInteraction} />
-              </div>
-            </motion.div>
-            </div>
+            )}
           </div>
         </motion.div>
       )}

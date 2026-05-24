@@ -6,37 +6,39 @@
 
 @layer base {
   :root {
-    --background: 260 20% 5%;
+    /* Midnight Curator — cinematic premium palette */
+    --background: 240 18% 3%;          /* #07070A */
     --foreground: 0 0% 100%;
 
-    --card: 260 15% 11%;
+    --card: 240 16% 8%;                /* #111118 */
     --card-foreground: 0 0% 100%;
 
-    --popover: 260 15% 11%;
+    --popover: 240 16% 8%;
     --popover-foreground: 0 0% 100%;
 
-    --primary: 265 90% 62%;
+    --primary: 258 90% 66%;            /* #8B5CF6 */
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 260 15% 14%;
+    --secondary: 240 14% 11%;
     --secondary-foreground: 0 0% 100%;
 
-    --muted: 260 12% 14%;
-    --muted-foreground: 260 10% 55%;
+    --muted: 240 12% 12%;
+    --muted-foreground: 0 0% 65%;      /* white at 65% */
 
-    --accent: 265 90% 62%;
+    --accent: 271 91% 65%;             /* #A855F7 */
     --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 84% 60%;
+    --destructive: 0 84% 60%;          /* #EF4444 */
     --destructive-foreground: 0 0% 100%;
 
-    --border: 260 15% 18%;
-    --input: 260 15% 18%;
-    --ring: 265 90% 62%;
+    --border: 240 10% 14%;             /* deep, low-contrast */
+    --input: 240 10% 14%;
+    --ring: 258 90% 66%;
 
-    --radius: 0.75rem;
+    --radius: 1.5rem;                  /* 24px — premium round */
 
-    --glow: 265 100% 65%;
+    --glow: 271 91% 65%;
+    --success: 160 64% 52%;            /* #34D399 */
     --gold: 38 92% 55%;
     --gold-foreground: 38 10% 10%;
     --surprise: 28 90% 55%;
