@@ -409,6 +409,18 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
     const [internalVisitedMovieIds, setInternalVisitedMovieIds] = useState<Set<number>>(() => new Set([movie.id]));
     const visitedMovieIds = externalVisited ?? internalVisitedMovieIds;
 
+    // Cinematic reveal staging: anticipation → reveal → settled
+    const [revealStage, setRevealStage] = useState<"anticipation" | "reveal" | "settled">("anticipation");
+    useEffect(() => {
+      setRevealStage("anticipation");
+      const t1 = setTimeout(() => setRevealStage("reveal"), 550);
+      const t2 = setTimeout(() => setRevealStage("settled"), 1600);
+      return () => {
+        clearTimeout(t1);
+        clearTimeout(t2);
+      };
+    }, [movie.id]);
+
     const setVisitedMovieIds = (updater: Set<number> | ((prev: Set<number>) => Set<number>)) => {
       const newVal = typeof updater === "function" ? updater(visitedMovieIds) : updater;
       if (onVisitedMovieIdsChange) {
