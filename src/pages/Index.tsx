@@ -483,6 +483,7 @@ const Index = () => {
       return;
     }
 
+    console.log("[voice-movie] handleMovieSuggested called — movies:", movies?.length, "recap:", recapTags);
     if (recapTags && recapTags.length > 0) setSearchTags(recapTags);
     setShowChat(false);
     setLoading(true);
@@ -490,10 +491,7 @@ const Index = () => {
     try {
       const desiredCount = profilePrefs.recommendationBatchSize || RECOMMENDATION_BATCH_SIZE;
       const raw = movies as RecommendationMovieDetail[];
-      const batch = await normalizeRecommendationBatch(raw, [], desiredCount);
-      if (batch.length > 0) {
-        openRecommendationBatch(batch, "home", 0, undefined, desiredCount);
-      } else if (raw.length > 0) {
+      if (raw.length > 0) {
         openRecommendationBatch(raw, "home", 0, undefined, desiredCount);
       } else {
         setStep("home");
@@ -514,13 +512,16 @@ const Index = () => {
     setLoading(true);
     setLoadingMessage("Pick cherche ton film…");
     try {
+      console.log("[voice] handleVoiceSearchIntent start", filters);
       const [liked, tasteProfile, multiVec] = user
         ? await Promise.all([getLikedMovies(), getUserTasteProfile(), computeMultiVectorProfile(user.id)])
         : [[], null, null] as const;
+      console.log("[voice] profile loaded — liked:", liked.length, "multiVec:", !!multiVec);
       const excludeIds = [...results.map((r: RecommendationMovieDetail) => r.id), ...((tasteProfile as any)?.excludeIds || [])];
       const confidenceScore = tasteProfile?.confidence?.score ?? profilePrefs.profileConfidence ?? 50;
       const explorationLevel = confidenceScore >= 70 ? 3 : confidenceScore >= 40 ? 5 : 7;
       const desiredCount = profilePrefs.recommendationBatchSize || RECOMMENDATION_BATCH_SIZE;
+      console.log("[voice] calling invokeSurprisePersonalized", { voiceGenres: filters.genres, voiceOriginalLanguage: filters.originalLanguage });
       const data = await invokeSurprisePersonalized({
         likedMovies: liked,
         userTasteVector: multiVec?.stableTasteVector ?? null,
@@ -540,11 +541,10 @@ const Index = () => {
         voiceMediaType: filters.mediaType,
         voiceMaxDuration: filters.maxDuration,
       });
+      console.log("[voice] invokeSurprisePersonalized returned", data);
       const extracted = extractRecommendationMovies(data);
-      const batch = await normalizeRecommendationBatch(extracted, excludeIds, desiredCount);
-      if (batch.length > 0) {
-        openRecommendationBatch(batch, "home", 0, undefined, desiredCount);
-      } else if (extracted.length > 0) {
+      console.log("[voice] extracted movies:", extracted.length);
+      if (extracted.length > 0) {
         openRecommendationBatch(extracted, "home", 0, undefined, desiredCount);
       } else {
         setStep("home");
@@ -559,7 +559,6 @@ const Index = () => {
     }
   }, [
     invokeSurprisePersonalized,
-    normalizeRecommendationBatch,
     openRecommendationBatch,
     profilePrefs,
     results,

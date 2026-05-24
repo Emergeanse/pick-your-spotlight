@@ -233,12 +233,16 @@ const VoiceChat = ({ onClose, onMovieSuggested, onSearchIntent, initialMessages,
 
       if (error) throw error;
 
+      console.log("[voice-chat] pick-chat response type:", data?.type, "has movie:", !!data?.movie, "has reply:", !!data?.reply);
+
       if (data?.type === "search_intent") {
         const recap: string[] = data.recap || [];
+        console.log("[voice-chat] search_intent path — filters:", data.filters, "recap:", recap);
         setRecapTags(recap);
         setConversationHistory(fullHistory);
         setPhase("recap");
         setTimeout(() => {
+          console.log("[voice-chat] firing onSearchIntent");
           onSearchIntent?.(data.filters as VoiceSearchFilters, recap);
         }, recap.length > 0 ? 1800 : 800);
       } else if (data?.movie) {
@@ -246,11 +250,13 @@ const VoiceChat = ({ onClose, onMovieSuggested, onSearchIntent, initialMessages,
         const movies: MovieDetail[] = data.movies && data.movies.length > 0
           ? data.movies as MovieDetail[]
           : [data.movie as MovieDetail];
+        console.log("[voice-chat] suggest_movie path — movie:", data.movie?.title, "movies count:", movies.length);
         setRecapTags(recap);
         setConversationHistory(fullHistory);
         setPhase("recap");
 
         setTimeout(() => {
+          console.log("[voice-chat] firing onMovieSuggested");
           onMovieSuggested(movies, recap);
         }, recap.length > 0 ? 1800 : 800);
       } else if (data?.type === "pick_together") {
