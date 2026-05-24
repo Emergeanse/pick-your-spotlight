@@ -1,49 +1,102 @@
 ##############################################################################
 # backfill-original-language.ps1
 #
-# Appelle l'edge function backfill-original-language en boucle jusqu'à
-# ce que tous les films aient original_language rempli.
+# Remplit original_language (et year si null) dans movie_embeddings
+# pour tous les films existants, via TMDB API + RPC Supabase.
 #
 # Utilisation :
 #   .\scripts\backfill-original-language.ps1
+#   .\scripts\backfill-original-language.ps1 -BatchSize 200
 ##############################################################################
 
 param(
-    [int]$BatchSize = 100,   # films traités par appel
-    [int]$DelayMs   = 2000   # pause entre chaque appel (ms)
+    [int]$BatchSize = 150,   # films traités par tour
+    [int]$DelayMs   = 80     # pause entre appels TMDB (ms)
 )
 
+$TMDB_KEY     = "2dca580c2a14b55200e784d157207b4d"
 $SUPABASE_URL = "https://lrjhpflvkrebbngfnaif.supabase.co"
 $ANON_KEY     = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyamhwZmx2a3JlYmJuZ2ZuYWlmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMxODMwODMsImV4cCI6MjA4ODc1OTA4M30.uqrxehgcnJTHmhGcmSKpu8GNngUkSE5iuHUcw7z4tPk"
 
-$endpoint = "$SUPABASE_URL/functions/v1/backfill-original-language"
-$headers  = @{
+$readHeaders = @{
     "Authorization" = "Bearer $ANON_KEY"
+    "apikey"        = $ANON_KEY
     "Content-Type"  = "application/json"
 }
-$body = @{ batchSize = $BatchSize } | ConvertTo-Json
+
+function Call-Tmdb($tmdbId, $mediaType) {
+    $type = if ($mediaType -eq "tv") { "tv" } else { "movie" }
+    try {
+        return Invoke-RestMethod "https://api.themoviedb.org/3/$type/${tmdbId}?api_key=$TMDB_KEY" -ErrorAction SilentlyContinue
+    } catch { return $null }
+}
+
+function Update-MovieLanguage($tmdbId, $origLang, $year) {
+    $body = @{ p_tmdb_id = [int]$tmdbId; p_original_language = $origLang }
+    if ($year) { $body.p_year = [int]$year }
+    try {
+        Invoke-RestMethod "$SUPABASE_URL/rest/v1/rpc/update_movie_language" `
+            -Method POST -Headers $readHeaders `
+            -Body ($body | ConvertTo-Json -Compress) -ErrorAction Stop | Out-Null
+        return $true
+    } catch {
+        Write-Host "  RPC erreur tmdb_id=$tmdbId : $_" -ForegroundColor Red
+        return $false
+    }
+}
 
 $totalUpdated = 0
+$totalErrors  = 0
 $round        = 0
 
-Write-Host "Démarrage du backfill (batchSize=$BatchSize)..." -ForegroundColor Cyan
+Write-Host "Démarrage du backfill original_language..." -ForegroundColor Cyan
 
 do {
     $round++
-    try {
-        $result = Invoke-RestMethod $endpoint -Method POST -Headers $headers -Body $body -ErrorAction Stop
-        $totalUpdated += $result.updated
-        Write-Host "Tour $round — traités: $($result.processed) | mis à jour: $($result.updated) | erreurs: $($result.errors) | restants: $($result.remaining) | total cumulé: $totalUpdated" -ForegroundColor $(if ($result.errors -gt 0) { "Yellow" } else { "Green" })
 
-        if ($result.remaining -le 0) {
-            Write-Host "`nBackfill terminé ! $totalUpdated films mis à jour au total." -ForegroundColor Green
-            break
-        }
+    # Récupère le prochain batch de films sans original_language
+    $films = @()
+    try {
+        $films = Invoke-RestMethod `
+            "$SUPABASE_URL/rest/v1/movie_embeddings?select=tmdb_id,media_type,year&original_language=is.null&order=tmdb_id.asc&limit=$BatchSize" `
+            -Headers $readHeaders -ErrorAction Stop
     } catch {
-        Write-Host "Erreur appel edge function: $_" -ForegroundColor Red
+        Write-Host "Erreur lecture Supabase : $_" -ForegroundColor Red
         break
     }
 
-    Start-Sleep -Milliseconds $DelayMs
+    if ($films.Count -eq 0) {
+        Write-Host "`nBackfill terminé ! $totalUpdated films mis à jour, $totalErrors erreurs." -ForegroundColor Green
+        break
+    }
+
+    $batchUpdated = 0
+    $batchErrors  = 0
+
+    foreach ($film in $films) {
+        $detail = Call-Tmdb -tmdbId $film.tmdb_id -mediaType $film.media_type
+        if (-not $detail -or -not $detail.original_language) {
+            $batchErrors++
+            Start-Sleep -Milliseconds $DelayMs
+            continue
+        }
+
+        $yearVal = $film.year
+        if (-not $yearVal) {
+            $dateStr = if ($film.media_type -eq "tv") { $detail.first_air_date } else { $detail.release_date }
+            if ($dateStr -and $dateStr.Length -ge 4) { $yearVal = [int]$dateStr.Substring(0, 4) }
+        }
+
+        $ok = Update-MovieLanguage -tmdbId $film.tmdb_id -origLang $detail.original_language -year $yearVal
+        if ($ok) { $batchUpdated++ } else { $batchErrors++ }
+
+        Start-Sleep -Milliseconds $DelayMs
+    }
+
+    $totalUpdated += $batchUpdated
+    $totalErrors  += $batchErrors
+
+    Write-Host "Tour $round — traités: $($films.Count) | maj: $batchUpdated | erreurs: $batchErrors | total cumulé: $totalUpdated" `
+        -ForegroundColor $(if ($batchErrors -gt 0) { "Yellow" } else { "Green" })
 
 } while ($true)
