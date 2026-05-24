@@ -916,42 +916,44 @@ const HomeScreen = ({
       <div className="absolute inset-0 bg-background/40" />
 
       <div className="relative z-10 h-full overflow-y-auto overscroll-y-contain touch-pan-y">
-        <div className="min-h-[85vh] md:min-h-[80vh] flex flex-col justify-end px-6 pt-20 pb-8">
+        <div className="min-h-[85vh] md:min-h-[80vh] flex flex-col items-center justify-center text-center px-6 pt-20 pb-8">
+          {/* Mascot — visible, central, atmospheric */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.1, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+            className="mb-6"
+          >
+            <PickCharacter mood="wave" size="lg" animate />
+          </motion.div>
+
           {/* Hero serif headline — emotional, cinematic */}
           <motion.h1
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.15, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-            className="font-serif text-foreground text-[44px] leading-[1.02] tracking-tight mb-7"
+            transition={{ delay: 0.25, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+            className="font-serif text-foreground text-[40px] sm:text-[44px] leading-[1.05] tracking-tight mb-6 max-w-md"
           >
             Ce soir, quelque chose{" "}
             <span className="italic text-foreground/90">d'intense</span>.
           </motion.h1>
 
           {/* Pick mascot bubble — conversational, warm */}
-          <motion.div
+          <motion.p
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.35, duration: 0.5 }}
-            className="flex items-start gap-3 mb-7"
+            transition={{ delay: 0.4, duration: 0.5 }}
+            className="text-foreground/65 text-[13.5px] leading-relaxed font-sans max-w-sm mb-8"
           >
-            <div className="relative shrink-0">
-              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primary to-accent border border-white/20 shadow-[0_0_18px_-2px_hsl(var(--primary)/0.55)]" />
-              <div className="absolute inset-0 rounded-full bg-primary/40 blur-md -z-10 animate-pulse" />
-            </div>
-            <div className="bg-card/70 backdrop-blur-xl border border-white/[0.06] px-4 py-3 rounded-2xl rounded-tl-md">
-              <p className="text-foreground/80 text-[13px] leading-relaxed font-sans">
-                Pick comprend tes envies. J'ai préparé une sélection brute et visuelle.
-              </p>
-            </div>
-          </motion.div>
+            Pick comprend tes envies. J'ai préparé une sélection brute et visuelle.
+          </motion.p>
 
           {/* Primary CTA — glowing purple, large tap target */}
           <motion.div
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5, duration: 0.5 }}
-            className="w-full"
+            transition={{ delay: 0.55, duration: 0.5 }}
+            className="w-full max-w-sm"
           >
             <motion.button
               data-tour="pick-ce-soir"
@@ -989,17 +991,6 @@ const HomeScreen = ({
                 ))}
               </button>
             </div>
-          </motion.div>
-
-          {/* Discreet mascot anchor — visible but not central */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.9 }}
-            className="hidden"
-            aria-hidden
-          >
-            <PickCharacter mood="wave" size="md" animate />
           </motion.div>
         </div>
 

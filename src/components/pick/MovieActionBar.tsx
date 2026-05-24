@@ -366,7 +366,7 @@ const MovieActionBar = ({
     "bg-foreground/85 border-white/15 text-background shadow-[0_0_18px_rgba(255,255,255,0.12)]";
 
   return (
-    <div className={`flex items-center gap-2 ${className}`}>
+    <div className={`flex items-center justify-center gap-2 ${className}`}>
       <button
         type="button"
         disabled={loading}
