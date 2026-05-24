@@ -994,19 +994,30 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
               </div>
             )}
 
-            <div className="mt-6">
+            <motion.div
+              initial={{ opacity: 0, y: 14 }}
+              animate={{ opacity: revealStage === "settled" ? 1 : 0, y: revealStage === "settled" ? 0 : 14 }}
+              transition={{ delay: 0.1, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+              className="mt-7"
+            >
               {trailerUrl ? (
                 <a
                   href={trailerUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 px-4 py-3 rounded-xl bg-primary text-primary-foreground text-sm font-sans font-semibold shadow-lg hover:opacity-95 transition-opacity"
+                  className="group relative inline-flex w-full sm:w-auto items-center justify-center gap-2.5 px-7 py-4 rounded-[24px] bg-primary text-primary-foreground font-sans font-semibold text-[14px] tracking-wide shadow-[0_22px_60px_-14px_hsl(var(--primary)/0.7)] hover:shadow-[0_22px_70px_-10px_hsl(var(--primary)/0.85)] transition-shadow"
                 >
+                  <motion.span
+                    aria-hidden
+                    animate={{ opacity: [0.35, 0.65, 0.35] }}
+                    transition={{ duration: 2.6, repeat: Infinity, ease: "easeInOut" }}
+                    className="absolute -inset-1 rounded-[26px] bg-primary/40 blur-xl -z-10"
+                  />
                   <Play className="w-4 h-4 fill-current" />
-                  Voir la bande-annonce
+                  On lance la séance ?
                 </a>
               ) : null}
-            </div>
+            </motion.div>
           </div>
 
           <div className="fixed left-0 right-0 bottom-[calc(3.5rem+env(safe-area-inset-bottom))] z-50 border-t border-border/20 bg-background/84 px-4 pt-3 pb-4 backdrop-blur-xl shadow-[0_-18px_40px_hsl(var(--background)/0.32)]">
