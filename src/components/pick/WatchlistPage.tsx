@@ -621,7 +621,7 @@ const WatchlistPage = ({ onMovieSelect }: WatchlistPageProps) => {
               <button
                 key={tab}
                 onClick={() => switchTab(tab)}
-                className={`shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-[12px] font-sans font-medium transition-all border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 ${
+                className={`shrink-0 flex items-center gap-1 px-2.5 py-2 rounded-xl text-[12px] font-sans font-medium transition-all border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 ${
                   active
                     ? "bg-card shadow-sm text-foreground border-border/25"
                     : "text-foreground/40 border-transparent hover:text-foreground/70 hover:bg-card/40"
