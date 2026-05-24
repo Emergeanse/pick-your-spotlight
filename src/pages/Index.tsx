@@ -110,6 +110,17 @@ const Index = () => {
     setChatSuggestedSeenMovieIds(new Set());
   };
 
+  // Soft-reset listener — replaces the previous hard reload from BottomTabBar Home tap.
+  const resetToHomeViewRef = useRef(resetToHomeView);
+  resetToHomeViewRef.current = resetToHomeView;
+  useEffect(() => {
+    const handler = () => resetToHomeViewRef.current();
+    window.addEventListener("home-reset", handler);
+    return () => window.removeEventListener("home-reset", handler);
+  }, []);
+
+
+
   const fetchCinemaAnecdotes = useCallback(async (context?: { genre?: string; mood?: string; mediaType?: string }) => {
     try {
       const { data } = await supabase.functions.invoke("cinema-anecdotes", { body: context ?? {} });
