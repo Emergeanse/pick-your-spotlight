@@ -553,6 +553,8 @@ const Index = () => {
           console.log(`     durée max     : ${f?.maxDuration ? `${f.maxDuration}min` : "illimitée"}`);
           console.log(`     genres aimés  : [${(f?.likedGenres || []).join(", ") || "—"}]`);
           console.log(`     genres exclus : [${(f?.effectiveExcludedGenres || []).join(", ") || "—"}]`);
+          if (f?.voiceOverrides?.language) console.log(`     langue voix   : ${f.voiceOverrides.language} (filtre post-SQL)`);
+          if (f?.voiceOverrides?.decade) console.log(`     décennie voix : ${f.voiceOverrides.decade}s (filtre post-SQL)`);
           console.table(dbg.sql50.map((c: any, i: number) => ({ "#": i + 1, "Titre": c.title, "Année": c.year, "Note": c.note ?? "–", "Sim%": c.sim ?? "–", "Type": c.type })));
           console.groupEnd();
         }

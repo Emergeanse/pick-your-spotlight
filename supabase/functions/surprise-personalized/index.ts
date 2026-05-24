@@ -648,6 +648,11 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
     }
 
     // ── ÉTAPE 4 : Fallback ──
+    // Genre IDs effectifs pour le fallback : voix prime sur profil
+    const effectiveLikedGenreIds = voiceGenres
+      ? new Set(voiceGenres.map((g: string) => genreNameToId[g]).filter(Boolean))
+      : likedGenreIds;
+
     if (movies.length < requestedCount) {
       console.log(`[SP] Fallback needed: have ${movies.length}/${requestedCount}`);
       for (let attempt = 0; attempt < 4 && movies.length < requestedCount; attempt++) {
@@ -659,9 +664,14 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
           page: String(Math.floor(Math.random() * 5) + 1),
         });
         if (minRating > 0) params.set("vote_average.gte", String(minRating));
-        if (maxDuration && searchType === "movie") params.set("with_runtime.lte", String(maxDuration));
+        if (effectiveMaxDuration && searchType === "movie") params.set("with_runtime.lte", String(effectiveMaxDuration));
         if (excludedGenreIds.size > 0) params.set("without_genres", [...excludedGenreIds].join(","));
-        if (likedGenreIds.size > 0) params.set("with_genres", [...likedGenreIds].join("|"));
+        if (effectiveLikedGenreIds.size > 0) params.set("with_genres", [...effectiveLikedGenreIds].join("|"));
+        if (voiceOriginalLanguage) params.set("with_original_language", voiceOriginalLanguage);
+        if (voiceDecade) {
+          params.set("release_date.gte", `${voiceDecade}-01-01`);
+          params.set("release_date.lte", `${voiceDecade + 9}-12-31`);
+        }
         if (platformIds?.length > 0) {
           params.set("with_watch_providers", platformIds.join("|"));
           params.set("watch_region", "FR");
