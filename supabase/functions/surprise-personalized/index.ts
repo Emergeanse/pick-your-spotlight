@@ -80,7 +80,17 @@ serve(async (req) => {
       maxDuration: rawMaxDuration,
       minMatchScore: rawMinMatchScore,
       likedMovies,
+      voiceGenres: rawVoiceGenres,
+      voiceOriginalLanguage: rawVoiceLanguage,
+      voiceMediaType: rawVoiceMediaType,
+      voiceMaxDuration: rawVoiceDuration,
     } = await req.json();
+
+    // Voice overrides: what was stated replaces profile; what wasn't keeps profile defaults
+    const voiceGenres: string[] | null = Array.isArray(rawVoiceGenres) && rawVoiceGenres.length > 0 ? rawVoiceGenres : null;
+    const voiceOriginalLanguage: string | null = typeof rawVoiceLanguage === "string" && rawVoiceLanguage.length > 0 ? rawVoiceLanguage : null;
+    const voiceMediaType: "movie" | "tv" | null = rawVoiceMediaType === "movie" || rawVoiceMediaType === "tv" ? rawVoiceMediaType : null;
+    const voiceMaxDuration: number | null = typeof rawVoiceDuration === "number" && rawVoiceDuration > 0 ? rawVoiceDuration : null;
 
     const requestedCount = Math.max(1, Math.min(typeof rawCount === "number" ? rawCount : 3, 20));
     const minRating = typeof rawMinRating === "number" ? Math.min(rawMinRating, 8) : 0;
@@ -91,6 +101,12 @@ serve(async (req) => {
     const minMatchScore = typeof rawMinMatchScore === "number" ? Math.max(0, Math.min(100, rawMinMatchScore)) : 60;
     const maxDuration = typeof rawMaxDuration === "number" && rawMaxDuration > 0 ? rawMaxDuration : null;
     const searchType: "movie" | "tv" = mediaType === "both" ? (Math.random() < 0.5 ? "movie" : "tv") : mediaType;
+
+    // Voice overrides replace profile when stated
+    const effectiveSearchType: "movie" | "tv" = voiceMediaType ?? searchType;
+    const effectiveLikedGenresSQL = voiceGenres ?? null; // null means "use profile genres below"
+    const effectiveMaxDuration = voiceMaxDuration ?? maxDuration;
+    const effectiveFilterMediaType = voiceMediaType ?? (mediaType === "both" ? null : searchType);
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
@@ -226,18 +242,49 @@ serve(async (req) => {
           query_vector: `[${userTasteVector.join(",")}]`,
           match_count: 200,
           exclude_ids: normalizedExcludeIds,
-          filter_media_type: mediaType === "both" ? null : searchType,
+          filter_media_type: effectiveFilterMediaType,
           min_rating: 6, // Plancher fixe — filtre les nanars, le score d'adhésion gère la qualité au-dessus
           excluded_genres: effectiveExcludedGenres,
-          liked_genres: likedGenresForSQL,
-          max_duration: maxDuration ?? null,
+          liked_genres: effectiveLikedGenresSQL ?? likedGenresForSQL,
+          max_duration: effectiveMaxDuration ?? null,
           p_user_id: userId ?? null,
         });
         if (rpcError) console.error("SQL RPC error:", rpcError);
         if (data) candidates = data as any[];
         console.log(
-          `[SP] SQL candidates: ${candidates.length} | liked: [${likedWithTv.slice(0, 4).join(", ")}...] | excluded: ${effectiveExcludedGenres.length} genres | excludeIds: ${normalizedExcludeIds.length}`,
+          `[SP] SQL candidates: ${candidates.length} | liked: [${(effectiveLikedGenresSQL ?? likedWithTv).slice(0, 4).join(", ")}...] | lang: ${voiceOriginalLanguage ?? "profil"} | excluded: ${effectiveExcludedGenres.length} genres | excludeIds: ${normalizedExcludeIds.length}`,
         );
+
+        // ── Fallback durée : si très peu de candidats avec contrainte vocale de durée, relancer sans durée ──
+        if (voiceMaxDuration && candidates.length < 10) {
+          console.log(`[SP] Voice duration fallback: ${candidates.length} candidates with maxDuration=${voiceMaxDuration} — retrying without duration`);
+          const { data: data2 } = await supabase.rpc("match_movies_for_recommendation", {
+            query_vector: `[${userTasteVector.join(",")}]`,
+            match_count: 200,
+            exclude_ids: normalizedExcludeIds,
+            filter_media_type: effectiveFilterMediaType,
+            min_rating: 6,
+            excluded_genres: effectiveExcludedGenres,
+            liked_genres: effectiveLikedGenresSQL ?? likedGenresForSQL,
+            max_duration: null,
+            p_user_id: userId ?? null,
+          });
+          if (data2 && (data2 as any[]).length > candidates.length) {
+            candidates = data2 as any[];
+            console.log(`[SP] Duration fallback: ${candidates.length} candidates`);
+          }
+        }
+
+        // ── Filtre langue (voix) post-SQL — avec fallback si < 5 résultats ──
+        if (voiceOriginalLanguage && candidates.length > 0) {
+          const langFiltered = candidates.filter((c: any) => (c.original_language || "") === voiceOriginalLanguage);
+          if (langFiltered.length >= 5) {
+            candidates = langFiltered;
+            console.log(`[SP] Voice language filter "${voiceOriginalLanguage}": ${langFiltered.length} candidates`);
+          } else {
+            console.log(`[SP] Voice language filter "${voiceOriginalLanguage}" trop restrictif (${langFiltered.length}) — conserve tous les ${candidates.length} candidats`);
+          }
+        }
       } catch (e) {
         console.error("SQL vector search failed:", e);
       }

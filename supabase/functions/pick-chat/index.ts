@@ -164,13 +164,19 @@ ${tasteProfileNote}
 ${ratingInstruction}
 ${genreInstruction}
 
+CHOIX D'OUTIL — IMPORTANT :
+- L'utilisateur cite un titre précis, un réalisateur ou acteur précis → suggest_movie
+- L'utilisateur décrit des CRITÈRES (genre, langue/origine, durée, type) → extract_search_intent
+- L'utilisateur est vague ou exprime une humeur → suggest_movie (le moteur SQL adaptera)
+- L'utilisateur mélange titre + critères → priorité à extract_search_intent si les critères sont les plus importants
+
 RÈGLE CRITIQUE — RECOMMANDATION :
-Recommande immédiatement (appelle suggest_movie) si l'utilisateur donne AU MOINS UN signal :
-- Une humeur ("fatigué", "envie de rigoler", "intense")
-- Un contexte SOLO ("seul ce soir", "rien à faire")
-- Un genre ("thriller", "comédie", "SF")
-- Une référence ("comme Inception", "style Tarantino")
-- Une demande même vague ("un bon film", "quelque chose de bien", "un truc ce soir")
+Appelle un outil immédiatement si l'utilisateur donne AU MOINS UN signal :
+- Une humeur ("fatigué", "envie de rigoler", "intense") → suggest_movie
+- Un contexte SOLO ("seul ce soir", "rien à faire") → suggest_movie
+- Un genre/origine/durée ("thriller", "film français", "moins de 2h") → extract_search_intent
+- Une référence ("comme Inception", "style Tarantino") → suggest_movie
+- Une demande même vague ("un bon film", "quelque chose de bien", "un truc ce soir") → suggest_movie
 
 RÈGLE GROUPE — TRÈS IMPORTANT :
 Si l'utilisateur mentionne qu'il est avec d'autres personnes (copine, potes, famille, groupe, "on est deux/trois/plusieurs", "soirée entre amis", "avec ma meuf", "entre potes"...), appelle l'outil suggest_pick_together au lieu de suggest_movie. Le mode Pick Together est conçu pour les groupes.
@@ -221,8 +227,11 @@ RÈGLE CRITIQUE : Tu fais de la recommandation de films et séries uniquement.
 - Si l'utilisateur pose des questions sur le cinéma → réponds gentiment : "Super question ! 🎬 Avec Pick+, tu pourras me poser toutes tes questions ciné. Pour l'instant, dis-moi ce que t'as envie de regarder !"
 - Si l'utilisateur parle de hors-sujet → "Hé, moi c'est trouver ton film ! 🎬 Dis-moi ton humeur."
 
-Recommande immédiatement (appelle suggest_movie) si l'utilisateur donne AU MOINS UN signal :
-- Une humeur, un genre, une référence, une demande même vague
+CHOIX D'OUTIL :
+- Critères (genre, langue, durée, type) → extract_search_intent
+- Titre précis / humeur / demande vague → suggest_movie
+
+Appelle un outil immédiatement si l'utilisateur donne AU MOINS UN signal.
 
 RÈGLE GROUPE — TRÈS IMPORTANT :
 Si l'utilisateur mentionne qu'il est avec d'autres personnes (copine, potes, famille, groupe, "on est deux/trois/plusieurs", "soirée entre amis", "avec ma meuf", "entre potes"...), appelle l'outil suggest_pick_together au lieu de suggest_movie.
@@ -254,7 +263,7 @@ ANNÉE EN COURS : ${currentYear}${timeInstruction}`;
         type: "function",
         function: {
           name: "suggest_movie",
-          description: "Suggest a movie or TV show to the user. IMPORTANT: only suggest titles rated above the user's minimum rating preference.",
+          description: "Suggest a specific movie or TV show by title. Use this when the user mentions a specific title, director, or actor they want something similar to. IMPORTANT: only suggest titles rated above the user's minimum rating preference.",
           parameters: {
             type: "object",
             properties: {
@@ -268,6 +277,43 @@ ANNÉE EN COURS : ${currentYear}${timeInstruction}`;
               },
             },
             required: ["title", "type", "reason", "recap"],
+            additionalProperties: false,
+          },
+        },
+      },
+      {
+        type: "function",
+        function: {
+          name: "extract_search_intent",
+          description: "Utilise cet outil quand l'utilisateur décrit des CRITÈRES généraux (genre, langue/origine, durée, type film/série) SANS mentionner un titre précis. Les critères énoncés remplacent le profil utilisateur de façon exclusive, ceux non mentionnés restent aux valeurs du profil. Exemples : 'un film d'action français' → genres=['Action'], originalLanguage='fr' / 'une série coréenne' → mediaType='tv', originalLanguage='ko' / 'un film court ce soir' → maxDuration=90.",
+          parameters: {
+            type: "object",
+            properties: {
+              genres: {
+                type: "array",
+                items: { type: "string" },
+                description: "Genres demandés en français. Valeurs valides UNIQUEMENT : Action, Aventure, Animation, Comédie, Crime, Documentaire, Drame, Famille, Fantastique, Histoire, Horreur, Musique, Mystère, Romance, Science-Fiction, Thriller, Guerre, Western. null si aucun genre mentionné.",
+              },
+              originalLanguage: {
+                type: "string",
+                description: "Code ISO 639-1 si une langue/origine est mentionnée : 'fr' (français/franco), 'en' (anglais/américain/britannique), 'ko' (coréen), 'ja' (japonais/anime), 'zh' (chinois), 'es' (espagnol/latino), 'pt' (portugais/brésilien). null si non mentionné.",
+              },
+              mediaType: {
+                type: "string",
+                enum: ["movie", "tv"],
+                description: "'movie' si l'utilisateur dit 'film', 'tv' si 'série'. Omis si non précisé.",
+              },
+              maxDuration: {
+                type: "number",
+                description: "Durée maximale en minutes si mentionnée. Exemples : 'court' ou 'pas trop long' → 95, '2h' → 120, '1h30' → 90, 'marathon' → null. null si non mentionné.",
+              },
+              recap: {
+                type: "array",
+                items: { type: "string" },
+                description: "2-4 tags courts résumant la demande vocale pour l'interface (ex: ['Action', 'Français', 'Court'])",
+              },
+            },
+            required: ["recap"],
             additionalProperties: false,
           },
         },
@@ -368,7 +414,24 @@ ANNÉE EN COURS : ${currentYear}${timeInstruction}`;
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      
+
+      // Handle extract_search_intent tool — return structured filters to the client
+      if (toolCall.function.name === "extract_search_intent") {
+        const args = JSON.parse(toolCall.function.arguments);
+        return new Response(JSON.stringify({
+          type: "search_intent",
+          filters: {
+            genres: args.genres ?? null,
+            originalLanguage: args.originalLanguage ?? null,
+            mediaType: args.mediaType ?? null,
+            maxDuration: args.maxDuration ?? null,
+          },
+          recap: args.recap || [],
+        }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
       if (toolCall.function.name !== "suggest_movie") break;
 
       const args = JSON.parse(toolCall.function.arguments);

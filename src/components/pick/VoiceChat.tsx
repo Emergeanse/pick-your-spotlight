@@ -12,9 +12,17 @@ import { getMyPreferences } from "@/lib/preferences";
 import type { MovieDetail } from "@/lib/tmdb";
 import PickCharacter from "./PickCharacter";
 
+export type VoiceSearchFilters = {
+  genres: string[] | null;
+  originalLanguage: string | null;
+  mediaType: "movie" | "tv" | null;
+  maxDuration: number | null;
+};
+
 interface VoiceChatProps {
   onClose: () => void;
   onMovieSuggested: (movies: MovieDetail[], recapTags?: string[]) => void;
+  onSearchIntent?: (filters: VoiceSearchFilters, recap: string[]) => void;
   initialMessages?: ChatMessage[];
   showMicGuide?: boolean;
 }
@@ -91,7 +99,7 @@ const SoundWave = () => (
   </div>
 );
 
-const VoiceChat = ({ onClose, onMovieSuggested, initialMessages, showMicGuide = false }: VoiceChatProps) => {
+const VoiceChat = ({ onClose, onMovieSuggested, onSearchIntent, initialMessages, showMicGuide = false }: VoiceChatProps) => {
   const navigate = useNavigate();
   const [phase, setPhase] = useState<Phase>("idle");
   const [userText, setUserText] = useState("");
@@ -224,7 +232,15 @@ const VoiceChat = ({ onClose, onMovieSuggested, initialMessages, showMicGuide = 
 
       if (error) throw error;
 
-      if (data?.movie) {
+      if (data?.type === "search_intent") {
+        const recap: string[] = data.recap || [];
+        setRecapTags(recap);
+        setConversationHistory(fullHistory);
+        setPhase("recap");
+        setTimeout(() => {
+          onSearchIntent?.(data.filters as VoiceSearchFilters, recap);
+        }, recap.length > 0 ? 1800 : 800);
+      } else if (data?.movie) {
         const recap: string[] = data.recap || [];
         const movies: MovieDetail[] = data.movies && data.movies.length > 0
           ? data.movies as MovieDetail[]

@@ -12,7 +12,7 @@ import WatchlistMissionGuide from "@/components/pick/WatchlistMissionGuide";
 import type { WatchlistGuideStep } from "@/components/pick/WatchlistMissionGuide";
 import TalkToPickMissionGuide from "@/components/pick/TalkToPickMissionGuide";
 import type { TalkToPickGuideStep } from "@/components/pick/TalkToPickMissionGuide";
-import type { ChatMessage } from "@/components/pick/VoiceChat";
+import type { ChatMessage, VoiceSearchFilters } from "@/components/pick/VoiceChat";
 import { toast } from "sonner";
 import BrandHeader from "@/components/pick/BrandHeader";
 import { useAuth } from "@/hooks/use-auth";
@@ -503,6 +503,61 @@ const Index = () => {
     }
   };
 
+  const handleVoiceSearchIntent = useCallback(async (filters: VoiceSearchFilters, recapTags: string[]) => {
+    if (recapTags.length > 0) setSearchTags(recapTags);
+    setShowChat(false);
+    setLoading(true);
+    setLoadingMessage("Pick cherche ton film…");
+    try {
+      const [liked, tasteProfile, multiVec] = user
+        ? await Promise.all([getLikedMovies(), getUserTasteProfile(), computeMultiVectorProfile(user.id)])
+        : [[], null, null] as const;
+      const excludeIds = [...results.map((r: RecommendationMovieDetail) => r.id), ...((tasteProfile as any)?.excludeIds || [])];
+      const confidenceScore = tasteProfile?.confidence?.score ?? profilePrefs.profileConfidence ?? 50;
+      const explorationLevel = confidenceScore >= 70 ? 3 : confidenceScore >= 40 ? 5 : 7;
+      const desiredCount = profilePrefs.recommendationBatchSize || RECOMMENDATION_BATCH_SIZE;
+      const data = await invokeSurprisePersonalized({
+        likedMovies: liked,
+        userTasteVector: multiVec?.stableTasteVector ?? null,
+        recentTasteVector: multiVec?.recentTasteVector ?? null,
+        avoidanceVector: multiVec?.avoidanceVector ?? null,
+        tasteProfile,
+        platformIds: profilePrefs.preferredPlatforms,
+        excludedPlatformIds: profilePrefs.excludedPlatforms,
+        excludedGenres: profilePrefs.excludedGenres,
+        minRating: profilePrefs.minRating,
+        minMatchScore: profilePrefs.matchThreshold,
+        excludeIds,
+        explorationLevel,
+        count: desiredCount,
+        voiceGenres: filters.genres,
+        voiceOriginalLanguage: filters.originalLanguage,
+        voiceMediaType: filters.mediaType,
+        voiceMaxDuration: filters.maxDuration,
+      });
+      const extracted = extractRecommendationMovies(data);
+      const batch = await normalizeRecommendationBatch(extracted, excludeIds, desiredCount);
+      if (batch.length > 0) {
+        openRecommendationBatch(batch, "home", 0, undefined, desiredCount);
+      } else {
+        setStep("home");
+      }
+    } catch (e) {
+      console.error(e);
+      setStep("home");
+    } finally {
+      setLoading(false);
+      setLoadingMessage("");
+    }
+  }, [
+    invokeSurprisePersonalized,
+    normalizeRecommendationBatch,
+    openRecommendationBatch,
+    profilePrefs,
+    results,
+    user,
+  ]);
+
   const handleShowAnother = async (rejectReason?: string, rejectedMovie?: MovieDetail) => {
     if (watchlistGuideStep === "autre-suggestion") {
       setWatchlistGuideStep(null);
@@ -776,6 +831,7 @@ const Index = () => {
           <VoiceChat
             onClose={handleCloseChat}
             onMovieSuggested={handleMovieSuggested}
+            onSearchIntent={handleVoiceSearchIntent}
             initialMessages={chatInitialMessages}
             showMicGuide={talkToPickGuideStep === "mic"}
           />
