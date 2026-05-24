@@ -19,8 +19,9 @@ const BottomTabBar = () => {
   const currentTab = tabs.find((t) => location.pathname === t.path)?.id || "home";
 
   return (
-    <nav className="fixed md:absolute bottom-0 left-0 right-0 z-40 bg-background/80 backdrop-blur-xl border-t border-border/10 pb-[env(safe-area-inset-bottom)]">
-      <div className="flex items-center justify-around h-14 max-w-lg mx-auto">
+    <nav className="fixed md:absolute bottom-0 left-0 right-0 z-40 bg-background/85 md:bg-background/70 backdrop-blur-xl border-t border-border/10 md:rounded-b-[2.25rem] pb-[env(safe-area-inset-bottom)] md:pb-0">
+      <div className="flex items-center justify-around h-14 max-w-lg mx-auto px-2">
+
         {tabs.map((tab) => {
           const isActive = currentTab === tab.id;
           const Icon = tab.icon;
