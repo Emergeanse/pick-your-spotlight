@@ -489,13 +489,18 @@ const Index = () => {
     setLoadingMessage("Pick cherche ton film…");
     try {
       const desiredCount = profilePrefs.recommendationBatchSize || RECOMMENDATION_BATCH_SIZE;
-      const batch = await normalizeRecommendationBatch(movies as RecommendationMovieDetail[], [], desiredCount);
+      const raw = movies as RecommendationMovieDetail[];
+      const batch = await normalizeRecommendationBatch(raw, [], desiredCount);
       if (batch.length > 0) {
         openRecommendationBatch(batch, "home", 0, undefined, desiredCount);
+      } else if (raw.length > 0) {
+        openRecommendationBatch(raw, "home", 0, undefined, desiredCount);
       } else {
         setStep("home");
       }
-    } catch {
+    } catch (e) {
+      console.error("[voice] handleMovieSuggested error:", e);
+      toast.error("Impossible de charger la suggestion vocale.");
       setStep("home");
     } finally {
       setLoading(false);
@@ -539,11 +544,14 @@ const Index = () => {
       const batch = await normalizeRecommendationBatch(extracted, excludeIds, desiredCount);
       if (batch.length > 0) {
         openRecommendationBatch(batch, "home", 0, undefined, desiredCount);
+      } else if (extracted.length > 0) {
+        openRecommendationBatch(extracted, "home", 0, undefined, desiredCount);
       } else {
         setStep("home");
       }
     } catch (e) {
-      console.error(e);
+      console.error("[voice] handleVoiceSearchIntent error:", e);
+      toast.error("Erreur recherche vocale : " + (e instanceof Error ? e.message : "Réessaie dans un instant."));
       setStep("home");
     } finally {
       setLoading(false);
