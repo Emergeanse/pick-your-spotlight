@@ -300,7 +300,7 @@ const Landing = () => {
             <h2 className="text-3xl md:text-5xl font-serif mb-3 leading-tight">
               Une recommandation.<br /><span className="text-primary">Pas un catalogue.</span>
             </h2>
-            <p className="text-foreground/35 font-sans text-sm md:text-base max-w-md mx-auto">
+            <p className="text-foreground/55 font-sans text-sm md:text-base max-w-md mx-auto">
               Pas de listes interminables. Pick te propose LE film qui correspond à ton moment.
             </p>
           </motion.div>
@@ -320,7 +320,7 @@ const Landing = () => {
         <div className="max-w-4xl mx-auto">
           <motion.div variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }} className="text-center mb-6">
             <h2 className="text-3xl md:text-5xl font-serif mb-3">Simple comme <span className="text-primary">1, 2, 3</span></h2>
-            <p className="text-foreground/35 font-sans text-sm md:text-base max-w-md mx-auto">De l'envie au film en quelques secondes.</p>
+            <p className="text-foreground/55 font-sans text-sm md:text-base max-w-md mx-auto">De l'envie au film en quelques secondes.</p>
           </motion.div>
           <motion.div variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }} className="grid md:grid-cols-3 gap-6 max-w-3xl mx-auto">
             {[
@@ -334,7 +334,7 @@ const Landing = () => {
                 </div>
                 <span className="text-[10px] uppercase tracking-[0.2em] text-primary/50 font-sans font-semibold">{item.step}</span>
                 <h3 className="text-lg font-serif mt-1 mb-2">{item.title}</h3>
-                <p className="text-foreground/35 font-sans text-sm leading-relaxed">{item.desc}</p>
+                <p className="text-foreground/60 font-sans text-sm leading-relaxed">{item.desc}</p>
               </motion.div>
             ))}
           </motion.div>
@@ -358,7 +358,7 @@ const Landing = () => {
               <h2 className="text-3xl md:text-4xl font-serif mb-4 mt-1">
                 Ton ADN <span className="text-primary">Cinéma</span>
               </h2>
-              <p className="text-foreground/40 font-sans text-sm md:text-base leading-relaxed mb-5 max-w-lg mx-auto">
+              <p className="text-foreground/60 font-sans text-sm md:text-base leading-relaxed mb-5 max-w-lg mx-auto">
                 Plus tu utilises Pick, plus il te connaît. Il construit ton profil cinématographique unique :
                 tes genres de prédilection, tes traits de goût, ton archétype de spectateur.
                 Comme une empreinte digitale, mais pour le cinéma.
@@ -438,7 +438,7 @@ const Landing = () => {
               <h2 className="text-3xl md:text-4xl font-serif mb-4 mt-1">
                 Pick <span className="text-gold">Ensemble</span>
               </h2>
-              <p className="text-foreground/40 font-sans text-sm md:text-base leading-relaxed mb-5">
+              <p className="text-foreground/60 font-sans text-sm md:text-base leading-relaxed mb-5">
                 Fini les 30 minutes de débat. Pick croise vos profils cinématographiques
                 et trouve instantanément le film qui plaît à tout le monde.
                 Chacun a ses goûts — Pick trouve le terrain d'entente parfait.
@@ -510,7 +510,7 @@ const Landing = () => {
         <div className="max-w-4xl mx-auto text-center">
           <motion.div variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }}>
             <h2 className="text-3xl md:text-5xl font-serif mb-3">Compatible avec <span className="text-primary">tes abonnements</span></h2>
-            <p className="text-foreground/35 font-sans text-sm md:text-base max-w-lg mx-auto mb-8">Pick ne recommande que des films disponibles sur tes plateformes.</p>
+            <p className="text-foreground/55 font-sans text-sm md:text-base max-w-lg mx-auto mb-8">Pick ne recommande que des films disponibles sur tes plateformes.</p>
           </motion.div>
           <motion.div variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }} className="flex items-center justify-center gap-4 md:gap-6 flex-wrap">
             {ALL_PLATFORMS.map((p, i) => (
@@ -533,7 +533,7 @@ const Landing = () => {
         <div className="max-w-4xl mx-auto relative z-10">
           <motion.div variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }} className="text-center mb-8">
             <h2 className="text-3xl md:text-5xl font-serif mb-3">Commence <span className="text-primary">gratuitement</span></h2>
-            <p className="text-foreground/35 font-sans text-sm md:text-base max-w-lg mx-auto">Pick est gratuit pour toujours. Pick+ amplifie l'expérience.</p>
+            <p className="text-foreground/55 font-sans text-sm md:text-base max-w-lg mx-auto">Pick est gratuit pour toujours. Pick+ amplifie l'expérience.</p>
           </motion.div>
           <motion.div variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }} className="grid md:grid-cols-2 gap-5 max-w-2xl mx-auto">
             {/* Free */}
