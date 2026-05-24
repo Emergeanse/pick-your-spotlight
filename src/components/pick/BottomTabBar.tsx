@@ -32,7 +32,7 @@ const BottomTabBar = () => {
               onClick={() => {
                 if (tab.id === "home") {
                   if (location.pathname === "/app") {
-                    window.location.href = "/app";
+                    window.dispatchEvent(new CustomEvent("home-reset"));
                   } else {
                     navigate("/app");
                   }
