@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence, useMotionValue, useTransform, PanInfo } from "framer-motion";
-import { Bookmark, Heart, Loader2, Sparkles, X, Eye, Clock, Search, ThumbsDown, Timer, Trash2, CheckCircle } from "lucide-react";
+import { Bookmark, Heart, Loader2, Sparkles, X, Eye, Clock, Search, ThumbsDown, Timer, Trash2, CheckCircle, SlidersHorizontal } from "lucide-react";
 import { getWatchlist, removeFromWatchlist } from "@/lib/watchlist";
 import { getPosterUrl, getMovieDetails } from "@/lib/tmdb";
 import { getLikedMovies, unlikeMovie } from "@/lib/liked-movies";
