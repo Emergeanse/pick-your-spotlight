@@ -202,7 +202,8 @@ serve(async (req) => {
 
     const hardExcludedFormats = ["Reality", "Soap", "Talk", "News", "Téléfilm", "Horreur"];
     const autoExcluded = hardExcludedFormats.filter((g) => !likedWithTv.includes(g));
-    const effectiveExcludedGenres = [...new Set([...(excludedGenres || []), ...autoExcluded])];
+    // Genres en fatigue (>= 3 occurrences) exclus en SQL — diversification forcée
+    const effectiveExcludedGenres = [...new Set([...(excludedGenres || []), ...autoExcluded, ...fatiguedGenres])];
 
     const excludedGenreIds = new Set(effectiveExcludedGenres.map((g: string) => genreNameToId[g]).filter(Boolean));
     const likedGenreIds = new Set((topGenres as string[]).map((g) => genreNameToId[g]).filter(Boolean));
@@ -289,6 +290,7 @@ serve(async (req) => {
       p_min_year: opts.withYear ? (voiceDecade ?? null) : null,
       p_max_year: opts.withYear ? (voiceDecade != null ? voiceDecade + 9 : null) : null,
       p_excluded_languages: effectiveExcludedLangsArr,
+      p_excluded_clusters: rejectedClusters.length > 0 ? rejectedClusters : [],
     });
 
     let candidates: any[] = [];
