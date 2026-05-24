@@ -910,86 +910,99 @@ const HomeScreen = ({
         />
       ))}
 
-      <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-background/50" />
-      <div className="absolute inset-0 bg-gradient-to-r from-background/50 via-transparent to-background/50" />
-      <div className="absolute inset-0 bg-background/30" />
+      {/* Midnight Curator: cinematic fade — backdrop kept atmospheric, never noisy */}
+      <div className="absolute inset-0 bg-gradient-to-b from-background/30 via-background/70 to-background" />
+      <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
+      <div className="absolute inset-0 bg-background/40" />
 
       <div className="relative z-10 h-full overflow-y-auto overscroll-y-contain touch-pan-y">
-        <div className="min-h-[85vh] md:min-h-[80vh] flex flex-col items-center justify-center text-center px-5 pt-16">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
+        <div className="min-h-[85vh] md:min-h-[80vh] flex flex-col justify-end px-6 pt-20 pb-8">
+          {/* Hero serif headline — emotional, cinematic */}
+          <motion.h1
+            initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2, duration: 0.5 }}
-            className="mb-6 md:mb-8"
+            transition={{ delay: 0.15, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+            className="font-serif text-foreground text-[44px] leading-[1.02] tracking-tight mb-7"
           >
-            <PickCharacter mood="wave" showGreeting size="md" animate />
-          </motion.div>
+            Ce soir, quelque chose{" "}
+            <span className="italic text-foreground/90">d'intense</span>.
+          </motion.h1>
 
+          {/* Pick mascot bubble — conversational, warm */}
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4, duration: 0.4 }}
-            className="w-full max-w-lg px-2"
+            transition={{ delay: 0.35, duration: 0.5 }}
+            className="flex items-start gap-3 mb-7"
           >
-            <div className="flex flex-col items-center gap-4">
-              <motion.button
-                data-tour="pick-ce-soir"
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.96 }}
-                onClick={() => setShowFindChoice(true)}
-                disabled={loading}
-                className="group w-full text-left rounded-2xl p-6 bg-gradient-to-br from-primary/20 via-primary/15 to-accent/10 border-2 border-primary/50 hover:border-primary/70 hover:from-primary/25 transition-all disabled:opacity-50 relative overflow-hidden shadow-[0_0_30px_-8px_hsl(var(--primary)/0.35)]"
-              >
-                <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 rounded-xl bg-primary/30 border border-primary/50 flex items-center justify-center shrink-0 group-hover:bg-primary/40 transition-colors shadow-[0_0_25px_-5px_hsl(var(--primary)/0.4)]">
-                    <span className="text-2xl">🎬</span>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-lg font-sans font-bold text-foreground mb-0.5">Trouver mon film</h3>
-                    <p className="text-foreground/50 text-[13px] font-sans leading-relaxed">
-                      Dis-moi ton mood ou laisse Pick choisir pour ce soir.
-                    </p>
-                  </div>
-                </div>
-              </motion.button>
+            <div className="relative shrink-0">
+              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primary to-accent border border-white/20 shadow-[0_0_18px_-2px_hsl(var(--primary)/0.55)]" />
+              <div className="absolute inset-0 rounded-full bg-primary/40 blur-md -z-10 animate-pulse" />
+            </div>
+            <div className="bg-card/70 backdrop-blur-xl border border-white/[0.06] px-4 py-3 rounded-2xl rounded-tl-md">
+              <p className="text-foreground/80 text-[13px] leading-relaxed font-sans">
+                Pick comprend tes envies. J'ai préparé une sélection brute et visuelle.
+              </p>
+            </div>
+          </motion.div>
 
+          {/* Primary CTA — glowing purple, large tap target */}
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5, duration: 0.5 }}
+            className="w-full"
+          >
+            <motion.button
+              data-tour="pick-ce-soir"
+              whileHover={{ scale: 1.01 }}
+              whileTap={{ scale: 0.97 }}
+              onClick={() => setShowFindChoice(true)}
+              disabled={loading}
+              className="w-full py-[18px] rounded-[28px] bg-primary text-primary-foreground font-sans font-semibold text-[15px] tracking-wide shadow-[0_18px_50px_-12px_hsl(var(--primary)/0.55)] hover:shadow-[0_18px_60px_-10px_hsl(var(--primary)/0.7)] transition-shadow disabled:opacity-50"
+            >
+              Trouver mon film
+            </motion.button>
+
+            <div className="mt-5 flex items-center justify-between">
               <a
                 href="/app/plan"
-                className="text-[12px] font-sans text-foreground/50 hover:text-foreground/80 transition-colors flex items-center gap-1.5"
+                className="text-[12px] font-sans text-foreground/45 hover:text-foreground/75 transition-colors"
               >
-                📅 Planifier une séance pour plus tard
+                Planifier pour plus tard
               </a>
-            </div>
-
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.8 }}
-              className="mt-6 flex flex-col items-center gap-2.5"
-            >
-              <div className="flex items-center gap-2">
+              <button
+                onClick={() => navigate("/app/profile?openPlatforms=1")}
+                className="flex items-center gap-1.5 text-[11px] font-sans text-foreground/35 hover:text-foreground/60 transition-colors"
+              >
                 {(userPlatformIds?.length > 0
-                  ? ALL_PLATFORMS.filter((p) => userPlatformIds.includes(p.id)).slice(0, 5)
-                  : ALL_PLATFORMS.slice(0, 5)
+                  ? ALL_PLATFORMS.filter((p) => userPlatformIds.includes(p.id)).slice(0, 4)
+                  : ALL_PLATFORMS.slice(0, 4)
                 ).map((p) => (
                   <img
                     key={p.id}
                     src={p.logo}
                     alt={p.label}
-                    className="w-7 h-7 md:w-8 md:h-8 rounded-md object-cover opacity-50"
+                    className="w-5 h-5 rounded-md object-cover opacity-50"
                     loading="lazy"
                   />
                 ))}
-              </div>
-              <button
-                onClick={() => navigate("/app/profile?openPlatforms=1")}
-                className="text-muted-foreground/40 hover:text-muted-foreground/70 text-[10px] md:text-[11px] font-sans underline underline-offset-2 transition-colors"
-              >
-                {userPlatformIds?.length > 0 ? "Modifier mes plateformes" : "Compatible avec toutes les plateformes"}
               </button>
-            </motion.div>
+            </div>
+          </motion.div>
+
+          {/* Discreet mascot anchor — visible but not central */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.9 }}
+            className="hidden"
+            aria-hidden
+          >
+            <PickCharacter mood="wave" size="md" animate />
           </motion.div>
         </div>
+
 
         <div className="px-5 md:px-12 pb-32">
           <DiscoverySection
