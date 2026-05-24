@@ -190,18 +190,23 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
         .select("tmdb_id")
         .eq("user_id", user.id)
         .in("action_type", ["liked", "skipped", "unsure", "dislike", "already_seen", "unknown"]),
-      supabase
-        .from("user_item_feedback")
-        .select("catalog_items(tmdb_id)")
-        .eq("user_id", user.id)
-        .in("feedback_type", ["like", "love", "seen", "not_for_me", "dislike", "watchlist"]) as any,
       supabase.from("user_people_preferences").select("id", { count: "exact", head: true }).eq("user_id", user.id),
-    ]).then(([movieResult, feedbackResult, peopleResult]) => {
+    ]).then(async ([movieResult, peopleResult]) => {
       const interactionIds = (movieResult.data || []).map((r: any) => Number(r.tmdb_id)).filter(Boolean);
-      const feedbackIds = ((feedbackResult as any).data || [])
-        .flatMap((r: any) => r.catalog_items ? [Number((r.catalog_items as any).tmdb_id)] : [])
-        .filter(Boolean);
-      const ids = new Set<number>([...interactionIds, ...feedbackIds]);
+
+      // Also exclude items liked/seen via the recommendation flow (user_item_feedback → catalog_items)
+      let feedbackTmdbIds: number[] = [];
+      try {
+        const { data: feedbackData } = await (supabase
+          .from("user_item_feedback")
+          .select("catalog_items!inner(tmdb_id)")
+          .eq("user_id", user.id) as any);
+        feedbackTmdbIds = (feedbackData || [])
+          .flatMap((r: any) => r.catalog_items ? [Number(r.catalog_items.tmdb_id)] : [])
+          .filter(Boolean);
+      } catch {}
+
+      const ids = new Set<number>([...interactionIds, ...feedbackTmdbIds]);
       allInteractedIds.current = ids;
       setProcessedIds(new Set(ids));
       setTotalEvaluated(movieResult.data?.length || 0);

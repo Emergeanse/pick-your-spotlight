@@ -7,6 +7,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useScribe, CommitStrategy } from "@elevenlabs/react";
 import { useAuth } from "@/hooks/use-auth";
 import { getLikedMovies } from "@/lib/liked-movies";
+import { getUserTasteProfile } from "@/lib/taste-engine";
+import { getMyPreferences } from "@/lib/preferences";
 import type { MovieDetail } from "@/lib/tmdb";
 import PickCharacter from "./PickCharacter";
 
@@ -112,17 +114,40 @@ const VoiceChat = ({ onClose, onMovieSuggested, initialMessages, showMicGuide = 
       if (data?.token) setScribeToken(data.token);
     }).catch(console.error);
 
-    // Fetch user taste context for personalized conversations
+    // Fetch full taste context for personalized conversations
     if (user) {
+      const ORIGIN_KEYS_MAP: Record<string, string> = {
+        "cinema-francais": "Cinéma français",
+        "cinema-americain": "Cinéma américain",
+        "cinema-asiatique": "Cinéma asiatique",
+        "cinema-africain": "Cinéma africain",
+        "cinema-amerique-du-sud": "Cinéma Amérique du Sud",
+      };
+
       Promise.all([
         getLikedMovies(),
         supabase.from("profiles").select("favorite_genres, excluded_genres, min_rating").eq("id", user.id).single(),
-      ]).then(([likedMovies, { data: profile }]) => {
+        getUserTasteProfile(),
+        getMyPreferences(),
+      ]).then(([likedMovies, { data: profile }, tasteProfile, prefs]) => {
+        const likedOrigins = prefs
+          .filter((p) => p.weight > 0 && ORIGIN_KEYS_MAP[p.tag.key])
+          .map((p) => ORIGIN_KEYS_MAP[p.tag.key]);
+        const excludedOrigins = prefs
+          .filter((p) => p.weight < 0 && ORIGIN_KEYS_MAP[p.tag.key])
+          .map((p) => ORIGIN_KEYS_MAP[p.tag.key]);
+
         setUserTasteContext({
           likedMovies: likedMovies?.map((m: any) => ({ title: m.title, genres: m.genres })) || [],
           favoriteGenres: profile?.favorite_genres || [],
           excludedGenres: profile?.excluded_genres || [],
           minRating: (profile as any)?.min_rating || 0,
+          tasteClusters: (tasteProfile as any)?.tasteClusters?.slice(0, 6) || [],
+          rejectedClusters: (tasteProfile as any)?.rejectedClusters || [],
+          confidence: (tasteProfile as any)?.confidence?.score || 50,
+          likedMovieTitles: (likedMovies || []).slice(0, 10).map((m: any) => m.title).filter(Boolean),
+          likedOrigins,
+          excludedOrigins,
         });
       }).catch(console.error);
     }
@@ -188,6 +213,12 @@ const VoiceChat = ({ onClose, onMovieSuggested, initialMessages, showMicGuide = 
           excludedGenres: userTasteContext?.excludedGenres || [],
           timeContext,
           userName: user?.user_metadata?.display_name || user?.email?.split("@")[0] || null,
+          tasteClusters: userTasteContext?.tasteClusters || [],
+          rejectedClusters: userTasteContext?.rejectedClusters || [],
+          likedMovieTitles: userTasteContext?.likedMovieTitles || [],
+          likedOrigins: userTasteContext?.likedOrigins || [],
+          excludedOrigins: userTasteContext?.excludedOrigins || [],
+          confidence: userTasteContext?.confidence || 50,
         },
       });
 

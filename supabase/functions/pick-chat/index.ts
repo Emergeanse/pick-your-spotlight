@@ -62,7 +62,11 @@ serve(async (req) => {
 
   try {
     const body = await req.json();
-    const { messages, mode, movieTitle, movieYear, movieOverview, spoilerMode, movieProgress, minRating: userMinRating, excludedGenres, isPremium, timeContext } = body;
+    const {
+      messages, mode, movieTitle, movieYear, movieOverview, spoilerMode, movieProgress,
+      minRating: userMinRating, excludedGenres, isPremium, timeContext,
+      tasteClusters, rejectedClusters, likedMovieTitles, likedOrigins, excludedOrigins, confidence,
+    } = body;
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
@@ -73,6 +77,18 @@ serve(async (req) => {
 
     // Time-aware instruction from client
     const timeInstruction = timeContext ? `\n\nCONTEXTE TEMPOREL : ${timeContext}` : "";
+
+    // Build taste profile block from enriched voice context
+    const tasteProfileNote = (() => {
+      const lines: string[] = [];
+      if (likedMovieTitles?.length > 0) lines.push(`- Films aimés : ${likedMovieTitles.slice(0, 8).join(", ")}`);
+      if (tasteClusters?.length > 0) lines.push(`- Styles favoris : ${tasteClusters.join(", ")}`);
+      if (rejectedClusters?.length > 0) lines.push(`- ⛔ Styles à éviter absolument : ${rejectedClusters.join(", ")}`);
+      if (likedOrigins?.length > 0) lines.push(`- Cinémas préférés : ${likedOrigins.join(", ")}`);
+      if (excludedOrigins?.length > 0) lines.push(`- ⛔ Cinémas à éviter : ${excludedOrigins.join(", ")}`);
+      if (confidence) lines.push(`- Confiance profil : ${confidence}/100`);
+      return lines.length > 0 ? `\nPROFIL CINÉPHILE PERSONNALISÉ :\n${lines.join("\n")}\nUtilise ce profil pour orienter ta recommandation même si l'utilisateur ne le mentionne pas explicitement.` : "";
+    })();
 
     // Build rating instruction for the prompt
     let ratingInstruction = "";
@@ -144,6 +160,7 @@ TU SAIS TOUT FAIRE (dans ton domaine) :
 4. COMPARER des films, donner ton avis, discuter de cinéma en général.
 
 ${getAppKnowledgeSection()}
+${tasteProfileNote}
 ${ratingInstruction}
 ${genreInstruction}
 
@@ -196,7 +213,7 @@ Tu dois :
 1. Comprendre rapidement l'humeur, le contexte et les envies de l'utilisateur
 2. Poser 1-2 questions courtes si nécessaire pour cerner ce qu'il cherche
 3. Proposer un film/série via suggest_movie
-
+${tasteProfileNote}
 ${ratingInstruction}
 ${genreInstruction}
 
