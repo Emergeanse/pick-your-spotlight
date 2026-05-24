@@ -1111,7 +1111,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
                 )}
               </div>
             </div>
-          </div>
+          </motion.div>
         </motion.div>
 
         <RefineSheet
