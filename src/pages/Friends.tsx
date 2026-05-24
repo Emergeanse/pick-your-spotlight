@@ -63,7 +63,8 @@ const Friends = () => {
         const code = addCode.trim().toUpperCase();
         if (!code) { setAddingFriend(false); return; }
         if (code === myFriendCode) { toast.error("Tu ne peux pas t'ajouter toi-même !"); setAddingFriend(false); return; }
-        const { data } = await (supabase.from("profiles").select("id, display_name") as any).eq("friend_code", code).single();
+        const { data: rpc } = await (supabase as any).rpc("find_profile_by_friend_code", { _code: code });
+        const data = Array.isArray(rpc) && rpc.length > 0 ? rpc[0] : null;
         found = data;
         if (!found) { toast.error("Code ami introuvable"); setAddingFriend(false); return; }
       } else {
