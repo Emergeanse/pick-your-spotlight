@@ -1031,16 +1031,40 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
                   <ChevronLeft className="h-5 w-5" />
                 </button>
 
-                <div className="flex items-center gap-2 text-center">
-                  {currentFeedback || interaction.watchlist || interaction.seen ? (
-                    <FeedbackBadge
-                      type={currentFeedback}
-                      inWatchlist={interaction.watchlist}
-                      seen={interaction.seen}
-                      size="sm"
-                    />
-                  ) : null}
-                </div>
+                {totalCount > 1 && (onPrevious || onNext) ? (
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={onPrevious}
+                      disabled={currentIndex === 0}
+                      className="rounded-full bg-foreground/5 p-2 text-foreground/40 transition-all hover:bg-foreground/10 disabled:opacity-20 disabled:cursor-not-allowed"
+                      aria-label="Proposition précédente"
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                    </button>
+                    <span className="min-w-[36px] text-center text-[12px] font-sans text-foreground/40">
+                      {currentIndex + 1}/{displayedTotal}
+                    </span>
+                    <button
+                      onClick={onNext}
+                      disabled={currentIndex >= totalCount - 1}
+                      className="rounded-full bg-foreground/5 p-2 text-foreground/40 transition-all hover:bg-foreground/10 disabled:opacity-20 disabled:cursor-not-allowed"
+                      aria-label="Proposition suivante"
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2 text-center">
+                    {currentFeedback || interaction.watchlist || interaction.seen ? (
+                      <FeedbackBadge
+                        type={currentFeedback}
+                        inWatchlist={interaction.watchlist}
+                        seen={interaction.seen}
+                        size="sm"
+                      />
+                    ) : null}
+                  </div>
+                )}
 
                 <button
                   onClick={() => setShowOptions(true)}
