@@ -692,64 +692,95 @@ const WatchlistPage = ({ onMovieSelect }: WatchlistPageProps) => {
             />
           </div>
 
-          {/* Type chips */}
-          <div className="flex gap-1.5 overflow-x-auto scrollbar-hide pb-0.5">
-            {(["all", "movie", "tv"] as MediaFilter[]).map((f) => (
-              <button
-                key={f}
-                onClick={() => setMediaFilter(f)}
-                className={`shrink-0 px-3 py-1.5 rounded-full text-[11px] font-sans font-medium border transition-all ${
-                  mediaFilter === f
-                    ? "bg-primary/15 border-primary/30 text-primary"
-                    : "bg-card/40 border-border/15 text-foreground/40 hover:text-foreground/60"
-                }`}
-              >
-                {f === "all" ? "Tout" : f === "movie" ? "Films" : "Séries"}
-              </button>
-            ))}
-          </div>
+          {/* Filtres toggle row */}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setFiltersOpen((v) => !v)}
+              className={`shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-sans font-medium border transition-all ${
+                filtersOpen || genreFilter.length > 0 || mediaFilter !== "all"
+                  ? "bg-primary/15 border-primary/30 text-primary"
+                  : "bg-card/40 border-border/15 text-foreground/50 hover:text-foreground/80"
+              }`}
+            >
+              <SlidersHorizontal className="w-3 h-3" />
+              Filtres
+              {(genreFilter.length > 0 || mediaFilter !== "all") && (
+                <span className="ml-0.5 inline-flex items-center justify-center min-w-[16px] h-4 px-1 rounded-full bg-primary/30 text-[9px]">
+                  {genreFilter.length + (mediaFilter !== "all" ? 1 : 0)}
+                </span>
+              )}
+            </button>
 
-          {/* Genre chips — wrap to multiple lines */}
-          {availableGenres.length > 0 && (
-            <div className="flex flex-wrap gap-1.5">
-              {availableGenres.map((g) => {
-                const active = genreFilter.includes(g);
-                return (
-                  <button
-                    key={g}
-                    onClick={() =>
-                      setGenreFilter((prev) =>
-                        active ? prev.filter((x) => x !== g) : [...prev, g]
-                      )
-                    }
-                    className={`px-3 py-1.5 rounded-full text-[11px] font-sans font-medium border transition-all ${
-                      active
-                        ? "bg-primary/15 border-primary/30 text-primary"
-                        : "bg-card/40 border-border/15 text-foreground/35 hover:text-foreground/60"
-                    }`}
-                  >
-                    {g}
-                  </button>
-                );
-              })}
-            </div>
-          )}
-
-          {/* Active filter summary */}
-          {(genreFilter.length > 0 || mediaFilter !== "all") && (
-            <div className="flex items-center gap-2 flex-wrap">
-              <p className="text-[10px] font-sans text-foreground/30">
-                {filteredItems.length} résultat{filteredItems.length > 1 ? "s" : ""}
-                {genreFilter.length > 0 && ` · ${genreFilter.join(", ")}`}
-              </p>
+            {(genreFilter.length > 0 || mediaFilter !== "all") && (
               <button
                 onClick={() => { setMediaFilter("all"); setGenreFilter([]); }}
-                className="text-[10px] font-sans text-primary/50 hover:text-primary transition-colors"
+                className="text-[10px] font-sans text-foreground/40 hover:text-foreground/70 transition-colors"
               >
-                Tout afficher
+                Réinitialiser
               </button>
-            </div>
-          )}
+            )}
+
+            <p className="ml-auto text-[10px] font-sans text-foreground/30">
+              {filteredItems.length} résultat{filteredItems.length > 1 ? "s" : ""}
+            </p>
+          </div>
+
+          <AnimatePresence initial={false}>
+            {filtersOpen && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.2 }}
+                className="overflow-hidden"
+              >
+                <div className="space-y-2 pt-1">
+                  {/* Type chips */}
+                  <div className="flex gap-1.5 overflow-x-auto scrollbar-hide pb-0.5">
+                    {(["all", "movie", "tv"] as MediaFilter[]).map((f) => (
+                      <button
+                        key={f}
+                        onClick={() => setMediaFilter(f)}
+                        className={`shrink-0 px-3 py-1.5 rounded-full text-[11px] font-sans font-medium border transition-all ${
+                          mediaFilter === f
+                            ? "bg-primary/15 border-primary/30 text-primary"
+                            : "bg-card/40 border-border/15 text-foreground/40 hover:text-foreground/60"
+                        }`}
+                      >
+                        {f === "all" ? "Tout" : f === "movie" ? "Films" : "Séries"}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Genre chips */}
+                  {availableGenres.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5">
+                      {availableGenres.map((g) => {
+                        const active = genreFilter.includes(g);
+                        return (
+                          <button
+                            key={g}
+                            onClick={() =>
+                              setGenreFilter((prev) =>
+                                active ? prev.filter((x) => x !== g) : [...prev, g]
+                              )
+                            }
+                            className={`px-3 py-1.5 rounded-full text-[11px] font-sans font-medium border transition-all ${
+                              active
+                                ? "bg-primary/15 border-primary/30 text-primary"
+                                : "bg-card/40 border-border/15 text-foreground/35 hover:text-foreground/60"
+                            }`}
+                          >
+                            {g}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </motion.div>
       )}
 
