@@ -116,14 +116,9 @@ const MatchAnalysis = ({ matchData, mediaType }: { matchData: MatchData; mediaTy
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1">
-              <p className="text-[10px] uppercase tracking-widest text-primary/60 font-sans font-semibold">
-                Pourquoi {mediaType === "tv" ? "cette série" : "ce film"}
+              <p className="text-[10px] uppercase tracking-[0.22em] text-primary/60 font-sans font-semibold">
+                Pourquoi je te le propose
               </p>
-              {score != null && (
-                <span className="text-[10px] font-sans font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded-full">
-                  {score}%
-                </span>
-              )}
             </div>
             {headline && <p className="text-foreground/80 text-[13px] font-sans font-semibold mb-1">{headline}</p>}
             {summary && (
