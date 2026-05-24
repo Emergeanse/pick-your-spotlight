@@ -240,9 +240,7 @@ const HomeScreen = ({
         : new Set(targetMovie?.id ? [targetMovie.id] : []);
 
     const effectiveCount = quickFilters.recommendationCount || RECOMMENDATION_BATCH_SIZE;
-    const sliced = chatSuggestedMovies.slice(0, effectiveCount);
-    const withProv = sliced.filter((m) => ((m as any).watchProviders as unknown[])?.length > 0);
-    const poolChat = withProv.length > 0 ? withProv : sliced;
+    const poolChat = chatSuggestedMovies.slice(0, effectiveCount);
     setChatMoviesPool(poolChat);
     void setCurrentTonightMovie(poolChat[startIdx] ?? poolChat[0], startIdx < poolChat.length ? startIdx : 0, seenIds);
     onChatSuggestedConsumed?.();

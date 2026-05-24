@@ -312,7 +312,7 @@ export function useRecommendationEngine({
           minMatchScore: profilePrefs.matchThreshold,
           excludeIds,
           explorationLevel,
-          count: desiredCount,
+          count: desiredCount * 3,
           voiceGenres: filters.genres,
           voiceOriginalLanguage: filters.originalLanguage,
           voiceMediaType: filters.mediaType,

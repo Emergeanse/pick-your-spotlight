@@ -109,7 +109,9 @@ const Index = () => {
       const desiredCount = profilePrefs.recommendationBatchSize || 5;
       const raw = movies as RecommendationMovieDetail[];
       if (raw.length > 0) {
-        engine.openRecommendationBatch(raw, "home", 0, undefined, desiredCount);
+        // Passer par normalizeRecommendationBatch pour le scoring movie-match + providers
+        const batch = await engine.normalizeRecommendationBatch(raw, raw.map((m) => m.id), desiredCount);
+        engine.openRecommendationBatch(batch.length > 0 ? batch : raw, "home", 0, undefined, desiredCount);
       } else {
         dispatch({ type: "SET_STEP_HOME" });
       }
