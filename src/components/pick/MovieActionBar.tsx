@@ -182,10 +182,11 @@ const MovieActionBar = ({
         await persistFeedback(newLabel);
 
         if (newLabel === "unknown" && seenActive) {
-          await clearFeedbackType(movie.id, ["seen"], mediaType);
+          await clearLabel("seen");
         }
       } else {
-        await clearFeedbackType(movie.id, [label], mediaType);
+        await clearLabel(label);
+
       }
 
       if (!isCurrentMovie(movieId)) return;
@@ -225,16 +226,15 @@ const MovieActionBar = ({
 
     try {
       if (isSeenActive) {
-        await clearFeedbackType(movie.id, ["seen"], mediaType);
+        await clearLabel("seen");
       } else {
         await persistFeedback("seen");
 
         if (unknownActive) {
-          await clearFeedbackType(movie.id, ["unknown"], mediaType);
+          await clearLabel("unknown");
         }
-
-        trackInteraction(movie.id, "already_seen", {});
       }
+
 
       if (!isCurrentMovie(movieId)) return;
 
@@ -263,14 +263,13 @@ const MovieActionBar = ({
     setLoading(true);
     try {
       if (bookmarked) {
-        await clearFeedbackType(movie.id, ["watchlist"], mediaType);
+        await clearLabel("watchlist");
         toast.success("Retiré de ta watchlist");
-        trackInteraction(movie.id, "unsaved");
       } else {
         await persistFeedback("watchlist");
         toast.success("Ajouté à ta watchlist !");
-        trackInteraction(movie.id, "saved");
       }
+
     } catch (error) {
       debugLog("handleToggleBookmark:error", error);
       toast.error("Erreur");
@@ -297,21 +296,30 @@ const MovieActionBar = ({
       if (liked) {
         // setFeedback("skip") deletes exclusive types (like, love) internally before inserting skip,
         // so the movie is excluded from future recommendations.
-        await setFeedback(movie.id, "skip", {
-          title: movie.title || (movie as any).name || ".",
-          media_type: mediaType,
-          poster_path: movie.poster_path ?? null,
-          year: null,
-          overview: movie.overview ?? null,
-          vote_average: movie.vote_average ?? null,
-          popularity: (movie as any).popularity ?? null,
-          runtime: movie.runtime ?? null,
-        });
+        await setFeedback(
+          movie.id,
+          "skip",
+          {
+            title: movie.title || (movie as any).name || ".",
+            media_type: mediaType,
+            poster_path: movie.poster_path ?? null,
+            year: null,
+            overview: movie.overview ?? null,
+            vote_average: movie.vote_average ?? null,
+            popularity: (movie as any).popularity ?? null,
+            runtime: movie.runtime ?? null,
+          },
+          {
+            context_type: contextType ?? (sessionId ? "solo_session" : "browse"),
+            context_id: sessionId ?? null,
+            interaction: interactionMeta,
+          },
+        );
 
         if (!isCurrentMovie(movieId)) return;
 
         toast.success("Retiré des favoris");
-        trackInteraction(movie.id, "unliked");
+
       } else {
         await persistFeedback("like");
 
@@ -325,8 +333,8 @@ const MovieActionBar = ({
         if (!isCurrentMovie(movieId)) return;
 
         toast.success("Ajouté aux favoris !");
-        trackInteraction(movie.id, "liked");
       }
+
     } catch (error) {
       debugLog("handleToggleLike:error", error);
       toast.error("Erreur");
