@@ -79,7 +79,7 @@ const LandingStep = ({ onCreateSoiree, creating }: LandingStepProps) => (
       className="flex flex-wrap justify-center gap-2 mb-10"
     >
       {[
-        { label: "Jusqu'à 6 personnes", icon: Users },
+        { label: "Jusqu'à 8 personnes", icon: Users },
         { label: "Invités sans compte", icon: Sparkles },
         { label: "QR code & lien", icon: Zap },
       ].map((pill, i) => (
