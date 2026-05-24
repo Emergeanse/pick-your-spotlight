@@ -19,10 +19,12 @@ const HomeScreenChoiceModal = ({
 }: HomeScreenChoiceModalProps) => {
   const title =
     mediaType === "movie"
-      ? "Tu veux regarder un film ?"
+      ? "Ce soir mérite un grand film."
       : mediaType === "tv"
-        ? "Tu veux regarder une série ?"
-        : "Tu veux regarder quelque chose ?";
+        ? "Ce soir mérite une grande série."
+        : "Ce soir mérite quelque chose de vrai.";
+
+  const subtitle = "Choisis comment je t'accompagne.";
 
   return (
     <AnimatePresence>
@@ -31,57 +33,183 @@ const HomeScreenChoiceModal = ({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-50 flex items-center justify-center bg-background/60 backdrop-blur-sm"
+          transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+          className="fixed inset-0 z-50 flex items-center justify-center"
           onClick={onClose}
         >
+          {/* Cinematic atmospheric layers */}
+          <div className="absolute inset-0 bg-background/75 backdrop-blur-2xl" />
+          {/* Soft vignette around edges */}
+          <div
+            className="absolute inset-0 pointer-events-none"
+            style={{
+              background:
+                "radial-gradient(ellipse at center, transparent 30%, hsl(var(--background) / 0.85) 100%)",
+            }}
+          />
+          {/* Subtle purple ambient glow behind modal */}
+          <div
+            className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] max-w-[640px] aspect-square pointer-events-none"
+            style={{
+              background:
+                "radial-gradient(circle, hsl(var(--primary) / 0.22) 0%, hsl(var(--primary) / 0.08) 35%, transparent 65%)",
+              filter: "blur(40px)",
+            }}
+          />
+          {/* Cinematic grain */}
+          <div
+            className="absolute inset-0 pointer-events-none opacity-[0.025] mix-blend-overlay"
+            style={{
+              backgroundImage:
+                "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E\")",
+            }}
+          />
+
           <motion.div
-            initial={{ y: 100, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: 100, opacity: 0 }}
-            transition={{ type: "spring", damping: 28, stiffness: 300 }}
-            className="w-full max-w-lg mx-4 mb-8 rounded-2xl bg-card border border-border/50 shadow-2xl p-5 flex flex-col gap-3"
+            initial={{ y: 24, opacity: 0, scale: 0.97 }}
+            animate={{ y: 0, opacity: 1, scale: 1 }}
+            exit={{ y: 24, opacity: 0, scale: 0.97 }}
+            transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+            className="relative w-full max-w-md mx-5 px-7 pt-9 pb-7 flex flex-col gap-5"
             onClick={(e) => e.stopPropagation()}
           >
-            <h3 className="text-center text-base font-sans font-semibold text-foreground mb-1">
-              {title}
-            </h3>
+            {/* Glow ring around modal */}
+            <div
+              className="absolute -inset-px rounded-[34px] pointer-events-none"
+              style={{
+                background:
+                  "linear-gradient(180deg, hsl(var(--primary) / 0.35), hsl(var(--primary) / 0.05) 40%, transparent)",
+                filter: "blur(1px)",
+              }}
+            />
+            {/* Glass surface */}
+            <div className="absolute inset-0 rounded-[32px] bg-card/55 backdrop-blur-2xl border border-white/[0.07] shadow-[0_40px_120px_-20px_rgba(0,0,0,0.7),0_0_60px_-12px_hsl(var(--primary)/0.35)]" />
+            {/* Top inner highlight */}
+            <div
+              className="absolute inset-x-0 top-0 h-px rounded-t-[32px] pointer-events-none"
+              style={{
+                background:
+                  "linear-gradient(90deg, transparent, hsl(var(--primary) / 0.4), transparent)",
+              }}
+            />
 
+            {/* Content */}
+            <div className="relative flex flex-col gap-1.5 text-center mb-1">
+              <motion.p
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.15, duration: 0.5 }}
+                className="text-[10px] font-sans tracking-[0.28em] uppercase text-primary/70"
+              >
+                Ce soir
+              </motion.p>
+              <motion.h3
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2, duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+                className="font-serif text-foreground text-[26px] leading-[1.15] tracking-tight"
+              >
+                {title.split(" ").slice(0, -1).join(" ")}{" "}
+                <span className="italic text-foreground/85">
+                  {title.split(" ").slice(-1)}
+                </span>
+              </motion.h3>
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.32, duration: 0.5 }}
+                className="text-foreground/45 text-[12px] font-sans mt-1"
+              >
+                {subtitle}
+              </motion.p>
+            </div>
+
+            {/* PRIMARY — hero card */}
             <motion.button
-              whileTap={{ scale: 0.97 }}
+              initial={{ opacity: 0, y: 14 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+              whileHover={{ y: -2 }}
+              whileTap={{ scale: 0.985 }}
               onClick={onAutoPick}
-              className="group w-full text-left rounded-xl p-4 bg-primary/10 border border-primary/30 hover:border-primary/50 hover:bg-primary/15 transition-all"
+              className="group relative w-full text-left rounded-[24px] p-5 overflow-hidden"
             >
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-primary/25 border border-primary/40 flex items-center justify-center shrink-0">
-                  <span className="text-lg">🍿</span>
-                </div>
-                <div>
-                  <h4 className="text-sm font-sans font-semibold text-foreground">
-                    Laisse-moi choisir pour toi !
+              {/* Gradient surface */}
+              <div
+                className="absolute inset-0 rounded-[24px]"
+                style={{
+                  background:
+                    "linear-gradient(135deg, hsl(var(--primary) / 0.45) 0%, hsl(var(--primary) / 0.18) 55%, hsl(var(--primary) / 0.08) 100%)",
+                }}
+              />
+              <div className="absolute inset-0 rounded-[24px] border border-primary/40 group-hover:border-primary/60 transition-colors" />
+              {/* Glow */}
+              <div
+                className="absolute -inset-4 rounded-[28px] pointer-events-none -z-10 opacity-70 group-hover:opacity-100 transition-opacity"
+                style={{
+                  background:
+                    "radial-gradient(ellipse at top left, hsl(var(--primary) / 0.55), transparent 60%)",
+                  filter: "blur(28px)",
+                }}
+              />
+              {/* Breathing top highlight */}
+              <motion.div
+                animate={{ opacity: [0.4, 0.85, 0.4] }}
+                transition={{ duration: 3.8, repeat: Infinity, ease: "easeInOut" }}
+                className="absolute inset-x-6 top-0 h-px"
+                style={{
+                  background:
+                    "linear-gradient(90deg, transparent, hsl(var(--primary) / 0.7), transparent)",
+                }}
+              />
+
+              <div className="relative flex items-center gap-4">
+                <motion.div
+                  animate={{ scale: [1, 1.04, 1] }}
+                  transition={{ duration: 3.2, repeat: Infinity, ease: "easeInOut" }}
+                  className="relative w-12 h-12 rounded-2xl bg-primary/30 border border-primary/50 flex items-center justify-center shrink-0 shadow-[0_0_24px_-4px_hsl(var(--primary)/0.7)]"
+                >
+                  <span className="text-[22px] drop-shadow-[0_0_8px_hsl(var(--primary)/0.6)]">
+                    🍿
+                  </span>
+                </motion.div>
+                <div className="flex-1 min-w-0">
+                  <h4 className="font-serif text-[17px] leading-tight text-foreground tracking-tight">
+                    Laisse-moi te surprendre
                   </h4>
-                  <p className="text-foreground/45 text-xs font-sans">
+                  <p className="text-foreground/65 text-[12.5px] font-sans mt-1 italic">
                     {getAutoPickSubtitle()}
                   </p>
                 </div>
               </div>
             </motion.button>
 
+            {/* SECONDARY — quieter card */}
             <motion.button
               data-tour="parle-a-pick"
-              whileTap={{ scale: 0.97 }}
+              initial={{ opacity: 0, y: 14 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+              whileHover={{ y: -2 }}
+              whileTap={{ scale: 0.985 }}
               onClick={onOpenChat}
-              className="group w-full text-left rounded-xl p-4 bg-primary/10 border border-primary/30 hover:border-primary/50 hover:bg-primary/15 transition-all"
+              className="group relative w-full text-left rounded-[24px] p-5 bg-white/[0.025] hover:bg-white/[0.045] border border-white/[0.06] hover:border-white/[0.12] transition-all"
             >
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-primary/25 border border-primary/40 flex items-center justify-center shrink-0">
-                  <Mic className="w-5 h-5 text-primary" />
+              <div className="flex items-center gap-4">
+                <div className="relative w-11 h-11 rounded-2xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center shrink-0">
+                  <motion.div
+                    animate={{ scale: [1, 1.18, 1], opacity: [0.3, 0.6, 0.3] }}
+                    transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
+                    className="absolute inset-0 rounded-2xl bg-primary/20"
+                  />
+                  <Mic className="relative w-[18px] h-[18px] text-foreground/75" />
                 </div>
-                <div>
-                  <h4 className="text-sm font-sans font-semibold text-foreground">
-                    Décris-moi ce que tu voudrais !
+                <div className="flex-1 min-w-0">
+                  <h4 className="font-sans text-[14.5px] font-medium text-foreground/90 tracking-tight">
+                    Décris-moi ton mood
                   </h4>
-                  <p className="text-foreground/45 text-xs font-sans">
-                    Dis-moi ce que tu veux ou comment tu te sens.
+                  <p className="text-foreground/40 text-[12px] font-sans mt-0.5">
+                    Parle-moi de ton envie du moment.
                   </p>
                 </div>
               </div>
