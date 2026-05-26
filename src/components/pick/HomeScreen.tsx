@@ -1114,15 +1114,13 @@ const HomeScreen = ({
           />
         </div>
 
-        <div className="px-5 pb-20 pt-2 md:px-[8px] py-[4px]">
-          <DiscoverySection
-            onMovieSelect={onMovieSelect}
-            platformIds={userPlatformIds}
-            favoriteGenres={userGenres}
-            minRating={userMinRating}
-            excludedGenres={userExcludedGenres}
-          />
-        </div>
+        <DiscoverySection
+          onMovieSelect={onMovieSelect}
+          platformIds={userPlatformIds}
+          favoriteGenres={userGenres}
+          minRating={userMinRating}
+          excludedGenres={userExcludedGenres}
+        />
       </div>
 
       <HomeScreenChoiceModal
