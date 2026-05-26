@@ -79,22 +79,25 @@ const BrandHeader = ({ showBack, onBack, extraActions }: BrandHeaderProps) => {
                 {initials}
               </AvatarFallback>
             </Avatar>
-            {isPremium && (
-              <span className="absolute -top-1 -right-1 flex items-center justify-center h-3.5 w-3.5 rounded-full bg-gradient-to-br from-amber-300 to-amber-500 shadow-[0_0_8px_-1px_rgba(251,191,36,0.7)] ring-[1.5px] ring-background">
-                <Crown className="h-2 w-2 text-background" strokeWidth={3} />
-              </span>
-            )}
           </div>
 
-          <div className="flex flex-col items-start min-w-0 leading-tight">
+          <div className="flex flex-col items-start min-w-0 leading-tight gap-0.5">
             <span className="text-[13px] font-medium text-foreground/90 truncate max-w-[110px]">
               {displayName || "…"}
             </span>
-            <span className="flex items-center gap-1 text-[11px] text-foreground/55">
-              <Star className="h-2.5 w-2.5 fill-amber-400 text-amber-400" />
-              <span className="tabular-nums">{interactionCount}</span>
-              <span>films</span>
-            </span>
+            <div className="flex items-center gap-1.5">
+              {isPremium && (
+                <span className="inline-flex items-center gap-0.5 px-1.5 py-[2px] rounded-md bg-primary text-primary-foreground text-[9px] font-bold leading-none">
+                  <Crown className="h-2 w-2" strokeWidth={3} />
+                  Pick+
+                </span>
+              )}
+              <span className="flex items-center gap-1 text-[11px] text-foreground/55">
+                <Star className="h-2.5 w-2.5 fill-amber-400 text-amber-400" />
+                <span className="tabular-nums">{interactionCount}</span>
+                <span>films</span>
+              </span>
+            </div>
           </div>
         </button>
       )}
