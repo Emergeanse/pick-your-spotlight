@@ -249,7 +249,7 @@ serve(async (req) => {
     const ORIGIN_KEY_LANGS: Record<string, string[]> = {
       "cinema-francais": ["fr"],
       "cinema-americain": ["en"],
-      "cinema-asiatique": ["ko", "ja", "zh", "th"],
+      "cinema-asiatique": ["ko", "ja", "zh", "cn", "th", "hi", "ta", "te", "ml"],
       "cinema-africain": [],
       "cinema-amerique-du-sud": ["es", "pt"],
     };
@@ -280,7 +280,7 @@ serve(async (req) => {
     // Les tags comme "Cinéma asiatique" sont stockés dans excludedGenres (pas user_preferences),
     // donc on les traduit en codes langue pour les passer au SQL dès la récupération des 300 candidats.
     const GENRE_TAG_LANGS: Record<string, string[]> = {
-      "Cinéma asiatique": ["ko", "ja", "zh", "th"],
+      "Cinéma asiatique": ["ko", "ja", "zh", "cn", "th", "hi", "ta", "te", "ml"],
       "Cinéma Amérique du Sud": ["es", "pt"],
       "Cinéma africain": [],
     };
@@ -403,7 +403,7 @@ serve(async (req) => {
     const ORIGIN_MAP: Record<string, string> = {
       "Cinéma français": "français (langue: fr)",
       "Cinéma américain": "américain/anglophone (langue: en)",
-      "Cinéma asiatique": "asiatique (langues: ko, ja, zh, th)",
+      "Cinéma asiatique": "asiatique (langues: ko, ja, zh, cn, th, hi)",
       "Cinéma africain": "africain",
       "Cinéma Amérique du Sud": "latino/sud-américain (langues: es, pt)",
     };
@@ -417,7 +417,7 @@ serve(async (req) => {
     const ORIGIN_LANGS: Record<string, string[]> = {
       "français (langue: fr)": ["fr"],
       "américain/anglophone (langue: en)": ["en"],
-      "asiatique (langues: ko, ja, zh, th)": ["ko", "ja", "zh", "th"],
+      "asiatique (langues: ko, ja, zh, cn, th, hi)": ["ko", "ja", "zh", "cn", "th", "hi", "ta", "te", "ml"],
       "africain": [],
       "latino/sud-américain (langues: es, pt)": ["es", "pt"],
     };
