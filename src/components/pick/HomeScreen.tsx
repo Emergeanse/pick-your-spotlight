@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { Sparkles, Mic } from "lucide-react";
 
 import { ALL_PLATFORMS } from "@/lib/platforms";
 import type { Movie, MovieDetail } from "@/lib/tmdb";
@@ -916,44 +917,75 @@ const HomeScreen = ({
       <div className="absolute inset-0 bg-background/40" />
 
       <div className="relative z-10 h-full overflow-y-auto overscroll-y-contain touch-pan-y">
-        <div className="min-h-[85vh] md:min-h-[80vh] flex flex-col items-center justify-center text-center px-6 pt-20 pb-8">
-          {/* Mascot — visible, central, atmospheric */}
+        {/* ─── Cinematic Hero ─── */}
+        <section className="relative pt-20 pb-4 px-5 md:px-8">
+          {/* Mascot floating on the right with violet halo */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.1, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-            className="mb-6"
+            initial={{ opacity: 0, scale: 0.92, x: 12 }}
+            animate={{ opacity: 1, scale: 1, x: 0 }}
+            transition={{ delay: 0.15, duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+            className="pointer-events-none absolute right-0 top-12 w-[55%] max-w-[280px] flex justify-end pr-1"
           >
-            <PickCharacter mood="wave" size="lg" animate />
+            <div className="relative">
+              <div
+                className="absolute inset-0 -z-10 blur-3xl opacity-70"
+                style={{
+                  background:
+                    "radial-gradient(ellipse at center, hsl(var(--primary) / 0.32), transparent 70%)",
+                }}
+              />
+              <PickCharacter mood="wave" size="lg" animate />
+            </div>
           </motion.div>
 
-          {/* Hero serif headline — emotional, cinematic */}
-          <motion.h1
-            initial={{ opacity: 0, y: 16 }}
+          {/* Eyebrow */}
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.25, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-            className="font-serif text-foreground text-[40px] sm:text-[44px] leading-[1.05] tracking-tight mb-6 max-w-md"
+            transition={{ delay: 0.2, duration: 0.5 }}
+            className="relative flex items-center gap-1.5 mb-3"
           >
-            Ce soir, quelque chose{" "}
-            <span className="italic text-foreground/90">d'intense</span>.
+            <Sparkles className="w-3.5 h-3.5 text-primary" />
+            <span className="text-[10.5px] font-sans font-semibold tracking-[0.18em] uppercase text-primary">
+              Pick comprend tes envies
+            </span>
+          </motion.div>
+
+          {/* Hero serif headline */}
+          <motion.h1
+            initial={{ opacity: 0, y: 14 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.28, duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
+            className="relative font-serif text-foreground text-[42px] sm:text-[50px] leading-[1] tracking-tight max-w-[64%]"
+            translate="no"
+          >
+            Ce soir,
+            <br />
+            quelque chose
+            <br />
+            d
+            <span className="italic bg-gradient-to-br from-primary via-accent to-primary bg-clip-text text-transparent">
+              ’intense
+            </span>
+            <span className="text-foreground">.</span>
           </motion.h1>
 
-          {/* Pick mascot bubble — conversational, warm */}
+          {/* Subtitle */}
           <motion.p
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4, duration: 0.5 }}
-            className="text-foreground/65 text-[13.5px] leading-relaxed font-sans max-w-sm mb-8"
+            transition={{ delay: 0.42, duration: 0.5 }}
+            className="relative mt-5 text-foreground/65 text-[13.5px] leading-relaxed font-sans max-w-[62%]"
           >
-            Pick comprend tes envies. J'ai préparé une sélection brute et visuelle.
+            Pick comprend tes envies. J’ai préparé une sélection brute et visuelle.
           </motion.p>
 
-          {/* Primary CTA — glowing purple, large tap target */}
+          {/* Primary CTA */}
           <motion.div
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.55, duration: 0.5 }}
-            className="w-full max-w-sm"
+            className="relative mt-7"
           >
             <motion.button
               data-tour="pick-ce-soir"
@@ -961,41 +993,83 @@ const HomeScreen = ({
               whileTap={{ scale: 0.97 }}
               onClick={() => setShowFindChoice(true)}
               disabled={loading}
-              className="w-full py-[18px] rounded-[28px] bg-primary text-primary-foreground font-sans font-semibold text-[15px] tracking-wide shadow-[0_18px_50px_-12px_hsl(var(--primary)/0.55)] hover:shadow-[0_18px_60px_-10px_hsl(var(--primary)/0.7)] transition-shadow disabled:opacity-50"
+              className="fab-pulse inline-flex items-center justify-center gap-2.5 w-full max-w-[320px] py-[18px] px-7 rounded-full bg-gradient-to-b from-primary to-accent text-primary-foreground font-sans font-semibold text-[15px] tracking-wide shadow-[0_18px_50px_-12px_hsl(var(--primary)/0.6)] hover:shadow-[0_22px_60px_-10px_hsl(var(--primary)/0.75)] transition-shadow disabled:opacity-50"
             >
-              Trouver mon film
+              <Sparkles className="w-4 h-4" />
+              Trouve-moi 1 film
             </motion.button>
-
-            <div className="mt-5 flex items-center justify-between">
-              <a
-                href="/app/plan"
-                className="text-[12px] font-sans text-foreground/45 hover:text-foreground/75 transition-colors"
-              >
-                Planifier pour plus tard
-              </a>
-              <button
-                onClick={() => navigate("/app/profile?openPlatforms=1")}
-                className="flex items-center gap-1.5 text-[11px] font-sans text-foreground/35 hover:text-foreground/60 transition-colors"
-              >
-                {(userPlatformIds?.length > 0
-                  ? ALL_PLATFORMS.filter((p) => userPlatformIds.includes(p.id)).slice(0, 4)
-                  : ALL_PLATFORMS.slice(0, 4)
-                ).map((p) => (
-                  <img
-                    key={p.id}
-                    src={p.logo}
-                    alt={p.label}
-                    className="w-5 h-5 rounded-md object-cover opacity-50"
-                    loading="lazy"
-                  />
-                ))}
-              </button>
-            </div>
           </motion.div>
-        </div>
 
+          {/* Voice card */}
+          <motion.button
+            type="button"
+            initial={{ opacity: 0, y: 14 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.7, duration: 0.55 }}
+            whileTap={{ scale: 0.985 }}
+            onClick={onOpenChat}
+            className="relative mt-5 w-full flex items-center gap-4 p-3.5 pr-5 rounded-[28px] bg-card/55 backdrop-blur-xl border border-white/[0.06] text-left hover:bg-card/70 transition-colors shadow-[0_10px_40px_-20px_rgba(0,0,0,0.8)]"
+          >
+            <span className="relative flex-shrink-0">
+              <span className="absolute inset-0 rounded-full bg-primary/25 blur-md animate-subtle-pulse" />
+              <span className="relative flex items-center justify-center w-12 h-12 rounded-full bg-primary/15 border border-primary/40">
+                <Mic className="w-[18px] h-[18px] text-primary" />
+              </span>
+            </span>
+            <span className="flex-1 min-w-0">
+              <span className="block font-serif text-foreground text-[18px] leading-tight">
+                Parle-moi…
+              </span>
+              <span className="block text-foreground/55 text-[12.5px] font-sans mt-0.5">
+                Dis ce que tu as envie de voir
+              </span>
+            </span>
+            <span className="flex items-end gap-[3px] h-6" aria-hidden="true">
+              {[6, 14, 9, 18, 12, 20, 8, 15, 7].map((h, i) => (
+                <motion.span
+                  key={i}
+                  className="w-[2.5px] rounded-full bg-primary/80"
+                  animate={{ height: [`${h * 0.4}px`, `${h}px`, `${h * 0.5}px`] }}
+                  transition={{
+                    duration: 1.2,
+                    repeat: Infinity,
+                    delay: i * 0.08,
+                    ease: "easeInOut",
+                  }}
+                />
+              ))}
+            </span>
+          </motion.button>
 
-        <div className="px-5 md:px-12 pb-32">
+          {/* Quick links row */}
+          <div className="mt-4 flex items-center justify-between px-1">
+            <a
+              href="/app/plan"
+              className="text-[12px] font-sans text-foreground/45 hover:text-foreground/75 transition-colors"
+            >
+              Planifier pour plus tard
+            </a>
+            <button
+              onClick={() => navigate("/app/profile?openPlatforms=1")}
+              className="flex items-center gap-1.5 text-[11px] font-sans text-foreground/35 hover:text-foreground/60 transition-colors"
+            >
+              {(userPlatformIds?.length > 0
+                ? ALL_PLATFORMS.filter((p) => userPlatformIds.includes(p.id)).slice(0, 4)
+                : ALL_PLATFORMS.slice(0, 4)
+              ).map((p) => (
+                <img
+                  key={p.id}
+                  src={p.logo}
+                  alt={p.label}
+                  className="w-5 h-5 rounded-md object-cover opacity-50"
+                  loading="lazy"
+                />
+              ))}
+            </button>
+          </div>
+        </section>
+
+        <div className="px-5 md:px-12 pb-32 pt-2">
           <DiscoverySection
             onMovieSelect={onMovieSelect}
             platformIds={userPlatformIds}

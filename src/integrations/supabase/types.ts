@@ -897,6 +897,33 @@ export type Database = {
           },
         ]
       }
+      user_movie_scores: {
+        Row: {
+          confidence: number
+          last_updated: string
+          movie_id: number
+          score: number
+          signals: Json
+          user_id: string
+        }
+        Insert: {
+          confidence?: number
+          last_updated?: string
+          movie_id: number
+          score?: number
+          signals?: Json
+          user_id: string
+        }
+        Update: {
+          confidence?: number
+          last_updated?: string
+          movie_id?: number
+          score?: number
+          signals?: Json
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_people_preferences: {
         Row: {
           created_at: string
@@ -1294,6 +1321,10 @@ export type Database = {
               year: string
             }[]
           }
+      recompute_user_movie_score: {
+        Args: { p_movie_id: number; p_user_id: string }
+        Returns: undefined
+      }
       update_movie_language: {
         Args: {
           p_original_language: string
