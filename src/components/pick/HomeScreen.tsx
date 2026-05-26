@@ -979,9 +979,9 @@ const HomeScreen = ({
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.42, duration: 0.5 }}
-            className="relative mt-2 text-foreground/65 text-[13.5px] leading-snug font-sans max-w-[62%]"
+            className="relative mt-2 text-foreground/65 text-[13.5px] leading-snug font-sans max-w-[62%] whitespace-pre-line"
           >
-            Pick comprend tes envies. J’ai préparé une sélection brute et visuelle.
+            {"\"Je t’ai préparé une sélection brute et visuelle.\"   \nPick"}
           </motion.p>
 
           {/* Primary CTA */}
