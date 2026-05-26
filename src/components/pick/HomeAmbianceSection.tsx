@@ -34,7 +34,7 @@ const POSTER_BASE = "https://image.tmdb.org/t/p/w342";
 
 // Unified premium surface — same family across all home cards
 const PREMIUM_SURFACE =
-  "rounded-[26px] border border-white/[0.05] bg-[linear-gradient(180deg,hsl(240_14%_9%/0.85),hsl(240_18%_5%/0.7))] backdrop-blur-2xl shadow-[0_30px_80px_-40px_rgba(0,0,0,0.95),inset_0_1px_0_rgba(255,255,255,0.04)]";
+  "rounded-[26px] border-white/[0.05] bg-[linear-gradient(180deg,hsl(240_14%_9%/0.85),hsl(240_18%_5%/0.7))] backdrop-blur-2xl shadow-[0_30px_80px_-40px_rgba(0,0,0,0.95),inset_0_1px_0_rgba(255,255,255,0.04)]";
 
 const SECTION_EYEBROW =
   "text-[10.5px] font-sans font-semibold tracking-[0.18em] uppercase text-foreground/40";
@@ -139,7 +139,7 @@ const HomeAmbianceSection = ({ onPickAmbiance, activeAmbiance }: Props) => {
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.05, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-          className={`relative ${PREMIUM_SURFACE} p-2.5`}
+          className={`relative ${PREMIUM_SURFACE} p-2.5 border-4`}
         >
           <div className="flex gap-3 items-stretch">
             <div className="relative flex-shrink-0 w-[56px] h-[84px] rounded-lg overflow-hidden border border-white/[0.06] shadow-[0_14px_36px_-14px_rgba(0,0,0,0.8)]">
@@ -207,7 +207,7 @@ const HomeAmbianceSection = ({ onPickAmbiance, activeAmbiance }: Props) => {
           initial={{ opacity: 0, y: 18 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.25, duration: 0.6 }}
-          className={`relative ${PREMIUM_SURFACE} px-3 pt-3 pb-1.5`}
+          className={`relative ${PREMIUM_SURFACE} px-3 pt-3 pb-1.5 border-8`}
         >
           <div className="flex items-start justify-between gap-3">
             <div className="flex-1 min-w-0">
