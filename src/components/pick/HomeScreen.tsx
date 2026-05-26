@@ -928,7 +928,7 @@ const HomeScreen = ({
 
       <div className="relative z-10 h-full overflow-y-auto overscroll-y-contain touch-pan-y">
         {/* ─── Cinematic Hero ─── */}
-        <section className="relative pt-20 pb-4 px-5 md:px-8">
+        <section className="relative pt-14 pb-2 px-5 md:px-8">
           {/* Mascot floating on the right with violet halo */}
           <motion.div
             initial={{ opacity: 0, scale: 0.92, x: 12 }}
