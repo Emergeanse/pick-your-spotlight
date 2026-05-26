@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { Sparkles, Mic } from "lucide-react";
 
 import { ALL_PLATFORMS } from "@/lib/platforms";
 import type { Movie, MovieDetail } from "@/lib/tmdb";
