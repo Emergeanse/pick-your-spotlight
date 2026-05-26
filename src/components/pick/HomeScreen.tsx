@@ -950,7 +950,7 @@ const HomeScreen = ({
             className="relative flex items-center gap-2 mb-1"
           >
             <Sparkles className="w-4 h-4 text-primary" />
-            <span className="text-xs font-sans font-semibold tracking-[0.15em] uppercase text-primary">
+            <span className="text-[9px] font-sans font-semibold tracking-[0.15em] uppercase text-primary">
               Pick comprend tes envies
             </span>
           </motion.div>
