@@ -589,19 +589,28 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
             { role: "user", content: `Sélectionne ${targetLLMCount} films.` },
           ],
         });
-        let response = await fetch("https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", {
-          method: "POST",
-          headers: { Authorization: `Bearer ${GOOGLE_AI_KEY}`, "Content-Type": "application/json" },
-          body: llmBody,
+        const llmEndpoint = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
+        const llmHeaders = { Authorization: `Bearer ${GOOGLE_AI_KEY}`, "Content-Type": "application/json" };
+        const llmBodyFallback = JSON.stringify({
+          model: "gemini-2.5-flash-lite-preview-06-17",
+          max_tokens: 4000,
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: `Sélectionne ${targetLLMCount} films.` },
+          ],
         });
-        // Retry once on transient errors (429 rate-limit, 503 unavailable)
+
+        let response = await fetch(llmEndpoint, { method: "POST", headers: llmHeaders, body: llmBody });
+        // Retry 1: same model after short delay on transient errors
         if (response.status === 429 || response.status === 503) {
-          await new Promise((r) => setTimeout(r, response.status === 503 ? 5000 : 3000));
-          response = await fetch("https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", {
-            method: "POST",
-            headers: { Authorization: `Bearer ${GOOGLE_AI_KEY}`, "Content-Type": "application/json" },
-            body: llmBody,
-          });
+          await new Promise((r) => setTimeout(r, response.status === 503 ? 4000 : 3000));
+          response = await fetch(llmEndpoint, { method: "POST", headers: llmHeaders, body: llmBody });
+        }
+        // Retry 2: fallback to lite model if primary still failing
+        if (response.status === 429 || response.status === 503) {
+          await new Promise((r) => setTimeout(r, 3000));
+          response = await fetch(llmEndpoint, { method: "POST", headers: llmHeaders, body: llmBodyFallback });
+          console.log("[SP] Switched to fallback model gemini-2.5-flash-lite");
         }
 
         if (response.ok) {
