@@ -20,11 +20,11 @@ const BottomTabBar = () => {
 
   return (
     <nav className="fixed md:absolute bottom-0 left-0 right-0 z-40 pb-[env(safe-area-inset-bottom)] md:pb-0">
-      {/* Top fade so the bar blends with cinematic background */}
-      <div className="pointer-events-none absolute -top-8 inset-x-0 h-8 bg-gradient-to-t from-background to-transparent" />
+      {/* Soft fade so the bar merges with the cinematic backdrop */}
+      <div className="pointer-events-none absolute -top-10 inset-x-0 h-10 bg-gradient-to-t from-background via-background/70 to-transparent" />
 
-      <div className="relative bg-background/80 backdrop-blur-2xl border-t border-white/[0.06] md:rounded-b-[2.25rem] shadow-[0_-12px_40px_-12px_rgba(0,0,0,0.6)]">
-        <div className="flex items-center justify-around h-16 max-w-lg mx-auto px-2">
+      <div className="relative border-t border-white/[0.05] bg-[linear-gradient(180deg,hsl(240_18%_5%/0.85),hsl(240_22%_3%/0.96))] backdrop-blur-2xl md:rounded-b-[2.25rem] shadow-[0_-20px_60px_-20px_rgba(0,0,0,0.7),inset_0_1px_0_rgba(255,255,255,0.04)]">
+        <div className="flex items-stretch justify-around h-[60px] max-w-lg mx-auto px-2">
           {tabs.map((tab) => {
             const isActive = currentTab === tab.id;
             const Icon = tab.icon;
@@ -50,45 +50,49 @@ const BottomTabBar = () => {
                     navigate(tab.path);
                   }
                 }}
-                className="relative flex flex-col items-center justify-center gap-1 flex-1 h-full transition-colors"
+                className="relative flex flex-col items-center justify-center flex-1 pt-1.5 pb-1 transition-colors"
                 style={{ WebkitTapHighlightColor: "transparent" }}
               >
+                {/* Active glow halo */}
                 {isActive && (
                   <motion.span
-                    layoutId="tab-glow"
-                    className="absolute top-1 w-10 h-10 rounded-full bg-primary/15 blur-md"
+                    layoutId="tab-halo"
+                    className="absolute top-0 w-12 h-9 rounded-full bg-primary/15 blur-xl"
                     transition={{ type: "spring", stiffness: 320, damping: 28 }}
                   />
                 )}
 
+                {/* Top indicator bar */}
+                {isActive && (
+                  <motion.span
+                    layoutId="tab-indicator"
+                    className="absolute top-0 h-[2px] w-8 rounded-full bg-gradient-to-r from-primary to-accent shadow-[0_0_10px_hsl(var(--primary)/0.8)]"
+                    transition={{ type: "spring", stiffness: 360, damping: 28 }}
+                  />
+                )}
+
                 <motion.div
-                  animate={{ y: isActive ? -1 : 0, scale: isActive ? 1.05 : 1 }}
-                  transition={{ type: "spring", stiffness: 360, damping: 24 }}
-                  className="relative"
+                  animate={{ scale: isActive ? 1.06 : 1, y: isActive ? -1 : 0 }}
+                  transition={{ type: "spring", stiffness: 380, damping: 24 }}
+                  className="relative flex items-center justify-center h-[26px]"
                 >
                   <Icon
                     className={`w-[20px] h-[20px] transition-colors duration-200 ${
-                      isActive ? "text-primary" : "text-foreground/40"
+                      isActive ? "text-primary" : "text-foreground/35"
                     }`}
-                    strokeWidth={isActive ? 2.2 : 1.8}
+                    strokeWidth={isActive ? 2.2 : 1.7}
                   />
                 </motion.div>
 
                 <span
-                  className={`text-[10.5px] font-sans transition-colors duration-200 ${
-                    isActive ? "text-primary font-semibold" : "text-foreground/40 font-medium"
+                  className={`mt-1 text-[10px] font-sans tracking-tight transition-colors duration-200 ${
+                    isActive
+                      ? "text-primary font-semibold"
+                      : "text-foreground/40 font-medium"
                   }`}
                 >
                   {tab.label}
                 </span>
-
-                {isActive && (
-                  <motion.div
-                    layoutId="tab-indicator"
-                    className="absolute -bottom-0.5 h-[3px] w-7 rounded-full bg-gradient-to-r from-primary to-accent shadow-[0_0_12px_hsl(var(--primary)/0.7)]"
-                    transition={{ type: "spring", stiffness: 320, damping: 26 }}
-                  />
-                )}
               </button>
             );
           })}
