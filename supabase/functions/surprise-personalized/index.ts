@@ -582,7 +582,7 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
 
       try {
         const llmBody = JSON.stringify({
-          model: "gemini-2.5-flash",
+          model: "gemini-2.0-flash",
           max_tokens: 4000,
           messages: [
             { role: "system", content: systemPrompt },
