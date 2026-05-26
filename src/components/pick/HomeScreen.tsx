@@ -62,6 +62,16 @@ type RejectionContext = {
   rejectedTitle: string;
 };
 
+export type AmbianceMood = "intense" | "mysterious" | "comfort" | "couple" | "surprise";
+
+const AMBIANCES: { id: AmbianceMood; label: string; Icon: React.ComponentType<any> }[] = [
+  { id: "intense", label: "Intense", Icon: Flame },
+  { id: "mysterious", label: "Mystérieux", Icon: Eye },
+  { id: "comfort", label: "Réconfortant", Icon: Coffee },
+  { id: "couple", label: "À deux", Icon: Heart },
+  { id: "surprise", label: "Surprends-moi", Icon: Shuffle },
+];
+
 const extractTmdbIdsFromFeedbackRows = (rows: any[]): number[] =>
   rows.map((row) => row?.catalog_items?.tmdb_id).filter((id): id is number => typeof id === "number" && id > 0);
 
