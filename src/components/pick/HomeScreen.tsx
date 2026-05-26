@@ -1056,9 +1056,9 @@ const HomeScreen = ({
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.8, duration: 0.5 }}
-            className="mt-4"
+            className="mt-3"
           >
-            <div className="flex items-baseline justify-between mb-2 px-0.5">
+            <div className="flex items-baseline justify-between mb-1.5 px-0.5">
               <h3 className="font-serif text-foreground text-[14px] leading-tight">
                 Choisis ton ambiance
               </h3>
