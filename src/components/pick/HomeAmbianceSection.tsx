@@ -225,7 +225,7 @@ const HomeAmbianceSection = ({ onPickAmbiance, activeAmbiance }: Props) => {
             </button>
           </div>
 
-          <div className="flex gap-1 overflow-x-auto -mx-3 px-3 pb-0.5 scrollbar-none">
+          <div className="flex gap-1 overflow-x-auto -mx-3 px-3 pb-0 scrollbar-none">
             {friends.map((f, i) => (
               <motion.button
                 key={f.id}
