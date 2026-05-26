@@ -239,12 +239,16 @@ export async function enrichRecommendationBatchWithTexts(
   if (!moviesNeedingTexts.length) return movies;
 
   const context = await buildMatchContext(options);
-  const generated = await Promise.all(
-    moviesNeedingTexts.map(async (movie) => ({
+  // Stagger calls by 400ms to avoid hitting Gemini rate limits when batch > 2 films
+  const generated: Array<{ id: number; recommendationTexts: RecommendationMatchData | null }> = [];
+  for (let i = 0; i < moviesNeedingTexts.length; i++) {
+    if (i > 0) await new Promise((r) => setTimeout(r, 400));
+    const movie = moviesNeedingTexts[i];
+    generated.push({
       id: movie.id,
       recommendationTexts: await fetchRecommendationTextsForMovie(movie, context, options),
-    })),
-  );
+    });
+  }
 
   const byId = new Map<number, RecommendationMatchData | null>(
     generated.map((entry) => [entry.id, entry.recommendationTexts]),

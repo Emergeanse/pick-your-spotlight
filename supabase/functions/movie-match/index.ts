@@ -281,22 +281,34 @@ ${criteriaText}${tasteSection}
 
 Génère la fiche de match multi-vecteur.`;
 
-    const response = await fetch("https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${GOOGLE_AI_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "gemini-2.5-flash",
-        max_tokens: 1200,
-        response_format: { type: "json_object" },
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt },
-        ],
-      }),
-    });
+    // Native Gemini API: thinkingBudget=0 suppresses thinking blocks entirely,
+    // responseMimeType="application/json" guarantees clean JSON output.
+    // The OpenAI-compatible wrapper (/v1beta/openai/...) does not support thinkingConfig,
+    // which caused <thinking> blocks to corrupt JSON parsing.
+    const callGemini = async () =>
+      fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GOOGLE_AI_KEY}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            system_instruction: { parts: [{ text: systemPrompt }] },
+            contents: [{ role: "user", parts: [{ text: userPrompt }] }],
+            generationConfig: {
+              responseMimeType: "application/json",
+              maxOutputTokens: 1200,
+              thinkingConfig: { thinkingBudget: 0 },
+            },
+          }),
+        },
+      );
+
+    let response = await callGemini();
+    // Retry once on rate-limit (parallel batch calls can trigger 429)
+    if (response.status === 429) {
+      await new Promise((r) => setTimeout(r, 2000));
+      response = await callGemini();
+    }
 
     if (!response.ok) {
       const t = await response.text();
@@ -337,12 +349,9 @@ Génère la fiche de match multi-vecteur.`;
       console.error("Failed to parse movie-match response body:", e);
       throw new Error("AI response parse error");
     }
-    const rawContent = aiData?.choices?.[0]?.message?.content || "";
-    // Strip Gemini thinking blocks (gemini-2.5-flash returns <thinking>...</thinking> before JSON)
-    const content = rawContent
-      .replace(/<thinking>[\s\S]*?<\/thinking>/gi, "")
-      .replace(/```(?:json)?\s*/g, "")
-      .trim();
+    // Native Gemini API response: candidates[0].content.parts[0].text
+    // thinkingBudget=0 means no thinking parts — direct JSON string
+    const content = (aiData?.candidates?.[0]?.content?.parts?.[0]?.text || "").trim();
 
     let matchData;
     try {
