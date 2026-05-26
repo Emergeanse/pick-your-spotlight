@@ -598,10 +598,10 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
           const raw = await response.text();
           const aiData = JSON.parse(raw);
           const rawContent = aiData?.choices?.[0]?.message?.content || "";
-          // Strip markdown code fences if present (model ignores "no backticks" instruction)
-          const content = rawContent.replace(/^```(?:json)?\s*/m, "").replace(/```\s*$/m, "").trim();
-          // Find "selections" key then extract enclosing {} by bracket counting
-          const selectionsIdx = content.indexOf('"selections"');
+          // Strip markdown code fences (all occurrences)
+          const content = rawContent.replace(/```(?:json)?\s*/g, "").trim();
+          // Use "selections": (with colon) to avoid matching thinking-mode preamble
+          const selectionsIdx = content.indexOf('"selections":');
           if (selectionsIdx === -1) throw new Error(`No JSON in LLM response: ${rawContent.slice(0, 300)}`);
           let jsonStart = selectionsIdx;
           while (jsonStart > 0 && content[jsonStart] !== "{") jsonStart--;
@@ -613,8 +613,10 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
           const rawJson = content.slice(jsonStart, jsonEnd + 1);
           // Repair common LLM JSON mistakes
           const repaired = rawJson
-            .replace(/\}\s*\n\s*\{/g, "},\n{")
-            .replace(/,\s*([}\]])/g, "$1");
+            .replace(/^﻿/, "")               // BOM
+            .replace(/\}\s*\n\s*\{/g, "},\n{")   // missing comma between objects
+            .replace(/,\s*([}\]])/g, "$1");        // trailing commas
+          console.log(`[SP] LLM rawJson preview: ${rawJson.slice(0, 120)}`);
           const parsed = JSON.parse(repaired);
           if (parsed.selections && Array.isArray(parsed.selections)) {
             const validIds = new Set(topPool.map((c: any) => Number(c.tmdb_id)));
