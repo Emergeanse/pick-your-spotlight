@@ -545,7 +545,7 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
       </div>
 
       {currentMovie && !showActivationCTA && (
-        <div className="relative z-20 border-t border-border/20 bg-background/84 px-4 pt-3 pb-[calc(1rem+env(safe-area-inset-bottom))] backdrop-blur-xl shadow-[0_-18px_40px_hsl(var(--background)/0.32)]">
+        <div className="sticky bottom-0 z-20 border-t border-border/20 bg-background/84 px-4 pt-3 pb-[calc(1rem+env(safe-area-inset-bottom))] backdrop-blur-xl shadow-[0_-18px_40px_hsl(var(--background)/0.32)]">
           <div className="mb-3 flex items-center justify-between gap-3">
             <button
               onClick={goBack}
