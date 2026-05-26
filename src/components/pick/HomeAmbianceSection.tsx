@@ -139,7 +139,7 @@ const HomeAmbianceSection = ({ onPickAmbiance, activeAmbiance }: Props) => {
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.05, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-          className={`relative ${PREMIUM_SURFACE} p-2.5 border-4`}
+          className={`relative mt-2.5 ${PREMIUM_SURFACE} p-2.5 border-4`}
         >
           <div className="flex gap-3 items-stretch">
             <div className="relative flex-shrink-0 w-[56px] h-[84px] rounded-lg overflow-hidden border border-white/[0.06] shadow-[0_14px_36px_-14px_rgba(0,0,0,0.8)]">
