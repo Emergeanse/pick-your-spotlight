@@ -1071,7 +1071,21 @@ const HomeScreen = ({
           </div>
         </section>
 
-        <div className="px-5 md:px-12 pb-32 pt-2">
+        <div className="mt-6">
+          <HomeAmbianceSection
+            activeAmbiance={activeAmbiance}
+            onPickAmbiance={(mood) => {
+              setActiveAmbiance(mood);
+              if (mood === "surprise") {
+                handleAutoPick();
+              } else {
+                setShowFindChoice(true);
+              }
+            }}
+          />
+        </div>
+
+        <div className="px-5 md:px-12 pb-32 pt-8">
           <DiscoverySection
             onMovieSelect={onMovieSelect}
             platformIds={userPlatformIds}
