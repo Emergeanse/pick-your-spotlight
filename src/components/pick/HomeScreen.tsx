@@ -1002,7 +1002,7 @@ const HomeScreen = ({
             </motion.button>
           </motion.div>
 
-          {/* Voice card */}
+          {/* Voice card — same premium surface family as cards below */}
           <motion.button
             type="button"
             initial={{ opacity: 0, y: 14 }}
@@ -1010,27 +1010,27 @@ const HomeScreen = ({
             transition={{ delay: 0.7, duration: 0.55 }}
             whileTap={{ scale: 0.985 }}
             onClick={onOpenChat}
-            className="relative mt-5 w-full flex items-center gap-4 p-3.5 pr-5 rounded-[28px] bg-card/55 backdrop-blur-xl border border-white/[0.06] text-left hover:bg-card/70 transition-colors shadow-[0_10px_40px_-20px_rgba(0,0,0,0.8)]"
+            className="relative mt-6 w-full flex items-center gap-4 p-3.5 pr-5 rounded-[26px] border border-white/[0.05] bg-[linear-gradient(180deg,hsl(240_14%_9%/0.85),hsl(240_18%_5%/0.7))] backdrop-blur-2xl text-left hover:border-white/[0.09] transition-all shadow-[0_30px_80px_-40px_rgba(0,0,0,0.95),inset_0_1px_0_rgba(255,255,255,0.04)]"
           >
             <span className="relative flex-shrink-0">
-              <span className="absolute inset-0 rounded-full bg-primary/25 blur-md animate-subtle-pulse" />
-              <span className="relative flex items-center justify-center w-12 h-12 rounded-full bg-primary/15 border border-primary/40">
+              <span className="absolute inset-0 rounded-full bg-primary/20 blur-md animate-subtle-pulse" />
+              <span className="relative flex items-center justify-center w-12 h-12 rounded-full bg-primary/12 border border-primary/40">
                 <Mic className="w-[18px] h-[18px] text-primary" />
               </span>
             </span>
             <span className="flex-1 min-w-0">
-              <span className="block font-serif text-foreground text-[18px] leading-tight">
+              <span className="block font-serif text-foreground text-[17px] leading-tight">
                 Parle-moi…
               </span>
-              <span className="block text-foreground/55 text-[12.5px] font-sans mt-0.5">
+              <span className="block text-foreground/45 text-[12px] font-sans mt-1">
                 Dis ce que tu as envie de voir
               </span>
             </span>
-            <span className="flex items-end gap-[3px] h-6" aria-hidden="true">
+            <span className="flex items-end gap-[2.5px] h-5" aria-hidden="true">
               {[6, 14, 9, 18, 12, 20, 8, 15, 7].map((h, i) => (
                 <motion.span
                   key={i}
-                  className="w-[2.5px] rounded-full bg-primary/80"
+                  className="w-[2.5px] rounded-full bg-primary/70"
                   animate={{ height: [`${h * 0.4}px`, `${h}px`, `${h * 0.5}px`] }}
                   transition={{
                     duration: 1.2,
@@ -1043,17 +1043,18 @@ const HomeScreen = ({
             </span>
           </motion.button>
 
-          {/* Quick links row */}
+          {/* Quick links row — refined, less noisy */}
           <div className="mt-4 flex items-center justify-between px-1">
             <a
               href="/app/plan"
-              className="text-[12px] font-sans text-foreground/45 hover:text-foreground/75 transition-colors"
+              className="text-[11.5px] font-sans tracking-wide text-foreground/40 hover:text-foreground/70 transition-colors"
             >
-              Planifier pour plus tard
+              Planifier pour plus tard →
             </a>
             <button
               onClick={() => navigate("/app/profile?openPlatforms=1")}
-              className="flex items-center gap-1.5 text-[11px] font-sans text-foreground/35 hover:text-foreground/60 transition-colors"
+              className="flex items-center -space-x-1.5 hover:opacity-90 transition-opacity"
+              aria-label="Gérer mes plateformes"
             >
               {(userPlatformIds?.length > 0
                 ? ALL_PLATFORMS.filter((p) => userPlatformIds.includes(p.id)).slice(0, 4)
@@ -1063,7 +1064,7 @@ const HomeScreen = ({
                   key={p.id}
                   src={p.logo}
                   alt={p.label}
-                  className="w-5 h-5 rounded-md object-cover opacity-50"
+                  className="w-[18px] h-[18px] rounded-[5px] object-cover ring-1 ring-background opacity-55"
                   loading="lazy"
                 />
               ))}
@@ -1071,7 +1072,7 @@ const HomeScreen = ({
           </div>
         </section>
 
-        <div className="mt-6">
+        <div className="mt-10">
           <HomeAmbianceSection
             activeAmbiance={activeAmbiance}
             onPickAmbiance={(mood) => {
