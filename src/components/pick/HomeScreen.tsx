@@ -1012,7 +1012,7 @@ const HomeScreen = ({
             transition={{ delay: 0.7, duration: 0.55 }}
             whileTap={{ scale: 0.985 }}
             onClick={onOpenChat}
-            className="relative mt-4 w-full flex items-center p-2.5 pr-4 text-left transition-all gap-[16px] rounded-2xl border border-white/10 bg-white/[0.06] backdrop-blur-sm hover:bg-white/[0.10] hover:border-white/20"
+            className="relative mt-4 w-full flex items-center py-2 px-2.5 pr-4 text-left transition-all gap-[16px] rounded-2xl border border-white/10 bg-white/[0.06] hover:bg-white/[0.10] hover:border-white/20"
           >
             <span className="relative flex-shrink-0">
               <span className="absolute inset-0 rounded-full bg-primary/20 blur-md animate-subtle-pulse" />
