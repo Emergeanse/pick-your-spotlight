@@ -966,7 +966,7 @@ const HomeScreen = ({
             initial={{ opacity: 0, y: 14 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.28, duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
-            className="relative font-serif text-foreground text-[42px] sm:text-[50px] leading-[1] tracking-tight max-w-[64%]"
+            className="relative font-serif text-foreground text-[34px] sm:text-[40px] leading-[1] tracking-tight max-w-[64%]"
             translate="no"
           >
             Ce soir,
@@ -1027,10 +1027,10 @@ const HomeScreen = ({
               </span>
             </span>
             <span className="flex-1 min-w-0">
-              <span className="block font-serif text-foreground text-[17px] leading-tight">
+              <span className="block font-serif text-foreground text-[15px] leading-tight">
                 Parle-moi…
               </span>
-              <span className="block text-foreground/45 text-[12px] font-sans mt-1">
+              <span className="block text-foreground/45 text-[11px] font-sans mt-0.5">
                 Dis ce que tu as envie de voir
               </span>
             </span>
@@ -1106,7 +1106,7 @@ const HomeScreen = ({
 
         </section>
 
-        <div className="mt-10">
+        <div className="mt-4">
           <HomeAmbianceSection
             activeAmbiance={activeAmbiance}
             onPickAmbiance={(mood) => {

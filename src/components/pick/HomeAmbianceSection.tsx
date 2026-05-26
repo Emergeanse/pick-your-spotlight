@@ -207,7 +207,7 @@ const HomeAmbianceSection = ({ onPickAmbiance, activeAmbiance }: Props) => {
           initial={{ opacity: 0, y: 18 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.25, duration: 0.6 }}
-          className={`relative ${PREMIUM_SURFACE} px-3 pt-3 pb-2.5`}
+          className={`relative ${PREMIUM_SURFACE} px-3 pt-3 pb-1.5`}
         >
           <div className="flex items-end justify-between mb-2.5">
             <div>
@@ -225,7 +225,7 @@ const HomeAmbianceSection = ({ onPickAmbiance, activeAmbiance }: Props) => {
             </button>
           </div>
 
-          <div className="flex gap-1 overflow-x-auto -mx-3 px-3 pb-0.5 scrollbar-none">
+          <div className="flex gap-1 overflow-x-auto -mx-3 px-3 pb-0 scrollbar-none">
             {friends.map((f, i) => (
               <motion.button
                 key={f.id}
