@@ -209,95 +209,54 @@ const HomeAmbianceSection = ({ onPickAmbiance, activeAmbiance }: Props) => {
           transition={{ delay: 0.25, duration: 0.6 }}
           className={`relative ${PREMIUM_SURFACE} px-3 pt-3 pb-1.5`}
         >
-          <div className="flex items-center justify-between">
+          <div className="flex items-start justify-between gap-3">
             <div className="flex-1 min-w-0">
               <p className={SECTION_EYEBROW}>Cercle Pick</p>
               <h3 className="mt-0.5 font-serif text-foreground text-[15px] leading-tight">
                 Vos amis regardent
               </h3>
-            </div>
-            <div className="flex items-center -space-x-1.5 ml-2">
-              {friends.slice(0, 2).map((f) => (
-                <div
-                  key={f.id}
-                  className="relative w-[28px] h-[28px] rounded-full overflow-hidden border-2 border-background bg-muted"
-                >
-                  {f.avatarUrl ? (
-                    <img src={f.avatarUrl} alt={f.name} className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-foreground/60 font-serif text-[10px]">
-                      {f.name.charAt(0)}
-                    </div>
-                  )}
-                </div>
-              ))}
-              {friends.length > 2 && (
-                <div className="relative w-[28px] h-[28px] rounded-full border-2 border-background bg-white/[0.05] flex items-center justify-center text-foreground/70 font-sans font-semibold text-[9px]">
-                  +{friends.length - 2}
-                </div>
-              )}
-            </div>
-          </div>
-
-          <button
-            onClick={() => navigate("/app/friends")}
-            className="mt-1.5 inline-flex items-center gap-1 text-[10px] font-sans font-medium text-foreground/40 hover:text-foreground transition-colors group"
-          >
-            Voir tout
-            <ArrowUpRight className="w-2.5 h-2.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-          </button>
-
-          <div className="flex gap-1 overflow-x-auto -mx-3 px-3 pb-0 scrollbar-none mt-2">
-            {friends.map((f, i) => (
-              <motion.button
-                key={f.id}
-                type="button"
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.32 + i * 0.06, duration: 0.45 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => navigate("/app/friends")}
-                className="flex-shrink-0 flex flex-col items-center w-[54px] group"
-              >
-                <div className="relative">
-                  <div className="absolute -inset-0.5 rounded-full bg-gradient-to-br from-primary/30 via-transparent to-transparent opacity-0 group-hover:opacity-100 blur transition-opacity" />
-                  <div className="relative w-[40px] h-[40px] rounded-full overflow-hidden border border-white/10 bg-muted">
-                    {f.avatarUrl ? (
-                      <img src={f.avatarUrl} alt={f.name} className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-foreground/60 font-serif text-sm">
-                        {f.name.charAt(0)}
-                      </div>
-                    )}
-                  </div>
-                  <span className="absolute bottom-0 right-0 w-2 h-2 rounded-full bg-emerald-400 border-2 border-background" />
-                </div>
-                <p className="mt-1 text-[10.5px] font-sans font-medium text-foreground/85 truncate w-full text-center leading-tight">
-                  {f.name}
-                </p>
-                {f.title && (
-                  <p className="mt-0 text-[9px] font-sans text-foreground/40 truncate w-full text-center leading-tight">
-                    {f.title}
-                  </p>
-                )}
-              </motion.button>
-
-            ))}
-            {extraFriends > 0 && (
               <button
                 onClick={() => navigate("/app/friends")}
-                className="flex-shrink-0 flex flex-col items-center w-[54px] group"
+                className="mt-1.5 inline-flex items-center gap-1 text-[10px] font-sans font-medium text-foreground/40 hover:text-foreground transition-colors group"
               >
-                <div className="w-[40px] h-[40px] rounded-full border border-white/[0.08] bg-white/[0.03] flex items-center justify-center text-foreground/70 font-sans font-semibold text-[11px] group-hover:border-primary/40 group-hover:text-primary transition-colors">
-                  +{extraFriends}
-                </div>
-                <p className="mt-1 text-[9px] font-sans text-foreground/40 text-center leading-tight">
-                  autres amis
-                </p>
+                Voir tout
+                <ArrowUpRight className="w-2.5 h-2.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
               </button>
-            )}
+            </div>
 
+            <div className="flex gap-1 flex-shrink-0">
+              {friends.slice(0, 2).map((f, i) => (
+                <motion.button
+                  key={f.id}
+                  type="button"
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.32 + i * 0.06, duration: 0.45 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => navigate("/app/friends")}
+                  className="flex-shrink-0 flex flex-col items-center w-[54px] group"
+                >
+                  <div className="relative">
+                    <div className="absolute -inset-0.5 rounded-full bg-gradient-to-br from-primary/30 via-transparent to-transparent opacity-0 group-hover:opacity-100 blur transition-opacity" />
+                    <div className="relative w-[40px] h-[40px] rounded-full overflow-hidden border border-white/10 bg-muted">
+                      {f.avatarUrl ? (
+                        <img src={f.avatarUrl} alt={f.name} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-foreground/60 font-serif text-sm">
+                          {f.name.charAt(0)}
+                        </div>
+                      )}
+                    </div>
+                    <span className="absolute bottom-0 right-0 w-2 h-2 rounded-full bg-emerald-400 border-2 border-background" />
+                  </div>
+                  <p className="mt-1 text-[10.5px] font-sans font-medium text-foreground/85 truncate w-full text-center leading-tight">
+                    {f.name}
+                  </p>
+                </motion.button>
+              ))}
+            </div>
           </div>
+
         </motion.section>
       )}
     </div>
