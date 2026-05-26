@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, Loader2, Sparkles, ArrowRight, SkipForward, Film, Users, Tv, Clapperboard, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -365,7 +366,7 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
   };
 
   if (selectedCategory === null) {
-    return (
+    return createPortal(
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -408,12 +409,13 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
             ))}
           </div>
         </div>
-      </motion.div>
+      </motion.div>,
+      document.body
     );
   }
 
   if (selectedCategory === "actors" || selectedCategory === "directors") {
-    return (
+    return createPortal(
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -442,11 +444,12 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
           filterDepartment={selectedCategory === "actors" ? "Acting" : "Directing"}
           onBack={() => setSelectedCategory(null)}
         />
-      </motion.div>
+      </motion.div>,
+      document.body
     );
   }
 
-  return (
+  const content = (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
@@ -634,6 +637,8 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
       />
     </motion.div>
   );
+
+  return createPortal(content, document.body);
 };
 
 export default TasteTrainer;
