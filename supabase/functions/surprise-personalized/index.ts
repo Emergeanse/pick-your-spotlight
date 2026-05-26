@@ -598,13 +598,21 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
           const raw = await response.text();
           const aiData = JSON.parse(raw);
           const content = aiData?.choices?.[0]?.message?.content || "";
-          // Extract JSON object that contains "selections" key
-          const jsonMatch = content.match(/\{\s*"selections"\s*:\s*\[[\s\S]*?\]\s*\}/);
-          if (!jsonMatch) throw new Error(`No JSON in LLM response: ${content.slice(0, 300)}`);
-          // Repair common LLM JSON mistakes before parsing
-          const repaired = jsonMatch[0]
-            .replace(/\}\s*\n\s*\{/g, "},\n{")   // missing comma between objects
-            .replace(/,\s*([}\]])/g, "$1");         // trailing commas
+          // Find "selections" key then extract enclosing {} by bracket counting
+          const selectionsIdx = content.indexOf('"selections"');
+          if (selectionsIdx === -1) throw new Error(`No JSON in LLM response: ${content.slice(0, 300)}`);
+          let jsonStart = selectionsIdx;
+          while (jsonStart > 0 && content[jsonStart] !== "{") jsonStart--;
+          let depth = 0, jsonEnd = jsonStart;
+          for (let i = jsonStart; i < content.length; i++) {
+            if (content[i] === "{") depth++;
+            else if (content[i] === "}") { depth--; if (depth === 0) { jsonEnd = i; break; } }
+          }
+          const rawJson = content.slice(jsonStart, jsonEnd + 1);
+          // Repair common LLM JSON mistakes
+          const repaired = rawJson
+            .replace(/\}\s*\n\s*\{/g, "},\n{")
+            .replace(/,\s*([}\]])/g, "$1");
           const parsed = JSON.parse(repaired);
           if (parsed.selections && Array.isArray(parsed.selections)) {
             const validIds = new Set(topPool.map((c: any) => Number(c.tmdb_id)));
