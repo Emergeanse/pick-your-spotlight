@@ -32,6 +32,7 @@ import DiscoverySection from "./DiscoverySection";
 import HomeScreenChoiceModal from "./HomeScreenChoiceModal";
 import TonightPickOverlay from "./TonightPickOverlay";
 import FlipCardDetail from "./FlipCardDetail";
+import HomeAmbianceSection, { type AmbianceMood } from "./HomeAmbianceSection";
 
 interface HomeScreenProps {
   onStart: () => void;
@@ -162,6 +163,7 @@ const HomeScreen = ({
   const [showFindChoice, setShowFindChoice] = useState(false);
   const [explorationLevel] = useState<number>(5);
   const [totalEvaluated, setTotalEvaluated] = useState(0);
+  const [activeAmbiance, setActiveAmbiance] = useState<AmbianceMood | null>(null);
 
   const [chatMoviesPool, setChatMoviesPool] = useState<MovieDetail[] | null>(null);
   const [movieMatchData, setMovieMatchData] = useState<Record<number, RecommendationMatch>>({});
@@ -1069,7 +1071,21 @@ const HomeScreen = ({
           </div>
         </section>
 
-        <div className="px-5 md:px-12 pb-32 pt-2">
+        <div className="mt-6">
+          <HomeAmbianceSection
+            activeAmbiance={activeAmbiance}
+            onPickAmbiance={(mood) => {
+              setActiveAmbiance(mood);
+              if (mood === "surprise") {
+                handleAutoPick();
+              } else {
+                setShowFindChoice(true);
+              }
+            }}
+          />
+        </div>
+
+        <div className="px-5 md:px-12 pb-32 pt-8">
           <DiscoverySection
             onMovieSelect={onMovieSelect}
             platformIds={userPlatformIds}
