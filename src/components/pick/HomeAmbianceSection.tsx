@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Flame, Eye, Coffee, Heart, Shuffle, Star, ChevronRight } from "lucide-react";
+import { Flame, Eye, Coffee, Heart, Shuffle, Star, ArrowUpRight, Mic } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -22,7 +22,7 @@ type LastReco = {
   posterPath: string | null;
   mediaType: "movie" | "tv";
   itemId: string;
-  currentScore: number; // 0-5
+  currentScore: number;
 };
 
 type FriendWatching = {
@@ -40,6 +40,13 @@ interface Props {
 
 const POSTER_BASE = "https://image.tmdb.org/t/p/w342";
 
+// Unified premium surface — same family across all home cards
+const PREMIUM_SURFACE =
+  "rounded-[26px] border border-white/[0.05] bg-[linear-gradient(180deg,hsl(240_14%_9%/0.85),hsl(240_18%_5%/0.7))] backdrop-blur-2xl shadow-[0_30px_80px_-40px_rgba(0,0,0,0.95),inset_0_1px_0_rgba(255,255,255,0.04)]";
+
+const SECTION_EYEBROW =
+  "text-[10.5px] font-sans font-semibold tracking-[0.18em] uppercase text-foreground/40";
+
 const HomeAmbianceSection = ({ onPickAmbiance, activeAmbiance }: Props) => {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -50,7 +57,6 @@ const HomeAmbianceSection = ({ onPickAmbiance, activeAmbiance }: Props) => {
   const [friends, setFriends] = useState<FriendWatching[]>([]);
   const [extraFriends, setExtraFriends] = useState<number>(0);
 
-  // Fetch last recommendation (last interacted item)
   useEffect(() => {
     if (!user) return;
     let cancelled = false;
@@ -78,7 +84,6 @@ const HomeAmbianceSection = ({ onPickAmbiance, activeAmbiance }: Props) => {
     return () => { cancelled = true; };
   }, [user]);
 
-  // Fetch friends + their latest like
   useEffect(() => {
     if (!user) return;
     let cancelled = false;
@@ -97,7 +102,6 @@ const HomeAmbianceSection = ({ onPickAmbiance, activeAmbiance }: Props) => {
         .select("id, display_name, avatar_url")
         .in("id", ids);
 
-      // For each friend, get their latest liked/loved movie
       const enriched: FriendWatching[] = await Promise.all(
         (profs ?? []).slice(0, 4).map(async (p: any) => {
           const { data: fb } = await supabase
@@ -136,17 +140,17 @@ const HomeAmbianceSection = ({ onPickAmbiance, activeAmbiance }: Props) => {
   };
 
   return (
-    <div className="px-5 md:px-8 space-y-6">
+    <div className="px-5 md:px-8 space-y-8">
       {/* ─── Last Reco Rating Card ─── */}
       {lastReco && (
         <motion.div
-          initial={{ opacity: 0, y: 14 }}
+          initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1, duration: 0.55 }}
-          className="relative rounded-[28px] bg-gradient-to-br from-card/80 via-card/55 to-card/30 backdrop-blur-xl border border-white/[0.06] p-4 shadow-[0_20px_60px_-30px_rgba(0,0,0,0.9)]"
+          transition={{ delay: 0.05, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+          className={`relative ${PREMIUM_SURFACE} p-4`}
         >
-          <div className="flex gap-4 items-center">
-            <div className="relative flex-shrink-0 w-[88px] h-[124px] rounded-2xl overflow-hidden border border-white/5 shadow-[0_10px_30px_-10px_rgba(0,0,0,0.7)]">
+          <div className="flex gap-4 items-stretch">
+            <div className="relative flex-shrink-0 w-[92px] h-[136px] rounded-2xl overflow-hidden border border-white/[0.06] shadow-[0_14px_36px_-14px_rgba(0,0,0,0.8)]">
               {lastReco.posterPath ? (
                 <img
                   src={`${POSTER_BASE}${lastReco.posterPath}`}
@@ -156,34 +160,42 @@ const HomeAmbianceSection = ({ onPickAmbiance, activeAmbiance }: Props) => {
               ) : (
                 <div className="w-full h-full bg-muted" />
               )}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+              <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/70 to-transparent" />
             </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-[12px] font-sans text-primary/90 tracking-wide font-medium mb-1">
-                Note ta dernière reco de Pick
-              </p>
-              <p className="font-serif text-foreground text-[19px] leading-tight truncate">
-                {lastReco.title}
-              </p>
-              <div className="mt-3 flex items-center gap-1.5" onMouseLeave={() => setHovered(0)}>
+
+            <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
+              <div>
+                <p className={SECTION_EYEBROW}>Ta dernière séance</p>
+                <p className="mt-1 font-serif text-foreground text-[20px] leading-[1.1] tracking-tight line-clamp-2">
+                  {lastReco.title}
+                </p>
+                <p className="mt-1.5 text-[12px] font-sans text-foreground/50 leading-snug">
+                  {submitted ? "Merci — j'affine ton goût." : "Comment tu l'as vécu ?"}
+                </p>
+              </div>
+
+              <div
+                className="mt-3 flex items-center gap-1"
+                onMouseLeave={() => setHovered(0)}
+              >
                 {[1, 2, 3, 4, 5].map((n) => {
                   const filled = (hovered || rating) >= n;
                   return (
                     <motion.button
                       key={n}
                       type="button"
-                      whileTap={{ scale: 0.85 }}
-                      whileHover={{ scale: 1.12 }}
+                      whileTap={{ scale: 0.82 }}
+                      whileHover={{ scale: 1.1 }}
                       onMouseEnter={() => setHovered(n)}
                       onClick={() => handleRate(n)}
-                      className="p-0.5"
+                      className="p-0.5 -ml-0.5"
                       aria-label={`Note ${n}/5`}
                     >
                       <Star
-                        className={`w-6 h-6 transition-all ${
+                        className={`w-[22px] h-[22px] transition-all ${
                           filled
-                            ? "fill-primary text-primary drop-shadow-[0_0_8px_hsl(var(--primary)/0.6)]"
-                            : "text-primary/40"
+                            ? "fill-primary text-primary drop-shadow-[0_0_10px_hsl(var(--primary)/0.55)]"
+                            : "text-foreground/25"
                         }`}
                         strokeWidth={1.5}
                       />
@@ -191,15 +203,6 @@ const HomeAmbianceSection = ({ onPickAmbiance, activeAmbiance }: Props) => {
                   );
                 })}
               </div>
-              {submitted && (
-                <motion.p
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className="mt-2 text-[11px] text-foreground/60 font-sans"
-                >
-                  Merci, j'affine ton goût ✨
-                </motion.p>
-              )}
             </div>
           </div>
         </motion.div>
@@ -207,13 +210,16 @@ const HomeAmbianceSection = ({ onPickAmbiance, activeAmbiance }: Props) => {
 
       {/* ─── Ambiance chips ─── */}
       <motion.div
-        initial={{ opacity: 0, y: 12 }}
+        initial={{ opacity: 0, y: 14 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.18, duration: 0.5 }}
+        transition={{ delay: 0.15, duration: 0.55 }}
       >
-        <p className="text-[13px] font-sans text-foreground/70 mb-3 px-1">
-          Ou choisis ton ambiance
-        </p>
+        <div className="flex items-baseline justify-between mb-3.5 px-0.5">
+          <h3 className="font-serif text-foreground text-[17px] leading-tight">
+            Ou choisis ton ambiance
+          </h3>
+          <span className={SECTION_EYEBROW}>Filtre rapide</span>
+        </div>
         <div className="flex gap-2 overflow-x-auto -mx-5 px-5 md:mx-0 md:px-0 md:flex-wrap pb-1 scrollbar-none">
           {AMBIANCES.map(({ id, label, Icon }, i) => {
             const active = activeAmbiance === id;
@@ -223,16 +229,21 @@ const HomeAmbianceSection = ({ onPickAmbiance, activeAmbiance }: Props) => {
                 type="button"
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.22 + i * 0.04, duration: 0.35 }}
+                transition={{ delay: 0.2 + i * 0.045, duration: 0.4 }}
                 whileTap={{ scale: 0.94 }}
                 onClick={() => onPickAmbiance(id)}
-                className={`flex-shrink-0 inline-flex items-center gap-2 h-10 px-4 rounded-full font-sans text-[13px] font-medium transition-all ${
+                className={`flex-shrink-0 inline-flex items-center gap-2 h-11 px-[18px] rounded-full font-sans text-[13.5px] font-medium transition-all duration-300 ${
                   active
-                    ? "bg-primary/15 text-primary border border-primary/60 shadow-[0_0_24px_-4px_hsl(var(--primary)/0.55)]"
-                    : "bg-card/60 text-foreground/75 border border-white/[0.06] hover:bg-card/80 hover:text-foreground"
+                    ? "bg-[linear-gradient(180deg,hsl(var(--primary)/0.22),hsl(var(--primary)/0.08))] text-primary border border-primary/55 shadow-[0_0_0_4px_hsl(var(--primary)/0.08),0_8px_24px_-8px_hsl(var(--primary)/0.5)]"
+                    : "bg-white/[0.03] text-foreground/70 border border-white/[0.06] hover:bg-white/[0.06] hover:text-foreground/90"
                 }`}
               >
-                <Icon className={`w-[15px] h-[15px] ${active ? "text-primary" : "text-foreground/55"}`} strokeWidth={2} />
+                <Icon
+                  className={`w-[15px] h-[15px] transition-colors ${
+                    active ? "text-primary" : "text-foreground/45"
+                  }`}
+                  strokeWidth={2}
+                />
                 {label}
               </motion.button>
             );
@@ -242,52 +253,58 @@ const HomeAmbianceSection = ({ onPickAmbiance, activeAmbiance }: Props) => {
 
       {/* ─── Friends watching ─── */}
       {friends.length > 0 && (
-        <motion.div
-          initial={{ opacity: 0, y: 14 }}
+        <motion.section
+          initial={{ opacity: 0, y: 18 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3, duration: 0.55 }}
-          className="rounded-[28px] bg-gradient-to-br from-card/80 via-card/55 to-card/30 backdrop-blur-xl border border-white/[0.06] p-5 shadow-[0_20px_60px_-30px_rgba(0,0,0,0.9)]"
+          transition={{ delay: 0.25, duration: 0.6 }}
+          className={`relative ${PREMIUM_SURFACE} px-5 pt-5 pb-4`}
         >
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-serif text-foreground text-[18px] leading-tight">
-              Vos amis regardent
-            </h3>
+          <div className="flex items-end justify-between mb-5">
+            <div>
+              <p className={SECTION_EYEBROW}>Cercle Pick</p>
+              <h3 className="mt-1 font-serif text-foreground text-[20px] leading-tight">
+                Vos amis regardent
+              </h3>
+            </div>
             <button
               onClick={() => navigate("/app/friends")}
-              className="inline-flex items-center gap-0.5 text-[12px] font-sans text-foreground/55 hover:text-primary transition-colors"
+              className="inline-flex items-center gap-1 text-[12px] font-sans font-medium text-foreground/55 hover:text-foreground transition-colors group"
             >
-              Voir tout <ChevronRight className="w-3.5 h-3.5" />
+              Voir tout
+              <ArrowUpRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
             </button>
           </div>
-          <div className="flex gap-3 overflow-x-auto -mx-5 px-5 pb-1 scrollbar-none">
+
+          <div className="flex gap-1 overflow-x-auto -mx-5 px-5 pb-1 scrollbar-none">
             {friends.map((f, i) => (
               <motion.button
                 key={f.id}
                 type="button"
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.35 + i * 0.06, duration: 0.4 }}
-                whileTap={{ scale: 0.94 }}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.32 + i * 0.06, duration: 0.45 }}
+                whileTap={{ scale: 0.95 }}
                 onClick={() => navigate("/app/friends")}
-                className="flex-shrink-0 flex flex-col items-center w-[72px] group"
+                className="flex-shrink-0 flex flex-col items-center w-[74px] group"
               >
                 <div className="relative">
-                  <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-white/10 group-hover:border-primary/60 transition-colors bg-muted">
+                  <div className="absolute -inset-0.5 rounded-full bg-gradient-to-br from-primary/30 via-transparent to-transparent opacity-0 group-hover:opacity-100 blur transition-opacity" />
+                  <div className="relative w-[58px] h-[58px] rounded-full overflow-hidden border border-white/10 bg-muted">
                     {f.avatarUrl ? (
                       <img src={f.avatarUrl} alt={f.name} className="w-full h-full object-cover" />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center text-foreground/60 font-sans text-sm font-semibold">
+                      <div className="w-full h-full flex items-center justify-center text-foreground/60 font-serif text-base">
                         {f.name.charAt(0)}
                       </div>
                     )}
                   </div>
-                  <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-primary border-2 border-background shadow-[0_0_10px_hsl(var(--primary)/0.8)]" />
+                  <span className="absolute bottom-0.5 right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-400 border-2 border-background" />
                 </div>
-                <p className="mt-2 text-[11.5px] font-sans font-medium text-foreground/85 truncate w-full text-center">
+                <p className="mt-2.5 text-[12px] font-sans font-medium text-foreground/85 truncate w-full text-center leading-tight">
                   {f.name}
                 </p>
                 {f.title && (
-                  <p className="text-[10px] font-sans text-foreground/45 truncate w-full text-center mt-0.5">
+                  <p className="mt-0.5 text-[10.5px] font-sans text-foreground/40 truncate w-full text-center leading-tight">
                     {f.title}
                   </p>
                 )}
@@ -296,18 +313,18 @@ const HomeAmbianceSection = ({ onPickAmbiance, activeAmbiance }: Props) => {
             {extraFriends > 0 && (
               <button
                 onClick={() => navigate("/app/friends")}
-                className="flex-shrink-0 flex flex-col items-center w-[72px]"
+                className="flex-shrink-0 flex flex-col items-center w-[74px] group"
               >
-                <div className="w-14 h-14 rounded-full border-2 border-primary/30 bg-primary/10 flex items-center justify-center text-primary font-sans font-semibold text-[14px]">
+                <div className="w-[58px] h-[58px] rounded-full border border-white/[0.08] bg-white/[0.03] flex items-center justify-center text-foreground/70 font-sans font-semibold text-[14px] group-hover:border-primary/40 group-hover:text-primary transition-colors">
                   +{extraFriends}
                 </div>
-                <p className="mt-2 text-[10px] font-sans text-foreground/45 text-center leading-tight">
-                  {extraFriends} autres<br/>amis
+                <p className="mt-2.5 text-[10.5px] font-sans text-foreground/40 text-center leading-tight">
+                  autres amis
                 </p>
               </button>
             )}
           </div>
-        </motion.div>
+        </motion.section>
       )}
     </div>
   );
