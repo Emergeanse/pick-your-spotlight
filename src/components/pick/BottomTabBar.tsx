@@ -1,12 +1,38 @@
-import { Home, Bookmark, Library, User, Heart } from "lucide-react";
+import { Home, Bookmark, Library, User } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 
 export type TabId = "home" | "watchlist" | "together" | "cinema" | "profile";
 
-const tabs: { id: TabId; label: string; icon: typeof Home; path: string }[] = [
+// Custom Match icon: film reel inside a magnifying glass
+const MatchIcon = ({ className, strokeWidth = 1.7 }: { className?: string; strokeWidth?: number }) => (
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={strokeWidth}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={className}
+    aria-hidden="true"
+  >
+    {/* Reel circle */}
+    <circle cx="10.5" cy="10.5" r="6.5" />
+    {/* Center hole */}
+    <circle cx="10.5" cy="10.5" r="1" fill="currentColor" stroke="none" />
+    {/* Outer holes (top, bottom, left, right) */}
+    <circle cx="10.5" cy="7" r="0.9" fill="currentColor" stroke="none" />
+    <circle cx="10.5" cy="14" r="0.9" fill="currentColor" stroke="none" />
+    <circle cx="7" cy="10.5" r="0.9" fill="currentColor" stroke="none" />
+    <circle cx="14" cy="10.5" r="0.9" fill="currentColor" stroke="none" />
+    {/* Magnifier handle */}
+    <line x1="15.4" y1="15.4" x2="19.5" y2="19.5" />
+  </svg>
+);
+
+const tabs: { id: TabId; label: string; icon: React.ComponentType<any>; path: string }[] = [
   { id: "home", label: "Trouve-moi", icon: Home, path: "/app" },
-  { id: "together", label: "Match", icon: Heart, path: "/app/pick-together" },
+  { id: "together", label: "Match", icon: MatchIcon, path: "/app/pick-together" },
   { id: "watchlist", label: "À voir", icon: Bookmark, path: "/app/watchlist" },
   { id: "cinema", label: "Bibliothèque", icon: Library, path: "/app/my-cinema" },
   { id: "profile", label: "Profil", icon: User, path: "/app/profile" },
