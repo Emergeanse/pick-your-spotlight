@@ -163,6 +163,7 @@ const HomeScreen = ({
   const [showFindChoice, setShowFindChoice] = useState(false);
   const [explorationLevel] = useState<number>(5);
   const [totalEvaluated, setTotalEvaluated] = useState(0);
+  const [activeAmbiance, setActiveAmbiance] = useState<AmbianceMood | null>(null);
 
   const [chatMoviesPool, setChatMoviesPool] = useState<MovieDetail[] | null>(null);
   const [movieMatchData, setMovieMatchData] = useState<Record<number, RecommendationMatch>>({});
