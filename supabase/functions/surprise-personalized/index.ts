@@ -85,6 +85,8 @@ serve(async (req) => {
       voiceMediaType: rawVoiceMediaType,
       voiceMaxDuration: rawVoiceDuration,
       voiceDecade: rawVoiceDecade,
+      moodContext: rawMoodContext,
+      moodBoostGenres: rawMoodBoostGenres,
     } = await req.json();
 
     // Voice overrides: what was stated replaces profile; what wasn't keeps profile defaults
@@ -93,6 +95,10 @@ serve(async (req) => {
     const voiceMediaType: "movie" | "tv" | null = rawVoiceMediaType === "movie" || rawVoiceMediaType === "tv" ? rawVoiceMediaType : null;
     const voiceMaxDuration: number | null = typeof rawVoiceDuration === "number" && rawVoiceDuration > 0 ? rawVoiceDuration : null;
     const voiceDecade: number | null = typeof rawVoiceDecade === "number" && rawVoiceDecade >= 1900 ? rawVoiceDecade : null;
+
+    // Mood overrides: applied when user selects an ambiance chip
+    const moodContext: string | null = typeof rawMoodContext === "string" && rawMoodContext.length > 0 ? rawMoodContext : null;
+    const moodBoostGenres: string[] | null = Array.isArray(rawMoodBoostGenres) && rawMoodBoostGenres.length > 0 ? rawMoodBoostGenres : null;
 
     const requestedCount = Math.max(1, Math.min(typeof rawCount === "number" ? rawCount : 3, 20));
     const minRating = typeof rawMinRating === "number" ? Math.min(rawMinRating, 8) : 0;
@@ -194,11 +200,14 @@ serve(async (req) => {
           ]
         : [];
 
-    // Pour le SQL : uniquement les genres TMDB valides (pas les styles ni les équivalents TV anglais)
+    // Pour le SQL : genres du profil + genres mood, uniquement les genres TMDB valides
     const likedGenresForSQL =
       topGenres.length >= 2
-        ? (topGenres as string[]).filter((g) => g in genreNameToId)
-        : [];
+        ? [...new Set([
+            ...(topGenres as string[]).filter((g) => g in genreNameToId),
+            ...(moodBoostGenres ?? []).filter((g) => g in genreNameToId),
+          ])]
+        : (moodBoostGenres ?? []).filter((g) => g in genreNameToId);
 
     const hardExcludedFormats = ["Reality", "Soap", "Talk", "News", "Téléfilm", "Horreur"];
     const autoExcluded = hardExcludedFormats.filter((g) => !likedWithTv.includes(g));
@@ -267,11 +276,23 @@ serve(async (req) => {
       }
     }
 
-    // ── Langues exclues effectives : profil moins override voix ──
+    // ── Langues exclues effectives : user_preferences + tags de genre origine ──
+    // Les tags comme "Cinéma asiatique" sont stockés dans excludedGenres (pas user_preferences),
+    // donc on les traduit en codes langue pour les passer au SQL dès la récupération des 300 candidats.
+    const GENRE_TAG_LANGS: Record<string, string[]> = {
+      "Cinéma asiatique": ["ko", "ja", "zh", "th"],
+      "Cinéma Amérique du Sud": ["es", "pt"],
+      "Cinéma africain": [],
+    };
+    const genreTagExcludedLangs = effectiveExcludedGenres
+      .flatMap((g: string) => GENRE_TAG_LANGS[g] ?? []);
+
     // Si la voix demande explicitement une langue exclue dans le profil → la voix prime
-    const effectiveExcludedLangsSet = voiceOriginalLanguage
-      ? new Set([...userExcludedOriginLangs].filter((l) => l !== voiceOriginalLanguage))
-      : userExcludedOriginLangs;
+    const effectiveExcludedLangsSet = new Set([
+      ...userExcludedOriginLangs,
+      ...genreTagExcludedLangs,
+    ]);
+    if (voiceOriginalLanguage) effectiveExcludedLangsSet.delete(voiceOriginalLanguage);
     const effectiveExcludedLangsArr = [...effectiveExcludedLangsSet];
 
     // ── ÉTAPE 1 : SQL — top candidats par similarité vectorielle ──
@@ -421,14 +442,17 @@ serve(async (req) => {
       const compositeScore = (c: any) => {
         let score = (c.similarity ?? 0) * 100 + (c.vote_average ?? 0);
         if (preferredLangsBoost.size > 0 && preferredLangsBoost.has(c.original_language || "")) score += 15;
-        if (excludedLangsBoost.size > 0 && excludedLangsBoost.has(c.original_language || "")) score -= 20;
         return score;
       };
-      const topPool = [...filteredCandidates]
+      // Hard-filter: never send excluded-language candidates to the LLM
+      const originEligible = excludedLangsBoost.size > 0
+        ? filteredCandidates.filter((c: any) => !excludedLangsBoost.has(c.original_language || ""))
+        : filteredCandidates;
+      const topPool = [...originEligible]
         .sort((a, b) => compositeScore(b) - compositeScore(a))
         .slice(0, llmPoolSize);
       llmPool = topPool;
-      const targetLLMCount = topPool.length;
+      const targetLLMCount = Math.max(3, Math.round(topPool.length * 0.7));
 
       const candidateList = topPool
         .map(
@@ -467,9 +491,10 @@ serve(async (req) => {
         .join("\n");
 
       const systemPrompt = `Tu es Pick, moteur de recommandation cinéphile. Sélectionne les meilleurs films depuis une liste pré-validée.
-
+${moodContext ? `\n🎭 AMBIANCE CHOISIE : ${moodContext}\n` : ""}
 PROFIL UTILISATEUR :
 - Genres préférés : ${likedWithTv.join(", ") || "non déterminés"}
+${moodBoostGenres ? `- 🎯 Genres prioritaires (ambiance) : ${moodBoostGenres.join(", ")}` : ""}
 - Clusters favoris : ${tasteClusters.slice(0, 5).join(", ") || "non déterminés"}
 ${rejectedClusters.length > 0 ? `- ⛔ Clusters rejetés : ${rejectedClusters.join(", ")}` : ""}
 - Films aimés : ${likedTitles.join(", ") || "aucun encore"}
@@ -483,7 +508,7 @@ ${explorationNote}
 FILMS DISPONIBLES — pré-validés mathématiquement par similarité vectorielle :
 ${candidateList}
 
-MISSION : Sélectionne EXACTEMENT ${targetLLMCount} films parmi cette liste.
+MISSION : Sélectionne entre ${Math.min(5, targetLLMCount)} et ${targetLLMCount} films/séries parmi cette liste (au moins ${Math.min(5, targetLLMCount)}, idéalement ${targetLLMCount}).
 
 RÈGLES DE SÉLECTION :
 - Chaque item est clairement marqué 🎬 Film ou 📺 Série — respecte ce type dans ta réponse (ne dis pas "film" si c'est une série)

@@ -110,7 +110,7 @@ const Index = () => {
       const raw = movies as RecommendationMovieDetail[];
       if (raw.length > 0) {
         // Passer par normalizeRecommendationBatch pour le scoring movie-match + providers
-        const batch = await engine.normalizeRecommendationBatch(raw, raw.map((m) => m.id), desiredCount);
+        const batch = await engine.normalizeRecommendationBatch(raw, [], desiredCount);
         engine.openRecommendationBatch(batch.length > 0 ? batch : raw, "home", 0, undefined, desiredCount);
       } else {
         dispatch({ type: "SET_STEP_HOME" });

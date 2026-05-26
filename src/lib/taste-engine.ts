@@ -178,18 +178,18 @@ export async function computeMultiVectorProfile(
         .select("*")
         .eq("user_id", userId)
         .maybeSingle(),
-      // Explicit permanent rejections (not_for_me / dislike) — strongest avoidance signals
+      // Films fortement rejetés (score ≤ -0.6) depuis user_movie_scores
       supabase
-        .from("user_item_feedback")
-        .select("feedback_type, created_at, catalog_items:item_id(tmdb_id)")
+        .from("user_movie_scores" as any)
+        .select("movie_id, score, last_updated")
         .eq("user_id", userId)
-        .in("feedback_type", ["not_for_me", "dislike"]) as any,
+        .lte("score", -0.6) as any,
     ]);
 
     const allLiked = likedMovies || [];
     const allWatchlist = watchlistItems || [];
     const allInteractions = (interactions || []) as any[];
-    const allRejectedFeedback = ((rejectedFeedback || []) as any[]).filter(r => r?.catalog_items?.tmdb_id);
+    const allRejectedFeedback = ((rejectedFeedback || []) as any[]).filter(r => r?.movie_id);
 
     // Check if cache is fresh (fingerprint-based)
     const likedIds = allLiked.map(m => m.tmdb_id).sort().join(",");
@@ -229,7 +229,7 @@ export async function computeMultiVectorProfile(
     const avoidanceInteractions = allInteractions.filter(
       (i: any) => avoidanceActionTypes.includes(i.action_type)
     );
-    const rejectedFeedbackTmdbIds = allRejectedFeedback.map(r => r.catalog_items.tmdb_id);
+    const rejectedFeedbackTmdbIds = allRejectedFeedback.map(r => r.movie_id);
 
     const allTmdbIds = [
       ...allLiked.map(m => m.tmdb_id),
@@ -335,11 +335,12 @@ export async function computeMultiVectorProfile(
         avoidanceItems.push({ vec, weight: 1.5 * decayWeight(i.created_at, AVOIDANCE_HALF_LIFE) });
       });
 
-    // Explicit permanent rejections from user_item_feedback — strongest signals
+    // Films avec score fortement négatif dans user_movie_scores — signal d'évitement fort
     allRejectedFeedback.forEach((r: any) => {
-      const vec = embMap.get(r.catalog_items.tmdb_id);
+      const vec = embMap.get(r.movie_id);
       if (!vec) return;
-      const w = (r.feedback_type === "dislike" ? 2.0 : 1.8) * decayWeight(r.created_at, AVOIDANCE_HALF_LIFE);
+      // score est dans [-1, -0.6] → poids entre 1.2 et 2.0
+      const w = (1.0 + Math.abs(r.score)) * decayWeight(r.last_updated, AVOIDANCE_HALF_LIFE);
       avoidanceItems.push({ vec, weight: w });
     });
 

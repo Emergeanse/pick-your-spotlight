@@ -72,6 +72,50 @@ const AMBIANCES: { id: AmbianceMood; label: string; Icon: React.ComponentType<an
   { id: "surprise", label: "Surprends-moi", Icon: Shuffle },
 ];
 
+type MoodConfig = {
+  boostGenres?: string[];
+  explorationOverride?: number;
+  maxDurationOverride?: number;
+  mediaTypeOverride?: "movie" | "tv";
+  minMatchScoreOverride?: number;
+  minRatingBoost?: number;
+  moodContext?: string;
+};
+
+const MOOD_CONFIGS: Record<AmbianceMood, MoodConfig> = {
+  intense: {
+    boostGenres: ["Thriller", "Horreur", "Action", "Crime"],
+    explorationOverride: 4,
+    moodContext: "L'utilisateur veut une expérience intense, haletante, à fort suspense ou action.",
+  },
+  mysterious: {
+    boostGenres: ["Mystère", "Thriller", "Crime", "Science-Fiction"],
+    explorationOverride: 6,
+    minRatingBoost: 0.5,
+    moodContext: "L'utilisateur veut quelque chose de mystérieux, intrigant, avec une atmosphère sombre et envoûtante.",
+  },
+  comfort: {
+    boostGenres: ["Comédie", "Romance", "Animation", "Famille"],
+    explorationOverride: 5,
+    maxDurationOverride: 120,
+    minMatchScoreOverride: 65,
+    moodContext: "L'utilisateur veut se détendre — favorise les films légers, chaleureux, feel-good.",
+  },
+  couple: {
+    boostGenres: ["Romance", "Comédie", "Aventure", "Drame"],
+    mediaTypeOverride: "movie",
+    explorationOverride: 5,
+    maxDurationOverride: 150,
+    moodContext: "L'utilisateur regarde en couple — favorise les films romantiques, feel-good ou à fort impact émotionnel.",
+  },
+  surprise: {
+    explorationOverride: 9,
+    minMatchScoreOverride: 55,
+    minRatingBoost: 0.5,
+    moodContext: "L'utilisateur veut être surpris — ose des choix audacieux, inattendus, hors des sentiers battus.",
+  },
+};
+
 const extractTmdbIdsFromFeedbackRows = (rows: any[]): number[] =>
   rows.map((row) => row?.catalog_items?.tmdb_id).filter((id): id is number => typeof id === "number" && id > 0);
 
@@ -439,23 +483,35 @@ const HomeScreen = ({
           console.log("excludeIds      :", allExcludeIds.length, "IDs");
           console.groupEnd();
 
+          const moodCfg = activeAmbiance ? MOOD_CONFIGS[activeAmbiance] : null;
+          const effectiveTopGenres = moodCfg?.boostGenres
+            ? [...new Set([...(moodCfg.boostGenres), ...(tasteProfile?.topGenres || [])])]
+            : tasteProfile?.topGenres;
+          const effectiveExplorationLevel = moodCfg?.explorationOverride ?? explorationLevel;
+          const effectiveMaxDuration = moodCfg?.maxDurationOverride ?? quickFilters.maxDuration;
+          const effectiveMediaType = moodCfg?.mediaTypeOverride ?? (quickFilters.mediaType !== "both" ? quickFilters.mediaType : "both");
+          const effectiveMinMatchScore = moodCfg?.minMatchScoreOverride ?? quickFilters.matchThreshold;
+          const effectiveMinRating = moodCfg?.minRatingBoost ? (userMinRating ?? 0) + moodCfg.minRatingBoost : userMinRating;
+
           const data = await invokeSurprisePersonalized({
             likedMovies: liked,
             userTasteVector,
-            tasteProfile,
+            tasteProfile: { ...tasteProfile, topGenres: effectiveTopGenres },
             recentTasteVector: multiProfile?.recentTasteVector || null,
             avoidanceVector: multiProfile?.avoidanceVector || null,
             platformIds: userPlatformIds,
             excludedPlatformIds: userExcludedPlatformIds,
             excludedGenres: userExcludedGenres,
-            minRating: userMinRating,
+            minRating: effectiveMinRating,
             excludeIds: allExcludeIds,
             rejectionContext,
-            explorationLevel,
-            mediaType: quickFilters.mediaType !== "both" ? quickFilters.mediaType : "both",
-            maxDuration: quickFilters.maxDuration,
+            explorationLevel: effectiveExplorationLevel,
+            mediaType: effectiveMediaType,
+            maxDuration: effectiveMaxDuration,
             count: (quickFilters.recommendationCount || RECOMMENDATION_BATCH_SIZE) * 3,
-            minMatchScore: quickFilters.matchThreshold,
+            minMatchScore: effectiveMinMatchScore,
+            ...(moodCfg?.moodContext && { moodContext: moodCfg.moodContext }),
+            ...(moodCfg?.boostGenres && { moodBoostGenres: moodCfg.boostGenres }),
           });
           engineMetaResult = data?.engineMeta ?? null;
           const dbg = data?.debugData;
