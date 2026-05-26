@@ -129,7 +129,7 @@ const HomeAmbianceSection = ({ onPickAmbiance, activeAmbiance }: Props) => {
     setSubmitted(true);
     try {
       const type = n >= 4 ? "love" : n >= 3 ? "like" : n >= 2 ? "seen" : "not_for_me";
-      await setFeedback(lastReco.tmdbId, type as any, lastReco.mediaType, { score: n });
+      await setFeedback(lastReco.tmdbId, type as any, { media_type: lastReco.mediaType }, { score: n });
     } catch (e) {
       console.error("[rate]", e);
     }
