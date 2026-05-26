@@ -910,21 +910,14 @@ const HomeScreen = ({
         }
       />
 
-      {bgImages.map((bg, i) => (
-        <motion.div
-          key={bg}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: i === currentBgIndex ? 1 : 0 }}
-          transition={{ duration: 1.5, ease: "easeInOut" }}
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-          style={{ backgroundImage: `url(${bg})` }}
-        />
-      ))}
+      <div
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+        style={{ backgroundImage: `url(${homeBackground})` }}
+      />
 
       {/* Midnight Curator: cinematic fade — backdrop kept atmospheric, never noisy */}
-      <div className="absolute inset-0 bg-gradient-to-b from-background/30 via-background/70 to-background" />
-      <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
-      <div className="absolute inset-0 bg-background/40" />
+      <div className="absolute inset-0 bg-gradient-to-b from-background/10 via-background/40 to-background" />
+      <div className="absolute inset-0 bg-background/20" />
 
       <div className="relative z-10 h-full overflow-y-auto overscroll-y-contain touch-pan-y">
         {/* ─── Cinematic Hero ─── */}
