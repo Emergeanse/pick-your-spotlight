@@ -990,7 +990,7 @@ const HomeScreen = ({
               <img
                 src={pickDefault}
                 alt="Pick"
-                className="w-5 h-5 object-contain drop-shadow-sm"
+                className="w-7 h-7 object-contain drop-shadow-sm"
               />
             </span>
           </motion.p>
