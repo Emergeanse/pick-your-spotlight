@@ -495,7 +495,6 @@ serve(async (req) => {
         .sort((a, b) => compositeScore(b) - compositeScore(a))
         .slice(0, llmPoolSize);
       llmPool = topPool;
-      const targetLLMCount = Math.max(3, Math.round(topPool.length * 0.7));
 
       const candidateList = topPool
         .map(
@@ -552,19 +551,20 @@ ${explorationNote}
 FILMS DISPONIBLES — pré-validés mathématiquement par similarité vectorielle :
 ${candidateList}
 
-MISSION : Sélectionne entre ${Math.min(5, targetLLMCount)} et ${targetLLMCount} films/séries parmi cette liste. Tu DOIS en sélectionner au moins ${Math.min(5, targetLLMCount)} — même si les scores sont modestes.
+MISSION : Sélectionne exactement 5 films/séries depuis cette liste — les 5 qui correspondent le mieux au profil. Nous garderons les 3 meilleurs.
 
 RÈGLES DE SÉLECTION :
-- Chaque item est clairement marqué 🎬 Film ou 📺 Série — respecte ce type dans ta réponse (ne dis pas "film" si c'est une série)
-- Diversifie les genres entre les sélections
+- Tu DOIS retourner exactement 5 entrées, pas moins. Classe-les du meilleur au moins bon.
+- Chaque item est clairement marqué 🎬 Film ou 📺 Série — respecte ce type dans ta réponse
+- Diversifie les genres entre les 5 sélections
 - Priorise les films bien notés (⭐7+) si le profil matche
 - Évite 2 films de la même franchise ou très similaires
 - Respecte absolument les genres exclus, origines exclues et clusters rejetés
 
 SCORING (matchScore) :
 - Base : 75%. Hausse si genre favori / note 8+. Baisse si cluster rejeté / note <6.
-- Donne des scores honnêtes — un film moyen doit avoir un score moyen (60-70).
-- Seuil indicatif : ${minMatchScore}. Priorise les films au-dessus, mais inclus toujours au moins ${Math.min(5, targetLLMCount)} films même en dessous si nécessaire.
+- Donne des scores honnêtes — les 5 films ont des scores différents reflétant leur rang.
+- Pas de seuil bloquant : classe les 5 meilleurs même si certains sont à 60%.
 
 Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
 {
@@ -585,7 +585,7 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
           max_tokens: 4000,
           messages: [
             { role: "system", content: systemPrompt },
-            { role: "user", content: `Sélectionne ${targetLLMCount} films.` },
+            { role: "user", content: `Sélectionne exactement 5 films parmi la liste, du meilleur au moins bon.` },
           ],
         });
         const llmEndpoint = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
@@ -595,7 +595,7 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
           max_tokens: 4000,
           messages: [
             { role: "system", content: systemPrompt },
-            { role: "user", content: `Sélectionne ${targetLLMCount} films.` },
+            { role: "user", content: `Sélectionne exactement 5 films parmi la liste, du meilleur au moins bon.` },
           ],
         });
 
@@ -662,12 +662,14 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
             }
           }
 
-          // Strategy 2: regex — extract tmdb_id + matchScore pairs, bypasses all JSON issues
+          // Strategy 2: regex — extract tmdb_id + matchScore + reason, bypasses all JSON issues
           if (!parsed) {
             const sels: any[] = [];
-            const re = /"tmdb_id"\s*:\s*(\d+)[\s\S]*?"matchScore"\s*:\s*(\d+)/g;
+            const re = /"tmdb_id"\s*:\s*(\d+)[^}]*?"matchScore"\s*:\s*(\d+)[^}]*?(?:"reason"\s*:\s*"([^"]*)")?/g;
             let m;
-            while ((m = re.exec(content)) !== null) sels.push({ tmdb_id: Number(m[1]), matchScore: Number(m[2]) });
+            while ((m = re.exec(content)) !== null) {
+              sels.push({ tmdb_id: Number(m[1]), matchScore: Number(m[2]), reason: m[3] || undefined });
+            }
             if (sels.length > 0) { parsed = { selections: sels }; console.log(`[SP] Strategy 2 (regex) extracted ${sels.length} sel`); }
           }
 
