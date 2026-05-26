@@ -264,16 +264,17 @@ const HomeAmbianceSection = ({ onPickAmbiance, activeAmbiance }: Props) => {
             {extraFriends > 0 && (
               <button
                 onClick={() => navigate("/app/friends")}
-                className="flex-shrink-0 flex flex-col items-center w-[74px] group"
+                className="flex-shrink-0 flex flex-col items-center w-[54px] group"
               >
-                <div className="w-[58px] h-[58px] rounded-full border border-white/[0.08] bg-white/[0.03] flex items-center justify-center text-foreground/70 font-sans font-semibold text-[14px] group-hover:border-primary/40 group-hover:text-primary transition-colors">
+                <div className="w-[40px] h-[40px] rounded-full border border-white/[0.08] bg-white/[0.03] flex items-center justify-center text-foreground/70 font-sans font-semibold text-[11px] group-hover:border-primary/40 group-hover:text-primary transition-colors">
                   +{extraFriends}
                 </div>
-                <p className="mt-2.5 text-[10.5px] font-sans text-foreground/40 text-center leading-tight">
+                <p className="mt-1 text-[9px] font-sans text-foreground/40 text-center leading-tight">
                   autres amis
                 </p>
               </button>
             )}
+
           </div>
         </motion.section>
       )}
