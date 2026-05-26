@@ -216,6 +216,32 @@ const HomeScreenChoiceModal = ({
                 </div>
               </div>
             </motion.button>
+
+            {/* TERTIARY — plan for later */}
+            <motion.button
+              initial={{ opacity: 0, y: 14 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.6, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+              whileHover={{ y: -1 }}
+              whileTap={{ scale: 0.985 }}
+              onClick={() => {
+                onClose();
+                navigate("/app/plan");
+              }}
+              className="group relative w-full text-left rounded-[20px] px-5 py-3.5 bg-white/[0.02] hover:bg-white/[0.04] border border-white/[0.05] hover:border-white/[0.1] transition-all flex items-center gap-3.5"
+            >
+              <div className="w-9 h-9 rounded-xl bg-white/[0.04] border border-white/[0.07] flex items-center justify-center shrink-0">
+                <CalendarClock className="w-[16px] h-[16px] text-foreground/65" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h4 className="font-sans text-[13.5px] font-medium text-foreground/85 tracking-tight">
+                  Planifier pour plus tard
+                </h4>
+                <p className="text-foreground/40 text-[11.5px] font-sans mt-0.5">
+                  Choisis une date, je m'occupe du reste.
+                </p>
+              </div>
+            </motion.button>
           </motion.div>
         </motion.div>
       )}
