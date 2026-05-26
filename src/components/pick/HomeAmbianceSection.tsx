@@ -1,20 +1,12 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Flame, Eye, Coffee, Heart, Shuffle, Star, ArrowUpRight } from "lucide-react";
+import { Star, ArrowUpRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { setFeedback } from "@/lib/feedback";
 
 export type AmbianceMood = "intense" | "mysterious" | "comfort" | "couple" | "surprise";
-
-const AMBIANCES: { id: AmbianceMood; label: string; Icon: typeof Flame }[] = [
-  { id: "intense", label: "Intense", Icon: Flame },
-  { id: "mysterious", label: "Mystérieux", Icon: Eye },
-  { id: "comfort", label: "Réconfortant", Icon: Coffee },
-  { id: "couple", label: "À deux", Icon: Heart },
-  { id: "surprise", label: "Surprends-moi", Icon: Shuffle },
-];
 
 type LastReco = {
   tmdbId: number;
@@ -207,49 +199,6 @@ const HomeAmbianceSection = ({ onPickAmbiance, activeAmbiance }: Props) => {
           </div>
         </motion.div>
       )}
-
-      {/* ─── Ambiance chips ─── */}
-      <motion.div
-        initial={{ opacity: 0, y: 14 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.15, duration: 0.55 }}
-      >
-        <div className="flex items-baseline justify-between mb-3.5 px-0.5">
-          <h3 className="font-serif text-foreground text-[17px] leading-tight">
-            Ou choisis ton ambiance
-          </h3>
-          <span className={SECTION_EYEBROW}>Filtre rapide</span>
-        </div>
-        <div className="flex gap-2 overflow-x-auto -mx-5 px-5 md:mx-0 md:px-0 md:flex-wrap pb-1 scrollbar-none">
-          {AMBIANCES.map(({ id, label, Icon }, i) => {
-            const active = activeAmbiance === id;
-            return (
-              <motion.button
-                key={id}
-                type="button"
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 + i * 0.045, duration: 0.4 }}
-                whileTap={{ scale: 0.94 }}
-                onClick={() => onPickAmbiance(id)}
-                className={`flex-shrink-0 inline-flex items-center gap-2 h-11 px-[18px] rounded-full font-sans text-[13.5px] font-medium transition-all duration-300 ${
-                  active
-                    ? "bg-[linear-gradient(180deg,hsl(var(--primary)/0.22),hsl(var(--primary)/0.08))] text-primary border border-primary/55 shadow-[0_0_0_4px_hsl(var(--primary)/0.08),0_8px_24px_-8px_hsl(var(--primary)/0.5)]"
-                    : "bg-white/[0.03] text-foreground/70 border border-white/[0.06] hover:bg-white/[0.06] hover:text-foreground/90"
-                }`}
-              >
-                <Icon
-                  className={`w-[15px] h-[15px] transition-colors ${
-                    active ? "text-primary" : "text-foreground/45"
-                  }`}
-                  strokeWidth={2}
-                />
-                {label}
-              </motion.button>
-            );
-          })}
-        </div>
-      </motion.div>
 
       {/* ─── Friends watching ─── */}
       {friends.length > 0 && (
