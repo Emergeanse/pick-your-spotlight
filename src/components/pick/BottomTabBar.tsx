@@ -30,7 +30,7 @@ const MatchIcon = ({ className, strokeWidth = 1.7 }: { className?: string; strok
   </svg>
 );
 
-const tabs: { id: TabId; label: string; icon: React.ComponentType<{ className?: string; strokeWidth?: number }>; path: string }[] = [
+const tabs: { id: TabId; label: string; icon: React.ComponentType<any>; path: string }[] = [
   { id: "home", label: "Trouve-moi", icon: Home, path: "/app" },
   { id: "together", label: "Match", icon: MatchIcon, path: "/app/pick-together" },
   { id: "watchlist", label: "À voir", icon: Bookmark, path: "/app/watchlist" },
