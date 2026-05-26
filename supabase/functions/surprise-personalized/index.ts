@@ -608,9 +608,13 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
           const raw = await response.text();
           const aiData = JSON.parse(raw);
           const rawContent = aiData?.choices?.[0]?.message?.content || "";
-          console.log(`[SP] LLM rawContent (first 300): ${rawContent.slice(0, 300)}`);
-          // Strip markdown code fences (all occurrences)
-          const content = rawContent.replace(/```(?:json)?\s*/g, "").trim();
+          console.log(`[SP] LLM rawContent (first 400): ${rawContent.slice(0, 400)}`);
+          // Strip <thinking> blocks (Gemini 2.5 Flash includes them inline)
+          // then strip markdown code fences
+          const content = rawContent
+            .replace(/<thinking>[\s\S]*?<\/thinking>/gi, "")
+            .replace(/```(?:json)?\s*/g, "")
+            .trim();
 
           // Helper: bracket-count from a given start index to find matching }
           const bracketCount = (src: string, start: number): number => {
@@ -622,9 +626,10 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
             return end;
           };
 
-          // Strategy 1: find "selections": then scan backward for the wrapping {
+          // Strategy 1: find LAST "selections": (real JSON is always at the end)
+          // then scan backward for the wrapping {
           let rawJson = "";
-          const selectionsIdx = content.indexOf('"selections":');
+          const selectionsIdx = content.lastIndexOf('"selections":');
           if (selectionsIdx !== -1) {
             let jsonStart = selectionsIdx;
             while (jsonStart > 0 && content[jsonStart] !== "{") jsonStart--;
@@ -634,12 +639,12 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
             }
           }
 
-          // Strategy 2 fallback: first { to its matching } in the whole content
+          // Strategy 2 fallback: last { before "selections" to its matching }
           if (!rawJson || !rawJson.includes('"selections"')) {
-            const firstBrace = content.indexOf("{");
-            if (firstBrace >= 0) {
-              const jsonEnd = bracketCount(content, firstBrace);
-              rawJson = content.slice(firstBrace, jsonEnd + 1);
+            const lastBrace = content.lastIndexOf("{");
+            if (lastBrace >= 0) {
+              const jsonEnd = bracketCount(content, lastBrace);
+              rawJson = content.slice(lastBrace, jsonEnd + 1);
             }
           }
 
