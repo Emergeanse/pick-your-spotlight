@@ -1106,7 +1106,7 @@ const HomeScreen = ({
 
         </section>
 
-        <div className="mt-4">
+        <div className="mt-2">
           <HomeAmbianceSection
             activeAmbiance={activeAmbiance}
             onPickAmbiance={(mood) => {
@@ -1120,7 +1120,7 @@ const HomeScreen = ({
           />
         </div>
 
-        <div className="px-5 md:px-12 pb-32 pt-8">
+        <div className="px-5 md:px-12 pb-32 pt-4">
           <DiscoverySection
             onMovieSelect={onMovieSelect}
             platformIds={userPlatformIds}
