@@ -597,10 +597,12 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
         if (response.ok) {
           const raw = await response.text();
           const aiData = JSON.parse(raw);
-          const content = aiData?.choices?.[0]?.message?.content || "";
+          const rawContent = aiData?.choices?.[0]?.message?.content || "";
+          // Strip markdown code fences if present (model ignores "no backticks" instruction)
+          const content = rawContent.replace(/^```(?:json)?\s*/m, "").replace(/```\s*$/m, "").trim();
           // Find "selections" key then extract enclosing {} by bracket counting
           const selectionsIdx = content.indexOf('"selections"');
-          if (selectionsIdx === -1) throw new Error(`No JSON in LLM response: ${content.slice(0, 300)}`);
+          if (selectionsIdx === -1) throw new Error(`No JSON in LLM response: ${rawContent.slice(0, 300)}`);
           let jsonStart = selectionsIdx;
           while (jsonStart > 0 && content[jsonStart] !== "{") jsonStart--;
           let depth = 0, jsonEnd = jsonStart;
