@@ -1,8 +1,12 @@
 import { motion } from "framer-motion";
-import { ArrowLeft, Users } from "lucide-react";
+import { ArrowLeft, Users, Crown, Star } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { ReactNode, useEffect, useState } from "react";
 import NotificationBell from "./NotificationBell";
-import { ReactNode } from "react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useAuth } from "@/hooks/use-auth";
+import { usePickPlus } from "@/hooks/use-pick-plus";
+import { supabase } from "@/integrations/supabase/client";
 
 interface BrandHeaderProps {
   showBack?: boolean;
@@ -12,28 +16,87 @@ interface BrandHeaderProps {
 
 const BrandHeader = ({ showBack, onBack, extraActions }: BrandHeaderProps) => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const { isPremium } = usePickPlus();
+  const [displayName, setDisplayName] = useState<string>("");
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [interactionCount, setInteractionCount] = useState<number>(0);
+
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+    (async () => {
+      const [{ data: profile }, { count }] = await Promise.all([
+        supabase.from("profiles").select("display_name, avatar_url").eq("id", user.id).maybeSingle(),
+        supabase
+          .from("user_item_feedback")
+          .select("*", { count: "exact", head: true })
+          .eq("user_id", user.id),
+      ]);
+      if (cancelled) return;
+      const name = (profile as any)?.display_name || user.email?.split("@")[0] || "Toi";
+      setDisplayName(name.split(" ")[0]);
+      setAvatarUrl((profile as any)?.avatar_url || null);
+      setInteractionCount(count || 0);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
+
+  const initials = (displayName || "?").slice(0, 1).toUpperCase();
 
   return (
     <motion.div
       initial={{ opacity: 0, y: -8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay: 0.1 }}
-      className="absolute top-0 left-0 right-0 z-30 p-3 pt-[calc(0.75rem+env(safe-area-inset-top))] md:p-6 flex items-center justify-between"
+      className="absolute top-0 left-0 right-0 z-30 p-3 pt-[calc(0.75rem+env(safe-area-inset-top))] md:p-6 flex items-center justify-between gap-2"
     >
       {showBack ? (
         <button
           onClick={onBack}
-          className="flex items-center gap-1.5 md:gap-2 text-foreground/60 hover:text-foreground transition-colors cursor-pointer group"
+          className="flex items-center gap-2 text-foreground/60 hover:text-foreground transition-colors cursor-pointer group"
         >
-          <ArrowLeft className="w-3.5 h-3.5 md:w-4 md:h-4 group-hover:-translate-x-0.5 transition-transform" />
-          <span className="font-serif text-base md:text-lg tracking-wide">Pick</span>
+          <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
+          <span className="font-serif text-xl md:text-2xl tracking-wide">Pick</span>
         </button>
       ) : (
-        <div className="flex items-center gap-1.5 md:gap-2">
-          <span className="font-serif text-lg md:text-xl tracking-wide text-foreground/80">
+        <button
+          onClick={() => navigate("/app/profile")}
+          className="flex items-center gap-2.5 min-w-0 group active:scale-[0.98] transition-transform"
+        >
+          <span className="font-serif text-2xl md:text-3xl tracking-wide text-foreground leading-none">
             Pick
           </span>
-        </div>
+
+          <span className="h-6 w-px bg-foreground/15" aria-hidden />
+
+          <div className="relative shrink-0">
+            <Avatar className="h-8 w-8 ring-1 ring-white/15">
+              {avatarUrl && <AvatarImage src={avatarUrl} alt={displayName} />}
+              <AvatarFallback className="bg-primary/20 text-foreground text-[11px] font-medium">
+                {initials}
+              </AvatarFallback>
+            </Avatar>
+            {isPremium && (
+              <span className="absolute -top-1 -right-1 flex items-center justify-center h-3.5 w-3.5 rounded-full bg-gradient-to-br from-amber-300 to-amber-500 shadow-[0_0_8px_-1px_rgba(251,191,36,0.7)] ring-[1.5px] ring-background">
+                <Crown className="h-2 w-2 text-background" strokeWidth={3} />
+              </span>
+            )}
+          </div>
+
+          <div className="flex flex-col items-start min-w-0 leading-tight">
+            <span className="text-[13px] font-medium text-foreground/90 truncate max-w-[110px]">
+              {displayName || "…"}
+            </span>
+            <span className="flex items-center gap-1 text-[11px] text-foreground/55">
+              <Star className="h-2.5 w-2.5 fill-amber-400 text-amber-400" />
+              <span className="tabular-nums">{interactionCount}</span>
+              <span>films</span>
+            </span>
+          </div>
+        </button>
       )}
 
       <div className="flex items-center gap-1">
