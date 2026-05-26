@@ -997,9 +997,9 @@ const HomeScreen = ({
               whileTap={{ scale: 0.97 }}
               onClick={() => setShowFindChoice(true)}
               disabled={loading}
-              className="fab-pulse inline-flex items-center justify-center gap-2.5 w-full max-w-[320px] py-[18px] px-7 rounded-full bg-gradient-to-b from-primary to-accent text-primary-foreground font-sans font-semibold text-[15px] tracking-wide shadow-[0_18px_50px_-12px_hsl(var(--primary)/0.6)] hover:shadow-[0_22px_60px_-10px_hsl(var(--primary)/0.75)] transition-shadow disabled:opacity-50"
+              className="fab-pulse inline-flex items-center justify-center gap-2.5 w-full max-w-[340px] py-[21px] px-7 rounded-full bg-gradient-to-b from-primary to-accent text-primary-foreground font-sans font-semibold text-[16.5px] tracking-wide shadow-[0_20px_55px_-12px_hsl(var(--primary)/0.65)] hover:shadow-[0_24px_65px_-10px_hsl(var(--primary)/0.8)] transition-shadow disabled:opacity-50"
             >
-              <Sparkles className="w-4 h-4" />
+              <Sparkles className="w-[18px] h-[18px]" />
               Trouve-moi 1 film
             </motion.button>
           </motion.div>
