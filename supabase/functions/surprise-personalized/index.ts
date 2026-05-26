@@ -618,54 +618,42 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
           const aiData = JSON.parse(raw);
           const rawContent = aiData?.choices?.[0]?.message?.content || "";
           console.log(`[SP] LLM rawContent (first 400): ${rawContent.slice(0, 400)}`);
-          // Strip <thinking> blocks (Gemini 2.5 Flash includes them inline)
-          // then strip markdown code fences
+
+          // Clean: strip thinking tags and markdown fences
           const content = rawContent
             .replace(/<thinking>[\s\S]*?<\/thinking>/gi, "")
             .replace(/```(?:json)?\s*/g, "")
             .trim();
 
-          // Helper: bracket-count from a given start index to find matching }
-          const bracketCount = (src: string, start: number): number => {
-            let d = 0, end = start;
-            for (let i = start; i < src.length; i++) {
-              if (src[i] === "{") d++;
-              else if (src[i] === "}") { d--; if (d === 0) { end = i; break; } }
-            }
-            return end;
-          };
+          // Repair helper: fix common LLM JSON mistakes
+          const repair = (s: string) => s
+            .replace(/^﻿/, "")
+            .replace(/\}\s*\n\s*\{/g, "},\n{")
+            .replace(/,\s*([}\]])/g, "$1");
 
-          // Strategy 1: find LAST "selections": (real JSON is always at the end)
-          // then scan backward for the wrapping {
-          let rawJson = "";
-          const selectionsIdx = content.lastIndexOf('"selections":');
-          if (selectionsIdx !== -1) {
-            let jsonStart = selectionsIdx;
-            while (jsonStart > 0 && content[jsonStart] !== "{") jsonStart--;
-            if (content[jsonStart] === "{") {
-              const jsonEnd = bracketCount(content, jsonStart);
-              rawJson = content.slice(jsonStart, jsonEnd + 1);
+          // Brute-force: scan every { in content, try to parse it, return the first
+          // object that contains a valid "selections" array
+          let parsed: any = null;
+          for (let i = 0; i < content.length && !parsed; i++) {
+            if (content[i] !== "{") continue;
+            // bracket-count to find matching }
+            let d = 0, end = i;
+            for (let j = i; j < content.length; j++) {
+              if (content[j] === "{") d++;
+              else if (content[j] === "}") { d--; if (d === 0) { end = j; break; } }
             }
+            if (end === i) continue; // no matching } found
+            try {
+              const candidate = repair(content.slice(i, end + 1));
+              const obj = JSON.parse(candidate);
+              if (obj?.selections && Array.isArray(obj.selections) && obj.selections.length > 0) {
+                parsed = obj;
+                console.log(`[SP] JSON found at offset ${i}, ${obj.selections.length} selections`);
+              }
+            } catch { /* try next { */ }
+            i = end; // skip to end of this block
           }
-
-          // Strategy 2 fallback: last { before "selections" to its matching }
-          if (!rawJson || !rawJson.includes('"selections"')) {
-            const lastBrace = content.lastIndexOf("{");
-            if (lastBrace >= 0) {
-              const jsonEnd = bracketCount(content, lastBrace);
-              rawJson = content.slice(lastBrace, jsonEnd + 1);
-            }
-          }
-
-          if (!rawJson) throw new Error(`No JSON found in LLM response: ${rawContent.slice(0, 300)}`);
-
-          // Repair common LLM JSON mistakes
-          const repaired = rawJson
-            .replace(/^﻿/, "")                        // BOM
-            .replace(/\}\s*\n\s*\{/g, "},\n{")        // missing comma between objects
-            .replace(/,\s*([}\]])/g, "$1");            // trailing commas
-          console.log(`[SP] repaired preview: ${repaired.slice(0, 120)}`);
-          const parsed = JSON.parse(repaired);
+          if (!parsed) throw new Error(`No valid selections JSON in LLM response: ${rawContent.slice(0, 300)}`);
           if (parsed.selections && Array.isArray(parsed.selections)) {
             const validIds = new Set(topPool.map((c: any) => Number(c.tmdb_id)));
             const idValid = parsed.selections.filter((s: any) => s.tmdb_id && validIds.has(Number(s.tmdb_id)));
