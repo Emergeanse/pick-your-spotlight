@@ -431,6 +431,48 @@ serve(async (req) => {
       ...userExcludedOriginLangs,
     ]);
 
+    // ── ÉTAPE 1.7 : Enrichissement langue TMDB pour les candidats avec original_language=null ──
+    // Les embeddings créés avant l'ajout de la colonne original_language ont null en base.
+    // Sans cette donnée, le filtre d'exclusion d'origine (asiatique, latino...) est aveugle.
+    if (excludedLangsBoost.size > 0 && filteredCandidates.length > 0) {
+      const nullLangCandidates = filteredCandidates
+        .filter((c: any) => !c.original_language)
+        .slice(0, 60);
+      if (nullLangCandidates.length > 0) {
+        console.log(`[SP] Enrichissement langue TMDB: ${nullLangCandidates.length} candidats sans original_language`);
+        const enriched = await Promise.all(
+          nullLangCandidates.map(async (c: any) => {
+            try {
+              const type = c.media_type === "tv" ? "tv" : "movie";
+              const res = await fetch(
+                `https://api.themoviedb.org/3/${type}/${c.tmdb_id}?api_key=${TMDB_API_KEY}&language=fr-FR`,
+              );
+              if (res.ok) {
+                const tmdbData = await res.json();
+                const lang = (tmdbData.original_language as string) || null;
+                if (lang) {
+                  // Backfill DB en tâche de fond
+                  fireEmbedding({
+                    id: c.tmdb_id,
+                    title: c.title,
+                    overview: "",
+                    genres: (c.genres || []).map((g: string) => ({ name: g })),
+                    original_language: lang,
+                  });
+                }
+                return { ...c, original_language: lang };
+              }
+            } catch { /* ignore */ }
+            return c;
+          }),
+        );
+        const enrichedMap = new Map(enriched.map((c: any) => [c.tmdb_id, c]));
+        filteredCandidates = filteredCandidates.map((c: any) => enrichedMap.get(c.tmdb_id) ?? c);
+        const enrichedCount = enriched.filter((c: any) => c.original_language).length;
+        console.log(`[SP] Enrichissement: ${enrichedCount}/${nullLangCandidates.length} langues récupérées`);
+      }
+    }
+
     // ── ÉTAPE 2 : LLM — sélection + scoring ──
     let llmSelections: any[] = [];
     let llmFilteredAll = false;
