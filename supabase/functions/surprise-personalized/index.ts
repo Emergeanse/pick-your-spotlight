@@ -552,7 +552,7 @@ ${explorationNote}
 FILMS DISPONIBLES — pré-validés mathématiquement par similarité vectorielle :
 ${candidateList}
 
-MISSION : Sélectionne entre ${Math.min(5, targetLLMCount)} et ${targetLLMCount} films/séries parmi cette liste (au moins ${Math.min(5, targetLLMCount)}, idéalement ${targetLLMCount}).
+MISSION : Sélectionne entre ${Math.min(5, targetLLMCount)} et ${targetLLMCount} films/séries parmi cette liste. Tu DOIS en sélectionner au moins ${Math.min(5, targetLLMCount)} — même si les scores sont modestes.
 
 RÈGLES DE SÉLECTION :
 - Chaque item est clairement marqué 🎬 Film ou 📺 Série — respecte ce type dans ta réponse (ne dis pas "film" si c'est une série)
@@ -562,10 +562,9 @@ RÈGLES DE SÉLECTION :
 - Respecte absolument les genres exclus, origines exclues et clusters rejetés
 
 SCORING (matchScore) :
-- Seuil minimum utilisateur : ${minMatchScore}. N'inclus AUCUN film avec matchScore < ${minMatchScore}.
 - Base : 75%. Hausse si genre favori / note 8+. Baisse si cluster rejeté / note <6.
-- Donne uniquement des scores honnêtes — un film moyen doit avoir un score moyen.
-- Si aucun film de la liste n'atteint ${minMatchScore}, sélectionne les meilleurs disponibles mais indique des scores réalistes.
+- Donne des scores honnêtes — un film moyen doit avoir un score moyen (60-70).
+- Seuil indicatif : ${minMatchScore}. Priorise les films au-dessus, mais inclus toujours au moins ${Math.min(5, targetLLMCount)} films même en dessous si nécessaire.
 
 Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
 {
@@ -676,9 +675,10 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
           if (parsed.selections && Array.isArray(parsed.selections)) {
             const validIds = new Set(topPool.map((c: any) => Number(c.tmdb_id)));
             const idValid = parsed.selections.filter((s: any) => s.tmdb_id && validIds.has(Number(s.tmdb_id)));
-            // Filtre post-LLM : on accepte jusqu'à 5pts en-dessous du seuil pour éviter les 0 résultats
-            const scoreFiltered = idValid.filter((s: any) => (s.matchScore || 0) >= minMatchScore - 5);
-            llmSelections = (scoreFiltered.length > 0 ? scoreFiltered : idValid)
+            // On garde toutes les sélections LLM — le LLM a déjà appliqué son jugement.
+            // Trier par score décroissant pour que les meilleurs passent en premier.
+            llmSelections = idValid
+              .sort((a: any, b: any) => (b.matchScore || 0) - (a.matchScore || 0))
               .map((s: any) => ({ ...s, tmdb_id: Number(s.tmdb_id) }));
             console.log(
               `[SP] LLM raw selections: ${parsed.selections.length}, valid: ${llmSelections.length}, minMatchScore (used by movie-match): ${minMatchScore}`,
