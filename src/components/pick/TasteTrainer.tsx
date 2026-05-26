@@ -370,7 +370,7 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-[100] flex flex-col overflow-y-auto overscroll-contain bg-background"
+        className="fixed inset-0 z-[100] flex flex-col overflow-hidden bg-background"
         style={{ minHeight: "100dvh" }}
       >
         <div className="relative z-10 flex items-center justify-between px-4 pt-[calc(0.75rem+env(safe-area-inset-top))] pb-1">
@@ -418,7 +418,7 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-[100] flex flex-col overflow-y-auto overscroll-contain bg-background"
+        className="fixed inset-0 z-[100] flex flex-col overflow-hidden bg-background"
         style={{ minHeight: "100dvh" }}
       >
         <div className="relative z-10 flex items-center justify-between px-4 pt-[calc(0.75rem+env(safe-area-inset-top))] pb-1">
@@ -451,8 +451,8 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[100] flex flex-col overflow-y-auto overscroll-contain bg-background"
-      style={{ minHeight: "100dvh" }}
+      className="fixed inset-0 z-[100] flex flex-col overflow-hidden bg-background"
+      style={{ height: "100dvh" }}
     >
       <div className="relative z-10 flex items-center justify-between px-4 pt-[calc(0.75rem+env(safe-area-inset-top))] pb-1">
         <button
@@ -506,7 +506,7 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
         </AnimatePresence>
       </div>
 
-      <div className="relative z-10 flex min-h-0 flex-1 items-center justify-center px-4 py-3">
+      <div className="relative z-10 flex min-h-0 flex-1 items-center justify-center overflow-y-auto px-4 py-3">
         {loading && movies.length === 0 ? (
           <div className="flex flex-col items-center gap-4">
             <Loader2 className="h-6 w-6 animate-spin text-primary/50" />
@@ -545,7 +545,7 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
       </div>
 
       {currentMovie && !showActivationCTA && (
-        <div className="sticky bottom-0 z-20 border-t border-border/20 bg-background/84 px-4 pt-3 pb-[calc(1rem+env(safe-area-inset-bottom))] backdrop-blur-xl shadow-[0_-18px_40px_hsl(var(--background)/0.32)]">
+        <div className="relative z-20 border-t border-border/20 bg-background/84 px-4 pt-3 pb-[calc(1rem+env(safe-area-inset-bottom))] backdrop-blur-xl shadow-[0_-18px_40px_hsl(var(--background)/0.32)]">
           <div className="mb-3 flex items-center justify-between gap-3">
             <button
               onClick={goBack}
