@@ -1027,10 +1027,10 @@ const HomeScreen = ({
               </span>
             </span>
             <span className="flex-1 min-w-0">
-              <span className="block font-serif text-foreground text-[17px] leading-tight">
+              <span className="block font-serif text-foreground text-[15px] leading-tight">
                 Parle-moi…
               </span>
-              <span className="block text-foreground/45 text-[12px] font-sans mt-1">
+              <span className="block text-foreground/45 text-[11px] font-sans mt-0.5">
                 Dis ce que tu as envie de voir
               </span>
             </span>
