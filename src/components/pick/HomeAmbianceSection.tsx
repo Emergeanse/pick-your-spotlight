@@ -132,17 +132,17 @@ const HomeAmbianceSection = ({ onPickAmbiance, activeAmbiance }: Props) => {
   };
 
   return (
-    <div className="px-5 md:px-8 space-y-8">
+    <div className="px-4 md:px-8 space-y-3">
       {/* ─── Last Reco Rating Card ─── */}
       {lastReco && (
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.05, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-          className={`relative ${PREMIUM_SURFACE} p-4`}
+          className={`relative ${PREMIUM_SURFACE} p-2.5`}
         >
-          <div className="flex gap-4 items-stretch">
-            <div className="relative flex-shrink-0 w-[92px] h-[136px] rounded-2xl overflow-hidden border border-white/[0.06] shadow-[0_14px_36px_-14px_rgba(0,0,0,0.8)]">
+          <div className="flex gap-3 items-stretch">
+            <div className="relative flex-shrink-0 w-[56px] h-[84px] rounded-lg overflow-hidden border border-white/[0.06] shadow-[0_14px_36px_-14px_rgba(0,0,0,0.8)]">
               {lastReco.posterPath ? (
                 <img
                   src={`${POSTER_BASE}${lastReco.posterPath}`}
