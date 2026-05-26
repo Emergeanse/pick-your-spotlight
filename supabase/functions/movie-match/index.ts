@@ -300,7 +300,32 @@ Génère la fiche de match multi-vecteur.`;
     if (!response.ok) {
       const t = await response.text();
       console.error("AI gateway error:", response.status, t);
-      throw new Error("AI error");
+      const fallback = {
+        matchScore: 70,
+        headline: "Celui-là pourrait bien te plaire",
+        whyItMatches: "Vu ce que tu cherches, ça devrait coller.",
+        detailedExplanation: "C'est le genre de film qui surprend — laisse-toi porter et tu verras.",
+        emotionalJourney: "Une expérience qui vaut le détour.",
+        perfectFor: "Parfait pour une soirée ciné sans prise de tête.",
+        funFact: "Un film qui a marqué son genre.",
+        scores: {
+          stable_taste: embeddingSimilarity ? Math.round(embeddingSimilarity * 100) : 50,
+          recent_taste: recentSimilarity ? Math.round(recentSimilarity * 100) : 50,
+          context: 70,
+          rejection_risk: avoidanceSimilarity ? Math.round(avoidanceSimilarity * 100) : 20,
+          quality: 70,
+          novelty: 50,
+          fatigue: 0,
+        },
+        fallback: true,
+        aiStatus: response.status,
+      };
+      if (embeddingSimilarity !== null) (fallback as any).embeddingSimilarity = Math.round(embeddingSimilarity * 100);
+      if (recentSimilarity !== null) (fallback as any).recentSimilarity = Math.round(recentSimilarity * 100);
+      if (avoidanceSimilarity !== null) (fallback as any).avoidanceSimilarity = Math.round(avoidanceSimilarity * 100);
+      return new Response(JSON.stringify(fallback), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     let aiData: any;
