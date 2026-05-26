@@ -155,19 +155,19 @@ const HomeAmbianceSection = ({ onPickAmbiance, activeAmbiance }: Props) => {
               <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/70 to-transparent" />
             </div>
 
-            <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
+            <div className="flex-1 min-w-0 flex flex-col justify-between py-0">
               <div>
                 <p className={SECTION_EYEBROW}>Ta dernière séance</p>
-                <p className="mt-1 font-serif text-foreground text-[20px] leading-[1.1] tracking-tight line-clamp-2">
+                <p className="mt-0.5 font-serif text-foreground text-[15px] leading-[1.15] tracking-tight line-clamp-1">
                   {lastReco.title}
                 </p>
-                <p className="mt-1.5 text-[12px] font-sans text-foreground/50 leading-snug">
+                <p className="mt-0.5 text-[10.5px] font-sans text-foreground/50 leading-snug">
                   {submitted ? "Merci — j'affine ton goût." : "Comment tu l'as vécu ?"}
                 </p>
               </div>
 
               <div
-                className="mt-3 flex items-center gap-1"
+                className="mt-1.5 flex items-center gap-0.5"
                 onMouseLeave={() => setHovered(0)}
               >
                 {[1, 2, 3, 4, 5].map((n) => {
@@ -184,7 +184,7 @@ const HomeAmbianceSection = ({ onPickAmbiance, activeAmbiance }: Props) => {
                       aria-label={`Note ${n}/5`}
                     >
                       <Star
-                        className={`w-[22px] h-[22px] transition-all ${
+                        className={`w-[16px] h-[16px] transition-all ${
                           filled
                             ? "fill-primary text-primary drop-shadow-[0_0_10px_hsl(var(--primary)/0.55)]"
                             : "text-foreground/25"
@@ -196,6 +196,7 @@ const HomeAmbianceSection = ({ onPickAmbiance, activeAmbiance }: Props) => {
                 })}
               </div>
             </div>
+
           </div>
         </motion.div>
       )}
