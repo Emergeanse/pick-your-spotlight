@@ -26,6 +26,7 @@ import { getMyPreferences } from "@/lib/preferences";
 
 import BrandHeader from "./BrandHeader";
 import PickCharacter from "./PickCharacter";
+import pickDefault from "@/assets/pick-squirrel.png";
 import QuickFilters, { type QuickFilterState, type ProfileDefaults } from "./QuickFilters";
 import TasteTrainer from "./TasteTrainer";
 import DiscoverySection from "./DiscoverySection";
