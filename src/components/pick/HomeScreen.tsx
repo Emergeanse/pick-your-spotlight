@@ -1051,6 +1051,59 @@ const HomeScreen = ({
             </span>
           </motion.button>
 
+          {/* Ambiance chips — compact single row, directly under "Parle-moi" */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.8, duration: 0.5 }}
+            className="mt-4"
+          >
+            <div className="flex items-baseline justify-between mb-2 px-0.5">
+              <h3 className="font-serif text-foreground text-[14px] leading-tight">
+                Choisis ton ambiance
+              </h3>
+              <span className="text-[10px] font-sans font-semibold tracking-[0.18em] uppercase text-foreground/40">
+                Filtre rapide
+              </span>
+            </div>
+            <div className="flex gap-1 w-full">
+              {AMBIANCES.map(({ id, label, Icon }, i) => {
+                const active = activeAmbiance === id;
+                return (
+                  <motion.button
+                    key={id}
+                    type="button"
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.85 + i * 0.04, duration: 0.35 }}
+                    whileTap={{ scale: 0.94 }}
+                    onClick={() => {
+                      setActiveAmbiance(id);
+                      if (id === "surprise") {
+                        handleAutoPick();
+                      } else {
+                        setShowFindChoice(true);
+                      }
+                    }}
+                    className={`flex-shrink-0 inline-flex items-center gap-1 h-7 px-1 rounded-full font-sans text-[10px] font-medium transition-all duration-300 ${
+                      active
+                        ? "bg-[linear-gradient(180deg,hsl(var(--primary)/0.22),hsl(var(--primary)/0.08))] text-primary border border-primary/55 shadow-[0_0_0_3px_hsl(var(--primary)/0.08),0_6px_18px_-6px_hsl(var(--primary)/0.5)]"
+                        : "bg-white/[0.03] text-foreground/70 border border-white/[0.06] hover:bg-white/[0.06] hover:text-foreground/90"
+                    }`}
+                  >
+                    <Icon
+                      className={`w-3 h-3 transition-colors ${
+                        active ? "text-primary" : "text-foreground/45"
+                      }`}
+                      strokeWidth={2}
+                    />
+                    {label}
+                  </motion.button>
+                );
+              })}
+            </div>
+          </motion.div>
+
         </section>
 
         <div className="mt-10">
