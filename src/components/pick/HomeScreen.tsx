@@ -32,6 +32,7 @@ import DiscoverySection from "./DiscoverySection";
 import HomeScreenChoiceModal from "./HomeScreenChoiceModal";
 import TonightPickOverlay from "./TonightPickOverlay";
 import FlipCardDetail from "./FlipCardDetail";
+import HomeAmbianceSection, { type AmbianceMood } from "./HomeAmbianceSection";
 
 interface HomeScreenProps {
   onStart: () => void;
