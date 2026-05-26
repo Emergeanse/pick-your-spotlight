@@ -132,7 +132,7 @@ const HomeAmbianceSection = ({ onPickAmbiance, activeAmbiance }: Props) => {
   };
 
   return (
-    <div className="px-4 md:px-8 space-y-2">
+    <div className="px-4 md:px-8 space-y-4">
       {/* ─── Last Reco Rating Card ─── */}
       {lastReco && (
         <motion.div
