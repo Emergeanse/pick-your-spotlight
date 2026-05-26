@@ -1120,6 +1120,14 @@ export type Database = {
       }
       generate_friend_code: { Args: never; Returns: string }
       generate_session_code: { Args: never; Returns: string }
+      get_movies_needing_language: {
+        Args: { p_limit?: number }
+        Returns: {
+          media_type: string
+          tmdb_id: number
+          year: number
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -1286,6 +1294,14 @@ export type Database = {
               year: string
             }[]
           }
+      update_movie_language: {
+        Args: {
+          p_original_language: string
+          p_tmdb_id: number
+          p_year?: number
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
