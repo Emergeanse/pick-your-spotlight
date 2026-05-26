@@ -1,5 +1,6 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { Mic } from "lucide-react";
+import { Mic, CalendarClock } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { getAutoPickSubtitle } from "@/lib/time-context";
 
 interface HomeScreenChoiceModalProps {
@@ -17,6 +18,7 @@ const HomeScreenChoiceModal = ({
   onAutoPick,
   onOpenChat,
 }: HomeScreenChoiceModalProps) => {
+  const navigate = useNavigate();
   const title =
     mediaType === "movie"
       ? "Ce soir mérite un grand film."
