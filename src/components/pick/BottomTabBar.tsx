@@ -1,4 +1,4 @@
-import { Home, Bookmark, Clapperboard, User, Users } from "lucide-react";
+import { Home, Bookmark, Library, User, Heart } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 
@@ -6,9 +6,9 @@ export type TabId = "home" | "watchlist" | "together" | "cinema" | "profile";
 
 const tabs: { id: TabId; label: string; icon: typeof Home; path: string }[] = [
   { id: "home", label: "Trouve-moi", icon: Home, path: "/app" },
-  { id: "together", label: "Match", icon: Users, path: "/app/pick-together" },
-  { id: "watchlist", label: "Bibliothèque", icon: Bookmark, path: "/app/watchlist" },
-  { id: "cinema", label: "Cinéma", icon: Clapperboard, path: "/app/my-cinema" },
+  { id: "together", label: "Match", icon: Heart, path: "/app/pick-together" },
+  { id: "watchlist", label: "À voir", icon: Bookmark, path: "/app/watchlist" },
+  { id: "cinema", label: "Bibliothèque", icon: Library, path: "/app/my-cinema" },
   { id: "profile", label: "Profil", icon: User, path: "/app/profile" },
 ];
 
