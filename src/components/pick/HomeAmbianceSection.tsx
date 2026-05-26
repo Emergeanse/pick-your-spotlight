@@ -8,12 +8,12 @@ import { setFeedback } from "@/lib/feedback";
 
 export type AmbianceMood = "intense" | "mysterious" | "comfort" | "couple" | "surprise";
 
-const AMBIANCES: { id: AmbianceMood; label: string; Icon: typeof Flame }[] = [
-  { id: "intense", label: "Intense", Icon: Flame },
-  { id: "mysterious", label: "Mystérieux", Icon: Eye },
-  { id: "comfort", label: "Réconfortant", Icon: Coffee },
-  { id: "couple", label: "À deux", Icon: Heart },
-  { id: "surprise", label: "Surprends-moi", Icon: Shuffle },
+export const AMBIANCES: { id: AmbianceMood; label: string; Icon: React.ComponentType<any> }[] = [
+  { id: "intense", label: "Intense", Icon: () => null },
+  { id: "mysterious", label: "Mystérieux", Icon: () => null },
+  { id: "comfort", label: "Réconfortant", Icon: () => null },
+  { id: "couple", label: "À deux", Icon: () => null },
+  { id: "surprise", label: "Surprends-moi", Icon: () => null },
 ];
 
 type LastReco = {
