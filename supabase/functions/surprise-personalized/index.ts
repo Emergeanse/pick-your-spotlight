@@ -699,9 +699,21 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
       console.log(`[SP] LLM skipped — not enough candidates: ${filteredCandidates.length} (platform-filtered)`);
     }
 
+    // ── Fallback SQL : si le LLM n'a rien retourné, prendre le top du llmPool directement ──
+    // Évite les résultats discover non pertinents quand Gemini échoue (429, JSON parse, etc.)
+    if (llmSelections.length === 0 && llmPool.length > 0) {
+      console.log(`[SP] LLM returned 0 — using top ${requestedCount} from SQL pool as fallback`);
+      llmSelections = llmPool
+        .slice(0, requestedCount + 2) // quelques extras au cas où TMDB en échoue
+        .map((c: any) => ({
+          tmdb_id: Number(c.tmdb_id),
+          matchScore: minMatchScore,
+          reason: null,
+        }));
+    }
+
     // ── ÉTAPE 3 : TMDB — enrichissement en batch ──
     // Trier par score LLM décroissant : on enrichit les meilleurs en premier
-    // → slice(0, requestedCount) garde les top-N, pas les premiers de la liste LLM
     llmSelections.sort((a: any, b: any) => (b.matchScore || 0) - (a.matchScore || 0));
 
     const movies: any[] = [];
