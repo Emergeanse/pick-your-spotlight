@@ -1050,10 +1050,10 @@ const HomeScreen = ({
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.8, duration: 0.5 }}
-            className="mt-4"
+            className="mt-4 w-full rounded-2xl border border-white/10 bg-white/[0.06] hover:bg-white/[0.10] hover:border-white/20 transition-all py-2 px-2.5"
           >
             <div className="flex items-baseline justify-between mb-1.5 px-0.5">
-              <h3 className="font-serif text-foreground text-[14px] leading-tight border-8">
+              <h3 className="font-serif text-foreground text-[13px] leading-tight">
                 Choisis ton ambiance
               </h3>
               <span className="text-[10px] font-sans font-semibold tracking-[0.18em] uppercase text-foreground/40">
@@ -1081,8 +1081,8 @@ const HomeScreen = ({
                     }}
                     className={`inline-flex items-center justify-center gap-0.5 h-7 px-[3px] rounded-full font-sans text-[9px] font-medium transition-all duration-300 min-w-0 ${
                       active
-                        ? "bg-[linear-gradient(180deg,hsl(var(--primary)/0.22),hsl(var(--primary)/0.08))] text-primary border border-primary/55 shadow-[0_0_0_3px_hsl(var(--primary)/0.08),0_6px_18px_-6px_hsl(var(--primary)/0.5)]"
-                        : "bg-white/[0.03] text-foreground/70 border border-white/[0.06] hover:bg-white/[0.06] hover:text-foreground/90"
+                        ? "bg-white/[0.10] text-primary border border-primary/55"
+                        : "bg-white/[0.04] text-foreground/70 border border-white/10 hover:bg-white/[0.10] hover:border-white/20 hover:text-foreground/90"
                     }`}
                   >
                     <Icon
@@ -1097,6 +1097,7 @@ const HomeScreen = ({
               })}
             </div>
           </motion.div>
+
 
         </section>
 
