@@ -336,12 +336,16 @@ Génère la fiche de match multi-vecteur.`;
       console.error("Failed to parse movie-match response body:", e);
       throw new Error("AI response parse error");
     }
-    const content = aiData?.choices?.[0]?.message?.content || "";
+    const rawContent = aiData?.choices?.[0]?.message?.content || "";
+    // Strip Gemini thinking blocks (gemini-2.5-flash returns <thinking>...</thinking> before JSON)
+    const content = rawContent
+      .replace(/<thinking>[\s\S]*?<\/thinking>/gi, "")
+      .replace(/```(?:json)?\s*/g, "")
+      .trim();
 
     let matchData;
     try {
-      const jsonStr = content.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
-      matchData = JSON.parse(jsonStr);
+      matchData = JSON.parse(content);
     } catch {
       console.error("Failed to parse AI response:", content);
       matchData = {

@@ -333,11 +333,13 @@ Structure :
     }
 
     const aiData = await aiResponse.json();
-    const content = aiData.choices?.[0]?.message?.content || "";
+    const content = (aiData.choices?.[0]?.message?.content || "")
+      .replace(/<thinking>[\s\S]*?<\/thinking>/gi, "")
+      .replace(/```(?:json)?\s*/g, "")
+      .trim();
     let aiResult: any;
     try {
-      const jsonStr = content.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
-      aiResult = JSON.parse(jsonStr);
+      aiResult = JSON.parse(content);
     } catch { throw new Error("Failed to parse AI response"); }
 
     const recommendations = aiResult.recommendations || [];

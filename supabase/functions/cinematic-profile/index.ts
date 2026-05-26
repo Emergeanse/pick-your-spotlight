@@ -262,12 +262,14 @@ Génère le profil cinématographique complet en 6 couches.`;
     }
 
     const aiData = await response.json();
-    const content = aiData.choices?.[0]?.message?.content || "";
+    const content = (aiData.choices?.[0]?.message?.content || "")
+      .replace(/<thinking>[\s\S]*?<\/thinking>/gi, "")
+      .replace(/```(?:json)?\s*/g, "")
+      .trim();
 
     let profileData;
     try {
-      const jsonStr = content.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
-      profileData = JSON.parse(jsonStr);
+      profileData = JSON.parse(content);
     } catch {
       console.error("Failed to parse profile:", content);
       throw new Error("Failed to parse AI response");
