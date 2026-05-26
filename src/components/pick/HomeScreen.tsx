@@ -62,8 +62,6 @@ type RejectionContext = {
   rejectedTitle: string;
 };
 
-export type AmbianceMood = "intense" | "mysterious" | "comfort" | "couple" | "surprise";
-
 const AMBIANCES: { id: AmbianceMood; label: string; Icon: React.ComponentType<any> }[] = [
   { id: "intense", label: "Intense", Icon: Flame },
   { id: "mysterious", label: "Mystérieux", Icon: Eye },
