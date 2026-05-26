@@ -209,23 +209,45 @@ const HomeAmbianceSection = ({ onPickAmbiance, activeAmbiance }: Props) => {
           transition={{ delay: 0.25, duration: 0.6 }}
           className={`relative ${PREMIUM_SURFACE} px-3 pt-3 pb-1.5`}
         >
-          <div className="flex items-end justify-between mb-2.5">
-            <div>
+          <div className="flex items-center justify-between">
+            <div className="flex-1 min-w-0">
               <p className={SECTION_EYEBROW}>Cercle Pick</p>
               <h3 className="mt-0.5 font-serif text-foreground text-[15px] leading-tight">
                 Vos amis regardent
               </h3>
             </div>
-            <button
-              onClick={() => navigate("/app/friends")}
-              className="inline-flex items-center gap-1 text-[11px] font-sans font-medium text-foreground/55 hover:text-foreground transition-colors group"
-            >
-              Voir tout
-              <ArrowUpRight className="w-3 h-3 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-            </button>
+            <div className="flex items-center -space-x-1.5 ml-2">
+              {friends.slice(0, 2).map((f) => (
+                <div
+                  key={f.id}
+                  className="relative w-[28px] h-[28px] rounded-full overflow-hidden border-2 border-background bg-muted"
+                >
+                  {f.avatarUrl ? (
+                    <img src={f.avatarUrl} alt={f.name} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-foreground/60 font-serif text-[10px]">
+                      {f.name.charAt(0)}
+                    </div>
+                  )}
+                </div>
+              ))}
+              {friends.length > 2 && (
+                <div className="relative w-[28px] h-[28px] rounded-full border-2 border-background bg-white/[0.05] flex items-center justify-center text-foreground/70 font-sans font-semibold text-[9px]">
+                  +{friends.length - 2}
+                </div>
+              )}
+            </div>
           </div>
 
-          <div className="flex gap-1 overflow-x-auto -mx-3 px-3 pb-0 scrollbar-none">
+          <button
+            onClick={() => navigate("/app/friends")}
+            className="mt-1.5 inline-flex items-center gap-1 text-[10px] font-sans font-medium text-foreground/40 hover:text-foreground transition-colors group"
+          >
+            Voir tout
+            <ArrowUpRight className="w-2.5 h-2.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+          </button>
+
+          <div className="flex gap-1 overflow-x-auto -mx-3 px-3 pb-0 scrollbar-none mt-2">
             {friends.map((f, i) => (
               <motion.button
                 key={f.id}
