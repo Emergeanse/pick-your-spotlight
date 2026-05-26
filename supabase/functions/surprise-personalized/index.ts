@@ -580,23 +580,23 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
       capturedSystemPrompt = systemPrompt;
 
       try {
+        const llmMessages = [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: `Sélectionne exactement 5 films parmi la liste, du meilleur au moins bon.` },
+        ];
         const llmBody = JSON.stringify({
           model: "gemini-2.5-flash",
-          max_tokens: 4000,
-          messages: [
-            { role: "system", content: systemPrompt },
-            { role: "user", content: `Sélectionne exactement 5 films parmi la liste, du meilleur au moins bon.` },
-          ],
+          max_tokens: 2000,
+          response_format: { type: "json_object" },
+          messages: llmMessages,
         });
         const llmEndpoint = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
         const llmHeaders = { Authorization: `Bearer ${GOOGLE_AI_KEY}`, "Content-Type": "application/json" };
         const llmBodyFallback = JSON.stringify({
           model: "gemini-2.5-flash-lite-preview-06-17",
-          max_tokens: 4000,
-          messages: [
-            { role: "system", content: systemPrompt },
-            { role: "user", content: `Sélectionne exactement 5 films parmi la liste, du meilleur au moins bon.` },
-          ],
+          max_tokens: 2000,
+          response_format: { type: "json_object" },
+          messages: llmMessages,
         });
 
         let response = await fetch(llmEndpoint, { method: "POST", headers: llmHeaders, body: llmBody });

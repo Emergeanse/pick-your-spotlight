@@ -290,6 +290,7 @@ Génère la fiche de match multi-vecteur.`;
       body: JSON.stringify({
         model: "gemini-2.5-flash",
         max_tokens: 1200,
+        response_format: { type: "json_object" },
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt },
