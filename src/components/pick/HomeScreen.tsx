@@ -947,10 +947,10 @@ const HomeScreen = ({
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2, duration: 0.5 }}
-            className="relative flex items-center gap-1.5 mb-2"
+            className="relative flex items-center gap-2 mb-1"
           >
-            <Sparkles className="w-3.5 h-3.5 text-primary" />
-            <span className="text-[10.5px] font-sans font-semibold tracking-[0.18em] uppercase text-primary">
+            <Sparkles className="w-4 h-4 text-primary" />
+            <span className="text-xs font-sans font-semibold tracking-[0.15em] uppercase text-primary">
               Pick comprend tes envies
             </span>
           </motion.div>
