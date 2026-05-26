@@ -631,28 +631,43 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
             .replace(/\}\s*\n\s*\{/g, "},\n{")
             .replace(/,\s*([}\]])/g, "$1");
 
-          // Brute-force: scan every { in content, try to parse it, return the first
-          // object that contains a valid "selections" array
+          const hasSelections = (obj: any) => obj?.selections && Array.isArray(obj.selections) && obj.selections.length > 0;
+
+          // Strategy 0: direct JSON.parse (works when content is pure JSON)
           let parsed: any = null;
-          for (let i = 0; i < content.length && !parsed; i++) {
-            if (content[i] !== "{") continue;
-            // bracket-count to find matching }
-            let d = 0, end = i;
-            for (let j = i; j < content.length; j++) {
-              if (content[j] === "{") d++;
-              else if (content[j] === "}") { d--; if (d === 0) { end = j; break; } }
-            }
-            if (end === i) continue; // no matching } found
-            try {
-              const candidate = repair(content.slice(i, end + 1));
-              const obj = JSON.parse(candidate);
-              if (obj?.selections && Array.isArray(obj.selections) && obj.selections.length > 0) {
-                parsed = obj;
-                console.log(`[SP] JSON found at offset ${i}, ${obj.selections.length} selections`);
+          try {
+            const obj = JSON.parse(repair(content));
+            if (hasSelections(obj)) { parsed = obj; console.log("[SP] Strategy 0 (direct parse) succeeded"); }
+          } catch {}
+
+          // Strategy 1: bracket-count from every { — handles preamble/postamble text
+          // NOTE: bracket counting fails when reason strings contain unbalanced { or }
+          if (!parsed) {
+            for (let i = 0; i < content.length && !parsed; i++) {
+              if (content[i] !== "{") continue;
+              let d = 0, end = i;
+              for (let j = i; j < content.length; j++) {
+                if (content[j] === "{") d++;
+                else if (content[j] === "}") { d--; if (d === 0) { end = j; break; } }
               }
-            } catch { /* try next { */ }
-            i = end; // skip to end of this block
+              if (end === i) continue;
+              try {
+                const obj = JSON.parse(repair(content.slice(i, end + 1)));
+                if (hasSelections(obj)) { parsed = obj; console.log(`[SP] Strategy 1 (bracket scan at ${i}), ${obj.selections.length} sel`); }
+              } catch {}
+              i = end;
+            }
           }
+
+          // Strategy 2: regex — extract tmdb_id + matchScore pairs, bypasses all JSON issues
+          if (!parsed) {
+            const sels: any[] = [];
+            const re = /"tmdb_id"\s*:\s*(\d+)[\s\S]*?"matchScore"\s*:\s*(\d+)/g;
+            let m;
+            while ((m = re.exec(content)) !== null) sels.push({ tmdb_id: Number(m[1]), matchScore: Number(m[2]) });
+            if (sels.length > 0) { parsed = { selections: sels }; console.log(`[SP] Strategy 2 (regex) extracted ${sels.length} sel`); }
+          }
+
           if (!parsed) throw new Error(`No valid selections JSON in LLM response: ${rawContent.slice(0, 300)}`);
           if (parsed.selections && Array.isArray(parsed.selections)) {
             const validIds = new Set(topPool.map((c: any) => Number(c.tmdb_id)));
