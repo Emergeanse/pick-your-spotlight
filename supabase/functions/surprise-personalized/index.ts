@@ -581,18 +581,28 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
       capturedSystemPrompt = systemPrompt;
 
       try {
-        const response = await fetch("https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", {
+        const llmBody = JSON.stringify({
+          model: "gemini-2.5-flash",
+          max_tokens: 4000,
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: `Sélectionne ${targetLLMCount} films.` },
+          ],
+        });
+        let response = await fetch("https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", {
           method: "POST",
           headers: { Authorization: `Bearer ${GOOGLE_AI_KEY}`, "Content-Type": "application/json" },
-          body: JSON.stringify({
-            model: "gemini-2.5-flash",
-            max_tokens: 4000,
-            messages: [
-              { role: "system", content: systemPrompt },
-              { role: "user", content: `Sélectionne ${targetLLMCount} films.` },
-            ],
-          }),
+          body: llmBody,
         });
+        // Retry once on 429 (rate limit) after a short delay
+        if (response.status === 429) {
+          await new Promise((r) => setTimeout(r, 3000));
+          response = await fetch("https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", {
+            method: "POST",
+            headers: { Authorization: `Bearer ${GOOGLE_AI_KEY}`, "Content-Type": "application/json" },
+            body: llmBody,
+          });
+        }
 
         if (response.ok) {
           const raw = await response.text();
