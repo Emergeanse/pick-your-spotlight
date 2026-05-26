@@ -1066,7 +1066,7 @@ const HomeScreen = ({
                 Filtre rapide
               </span>
             </div>
-            <div className="grid grid-cols-5 gap-1 w-full">
+            <div className="flex gap-[3px] w-full">
               {AMBIANCES.map(({ id, label, Icon }, i) => {
                 const active = activeAmbiance === id;
                 return (
@@ -1085,17 +1085,17 @@ const HomeScreen = ({
                         setShowFindChoice(true);
                       }
                     }}
-                    className={`inline-flex items-center justify-center gap-1 h-7 px-1 rounded-full font-sans text-[10px] font-medium transition-all duration-300 min-w-0 ${
+                    className={`inline-flex items-center justify-center gap-0.5 h-7 px-[3px] rounded-full font-sans text-[9px] font-medium transition-all duration-300 min-w-0 ${
                       active
                         ? "bg-[linear-gradient(180deg,hsl(var(--primary)/0.22),hsl(var(--primary)/0.08))] text-primary border border-primary/55 shadow-[0_0_0_3px_hsl(var(--primary)/0.08),0_6px_18px_-6px_hsl(var(--primary)/0.5)]"
                         : "bg-white/[0.03] text-foreground/70 border border-white/[0.06] hover:bg-white/[0.06] hover:text-foreground/90"
                     }`}
                   >
                     <Icon
-                      className={`w-3 h-3 flex-shrink-0 transition-colors ${
+                      className={`w-2.5 h-2.5 flex-shrink-0 transition-colors ${
                         active ? "text-primary" : "text-foreground/45"
                       }`}
-                      strokeWidth={2}
+                      strokeWidth={2.5}
                     />
                     <span className="truncate">{label}</span>
                   </motion.button>
