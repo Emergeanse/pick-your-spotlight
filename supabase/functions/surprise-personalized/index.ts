@@ -586,7 +586,7 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
           headers: { Authorization: `Bearer ${GOOGLE_AI_KEY}`, "Content-Type": "application/json" },
           body: JSON.stringify({
             model: "gemini-2.5-flash",
-            max_tokens: 2500,
+            max_tokens: 4000,
             messages: [
               { role: "system", content: systemPrompt },
               { role: "user", content: `Sélectionne ${targetLLMCount} films.` },
@@ -598,10 +598,14 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
           const raw = await response.text();
           const aiData = JSON.parse(raw);
           const content = aiData?.choices?.[0]?.message?.content || "";
-          // Extract JSON object even if model adds preamble text
-          const jsonMatch = content.match(/\{[\s\S]*\}/);
-          if (!jsonMatch) throw new Error(`No JSON in LLM response: ${content.slice(0, 200)}`);
-          const parsed = JSON.parse(jsonMatch[0]);
+          // Extract JSON object that contains "selections" key
+          const jsonMatch = content.match(/\{\s*"selections"\s*:\s*\[[\s\S]*?\]\s*\}/);
+          if (!jsonMatch) throw new Error(`No JSON in LLM response: ${content.slice(0, 300)}`);
+          // Repair common LLM JSON mistakes before parsing
+          const repaired = jsonMatch[0]
+            .replace(/\}\s*\n\s*\{/g, "},\n{")   // missing comma between objects
+            .replace(/,\s*([}\]])/g, "$1");         // trailing commas
+          const parsed = JSON.parse(repaired);
           if (parsed.selections && Array.isArray(parsed.selections)) {
             const validIds = new Set(topPool.map((c: any) => Number(c.tmdb_id)));
             const idValid = parsed.selections.filter((s: any) => s.tmdb_id && validIds.has(Number(s.tmdb_id)));
