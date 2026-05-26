@@ -131,6 +131,7 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
   const [totalPeopleEvaluated, setTotalPeopleEvaluated] = useState(0);
   const [milestoneMsg, setMilestoneMsg] = useState<string | null>(null);
   const [showActivationCTA, setShowActivationCTA] = useState(false);
+  const [interactionsLoaded, setInteractionsLoaded] = useState(false);
   const [history, setHistory] = useState<number[]>([]);
   const [detailMovie, setDetailMovie] = useState<MovieDetail | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
@@ -172,7 +173,7 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
   );
 
   useEffect(() => {
-    if (!isMediaCategory) return;
+    if (!isMediaCategory || !interactionsLoaded) return;
     setMovies([]);
     setCurrentIndex(0);
     setHistory([]);
@@ -180,7 +181,7 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
     setCurrentMovieDetail(null);
     advancedMovieIdsRef.current = new Set();
     loadMovies(1, selectedCategory!);
-  }, [selectedCategory]);
+  }, [selectedCategory, interactionsLoaded]);
 
   useEffect(() => {
     if (!user) return;
@@ -212,6 +213,7 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
       setProcessedIds(new Set(ids));
       setTotalEvaluated(movieResult.data?.length || 0);
       setTotalPeopleEvaluated(peopleResult.count || 0);
+      setInteractionsLoaded(true);
     });
   }, [user]);
 
@@ -540,6 +542,7 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
               movie={currentMovieDetail}
               contextType="browse"
               showPrimaryAction={false}
+              showActionBar={false}
               onOpenDetails={openMovieDetail}
               className="min-h-0"
             />

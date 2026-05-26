@@ -220,6 +220,7 @@ export interface RecommendationMovieCardProps {
   contextType?: "solo_session" | "group_session" | "browse";
   onOpenDetails?: () => void;
   showPrimaryAction?: boolean;
+  showActionBar?: boolean;
   onPrimaryAction?: () => void;
   primaryActionLabel?: string;
   className?: string;
@@ -232,6 +233,7 @@ const RecommendationMovieCard = ({
   contextType,
   onOpenDetails,
   showPrimaryAction = true,
+  showActionBar = true,
   onPrimaryAction,
   primaryActionLabel = "On regarde ?",
   className = "",
@@ -326,9 +328,11 @@ const RecommendationMovieCard = ({
             </div>
           )}
 
-          <div onClick={(e) => e.stopPropagation()}>
-            <MovieActionBar movie={movie} sessionId={sessionId} contextType={contextType} />
-          </div>
+          {showActionBar && (
+            <div onClick={(e) => e.stopPropagation()}>
+              <MovieActionBar movie={movie} sessionId={sessionId} contextType={contextType} />
+            </div>
+          )}
         </motion.div>
       </div>
     </div>
