@@ -1019,7 +1019,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: revealStage === "settled" ? 1 : 0, y: revealStage === "settled" ? 0 : 24 }}
             transition={{ delay: 0.2, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-            className="fixed left-0 right-0 bottom-[calc(3.5rem+env(safe-area-inset-bottom))] z-50 border-t border-border/20 bg-background/84 px-4 pt-3 pb-4 backdrop-blur-xl shadow-[0_-18px_40px_hsl(var(--background)/0.32)]"
+            className="fixed left-0 right-0 bottom-[calc(3.5rem+env(safe-area-inset-bottom))] z-50 border-t border-border/20 bg-background/84 px-4 pt-3 pb-4 backdrop-blur-xl shadow-[0_-18px_40px_hsl(var(--background)/0.32)] max-h-[calc(100dvh-3.5rem-env(safe-area-inset-bottom)-1rem)] overflow-y-auto overscroll-contain"
           >
             <div className="mx-auto max-w-md">
               <div className="mb-3 flex items-center justify-between gap-3">
