@@ -6,7 +6,7 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY") ?? "";
+const GOOGLE_AI_KEY = Deno.env.get("GOOGLE_AI_KEY") ?? "";
 
 const SYSTEM = `Tu es un parseur d'envies de soirées cinéma en français.
 À partir d'une phrase libre, sépare clairement DEUX choses :
@@ -61,17 +61,17 @@ serve(async (req) => {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    if (!LOVABLE_API_KEY) {
-      return new Response(JSON.stringify({ error: "missing LOVABLE_API_KEY" }), {
+    if (!GOOGLE_AI_KEY) {
+      return new Response(JSON.stringify({ error: "missing GOOGLE_AI_KEY" }), {
         status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const res = await fetch("https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", {
       method: "POST",
-      headers: { "Authorization": `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
+      headers: { "Authorization": `Bearer ${GOOGLE_AI_KEY}`, "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: "gemini-2.5-flash",
         messages: [
           { role: "system", content: SYSTEM },
           { role: "user", content: prompt },

@@ -15,8 +15,8 @@ serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     const { genre, mood, mediaType } = body;
 
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
+    const GOOGLE_AI_KEY = Deno.env.get("GOOGLE_AI_KEY");
+    if (!GOOGLE_AI_KEY) throw new Error("GOOGLE_AI_KEY not configured");
 
     const contextHint = [
       genre ? `Le genre choisi est : ${genre}.` : "",
@@ -31,14 +31,14 @@ Réponds UNIQUEMENT avec ce JSON valide, sans markdown ni texte autour :
 
 Les moods possibles : "think", "wave", "default". Varie-les.`;
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const response = await fetch("https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        Authorization: `Bearer ${GOOGLE_AI_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.0-flash",
+        model: "gemini-2.0-flash",
         max_tokens: 600,
         temperature: 1.0,
         messages: [{ role: "user", content: prompt }],
