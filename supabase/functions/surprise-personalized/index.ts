@@ -116,10 +116,10 @@ serve(async (req) => {
     const effectiveMaxDuration = voiceMaxDuration ?? maxDuration;
     const effectiveFilterMediaType = voiceMediaType ?? (mediaType === "both" ? null : searchType);
 
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    const GOOGLE_AI_KEY = Deno.env.get("GOOGLE_AI_KEY");
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
+    if (!GOOGLE_AI_KEY) throw new Error("GOOGLE_AI_KEY is not configured");
 
     let userId: string | null = null;
     try {
@@ -581,11 +581,11 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
       capturedSystemPrompt = systemPrompt;
 
       try {
-        const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        const response = await fetch("https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", {
           method: "POST",
-          headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
+          headers: { Authorization: `Bearer ${GOOGLE_AI_KEY}`, "Content-Type": "application/json" },
           body: JSON.stringify({
-            model: "google/gemini-2.5-flash",
+            model: "gemini-2.5-flash",
             max_tokens: 2500,
             messages: [
               { role: "system", content: systemPrompt },
