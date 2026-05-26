@@ -608,25 +608,49 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
           const raw = await response.text();
           const aiData = JSON.parse(raw);
           const rawContent = aiData?.choices?.[0]?.message?.content || "";
+          console.log(`[SP] LLM rawContent (first 300): ${rawContent.slice(0, 300)}`);
           // Strip markdown code fences (all occurrences)
           const content = rawContent.replace(/```(?:json)?\s*/g, "").trim();
-          // Use "selections": (with colon) to avoid matching thinking-mode preamble
+
+          // Helper: bracket-count from a given start index to find matching }
+          const bracketCount = (src: string, start: number): number => {
+            let d = 0, end = start;
+            for (let i = start; i < src.length; i++) {
+              if (src[i] === "{") d++;
+              else if (src[i] === "}") { d--; if (d === 0) { end = i; break; } }
+            }
+            return end;
+          };
+
+          // Strategy 1: find "selections": then scan backward for the wrapping {
+          let rawJson = "";
           const selectionsIdx = content.indexOf('"selections":');
-          if (selectionsIdx === -1) throw new Error(`No JSON in LLM response: ${rawContent.slice(0, 300)}`);
-          let jsonStart = selectionsIdx;
-          while (jsonStart > 0 && content[jsonStart] !== "{") jsonStart--;
-          let depth = 0, jsonEnd = jsonStart;
-          for (let i = jsonStart; i < content.length; i++) {
-            if (content[i] === "{") depth++;
-            else if (content[i] === "}") { depth--; if (depth === 0) { jsonEnd = i; break; } }
+          if (selectionsIdx !== -1) {
+            let jsonStart = selectionsIdx;
+            while (jsonStart > 0 && content[jsonStart] !== "{") jsonStart--;
+            if (content[jsonStart] === "{") {
+              const jsonEnd = bracketCount(content, jsonStart);
+              rawJson = content.slice(jsonStart, jsonEnd + 1);
+            }
           }
-          const rawJson = content.slice(jsonStart, jsonEnd + 1);
+
+          // Strategy 2 fallback: first { to its matching } in the whole content
+          if (!rawJson || !rawJson.includes('"selections"')) {
+            const firstBrace = content.indexOf("{");
+            if (firstBrace >= 0) {
+              const jsonEnd = bracketCount(content, firstBrace);
+              rawJson = content.slice(firstBrace, jsonEnd + 1);
+            }
+          }
+
+          if (!rawJson) throw new Error(`No JSON found in LLM response: ${rawContent.slice(0, 300)}`);
+
           // Repair common LLM JSON mistakes
           const repaired = rawJson
-            .replace(/^﻿/, "")               // BOM
-            .replace(/\}\s*\n\s*\{/g, "},\n{")   // missing comma between objects
-            .replace(/,\s*([}\]])/g, "$1");        // trailing commas
-          console.log(`[SP] LLM rawJson preview: ${rawJson.slice(0, 120)}`);
+            .replace(/^﻿/, "")                        // BOM
+            .replace(/\}\s*\n\s*\{/g, "},\n{")        // missing comma between objects
+            .replace(/,\s*([}\]])/g, "$1");            // trailing commas
+          console.log(`[SP] repaired preview: ${repaired.slice(0, 120)}`);
           const parsed = JSON.parse(repaired);
           if (parsed.selections && Array.isArray(parsed.selections)) {
             const validIds = new Set(topPool.map((c: any) => Number(c.tmdb_id)));
