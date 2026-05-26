@@ -1043,33 +1043,6 @@ const HomeScreen = ({
             </span>
           </motion.button>
 
-          {/* Quick links row — refined, less noisy */}
-          <div className="mt-4 flex items-center justify-between px-1">
-            <a
-              href="/app/plan"
-              className="text-[11.5px] font-sans tracking-wide text-foreground/40 hover:text-foreground/70 transition-colors"
-            >
-              Planifier pour plus tard →
-            </a>
-            <button
-              onClick={() => navigate("/app/profile?openPlatforms=1")}
-              className="flex items-center -space-x-1.5 hover:opacity-90 transition-opacity"
-              aria-label="Gérer mes plateformes"
-            >
-              {(userPlatformIds?.length > 0
-                ? ALL_PLATFORMS.filter((p) => userPlatformIds.includes(p.id)).slice(0, 4)
-                : ALL_PLATFORMS.slice(0, 4)
-              ).map((p) => (
-                <img
-                  key={p.id}
-                  src={p.logo}
-                  alt={p.label}
-                  className="w-[18px] h-[18px] rounded-[5px] object-cover ring-1 ring-background opacity-55"
-                  loading="lazy"
-                />
-              ))}
-            </button>
-          </div>
         </section>
 
         <div className="mt-10">
