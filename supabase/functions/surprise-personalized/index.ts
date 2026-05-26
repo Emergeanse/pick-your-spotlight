@@ -479,6 +479,7 @@ serve(async (req) => {
     const llmPoolSize = 30;
     let llmPool: any[] = [];
     let capturedSystemPrompt: string | null = null;
+    let llmDebugError: string | null = null;
 
     if (filteredCandidates.length >= 1) {
       const compositeScore = (c: any) => {
@@ -613,9 +614,12 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
             );
           }
         } else {
-          console.error(`[SP] LLM gateway error: ${response.status}`);
+          const errBody = await response.text().catch(() => "");
+          llmDebugError = `HTTP ${response.status}: ${errBody.slice(0, 300)}`;
+          console.error(`[SP] LLM gateway error: ${llmDebugError}`);
         }
       } catch (e) {
+        llmDebugError = String(e);
         console.error("LLM selection failed:", e);
       }
     } else {
@@ -905,6 +909,7 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
           mode: llmSelections.length > 0 ? "retrieve-rerank" : "discover-fallback",
           candidatesFound: candidates.length,
           llmSelected: llmSelections.length,
+          llmError: llmDebugError,
           finalCount: finalMovies.length,
           noSQLCandidates: candidates.length === 0,
           llmFilteredAll,
