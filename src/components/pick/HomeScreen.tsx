@@ -1018,7 +1018,7 @@ const HomeScreen = ({
             transition={{ delay: 0.7, duration: 0.55 }}
             whileTap={{ scale: 0.985 }}
             onClick={onOpenChat}
-            className="relative mt-6 w-full flex items-center gap-4 p-3.5 pr-5 rounded-[26px] border border-white/[0.05] bg-[linear-gradient(180deg,hsl(240_14%_9%/0.85),hsl(240_18%_5%/0.7))] backdrop-blur-2xl text-left hover:border-white/[0.09] transition-all shadow-[0_30px_80px_-40px_rgba(0,0,0,0.95),inset_0_1px_0_rgba(255,255,255,0.04)]"
+            className="relative mt-3 w-full flex items-center gap-4 p-3.5 pr-5 rounded-[26px] border border-white/[0.05] bg-[linear-gradient(180deg,hsl(240_14%_9%/0.85),hsl(240_18%_5%/0.7))] backdrop-blur-2xl text-left hover:border-white/[0.09] transition-all shadow-[0_30px_80px_-40px_rgba(0,0,0,0.95),inset_0_1px_0_rgba(255,255,255,0.04)]"
           >
             <span className="relative flex-shrink-0">
               <span className="absolute inset-0 rounded-full bg-primary/20 blur-md animate-subtle-pulse" />
