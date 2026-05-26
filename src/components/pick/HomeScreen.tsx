@@ -928,7 +928,7 @@ const HomeScreen = ({
 
       <div className="relative z-10 h-full overflow-y-auto overscroll-y-contain touch-pan-y">
         {/* ─── Cinematic Hero ─── */}
-        <section className="relative pt-20 pb-4 px-5 md:px-8">
+        <section className="relative pt-14 pb-2 px-5 md:px-8">
           {/* Mascot floating on the right with violet halo */}
           <motion.div
             initial={{ opacity: 0, scale: 0.92, x: 12 }}
@@ -953,7 +953,7 @@ const HomeScreen = ({
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2, duration: 0.5 }}
-            className="relative flex items-center gap-1.5 mb-3"
+            className="relative flex items-center gap-1.5 mb-2"
           >
             <Sparkles className="w-3.5 h-3.5 text-primary" />
             <span className="text-[10.5px] font-sans font-semibold tracking-[0.18em] uppercase text-primary">
@@ -985,7 +985,7 @@ const HomeScreen = ({
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.42, duration: 0.5 }}
-            className="relative mt-5 text-foreground/65 text-[13.5px] leading-relaxed font-sans max-w-[62%]"
+            className="relative mt-2 text-foreground/65 text-[13.5px] leading-snug font-sans max-w-[62%]"
           >
             Pick comprend tes envies. J’ai préparé une sélection brute et visuelle.
           </motion.p>
@@ -995,7 +995,7 @@ const HomeScreen = ({
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.55, duration: 0.5 }}
-            className="relative mt-7"
+            className="relative mt-3"
           >
             <motion.button
               data-tour="pick-ce-soir"
@@ -1018,7 +1018,7 @@ const HomeScreen = ({
             transition={{ delay: 0.7, duration: 0.55 }}
             whileTap={{ scale: 0.985 }}
             onClick={onOpenChat}
-            className="relative mt-6 w-full flex items-center gap-4 p-3.5 pr-5 rounded-[26px] border border-white/[0.05] bg-[linear-gradient(180deg,hsl(240_14%_9%/0.85),hsl(240_18%_5%/0.7))] backdrop-blur-2xl text-left hover:border-white/[0.09] transition-all shadow-[0_30px_80px_-40px_rgba(0,0,0,0.95),inset_0_1px_0_rgba(255,255,255,0.04)]"
+            className="relative mt-3 w-full flex items-center gap-4 p-3.5 pr-5 rounded-[26px] border border-white/[0.05] bg-[linear-gradient(180deg,hsl(240_14%_9%/0.85),hsl(240_18%_5%/0.7))] backdrop-blur-2xl text-left hover:border-white/[0.09] transition-all shadow-[0_30px_80px_-40px_rgba(0,0,0,0.95),inset_0_1px_0_rgba(255,255,255,0.04)]"
           >
             <span className="relative flex-shrink-0">
               <span className="absolute inset-0 rounded-full bg-primary/20 blur-md animate-subtle-pulse" />
@@ -1056,9 +1056,9 @@ const HomeScreen = ({
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.8, duration: 0.5 }}
-            className="mt-4"
+            className="mt-3"
           >
-            <div className="flex items-baseline justify-between mb-2 px-0.5">
+            <div className="flex items-baseline justify-between mb-1.5 px-0.5">
               <h3 className="font-serif text-foreground text-[14px] leading-tight">
                 Choisis ton ambiance
               </h3>
@@ -1106,7 +1106,7 @@ const HomeScreen = ({
 
         </section>
 
-        <div className="mt-4">
+        <div className="mt-2">
           <HomeAmbianceSection
             activeAmbiance={activeAmbiance}
             onPickAmbiance={(mood) => {
@@ -1120,7 +1120,7 @@ const HomeScreen = ({
           />
         </div>
 
-        <div className="px-5 md:px-12 pb-32 pt-8">
+        <div className="px-5 md:px-12 pb-32 pt-4">
           <DiscoverySection
             onMovieSelect={onMovieSelect}
             platformIds={userPlatformIds}
