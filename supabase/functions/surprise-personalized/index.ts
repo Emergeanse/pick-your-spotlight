@@ -496,12 +496,13 @@ serve(async (req) => {
         .slice(0, llmPoolSize);
       llmPool = topPool;
 
+      // Le LLM répond par rang (1-30), pas par tmdb_id — évite les hallucinations d'ID
       const candidateList = topPool
         .map(
           (c: any, i: number) => {
             const typeLabel = c.media_type === "tv" ? "📺 Série" : "🎬 Film";
             const safeTitle = (c.title || "").replace(/�/g, "").replace(/[^\x20-\x7EÀ-ɏЀ-ӿ]/g, "").trim();
-            return `[${i + 1}] id=${c.tmdb_id} | ${typeLabel} | "${safeTitle}" (${c.year || "?"}) | ${(c.genres || []).slice(0, 3).join(", ")} | ⭐${c.vote_average > 0 ? c.vote_average.toFixed(1) : "?"}/10 | sim=${c.similarity != null ? Math.round(c.similarity * 1000) / 10 : "?"}%`;
+            return `N°${i + 1} | ${typeLabel} | "${safeTitle}" (${c.year || "?"}) | ${(c.genres || []).slice(0, 3).join(", ")} | ⭐${c.vote_average > 0 ? c.vote_average.toFixed(1) : "?"}/10`;
           },
         )
         .join("\n");
@@ -570,8 +571,8 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
 {
   "selections": [
     {
-      "tmdb_id": <id exact de la liste ci-dessus>,
-      "matchScore": <${minMatchScore}-99>,
+      "rank": <numéro N° de la liste, entre 1 et ${topPool.length}>,
+      "matchScore": <entier entre 60 et 99>,
       "reason": "<1 phrase pourquoi ce film correspond au profil>"
     }
   ]
@@ -662,28 +663,35 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
             }
           }
 
-          // Strategy 2: regex — extract tmdb_id + matchScore + reason, bypasses all JSON issues
+          // Strategy 2: regex — extract rank + matchScore + reason
           if (!parsed) {
             const sels: any[] = [];
-            const re = /"tmdb_id"\s*:\s*(\d+)[^}]*?"matchScore"\s*:\s*(\d+)[^}]*?(?:"reason"\s*:\s*"([^"]*)")?/g;
+            const re = /"rank"\s*:\s*(\d+)[^}]*?"matchScore"\s*:\s*(\d+)(?:[^}]*?"reason"\s*:\s*"([^"]*)")?/g;
             let m;
             while ((m = re.exec(content)) !== null) {
-              sels.push({ tmdb_id: Number(m[1]), matchScore: Number(m[2]), reason: m[3] || undefined });
+              sels.push({ rank: Number(m[1]), matchScore: Number(m[2]), reason: m[3] || undefined });
             }
             if (sels.length > 0) { parsed = { selections: sels }; console.log(`[SP] Strategy 2 (regex) extracted ${sels.length} sel`); }
           }
 
           if (!parsed) throw new Error(`No valid selections JSON in LLM response: ${rawContent.slice(0, 300)}`);
           if (parsed.selections && Array.isArray(parsed.selections)) {
-            const validIds = new Set(topPool.map((c: any) => Number(c.tmdb_id)));
-            const idValid = parsed.selections.filter((s: any) => s.tmdb_id && validIds.has(Number(s.tmdb_id)));
-            // On garde toutes les sélections LLM — le LLM a déjà appliqué son jugement.
-            // Trier par score décroissant pour que les meilleurs passent en premier.
-            llmSelections = idValid
-              .sort((a: any, b: any) => (b.matchScore || 0) - (a.matchScore || 0))
-              .map((s: any) => ({ ...s, tmdb_id: Number(s.tmdb_id) }));
+            // Résoudre rang → tmdb_id (le LLM répond par numéro de rang pour éviter les hallucinations)
+            const resolved = parsed.selections
+              .map((s: any) => {
+                const rankIdx = (s.rank != null ? Number(s.rank) : null);
+                const candidate = (rankIdx != null && rankIdx >= 1 && rankIdx <= topPool.length)
+                  ? topPool[rankIdx - 1]
+                  : topPool.find((c: any) => Number(c.tmdb_id) === Number(s.tmdb_id)); // fallback si le LLM envoie tmdb_id quand même
+                if (!candidate) return null;
+                return { tmdb_id: Number(candidate.tmdb_id), matchScore: s.matchScore || minMatchScore, reason: s.reason || null };
+              })
+              .filter(Boolean);
+
+            llmSelections = resolved
+              .sort((a: any, b: any) => (b.matchScore || 0) - (a.matchScore || 0));
             console.log(
-              `[SP] LLM raw selections: ${parsed.selections.length}, valid: ${llmSelections.length}, minMatchScore (used by movie-match): ${minMatchScore}`,
+              `[SP] LLM raw selections: ${parsed.selections.length}, resolved: ${llmSelections.length}`,
             );
           }
         } else {
@@ -708,7 +716,7 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
         .map((c: any) => ({
           tmdb_id: Number(c.tmdb_id),
           matchScore: minMatchScore,
-          reason: null,
+          reason: undefined, // movie-match génèrera les textes
         }));
     }
 
