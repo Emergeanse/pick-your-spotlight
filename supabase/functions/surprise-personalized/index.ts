@@ -633,12 +633,16 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
 
           const hasSelections = (obj: any) => obj?.selections && Array.isArray(obj.selections) && obj.selections.length > 0;
 
-          // Strategy 0: direct JSON.parse (works when content is pure JSON)
+          // Strategy 0: direct JSON.parse — try as-is first, then with light repair
+          // (repair can corrupt valid JSON, so we try without it first)
           let parsed: any = null;
-          try {
-            const obj = JSON.parse(repair(content));
-            if (hasSelections(obj)) { parsed = obj; console.log("[SP] Strategy 0 (direct parse) succeeded"); }
-          } catch {}
+          for (const candidate of [content, repair(content)]) {
+            if (parsed) break;
+            try {
+              const obj = JSON.parse(candidate);
+              if (hasSelections(obj)) { parsed = obj; console.log("[SP] Strategy 0 (direct parse) succeeded"); }
+            } catch {}
+          }
 
           // Strategy 1: bracket-count from every { — handles preamble/postamble text
           // NOTE: bracket counting fails when reason strings contain unbalanced { or }
