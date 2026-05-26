@@ -132,17 +132,17 @@ const HomeAmbianceSection = ({ onPickAmbiance, activeAmbiance }: Props) => {
   };
 
   return (
-    <div className="px-5 md:px-8 space-y-8">
+    <div className="px-4 md:px-8 space-y-3">
       {/* ─── Last Reco Rating Card ─── */}
       {lastReco && (
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.05, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-          className={`relative ${PREMIUM_SURFACE} p-4`}
+          className={`relative ${PREMIUM_SURFACE} p-2.5`}
         >
-          <div className="flex gap-4 items-stretch">
-            <div className="relative flex-shrink-0 w-[92px] h-[136px] rounded-2xl overflow-hidden border border-white/[0.06] shadow-[0_14px_36px_-14px_rgba(0,0,0,0.8)]">
+          <div className="flex gap-3 items-stretch">
+            <div className="relative flex-shrink-0 w-[56px] h-[84px] rounded-lg overflow-hidden border border-white/[0.06] shadow-[0_14px_36px_-14px_rgba(0,0,0,0.8)]">
               {lastReco.posterPath ? (
                 <img
                   src={`${POSTER_BASE}${lastReco.posterPath}`}
@@ -155,19 +155,19 @@ const HomeAmbianceSection = ({ onPickAmbiance, activeAmbiance }: Props) => {
               <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/70 to-transparent" />
             </div>
 
-            <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
+            <div className="flex-1 min-w-0 flex flex-col justify-between py-0">
               <div>
                 <p className={SECTION_EYEBROW}>Ta dernière séance</p>
-                <p className="mt-1 font-serif text-foreground text-[20px] leading-[1.1] tracking-tight line-clamp-2">
+                <p className="mt-0.5 font-serif text-foreground text-[15px] leading-[1.15] tracking-tight line-clamp-1">
                   {lastReco.title}
                 </p>
-                <p className="mt-1.5 text-[12px] font-sans text-foreground/50 leading-snug">
+                <p className="mt-0.5 text-[10.5px] font-sans text-foreground/50 leading-snug">
                   {submitted ? "Merci — j'affine ton goût." : "Comment tu l'as vécu ?"}
                 </p>
               </div>
 
               <div
-                className="mt-3 flex items-center gap-1"
+                className="mt-1.5 flex items-center gap-0.5"
                 onMouseLeave={() => setHovered(0)}
               >
                 {[1, 2, 3, 4, 5].map((n) => {
@@ -184,7 +184,7 @@ const HomeAmbianceSection = ({ onPickAmbiance, activeAmbiance }: Props) => {
                       aria-label={`Note ${n}/5`}
                     >
                       <Star
-                        className={`w-[22px] h-[22px] transition-all ${
+                        className={`w-[16px] h-[16px] transition-all ${
                           filled
                             ? "fill-primary text-primary drop-shadow-[0_0_10px_hsl(var(--primary)/0.55)]"
                             : "text-foreground/25"
@@ -196,6 +196,7 @@ const HomeAmbianceSection = ({ onPickAmbiance, activeAmbiance }: Props) => {
                 })}
               </div>
             </div>
+
           </div>
         </motion.div>
       )}
@@ -206,25 +207,25 @@ const HomeAmbianceSection = ({ onPickAmbiance, activeAmbiance }: Props) => {
           initial={{ opacity: 0, y: 18 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.25, duration: 0.6 }}
-          className={`relative ${PREMIUM_SURFACE} px-5 pt-5 pb-4`}
+          className={`relative ${PREMIUM_SURFACE} px-3 pt-3 pb-2.5`}
         >
-          <div className="flex items-end justify-between mb-5">
+          <div className="flex items-end justify-between mb-2.5">
             <div>
               <p className={SECTION_EYEBROW}>Cercle Pick</p>
-              <h3 className="mt-1 font-serif text-foreground text-[20px] leading-tight">
+              <h3 className="mt-0.5 font-serif text-foreground text-[15px] leading-tight">
                 Vos amis regardent
               </h3>
             </div>
             <button
               onClick={() => navigate("/app/friends")}
-              className="inline-flex items-center gap-1 text-[12px] font-sans font-medium text-foreground/55 hover:text-foreground transition-colors group"
+              className="inline-flex items-center gap-1 text-[11px] font-sans font-medium text-foreground/55 hover:text-foreground transition-colors group"
             >
               Voir tout
-              <ArrowUpRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+              <ArrowUpRight className="w-3 h-3 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
             </button>
           </div>
 
-          <div className="flex gap-1 overflow-x-auto -mx-5 px-5 pb-1 scrollbar-none">
+          <div className="flex gap-1 overflow-x-auto -mx-3 px-3 pb-0.5 scrollbar-none">
             {friends.map((f, i) => (
               <motion.button
                 key={f.id}
@@ -234,44 +235,46 @@ const HomeAmbianceSection = ({ onPickAmbiance, activeAmbiance }: Props) => {
                 transition={{ delay: 0.32 + i * 0.06, duration: 0.45 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => navigate("/app/friends")}
-                className="flex-shrink-0 flex flex-col items-center w-[74px] group"
+                className="flex-shrink-0 flex flex-col items-center w-[54px] group"
               >
                 <div className="relative">
                   <div className="absolute -inset-0.5 rounded-full bg-gradient-to-br from-primary/30 via-transparent to-transparent opacity-0 group-hover:opacity-100 blur transition-opacity" />
-                  <div className="relative w-[58px] h-[58px] rounded-full overflow-hidden border border-white/10 bg-muted">
+                  <div className="relative w-[40px] h-[40px] rounded-full overflow-hidden border border-white/10 bg-muted">
                     {f.avatarUrl ? (
                       <img src={f.avatarUrl} alt={f.name} className="w-full h-full object-cover" />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center text-foreground/60 font-serif text-base">
+                      <div className="w-full h-full flex items-center justify-center text-foreground/60 font-serif text-sm">
                         {f.name.charAt(0)}
                       </div>
                     )}
                   </div>
-                  <span className="absolute bottom-0.5 right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-400 border-2 border-background" />
+                  <span className="absolute bottom-0 right-0 w-2 h-2 rounded-full bg-emerald-400 border-2 border-background" />
                 </div>
-                <p className="mt-2.5 text-[12px] font-sans font-medium text-foreground/85 truncate w-full text-center leading-tight">
+                <p className="mt-1 text-[10.5px] font-sans font-medium text-foreground/85 truncate w-full text-center leading-tight">
                   {f.name}
                 </p>
                 {f.title && (
-                  <p className="mt-0.5 text-[10.5px] font-sans text-foreground/40 truncate w-full text-center leading-tight">
+                  <p className="mt-0 text-[9px] font-sans text-foreground/40 truncate w-full text-center leading-tight">
                     {f.title}
                   </p>
                 )}
               </motion.button>
+
             ))}
             {extraFriends > 0 && (
               <button
                 onClick={() => navigate("/app/friends")}
-                className="flex-shrink-0 flex flex-col items-center w-[74px] group"
+                className="flex-shrink-0 flex flex-col items-center w-[54px] group"
               >
-                <div className="w-[58px] h-[58px] rounded-full border border-white/[0.08] bg-white/[0.03] flex items-center justify-center text-foreground/70 font-sans font-semibold text-[14px] group-hover:border-primary/40 group-hover:text-primary transition-colors">
+                <div className="w-[40px] h-[40px] rounded-full border border-white/[0.08] bg-white/[0.03] flex items-center justify-center text-foreground/70 font-sans font-semibold text-[11px] group-hover:border-primary/40 group-hover:text-primary transition-colors">
                   +{extraFriends}
                 </div>
-                <p className="mt-2.5 text-[10.5px] font-sans text-foreground/40 text-center leading-tight">
+                <p className="mt-1 text-[9px] font-sans text-foreground/40 text-center leading-tight">
                   autres amis
                 </p>
               </button>
             )}
+
           </div>
         </motion.section>
       )}
