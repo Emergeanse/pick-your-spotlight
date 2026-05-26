@@ -1112,7 +1112,7 @@ const HomeScreen = ({
 
         </section>
 
-        <div className="mt-[54px]">
+        <div className="mt-[44px]">
           <HomeAmbianceSection
             activeAmbiance={activeAmbiance}
             onPickAmbiance={(mood) => {
