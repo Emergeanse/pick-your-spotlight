@@ -33,6 +33,7 @@ import HomeScreenChoiceModal from "./HomeScreenChoiceModal";
 import TonightPickOverlay from "./TonightPickOverlay";
 import FlipCardDetail from "./FlipCardDetail";
 import HomeAmbianceSection, { type AmbianceMood } from "./HomeAmbianceSection";
+import homeBackground from "@/assets/home-background.png";
 
 interface HomeScreenProps {
   onStart: () => void;
