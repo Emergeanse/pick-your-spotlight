@@ -594,9 +594,9 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
           headers: { Authorization: `Bearer ${GOOGLE_AI_KEY}`, "Content-Type": "application/json" },
           body: llmBody,
         });
-        // Retry once on 429 (rate limit) after a short delay
-        if (response.status === 429) {
-          await new Promise((r) => setTimeout(r, 3000));
+        // Retry once on transient errors (429 rate-limit, 503 unavailable)
+        if (response.status === 429 || response.status === 503) {
+          await new Promise((r) => setTimeout(r, response.status === 503 ? 5000 : 3000));
           response = await fetch("https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", {
             method: "POST",
             headers: { Authorization: `Bearer ${GOOGLE_AI_KEY}`, "Content-Type": "application/json" },
