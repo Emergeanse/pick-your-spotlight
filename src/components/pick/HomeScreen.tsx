@@ -966,7 +966,7 @@ const HomeScreen = ({
             initial={{ opacity: 0, y: 14 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.28, duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
-            className="relative font-serif text-foreground text-[42px] sm:text-[50px] leading-[1] tracking-tight max-w-[64%]"
+            className="relative font-serif text-foreground text-[34px] sm:text-[40px] leading-[1] tracking-tight max-w-[64%]"
             translate="no"
           >
             Ce soir,
