@@ -1012,28 +1012,28 @@ const HomeScreen = ({
             transition={{ delay: 0.7, duration: 0.55 }}
             whileTap={{ scale: 0.985 }}
             onClick={onOpenChat}
-            className="relative mt-3 w-full flex items-center gap-4 p-3.5 pr-5 rounded-[26px] border border-white/[0.05] bg-[linear-gradient(180deg,hsl(240_14%_9%/0.85),hsl(240_18%_5%/0.7))] backdrop-blur-2xl text-left hover:border-white/[0.09] transition-all shadow-[0_30px_80px_-40px_rgba(0,0,0,0.95),inset_0_1px_0_rgba(255,255,255,0.04)]"
+            className="relative mt-4 w-full flex items-center gap-3 p-2.5 pr-4 rounded-[22px] border border-white/[0.05] bg-[linear-gradient(180deg,hsl(240_14%_9%/0.85),hsl(240_18%_5%/0.7))] backdrop-blur-2xl text-left hover:border-white/[0.09] transition-all shadow-[0_24px_60px_-32px_rgba(0,0,0,0.9),inset_0_1px_0_rgba(255,255,255,0.04)]"
           >
             <span className="relative flex-shrink-0">
               <span className="absolute inset-0 rounded-full bg-primary/20 blur-md animate-subtle-pulse" />
-              <span className="relative flex items-center justify-center w-12 h-12 rounded-full bg-primary/12 border border-primary/40">
-                <Mic className="w-[18px] h-[18px] text-primary" />
+              <span className="relative flex items-center justify-center w-9 h-9 rounded-full bg-primary/12 border border-primary/40">
+                <Mic className="w-[14px] h-[14px] text-primary" />
               </span>
             </span>
             <span className="flex-1 min-w-0">
-              <span className="block font-serif text-foreground text-[15px] leading-tight">
+              <span className="block font-serif text-foreground text-[13px] leading-tight">
                 Parle-moi…
               </span>
-              <span className="block text-foreground/45 text-[11px] font-sans mt-0.5">
+              <span className="block text-foreground/45 text-[10px] font-sans mt-0.5">
                 Dis ce que tu as envie de voir
               </span>
             </span>
-            <span className="flex items-end gap-[2.5px] h-5" aria-hidden="true">
+            <span className="flex items-end gap-[2px] h-4" aria-hidden="true">
               {[6, 14, 9, 18, 12, 20, 8, 15, 7].map((h, i) => (
                 <motion.span
                   key={i}
-                  className="w-[2.5px] rounded-full bg-primary/70"
-                  animate={{ height: [`${h * 0.4}px`, `${h}px`, `${h * 0.5}px`] }}
+                  className="w-[2px] rounded-full bg-primary/70"
+                  animate={{ height: [`${h * 0.35}px`, `${h * 0.85}px`, `${h * 0.45}px`] }}
                   transition={{
                     duration: 1.2,
                     repeat: Infinity,
