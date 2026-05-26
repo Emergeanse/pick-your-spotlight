@@ -500,7 +500,8 @@ serve(async (req) => {
         .map(
           (c: any, i: number) => {
             const typeLabel = c.media_type === "tv" ? "📺 Série" : "🎬 Film";
-            return `[${i + 1}] id=${c.tmdb_id} | ${typeLabel} | "${c.title}" (${c.year || "?"}) | ${(c.genres || []).slice(0, 3).join(", ")} | ⭐${c.vote_average > 0 ? c.vote_average.toFixed(1) : "?"}/10 | sim=${c.similarity != null ? Math.round(c.similarity * 1000) / 10 : "?"}% | composite=${Math.round(compositeScore(c) * 100)}%`;
+            const safeTitle = (c.title || "").replace(/�/g, "").replace(/[^\x20-\x7EÀ-ɏЀ-ӿ]/g, "").trim();
+            return `[${i + 1}] id=${c.tmdb_id} | ${typeLabel} | "${safeTitle}" (${c.year || "?"}) | ${(c.genres || []).slice(0, 3).join(", ")} | ⭐${c.vote_average > 0 ? c.vote_average.toFixed(1) : "?"}/10 | sim=${c.similarity != null ? Math.round(c.similarity * 1000) / 10 : "?"}%`;
           },
         )
         .join("\n");
@@ -596,11 +597,10 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
           const raw = await response.text();
           const aiData = JSON.parse(raw);
           const content = aiData?.choices?.[0]?.message?.content || "";
-          const jsonStr = content
-            .replace(/```json\n?/g, "")
-            .replace(/```\n?/g, "")
-            .trim();
-          const parsed = JSON.parse(jsonStr);
+          // Extract JSON object even if model adds preamble text
+          const jsonMatch = content.match(/\{[\s\S]*\}/);
+          if (!jsonMatch) throw new Error(`No JSON in LLM response: ${content.slice(0, 200)}`);
+          const parsed = JSON.parse(jsonMatch[0]);
           if (parsed.selections && Array.isArray(parsed.selections)) {
             const validIds = new Set(topPool.map((c: any) => Number(c.tmdb_id)));
             const idValid = parsed.selections.filter((s: any) => s.tmdb_id && validIds.has(Number(s.tmdb_id)));
