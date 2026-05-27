@@ -81,14 +81,23 @@ const TonightPickOverlay = ({
   const year = ((movie.release_date || (movie as any).first_air_date) as string | undefined)?.substring(0, 4);
   const primaryGenre = movie.genres?.[0]?.name;
 
-  // SVG match ring
-  const ringCirc = 2 * Math.PI * 24;
-  const ringOffset = adhesionScore != null ? ringCirc * (1 - adhesionScore / 100) : ringCirc;
-  const ringColor =
-    adhesionScore == null ? "text-white/20"
-    : adhesionScore >= 85 ? "text-emerald-400"
-    : adhesionScore >= 70 ? "text-amber-400"
-    : "text-primary";
+  // Hazelnut match indicator
+  const hazelnutStyle = (() => {
+    const pct = (adhesionScore ?? 0) / 100;
+    const grey = Math.round((1 - pct) * 100);
+    const bright = 0.45 + pct * 0.8;
+    const opa = 0.2 + pct * 0.8;
+    const glow =
+      (adhesionScore ?? 0) >= 85
+        ? "drop-shadow(0 0 14px rgba(234,179,8,0.95)) drop-shadow(0 0 6px rgba(251,146,60,0.7))"
+        : (adhesionScore ?? 0) >= 70
+        ? "drop-shadow(0 0 8px rgba(234,179,8,0.55))"
+        : "none";
+    return {
+      filter: `grayscale(${grey}%) brightness(${bright}) ${glow}`,
+      opacity: opa,
+    };
+  })();
 
   return (
     <AnimatePresence>
@@ -126,23 +135,16 @@ const TonightPickOverlay = ({
             </button>
 
             {adhesionScore != null && (
-              <div className="relative w-12 h-12 flex items-center justify-center">
-                <svg className="w-full h-full -rotate-90" viewBox="0 0 56 56">
-                  <circle cx="28" cy="28" r="24" stroke="currentColor" strokeWidth="4" fill="transparent" className="text-white/10" />
-                  <circle
-                    cx="28"
-                    cy="28"
-                    r="24"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                    fill="transparent"
-                    strokeDasharray={ringCirc}
-                    strokeDashoffset={ringOffset}
-                    strokeLinecap="round"
-                    className={`${ringColor} transition-all duration-700`}
-                  />
-                </svg>
-              </div>
+              <motion.span
+                initial={{ opacity: 0, scale: 0.6 }}
+                animate={{ opacity: hazelnutStyle.opacity, scale: 1 }}
+                transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+                className="text-4xl select-none leading-none"
+                style={{ filter: hazelnutStyle.filter, display: "inline-block" }}
+                aria-label={`Adhésion ${adhesionScore}%`}
+              >
+                🌰
+              </motion.span>
             )}
           </div>
 
