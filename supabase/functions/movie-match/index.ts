@@ -37,10 +37,10 @@ serve(async (req) => {
     const mmT0 = Date.now();
     const { movie, userCriteria, tasteProfile, userTasteVector, likedMovieTitles, searchTags, cinematicProfile, peoplePreferences, userName, minMatchScore: rawMinMatchScore } = await req.json();
     const minMatchScore = typeof rawMinMatchScore === "number" ? Math.max(0, Math.min(100, rawMinMatchScore)) : 60;
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    const GOOGLE_AI_KEY = Deno.env.get("GOOGLE_AI_KEY");
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
+    if (!GOOGLE_AI_KEY) throw new Error("GOOGLE_AI_KEY is not configured");
 
     const isYouTube = !!(movie._youtube);
     const youtubeData = movie._youtubeData || {};
@@ -285,37 +285,37 @@ ${criteriaText}${tasteSection}
 
 Génère la fiche de match multi-vecteur.`;
 
-    const callAI = async () =>
-      fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${LOVABLE_API_KEY}`,
-          "Content-Type": "application/json",
+    const callGemini = async () =>
+      fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GOOGLE_AI_KEY}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            system_instruction: { parts: [{ text: systemPrompt }] },
+            contents: [{ role: "user", parts: [{ text: userPrompt }] }],
+            generationConfig: {
+              responseMimeType: "application/json",
+              maxOutputTokens: 1200,
+            },
+          }),
         },
-        body: JSON.stringify({
-          model: "google/gemini-2.5-flash",
-          max_tokens: 1200,
-          messages: [
-            { role: "system", content: systemPrompt },
-            { role: "user", content: userPrompt },
-          ],
-        }),
-      });
+      );
 
     const mmT2 = Date.now();
-    let response = await callAI();
+    let response = await callGemini();
     // Retry once on rate-limit
     if (response.status === 429) {
-      console.warn(`[MM⏱] AI gateway 429 — retry in 2s`);
+      console.warn(`[MM⏱] Gemini 429 — retry in 2s`);
       await new Promise((r) => setTimeout(r, 2000));
-      response = await callAI();
+      response = await callGemini();
     }
     const mmT3 = Date.now();
-    console.log(`[MM⏱] AI gateway: ${mmT3 - mmT2}ms (status=${response.status}, title="${title}")`);
+    console.log(`[MM⏱] Gemini API: ${mmT3 - mmT2}ms (status=${response.status}, title="${title}")`);
 
     if (!response.ok) {
       const t = await response.text();
-      console.error(`[MM] AI gateway HTTP error: status=${response.status} title="${title}" body=${t.slice(0, 300)}`);
+      console.error(`[MM] Gemini HTTP error: status=${response.status} title="${title}" body=${t.slice(0, 300)}`);
       const fallback = {
         matchScore: 70,
         headline: "Celui-là pourrait bien te plaire",
@@ -353,9 +353,8 @@ Génère la fiche de match multi-vecteur.`;
       console.error("Failed to parse movie-match response body:", e);
       throw new Error("AI response parse error");
     }
-    // OpenAI-compatible response: choices[0].message.content
-    const rawContent = aiData?.choices?.[0]?.message?.content || "";
-    const content = rawContent.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
+    // Native Gemini API response: candidates[0].content.parts[0].text
+    const content = (aiData?.candidates?.[0]?.content?.parts?.[0]?.text || "").trim();
 
     let matchData;
     try {
