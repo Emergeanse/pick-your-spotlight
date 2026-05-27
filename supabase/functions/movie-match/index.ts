@@ -297,6 +297,7 @@ Génère la fiche de match multi-vecteur.`;
             generationConfig: {
               responseMimeType: "application/json",
               maxOutputTokens: 1200,
+              thinkingConfig: { thinkingBudget: 0 },
             },
           }),
         },
@@ -348,6 +349,7 @@ Génère la fiche de match multi-vecteur.`;
     let aiData: any;
     try {
       const rawText = await response.text();
+      console.log(`[MM-RAW] "${title}": ${rawText.slice(0, 500)}`);
       aiData = JSON.parse(rawText);
     } catch (e) {
       console.error("Failed to parse movie-match response body:", e);
