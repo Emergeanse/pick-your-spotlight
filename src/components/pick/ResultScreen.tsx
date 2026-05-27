@@ -1100,30 +1100,21 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
                 }}
               />
 
-              <div className="flex flex-col items-center gap-1.5 mt-2">
-                <div className="relative group">
-                  <button
-                    data-tour="autre-suggestion"
-                    onClick={() => onShowAnother()}
-                    disabled={refining || !allVisited}
-                    className={`text-[12px] font-sans transition-all flex items-center gap-1.5 ${
-                      allVisited
-                        ? "text-foreground/50 hover:text-foreground/70"
-                        : "text-foreground/30 cursor-not-allowed"
-                    }`}
-                  >
-                    {refining ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
-                    {displayedTotal} autre{displayedTotal > 1 ? "s" : ""} suggestion{displayedTotal > 1 ? "s" : ""}
-                  </button>
-                  {!allVisited && (
-                    <div className="pointer-events-none absolute left-1/2 -translate-x-1/2 bottom-full mb-2 hidden group-hover:block whitespace-nowrap rounded-lg bg-background/95 border border-border/20 px-2.5 py-1.5 shadow-xl">
-                      <p className="text-[10px] text-foreground/50 font-sans">
-                        Parcours les {displayedTotal} suggestions d'abord
-                      </p>
-                    </div>
-                  )}
-                </div>
-                {displayedTotal > 1 && (
+              <div className="flex flex-col items-center gap-1.5 mt-3">
+                <button
+                  data-tour="autre-suggestion"
+                  onClick={() => onShowAnother()}
+                  disabled={refining || !allVisited}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-full border text-[12px] font-sans transition-all ${
+                    allVisited
+                      ? "border-foreground/20 text-foreground/60 hover:border-foreground/40 hover:text-foreground/80"
+                      : "border-foreground/10 text-foreground/35 cursor-not-allowed"
+                  }`}
+                >
+                  {refining ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
+                  {displayedTotal} autre{displayedTotal > 1 ? "s" : ""} suggestion{displayedTotal > 1 ? "s" : ""}
+                </button>
+                {!allVisited && displayedTotal > 1 && (
                   <p className="text-[10px] text-foreground/25 font-sans">
                     {visitedMovieIds.size}/{displayedTotal} vues
                   </p>
