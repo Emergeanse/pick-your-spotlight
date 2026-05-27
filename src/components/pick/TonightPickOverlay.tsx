@@ -83,54 +83,31 @@ const TonightPickOverlay = ({
   const year = ((movie.release_date || (movie as any).first_air_date) as string | undefined)?.substring(0, 4);
   const primaryGenre = movie.genres?.[0]?.name;
 
-  // Hazelnut match indicator — size proportional to score, distinct visual tiers
+  // Hazelnut match indicator
   const hazelnutStyle = (() => {
     const s = adhesionScore ?? 0;
-    // Continuous size: small at 0%, large at 100%
-    const scale = 0.5 + (s / 100) * 1.1; // 0.5 → 1.6
+    const scale = 0.55 + (s / 100) * 1.05; // 0.55 → 1.6
 
     if (s >= 90) return {
-      filter: [
-        "grayscale(0%)", "brightness(1.5)", "saturate(2.4)",
-        "drop-shadow(0 0 28px rgba(234,179,8,1))",
-        "drop-shadow(0 0 12px rgba(251,146,60,0.95))",
-        "drop-shadow(0 0 4px rgba(255,230,100,0.6))",
-      ].join(" "),
-      opacity: 1,
-      scale,
-      textColor: "text-white",
+      filter: "grayscale(0%) sepia(0.25) saturate(2.6) brightness(1.15) hue-rotate(-12deg) drop-shadow(0 0 10px rgba(251,146,60,0.9))",
+      opacity: 1, scale, textColor: "text-white", glow: true, rings: 3,
     };
     if (s >= 80) return {
-      filter: [
-        "grayscale(0%)", "brightness(1.3)", "saturate(1.7)",
-        "drop-shadow(0 0 16px rgba(234,179,8,0.85))",
-        "drop-shadow(0 0 6px rgba(251,146,60,0.65))",
-      ].join(" "),
-      opacity: 0.96,
-      scale,
-      textColor: "text-white",
+      filter: "grayscale(0%) sepia(0.2) saturate(2.0) brightness(1.1) hue-rotate(-10deg) drop-shadow(0 0 7px rgba(234,179,8,0.75))",
+      opacity: 0.97, scale, textColor: "text-white", glow: true, rings: 2,
     };
     if (s >= 70) return {
-      filter: [
-        "grayscale(22%)", "brightness(1.05)", "saturate(1.05)",
-        "drop-shadow(0 0 7px rgba(234,179,8,0.35))",
-      ].join(" "),
-      opacity: 0.82,
-      scale,
-      textColor: "text-white",
+      filter: "grayscale(10%) sepia(0.1) saturate(1.4) brightness(1.0) drop-shadow(0 0 4px rgba(234,179,8,0.3))",
+      opacity: 0.85, scale, textColor: "text-white", glow: false, rings: 0,
     };
     if (s >= 55) return {
-      filter: "grayscale(55%) brightness(0.78) saturate(0.7)",
-      opacity: 0.55,
-      scale,
-      textColor: "text-white/80",
+      filter: "grayscale(55%) brightness(0.8) saturate(0.7)",
+      opacity: 0.58, scale, textColor: "text-white/80", glow: false, rings: 0,
     };
     const pct = Math.max(0, s) / 55;
     return {
-      filter: `grayscale(${Math.round(95 - pct * 40)}%) brightness(${0.38 + pct * 0.4}) saturate(${0.4 + pct * 0.3})`,
-      opacity: 0.15 + pct * 0.35,
-      scale,
-      textColor: "text-white/60",
+      filter: `grayscale(${Math.round(92 - pct * 37)}%) brightness(${0.4 + pct * 0.4})`,
+      opacity: 0.15 + pct * 0.3, scale, textColor: "text-white/50", glow: false, rings: 0,
     };
   })();
 
@@ -170,7 +147,35 @@ const TonightPickOverlay = ({
             </button>
 
             {adhesionScore != null && (
-              <div className="relative flex items-center justify-center w-14 h-14">
+              <div className="relative flex items-center justify-center" style={{ width: 56, height: 56 }}>
+
+                {/* Expanding glow rings at ≥80% */}
+                {hazelnutStyle.rings >= 1 && (
+                  <motion.div
+                    animate={{ scale: [1, 2.4], opacity: [0.55, 0] }}
+                    transition={{ duration: 1.9, repeat: Infinity, ease: "easeOut" }}
+                    className="absolute inset-0 rounded-full pointer-events-none"
+                    style={{ background: "radial-gradient(circle, rgba(251,146,60,0.55) 0%, transparent 70%)" }}
+                  />
+                )}
+                {hazelnutStyle.rings >= 2 && (
+                  <motion.div
+                    animate={{ scale: [1, 1.9], opacity: [0.45, 0] }}
+                    transition={{ duration: 1.9, repeat: Infinity, delay: 0.65, ease: "easeOut" }}
+                    className="absolute inset-0 rounded-full pointer-events-none"
+                    style={{ background: "radial-gradient(circle, rgba(234,179,8,0.5) 0%, transparent 70%)" }}
+                  />
+                )}
+                {hazelnutStyle.rings >= 3 && (
+                  <motion.div
+                    animate={{ scale: [1, 3.0], opacity: [0.35, 0] }}
+                    transition={{ duration: 2.4, repeat: Infinity, delay: 1.2, ease: "easeOut" }}
+                    className="absolute inset-0 rounded-full pointer-events-none"
+                    style={{ background: "radial-gradient(circle, rgba(255,210,60,0.35) 0%, transparent 70%)" }}
+                  />
+                )}
+
+                {/* Hazelnut — image or emoji fallback */}
                 {hazelnutError ? (
                   <motion.span
                     initial={{ opacity: 0, scale: 0.4 }}
@@ -193,12 +198,14 @@ const TonightPickOverlay = ({
                     onError={() => setHazelnutError(true)}
                   />
                 )}
+
+                {/* Score text */}
                 <motion.span
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  transition={{ delay: 0.45, duration: 0.5 }}
-                  className={`relative z-10 text-[11px] font-black font-sans select-none ${hazelnutStyle.textColor}`}
-                  style={{ textShadow: "0 1px 4px rgba(0,0,0,0.85), 0 0 8px rgba(0,0,0,0.6)" }}
+                  transition={{ delay: 0.5, duration: 0.5 }}
+                  className={`relative z-10 text-[13px] font-black font-sans select-none tracking-tight ${hazelnutStyle.textColor}`}
+                  style={{ textShadow: "0 1px 6px rgba(0,0,0,0.95), 0 0 14px rgba(0,0,0,0.75)" }}
                   aria-label={`Adhésion ${adhesionScore}%`}
                 >
                   {adhesionScore}%
