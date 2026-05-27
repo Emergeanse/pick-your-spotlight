@@ -124,6 +124,7 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
   const [loading, setLoading] = useState(true);
   const [processedIds, setProcessedIds] = useState<Set<number>>(new Set());
   const allInteractedIds = useRef<Set<number>>(new Set());
+  const queuedIds = useRef<Set<number>>(new Set());
   const [likedCount, setLikedCount] = useState(0);
   const [skippedCount, setSkippedCount] = useState(0);
   const [page, setPage] = useState(1);
@@ -161,7 +162,8 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
       try {
         const randomPage = Math.floor(Math.random() * 20) + p;
         const results = m === "series" ? await fetchTrainingSeries(randomPage) : await fetchTrainingMovies(randomPage);
-        const filtered = results.filter((mv) => !processedIds.has(mv.id) && !allInteractedIds.current.has(mv.id) && mv.poster_path);
+        const filtered = results.filter((mv) => !processedIds.has(mv.id) && !allInteractedIds.current.has(mv.id) && !queuedIds.current.has(mv.id) && mv.poster_path);
+        filtered.forEach((mv) => queuedIds.current.add(mv.id));
         setMovies((prev) => [...prev, ...filtered]);
       } catch (e) {
         console.error("Failed to load training content:", e);
@@ -180,6 +182,7 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
     setPage(1);
     setCurrentMovieDetail(null);
     advancedMovieIdsRef.current = new Set();
+    queuedIds.current = new Set();
     loadMovies(1, selectedCategory!);
   }, [selectedCategory, interactionsLoaded]);
 
