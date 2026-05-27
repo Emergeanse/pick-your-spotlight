@@ -285,13 +285,11 @@ ${criteriaText}${tasteSection}
 
 Génère la fiche de match multi-vecteur.`;
 
-    // Native Gemini API: thinkingBudget=0 suppresses thinking blocks entirely,
+    // gemini-2.0-flash: ~300-500ms/call vs ~5s for 2.5-flash; no thinking blocks.
     // responseMimeType="application/json" guarantees clean JSON output.
-    // The OpenAI-compatible wrapper (/v1beta/openai/...) does not support thinkingConfig,
-    // which caused <thinking> blocks to corrupt JSON parsing.
     const callGemini = async () =>
       fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GOOGLE_AI_KEY}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GOOGLE_AI_KEY}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -301,7 +299,6 @@ Génère la fiche de match multi-vecteur.`;
             generationConfig: {
               responseMimeType: "application/json",
               maxOutputTokens: 1200,
-              thinkingConfig: { thinkingBudget: 0 },
             },
           }),
         },

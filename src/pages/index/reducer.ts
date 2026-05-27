@@ -49,6 +49,7 @@ export type IndexAction =
       suggestionCount: number;
     }
   | { type: "REPLACE_BATCH"; movies: RecommendationMovieDetail[]; suggestionCount: number }
+  | { type: "UPDATE_MOVIE_TEXTS"; movieId: number; texts: RecommendationMovieDetail["recommendationTexts"] }
   | { type: "RESET_HOME"; suggestionCount: number }
   | { type: "GO_HOME_SOFT"; suggestionCount: number }
   | {
@@ -101,6 +102,15 @@ export function indexReducer(state: IndexState, action: IndexAction): IndexState
         resultIndexHistory: [],
         resultSeenMovieIds: new Set(action.movies[0] ? [action.movies[0].id] : []),
         batchRejectedIds: new Set(),
+      };
+    case "UPDATE_MOVIE_TEXTS":
+      return {
+        ...state,
+        results: state.results.map((m) =>
+          m.id === action.movieId && action.texts
+            ? { ...m, recommendationTexts: { ...m.recommendationTexts, ...action.texts } }
+            : m,
+        ),
       };
     case "RESET_HOME":
       return {

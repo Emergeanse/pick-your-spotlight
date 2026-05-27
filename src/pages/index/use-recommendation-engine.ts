@@ -8,6 +8,7 @@ import type { RecommendationMovieDetail } from "@/lib/recommendation-batch";
 import {
   extractRecommendationMovies,
   ensureRecommendationBatch,
+  enrichMoviesLazy,
   RECOMMENDATION_BATCH_SIZE,
 } from "@/lib/recommendation-batch";
 import { recordSkippedRecommendation } from "@/lib/engagement";
@@ -79,7 +80,7 @@ export function useRecommendationEngine({
   );
 
   const normalizeRecommendationBatch = useCallback(
-    (movies: RecommendationMovieDetail[], excludeIds: number[] = [], size = profilePrefs.recommendationBatchSize) =>
+    (movies: RecommendationMovieDetail[], excludeIds: number[] = [], size = profilePrefs.recommendationBatchSize, extra: { eagerCount?: number } = {}) =>
       ensureRecommendationBatch(movies, {
         excludeIds,
         platformIds: profilePrefs.preferredPlatforms,
@@ -91,6 +92,7 @@ export function useRecommendationEngine({
         size,
         preloadMatchTexts: true,
         preloadProviders: true,
+        ...extra,
       }),
     [
       profilePrefs.excludedGenres,
@@ -251,13 +253,16 @@ export function useRecommendationEngine({
             count: profilePrefs.recommendationBatchSize || RECOMMENDATION_BATCH_SIZE,
           });
           const tSP1 = performance.now();
-          console.log(`[Pick⏱] surprise-personalized: ${Math.round(tSP1 - tSP0)}ms | server timings:`, data?.engineMeta?.timings ?? "n/a");
+          console.log(`[Pick⏱] surprise-personalized: ${Math.round(tSP1 - tSP0)}ms | server:`, data?.engineMeta?.timings ?? "n/a");
           const extracted = extractRecommendationMovies(data);
           const desiredCount = profilePrefs.recommendationBatchSize || RECOMMENDATION_BATCH_SIZE;
-          const tMM0 = performance.now();
-          batch = await normalizeRecommendationBatch(extracted, excludeIds, desiredCount);
-          const tMM1 = performance.now();
-          console.log(`[Pick⏱] movie-match enrichissement: ${Math.round(tMM1 - tMM0)}ms pour ${extracted.length} films`);
+
+          // Enrichit seulement le film[0] avant d'afficher — les suivants arrivent en arrière-plan
+          const tEager0 = performance.now();
+          batch = await normalizeRecommendationBatch(extracted, excludeIds, desiredCount, { eagerCount: 1 });
+          const tEager1 = performance.now();
+          console.log(`[Pick⏱] movie-match eager (film[0]): ${Math.round(tEager1 - tEager0)}ms`);
+          console.log(`[Pick⏱] ✅ AFFICHAGE: ${Math.round(tEager1 - tSP0)}ms depuis le clic`);
         } else {
           batch = await normalizeRecommendationBatch([], excludeIds);
         }
@@ -267,6 +272,23 @@ export function useRecommendationEngine({
           movies: batch,
           suggestionCount: profilePrefs.recommendationBatchSize || RECOMMENDATION_BATCH_SIZE,
         });
+
+        // Films 1..N : enrichissement en arrière-plan pendant que l'utilisateur regarde film[0]
+        const lazyMovies = batch.slice(1).filter((m) => !m.recommendationTexts?.headline);
+        if (lazyMovies.length > 0) {
+          enrichMoviesLazy(
+            lazyMovies,
+            {
+              platformIds: profilePrefs.preferredPlatforms,
+              minRating: profilePrefs.minRating,
+              excludedGenres: profilePrefs.excludedGenres,
+              minMatchScore: profilePrefs.matchThreshold,
+              searchTags: stateRef.current.searchTags,
+              userCriteria: { mood: null, context: null, time: null },
+            },
+            (movieId, texts) => dispatch({ type: "UPDATE_MOVIE_TEXTS", movieId, texts }),
+          );
+        }
       } catch (e) {
         console.error(e);
       } finally {

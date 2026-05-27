@@ -97,6 +97,8 @@ type RecommendationBatchOptions = {
   preloadMatchTexts?: boolean;
   preloadProviders?: boolean;
   minMatchScore?: number;
+  // How many films to enrich synchronously before returning — rest are enriched lazily.
+  eagerCount?: number;
 };
 
 const extractInlineRecommendationTexts = (entry: any): RecommendationMatchData | null => {
@@ -238,19 +240,21 @@ export async function enrichRecommendationBatchWithTexts(
   const moviesNeedingTexts = movies.filter((movie) => !hasRichMatchTexts(movie.recommendationTexts));
   if (!moviesNeedingTexts.length) return movies;
 
+  const eagerCount = options.eagerCount ?? moviesNeedingTexts.length;
+  const eagerMovies = moviesNeedingTexts.slice(0, eagerCount);
+  if (!eagerMovies.length) return movies;
+
   const context = await buildMatchContext(options);
-  // Stagger calls by 400ms to avoid hitting Gemini rate limits when batch > 2 films
   const generated: Array<{ id: number; recommendationTexts: RecommendationMatchData | null }> = [];
-  for (let i = 0; i < moviesNeedingTexts.length; i++) {
-    if (i > 0) await new Promise((r) => setTimeout(r, 400));
-    const movie = moviesNeedingTexts[i];
+  for (let i = 0; i < eagerMovies.length; i++) {
+    const movie = eagerMovies[i];
     const tMovie0 = performance.now();
     const recommendationTexts = await fetchRecommendationTextsForMovie(movie, context, options);
     const tMovie1 = performance.now();
-    const serverMs = (recommendationTexts as any)?._timings?.total;
+    const srv = (recommendationTexts as any)?._timings;
     console.log(
-      `[Pick⏱] movie-match "${movie.title ?? movie.id}": ${Math.round(tMovie1 - tMovie0)}ms total` +
-        (serverMs != null ? ` (serveur: embed=${(recommendationTexts as any)._timings?.embed}ms gemini=${(recommendationTexts as any)._timings?.gemini}ms)` : ""),
+      `[Pick⏱] movie-match eager "${movie.title ?? movie.id}": ${Math.round(tMovie1 - tMovie0)}ms` +
+        (srv ? ` (embed=${srv.embed}ms gemini=${srv.gemini}ms)` : ""),
     );
     generated.push({ id: movie.id, recommendationTexts });
   }
@@ -276,6 +280,30 @@ export async function enrichRecommendationBatchWithTexts(
       : movie.recommendationTexts ?? null;
     return recommendationTexts ? { ...movie, recommendationTexts } : movie;
   });
+}
+
+// Enrichit les films restants en arrière-plan et appelle onMovieEnriched pour chaque film.
+// Ne bloque pas le rendu — à appeler APRÈS avoir dispatché le batch initial.
+export function enrichMoviesLazy(
+  movies: RecommendationMovieDetail[],
+  options: RecommendationBatchOptions,
+  onMovieEnriched: (movieId: number, texts: RecommendationMatchData) => void,
+): void {
+  if (!movies.length) return;
+  (async () => {
+    const context = await buildMatchContext(options);
+    for (const movie of movies) {
+      const tMovie0 = performance.now();
+      const texts = await fetchRecommendationTextsForMovie(movie, context, options);
+      const tMovie1 = performance.now();
+      const srv = (texts as any)?._timings;
+      console.log(
+        `[Pick⏱] movie-match lazy "${movie.title ?? movie.id}": ${Math.round(tMovie1 - tMovie0)}ms` +
+          (srv ? ` (embed=${srv.embed}ms gemini=${srv.gemini}ms)` : ""),
+      );
+      if (texts) onMovieEnriched(movie.id, texts);
+    }
+  })();
 }
 
 export async function enrichRecommendationBatchWithProviders(
