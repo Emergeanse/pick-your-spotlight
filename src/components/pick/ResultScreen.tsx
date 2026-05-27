@@ -1032,26 +1032,46 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
                 </button>
 
                 {totalCount > 1 && (onPrevious || onNext) ? (
-                  <div className="flex items-center gap-1">
+                  <div className="flex flex-col items-center gap-1.5">
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={onPrevious}
+                        disabled={currentIndex === 0}
+                        className="rounded-full bg-foreground/5 p-2 text-foreground/40 transition-all hover:bg-foreground/10 disabled:opacity-20 disabled:cursor-not-allowed"
+                        aria-label="Proposition précédente"
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                      </button>
+                      <span className="min-w-[60px] text-center text-[11px] uppercase tracking-[0.18em] font-sans text-foreground/40">
+                        Suggestion {currentIndex + 1}/{displayedTotal}
+                      </span>
+                      <button
+                        onClick={onNext}
+                        disabled={currentIndex >= totalCount - 1}
+                        className="rounded-full bg-foreground/5 p-2 text-foreground/40 transition-all hover:bg-foreground/10 disabled:opacity-20 disabled:cursor-not-allowed"
+                        aria-label="Proposition suivante"
+                      >
+                        <ChevronRight className="h-4 w-4" />
+                      </button>
+                    </div>
                     <button
-                      onClick={onPrevious}
-                      disabled={currentIndex === 0}
-                      className="rounded-full bg-foreground/5 p-2 text-foreground/40 transition-all hover:bg-foreground/10 disabled:opacity-20 disabled:cursor-not-allowed"
-                      aria-label="Proposition précédente"
+                      data-tour="autre-suggestion"
+                      onClick={() => onShowAnother()}
+                      disabled={refining || !allVisited}
+                      className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full border text-[12px] font-sans font-medium transition-all ${
+                        allVisited
+                          ? "border-primary/50 text-primary/80 bg-primary/5 hover:bg-primary/10 hover:border-primary/70 hover:text-primary shadow-[0_0_14px_hsl(var(--primary)/0.12)]"
+                          : "border-foreground/10 text-foreground/30 cursor-not-allowed"
+                      }`}
                     >
-                      <ChevronLeft className="h-4 w-4" />
+                      {refining ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
+                      {displayedTotal} autre{displayedTotal > 1 ? "s" : ""} suggestion{displayedTotal > 1 ? "s" : ""}
                     </button>
-                    <span className="min-w-[36px] text-center text-[12px] font-sans text-foreground/40">
-                      {currentIndex + 1}/{displayedTotal}
-                    </span>
-                    <button
-                      onClick={onNext}
-                      disabled={currentIndex >= totalCount - 1}
-                      className="rounded-full bg-foreground/5 p-2 text-foreground/40 transition-all hover:bg-foreground/10 disabled:opacity-20 disabled:cursor-not-allowed"
-                      aria-label="Proposition suivante"
-                    >
-                      <ChevronRight className="h-4 w-4" />
-                    </button>
+                    {!allVisited && displayedTotal > 1 && (
+                      <p className="text-[10px] text-foreground/25 font-sans">
+                        {visitedMovieIds.size}/{displayedTotal} vues
+                      </p>
+                    )}
                   </div>
                 ) : (
                   <div className="flex items-center gap-2 text-center">
@@ -1099,27 +1119,6 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
                   }
                 }}
               />
-
-              <div className="flex w-full flex-col items-center gap-1.5 mt-3">
-                <button
-                  data-tour="autre-suggestion"
-                  onClick={() => onShowAnother()}
-                  disabled={refining || !allVisited}
-                  className={`flex items-center gap-2 px-5 py-2.5 rounded-full border text-[13px] font-sans font-medium transition-all ${
-                    allVisited
-                      ? "border-primary/50 text-primary/80 bg-primary/5 hover:bg-primary/10 hover:border-primary/70 hover:text-primary shadow-[0_0_16px_hsl(var(--primary)/0.12)]"
-                      : "border-foreground/10 text-foreground/30 cursor-not-allowed"
-                  }`}
-                >
-                  {refining ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
-                  {displayedTotal} autre{displayedTotal > 1 ? "s" : ""} suggestion{displayedTotal > 1 ? "s" : ""}
-                </button>
-                {!allVisited && displayedTotal > 1 && (
-                  <p className="text-[10px] text-foreground/25 font-sans">
-                    {visitedMovieIds.size}/{displayedTotal} vues
-                  </p>
-                )}
-              </div>
             </div>
           </motion.div>
         </motion.div>
