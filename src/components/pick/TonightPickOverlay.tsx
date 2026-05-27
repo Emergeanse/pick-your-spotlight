@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ChevronRight, Dices, Loader2, Info } from "lucide-react";
 import { getBackdropUrl, getDisplayTitle, getPosterUrl, type MovieDetail } from "@/lib/tmdb";
@@ -50,6 +51,7 @@ const TonightPickOverlay = ({
 }: TonightPickOverlayProps) => {
   const interaction = useMovieInteraction(movie?.id);
   const displayCount = expectedCount ?? tonightPool.length;
+  const [hazelnutError, setHazelnutError] = useState(false);
 
   if (!movie) return null;
 
@@ -169,16 +171,28 @@ const TonightPickOverlay = ({
 
             {adhesionScore != null && (
               <div className="relative flex items-center justify-center w-14 h-14">
-                <motion.img
-                  src="/hazelnut.png"
-                  alt=""
-                  initial={{ opacity: 0, scale: 0.4 }}
-                  animate={{ opacity: hazelnutStyle.opacity, scale: hazelnutStyle.scale }}
-                  transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
-                  className="w-12 h-12 select-none absolute"
-                  style={{ filter: hazelnutStyle.filter }}
-                  onError={(e) => { (e.currentTarget as HTMLImageElement).src = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg'/>"; }}
-                />
+                {hazelnutError ? (
+                  <motion.span
+                    initial={{ opacity: 0, scale: 0.4 }}
+                    animate={{ opacity: hazelnutStyle.opacity, scale: hazelnutStyle.scale }}
+                    transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
+                    className="absolute text-5xl select-none leading-none"
+                    style={{ filter: hazelnutStyle.filter }}
+                  >
+                    🌰
+                  </motion.span>
+                ) : (
+                  <motion.img
+                    src="/hazelnut.png"
+                    alt=""
+                    initial={{ opacity: 0, scale: 0.4 }}
+                    animate={{ opacity: hazelnutStyle.opacity, scale: hazelnutStyle.scale }}
+                    transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
+                    className="w-12 h-12 select-none absolute"
+                    style={{ filter: hazelnutStyle.filter }}
+                    onError={() => setHazelnutError(true)}
+                  />
+                )}
                 <motion.span
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
