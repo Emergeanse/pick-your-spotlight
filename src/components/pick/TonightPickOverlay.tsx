@@ -81,9 +81,12 @@ const TonightPickOverlay = ({
   const year = ((movie.release_date || (movie as any).first_air_date) as string | undefined)?.substring(0, 4);
   const primaryGenre = movie.genres?.[0]?.name;
 
-  // Hazelnut match indicator — distinct tiers
+  // Hazelnut match indicator — size proportional to score, distinct visual tiers
   const hazelnutStyle = (() => {
     const s = adhesionScore ?? 0;
+    // Continuous size: small at 0%, large at 100%
+    const scale = 0.5 + (s / 100) * 1.1; // 0.5 → 1.6
+
     if (s >= 90) return {
       filter: [
         "grayscale(0%)", "brightness(1.5)", "saturate(2.4)",
@@ -92,7 +95,8 @@ const TonightPickOverlay = ({
         "drop-shadow(0 0 4px rgba(255,230,100,0.6))",
       ].join(" "),
       opacity: 1,
-      scale: 1.22,
+      scale,
+      textColor: "text-white",
     };
     if (s >= 80) return {
       filter: [
@@ -101,7 +105,8 @@ const TonightPickOverlay = ({
         "drop-shadow(0 0 6px rgba(251,146,60,0.65))",
       ].join(" "),
       opacity: 0.96,
-      scale: 1.08,
+      scale,
+      textColor: "text-white",
     };
     if (s >= 70) return {
       filter: [
@@ -109,19 +114,21 @@ const TonightPickOverlay = ({
         "drop-shadow(0 0 7px rgba(234,179,8,0.35))",
       ].join(" "),
       opacity: 0.82,
-      scale: 0.96,
+      scale,
+      textColor: "text-white",
     };
     if (s >= 55) return {
       filter: "grayscale(55%) brightness(0.78) saturate(0.7)",
       opacity: 0.55,
-      scale: 0.88,
+      scale,
+      textColor: "text-white/80",
     };
-    // below 55 — very faded
     const pct = Math.max(0, s) / 55;
     return {
       filter: `grayscale(${Math.round(95 - pct * 40)}%) brightness(${0.38 + pct * 0.4}) saturate(${0.4 + pct * 0.3})`,
-      opacity: 0.12 + pct * 0.32,
-      scale: 0.8,
+      opacity: 0.15 + pct * 0.35,
+      scale,
+      textColor: "text-white/60",
     };
   })();
 
@@ -161,23 +168,28 @@ const TonightPickOverlay = ({
             </button>
 
             {adhesionScore != null && (
-              <motion.img
-                src="/hazelnut.png"
-                alt={`Adhésion ${adhesionScore}%`}
-                initial={{ opacity: 0, scale: 0.5 }}
-                animate={{ opacity: hazelnutStyle.opacity, scale: hazelnutStyle.scale }}
-                transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
-                className="w-12 h-12 select-none"
-                style={{ filter: hazelnutStyle.filter }}
-                onError={(e) => {
-                  const el = e.currentTarget as HTMLImageElement;
-                  el.style.display = "none";
-                  const span = document.createElement("span");
-                  span.textContent = "🌰";
-                  span.style.cssText = `font-size:2.5rem;line-height:1;filter:${hazelnutStyle.filter};opacity:${hazelnutStyle.opacity};transform:scale(${hazelnutStyle.scale});display:inline-block`;
-                  el.parentElement?.appendChild(span);
-                }}
-              />
+              <div className="relative flex items-center justify-center w-14 h-14">
+                <motion.img
+                  src="/hazelnut.png"
+                  alt=""
+                  initial={{ opacity: 0, scale: 0.4 }}
+                  animate={{ opacity: hazelnutStyle.opacity, scale: hazelnutStyle.scale }}
+                  transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
+                  className="w-12 h-12 select-none absolute"
+                  style={{ filter: hazelnutStyle.filter }}
+                  onError={(e) => { (e.currentTarget as HTMLImageElement).src = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg'/>"; }}
+                />
+                <motion.span
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.45, duration: 0.5 }}
+                  className={`relative z-10 text-[11px] font-black font-sans select-none ${hazelnutStyle.textColor}`}
+                  style={{ textShadow: "0 1px 4px rgba(0,0,0,0.85), 0 0 8px rgba(0,0,0,0.6)" }}
+                  aria-label={`Adhésion ${adhesionScore}%`}
+                >
+                  {adhesionScore}%
+                </motion.span>
+              </div>
             )}
           </div>
 
