@@ -1108,9 +1108,9 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
                     disabled={refining || !allVisited}
                     className={`text-[12px] font-sans transition-all flex items-center gap-1.5 ${
                       allVisited
-                        ? "text-foreground/40 hover:text-foreground/60"
-                        : "text-foreground/20 cursor-not-allowed"
-                    } disabled:opacity-50`}
+                        ? "text-foreground/50 hover:text-foreground/70"
+                        : "text-foreground/30 cursor-not-allowed"
+                    }`}
                   >
                     {refining ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
                     {displayedTotal} autre{displayedTotal > 1 ? "s" : ""} suggestion{displayedTotal > 1 ? "s" : ""}
