@@ -15,7 +15,7 @@ import { computeMultiVectorProfile } from "@/lib/taste-engine";
 import {
   extractRecommendationMovies,
   ensureRecommendationBatch,
-  enrichRecommendationBatchWithTexts,
+  enrichMoviesLazy,
   getRecommendationScore,
   RECOMMENDATION_BATCH_SIZE,
   type RecommendationMovieDetail,
@@ -644,7 +644,8 @@ const HomeScreen = ({
           });
           setMovieMatchData((prev) => ({ ...prev, ...matchMap }));
 
-          // Single call: fills to desiredCount, scores, filters by threshold
+          // Enrich only film[0] eagerly so display starts ~2s after click.
+          // Films[1..N] are enriched lazily after setCurrentTonightMovie resolves.
           movies = await ensureRecommendationBatch(extracted, {
             excludeIds: allExcludeIds,
             platformIds: userPlatformIds,
@@ -655,6 +656,7 @@ const HomeScreen = ({
             preloadMatchTexts: true,
             preloadProviders: true,
             minMatchScore: quickFilters.matchThreshold,
+            eagerCount: 1,
           });
 
           console.group("[PICK-DEBUG] 4️⃣ Résultat final après movie-match");
@@ -794,47 +796,34 @@ const HomeScreen = ({
         setChatMoviesPool(poolMovies);
         await setCurrentTonightMovie(poolMovies[0], 0, new Set(poolMovies[0] ? [poolMovies[0].id] : []));
 
-        // Background enrichment: call movie-match to get rich personalized teasers.
-        // Runs after display so the overlay appears immediately, text updates when ready.
-        const moviesToEnrich = movies as RecommendationMovieDetail[];
-        const enrichmentThreshold = quickFilters.matchThreshold;
-        void (async () => {
-          try {
-            const enriched = await enrichRecommendationBatchWithTexts(moviesToEnrich, {
-              minMatchScore: enrichmentThreshold || undefined,
-            });
-            if (!isMountedRef.current) return;
-
-            // Soft floor: only reduce pool if we retain the full requested count.
-            const scoreFloor = enrichmentThreshold ?? 60;
-            const aboveFloor = enriched.filter((m: RecommendationMovieDetail) => {
-              const score = getRecommendationScore(m.recommendationTexts);
-              return score === null || score >= scoreFloor;
-            });
-            const rawFinalPool = aboveFloor.length >= moviesToEnrich.length ? aboveFloor : enriched;
-            // Pas de filtre watchProviders ici non plus — l'edge function est autoritaire sur la plateforme.
-            const finalPool = rawFinalPool.slice(0, displayCount);
-            setChatMoviesPool(finalPool);
-
-            // Update movieMatchData with richer text for the overlay's matchInfo fallback
-            const richMap: Record<number, RecommendationMatch> = {};
-            (aboveFloor.length >= moviesToEnrich.length ? aboveFloor : enriched).forEach((m: any) => {
-              const t = m.recommendationTexts;
-              const score = getRecommendationScore(t);
-              if (m.id && score != null) {
-                richMap[m.id] = {
-                  confidence: score,
-                  reason: t?.summary ?? t?.whyItMatches ?? t?.detailedExplanation ?? t?.reason ?? "",
-                };
+        // Enrich films[1..N] lazily — film[0] already has rich texts from eagerCount:1 above.
+        const lazyMovies = (movies as RecommendationMovieDetail[]).filter(
+          (m) => !m.recommendationTexts?.headline,
+        );
+        if (lazyMovies.length > 0) {
+          enrichMoviesLazy(
+            lazyMovies,
+            { minMatchScore: quickFilters.matchThreshold || undefined },
+            (movieId, texts) => {
+              if (!isMountedRef.current) return;
+              setChatMoviesPool((prev) =>
+                prev
+                  ? prev.map((m) => (m.id === movieId ? ({ ...m, recommendationTexts: texts } as RecommendationMovieDetail) : m))
+                  : prev,
+              );
+              const score = getRecommendationScore(texts);
+              if (score != null) {
+                setMovieMatchData((prev) => ({
+                  ...prev,
+                  [movieId]: {
+                    confidence: score,
+                    reason: texts?.summary ?? texts?.whyItMatches ?? texts?.detailedExplanation ?? texts?.reason ?? "",
+                  },
+                }));
               }
-            });
-            if (Object.keys(richMap).length > 0) {
-              setMovieMatchData((prev) => ({ ...prev, ...richMap }));
-            }
-          } catch {
-            // Silent fail — keep original text
-          }
-        })();
+            },
+          );
+        }
       }
     } catch (e) {
       console.error(e);
