@@ -34,6 +34,7 @@ serve(async (req) => {
   }
 
   try {
+    const mmT0 = Date.now();
     const { movie, userCriteria, tasteProfile, userTasteVector, likedMovieTitles, searchTags, cinematicProfile, peoplePreferences, userName, minMatchScore: rawMinMatchScore } = await req.json();
     const minMatchScore = typeof rawMinMatchScore === "number" ? Math.max(0, Math.min(100, rawMinMatchScore)) : 60;
     const GOOGLE_AI_KEY = Deno.env.get("GOOGLE_AI_KEY");
@@ -112,6 +113,9 @@ serve(async (req) => {
         }
       }
     }
+
+    const mmT1 = Date.now();
+    if (mmT1 - mmT0 > 20) console.log(`[MM⏱] Embedding fetch: ${mmT1 - mmT0}ms`);
 
     // ── Session context ──
     const searchTagsText = (searchTags && searchTags.length > 0) 
@@ -303,12 +307,16 @@ Génère la fiche de match multi-vecteur.`;
         },
       );
 
+    const mmT2 = Date.now();
     let response = await callGemini();
     // Retry once on rate-limit (parallel batch calls can trigger 429)
     if (response.status === 429) {
+      console.warn(`[MM⏱] Gemini 429 — retry in 2s`);
       await new Promise((r) => setTimeout(r, 2000));
       response = await callGemini();
     }
+    const mmT3 = Date.now();
+    console.log(`[MM⏱] Gemini API: ${mmT3 - mmT2}ms (status=${response.status}, title="${title}")`);
 
     if (!response.ok) {
       const t = await response.text();
@@ -387,6 +395,10 @@ Génère la fiche de match multi-vecteur.`;
     if (movieSafetyTags.length > 0) matchData.safetyTags = movieSafetyTags;
     if (movieSuitabilityTags.length > 0) matchData.suitabilityTags = movieSuitabilityTags;
     if (Object.keys(movieSemanticAxes).length > 0) matchData.semanticAxes = movieSemanticAxes;
+
+    const mmTFinal = Date.now();
+    console.log(`[MM⏱] TOTAL: ${mmTFinal - mmT0}ms | embed: ${mmT1 - mmT0}ms | gemini: ${mmT3 - mmT2}ms | parse: ${mmTFinal - mmT3}ms`);
+    matchData._timings = { total: mmTFinal - mmT0, embed: mmT1 - mmT0, gemini: mmT3 - mmT2 };
 
     return new Response(JSON.stringify(matchData), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

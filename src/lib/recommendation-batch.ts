@@ -244,10 +244,15 @@ export async function enrichRecommendationBatchWithTexts(
   for (let i = 0; i < moviesNeedingTexts.length; i++) {
     if (i > 0) await new Promise((r) => setTimeout(r, 400));
     const movie = moviesNeedingTexts[i];
-    generated.push({
-      id: movie.id,
-      recommendationTexts: await fetchRecommendationTextsForMovie(movie, context, options),
-    });
+    const tMovie0 = performance.now();
+    const recommendationTexts = await fetchRecommendationTextsForMovie(movie, context, options);
+    const tMovie1 = performance.now();
+    const serverMs = (recommendationTexts as any)?._timings?.total;
+    console.log(
+      `[Pick⏱] movie-match "${movie.title ?? movie.id}": ${Math.round(tMovie1 - tMovie0)}ms total` +
+        (serverMs != null ? ` (serveur: embed=${(recommendationTexts as any)._timings?.embed}ms gemini=${(recommendationTexts as any)._timings?.gemini}ms)` : ""),
+    );
+    generated.push({ id: movie.id, recommendationTexts });
   }
 
   const byId = new Map<number, RecommendationMatchData | null>(

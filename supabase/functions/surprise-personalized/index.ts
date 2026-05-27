@@ -65,6 +65,7 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
+    const t0 = Date.now();
     const {
       tasteProfile,
       userTasteVector,
@@ -399,6 +400,9 @@ serve(async (req) => {
       }
     }
 
+    const t1 = Date.now();
+    console.log(`[SP⏱] SQL + filtres: ${t1 - t0}ms (${candidates.length} candidats → ${filteredCandidates.length} après filtres)`);
+
     // ── Préférences d'origine (calculées une fois, utilisées dans LLM + debug) ──
     const ORIGIN_MAP: Record<string, string> = {
       "Cinéma français": "français (langue: fr)",
@@ -472,6 +476,9 @@ serve(async (req) => {
         console.log(`[SP] Enrichissement: ${enrichedCount}/${nullLangCandidates.length} langues récupérées`);
       }
     }
+
+    const t2 = Date.now();
+    if (t2 - t1 > 50) console.log(`[SP⏱] Enrichissement langue TMDB: ${t2 - t1}ms`);
 
     // ── ÉTAPE 2 : Sélection déterministe depuis le pool SQL ──
     // Gemini n'est pas fiable pour la sélection structurée (sous-sélection, hallucinations d'ID).
@@ -550,6 +557,9 @@ serve(async (req) => {
       console.log(`[SP] Sélection skipped — candidats insuffisants: ${filteredCandidates.length}`);
     }
 
+    const t3 = Date.now();
+    console.log(`[SP⏱] Sélection déterministe: ${t3 - t2}ms → ${llmSelections.length} films`);
+
     // ── ÉTAPE 3 : TMDB — enrichissement en batch ──
     // Trier par score LLM décroissant : on enrichit les meilleurs en premier
     llmSelections.sort((a: any, b: any) => (b.matchScore || 0) - (a.matchScore || 0));
@@ -625,6 +635,9 @@ serve(async (req) => {
         });
       }
     }
+
+    const t4 = Date.now();
+    console.log(`[SP⏱] TMDB enrichissement batch: ${t4 - t3}ms → ${movies.length} films OK`);
 
     // ── ÉTAPE 4 : Fallback ──
     // Genre IDs effectifs pour le fallback : voix prime sur profil
@@ -803,9 +816,11 @@ serve(async (req) => {
     // Garde au maximum le nombre souhaité par l'utilisateur
     const finalMovies = movies.slice(0, requestedCount);
 
+    const tFinal = Date.now();
     console.log(
       `[SP] Final: ${finalMovies.length}/${movies.length} movies kept (requested ${requestedCount}), mode: ${llmSelections.length > 0 ? "retrieve-rerank" : "fallback"}`,
     );
+    console.log(`[SP⏱] TOTAL: ${tFinal - t0}ms | SQL: ${t1 - t0}ms | LangEnrich: ${t2 - t1}ms | Select: ${t3 - t2}ms | TMDB: ${t4 - t3}ms | Fallback: ${tFinal - t4}ms`);
 
     const toCompositeScore = (c: any) =>
       Math.round(((c.similarity ?? 0) * 100 + (c.vote_average ?? 0)) * 10) / 10;
@@ -837,6 +852,14 @@ serve(async (req) => {
           noSQLCandidates: candidates.length === 0,
           llmFilteredAll,
           filtersRelaxed: llmFilteredAll || (candidates.length === 0 && minRating > 0),
+          timings: {
+            total: tFinal - t0,
+            sql: t1 - t0,
+            langEnrich: t2 - t1,
+            select: t3 - t2,
+            tmdb: t4 - t3,
+            fallback: tFinal - t4,
+          },
         },
         debugData: {
           filters: {

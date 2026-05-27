@@ -233,6 +233,7 @@ export function useRecommendationEngine({
         if (user && liked.length >= 2) {
           const confidenceScore = tasteProfile?.confidence?.score ?? profilePrefs.profileConfidence ?? 50;
           const explorationLevel = confidenceScore >= 70 ? 3 : confidenceScore >= 40 ? 5 : 7;
+          const tSP0 = performance.now();
           const data = await invokeSurprisePersonalized({
             likedMovies: liked,
             userTasteVector: multiVec?.stableTasteVector ?? null,
@@ -249,9 +250,14 @@ export function useRecommendationEngine({
             explorationLevel,
             count: profilePrefs.recommendationBatchSize || RECOMMENDATION_BATCH_SIZE,
           });
+          const tSP1 = performance.now();
+          console.log(`[Pick⏱] surprise-personalized: ${Math.round(tSP1 - tSP0)}ms | server timings:`, data?.engineMeta?.timings ?? "n/a");
           const extracted = extractRecommendationMovies(data);
           const desiredCount = profilePrefs.recommendationBatchSize || RECOMMENDATION_BATCH_SIZE;
+          const tMM0 = performance.now();
           batch = await normalizeRecommendationBatch(extracted, excludeIds, desiredCount);
+          const tMM1 = performance.now();
+          console.log(`[Pick⏱] movie-match enrichissement: ${Math.round(tMM1 - tMM0)}ms pour ${extracted.length} films`);
         } else {
           batch = await normalizeRecommendationBatch([], excludeIds);
         }
