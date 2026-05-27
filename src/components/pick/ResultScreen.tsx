@@ -1100,18 +1100,18 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
                 }}
               />
 
-              <div className="flex flex-col items-center gap-1.5 mt-3">
+              <div className="flex w-full flex-col items-center gap-1.5 mt-3">
                 <button
                   data-tour="autre-suggestion"
                   onClick={() => onShowAnother()}
                   disabled={refining || !allVisited}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-full border text-[12px] font-sans transition-all ${
+                  className={`flex items-center gap-2 px-5 py-2.5 rounded-full border text-[13px] font-sans font-medium transition-all ${
                     allVisited
-                      ? "border-foreground/20 text-foreground/60 hover:border-foreground/40 hover:text-foreground/80"
-                      : "border-foreground/10 text-foreground/35 cursor-not-allowed"
+                      ? "border-primary/50 text-primary/80 bg-primary/5 hover:bg-primary/10 hover:border-primary/70 hover:text-primary shadow-[0_0_16px_hsl(var(--primary)/0.12)]"
+                      : "border-foreground/10 text-foreground/30 cursor-not-allowed"
                   }`}
                 >
-                  {refining ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
+                  {refining ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
                   {displayedTotal} autre{displayedTotal > 1 ? "s" : ""} suggestion{displayedTotal > 1 ? "s" : ""}
                 </button>
                 {!allVisited && displayedTotal > 1 && (

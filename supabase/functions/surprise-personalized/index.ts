@@ -315,6 +315,7 @@ serve(async (req) => {
       p_max_year: opts.withYear ? (voiceDecade != null ? voiceDecade + 9 : null) : null,
       p_excluded_languages: effectiveExcludedLangsArr,
       p_excluded_clusters: rejectedClusters.length > 0 ? rejectedClusters : [],
+      p_min_popularity: 8,
     });
 
     let candidates: any[] = [];
