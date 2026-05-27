@@ -317,7 +317,7 @@ Génère la fiche de match multi-vecteur.`;
 
     if (!response.ok) {
       const t = await response.text();
-      console.error("AI gateway error:", response.status, t);
+      console.error(`[MM] Gemini HTTP error: status=${response.status} title="${title}" body=${t.slice(0, 300)}`);
       const fallback = {
         matchScore: 70,
         headline: "Celui-là pourrait bien te plaire",
@@ -337,6 +337,7 @@ Génère la fiche de match multi-vecteur.`;
         },
         fallback: true,
         aiStatus: response.status,
+        aiError: t.slice(0, 200),
       };
       if (embeddingSimilarity !== null) (fallback as any).embeddingSimilarity = Math.round(embeddingSimilarity * 100);
       if (recentSimilarity !== null) (fallback as any).recentSimilarity = Math.round(recentSimilarity * 100);
@@ -362,7 +363,7 @@ Génère la fiche de match multi-vecteur.`;
     try {
       matchData = JSON.parse(content);
     } catch {
-      console.error("Failed to parse AI response:", content);
+      console.error(`[MM] JSON parse failed for "${title}": content="${content.slice(0, 200)}"`);
       matchData = {
         matchScore: 70,
         headline: "Celui-là pourrait bien te plaire",
@@ -380,6 +381,8 @@ Génère la fiche de match multi-vecteur.`;
           novelty: 50,
           fatigue: 0,
         },
+        fallback: true,
+        aiError: "json_parse_failed",
       };
     }
 

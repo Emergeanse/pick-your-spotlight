@@ -662,7 +662,7 @@ const HomeScreen = ({
             "#": i + 1,
             "Titre": m.title,
             "Score movie-match": `${getRecommendationScore(m.recommendationTexts) ?? "–"}%`,
-            "Rich texts": m.recommendationTexts?.headline ? "oui" : "non",
+            "Rich texts": (m.recommendationTexts as any)?.fallback ? "⚠️ FALLBACK" : m.recommendationTexts?.headline ? "oui" : "non",
           })));
           console.groupEnd();
 

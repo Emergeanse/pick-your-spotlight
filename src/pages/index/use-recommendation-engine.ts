@@ -193,7 +193,11 @@ export function useRecommendationEngine({
       // Use them directly — no need to re-run normalizeRecommendationBatch.
       const alreadyEnriched =
         enrichedMovies.length > 0 &&
-        enrichedMovies.every((m) => !!(m.recommendationTexts?.headline || m.recommendationTexts?.detailedExplanation));
+        enrichedMovies.every(
+          (m) =>
+            !!(m.recommendationTexts?.headline || m.recommendationTexts?.detailedExplanation) &&
+            !(m.recommendationTexts as any)?.fallback,
+        );
 
       if (alreadyEnriched) {
         openRecommendationBatch(enrichedMovies, "home", startIndex, seenMovieIds, desiredCount);
