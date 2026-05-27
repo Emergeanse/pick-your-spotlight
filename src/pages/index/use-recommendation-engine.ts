@@ -187,9 +187,22 @@ export function useRecommendationEngine({
   const handleSurprise = useCallback(
     async (movies: MovieDetail[], startIndex: number = 0, seenMovieIds?: Set<number>) => {
       const desiredCount = profilePrefs.recommendationBatchSize || RECOMMENDATION_BATCH_SIZE;
+      const enrichedMovies = movies as RecommendationMovieDetail[];
+
+      // HomeScreen pre-enriches movies (rich texts + providers) before calling onSurprise.
+      // Use them directly — no need to re-run normalizeRecommendationBatch.
+      const alreadyEnriched =
+        enrichedMovies.length > 0 &&
+        enrichedMovies.every((m) => !!(m.recommendationTexts?.headline || m.recommendationTexts?.detailedExplanation));
+
+      if (alreadyEnriched) {
+        openRecommendationBatch(enrichedMovies, "home", startIndex, seenMovieIds, desiredCount);
+        return;
+      }
+
       const tasteProfile = user ? await getUserTasteProfile() : null;
-      const excludeIds = [...movies.map((m) => m.id), ...(tasteProfile?.excludeIds ?? [])];
-      const batch = await normalizeRecommendationBatch(movies, excludeIds, desiredCount);
+      const excludeIds = [...(tasteProfile?.excludeIds ?? [])];
+      const batch = await normalizeRecommendationBatch(enrichedMovies, excludeIds, desiredCount);
       openRecommendationBatch(batch, "home", startIndex, seenMovieIds, desiredCount);
     },
     [normalizeRecommendationBatch, openRecommendationBatch, profilePrefs.recommendationBatchSize, user],

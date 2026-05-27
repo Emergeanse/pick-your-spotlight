@@ -370,16 +370,15 @@ export async function ensureRecommendationBatch(
     }
   }
 
-  // Score ALL candidates before slicing — movie-match picks the best N
+  // Pre-sort and pre-slice BEFORE enrichment — scores come from the deterministic selection
+  // in surprise-personalized (composite score); movie-match only adds rich texts and never
+  // changes the sort order (originalScore always overrides movie-match score).
+  // This limits movie-match calls to exactly `size` films instead of all candidates.
   let finalBatch = dedupeMovies(batch);
 
   if (options.preloadMatchTexts) {
-    // Score all candidates in parallel via movie-match
-    finalBatch = await enrichRecommendationBatchWithTexts(finalBatch, options);
-
-    // Sort by score descending, keep top `size`
     const scoreFloor = (options.minMatchScore ?? 60) - 5;
-    const scored = finalBatch
+    const prescored = finalBatch
       .filter((m) => {
         const score = getRecommendationScore(m.recommendationTexts);
         return score === null || score >= scoreFloor;
@@ -391,9 +390,12 @@ export async function ensureRecommendationBatch(
       });
     // Never fall back to the unfiltered batch: prefer fewer films above threshold
     // over showing films the user explicitly doesn't want.
-    finalBatch = scored.slice(0, size);
+    finalBatch = prescored.slice(0, size);
 
-    // Load providers for the actual top N films (after scoring)
+    // Enrich ONLY the top `size` films — eliminates rate-limit 429s from excess parallel calls.
+    finalBatch = await enrichRecommendationBatchWithTexts(finalBatch, options);
+
+    // Load providers for the top N films
     if (options.preloadProviders) {
       finalBatch = await enrichRecommendationBatchWithProviders(finalBatch);
     }
