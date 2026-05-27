@@ -43,6 +43,8 @@ serve(async (req) => {
     if (!GOOGLE_AI_KEY) throw new Error("GOOGLE_AI_KEY is not configured");
 
     const isYouTube = !!(movie._youtube);
+    const isTv = !isYouTube && !!(movie.first_air_date || movie.name && !movie.title);
+    const mediaLabel = isYouTube ? "Vidéo YouTube" : isTv ? "Série" : "Film";
     const youtubeData = movie._youtubeData || {};
     const title = movie.title || movie.name || "Contenu inconnu";
     const genres = (movie.genres || []).map((g: any) => g.name).join(", ");
@@ -279,7 +281,7 @@ RÈGLES :
 
     const youtubeExtra = isYouTube ? `\nChaîne YouTube : ${youtubeData.channelTitle || "inconnue"}\nVues : ${youtubeData.viewCount || 0}\nDurée : ${runtime} min` : "";
 
-    const userPrompt = `${isYouTube ? "Vidéo YouTube" : "Film"} : "${title}" (${genres}, ${runtime}min${!isYouTube ? `, note ${rating}/10` : ""})
+    const userPrompt = `${mediaLabel} : "${title}" (${genres}, ${isTv ? `série TV` : `${runtime}min`}${!isYouTube ? `, note ${rating}/10` : ""})
 Synopsis : ${overview}${youtubeExtra}
 ${criteriaText}${tasteSection}
 
