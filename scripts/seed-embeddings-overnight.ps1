@@ -15,12 +15,11 @@ $ANON_KEY     = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsIn
 
 $genreMap = @{
     28="Action"; 12="Aventure"; 16="Animation"; 35="Comédie"; 80="Crime"
-    99="Documentaire"; 18="Drame"; 10751="Famille"; 10751="Familial"; 14="Fantastique"
+    99="Documentaire"; 18="Drame"; 10751="Famille"; 14="Fantastique"
     36="Histoire"; 27="Horreur"; 10402="Musique"; 9648="Mystère"
     10749="Romance"; 878="Science-Fiction"; 53="Thriller"; 10752="Guerre"; 37="Western"
     10759="Action & Adventure"; 10762="Kids"; 10763="News"; 10764="Reality"
     10765="Sci-Fi & Fantasy"; 10766="Soap"; 10767="Talk"; 10768="War & Politics"
-    10765="Science-Fiction & Fantastique"
 }
 
 function Seed-Item {
