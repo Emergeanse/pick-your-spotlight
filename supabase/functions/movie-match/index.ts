@@ -307,9 +307,9 @@ Génère la fiche de match multi-vecteur.`;
 
     const mmT2 = Date.now();
     let response = await callGemini();
-    // Retry once on rate-limit
-    if (response.status === 429) {
-      console.warn(`[MM⏱] Gemini 429 — retry in 2s`);
+    // Retry once on rate-limit or temporary overload
+    if (response.status === 429 || response.status === 503) {
+      console.warn(`[MM⏱] Gemini ${response.status} — retry in 2s`);
       await new Promise((r) => setTimeout(r, 2000));
       response = await callGemini();
     }
