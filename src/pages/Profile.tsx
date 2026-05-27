@@ -451,86 +451,6 @@ const Profile = () => {
           ) : (
             <div className="space-y-5">
 
-              {/* Niveau de personnalisation */}
-              {confidence && (
-                <div className="rounded-2xl bg-card/30 border border-border/8 p-4">
-                  <div className="flex items-center gap-2 mb-3">
-                    <Sparkles className="w-3.5 h-3.5 text-primary/30" />
-                    <span className="text-xs font-sans font-semibold text-foreground/35 uppercase tracking-widest">Niveau de personnalisation</span>
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <button className="text-foreground/15 hover:text-foreground/30 transition-colors"><Info className="w-3 h-3" /></button>
-                        </TooltipTrigger>
-                        <TooltipContent side="top" className="max-w-[280px] text-xs leading-relaxed">
-                          <p>Ce score reflète à quel point Pick te connaît. Plus tu interagis (recos, likes, watchlist, training), plus les suggestions sont personnalisées.</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  </div>
-                  <div className="flex items-end justify-between mb-3">
-                    <div>
-                      <span className={`text-3xl font-serif font-bold tabular-nums ${confidenceColor}`}>{confidenceTotal}</span>
-                      <span className="text-foreground/20 text-sm font-sans">/100</span>
-                    </div>
-                    <span className={`text-xs font-sans font-semibold ${confidenceColor}`}>{confidenceLabel}</span>
-                  </div>
-                  <div className="h-2 rounded-full bg-foreground/[0.04] overflow-hidden mb-4">
-                    <motion.div initial={{ width: 0 }} animate={{ width: `${confidenceTotal}%` }}
-                      transition={{ delay: 0.3, duration: 1, ease: [0.16, 1, 0.3, 1] }}
-                      className="h-full rounded-full bg-gradient-to-r from-primary/30 via-primary/60 to-primary" />
-                  </div>
-                  <button onClick={() => setShowConfidenceDetail(!showConfidenceDetail)}
-                    className="text-[11px] font-sans text-primary/40 hover:text-primary/60 transition-colors mb-1">
-                    {showConfidenceDetail ? "Masquer le détail" : "Comment c'est calculé ?"}
-                  </button>
-                  {showConfidenceDetail && (
-                    <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }}
-                      className="overflow-hidden mt-3 space-y-2.5">
-                      {confidence.breakdown.map((item, i) => (
-                        <div key={i}>
-                          <div className="flex items-center justify-between mb-1">
-                            <span className="text-[11px] font-sans text-foreground/40">{item.label}</span>
-                            <span className="text-[11px] font-sans text-foreground/30 tabular-nums">{item.score}/{item.max}</span>
-                          </div>
-                          <div className="h-1 rounded-full bg-foreground/[0.04] overflow-hidden">
-                            <motion.div initial={{ width: 0 }} animate={{ width: `${(item.score / item.max) * 100}%` }}
-                              transition={{ delay: 0.4 + i * 0.08, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-                              className="h-full rounded-full bg-primary/40" />
-                          </div>
-                          <p className="text-[9px] font-sans text-foreground/15 mt-0.5">{item.detail}</p>
-                        </div>
-                      ))}
-                    </motion.div>
-                  )}
-                  <button onClick={() => setShowTrainer(true)}
-                    className="w-full flex items-center justify-center gap-2 py-2.5 mt-4 rounded-xl bg-primary/8 border border-primary/15 hover:bg-primary/12 transition-colors active:scale-[0.98]">
-                    <Brain className="w-3.5 h-3.5 text-primary" />
-                    <span className="text-primary text-[12px] font-sans font-semibold">Entraîner mes goûts</span>
-                  </button>
-                </div>
-              )}
-
-              {/* Radar genres */}
-              {radarData.length >= 3 && (
-                <div>
-                  <p className="text-[10px] font-sans font-semibold text-foreground/25 uppercase tracking-widest mb-2">Empreinte cinématographique</p>
-                  <div className="rounded-2xl bg-card/30 border border-border/8 p-2 pt-4">
-                    <ResponsiveContainer width="100%" height={230}>
-                      <RadarChart data={radarData} cx="50%" cy="50%" outerRadius="72%">
-                        <PolarGrid stroke="hsl(var(--foreground) / 0.06)" strokeDasharray="3 3" />
-                        <PolarAngleAxis dataKey="genre"
-                          tick={{ fill: "hsl(var(--foreground) / 0.4)", fontSize: 10, fontFamily: "var(--font-sans)" }}
-                          tickLine={false} />
-                        <Radar name="Genres" dataKey="value"
-                          stroke="hsl(var(--primary) / 0.7)" fill="hsl(var(--primary) / 0.15)"
-                          strokeWidth={2} dot={{ r: 3, fill: "hsl(var(--primary))", strokeWidth: 0 }} />
-                      </RadarChart>
-                    </ResponsiveContainer>
-                  </div>
-                </div>
-              )}
-
               {/* Statistiques */}
               <div>
                 <button onClick={() => setShowStats((v) => !v)} className="w-full flex items-center justify-between mb-3 group">
@@ -631,6 +551,86 @@ const Profile = () => {
                   </>
                 );
               })()}
+
+              {/* Niveau de personnalisation */}
+              {confidence && (
+                <div className="rounded-2xl bg-card/30 border border-border/8 p-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Sparkles className="w-3.5 h-3.5 text-primary/30" />
+                    <span className="text-xs font-sans font-semibold text-foreground/35 uppercase tracking-widest">Niveau de personnalisation</span>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button className="text-foreground/15 hover:text-foreground/30 transition-colors"><Info className="w-3 h-3" /></button>
+                        </TooltipTrigger>
+                        <TooltipContent side="top" className="max-w-[280px] text-xs leading-relaxed">
+                          <p>Ce score reflète à quel point Pick te connaît. Plus tu interagis (recos, likes, watchlist, training), plus les suggestions sont personnalisées.</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
+                  <div className="flex items-end justify-between mb-3">
+                    <div>
+                      <span className={`text-3xl font-serif font-bold tabular-nums ${confidenceColor}`}>{confidenceTotal}</span>
+                      <span className="text-foreground/20 text-sm font-sans">/100</span>
+                    </div>
+                    <span className={`text-xs font-sans font-semibold ${confidenceColor}`}>{confidenceLabel}</span>
+                  </div>
+                  <div className="h-2 rounded-full bg-foreground/[0.04] overflow-hidden mb-4">
+                    <motion.div initial={{ width: 0 }} animate={{ width: `${confidenceTotal}%` }}
+                      transition={{ delay: 0.3, duration: 1, ease: [0.16, 1, 0.3, 1] }}
+                      className="h-full rounded-full bg-gradient-to-r from-primary/30 via-primary/60 to-primary" />
+                  </div>
+                  <button onClick={() => setShowConfidenceDetail(!showConfidenceDetail)}
+                    className="text-[11px] font-sans text-primary/40 hover:text-primary/60 transition-colors mb-1">
+                    {showConfidenceDetail ? "Masquer le détail" : "Comment c'est calculé ?"}
+                  </button>
+                  {showConfidenceDetail && (
+                    <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }}
+                      className="overflow-hidden mt-3 space-y-2.5">
+                      {confidence.breakdown.map((item, i) => (
+                        <div key={i}>
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-[11px] font-sans text-foreground/40">{item.label}</span>
+                            <span className="text-[11px] font-sans text-foreground/30 tabular-nums">{item.score}/{item.max}</span>
+                          </div>
+                          <div className="h-1 rounded-full bg-foreground/[0.04] overflow-hidden">
+                            <motion.div initial={{ width: 0 }} animate={{ width: `${(item.score / item.max) * 100}%` }}
+                              transition={{ delay: 0.4 + i * 0.08, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+                              className="h-full rounded-full bg-primary/40" />
+                          </div>
+                          <p className="text-[9px] font-sans text-foreground/15 mt-0.5">{item.detail}</p>
+                        </div>
+                      ))}
+                    </motion.div>
+                  )}
+                  <button onClick={() => setShowTrainer(true)}
+                    className="w-full flex items-center justify-center gap-2 py-2.5 mt-4 rounded-xl bg-primary/8 border border-primary/15 hover:bg-primary/12 transition-colors active:scale-[0.98]">
+                    <Brain className="w-3.5 h-3.5 text-primary" />
+                    <span className="text-primary text-[12px] font-sans font-semibold">Entraîner mes goûts</span>
+                  </button>
+                </div>
+              )}
+
+              {/* Radar genres */}
+              {radarData.length >= 3 && (
+                <div>
+                  <p className="text-[10px] font-sans font-semibold text-foreground/25 uppercase tracking-widest mb-2">Empreinte cinématographique</p>
+                  <div className="rounded-2xl bg-card/30 border border-border/8 p-2 pt-4">
+                    <ResponsiveContainer width="100%" height={230}>
+                      <RadarChart data={radarData} cx="50%" cy="50%" outerRadius="72%">
+                        <PolarGrid stroke="hsl(var(--foreground) / 0.06)" strokeDasharray="3 3" />
+                        <PolarAngleAxis dataKey="genre"
+                          tick={{ fill: "hsl(var(--foreground) / 0.4)", fontSize: 10, fontFamily: "var(--font-sans)" }}
+                          tickLine={false} />
+                        <Radar name="Genres" dataKey="value"
+                          stroke="hsl(var(--primary) / 0.7)" fill="hsl(var(--primary) / 0.15)"
+                          strokeWidth={2} dot={{ r: 3, fill: "hsl(var(--primary))", strokeWidth: 0 }} />
+                      </RadarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+              )}
 
             </div>
           )}
