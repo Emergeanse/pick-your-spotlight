@@ -845,7 +845,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
           initial={{ opacity: 0 }}
           animate={{ opacity: revealStage === "anticipation" ? 0 : 1 }}
           transition={{ duration: 0.7, ease: "easeOut" }}
-          className="relative z-10 min-h-full px-5 pt-[calc(1rem+env(safe-area-inset-top))] pb-[calc(20rem+env(safe-area-inset-bottom))] md:px-8 lg:px-12"
+          className="relative z-10 min-h-full px-5 pt-[calc(1rem+env(safe-area-inset-top))] pb-[calc(8rem+env(safe-area-inset-bottom))] md:px-8 lg:px-12"
         >
           <BrandHeader />
 
@@ -1013,13 +1013,66 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
                 </a>
               ) : null}
             </motion.div>
+
+            {/* ── Navigation suggestions — dans le scroll, toujours atteignable ── */}
+            {totalCount > 1 && (onPrevious || onNext) && (
+              <motion.div
+                initial={{ opacity: 0, y: 14 }}
+                animate={{ opacity: revealStage === "settled" ? 1 : 0, y: revealStage === "settled" ? 0 : 14 }}
+                transition={{ delay: 0.3, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+                className="mt-10 flex flex-col items-center gap-3 pb-2"
+              >
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={onPrevious}
+                    disabled={currentIndex === 0}
+                    className="rounded-full bg-foreground/5 p-2.5 text-foreground/40 transition-all hover:bg-foreground/10 disabled:opacity-20 disabled:cursor-not-allowed"
+                    aria-label="Proposition précédente"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </button>
+                  <span className="min-w-[80px] text-center text-[11px] uppercase tracking-[0.2em] font-sans text-foreground/40">
+                    Suggestion {currentIndex + 1}/{displayedTotal}
+                  </span>
+                  <button
+                    onClick={onNext}
+                    disabled={currentIndex >= totalCount - 1}
+                    className="rounded-full bg-foreground/5 p-2.5 text-foreground/40 transition-all hover:bg-foreground/10 disabled:opacity-20 disabled:cursor-not-allowed"
+                    aria-label="Proposition suivante"
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </button>
+                </div>
+
+                <button
+                  data-tour="autre-suggestion"
+                  onClick={() => onShowAnother()}
+                  disabled={refining || !allVisited}
+                  className={`flex items-center gap-2 px-5 py-2.5 rounded-full border text-[13px] font-sans font-medium transition-all ${
+                    allVisited
+                      ? "border-primary/50 text-primary/80 bg-primary/5 hover:bg-primary/10 hover:border-primary/70 hover:text-primary shadow-[0_0_16px_hsl(var(--primary)/0.12)]"
+                      : "border-foreground/10 text-foreground/30 cursor-not-allowed"
+                  }`}
+                >
+                  {refining ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
+                  {displayedTotal} autre{displayedTotal > 1 ? "s" : ""} suggestion{displayedTotal > 1 ? "s" : ""}
+                </button>
+
+                {!allVisited && displayedTotal > 1 && (
+                  <p className="text-[10px] text-foreground/25 font-sans">
+                    {visitedMovieIds.size}/{displayedTotal} vues — fais défiler chaque suggestion
+                  </p>
+                )}
+              </motion.div>
+            )}
           </div>
 
+          {/* ── Barre fixe — uniquement les boutons d'action ── */}
           <motion.div
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: revealStage === "settled" ? 1 : 0, y: revealStage === "settled" ? 0 : 24 }}
             transition={{ delay: 0.2, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-            className="fixed left-0 right-0 bottom-[calc(3.5rem+env(safe-area-inset-bottom))] z-50 border-t border-border/20 bg-background/84 px-4 pt-3 pb-4 backdrop-blur-xl shadow-[0_-18px_40px_hsl(var(--background)/0.32)] max-h-[calc(100dvh-3.5rem-env(safe-area-inset-bottom)-1rem)] overflow-y-auto overscroll-contain"
+            className="fixed left-0 right-0 bottom-[calc(3.5rem+env(safe-area-inset-bottom))] z-50 border-t border-border/20 bg-background/84 px-4 pt-3 pb-4 backdrop-blur-xl shadow-[0_-18px_40px_hsl(var(--background)/0.32)]"
           >
             <div className="mx-auto max-w-md">
               <div className="mb-3 flex items-center justify-between gap-3">
@@ -1031,60 +1084,16 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
                   <ChevronLeft className="h-5 w-5" />
                 </button>
 
-                {totalCount > 1 && (onPrevious || onNext) ? (
-                  <div className="flex flex-col items-center gap-1.5">
-                    <div className="flex items-center gap-1">
-                      <button
-                        onClick={onPrevious}
-                        disabled={currentIndex === 0}
-                        className="rounded-full bg-foreground/5 p-2 text-foreground/40 transition-all hover:bg-foreground/10 disabled:opacity-20 disabled:cursor-not-allowed"
-                        aria-label="Proposition précédente"
-                      >
-                        <ChevronLeft className="h-4 w-4" />
-                      </button>
-                      <span className="min-w-[60px] text-center text-[11px] uppercase tracking-[0.18em] font-sans text-foreground/40">
-                        Suggestion {currentIndex + 1}/{displayedTotal}
-                      </span>
-                      <button
-                        onClick={onNext}
-                        disabled={currentIndex >= totalCount - 1}
-                        className="rounded-full bg-foreground/5 p-2 text-foreground/40 transition-all hover:bg-foreground/10 disabled:opacity-20 disabled:cursor-not-allowed"
-                        aria-label="Proposition suivante"
-                      >
-                        <ChevronRight className="h-4 w-4" />
-                      </button>
-                    </div>
-                    <button
-                      data-tour="autre-suggestion"
-                      onClick={() => onShowAnother()}
-                      disabled={refining || !allVisited}
-                      className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full border text-[12px] font-sans font-medium transition-all ${
-                        allVisited
-                          ? "border-primary/50 text-primary/80 bg-primary/5 hover:bg-primary/10 hover:border-primary/70 hover:text-primary shadow-[0_0_14px_hsl(var(--primary)/0.12)]"
-                          : "border-foreground/10 text-foreground/30 cursor-not-allowed"
-                      }`}
-                    >
-                      {refining ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
-                      {displayedTotal} autre{displayedTotal > 1 ? "s" : ""} suggestion{displayedTotal > 1 ? "s" : ""}
-                    </button>
-                    {!allVisited && displayedTotal > 1 && (
-                      <p className="text-[10px] text-foreground/25 font-sans">
-                        {visitedMovieIds.size}/{displayedTotal} vues
-                      </p>
-                    )}
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-2 text-center">
-                    {currentFeedback || interaction.watchlist || interaction.seen ? (
-                      <FeedbackBadge
-                        type={currentFeedback}
-                        inWatchlist={interaction.watchlist}
-                        seen={interaction.seen}
-                        size="sm"
-                      />
-                    ) : null}
-                  </div>
-                )}
+                <div className="flex items-center gap-2">
+                  {currentFeedback || interaction.watchlist || interaction.seen ? (
+                    <FeedbackBadge
+                      type={currentFeedback}
+                      inWatchlist={interaction.watchlist}
+                      seen={interaction.seen}
+                      size="sm"
+                    />
+                  ) : null}
+                </div>
 
                 <button
                   onClick={() => setShowOptions(true)}
