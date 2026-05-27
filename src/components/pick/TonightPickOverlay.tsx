@@ -135,16 +135,25 @@ const TonightPickOverlay = ({
             </button>
 
             {adhesionScore != null && (
-              <motion.span
+              <motion.img
+                src="/hazelnut.png"
+                alt={`Adhésion ${adhesionScore}%`}
                 initial={{ opacity: 0, scale: 0.6 }}
                 animate={{ opacity: hazelnutStyle.opacity, scale: 1 }}
                 transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-                className="text-4xl select-none leading-none"
-                style={{ filter: hazelnutStyle.filter, display: "inline-block" }}
-                aria-label={`Adhésion ${adhesionScore}%`}
-              >
-                🌰
-              </motion.span>
+                className="w-11 h-11 select-none"
+                style={{ filter: hazelnutStyle.filter }}
+                onError={(e) => {
+                  // fallback to emoji if image not yet added
+                  const el = e.currentTarget as HTMLImageElement;
+                  el.style.display = "none";
+                  const span = document.createElement("span");
+                  span.textContent = "🌰";
+                  span.className = "text-4xl leading-none";
+                  span.style.cssText = `filter:${hazelnutStyle.filter};opacity:${hazelnutStyle.opacity}`;
+                  el.parentElement?.appendChild(span);
+                }}
+              />
             )}
           </div>
 
