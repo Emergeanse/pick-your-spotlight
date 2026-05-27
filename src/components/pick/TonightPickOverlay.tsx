@@ -81,21 +81,47 @@ const TonightPickOverlay = ({
   const year = ((movie.release_date || (movie as any).first_air_date) as string | undefined)?.substring(0, 4);
   const primaryGenre = movie.genres?.[0]?.name;
 
-  // Hazelnut match indicator
+  // Hazelnut match indicator — distinct tiers
   const hazelnutStyle = (() => {
-    const pct = (adhesionScore ?? 0) / 100;
-    const grey = Math.round((1 - pct) * 100);
-    const bright = 0.45 + pct * 0.8;
-    const opa = 0.2 + pct * 0.8;
-    const glow =
-      (adhesionScore ?? 0) >= 85
-        ? "drop-shadow(0 0 14px rgba(234,179,8,0.95)) drop-shadow(0 0 6px rgba(251,146,60,0.7))"
-        : (adhesionScore ?? 0) >= 70
-        ? "drop-shadow(0 0 8px rgba(234,179,8,0.55))"
-        : "none";
+    const s = adhesionScore ?? 0;
+    if (s >= 90) return {
+      filter: [
+        "grayscale(0%)", "brightness(1.5)", "saturate(2.4)",
+        "drop-shadow(0 0 28px rgba(234,179,8,1))",
+        "drop-shadow(0 0 12px rgba(251,146,60,0.95))",
+        "drop-shadow(0 0 4px rgba(255,230,100,0.6))",
+      ].join(" "),
+      opacity: 1,
+      scale: 1.22,
+    };
+    if (s >= 80) return {
+      filter: [
+        "grayscale(0%)", "brightness(1.3)", "saturate(1.7)",
+        "drop-shadow(0 0 16px rgba(234,179,8,0.85))",
+        "drop-shadow(0 0 6px rgba(251,146,60,0.65))",
+      ].join(" "),
+      opacity: 0.96,
+      scale: 1.08,
+    };
+    if (s >= 70) return {
+      filter: [
+        "grayscale(22%)", "brightness(1.05)", "saturate(1.05)",
+        "drop-shadow(0 0 7px rgba(234,179,8,0.35))",
+      ].join(" "),
+      opacity: 0.82,
+      scale: 0.96,
+    };
+    if (s >= 55) return {
+      filter: "grayscale(55%) brightness(0.78) saturate(0.7)",
+      opacity: 0.55,
+      scale: 0.88,
+    };
+    // below 55 — very faded
+    const pct = Math.max(0, s) / 55;
     return {
-      filter: `grayscale(${grey}%) brightness(${bright}) ${glow}`,
-      opacity: opa,
+      filter: `grayscale(${Math.round(95 - pct * 40)}%) brightness(${0.38 + pct * 0.4}) saturate(${0.4 + pct * 0.3})`,
+      opacity: 0.12 + pct * 0.32,
+      scale: 0.8,
     };
   })();
 
@@ -138,19 +164,17 @@ const TonightPickOverlay = ({
               <motion.img
                 src="/hazelnut.png"
                 alt={`Adhésion ${adhesionScore}%`}
-                initial={{ opacity: 0, scale: 0.6 }}
-                animate={{ opacity: hazelnutStyle.opacity, scale: 1 }}
-                transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-                className="w-11 h-11 select-none"
+                initial={{ opacity: 0, scale: 0.5 }}
+                animate={{ opacity: hazelnutStyle.opacity, scale: hazelnutStyle.scale }}
+                transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
+                className="w-12 h-12 select-none"
                 style={{ filter: hazelnutStyle.filter }}
                 onError={(e) => {
-                  // fallback to emoji if image not yet added
                   const el = e.currentTarget as HTMLImageElement;
                   el.style.display = "none";
                   const span = document.createElement("span");
                   span.textContent = "🌰";
-                  span.className = "text-4xl leading-none";
-                  span.style.cssText = `filter:${hazelnutStyle.filter};opacity:${hazelnutStyle.opacity}`;
+                  span.style.cssText = `font-size:2.5rem;line-height:1;filter:${hazelnutStyle.filter};opacity:${hazelnutStyle.opacity};transform:scale(${hazelnutStyle.scale});display:inline-block`;
                   el.parentElement?.appendChild(span);
                 }}
               />
