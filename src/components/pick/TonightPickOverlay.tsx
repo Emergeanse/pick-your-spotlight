@@ -84,6 +84,11 @@ const TonightPickOverlay = ({
   // SVG match ring
   const ringCirc = 2 * Math.PI * 24;
   const ringOffset = adhesionScore != null ? ringCirc * (1 - adhesionScore / 100) : ringCirc;
+  const ringColor =
+    adhesionScore == null ? "text-white/20"
+    : adhesionScore >= 85 ? "text-emerald-400"
+    : adhesionScore >= 70 ? "text-amber-400"
+    : "text-primary";
 
   return (
     <AnimatePresence>
@@ -121,23 +126,22 @@ const TonightPickOverlay = ({
             </button>
 
             {adhesionScore != null && (
-              <div className="relative w-14 h-14 flex items-center justify-center">
+              <div className="relative w-12 h-12 flex items-center justify-center">
                 <svg className="w-full h-full -rotate-90" viewBox="0 0 56 56">
-                  <circle cx="28" cy="28" r="24" stroke="currentColor" strokeWidth="3" fill="transparent" className="text-white/10" />
+                  <circle cx="28" cy="28" r="24" stroke="currentColor" strokeWidth="4" fill="transparent" className="text-white/10" />
                   <circle
                     cx="28"
                     cy="28"
                     r="24"
                     stroke="currentColor"
-                    strokeWidth="3"
+                    strokeWidth="4"
                     fill="transparent"
                     strokeDasharray={ringCirc}
                     strokeDashoffset={ringOffset}
                     strokeLinecap="round"
-                    className="text-[hsl(var(--success))] transition-all duration-700"
+                    className={`${ringColor} transition-all duration-700`}
                   />
                 </svg>
-                <span className="absolute text-[11px] font-bold text-foreground font-sans">{adhesionScore}%</span>
               </div>
             )}
           </div>
