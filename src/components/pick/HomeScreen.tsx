@@ -644,8 +644,7 @@ const HomeScreen = ({
           });
           setMovieMatchData((prev) => ({ ...prev, ...matchMap }));
 
-          // Enrich only film[0] eagerly so display starts ~2s after click.
-          // Films[1..N] are enriched lazily after setCurrentTonightMovie resolves.
+          // All films enriched in parallel — gemini-2.0-flash ~500ms/call, ~600ms total for 3 films.
           movies = await ensureRecommendationBatch(extracted, {
             excludeIds: allExcludeIds,
             platformIds: userPlatformIds,
@@ -656,7 +655,6 @@ const HomeScreen = ({
             preloadMatchTexts: true,
             preloadProviders: true,
             minMatchScore: quickFilters.matchThreshold,
-            eagerCount: 1,
           });
 
           console.group("[PICK-DEBUG] 4️⃣ Résultat final après movie-match");
@@ -796,34 +794,7 @@ const HomeScreen = ({
         setChatMoviesPool(poolMovies);
         await setCurrentTonightMovie(poolMovies[0], 0, new Set(poolMovies[0] ? [poolMovies[0].id] : []));
 
-        // Enrich films[1..N] lazily — film[0] already has rich texts from eagerCount:1 above.
-        const lazyMovies = (movies as RecommendationMovieDetail[]).filter(
-          (m) => !m.recommendationTexts?.headline,
-        );
-        if (lazyMovies.length > 0) {
-          enrichMoviesLazy(
-            lazyMovies,
-            { minMatchScore: quickFilters.matchThreshold || undefined },
-            (movieId, texts) => {
-              if (!isMountedRef.current) return;
-              setChatMoviesPool((prev) =>
-                prev
-                  ? prev.map((m) => (m.id === movieId ? ({ ...m, recommendationTexts: texts } as RecommendationMovieDetail) : m))
-                  : prev,
-              );
-              const score = getRecommendationScore(texts);
-              if (score != null) {
-                setMovieMatchData((prev) => ({
-                  ...prev,
-                  [movieId]: {
-                    confidence: score,
-                    reason: texts?.summary ?? texts?.whyItMatches ?? texts?.detailedExplanation ?? texts?.reason ?? "",
-                  },
-                }));
-              }
-            },
-          );
-        }
+        // All films were enriched in parallel above — nothing to do lazily here.
       }
     } catch (e) {
       console.error(e);

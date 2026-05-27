@@ -245,19 +245,20 @@ export async function enrichRecommendationBatchWithTexts(
   if (!eagerMovies.length) return movies;
 
   const context = await buildMatchContext(options);
-  const generated: Array<{ id: number; recommendationTexts: RecommendationMatchData | null }> = [];
-  for (let i = 0; i < eagerMovies.length; i++) {
-    const movie = eagerMovies[i];
-    const tMovie0 = performance.now();
-    const recommendationTexts = await fetchRecommendationTextsForMovie(movie, context, options);
-    const tMovie1 = performance.now();
-    const srv = (recommendationTexts as any)?._timings;
-    console.log(
-      `[Pick⏱] movie-match eager "${movie.title ?? movie.id}": ${Math.round(tMovie1 - tMovie0)}ms` +
-        (srv ? ` (embed=${srv.embed}ms gemini=${srv.gemini}ms)` : ""),
-    );
-    generated.push({ id: movie.id, recommendationTexts });
-  }
+  // Parallel calls — gemini-2.0-flash handles concurrent requests well (~500ms total vs N×500ms sequential)
+  const generated = await Promise.all(
+    eagerMovies.map(async (movie) => {
+      const t0 = performance.now();
+      const recommendationTexts = await fetchRecommendationTextsForMovie(movie, context, options);
+      const t1 = performance.now();
+      const srv = (recommendationTexts as any)?._timings;
+      console.log(
+        `[Pick⏱] movie-match eager "${movie.title ?? movie.id}": ${Math.round(t1 - t0)}ms` +
+          (srv ? ` (embed=${srv.embed}ms gemini=${srv.gemini}ms)` : ""),
+      );
+      return { id: movie.id, recommendationTexts };
+    }),
+  );
 
   const byId = new Map<number, RecommendationMatchData | null>(
     generated.map((entry) => [entry.id, entry.recommendationTexts]),
