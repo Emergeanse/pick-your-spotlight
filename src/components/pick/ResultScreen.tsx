@@ -644,21 +644,13 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
 
         if (!missingMovies.length) return;
 
-        const results = await Promise.all(
-          missingMovies.map(async (candidate) => ({
-            movieId: candidate.id,
-            data: await fetchMatchDataForMovie(candidate),
-          })),
-        );
-
-        if (cancelled) return;
-
-        setPrefetchedMatchData((prev) => {
-          const next = { ...prev };
-          for (const result of results) {
-            if (result.data && !next[result.movieId]) next[result.movieId] = result.data;
-          }
-          return next;
+        missingMovies.forEach(async (candidate) => {
+          const data = await fetchMatchDataForMovie(candidate);
+          if (cancelled || !data) return;
+          setPrefetchedMatchData((prev) => {
+            if (prev[candidate.id]) return prev;
+            return { ...prev, [candidate.id]: data };
+          });
         });
       };
 
