@@ -538,16 +538,19 @@ serve(async (req) => {
           ? `\n🎬 Ces films sont tous disponibles sur les plateformes de l'utilisateur (${(platformIds as number[]).map((id) => PROVIDER_NAMES[id] ?? `#${id}`).join(", ")}).\n`
           : "";
 
+        const hardExcludedNote = effectiveExcludedGenres.length > 0
+          ? `\n⛔ GENRES INTERDITS (élimination absolue) : ${effectiveExcludedGenres.join(", ")}\nÉlimine immédiatement tout film de la liste dont un genre correspond à cette liste — ne les propose pas, même s'ils semblent bien noter.\n`
+          : "";
+
         const systemPrompt = `Tu es Pick, moteur de recommandation cinéphile. Sélectionne les meilleurs films depuis une liste pré-validée.
-${moodContext ? `\n🎭 AMBIANCE CHOISIE : ${moodContext}\n` : ""}${platformNote}
+${moodContext ? `\n🎭 AMBIANCE CHOISIE : ${moodContext}\n` : ""}${platformNote}${hardExcludedNote}
 PROFIL UTILISATEUR :
 - Genres préférés : ${likedWithTv.join(", ") || "non déterminés"}
 ${moodBoostGenres ? `- 🎯 Genres prioritaires (ambiance) : ${moodBoostGenres.join(", ")}` : ""}
 - Clusters favoris : ${tasteClusters.slice(0, 5).join(", ") || "non déterminés"}
 - Films aimés : ${likedTitles.join(", ") || "aucun encore"}
 - Confiance profil : ${confidence.score}/100
-${fatiguedGenres.length > 0 ? `- Genres en fatigue : ${fatiguedGenres.join(", ")}` : ""}
-${excludedGenres?.length > 0 ? `- ⛔ GENRES EXCLUS (absolu) : ${excludedGenres.join(", ")}` : ""}
+${fatiguedGenres.length > 0 ? `- Genres à éviter (fatigue) : ${fatiguedGenres.join(", ")}` : ""}
 ${originNote}
 ${rejectionNote}
 ${explorationNote}
@@ -557,13 +560,17 @@ ${candidateList}
 
 MISSION : Sélectionne exactement ${targetCount} films/séries depuis cette liste — les ${targetCount} qui correspondent le mieux au profil, classés du meilleur au moins bon.
 
+ÉTAPE 1 — FILTRE OBLIGATOIRE : Parcours chaque film de la liste et élimine définitivement tout film dont un genre figure dans les GENRES INTERDITS ci-dessus. Ces films ne peuvent pas être sélectionnés, quelle que soit leur note.
+
+ÉTAPE 2 — SÉLECTION : Parmi les films restants, choisis les ${targetCount} meilleurs selon le profil.
+
 RÈGLES DE SÉLECTION :
 - Tu DOIS retourner exactement ${targetCount} entrées, pas moins. Classe-les du meilleur au moins bon.
 - Chaque item est clairement marqué 🎬 Film ou 📺 Série — respecte ce type dans ta réponse
 - Diversifie les genres entre les sélections
 - Priorise les films bien notés (⭐7+) si le profil matche
 - Évite 2 films de la même franchise ou très similaires
-- Respecte absolument les genres exclus, origines exclues et clusters rejetés
+- Les genres interdits et origines exclues sont des règles absolues — jamais d'exception
 
 SCORING (matchScore) :
 - Base : 75%. Hausse si genre favori / note 8+. Baisse si cluster rejeté / note <6.
