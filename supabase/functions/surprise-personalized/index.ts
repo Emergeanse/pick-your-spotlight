@@ -481,15 +481,19 @@ serve(async (req) => {
     const t2 = Date.now();
     if (t2 - t1 > 50) console.log(`[SP⏱] Enrichissement langue TMDB: ${t2 - t1}ms`);
 
-    // ── ÉTAPE 2 : Sélection déterministe depuis le pool SQL ──
-    // Gemini n'est pas fiable pour la sélection structurée (sous-sélection, hallucinations d'ID).
-    // On sélectionne directement depuis le pool SQL trié par score composé avec diversité de genres.
+    // ── ÉTAPE 2 : LLM — sélection parmi les 30 meilleurs candidats SQL ──
     let llmSelections: any[] = [];
     let llmFilteredAll = false;
     const llmPoolSize = 30;
     let llmPool: any[] = [];
-    const capturedSystemPrompt: string | null = null;
-    const llmDebugError: string | null = null;
+    let capturedSystemPrompt: string | null = null;
+    let llmDebugError: string | null = null;
+
+    const PROVIDER_NAMES: Record<number, string> = {
+      8: "Netflix", 119: "Amazon Prime Video", 337: "Disney+",
+      381: "Canal+", 56: "Paramount+", 350: "Apple TV+",
+      2: "Apple TV", 15: "Hulu", 283: "Crunchyroll", 1899: "Max",
+    };
 
     if (filteredCandidates.length >= 1) {
       const compositeScore = (c: any) => {
@@ -506,60 +510,219 @@ serve(async (req) => {
         .slice(0, llmPoolSize);
       llmPool = topPool;
 
-      // Score composé → matchScore (72-92%) selon rang dans le pool
-      const poolScores = topPool.map((c: any) => compositeScore(c));
+      const candidateList = topPool
+        .map((c: any, i: number) => {
+          const typeLabel = c.media_type === "tv" ? "📺 Série" : "🎬 Film";
+          const safeTitle = (c.title || "").replace(/[^\x20-\x7EÀ-ɏЀ-ӿ]/g, "").trim();
+          return `N°${i + 1} | ${typeLabel} | "${safeTitle}" (${c.year || "?"}) | ${(c.genres || []).slice(0, 3).join(", ")} | ⭐${c.vote_average > 0 ? c.vote_average.toFixed(1) : "?"}/10`;
+        })
+        .join("\n");
+
+      console.log(`[SP] Top ${topPool.length} envoyés au LLM — triés par score composé (sim×100 + note):\n${candidateList}`);
+
+      const rejectionNote = rejectionContext
+        ? `\nDERNIER FILM REFUSÉ : "${rejectionContext.rejectedTitle}" — Ne propose rien de similaire.`
+        : "";
+      const explorationNote =
+        explorationLevel >= 7
+          ? "MODE DÉCOUVERTE : Privilégie des pépites moins connues ou des genres adjacents."
+          : explorationLevel <= 2
+            ? "MODE PRÉCISION : Reste très proche des genres et clusters favoris."
+            : "";
+      const originNote = [
+        likedOrigins.length > 0 ? `- Origines préférées : ${likedOrigins.join(", ")}` : "",
+        excludedOrigins.length > 0
+          ? `- ⛔ ORIGINES À ÉVITER ABSOLUMENT : ${excludedOrigins.join(", ")} — n'inclus aucun film de ces origines.`
+          : "",
+      ].filter(Boolean).join("\n");
+      const platformNote = platformIds?.length > 0
+        ? `\n🎬 PLATEFORMES DISPONIBLES : Les films proposés sont disponibles sur ${(platformIds as number[]).map((id) => PROVIDER_NAMES[id] ?? `#${id}`).join(", ")}.\n`
+        : "";
+
+      const systemPrompt = `Tu es Pick, moteur de recommandation cinéphile. Sélectionne les meilleurs films depuis une liste pré-validée.
+${moodContext ? `\n🎭 AMBIANCE CHOISIE : ${moodContext}\n` : ""}${platformNote}
+PROFIL UTILISATEUR :
+- Genres préférés : ${likedWithTv.join(", ") || "non déterminés"}
+${moodBoostGenres ? `- 🎯 Genres prioritaires (ambiance) : ${moodBoostGenres.join(", ")}` : ""}
+- Clusters favoris : ${tasteClusters.slice(0, 5).join(", ") || "non déterminés"}
+- Films aimés : ${likedTitles.join(", ") || "aucun encore"}
+- Confiance profil : ${confidence.score}/100
+${fatiguedGenres.length > 0 ? `- Genres en fatigue : ${fatiguedGenres.join(", ")}` : ""}
+${excludedGenres?.length > 0 ? `- ⛔ GENRES EXCLUS (absolu) : ${excludedGenres.join(", ")}` : ""}
+${originNote}
+${rejectionNote}
+${explorationNote}
+
+FILMS DISPONIBLES — pré-validés mathématiquement par similarité vectorielle :
+${candidateList}
+
+MISSION : Sélectionne exactement 5 films/séries depuis cette liste — les 5 qui correspondent le mieux au profil. Nous garderons les 3 meilleurs.
+
+RÈGLES DE SÉLECTION :
+- Tu DOIS retourner exactement 5 entrées, pas moins. Classe-les du meilleur au moins bon.
+- Chaque item est clairement marqué 🎬 Film ou 📺 Série — respecte ce type dans ta réponse
+- Diversifie les genres entre les 5 sélections
+- Priorise les films bien notés (⭐7+) si le profil matche
+- Évite 2 films de la même franchise ou très similaires
+- Respecte absolument les genres exclus, origines exclues et clusters rejetés
+
+SCORING (matchScore) :
+- Base : 75%. Hausse si genre favori / note 8+. Baisse si cluster rejeté / note <6.
+- Donne des scores honnêtes — les 5 films ont des scores différents reflétant leur rang.
+- Pas de seuil bloquant : classe les 5 meilleurs même si certains sont à 60%.
+
+Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
+{
+  "selections": [
+    {
+      "rank": <numéro N° de la liste, entre 1 et ${topPool.length}>,
+      "matchScore": <entier entre 60 et 99>,
+      "reason": "<1 phrase pourquoi ce film correspond au profil>"
+    }
+  ]
+}`;
+
+      capturedSystemPrompt = systemPrompt;
+
+      try {
+        let response = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GOOGLE_AI_KEY}`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              contents: [{ role: "user", parts: [{ text: systemPrompt }] }],
+              generationConfig: {
+                maxOutputTokens: 2000,
+                responseMimeType: "application/json",
+                thinkingConfig: { thinkingBudget: 0 },
+              },
+            }),
+          },
+        );
+
+        // Retry 1 : même modèle après délai sur erreur transitoire
+        if (response.status === 429 || response.status === 503) {
+          await new Promise((r) => setTimeout(r, response.status === 503 ? 4000 : 3000));
+          response = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GOOGLE_AI_KEY}`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                contents: [{ role: "user", parts: [{ text: systemPrompt }] }],
+                generationConfig: {
+                  maxOutputTokens: 2000,
+                  responseMimeType: "application/json",
+                  thinkingConfig: { thinkingBudget: 0 },
+                },
+              }),
+            },
+          );
+        }
+
+        if (response.ok) {
+          const raw = await response.text();
+          const aiData = JSON.parse(raw);
+          const rawContent = aiData?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+          console.log(`[SP] LLM rawContent (first 400): ${rawContent.slice(0, 400)}`);
+
+          const content = rawContent
+            .replace(/<thinking>[\s\S]*?<\/thinking>/gi, "")
+            .replace(/```(?:json)?\s*/g, "")
+            .trim();
+
+          const repair = (s: string) => s
+            .replace(/^﻿/, "")
+            .replace(/\}\s*\n\s*\{/g, "},\n{")
+            .replace(/,\s*([}\]])/g, "$1");
+
+          const hasSelections = (obj: any) => obj?.selections && Array.isArray(obj.selections) && obj.selections.length > 0;
+
+          let parsed: any = null;
+          for (const candidate of [content, repair(content)]) {
+            if (parsed) break;
+            try {
+              const obj = JSON.parse(candidate);
+              if (hasSelections(obj)) { parsed = obj; console.log("[SP] Strategy 0 (direct parse) succeeded"); }
+            } catch {}
+          }
+
+          if (!parsed) {
+            for (let i = 0; i < content.length && !parsed; i++) {
+              if (content[i] !== "{") continue;
+              let d = 0, end = i;
+              for (let j = i; j < content.length; j++) {
+                if (content[j] === "{") d++;
+                else if (content[j] === "}") { d--; if (d === 0) { end = j; break; } }
+              }
+              if (end === i) continue;
+              try {
+                const obj = JSON.parse(repair(content.slice(i, end + 1)));
+                if (hasSelections(obj)) { parsed = obj; console.log(`[SP] Strategy 1 (bracket scan at ${i}), ${obj.selections.length} sel`); }
+              } catch {}
+              i = end;
+            }
+          }
+
+          if (!parsed) {
+            const sels: any[] = [];
+            const re = /"rank"\s*:\s*(\d+)[^}]*?"matchScore"\s*:\s*(\d+)(?:[^}]*?"reason"\s*:\s*"([^"]*)")?/g;
+            let m;
+            while ((m = re.exec(content)) !== null) {
+              sels.push({ rank: Number(m[1]), matchScore: Number(m[2]), reason: m[3] || undefined });
+            }
+            if (sels.length > 0) { parsed = { selections: sels }; console.log(`[SP] Strategy 2 (regex) extracted ${sels.length} sel`); }
+          }
+
+          if (!parsed) throw new Error(`No valid selections JSON in LLM response: ${rawContent.slice(0, 300)}`);
+
+          if (parsed.selections && Array.isArray(parsed.selections)) {
+            const resolved = parsed.selections
+              .map((s: any) => {
+                const rankIdx = s.rank != null ? Number(s.rank) : null;
+                const candidate = (rankIdx != null && rankIdx >= 1 && rankIdx <= topPool.length)
+                  ? topPool[rankIdx - 1]
+                  : topPool.find((c: any) => Number(c.tmdb_id) === Number(s.tmdb_id));
+                if (!candidate) return null;
+                return { tmdb_id: Number(candidate.tmdb_id), matchScore: s.matchScore || 75, reason: s.reason || null };
+              })
+              .filter(Boolean);
+
+            llmSelections = resolved.sort((a: any, b: any) => (b.matchScore || 0) - (a.matchScore || 0));
+            console.log(`[SP] LLM raw selections: ${parsed.selections.length}, resolved: ${llmSelections.length}`);
+          }
+        } else {
+          const errBody = await response.text().catch(() => "");
+          llmDebugError = `HTTP ${response.status}: ${errBody.slice(0, 300)}`;
+          console.error(`[SP] LLM gateway error: ${llmDebugError}`);
+        }
+      } catch (e) {
+        llmDebugError = String(e);
+        console.error("LLM selection failed:", e);
+      }
+    } else {
+      console.log(`[SP] LLM skipped — candidats insuffisants: ${filteredCandidates.length}`);
+    }
+
+    // ── Fallback SQL : si le LLM n'a rien retourné, prendre le top du pool directement ──
+    if (llmSelections.length === 0 && llmPool.length > 0) {
+      console.log(`[SP] LLM returned 0 — fallback déterministe sur top ${requestedCount + 2} du pool SQL`);
+      const poolScores = llmPool.map((c: any) => ((c.similarity ?? 0) * 100 + (c.vote_average ?? 0)));
       const scoreMin = poolScores[poolScores.length - 1] ?? 0;
       const scoreMax = poolScores[0] ?? 1;
       const scoreRange = scoreMax - scoreMin || 1;
-      const toMatchScore = (c: any) => Math.round(72 + ((compositeScore(c) - scoreMin) / scoreRange) * 20);
-
-      // Exclure le film récemment refusé
-      const rejectedLower = rejectionContext?.rejectedTitle?.toLowerCase() || "";
-      const eligible = rejectedLower
-        ? topPool.filter((c: any) => !(c.title || "").toLowerCase().includes(rejectedLower))
-        : topPool;
-
-      // Sélection avec diversité : max 2 films par genre principal
-      const selected: any[] = [];
-      const genreCount: Record<string, number> = {};
-      const MAX_PER_GENRE = 2;
-      const needed = requestedCount + 2; // extras pour absorber les échecs TMDB
-
-      for (const c of eligible) {
-        if (selected.length >= needed) break;
-        const primaryGenre = (c.genres || [])[0] || "?";
-        if ((genreCount[primaryGenre] || 0) < MAX_PER_GENRE) {
-          genreCount[primaryGenre] = (genreCount[primaryGenre] || 0) + 1;
-          selected.push(c);
-        }
-      }
-      // Compléter sans contrainte si pas assez
-      if (selected.length < needed) {
-        const selectedIds = new Set(selected.map((c: any) => c.tmdb_id));
-        for (const c of eligible) {
-          if (selected.length >= needed) break;
-          if (!selectedIds.has(c.tmdb_id)) selected.push(c);
-        }
-      }
-
-      llmSelections = selected.map((c: any) => ({
-        tmdb_id: Number(c.tmdb_id),
-        matchScore: toMatchScore(c),
-        reason: null, // movie-match génère les textes personnalisés
-      }));
-
-      const debugList = topPool.map((c: any, i: number) => {
-        const typeLabel = c.media_type === "tv" ? "📺" : "🎬";
-        return `[${i + 1}] ${typeLabel} "${c.title || "?"}" (${c.year || "?"}) | ${(c.genres || []).slice(0, 2).join(", ")} | ⭐${c.vote_average > 0 ? c.vote_average.toFixed(1) : "?"} | sim=${c.similarity != null ? Math.round(c.similarity * 1000) / 10 : "?"}%`;
-      }).join("\n");
-      console.log(`[SP] Pool SQL top ${topPool.length}:\n${debugList}`);
-      console.log(`[SP] Sélection déterministe: ${llmSelections.length} films (diversité genres, skip refus)`);
-    } else {
-      console.log(`[SP] Sélection skipped — candidats insuffisants: ${filteredCandidates.length}`);
+      llmSelections = llmPool
+        .slice(0, requestedCount + 2)
+        .map((c: any) => ({
+          tmdb_id: Number(c.tmdb_id),
+          matchScore: Math.round(72 + (((c.similarity ?? 0) * 100 + (c.vote_average ?? 0) - scoreMin) / scoreRange) * 20),
+          reason: null,
+        }));
     }
 
     const t3 = Date.now();
-    console.log(`[SP⏱] Sélection déterministe: ${t3 - t2}ms → ${llmSelections.length} films`);
+    console.log(`[SP⏱] LLM sélection: ${t3 - t2}ms → ${llmSelections.length} films`);
 
     // ── ÉTAPE 3 : TMDB — enrichissement en batch ──
     // Trier par score LLM décroissant : on enrichit les meilleurs en premier
