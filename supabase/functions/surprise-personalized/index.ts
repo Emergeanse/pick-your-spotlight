@@ -550,41 +550,48 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
 
       capturedSystemPrompt = systemPrompt;
 
-      try {
-        let response = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GOOGLE_AI_KEY}`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              contents: [{ role: "user", parts: [{ text: systemPrompt }] }],
-              generationConfig: {
-                maxOutputTokens: 2000,
-                responseMimeType: "application/json",
-                thinkingConfig: { thinkingBudget: 0 },
-              },
-            }),
-          },
-        );
+      // ── LLM + plateforme en PARALLÈLE ──
+      // Les 30 checks TMDB plateforme démarrent en même temps que le LLM (~1.8s).
+      // On croise les résultats une fois les deux terminés.
+      const platformSet = platformIds?.length > 0
+        ? new Set((platformIds as number[]).map(Number))
+        : null;
 
-        // Retry 1 : même modèle après délai sur erreur transitoire
+      const poolPlatformPromise: Promise<Set<number>> = platformSet
+        ? Promise.all(
+            topPool.map(async (c: any) => {
+              const type: "movie" | "tv" = c.media_type === "tv" ? "tv" : "movie";
+              const providerIds = await getProviderIdsFR(Number(c.tmdb_id), type);
+              return providerIds.some((pid) => platformSet.has(pid)) ? Number(c.tmdb_id) : null;
+            }),
+          ).then((results) => new Set(results.filter((id): id is number => id !== null)))
+        : Promise.resolve(new Set(topPool.map((c: any) => Number(c.tmdb_id))));
+
+      const llmCallPromise = (async () => {
+        const geminiBody = JSON.stringify({
+          contents: [{ role: "user", parts: [{ text: systemPrompt }] }],
+          generationConfig: {
+            maxOutputTokens: 2000,
+            responseMimeType: "application/json",
+            thinkingConfig: { thinkingBudget: 0 },
+          },
+        });
+        const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GOOGLE_AI_KEY}`;
+        const geminiHeaders = { "Content-Type": "application/json" };
+
+        let response = await fetch(geminiUrl, { method: "POST", headers: geminiHeaders, body: geminiBody });
         if (response.status === 429 || response.status === 503) {
           await new Promise((r) => setTimeout(r, response.status === 503 ? 4000 : 3000));
-          response = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GOOGLE_AI_KEY}`,
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                contents: [{ role: "user", parts: [{ text: systemPrompt }] }],
-                generationConfig: {
-                  maxOutputTokens: 2000,
-                  responseMimeType: "application/json",
-                  thinkingConfig: { thinkingBudget: 0 },
-                },
-              }),
-            },
-          );
+          response = await fetch(geminiUrl, { method: "POST", headers: geminiHeaders, body: geminiBody });
+        }
+        return response;
+      })();
+
+      try {
+        const [platformOkIds, response] = await Promise.all([poolPlatformPromise, llmCallPromise]);
+
+        if (platformSet) {
+          console.log(`[SP] Filtre plateforme (pool 30): ${platformOkIds.size}/30 films disponibles sur [${(platformIds as number[]).map((id: number) => PROVIDER_NAMES[id] ?? `#${id}`).join(", ")}]`);
         }
 
         if (response.ok) {
@@ -653,10 +660,40 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
                 if (!candidate) return null;
                 return { tmdb_id: Number(candidate.tmdb_id), matchScore: s.matchScore || 75, reason: s.reason || null };
               })
-              .filter(Boolean);
+              .filter(Boolean)
+              .sort((a: any, b: any) => (b.matchScore || 0) - (a.matchScore || 0));
 
-            llmSelections = resolved.sort((a: any, b: any) => (b.matchScore || 0) - (a.matchScore || 0));
-            console.log(`[SP] LLM raw selections: ${parsed.selections.length}, resolved: ${llmSelections.length}`);
+            // Filtre plateforme : prioriser les sélections LLM sur plateforme,
+            // compléter avec les candidats du pool sur plateforme si besoin.
+            if (platformSet) {
+              const onPlatform = resolved.filter((s: any) => platformOkIds.has(s.tmdb_id));
+              console.log(`[SP] LLM: ${resolved.length} sélections → ${onPlatform.length} sur plateforme`);
+
+              if (onPlatform.length >= requestedCount) {
+                llmSelections = onPlatform;
+              } else {
+                // Compléter avec le reste du pool qui est sur plateforme (déjà vérifié en parallèle)
+                const selectedIds = new Set(resolved.map((s: any) => s.tmdb_id));
+                const poolScores = topPool.map((c: any) => ((c.similarity ?? 0) * 100 + (c.vote_average ?? 0)));
+                const scoreMin = Math.min(...poolScores);
+                const scoreMax = Math.max(...poolScores) || 1;
+                const scoreRange = scoreMax - scoreMin || 1;
+                const extras = topPool
+                  .filter((c: any) => platformOkIds.has(Number(c.tmdb_id)) && !selectedIds.has(Number(c.tmdb_id)))
+                  .slice(0, requestedCount + 2 - onPlatform.length)
+                  .map((c: any) => ({
+                    tmdb_id: Number(c.tmdb_id),
+                    matchScore: Math.round(72 + (((c.similarity ?? 0) * 100 + (c.vote_average ?? 0) - scoreMin) / scoreRange) * 20),
+                    reason: null,
+                  }));
+                llmSelections = [...onPlatform, ...extras];
+                console.log(`[SP] Complété avec ${extras.length} films pool sur plateforme → ${llmSelections.length} total`);
+              }
+            } else {
+              llmSelections = resolved;
+            }
+
+            console.log(`[SP] LLM raw selections: ${parsed.selections.length}, resolved: ${resolved.length}, après plateforme: ${llmSelections.length}`);
           }
         } else {
           const errBody = await response.text().catch(() => "");
@@ -685,65 +722,6 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
           matchScore: Math.round(72 + (((c.similarity ?? 0) * 100 + (c.vote_average ?? 0) - scoreMin) / scoreRange) * 20),
           reason: null,
         }));
-    }
-
-    // ── ÉTAPE 2.5 : Filtre plateforme sur les sélections LLM uniquement ──
-    // Beaucoup plus rapide : 10 appels max au lieu de 300.
-    if (platformIds?.length > 0 && llmSelections.length > 0) {
-      const platformSet = new Set((platformIds as number[]).map(Number));
-
-      const checkPlatform = async (tmdbId: number, mediaType: string): Promise<boolean> => {
-        const type: "movie" | "tv" = mediaType === "tv" ? "tv" : "movie";
-        const providerIds = await getProviderIdsFR(tmdbId, type);
-        return providerIds.some((pid) => platformSet.has(pid));
-      };
-
-      // Vérifier d'abord les sélections LLM (classées par matchScore)
-      const selectionChecks = await Promise.all(
-        llmSelections.map(async (sel: any) => {
-          const c = candidates.find((c: any) => Number(c.tmdb_id) === Number(sel.tmdb_id));
-          const onPlatform = await checkPlatform(sel.tmdb_id, c?.media_type ?? "movie");
-          return { ...sel, onPlatform };
-        }),
-      );
-
-      const onPlatform = selectionChecks.filter((s) => s.onPlatform);
-      const notOnPlatform = selectionChecks.filter((s) => !s.onPlatform);
-
-      console.log(`[SP] Filtre plateforme (post-LLM): ${onPlatform.length}/${llmSelections.length} sélections sur [${(platformIds as number[]).map((id) => PROVIDER_NAMES[id] ?? `#${id}`).join(", ")}]`);
-
-      if (onPlatform.length >= requestedCount) {
-        // Assez de films sur plateforme parmi les sélections LLM
-        llmSelections = onPlatform;
-      } else {
-        // Pas assez → étendre la vérification au reste du llmPool (films non sélectionnés par le LLM)
-        const checkedIds = new Set(selectionChecks.map((s) => s.tmdb_id));
-        const remaining = llmPool.filter((c: any) => !checkedIds.has(Number(c.tmdb_id)));
-        const needed = requestedCount + 2 - onPlatform.length;
-
-        if (remaining.length > 0 && needed > 0) {
-          console.log(`[SP] Extension plateforme: vérification de ${Math.min(remaining.length, needed * 3)} films supplémentaires du pool`);
-          const extraChecks = await Promise.all(
-            remaining.slice(0, needed * 3).map(async (c: any) => {
-              const onPlatformExtra = await checkPlatform(Number(c.tmdb_id), c.media_type ?? "movie");
-              return onPlatformExtra ? {
-                tmdb_id: Number(c.tmdb_id),
-                matchScore: 70,
-                reason: null,
-                onPlatform: true,
-              } : null;
-            }),
-          );
-          const extras = extraChecks.filter(Boolean).slice(0, needed);
-          llmSelections = [...onPlatform, ...extras];
-        } else {
-          llmSelections = onPlatform;
-        }
-
-        if (llmSelections.length === 0) {
-          console.log(`[SP] Aucune sélection LLM sur les plateformes user — fallback TMDB discover activé`);
-        }
-      }
     }
 
     const t3 = Date.now();
