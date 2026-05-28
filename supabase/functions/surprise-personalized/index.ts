@@ -522,19 +522,28 @@ serve(async (req) => {
       let llmInputPool = topPool; // par défaut : tous les 30
 
       if (platformSet) {
-        const platformChecks = await Promise.all(
+        const platformCheckResults = await Promise.all(
           topPool.map(async (c: any) => {
             const type: "movie" | "tv" = c.media_type === "tv" ? "tv" : "movie";
             const providerIds = await getProviderIdsFR(Number(c.tmdb_id), type);
-            return providerIds.some((pid) => platformSet.has(pid)) ? c : null;
+            return { candidate: c, providerIds, matches: providerIds.some((pid) => platformSet.has(pid)) };
           }),
         );
-        llmInputPool = platformChecks.filter(Boolean) as any[];
         const platformNames = (platformIds as number[]).map((id) => PROVIDER_NAMES[id] ?? `#${id}`).join(", ");
-        console.log(`[SP] Filtre plateforme: ${llmInputPool.length}/${topPool.length} films disponibles sur [${platformNames}]`);
+        const nonEmptyCount = platformCheckResults.filter((r) => r.providerIds.length > 0).length;
+        const matching = platformCheckResults.filter((r) => r.matches).map((r) => r.candidate);
 
-        if (llmInputPool.length === 0) {
-          console.log(`[SP] Aucun film sur les plateformes user — fallback TMDB discover activé`);
+        // Fail-open : si <3 appels TMDB sur 30 ont retourné des données (rate limit probable),
+        // on bypasse le filtre plutôt que d'éliminer tous les films.
+        if (nonEmptyCount < 3 && matching.length === 0) {
+          llmInputPool = topPool;
+          console.log(`[SP] ⚠️ Filtre plateforme bypass: seulement ${nonEmptyCount}/${topPool.length} appels TMDB non-vides → rate limit probable, pool complet envoyé au LLM`);
+        } else {
+          llmInputPool = matching;
+          console.log(`[SP] Filtre plateforme: ${llmInputPool.length}/${topPool.length} films disponibles sur [${platformNames}] (${nonEmptyCount} appels TMDB avec données)`);
+          if (llmInputPool.length === 0) {
+            console.log(`[SP] Aucun film sur les plateformes user — fallback TMDB discover activé`);
+          }
         }
       }
 
