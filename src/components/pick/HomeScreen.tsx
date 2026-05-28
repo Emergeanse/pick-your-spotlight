@@ -585,22 +585,30 @@ const HomeScreen = ({
             console.groupEnd();
           }
 
-          // ── Étape 2.5 : Films après filtre plateforme → envoyés au LLM ──
-          if (dbg?.llmFiltered) {
+          // ── Étape 2.5 : 30 films avec leur plateforme + filtrés envoyés au LLM ──
+          if (dbg?.platformPool?.length) {
             const platformMs = dbg.platformFilterMs != null ? dbg.platformFilterMs : "?";
             const llmMs = dbg.llmMs != null ? dbg.llmMs : "?";
-            const label = dbg.llmFiltered.length < (dbg.top20?.length ?? 30)
-              ? `filtrés par plateforme (${platformMs}ms) — ${dbg.llmFiltered.length}/${dbg.top20?.length ?? "?"} retenus`
-              : `filtre plateforme bypassed ou absent (${platformMs}ms) — ${dbg.llmFiltered.length} films`;
-            console.group(`[PICK-DEBUG] 2️⃣⁺ Films envoyés au LLM — ${label} | LLM: ${llmMs}ms`);
-            console.table(dbg.llmFiltered.map((c: any, i: number) => ({
+            const matched = dbg.platformPool.filter((r: any) => r.match).length;
+            const bypassed = dbg.llmFiltered?.length === dbg.top20?.length;
+            const label = bypassed
+              ? `⚠️ bypass rate limit (${platformMs}ms) — tous les ${dbg.top20?.length} films au LLM`
+              : `filtre plateforme (${platformMs}ms) — ${matched}/${dbg.platformPool.length} retenus | LLM: ${llmMs}ms`;
+            console.group(`[PICK-DEBUG] 2️⃣⁺ Plateformes des 30 films — ${label}`);
+            console.table(dbg.platformPool.map((r: any, i: number) => ({
               "#": i + 1,
-              "Titre": c.title,
-              "Note /10": c.note ?? "–",
-              "Sim%": c.sim ?? "–",
-              "Composite": c.composite ?? "–",
-              "Genres": (c.genres || []).join(", "),
-              "Type": c.type,
+              "Titre": r.title,
+              "✅ Match": r.match ? "✅ oui" : "❌ non",
+              "Plateformes dispo": r.platforms.length ? r.platforms.join(", ") : "—",
+            })));
+            console.groupEnd();
+          } else if (dbg?.llmFiltered) {
+            // Fallback si platformPool absent (ancienne version déployée)
+            const platformMs = dbg.platformFilterMs != null ? dbg.platformFilterMs : "?";
+            const llmMs = dbg.llmMs != null ? dbg.llmMs : "?";
+            console.group(`[PICK-DEBUG] 2️⃣⁺ Films envoyés au LLM (${platformMs}ms filtre | LLM: ${llmMs}ms) — ${dbg.llmFiltered.length} films`);
+            console.table(dbg.llmFiltered.map((c: any, i: number) => ({
+              "#": i + 1, "Titre": c.title, "Note /10": c.note ?? "–", "Sim%": c.sim ?? "–",
             })));
             console.groupEnd();
           }

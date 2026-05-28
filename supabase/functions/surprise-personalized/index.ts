@@ -524,6 +524,8 @@ serve(async (req) => {
 
       llmInputPool = topPool; // par défaut : tous les 30
 
+      let platformPool: { title: string; platforms: string[]; match: boolean }[] = [];
+
       if (platformSet) {
         const platformCheckResults = await Promise.all(
           topPool.map(async (c: any) => {
@@ -537,6 +539,13 @@ serve(async (req) => {
         const platformNames = (platformIds as number[]).map((id) => PROVIDER_NAMES[id] ?? `#${id}`).join(", ");
         const nonEmptyCount = platformCheckResults.filter((r) => r.providerIds.length > 0).length;
         const matching = platformCheckResults.filter((r) => r.matches).map((r) => r.candidate);
+
+        // Construit le tableau debug avec les plateformes de chaque film
+        platformPool = platformCheckResults.map((r) => ({
+          title: r.candidate.title || "?",
+          platforms: r.providerIds.map((id: number) => PROVIDER_NAMES[id] ?? `#${id}`).filter(Boolean),
+          match: r.matches,
+        }));
 
         // Fail-open : deux signaux de rate limit TMDB →
         //   1. <250ms pour 30 appels parallèles (impossiblement rapide pour de vraies réponses)
@@ -1073,6 +1082,7 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
           sql50: candidates.map(toDebugRow), // renommé sql100 en pratique
           top20: llmPool.length > 0 ? llmPool.map(toDebugRow) : candidates.slice(0, llmPoolSize).map(toDebugRow),
           llmFiltered: llmInputPool.map(toDebugRow),
+          platformPool,
           platformFilterMs: tPlatform - t2,
           llmMs: t3 - tPlatform,
           tmdbEnrichment: tmdbDiag,
