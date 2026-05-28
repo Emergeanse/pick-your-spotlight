@@ -447,7 +447,7 @@ serve(async (req) => {
     const t2 = Date.now();
     if (t2 - t1 > 50) console.log(`[SP⏱] Enrichissement langue TMDB: ${t2 - t1}ms`);
 
-    // ── ÉTAPE 2 : LLM — sélection parmi les 30 meilleurs candidats SQL ──
+    // ── ÉTAPE 2 : Filtre plateforme → LLM sur les films disponibles uniquement ──
     let llmSelections: any[] = [];
     let llmFilteredAll = false;
     const llmPoolSize = 30;
@@ -476,36 +476,69 @@ serve(async (req) => {
         .slice(0, llmPoolSize);
       llmPool = topPool;
 
-      const candidateList = topPool
-        .map((c: any, i: number) => {
-          const typeLabel = c.media_type === "tv" ? "📺 Série" : "🎬 Film";
-          const safeTitle = (c.title || "").replace(/[^\x20-\x7EÀ-ɏЀ-ӿ]/g, "").trim();
-          return `N°${i + 1} | ${typeLabel} | "${safeTitle}" (${c.year || "?"}) | ${(c.genres || []).slice(0, 3).join(", ")} | ⭐${c.vote_average > 0 ? c.vote_average.toFixed(1) : "?"}/10`;
-        })
-        .join("\n");
+      // ── ÉTAPE 2.1 : Filtre plateforme sur les 30 candidats (en parallèle, ~500ms) ──
+      // Le LLM ne reçoit que les films disponibles sur les plateformes de l'utilisateur.
+      const platformSet = platformIds?.length > 0
+        ? new Set((platformIds as number[]).map(Number))
+        : null;
 
-      console.log(`[SP] Top ${topPool.length} envoyés au LLM — triés par score composé (sim×100 + note):\n${candidateList}`);
+      let llmInputPool = topPool; // par défaut : tous les 30
 
-      const rejectionNote = rejectionContext
-        ? `\nDERNIER FILM REFUSÉ : "${rejectionContext.rejectedTitle}" — Ne propose rien de similaire.`
-        : "";
-      const explorationNote =
-        explorationLevel >= 7
-          ? "MODE DÉCOUVERTE : Privilégie des pépites moins connues ou des genres adjacents."
-          : explorationLevel <= 2
-            ? "MODE PRÉCISION : Reste très proche des genres et clusters favoris."
-            : "";
-      const originNote = [
-        likedOrigins.length > 0 ? `- Origines préférées : ${likedOrigins.join(", ")}` : "",
-        excludedOrigins.length > 0
-          ? `- ⛔ ORIGINES À ÉVITER ABSOLUMENT : ${excludedOrigins.join(", ")} — n'inclus aucun film de ces origines.`
-          : "",
-      ].filter(Boolean).join("\n");
-      const platformNote = platformIds?.length > 0
-        ? `\n🎬 PLATEFORMES DE L'UTILISATEUR : ${(platformIds as number[]).map((id) => PROVIDER_NAMES[id] ?? `#${id}`).join(", ")}. La disponibilité sera vérifiée après ta sélection — sélectionne par affinité de goût, pas par plateforme.\n`
-        : "";
+      if (platformSet) {
+        const platformChecks = await Promise.all(
+          topPool.map(async (c: any) => {
+            const type: "movie" | "tv" = c.media_type === "tv" ? "tv" : "movie";
+            const providerIds = await getProviderIdsFR(Number(c.tmdb_id), type);
+            return providerIds.some((pid) => platformSet.has(pid)) ? c : null;
+          }),
+        );
+        llmInputPool = platformChecks.filter(Boolean) as any[];
+        const platformNames = (platformIds as number[]).map((id) => PROVIDER_NAMES[id] ?? `#${id}`).join(", ");
+        console.log(`[SP] Filtre plateforme: ${llmInputPool.length}/${topPool.length} films disponibles sur [${platformNames}]`);
 
-      const systemPrompt = `Tu es Pick, moteur de recommandation cinéphile. Sélectionne les meilleurs films depuis une liste pré-validée.
+        if (llmInputPool.length === 0) {
+          console.log(`[SP] Aucun film sur les plateformes user — fallback TMDB discover activé`);
+        }
+      }
+
+      // ── ÉTAPE 2.2 : LLM — évalue uniquement les films disponibles ──
+      if (llmInputPool.length >= 1) {
+        const poolScores = llmInputPool.map((c: any) => ((c.similarity ?? 0) * 100 + (c.vote_average ?? 0)));
+        const scoreMin = Math.min(...poolScores);
+        const scoreMax = Math.max(...poolScores) || 1;
+        const scoreRange = scoreMax - scoreMin || 1;
+
+        const candidateList = llmInputPool
+          .map((c: any, i: number) => {
+            const typeLabel = c.media_type === "tv" ? "📺 Série" : "🎬 Film";
+            const safeTitle = (c.title || "").replace(/[^\x20-\x7EÀ-ɏЀ-ӿ]/g, "").trim();
+            return `N°${i + 1} | ${typeLabel} | "${safeTitle}" (${c.year || "?"}) | ${(c.genres || []).slice(0, 3).join(", ")} | ⭐${c.vote_average > 0 ? c.vote_average.toFixed(1) : "?"}/10`;
+          })
+          .join("\n");
+
+        console.log(`[SP] ${llmInputPool.length} films envoyés au LLM (disponibles sur plateforme):\n${candidateList}`);
+
+        const targetCount = Math.min(requestedCount + 2, llmInputPool.length);
+        const rejectionNote = rejectionContext
+          ? `\nDERNIER FILM REFUSÉ : "${rejectionContext.rejectedTitle}" — Ne propose rien de similaire.`
+          : "";
+        const explorationNote =
+          explorationLevel >= 7
+            ? "MODE DÉCOUVERTE : Privilégie des pépites moins connues ou des genres adjacents."
+            : explorationLevel <= 2
+              ? "MODE PRÉCISION : Reste très proche des genres et clusters favoris."
+              : "";
+        const originNote = [
+          likedOrigins.length > 0 ? `- Origines préférées : ${likedOrigins.join(", ")}` : "",
+          excludedOrigins.length > 0
+            ? `- ⛔ ORIGINES À ÉVITER ABSOLUMENT : ${excludedOrigins.join(", ")} — n'inclus aucun film de ces origines.`
+            : "",
+        ].filter(Boolean).join("\n");
+        const platformNote = platformSet
+          ? `\n🎬 Ces films sont tous disponibles sur les plateformes de l'utilisateur (${(platformIds as number[]).map((id) => PROVIDER_NAMES[id] ?? `#${id}`).join(", ")}).\n`
+          : "";
+
+        const systemPrompt = `Tu es Pick, moteur de recommandation cinéphile. Sélectionne les meilleurs films depuis une liste pré-validée.
 ${moodContext ? `\n🎭 AMBIANCE CHOISIE : ${moodContext}\n` : ""}${platformNote}
 PROFIL UTILISATEUR :
 - Genres préférés : ${likedWithTv.join(", ") || "non déterminés"}
@@ -519,213 +552,131 @@ ${originNote}
 ${rejectionNote}
 ${explorationNote}
 
-FILMS DISPONIBLES — pré-validés mathématiquement par similarité vectorielle :
+FILMS DISPONIBLES — déjà filtrés par similarité vectorielle et disponibilité plateforme :
 ${candidateList}
 
-MISSION : Sélectionne exactement 10 films/séries depuis cette liste — les 10 qui correspondent le mieux au profil, classés du meilleur au moins bon. Nous vérifierons ensuite la disponibilité plateforme et garderons les meilleurs disponibles.
+MISSION : Sélectionne exactement ${targetCount} films/séries depuis cette liste — les ${targetCount} qui correspondent le mieux au profil, classés du meilleur au moins bon.
 
 RÈGLES DE SÉLECTION :
-- Tu DOIS retourner exactement 10 entrées, pas moins. Classe-les du meilleur au moins bon.
+- Tu DOIS retourner exactement ${targetCount} entrées, pas moins. Classe-les du meilleur au moins bon.
 - Chaque item est clairement marqué 🎬 Film ou 📺 Série — respecte ce type dans ta réponse
-- Diversifie les genres entre les 10 sélections
+- Diversifie les genres entre les sélections
 - Priorise les films bien notés (⭐7+) si le profil matche
 - Évite 2 films de la même franchise ou très similaires
 - Respecte absolument les genres exclus, origines exclues et clusters rejetés
 
 SCORING (matchScore) :
 - Base : 75%. Hausse si genre favori / note 8+. Baisse si cluster rejeté / note <6.
-- Donne des scores honnêtes — les 10 films ont des scores différents reflétant leur rang.
-- Pas de seuil bloquant : classe les 10 meilleurs même si certains sont à 60%.
+- Donne des scores honnêtes reflétant le rang.
+- Pas de seuil bloquant : classe les ${targetCount} meilleurs même si certains sont à 60%.
 
 Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
 {
   "selections": [
     {
-      "rank": <numéro N° de la liste, entre 1 et ${topPool.length}>,
+      "rank": <numéro N° de la liste, entre 1 et ${llmInputPool.length}>,
       "matchScore": <entier entre 60 et 99>,
       "reason": "<1 phrase pourquoi ce film correspond au profil>"
     }
   ]
 }`;
 
-      capturedSystemPrompt = systemPrompt;
+        capturedSystemPrompt = systemPrompt;
 
-      // ── LLM + plateforme en PARALLÈLE ──
-      // Les 30 checks TMDB plateforme démarrent en même temps que le LLM (~1.8s).
-      // On croise les résultats une fois les deux terminés.
-      const platformSet = platformIds?.length > 0
-        ? new Set((platformIds as number[]).map(Number))
-        : null;
+        try {
+          const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GOOGLE_AI_KEY}`;
+          const geminiBody = JSON.stringify({
+            contents: [{ role: "user", parts: [{ text: systemPrompt }] }],
+            generationConfig: { maxOutputTokens: 2000, responseMimeType: "application/json", thinkingConfig: { thinkingBudget: 0 } },
+          });
+          const geminiHeaders = { "Content-Type": "application/json" };
 
-      const poolPlatformPromise: Promise<Set<number>> = platformSet
-        ? Promise.all(
-            topPool.map(async (c: any) => {
-              const type: "movie" | "tv" = c.media_type === "tv" ? "tv" : "movie";
-              const providerIds = await getProviderIdsFR(Number(c.tmdb_id), type);
-              return providerIds.some((pid) => platformSet.has(pid)) ? Number(c.tmdb_id) : null;
-            }),
-          ).then((results) => new Set(results.filter((id): id is number => id !== null)))
-        : Promise.resolve(new Set(topPool.map((c: any) => Number(c.tmdb_id))));
-
-      const llmCallPromise = (async () => {
-        const geminiBody = JSON.stringify({
-          contents: [{ role: "user", parts: [{ text: systemPrompt }] }],
-          generationConfig: {
-            maxOutputTokens: 2000,
-            responseMimeType: "application/json",
-            thinkingConfig: { thinkingBudget: 0 },
-          },
-        });
-        const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GOOGLE_AI_KEY}`;
-        const geminiHeaders = { "Content-Type": "application/json" };
-
-        let response = await fetch(geminiUrl, { method: "POST", headers: geminiHeaders, body: geminiBody });
-        if (response.status === 429 || response.status === 503) {
-          await new Promise((r) => setTimeout(r, response.status === 503 ? 4000 : 3000));
-          response = await fetch(geminiUrl, { method: "POST", headers: geminiHeaders, body: geminiBody });
-        }
-        return response;
-      })();
-
-      try {
-        const [platformOkIds, response] = await Promise.all([poolPlatformPromise, llmCallPromise]);
-
-        if (platformSet) {
-          console.log(`[SP] Filtre plateforme (pool 30): ${platformOkIds.size}/30 films disponibles sur [${(platformIds as number[]).map((id: number) => PROVIDER_NAMES[id] ?? `#${id}`).join(", ")}]`);
-        }
-
-        if (response.ok) {
-          const raw = await response.text();
-          const aiData = JSON.parse(raw);
-          const rawContent = aiData?.candidates?.[0]?.content?.parts?.[0]?.text || "";
-          console.log(`[SP] LLM rawContent (first 400): ${rawContent.slice(0, 400)}`);
-
-          const content = rawContent
-            .replace(/<thinking>[\s\S]*?<\/thinking>/gi, "")
-            .replace(/```(?:json)?\s*/g, "")
-            .trim();
-
-          const repair = (s: string) => s
-            .replace(/^﻿/, "")
-            .replace(/\}\s*\n\s*\{/g, "},\n{")
-            .replace(/,\s*([}\]])/g, "$1");
-
-          const hasSelections = (obj: any) => obj?.selections && Array.isArray(obj.selections) && obj.selections.length > 0;
-
-          let parsed: any = null;
-          for (const candidate of [content, repair(content)]) {
-            if (parsed) break;
-            try {
-              const obj = JSON.parse(candidate);
-              if (hasSelections(obj)) { parsed = obj; console.log("[SP] Strategy 0 (direct parse) succeeded"); }
-            } catch {}
+          let response = await fetch(geminiUrl, { method: "POST", headers: geminiHeaders, body: geminiBody });
+          if (response.status === 429 || response.status === 503) {
+            await new Promise((r) => setTimeout(r, response.status === 503 ? 4000 : 3000));
+            response = await fetch(geminiUrl, { method: "POST", headers: geminiHeaders, body: geminiBody });
           }
 
-          if (!parsed) {
-            for (let i = 0; i < content.length && !parsed; i++) {
-              if (content[i] !== "{") continue;
-              let d = 0, end = i;
-              for (let j = i; j < content.length; j++) {
-                if (content[j] === "{") d++;
-                else if (content[j] === "}") { d--; if (d === 0) { end = j; break; } }
+          if (response.ok) {
+            const raw = await response.text();
+            const aiData = JSON.parse(raw);
+            const rawContent = aiData?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+            console.log(`[SP] LLM rawContent (first 400): ${rawContent.slice(0, 400)}`);
+
+            const content = rawContent.replace(/<thinking>[\s\S]*?<\/thinking>/gi, "").replace(/```(?:json)?\s*/g, "").trim();
+            const repair = (s: string) => s.replace(/^﻿/, "").replace(/\}\s*\n\s*\{/g, "},\n{").replace(/,\s*([}\]])/g, "$1");
+            const hasSelections = (obj: any) => obj?.selections && Array.isArray(obj.selections) && obj.selections.length > 0;
+
+            let parsed: any = null;
+            for (const cand of [content, repair(content)]) {
+              if (parsed) break;
+              try { const obj = JSON.parse(cand); if (hasSelections(obj)) { parsed = obj; console.log("[SP] Strategy 0 succeeded"); } } catch {}
+            }
+            if (!parsed) {
+              for (let i = 0; i < content.length && !parsed; i++) {
+                if (content[i] !== "{") continue;
+                let d = 0, end = i;
+                for (let j = i; j < content.length; j++) {
+                  if (content[j] === "{") d++; else if (content[j] === "}") { d--; if (d === 0) { end = j; break; } }
+                }
+                if (end === i) continue;
+                try { const obj = JSON.parse(repair(content.slice(i, end + 1))); if (hasSelections(obj)) { parsed = obj; } } catch {}
+                i = end;
               }
-              if (end === i) continue;
-              try {
-                const obj = JSON.parse(repair(content.slice(i, end + 1)));
-                if (hasSelections(obj)) { parsed = obj; console.log(`[SP] Strategy 1 (bracket scan at ${i}), ${obj.selections.length} sel`); }
-              } catch {}
-              i = end;
             }
-          }
-
-          if (!parsed) {
-            const sels: any[] = [];
-            const re = /"rank"\s*:\s*(\d+)[^}]*?"matchScore"\s*:\s*(\d+)(?:[^}]*?"reason"\s*:\s*"([^"]*)")?/g;
-            let m;
-            while ((m = re.exec(content)) !== null) {
-              sels.push({ rank: Number(m[1]), matchScore: Number(m[2]), reason: m[3] || undefined });
-            }
-            if (sels.length > 0) { parsed = { selections: sels }; console.log(`[SP] Strategy 2 (regex) extracted ${sels.length} sel`); }
-          }
-
-          if (!parsed) throw new Error(`No valid selections JSON in LLM response: ${rawContent.slice(0, 300)}`);
-
-          if (parsed.selections && Array.isArray(parsed.selections)) {
-            const resolved = parsed.selections
-              .map((s: any) => {
-                const rankIdx = s.rank != null ? Number(s.rank) : null;
-                const candidate = (rankIdx != null && rankIdx >= 1 && rankIdx <= topPool.length)
-                  ? topPool[rankIdx - 1]
-                  : topPool.find((c: any) => Number(c.tmdb_id) === Number(s.tmdb_id));
-                if (!candidate) return null;
-                return { tmdb_id: Number(candidate.tmdb_id), matchScore: s.matchScore || 75, reason: s.reason || null };
-              })
-              .filter(Boolean)
-              .sort((a: any, b: any) => (b.matchScore || 0) - (a.matchScore || 0));
-
-            // Filtre plateforme : prioriser les sélections LLM sur plateforme,
-            // compléter avec les candidats du pool sur plateforme si besoin.
-            if (platformSet) {
-              const onPlatform = resolved.filter((s: any) => platformOkIds.has(s.tmdb_id));
-              console.log(`[SP] LLM: ${resolved.length} sélections → ${onPlatform.length} sur plateforme`);
-
-              if (onPlatform.length >= requestedCount) {
-                llmSelections = onPlatform;
-              } else {
-                // Compléter avec le reste du pool qui est sur plateforme (déjà vérifié en parallèle)
-                const selectedIds = new Set(resolved.map((s: any) => s.tmdb_id));
-                const poolScores = topPool.map((c: any) => ((c.similarity ?? 0) * 100 + (c.vote_average ?? 0)));
-                const scoreMin = Math.min(...poolScores);
-                const scoreMax = Math.max(...poolScores) || 1;
-                const scoreRange = scoreMax - scoreMin || 1;
-                const extras = topPool
-                  .filter((c: any) => platformOkIds.has(Number(c.tmdb_id)) && !selectedIds.has(Number(c.tmdb_id)))
-                  .slice(0, requestedCount + 2 - onPlatform.length)
-                  .map((c: any) => ({
-                    tmdb_id: Number(c.tmdb_id),
-                    matchScore: Math.round(72 + (((c.similarity ?? 0) * 100 + (c.vote_average ?? 0) - scoreMin) / scoreRange) * 20),
-                    reason: null,
-                  }));
-                llmSelections = [...onPlatform, ...extras];
-                console.log(`[SP] Complété avec ${extras.length} films pool sur plateforme → ${llmSelections.length} total`);
-              }
-            } else {
-              llmSelections = resolved;
+            if (!parsed) {
+              const sels: any[] = [];
+              const re = /"rank"\s*:\s*(\d+)[^}]*?"matchScore"\s*:\s*(\d+)(?:[^}]*?"reason"\s*:\s*"([^"]*)")?/g;
+              let m;
+              while ((m = re.exec(content)) !== null) sels.push({ rank: Number(m[1]), matchScore: Number(m[2]), reason: m[3] || undefined });
+              if (sels.length > 0) { parsed = { selections: sels }; console.log(`[SP] Strategy 2 (regex) extracted ${sels.length}`); }
             }
 
-            console.log(`[SP] LLM raw selections: ${parsed.selections.length}, resolved: ${resolved.length}, après plateforme: ${llmSelections.length}`);
+            if (!parsed) throw new Error(`No valid JSON in LLM response: ${rawContent.slice(0, 300)}`);
+
+            if (parsed.selections && Array.isArray(parsed.selections)) {
+              llmSelections = parsed.selections
+                .map((s: any) => {
+                  const rankIdx = s.rank != null ? Number(s.rank) : null;
+                  // Les rangs réfèrent à llmInputPool (liste filtrée plateforme)
+                  const candidate = (rankIdx != null && rankIdx >= 1 && rankIdx <= llmInputPool.length)
+                    ? llmInputPool[rankIdx - 1]
+                    : llmInputPool.find((c: any) => Number(c.tmdb_id) === Number(s.tmdb_id));
+                  if (!candidate) return null;
+                  return { tmdb_id: Number(candidate.tmdb_id), matchScore: s.matchScore || 75, reason: s.reason || null };
+                })
+                .filter(Boolean)
+                .sort((a: any, b: any) => (b.matchScore || 0) - (a.matchScore || 0));
+              console.log(`[SP] LLM: ${parsed.selections.length} sélections → ${llmSelections.length} résolues`);
+            }
+          } else {
+            const errBody = await response.text().catch(() => "");
+            llmDebugError = `HTTP ${response.status}: ${errBody.slice(0, 300)}`;
+            console.error(`[SP] LLM error: ${llmDebugError}`);
           }
-        } else {
-          const errBody = await response.text().catch(() => "");
-          llmDebugError = `HTTP ${response.status}: ${errBody.slice(0, 300)}`;
-          console.error(`[SP] LLM gateway error: ${llmDebugError}`);
+        } catch (e) {
+          llmDebugError = String(e);
+          console.error("LLM selection failed:", e);
         }
-      } catch (e) {
-        llmDebugError = String(e);
-        console.error("LLM selection failed:", e);
+
+        // Fallback : si le LLM échoue, prendre le top du pool filtré plateforme directement
+        if (llmSelections.length === 0) {
+          console.log(`[SP] LLM returned 0 — fallback déterministe sur pool plateforme`);
+          llmSelections = llmInputPool
+            .slice(0, targetCount)
+            .map((c: any) => ({
+              tmdb_id: Number(c.tmdb_id),
+              matchScore: Math.round(72 + (((c.similarity ?? 0) * 100 + (c.vote_average ?? 0) - scoreMin) / scoreRange) * 20),
+              reason: null,
+            }));
+        }
       }
     } else {
       console.log(`[SP] LLM skipped — candidats insuffisants: ${filteredCandidates.length}`);
     }
 
-    // ── Fallback SQL : si le LLM n'a rien retourné, prendre le top du pool directement ──
-    if (llmSelections.length === 0 && llmPool.length > 0) {
-      console.log(`[SP] LLM returned 0 — fallback déterministe sur top ${Math.min(10, llmPool.length)} du pool SQL`);
-      const poolScores = llmPool.map((c: any) => ((c.similarity ?? 0) * 100 + (c.vote_average ?? 0)));
-      const scoreMin = poolScores[poolScores.length - 1] ?? 0;
-      const scoreMax = poolScores[0] ?? 1;
-      const scoreRange = scoreMax - scoreMin || 1;
-      llmSelections = llmPool
-        .slice(0, 10)
-        .map((c: any) => ({
-          tmdb_id: Number(c.tmdb_id),
-          matchScore: Math.round(72 + (((c.similarity ?? 0) * 100 + (c.vote_average ?? 0) - scoreMin) / scoreRange) * 20),
-          reason: null,
-        }));
-    }
-
     const t3 = Date.now();
-    console.log(`[SP⏱] LLM + filtre plateforme: ${t3 - t2}ms → ${llmSelections.length} films`);
+    console.log(`[SP⏱] Plateforme + LLM: ${t3 - t2}ms → ${llmSelections.length} films`);
 
     // ── ÉTAPE 3 : TMDB — enrichissement en batch ──
     // Trier par score LLM décroissant : on enrichit les meilleurs en premier
