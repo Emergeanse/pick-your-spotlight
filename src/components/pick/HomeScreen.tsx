@@ -629,6 +629,25 @@ const HomeScreen = ({
           }
 
           console.log("[PICK-DEBUG] engineMeta:", data?.engineMeta);
+
+          // ── Timings par étape ──
+          const timings = data?.engineMeta?.timings;
+          if (timings) {
+            const fmt = (ms: number) => ms >= 1000 ? `${(ms / 1000).toFixed(1)}s` : `${ms}ms`;
+            const bar = (ms: number, total: number) => {
+              const pct = Math.round((ms / total) * 20);
+              return "█".repeat(Math.max(1, pct)) + "░".repeat(20 - Math.max(1, pct));
+            };
+            const tot = timings.total || 1;
+            console.group(`[PICK-DEBUG] ⏱️ Timings pipeline — total ${fmt(tot)}`);
+            console.log(`  SQL + filtres plateforme  ${bar(timings.sql, tot)}  ${fmt(timings.sql)}`);
+            console.log(`  Enrichissement langue      ${bar(timings.langEnrich, tot)}  ${fmt(timings.langEnrich)}`);
+            console.log(`  LLM sélection (Gemini)    ${bar(timings.select, tot)}  ${fmt(timings.select)}`);
+            console.log(`  TMDB enrichissement batch  ${bar(timings.tmdb, tot)}  ${fmt(timings.tmdb)}`);
+            console.log(`  Fallback                   ${bar(timings.fallback, tot)}  ${fmt(timings.fallback)}`);
+            console.groupEnd();
+          }
+
           console.groupEnd();
           const extracted = extractRecommendationMovies(data);
           const desiredCount = quickFilters.recommendationCount || RECOMMENDATION_BATCH_SIZE;
