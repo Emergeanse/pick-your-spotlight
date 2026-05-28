@@ -1014,60 +1014,9 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
               ) : null}
             </motion.div>
 
-            {/* ── Navigation suggestions — dans le scroll, toujours atteignable ── */}
-            {totalCount > 1 && (onPrevious || onNext) && (
-              <motion.div
-                initial={{ opacity: 0, y: 14 }}
-                animate={{ opacity: revealStage === "settled" ? 1 : 0, y: revealStage === "settled" ? 0 : 14 }}
-                transition={{ delay: 0.3, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-                className="mt-10 flex flex-col items-center gap-3 pb-2"
-              >
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={onPrevious}
-                    disabled={currentIndex === 0}
-                    className="rounded-full bg-foreground/5 p-2.5 text-foreground/40 transition-all hover:bg-foreground/10 disabled:opacity-20 disabled:cursor-not-allowed"
-                    aria-label="Proposition précédente"
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                  </button>
-                  <span className="min-w-[80px] text-center text-[11px] uppercase tracking-[0.2em] font-sans text-foreground/40">
-                    Suggestion {currentIndex + 1}/{displayedTotal}
-                  </span>
-                  <button
-                    onClick={onNext}
-                    disabled={currentIndex >= totalCount - 1}
-                    className="rounded-full bg-foreground/5 p-2.5 text-foreground/40 transition-all hover:bg-foreground/10 disabled:opacity-20 disabled:cursor-not-allowed"
-                    aria-label="Proposition suivante"
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                  </button>
-                </div>
-
-                <button
-                  data-tour="autre-suggestion"
-                  onClick={() => onShowAnother()}
-                  disabled={refining || !allVisited}
-                  className={`flex items-center gap-2 px-5 py-2.5 rounded-full border text-[13px] font-sans font-medium transition-all ${
-                    allVisited
-                      ? "border-primary/50 text-primary/80 bg-primary/5 hover:bg-primary/10 hover:border-primary/70 hover:text-primary shadow-[0_0_16px_hsl(var(--primary)/0.12)]"
-                      : "border-foreground/10 text-foreground/30 cursor-not-allowed"
-                  }`}
-                >
-                  {refining ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
-                  {displayedTotal} autre{displayedTotal > 1 ? "s" : ""} suggestion{displayedTotal > 1 ? "s" : ""}
-                </button>
-
-                {!allVisited && displayedTotal > 1 && (
-                  <p className="text-[10px] text-foreground/25 font-sans">
-                    {visitedMovieIds.size}/{displayedTotal} vues — fais défiler chaque suggestion
-                  </p>
-                )}
-              </motion.div>
-            )}
           </div>
 
-          {/* ── Barre fixe — uniquement les boutons d'action ── */}
+          {/* ── Barre fixe — navigation + boutons d'action ── */}
           <motion.div
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: revealStage === "settled" ? 1 : 0, y: revealStage === "settled" ? 0 : 24 }}
@@ -1075,6 +1024,47 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
             className="fixed left-0 right-0 bottom-[calc(3.5rem+env(safe-area-inset-bottom))] z-50 border-t border-border/20 bg-background/84 px-4 pt-3 pb-4 backdrop-blur-xl shadow-[0_-18px_40px_hsl(var(--background)/0.32)]"
           >
             <div className="mx-auto max-w-md">
+              {/* Ligne navigation suggestions — toujours visible quand plusieurs suggestions */}
+              {totalCount > 1 && (onPrevious || onNext) && (
+                <div className="mb-2.5 flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={onPrevious}
+                      disabled={currentIndex === 0}
+                      className="rounded-full bg-foreground/5 p-1.5 text-foreground/40 transition-all hover:bg-foreground/10 disabled:opacity-20 disabled:cursor-not-allowed"
+                      aria-label="Proposition précédente"
+                    >
+                      <ChevronLeft className="h-3.5 w-3.5" />
+                    </button>
+                    <span className="min-w-[72px] text-center text-[11px] uppercase tracking-[0.18em] font-sans text-foreground/40">
+                      Suggestion {currentIndex + 1}/{displayedTotal}
+                    </span>
+                    <button
+                      onClick={onNext}
+                      disabled={currentIndex >= totalCount - 1}
+                      className="rounded-full bg-foreground/5 p-1.5 text-foreground/40 transition-all hover:bg-foreground/10 disabled:opacity-20 disabled:cursor-not-allowed"
+                      aria-label="Proposition suivante"
+                    >
+                      <ChevronRight className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+
+                  <button
+                    data-tour="autre-suggestion"
+                    onClick={() => onShowAnother()}
+                    disabled={refining || !allVisited}
+                    className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border text-[12px] font-sans font-medium transition-all ${
+                      allVisited
+                        ? "border-primary/50 text-primary/80 bg-primary/5 hover:bg-primary/10 hover:border-primary/70 hover:text-primary shadow-[0_0_12px_hsl(var(--primary)/0.12)]"
+                        : "border-foreground/10 text-foreground/30 cursor-not-allowed"
+                    }`}
+                  >
+                    {refining ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
+                    {displayedTotal} autre{displayedTotal > 1 ? "s" : ""}
+                  </button>
+                </div>
+              )}
+
               <div className="mb-3 flex items-center justify-between gap-3">
                 <button
                   onClick={onRestart}
