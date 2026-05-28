@@ -357,6 +357,33 @@ serve(async (req) => {
             console.log(`[SP] Duration fallback: ${candidates.length} candidates`);
           }
         }
+
+        // ── Fallback excludeIds : trop d'exclusions → base épuisée → relancer avec liste réduite ──
+        if (candidates.length === 0 && normalizedExcludeIds.length > 200) {
+          const recentExcludes = normalizedExcludeIds.slice(-200);
+          console.log(`[SP] Retry SQL avec ${recentExcludes.length} excludes réduits (${normalizedExcludeIds.length} → 0 candidats)`);
+          const { data: dataR1 } = await supabase.rpc(
+            "match_movies_for_recommendation",
+            { ...buildRpcParams({ withLang: false, withYear: false }), exclude_ids: recentExcludes },
+          );
+          if (dataR1 && (dataR1 as any[]).length > 0) {
+            candidates = dataR1 as any[];
+            console.log(`[SP] Retry réduit: ${candidates.length} candidats`);
+          }
+        }
+
+        // ── Dernier recours : aucune exclusion — on préfère re-voir un film connu plutôt que fallback TMDB ──
+        if (candidates.length === 0) {
+          console.log(`[SP] Retry SQL SANS exclusions — dernier recours (base épuisée)`);
+          const { data: dataR2 } = await supabase.rpc(
+            "match_movies_for_recommendation",
+            { ...buildRpcParams({ withLang: false, withYear: false }), exclude_ids: [] },
+          );
+          if (dataR2 && (dataR2 as any[]).length > 0) {
+            candidates = dataR2 as any[];
+            console.log(`[SP] Sans exclusions: ${candidates.length} candidats`);
+          }
+        }
       } catch (e) {
         console.error("SQL vector search failed:", e);
       }
