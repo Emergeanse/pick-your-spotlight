@@ -533,18 +533,22 @@ serve(async (req) => {
           }),
         );
         tPlatform = Date.now();
+        const platformCheckMs = tPlatform - t2;
         const platformNames = (platformIds as number[]).map((id) => PROVIDER_NAMES[id] ?? `#${id}`).join(", ");
         const nonEmptyCount = platformCheckResults.filter((r) => r.providerIds.length > 0).length;
         const matching = platformCheckResults.filter((r) => r.matches).map((r) => r.candidate);
 
-        // Fail-open : si <3 appels TMDB sur 30 ont retourné des données (rate limit probable),
-        // on bypasse le filtre plutôt que d'éliminer tous les films.
-        if (nonEmptyCount < 3 && matching.length === 0) {
+        // Fail-open : deux signaux de rate limit TMDB →
+        //   1. <250ms pour 30 appels parallèles (impossiblement rapide pour de vraies réponses)
+        //   2. <30% des appels ont retourné des données provider
+        const suspiciouslyFast = platformCheckMs < 250;
+        const lowDataRate = nonEmptyCount < Math.ceil(topPool.length * 0.3);
+        if (matching.length === 0 && (suspiciouslyFast || lowDataRate)) {
           llmInputPool = topPool;
-          console.log(`[SP] ⚠️ Filtre plateforme bypass: seulement ${nonEmptyCount}/${topPool.length} appels TMDB non-vides → rate limit probable, pool complet envoyé au LLM`);
+          console.log(`[SP] ⚠️ Filtre plateforme bypass: ${platformCheckMs}ms, ${nonEmptyCount}/${topPool.length} appels non-vides → rate limit TMDB probable, pool complet au LLM`);
         } else {
           llmInputPool = matching;
-          console.log(`[SP] Filtre plateforme: ${llmInputPool.length}/${topPool.length} films disponibles sur [${platformNames}] (${nonEmptyCount} appels TMDB avec données)`);
+          console.log(`[SP] Filtre plateforme: ${llmInputPool.length}/${topPool.length} films sur [${platformNames}] | ${platformCheckMs}ms, ${nonEmptyCount} appels avec données`);
           if (llmInputPool.length === 0) {
             console.log(`[SP] Aucun film sur les plateformes user — fallback TMDB discover activé`);
           }
