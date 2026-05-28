@@ -1302,6 +1302,7 @@ export type Database = {
               p_excluded_clusters?: string[]
               p_excluded_languages?: string[]
               p_max_year?: number
+              p_min_popularity?: number
               p_min_year?: number
               p_original_language?: string
               p_user_id?: string
