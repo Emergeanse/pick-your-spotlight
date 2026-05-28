@@ -365,7 +365,7 @@ serve(async (req) => {
     }
 
     // Pas de filtre plateforme sur les 200 candidats SQL — fait après le LLM sur 10-30 films seulement.
-    const filteredCandidates = candidates;
+    let filteredCandidates = candidates;
 
     const t1 = Date.now();
     console.log(`[SP⏱] SQL: ${t1 - t0}ms (${candidates.length} candidats)`);
