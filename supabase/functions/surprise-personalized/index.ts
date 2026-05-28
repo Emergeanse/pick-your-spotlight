@@ -480,9 +480,10 @@ serve(async (req) => {
     const llmPoolSize = 30;
     let llmPool: any[] = [];
     let llmInputPool: any[] = [];
-    let tPlatform = t2;
     let capturedSystemPrompt: string | null = null;
     let llmDebugError: string | null = null;
+    let tPlatform = t2;
+
 
     const PROVIDER_NAMES: Record<number, string> = {
       8: "Netflix", 119: "Amazon Prime Video", 337: "Disney+",
