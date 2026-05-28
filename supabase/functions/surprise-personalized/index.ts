@@ -297,9 +297,9 @@ serve(async (req) => {
     const effectiveExcludedLangsArr = [...effectiveExcludedLangsSet];
 
     // ── ÉTAPE 1 : SQL — top candidats par similarité vectorielle ──
-    // Langue, décennie et exclusions d'origine filtrées en SQL (plus de post-filtrage).
-    // 300 candidats quand un filtre plateforme est actif (hit-rate ~7% → besoin de plus de marge).
-    const sqlMatchCount = platformIds?.length > 0 ? 300 : 200;
+    // Langue, décennie et exclusions d'origine filtrées en SQL.
+    // Le filtre plateforme est fait APRÈS le LLM (sur 10-30 films, pas 300).
+    const sqlMatchCount = 200;
     const buildRpcParams = (opts: { withLang: boolean; withYear: boolean }) => ({
       query_vector: `[${userTasteVector.join(",")}]`,
       match_count: sqlMatchCount,
@@ -364,45 +364,11 @@ serve(async (req) => {
       console.log(`[SP] SQL skipped — userTasteVector: ${!!userTasteVector}, SUPABASE_URL: ${!!SUPABASE_URL}`);
     }
 
-    // ── ÉTAPE 1.5 : Filtre plateforme sur les 100 candidats SQL ──
-    let filteredCandidates = candidates;
-    if (platformIds?.length > 0 && candidates.length > 0) {
-      const platformSet = new Set((platformIds as number[]).map(Number));
-      const PARALLEL = 30;
-      const platformResults: { tmdb_id: number; onPlatform: boolean }[] = [];
-
-      for (let i = 0; i < candidates.length; i += PARALLEL) {
-        const chunk = candidates.slice(i, i + PARALLEL);
-        const chunkResults = await Promise.all(
-          chunk.map(async (c: any) => {
-            const itemType: "movie" | "tv" = c.media_type === "tv" ? "tv" : "movie";
-            const providerIds = await getProviderIdsFR(Number(c.tmdb_id), itemType);
-            const onPlatform = providerIds.some((pid) => platformSet.has(pid));
-            return { tmdb_id: c.tmdb_id, onPlatform };
-          }),
-        );
-        platformResults.push(...chunkResults);
-        if (i + PARALLEL < candidates.length) {
-          await new Promise((r) => setTimeout(r, 350));
-        }
-      }
-
-      const platformMatchedIds = new Set(
-        platformResults.filter((r) => r.onPlatform).map((r) => r.tmdb_id),
-      );
-      const platformFiltered = candidates.filter((c: any) => platformMatchedIds.has(c.tmdb_id));
-      console.log(
-        `[SP] Filtre plateforme: ${platformFiltered.length}/${candidates.length} candidats sur les plateformes [${platformIds.join(",")}]`,
-      );
-      // Même 1 seul film sur plateforme est suffisant — ne jamais revenir aux candidats non filtrés
-      filteredCandidates = platformFiltered;
-      if (platformFiltered.length === 0) {
-        console.log(`[SP] Aucun candidat SQL sur les plateformes user — fallback TMDB discover utilisé`);
-      }
-    }
+    // Pas de filtre plateforme sur les 200 candidats SQL — fait après le LLM sur 10-30 films seulement.
+    const filteredCandidates = candidates;
 
     const t1 = Date.now();
-    console.log(`[SP⏱] SQL + filtres: ${t1 - t0}ms (${candidates.length} candidats → ${filteredCandidates.length} après filtres)`);
+    console.log(`[SP⏱] SQL: ${t1 - t0}ms (${candidates.length} candidats)`);
 
     // ── Préférences d'origine (calculées une fois, utilisées dans LLM + debug) ──
     const ORIGIN_MAP: Record<string, string> = {
@@ -536,7 +502,7 @@ serve(async (req) => {
           : "",
       ].filter(Boolean).join("\n");
       const platformNote = platformIds?.length > 0
-        ? `\n🎬 PLATEFORMES DISPONIBLES : Les films proposés sont disponibles sur ${(platformIds as number[]).map((id) => PROVIDER_NAMES[id] ?? `#${id}`).join(", ")}.\n`
+        ? `\n🎬 PLATEFORMES DE L'UTILISATEUR : ${(platformIds as number[]).map((id) => PROVIDER_NAMES[id] ?? `#${id}`).join(", ")}. La disponibilité sera vérifiée après ta sélection — sélectionne par affinité de goût, pas par plateforme.\n`
         : "";
 
       const systemPrompt = `Tu es Pick, moteur de recommandation cinéphile. Sélectionne les meilleurs films depuis une liste pré-validée.
@@ -556,20 +522,20 @@ ${explorationNote}
 FILMS DISPONIBLES — pré-validés mathématiquement par similarité vectorielle :
 ${candidateList}
 
-MISSION : Sélectionne exactement 5 films/séries depuis cette liste — les 5 qui correspondent le mieux au profil. Nous garderons les 3 meilleurs.
+MISSION : Sélectionne exactement 10 films/séries depuis cette liste — les 10 qui correspondent le mieux au profil, classés du meilleur au moins bon. Nous vérifierons ensuite la disponibilité plateforme et garderons les meilleurs disponibles.
 
 RÈGLES DE SÉLECTION :
-- Tu DOIS retourner exactement 5 entrées, pas moins. Classe-les du meilleur au moins bon.
+- Tu DOIS retourner exactement 10 entrées, pas moins. Classe-les du meilleur au moins bon.
 - Chaque item est clairement marqué 🎬 Film ou 📺 Série — respecte ce type dans ta réponse
-- Diversifie les genres entre les 5 sélections
+- Diversifie les genres entre les 10 sélections
 - Priorise les films bien notés (⭐7+) si le profil matche
 - Évite 2 films de la même franchise ou très similaires
 - Respecte absolument les genres exclus, origines exclues et clusters rejetés
 
 SCORING (matchScore) :
 - Base : 75%. Hausse si genre favori / note 8+. Baisse si cluster rejeté / note <6.
-- Donne des scores honnêtes — les 5 films ont des scores différents reflétant leur rang.
-- Pas de seuil bloquant : classe les 5 meilleurs même si certains sont à 60%.
+- Donne des scores honnêtes — les 10 films ont des scores différents reflétant leur rang.
+- Pas de seuil bloquant : classe les 10 meilleurs même si certains sont à 60%.
 
 Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
 {
@@ -707,13 +673,13 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
 
     // ── Fallback SQL : si le LLM n'a rien retourné, prendre le top du pool directement ──
     if (llmSelections.length === 0 && llmPool.length > 0) {
-      console.log(`[SP] LLM returned 0 — fallback déterministe sur top ${requestedCount + 2} du pool SQL`);
+      console.log(`[SP] LLM returned 0 — fallback déterministe sur top ${Math.min(10, llmPool.length)} du pool SQL`);
       const poolScores = llmPool.map((c: any) => ((c.similarity ?? 0) * 100 + (c.vote_average ?? 0)));
       const scoreMin = poolScores[poolScores.length - 1] ?? 0;
       const scoreMax = poolScores[0] ?? 1;
       const scoreRange = scoreMax - scoreMin || 1;
       llmSelections = llmPool
-        .slice(0, requestedCount + 2)
+        .slice(0, 10)
         .map((c: any) => ({
           tmdb_id: Number(c.tmdb_id),
           matchScore: Math.round(72 + (((c.similarity ?? 0) * 100 + (c.vote_average ?? 0) - scoreMin) / scoreRange) * 20),
@@ -721,8 +687,67 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
         }));
     }
 
+    // ── ÉTAPE 2.5 : Filtre plateforme sur les sélections LLM uniquement ──
+    // Beaucoup plus rapide : 10 appels max au lieu de 300.
+    if (platformIds?.length > 0 && llmSelections.length > 0) {
+      const platformSet = new Set((platformIds as number[]).map(Number));
+
+      const checkPlatform = async (tmdbId: number, mediaType: string): Promise<boolean> => {
+        const type: "movie" | "tv" = mediaType === "tv" ? "tv" : "movie";
+        const providerIds = await getProviderIdsFR(tmdbId, type);
+        return providerIds.some((pid) => platformSet.has(pid));
+      };
+
+      // Vérifier d'abord les sélections LLM (classées par matchScore)
+      const selectionChecks = await Promise.all(
+        llmSelections.map(async (sel: any) => {
+          const c = candidates.find((c: any) => Number(c.tmdb_id) === Number(sel.tmdb_id));
+          const onPlatform = await checkPlatform(sel.tmdb_id, c?.media_type ?? "movie");
+          return { ...sel, onPlatform };
+        }),
+      );
+
+      const onPlatform = selectionChecks.filter((s) => s.onPlatform);
+      const notOnPlatform = selectionChecks.filter((s) => !s.onPlatform);
+
+      console.log(`[SP] Filtre plateforme (post-LLM): ${onPlatform.length}/${llmSelections.length} sélections sur [${(platformIds as number[]).map((id) => PROVIDER_NAMES[id] ?? `#${id}`).join(", ")}]`);
+
+      if (onPlatform.length >= requestedCount) {
+        // Assez de films sur plateforme parmi les sélections LLM
+        llmSelections = onPlatform;
+      } else {
+        // Pas assez → étendre la vérification au reste du llmPool (films non sélectionnés par le LLM)
+        const checkedIds = new Set(selectionChecks.map((s) => s.tmdb_id));
+        const remaining = llmPool.filter((c: any) => !checkedIds.has(Number(c.tmdb_id)));
+        const needed = requestedCount + 2 - onPlatform.length;
+
+        if (remaining.length > 0 && needed > 0) {
+          console.log(`[SP] Extension plateforme: vérification de ${Math.min(remaining.length, needed * 3)} films supplémentaires du pool`);
+          const extraChecks = await Promise.all(
+            remaining.slice(0, needed * 3).map(async (c: any) => {
+              const onPlatformExtra = await checkPlatform(Number(c.tmdb_id), c.media_type ?? "movie");
+              return onPlatformExtra ? {
+                tmdb_id: Number(c.tmdb_id),
+                matchScore: 70,
+                reason: null,
+                onPlatform: true,
+              } : null;
+            }),
+          );
+          const extras = extraChecks.filter(Boolean).slice(0, needed);
+          llmSelections = [...onPlatform, ...extras];
+        } else {
+          llmSelections = onPlatform;
+        }
+
+        if (llmSelections.length === 0) {
+          console.log(`[SP] Aucune sélection LLM sur les plateformes user — fallback TMDB discover activé`);
+        }
+      }
+    }
+
     const t3 = Date.now();
-    console.log(`[SP⏱] LLM sélection: ${t3 - t2}ms → ${llmSelections.length} films`);
+    console.log(`[SP⏱] LLM + filtre plateforme: ${t3 - t2}ms → ${llmSelections.length} films`);
 
     // ── ÉTAPE 3 : TMDB — enrichissement en batch ──
     // Trier par score LLM décroissant : on enrichit les meilleurs en premier
@@ -984,7 +1009,7 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
     console.log(
       `[SP] Final: ${finalMovies.length}/${movies.length} movies kept (requested ${requestedCount}), mode: ${llmSelections.length > 0 ? "retrieve-rerank" : "fallback"}`,
     );
-    console.log(`[SP⏱] TOTAL: ${tFinal - t0}ms | SQL: ${t1 - t0}ms | LangEnrich: ${t2 - t1}ms | Select: ${t3 - t2}ms | TMDB: ${t4 - t3}ms | Fallback: ${tFinal - t4}ms`);
+    console.log(`[SP⏱] TOTAL: ${tFinal - t0}ms | SQL: ${t1 - t0}ms | LangEnrich: ${t2 - t1}ms | LLM+Plateforme: ${t3 - t2}ms | TMDB: ${t4 - t3}ms | Fallback: ${tFinal - t4}ms`);
 
     const toCompositeScore = (c: any) =>
       Math.round(((c.similarity ?? 0) * 100 + (c.vote_average ?? 0)) * 10) / 10;

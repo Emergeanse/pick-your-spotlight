@@ -640,9 +640,9 @@ const HomeScreen = ({
             };
             const tot = timings.total || 1;
             console.group(`[PICK-DEBUG] ⏱️ Timings pipeline — total ${fmt(tot)}`);
-            console.log(`  SQL + filtres plateforme  ${bar(timings.sql, tot)}  ${fmt(timings.sql)}`);
+            console.log(`  SQL (200 candidats)        ${bar(timings.sql, tot)}  ${fmt(timings.sql)}`);
             console.log(`  Enrichissement langue      ${bar(timings.langEnrich, tot)}  ${fmt(timings.langEnrich)}`);
-            console.log(`  LLM sélection (Gemini)    ${bar(timings.select, tot)}  ${fmt(timings.select)}`);
+            console.log(`  LLM + filtre plateforme   ${bar(timings.select, tot)}  ${fmt(timings.select)}`);
             console.log(`  TMDB enrichissement batch  ${bar(timings.tmdb, tot)}  ${fmt(timings.tmdb)}`);
             console.log(`  Fallback                   ${bar(timings.fallback, tot)}  ${fmt(timings.fallback)}`);
             console.groupEnd();
