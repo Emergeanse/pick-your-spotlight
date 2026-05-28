@@ -585,6 +585,26 @@ const HomeScreen = ({
             console.groupEnd();
           }
 
+          // ── Étape 2.5 : Films après filtre plateforme → envoyés au LLM ──
+          if (dbg?.llmFiltered) {
+            const platformMs = dbg.platformFilterMs != null ? dbg.platformFilterMs : "?";
+            const llmMs = dbg.llmMs != null ? dbg.llmMs : "?";
+            const label = dbg.llmFiltered.length < (dbg.top20?.length ?? 30)
+              ? `filtrés par plateforme (${platformMs}ms) — ${dbg.llmFiltered.length}/${dbg.top20?.length ?? "?"} retenus`
+              : `filtre plateforme bypassed ou absent (${platformMs}ms) — ${dbg.llmFiltered.length} films`;
+            console.group(`[PICK-DEBUG] 2️⃣⁺ Films envoyés au LLM — ${label} | LLM: ${llmMs}ms`);
+            console.table(dbg.llmFiltered.map((c: any, i: number) => ({
+              "#": i + 1,
+              "Titre": c.title,
+              "Note /10": c.note ?? "–",
+              "Sim%": c.sim ?? "–",
+              "Composite": c.composite ?? "–",
+              "Genres": (c.genres || []).join(", "),
+              "Type": c.type,
+            })));
+            console.groupEnd();
+          }
+
           // ── Étape 3 : Sélections LLM ──
           if (dbg?.llmSelections?.length) {
             console.group(`[PICK-DEBUG] 3️⃣ Sélections LLM (${dbg.llmSelections.length} films → movie-match va scorer)`);

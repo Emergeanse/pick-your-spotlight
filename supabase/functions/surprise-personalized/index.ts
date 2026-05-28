@@ -520,6 +520,7 @@ serve(async (req) => {
         : null;
 
       let llmInputPool = topPool; // par défaut : tous les 30
+      let tPlatform = t2; // sera mis à jour après le filtre plateforme
 
       if (platformSet) {
         const platformCheckResults = await Promise.all(
@@ -529,6 +530,7 @@ serve(async (req) => {
             return { candidate: c, providerIds, matches: providerIds.some((pid) => platformSet.has(pid)) };
           }),
         );
+        tPlatform = Date.now();
         const platformNames = (platformIds as number[]).map((id) => PROVIDER_NAMES[id] ?? `#${id}`).join(", ");
         const nonEmptyCount = platformCheckResults.filter((r) => r.providerIds.length > 0).length;
         const matching = platformCheckResults.filter((r) => r.matches).map((r) => r.candidate);
@@ -729,7 +731,7 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
     }
 
     const t3 = Date.now();
-    console.log(`[SP⏱] Plateforme + LLM: ${t3 - t2}ms → ${llmSelections.length} films`);
+    console.log(`[SP⏱] Plateforme: ${tPlatform - t2}ms | LLM: ${t3 - tPlatform}ms → ${llmSelections.length} films sélectionnés`);
 
     // ── ÉTAPE 3 : TMDB — enrichissement en batch ──
     // Trier par score LLM décroissant : on enrichit les meilleurs en premier
@@ -1064,6 +1066,9 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
           },
           sql50: candidates.map(toDebugRow), // renommé sql100 en pratique
           top20: llmPool.length > 0 ? llmPool.map(toDebugRow) : candidates.slice(0, llmPoolSize).map(toDebugRow),
+          llmFiltered: llmInputPool.map(toDebugRow),
+          platformFilterMs: tPlatform - t2,
+          llmMs: t3 - tPlatform,
           tmdbEnrichment: tmdbDiag,
           fallbackTrace,
           llmSelections: llmSelections.map((s: any) => ({
