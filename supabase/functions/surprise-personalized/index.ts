@@ -479,6 +479,8 @@ serve(async (req) => {
     let llmFilteredAll = false;
     const llmPoolSize = 30;
     let llmPool: any[] = [];
+    let llmInputPool: any[] = [];
+    let tPlatform = t2;
     let capturedSystemPrompt: string | null = null;
     let llmDebugError: string | null = null;
 
@@ -519,8 +521,7 @@ serve(async (req) => {
         ? new Set((platformIds as number[]).map(Number))
         : null;
 
-      let llmInputPool = topPool; // par défaut : tous les 30
-      let tPlatform = t2; // sera mis à jour après le filtre plateforme
+      llmInputPool = topPool; // par défaut : tous les 30
 
       if (platformSet) {
         const platformCheckResults = await Promise.all(
