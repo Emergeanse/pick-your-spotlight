@@ -498,10 +498,20 @@ serve(async (req) => {
       const originEligible = excludedLangsBoost.size > 0
         ? filteredCandidates.filter((c: any) => !excludedLangsBoost.has(c.original_language || ""))
         : filteredCandidates;
+      if (excludedLangsBoost.size > 0) {
+        const removed = filteredCandidates.length - originEligible.length;
+        console.log(`[SP] Filtre origine: ${originEligible.length}/${filteredCandidates.length} films gardés (${removed} retirés — langues exclues: [${[...excludedLangsBoost].join(",")}])`);
+      }
       const topPool = [...originEligible]
         .sort((a, b) => compositeScore(b) - compositeScore(a))
         .slice(0, llmPoolSize);
       llmPool = topPool;
+      console.log(
+        `[SP] Top ${topPool.length} après filtre origine:\n` +
+        topPool.map((c: any, i: number) =>
+          `  ${i + 1}. "${c.title || "?"}" (${c.year || "?"}) [${c.original_language || "?"}] ⭐${c.vote_average?.toFixed(1) ?? "?"} sim=${((c.similarity ?? 0) * 100).toFixed(1)}`
+        ).join("\n")
+      );
 
       // ── ÉTAPE 2.1 : Filtre plateforme sur les 30 candidats (en parallèle, ~500ms) ──
       // Le LLM ne reçoit que les films disponibles sur les plateformes de l'utilisateur.
