@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence, useMotionValue, useTransform, PanInfo } from "framer-motion";
-import { Bookmark, Heart, Loader2, Sparkles, X, Eye, Clock, Search, ThumbsDown, Timer, Trash2, CheckCircle, SlidersHorizontal } from "lucide-react";
+import { Bookmark, Heart, Loader2, Sparkles, X, Eye, Clock, Search, ThumbsDown, ThumbsUp, Timer, Trash2, CheckCircle, SlidersHorizontal } from "lucide-react";
 import { getWatchlist, removeFromWatchlist } from "@/lib/watchlist";
 import { getPosterUrl, getMovieDetails } from "@/lib/tmdb";
 import { getLikedMovies, unlikeMovie } from "@/lib/liked-movies";
@@ -23,7 +23,7 @@ interface WatchlistPageProps {
 }
 
 type MediaFilter = "all" | "movie" | "tv";
-type ActiveTab = "watchlist" | "liked" | "seen" | "disliked";
+type ActiveTab = "watchlist" | "liked" | "loved" | "seen" | "disliked";
 
 const DISLIKE_LABELS: Record<string, string> = {
   skip: "Pas dans le mood",
@@ -50,7 +50,8 @@ const mapCatalogRow = (row: any, feedbackType?: string): any | null => {
 
 const getPickBubbleMessage = (tab: ActiveTab, count: number, hour: number): string => {
   if (count === 0) return "";
-  if (tab === "liked") return `${count} coup${count > 1 ? "s" : ""} de cœur. Tes goûts parlent d'eux-mêmes !`;
+  if (tab === "liked") return `${count} titre${count > 1 ? "s" : ""} aimé${count > 1 ? "s" : ""} au pouce. Pick s'en souvient !`;
+  if (tab === "loved") return `${count} coup${count > 1 ? "s" : ""} de cœur. Tes vrais favoris sont ici.`;
   if (tab === "seen") return `${count} titre${count > 1 ? "s" : ""} déjà vu${count > 1 ? "s" : ""}. Tu en as parcouru du chemin !`;
   if (tab === "disliked") return `${count} titre${count > 1 ? "s" : ""} écarté${count > 1 ? "s" : ""}. Pick les évite pour toi.`;
   if (hour >= 18 || hour < 4) return `${count} titre${count > 1 ? "s" : ""} t'attend${count > 1 ? "ent" : ""}. Lequel ce soir ?`;
@@ -67,10 +68,17 @@ const COMMENTS: Record<ActiveTab, string[]> = {
     "Idéal pour une soirée tranquille.",
   ],
   liked: [
-    "Un de tes coups de cœur.",
+    "Tu lui as mis un pouce — bon signe.",
+    "Ça t'a plu, Pick s'en souvient.",
+    "Un titre qui t'a parlé.",
+    "Noté dans tes goûts.",
+    "Pick affine ses recommandations grâce à toi.",
+  ],
+  loved: [
+    "Un vrai coup de cœur.",
     "Tu as adoré celui-là !",
-    "Un favori confirmé.",
     "Dans tes classiques personnels.",
+    "Un favori absolu.",
     "Un titre qui t'a marqué.",
   ],
   seen: [
@@ -91,7 +99,8 @@ const COMMENTS: Record<ActiveTab, string[]> = {
 
 const TAB_CONFIG: Record<ActiveTab, { label: string; icon: React.ReactNode; color: string }> = {
   watchlist: { label: "À voir", icon: <Bookmark className="w-3.5 h-3.5" />, color: "text-blue-400" },
-  liked: { label: "Favoris", icon: <Heart className="w-3.5 h-3.5" />, color: "text-rose-400" },
+  liked: { label: "Aimés", icon: <ThumbsUp className="w-3.5 h-3.5" />, color: "text-primary" },
+  loved: { label: "Adorés", icon: <Heart className="w-3.5 h-3.5" />, color: "text-rose-400" },
   seen: { label: "Vus", icon: <CheckCircle className="w-3.5 h-3.5" />, color: "text-emerald-400" },
   disliked: { label: "Écartés", icon: <ThumbsDown className="w-3.5 h-3.5" />, color: "text-foreground/30" },
 };
@@ -306,6 +315,7 @@ const WatchlistPage = ({ onMovieSelect }: WatchlistPageProps) => {
   const [activeTab, setActiveTab] = useState<ActiveTab>("watchlist");
   const [watchlistItems, setWatchlistItems] = useState<any[]>([]);
   const [likedItems, setLikedItems] = useState<any[]>([]);
+  const [lovedItems, setLovedItems] = useState<any[]>([]);
   const [seenItems, setSeenItems] = useState<any[]>([]);
   const [dislikedItems, setDislikedItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -328,9 +338,10 @@ const WatchlistPage = ({ onMovieSelect }: WatchlistPageProps) => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
 
-      const [watchlist, liked, seenRaw, { data: rejectedRaw }] = await Promise.all([
+      const [watchlist, likedRaw, lovedRaw, seenRaw, { data: rejectedRaw }] = await Promise.all([
         getWatchlist(),
-        getLikedMovies(),
+        listFeedbackByType("like"),
+        listFeedbackByType("love"),
         listFeedbackByType("seen"),
         user
           ? supabase
@@ -341,6 +352,14 @@ const WatchlistPage = ({ onMovieSelect }: WatchlistPageProps) => {
               .order("created_at", { ascending: false })
           : Promise.resolve({ data: [] }),
       ]);
+
+      const likedList = (likedRaw as any[])
+        .map((row: any) => mapCatalogRow(row, "like"))
+        .filter(Boolean) as any[];
+
+      const lovedList = (lovedRaw as any[])
+        .map((row: any) => mapCatalogRow(row, "love"))
+        .filter(Boolean) as any[];
 
       const seenList = (seenRaw as any[])
         .map((row: any) => mapCatalogRow(row, "seen"))
@@ -358,19 +377,22 @@ const WatchlistPage = ({ onMovieSelect }: WatchlistPageProps) => {
         }) as any[];
 
       setWatchlistItems(watchlist);
-      setLikedItems(liked);
+      setLikedItems(likedList);
+      setLovedItems(lovedList);
       setSeenItems(seenList);
       setDislikedItems(dislikedList);
 
       hydrateMissingPosters([
         { items: watchlist, setter: setWatchlistItems },
-        { items: liked, setter: setLikedItems },
+        { items: likedList, setter: setLikedItems },
+        { items: lovedList, setter: setLovedItems },
         { items: seenList, setter: setSeenItems },
         { items: dislikedList, setter: setDislikedItems },
       ]);
     } catch {
       setWatchlistItems([]);
       setLikedItems([]);
+      setLovedItems([]);
       setSeenItems([]);
       setDislikedItems([]);
     } finally {
@@ -381,6 +403,7 @@ const WatchlistPage = ({ onMovieSelect }: WatchlistPageProps) => {
   const itemsByTab: Record<ActiveTab, any[]> = {
     watchlist: watchlistItems,
     liked: likedItems,
+    loved: lovedItems,
     seen: seenItems,
     disliked: dislikedItems,
   };
@@ -389,7 +412,7 @@ const WatchlistPage = ({ onMovieSelect }: WatchlistPageProps) => {
 
   // Genre filter uses ALL items across all tabs
   const availableGenres = useMemo(() => {
-    const allItems = [...watchlistItems, ...likedItems, ...seenItems, ...dislikedItems];
+    const allItems = [...watchlistItems, ...likedItems, ...lovedItems, ...seenItems, ...dislikedItems];
     const genres = new Set<string>();
     allItems.forEach((item: any) => (item.genres || []).forEach((g: string) => genres.add(g)));
     return Array.from(genres).sort();
@@ -434,9 +457,17 @@ const WatchlistPage = ({ onMovieSelect }: WatchlistPageProps) => {
 
   const handleRemoveLiked = async (tmdbId: number) => {
     try {
-      await unlikeMovie(tmdbId);
+      await clearFeedbackType(tmdbId, ["like"]);
       setLikedItems((prev) => prev.filter((i) => i.tmdb_id !== tmdbId));
-      toast.success("Retiré de tes coups de cœur");
+      toast.success("Like retiré");
+    } catch { toast.error("Erreur"); }
+  };
+
+  const handleRemoveLoved = async (tmdbId: number) => {
+    try {
+      await clearFeedbackType(tmdbId, ["love"]);
+      setLovedItems((prev) => prev.filter((i) => i.tmdb_id !== tmdbId));
+      toast.success("Retiré de tes adorés");
     } catch { toast.error("Erreur"); }
   };
 
@@ -460,6 +491,7 @@ const WatchlistPage = ({ onMovieSelect }: WatchlistPageProps) => {
     const tmdbId = item.tmdb_id;
     if (activeTab === "watchlist") handleRemoveWatchlist(tmdbId);
     else if (activeTab === "liked") handleRemoveLiked(tmdbId);
+    else if (activeTab === "loved") handleRemoveLoved(tmdbId);
     else if (activeTab === "seen") handleRemoveSeen(tmdbId);
     else handleRemoveDisliked(tmdbId);
   };
@@ -473,7 +505,8 @@ const WatchlistPage = ({ onMovieSelect }: WatchlistPageProps) => {
 
       const targetType: FeedbackType[] =
         activeTab === "watchlist" ? ["watchlist"] :
-        activeTab === "liked" ? ["like", "love"] :
+        activeTab === "liked" ? ["like"] :
+        activeTab === "loved" ? ["love"] :
         activeTab === "seen" ? ["seen"] :
         ["skip", "not_for_me", "dislike"];
 
@@ -486,7 +519,8 @@ const WatchlistPage = ({ onMovieSelect }: WatchlistPageProps) => {
       if (error) throw error;
 
       if (activeTab === "watchlist") { setWatchlistItems([]); toast.success("Liste vidée"); }
-      else if (activeTab === "liked") { setLikedItems([]); toast.success("Coups de cœur réinitialisés"); }
+      else if (activeTab === "liked") { setLikedItems([]); toast.success("Aimés réinitialisés"); }
+      else if (activeTab === "loved") { setLovedItems([]); toast.success("Adorés réinitialisés"); }
       else if (activeTab === "seen") { setSeenItems([]); toast.success("Historique effacé"); }
       else { setDislikedItems([]); toast.success("Liste réinitialisée"); }
     } catch {
@@ -520,11 +554,12 @@ const WatchlistPage = ({ onMovieSelect }: WatchlistPageProps) => {
   const hour = new Date().getHours();
   const bubbleMessage = getPickBubbleMessage(activeTab, currentItems.length, hour);
 
-  const TABS: ActiveTab[] = ["watchlist", "liked", "seen", "disliked"];
+  const TABS: ActiveTab[] = ["watchlist", "liked", "loved", "seen", "disliked"];
 
   const RESET_LABELS: Record<ActiveTab, { title: string; body: string; success: string }> = {
     watchlist: { title: "Vider ta liste ?", body: `${watchlistItems.length} titre${watchlistItems.length > 1 ? "s" : ""} seront supprimés.`, success: "Liste vidée" },
-    liked: { title: "Réinitialiser tes coups de cœur ?", body: `${likedItems.length} titre${likedItems.length > 1 ? "s" : ""} seront retirés.`, success: "Réinitialisé" },
+    liked: { title: "Réinitialiser tes aimés ?", body: `${likedItems.length} titre${likedItems.length > 1 ? "s" : ""} seront retirés.`, success: "Réinitialisé" },
+    loved: { title: "Réinitialiser tes adorés ?", body: `${lovedItems.length} titre${lovedItems.length > 1 ? "s" : ""} seront retirés.`, success: "Réinitialisé" },
     seen: { title: "Effacer ton historique vu ?", body: `${seenItems.length} titre${seenItems.length > 1 ? "s" : ""} disparaîtront.`, success: "Effacé" },
     disliked: { title: "Réinitialiser les films écartés ?", body: `${dislikedItems.length} titre${dislikedItems.length > 1 ? "s" : ""} seront oubliés.`, success: "Réinitialisé" },
   };
@@ -571,7 +606,7 @@ const WatchlistPage = ({ onMovieSelect }: WatchlistPageProps) => {
           <div>
             <h1 className="text-2xl font-serif leading-tight">Ma Collection</h1>
             <p className="text-foreground/35 text-[11px] font-sans mt-0.5 tabular-nums">
-              {watchlistItems.length + likedItems.length + seenItems.length + dislikedItems.length} titres au total
+              {watchlistItems.length + likedItems.length + lovedItems.length + seenItems.length + dislikedItems.length} titres au total
             </p>
           </div>
           {currentItems.length > 0 && (
@@ -769,7 +804,8 @@ const WatchlistPage = ({ onMovieSelect }: WatchlistPageProps) => {
             mood="wave"
             message={
               activeTab === "watchlist" ? "Sauvegarde des titres et retrouve-les ici !"
-              : activeTab === "liked" ? "Like des films et séries pour construire tes goûts !"
+              : activeTab === "liked" ? "Mets un 👍 sur les films qui t'ont plu pour affiner tes recos !"
+              : activeTab === "loved" ? "Mets un ❤️ sur tes vrais coups de cœur pour les retrouver ici !"
               : activeTab === "seen" ? "Marque ce que tu as déjà vu pour affiner tes recommandations !"
               : "Les films que tu écarteras apparaîtront ici — Pick ne les reproposera plus."
             }
@@ -778,7 +814,8 @@ const WatchlistPage = ({ onMovieSelect }: WatchlistPageProps) => {
           />
           <p className="text-foreground/25 text-xs font-sans mt-4">
             {activeTab === "watchlist" ? "Ta liste est vide"
-            : activeTab === "liked" ? "Aucun coup de cœur"
+            : activeTab === "liked" ? "Aucun film aimé"
+            : activeTab === "loved" ? "Aucun coup de cœur"
             : activeTab === "seen" ? "Aucun titre marqué comme vu"
             : "Aucun titre écarté"}
           </p>
