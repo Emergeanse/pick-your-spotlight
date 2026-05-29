@@ -669,7 +669,7 @@ const HomeScreen = ({
           if (meta && meta.platformCandidatesCount >= 0) {
             if (meta.platformFallbackTriggered) {
               console.warn(
-                `[PICK-DEBUG] ⚠️ FILTRE PLATEFORME INSUFFISANT : ${meta.platformCandidatesCount} candidats SQL avec tes plateformes (seuil = 20) → fallback sans filtre (${meta.candidatesFound} candidats). Relance sync-platform-ids pour améliorer la couverture.`,
+                `[PICK-DEBUG] ⚠️ Filtre plateforme initial insuffisant (${meta.platformCandidatesCount} candidats avec tous les filtres) → cascade appliquée, plateforme conservée → ${meta.candidatesFound} candidats finaux sur tes plateformes.`,
               );
             } else {
               console.log(
