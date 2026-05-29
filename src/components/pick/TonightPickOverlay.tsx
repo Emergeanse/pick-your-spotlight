@@ -293,7 +293,8 @@ const TonightPickOverlay = ({
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.45, delay: 0.2 }}
-              className="font-serif text-foreground text-[42px] leading-[0.95] tracking-tight mb-5"
+              className="font-serif text-foreground text-[42px] leading-[0.95] tracking-tight mb-5 cursor-pointer"
+              onClick={onOpenDetail}
             >
               {getDisplayTitle(movie)}
             </motion.h2>
@@ -303,7 +304,8 @@ const TonightPickOverlay = ({
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.45, delay: 0.32 }}
-              className="flex items-start gap-3 mb-7"
+              className="flex items-start gap-3 mb-7 cursor-pointer"
+              onClick={onOpenDetail}
             >
               <div className="w-1 self-stretch min-h-[40px] bg-primary rounded-full shrink-0" />
               <p className="text-foreground/80 text-[14px] italic font-sans leading-relaxed pt-0.5">
