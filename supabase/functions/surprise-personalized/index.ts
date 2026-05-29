@@ -300,7 +300,19 @@ serve(async (req) => {
     // Langue, décennie et exclusions d'origine filtrées en SQL.
     // Le filtre plateforme est fait APRÈS le LLM (sur 10-30 films, pas 300).
     const sqlMatchCount = 200;
-    const buildRpcParams = (opts: { withLang: boolean; withYear: boolean }) => ({
+    // Familles de plateformes : un abonnement inclut plusieurs IDs TMDB distincts
+    const PLATFORM_FAMILIES: Record<number, number[]> = {
+      381: [381, 538, 685, 193, 1754, 2285], // Canal+ → Cinéma, Séries, Box Office, myCanal, Cine+
+      119: [119, 1024, 10],                   // Amazon Prime → variants
+      8:   [8, 1796],                          // Netflix → variants
+      337: [337],                              // Disney+
+      56:  [56, 531, 582, 2303],               // Paramount+ → variants FR
+    };
+    const expandedPlatformIds = platformIds?.length > 0
+      ? [...new Set((platformIds as number[]).flatMap((id: number) => PLATFORM_FAMILIES[id] ?? [id]))]
+      : null;
+
+    const buildRpcParams = (opts: { withLang: boolean; withYear: boolean; withPlatform: boolean }) => ({
       query_vector: `[${userTasteVector.join(",")}]`,
       match_count: sqlMatchCount,
       exclude_ids: normalizedExcludeIds,
@@ -316,6 +328,7 @@ serve(async (req) => {
       p_excluded_languages: effectiveExcludedLangsArr,
       p_excluded_clusters: rejectedClusters.length > 0 ? rejectedClusters : [],
       p_min_popularity: 8,
+      p_platform_ids: opts.withPlatform ? (expandedPlatformIds ?? null) : null,
     });
 
     let candidates: any[] = [];
@@ -324,20 +337,33 @@ serve(async (req) => {
         const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
         const { data, error: rpcError } = await supabase.rpc(
           "match_movies_for_recommendation",
-          buildRpcParams({ withLang: true, withYear: true }),
+          buildRpcParams({ withLang: true, withYear: true, withPlatform: true }),
         );
         if (rpcError) console.error("SQL RPC error:", rpcError);
         if (data) candidates = data as any[];
         console.log(
-          `[SP] SQL candidates: ${candidates.length} | liked: [${(effectiveLikedGenresSQL ?? likedWithTv).slice(0, 4).join(", ")}...] | lang: ${voiceOriginalLanguage ?? "profil"} | decade: ${voiceDecade ?? "—"} | excluded_langs: [${effectiveExcludedLangsArr.join(",")}] | excludeIds: ${normalizedExcludeIds.length}`,
+          `[SP] SQL candidates: ${candidates.length} | platform: [${expandedPlatformIds?.join(",") ?? "none"}] | liked: [${(effectiveLikedGenresSQL ?? likedWithTv).slice(0, 4).join(", ")}...] | excludeIds: ${normalizedExcludeIds.length}`,
         );
+
+        // ── Fallback plateforme : si platform_ids vides en base (sync pas encore exécuté), relancer sans ──
+        if (candidates.length < 20 && expandedPlatformIds && expandedPlatformIds.length > 0) {
+          console.log(`[SP] Retry SQL sans filtre plateforme (${candidates.length} candidats — sync-platform-ids à exécuter?)`);
+          const { data: dataNP } = await supabase.rpc(
+            "match_movies_for_recommendation",
+            buildRpcParams({ withLang: true, withYear: true, withPlatform: false }),
+          );
+          if (dataNP && (dataNP as any[]).length > candidates.length) {
+            candidates = dataNP as any[];
+            console.log(`[SP] Fallback sans plateforme: ${candidates.length} candidats`);
+          }
+        }
 
         // ── Fallback langue/année : si trop peu de candidats avec filtres voix stricts, relancer sans ──
         if ((voiceOriginalLanguage || voiceDecade) && candidates.length < 10) {
           console.log(`[SP] Voice lang/year fallback: ${candidates.length} candidats — relance sans filtre langue/année`);
           const { data: data2 } = await supabase.rpc(
             "match_movies_for_recommendation",
-            buildRpcParams({ withLang: false, withYear: false }),
+            buildRpcParams({ withLang: false, withYear: false, withPlatform: true }),
           );
           if (data2 && (data2 as any[]).length > candidates.length) {
             candidates = data2 as any[];
@@ -347,9 +373,9 @@ serve(async (req) => {
 
         // ── Fallback durée : si très peu de candidats avec contrainte vocale de durée, relancer sans durée ──
         if (voiceMaxDuration && candidates.length < 10) {
-          console.log(`[SP] Voice duration fallback: ${candidates.length} candidates with maxDuration=${voiceMaxDuration} — retrying without duration`);
+          console.log(`[SP] Voice duration fallback: ${candidates.length} candidates — retrying without duration`);
           const { data: data3 } = await supabase.rpc("match_movies_for_recommendation", {
-            ...buildRpcParams({ withLang: true, withYear: true }),
+            ...buildRpcParams({ withLang: true, withYear: true, withPlatform: true }),
             max_duration: null,
           });
           if (data3 && (data3 as any[]).length > candidates.length) {
@@ -361,10 +387,10 @@ serve(async (req) => {
         // ── Fallback excludeIds : trop d'exclusions → base épuisée → relancer avec liste réduite ──
         if (candidates.length === 0 && normalizedExcludeIds.length > 200) {
           const recentExcludes = normalizedExcludeIds.slice(-200);
-          console.log(`[SP] Retry SQL avec ${recentExcludes.length} excludes réduits (${normalizedExcludeIds.length} → 0 candidats)`);
+          console.log(`[SP] Retry SQL avec ${recentExcludes.length} excludes réduits`);
           const { data: dataR1 } = await supabase.rpc(
             "match_movies_for_recommendation",
-            { ...buildRpcParams({ withLang: false, withYear: false }), exclude_ids: recentExcludes },
+            { ...buildRpcParams({ withLang: false, withYear: false, withPlatform: true }), exclude_ids: recentExcludes },
           );
           if (dataR1 && (dataR1 as any[]).length > 0) {
             candidates = dataR1 as any[];
@@ -372,12 +398,12 @@ serve(async (req) => {
           }
         }
 
-        // ── Dernier recours : aucune exclusion — on préfère re-voir un film connu plutôt que fallback TMDB ──
+        // ── Dernier recours : aucune exclusion ──
         if (candidates.length === 0) {
-          console.log(`[SP] Retry SQL SANS exclusions — dernier recours (base épuisée)`);
+          console.log(`[SP] Retry SQL SANS exclusions — dernier recours`);
           const { data: dataR2 } = await supabase.rpc(
             "match_movies_for_recommendation",
-            { ...buildRpcParams({ withLang: false, withYear: false }), exclude_ids: [] },
+            { ...buildRpcParams({ withLang: false, withYear: false, withPlatform: true }), exclude_ids: [] },
           );
           if (dataR2 && (dataR2 as any[]).length > 0) {
             candidates = dataR2 as any[];
@@ -523,58 +549,19 @@ serve(async (req) => {
         ).join("\n")
       );
 
-      // ── ÉTAPE 2.1 : Filtre plateforme sur les 30 candidats (en parallèle, ~500ms) ──
-      // Le LLM ne reçoit que les films disponibles sur les plateformes de l'utilisateur.
-      // Les familles de plateformes : un abonnement inclut plusieurs IDs TMDB distincts.
-      const PLATFORM_FAMILIES: Record<number, number[]> = {
-        381: [381, 538, 685, 193, 1754, 2285], // Canal+ → Canal+ Cinéma, Séries, Box Office, myCanal, Cine+
-        119: [119, 1024, 10],                   // Amazon Prime → Amazon variants
-        8:   [8, 1796],                          // Netflix → Netflix variants
-        337: [337],                              // Disney+ (pas de sous-marques)
-        56:  [56, 531, 582, 2303],               // Paramount+ → variants FR
-      };
-      const expandedPlatformIds = platformIds?.length > 0
-        ? [...new Set((platformIds as number[]).flatMap((id) => PLATFORM_FAMILIES[id] ?? [id]))]
-        : null;
-      const platformSet = expandedPlatformIds ? new Set(expandedPlatformIds.map(Number)) : null;
+      // ── ÉTAPE 2.1 : Filtre plateforme — déjà fait en SQL, pas d'appels TMDB ──
+      tPlatform = Date.now();
+      llmInputPool = topPool; // tous les candidats sont déjà filtrés par plateforme en SQL
 
-      llmInputPool = topPool; // par défaut : tous les 30
-
-      if (platformSet) {
-        const platformCheckResults = await Promise.all(
-          topPool.map(async (c: any) => {
-            const type: "movie" | "tv" = c.media_type === "tv" ? "tv" : "movie";
-            const providerIds = await getProviderIdsFR(Number(c.tmdb_id), type);
-            return { candidate: c, providerIds, matches: providerIds.some((pid) => platformSet.has(pid)) };
-          }),
-        );
-        tPlatform = Date.now();
-        const platformCheckMs = tPlatform - t2;
-        const platformNames = (platformIds as number[]).map((id) => PROVIDER_NAMES[id] ?? `#${id}`).join(", ");
-        const nonEmptyCount = platformCheckResults.filter((r) => r.providerIds.length > 0).length;
-        const matching = platformCheckResults.filter((r) => r.matches).map((r) => r.candidate);
-
-        // Construit le tableau debug avec les plateformes de chaque film
-        platformPool = platformCheckResults.map((r) => ({
-          title: r.candidate.title || "?",
-          platforms: r.providerIds.map((id: number) => PROVIDER_NAMES[id] ?? `#${id}`).filter(Boolean),
-          match: r.matches,
+      if (expandedPlatformIds && expandedPlatformIds.length > 0) {
+        const platformNames = (platformIds as number[]).map((id: number) => PROVIDER_NAMES[id] ?? `#${id}`).join(", ");
+        // Construit le debug depuis les platform_ids retournés par SQL
+        platformPool = topPool.map((c: any) => ({
+          title: c.title || "?",
+          platforms: (c.platform_ids || []).map((id: number) => PROVIDER_NAMES[id] ?? `#${id}`),
+          match: true,
         }));
-
-        // Fail-open : si le check est suspicieusement rapide (<250ms pour 30 appels),
-        // on ne peut pas faire confiance aux résultats — rate limit TMDB probable.
-        // Dans ce cas on envoie tout le pool au LLM pour éviter le fallback Worldbreaker.
-        const suspiciouslyFast = platformCheckMs < 250;
-        if (suspiciouslyFast || matching.length === 0) {
-          llmInputPool = topPool;
-          const reason = suspiciouslyFast
-            ? `rate limit probable (${platformCheckMs}ms pour ${topPool.length} appels)`
-            : `aucun film sur [${platformNames}]`;
-          console.log(`[SP] ⚠️ Filtre plateforme bypass: ${reason} → pool complet (${topPool.length}) au LLM`);
-        } else {
-          llmInputPool = matching;
-          console.log(`[SP] Filtre plateforme: ${llmInputPool.length}/${topPool.length} films sur [${platformNames}] | ${platformCheckMs}ms, ${nonEmptyCount} appels avec données`);
-        }
+        console.log(`[SP] Filtre plateforme SQL: ${topPool.length} films sur [${platformNames}] (0ms — données en base)`);
       }
 
       // ── ÉTAPE 2.2 : LLM — évalue uniquement les films disponibles ──
