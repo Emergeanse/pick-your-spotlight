@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import { Bookmark, Heart, Eye, ThumbsDown, HelpCircle } from "lucide-react";
+import { Bookmark, Heart, Eye, ThumbsDown, ThumbsUp } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
 import type { InteractionContext } from "@/lib/interactions";
@@ -39,11 +39,11 @@ const MovieActionBar = ({
   const mediaType = inferCatalogMediaType(movie);
   const interaction = useMovieInteraction(movie.id, mediaType);
 
-  const liked = interaction.liked;
+  const thumbsUp = interaction.primaryStatus === "like";
+  const loved = interaction.primaryStatus === "love";
   const bookmarked = interaction.watchlist;
   const seenActive = interaction.seen;
   const activeFeedback = interaction.primaryStatus;
-  const unknownActive = activeFeedback === "unknown";
 
   const [loading, setLoading] = useState(false);
 
@@ -215,13 +215,6 @@ const MovieActionBar = ({
     const movieId = movie.id;
     const isSeenActive = seenActive;
 
-    debugLog("handleToggleSeen", {
-      movieId,
-      seenActive: isSeenActive,
-      unknownActive,
-      activeFeedback,
-    });
-
     setLoading(true);
 
     try {
@@ -229,10 +222,6 @@ const MovieActionBar = ({
         await clearLabel("seen");
       } else {
         await persistFeedback("seen");
-
-        if (unknownActive) {
-          await clearLabel("unknown");
-        }
       }
 
 
@@ -280,68 +269,55 @@ const MovieActionBar = ({
 
   const handleToggleLike = async () => {
     if (!requireAuth()) return;
-
     const movieId = movie.id;
-
-    debugLog("handleToggleLike", {
-      movieId,
-      likedBefore: liked,
-      bookmarkedBefore: bookmarked,
-      activeFeedback,
-      seenActive,
-    });
-
     setLoading(true);
     try {
-      if (liked) {
-        // setFeedback("skip") deletes exclusive types (like, love) internally before inserting skip,
-        // so the movie is excluded from future recommendations.
-        await setFeedback(
-          movie.id,
-          "skip",
-          {
-            title: movie.title || (movie as any).name || ".",
-            media_type: mediaType,
-            poster_path: movie.poster_path ?? null,
-            year: null,
-            overview: movie.overview ?? null,
-            vote_average: movie.vote_average ?? null,
-            popularity: (movie as any).popularity ?? null,
-            runtime: movie.runtime ?? null,
-          },
-          {
-            context_type: contextType ?? (sessionId ? "solo_session" : "browse"),
-            context_id: sessionId ?? null,
-            interaction: interactionMeta,
-          },
-        );
-
-        if (!isCurrentMovie(movieId)) return;
-
-        toast.success("Retiré des favoris");
-
+      if (thumbsUp) {
+        await clearLabel("like");
+        toast.success("Like retiré");
       } else {
         await persistFeedback("like");
-
         ensureMovieEmbedding(
           movie.id,
           movie.title || (movie as any).name || "",
           movie.overview || "",
           (movie.genres || []).map((g) => g.name),
         );
-
-        if (!isCurrentMovie(movieId)) return;
-
-        toast.success("Ajouté aux favoris !");
+        toast.success("👍 Noté !");
       }
-
+      onInteraction?.("like");
     } catch (error) {
       debugLog("handleToggleLike:error", error);
       toast.error("Erreur");
     } finally {
-      if (isCurrentMovie(movieId)) {
-        setLoading(false);
+      if (isCurrentMovie(movieId)) setLoading(false);
+    }
+  };
+
+  const handleToggleLove = async () => {
+    if (!requireAuth()) return;
+    const movieId = movie.id;
+    setLoading(true);
+    try {
+      if (loved) {
+        await clearLabel("love");
+        toast.success("Coup de cœur retiré");
+      } else {
+        await persistFeedback("love");
+        ensureMovieEmbedding(
+          movie.id,
+          movie.title || (movie as any).name || "",
+          movie.overview || "",
+          (movie.genres || []).map((g) => g.name),
+        );
+        toast.success("❤️ Coup de cœur !");
       }
+      onInteraction?.("love");
+    } catch (error) {
+      debugLog("handleToggleLove:error", error);
+      toast.error("Erreur");
+    } finally {
+      if (isCurrentMovie(movieId)) setLoading(false);
     }
   };
 
@@ -353,6 +329,9 @@ const MovieActionBar = ({
   const likeFilledClass =
     "bg-primary border-primary/80 text-primary-foreground ring-1 ring-white/15 shadow-[0_0_24px_hsl(var(--primary)/0.45)]";
 
+  const loveFilledClass =
+    "bg-rose-500 border-rose-300/70 text-white ring-1 ring-white/15 shadow-[0_0_24px_rgba(244,63,94,0.55)]";
+
   const watchlistFilledClass =
     "bg-sky-500 border-sky-300/70 text-white ring-1 ring-white/15 shadow-[0_0_24px_rgba(14,165,233,0.45)]";
 
@@ -362,9 +341,6 @@ const MovieActionBar = ({
   const notForMeFilledClass =
     "bg-rose-600 border-rose-300/70 text-white ring-1 ring-white/10 shadow-[0_0_24px_rgba(225,29,72,0.45)]";
 
-  const unknownFilledClass =
-    "bg-foreground/85 border-white/15 text-background shadow-[0_0_18px_rgba(255,255,255,0.12)]";
-
   return (
     <div className={`flex items-center justify-center gap-2 ${className}`}>
       <button
@@ -372,11 +348,23 @@ const MovieActionBar = ({
         disabled={loading}
         onClick={handleToggleLike}
         className={`${btnSize} rounded-full border transition-all flex items-center justify-center ${
-          liked ? likeFilledClass : inactiveClass
+          thumbsUp ? likeFilledClass : inactiveClass
         }`}
-        title="Aimé"
+        title="J'aime"
       >
-        <Heart className={`${iconSize} ${liked ? "fill-current" : ""}`} />
+        <ThumbsUp className={`${iconSize} ${thumbsUp ? "fill-current" : ""}`} />
+      </button>
+
+      <button
+        type="button"
+        disabled={loading}
+        onClick={handleToggleLove}
+        className={`${btnSize} rounded-full border transition-all flex items-center justify-center ${
+          loved ? loveFilledClass : inactiveClass
+        }`}
+        title="Coup de cœur"
+      >
+        <Heart className={`${iconSize} ${loved ? "fill-current" : ""}`} />
       </button>
 
       <button
@@ -413,18 +401,6 @@ const MovieActionBar = ({
         title="Pas pour moi"
       >
         <ThumbsDown className={iconSize} />
-      </button>
-
-      <button
-        type="button"
-        disabled={loading}
-        onClick={() => handlePrimaryToggle("unknown")}
-        className={`${btnSize} rounded-full border transition-all flex items-center justify-center ${
-          unknownActive ? unknownFilledClass : inactiveClass
-        }`}
-        title="Inconnu"
-      >
-        <HelpCircle className={iconSize} />
       </button>
     </div>
   );
