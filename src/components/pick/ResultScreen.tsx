@@ -94,7 +94,7 @@ const ActorCard = ({ actor, onClick }: { actor: CastMember; onClick?: () => void
   </button>
 );
 
-const MatchAnalysis = ({ matchData, mediaType }: { matchData: MatchData; mediaType: string; movieId: number }) => {
+const MatchAnalysis = ({ matchData, mediaType, onOpenDetails }: { matchData: MatchData; mediaType: string; movieId: number; onOpenDetails?: () => void }) => {
   const score = matchData.confidence ?? matchData.matchScore ?? matchData.score;
   const summary = matchData.summary || matchData.detailedExplanation || matchData.whyItMatches || matchData.pickNote || matchData.reason;
   const headline = matchData.headline;
@@ -109,7 +109,10 @@ const MatchAnalysis = ({ matchData, mediaType }: { matchData: MatchData; mediaTy
       transition={{ delay: 0.1, duration: 0.4 }}
       className="mb-5 max-w-md"
     >
-      <div className="p-3 sm:p-4 rounded-xl bg-primary/[0.04] border border-primary/15 backdrop-blur-sm">
+      <div
+        className={`p-3 sm:p-4 rounded-xl bg-primary/[0.04] border border-primary/15 backdrop-blur-sm transition-colors${onOpenDetails ? " cursor-pointer hover:border-primary/30 hover:bg-primary/[0.07]" : ""}`}
+        onClick={onOpenDetails}
+      >
         <div className="flex items-start gap-3">
           <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
             <Sparkles className="w-4 h-4 text-primary" />
@@ -876,6 +879,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
                     : currentRecommendationText}
                   mediaType={mediaType}
                   movieId={movie.id}
+                  onOpenDetails={() => setMovieDetailOpen(true)}
                 />
               </>
             ) : null}
