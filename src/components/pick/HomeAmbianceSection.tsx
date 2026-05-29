@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { setFeedback } from "@/lib/feedback";
+import { getMovieDetails } from "@/lib/tmdb";
 
 export type AmbianceMood = "intense" | "mysterious" | "comfort" | "couple" | "surprise";
 
@@ -63,11 +64,24 @@ const HomeAmbianceSection = ({ onPickAmbiance, activeAmbiance }: Props) => {
       const row = data[0] as any;
       const ci = row.catalog_items;
       if (!ci?.tmdb_id) return;
+      const mediaType = (ci.media_type as "movie" | "tv") || "movie";
+      let title: string = ci.title;
+      let posterPath: string | null = ci.poster_path ?? null;
+      if (!title || /^TMDB #\d+$/.test(title) || !posterPath) {
+        try {
+          const detail = await getMovieDetails(ci.tmdb_id, mediaType);
+          if (detail) {
+            title = detail.title || title;
+            posterPath = detail.poster_path || posterPath;
+          }
+        } catch {}
+      }
+      if (cancelled) return;
       setLastReco({
         tmdbId: ci.tmdb_id,
-        title: ci.title,
-        posterPath: ci.poster_path,
-        mediaType: (ci.media_type as "movie" | "tv") || "movie",
+        title,
+        posterPath,
+        mediaType,
         itemId: ci.id,
         currentScore: row.score || 0,
       });
