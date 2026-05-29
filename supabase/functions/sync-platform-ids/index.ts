@@ -83,6 +83,7 @@ serve(async (req) => {
     // ── Appels TMDB par lots parallèles de PARALLEL films ──
     const results: { tmdb_id: number; title: string; platform_ids: number[] }[] = [];
     let tmdbErrors = 0;
+    const totalBatches = Math.ceil(films.length / PARALLEL);
 
     for (let i = 0; i < films.length; i += PARALLEL) {
       const chunk = films.slice(i, i + PARALLEL);
@@ -96,32 +97,29 @@ serve(async (req) => {
       results.push(...chunkResults);
 
       const batchNum = Math.floor(i / PARALLEL) + 1;
-      const totalBatches = Math.ceil(films.length / PARALLEL);
       const withPlatforms = chunkResults.filter((r) => r.platform_ids.length > 0).length;
       console.log(`[SYNC-PLATFORMS] Lot ${batchNum}/${totalBatches}: ${withPlatforms}/${chunk.length} ont des plateformes`);
+
+      // ── Commit immédiat après chaque lot — progrès sauvegardé si timeout ──
+      await Promise.all(
+        chunkResults.map(async (r) => {
+          // NULL = vérifié, aucune plateforme FR (évite re-traitement) ; [] = pas encore traité
+          const { error } = await supabase
+            .from("movie_embeddings")
+            .update({ platform_ids: r.platform_ids.length > 0 ? r.platform_ids : null })
+            .eq("tmdb_id", r.tmdb_id);
+          if (error) {
+            console.error(`[SYNC-PLATFORMS] Update error tmdb_id=${r.tmdb_id}: ${error.message}`);
+            tmdbErrors++;
+          }
+        }),
+      );
 
       // Pause courte entre les lots pour respecter le rate limit TMDB
       if (i + PARALLEL < films.length) {
         await new Promise((r) => setTimeout(r, 350));
       }
     }
-
-    // ── Mise à jour en base — tous les résultats en parallèle ──
-    const updateErrors: number[] = [];
-    await Promise.all(
-      results.map(async (r) => {
-        // NULL = vérifié, aucune plateforme FR (évite re-traitement) ; [] = pas encore traité
-        const { error } = await supabase
-          .from("movie_embeddings")
-          .update({ platform_ids: r.platform_ids.length > 0 ? r.platform_ids : null })
-          .eq("tmdb_id", r.tmdb_id);
-        if (error) {
-          console.error(`[SYNC-PLATFORMS] Update error tmdb_id=${r.tmdb_id}: ${error.message}`);
-          updateErrors.push(r.tmdb_id);
-          tmdbErrors++;
-        }
-      }),
-    );
 
     const withPlatforms = results.filter((r) => r.platform_ids.length > 0);
     const withoutPlatforms = results.filter((r) => r.platform_ids.length === 0);
