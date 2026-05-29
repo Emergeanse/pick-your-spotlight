@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import PickCharacter from "./PickCharacter";
 import FeedbackBadge from "./FeedbackBadge";
 import FlipCardDetail from "./FlipCardDetail";
+import RecommendationMovieCard from "./RecommendationMovieCard";
 import { useMovieInteractions } from "@/hooks/use-movie-interactions";
 import { listFeedbackByType, clearFeedbackType, type FeedbackType, type MovieInteractionState } from "@/lib/feedback";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -311,6 +312,7 @@ const WatchlistPage = ({ onMovieSelect }: WatchlistPageProps) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [genreFilter, setGenreFilter] = useState<string[]>([]);
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [previewMovie, setPreviewMovie] = useState<MovieDetail | null>(null);
   const [detailMovie, setDetailMovie] = useState<MovieDetail | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
@@ -499,7 +501,7 @@ const WatchlistPage = ({ onMovieSelect }: WatchlistPageProps) => {
     try {
       const mediaType = item.media_type || (item.first_air_date ? "tv" : "movie");
       const movie = await getMovieDetails(item.tmdb_id, mediaType);
-      setDetailMovie(movie);
+      setPreviewMovie(movie);
     } catch {
       toast.error("Impossible d'ouvrir la fiche");
     } finally {
@@ -825,6 +827,31 @@ const WatchlistPage = ({ onMovieSelect }: WatchlistPageProps) => {
             className="fixed inset-0 z-50 flex items-center justify-center bg-background/60 backdrop-blur-sm"
           >
             <Loader2 className="w-6 h-6 text-primary animate-spin" />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Movie preview — affichage style page de reco : vignette + teaser + action bar */}
+      <AnimatePresence>
+        {previewMovie && (
+          <motion.div
+            initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 24 }}
+            transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+            className="fixed inset-0 z-[55] bg-background overflow-y-auto"
+          >
+            <button
+              type="button"
+              onClick={() => setPreviewMovie(null)}
+              className="fixed top-[calc(env(safe-area-inset-top)+0.75rem)] left-4 z-[60] w-9 h-9 rounded-full bg-card/70 backdrop-blur-md border border-border/30 flex items-center justify-center text-foreground/70 hover:text-foreground transition-colors"
+              aria-label="Retour"
+            >
+              <X className="w-4 h-4" />
+            </button>
+            <RecommendationMovieCard
+              movie={previewMovie}
+              onOpenDetails={() => setDetailMovie(previewMovie)}
+              showPrimaryAction={false}
+            />
           </motion.div>
         )}
       </AnimatePresence>
