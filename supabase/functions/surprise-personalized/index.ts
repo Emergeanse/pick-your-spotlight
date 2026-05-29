@@ -597,7 +597,7 @@ serve(async (req) => {
             ? `- ⛔ ORIGINES À ÉVITER ABSOLUMENT : ${excludedOrigins.join(", ")} — n'inclus aucun film de ces origines.`
             : "",
         ].filter(Boolean).join("\n");
-        const platformNote = platformSet
+        const platformNote = expandedPlatformIds && expandedPlatformIds.length > 0
           ? `\n🎬 Ces films sont tous disponibles sur les plateformes de l'utilisateur (${(platformIds as number[]).map((id) => PROVIDER_NAMES[id] ?? `#${id}`).join(", ")}).\n`
           : "";
 
