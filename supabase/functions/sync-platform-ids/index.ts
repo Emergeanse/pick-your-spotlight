@@ -45,7 +45,8 @@ serve(async (req) => {
     let query = supabase
       .from("movie_embeddings")
       .select("tmdb_id, media_type, title")
-      .order("tmdb_id", { ascending: true });
+      .order("tmdb_id", { ascending: true })
+      .limit(5000);
 
     if (!forceRefresh) {
       query = query.eq("platform_ids", "{}");
