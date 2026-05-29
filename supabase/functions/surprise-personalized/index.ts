@@ -480,6 +480,7 @@ serve(async (req) => {
     const llmPoolSize = 30;
     let llmPool: any[] = [];
     let llmInputPool: any[] = [];
+    let platformPool: { title: string; platforms: string[]; match: boolean }[] = [];
     let capturedSystemPrompt: string | null = null;
     let llmDebugError: string | null = null;
     let tPlatform = t2;
@@ -524,8 +525,6 @@ serve(async (req) => {
 
       llmInputPool = topPool; // par défaut : tous les 30
 
-      let platformPool: { title: string; platforms: string[]; match: boolean }[] = [];
-
       if (platformSet) {
         const platformCheckResults = await Promise.all(
           topPool.map(async (c: any) => {
@@ -547,20 +546,21 @@ serve(async (req) => {
           match: r.matches,
         }));
 
-        // Fail-open : deux signaux de rate limit TMDB →
-        //   1. <250ms pour 30 appels parallèles (impossiblement rapide pour de vraies réponses)
-        //   2. <30% des appels ont retourné des données provider
+        // Fail-open : rate limit ou 0 match → envoyer tout le pool au LLM plutôt que Worldbreaker
+        //   Signal rate limit : <250ms pour 30 appels OU <30% des appels avec données
         const suspiciouslyFast = platformCheckMs < 250;
         const lowDataRate = nonEmptyCount < Math.ceil(topPool.length * 0.3);
-        if (matching.length === 0 && (suspiciouslyFast || lowDataRate)) {
+        if (matching.length === 0) {
           llmInputPool = topPool;
-          console.log(`[SP] ⚠️ Filtre plateforme bypass: ${platformCheckMs}ms, ${nonEmptyCount}/${topPool.length} appels non-vides → rate limit TMDB probable, pool complet au LLM`);
+          const reason = suspiciouslyFast
+            ? `rate limit probable (${platformCheckMs}ms)`
+            : lowDataRate
+              ? `peu de données TMDB (${nonEmptyCount}/${topPool.length})`
+              : `aucun film sur [${platformNames}] — données TMDB peut-être inexactes`;
+          console.log(`[SP] ⚠️ Filtre plateforme bypass: ${reason} → pool complet au LLM`);
         } else {
           llmInputPool = matching;
           console.log(`[SP] Filtre plateforme: ${llmInputPool.length}/${topPool.length} films sur [${platformNames}] | ${platformCheckMs}ms, ${nonEmptyCount} appels avec données`);
-          if (llmInputPool.length === 0) {
-            console.log(`[SP] Aucun film sur les plateformes user — fallback TMDB discover activé`);
-          }
         }
       }
 
