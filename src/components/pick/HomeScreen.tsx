@@ -180,52 +180,106 @@ const PLATFORM_LABELS: Record<number, string> = {
   381: "Canal+", 56: "Paramount+", 350: "Apple TV+", 234: "OCS",
 };
 
+const rnd = <T,>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
+
 function buildPersonalizedLoadingMessages({
   genres,
   mediaType,
   explorationLevel,
   ambiance,
   platformIds,
+  likedTitles = [],
 }: {
   genres: string[];
   mediaType: string;
   explorationLevel: number;
   ambiance: string | null;
   platformIds: number[];
+  likedTitles?: string[];
 }): string[] {
   const topGenres = genres.slice(0, 3);
-  const genreStr = topGenres.length >= 2
-    ? `${topGenres[0]} & ${topGenres[1]}`
-    : topGenres[0] ?? "tes genres favoris";
-  const typeStr = mediaType === "tv" ? "série" : "film";
-  const platformNames = platformIds
-    .map((id) => PLATFORM_LABELS[id])
-    .filter(Boolean)
-    .slice(0, 2)
-    .join(" et ");
+  const g1 = topGenres[0] ?? "tes genres favoris";
+  const g2 = topGenres[1];
+  const genreStr = g2 ? `${g1} & ${g2}` : g1;
+  const typeStr = mediaType === "tv" ? rnd(["série", "émission"]) : rnd(["film", "long métrage"]);
+  const platformNames = platformIds.map((id) => PLATFORM_LABELS[id]).filter(Boolean).slice(0, 2).join(" et ");
+  const likedTitle = likedTitles.length > 0 ? likedTitles[Math.floor(Math.random() * likedTitles.length)] : null;
 
-  const msgs: string[] = [
+  return [
     ambiance
-      ? `Je cherche le ${typeStr} idéal pour une soirée "${ambiance}"…`
-      : `Je cherche ton prochain ${typeStr} de ${genreStr}…`,
-    platformNames
-      ? `Je filtre sur ${platformNames} pour ne garder que ce qui est dispo…`
-      : `Je parcours la base de ${typeStr}s…`,
-    explorationLevel >= 7
-      ? "Mode découverte — je dépasse mes sentiers habituels pour toi…"
-      : explorationLevel <= 3
-        ? "Tu veux du solide ? Je cible les valeurs sûres…"
-        : `J'analyse ton profil ${genreStr} pour affiner…`,
-    `Un ${typeStr} de ${genreStr}, bien noté, que tu n'as pas encore vu…`,
-    topGenres.length >= 3
-      ? `${topGenres[0]}, ${topGenres[1]}, ${topGenres[2]}… je croise tout ça avec ta note de similarité…`
-      : "Je croise similarité vectorielle et note pour toi…",
-    "Je compare les candidats et élimine les doublons de franchise…",
-    "Le LLM évalue les derniers finalistes…",
-    "Encore un instant — je finalise le score de correspondance…",
-  ];
+      ? rnd([
+          `Mode "${ambiance}" activé — je cherche ce qui va t'embarquer…`,
+          `Une soirée "${ambiance}" ? Je sais ce qu'il te faut…`,
+          `Je cherche le ${typeStr} parfait pour l'ambiance "${ambiance}"…`,
+        ])
+      : rnd([
+          `Je cherche ton prochain ${typeStr} de ${genreStr}…`,
+          `Un ${typeStr} de ${genreStr} qui n'attend que toi…`,
+          `Je parcours ma collection de ${genreStr}…`,
+        ]),
 
-  return msgs;
+    platformNames
+      ? rnd([
+          `Je filtre sur ${platformNames} — finis les reco inaccessibles…`,
+          `${platformNames} seulement — je garde ce que tu peux regarder ce soir…`,
+          `Je me limite à ${platformNames} pour toi…`,
+        ])
+      : rnd([`Je parcours la base de ${typeStr}s…`, "J'analyse des milliers d'options…"]),
+
+    likedTitle
+      ? rnd([
+          `Tu as aimé "${likedTitle}" — je cherche ce qui te donnera la même sensation…`,
+          `Dans la veine de "${likedTitle}"… voyons ce que j'ai…`,
+          `Fan de "${likedTitle}" ? Je cherche quelque chose d'aussi fort…`,
+        ])
+      : rnd([
+          `J'analyse ton empreinte de goût…`,
+          `Je croise similarité vectorielle et préférences…`,
+          `Je lis entre les lignes de ton profil…`,
+        ]),
+
+    topGenres.length >= 3
+      ? rnd([
+          `${topGenres[0]}, ${topGenres[1]}, ${topGenres[2]}… je croise tout ça…`,
+          `Ta passion pour le ${topGenres[0]} & le ${topGenres[1]}… je m'en sers…`,
+          `Je pondère ${topGenres[0]}, ${topGenres[1]} et ${topGenres[2]} ensemble…`,
+        ])
+      : rnd([`Je calibre sur tes genres préférés…`, `J'affine par genre et par note…`]),
+
+    explorationLevel >= 7
+      ? rnd([
+          "Mode découverte — je cherche une pépite que tu ne connais peut-être pas…",
+          "Je prends quelques risques pour te surprendre…",
+          "Je dépasse mes sentiers habituels pour toi…",
+        ])
+      : explorationLevel <= 3
+        ? rnd([
+            "Tu veux du solide — je cible les valeurs sûres…",
+            "Pas d'expérimentation ce soir, je reste dans tes certitudes…",
+          ])
+        : rnd([
+            "J'équilibre valeur sûre et découverte…",
+            "Je calibre le niveau de surprise…",
+          ]),
+
+    rnd([
+      "Je compare les candidats et élimine les doublons de franchise…",
+      "Je classe les finalistes par pertinence…",
+      "Dernière passe — je trie les meilleures options…",
+    ]),
+
+    rnd([
+      "L'IA évalue les derniers candidats…",
+      "Je finalise le score de correspondance…",
+      "Presque là — je peaufine le choix final…",
+    ]),
+
+    rnd([
+      "Encore un instant — ça va valoir le coup…",
+      "C'est presque prêt, promis…",
+      "Quelques secondes encore…",
+    ]),
+  ];
 }
 
 const HomeScreen = ({
@@ -254,6 +308,7 @@ const HomeScreen = ({
   const [tonightLoadingMsg, setTonightLoadingMsg] = useState("");
   const [loadingLog, setLoadingLog] = useState<string[]>([]);
   const loadingLogEndRef = useRef<HTMLDivElement | null>(null);
+  const activeMessagesRef = useRef<string[]>([]);
   const [tonightProviders, setTonightProviders] = useState<{ name: string; logo_path: string }[]>([]);
 
   const [userPlatformIds, setUserPlatformIds] = useState<number[]>([]);
@@ -510,22 +565,24 @@ const HomeScreen = ({
     setTonightProviders([]);
     setLoadingLog([]);
 
-    const activeMessages = buildPersonalizedLoadingMessages({
+    const buildMsgs = (likedTitles: string[] = []) => buildPersonalizedLoadingMessages({
       genres: userGenres,
       mediaType: quickFilters.mediaType,
       explorationLevel,
       ambiance: activeAmbiance ?? null,
       platformIds: userPlatformIds,
+      likedTitles,
     });
 
+    activeMessagesRef.current = buildMsgs();
     let msgIndex = 0;
-    setTonightLoadingMsg(activeMessages[0]);
-    setLoadingLog([activeMessages[0]]);
+    setTonightLoadingMsg(activeMessagesRef.current[0]);
+    setLoadingLog([activeMessagesRef.current[0]]);
 
     const msgInterval = setInterval(() => {
       if (!isMountedRef.current) return;
-      msgIndex = (msgIndex + 1) % activeMessages.length;
-      const next = activeMessages[msgIndex];
+      msgIndex = (msgIndex + 1) % activeMessagesRef.current.length;
+      const next = activeMessagesRef.current[msgIndex];
       setTonightLoadingMsg(next);
       setLoadingLog((prev) => [...prev, next]);
     }, 2000);
@@ -537,6 +594,11 @@ const HomeScreen = ({
 
       if (user) {
         const liked = await getLikedMovies();
+
+        if (liked.length > 0) {
+          const likedTitles = liked.slice(0, 8).map((m: any) => m.title).filter(Boolean) as string[];
+          if (likedTitles.length > 0) activeMessagesRef.current = buildMsgs(likedTitles);
+        }
 
         if (liked.length >= 2) {
           const [multiProfile, tasteProfile] = await Promise.all([
