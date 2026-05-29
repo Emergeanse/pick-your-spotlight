@@ -9,6 +9,7 @@ interface HomeScreenChoiceModalProps {
   onClose: () => void;
   onAutoPick: () => void;
   onOpenChat: () => void;
+  onOpenMoodCapture: () => void;
 }
 
 const HomeScreenChoiceModal = ({
@@ -17,6 +18,7 @@ const HomeScreenChoiceModal = ({
   onClose,
   onAutoPick,
   onOpenChat,
+  onOpenMoodCapture,
 }: HomeScreenChoiceModalProps) => {
   const navigate = useNavigate();
   const title =
@@ -194,7 +196,7 @@ const HomeScreenChoiceModal = ({
               transition={{ delay: 0.5, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
               whileHover={{ y: -2 }}
               whileTap={{ scale: 0.985 }}
-              onClick={onOpenChat}
+              onClick={() => { onClose(); onOpenMoodCapture(); }}
               className="group relative w-full text-left rounded-[24px] p-5 bg-white/[0.025] hover:bg-white/[0.045] border border-white/[0.06] hover:border-white/[0.12] transition-all"
             >
               <div className="flex items-center gap-4">
