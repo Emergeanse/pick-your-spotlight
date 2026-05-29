@@ -299,7 +299,7 @@ serve(async (req) => {
     // ── ÉTAPE 1 : SQL — top candidats par similarité vectorielle ──
     // Langue, décennie et exclusions d'origine filtrées en SQL.
     // Le filtre plateforme est fait APRÈS le LLM (sur 10-30 films, pas 300).
-    const sqlMatchCount = 200;
+    const sqlMatchCount = (platformIds?.length ?? 0) > 0 ? 100 : 200;
     // Familles de plateformes : un abonnement inclut plusieurs IDs TMDB distincts
     const PLATFORM_FAMILIES: Record<number, number[]> = {
       381: [381, 538, 685, 193, 1754, 2285], // Canal+ → Cinéma, Séries, Box Office, myCanal, Cine+
