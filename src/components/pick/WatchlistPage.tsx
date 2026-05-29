@@ -11,6 +11,7 @@ import PickCharacter from "./PickCharacter";
 import FeedbackBadge from "./FeedbackBadge";
 import FlipCardDetail from "./FlipCardDetail";
 import RecommendationMovieCard from "./RecommendationMovieCard";
+import MovieActionBar from "./MovieActionBar";
 import { useMovieInteractions } from "@/hooks/use-movie-interactions";
 import { listFeedbackByType, clearFeedbackType, type FeedbackType, type MovieInteractionState } from "@/lib/feedback";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -851,7 +852,12 @@ const WatchlistPage = ({ onMovieSelect }: WatchlistPageProps) => {
               movie={previewMovie}
               onOpenDetails={() => setDetailMovie(previewMovie)}
               showPrimaryAction={false}
+              showActionBar={false}
             />
+            {/* Action bar fixée en bas, toujours accessible */}
+            <div className="fixed bottom-0 left-0 right-0 z-[60] px-4 pt-3 pb-[calc(1.25rem+env(safe-area-inset-bottom))] bg-gradient-to-t from-background via-background/90 to-transparent">
+              <MovieActionBar movie={previewMovie} />
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
