@@ -490,6 +490,12 @@ serve(async (req) => {
       8: "Netflix", 119: "Amazon Prime Video", 337: "Disney+",
       381: "Canal+", 56: "Paramount+", 350: "Apple TV+",
       2: "Apple TV", 15: "Hulu", 283: "Crunchyroll", 1899: "Max",
+      // Plateformes françaises
+      1754: "myCanal", 531: "Paramount+ FR", 582: "Paramount+ FR",
+      538: "Canal+ Cinéma", 701: "OCS", 588: "OCS",
+      685: "Canal+ Séries", 193: "Canal+ Box Office",
+      1967: "Filmo TV", 2077: "Universciné", 2285: "Cine+ FR",
+      2303: "Paramount+ FR", 1825: "Max FR",
     };
 
     if (filteredCandidates.length >= 1) {
@@ -546,18 +552,16 @@ serve(async (req) => {
           match: r.matches,
         }));
 
-        // Fail-open : rate limit ou 0 match → envoyer tout le pool au LLM plutôt que Worldbreaker
-        //   Signal rate limit : <250ms pour 30 appels OU <30% des appels avec données
+        // Fail-open : si le check est suspicieusement rapide (<250ms pour 30 appels),
+        // on ne peut pas faire confiance aux résultats — rate limit TMDB probable.
+        // Dans ce cas on envoie tout le pool au LLM pour éviter le fallback Worldbreaker.
         const suspiciouslyFast = platformCheckMs < 250;
-        const lowDataRate = nonEmptyCount < Math.ceil(topPool.length * 0.3);
-        if (matching.length === 0) {
+        if (suspiciouslyFast || matching.length === 0) {
           llmInputPool = topPool;
           const reason = suspiciouslyFast
-            ? `rate limit probable (${platformCheckMs}ms)`
-            : lowDataRate
-              ? `peu de données TMDB (${nonEmptyCount}/${topPool.length})`
-              : `aucun film sur [${platformNames}] — données TMDB peut-être inexactes`;
-          console.log(`[SP] ⚠️ Filtre plateforme bypass: ${reason} → pool complet au LLM`);
+            ? `rate limit probable (${platformCheckMs}ms pour ${topPool.length} appels)`
+            : `aucun film sur [${platformNames}]`;
+          console.log(`[SP] ⚠️ Filtre plateforme bypass: ${reason} → pool complet (${topPool.length}) au LLM`);
         } else {
           llmInputPool = matching;
           console.log(`[SP] Filtre plateforme: ${llmInputPool.length}/${topPool.length} films sur [${platformNames}] | ${platformCheckMs}ms, ${nonEmptyCount} appels avec données`);
