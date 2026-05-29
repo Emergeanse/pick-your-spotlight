@@ -525,9 +525,18 @@ serve(async (req) => {
 
       // ── ÉTAPE 2.1 : Filtre plateforme sur les 30 candidats (en parallèle, ~500ms) ──
       // Le LLM ne reçoit que les films disponibles sur les plateformes de l'utilisateur.
-      const platformSet = platformIds?.length > 0
-        ? new Set((platformIds as number[]).map(Number))
+      // Les familles de plateformes : un abonnement inclut plusieurs IDs TMDB distincts.
+      const PLATFORM_FAMILIES: Record<number, number[]> = {
+        381: [381, 538, 685, 193, 1754, 2285], // Canal+ → Canal+ Cinéma, Séries, Box Office, myCanal, Cine+
+        119: [119, 1024, 10],                   // Amazon Prime → Amazon variants
+        8:   [8, 1796],                          // Netflix → Netflix variants
+        337: [337],                              // Disney+ (pas de sous-marques)
+        56:  [56, 531, 582, 2303],               // Paramount+ → variants FR
+      };
+      const expandedPlatformIds = platformIds?.length > 0
+        ? [...new Set((platformIds as number[]).flatMap((id) => PLATFORM_FAMILIES[id] ?? [id]))]
         : null;
+      const platformSet = expandedPlatformIds ? new Set(expandedPlatformIds.map(Number)) : null;
 
       llmInputPool = topPool; // par défaut : tous les 30
 
