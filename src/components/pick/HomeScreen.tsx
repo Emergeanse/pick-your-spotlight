@@ -175,6 +175,59 @@ const LOADING_MESSAGES = [
   "Ça cogite sévère de mon côté !",
 ];
 
+const PLATFORM_LABELS: Record<number, string> = {
+  8: "Netflix", 119: "Amazon Prime", 337: "Disney+",
+  381: "Canal+", 56: "Paramount+", 350: "Apple TV+", 234: "OCS",
+};
+
+function buildPersonalizedLoadingMessages({
+  genres,
+  mediaType,
+  explorationLevel,
+  ambiance,
+  platformIds,
+}: {
+  genres: string[];
+  mediaType: string;
+  explorationLevel: number;
+  ambiance: string | null;
+  platformIds: number[];
+}): string[] {
+  const topGenres = genres.slice(0, 3);
+  const genreStr = topGenres.length >= 2
+    ? `${topGenres[0]} & ${topGenres[1]}`
+    : topGenres[0] ?? "tes genres favoris";
+  const typeStr = mediaType === "tv" ? "série" : "film";
+  const platformNames = platformIds
+    .map((id) => PLATFORM_LABELS[id])
+    .filter(Boolean)
+    .slice(0, 2)
+    .join(" et ");
+
+  const msgs: string[] = [
+    ambiance
+      ? `Je cherche le ${typeStr} idéal pour une soirée "${ambiance}"…`
+      : `Je cherche ton prochain ${typeStr} de ${genreStr}…`,
+    platformNames
+      ? `Je filtre sur ${platformNames} pour ne garder que ce qui est dispo…`
+      : `Je parcours la base de ${typeStr}s…`,
+    explorationLevel >= 7
+      ? "Mode découverte — je dépasse mes sentiers habituels pour toi…"
+      : explorationLevel <= 3
+        ? "Tu veux du solide ? Je cible les valeurs sûres…"
+        : `J'analyse ton profil ${genreStr} pour affiner…`,
+    `Un ${typeStr} de ${genreStr}, bien noté, que tu n'as pas encore vu…`,
+    topGenres.length >= 3
+      ? `${topGenres[0]}, ${topGenres[1]}, ${topGenres[2]}… je croise tout ça avec ta note de similarité…`
+      : "Je croise similarité vectorielle et note pour toi…",
+    "Je compare les candidats et élimine les doublons de franchise…",
+    "Le LLM évalue les derniers finalistes…",
+    "Encore un instant — je finalise le score de correspondance…",
+  ];
+
+  return msgs;
+}
+
 const HomeScreen = ({
   onOpenChat,
   onSurprise,
@@ -450,13 +503,21 @@ const HomeScreen = ({
     setTonightLoading(true);
     setTonightProviders([]);
 
+    const activeMessages = buildPersonalizedLoadingMessages({
+      genres: userGenres,
+      mediaType: quickFilters.mediaType,
+      explorationLevel,
+      ambiance: activeAmbiance ?? null,
+      platformIds: userPlatformIds,
+    });
+
     let msgIndex = 0;
-    setTonightLoadingMsg(LOADING_MESSAGES[0]);
+    setTonightLoadingMsg(activeMessages[0]);
 
     const msgInterval = setInterval(() => {
       if (!isMountedRef.current) return;
-      msgIndex = (msgIndex + 1) % LOADING_MESSAGES.length;
-      setTonightLoadingMsg(LOADING_MESSAGES[msgIndex]);
+      msgIndex = (msgIndex + 1) % activeMessages.length;
+      setTonightLoadingMsg(activeMessages[msgIndex]);
     }, 2000);
     msgIntervalRef.current = msgInterval;
 
