@@ -103,10 +103,10 @@ serve(async (req) => {
       // ── Commit immédiat après chaque lot — progrès sauvegardé si timeout ──
       await Promise.all(
         chunkResults.map(async (r) => {
-          // NULL = vérifié, aucune plateforme FR (évite re-traitement) ; [] = pas encore traité
+          // [0] = vérifié, aucune plateforme FR (évite re-traitement) ; [] = pas encore traité
           const { error } = await supabase
             .from("movie_embeddings")
-            .update({ platform_ids: r.platform_ids.length > 0 ? r.platform_ids : null })
+            .update({ platform_ids: r.platform_ids.length > 0 ? r.platform_ids : [0] })
             .eq("tmdb_id", r.tmdb_id);
           if (error) {
             console.error(`[SYNC-PLATFORMS] Update error tmdb_id=${r.tmdb_id}: ${error.message}`);
