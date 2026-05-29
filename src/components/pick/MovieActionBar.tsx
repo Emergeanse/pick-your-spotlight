@@ -62,13 +62,14 @@ const MovieActionBar = ({
       movieId: movie.id,
       mediaType,
       interaction,
-      liked,
+      thumbsUp,
+      loved,
       bookmarked,
       seenActive,
       activeFeedback,
       initialFeedback,
     });
-  }, [movie.id, mediaType, interaction, liked, bookmarked, seenActive, activeFeedback, initialFeedback]);
+  }, [movie.id, mediaType, interaction, thumbsUp, loved, bookmarked, seenActive, activeFeedback, initialFeedback]);
 
   useEffect(() => {
     const handler = (e: Event) => {
