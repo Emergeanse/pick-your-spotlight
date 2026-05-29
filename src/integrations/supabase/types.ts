@@ -1305,6 +1305,7 @@ export type Database = {
               p_min_popularity?: number
               p_min_year?: number
               p_original_language?: string
+              p_platform_ids?: number[]
               p_user_id?: string
               query_vector: string
             }
@@ -1313,6 +1314,7 @@ export type Database = {
               genres: string[]
               media_type: string
               original_language: string
+              platform_ids: number[]
               popularity: number
               similarity: number
               taste_tags: string[]
