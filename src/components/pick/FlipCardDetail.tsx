@@ -6,6 +6,7 @@ import { getPersonPhotoUrl, fetchPersonDetail } from "@/lib/people-preferences";
 import type { Movie } from "@/lib/tmdb";
 import FeedbackBadge from "@/components/pick/FeedbackBadge";
 import { useMovieInteraction } from "@/hooks/use-movie-interactions";
+import MovieActionBar from "@/components/pick/MovieActionBar";
 
 type MatchData = {
   matchScore?: number;
@@ -287,6 +288,11 @@ const MovieDetailContent = ({
             </div>
           )}
         </div>
+      </div>
+
+      {/* Action bar */}
+      <div className="mx-5 mb-4 rounded-2xl bg-white/5 backdrop-blur-xl border border-white/[0.06] p-1.5">
+        <MovieActionBar movie={detail || item} />
       </div>
 
       {/* Divider */}
