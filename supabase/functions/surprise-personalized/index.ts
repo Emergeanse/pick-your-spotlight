@@ -348,7 +348,7 @@ serve(async (req) => {
 
         // ── Fallback plateforme : si platform_ids vides en base (sync pas encore exécuté), relancer sans ──
         platformCandidatesCount = candidates.length;
-        if (candidates.length < 20 && expandedPlatformIds && expandedPlatformIds.length > 0) {
+        if (candidates.length < 5 && expandedPlatformIds && expandedPlatformIds.length > 0) {
           console.log(`[SP] Retry SQL sans filtre plateforme (${candidates.length} candidats — sync-platform-ids à exécuter?)`);
           const { data: dataNP } = await supabase.rpc(
             "match_movies_for_recommendation",
@@ -1037,7 +1037,7 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
           mode: llmSelections.length > 0 ? "retrieve-rerank" : "discover-fallback",
           candidatesFound: candidates.length,
           platformCandidatesCount,
-          platformFallbackTriggered: platformCandidatesCount < 20 && (expandedPlatformIds?.length ?? 0) > 0,
+          platformFallbackTriggered: platformCandidatesCount < 5 && (expandedPlatformIds?.length ?? 0) > 0,
           llmSelected: llmSelections.length,
           llmError: llmDebugError,
           finalCount: finalMovies.length,
