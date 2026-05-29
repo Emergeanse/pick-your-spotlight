@@ -328,69 +328,13 @@ export function useRecommendationEngine({
   );
 
   const handleVoiceSearchIntent = useCallback(
-    async (filters: VoiceSearchFilters, recapTags: string[]) => {
+    (filters: VoiceSearchFilters, recapTags: string[]) => {
       if (recapTags.length > 0) dispatch({ type: "SET_SEARCH_TAGS", tags: recapTags });
       dispatch({ type: "CLOSE_CHAT" });
-      setLoading(true);
-      setLoadingMessage("Pick cherche ton film…");
-      try {
-        const [liked, tasteProfile, multiVec] = user
-          ? await Promise.all([getLikedMovies(), getUserTasteProfile(), computeMultiVectorProfile(user.id)])
-          : ([[], null, null] as const);
-        const excludeIds = [
-          ...stateRef.current.results.map((r) => r.id),
-          ...((tasteProfile as any)?.excludeIds || []),
-        ];
-        const confidenceScore = tasteProfile?.confidence?.score ?? profilePrefs.profileConfidence ?? 50;
-        const explorationLevel = confidenceScore >= 70 ? 3 : confidenceScore >= 40 ? 5 : 7;
-        const desiredCount = profilePrefs.recommendationBatchSize || RECOMMENDATION_BATCH_SIZE;
-        const data = await invokeSurprisePersonalized({
-          likedMovies: liked,
-          userTasteVector: multiVec?.stableTasteVector ?? null,
-          recentTasteVector: multiVec?.recentTasteVector ?? null,
-          avoidanceVector: multiVec?.avoidanceVector ?? null,
-          tasteProfile,
-          platformIds: profilePrefs.preferredPlatforms,
-          excludedPlatformIds: profilePrefs.excludedPlatforms,
-          excludedGenres: profilePrefs.excludedGenres,
-          minRating: profilePrefs.minRating,
-          minMatchScore: profilePrefs.matchThreshold,
-          excludeIds,
-          explorationLevel,
-          count: desiredCount * 3,
-          voiceGenres: filters.genres,
-          voiceOriginalLanguage: filters.originalLanguage,
-          voiceMediaType: filters.mediaType,
-          voiceMaxDuration: filters.maxDuration,
-          voiceDecade: filters.decade,
-        });
-        const extracted = extractRecommendationMovies(data);
-        if (extracted.length > 0) {
-          openRecommendationBatch(extracted, "home", 0, undefined, desiredCount);
-        } else {
-          dispatch({ type: "SET_STEP_HOME" });
-        }
-      } catch (e) {
-        console.error("[voice] handleVoiceSearchIntent error:", e);
-        toast.error("Erreur recherche vocale : " + (e instanceof Error ? e.message : "Réessaie dans un instant."));
-        dispatch({ type: "SET_STEP_HOME" });
-      } finally {
-        setLoading(false);
-        setLoadingMessage("");
-      }
+      // Délègue au pipeline complet de HomeScreen (mêmes couches SQL, logs, loading overlay)
+      window.dispatchEvent(new CustomEvent("pick-voice-search", { detail: { filters } }));
     },
-    [
-      dispatch,
-      openRecommendationBatch,
-      profilePrefs.excludedGenres,
-      profilePrefs.excludedPlatforms,
-      profilePrefs.matchThreshold,
-      profilePrefs.minRating,
-      profilePrefs.preferredPlatforms,
-      profilePrefs.profileConfidence,
-      profilePrefs.recommendationBatchSize,
-      user,
-    ],
+    [dispatch],
   );
 
   const handleRefineWithMessage = useCallback(

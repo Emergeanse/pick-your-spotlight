@@ -6,6 +6,7 @@ import { Sparkles, Mic, Flame, Eye, Coffee, Heart, Shuffle } from "lucide-react"
 
 import { ALL_PLATFORMS } from "@/lib/platforms";
 import type { Movie, MovieDetail } from "@/lib/tmdb";
+import type { VoiceSearchFilters } from "./VoiceChat";
 import { getTrendingMovies, getBackdropUrl, getWatchProviders } from "@/lib/tmdb";
 import { getLikedMovies } from "@/lib/liked-movies";
 import { trackInteraction, getUserTasteProfile } from "@/lib/interactions";
@@ -361,6 +362,7 @@ const HomeScreen = ({
   const isMountedRef = useRef(true);
   const msgIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const historyExcludeIdsRef = useRef<number[]>([]);
+  const generateTonightPickRef = useRef<typeof generateTonightPick | null>(null);
 
   useEffect(() => {
     isMountedRef.current = true;
@@ -368,6 +370,17 @@ const HomeScreen = ({
       isMountedRef.current = false;
       if (msgIntervalRef.current !== null) clearInterval(msgIntervalRef.current);
     };
+  }, []);
+
+  // Écoute le custom event émis par handleVoiceSearchIntent
+  // pour router la recherche vocale dans le même pipeline que la recherche standard
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const { filters } = (e as CustomEvent).detail as { filters: VoiceSearchFilters };
+      generateTonightPickRef.current?.([], undefined, filters);
+    };
+    window.addEventListener("pick-voice-search", handler);
+    return () => window.removeEventListener("pick-voice-search", handler);
   }, []);
 
   const tonightPool = useMemo(() => chatMoviesPool || [], [chatMoviesPool]);
@@ -549,7 +562,8 @@ const HomeScreen = ({
     return data;
   };
 
-  const generateTonightPick = async (excludeList: number[] = rejectedIds, rejectionContext?: RejectionContext) => {
+  const generateTonightPick = async (excludeList: number[] = rejectedIds, rejectionContext?: RejectionContext, voiceFilters?: VoiceSearchFilters | null) => {
+    generateTonightPickRef.current = generateTonightPick;
     const poolIds = (chatMoviesPool || []).map((m) => m.id).filter(Number.isFinite);
     const allExcludeIds = [...new Set([...excludeList, ...poolIds, ...historyExcludeIdsRef.current])];
 
@@ -623,14 +637,28 @@ const HomeScreen = ({
           console.groupEnd();
 
           const moodCfg = activeAmbiance ? MOOD_CONFIGS[activeAmbiance] : null;
-          const effectiveTopGenres = moodCfg?.boostGenres
-            ? [...new Set([...(moodCfg.boostGenres), ...(tasteProfile?.topGenres || [])])]
-            : tasteProfile?.topGenres;
+
+          // Voix prime sur l'ambiance qui prime sur les valeurs par défaut
+          const effectiveTopGenres = voiceFilters?.genres?.length
+            ? voiceFilters.genres
+            : moodCfg?.boostGenres
+              ? [...new Set([...(moodCfg.boostGenres), ...(tasteProfile?.topGenres || [])])]
+              : tasteProfile?.topGenres;
           const effectiveExplorationLevel = moodCfg?.explorationOverride ?? explorationLevel;
-          const effectiveMaxDuration = moodCfg?.maxDurationOverride ?? quickFilters.maxDuration;
-          const effectiveMediaType = moodCfg?.mediaTypeOverride ?? (quickFilters.mediaType !== "both" ? quickFilters.mediaType : "both");
+          const effectiveMaxDuration = voiceFilters?.maxDuration ?? moodCfg?.maxDurationOverride ?? quickFilters.maxDuration;
+          const effectiveMediaType = voiceFilters?.mediaType ?? moodCfg?.mediaTypeOverride ?? (quickFilters.mediaType !== "both" ? quickFilters.mediaType : "both");
           const effectiveMinMatchScore = moodCfg?.minMatchScoreOverride ?? quickFilters.matchThreshold;
           const effectiveMinRating = moodCfg?.minRatingBoost ? (userMinRating ?? 0) + moodCfg.minRatingBoost : userMinRating;
+
+          if (voiceFilters) {
+            console.log("[PICK-DEBUG] 🎤 Voice overrides appliqués au pipeline :", {
+              genres: voiceFilters.genres,
+              originalLanguage: voiceFilters.originalLanguage,
+              decade: voiceFilters.decade,
+              maxDuration: voiceFilters.maxDuration,
+              mediaType: voiceFilters.mediaType,
+            });
+          }
 
           tEdgeStart = performance.now();
           const data = await invokeSurprisePersonalized({
@@ -652,6 +680,12 @@ const HomeScreen = ({
             minMatchScore: effectiveMinMatchScore,
             ...(moodCfg?.moodContext && { moodContext: moodCfg.moodContext }),
             ...(moodCfg?.boostGenres && { moodBoostGenres: moodCfg.boostGenres }),
+            // Overrides vocaux — priment sur les defaults SQL
+            voiceGenres: voiceFilters?.genres ?? null,
+            voiceOriginalLanguage: voiceFilters?.originalLanguage ?? null,
+            voiceMediaType: voiceFilters?.mediaType ?? null,
+            voiceMaxDuration: voiceFilters?.maxDuration ?? null,
+            voiceDecade: voiceFilters?.decade ?? null,
           });
           tEdgeEnd = performance.now();
           engineMetaResult = data?.engineMeta ?? null;
