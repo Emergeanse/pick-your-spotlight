@@ -41,19 +41,35 @@ serve(async (req) => {
       forceRefresh = false,
     } = body;
 
-    // ── Récupère tous les films à traiter en une seule requête ──
-    let query = supabase
-      .from("movie_embeddings")
-      .select("tmdb_id, media_type, title")
-      .order("tmdb_id", { ascending: true })
-      .limit(5000);
+    // ── Récupère jusqu'à 5000 films via pagination (PostgREST cap = 1000/page) ──
+    const MAX_FILMS = 5000;
+    const PAGE_SIZE = 1000;
+    const allFilms: any[] = [];
+    let from = 0;
 
-    if (!forceRefresh) {
-      query = query.eq("platform_ids", "{}");
+    while (allFilms.length < MAX_FILMS) {
+      const toFetch = Math.min(PAGE_SIZE, MAX_FILMS - allFilms.length);
+      let q = supabase
+        .from("movie_embeddings")
+        .select("tmdb_id, media_type, title")
+        .order("tmdb_id", { ascending: true })
+        .range(from, from + toFetch - 1);
+      if (!forceRefresh) q = q.eq("platform_ids", "{}");
+      const { data: page, error: pageError } = await q;
+      if (pageError) throw pageError;
+      if (!page || page.length === 0) break;
+      allFilms.push(...page);
+      if (page.length < toFetch) break;
+      from += toFetch;
     }
 
-    const { data: films, error: fetchError } = await query;
-    if (fetchError) throw fetchError;
+    const films = allFilms;
+    if (films.length === 0) {
+      return new Response(
+        JSON.stringify({ message: "Aucun film à mettre à jour — platform_ids déjà renseignés.", processed: 0 }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
 
     if (!films || films.length === 0) {
       return new Response(
@@ -94,9 +110,10 @@ serve(async (req) => {
     const updateErrors: number[] = [];
     await Promise.all(
       results.map(async (r) => {
+        // NULL = vérifié, aucune plateforme FR (évite re-traitement) ; [] = pas encore traité
         const { error } = await supabase
           .from("movie_embeddings")
-          .update({ platform_ids: r.platform_ids })
+          .update({ platform_ids: r.platform_ids.length > 0 ? r.platform_ids : null })
           .eq("tmdb_id", r.tmdb_id);
         if (error) {
           console.error(`[SYNC-PLATFORMS] Update error tmdb_id=${r.tmdb_id}: ${error.message}`);
