@@ -658,6 +658,20 @@ const HomeScreen = ({
 
           console.log("[PICK-DEBUG] engineMeta:", data?.engineMeta);
 
+          // ── Filtre plateforme : diagnostic ──
+          const meta = data?.engineMeta;
+          if (meta && meta.platformCandidatesCount >= 0) {
+            if (meta.platformFallbackTriggered) {
+              console.warn(
+                `[PICK-DEBUG] ⚠️ FILTRE PLATEFORME INSUFFISANT : ${meta.platformCandidatesCount} candidats SQL avec tes plateformes (seuil = 20) → fallback sans filtre (${meta.candidatesFound} candidats). Relance sync-platform-ids pour améliorer la couverture.`,
+              );
+            } else {
+              console.log(
+                `[PICK-DEBUG] ✅ Filtre plateforme actif : ${meta.platformCandidatesCount} candidats SQL sur tes plateformes.`,
+              );
+            }
+          }
+
           // ── Timings par étape ──
           const timings = data?.engineMeta?.timings;
           if (timings) {

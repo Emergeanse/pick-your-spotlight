@@ -332,6 +332,7 @@ serve(async (req) => {
     });
 
     let candidates: any[] = [];
+    let platformCandidatesCount = -1;
     if (SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY && userTasteVector) {
       try {
         const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
@@ -346,6 +347,7 @@ serve(async (req) => {
         );
 
         // ── Fallback plateforme : si platform_ids vides en base (sync pas encore exécuté), relancer sans ──
+        platformCandidatesCount = candidates.length;
         if (candidates.length < 20 && expandedPlatformIds && expandedPlatformIds.length > 0) {
           console.log(`[SP] Retry SQL sans filtre plateforme (${candidates.length} candidats — sync-platform-ids à exécuter?)`);
           const { data: dataNP } = await supabase.rpc(
@@ -1034,6 +1036,8 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
           profileConfidence: confidence.score,
           mode: llmSelections.length > 0 ? "retrieve-rerank" : "discover-fallback",
           candidatesFound: candidates.length,
+          platformCandidatesCount,
+          platformFallbackTriggered: platformCandidatesCount < 20 && (expandedPlatformIds?.length ?? 0) > 0,
           llmSelected: llmSelections.length,
           llmError: llmDebugError,
           finalCount: finalMovies.length,
