@@ -252,6 +252,8 @@ const HomeScreen = ({
   const [tonightPick, setTonightPick] = useState<MovieDetail | null>(null);
   const [tonightLoading, setTonightLoading] = useState(false);
   const [tonightLoadingMsg, setTonightLoadingMsg] = useState("");
+  const [loadingLog, setLoadingLog] = useState<string[]>([]);
+  const loadingLogEndRef = useRef<HTMLDivElement | null>(null);
   const [tonightProviders, setTonightProviders] = useState<{ name: string; logo_path: string }[]>([]);
 
   const [userPlatformIds, setUserPlatformIds] = useState<number[]>([]);
@@ -469,6 +471,10 @@ const HomeScreen = ({
     return () => clearInterval(interval);
   }, [bgImages]);
 
+  useEffect(() => {
+    loadingLogEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [loadingLog]);
+
   const invokeSurprisePersonalized = async (body: unknown, retries = 2): Promise<any> => {
     const { data, error } = await supabase.functions.invoke("surprise-personalized", { body });
 
@@ -502,6 +508,7 @@ const HomeScreen = ({
 
     setTonightLoading(true);
     setTonightProviders([]);
+    setLoadingLog([]);
 
     const activeMessages = buildPersonalizedLoadingMessages({
       genres: userGenres,
@@ -513,11 +520,14 @@ const HomeScreen = ({
 
     let msgIndex = 0;
     setTonightLoadingMsg(activeMessages[0]);
+    setLoadingLog([activeMessages[0]]);
 
     const msgInterval = setInterval(() => {
       if (!isMountedRef.current) return;
       msgIndex = (msgIndex + 1) % activeMessages.length;
-      setTonightLoadingMsg(activeMessages[msgIndex]);
+      const next = activeMessages[msgIndex];
+      setTonightLoadingMsg(next);
+      setLoadingLog((prev) => [...prev, next]);
     }, 2000);
     msgIntervalRef.current = msgInterval;
 
@@ -1318,8 +1328,25 @@ const HomeScreen = ({
             className="absolute inset-0 z-30 flex flex-col items-center justify-center"
           >
             <div className="absolute inset-0 bg-background/90 backdrop-blur-md" />
-            <div className="relative z-10 flex flex-col items-center">
-              <PickCharacter mood="think" message={tonightLoadingMsg} size="md" animate />
+            <div className="relative z-10 flex flex-col items-center gap-6 w-full max-w-sm px-6">
+              <PickCharacter mood="think" size="md" animate />
+              <div className="w-full max-h-48 overflow-y-auto flex flex-col gap-1.5 scroll-smooth">
+                <AnimatePresence initial={false}>
+                  {loadingLog.map((line, i) => (
+                    <motion.p
+                      key={i}
+                      initial={{ opacity: 0, y: 6 }}
+                      animate={{ opacity: i === loadingLog.length - 1 ? 1 : 0.35, y: 0 }}
+                      transition={{ duration: 0.4 }}
+                      className="text-sm text-center leading-snug"
+                      style={{ color: i === loadingLog.length - 1 ? "hsl(var(--foreground))" : "hsl(var(--muted-foreground))" }}
+                    >
+                      {line}
+                    </motion.p>
+                  ))}
+                </AnimatePresence>
+                <div ref={loadingLogEndRef} />
+              </div>
             </div>
           </motion.div>
         )}
