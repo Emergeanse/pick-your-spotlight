@@ -437,6 +437,10 @@ const HomeScreen = ({
     const poolIds = (chatMoviesPool || []).map((m) => m.id).filter(Number.isFinite);
     const allExcludeIds = [...new Set([...excludeList, ...poolIds, ...historyExcludeIdsRef.current])];
 
+    const t0Pick = performance.now();
+    let tEdgeStart = t0Pick;
+    let tEdgeEnd = t0Pick;
+    let tBatchStart = t0Pick;
     console.log("[PICK-DEBUG] ═══ generateTonightPick ═══");
     console.log("[PICK-DEBUG] historyExcludeIds (depuis feedback):", historyExcludeIdsRef.current.length, "IDs", historyExcludeIdsRef.current.slice(0, 20));
     console.log("[PICK-DEBUG] rejectedIds (session):", excludeList.length, "IDs", excludeList);
@@ -493,6 +497,7 @@ const HomeScreen = ({
           const effectiveMinMatchScore = moodCfg?.minMatchScoreOverride ?? quickFilters.matchThreshold;
           const effectiveMinRating = moodCfg?.minRatingBoost ? (userMinRating ?? 0) + moodCfg.minRatingBoost : userMinRating;
 
+          tEdgeStart = performance.now();
           const data = await invokeSurprisePersonalized({
             likedMovies: liked,
             userTasteVector,
@@ -513,6 +518,7 @@ const HomeScreen = ({
             ...(moodCfg?.moodContext && { moodContext: moodCfg.moodContext }),
             ...(moodCfg?.boostGenres && { moodBoostGenres: moodCfg.boostGenres }),
           });
+          tEdgeEnd = performance.now();
           engineMetaResult = data?.engineMeta ?? null;
           const dbg = data?.debugData;
 
@@ -706,6 +712,7 @@ const HomeScreen = ({
           setMovieMatchData((prev) => ({ ...prev, ...matchMap }));
 
           // All films enriched in parallel — gemini-2.0-flash ~500ms/call, ~600ms total for 3 films.
+          tBatchStart = performance.now();
           movies = await ensureRecommendationBatch(extracted, {
             excludeIds: allExcludeIds,
             platformIds: userPlatformIds,
@@ -853,6 +860,20 @@ const HomeScreen = ({
         // ce qui réduirait le pool à 1 film alors que tous sont bien sur la plateforme de l'utilisateur.
         const poolMovies = movies.slice(0, displayCount);
         setChatMoviesPool(poolMovies);
+
+        const tDisplay = performance.now();
+        const fmt = (ms: number) => ms >= 1000 ? `${(ms / 1000).toFixed(2)}s` : `${Math.round(ms)}ms`;
+        const total = tDisplay - t0Pick;
+        const preEdge = tEdgeStart - t0Pick;
+        const edge = tEdgeEnd - tEdgeStart;
+        const batch = tDisplay - tBatchStart;
+        const bar = (ms: number) => { const p = Math.round((ms / total) * 20); return "█".repeat(Math.max(1, p)) + "░".repeat(20 - Math.max(1, p)); };
+        console.group(`[PICK-DEBUG] ⏱️ BOUT EN BOUT — clic → premier film affiché : ${fmt(total)}`);
+        console.log(`  Préparation (profil, liked)  ${bar(preEdge)}  ${fmt(preEdge)}`);
+        console.log(`  Edge function                ${bar(edge)}  ${fmt(edge)}`);
+        console.log(`  Movie-match + batch          ${bar(batch)}  ${fmt(batch)}`);
+        console.groupEnd();
+
         await setCurrentTonightMovie(poolMovies[0], 0, new Set(poolMovies[0] ? [poolMovies[0].id] : []));
 
         // All films were enriched in parallel above — nothing to do lazily here.
