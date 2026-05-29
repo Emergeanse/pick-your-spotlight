@@ -346,71 +346,58 @@ serve(async (req) => {
           `[SP] SQL candidates: ${candidates.length} | platform: [${expandedPlatformIds?.join(",") ?? "none"}] | liked: [${(effectiveLikedGenresSQL ?? likedWithTv).slice(0, 4).join(", ")}...] | excludeIds: ${normalizedExcludeIds.length}`,
         );
 
-        // ── Fallback plateforme : si platform_ids vides en base (sync pas encore exécuté), relancer sans ──
+        // ── Cascade de fallbacks : le filtre plateforme est toujours conservé jusqu'au dernier recours absolu ──
         platformCandidatesCount = candidates.length;
-        if (candidates.length < 5 && expandedPlatformIds && expandedPlatformIds.length > 0) {
-          console.log(`[SP] Retry SQL sans filtre plateforme (${candidates.length} candidats — sync-platform-ids à exécuter?)`);
-          const { data: dataNP } = await supabase.rpc(
-            "match_movies_for_recommendation",
-            buildRpcParams({ withLang: true, withYear: true, withPlatform: false }),
-          );
-          if (dataNP && (dataNP as any[]).length > candidates.length) {
-            candidates = dataNP as any[];
-            console.log(`[SP] Fallback sans plateforme: ${candidates.length} candidats`);
-          }
-        }
+        const platformActive = (expandedPlatformIds?.length ?? 0) > 0;
 
-        // ── Fallback langue/année : si trop peu de candidats avec filtres voix stricts, relancer sans ──
+        // 1. Filtre voix : relâche langue/année mais garde plateforme
         if ((voiceOriginalLanguage || voiceDecade) && candidates.length < 10) {
-          console.log(`[SP] Voice lang/year fallback: ${candidates.length} candidats — relance sans filtre langue/année`);
-          const { data: data2 } = await supabase.rpc(
-            "match_movies_for_recommendation",
-            buildRpcParams({ withLang: false, withYear: false, withPlatform: true }),
-          );
-          if (data2 && (data2 as any[]).length > candidates.length) {
-            candidates = data2 as any[];
-            console.log(`[SP] Lang/year fallback: ${candidates.length} candidats`);
-          }
+          console.log(`[SP] Voice lang/year fallback: ${candidates.length} candidats`);
+          const { data: d } = await supabase.rpc("match_movies_for_recommendation",
+            buildRpcParams({ withLang: false, withYear: false, withPlatform: true }));
+          if (d && (d as any[]).length > candidates.length) candidates = d as any[];
         }
 
-        // ── Fallback durée : si très peu de candidats avec contrainte vocale de durée, relancer sans durée ──
+        // 2. Filtre voix : relâche durée mais garde plateforme
         if (voiceMaxDuration && candidates.length < 10) {
-          console.log(`[SP] Voice duration fallback: ${candidates.length} candidates — retrying without duration`);
-          const { data: data3 } = await supabase.rpc("match_movies_for_recommendation", {
-            ...buildRpcParams({ withLang: true, withYear: true, withPlatform: true }),
-            max_duration: null,
-          });
-          if (data3 && (data3 as any[]).length > candidates.length) {
-            candidates = data3 as any[];
-            console.log(`[SP] Duration fallback: ${candidates.length} candidates`);
-          }
+          console.log(`[SP] Voice duration fallback: ${candidates.length} candidats`);
+          const { data: d } = await supabase.rpc("match_movies_for_recommendation",
+            { ...buildRpcParams({ withLang: true, withYear: true, withPlatform: true }), max_duration: null });
+          if (d && (d as any[]).length > candidates.length) candidates = d as any[];
         }
 
-        // ── Fallback excludeIds : trop d'exclusions → base épuisée → relancer avec liste réduite ──
-        if (candidates.length === 0 && normalizedExcludeIds.length > 200) {
+        // 3. Trop peu de candidats sur plateforme : réduit les exclusions, garde plateforme
+        if (platformActive && candidates.length < 20 && normalizedExcludeIds.length > 200) {
           const recentExcludes = normalizedExcludeIds.slice(-200);
-          console.log(`[SP] Retry SQL avec ${recentExcludes.length} excludes réduits`);
-          const { data: dataR1 } = await supabase.rpc(
-            "match_movies_for_recommendation",
-            { ...buildRpcParams({ withLang: false, withYear: false, withPlatform: true }), exclude_ids: recentExcludes },
-          );
-          if (dataR1 && (dataR1 as any[]).length > 0) {
-            candidates = dataR1 as any[];
-            console.log(`[SP] Retry réduit: ${candidates.length} candidats`);
-          }
+          console.log(`[SP] Plateforme insuffisante (${candidates.length}) — réduit excludeIds à ${recentExcludes.length}`);
+          const { data: d } = await supabase.rpc("match_movies_for_recommendation",
+            { ...buildRpcParams({ withLang: false, withYear: false, withPlatform: true }), exclude_ids: recentExcludes });
+          if (d && (d as any[]).length > candidates.length) candidates = d as any[];
         }
 
-        // ── Dernier recours : aucune exclusion ──
+        // 4. Encore trop peu : supprime liked_genres + réduit exclusions, garde plateforme
+        if (platformActive && candidates.length < 10) {
+          const reducedExcludes = normalizedExcludeIds.length > 200 ? normalizedExcludeIds.slice(-200) : normalizedExcludeIds;
+          console.log(`[SP] Plateforme insuffisante (${candidates.length}) — relâche liked_genres`);
+          const { data: d } = await supabase.rpc("match_movies_for_recommendation",
+            { ...buildRpcParams({ withLang: false, withYear: false, withPlatform: true }), liked_genres: [], exclude_ids: reducedExcludes });
+          if (d && (d as any[]).length > candidates.length) candidates = d as any[];
+        }
+
+        // 5. Dernier recours avec plateforme : supprime toutes les contraintes sauf la plateforme
+        if (platformActive && candidates.length === 0) {
+          console.log(`[SP] Plateforme: dernier recours — toutes contraintes relâchées sauf plateforme`);
+          const { data: d } = await supabase.rpc("match_movies_for_recommendation",
+            { ...buildRpcParams({ withLang: false, withYear: false, withPlatform: true }), liked_genres: [], excluded_genres: [], min_rating: 0, p_min_popularity: null, exclude_ids: [] });
+          if (d && (d as any[]).length > 0) candidates = d as any[];
+        }
+
+        // 6. Fallback absolu sans plateforme : uniquement si 0 candidat après tout
         if (candidates.length === 0) {
-          console.log(`[SP] Retry SQL SANS exclusions — dernier recours`);
-          const { data: dataR2 } = await supabase.rpc(
-            "match_movies_for_recommendation",
-            { ...buildRpcParams({ withLang: false, withYear: false, withPlatform: true }), exclude_ids: [] },
-          );
-          if (dataR2 && (dataR2 as any[]).length > 0) {
-            candidates = dataR2 as any[];
-            console.log(`[SP] Sans exclusions: ${candidates.length} candidats`);
-          }
+          console.log(`[SP] FALLBACK ABSOLU sans plateforme — aucun film trouvé sur les plateformes`);
+          const { data: d } = await supabase.rpc("match_movies_for_recommendation",
+            buildRpcParams({ withLang: false, withYear: false, withPlatform: false }));
+          if (d && (d as any[]).length > 0) candidates = d as any[];
         }
       } catch (e) {
         console.error("SQL vector search failed:", e);
