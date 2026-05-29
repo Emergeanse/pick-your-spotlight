@@ -1,9 +1,10 @@
-import { useReducer } from "react";
+import { useReducer, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import HomeScreen from "@/components/pick/HomeScreen";
 import ResultScreen from "@/components/pick/ResultScreen";
 import VoiceChat from "@/components/pick/VoiceChat";
+import MoodVoiceSheet from "@/components/pick/MoodVoiceSheet";
 import RevealAnimation from "@/components/pick/RevealAnimation";
 import PlatformTour from "@/components/pick/PlatformTour";
 import ActivationFlow from "@/components/pick/ActivationFlow";
@@ -65,6 +66,8 @@ const Index = () => {
   });
 
   // ─── Composition handlers (need both engine + overlay context) ───
+
+  const [showMoodCapture, setShowMoodCapture] = useState(false);
 
   const handleOpenChat = () => {
     dispatch({ type: "OPEN_CHAT", initialMessages: undefined });
@@ -146,6 +149,7 @@ const Index = () => {
             <HomeScreen
               onStart={() => {}}
               onOpenChat={handleOpenChat}
+              onOpenMoodCapture={() => setShowMoodCapture(true)}
               onSurprise={engine.handleSurprise}
               onMovieSelect={engine.handleMovieSelect}
               loading={engine.loading}
@@ -242,6 +246,18 @@ const Index = () => {
             onSearchIntent={engine.handleVoiceSearchIntent}
             initialMessages={state.chatInitialMessages}
             showMicGuide={overlays.talkToPickGuideStep === "mic"}
+          />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showMoodCapture && (
+          <MoodVoiceSheet
+            onClose={() => setShowMoodCapture(false)}
+            onSearchIntent={(filters, recap) => {
+              setShowMoodCapture(false);
+              engine.handleVoiceSearchIntent(filters, recap);
+            }}
           />
         )}
       </AnimatePresence>

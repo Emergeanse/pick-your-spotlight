@@ -39,6 +39,7 @@ import homeBackground from "@/assets/home-background.png";
 interface HomeScreenProps {
   onStart: () => void;
   onOpenChat: () => void;
+  onOpenMoodCapture: () => void;
   onSurprise: (movies: MovieDetail[], startIndex?: number, seenMovieIds?: Set<number>) => void;
   onMovieSelect: (movie: MovieDetail) => void;
   loading: boolean;
@@ -284,6 +285,7 @@ function buildPersonalizedLoadingMessages({
 
 const HomeScreen = ({
   onOpenChat,
+  onOpenMoodCapture,
   onSurprise,
   onMovieSelect,
   loading,
@@ -1358,6 +1360,32 @@ const HomeScreen = ({
               }
             }}
           />
+
+          {/* Mood voice capture — entrée rapide par la voix */}
+          <motion.button
+            type="button"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.95, duration: 0.45 }}
+            whileTap={{ scale: 0.985 }}
+            onClick={onOpenMoodCapture}
+            className="mt-3 w-full flex items-center py-2 px-2.5 pr-4 text-left gap-[16px] rounded-2xl border border-primary/20 bg-primary/[0.06] hover:bg-primary/[0.10] hover:border-primary/35 transition-all"
+          >
+            <span className="relative flex-shrink-0">
+              <span className="absolute inset-0 rounded-full bg-primary/20 blur-md animate-subtle-pulse" />
+              <span className="relative flex items-center justify-center w-9 h-9 rounded-full bg-primary/15 border border-primary/40">
+                <Mic className="w-[14px] h-[14px] text-primary" />
+              </span>
+            </span>
+            <span className="flex-1 min-w-0">
+              <span className="block font-serif text-foreground text-[13px] leading-tight">
+                Décris ton mood
+              </span>
+              <span className="block text-foreground/45 text-[10px] font-sans mt-0.5">
+                Je cherche en fonction de ce que tu décris
+              </span>
+            </span>
+          </motion.button>
         </div>
 
         <DiscoverySection
