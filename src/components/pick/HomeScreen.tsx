@@ -938,7 +938,7 @@ const HomeScreen = ({
           // trouvés grâce à la cascade (réduction à 200 exclusions récentes).
           tBatchStart = performance.now();
           movies = await ensureRecommendationBatch(extracted, {
-            excludeIds: historyExcludeIdsRef.current,
+            excludeIds: [],
             platformIds: userPlatformIds,
             minRating: userMinRating,
             excludedGenres: userExcludedGenres,
