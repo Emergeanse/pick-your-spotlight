@@ -301,16 +301,28 @@ serve(async (req) => {
     // Le filtre plateforme est fait APRÈS le LLM (sur 10-30 films, pas 300).
     const sqlMatchCount = (platformIds?.length ?? 0) > 0 ? 100 : 200;
     // Familles de plateformes : un abonnement inclut plusieurs IDs TMDB distincts
+    // IDs sourcés depuis platforms.ts (source de vérité côté app)
     const PLATFORM_FAMILIES: Record<number, number[]> = {
       381: [381, 538, 685, 193, 1754, 2285], // Canal+ → Cinéma, Séries, Box Office, myCanal, Cine+
       119: [119, 1024, 10, 2100],            // Amazon Prime → variants + channel Amazon (2100)
       8:   [8, 1796],                          // Netflix → variants
-      337: [337, 35],                          // Disney+ → variants FR
+      337: [337],                              // Disney+
       56:  [56, 531, 582, 2303],               // Paramount+ → variants FR
+      236: [236, 531, 582, 2303],              // Paramount+ (ID app) → même famille
       1899: [1899, 1825],                      // Max → Max FR
-      1967: [1967],                            // Filmo TV
+      384: [384, 1899, 1825],                  // HBO (ID app) → Max/Max FR
+      35:  [35],                               // Rakuten TV
+      234: [234],                              // Arte
+      11:  [11],                               // MUBI
+      1967: [1967],                            // Molotov TV
       350: [350],                              // Apple TV+
-      2077: [2077],                            // Universciné
+      147: [147],                              // M6+
+      415: [415],                              // ADN
+      310: [310],                              // LaCinetek
+      513: [513],                              // Shadowz
+      300: [300],                              // Pluto TV
+      2601: [2601],                            // Pathé Home
+      193: [193],                              // SFR Play
     };
     const expandedPlatformIds = platformIds?.length > 0
       ? [...new Set((platformIds as number[]).flatMap((id: number) => PLATFORM_FAMILIES[id] ?? [id]))]
@@ -514,17 +526,28 @@ serve(async (req) => {
 
 
     const PROVIDER_NAMES: Record<number, string> = {
-      8: "Netflix", 119: "Amazon Prime Video", 337: "Disney+",
-      381: "Canal+", 56: "Paramount+", 350: "Apple TV+",
-      2: "Apple TV", 15: "Hulu", 283: "Crunchyroll", 1899: "Max",
-      // Plateformes françaises
-      1754: "myCanal", 531: "Paramount+ FR", 582: "Paramount+ FR",
-      538: "Canal+ Cinéma", 701: "OCS", 588: "OCS",
-      685: "Canal+ Séries", 193: "Canal+ Box Office",
-      1967: "Filmo TV", 2077: "Universciné", 2285: "Cine+ FR",
-      2303: "Paramount+ FR", 1825: "Max FR",
-      1796: "Netflix", 1024: "Amazon Prime Video", 35: "Disney+",
-      2100: "Amazon Channel", 1968: "Canal+",
+      8: "Netflix", 1796: "Netflix",
+      119: "Amazon Prime", 1024: "Amazon Prime", 10: "Amazon Prime", 2100: "Amazon",
+      337: "Disney+",
+      381: "Canal+", 538: "Canal+ Cinéma", 685: "Canal+ Séries",
+      193: "Canal+ Box Office", 1754: "myCanal", 2285: "Cine+",
+      56: "Paramount+", 236: "Paramount+", 531: "Paramount+", 582: "Paramount+", 2303: "Paramount+",
+      384: "Max", 1899: "Max", 1825: "Max",
+      350: "Apple TV+",
+      35: "Rakuten TV",
+      234: "Arte",
+      11: "MUBI",
+      1967: "Molotov TV",
+      147: "M6+",
+      415: "ADN",
+      310: "LaCinetek",
+      513: "Shadowz",
+      300: "Pluto TV",
+      2601: "Pathé Home",
+      193: "SFR Play",
+      701: "OCS", 588: "OCS",
+      2077: "Universciné",
+      1968: "Canal+",
     };
 
     if (filteredCandidates.length >= 1) {
