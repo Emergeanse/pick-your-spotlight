@@ -844,6 +844,8 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
         if (platformIds?.length > 0) {
           params.set("with_watch_providers", platformIds.join("|"));
           params.set("watch_region", "FR");
+          // Exclut location/achat — uniquement abonnement/gratuit/AVOD comme le filtre SQL
+          params.set("with_watch_monetization_types", "flatrate|free|ads");
         }
         const data = await safeFetchJson(`https://api.themoviedb.org/3/discover/${searchType}?${params}`);
         const found = (data?.results || []).find(
