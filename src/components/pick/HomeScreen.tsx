@@ -388,16 +388,30 @@ const HomeScreen = ({
   const canGoNext = tonightPickIndex < tonightPool.length - 1;
   const tonightAllVisited = tonightSeenMovieIds.size >= tonightPool.length && tonightPool.length > 0;
 
+  const filterProvidersByUserPlatforms = (providers: { name: string; logo_path: string; provider_id?: number }[]) => {
+    if (!userPlatformIds?.length) return providers;
+    const PLATFORM_FAMILIES: Record<number, number[]> = {
+      381: [381, 538, 685, 193, 1754, 2285],
+      119: [119, 1024, 10],
+      8:   [8, 1796],
+      337: [337],
+      56:  [56, 531, 582, 2303],
+    };
+    const expandedIds = new Set(userPlatformIds.flatMap((id) => PLATFORM_FAMILIES[id] ?? [id]));
+    const filtered = providers.filter((p) => p.provider_id != null && expandedIds.has(p.provider_id));
+    return filtered.length > 0 ? filtered : providers;
+  };
+
   const loadProviders = async (movie: MovieDetail) => {
     const cached = (movie as any).watchProviders as { name: string; logo_path: string; provider_id?: number }[] | undefined;
     if (cached && Array.isArray(cached)) {
-      setTonightProviders(cached);
+      setTonightProviders(filterProvidersByUserPlatforms(cached));
       return;
     }
     const mediaType = movie.first_air_date ? "tv" : "movie";
     try {
       const providers = await getWatchProviders(movie.id, mediaType);
-      setTonightProviders(providers);
+      setTonightProviders(filterProvidersByUserPlatforms(providers));
     } catch {
       setTonightProviders([]);
     }
