@@ -388,7 +388,7 @@ serve(async (req) => {
         if (platformActive && candidates.length === 0) {
           console.log(`[SP] Plateforme: dernier recours — toutes contraintes relâchées sauf plateforme`);
           const { data: d } = await supabase.rpc("match_movies_for_recommendation",
-            { ...buildRpcParams({ withLang: false, withYear: false, withPlatform: true }), liked_genres: [], excluded_genres: [], min_rating: 0, p_min_popularity: null, exclude_ids: [] });
+            { ...buildRpcParams({ withLang: false, withYear: false, withPlatform: true }), liked_genres: [], excluded_genres: [], min_rating: 0, p_min_popularity: null, exclude_ids: normalizedExcludeIds });
           if (d && (d as any[]).length > 0) candidates = d as any[];
         }
 
@@ -742,7 +742,7 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
     llmSelections.sort((a: any, b: any) => (b.matchScore || 0) - (a.matchScore || 0));
 
     const movies: any[] = [];
-    const usedIds = new Set<number>();
+    const usedIds = new Set<number>(normalizedExcludeIds);
     const tmdbDiag: { id: number; title: string; type: string; ok: boolean; reason?: string }[] = [];
     const fallbackTrace: { stage: string; id: number; title: string; type: string }[] = [];
 
@@ -771,16 +771,6 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
               type: itemType,
               ok: false,
               reason: "duplicate id",
-            });
-            return null;
-          }
-          if (maxDuration && itemType === "movie" && (detail.runtime || 0) > maxDuration) {
-            tmdbDiag.push({
-              id: sel.tmdb_id,
-              title: candidate?.title || "?",
-              type: itemType,
-              ok: false,
-              reason: `${detail.runtime}min > limite ${maxDuration}min`,
             });
             return null;
           }
