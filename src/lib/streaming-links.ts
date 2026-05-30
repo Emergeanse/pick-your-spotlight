@@ -86,6 +86,36 @@ const PLATFORM_MAP: Record<number, PlatformConfig> = {
     },
     color: "#1A1A1A",
   },
+  538: {
+    name: "Canal+",
+    webUrl: (tmdbLink, title) =>
+      tmdbLink || `https://www.canalplus.com/recherche/${encodeURIComponent(title)}`,
+    color: "#1A1A1A",
+  },
+  685: {
+    name: "Canal+",
+    webUrl: (tmdbLink, title) =>
+      tmdbLink || `https://www.canalplus.com/recherche/${encodeURIComponent(title)}`,
+    color: "#1A1A1A",
+  },
+  193: {
+    name: "Canal+",
+    webUrl: (tmdbLink, title) =>
+      tmdbLink || `https://www.canalplus.com/recherche/${encodeURIComponent(title)}`,
+    color: "#1A1A1A",
+  },
+  1754: {
+    name: "Canal+",
+    webUrl: (tmdbLink, title) =>
+      tmdbLink || `https://www.canalplus.com/recherche/${encodeURIComponent(title)}`,
+    color: "#1A1A1A",
+  },
+  2285: {
+    name: "Canal+",
+    webUrl: (tmdbLink, title) =>
+      tmdbLink || `https://www.canalplus.com/recherche/${encodeURIComponent(title)}`,
+    color: "#1A1A1A",
+  },
   1967: {
     name: "Molotov",
     webUrl: (tmdbLink, title) =>
