@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Mic, X, Loader2, Sparkles } from "lucide-react";
+import { Mic, X, Loader2, Sparkles, RotateCcw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useScribe, CommitStrategy } from "@elevenlabs/react";
 import { useAuth } from "@/hooks/use-auth";
@@ -9,7 +9,10 @@ import { getUserTasteProfile } from "@/lib/interactions";
 import { getMyPreferences } from "@/lib/preferences";
 import type { VoiceSearchFilters } from "./VoiceChat";
 
-type Phase = "ready" | "recording" | "processing" | "recap";
+// Bug 2 fix : ajout de la phase "clarification" pour les questions de Pick
+type Phase = "ready" | "recording" | "processing" | "recap" | "clarification";
+
+const RECORDING_TIMEOUT_MS = 30_000; // Bug 3 fix : timeout 30s
 
 interface MoodVoiceSheetProps {
   onClose: () => void;
@@ -22,11 +25,11 @@ const MoodVoiceSheet = ({ onClose, onSearchIntent }: MoodVoiceSheetProps) => {
   const [partialText, setPartialText] = useState("");
   const [transcript, setTranscript] = useState("");
   const [recapTags, setRecapTags] = useState<string[]>([]);
+  const [clarificationText, setClarificationText] = useState("");
+  const [micError, setMicError] = useState<string | null>(null);
   const [userTasteContext, setUserTasteContext] = useState<any>(null);
   const pendingVoiceRef = useRef<string | null>(null);
-  const phaseRef = useRef<Phase>("ready");
-
-  useEffect(() => { phaseRef.current = phase; }, [phase]);
+  const recordingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Load taste context for pick-chat
   useEffect(() => {
@@ -47,10 +50,30 @@ const MoodVoiceSheet = ({ onClose, onSearchIntent }: MoodVoiceSheetProps) => {
       .catch(console.error);
   }, [user]);
 
+  // Bug 3 fix : timeout enregistrement 30s
+  useEffect(() => {
+    if (phase === "recording") {
+      recordingTimerRef.current = setTimeout(() => {
+        scribe.disconnect();
+        setPhase("ready");
+        setMicError("Aucune parole détectée. Réessaie !");
+      }, RECORDING_TIMEOUT_MS);
+    }
+    return () => {
+      if (recordingTimerRef.current) {
+        clearTimeout(recordingTimerRef.current);
+        recordingTimerRef.current = null;
+      }
+    };
+  }, [phase]);
+
   const scribe = useScribe({
     modelId: "scribe_v2_realtime",
     commitStrategy: CommitStrategy.VAD,
-    onPartialTranscript: (data) => setPartialText(data.text),
+    onPartialTranscript: (data) => {
+      setMicError(null);
+      setPartialText(data.text);
+    },
     onCommittedTranscript: (data) => {
       if (data.text.trim()) {
         const finalText = data.text.trim();
@@ -99,7 +122,11 @@ const MoodVoiceSheet = ({ onClose, onSearchIntent }: MoodVoiceSheetProps) => {
         },
       })
       .then(({ data, error }) => {
-        if (error || !data) { onClose(); return; }
+        if (error || !data) {
+          setPhase("ready");
+          setMicError("Erreur de connexion. Réessaie !");
+          return;
+        }
         if (data.type === "search_intent") {
           const recap: string[] = data.recap || [];
           setRecapTags(recap);
@@ -108,22 +135,40 @@ const MoodVoiceSheet = ({ onClose, onSearchIntent }: MoodVoiceSheetProps) => {
             onSearchIntent(data.filters as VoiceSearchFilters, recap);
             onClose();
           }, recap.length > 0 ? 1400 : 500);
+        } else if (data.reply) {
+          // Bug 2 fix : Pick demande une précision — on l'affiche au lieu de fermer
+          setClarificationText(data.reply);
+          setPhase("clarification");
         } else {
-          onClose();
+          setPhase("ready");
+          setMicError("Je n'ai pas compris. Réessaie !");
         }
       })
-      .catch(() => onClose());
+      .catch(() => {
+        setPhase("ready");
+        setMicError("Erreur réseau. Réessaie !");
+      });
   }, [phase]);
 
+  // Bug 1 fix : utilise { token } comme VoiceChat, pas { signedUrl }
   const startRecording = async () => {
+    setMicError(null);
+    setTranscript("");
+    setClarificationText("");
     try {
       await navigator.mediaDevices.getUserMedia({ audio: true });
-      const tokenRes = await supabase.functions.invoke("scribe-token");
-      const token = tokenRes.data?.signed_url || tokenRes.data?.token;
-      await scribe.connect({ signedUrl: token });
+      const { data, error } = await supabase.functions.invoke("scribe-token");
+      if (error || !data?.token) {
+        setMicError("Erreur de connexion vocale. Réessaie !");
+        return;
+      }
+      await scribe.connect({
+        token: data.token,
+        microphone: { echoCancellation: true, noiseSuppression: true },
+      });
       setPhase("recording");
     } catch {
-      onClose();
+      setMicError("Impossible d'accéder au micro. Vérifie les permissions.");
     }
   };
 
@@ -131,9 +176,10 @@ const MoodVoiceSheet = ({ onClose, onSearchIntent }: MoodVoiceSheetProps) => {
 
   const phaseLabel: Record<Phase, string> = {
     ready: "Dis-moi ce que tu as envie de voir",
-    recording: "Je t'écoute…",
+    recording: "Je t'écoute… parle naturellement",
     processing: "Je cherche les bons films…",
     recap: "C'est parti !",
+    clarification: "Pick a besoin d'un peu plus",
   };
 
   return (
@@ -157,7 +203,7 @@ const MoodVoiceSheet = ({ onClose, onSearchIntent }: MoodVoiceSheetProps) => {
       >
         <div className="w-10 h-1 rounded-full bg-foreground/15 mx-auto mb-5" />
 
-        {phase === "ready" && (
+        {(phase === "ready" || phase === "clarification") && (
           <button
             onClick={onClose}
             className="absolute top-4 right-4 w-8 h-8 rounded-full bg-foreground/8 flex items-center justify-center"
@@ -172,6 +218,21 @@ const MoodVoiceSheet = ({ onClose, onSearchIntent }: MoodVoiceSheetProps) => {
           {phaseLabel[phase]}
         </p>
 
+        {/* Erreur micro */}
+        <AnimatePresence>
+          {micError && (
+            <motion.p
+              key="error"
+              initial={{ opacity: 0, y: -4 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              className="text-rose-400 text-xs font-sans text-center mb-4"
+            >
+              {micError}
+            </motion.p>
+          )}
+        </AnimatePresence>
+
         {/* Transcript */}
         <AnimatePresence>
           {displayText && (
@@ -183,6 +244,22 @@ const MoodVoiceSheet = ({ onClose, onSearchIntent }: MoodVoiceSheetProps) => {
             >
               <p className="text-sm font-sans text-foreground/70 italic leading-relaxed">
                 « {displayText} »
+              </p>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Bug 2 fix : message de clarification de Pick */}
+        <AnimatePresence>
+          {phase === "clarification" && clarificationText && (
+            <motion.div
+              key="clarification"
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-5 p-3.5 rounded-xl bg-primary/[0.06] border border-primary/20"
+            >
+              <p className="text-sm font-sans text-foreground/75 leading-relaxed">
+                {clarificationText}
               </p>
             </motion.div>
           )}
@@ -215,13 +292,17 @@ const MoodVoiceSheet = ({ onClose, onSearchIntent }: MoodVoiceSheetProps) => {
 
         {/* Mic / state button */}
         <div className="flex justify-center mt-2">
-          {phase === "ready" && (
+          {(phase === "ready" || phase === "clarification") && (
             <motion.button
               whileTap={{ scale: 0.93 }}
               onClick={startRecording}
-              className="w-16 h-16 rounded-full bg-primary flex items-center justify-center shadow-[0_0_32px_hsl(var(--primary)/0.55)]"
+              className="flex items-center gap-2.5 px-6 py-3.5 rounded-full bg-primary text-primary-foreground font-sans font-medium text-sm shadow-[0_0_32px_hsl(var(--primary)/0.55)]"
             >
-              <Mic className="w-7 h-7 text-primary-foreground" />
+              {phase === "clarification" ? (
+                <><RotateCcw className="w-4 h-4" /> Répondre</>
+              ) : (
+                <><Mic className="w-5 h-5" /> Parler</>
+              )}
             </motion.button>
           )}
 
@@ -241,6 +322,13 @@ const MoodVoiceSheet = ({ onClose, onSearchIntent }: MoodVoiceSheetProps) => {
             </div>
           )}
         </div>
+
+        {/* Bug 3 : indicateur timeout */}
+        {phase === "recording" && (
+          <p className="text-center text-foreground/30 text-[10px] font-sans mt-4">
+            S'arrête automatiquement après 30s
+          </p>
+        )}
       </motion.div>
     </motion.div>
   );
