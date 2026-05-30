@@ -932,17 +932,16 @@ const HomeScreen = ({
           });
           setMovieMatchData((prev) => ({ ...prev, ...matchMap }));
 
-          // Premier film enrichi en eager (affiché immédiatement), les suivants en arrière-plan.
-          // L'edge function a déjà appliqué les exclusions (avec relaxation si nécessaire) :
-          // ne pas re-filtrer côté client avec la liste complète qui éliminerait les films
-          // trouvés grâce à la cascade (réduction à 200 exclusions récentes).
+          // Tout le filtrage est fait dans le SQL (exclusions, note, genres, durée, plateformes).
+          // Le client ne re-filtre pas — il enrichit seulement avec movie-match (score floor post-SQL)
+          // et les providers. excludeIds:[] et minRating:0 évitent tout double-filtrage.
           tBatchStart = performance.now();
           movies = await ensureRecommendationBatch(extracted, {
             excludeIds: [],
             platformIds: userPlatformIds,
-            minRating: userMinRating,
-            excludedGenres: userExcludedGenres,
-            mediaType: quickFilters.mediaType,
+            minRating: 0,
+            excludedGenres: [],
+            mediaType: undefined,
             size: desiredCount,
             preloadMatchTexts: true,
             preloadProviders: true,
