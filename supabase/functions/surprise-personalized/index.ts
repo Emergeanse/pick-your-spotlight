@@ -804,8 +804,9 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
         if (!r) continue;
         if (usedIds.has(r.detail.id)) continue;
         usedIds.add(r.detail.id);
+        const candidate = candidates.find((c: any) => Number(c.tmdb_id) === Number(r.sel.tmdb_id));
         movies.push({
-          movie: r.detail,
+          movie: { ...r.detail, platform_ids: candidate?.platform_ids ?? [] },
           reason: r.sel.reason || "Ce film correspond à tes goûts.",
           confidence: r.sel.matchScore || 75,
           recommendationTexts: {

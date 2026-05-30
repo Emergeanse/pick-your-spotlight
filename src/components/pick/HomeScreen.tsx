@@ -388,26 +388,64 @@ const HomeScreen = ({
   const canGoNext = tonightPickIndex < tonightPool.length - 1;
   const tonightAllVisited = tonightSeenMovieIds.size >= tonightPool.length && tonightPool.length > 0;
 
+  const PLATFORM_FAMILIES_CLIENT: Record<number, number[]> = {
+    381: [381, 538, 685, 193, 1754, 2285],
+    119: [119, 1024, 10, 2100],
+    8:   [8, 1796],
+    337: [337, 35],
+    56:  [56, 531, 582, 2303],
+    1899: [1899, 1825],
+    1967: [1967],
+    350: [350],
+    2077: [2077],
+  };
+
+  const PLATFORM_LABELS_CLIENT: Record<number, string> = {
+    8: "Netflix", 1796: "Netflix",
+    119: "Amazon Prime", 1024: "Amazon Prime", 10: "Amazon Prime", 2100: "Amazon",
+    337: "Disney+", 35: "Disney+",
+    381: "Canal+", 538: "Canal+ Cinéma", 685: "Canal+ Séries", 193: "Canal+ Box Office", 1754: "myCanal", 2285: "Cine+",
+    56: "Paramount+", 531: "Paramount+", 582: "Paramount+", 2303: "Paramount+",
+    1899: "Max", 1825: "Max",
+    350: "Apple TV+",
+    1967: "Filmo TV",
+    2077: "Universciné",
+  };
+
+  const buildProvidersFromPlatformIds = (platformIds: number[]): { name: string; logo_path: string; provider_id: number }[] => {
+    if (!userPlatformIds?.length) return [];
+    const expandedUserIds = new Set(userPlatformIds.flatMap((id) => PLATFORM_FAMILIES_CLIENT[id] ?? [id]));
+    const matched = platformIds.filter((id) => expandedUserIds.has(id));
+    const seen = new Set<number>();
+    return matched
+      .filter((id) => PLATFORM_LABELS_CLIENT[id] && !seen.has(id) && seen.add(id))
+      .map((id) => ({ name: PLATFORM_LABELS_CLIENT[id], logo_path: "", provider_id: id }));
+  };
+
   const filterProvidersByUserPlatforms = (providers: { name: string; logo_path: string; provider_id?: number }[]) => {
     if (!userPlatformIds?.length) return providers;
-    const PLATFORM_FAMILIES: Record<number, number[]> = {
-      381: [381, 538, 685, 193, 1754, 2285],
-      119: [119, 1024, 10],
-      8:   [8, 1796],
-      337: [337],
-      56:  [56, 531, 582, 2303],
-    };
-    const expandedIds = new Set(userPlatformIds.flatMap((id) => PLATFORM_FAMILIES[id] ?? [id]));
+    const expandedIds = new Set(userPlatformIds.flatMap((id) => PLATFORM_FAMILIES_CLIENT[id] ?? [id]));
     const filtered = providers.filter((p) => p.provider_id != null && expandedIds.has(p.provider_id));
     return filtered.length > 0 ? filtered : providers;
   };
 
   const loadProviders = async (movie: MovieDetail) => {
+    // Priorité 1 : platform_ids depuis movie_embeddings (SQL) — intersection avec plateformes user
+    const embeddingPlatformIds = (movie as any).platform_ids as number[] | undefined;
+    if (Array.isArray(embeddingPlatformIds) && embeddingPlatformIds.length > 0 && userPlatformIds?.length) {
+      const fromEmbedding = buildProvidersFromPlatformIds(embeddingPlatformIds);
+      if (fromEmbedding.length > 0) {
+        setTonightProviders(fromEmbedding);
+        return;
+      }
+    }
+    // Priorité 2 : watchProviders pré-chargés (avec logos TMDB)
     const cached = (movie as any).watchProviders as { name: string; logo_path: string; provider_id?: number }[] | undefined;
     if (cached && Array.isArray(cached)) {
       setTonightProviders(filterProvidersByUserPlatforms(cached));
       return;
     }
+    // Priorité 3 : appel TMDB watch/providers
     const mediaType = movie.first_air_date ? "tv" : "movie";
     try {
       const providers = await getWatchProviders(movie.id, mediaType);
