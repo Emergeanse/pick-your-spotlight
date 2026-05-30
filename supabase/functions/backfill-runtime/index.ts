@@ -54,14 +54,27 @@ serve(async (req) => {
       const res = await fetch(
         `https://api.themoviedb.org/3/${type}/${film.tmdb_id}?api_key=${TMDB_API_KEY}&language=fr-FR`,
       );
-      if (!res.ok) { errors++; continue; }
+      if (res.status === 404) {
+        // Marquer comme traité (runtime=0) pour éviter de re-boucler indéfiniment
+        await supabase.from("movie_embeddings").update({ runtime: 0 }).eq("tmdb_id", film.tmdb_id);
+        skipped++;
+        await new Promise((r) => setTimeout(r, 300));
+        continue;
+      }
+      if (!res.ok) { errors++; await new Promise((r) => setTimeout(r, 300)); continue; }
       const detail = await res.json();
 
       const runtime = type === "tv"
         ? (detail.episode_run_time?.[0] || null)
         : (detail.runtime || null);
 
-      if (!runtime) { skipped++; continue; }
+      if (!runtime) {
+        // Marquer comme traité (runtime=0) pour éviter de re-boucler
+        await supabase.from("movie_embeddings").update({ runtime: 0 }).eq("tmdb_id", film.tmdb_id);
+        skipped++;
+        await new Promise((r) => setTimeout(r, 300));
+        continue;
+      }
 
       const { error: patchError } = await supabase
         .from("movie_embeddings")
@@ -70,9 +83,10 @@ serve(async (req) => {
 
       if (patchError) { errors++; } else { updated++; }
 
-      await new Promise((r) => setTimeout(r, 60));
+      await new Promise((r) => setTimeout(r, 300));
     } catch {
       errors++;
+      await new Promise((r) => setTimeout(r, 300));
     }
   }
 
