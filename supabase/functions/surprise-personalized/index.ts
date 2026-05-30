@@ -399,6 +399,14 @@ serve(async (req) => {
             buildRpcParams({ withLang: false, withYear: false, withPlatform: false }));
           if (d && (d as any[]).length > 0) candidates = d as any[];
         }
+
+        // 7. Dernier recours absolu : relâche max_duration (peut être trop strict après backfill runtime)
+        if (candidates.length === 0 && effectiveMaxDuration != null) {
+          console.log(`[SP] DERNIER RECOURS — relâche max_duration (${effectiveMaxDuration}min)`);
+          const { data: d } = await supabase.rpc("match_movies_for_recommendation",
+            { ...buildRpcParams({ withLang: false, withYear: false, withPlatform: false }), max_duration: null, min_rating: 0, p_min_popularity: null });
+          if (d && (d as any[]).length > 0) candidates = d as any[];
+        }
       } catch (e) {
         console.error("SQL vector search failed:", e);
       }

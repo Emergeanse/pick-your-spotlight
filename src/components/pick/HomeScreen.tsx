@@ -894,7 +894,7 @@ const HomeScreen = ({
           });
           setMovieMatchData((prev) => ({ ...prev, ...matchMap }));
 
-          // All films enriched in parallel — gemini-2.0-flash ~500ms/call, ~600ms total for 3 films.
+          // Premier film enrichi en eager (affiché immédiatement), les suivants en arrière-plan.
           // L'edge function a déjà appliqué les exclusions (avec relaxation si nécessaire) :
           // ne pas re-filtrer côté client avec la liste complète qui éliminerait les films
           // trouvés grâce à la cascade (réduction à 200 exclusions récentes).
@@ -909,6 +909,7 @@ const HomeScreen = ({
             preloadMatchTexts: true,
             preloadProviders: true,
             minMatchScore: quickFilters.matchThreshold,
+            eagerCount: 1,
           });
 
           console.group("[PICK-DEBUG] 4️⃣ Résultat final après movie-match");
