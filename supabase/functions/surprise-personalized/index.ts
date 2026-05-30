@@ -303,10 +303,14 @@ serve(async (req) => {
     // Familles de plateformes : un abonnement inclut plusieurs IDs TMDB distincts
     const PLATFORM_FAMILIES: Record<number, number[]> = {
       381: [381, 538, 685, 193, 1754, 2285], // Canal+ → Cinéma, Séries, Box Office, myCanal, Cine+
-      119: [119, 1024, 10],                   // Amazon Prime → variants
+      119: [119, 1024, 10, 2100],            // Amazon Prime → variants + channel Amazon (2100)
       8:   [8, 1796],                          // Netflix → variants
-      337: [337],                              // Disney+
+      337: [337, 35],                          // Disney+ → variants FR
       56:  [56, 531, 582, 2303],               // Paramount+ → variants FR
+      1899: [1899, 1825],                      // Max → Max FR
+      1967: [1967],                            // Filmo TV
+      350: [350],                              // Apple TV+
+      2077: [2077],                            // Universciné
     };
     const expandedPlatformIds = platformIds?.length > 0
       ? [...new Set((platformIds as number[]).flatMap((id: number) => PLATFORM_FAMILIES[id] ?? [id]))]
@@ -519,6 +523,8 @@ serve(async (req) => {
       685: "Canal+ Séries", 193: "Canal+ Box Office",
       1967: "Filmo TV", 2077: "Universciné", 2285: "Cine+ FR",
       2303: "Paramount+ FR", 1825: "Max FR",
+      1796: "Netflix", 1024: "Amazon Prime Video", 35: "Disney+",
+      2100: "Amazon Channel", 1968: "Canal+",
     };
 
     if (filteredCandidates.length >= 1) {
