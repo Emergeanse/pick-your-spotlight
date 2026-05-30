@@ -947,7 +947,6 @@ const HomeScreen = ({
             preloadMatchTexts: true,
             preloadProviders: true,
             minMatchScore: quickFilters.matchThreshold,
-            eagerCount: 1,
           });
 
           console.group("[PICK-DEBUG] 4️⃣ Résultat final après movie-match");
