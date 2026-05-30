@@ -20,6 +20,9 @@ import { supabase } from "@/integrations/supabase/client";
 
 interface WatchlistPageProps {
   onMovieSelect: (movie: MovieDetail) => void;
+  tabs?: ActiveTab[];        // onglets à afficher (défaut : tous)
+  title?: string;            // titre de la page
+  defaultTab?: ActiveTab;    // onglet actif au démarrage
 }
 
 type MediaFilter = "all" | "movie" | "tv";
@@ -311,8 +314,11 @@ async function hydrateMissingPosters(
   }
 }
 
-const WatchlistPage = ({ onMovieSelect }: WatchlistPageProps) => {
-  const [activeTab, setActiveTab] = useState<ActiveTab>("watchlist");
+const ALL_TABS: ActiveTab[] = ["watchlist", "liked", "loved", "seen", "disliked"];
+
+const WatchlistPage = ({ onMovieSelect, tabs: allowedTabs, title, defaultTab }: WatchlistPageProps) => {
+  const visibleTabs = allowedTabs ?? ALL_TABS;
+  const [activeTab, setActiveTab] = useState<ActiveTab>(defaultTab ?? visibleTabs[0]);
   const [watchlistItems, setWatchlistItems] = useState<any[]>([]);
   const [likedItems, setLikedItems] = useState<any[]>([]);
   const [lovedItems, setLovedItems] = useState<any[]>([]);
@@ -338,12 +344,14 @@ const WatchlistPage = ({ onMovieSelect }: WatchlistPageProps) => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
 
+      const needs = (tab: ActiveTab) => visibleTabs.includes(tab);
+
       const [watchlist, likedRaw, lovedRaw, seenRaw, { data: rejectedRaw }] = await Promise.all([
-        getWatchlist(),
-        listFeedbackByType("like"),
-        listFeedbackByType("love"),
-        listFeedbackByType("seen"),
-        user
+        needs("watchlist") ? getWatchlist() : Promise.resolve([]),
+        needs("liked")     ? listFeedbackByType("like")  : Promise.resolve([]),
+        needs("loved")     ? listFeedbackByType("love")  : Promise.resolve([]),
+        needs("seen")      ? listFeedbackByType("seen")  : Promise.resolve([]),
+        needs("disliked") && user
           ? supabase
               .from("user_item_feedback")
               .select("item_id, feedback_type, score, created_at, catalog_items:item_id(id, tmdb_id, title, poster_path, media_type, year, runtime, overview, vote_average)")
@@ -554,7 +562,7 @@ const WatchlistPage = ({ onMovieSelect }: WatchlistPageProps) => {
   const hour = new Date().getHours();
   const bubbleMessage = getPickBubbleMessage(activeTab, currentItems.length, hour);
 
-  const TABS: ActiveTab[] = ["watchlist", "liked", "loved", "seen", "disliked"];
+  const TABS = visibleTabs;
 
   const RESET_LABELS: Record<ActiveTab, { title: string; body: string; success: string }> = {
     watchlist: { title: "Vider ta liste ?", body: `${watchlistItems.length} titre${watchlistItems.length > 1 ? "s" : ""} seront supprimés.`, success: "Liste vidée" },
@@ -604,9 +612,9 @@ const WatchlistPage = ({ onMovieSelect }: WatchlistPageProps) => {
         {/* Header */}
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex items-center justify-between mb-4">
           <div>
-            <h1 className="text-2xl font-serif leading-tight">Ma Collection</h1>
+            <h1 className="text-2xl font-serif leading-tight">{title ?? "Ma Collection"}</h1>
             <p className="text-foreground/35 text-[11px] font-sans mt-0.5 tabular-nums">
-              {watchlistItems.length + likedItems.length + lovedItems.length + seenItems.length + dislikedItems.length} titres au total
+              {TABS.reduce((acc, t) => acc + (itemsByTab[t]?.length ?? 0), 0)} titres au total
             </p>
           </div>
           {currentItems.length > 0 && (

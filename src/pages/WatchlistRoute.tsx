@@ -15,7 +15,11 @@ const WatchlistRoute = () => {
   return (
     <div className="fixed inset-0 bg-background">
       <div className="h-full pb-[calc(3.5rem+env(safe-area-inset-bottom))]">
-        <WatchlistPage onMovieSelect={handleMovieSelect} />
+        <WatchlistPage
+          onMovieSelect={handleMovieSelect}
+          tabs={["watchlist"]}
+          title="À voir"
+        />
       </div>
     </div>
   );
