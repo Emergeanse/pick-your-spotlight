@@ -932,9 +932,8 @@ const HomeScreen = ({
           });
           setMovieMatchData((prev) => ({ ...prev, ...matchMap }));
 
-          // Tout le filtrage est fait dans le SQL (exclusions, note, genres, durée, plateformes).
-          // Le client ne re-filtre pas — il enrichit seulement avec movie-match (score floor post-SQL)
-          // et les providers. excludeIds:[] et minRating:0 évitent tout double-filtrage.
+          // Tout le filtrage est fait dans le SQL. Le client score tous les candidats LLM
+          // avec movie-match en parallèle, puis sélectionne les N meilleurs par score movie-match.
           tBatchStart = performance.now();
           movies = await ensureRecommendationBatch(extracted, {
             excludeIds: [],
@@ -945,7 +944,7 @@ const HomeScreen = ({
             size: desiredCount,
             preloadMatchTexts: true,
             preloadProviders: true,
-            minMatchScore: quickFilters.matchThreshold,
+            scoreAllWithMovieMatch: true,
           });
 
           console.group("[PICK-DEBUG] 4️⃣ Résultat final après movie-match");

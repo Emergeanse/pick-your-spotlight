@@ -97,8 +97,10 @@ type RecommendationBatchOptions = {
   preloadMatchTexts?: boolean;
   preloadProviders?: boolean;
   minMatchScore?: number;
-  // How many films to enrich synchronously before returning — rest are enriched lazily.
   eagerCount?: number;
+  // Score ALL candidates with movie-match first, then select top N by movie-match score.
+  // movie-match devient le juge final (pas le LLM). Ignore minMatchScore comme seuil.
+  scoreAllWithMovieMatch?: boolean;
 };
 
 const extractInlineRecommendationTexts = (entry: any): RecommendationMatchData | null => {
@@ -264,20 +266,23 @@ export async function enrichRecommendationBatchWithTexts(
     generated.map((entry) => [entry.id, entry.recommendationTexts]),
   );
 
+  const useMovieMatchScore = options.scoreAllWithMovieMatch === true;
   return movies.map((movie) => {
     if (!byId.has(movie.id)) return movie;
     const newTexts = byId.get(movie.id);
-    // Preserve the original LLM score — movie-match is authoritative for rich texts only,
-    // not for overriding the score that drove the recommendation selection.
     const originalScore = getRecommendationScore(movie.recommendationTexts);
     const originalConfidence = movie.recommendationTexts?.confidence;
     const recommendationTexts = newTexts
-      ? {
-          ...newTexts,
-          confidence: originalConfidence ?? newTexts.confidence,
-          matchScore: originalScore ?? newTexts.matchScore,
-          score: originalScore ?? newTexts.score,
-        }
+      ? useMovieMatchScore
+        // movie-match est le juge final : on garde son score sans l'écraser par le score LLM
+        ? { ...newTexts }
+        // mode classique : le score LLM prime (tri déjà fait avant enrichissement)
+        : {
+            ...newTexts,
+            confidence: originalConfidence ?? newTexts.confidence,
+            matchScore: originalScore ?? newTexts.matchScore,
+            score: originalScore ?? newTexts.score,
+          }
       : movie.recommendationTexts ?? null;
     return recommendationTexts ? { ...movie, recommendationTexts } : movie;
   });
@@ -376,7 +381,24 @@ export async function ensureRecommendationBatch(
   // This limits movie-match calls to exactly `size` films instead of all candidates.
   let finalBatch = dedupeMovies(batch);
 
-  if (options.preloadMatchTexts) {
+  if (options.preloadMatchTexts && options.scoreAllWithMovieMatch) {
+    // Mode : movie-match juge final
+    // 1. Score TOUS les candidats LLM en parallèle
+    // 2. Trie par score movie-match (pas score LLM)
+    // 3. Prend le top N — garantit toujours N films sans fallback TMDB
+    const allEnriched = await enrichRecommendationBatchWithTexts(finalBatch, options);
+    finalBatch = dedupeMovies(allEnriched)
+      .filter((m) => getRecommendationScore(m.recommendationTexts) !== null)
+      .sort((a, b) => {
+        const sa = getRecommendationScore(a.recommendationTexts) ?? 0;
+        const sb = getRecommendationScore(b.recommendationTexts) ?? 0;
+        return sb - sa;
+      })
+      .slice(0, size);
+    if (options.preloadProviders) {
+      finalBatch = await enrichRecommendationBatchWithProviders(finalBatch);
+    }
+  } else if (options.preloadMatchTexts) {
     const scoreFloor = (options.minMatchScore ?? 60) - 5;
     const prescored = finalBatch
       .filter((m) => {
@@ -388,14 +410,8 @@ export async function ensureRecommendationBatch(
         const sb = getRecommendationScore(b.recommendationTexts) ?? 0;
         return sb - sa;
       });
-    // Never fall back to the unfiltered batch: prefer fewer films above threshold
-    // over showing films the user explicitly doesn't want.
     finalBatch = prescored.slice(0, size);
-
-    // Enrich ONLY the top `size` films — eliminates rate-limit 429s from excess parallel calls.
     finalBatch = await enrichRecommendationBatchWithTexts(finalBatch, options);
-
-    // Load providers for the top N films
     if (options.preloadProviders) {
       finalBatch = await enrichRecommendationBatchWithProviders(finalBatch);
     }
