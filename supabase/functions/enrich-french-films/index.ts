@@ -10,7 +10,6 @@ const corsHeaders = {
 const TMDB_API_KEY = "2dca580c2a14b55200e784d157207b4d";
 const TMDB_BASE = "https://api.themoviedb.org/3";
 
-// Mapping genre IDs TMDB → noms français (cohérent avec movie_embeddings)
 const GENRE_MAP_MOVIE: Record<number, string> = {
   28: "Action", 12: "Aventure", 16: "Animation", 35: "Comédie", 80: "Crime",
   99: "Documentaire", 18: "Drame", 10751: "Familial", 14: "Fantastique",
@@ -28,12 +27,11 @@ const GENRE_MAP_TV: Record<number, string> = {
 
 async function fetchTmdbPage(mediaType: "movie" | "tv", page: number, minVoteCount: number): Promise<{ results: any[]; totalPages: number }> {
   const endpoint = mediaType === "movie" ? "discover/movie" : "discover/tv";
-  const dateField = mediaType === "movie" ? "vote_count.gte" : "vote_count.gte";
-  const url = `${TMDB_BASE}/${endpoint}?api_key=${TMDB_API_KEY}&language=fr-FR&with_original_language=fr&watch_region=FR&sort_by=vote_count.desc&${dateField}=${minVoteCount}&page=${page}`;
+  const url = `${TMDB_BASE}/${endpoint}?api_key=${TMDB_API_KEY}&language=fr-FR&with_original_language=fr&watch_region=FR&sort_by=vote_count.desc&vote_count.gte=${minVoteCount}&page=${page}`;
   const res = await fetch(url);
   if (!res.ok) throw new Error(`TMDB discover error: ${res.status}`);
   const data = await res.json();
-  return { results: data.results || [], totalPages: data.total_pages || 1 };
+  return { results: data.results || [], totalPages: Math.min(data.total_pages || 1, 500) };
 }
 
 async function fetchTmdbDetail(tmdbId: number, mediaType: "movie" | "tv"): Promise<any> {
@@ -54,61 +52,35 @@ async function getProviderIdsFR(tmdbId: number, mediaType: "movie" | "tv"): Prom
   } catch { return []; }
 }
 
-async function processFilm(
-  film: any,
-  mediaType: "movie" | "tv",
-  supabaseUrl: string,
-  serviceKey: string,
-): Promise<{ tmdbId: number; status: "added" | "error"; title: string; error?: string }> {
+async function processFilm(film: any, mediaType: "movie" | "tv", supabaseUrl: string, serviceKey: string) {
   const tmdbId = film.id;
   const title = film.title || film.name || `TMDB #${tmdbId}`;
-
   try {
     const [detail, platformIds] = await Promise.all([
       fetchTmdbDetail(tmdbId, mediaType),
       getProviderIdsFR(tmdbId, mediaType),
     ]);
-
     if (!detail) throw new Error("TMDB detail fetch failed");
 
     const genreMap = mediaType === "movie" ? GENRE_MAP_MOVIE : GENRE_MAP_TV;
     const genres = (detail.genres || []).map((g: any) => genreMap[g.id] || g.name).filter(Boolean);
     const year = (detail.release_date || detail.first_air_date || "").substring(0, 4) || null;
-    const runtime = mediaType === "movie"
-      ? (detail.runtime || null)
-      : (detail.episode_run_time?.[0] || null);
-
-    const payload = {
-      tmdbId,
-      title: detail.title || detail.name || title,
-      overview: detail.overview || "",
-      genres,
-      year,
-      runtime,
-      popularity: detail.popularity || 0,
-      voteAverage: detail.vote_average || 0,
-      mediaType,
-      platformIds,
-      originalLanguage: detail.original_language || "fr",
-    };
+    const runtime = mediaType === "movie" ? (detail.runtime || null) : (detail.episode_run_time?.[0] || null);
 
     const res = await fetch(`${supabaseUrl}/functions/v1/generate-embedding`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${serviceKey}`,
-      },
-      body: JSON.stringify(payload),
+      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${serviceKey}` },
+      body: JSON.stringify({
+        tmdbId, title: detail.title || detail.name || title,
+        overview: detail.overview || "", genres, year, runtime,
+        popularity: detail.popularity || 0, voteAverage: detail.vote_average || 0,
+        mediaType, platformIds, originalLanguage: detail.original_language || "fr",
+      }),
     });
-
-    if (!res.ok) {
-      const err = await res.text();
-      throw new Error(`generate-embedding failed: ${res.status} ${err}`);
-    }
-
-    return { tmdbId, status: "added", title: payload.title };
+    if (!res.ok) throw new Error(`generate-embedding ${res.status}`);
+    return { tmdbId, status: "added" as const, title: detail.title || detail.name || title };
   } catch (e) {
-    return { tmdbId, status: "error", title, error: e instanceof Error ? e.message : String(e) };
+    return { tmdbId, status: "error" as const, title, error: e instanceof Error ? e.message : String(e) };
   }
 }
 
@@ -124,72 +96,65 @@ serve(async (req) => {
 
     const body = req.method === "POST" ? await req.json().catch(() => ({})) : {};
     const {
-      page = 1,           // Page TMDB à traiter (1–500)
-      batchSize = 8,      // Films à traiter par invocation (max ~10 pour le timeout)
+      startPage = 1,       // Page de départ
+      maxPages = 1,        // Nombre de pages à traiter en une invocation (défaut 1)
+      batchSize = 8,       // Films max à traiter par page
       mediaType = "movie" as "movie" | "tv",
-      minVoteCount = 20,  // Ignore les films avec moins de votes
+      minVoteCount = 20,
     } = body;
 
-    // 1. Récupère la page TMDB
-    const { results: tmdbFilms, totalPages } = await fetchTmdbPage(mediaType, page, minVoteCount);
-    console.log(`[enrich] Page ${page}/${totalPages} — ${tmdbFilms.length} films TMDB`);
+    let totalAdded = 0, totalSkipped = 0, totalErrors = 0;
+    let lastPage = startPage;
+    let finalTotalPages = 1;
+    const allDetails: any[] = [];
 
-    // 2. Récupère les IDs déjà en base (batch 1000)
-    const tmdbIds = tmdbFilms.map((f: any) => f.id);
-    const { data: existing } = await supabase
-      .from("movie_embeddings")
-      .select("tmdb_id")
-      .in("tmdb_id", tmdbIds);
+    for (let page = startPage; page < startPage + maxPages; page++) {
+      const { results: tmdbFilms, totalPages } = await fetchTmdbPage(mediaType, page, minVoteCount);
+      finalTotalPages = totalPages;
+      lastPage = page;
 
-    const existingIds = new Set((existing || []).map((r: any) => r.tmdb_id));
-    const toProcess = tmdbFilms.filter((f: any) => !existingIds.has(f.id)).slice(0, batchSize);
+      const tmdbIds = tmdbFilms.map((f: any) => f.id);
+      const { data: existing } = await supabase
+        .from("movie_embeddings").select("tmdb_id").in("tmdb_id", tmdbIds);
 
-    console.log(`[enrich] ${existingIds.size} déjà en base, ${toProcess.length} à traiter`);
+      const existingIds = new Set((existing || []).map((r: any) => r.tmdb_id));
+      const toProcess = tmdbFilms.filter((f: any) => !existingIds.has(f.id)).slice(0, batchSize);
+      const skipped = tmdbFilms.length - toProcess.length;
+      totalSkipped += skipped;
 
-    if (toProcess.length === 0) {
-      return new Response(JSON.stringify({
-        page,
-        totalPages,
-        nextPage: page < totalPages ? page + 1 : null,
-        processed: 0,
-        added: 0,
-        skipped: tmdbFilms.length,
-        errors: 0,
-        details: [],
-      }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      if (toProcess.length > 0) {
+        const results = await Promise.all(
+          toProcess.map((film: any) => processFilm(film, mediaType, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY))
+        );
+        const added = results.filter(r => r.status === "added").length;
+        const errors = results.filter(r => r.status === "error").length;
+        totalAdded += added;
+        totalErrors += errors;
+        allDetails.push(...results.map(r => ({ page, ...r })));
+        console.log(`[enrich] Page ${page}/${totalPages} — +${added} ajoutés, ${skipped} ignorés, ${errors} erreurs`);
+      } else {
+        console.log(`[enrich] Page ${page}/${totalPages} — tout déjà en base, on continue`);
+      }
+
+      if (page >= totalPages) break;
     }
 
-    // 3. Traite les films en parallèle (batchSize simultanés)
-    const results = await Promise.all(
-      toProcess.map((film: any) => processFilm(film, mediaType, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY))
-    );
-
-    const added = results.filter(r => r.status === "added").length;
-    const errors = results.filter(r => r.status === "error").length;
-
-    console.log(`[enrich] ✅ ${added} ajoutés, ❌ ${errors} erreurs`);
+    const nextPage = lastPage < finalTotalPages ? lastPage + 1 : null;
 
     return new Response(JSON.stringify({
-      page,
-      totalPages,
-      nextPage: page < totalPages ? page + 1 : null,
-      processed: toProcess.length,
-      added,
-      skipped: tmdbFilms.length - toProcess.length,
-      errors,
-      details: results.map(r => ({
-        tmdbId: r.tmdbId,
-        title: r.title,
-        status: r.status,
-        ...(r.error ? { error: r.error } : {}),
-      })),
+      pagesTraitées: `${startPage}→${lastPage}`,
+      totalPages: finalTotalPages,
+      nextPage,
+      totalAdded,
+      totalSkipped,
+      totalErrors,
+      details: allDetails,
     }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
   } catch (e) {
     console.error("[enrich-french-films] error:", e);
     return new Response(JSON.stringify({ error: e instanceof Error ? e.message : String(e) }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 });
