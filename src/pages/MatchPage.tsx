@@ -8,6 +8,7 @@ import { getUserTasteProfile } from "@/lib/interactions";
 import { getLikedMovies } from "@/lib/liked-movies";
 import { computeMultiVectorProfile } from "@/lib/taste-engine";
 import type { RecommendationMatchData } from "@/lib/recommendation-batch";
+import HazelnutScore from "@/components/pick/HazelnutScore";
 import MovieActionBar from "@/components/pick/MovieActionBar";
 
 type MatchState = "idle" | "listening" | "identifying" | "result" | "error";
@@ -181,11 +182,7 @@ export default function MatchPage() {
               >
                 <ChevronLeft className="w-5 h-5" />
               </button>
-              {adhesionScore != null && (
-                <div className="px-3 py-1.5 rounded-full bg-primary/25 backdrop-blur-xl border border-primary/40 text-sm font-bold text-foreground">
-                  {adhesionScore}%
-                </div>
-              )}
+              <HazelnutScore score={adhesionScore} size={56} />
             </div>
 
             {/* Poster */}
