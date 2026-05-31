@@ -574,7 +574,7 @@ const WatchlistPage = ({ onMovieSelect, tabs: allowedTabs, title, defaultTab }: 
 
   if (loading) {
     return (
-      <div className="h-full overflow-y-auto px-5 pt-[calc(5rem+env(safe-area-inset-top))] pb-24">
+      <div className="h-full overflow-y-auto scrollbar-dark px-5 pt-[calc(5rem+env(safe-area-inset-top))] pb-24">
         <div className="flex items-center justify-between mb-4">
           <div className="space-y-2">
             <Skeleton className="h-7 w-40" />
@@ -606,7 +606,7 @@ const WatchlistPage = ({ onMovieSelect, tabs: allowedTabs, title, defaultTab }: 
 
 
   return (
-    <div className="h-full overflow-y-auto px-5 pt-[calc(5rem+env(safe-area-inset-top))] pb-24">
+    <div className="h-full overflow-y-auto scrollbar-dark px-5 pt-[calc(5rem+env(safe-area-inset-top))] pb-24">
       {/* Sticky header zone — keeps title + tabs visible while scrolling the list */}
       <div className="sticky -top-4 z-20 -mx-5 px-5 pt-3 pb-3 bg-gradient-to-b from-background via-background/95 to-background/70 backdrop-blur-md">
         {/* Header */}
