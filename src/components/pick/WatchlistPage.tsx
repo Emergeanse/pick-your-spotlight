@@ -360,6 +360,15 @@ const WatchlistPage = ({ onMovieSelect, tabs: allowedTabs, title, defaultTab }: 
       if (primary.liked)     setLikedItems(primary.liked as any[]);
       if (primary.watchlist) setWatchlistItems(primary.watchlist as any[]);
       if (primary.seen)      setSeenItems(primary.seen as any[]);
+
+      // Si l'onglet prioritaire est vide, basculer sur le premier onglet visible avec du contenu
+      const primaryItems = primary.loved ?? primary.liked ?? primary.watchlist ?? primary.seen ?? [];
+      if ((primaryItems as any[]).length === 0) {
+        const fallbackOrder: ActiveTab[] = ["liked", "watchlist", "seen", "loved", "disliked"];
+        const fallback = fallbackOrder.find(t => visibleTabs.includes(t) && t !== primaryTab);
+        if (fallback) setActiveTab(fallback);
+      }
+
       setLoading(false);
 
       // ── Passe 2 : reste en arrière-plan ──
