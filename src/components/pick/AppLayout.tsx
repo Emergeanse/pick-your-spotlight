@@ -9,8 +9,8 @@ import BrandHeader from "@/components/pick/BrandHeader";
  */
 const AppLayout = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
-  // HomeScreen (/app) et le TonightPickOverlay gèrent leur propre header
-  const showHeader = location.pathname !== "/app";
+  // HomeScreen (/app) et Profile (/app/profile) gèrent leur propre header
+  const showHeader = location.pathname !== "/app" && location.pathname !== "/app/profile";
 
   return (
     <div className="md:fixed md:inset-0 md:flex md:items-center md:justify-center md:bg-background">
