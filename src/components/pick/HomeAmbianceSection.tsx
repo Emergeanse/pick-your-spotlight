@@ -153,10 +153,10 @@ const HomeAmbianceSection = ({ onPickAmbiance, activeAmbiance }: Props) => {
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.05, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-          className={`relative mt-2.5 ${PREMIUM_SURFACE} p-2.5 border-4`}
+          className={`relative mt-2.5 ${PREMIUM_SURFACE} p-2 border-4`}
         >
-          <div className="flex gap-3 items-stretch">
-            <div className="relative flex-shrink-0 w-[56px] h-[84px] rounded-lg overflow-hidden border border-white/[0.06] shadow-[0_14px_36px_-14px_rgba(0,0,0,0.8)]">
+          <div className="flex gap-2.5 items-stretch">
+            <div className="relative flex-shrink-0 w-[44px] h-[66px] rounded-lg overflow-hidden border border-white/[0.06] shadow-[0_14px_36px_-14px_rgba(0,0,0,0.8)]">
               {lastReco.posterPath ? (
                 <img
                   src={`${POSTER_BASE}${lastReco.posterPath}`}
@@ -172,10 +172,10 @@ const HomeAmbianceSection = ({ onPickAmbiance, activeAmbiance }: Props) => {
             <div className="flex-1 min-w-0 flex flex-col justify-between py-0">
               <div>
                 <p className={SECTION_EYEBROW}>Ta dernière séance</p>
-                <p className="mt-0.5 font-serif text-foreground text-[15px] leading-[1.15] tracking-tight line-clamp-1">
+                <p className="mt-0.5 font-serif text-foreground text-[13px] leading-[1.15] tracking-tight line-clamp-1">
                   {lastReco.title}
                 </p>
-                <p className="mt-0.5 text-[10.5px] font-sans text-foreground/50 leading-snug">
+                <p className="mt-0.5 text-[10px] font-sans text-foreground/50 leading-snug">
                   {submitted ? "Merci — j'affine ton goût." : "Comment tu l'as vécu ?"}
                 </p>
               </div>
@@ -221,12 +221,12 @@ const HomeAmbianceSection = ({ onPickAmbiance, activeAmbiance }: Props) => {
           initial={{ opacity: 0, y: 18 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.25, duration: 0.6 }}
-          className={`relative ${PREMIUM_SURFACE} px-3 pt-3 pb-1.5 border-8`}
+          className={`relative ${PREMIUM_SURFACE} px-3 pt-2 pb-1 border-8`}
         >
           <div className="flex items-start justify-between gap-3">
             <div className="flex-1 min-w-0">
               <p className={SECTION_EYEBROW}>Cercle Pick</p>
-              <h3 className="mt-0.5 font-serif text-foreground text-[15px] leading-tight">
+              <h3 className="mt-0.5 font-serif text-foreground text-[13px] leading-tight">
                 Vos amis regardent
               </h3>
               <button
