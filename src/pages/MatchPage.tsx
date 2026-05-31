@@ -9,6 +9,7 @@ import { getLikedMovies } from "@/lib/liked-movies";
 import { computeMultiVectorProfile } from "@/lib/taste-engine";
 import type { RecommendationMatchData } from "@/lib/recommendation-batch";
 import HazelnutScore from "@/components/pick/HazelnutScore";
+import matchBackground from "@/assets/match-background.png";
 import MovieActionBar from "@/components/pick/MovieActionBar";
 
 type MatchState = "idle" | "listening" | "identifying" | "result" | "error";
@@ -155,7 +156,14 @@ export default function MatchPage() {
   const primaryGenre = movie?.genres?.[0]?.name;
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen bg-background flex flex-col relative overflow-hidden">
+      {/* Background écureuil inspecteur */}
+      <div
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat pointer-events-none"
+        style={{ backgroundImage: `url(${matchBackground})` }}
+      />
+      <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-background/30 pointer-events-none" />
+
       <AnimatePresence mode="wait">
 
         {/* ── État résultat ── */}
@@ -264,7 +272,7 @@ export default function MatchPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="flex-1 flex flex-col justify-center px-6 pt-8 pb-[calc(6rem+env(safe-area-inset-bottom))]"
+            className="relative z-10 flex-1 flex flex-col justify-center px-6 pt-8 pb-[calc(6rem+env(safe-area-inset-bottom))]"
           >
             <h1 className="text-3xl font-serif text-foreground mb-2">Match</h1>
             <p className="text-foreground/50 text-sm font-sans mb-10">
