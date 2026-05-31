@@ -1330,7 +1330,7 @@ const HomeScreen = ({
             className="relative flex items-center gap-2 mb-1"
           >
             <Sparkles className="w-4 h-4 text-primary" />
-            <span className="text-[9px] font-sans font-semibold tracking-[0.15em] uppercase text-primary">
+            <span className="text-[8px] font-sans font-semibold tracking-[0.15em] uppercase text-primary">
               Pick comprend tes envies
             </span>
           </motion.div>
@@ -1359,7 +1359,7 @@ const HomeScreen = ({
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.42, duration: 0.5 }}
-            className="relative mt-2 text-foreground/75 text-[13.5px] leading-snug font-sans max-w-[62%]"
+            className="relative mt-2 text-foreground/75 text-[11px] leading-snug font-sans max-w-[62%]"
           >
             <span className="italic font-bold">
               « Je t’ai préparé une sélection brutale et visuelle ! »
