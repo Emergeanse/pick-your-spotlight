@@ -372,7 +372,7 @@ const Profile = () => {
   }
 
   return (
-    <div className="fixed inset-0 bg-background overflow-y-auto">
+    <div className="fixed inset-0 bg-background overflow-y-auto scrollbar-dark">
       <div className="max-w-lg mx-auto px-5 pt-[calc(1.5rem+env(safe-area-inset-top))] pb-32 space-y-10">
 
         {/* ════════════════════════════════
