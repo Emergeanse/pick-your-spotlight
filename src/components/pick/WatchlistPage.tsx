@@ -152,10 +152,10 @@ const SwipeableCard = ({
         dragElastic={0.3}
         onDragEnd={handleDragEnd}
         style={{ x }}
-        className={`relative flex items-start gap-3 p-3 rounded-xl border transition-colors ${
+        className={`relative flex items-start gap-3 p-3 rounded-xl border backdrop-blur-sm transition-colors ${
           isDisliked
-            ? "bg-card/20 border-border/8 hover:bg-card/30"
-            : "bg-card/40 border-border/10 hover:bg-card/60"
+            ? "bg-white/[0.02] border-white/[0.05] hover:bg-white/[0.05]"
+            : "bg-white/[0.04] border-white/[0.07] hover:bg-white/[0.07]"
         }`}
       >
         <button onClick={onSelect} className="flex items-start gap-3 flex-1 min-w-0 text-left">
@@ -695,7 +695,7 @@ const WatchlistPage = ({ onMovieSelect, tabs: allowedTabs, title, defaultTab }: 
             <div className="shrink-0 w-8 h-8">
               <PickCharacter mood="default" size="sm" animate={false} />
             </div>
-            <div className="px-3.5 py-2.5 rounded-2xl bg-card/60 border border-border/15 flex-1">
+            <div className="px-3.5 py-2.5 rounded-2xl bg-white/[0.06] backdrop-blur-sm border border-white/[0.08] flex-1">
               <p className="text-foreground/60 text-[12px] font-sans leading-relaxed">{bubbleMessage}</p>
             </div>
           </div>
@@ -724,7 +724,7 @@ const WatchlistPage = ({ onMovieSelect, tabs: allowedTabs, title, defaultTab }: 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Rechercher un titre…"
-              className="w-full h-9 pl-9 pr-3 rounded-xl bg-card/40 border border-border/15 text-sm font-sans text-foreground placeholder:text-foreground/25 focus:outline-none focus:border-primary/30 transition-colors"
+              className="w-full h-9 pl-9 pr-3 rounded-xl bg-white/[0.05] backdrop-blur-sm border border-white/[0.08] text-sm font-sans text-foreground placeholder:text-foreground/25 focus:outline-none focus:border-primary/30 transition-colors"
             />
           </div>
 
