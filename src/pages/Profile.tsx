@@ -463,7 +463,7 @@ const Profile = () => {
 
               {/* Niveau de personnalisation */}
               {confidence && (
-                <div className="rounded-2xl bg-card/30 border border-border/8 p-4">
+                <div className="rounded-2xl bg-card/80 backdrop-blur-sm border border-border/15 p-4">
                   <div className="flex items-center gap-2 mb-3">
                     <Sparkles className="w-3.5 h-3.5 text-primary/30" />
                     <span className="text-xs font-sans font-semibold text-foreground/35 uppercase tracking-widest">Niveau de personnalisation</span>
@@ -525,7 +525,7 @@ const Profile = () => {
               {radarData.length >= 3 && (
                 <div>
                   <p className="text-[10px] font-sans font-semibold text-foreground/25 uppercase tracking-widest mb-2">Empreinte cinématographique</p>
-                  <div className="rounded-2xl bg-card/30 border border-border/8 p-2 pt-4">
+                  <div className="rounded-2xl bg-card/80 backdrop-blur-sm border border-border/15 p-2 pt-4">
                     <ResponsiveContainer width="100%" height={230}>
                       <RadarChart data={radarData} cx="50%" cy="50%" outerRadius="72%">
                         <PolarGrid stroke="hsl(var(--foreground) / 0.06)" strokeDasharray="3 3" />
@@ -567,7 +567,7 @@ const Profile = () => {
               <ChevronDown className={`w-3.5 h-3.5 text-foreground/25 transition-transform duration-200 ${showGenres ? "rotate-180" : ""}`} />
             </button>
             <div className={showGenres || genresSelected > 0 ? "" : "hidden"}>
-              <div className={`rounded-2xl bg-card/30 border border-border/8 transition-all ${showGenres ? "p-4" : "px-4 py-3"}`}>
+              <div className={`rounded-2xl bg-card/80 backdrop-blur-sm border border-border/15 transition-all ${showGenres ? "p-4" : "px-4 py-3"}`}>
                 <AnimatePresence initial={false}>
                   {showGenres && (
                     <motion.p key="desc" initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }}
@@ -700,7 +700,7 @@ const Profile = () => {
                 <span className="text-[10px] font-sans font-semibold text-foreground/25 uppercase tracking-widest">Statistiques</span>
                 <ChevronDown className={`w-3.5 h-3.5 text-foreground/25 transition-transform duration-200 ${showStats ? "rotate-180" : ""}`} />
               </button>
-              <div className="rounded-2xl bg-card/30 border border-border/8 overflow-hidden divide-y divide-border/5">
+              <div className="rounded-2xl bg-card/80 backdrop-blur-sm border border-border/15 overflow-hidden divide-y divide-border/5">
                 {[
                   { icon: <Eye className="w-3.5 h-3.5 text-primary/40" />,        label: "Recommandations reçues",   value: totalRecos },
                   { icon: <Heart className="w-3.5 h-3.5 text-destructive/40" />,  label: "Films évalués / likés",    value: likedMovies.length },
@@ -771,7 +771,7 @@ const Profile = () => {
                                   {cat.milestones.map((m) => {
                                     const reached = value >= m.count;
                                     return (
-                                      <div key={m.count} className={`flex flex-col items-center gap-1 p-2 rounded-xl border transition-all ${reached ? "bg-primary/[0.06] border-primary/20 shadow-[0_0_12px_rgba(139,92,246,0.08)]" : "bg-card/20 border-border/5"}`}>
+                                      <div key={m.count} className={`flex flex-col items-center gap-1 p-2 rounded-xl border transition-all ${reached ? "bg-primary/[0.06] border-primary/20 shadow-[0_0_12px_rgba(139,92,246,0.08)]" : "bg-card/70 border-border/15"}`}>
                                         <span className={`text-xl leading-none ${reached ? "" : "grayscale opacity-15"}`}>{m.icon}</span>
                                         <span className={`text-[8px] font-sans text-center leading-tight mt-0.5 ${reached ? "text-foreground/55" : "text-foreground/12"}`}>{reached ? m.label : "???"}</span>
                                         <span className={`text-[7px] font-sans tabular-nums ${reached ? "text-primary/45" : "text-foreground/8"}`}>{m.count}</span>
