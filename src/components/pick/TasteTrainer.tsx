@@ -307,12 +307,12 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
     async (type: string) => {
       if (!currentMovie) return;
 
-      if (type === "like") {
+      if (type === "like" || type === "love" || type === "watchlist") {
         await advanceAfterTrainingInteraction("liked");
         return;
       }
 
-      if (type === "already_seen" || type === "dislike" || type === "unknown") {
+      if (type === "already_seen" || type === "dislike" || type === "unknown" || type === "seen" || type === "not_for_me" || type === "skip") {
         await advanceAfterTrainingInteraction("skipped");
       }
     },
