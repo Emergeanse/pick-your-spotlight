@@ -162,7 +162,7 @@ const GenrePreferences = ({ onCountChange, collapsed = false }: GenrePreferences
   return (
     <div className="space-y-3">
       {visibleGenres.length > 0 && (
-        <div className={`flex flex-wrap gap-2 max-h-[108px] ${collapsed ? "overflow-hidden" : "overflow-y-auto scrollbar-dark"}`}>
+        <div className={`flex flex-wrap gap-2 ${collapsed ? "max-h-[108px] overflow-hidden" : ""}`}>
           {visibleGenres.map((tag, i) => renderChip(tag, i))}
         </div>
       )}
@@ -174,7 +174,7 @@ const GenrePreferences = ({ onCountChange, collapsed = false }: GenrePreferences
               Styles cinématographiques · 1 clic = aimé · 2 clics = exclu
             </p>
           )}
-          <div className={`flex flex-wrap gap-2 max-h-[72px] ${collapsed ? "overflow-hidden" : "overflow-y-auto scrollbar-dark"}`}>
+          <div className={`flex flex-wrap gap-2 ${collapsed ? "max-h-[72px] overflow-hidden" : ""}`}>
             {visibleOrigins.map((tag, i) => renderChip(tag, visibleGenres.length + i))}
           </div>
         </div>
