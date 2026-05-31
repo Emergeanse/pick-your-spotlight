@@ -144,6 +144,7 @@ const Profile = () => {
   const [showConfidenceDetail, setShowConfidenceDetail] = useState(false);
   const [peopleEvaluated, setPeopleEvaluated] = useState(0);
   const [genresSelected, setGenresSelected] = useState(0);
+  const [genresExcluded, setGenresExcluded] = useState(0);
   const [showGenres, setShowGenres] = useState(false);
   const [showStats, setShowStats] = useState(false);
   const [showTrophies, setShowTrophies] = useState(false);
@@ -546,9 +547,11 @@ const Profile = () => {
             <button onClick={() => setShowGenres((v) => !v)} className="w-full flex items-center justify-between mb-2 group">
               <div className="flex items-center gap-2">
                 <span className="text-[10px] font-sans font-semibold text-foreground/25 uppercase tracking-widest">Genres & styles</span>
-                {genresSelected > 0 && (
+                {(genresSelected > 0 || genresExcluded > 0) && (
                   <span className="text-[9px] font-sans px-1.5 py-0.5 rounded-full bg-primary/15 text-primary/70 border border-primary/20">
-                    {genresSelected} sélectionné{genresSelected > 1 ? "s" : ""}
+                    {genresSelected > 0 && `${genresSelected} aimé${genresSelected > 1 ? "s" : ""}`}
+                    {genresSelected > 0 && genresExcluded > 0 && " · "}
+                    {genresExcluded > 0 && <span className="text-destructive/70">{genresExcluded} exclu{genresExcluded > 1 ? "s" : ""}</span>}
                   </span>
                 )}
               </div>
@@ -565,7 +568,7 @@ const Profile = () => {
                     </motion.p>
                   )}
                 </AnimatePresence>
-                <GenrePreferences onCountChange={setGenresSelected} collapsed={!showGenres} />
+                <GenrePreferences onCountChange={setGenresSelected} onRejectedCountChange={setGenresExcluded} collapsed={!showGenres} />
               </div>
             </div>
           </div>

@@ -15,10 +15,11 @@ type BadgeState = "none" | "selected" | "rejected";
 
 interface GenrePreferencesProps {
   onCountChange?: (count: number) => void;
+  onRejectedCountChange?: (count: number) => void;
   collapsed?: boolean;
 }
 
-const GenrePreferences = ({ onCountChange, collapsed = false }: GenrePreferencesProps) => {
+const GenrePreferences = ({ onCountChange, onRejectedCountChange, collapsed = false }: GenrePreferencesProps) => {
   const [tags, setTags] = useState<PreferenceTag[]>([]);
   const [states, setStates] = useState<Map<string, BadgeState>>(new Map());
   const [loading, setLoading] = useState(true);
@@ -52,6 +53,7 @@ const GenrePreferences = ({ onCountChange, collapsed = false }: GenrePreferences
 
         setStates(initial);
         onCountChange?.(countSelected(initial));
+        onRejectedCountChange?.([...initial.values()].filter(s => s === "rejected").length);
       } finally {
         setLoading(false);
       }
@@ -76,6 +78,7 @@ const GenrePreferences = ({ onCountChange, collapsed = false }: GenrePreferences
         if (next === "none") m.delete(tag.key);
         else m.set(tag.key, next);
         onCountChange?.(countSelected(m));
+        onRejectedCountChange?.([...m.values()].filter(s => s === "rejected").length);
         return m;
       });
       setPending((prev) => new Set(prev).add(tag.key));
