@@ -16,7 +16,7 @@ const MyCinema = () => {
           onMovieSelect={handleMovieSelect}
           tabs={["liked", "loved", "seen", "disliked"]}
           title="Ma Bibliothèque"
-          defaultTab="loved"
+          defaultTab="liked"
         />
       </div>
     </div>
