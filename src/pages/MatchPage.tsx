@@ -11,6 +11,7 @@ import type { RecommendationMatchData } from "@/lib/recommendation-batch";
 import HazelnutScore from "@/components/pick/HazelnutScore";
 import matchBackground from "@/assets/match-background.png";
 import MovieActionBar from "@/components/pick/MovieActionBar";
+import FlipCardDetail from "@/components/pick/FlipCardDetail";
 
 type MatchState = "idle" | "listening" | "identifying" | "result" | "error";
 
@@ -23,6 +24,7 @@ export default function MatchPage() {
   const [providers, setProviders] = useState<{ name: string; logo_path: string }[]>([]);
   const [errorMsg, setErrorMsg] = useState("");
   const [excludedIds, setExcludedIds] = useState<number[]>([]);
+  const [detailOpen, setDetailOpen] = useState(false);
 
   const recognitionRef = useRef<any>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -196,11 +198,13 @@ export default function MatchPage() {
             {/* Poster */}
             <div className="relative z-10 flex justify-center mt-4">
               {movie.poster_path && (
-                <img
-                  src={getPosterUrl(movie.poster_path, "w500") || ""}
-                  alt={getDisplayTitle(movie)}
-                  className="w-36 h-52 rounded-2xl object-cover shadow-[0_30px_60px_-15px_rgba(0,0,0,0.8)] border border-white/10"
-                />
+                <button onClick={() => setDetailOpen(true)} className="active:scale-95 transition-transform">
+                  <img
+                    src={getPosterUrl(movie.poster_path, "w500") || ""}
+                    alt={getDisplayTitle(movie)}
+                    className="w-36 h-52 rounded-2xl object-cover shadow-[0_30px_60px_-15px_rgba(0,0,0,0.8)] border border-white/10"
+                  />
+                </button>
               )}
             </div>
 
@@ -226,25 +230,29 @@ export default function MatchPage() {
               </div>
 
               {/* Titre */}
-              <h2 className="font-serif text-foreground text-[38px] leading-tight tracking-tight mb-4">
-                {getDisplayTitle(movie)}
-              </h2>
+              <button onClick={() => setDetailOpen(true)} className="text-left w-full mb-4 active:opacity-70 transition-opacity">
+                <h2 className="font-serif text-foreground text-[38px] leading-tight tracking-tight">
+                  {getDisplayTitle(movie)}
+                </h2>
+              </button>
 
               {/* Headline movie-match */}
               {matchData?.headline && (
-                <div className="flex items-start gap-3 mb-5">
+                <button onClick={() => setDetailOpen(true)} className="w-full text-left flex items-start gap-3 mb-5 active:opacity-70 transition-opacity">
                   <div className="w-1 self-stretch min-h-[36px] bg-primary rounded-full shrink-0" />
                   <p className="text-foreground/80 text-[14px] italic font-sans leading-relaxed">
                     {matchData.headline}
                   </p>
-                </div>
+                </button>
               )}
 
               {/* Why it matches */}
               {matchData?.whyItMatches && (
-                <p className="text-foreground/60 text-[13px] font-sans leading-relaxed mb-5">
-                  {matchData.whyItMatches}
-                </p>
+                <button onClick={() => setDetailOpen(true)} className="w-full text-left mb-5 active:opacity-70 transition-opacity">
+                  <p className="text-foreground/60 text-[13px] font-sans leading-relaxed">
+                    {matchData.whyItMatches}
+                  </p>
+                </button>
               )}
 
               {/* Actions */}
@@ -374,6 +382,27 @@ export default function MatchPage() {
         )}
 
       </AnimatePresence>
+
+      {movie && (
+        <FlipCardDetail
+          item={movie}
+          type="movie"
+          isOpen={detailOpen}
+          onClose={() => setDetailOpen(false)}
+          recommendationTexts={matchData ? {
+            confidence: matchData.matchScore ?? (matchData as any).score ?? null,
+            headline: matchData.headline ?? null,
+            whyItMatches: matchData.whyItMatches ?? null,
+            detailedExplanation: matchData.detailedExplanation ?? null,
+            emotionalJourney: matchData.emotionalJourney ?? null,
+            perfectFor: matchData.perfectFor ?? null,
+            funFact: matchData.funFact ?? null,
+            matchingReasons: matchData.matchingReasons ?? null,
+            similarLikedMovies: matchData.similarLikedMovies ?? null,
+            pickNote: matchData.pickNote ?? null,
+          } : null}
+        />
+      )}
     </div>
   );
 }
