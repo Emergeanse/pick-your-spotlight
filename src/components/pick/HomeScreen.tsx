@@ -36,6 +36,7 @@ import TonightPickOverlay from "./TonightPickOverlay";
 import FlipCardDetail from "./FlipCardDetail";
 import HomeAmbianceSection, { type AmbianceMood } from "./HomeAmbianceSection";
 import homeBackground from "@/assets/home-background.png";
+import loadingBackground from "@/assets/loading-background.png";
 
 interface HomeScreenProps {
   onStart: () => void;
@@ -1538,7 +1539,8 @@ const HomeScreen = ({
             transition={{ duration: 0.3 }}
             className="absolute inset-0 z-30 flex flex-col items-center justify-center"
           >
-            <div className="absolute inset-0 bg-background/90 backdrop-blur-md" />
+            <div className="absolute inset-0 bg-cover bg-center bg-no-repeat" style={{ backgroundImage: `url(${loadingBackground})` }} />
+            <div className="absolute inset-0 bg-gradient-to-t from-background via-background/70 to-background/20" />
             <div className="relative z-10 flex flex-col items-center gap-6 w-full max-w-sm px-6">
               <PickCharacter mood="think" size="md" animate />
               <div className="w-full max-h-48 overflow-y-auto flex flex-col gap-1.5 scroll-smooth">
