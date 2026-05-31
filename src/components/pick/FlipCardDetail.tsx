@@ -158,7 +158,7 @@ const FlipCardDetail = ({
             </button>
           </div>
 
-          <div className="flex-1 overflow-y-auto overscroll-contain pb-[calc(2rem+env(safe-area-inset-bottom))]">
+          <div className="flex-1 overflow-y-auto overscroll-contain scrollbar-dark pb-[calc(2rem+env(safe-area-inset-bottom))]">
             {loading ? (
               <div className="flex items-center justify-center py-32">
                 <Loader2 className="h-7 w-7 animate-spin text-primary/40" />
