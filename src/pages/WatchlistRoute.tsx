@@ -12,12 +12,15 @@ const WatchlistRoute = () => {
 
   return (
     <div className="fixed inset-0 bg-background">
-      {/* Image visible en haut, fondue vers le bas */}
+      {/* Image visible en haut, fondue très progressivement */}
       <div
-        className="absolute inset-x-0 top-0 h-72 bg-cover bg-top bg-no-repeat pointer-events-none"
+        className="absolute inset-0 bg-cover bg-top bg-no-repeat pointer-events-none opacity-40"
         style={{ backgroundImage: `url(${watchlistBackground})` }}
       />
-      <div className="absolute inset-x-0 top-0 h-72 bg-gradient-to-b from-transparent via-background/60 to-background pointer-events-none" />
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{ background: "linear-gradient(to bottom, transparent 0%, transparent 20%, hsl(var(--background)/0.5) 50%, hsl(var(--background)/0.85) 75%, hsl(var(--background)) 100%)" }}
+      />
       <div className="h-full pt-[calc(4rem+env(safe-area-inset-top))] pb-[calc(3.5rem+env(safe-area-inset-bottom))] relative">
         <WatchlistPage
           onMovieSelect={handleMovieSelect}
