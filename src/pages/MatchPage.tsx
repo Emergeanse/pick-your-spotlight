@@ -267,7 +267,7 @@ export default function MatchPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="flex-1 flex flex-col justify-center px-6 pt-[calc(2rem+env(safe-area-inset-top))] pb-[calc(6rem+env(safe-area-inset-bottom))]"
+            className="flex-1 flex flex-col justify-center px-6 pt-8 pb-[calc(6rem+env(safe-area-inset-bottom))]"
           >
             <h1 className="text-3xl font-serif text-foreground mb-2">Match</h1>
             <p className="text-foreground/50 text-sm font-sans mb-10">
