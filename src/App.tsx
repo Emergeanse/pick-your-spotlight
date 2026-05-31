@@ -19,6 +19,7 @@ import NotFound from "./pages/NotFound.tsx";
 import WatchlistPageRoute from "./pages/WatchlistRoute.tsx";
 import Friends from "./pages/Friends.tsx";
 import PickTogether from "./pages/PickTogether.tsx";
+import MatchPage from "./pages/MatchPage.tsx";
 import JoinSession from "./pages/JoinSession.tsx";
 import Admin from "./pages/Admin.tsx";
 import PlanSession from "./pages/PlanSession.tsx";
@@ -63,7 +64,8 @@ const App = () => (
             <Route path="/app/my-cinema" element={<ProtectedRoute><AppLayout><MyCinema /></AppLayout></ProtectedRoute>} />
             <Route path="/app/watchlist" element={<ProtectedRoute><AppLayout><WatchlistPageRoute /></AppLayout></ProtectedRoute>} />
             <Route path="/app/friends" element={<ProtectedRoute><AppLayout><Friends /></AppLayout></ProtectedRoute>} />
-            <Route path="/app/pick-together" element={<ProtectedRoute><AppLayout><PickTogether /></AppLayout></ProtectedRoute>} />
+            <Route path="/app/pick-together" element={<ProtectedRoute><AppLayout><MatchPage /></AppLayout></ProtectedRoute>} />
+            <Route path="/app/pick-together-group" element={<ProtectedRoute><AppLayout><PickTogether /></AppLayout></ProtectedRoute>} />
             <Route path="/app/pick-plus" element={<ProtectedRoute><AppLayout><PickPlusPage /></AppLayout></ProtectedRoute>} />
             <Route path="/app/plan" element={<ProtectedRoute><AppLayout><PlanSession /></AppLayout></ProtectedRoute>} />
             <Route path="/app/history" element={<ProtectedRoute><AppLayout><History /></AppLayout></ProtectedRoute>} />
