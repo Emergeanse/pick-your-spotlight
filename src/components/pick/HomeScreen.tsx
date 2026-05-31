@@ -1379,7 +1379,7 @@ const HomeScreen = ({
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.55, duration: 0.5 }}
-            className="relative mt-16"
+            className="relative mt-16 flex justify-center"
           >
             <motion.button
               data-tour="pick-ce-soir"
@@ -1491,7 +1491,7 @@ const HomeScreen = ({
 
         </section>
 
-        <div className="mt-[44px]">
+        <div className="mt-4">
           <HomeAmbianceSection
             activeAmbiance={activeAmbiance}
             onPickAmbiance={(mood) => {
