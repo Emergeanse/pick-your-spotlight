@@ -361,12 +361,23 @@ const WatchlistPage = ({ onMovieSelect, tabs: allowedTabs, title, defaultTab }: 
       if (primary.watchlist) setWatchlistItems(primary.watchlist as any[]);
       if (primary.seen)      setSeenItems(primary.seen as any[]);
 
-      // Si l'onglet prioritaire est vide, basculer sur le premier onglet visible avec du contenu
+      // Si l'onglet prioritaire est vide, charger le fallback AVANT d'afficher
       const primaryItems = primary.loved ?? primary.liked ?? primary.watchlist ?? primary.seen ?? [];
       if ((primaryItems as any[]).length === 0) {
-        const fallbackOrder: ActiveTab[] = ["liked", "watchlist", "seen", "loved", "disliked"];
+        const fallbackOrder: ActiveTab[] = ["liked", "watchlist", "seen", "disliked"];
         const fallback = fallbackOrder.find(t => visibleTabs.includes(t) && t !== primaryTab);
-        if (fallback) setActiveTab(fallback);
+        if (fallback) {
+          if (fallback === "liked" && needs("liked")) {
+            const likedFallback = (await listFeedbackByType("like")).map((r: any) => mapCatalogRow(r, "like")).filter(Boolean) as any[];
+            setLikedItems(likedFallback);
+          } else if (fallback === "watchlist" && needs("watchlist")) {
+            setWatchlistItems(await getWatchlist() as any[]);
+          } else if (fallback === "seen" && needs("seen")) {
+            const seenFallback = (await listFeedbackByType("seen")).map((r: any) => mapCatalogRow(r, "seen")).filter(Boolean) as any[];
+            setSeenItems(seenFallback);
+          }
+          setActiveTab(fallback);
+        }
       }
 
       setLoading(false);
