@@ -643,64 +643,58 @@ const WatchlistPage = ({ onMovieSelect, tabs: allowedTabs, title, defaultTab }: 
           )}
         </motion.div>
 
-        {/* Tab bar — scrollable */}
+        {/* Tab bar + bubble sur la même ligne */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.05 }}
-          className="flex gap-1 overflow-x-auto scrollbar-hide -mx-1 px-1"
+          className="flex items-center gap-2"
         >
-          {TABS.map((tab) => {
-            const count = itemsByTab[tab].length;
-            const cfg = TAB_CONFIG[tab];
-            const active = activeTab === tab;
-            return (
-              <button
-                key={tab}
-                onClick={() => switchTab(tab)}
-                className={`shrink-0 flex items-center gap-1 px-2.5 py-2 rounded-xl text-[12px] font-sans font-medium transition-all border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 ${
-                  active
-                    ? "bg-white/[0.08] backdrop-blur-sm text-foreground border-white/[0.12]"
-                    : "text-foreground/40 border-transparent hover:text-foreground/70 hover:bg-white/[0.06]"
-                }`}
-                aria-pressed={active}
-              >
-                <span className={active ? cfg.color : ""}>{cfg.icon}</span>
-                <span>{cfg.label}</span>
-                {count > 0 && (
-                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium tabular-nums ${
-                    active ? "bg-primary/15 text-primary/80" : "bg-foreground/5 text-foreground/35"
-                  }`}>
-                    {count}
-                  </span>
-                )}
-              </button>
-            );
-          })}
+          <div className="flex gap-1 overflow-x-auto scrollbar-hide -mx-1 px-1 shrink-0">
+            {TABS.map((tab) => {
+              const count = itemsByTab[tab].length;
+              const cfg = TAB_CONFIG[tab];
+              const active = activeTab === tab;
+              return (
+                <button
+                  key={tab}
+                  onClick={() => switchTab(tab)}
+                  className={`shrink-0 flex items-center gap-1 px-2.5 py-2 rounded-xl text-[12px] font-sans font-medium transition-all border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 ${
+                    active
+                      ? "bg-white/[0.08] backdrop-blur-sm text-foreground border-white/[0.12]"
+                      : "text-foreground/40 border-transparent hover:text-foreground/70 hover:bg-white/[0.06]"
+                  }`}
+                  aria-pressed={active}
+                >
+                  <span className={active ? cfg.color : ""}>{cfg.icon}</span>
+                  <span>{cfg.label}</span>
+                  {count > 0 && (
+                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium tabular-nums ${
+                      active ? "bg-primary/15 text-primary/80" : "bg-foreground/5 text-foreground/35"
+                    }`}>
+                      {count}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+
+          {currentItems.length > 0 && (
+            <motion.p
+              key={activeTab}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.1 }}
+              className="text-foreground/45 text-[11px] font-sans leading-tight min-w-0 truncate"
+            >
+              {bubbleMessage}
+            </motion.p>
+          )}
         </motion.div>
       </div>
 
       <div className="h-4" />
-
-      {/* Pick bubble */}
-      {currentItems.length > 0 && (
-        <motion.div
-          initial={{ opacity: 0, y: 6 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="mb-4"
-          key={activeTab}
-        >
-          <div className="flex items-start gap-2.5 mb-1.5">
-            <div className="shrink-0 w-8 h-8">
-              <PickCharacter mood="default" size="sm" animate={false} />
-            </div>
-            <div className="px-3.5 py-2.5 rounded-2xl bg-white/[0.06] backdrop-blur-sm border border-white/[0.08] flex-1">
-              <p className="text-foreground/60 text-[12px] font-sans leading-relaxed">{bubbleMessage}</p>
-            </div>
-          </div>
-        </motion.div>
-      )}
 
       {/* Filters */}
       {currentItems.length > 0 && (
