@@ -159,8 +159,8 @@ export default function MatchPage() {
     <div className="min-h-screen bg-background flex flex-col relative overflow-hidden">
       {/* Background écureuil inspecteur */}
       <div
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat pointer-events-none"
-        style={{ backgroundImage: `url(${matchBackground})` }}
+        className="absolute inset-0 bg-cover bg-no-repeat pointer-events-none"
+        style={{ backgroundImage: `url(${matchBackground})`, backgroundPosition: "center 20%" }}
       />
       <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-background/30 pointer-events-none" />
 
