@@ -25,7 +25,7 @@ const WatchlistRoute = () => {
         <WatchlistPage
           onMovieSelect={handleMovieSelect}
           tabs={["watchlist"]}
-          title="À voir"
+          title="Ici c'est tes pépites !"
         />
       </div>
     </div>
