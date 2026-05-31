@@ -10,7 +10,7 @@ import BrandHeader from "@/components/pick/BrandHeader";
 const AppLayout = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
   // Ces pages gèrent leur propre header — pas besoin du BrandHeader global
-  const PAGES_WITH_OWN_HEADER = ["/app", "/app/profile", "/app/watchlist", "/app/my-cinema"];
+  const PAGES_WITH_OWN_HEADER = ["/app", "/app/profile", "/app/watchlist", "/app/my-cinema", "/app/pick-together"];
   const showHeader = !PAGES_WITH_OWN_HEADER.includes(location.pathname);
 
   return (
