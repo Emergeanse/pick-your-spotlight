@@ -1379,7 +1379,7 @@ const HomeScreen = ({
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.55, duration: 0.5 }}
-            className="relative mt-3"
+            className="relative mt-10"
           >
             <motion.button
               data-tour="pick-ce-soir"
@@ -1402,7 +1402,7 @@ const HomeScreen = ({
             transition={{ delay: 0.7, duration: 0.55 }}
             whileTap={{ scale: 0.985 }}
             onClick={onOpenChat}
-            className="relative mt-4 w-full flex items-center py-2 px-2.5 pr-4 text-left transition-all gap-[16px] rounded-2xl border border-white/10 bg-white/[0.06] hover:bg-white/[0.10] hover:border-white/20"
+            className="relative mt-4 w-full flex items-center py-1.5 px-2.5 pr-4 text-left transition-all gap-[16px] rounded-2xl border border-white/10 bg-white/[0.06] hover:bg-white/[0.10] hover:border-white/20"
           >
             <span className="relative flex-shrink-0">
               <span className="absolute inset-0 rounded-full bg-primary/20 blur-md animate-subtle-pulse" />
@@ -1440,7 +1440,7 @@ const HomeScreen = ({
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.8, duration: 0.5 }}
-            className="mt-4 w-full rounded-2xl border border-white/10 bg-white/[0.06] hover:bg-white/[0.10] hover:border-white/20 transition-all py-2 px-2.5"
+            className="mt-4 w-full rounded-2xl border border-white/10 bg-white/[0.06] hover:bg-white/[0.10] hover:border-white/20 transition-all py-1.5 px-2.5"
           >
             <div className="flex items-baseline justify-between mb-1.5 px-0.5">
               <h3 className="font-serif text-foreground text-[13px] leading-tight">
