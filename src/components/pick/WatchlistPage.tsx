@@ -699,12 +699,6 @@ const WatchlistPage = ({ onMovieSelect, tabs: allowedTabs, title, defaultTab }: 
               <p className="text-foreground/60 text-[12px] font-sans leading-relaxed">{bubbleMessage}</p>
             </div>
           </div>
-          {totalWatchTime > 0 && activeTab === "watchlist" && (
-            <div className="flex items-center gap-1.5 ml-10 text-foreground/25 text-[11px] font-sans">
-              <Timer className="w-3 h-3" />
-              <span>{formatTime(totalWatchTime)} de contenu dans ta liste</span>
-            </div>
-          )}
         </motion.div>
       )}
 
