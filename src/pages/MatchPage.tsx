@@ -9,7 +9,6 @@ import { getLikedMovies } from "@/lib/liked-movies";
 import { computeMultiVectorProfile } from "@/lib/taste-engine";
 import type { RecommendationMatchData } from "@/lib/recommendation-batch";
 import MovieActionBar from "@/components/pick/MovieActionBar";
-import BrandHeader from "@/components/pick/BrandHeader";
 
 type MatchState = "idle" | "listening" | "identifying" | "result" | "error";
 
@@ -156,8 +155,6 @@ export default function MatchPage() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      <BrandHeader />
-
       <AnimatePresence mode="wait">
 
         {/* ── État résultat ── */}
@@ -270,10 +267,10 @@ export default function MatchPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="flex-1 flex flex-col px-6 pt-4 pb-[calc(6rem+env(safe-area-inset-bottom))]"
+            className="flex-1 flex flex-col justify-center px-6 pt-[calc(2rem+env(safe-area-inset-top))] pb-[calc(6rem+env(safe-area-inset-bottom))]"
           >
-            <h1 className="text-2xl font-serif text-foreground mb-1">Trouve un film</h1>
-            <p className="text-foreground/50 text-sm font-sans mb-8">
+            <h1 className="text-3xl font-serif text-foreground mb-2">Match</h1>
+            <p className="text-foreground/50 text-sm font-sans mb-10">
               Nomme-le, décris-le, parle ou montre son affiche
             </p>
 
