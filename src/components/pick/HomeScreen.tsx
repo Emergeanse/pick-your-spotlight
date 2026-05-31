@@ -1542,7 +1542,6 @@ const HomeScreen = ({
             <div className="absolute inset-0 bg-cover bg-center bg-no-repeat" style={{ backgroundImage: `url(${loadingBackground})` }} />
             <div className="absolute inset-0 bg-gradient-to-t from-background via-background/70 to-background/20" />
             <div className="relative z-10 flex flex-col items-center gap-6 w-full max-w-sm px-6">
-              <PickCharacter mood="think" size="md" animate />
               <div className="w-full max-h-48 overflow-y-auto scrollbar-dark flex flex-col gap-1.5 scroll-smooth">
                 <AnimatePresence initial={false}>
                   {loadingLog.map((line, i) => (
@@ -1560,6 +1559,7 @@ const HomeScreen = ({
                 </AnimatePresence>
                 <div ref={loadingLogEndRef} />
               </div>
+              <PickCharacter mood="think" size="md" animate />
             </div>
           </motion.div>
         )}
