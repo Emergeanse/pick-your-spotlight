@@ -23,6 +23,7 @@ import TasteTrainer from "@/components/pick/TasteTrainer";
 import GenrePreferences from "@/components/pick/GenrePreferences";
 import CinemaAvatar from "@/components/pick/CinemaAvatar";
 import { RadarChart, PolarGrid, PolarAngleAxis, Radar, ResponsiveContainer } from "recharts";
+import profileBackground from "@/assets/profile-background.png";
 
 const TROPHY_CATEGORIES = [
   {
@@ -374,6 +375,14 @@ const Profile = () => {
 
   return (
     <div className="fixed inset-0 bg-background overflow-y-auto scrollbar-dark">
+      <div
+        className="absolute inset-x-0 top-0 h-[80%] bg-cover bg-top bg-no-repeat pointer-events-none"
+        style={{ backgroundImage: `url(${profileBackground})`, maskImage: "linear-gradient(to bottom, black 60%, transparent 100%)", WebkitMaskImage: "linear-gradient(to bottom, black 60%, transparent 100%)", opacity: 0.4 }}
+      />
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{ background: "linear-gradient(to bottom, transparent 0%, hsl(var(--background)/0.3) 60%, hsl(var(--background)/0.9) 85%, hsl(var(--background)) 100%)" }}
+      />
       <div className="max-w-lg mx-auto px-5 pt-[calc(1.5rem+env(safe-area-inset-top))] pb-32 space-y-10">
 
         {/* ════════════════════════════════
