@@ -672,24 +672,7 @@ const Profile = () => {
         </section>
 
         {/* ════════════════════════════════
-            4. COMPTE
-        ════════════════════════════════ */}
-        <section>
-          <h2 className="text-sm font-sans font-semibold text-foreground/35 uppercase tracking-widest mb-3">Compte</h2>
-          <div className="flex flex-col gap-1 border-t border-border/5 pt-3">
-            {isAdmin && (
-              <Button variant="ghost" onClick={() => navigate("/admin")} className="justify-start text-primary/50 hover:text-primary text-xs font-sans gap-2 h-10">
-                <Shield className="w-3.5 h-3.5" /> Administration
-              </Button>
-            )}
-            <Button variant="ghost" onClick={async () => { await signOut(); navigate("/"); }} className="justify-start text-foreground/30 hover:text-foreground text-xs font-sans gap-2 h-10">
-              <LogOut className="w-3.5 h-3.5" /> Déconnexion
-            </Button>
-          </div>
-        </section>
-
-        {/* ════════════════════════════════
-            5. STATISTIQUES & TROPHÉES
+            4. STATISTIQUES & TROPHÉES
         ════════════════════════════════ */}
         {!cinemaLoading && (
           <section className="space-y-5">
@@ -797,6 +780,23 @@ const Profile = () => {
 
           </section>
         )}
+
+        {/* ════════════════════════════════
+            5. COMPTE
+        ════════════════════════════════ */}
+        <section>
+          <h2 className="text-sm font-sans font-semibold text-foreground/35 uppercase tracking-widest mb-3">Compte</h2>
+          <div className="flex flex-col gap-1 border-t border-border/5 pt-3">
+            {isAdmin && (
+              <Button variant="ghost" onClick={() => navigate("/admin")} className="justify-start text-primary/50 hover:text-primary text-xs font-sans gap-2 h-10">
+                <Shield className="w-3.5 h-3.5" /> Administration
+              </Button>
+            )}
+            <Button variant="ghost" onClick={async () => { await signOut(); navigate("/"); }} className="justify-start text-foreground/30 hover:text-foreground text-xs font-sans gap-2 h-10">
+              <LogOut className="w-3.5 h-3.5" /> Déconnexion
+            </Button>
+          </div>
+        </section>
 
       </div>
 
