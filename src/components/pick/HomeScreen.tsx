@@ -621,6 +621,17 @@ const HomeScreen = ({
   }, [user]);
 
   useEffect(() => {
+    const handler = () => {
+      setTonightPick(null);
+      setTonightLoading(false);
+      setFlipDetailMovie(null);
+      setActiveAmbiance(null);
+    };
+    window.addEventListener("home-reset", handler);
+    return () => window.removeEventListener("home-reset", handler);
+  }, []);
+
+  useEffect(() => {
     getTrendingMovies(20)
       .then((movies: Movie[]) => {
         const bgs = movies
