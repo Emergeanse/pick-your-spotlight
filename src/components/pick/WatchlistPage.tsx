@@ -395,9 +395,10 @@ const WatchlistPage = ({ onMovieSelect, tabs: allowedTabs, title, defaultTab }: 
           : Promise.resolve({ data: [] }),
       ]);
 
-      const likedList    = (likedRaw  as any[]).map((r: any) => mapCatalogRow(r, "like")).filter(Boolean) as any[];
-      const lovedList    = (lovedRaw  as any[]).map((r: any) => mapCatalogRow(r, "love")).filter(Boolean) as any[];
-      const seenList     = (seenRaw   as any[]).map((r: any) => mapCatalogRow(r, "seen")).filter(Boolean) as any[];
+      // Si primary contient déjà les données mappées, on les réutilise directement
+      const likedList    = primary.liked    ? (primary.liked    as any[]) : (likedRaw  as any[]).map((r: any) => mapCatalogRow(r, "like")).filter(Boolean) as any[];
+      const lovedList    = primary.loved    ? (primary.loved    as any[]) : (lovedRaw  as any[]).map((r: any) => mapCatalogRow(r, "love")).filter(Boolean) as any[];
+      const seenList     = primary.seen     ? (primary.seen     as any[]) : (seenRaw   as any[]).map((r: any) => mapCatalogRow(r, "seen")).filter(Boolean) as any[];
       const seenTmdbIds  = new Set<number>();
       const dislikedList = ((rejectedRaw as any[]) || [])
         .map((r: any) => mapCatalogRow(r)).filter(Boolean)
