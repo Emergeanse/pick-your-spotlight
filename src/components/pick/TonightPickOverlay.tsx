@@ -262,7 +262,7 @@ const TonightPickOverlay = ({
           </div>
 
           {/* Bottom-anchored info block */}
-          <div className="relative z-10 mt-auto px-7 pb-[calc(5rem+env(safe-area-inset-bottom))]">
+          <div className="relative z-10 mt-auto px-7 pb-[calc(5rem+env(safe-area-inset-bottom))] overflow-y-auto scrollbar-hide max-h-[65vh]">
             {/* Chips: year, genre, first streaming platform */}
             <div className="flex gap-2 mb-4 flex-wrap">
               {year && (
