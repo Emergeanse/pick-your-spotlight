@@ -343,67 +343,61 @@ const WatchlistPage = ({ onMovieSelect, tabs: allowedTabs, title, defaultTab }: 
     setLoading(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
-
       const needs = (tab: ActiveTab) => visibleTabs.includes(tab);
+      const primaryTab = defaultTab ?? visibleTabs[0];
 
+      // ── Passe 1 : onglet actif uniquement ──
+      const loadPrimary = async () => {
+        if (primaryTab === "loved"    && needs("loved"))    return { loved:    (await listFeedbackByType("love")).map((r: any) => mapCatalogRow(r, "love")).filter(Boolean) };
+        if (primaryTab === "liked"    && needs("liked"))    return { liked:    (await listFeedbackByType("like")).map((r: any) => mapCatalogRow(r, "like")).filter(Boolean) };
+        if (primaryTab === "watchlist"&& needs("watchlist"))return { watchlist: await getWatchlist() };
+        if (primaryTab === "seen"     && needs("seen"))     return { seen:     (await listFeedbackByType("seen")).map((r: any) => mapCatalogRow(r, "seen")).filter(Boolean) };
+        return {};
+      };
+
+      const primary = await loadPrimary();
+      if (primary.loved)     setLovedItems(primary.loved as any[]);
+      if (primary.liked)     setLikedItems(primary.liked as any[]);
+      if (primary.watchlist) setWatchlistItems(primary.watchlist as any[]);
+      if (primary.seen)      setSeenItems(primary.seen as any[]);
+      setLoading(false);
+
+      // ── Passe 2 : reste en arrière-plan ──
       const [watchlist, likedRaw, lovedRaw, seenRaw, { data: rejectedRaw }] = await Promise.all([
-        needs("watchlist") ? getWatchlist() : Promise.resolve([]),
-        needs("liked")     ? listFeedbackByType("like")  : Promise.resolve([]),
-        needs("loved")     ? listFeedbackByType("love")  : Promise.resolve([]),
-        needs("seen")      ? listFeedbackByType("seen")  : Promise.resolve([]),
+        needs("watchlist") && !primary.watchlist ? getWatchlist()                  : Promise.resolve(primary.watchlist ?? []),
+        needs("liked")     && !primary.liked     ? listFeedbackByType("like")      : Promise.resolve(primary.liked    ?? []),
+        needs("loved")     && !primary.loved     ? listFeedbackByType("love")      : Promise.resolve(primary.loved    ?? []),
+        needs("seen")      && !primary.seen      ? listFeedbackByType("seen")      : Promise.resolve(primary.seen     ?? []),
         needs("disliked") && user
-          ? supabase
-              .from("user_item_feedback")
+          ? supabase.from("user_item_feedback")
               .select("item_id, feedback_type, score, created_at, catalog_items:item_id(id, tmdb_id, title, poster_path, media_type, year, runtime, overview, vote_average)")
-              .eq("user_id", user.id)
-              .in("feedback_type", ["skip", "not_for_me", "dislike"])
-              .order("created_at", { ascending: false })
+              .eq("user_id", user.id).in("feedback_type", ["skip", "not_for_me", "dislike"]).order("created_at", { ascending: false })
           : Promise.resolve({ data: [] }),
       ]);
 
-      const likedList = (likedRaw as any[])
-        .map((row: any) => mapCatalogRow(row, "like"))
-        .filter(Boolean) as any[];
-
-      const lovedList = (lovedRaw as any[])
-        .map((row: any) => mapCatalogRow(row, "love"))
-        .filter(Boolean) as any[];
-
-      const seenList = (seenRaw as any[])
-        .map((row: any) => mapCatalogRow(row, "seen"))
-        .filter(Boolean) as any[];
-
-      // Deduplicate disliked: keep most recent feedback per tmdb_id
-      const seenTmdbIds = new Set<number>();
+      const likedList    = (likedRaw  as any[]).map((r: any) => mapCatalogRow(r, "like")).filter(Boolean) as any[];
+      const lovedList    = (lovedRaw  as any[]).map((r: any) => mapCatalogRow(r, "love")).filter(Boolean) as any[];
+      const seenList     = (seenRaw   as any[]).map((r: any) => mapCatalogRow(r, "seen")).filter(Boolean) as any[];
+      const seenTmdbIds  = new Set<number>();
       const dislikedList = ((rejectedRaw as any[]) || [])
-        .map((row: any) => mapCatalogRow(row))
-        .filter(Boolean)
-        .filter((item: any) => {
-          if (!item?.tmdb_id || seenTmdbIds.has(item.tmdb_id)) return false;
-          seenTmdbIds.add(item.tmdb_id);
-          return true;
-        }) as any[];
+        .map((r: any) => mapCatalogRow(r)).filter(Boolean)
+        .filter((item: any) => { if (!item?.tmdb_id || seenTmdbIds.has(item.tmdb_id)) return false; seenTmdbIds.add(item.tmdb_id); return true; }) as any[];
 
-      setWatchlistItems(watchlist);
+      setWatchlistItems(watchlist as any[]);
       setLikedItems(likedList);
       setLovedItems(lovedList);
       setSeenItems(seenList);
       setDislikedItems(dislikedList);
 
       hydrateMissingPosters([
-        { items: watchlist, setter: setWatchlistItems },
-        { items: likedList, setter: setLikedItems },
-        { items: lovedList, setter: setLovedItems },
-        { items: seenList, setter: setSeenItems },
-        { items: dislikedList, setter: setDislikedItems },
+        { items: watchlist as any[], setter: setWatchlistItems },
+        { items: likedList,          setter: setLikedItems },
+        { items: lovedList,          setter: setLovedItems },
+        { items: seenList,           setter: setSeenItems },
+        { items: dislikedList,       setter: setDislikedItems },
       ]);
     } catch {
-      setWatchlistItems([]);
-      setLikedItems([]);
-      setLovedItems([]);
-      setSeenItems([]);
-      setDislikedItems([]);
-    } finally {
+      setWatchlistItems([]); setLikedItems([]); setLovedItems([]); setSeenItems([]); setDislikedItems([]);
       setLoading(false);
     }
   };
