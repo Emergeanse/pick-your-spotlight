@@ -160,7 +160,7 @@ export default function MatchPage() {
       {/* Background écureuil inspecteur */}
       <div
         className="absolute inset-0 bg-cover bg-no-repeat pointer-events-none"
-        style={{ backgroundImage: `url(${matchBackground})`, backgroundPosition: "center 20%" }}
+        style={{ backgroundImage: `url(${matchBackground})`, backgroundPosition: "center 0%" }}
       />
       <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-background/30 pointer-events-none" />
 
