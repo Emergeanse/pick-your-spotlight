@@ -166,7 +166,7 @@ async function buildMatchContext(options: RecommendationBatchOptions) {
   const user = authData.user;
 
   // computeMultiVectorProfile is cached in memory — second call within ~90s is instant.
-  const [tasteProfile, multiVecProfile, likedMovies, cinematicProfile] = await Promise.all([
+  const [tasteProfile, multiVecProfile, likedMovies, cinematicProfile, profileData] = await Promise.all([
     getUserTasteProfile().catch(() => null),
     user ? computeMultiVectorProfile(user.id).catch(() => null) : Promise.resolve(null),
     user ? getLikedMovies().catch(() => []) : Promise.resolve([]),
@@ -178,6 +178,9 @@ async function buildMatchContext(options: RecommendationBatchOptions) {
           .maybeSingle()
           .then((r) => r.data)
       : Promise.resolve(null),
+    user
+      ? supabase.from("profiles").select("display_name").eq("id", user.id).maybeSingle().then((r) => r.data)
+      : Promise.resolve(null),
   ]);
 
   const enrichedProfile = tasteProfile
@@ -188,8 +191,11 @@ async function buildMatchContext(options: RecommendationBatchOptions) {
       }
     : null;
 
+  const userName = (profileData as any)?.display_name || user?.email?.split("@")[0] || null;
+
   return {
     user,
+    userName,
     userCriteria: options.userCriteria ?? { mood: null, context: null, time: null },
     searchTags: options.searchTags ?? [],
     userTasteVector: multiVecProfile?.stableTasteVector ?? null,
@@ -216,7 +222,7 @@ async function fetchRecommendationTextsForMovie(
         searchTags: context.searchTags,
         cinematicProfile: context.cinematicProfile,
         peoplePreferences: context.peoplePreferences,
-        userName: context.user?.user_metadata?.display_name || context.user?.email?.split("@")[0] || null,
+        userName: context.userName,
         minMatchScore: options.minMatchScore ?? 60,
       },
     });
