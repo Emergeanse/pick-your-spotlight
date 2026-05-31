@@ -11,7 +11,7 @@ const MyCinema = () => {
 
   return (
     <div className="fixed inset-0 bg-background">
-      <div className="h-full pb-[calc(3.5rem+env(safe-area-inset-bottom))]">
+      <div className="h-full pt-[calc(4rem+env(safe-area-inset-top))] pb-[calc(3.5rem+env(safe-area-inset-bottom))]">
         <WatchlistPage
           onMovieSelect={handleMovieSelect}
           tabs={["liked", "loved", "seen", "disliked"]}
