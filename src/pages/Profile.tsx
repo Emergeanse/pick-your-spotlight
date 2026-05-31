@@ -451,107 +451,6 @@ const Profile = () => {
           ) : (
             <div className="space-y-5">
 
-              {/* Statistiques */}
-              <div>
-                <button onClick={() => setShowStats((v) => !v)} className="w-full flex items-center justify-between mb-3 group">
-                  <span className="text-[10px] font-sans font-semibold text-foreground/25 uppercase tracking-widest">Statistiques</span>
-                  <ChevronDown className={`w-3.5 h-3.5 text-foreground/25 transition-transform duration-200 ${showStats ? "rotate-180" : ""}`} />
-                </button>
-                <div className="rounded-2xl bg-card/30 border border-border/8 overflow-hidden divide-y divide-border/5">
-                  {[
-                    { icon: <Eye className="w-3.5 h-3.5 text-primary/40" />,        label: "Recommandations reçues",   value: totalRecos },
-                    { icon: <Heart className="w-3.5 h-3.5 text-destructive/40" />,  label: "Films évalués / likés",    value: likedMovies.length },
-                    { icon: <Bookmark className="w-3.5 h-3.5 text-primary/40" />,   label: "En watchlist",             value: watchlistCount },
-                  ].map((row, i) => (
-                    <div key={i} className="flex items-center justify-between px-4 py-3">
-                      <div className="flex items-center gap-2.5">{row.icon}<span className="text-sm font-sans text-foreground/60">{row.label}</span></div>
-                      <span className="text-sm font-sans font-semibold text-foreground tabular-nums">{row.value}</span>
-                    </div>
-                  ))}
-                  <AnimatePresence initial={false}>
-                    {showStats && (
-                      <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.25, ease: "easeInOut" }}
-                        className="overflow-hidden divide-y divide-border/5">
-                        {[
-                          { icon: <Film className="w-3.5 h-3.5 text-primary/40" />,      label: "Films",                          value: movieVsSeries.movies },
-                          { icon: <Tv className="w-3.5 h-3.5 text-primary/40" />,         label: "Séries",                         value: movieVsSeries.series },
-                          { icon: <Users className="w-3.5 h-3.5 text-primary/40" />,      label: "Acteurs & réalisateurs évalués", value: peopleEvaluated },
-                          { icon: <TrendingUp className="w-3.5 h-3.5 text-primary/40" />, label: "Meilleure série",                value: `${engagement?.bestStreak || 0} d'affilée` },
-                        ].map((row, i) => (
-                          <div key={i} className="flex items-center justify-between px-4 py-3">
-                            <div className="flex items-center gap-2.5">{row.icon}<span className="text-sm font-sans text-foreground/60">{row.label}</span></div>
-                            <span className="text-sm font-sans font-semibold text-foreground tabular-nums">{row.value}</span>
-                          </div>
-                        ))}
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-              </div>
-
-              {/* Trophées */}
-              {(() => {
-                const allUnlocked = TROPHY_CATEGORIES.flatMap((cat) => cat.milestones.filter((m) => (trophyValues[cat.key] ?? 0) >= m.count));
-                const totalUnlocked = allUnlocked.length;
-                const totalMilestones = TROPHY_CATEGORIES.reduce((s, c) => s + c.milestones.length, 0);
-                return (
-                  <>
-                    <button onClick={() => setShowTrophies((v) => !v)} className="w-full flex items-center justify-between group">
-                      <div className="flex items-center gap-2">
-                        <Trophy className="w-3.5 h-3.5 text-primary/30" />
-                        <span className="text-[10px] font-sans font-semibold text-foreground/25 uppercase tracking-widest">Trophées</span>
-                        <span className="text-[10px] font-sans text-primary/40 tabular-nums">{totalUnlocked}/{totalMilestones}</span>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        {!showTrophies && allUnlocked.slice(-5).map((m, i) => <span key={i} className="text-sm">{m.icon}</span>)}
-                        <ChevronDown className={`w-4 h-4 text-foreground/20 transition-transform duration-300 ${showTrophies ? "rotate-180" : ""}`} />
-                      </div>
-                    </button>
-                    <AnimatePresence>
-                      {showTrophies && (
-                        <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }}
-                          exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
-                          className="overflow-hidden mt-3">
-                          <div className="space-y-5">
-                            {TROPHY_CATEGORIES.map((cat) => {
-                              const value = trophyValues[cat.key] ?? 0;
-                              const nextM = cat.milestones.find((m) => value < m.count);
-                              const unlockedCount = cat.milestones.filter((m) => value >= m.count).length;
-                              return (
-                                <div key={cat.key}>
-                                  <div className="flex items-center justify-between mb-2">
-                                    <p className="text-[9px] font-sans text-foreground/20 uppercase tracking-widest">{cat.label}</p>
-                                    <span className="text-[9px] font-sans text-primary/30 tabular-nums">{unlockedCount}/{cat.milestones.length}</span>
-                                  </div>
-                                  <div className="grid grid-cols-4 gap-1.5">
-                                    {cat.milestones.map((m) => {
-                                      const reached = value >= m.count;
-                                      return (
-                                        <div key={m.count} className={`flex flex-col items-center gap-1 p-2 rounded-xl border transition-all ${reached ? "bg-primary/[0.06] border-primary/20 shadow-[0_0_12px_rgba(139,92,246,0.08)]" : "bg-card/20 border-border/5"}`}>
-                                          <span className={`text-xl leading-none ${reached ? "" : "grayscale opacity-15"}`}>{m.icon}</span>
-                                          <span className={`text-[8px] font-sans text-center leading-tight mt-0.5 ${reached ? "text-foreground/55" : "text-foreground/12"}`}>{reached ? m.label : "???"}</span>
-                                          <span className={`text-[7px] font-sans tabular-nums ${reached ? "text-primary/45" : "text-foreground/8"}`}>{m.count}</span>
-                                        </div>
-                                      );
-                                    })}
-                                  </div>
-                                  {nextM && (
-                                    <p className="text-foreground/20 text-[10px] font-sans mt-1.5 text-center">
-                                      Plus que <span className="text-primary/30 tabular-nums">{nextM.count - value}</span> pour « {nextM.label} »
-                                    </p>
-                                  )}
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </>
-                );
-              })()}
-
               {/* Niveau de personnalisation */}
               {confidence && (
                 <div className="rounded-2xl bg-card/30 border border-border/8 p-4">
@@ -776,6 +675,116 @@ const Profile = () => {
             </Button>
           </div>
         </section>
+
+        {/* ════════════════════════════════
+            5. STATISTIQUES & TROPHÉES
+        ════════════════════════════════ */}
+        {!cinemaLoading && (
+          <section className="space-y-5">
+
+            {/* Statistiques */}
+            <div>
+              <button onClick={() => setShowStats((v) => !v)} className="w-full flex items-center justify-between mb-3 group">
+                <span className="text-[10px] font-sans font-semibold text-foreground/25 uppercase tracking-widest">Statistiques</span>
+                <ChevronDown className={`w-3.5 h-3.5 text-foreground/25 transition-transform duration-200 ${showStats ? "rotate-180" : ""}`} />
+              </button>
+              <div className="rounded-2xl bg-card/30 border border-border/8 overflow-hidden divide-y divide-border/5">
+                {[
+                  { icon: <Eye className="w-3.5 h-3.5 text-primary/40" />,        label: "Recommandations reçues",   value: totalRecos },
+                  { icon: <Heart className="w-3.5 h-3.5 text-destructive/40" />,  label: "Films évalués / likés",    value: likedMovies.length },
+                  { icon: <Bookmark className="w-3.5 h-3.5 text-primary/40" />,   label: "En watchlist",             value: watchlistCount },
+                ].map((row, i) => (
+                  <div key={i} className="flex items-center justify-between px-4 py-3">
+                    <div className="flex items-center gap-2.5">{row.icon}<span className="text-sm font-sans text-foreground/60">{row.label}</span></div>
+                    <span className="text-sm font-sans font-semibold text-foreground tabular-nums">{row.value}</span>
+                  </div>
+                ))}
+                <AnimatePresence initial={false}>
+                  {showStats && (
+                    <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.25, ease: "easeInOut" }}
+                      className="overflow-hidden divide-y divide-border/5">
+                      {[
+                        { icon: <Film className="w-3.5 h-3.5 text-primary/40" />,      label: "Films",                          value: movieVsSeries.movies },
+                        { icon: <Tv className="w-3.5 h-3.5 text-primary/40" />,         label: "Séries",                         value: movieVsSeries.series },
+                        { icon: <Users className="w-3.5 h-3.5 text-primary/40" />,      label: "Acteurs & réalisateurs évalués", value: peopleEvaluated },
+                        { icon: <TrendingUp className="w-3.5 h-3.5 text-primary/40" />, label: "Meilleure série",                value: `${engagement?.bestStreak || 0} d'affilée` },
+                      ].map((row, i) => (
+                        <div key={i} className="flex items-center justify-between px-4 py-3">
+                          <div className="flex items-center gap-2.5">{row.icon}<span className="text-sm font-sans text-foreground/60">{row.label}</span></div>
+                          <span className="text-sm font-sans font-semibold text-foreground tabular-nums">{row.value}</span>
+                        </div>
+                      ))}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            </div>
+
+            {/* Trophées */}
+            {(() => {
+              const allUnlocked = TROPHY_CATEGORIES.flatMap((cat) => cat.milestones.filter((m) => (trophyValues[cat.key] ?? 0) >= m.count));
+              const totalUnlocked = allUnlocked.length;
+              const totalMilestones = TROPHY_CATEGORIES.reduce((s, c) => s + c.milestones.length, 0);
+              return (
+                <>
+                  <button onClick={() => setShowTrophies((v) => !v)} className="w-full flex items-center justify-between group">
+                    <div className="flex items-center gap-2">
+                      <Trophy className="w-3.5 h-3.5 text-primary/30" />
+                      <span className="text-[10px] font-sans font-semibold text-foreground/25 uppercase tracking-widest">Trophées</span>
+                      <span className="text-[10px] font-sans text-primary/40 tabular-nums">{totalUnlocked}/{totalMilestones}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      {!showTrophies && allUnlocked.slice(-5).map((m, i) => <span key={i} className="text-sm">{m.icon}</span>)}
+                      <ChevronDown className={`w-4 h-4 text-foreground/20 transition-transform duration-300 ${showTrophies ? "rotate-180" : ""}`} />
+                    </div>
+                  </button>
+                  <AnimatePresence>
+                    {showTrophies && (
+                      <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }}
+                        exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
+                        className="overflow-hidden mt-3">
+                        <div className="space-y-5">
+                          {TROPHY_CATEGORIES.map((cat) => {
+                            const value = trophyValues[cat.key] ?? 0;
+                            const nextM = cat.milestones.find((m) => value < m.count);
+                            const unlockedCount = cat.milestones.filter((m) => value >= m.count).length;
+                            return (
+                              <div key={cat.key}>
+                                <div className="flex items-center justify-between mb-2">
+                                  <p className="text-[9px] font-sans text-foreground/20 uppercase tracking-widest">{cat.label}</p>
+                                  <span className="text-[9px] font-sans text-primary/30 tabular-nums">{unlockedCount}/{cat.milestones.length}</span>
+                                </div>
+                                <div className="grid grid-cols-4 gap-1.5">
+                                  {cat.milestones.map((m) => {
+                                    const reached = value >= m.count;
+                                    return (
+                                      <div key={m.count} className={`flex flex-col items-center gap-1 p-2 rounded-xl border transition-all ${reached ? "bg-primary/[0.06] border-primary/20 shadow-[0_0_12px_rgba(139,92,246,0.08)]" : "bg-card/20 border-border/5"}`}>
+                                        <span className={`text-xl leading-none ${reached ? "" : "grayscale opacity-15"}`}>{m.icon}</span>
+                                        <span className={`text-[8px] font-sans text-center leading-tight mt-0.5 ${reached ? "text-foreground/55" : "text-foreground/12"}`}>{reached ? m.label : "???"}</span>
+                                        <span className={`text-[7px] font-sans tabular-nums ${reached ? "text-primary/45" : "text-foreground/8"}`}>{m.count}</span>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                                {nextM && (
+                                  <p className="text-foreground/20 text-[10px] font-sans mt-1.5 text-center">
+                                    Plus que <span className="text-primary/30 tabular-nums">{nextM.count - value}</span> pour « {nextM.label} »
+                                  </p>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </>
+              );
+            })()}
+
+          </section>
+        )}
 
       </div>
 
