@@ -368,6 +368,7 @@ const TonightPickOverlay = ({
                 {displayCount} autre{displayCount > 1 ? "s" : ""} suggestion{displayCount > 1 ? "s" : ""}
               </button>
             )}
+            <div className="h-8" />
           </div>
         </motion.div>
       )}
