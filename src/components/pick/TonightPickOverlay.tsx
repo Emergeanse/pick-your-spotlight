@@ -275,14 +275,13 @@ const TonightPickOverlay = ({
                   {primaryGenre}
                 </span>
               )}
-              {tonightProviders[0] && (
-                <span className="px-2.5 py-1.5 bg-primary/25 backdrop-blur-xl border border-primary/40 rounded-lg text-[9px] text-foreground uppercase tracking-widest font-bold font-sans flex items-center gap-1.5">
+              {tonightProviders[0]?.logo_path && (
+                <span className="p-1.5 bg-primary/25 backdrop-blur-xl border border-primary/40 rounded-lg flex items-center">
                   <img
                     src={`https://image.tmdb.org/t/p/w45${tonightProviders[0].logo_path}`}
-                    alt=""
-                    className="w-3.5 h-3.5 rounded object-cover"
+                    alt={tonightProviders[0].name}
+                    className="h-5 w-auto rounded object-contain"
                   />
-                  {tonightProviders[0].name}
                 </span>
               )}
             </div>

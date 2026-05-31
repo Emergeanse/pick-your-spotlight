@@ -433,6 +433,32 @@ const HomeScreen = ({
     2077: "Universciné",
   };
 
+  const PLATFORM_LOGO_PATHS_CLIENT: Record<number, string> = {
+    8:    "/pbpMk2JmcoNnQwx5JGpXngfoWtp.jpg", 1796: "/pbpMk2JmcoNnQwx5JGpXngfoWtp.jpg",
+    119:  "/pvske1MyAoymrs5bguRfVqYiM9a.jpg",  1024: "/pvske1MyAoymrs5bguRfVqYiM9a.jpg",
+    10:   "/pvske1MyAoymrs5bguRfVqYiM9a.jpg",  2100: "/pvske1MyAoymrs5bguRfVqYiM9a.jpg",
+    337:  "/97yvRBw1GzX7fXprcF80er19ot.jpg",
+    381:  "/geOzgeKZWpZC3lymAVEHVIk3X0q.jpg",  538: "/geOzgeKZWpZC3lymAVEHVIk3X0q.jpg",
+    685:  "/geOzgeKZWpZC3lymAVEHVIk3X0q.jpg",  193: "/geOzgeKZWpZC3lymAVEHVIk3X0q.jpg",
+    1754: "/blrBF9R2ONYu04ifGkYEb3k779N.jpg",  2285: "/geOzgeKZWpZC3lymAVEHVIk3X0q.jpg",
+    56:   "/h5DcR0J2EESLitnhR8xLG1QymTE.jpg",  236: "/h5DcR0J2EESLitnhR8xLG1QymTE.jpg",
+    531:  "/h5DcR0J2EESLitnhR8xLG1QymTE.jpg",  582: "/h5DcR0J2EESLitnhR8xLG1QymTE.jpg",
+    2303: "/h5DcR0J2EESLitnhR8xLG1QymTE.jpg",
+    350:  "/mcbz1LgtErU9p4UdbZ0rG6RTWHX.jpg",
+    384:  "/bZvc9dXrXNly7cA0V4D9pR8yJwm.jpg",  1899: "/bZvc9dXrXNly7cA0V4D9pR8yJwm.jpg",
+    1825: "/bZvc9dXrXNly7cA0V4D9pR8yJwm.jpg",
+    35:   "/bZvc9dXrXNly7cA0V4D9pR8yJwm.jpg",
+    234:  "/vPZrjHe7wvALuwJEXT2kwYLi0gV.jpg",
+    11:   "/x570VpH2C9EKDf1riP83rYc5dnL.jpg",
+    1967: "/8qSG9LtUhBQIWy2Fr6fzeW7gBdd.jpg",
+    147:  "/tmYzlEKeiWStvXwC1QdpXIASpN4.jpg",
+    415:  "/w86FOwg0bbgUSHWWnjOTuEjsUvq.jpg",
+    310:  "/1syoSwH2yIskHUqeOiK9re8AMJC.jpg",
+    513:  "/qwRq7klF8EijYs7XgvxSaYd6v6w.jpg",
+    300:  "/dB8G41Q6tSL5NBisrIeqByfepBc.jpg",
+    2601: "/yvui9yFtpWHt0ZrsPelItbuTavI.jpg",
+  };
+
   const buildProvidersFromPlatformIds = (platformIds: number[]): { name: string; logo_path: string; provider_id: number }[] => {
     if (!userPlatformIds?.length) return [];
     const expandedUserIds = new Set(userPlatformIds.flatMap((id) => PLATFORM_FAMILIES_CLIENT[id] ?? [id]));
@@ -440,7 +466,7 @@ const HomeScreen = ({
     const seen = new Set<number>();
     return matched
       .filter((id) => PLATFORM_LABELS_CLIENT[id] && !seen.has(id) && seen.add(id))
-      .map((id) => ({ name: PLATFORM_LABELS_CLIENT[id], logo_path: "", provider_id: id }));
+      .map((id) => ({ name: PLATFORM_LABELS_CLIENT[id], logo_path: PLATFORM_LOGO_PATHS_CLIENT[id] ?? "", provider_id: id }));
   };
 
   const filterProvidersByUserPlatforms = (providers: { name: string; logo_path: string; provider_id?: number }[]) => {
