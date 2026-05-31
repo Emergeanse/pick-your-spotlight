@@ -14,7 +14,7 @@ const WatchlistRoute = () => {
     <div className="fixed inset-0 bg-background">
       {/* Image visible en haut, fondue très progressivement */}
       <div
-        className="absolute inset-0 bg-cover bg-top bg-no-repeat pointer-events-none opacity-40"
+        className="absolute inset-x-0 top-0 h-[60%] bg-cover bg-top bg-no-repeat pointer-events-none opacity-40"
         style={{ backgroundImage: `url(${watchlistBackground})` }}
       />
       <div
