@@ -623,7 +623,7 @@ const WatchlistPage = ({ onMovieSelect, tabs: allowedTabs, title, defaultTab }: 
   return (
     <div className="h-full overflow-y-auto scrollbar-dark px-5 pt-4 pb-24">
       {/* Sticky header zone — keeps title + tabs visible while scrolling the list */}
-      <div className="sticky -top-4 z-20 -mx-5 px-5 pt-3 pb-3 bg-gradient-to-b from-background via-background/95 to-background/70 backdrop-blur-md">
+      <div className="sticky -top-4 z-20 -mx-5 px-5 pt-3 pb-3 bg-gradient-to-b from-black/10 via-transparent to-transparent backdrop-blur-[2px]">
         {/* Header */}
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex items-center justify-between mb-4">
           <div>
@@ -660,8 +660,8 @@ const WatchlistPage = ({ onMovieSelect, tabs: allowedTabs, title, defaultTab }: 
                 onClick={() => switchTab(tab)}
                 className={`shrink-0 flex items-center gap-1 px-2.5 py-2 rounded-xl text-[12px] font-sans font-medium transition-all border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 ${
                   active
-                    ? "bg-card shadow-sm text-foreground border-border/25"
-                    : "text-foreground/40 border-transparent hover:text-foreground/70 hover:bg-card/40"
+                    ? "bg-white/[0.08] backdrop-blur-sm text-foreground border-white/[0.12]"
+                    : "text-foreground/40 border-transparent hover:text-foreground/70 hover:bg-white/[0.06]"
                 }`}
                 aria-pressed={active}
               >
