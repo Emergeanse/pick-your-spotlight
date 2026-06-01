@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Clock, Star, Zap, Tv, ExternalLink } from "lucide-react";
+import { Clock, Star, Zap, Tv } from "lucide-react";
 import type { MovieDetail } from "@/lib/tmdb";
 import { getDisplayTitle, getYear, getPosterUrl, getBackdropUrl, getWatchProviders } from "@/lib/tmdb";
 import { Button } from "@/components/ui/button";
@@ -300,20 +300,17 @@ const RecommendationMovieCard = ({
                     href={link.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-foreground/[0.04] border border-border/15 hover:border-primary/25 hover:bg-foreground/[0.08] transition-all group"
+                    title={link.name}
+                    className="opacity-80 hover:opacity-100 transition-opacity"
                     onClick={(e) => e.stopPropagation()}
                   >
                     {link.logo_path && (
                       <img
-                        src={`${IMG_BASE}/w185${link.logo_path}`}
+                        src={`${IMG_BASE}/original${link.logo_path}`}
                         alt={link.name}
-                        className="w-5 h-5 rounded-md object-contain"
+                        className="h-10 w-10 object-cover rounded-xl"
                       />
                     )}
-                    <span className="text-foreground/60 text-[12px] font-sans font-medium group-hover:text-foreground transition-colors">
-                      {link.name}
-                    </span>
-                    <ExternalLink className="w-3 h-3 text-foreground/30 group-hover:text-primary transition-colors" />
                   </a>
                 ))}
               </div>
