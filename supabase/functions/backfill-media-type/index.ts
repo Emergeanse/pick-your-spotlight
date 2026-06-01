@@ -7,6 +7,43 @@ const corsHeaders = {
 };
 
 const TMDB_API_KEY = "2dca580c2a14b55200e784d157207b4d";
+const CONCURRENCY = 5; // appels TMDB simultanés
+
+async function checkAndFix(
+  supabase: any,
+  film: { tmdb_id: number; title: string },
+): Promise<"confirmed" | "corrected" | "error"> {
+  try {
+    const movieRes = await fetch(
+      `https://api.themoviedb.org/3/movie/${film.tmdb_id}?api_key=${TMDB_API_KEY}&language=fr-FR`,
+    );
+    if (movieRes.ok) return "confirmed";
+
+    // /movie null ou 404 → tester /tv
+    const tvRes = await fetch(
+      `https://api.themoviedb.org/3/tv/${film.tmdb_id}?api_key=${TMDB_API_KEY}&language=fr-FR`,
+    );
+    if (!tvRes.ok) {
+      console.warn(`[backfill] Introuvable movie ni tv: ${film.tmdb_id} "${film.title}"`);
+      return "error";
+    }
+
+    const { error: patchError } = await supabase
+      .from("movie_embeddings")
+      .update({ media_type: "tv" })
+      .eq("tmdb_id", film.tmdb_id);
+
+    if (patchError) {
+      console.error(`[backfill] Patch error ${film.tmdb_id}: ${patchError.message}`);
+      return "error";
+    }
+    console.log(`[backfill] Corrigé: "${film.title}" (${film.tmdb_id}) movie → tv`);
+    return "corrected";
+  } catch (e) {
+    console.error(`[backfill] Exception ${film.tmdb_id}:`, e);
+    return "error";
+  }
+}
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -15,13 +52,12 @@ serve(async (req) => {
   const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-  const { batchSize = 50, offset = 0 } =
+  const { batchSize = 200, offset = 0 } =
     req.method === "POST" ? await req.json().catch(() => ({})) : {};
 
-  // Récupère les enregistrements stockés comme "movie" — ce sont les seuls potentiellement faux
   const { data: films, error } = await supabase
     .from("movie_embeddings")
-    .select("tmdb_id, title, media_type")
+    .select("tmdb_id, title")
     .eq("media_type", "movie")
     .order("tmdb_id", { ascending: true })
     .range(offset, offset + batchSize - 1);
@@ -35,59 +71,27 @@ serve(async (req) => {
 
   if (!films || films.length === 0) {
     return new Response(
-      JSON.stringify({ message: "Backfill terminé — aucun enregistrement restant à vérifier.", checked: 0, corrected: 0, errors: 0 }),
+      JSON.stringify({ message: "Backfill terminé — plus rien à vérifier.", checked: 0, corrected: 0, errors: 0 }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   }
 
-  let corrected = 0;
   let confirmed = 0;
+  let corrected = 0;
   let errors = 0;
 
-  for (const film of films) {
-    try {
-      // Tester d'abord /movie/{id}
-      const movieRes = await fetch(
-        `https://api.themoviedb.org/3/movie/${film.tmdb_id}?api_key=${TMDB_API_KEY}&language=fr-FR`,
-      );
-
-      if (movieRes.ok) {
-        // C'est bien un film — rien à corriger
-        confirmed++;
-        await new Promise((r) => setTimeout(r, 150));
-        continue;
-      }
-
-      // /movie retourne null ou 404 : tester /tv/{id}
-      const tvRes = await fetch(
-        `https://api.themoviedb.org/3/tv/${film.tmdb_id}?api_key=${TMDB_API_KEY}&language=fr-FR`,
-      );
-
-      if (tvRes.ok) {
-        // C'est une série stockée à tort comme "movie" — corriger
-        const { error: patchError } = await supabase
-          .from("movie_embeddings")
-          .update({ media_type: "tv" })
-          .eq("tmdb_id", film.tmdb_id);
-
-        if (patchError) {
-          console.error(`[backfill] Patch error tmdb_id=${film.tmdb_id}: ${patchError.message}`);
-          errors++;
-        } else {
-          console.log(`[backfill] Corrigé: "${film.title}" (${film.tmdb_id}) movie → tv`);
-          corrected++;
-        }
-      } else {
-        // Introuvable sur TMDB (movie ni tv) — on laisse tel quel
-        console.warn(`[backfill] Introuvable sur TMDB: tmdb_id=${film.tmdb_id} "${film.title}"`);
-        errors++;
-      }
-
+  // Traitement par groupes de CONCURRENCY appels simultanés
+  for (let i = 0; i < films.length; i += CONCURRENCY) {
+    const chunk = films.slice(i, i + CONCURRENCY);
+    const results = await Promise.all(chunk.map((f: any) => checkAndFix(supabase, f)));
+    for (const r of results) {
+      if (r === "confirmed") confirmed++;
+      else if (r === "corrected") corrected++;
+      else errors++;
+    }
+    // Pause courte entre groupes pour respecter le rate-limit TMDB (~40 req/s)
+    if (i + CONCURRENCY < films.length) {
       await new Promise((r) => setTimeout(r, 150));
-    } catch (e) {
-      console.error(`[backfill] Exception tmdb_id=${film.tmdb_id}:`, e);
-      errors++;
-      await new Promise((r) => setTimeout(r, 300));
     }
   }
 
