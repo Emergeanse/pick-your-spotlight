@@ -276,13 +276,13 @@ const TonightPickOverlay = ({
                 </span>
               )}
               {tonightProviders.filter(p => p.logo_path).slice(0, 4).map((p) => (
-                <span key={p.provider_id ?? p.name} className="p-1.5 bg-primary/25 backdrop-blur-xl border border-primary/40 rounded-lg flex items-center">
-                  <img
-                    src={`https://image.tmdb.org/t/p/w45${p.logo_path}`}
-                    alt={p.name}
-                    className="h-5 w-auto rounded object-contain"
-                  />
-                </span>
+                <img
+                  key={p.provider_id ?? p.name}
+                  src={`https://image.tmdb.org/t/p/original${p.logo_path}`}
+                  alt={p.name}
+                  title={p.name}
+                  className="h-9 w-9 rounded-xl object-cover"
+                />
               ))}
             </div>
 
