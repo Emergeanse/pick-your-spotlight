@@ -305,7 +305,7 @@ const RecommendationMovieCard = ({
                   >
                     {link.logo_path && (
                       <img
-                        src={`${IMG_BASE}/w92${link.logo_path}`}
+                        src={`${IMG_BASE}/w185${link.logo_path}`}
                         alt={link.name}
                         className="w-5 h-5 rounded-md object-contain"
                       />

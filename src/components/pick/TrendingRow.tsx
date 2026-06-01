@@ -86,7 +86,7 @@ const MovieCard = ({
           {provider && (
             <div className="absolute bottom-1.5 left-1.5 md:bottom-2 md:left-2">
               <img
-                src={`${IMG_BASE}/w92${provider.logo_path}`}
+                src={`${IMG_BASE}/w185${provider.logo_path}`}
                 alt={provider.name}
                 className="w-5 h-5 md:w-6 md:h-6 rounded-md object-cover border border-border/30"
               />

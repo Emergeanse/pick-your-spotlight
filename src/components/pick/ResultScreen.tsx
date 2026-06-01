@@ -175,7 +175,7 @@ const StreamingSection = ({ streamingLinks }: { streamingLinks: StreamingLink[] 
           >
             {link.logo_path && (
               <img
-                src={`${IMG_BASE}/w92${link.logo_path}`}
+                src={`${IMG_BASE}/w185${link.logo_path}`}
                 alt={link.name}
                 className="w-5 h-5 rounded-md object-contain"
               />
@@ -949,7 +949,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
                 {candidate.watchProviders.slice(0, 4).map((p) => (
                   <img
                     key={p.provider_id}
-                    src={`${IMG_BASE}/w92${p.logo_path}`}
+                    src={`${IMG_BASE}/w185${p.logo_path}`}
                     alt={p.name}
                     title={p.name}
                     className="w-4 h-4 rounded object-contain"

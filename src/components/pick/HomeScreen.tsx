@@ -464,9 +464,16 @@ const HomeScreen = ({
     if (!userPlatformIds?.length) return [];
     const expandedUserIds = new Set(userPlatformIds.flatMap((id) => PLATFORM_FAMILIES_CLIENT[id] ?? [id]));
     const matched = platformIds.filter((id) => expandedUserIds.has(id));
-    const seen = new Set<number>();
+    const seenIds = new Set<number>();
+    const seenLogos = new Set<string>();
     return matched
-      .filter((id) => PLATFORM_LABELS_CLIENT[id] && !seen.has(id) && seen.add(id))
+      .filter((id) => {
+        const logo = PLATFORM_LOGO_PATHS_CLIENT[id] ?? "";
+        if (!PLATFORM_LABELS_CLIENT[id] || seenIds.has(id) || (logo && seenLogos.has(logo))) return false;
+        seenIds.add(id);
+        if (logo) seenLogos.add(logo);
+        return true;
+      })
       .map((id) => ({ name: PLATFORM_LABELS_CLIENT[id], logo_path: PLATFORM_LOGO_PATHS_CLIENT[id] ?? "", provider_id: id }));
   };
 
