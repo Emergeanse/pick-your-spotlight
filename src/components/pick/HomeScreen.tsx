@@ -717,6 +717,7 @@ const HomeScreen = ({
 
     try {
       let movies: MovieDetail[] = [];
+      let firstMovieShown = false;
       let engineMetaResult: any = null;
 
       if (user) {
@@ -994,7 +995,6 @@ const HomeScreen = ({
           // Tout le filtrage est fait dans le SQL. Le client score tous les candidats LLM
           // avec movie-match en parallèle, puis sélectionne les N meilleurs par score movie-match.
           tBatchStart = performance.now();
-          let firstMovieShown = false;
           movies = await ensureRecommendationBatch(extracted, {
             excludeIds: [],
             platformIds: userPlatformIds,
@@ -1155,7 +1155,8 @@ const HomeScreen = ({
         const edge = tEdgeEnd - tEdgeStart;
         const batch = tDisplay - tBatchStart;
         const bar = (ms: number) => { const p = Math.round((ms / total) * 20); return "█".repeat(Math.max(1, p)) + "░".repeat(20 - Math.max(1, p)); };
-        console.group(`[PICK-DEBUG] ⏱️ BOUT EN BOUT — clic → premier film affiché : ${fmt(total)}`);
+        const label = firstMovieShown ? "batch complet (1er film affiché plus tôt)" : "clic → premier film affiché";
+        console.group(`[PICK-DEBUG] ⏱️ BOUT EN BOUT — ${label} : ${fmt(total)}`);
         console.log(`  Préparation (profil, liked)  ${bar(preEdge)}  ${fmt(preEdge)}`);
         console.log(`  Edge function                ${bar(edge)}  ${fmt(edge)}`);
         console.log(`  Movie-match + batch          ${bar(batch)}  ${fmt(batch)}`);
