@@ -298,8 +298,9 @@ serve(async (req) => {
 
     // ── ÉTAPE 1 : SQL — top candidats par similarité vectorielle ──
     // Langue, décennie et exclusions d'origine filtrées en SQL.
-    // Le filtre plateforme est fait APRÈS le LLM (sur 10-30 films, pas 300).
-    const sqlMatchCount = (platformIds?.length ?? 0) > 0 ? 100 : 200;
+    // Le filtre plateforme est fait APRÈS le LLM (sur 10-50 films, pas 200).
+    // La base movie_embeddings est qualitative → 50 candidats SQL suffisent.
+    const sqlMatchCount = 50;
     // Familles de plateformes : un abonnement inclut plusieurs IDs TMDB distincts
     // IDs sourcés depuis platforms.ts (source de vérité côté app)
     const PLATFORM_FAMILIES: Record<number, number[]> = {
@@ -430,7 +431,7 @@ serve(async (req) => {
       console.log(`[SP] SQL skipped — userTasteVector: ${!!userTasteVector}, SUPABASE_URL: ${!!SUPABASE_URL}`);
     }
 
-    // Pas de filtre plateforme sur les 200 candidats SQL — fait après le LLM sur 10-30 films seulement.
+    // Pas de filtre plateforme en SQL — fait après le LLM sur les 50 candidats.
     let filteredCandidates = candidates;
 
     const t1 = Date.now();
@@ -516,7 +517,7 @@ serve(async (req) => {
     // ── ÉTAPE 2 : Filtre plateforme → LLM sur les films disponibles uniquement ──
     let llmSelections: any[] = [];
     let llmFilteredAll = false;
-    const llmPoolSize = 30;
+    const llmPoolSize = 50;
     let llmPool: any[] = [];
     let llmInputPool: any[] = [];
     let platformPool: { title: string; platforms: string[]; match: boolean }[] = [];
