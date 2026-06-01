@@ -718,6 +718,7 @@ const HomeScreen = ({
     try {
       let movies: MovieDetail[] = [];
       let firstMovieShown = false;
+      let firstMovieShownId: number | null = null;
       let engineMetaResult: any = null;
 
       if (user) {
@@ -1008,6 +1009,7 @@ const HomeScreen = ({
             onFirstMovieReady: (firstMovie) => {
               if (!isMountedRef.current || firstMovieShown) return;
               firstMovieShown = true;
+              firstMovieShownId = firstMovie.id;
               setCurrentTonightMovie(firstMovie as MovieDetail, 0, new Set([firstMovie.id]));
             },
           });
@@ -1145,7 +1147,15 @@ const HomeScreen = ({
         // Ne pas re-filtrer par watchProviders : l'edge function a déjà filtré par plateforme.
         // Le TMDB provider check client-side peut manquer des résultats (cache miss / race),
         // ce qui réduirait le pool à 1 film alors que tous sont bien sur la plateforme de l'utilisateur.
-        const poolMovies = movies.slice(0, displayCount);
+        let poolMovies = movies.slice(0, displayCount);
+        // Si un film a déjà été affiché via onFirstMovieReady, on s'assure qu'il reste en 1ère position
+        if (firstMovieShownId !== null) {
+          const idx = poolMovies.findIndex((m) => m.id === firstMovieShownId);
+          if (idx > 0) {
+            const [first] = poolMovies.splice(idx, 1);
+            poolMovies = [first, ...poolMovies];
+          }
+        }
         setChatMoviesPool(poolMovies);
 
         const tDisplay = performance.now();
