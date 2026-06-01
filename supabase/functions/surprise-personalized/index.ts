@@ -345,7 +345,7 @@ serve(async (req) => {
       p_excluded_languages: effectiveExcludedLangsArr,
       p_excluded_clusters: rejectedClusters.length > 0 ? rejectedClusters : [],
       p_min_popularity: 8,
-      p_platform_ids: opts.withPlatform ? (expandedPlatformIds ?? null) : null,
+      p_platform_ids: null, // Filtrage plateforme fait en JS après SQL (IVFFlat incompatible avec ce filtre)
     });
 
     let candidates: any[] = [];
@@ -576,19 +576,31 @@ serve(async (req) => {
         ).join("\n")
       );
 
-      // ── ÉTAPE 2.1 : Filtre plateforme — déjà fait en SQL, pas d'appels TMDB ──
+      // ── ÉTAPE 2.1 : Filtre plateforme en JS — utilise platform_ids retournés par le SQL (sync déjà faite) ──
+      // IVFFlat est incompatible avec le filtre plateforme en SQL (retourne toujours 0).
+      // On filtre ici avec les platform_ids stockés en base — zéro appels TMDB.
       tPlatform = Date.now();
-      llmInputPool = topPool; // tous les candidats sont déjà filtrés par plateforme en SQL
 
       if (expandedPlatformIds && expandedPlatformIds.length > 0) {
         const platformNames = (platformIds as number[]).map((id: number) => PROVIDER_NAMES[id] ?? `#${id}`).join(", ");
-        // Construit le debug depuis les platform_ids retournés par SQL
+        const withPlatform = topPool.filter((c: any) =>
+          (c.platform_ids || []).some((id: number) => expandedPlatformIds!.includes(id))
+        );
         platformPool = topPool.map((c: any) => ({
           title: c.title || "?",
           platforms: (c.platform_ids || []).map((id: number) => PROVIDER_NAMES[id] ?? `#${id}`),
-          match: true,
+          match: (c.platform_ids || []).some((id: number) => expandedPlatformIds!.includes(id)),
         }));
-        console.log(`[SP] Filtre plateforme SQL: ${topPool.length} films sur [${platformNames}] (0ms — données en base)`);
+        platformCandidatesCount = withPlatform.length;
+        if (withPlatform.length >= 1) {
+          llmInputPool = withPlatform;
+          console.log(`[SP] Filtre plateforme JS: ${withPlatform.length}/${topPool.length} films sur [${platformNames}] (données en base, 0ms TMDB)`);
+        } else {
+          llmInputPool = topPool;
+          console.log(`[SP] ⚠️ Aucun film trouvé sur [${platformNames}] dans les ${topPool.length} candidats → tous conservés`);
+        }
+      } else {
+        llmInputPool = topPool;
       }
 
       // ── ÉTAPE 2.2 : LLM — évalue uniquement les films disponibles ──
