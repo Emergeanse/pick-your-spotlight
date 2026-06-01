@@ -404,7 +404,9 @@ export async function ensureRecommendationBatch(
     // 1. Score TOUS les candidats LLM en parallèle
     // 2. Trie par score movie-match (pas score LLM)
     // 3. Prend le top N — garantit toujours N films sans fallback TMDB
-    const allEnriched = await enrichRecommendationBatchWithTexts(finalBatch, options);
+    // On n'enrichit que les `size` premiers — l'ordre LLM est déjà fiable
+    const toEnrich = finalBatch.slice(0, size);
+    const allEnriched = await enrichRecommendationBatchWithTexts(toEnrich, options);
     const withScores = dedupeMovies(allEnriched)
       .filter((m) => getRecommendationScore(m.recommendationTexts) !== null);
     // Si onFirstMovieReady est actif, un film est déjà affiché — on preserve l'ordre LLM
