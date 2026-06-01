@@ -517,7 +517,7 @@ serve(async (req) => {
     // ── ÉTAPE 2 : Filtre plateforme → LLM sur les films disponibles uniquement ──
     let llmSelections: any[] = [];
     let llmFilteredAll = false;
-    const llmPoolSize = 50;
+    const llmPoolSize = 20;
     let llmPool: any[] = [];
     let llmInputPool: any[] = [];
     let platformPool: { title: string; platforms: string[]; match: boolean }[] = [];
