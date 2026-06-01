@@ -802,7 +802,17 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
           const candidate = candidates.find((c: any) => Number(c.tmdb_id) === Number(sel.tmdb_id));
           const rawType = candidate?.media_type;
           const itemType: "movie" | "tv" = rawType === "tv" ? "tv" : rawType === "movie" ? "movie" : searchType;
-          const detail = await getMovieDetails(sel.tmdb_id, itemType);
+          let detail = await getMovieDetails(sel.tmdb_id, itemType);
+          let resolvedType = itemType;
+          // Si TMDB retourne null, réessayer avec l'autre type (media_type stocké peut être incorrect)
+          if (!detail) {
+            const fallbackType: "movie" | "tv" = itemType === "movie" ? "tv" : "movie";
+            detail = await getMovieDetails(sel.tmdb_id, fallbackType);
+            if (detail) {
+              console.warn(`[SP] TMDB type mismatch id=${sel.tmdb_id}: stored=${itemType}, resolved=${fallbackType}`);
+              resolvedType = fallbackType;
+            }
+          }
           if (!detail) {
             console.warn(`[SP] TMDB null for id=${sel.tmdb_id} type=${itemType} (rawType=${rawType})`);
             tmdbDiag.push({
@@ -825,14 +835,14 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
             return null;
           }
           // Normalise les séries TV : TMDB renvoie "name" au lieu de "title"
-          if (itemType === "tv") {
+          if (resolvedType === "tv") {
             if (!detail.title && detail.name) detail.title = detail.name;
             if (!detail.original_title && detail.original_name) detail.original_title = detail.original_name;
             if (!detail.release_date && detail.first_air_date) detail.release_date = detail.first_air_date;
           }
           // Filtre plateforme déjà fait en SQL — pas de re-vérification TMDB ici.
-          tmdbDiag.push({ id: sel.tmdb_id, title: detail.title || candidate?.title || "?", type: itemType, ok: true });
-          return { detail, sel };
+          tmdbDiag.push({ id: sel.tmdb_id, title: detail.title || candidate?.title || "?", type: resolvedType, ok: true });
+          return { detail, sel, resolvedType };
         }),
       );
 
