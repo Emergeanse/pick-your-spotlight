@@ -994,6 +994,7 @@ const HomeScreen = ({
           // Tout le filtrage est fait dans le SQL. Le client score tous les candidats LLM
           // avec movie-match en parallèle, puis sélectionne les N meilleurs par score movie-match.
           tBatchStart = performance.now();
+          let firstMovieShown = false;
           movies = await ensureRecommendationBatch(extracted, {
             excludeIds: [],
             platformIds: userPlatformIds,
@@ -1004,6 +1005,11 @@ const HomeScreen = ({
             preloadMatchTexts: true,
             preloadProviders: true,
             scoreAllWithMovieMatch: true,
+            onFirstMovieReady: (firstMovie) => {
+              if (!isMountedRef.current || firstMovieShown) return;
+              firstMovieShown = true;
+              setCurrentTonightMovie(firstMovie as MovieDetail, 0, new Set([firstMovie.id]));
+            },
           });
 
           console.group("[PICK-DEBUG] 4️⃣ Résultat final après movie-match");
@@ -1155,7 +1161,11 @@ const HomeScreen = ({
         console.log(`  Movie-match + batch          ${bar(batch)}  ${fmt(batch)}`);
         console.groupEnd();
 
-        await setCurrentTonightMovie(poolMovies[0], 0, new Set(poolMovies[0] ? [poolMovies[0].id] : []));
+        // Mettre à jour le pool complet ; si le premier film est déjà affiché, ne pas le remplacer
+        setChatMoviesPool(poolMovies);
+        if (!firstMovieShown) {
+          await setCurrentTonightMovie(poolMovies[0], 0, new Set(poolMovies[0] ? [poolMovies[0].id] : []));
+        }
 
         // All films were enriched in parallel above — nothing to do lazily here.
       }

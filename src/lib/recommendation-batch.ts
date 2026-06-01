@@ -101,6 +101,8 @@ type RecommendationBatchOptions = {
   // Score ALL candidates with movie-match first, then select top N by movie-match score.
   // movie-match devient le juge final (pas le LLM). Ignore minMatchScore comme seuil.
   scoreAllWithMovieMatch?: boolean;
+  // Appelé dès que le premier résultat movie-match est prêt — sans bloquer le reste.
+  onFirstMovieReady?: (movie: RecommendationMovieDetail) => void;
 };
 
 const extractInlineRecommendationTexts = (entry: any): RecommendationMatchData | null => {
@@ -253,6 +255,9 @@ export async function enrichRecommendationBatchWithTexts(
   if (!eagerMovies.length) return movies;
 
   const context = await buildMatchContext(options);
+  const onFirstMovieReady = options.onFirstMovieReady;
+  let firstMovieFired = false;
+
   // Parallel calls — gemini-2.0-flash handles concurrent requests well (~500ms total vs N×500ms sequential)
   const generated = await Promise.all(
     eagerMovies.map(async (movie) => {
@@ -264,6 +269,13 @@ export async function enrichRecommendationBatchWithTexts(
         `[Pick⏱] movie-match eager "${movie.title ?? movie.id}": ${Math.round(t1 - t0)}ms` +
           (srv ? ` (embed=${srv.embed}ms gemini=${srv.gemini}ms)` : ""),
       );
+      // Fire callback on first successful result — non-blocking
+      if (onFirstMovieReady && !firstMovieFired && recommendationTexts) {
+        firstMovieFired = true;
+        Promise.resolve().then(() =>
+          onFirstMovieReady({ ...movie, recommendationTexts })
+        );
+      }
       return { id: movie.id, recommendationTexts };
     }),
   );
