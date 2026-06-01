@@ -346,7 +346,7 @@ serve(async (req) => {
       p_excluded_languages: effectiveExcludedLangsArr,
       p_excluded_clusters: rejectedClusters.length > 0 ? rejectedClusters : [],
       p_min_popularity: 8,
-      p_platform_ids: null, // Filtrage plateforme fait en JS après SQL (IVFFlat incompatible avec ce filtre)
+      p_platform_ids: opts.withPlatform ? (expandedPlatformIds ?? null) : null,
     });
 
     let candidates: any[] = [];
@@ -523,15 +523,10 @@ serve(async (req) => {
       const SQL_BATCH = 100;
       const MAX_ROUNDS = 4;
 
+      // La plateforme est filtrée en SQL — on estime uniquement le filtre origine (langue)
       const estimateFilteredPool = (cands: any[]): number => {
-        const eligible = excludedLangsBoost.size > 0
-          ? cands.filter((c: any) => !excludedLangsBoost.has(c.original_language || ""))
-          : cands;
-        if (!expandedPlatformIds || expandedPlatformIds.length === 0) return eligible.length;
-        const withPlatform = eligible.filter((c: any) =>
-          (c.platform_ids || []).some((id: number) => expandedPlatformIds!.includes(id))
-        );
-        return withPlatform.length > 0 ? withPlatform.length : eligible.length;
+        if (excludedLangsBoost.size === 0) return cands.length;
+        return cands.filter((c: any) => !excludedLangsBoost.has(c.original_language || "")).length;
       };
 
       const seenIds = new Set(filteredCandidates.map((c: any) => Number(c.tmdb_id)));
@@ -543,7 +538,7 @@ serve(async (req) => {
         try {
           const sbExpand = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
           const { data: moreData } = await sbExpand.rpc("match_movies_for_recommendation", {
-            ...buildRpcParams({ withLang: false, withYear: false, withPlatform: false }),
+            ...buildRpcParams({ withLang: false, withYear: false, withPlatform: true }),
             match_count: SQL_BATCH,
             exclude_ids: expandExcludeIds,
           });
@@ -624,31 +619,20 @@ serve(async (req) => {
         ).join("\n")
       );
 
-      // ── ÉTAPE 2.1 : Filtre plateforme en JS — utilise platform_ids retournés par le SQL (sync déjà faite) ──
-      // IVFFlat est incompatible avec le filtre plateforme en SQL (retourne toujours 0).
-      // On filtre ici avec les platform_ids stockés en base — zéro appels TMDB.
+      // ── ÉTAPE 2.1 : Filtre plateforme déjà appliqué en SQL (p_platform_ids) ──
+      // Les candidats retournés sont tous disponibles sur les plateformes de l'utilisateur.
+      // Ce bloc conserve le debug platformPool et platformCandidatesCount.
       tPlatform = Date.now();
-
+      platformPool = topPool.map((c: any) => ({
+        title: c.title || "?",
+        platforms: (c.platform_ids || []).map((id: number) => PROVIDER_NAMES[id] ?? `#${id}`),
+        match: true,
+      }));
+      platformCandidatesCount = topPool.length;
+      llmInputPool = topPool;
       if (expandedPlatformIds && expandedPlatformIds.length > 0) {
         const platformNames = (platformIds as number[]).map((id: number) => PROVIDER_NAMES[id] ?? `#${id}`).join(", ");
-        const withPlatform = topPool.filter((c: any) =>
-          (c.platform_ids || []).some((id: number) => expandedPlatformIds!.includes(id))
-        );
-        platformPool = topPool.map((c: any) => ({
-          title: c.title || "?",
-          platforms: (c.platform_ids || []).map((id: number) => PROVIDER_NAMES[id] ?? `#${id}`),
-          match: (c.platform_ids || []).some((id: number) => expandedPlatformIds!.includes(id)),
-        }));
-        platformCandidatesCount = withPlatform.length;
-        if (withPlatform.length >= 1) {
-          llmInputPool = withPlatform;
-          console.log(`[SP] Filtre plateforme JS: ${withPlatform.length}/${topPool.length} films sur [${platformNames}] (données en base, 0ms TMDB)`);
-        } else {
-          llmInputPool = topPool;
-          console.log(`[SP] ⚠️ Aucun film trouvé sur [${platformNames}] dans les ${topPool.length} candidats → tous conservés`);
-        }
-      } else {
-        llmInputPool = topPool;
+        console.log(`[SP] Filtre plateforme SQL: ${topPool.length} films sur [${platformNames}]`);
       }
 
       // ── ÉTAPE 2.2 : LLM — évalue uniquement les films disponibles ──
