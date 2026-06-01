@@ -299,8 +299,8 @@ serve(async (req) => {
     // ── ÉTAPE 1 : SQL — top candidats par similarité vectorielle ──
     // Langue, décennie et exclusions d'origine filtrées en SQL.
     // Le filtre plateforme est fait APRÈS le LLM (sur 10-50 films, pas 200).
-    // La base movie_embeddings est qualitative → 50 candidats SQL suffisent.
-    const sqlMatchCount = 50;
+    // La base movie_embeddings est qualitative → 100 candidats SQL suffisent.
+    const sqlMatchCount = 100;
     // Familles de plateformes : un abonnement inclut plusieurs IDs TMDB distincts
     // IDs sourcés depuis platforms.ts (source de vérité côté app)
     const PLATFORM_FAMILIES: Record<number, number[]> = {
