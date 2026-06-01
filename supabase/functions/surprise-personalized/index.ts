@@ -515,10 +515,57 @@ serve(async (req) => {
     const t2 = Date.now();
     if (t2 - t1 > 50) console.log(`[SP⏱] Enrichissement langue TMDB: ${t2 - t1}ms`);
 
+    // ── ÉTAPE 1.8 : Expansion du pool — batch de 100 jusqu'à 30 candidats filtrés ──
+    // Si le SQL initial + filtres JS (origine + plateforme) donnent < 30 films,
+    // on relance par tranche de 100 en excluant les IDs déjà vus.
+    if (SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY && userTasteVector) {
+      const TARGET_POOL = 30;
+      const SQL_BATCH = 100;
+      const MAX_ROUNDS = 4;
+
+      const estimateFilteredPool = (cands: any[]): number => {
+        const eligible = excludedLangsBoost.size > 0
+          ? cands.filter((c: any) => !excludedLangsBoost.has(c.original_language || ""))
+          : cands;
+        if (!expandedPlatformIds || expandedPlatformIds.length === 0) return eligible.length;
+        const withPlatform = eligible.filter((c: any) =>
+          (c.platform_ids || []).some((id: number) => expandedPlatformIds!.includes(id))
+        );
+        return withPlatform.length > 0 ? withPlatform.length : eligible.length;
+      };
+
+      const seenIds = new Set(filteredCandidates.map((c: any) => Number(c.tmdb_id)));
+      let expansionRound = 0;
+
+      while (estimateFilteredPool(filteredCandidates) < TARGET_POOL && expansionRound < MAX_ROUNDS) {
+        expansionRound++;
+        const expandExcludeIds = [...normalizedExcludeIds, ...[...seenIds]];
+        try {
+          const sbExpand = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+          const { data: moreData } = await sbExpand.rpc("match_movies_for_recommendation", {
+            ...buildRpcParams({ withLang: false, withYear: false, withPlatform: false }),
+            match_count: SQL_BATCH,
+            exclude_ids: expandExcludeIds,
+          });
+          if (!moreData || (moreData as any[]).length === 0) break;
+          const newCandidates = (moreData as any[]).filter((c: any) => !seenIds.has(Number(c.tmdb_id)));
+          if (newCandidates.length === 0) break;
+          for (const c of newCandidates) seenIds.add(Number(c.tmdb_id));
+          candidates = [...candidates, ...newCandidates];
+          filteredCandidates = [...filteredCandidates, ...newCandidates];
+          console.log(`[SP] Pool expansion #${expansionRound}: +${newCandidates.length} → total ${filteredCandidates.length}, pool estimé: ${estimateFilteredPool(filteredCandidates)}/${TARGET_POOL}`);
+          if (newCandidates.length < SQL_BATCH) break;
+        } catch (e) {
+          console.error("[SP] Pool expansion error:", e);
+          break;
+        }
+      }
+    }
+
     // ── ÉTAPE 2 : Filtre plateforme → LLM sur les films disponibles uniquement ──
     let llmSelections: any[] = [];
     let llmFilteredAll = false;
-    const llmPoolSize = 20;
+    const llmPoolSize = 30;
     let llmPool: any[] = [];
     let llmInputPool: any[] = [];
     let platformPool: { title: string; platforms: string[]; match: boolean }[] = [];
