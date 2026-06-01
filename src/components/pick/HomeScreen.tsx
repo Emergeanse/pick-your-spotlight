@@ -1156,8 +1156,6 @@ const HomeScreen = ({
             poolMovies = [first, ...poolMovies];
           }
         }
-        setChatMoviesPool(poolMovies);
-
         const tDisplay = performance.now();
         const fmt = (ms: number) => ms >= 1000 ? `${(ms / 1000).toFixed(2)}s` : `${Math.round(ms)}ms`;
         const total = tDisplay - t0Pick;
@@ -1172,11 +1170,11 @@ const HomeScreen = ({
         console.log(`  Movie-match + batch          ${bar(batch)}  ${fmt(batch)}`);
         console.groupEnd();
 
-        // Mettre à jour le pool complet ; si le premier film est déjà affiché, ne pas le remplacer
+        // Mettre à jour le pool et garantir que poolMovies[0] est toujours le film affiché
         setChatMoviesPool(poolMovies);
-        if (!firstMovieShown) {
-          await setCurrentTonightMovie(poolMovies[0], 0, new Set(poolMovies[0] ? [poolMovies[0].id] : []));
-        }
+        // On appelle toujours setCurrentTonightMovie avec poolMovies[0] pour éviter tout flicker
+        // Si firstMovieShown=true et poolMovies[0] === film déjà affiché → aucun changement visuel
+        await setCurrentTonightMovie(poolMovies[0], 0, new Set(poolMovies[0] ? [poolMovies[0].id] : []));
 
         // All films were enriched in parallel above — nothing to do lazily here.
       }
