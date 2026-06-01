@@ -294,13 +294,14 @@ export async function getUserTasteProfile() {
         )
       `,
         )
-        .eq("user_id", userId),
+        .eq("user_id", userId)
+        .limit(5000),
       supabase
         .from("user_interactions" as any)
         .select("id, tmdb_id, action_type, context, created_at")
         .eq("user_id", userId)
         .order("created_at", { ascending: false })
-        .limit(500),
+        .limit(2000),
       supabase
         .from("user_taste_vectors" as any)
         .select(

@@ -576,7 +576,8 @@ export async function listFeedbackByType(type: FeedbackType) {
     )
     .eq("user_id", userId)
     .eq("feedback_type", type)
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    .limit(5000);
 
   if (error) {
     feedbackError("listFeedbackByType failed", { type, error });
