@@ -1,8 +1,8 @@
-import { Home, Bookmark, Library, User } from "lucide-react";
+import { Home, Bookmark, Library, User, Heart } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 
-export type TabId = "home" | "watchlist" | "together" | "cinema" | "profile";
+export type TabId = "home" | "watchlist" | "together" | "cinema" | "profile" | "duo";
 
 // Custom Match icon: film reel inside a magnifying glass
 const MatchIcon = ({ className, strokeWidth = 1.7 }: { className?: string; strokeWidth?: number }) => (
@@ -33,8 +33,9 @@ const MatchIcon = ({ className, strokeWidth = 1.7 }: { className?: string; strok
 const tabs: { id: TabId; label: string; icon: React.ComponentType<any>; path: string }[] = [
   { id: "home", label: "Trouve-moi", icon: Home, path: "/app" },
   { id: "together", label: "Match", icon: MatchIcon, path: "/app/pick-together" },
+  { id: "duo", label: "Duo", icon: Heart, path: "/app/duo" },
   { id: "watchlist", label: "À voir", icon: Bookmark, path: "/app/watchlist" },
-  { id: "cinema", label: "Bibliothèque", icon: Library, path: "/app/my-cinema" },
+  { id: "cinema", label: "Biblio", icon: Library, path: "/app/my-cinema" },
   { id: "profile", label: "Profil", icon: User, path: "/app/profile" },
 ];
 
