@@ -63,7 +63,7 @@ serve(async (req) => {
     // Check cache first
     const { data: existing } = await supabase
       .from("movie_embeddings")
-      .select("embedding, taste_tags, semantic_axes, safety_tags, suitability_tags, cluster_labels, runtime, year, vote_average, popularity, original_language")
+      .select("embedding, taste_tags, semantic_axes, safety_tags, suitability_tags, cluster_labels, runtime, year, vote_average, popularity, original_language, media_type")
       .eq("tmdb_id", tmdbId)
       .maybeSingle();
 
@@ -75,6 +75,8 @@ serve(async (req) => {
       if (voteAverage && !(existing as any).vote_average) patch.vote_average = voteAverage;
       if (popularity && !(existing as any).popularity) patch.popularity = popularity;
       if (originalLanguage && !(existing as any).original_language) patch.original_language = originalLanguage;
+      // Corriger media_type si le caller passe une valeur explicite différente (évite que "movie" reste stocké pour des séries TV)
+      if (mediaType && mediaType !== (existing as any).media_type) patch.media_type = mediaType;
       if (Object.keys(patch).length > 0) {
         await supabase.from("movie_embeddings").update(patch).eq("tmdb_id", tmdbId);
       }

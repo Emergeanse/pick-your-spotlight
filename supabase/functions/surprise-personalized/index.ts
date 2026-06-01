@@ -241,6 +241,7 @@ serve(async (req) => {
             overview: m.overview,
             genres: (m.genres || []).map((g: any) => g.name),
             originalLanguage: m.original_language || null,
+            mediaType: m.media_type === "tv" ? "tv" : "movie",
           }),
         }).catch(() => {});
       }
