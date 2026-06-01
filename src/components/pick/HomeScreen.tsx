@@ -1010,7 +1010,11 @@ const HomeScreen = ({
               if (!isMountedRef.current || firstMovieShown) return;
               firstMovieShown = true;
               firstMovieShownId = firstMovie.id;
-              setCurrentTonightMovie(firstMovie as MovieDetail, 0, new Set([firstMovie.id]));
+              // Seulement setTonightPick — pas loadProviders pour éviter la race condition
+              // loadProviders sera appelé une seule fois via setCurrentTonightMovie à la fin
+              setTonightPick(firstMovie as MovieDetail);
+              setTonightPickIndex(0);
+              setTonightSeenMovieIds(new Set([firstMovie.id]));
             },
           });
 
