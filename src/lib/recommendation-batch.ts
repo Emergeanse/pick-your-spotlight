@@ -405,14 +405,18 @@ export async function ensureRecommendationBatch(
     // 2. Trie par score movie-match (pas score LLM)
     // 3. Prend le top N — garantit toujours N films sans fallback TMDB
     const allEnriched = await enrichRecommendationBatchWithTexts(finalBatch, options);
-    finalBatch = dedupeMovies(allEnriched)
-      .filter((m) => getRecommendationScore(m.recommendationTexts) !== null)
-      .sort((a, b) => {
+    const withScores = dedupeMovies(allEnriched)
+      .filter((m) => getRecommendationScore(m.recommendationTexts) !== null);
+    // Si onFirstMovieReady est actif, un film est déjà affiché — on preserve l'ordre LLM
+    // pour éviter que le film affiché change de position après le tri.
+    if (!options.onFirstMovieReady) {
+      withScores.sort((a, b) => {
         const sa = getRecommendationScore(a.recommendationTexts) ?? 0;
         const sb = getRecommendationScore(b.recommendationTexts) ?? 0;
         return sb - sa;
-      })
-      .slice(0, size);
+      });
+    }
+    finalBatch = withScores.slice(0, size);
     if (options.preloadProviders) {
       finalBatch = await enrichRecommendationBatchWithProviders(finalBatch);
     }
