@@ -1251,11 +1251,13 @@ const HomeScreen = ({
             };
           };
 
+          // Exclut tous les films interagis SAUF ceux uniquement en watchlist
           const fetchInteractedTmdbIds = async (userId: string): Promise<number[]> => {
             const { data } = await supabase
               .from("user_item_feedback")
-              .select("item:item_id(tmdb_id)")
-              .eq("user_id", userId);
+              .select("item:item_id(tmdb_id), feedback_type")
+              .eq("user_id", userId)
+              .in("feedback_type", ["like", "love", "seen", "skip", "dislike", "not_for_me"]);
             return (data ?? [])
               .map((r: any) => r.item?.tmdb_id)
               .filter((id: any) => Number.isFinite(id)) as number[];
@@ -1279,8 +1281,8 @@ const HomeScreen = ({
             fetchLikedTitles(duo.user2_id),
           ]);
 
-          // Union des genres likés pour avoir plus de candidats SQL
-          const unionLiked     = [...new Set([...prefs1.liked, ...prefs2.liked])];
+          // Intersection des genres likés (source de vérité pour le filtre SQL)
+          const commonLiked    = prefs1.liked.filter((g: string) => prefs2.liked.includes(g));
           const commonExcluded = prefs1.excluded.filter((g: string) => prefs2.excluded.includes(g));
           const mergedLikedTitles = [...new Set([...titles1, ...titles2])];
           const partnerExcludeIds = [...new Set([...ids1, ...ids2])];
@@ -1288,7 +1290,7 @@ const HomeScreen = ({
           const av = duo.avoidance_vector ? JSON.parse(duo.avoidance_vector) : null;
 
           void generateTonightPick(rejectedIds, undefined, undefined, {
-            topGenres: unionLiked,
+            topGenres: commonLiked,
             mergedLikedTitles,
             excludedGenres: commonExcluded,
             tasteVector: tv,
