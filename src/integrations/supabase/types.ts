@@ -227,6 +227,75 @@ export type Database = {
         }
         Relationships: []
       }
+      duo_taste_profiles: {
+        Row: {
+          affinity_score: number | null
+          avoidance_vector: string | null
+          common_genres: string[] | null
+          created_at: string | null
+          created_by: string
+          duo_name: string
+          excluded_genres: string[] | null
+          id: string
+          invite_code: string
+          rejected_clusters: string[] | null
+          status: string
+          taste_vector: string | null
+          top_clusters: string[] | null
+          updated_at: string | null
+          user1_display_name: string | null
+          user1_genres: string[] | null
+          user1_id: string
+          user2_display_name: string | null
+          user2_genres: string[] | null
+          user2_id: string | null
+        }
+        Insert: {
+          affinity_score?: number | null
+          avoidance_vector?: string | null
+          common_genres?: string[] | null
+          created_at?: string | null
+          created_by: string
+          duo_name?: string
+          excluded_genres?: string[] | null
+          id?: string
+          invite_code?: string
+          rejected_clusters?: string[] | null
+          status?: string
+          taste_vector?: string | null
+          top_clusters?: string[] | null
+          updated_at?: string | null
+          user1_display_name?: string | null
+          user1_genres?: string[] | null
+          user1_id: string
+          user2_display_name?: string | null
+          user2_genres?: string[] | null
+          user2_id?: string | null
+        }
+        Update: {
+          affinity_score?: number | null
+          avoidance_vector?: string | null
+          common_genres?: string[] | null
+          created_at?: string | null
+          created_by?: string
+          duo_name?: string
+          excluded_genres?: string[] | null
+          id?: string
+          invite_code?: string
+          rejected_clusters?: string[] | null
+          status?: string
+          taste_vector?: string | null
+          top_clusters?: string[] | null
+          updated_at?: string | null
+          user1_display_name?: string | null
+          user1_genres?: string[] | null
+          user1_id?: string
+          user2_display_name?: string | null
+          user2_genres?: string[] | null
+          user2_id?: string | null
+        }
+        Relationships: []
+      }
       engine_metrics: {
         Row: {
           breakdown: Json
