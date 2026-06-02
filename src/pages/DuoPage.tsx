@@ -8,9 +8,11 @@ import {
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import {
-  createDuo, fetchMyDuos, fetchPendingDuos, updateDuoName, deleteDuo,
-  type DuoProfile,
+  createDuo, createDuoWithFriend, fetchMyDuos, fetchPendingDuos,
+  updateDuoName, deleteDuo, loadAcceptedFriends,
+  type DuoProfile, type DuoFriendCandidate,
 } from "@/lib/duo-profiles";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 
 /* ── Petit utilitaire affinité → couleur ── */
@@ -219,24 +221,56 @@ const DuoDetail = ({ duo, currentUserId, onBack, onRename, onDelete }: {
 /* ── Flow création ── */
 const CreateFlow = ({ userId, displayName, onCreated, onCancel }: {
   userId: string; displayName: string;
-  onCreated: (duo: DuoProfile, url: string) => void; onCancel: () => void;
+  onCreated: (duo: DuoProfile, url?: string) => void; onCancel: () => void;
 }) => {
-  const [step, setStep] = useState<"name" | "share">("name");
+  type Step = "choose" | "name" | "share";
+  const [step, setStep] = useState<Step>("choose");
+  const [friends, setFriends] = useState<DuoFriendCandidate[]>([]);
+  const [loadingFriends, setLoadingFriends] = useState(true);
+  const [selectedFriend, setSelectedFriend] = useState<DuoFriendCandidate | null>(null);
   const [duoName, setDuoName] = useState("");
   const [creating, setCreating] = useState(false);
   const [inviteUrl, setInviteUrl] = useState("");
   const [createdDuo, setCreatedDuo] = useState<DuoProfile | null>(null);
   const [copied, setCopied] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    loadAcceptedFriends(userId).then(f => { setFriends(f); setLoadingFriends(false); });
+  }, [userId]);
+
+  const handleSelectFriend = (friend: DuoFriendCandidate) => {
+    setSelectedFriend(friend);
+    setDuoName(`${displayName} & ${friend.displayName}`);
+    setStep("name");
+  };
+
+  const handleInviteByLink = () => {
+    setSelectedFriend(null);
+    setDuoName("");
+    setStep("name");
+  };
 
   const handleCreate = async () => {
     if (!duoName.trim()) return;
     setCreating(true);
-    const result = await createDuo(userId, displayName, duoName.trim());
-    setCreating(false);
-    if (result) {
-      setInviteUrl(result.inviteUrl);
-      setCreatedDuo(result.duo);
-      setStep("share");
+    setError(null);
+    try {
+      if (selectedFriend) {
+        // Création directe avec un ami → duo actif immédiatement
+        const duo = await createDuoWithFriend(userId, displayName, selectedFriend.id, selectedFriend.displayName, duoName.trim());
+        if (duo) onCreated(duo);
+        else setError("Erreur lors de la création. Réessaie.");
+      } else {
+        // Lien d'invitation
+        const result = await createDuo(userId, displayName, duoName.trim());
+        if (result) { setInviteUrl(result.inviteUrl); setCreatedDuo(result.duo); setStep("share"); }
+        else setError("Erreur lors de la création. Réessaie.");
+      }
+    } catch (e: any) {
+      setError(e?.message ?? "Erreur inattendue.");
+    } finally {
+      setCreating(false);
     }
   };
 
@@ -246,6 +280,7 @@ const CreateFlow = ({ userId, displayName, onCreated, onCancel }: {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  /* ── Étape "share" : lien d'invitation ── */
   if (step === "share" && createdDuo) {
     return (
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="w-full flex flex-col gap-5">
@@ -253,8 +288,8 @@ const CreateFlow = ({ userId, displayName, onCreated, onCancel }: {
           <div className="w-14 h-14 rounded-full bg-primary/15 border border-primary/25 flex items-center justify-center mx-auto mb-3">
             <Share2 className="w-6 h-6 text-primary" />
           </div>
-          <h3 className="font-serif text-xl text-foreground">Duo créé !</h3>
-          <p className="text-foreground/50 font-sans text-sm mt-1">Partage ce lien à ton ami pour qu'il rejoigne <span className="text-primary">«&nbsp;{createdDuo.duo_name}&nbsp;»</span></p>
+          <h3 className="font-serif text-xl text-foreground">En attente…</h3>
+          <p className="text-foreground/50 font-sans text-sm mt-1">Partage ce lien à ton ami pour activer <span className="text-primary">«&nbsp;{createdDuo.duo_name}&nbsp;»</span></p>
         </div>
         <div className="bg-foreground/[0.04] border border-border/15 rounded-xl px-3 py-3 flex items-center gap-2">
           <p className="flex-1 font-mono text-xs text-foreground/60 truncate">{inviteUrl}</p>
@@ -262,36 +297,104 @@ const CreateFlow = ({ userId, displayName, onCreated, onCancel }: {
             {copied ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4 text-foreground/40" />}
           </button>
         </div>
-        <Button className="w-full" onClick={() => onCreated(createdDuo, inviteUrl)}>
-          Terminé
-        </Button>
+        <Button className="w-full" onClick={() => onCreated(createdDuo, inviteUrl)}>Terminé</Button>
       </motion.div>
     );
   }
 
-  return (
-    <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="w-full flex flex-col gap-5">
-      <div className="text-center">
-        <div className="w-14 h-14 rounded-full bg-primary/15 border border-primary/25 flex items-center justify-center mx-auto mb-3">
-          <Users className="w-6 h-6 text-primary" />
+  /* ── Étape "name" : nom du duo ── */
+  if (step === "name") {
+    return (
+      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="w-full flex flex-col gap-5">
+        <div className="flex items-center gap-3">
+          <button onClick={() => setStep("choose")} className="p-2 rounded-xl hover:bg-foreground/8 transition-colors text-foreground/40">
+            <ArrowLeft className="w-4 h-4" />
+          </button>
+          <div>
+            <h3 className="font-serif text-xl text-foreground">Nom du duo</h3>
+            {selectedFriend && (
+              <p className="text-foreground/40 font-sans text-xs mt-0.5">avec {selectedFriend.displayName}</p>
+            )}
+          </div>
         </div>
-        <h3 className="font-serif text-xl text-foreground">Nouveau duo</h3>
-        <p className="text-foreground/50 font-sans text-sm mt-1">Donne un nom à votre profil commun</p>
+        <input
+          autoFocus
+          placeholder="Ex: Soirée Ciné, Alice & Bob…"
+          value={duoName}
+          onChange={e => setDuoName(e.target.value)}
+          onKeyDown={e => e.key === "Enter" && handleCreate()}
+          className="w-full bg-foreground/[0.04] border border-border/20 rounded-xl px-4 py-3 font-sans text-sm text-foreground placeholder:text-foreground/25 outline-none focus:border-primary/40 transition-colors"
+        />
+        {error && <p className="text-destructive text-xs font-sans">{error}</p>}
+        <div className="flex gap-3">
+          <Button variant="ghost" className="flex-1" onClick={onCancel}>Annuler</Button>
+          <Button className="flex-1" onClick={handleCreate} disabled={!duoName.trim() || creating}>
+            {creating ? <Loader2 className="w-4 h-4 animate-spin" /> : selectedFriend ? "Créer le duo" : "Générer le lien"}
+          </Button>
+        </div>
+      </motion.div>
+    );
+  }
+
+  /* ── Étape "choose" : sélection ami ou lien ── */
+  return (
+    <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="w-full flex flex-col gap-4">
+      <div className="flex items-center gap-3">
+        <button onClick={onCancel} className="p-2 rounded-xl hover:bg-foreground/8 transition-colors text-foreground/40">
+          <ArrowLeft className="w-4 h-4" />
+        </button>
+        <div>
+          <h3 className="font-serif text-xl text-foreground">Nouveau duo</h3>
+          <p className="text-foreground/40 font-sans text-xs mt-0.5">Avec qui ?</p>
+        </div>
       </div>
-      <input
-        autoFocus
-        placeholder="Ex: Alice & Bob, Soirée Ciné…"
-        value={duoName}
-        onChange={e => setDuoName(e.target.value)}
-        onKeyDown={e => e.key === "Enter" && handleCreate()}
-        className="w-full bg-foreground/[0.04] border border-border/20 rounded-xl px-4 py-3 font-sans text-sm text-foreground placeholder:text-foreground/25 outline-none focus:border-primary/40 transition-colors"
-      />
-      <div className="flex gap-3">
-        <Button variant="ghost" className="flex-1" onClick={onCancel}>Annuler</Button>
-        <Button className="flex-1" onClick={handleCreate} disabled={!duoName.trim() || creating}>
-          {creating ? <Loader2 className="w-4 h-4 animate-spin" /> : "Créer"}
-        </Button>
+
+      {/* Liste d'amis */}
+      {loadingFriends ? (
+        <div className="flex justify-center py-6"><Loader2 className="w-5 h-5 animate-spin text-foreground/30" /></div>
+      ) : friends.length > 0 ? (
+        <div className="flex flex-col gap-2">
+          <p className="text-[10px] uppercase tracking-widest text-foreground/30 font-sans font-semibold">Mes amis</p>
+          {friends.map(friend => (
+            <button
+              key={friend.id}
+              onClick={() => handleSelectFriend(friend)}
+              className="flex items-center gap-3 px-3 py-3 rounded-2xl bg-foreground/[0.04] border border-border/15 hover:border-primary/30 hover:bg-foreground/[0.07] transition-all text-left"
+            >
+              <Avatar className="h-9 w-9 ring-1 ring-white/10 shrink-0">
+                {friend.avatarUrl && <AvatarImage src={friend.avatarUrl} alt={friend.displayName} />}
+                <AvatarFallback className="bg-primary/20 text-foreground text-xs font-bold">
+                  {friend.displayName.charAt(0).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              <span className="flex-1 font-sans font-medium text-sm text-foreground">{friend.displayName}</span>
+              <ChevronRight className="w-4 h-4 text-foreground/25 shrink-0" />
+            </button>
+          ))}
+        </div>
+      ) : (
+        <p className="text-foreground/35 font-sans text-sm text-center py-4">Aucun ami dans ta liste pour l'instant.</p>
+      )}
+
+      {/* Séparateur + option lien */}
+      <div className="flex items-center gap-3 my-1">
+        <div className="flex-1 h-px bg-border/15" />
+        <span className="text-foreground/25 font-sans text-xs">ou</span>
+        <div className="flex-1 h-px bg-border/15" />
       </div>
+      <button
+        onClick={handleInviteByLink}
+        className="flex items-center gap-3 px-3 py-3 rounded-2xl border border-dashed border-border/20 hover:border-primary/30 hover:bg-foreground/[0.04] transition-all text-left"
+      >
+        <div className="w-9 h-9 rounded-full bg-foreground/[0.06] flex items-center justify-center shrink-0">
+          <Share2 className="w-4 h-4 text-foreground/40" />
+        </div>
+        <div className="flex-1">
+          <p className="font-sans font-medium text-sm text-foreground/70">Inviter par lien</p>
+          <p className="font-sans text-xs text-foreground/35">Partager un lien d'invitation</p>
+        </div>
+        <ChevronRight className="w-4 h-4 text-foreground/20 shrink-0" />
+      </button>
     </motion.div>
   );
 };

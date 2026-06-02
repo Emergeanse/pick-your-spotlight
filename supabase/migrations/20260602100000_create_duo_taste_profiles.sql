@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS public.duo_taste_profiles (
   user2_id uuid REFERENCES auth.users(id) ON DELETE SET NULL,
 
   -- Invitation
-  invite_code text UNIQUE NOT NULL DEFAULT encode(gen_random_bytes(8), 'hex'),
+  invite_code text UNIQUE NOT NULL DEFAULT substr(md5(random()::text || clock_timestamp()::text), 1, 16),
   status text NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'active')),
 
   -- Vecteurs de goût mergés (JSON, calculés à l'acceptation)

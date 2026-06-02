@@ -280,6 +280,38 @@ export async function updateDuoName(duoId: string, newName: string): Promise<boo
   return !error;
 }
 
+export interface DuoFriendCandidate {
+  id: string;
+  displayName: string;
+  avatarUrl: string | null;
+}
+
+/** Charge les amis acceptés d'un utilisateur (pour le sélecteur de duo) */
+export async function loadAcceptedFriends(userId: string): Promise<DuoFriendCandidate[]> {
+  const { data: friendships } = await (supabase as any)
+    .from("friendships")
+    .select("requester_id, addressee_id")
+    .or(`requester_id.eq.${userId},addressee_id.eq.${userId}`)
+    .eq("status", "accepted");
+
+  if (!friendships || (friendships as any[]).length === 0) return [];
+
+  const otherIds = (friendships as any[]).map((f: any) =>
+    f.requester_id === userId ? f.addressee_id : f.requester_id
+  );
+
+  const { data: profiles } = await supabase
+    .from("profiles")
+    .select("id, display_name, avatar_url")
+    .in("id", otherIds);
+
+  return (profiles ?? []).map((p: any) => ({
+    id: p.id,
+    displayName: (p as any).display_name ?? "Ami",
+    avatarUrl: (p as any).avatar_url ?? null,
+  }));
+}
+
 /** Supprime un duo */
 export async function deleteDuo(duoId: string): Promise<boolean> {
   const { error } = await db
