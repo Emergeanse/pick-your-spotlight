@@ -690,11 +690,11 @@ const HomeScreen = ({
     return data;
   };
 
-  type DuoOverrides = { topGenres: string[]; excludedGenres: string[]; tasteVector: number[] | null; avoidanceVector: number[] | null; topClusters: string[]; rejectedClusters: string[] };
+  type DuoOverrides = { topGenres: string[]; excludedGenres: string[]; tasteVector: number[] | null; avoidanceVector: number[] | null; topClusters: string[]; rejectedClusters: string[]; partnerExcludeIds: number[] };
   const generateTonightPick = async (excludeList: number[] = rejectedIds, rejectionContext?: RejectionContext, voiceFilters?: VoiceSearchFilters | null, duoOverrides?: DuoOverrides) => {
     generateTonightPickRef.current = generateTonightPick;
     const poolIds = (chatMoviesPool || []).map((m) => m.id).filter(Number.isFinite);
-    const allExcludeIds = [...new Set([...excludeList, ...poolIds, ...historyExcludeIdsRef.current])];
+    const allExcludeIds = [...new Set([...excludeList, ...poolIds, ...historyExcludeIdsRef.current, ...(duoOverrides?.partnerExcludeIds ?? [])])];
 
     const t0Pick = performance.now();
     let tEdgeStart = t0Pick;
@@ -1246,13 +1246,26 @@ const HomeScreen = ({
             };
           };
 
-          const [prefs1, prefs2] = await Promise.all([
+          const fetchInteractedTmdbIds = async (userId: string): Promise<number[]> => {
+            const { data } = await supabase
+              .from("user_item_feedback")
+              .select("item:item_id(tmdb_id)")
+              .eq("user_id", userId);
+            return (data ?? [])
+              .map((r: any) => r.item?.tmdb_id)
+              .filter((id: any) => Number.isFinite(id)) as number[];
+          };
+
+          const [prefs1, prefs2, ids1, ids2] = await Promise.all([
             fetchGenrePrefs(duo.user1_id),
             fetchGenrePrefs(duo.user2_id),
+            fetchInteractedTmdbIds(duo.user1_id),
+            fetchInteractedTmdbIds(duo.user2_id),
           ]);
 
           const commonLiked    = prefs1.liked.filter((g: string) => prefs2.liked.includes(g));
           const commonExcluded = prefs1.excluded.filter((g: string) => prefs2.excluded.includes(g));
+          const partnerExcludeIds = [...new Set([...ids1, ...ids2])];
           const tv = duo.taste_vector ? JSON.parse(duo.taste_vector) : null;
           const av = duo.avoidance_vector ? JSON.parse(duo.avoidance_vector) : null;
 
@@ -1263,6 +1276,7 @@ const HomeScreen = ({
             avoidanceVector: av,
             topClusters: duo.top_clusters ?? [],
             rejectedClusters: duo.rejected_clusters ?? [],
+            partnerExcludeIds,
           });
           return;
         }
