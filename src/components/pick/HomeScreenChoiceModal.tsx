@@ -151,13 +151,13 @@ const HomeScreenChoiceModal = ({
                 className="flex flex-col gap-2.5"
               >
                 {/* Toggle Solo / Duo */}
-                <div className="flex gap-1.5 p-1 rounded-2xl bg-white/[0.04] border border-white/[0.06]">
+                <div className="flex gap-1.5 p-1 rounded-2xl bg-white/[0.10] border border-white/[0.18]">
                   <button
                     onClick={() => { setMode("solo"); setSelectedDuoId(null); }}
-                    className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-[13px] font-sans font-medium transition-all ${
+                    className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-[13px] font-sans font-semibold transition-all ${
                       mode === "solo"
-                        ? "bg-primary/25 border border-primary/40 text-primary"
-                        : "text-foreground/45 hover:text-foreground/70"
+                        ? "bg-primary/30 border border-primary/60 text-primary shadow-[0_2px_12px_-2px_hsl(var(--primary)/0.4)]"
+                        : "text-foreground/70 hover:text-foreground"
                     }`}
                   >
                     <User className="w-3.5 h-3.5" />
@@ -168,10 +168,10 @@ const HomeScreenChoiceModal = ({
                       setMode("duo");
                       if (!selectedDuoId && duos.length === 1) setSelectedDuoId(duos[0].id);
                     }}
-                    className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-[13px] font-sans font-medium transition-all ${
+                    className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-[13px] font-sans font-semibold transition-all ${
                       mode === "duo"
-                        ? "bg-primary/25 border border-primary/40 text-primary"
-                        : "text-foreground/45 hover:text-foreground/70"
+                        ? "bg-primary/30 border border-primary/60 text-primary shadow-[0_2px_12px_-2px_hsl(var(--primary)/0.4)]"
+                        : "text-foreground/70 hover:text-foreground"
                     }`}
                   >
                     <Heart className="w-3.5 h-3.5" />
