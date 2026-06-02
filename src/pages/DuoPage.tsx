@@ -267,14 +267,26 @@ const DuoDetail = ({ duo: initialDuo, currentUserId, onBack, onRename, onDelete 
         </div>
       )}
 
-      {/* Films en commun */}
-      {sharedMovies && (sharedMovies.liked.length > 0 || sharedMovies.watchlist.length > 0) && (
-        <div className="mb-2">
-          <div className="h-px bg-border/10 mb-4" />
-          <MovieRow movies={sharedMovies.liked} label="Vous avez tous les deux aimé" />
-          <MovieRow movies={sharedMovies.watchlist} label="Dans vos deux listes" />
-        </div>
-      )}
+      {/* Films en commun — toujours visible */}
+      <div className="mt-2">
+        <div className="h-px bg-border/10 mb-4" />
+        {sharedMovies === null ? (
+          <div className="flex items-center gap-2 py-4 justify-center">
+            <Loader2 className="w-4 h-4 animate-spin text-foreground/25" />
+            <p className="text-foreground/30 font-sans text-xs">Chargement des films en commun…</p>
+          </div>
+        ) : sharedMovies.liked.length === 0 && sharedMovies.watchlist.length === 0 ? (
+          <div className="py-4 text-center">
+            <p className="text-foreground/30 font-sans text-xs">Aucun film en commun pour l'instant.</p>
+            <p className="text-foreground/20 font-sans text-[11px] mt-1">Likez ou ajoutez des films à votre liste pour voir les points communs.</p>
+          </div>
+        ) : (
+          <>
+            <MovieRow movies={sharedMovies.liked} label="Vous avez tous les deux aimé" />
+            <MovieRow movies={sharedMovies.watchlist} label="Dans vos deux listes" />
+          </>
+        )}
+      </div>
     </motion.div>
   );
 };
