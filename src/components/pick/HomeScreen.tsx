@@ -1379,7 +1379,7 @@ const HomeScreen = ({
       <div className="absolute inset-0 bg-gradient-to-b from-background/10 via-background/40 to-background" />
       <div className="absolute inset-0 bg-background/20" />
 
-      <div className="relative z-10 h-full overflow-y-auto overscroll-y-contain touch-pan-y scrollbar-hide">
+      <div className="relative z-10 h-full overflow-y-auto overscroll-y-contain touch-[pan-y_pinch-zoom] scrollbar-hide">
         {/* ─── Cinematic Hero ─── */}
         <section className="relative pt-14 pb-2 px-5 md:px-8">
           {/* Mascot floating on the right with violet halo */}
