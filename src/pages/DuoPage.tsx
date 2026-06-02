@@ -544,13 +544,16 @@ export default function DuoPage() {
   }
 
   return (
-    <div className="flex-1 relative overflow-hidden">
-      {/* Fond d'écran — même pattern que HomeScreen */}
-      <div className="absolute inset-0 bg-cover bg-center bg-no-repeat" style={{ backgroundImage: `url(${duoBg})` }} />
-      <div className="absolute inset-0 bg-gradient-to-b from-background/10 via-background/50 to-background/90" />
+    <div className="flex-1 relative min-h-dvh">
+      {/* Fond d'écran fixe — couvre toujours tout l'écran */}
+      <div
+        className="fixed inset-0 bg-cover bg-center bg-no-repeat -z-10"
+        style={{ backgroundImage: `url(${duoBg})` }}
+      />
+      <div className="fixed inset-0 bg-gradient-to-b from-background/20 via-background/50 to-background/92 -z-10" />
 
       {/* Contenu scrollable */}
-      <div className="relative z-10 h-full overflow-y-auto pb-28 px-4 pt-[calc(4.5rem+env(safe-area-inset-top))] max-w-lg mx-auto w-full">
+      <div className="relative z-10 pb-28 px-4 pt-[calc(4.5rem+env(safe-area-inset-top))] max-w-lg mx-auto w-full">
       <AnimatePresence mode="wait">
         {/* ── Vue détail ── */}
         {selectedDuo && (
