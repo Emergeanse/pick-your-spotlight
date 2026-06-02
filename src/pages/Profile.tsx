@@ -412,7 +412,7 @@ const Profile = () => {
                 </div>
               ) : (
                 <button onClick={() => setEditingName(true)} className="flex items-center gap-2 group">
-                  <h1 className="text-xl font-serif">{nameDisplay}</h1>
+                  <h1 className="text-2xl font-serif text-foreground">{nameDisplay}</h1>
                   <Pencil className="w-3 h-3 text-foreground/20 group-hover:text-foreground/50 transition-colors" />
                 </button>
               )}
@@ -466,7 +466,7 @@ const Profile = () => {
                 <div className="rounded-2xl bg-card/80 backdrop-blur-sm border border-border/15 p-4">
                   <div className="flex items-center gap-2 mb-3">
                     <Sparkles className="w-3.5 h-3.5 text-primary/30" />
-                    <span className="text-xs font-sans font-semibold text-foreground/35 uppercase tracking-widest">Niveau de personnalisation</span>
+                    <span className="text-xs font-sans font-semibold text-foreground/70 uppercase tracking-widest">Niveau de personnalisation</span>
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger asChild>
@@ -549,7 +549,7 @@ const Profile = () => {
             3. MES PRÉFÉRENCES
         ════════════════════════════════ */}
         <section>
-          <h2 className="text-sm font-sans font-semibold text-foreground/35 uppercase tracking-widest mb-4">Mes préférences</h2>
+          <h2 className="text-sm font-sans font-semibold text-foreground/70 uppercase tracking-widest mb-4">Mes préférences</h2>
 
           {/* Genres & Styles */}
           <div className="mb-5">

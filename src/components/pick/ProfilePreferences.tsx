@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { motion } from "framer-motion";
 import { Film, Tv, Clapperboard, Clock, Target, Info } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
@@ -91,7 +90,7 @@ const ProfilePreferences = ({
         <motion.section initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="mb-8">
           <div className="flex items-center gap-1.5 mb-3">
             <Clock className="w-3.5 h-3.5 text-foreground/40" />
-            <h2 className="text-sm font-sans font-semibold text-foreground/50 uppercase tracking-widest">Durée souhaitée</h2>
+            <h2 className="text-sm font-sans font-semibold text-foreground/70 uppercase tracking-widest">Durée souhaitée</h2>
           </div>
           <div className="flex gap-1.5 flex-wrap">
             {DURATION_OPTIONS.map((opt) => {
