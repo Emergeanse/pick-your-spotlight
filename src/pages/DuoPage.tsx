@@ -50,7 +50,7 @@ const DuoCard = ({ duo, currentUserId, onOpen }: {
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.95 }}
-      className="w-full bg-foreground/[0.04] border border-border/15 rounded-2xl px-4 py-4 flex items-center gap-3 cursor-pointer hover:border-primary/25 transition-colors"
+      className="w-full bg-foreground/[0.04] border border-border/40 rounded-2xl px-4 py-4 flex items-center gap-3 cursor-pointer hover:border-primary/50 transition-colors"
       onClick={onOpen}
     >
       <div className="w-10 h-10 rounded-full bg-primary/15 border border-primary/25 flex items-center justify-center shrink-0">
@@ -79,7 +79,7 @@ const PendingDuoCard = ({ duo, onShare, onDelete }: {
     initial={{ opacity: 0, y: 12 }}
     animate={{ opacity: 1, y: 0 }}
     exit={{ opacity: 0, scale: 0.95 }}
-    className="w-full bg-foreground/[0.03] border border-border/10 border-dashed rounded-2xl px-4 py-4 flex items-center gap-3"
+    className="w-full bg-foreground/[0.03] border border-border/30 border-dashed rounded-2xl px-4 py-4 flex items-center gap-3"
   >
     <div className="w-10 h-10 rounded-full bg-foreground/8 flex items-center justify-center shrink-0">
       <Clock className="w-4 h-4 text-foreground/30" />

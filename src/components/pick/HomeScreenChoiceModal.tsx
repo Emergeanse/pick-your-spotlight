@@ -1,13 +1,16 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { Mic, CalendarClock } from "lucide-react";
+import { Mic, CalendarClock, Heart, Check, User, Users } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
 import { getAutoPickSubtitle } from "@/lib/time-context";
+import { useAuth } from "@/hooks/use-auth";
+import { fetchMyDuos, type DuoProfile } from "@/lib/duo-profiles";
 
 interface HomeScreenChoiceModalProps {
   open: boolean;
   mediaType: "both" | "movie" | "tv";
   onClose: () => void;
-  onAutoPick: () => void;
+  onAutoPick: (duoId?: string) => void;
   onOpenChat: () => void;
   onOpenMoodCapture: () => void;
 }
@@ -21,6 +24,17 @@ const HomeScreenChoiceModal = ({
   onOpenMoodCapture,
 }: HomeScreenChoiceModalProps) => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const [duos, setDuos] = useState<DuoProfile[]>([]);
+  const [mode, setMode] = useState<"solo" | "duo">("solo");
+  const [selectedDuoId, setSelectedDuoId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (open && user) {
+      fetchMyDuos(user.id).then(setDuos);
+    }
+    if (!open) { setMode("solo"); setSelectedDuoId(null); }
+  }, [open, user]);
   const title =
     mediaType === "movie"
       ? "Ce soir mérite un grand film."
@@ -128,6 +142,81 @@ const HomeScreenChoiceModal = ({
               </motion.p>
             </div>
 
+            {/* Sélecteur "Pour qui ?" — visible uniquement si des duos existent */}
+            {duos.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.33, duration: 0.4 }}
+                className="flex flex-col gap-2.5"
+              >
+                {/* Toggle Solo / Duo */}
+                <div className="flex gap-1.5 p-1 rounded-2xl bg-white/[0.04] border border-white/[0.06]">
+                  <button
+                    onClick={() => { setMode("solo"); setSelectedDuoId(null); }}
+                    className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-[13px] font-sans font-medium transition-all ${
+                      mode === "solo"
+                        ? "bg-primary/25 border border-primary/40 text-primary"
+                        : "text-foreground/45 hover:text-foreground/70"
+                    }`}
+                  >
+                    <User className="w-3.5 h-3.5" />
+                    Solo
+                  </button>
+                  <button
+                    onClick={() => {
+                      setMode("duo");
+                      if (!selectedDuoId && duos.length === 1) setSelectedDuoId(duos[0].id);
+                    }}
+                    className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-[13px] font-sans font-medium transition-all ${
+                      mode === "duo"
+                        ? "bg-primary/25 border border-primary/40 text-primary"
+                        : "text-foreground/45 hover:text-foreground/70"
+                    }`}
+                  >
+                    <Heart className="w-3.5 h-3.5" />
+                    Duo
+                  </button>
+                </div>
+
+                {/* Liste des duos */}
+                {mode === "duo" && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.25 }}
+                    className="flex flex-col gap-1.5"
+                  >
+                    {duos.map(duo => {
+                      const partner = duo.user1_id === user?.id ? duo.user2_display_name : duo.user1_display_name;
+                      const active = selectedDuoId === duo.id;
+                      return (
+                        <button
+                          key={duo.id}
+                          onClick={() => setSelectedDuoId(duo.id)}
+                          className={`flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-[13px] font-sans transition-all border ${
+                            active
+                              ? "bg-primary/20 border-primary/45 text-primary"
+                              : "bg-white/[0.03] border-white/[0.07] text-foreground/65 hover:border-white/20"
+                          }`}
+                        >
+                          <Heart className="w-3.5 h-3.5 shrink-0" />
+                          <span className="flex-1 text-left font-medium">{duo.duo_name}</span>
+                          <span className="text-[11px] opacity-60 shrink-0">avec {partner ?? "—"}</span>
+                          {active && <Check className="w-3.5 h-3.5 shrink-0" />}
+                        </button>
+                      );
+                    })}
+                    {!selectedDuoId && (
+                      <p className="text-[11px] text-foreground/35 font-sans text-center pt-0.5">
+                        Sélectionne un duo
+                      </p>
+                    )}
+                  </motion.div>
+                )}
+              </motion.div>
+            )}
+
             {/* PRIMARY — hero card */}
             <motion.button
               initial={{ opacity: 0, y: 14 }}
@@ -135,8 +224,9 @@ const HomeScreenChoiceModal = ({
               transition={{ delay: 0.4, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
               whileHover={{ y: -2 }}
               whileTap={{ scale: 0.985 }}
-              onClick={onAutoPick}
-              className="group relative w-full text-left rounded-[24px] p-5 overflow-hidden"
+              onClick={() => onAutoPick(selectedDuoId ?? undefined)}
+              disabled={mode === "duo" && !selectedDuoId}
+              className="group relative w-full text-left rounded-[24px] p-5 overflow-hidden disabled:opacity-40"
             >
               {/* Gradient surface */}
               <div
