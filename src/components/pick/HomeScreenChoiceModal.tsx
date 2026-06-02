@@ -151,13 +151,12 @@ const HomeScreenChoiceModal = ({
                 className="flex flex-col gap-2.5"
               >
                 {/* Toggle Solo / Duo */}
-                <div className="flex gap-1.5 p-1 rounded-2xl bg-black/30 border border-white/20">
+                <div className="flex gap-1 p-1 rounded-2xl" style={{ background: "rgba(0,0,0,0.55)", border: "1px solid rgba(255,255,255,0.18)" }}>
                   <button
                     onClick={() => { setMode("solo"); setSelectedDuoId(null); }}
+                    style={mode === "solo" ? { background: "rgba(255,255,255,0.92)" } : {}}
                     className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-[13px] font-sans font-semibold transition-all ${
-                      mode === "solo"
-                        ? "bg-white/20 border border-white/40 text-white"
-                        : "text-white/50 hover:text-white/80"
+                      mode === "solo" ? "text-black" : "text-white/60 hover:text-white"
                     }`}
                   >
                     <User className="w-3.5 h-3.5" />
@@ -168,10 +167,9 @@ const HomeScreenChoiceModal = ({
                       setMode("duo");
                       if (!selectedDuoId && duos.length === 1) setSelectedDuoId(duos[0].id);
                     }}
+                    style={mode === "duo" ? { background: "rgba(255,255,255,0.92)" } : {}}
                     className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-[13px] font-sans font-semibold transition-all ${
-                      mode === "duo"
-                        ? "bg-white/20 border border-white/40 text-white"
-                        : "text-white/50 hover:text-white/80"
+                      mode === "duo" ? "text-black" : "text-white/60 hover:text-white"
                     }`}
                   >
                     <Heart className="w-3.5 h-3.5" />
