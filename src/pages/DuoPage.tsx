@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Users, Plus, Copy, Check, Trash2, Pencil, ChevronRight,
@@ -36,9 +36,9 @@ const GenreBadge = ({ label, variant = "neutral" }: { label: string; variant?: "
 };
 
 /* ── Carte duo dans la liste ── */
-const DuoCard = ({ duo, currentUserId, onOpen, onDelete }: {
+const DuoCard = ({ duo, currentUserId, onOpen }: {
   duo: DuoProfile; currentUserId: string;
-  onOpen: () => void; onDelete: () => void;
+  onOpen: () => void;
 }) => {
   const partner = duo.user1_id === currentUserId ? duo.user2_display_name : duo.user1_display_name;
   return (
@@ -302,7 +302,6 @@ const CreateFlow = ({ userId, displayName, onCreated, onCancel }: {
 export default function DuoPage() {
   const { user, isReady } = useAuth();
   const location = useLocation();
-  const navigate = useNavigate();
 
   const [duos, setDuos] = useState<DuoProfile[]>([]);
   const [pendingDuos, setPendingDuos] = useState<DuoProfile[]>([]);
@@ -368,7 +367,7 @@ export default function DuoPage() {
   }
 
   return (
-    <div className="flex-1 overflow-y-auto pb-28 px-4 pt-6 max-w-lg mx-auto w-full">
+    <div className="flex-1 overflow-y-auto pb-28 px-4 pt-[calc(4.5rem+env(safe-area-inset-top))] max-w-lg mx-auto w-full">
       <AnimatePresence mode="wait">
         {/* ── Vue détail ── */}
         {selectedDuo && (
@@ -427,7 +426,6 @@ export default function DuoPage() {
                       duo={duo}
                       currentUserId={user!.id}
                       onOpen={() => setSelectedDuo(duo)}
-                      onDelete={() => handleDelete(duo.id)}
                     />
                   ))}
                 </AnimatePresence>
