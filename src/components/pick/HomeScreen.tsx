@@ -430,7 +430,6 @@ const HomeScreen = ({
     513: "Shadowz",
     300: "Pluto TV",
     2601: "Pathé Home",
-    193: "SFR Play",
     2077: "Universciné",
   };
 

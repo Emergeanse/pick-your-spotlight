@@ -398,7 +398,6 @@ export default function MatchPage() {
             perfectFor: matchData.perfectFor ?? null,
             funFact: matchData.funFact ?? null,
             matchingReasons: matchData.matchingReasons ?? null,
-            similarLikedMovies: matchData.similarLikedMovies ?? null,
             pickNote: matchData.pickNote ?? null,
           } : null}
         />

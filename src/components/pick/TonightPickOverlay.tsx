@@ -277,7 +277,7 @@ const TonightPickOverlay = ({
               )}
               {tonightProviders.filter(p => p.logo_path).slice(0, 4).map((p) => (
                 <img
-                  key={p.provider_id ?? p.name}
+                  key={p.name}
                   src={`https://image.tmdb.org/t/p/original${p.logo_path}`}
                   alt={p.name}
                   title={p.name}
