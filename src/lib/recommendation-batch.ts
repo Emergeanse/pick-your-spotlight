@@ -103,6 +103,8 @@ type RecommendationBatchOptions = {
   scoreAllWithMovieMatch?: boolean;
   // Appelé dès que le premier résultat movie-match est prêt — sans bloquer le reste.
   onFirstMovieReady?: (movie: RecommendationMovieDetail) => void;
+  // Contexte duo : noms des deux utilisateurs pour personnaliser le texte movie-match
+  duoContext?: { user1Name: string | null; user2Name: string | null };
 };
 
 const extractInlineRecommendationTexts = (entry: any): RecommendationMatchData | null => {
@@ -205,6 +207,7 @@ async function buildMatchContext(options: RecommendationBatchOptions) {
     tasteProfile: enrichedProfile,
     cinematicProfile,
     peoplePreferences: tasteProfile?.peoplePreferences || null,
+    duoContext: options.duoContext ?? null,
   };
 }
 
@@ -225,6 +228,7 @@ async function fetchRecommendationTextsForMovie(
         cinematicProfile: context.cinematicProfile,
         peoplePreferences: context.peoplePreferences,
         userName: context.userName,
+        duoContext: (context as any).duoContext ?? null,
         minMatchScore: options.minMatchScore ?? 60,
       },
     });

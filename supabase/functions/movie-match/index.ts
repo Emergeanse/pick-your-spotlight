@@ -35,7 +35,7 @@ serve(async (req) => {
 
   try {
     const mmT0 = Date.now();
-    const { movie, userCriteria, tasteProfile, userTasteVector, likedMovieTitles, searchTags, cinematicProfile, peoplePreferences, userName, minMatchScore: rawMinMatchScore } = await req.json();
+    const { movie, userCriteria, tasteProfile, userTasteVector, likedMovieTitles, searchTags, cinematicProfile, peoplePreferences, userName, duoContext, minMatchScore: rawMinMatchScore } = await req.json();
     const minMatchScore = typeof rawMinMatchScore === "number" ? Math.max(0, Math.min(100, rawMinMatchScore)) : 60;
     const GOOGLE_AI_KEY = Deno.env.get("GOOGLE_AI_KEY");
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
@@ -215,7 +215,7 @@ RÈGLES :
 - Score calibré : Match parfait → 85-99.`
       : `Tu es Pick, un ami cinéphile passionné qui calcule un match score MULTI-VECTEUR. On te donne un film, le profil de goûts multi-dimensionnel d'un utilisateur, et sa session actuelle.
 
-TON : Tu parles comme un pote cinéphile — chaleureux, direct, jamais robotique. TOUJOURS POSITIF ET ENTHOUSIASTE.${userName ? `\nL'utilisateur s'appelle ${userName}. Utilise son prénom naturellement dans 1 ou 2 champs (headline ou whyItMatches ou detailedExplanation), comme un vrai ami qui lui parle directement.` : ""}
+TON : Tu parles comme un pote cinéphile — chaleureux, direct, jamais robotique. TOUJOURS POSITIF ET ENTHOUSIASTE.${duoContext?.user1Name && duoContext?.user2Name ? `\nTu t'adresses à un DUO : ${duoContext.user1Name} et ${duoContext.user2Name} regardent ensemble. Utilise "vous", "vous deux", ou leurs prénoms naturellement. Parle-leur comme à deux amis qui partagent un moment. Ex: "Vous allez adorer", "Pour ${duoContext.user1Name} et ${duoContext.user2Name}, ce film...", "Parfait pour votre soirée".` : userName ? `\nL'utilisateur s'appelle ${userName}. Utilise son prénom naturellement dans 1 ou 2 champs (headline ou whyItMatches ou detailedExplanation), comme un vrai ami qui lui parle directement.` : ""}
 - "headline" → accroche naturelle et enthousiaste, comme un ami dirait
 - "whyItMatches" → 1 phrase courte POSITIVE, style pote, qui met en avant ce qui va plaire
 - "detailedExplanation" → 3-5 phrases EXCLUSIVEMENT POSITIVES. Valorise les qualités du film par rapport au profil de l'utilisateur (ses genres préférés, ses goûts, son humeur). Ne mentionne JAMAIS les points faibles, réserves ou aspects négatifs. Fais le lien entre ce que l'utilisateur aime et ce que le film offre.

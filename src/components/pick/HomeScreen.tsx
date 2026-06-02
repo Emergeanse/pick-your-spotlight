@@ -690,7 +690,7 @@ const HomeScreen = ({
     return data;
   };
 
-  type DuoOverrides = { topGenres: string[]; excludedGenres: string[]; tasteVector: number[] | null; avoidanceVector: number[] | null; topClusters: string[]; rejectedClusters: string[]; partnerExcludeIds: number[] };
+  type DuoOverrides = { topGenres: string[]; excludedGenres: string[]; tasteVector: number[] | null; avoidanceVector: number[] | null; topClusters: string[]; rejectedClusters: string[]; partnerExcludeIds: number[]; user1Name: string | null; user2Name: string | null };
   const generateTonightPick = async (excludeList: number[] = rejectedIds, rejectionContext?: RejectionContext, voiceFilters?: VoiceSearchFilters | null, duoOverrides?: DuoOverrides) => {
     generateTonightPickRef.current = generateTonightPick;
     const poolIds = (chatMoviesPool || []).map((m) => m.id).filter(Number.isFinite);
@@ -1032,6 +1032,7 @@ const HomeScreen = ({
             preloadMatchTexts: true,
             preloadProviders: true,
             scoreAllWithMovieMatch: true,
+            ...(duoOverrides?.user1Name && { duoContext: { user1Name: duoOverrides.user1Name, user2Name: duoOverrides.user2Name ?? null } }),
             onFirstMovieReady: (firstMovie) => {
               if (!isMountedRef.current || firstMovieShown) return;
               firstMovieShown = true;
@@ -1087,6 +1088,7 @@ const HomeScreen = ({
             preloadMatchTexts: true,
             preloadProviders: true,
             minMatchScore: quickFilters.matchThreshold,
+            ...(duoOverrides?.user1Name && { duoContext: { user1Name: duoOverrides.user1Name, user2Name: duoOverrides.user2Name ?? null } }),
           });
           const scoreMapB: Record<number, RecommendationMatch> = {};
           (movies as any[]).forEach((m: any) => {
@@ -1114,6 +1116,7 @@ const HomeScreen = ({
           preloadMatchTexts: true,
           preloadProviders: true,
           minMatchScore: quickFilters.matchThreshold,
+          ...(duoOverrides?.user1Name && { duoContext: { user1Name: duoOverrides.user1Name, user2Name: duoOverrides.user2Name ?? null } }),
         });
         const scoreMapC: Record<number, RecommendationMatch> = {};
         (movies as any[]).forEach((m: any) => {
@@ -1277,6 +1280,8 @@ const HomeScreen = ({
             topClusters: duo.top_clusters ?? [],
             rejectedClusters: duo.rejected_clusters ?? [],
             partnerExcludeIds,
+            user1Name: duo.user1_display_name ?? null,
+            user2Name: duo.user2_display_name ?? null,
           });
           return;
         }
