@@ -279,6 +279,19 @@ export async function acceptDuo(
     console.error("[Duo] acceptDuo error:", error);
     return null;
   }
+
+  // Ajouter mutuellement comme amis si pas déjà amis
+  const { data: existing } = await (supabase as any)
+    .from("friendships")
+    .select("id")
+    .or(`and(requester_id.eq.${duo.user1_id},addressee_id.eq.${user2Id}),and(requester_id.eq.${user2Id},addressee_id.eq.${duo.user1_id})`)
+    .maybeSingle();
+  if (!existing) {
+    await (supabase as any)
+      .from("friendships")
+      .insert({ requester_id: duo.user1_id, addressee_id: user2Id, status: "accepted" });
+  }
+
   return data as DuoProfile;
 }
 
