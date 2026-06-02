@@ -694,7 +694,9 @@ const HomeScreen = ({
   const generateTonightPick = async (excludeList: number[] = rejectedIds, rejectionContext?: RejectionContext, voiceFilters?: VoiceSearchFilters | null, duoOverrides?: DuoOverrides) => {
     generateTonightPickRef.current = generateTonightPick;
     const poolIds = (chatMoviesPool || []).map((m) => m.id).filter(Number.isFinite);
-    const allExcludeIds = [...new Set([...excludeList, ...poolIds, ...historyExcludeIdsRef.current, ...(duoOverrides?.partnerExcludeIds ?? [])])];
+    // En mode duo : on n'utilise pas l'historique solo (trop restrictif), juste les interactions des deux users
+    const soloHistory = duoOverrides ? [] : historyExcludeIdsRef.current;
+    const allExcludeIds = [...new Set([...excludeList, ...poolIds, ...soloHistory, ...(duoOverrides?.partnerExcludeIds ?? [])])];
 
     const t0Pick = performance.now();
     let tEdgeStart = t0Pick;
@@ -1281,16 +1283,21 @@ const HomeScreen = ({
             fetchLikedTitles(duo.user2_id),
           ]);
 
-          // Intersection des genres likés (source de vérité pour le filtre SQL)
-          const commonLiked    = prefs1.liked.filter((g: string) => prefs2.liked.includes(g));
+          // Union des genres likés pour le filtre SQL (plus de candidats)
+          // Le LLM et le vecteur duo sélectionnent les films les plus pertinents pour les deux
+          const unionLiked     = [...new Set([...prefs1.liked, ...prefs2.liked])];
           const commonExcluded = prefs1.excluded.filter((g: string) => prefs2.excluded.includes(g));
           const mergedLikedTitles = [...new Set([...titles1, ...titles2])];
+          // N'exclure que les interactions récentes/explicites des deux (pas l'historique complet)
           const partnerExcludeIds = [...new Set([...ids1, ...ids2])];
           const tv = duo.taste_vector ? JSON.parse(duo.taste_vector) : null;
           const av = duo.avoidance_vector ? JSON.parse(duo.avoidance_vector) : null;
 
-          void generateTonightPick(rejectedIds, undefined, undefined, {
-            topGenres: commonLiked,
+          void generateTonightPick(
+            // En mode duo, on réinitialise les rejectedIds pour éviter de bloquer le pool
+            [],
+            undefined, undefined, {
+            topGenres: unionLiked,
             mergedLikedTitles,
             excludedGenres: commonExcluded,
             tasteVector: tv,
