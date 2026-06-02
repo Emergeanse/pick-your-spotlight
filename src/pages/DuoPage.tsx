@@ -50,7 +50,7 @@ const DuoCard = ({ duo, currentUserId, onOpen }: {
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.95 }}
-      className="w-full bg-foreground/[0.04] border border-border/40 rounded-2xl px-4 py-4 flex items-center gap-3 cursor-pointer hover:border-primary/50 transition-colors"
+      className="w-full bg-white/[0.07] border border-white/25 rounded-2xl px-4 py-4 flex items-center gap-3 cursor-pointer hover:bg-white/[0.11] hover:border-primary/50 transition-all shadow-[0_2px_16px_-4px_rgba(0,0,0,0.4)]"
       onClick={onOpen}
     >
       <div className="w-10 h-10 rounded-full bg-primary/15 border border-primary/25 flex items-center justify-center shrink-0">
@@ -550,7 +550,7 @@ export default function DuoPage() {
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
         style={{ backgroundImage: `url(${duoBg})` }}
       />
-      <div className="absolute inset-0 bg-gradient-to-b from-background/20 via-background/50 to-background/92" />
+      <div className="absolute inset-0 bg-gradient-to-b from-background/55 via-background/75 to-background/97" />
 
       {/* Contenu */}
       <div className="relative z-10 pb-28 px-4 pt-[calc(4.5rem+env(safe-area-inset-top))] max-w-lg mx-auto w-full">
