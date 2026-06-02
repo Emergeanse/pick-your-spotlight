@@ -56,7 +56,7 @@ const HomeScreenChoiceModal = ({
           onClick={onClose}
         >
           {/* Cinematic atmospheric layers */}
-          <div className="absolute inset-0 bg-background/75 backdrop-blur-2xl" />
+          <div className="absolute inset-0 bg-background/75 backdrop-blur-2xl pointer-events-none" />
           {/* Soft vignette around edges */}
           <div
             className="absolute inset-0 pointer-events-none"
@@ -144,12 +144,7 @@ const HomeScreenChoiceModal = ({
 
             {/* Sélecteur "Pour qui ?" — visible uniquement si des duos existent */}
             {duos.length > 0 && (
-              <motion.div
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.33, duration: 0.4 }}
-                className="flex flex-col gap-2.5"
-              >
+              <div className="relative z-10 flex flex-col gap-2.5">
                 {/* Toggle Solo / Duo */}
                 <div className="flex gap-1 p-1 rounded-2xl" style={{ background: "rgba(0,0,0,0.55)", border: "1px solid rgba(255,255,255,0.18)" }}>
                   <button
@@ -212,7 +207,7 @@ const HomeScreenChoiceModal = ({
                     )}
                   </motion.div>
                 )}
-              </motion.div>
+              </div>
             )}
 
             {/* PRIMARY — hero card */}
