@@ -284,7 +284,7 @@ export default function MatchPage() {
           >
             <h1 className="text-3xl font-serif text-foreground mb-2">Match</h1>
             <p className="text-foreground/50 text-sm font-sans mb-10">
-              Nomme-le, décris-le, parle ou montre son affiche
+              Nomme-le, décris-le, parle ou montre son affiche ou une image du film
             </p>
 
             {/* Zone de texte */}
