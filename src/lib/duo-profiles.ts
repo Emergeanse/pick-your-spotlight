@@ -42,6 +42,45 @@ function averageVectors(v1: number[], v2: number[]): number[] {
   return v1.map((val, i) => (val + v2[i]) / 2);
 }
 
+// Éclate les genres composites ("Science-Fiction & Fantastique" → ["Science-Fiction","Fantastique"])
+// et normalise les variantes anglaises/françaises courantes
+function expandGenres(genres: string[]): string[] {
+  const result = new Set<string>();
+  for (const g of genres) {
+    // Séparateurs courants dans les genres TMDB composites
+    for (const part of g.split(/\s*[&,/]\s*/)) {
+      const clean = part.trim();
+      if (clean.length > 1) result.add(clean);
+    }
+    result.add(g.trim()); // garder aussi l'original
+  }
+  return [...result];
+}
+
+// Calcule l'affinité : cosinus si vecteurs dispo, sinon Dice sur les genres (fallback)
+function computeAffinityScore(
+  tv1: number[] | null, tv2: number[] | null,
+  genres1: string[], genres2: string[]
+): number {
+  if (tv1 && tv2) return Math.round(cosineSimilarity(tv1, tv2) * 100);
+  // Fallback : coefficient Dice sur genres expandus
+  const set1 = new Set(expandGenres(genres1));
+  const set2 = new Set(expandGenres(genres2));
+  const commonCount = [...set1].filter(g => set2.has(g)).length;
+  const total = set1.size + set2.size;
+  return total === 0 ? 0 : Math.round(2 * commonCount / total * 100);
+}
+
+// Calcule les genres réellement en commun (avec expansion des composites)
+function computeCommonGenres(genres1: string[], genres2: string[]): string[] {
+  const expanded1 = new Set(expandGenres(genres1));
+  const expanded2 = new Set(expandGenres(genres2));
+  // Retourne les termes atomiques communs présents dans les listes originales
+  const allAtoms = new Set([...expanded1, ...expanded2]);
+  return [...allAtoms].filter(g => expanded1.has(g) && expanded2.has(g))
+    .filter(g => genres1.some(og => og === g || og.includes(g)) && genres2.some(og => og === g || og.includes(g)));
+}
+
 function parseVector(raw: string | null): number[] | null {
   if (!raw) return null;
   try {
@@ -113,8 +152,6 @@ export async function createDuoWithFriend(
 
   const mergedTaste = tv1 && tv2 ? averageVectors(tv1, tv2) : (tv1 ?? tv2);
   const mergedAvoidance = av1 && av2 ? averageVectors(av1, av2) : (av1 ?? av2);
-  const affinity = tv1 && tv2 ? Math.round(cosineSimilarity(tv1, tv2) * 100) : 0;
-
   const clusters1: string[] = vec1?.top_clusters ?? [];
   const clusters2: string[] = vec2?.top_clusters ?? [];
   const rejected1: string[] = vec1?.rejected_clusters ?? [];
@@ -123,6 +160,7 @@ export async function createDuoWithFriend(
   const genres2: string[] = prof2?.favorite_genres ?? [];
   const excluded1: string[] = prof1?.excluded_genres ?? [];
   const excluded2: string[] = prof2?.excluded_genres ?? [];
+  const affinity = computeAffinityScore(tv1, tv2, genres1, genres2);
 
   const { data, error } = await db
     .from("duo_taste_profiles")
@@ -142,7 +180,7 @@ export async function createDuoWithFriend(
       excluded_genres: [...new Set([...excluded1, ...excluded2])],
       user1_genres: genres1,
       user2_genres: genres2,
-      common_genres: genres1.filter(g => genres2.includes(g)),
+      common_genres: computeCommonGenres(genres1, genres2),
     })
     .select()
     .single();
@@ -197,7 +235,6 @@ export async function acceptDuo(
 
   const mergedTaste = tv1 && tv2 ? averageVectors(tv1, tv2) : (tv1 ?? tv2);
   const mergedAvoidance = av1 && av2 ? averageVectors(av1, av2) : (av1 ?? av2);
-  const affinity = tv1 && tv2 ? Math.round(cosineSimilarity(tv1, tv2) * 100) : 0;
 
   // 5. Clusters et genres
   const clusters1: string[] = vec1?.top_clusters ?? [];
@@ -210,11 +247,11 @@ export async function acceptDuo(
 
   const genres1: string[] = prof1?.favorite_genres ?? [];
   const genres2: string[] = prof2?.favorite_genres ?? [];
-  const commonGenres = genres1.filter(g => genres2.includes(g));
-
   const excluded1: string[] = prof1?.excluded_genres ?? [];
   const excluded2: string[] = prof2?.excluded_genres ?? [];
   const excludedGenres = [...new Set([...excluded1, ...excluded2])];
+  const affinity = computeAffinityScore(tv1, tv2, genres1, genres2);
+  const commonGenres = computeCommonGenres(genres1, genres2);
 
   // 6. Mettre à jour le duo
   const { data, error } = await db
@@ -332,8 +369,6 @@ export async function recalculateDuo(duo: DuoProfile): Promise<DuoProfile | null
 
   const mergedTaste = tv1 && tv2 ? averageVectors(tv1, tv2) : (tv1 ?? tv2);
   const mergedAvoidance = av1 && av2 ? averageVectors(av1, av2) : (av1 ?? av2);
-  const affinity = tv1 && tv2 ? Math.round(cosineSimilarity(tv1, tv2) * 100) : 0;
-
   const clusters1: string[] = vec1?.top_clusters ?? [];
   const clusters2: string[] = vec2?.top_clusters ?? [];
   const rejected1: string[] = vec1?.rejected_clusters ?? [];
@@ -342,6 +377,7 @@ export async function recalculateDuo(duo: DuoProfile): Promise<DuoProfile | null
   const genres2: string[] = prof2?.favorite_genres ?? [];
   const excluded1: string[] = prof1?.excluded_genres ?? [];
   const excluded2: string[] = prof2?.excluded_genres ?? [];
+  const affinity = computeAffinityScore(tv1, tv2, genres1, genres2);
 
   const { data, error } = await db
     .from("duo_taste_profiles")
@@ -354,7 +390,7 @@ export async function recalculateDuo(duo: DuoProfile): Promise<DuoProfile | null
       excluded_genres: [...new Set([...excluded1, ...excluded2])],
       user1_genres: genres1,
       user2_genres: genres2,
-      common_genres: genres1.filter((g: string) => genres2.includes(g)),
+      common_genres: computeCommonGenres(genres1, genres2),
       updated_at: new Date().toISOString(),
     })
     .eq("id", duo.id)
