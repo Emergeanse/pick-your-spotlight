@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { computeMultiVectorProfile } from "@/lib/taste-engine";
 
 // duo_taste_profiles n'est pas encore dans les types générés — alias non-typé
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -378,6 +379,13 @@ export async function loadAcceptedFriends(userId: string): Promise<DuoFriendCand
 /** Recalcule les vecteurs et l'affinité d'un duo existant (utile quand les profils ont évolué) */
 export async function recalculateDuo(duo: DuoProfile): Promise<DuoProfile | null> {
   if (!duo.user2_id) return null;
+
+  // Mettre à jour les vecteurs de goût des deux utilisateurs avant le calcul
+  // pour s'assurer que les interactions récentes sont bien prises en compte
+  await Promise.all([
+    computeMultiVectorProfile(duo.user1_id),
+    computeMultiVectorProfile(duo.user2_id),
+  ]);
 
   const [{ data: vec1 }, { data: vec2 }] = await Promise.all([
     supabase.from("user_taste_vectors").select("taste_vector, avoidance_vector, top_clusters, rejected_clusters").eq("user_id", duo.user1_id).maybeSingle(),
