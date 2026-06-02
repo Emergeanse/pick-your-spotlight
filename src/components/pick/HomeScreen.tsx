@@ -1233,17 +1233,31 @@ const HomeScreen = ({
         const { data: duo } = await (supabase as any)
           .from("duo_taste_profiles").select("*").eq("id", duoId).single();
         if (duo && duo.user2_id) {
-          const [{ data: p1 }, { data: p2 }] = await Promise.all([
-            supabase.from("profiles").select("excluded_genres").eq("id", duo.user1_id).maybeSingle(),
-            supabase.from("profiles").select("excluded_genres").eq("id", duo.user2_id).maybeSingle(),
+          // Fetch live genre preferences from user_preferences (source de vérité)
+          const fetchGenrePrefs = async (userId: string) => {
+            const { data } = await supabase
+              .from("user_preferences")
+              .select("weight, tag:tag_id(category, label)")
+              .eq("user_id", userId);
+            const genres = (data ?? []).filter((r: any) => r.tag?.category === "genre");
+            return {
+              liked:    genres.filter((r: any) => r.weight > 0).map((r: any) => r.tag.label as string),
+              excluded: genres.filter((r: any) => r.weight < 0).map((r: any) => r.tag.label as string),
+            };
+          };
+
+          const [prefs1, prefs2] = await Promise.all([
+            fetchGenrePrefs(duo.user1_id),
+            fetchGenrePrefs(duo.user2_id),
           ]);
-          const ex1: string[] = (p1 as any)?.excluded_genres ?? [];
-          const ex2: string[] = (p2 as any)?.excluded_genres ?? [];
-          const commonExcluded = ex1.filter((g: string) => ex2.includes(g));
+
+          const commonLiked    = prefs1.liked.filter((g: string) => prefs2.liked.includes(g));
+          const commonExcluded = prefs1.excluded.filter((g: string) => prefs2.excluded.includes(g));
           const tv = duo.taste_vector ? JSON.parse(duo.taste_vector) : null;
           const av = duo.avoidance_vector ? JSON.parse(duo.avoidance_vector) : null;
+
           void generateTonightPick(rejectedIds, undefined, undefined, {
-            topGenres: duo.common_genres ?? [],
+            topGenres: commonLiked,
             excludedGenres: commonExcluded,
             tasteVector: tv,
             avoidanceVector: av,
