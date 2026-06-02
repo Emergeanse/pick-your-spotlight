@@ -239,7 +239,7 @@ const DuoDetail = ({ duo: initialDuo, currentUserId, onBack, onRename, onDelete 
         style={{ background: "linear-gradient(135deg, hsl(var(--primary) / 0.9) 0%, hsl(var(--primary) / 0.65) 100%)" }}
       >
         <Sparkles className="w-4 h-4" />
-        Trouve-moi 1 film en duo
+        Trouve-nous un film !
       </button>
 
       {/* Goûts fusionnés */}
