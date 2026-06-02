@@ -148,13 +148,24 @@ const DuoDetail = ({ duo: initialDuo, currentUserId, onBack, onRename, onDelete 
   useEffect(() => {
     if (duo.user2_id) {
       fetchDuoSharedMovies(duo.user1_id, duo.user2_id).then(setSharedMovies);
+
+      // Fetch excluded genre preferences for both users from user_preferences
+      const fetchExcludedGenres = async (userId: string): Promise<string[]> => {
+        const { data } = await supabase
+          .from("user_preferences")
+          .select("weight, tag:tag_id(category, label)")
+          .eq("user_id", userId)
+          .lt("weight", 0);
+        return (data ?? [])
+          .filter((r: any) => r.tag?.category === "genre")
+          .map((r: any) => r.tag.label as string);
+      };
+
       Promise.all([
-        supabase.from("profiles").select("excluded_genres").eq("id", duo.user1_id).maybeSingle(),
-        supabase.from("profiles").select("excluded_genres").eq("id", duo.user2_id).maybeSingle(),
-      ]).then(([{ data: p1 }, { data: p2 }]) => {
-        const ex1: string[] = (p1 as any)?.excluded_genres ?? [];
-        const ex2: string[] = (p2 as any)?.excluded_genres ?? [];
-        setCommonExcluded(ex1.filter((g: string) => ex2.includes(g)));
+        fetchExcludedGenres(duo.user1_id),
+        fetchExcludedGenres(duo.user2_id),
+      ]).then(([ex1, ex2]) => {
+        setCommonExcluded(ex1.filter(g => ex2.includes(g)));
       });
     }
   }, [duo.id, duo.user1_id, duo.user2_id]);
