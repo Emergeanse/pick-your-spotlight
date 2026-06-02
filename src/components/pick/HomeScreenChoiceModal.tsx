@@ -146,29 +146,37 @@ const HomeScreenChoiceModal = ({
             {duos.length > 0 && (
               <div className="relative z-10 flex flex-col gap-2.5">
                 {/* Toggle Solo / Duo */}
-                <div className="flex gap-1 p-1 rounded-2xl" style={{ background: "rgba(0,0,0,0.55)", border: "1px solid rgba(255,255,255,0.18)" }}>
+                <div className="flex gap-1 p-1 rounded-2xl bg-white/[0.04] border border-white/[0.08]">
                   <button
                     onClick={() => { setMode("solo"); setSelectedDuoId(null); }}
-                    style={mode === "solo" ? { background: "rgba(255,255,255,0.92)" } : {}}
-                    className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-[13px] font-sans font-semibold transition-all ${
-                      mode === "solo" ? "text-black" : "text-white/60 hover:text-white"
+                    className={`relative flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-[13px] font-sans font-medium transition-all overflow-hidden ${
+                      mode === "solo"
+                        ? "text-foreground border border-primary/40"
+                        : "text-foreground/45 hover:text-foreground/70"
                     }`}
                   >
-                    <User className="w-3.5 h-3.5" />
-                    Solo
+                    {mode === "solo" && (
+                      <div className="absolute inset-0 rounded-xl" style={{ background: "linear-gradient(135deg, hsl(var(--primary) / 0.40) 0%, hsl(var(--primary) / 0.15) 100%)" }} />
+                    )}
+                    <User className="relative w-3.5 h-3.5" />
+                    <span className="relative">Solo</span>
                   </button>
                   <button
                     onClick={() => {
                       setMode("duo");
                       if (!selectedDuoId && duos.length === 1) setSelectedDuoId(duos[0].id);
                     }}
-                    style={mode === "duo" ? { background: "rgba(255,255,255,0.92)" } : {}}
-                    className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-[13px] font-sans font-semibold transition-all ${
-                      mode === "duo" ? "text-black" : "text-white/60 hover:text-white"
+                    className={`relative flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-[13px] font-sans font-medium transition-all overflow-hidden ${
+                      mode === "duo"
+                        ? "text-foreground border border-primary/40"
+                        : "text-foreground/45 hover:text-foreground/70"
                     }`}
                   >
-                    <Heart className="w-3.5 h-3.5" />
-                    Duo
+                    {mode === "duo" && (
+                      <div className="absolute inset-0 rounded-xl" style={{ background: "linear-gradient(135deg, hsl(var(--primary) / 0.40) 0%, hsl(var(--primary) / 0.15) 100%)" }} />
+                    )}
+                    <Heart className="relative w-3.5 h-3.5" />
+                    <span className="relative">Duo</span>
                   </button>
                 </div>
 
@@ -187,16 +195,21 @@ const HomeScreenChoiceModal = ({
                         <button
                           key={duo.id}
                           onClick={() => setSelectedDuoId(duo.id)}
-                          className={`flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-[13px] font-sans transition-all border ${
+                          className={`relative flex items-center gap-3 px-4 py-3 rounded-[20px] text-[13px] font-sans transition-all overflow-hidden border ${
                             active
-                              ? "bg-primary/20 border-primary/45 text-primary"
-                              : "bg-white/[0.03] border-white/[0.07] text-foreground/65 hover:border-white/20"
+                              ? "border-primary/40 text-foreground"
+                              : "bg-white/[0.025] border-white/[0.06] text-foreground/80 hover:bg-white/[0.045] hover:border-white/[0.12]"
                           }`}
                         >
-                          <Heart className="w-3.5 h-3.5 shrink-0" />
-                          <span className="flex-1 text-left font-medium">{duo.duo_name}</span>
-                          <span className="text-[11px] opacity-60 shrink-0">avec {partner ?? "—"}</span>
-                          {active && <Check className="w-3.5 h-3.5 shrink-0" />}
+                          {active && (
+                            <div className="absolute inset-0 rounded-[20px]" style={{ background: "linear-gradient(135deg, hsl(var(--primary) / 0.35) 0%, hsl(var(--primary) / 0.10) 100%)" }} />
+                          )}
+                          <div className={`relative w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${active ? "bg-primary/30 border border-primary/50" : "bg-white/[0.04] border border-white/[0.08]"}`}>
+                            <Heart className="w-3.5 h-3.5" />
+                          </div>
+                          <span className="relative flex-1 text-left font-medium">{duo.duo_name}</span>
+                          <span className="relative text-[11px] text-foreground/45 shrink-0">avec {partner ?? "—"}</span>
+                          {active && <Check className="relative w-3.5 h-3.5 shrink-0 text-primary" />}
                         </button>
                       );
                     })}
