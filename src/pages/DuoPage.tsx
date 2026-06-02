@@ -547,9 +547,10 @@ export default function DuoPage() {
     <div
       className="flex-1 overflow-y-auto pb-28 px-4 pt-[calc(4.5rem+env(safe-area-inset-top))] max-w-lg mx-auto w-full"
       style={{
-        backgroundImage: `linear-gradient(to bottom, hsl(var(--background)/0.75), hsl(var(--background)/0.55), hsl(var(--background)/0.9)), url(${duoBg})`,
+        backgroundImage: `linear-gradient(to bottom, hsl(var(--background)/0.4) 0%, transparent 30%, transparent 60%, hsl(var(--background)/0.8) 85%, hsl(var(--background)/0.97) 100%), url(${duoBg})`,
         backgroundSize: "cover",
         backgroundPosition: "center top",
+        backgroundAttachment: "fixed",
       }}
     >
       <AnimatePresence mode="wait">
