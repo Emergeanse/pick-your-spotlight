@@ -690,7 +690,8 @@ const HomeScreen = ({
     return data;
   };
 
-  const generateTonightPick = async (excludeList: number[] = rejectedIds, rejectionContext?: RejectionContext, voiceFilters?: VoiceSearchFilters | null) => {
+  type DuoOverrides = { topGenres: string[]; excludedGenres: string[]; tasteVector: number[] | null; avoidanceVector: number[] | null; topClusters: string[]; rejectedClusters: string[] };
+  const generateTonightPick = async (excludeList: number[] = rejectedIds, rejectionContext?: RejectionContext, voiceFilters?: VoiceSearchFilters | null, duoOverrides?: DuoOverrides) => {
     generateTonightPickRef.current = generateTonightPick;
     const poolIds = (chatMoviesPool || []).map((m) => m.id).filter(Number.isFinite);
     const allExcludeIds = [...new Set([...excludeList, ...poolIds, ...historyExcludeIdsRef.current])];
@@ -752,7 +753,7 @@ const HomeScreen = ({
             getUserTasteProfile(),
           ]);
 
-          const userTasteVector = multiProfile?.stableTasteVector || null;
+          const userTasteVector = duoOverrides?.tasteVector ?? (multiProfile?.stableTasteVector || null);
 
           console.group("[PICK-DEBUG] 📤 Paramètres envoyés à surprise-personalized");
           console.log("userTasteVector :", userTasteVector ? `✅ ${userTasteVector.length} dims` : "❌ NULL — SQL sera sauté");
@@ -768,12 +769,16 @@ const HomeScreen = ({
 
           const moodCfg = activeAmbiance ? MOOD_CONFIGS[activeAmbiance] : null;
 
-          // Voix prime sur l'ambiance qui prime sur les valeurs par défaut
-          const effectiveTopGenres = voiceFilters?.genres?.length
-            ? voiceFilters.genres
-            : moodCfg?.boostGenres
-              ? [...new Set([...(moodCfg.boostGenres), ...(tasteProfile?.topGenres || [])])]
-              : tasteProfile?.topGenres;
+          // Duo prime sur voix qui prime sur ambiance qui prime sur les valeurs par défaut
+          const effectiveTopGenres = duoOverrides
+            ? duoOverrides.topGenres
+            : voiceFilters?.genres?.length
+              ? voiceFilters.genres
+              : moodCfg?.boostGenres
+                ? [...new Set([...(moodCfg.boostGenres), ...(tasteProfile?.topGenres || [])])]
+                : tasteProfile?.topGenres;
+          const effectiveExcludedGenres = duoOverrides ? duoOverrides.excludedGenres : userExcludedGenres;
+          const effectiveAvoidanceVector = duoOverrides?.avoidanceVector ?? (multiProfile?.avoidanceVector || null);
           const effectiveExplorationLevel = moodCfg?.explorationOverride ?? explorationLevel;
           const effectiveMaxDuration = voiceFilters?.maxDuration ?? moodCfg?.maxDurationOverride ?? quickFilters.maxDuration;
           const effectiveMediaType = voiceFilters?.mediaType ?? moodCfg?.mediaTypeOverride ?? (quickFilters.mediaType !== "both" ? quickFilters.mediaType : "both");
@@ -794,12 +799,16 @@ const HomeScreen = ({
           const data = await invokeSurprisePersonalized({
             likedMovies: liked,
             userTasteVector,
-            tasteProfile: { ...tasteProfile, topGenres: effectiveTopGenres },
+            tasteProfile: {
+              ...tasteProfile,
+              topGenres: effectiveTopGenres,
+              ...(duoOverrides && { tasteClusters: duoOverrides.topClusters, rejectedClusters: duoOverrides.rejectedClusters }),
+            },
             recentTasteVector: multiProfile?.recentTasteVector || null,
-            avoidanceVector: multiProfile?.avoidanceVector || null,
+            avoidanceVector: effectiveAvoidanceVector,
             platformIds: userPlatformIds,
             excludedPlatformIds: userExcludedPlatformIds,
-            excludedGenres: userExcludedGenres,
+            excludedGenres: effectiveExcludedGenres,
             minRating: effectiveMinRating,
             excludeIds: allExcludeIds,
             rejectionContext,
@@ -1211,12 +1220,42 @@ const HomeScreen = ({
     }
   };
 
-  const handleAutoPick = () => {
+  const handleAutoPick = async (duoId?: string) => {
     setShowFindChoice(false);
+    setFindChoiceDuoId(undefined);
     setTonightPick(null);
     setChatMoviesPool(null);
     setTonightPickIndex(0);
     setNoResultsInfo(null);
+
+    if (duoId) {
+      try {
+        const { data: duo } = await (supabase as any)
+          .from("duo_taste_profiles").select("*").eq("id", duoId).single();
+        if (duo && duo.user2_id) {
+          const [{ data: p1 }, { data: p2 }] = await Promise.all([
+            supabase.from("profiles").select("excluded_genres").eq("id", duo.user1_id).maybeSingle(),
+            supabase.from("profiles").select("excluded_genres").eq("id", duo.user2_id).maybeSingle(),
+          ]);
+          const ex1: string[] = (p1 as any)?.excluded_genres ?? [];
+          const ex2: string[] = (p2 as any)?.excluded_genres ?? [];
+          const commonExcluded = ex1.filter((g: string) => ex2.includes(g));
+          const tv = duo.taste_vector ? JSON.parse(duo.taste_vector) : null;
+          const av = duo.avoidance_vector ? JSON.parse(duo.avoidance_vector) : null;
+          void generateTonightPick(rejectedIds, undefined, undefined, {
+            topGenres: duo.common_genres ?? [],
+            excludedGenres: commonExcluded,
+            tasteVector: tv,
+            avoidanceVector: av,
+            topClusters: duo.top_clusters ?? [],
+            rejectedClusters: duo.rejected_clusters ?? [],
+          });
+          return;
+        }
+      } catch (e) {
+        console.error("[Duo] handleAutoPick fetch error:", e);
+      }
+    }
     void generateTonightPick(rejectedIds);
   };
 
