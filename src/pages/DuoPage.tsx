@@ -1,10 +1,10 @@
 import { useEffect, useState, useCallback } from "react";
 import duoBg from "@/assets/duo-background.png";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Users, Plus, Copy, Check, Trash2, Pencil, ChevronRight,
-  Heart, Loader2, Share2, ArrowLeft, Clock, RefreshCw
+  Heart, Loader2, Share2, ArrowLeft, Clock, RefreshCw, Sparkles
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
@@ -130,6 +130,7 @@ const DuoDetail = ({ duo: initialDuo, currentUserId, onBack, onRename, onDelete 
   duo: DuoProfile; currentUserId: string;
   onBack: () => void; onRename: (name: string) => void; onDelete: () => void;
 }) => {
+  const navigate = useNavigate();
   const [duo, setDuo] = useState(initialDuo);
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(duo.duo_name);
@@ -206,6 +207,16 @@ const DuoDetail = ({ duo: initialDuo, currentUserId, onBack, onRename, onDelete 
           <span className="font-sans text-xs font-medium">Recalc.</span>
         </button>
       </div>
+
+      {/* CTA Trouve-moi 1 film */}
+      <button
+        onClick={() => navigate("/app", { state: { openFindChoice: true, duoId: duo.id } })}
+        className="w-full mb-4 py-4 rounded-2xl flex items-center justify-center gap-2.5 font-sans font-semibold text-[14px] text-primary-foreground tracking-wide"
+        style={{ background: "linear-gradient(135deg, hsl(var(--primary) / 0.9) 0%, hsl(var(--primary) / 0.65) 100%)" }}
+      >
+        <Sparkles className="w-4 h-4" />
+        Trouve-moi 1 film en duo
+      </button>
 
       {/* Genres en commun */}
       {duo.common_genres.length > 0 && (

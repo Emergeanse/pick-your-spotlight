@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { toast } from "sonner";
 import { Sparkles, Mic, Flame, Eye, Coffee, Heart, Shuffle } from "lucide-react";
 
@@ -303,8 +303,10 @@ const HomeScreen = ({
 }: HomeScreenProps) => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [bgImages, setBgImages] = useState<string[]>([]);
+  const [findChoiceDuoId, setFindChoiceDuoId] = useState<string | undefined>(undefined);
   const [currentBgIndex, setCurrentBgIndex] = useState(0);
 
   const [tonightPick, setTonightPick] = useState<MovieDetail | null>(null);
@@ -372,6 +374,15 @@ const HomeScreen = ({
       if (msgIntervalRef.current !== null) clearInterval(msgIntervalRef.current);
     };
   }, []);
+
+  useEffect(() => {
+    const state = location.state as { openFindChoice?: boolean; duoId?: string } | null;
+    if (state?.openFindChoice) {
+      setFindChoiceDuoId(state.duoId);
+      setShowFindChoice(true);
+      navigate("/app", { replace: true, state: {} });
+    }
+  }, [location.state]);
 
   // Écoute le custom event émis par handleVoiceSearchIntent
   // pour router la recherche vocale dans le même pipeline que la recherche standard
@@ -1547,8 +1558,9 @@ const HomeScreen = ({
       <HomeScreenChoiceModal
         open={showFindChoice}
         mediaType={quickFilters.mediaType}
-        onClose={() => setShowFindChoice(false)}
+        onClose={() => { setShowFindChoice(false); setFindChoiceDuoId(undefined); }}
         onAutoPick={handleAutoPick}
+        initialDuoId={findChoiceDuoId}
         onOpenChat={() => {
           setShowFindChoice(false);
           onOpenChat();

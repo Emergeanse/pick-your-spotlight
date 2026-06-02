@@ -13,6 +13,7 @@ interface HomeScreenChoiceModalProps {
   onAutoPick: (duoId?: string) => void;
   onOpenChat: () => void;
   onOpenMoodCapture: () => void;
+  initialDuoId?: string;
 }
 
 const HomeScreenChoiceModal = ({
@@ -22,6 +23,7 @@ const HomeScreenChoiceModal = ({
   onAutoPick,
   onOpenChat,
   onOpenMoodCapture,
+  initialDuoId,
 }: HomeScreenChoiceModalProps) => {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -32,10 +34,17 @@ const HomeScreenChoiceModal = ({
 
   useEffect(() => {
     if (open && user) {
-      fetchMyDuos(user.id).then(setDuos);
+      fetchMyDuos(user.id).then((fetched) => {
+        setDuos(fetched);
+        if (initialDuoId && fetched.some(d => d.id === initialDuoId)) {
+          setMode("duo");
+          setSelectedDuoId(initialDuoId);
+          setDuoListOpen(false);
+        }
+      });
     }
     if (!open) { setMode("solo"); setSelectedDuoId(null); setDuoListOpen(false); }
-  }, [open, user]);
+  }, [open, user, initialDuoId]);
   const title =
     mediaType === "movie"
       ? "Ce soir mérite un grand film."
