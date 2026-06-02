@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
+import duoBg from "@/assets/duo-background.png";
 import { useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -543,7 +544,14 @@ export default function DuoPage() {
   }
 
   return (
-    <div className="flex-1 overflow-y-auto pb-28 px-4 pt-[calc(4.5rem+env(safe-area-inset-top))] max-w-lg mx-auto w-full">
+    <div
+      className="flex-1 overflow-y-auto pb-28 px-4 pt-[calc(4.5rem+env(safe-area-inset-top))] max-w-lg mx-auto w-full"
+      style={{
+        backgroundImage: `linear-gradient(to bottom, hsl(var(--background)/0.75), hsl(var(--background)/0.55), hsl(var(--background)/0.9)), url(${duoBg})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center top",
+      }}
+    >
       <AnimatePresence mode="wait">
         {/* ── Vue détail ── */}
         {selectedDuo && (
