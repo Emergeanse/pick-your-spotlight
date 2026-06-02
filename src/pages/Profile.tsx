@@ -549,7 +549,10 @@ const Profile = () => {
             3. MES PRÉFÉRENCES
         ════════════════════════════════ */}
         <section>
-          <h2 className="text-sm font-sans font-semibold text-foreground/70 uppercase tracking-widest mb-4">Mes préférences</h2>
+          <div className="flex items-center gap-2 mb-4">
+            <Sparkles className="w-3.5 h-3.5 text-primary/30" />
+            <h2 className="text-xs font-sans font-semibold text-foreground/70 uppercase tracking-widest">Mes préférences</h2>
+          </div>
 
           {/* Genres & Styles */}
           <div className="mb-5">
