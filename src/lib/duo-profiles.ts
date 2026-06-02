@@ -186,6 +186,19 @@ export async function createDuoWithFriend(
     .single();
 
   if (error || !data) { console.error("[Duo] createDuoWithFriend error:", error); return null; }
+
+  // Ajouter mutuellement comme amis si pas déjà amis
+  const { data: existingFriend } = await (supabase as any)
+    .from("friendships")
+    .select("id")
+    .or(`and(requester_id.eq.${user1Id},addressee_id.eq.${user2Id}),and(requester_id.eq.${user2Id},addressee_id.eq.${user1Id})`)
+    .maybeSingle();
+  if (!existingFriend) {
+    await (supabase as any)
+      .from("friendships")
+      .insert({ requester_id: user1Id, addressee_id: user2Id, status: "accepted" });
+  }
+
   return data as DuoProfile;
 }
 
