@@ -136,12 +136,13 @@ const DuoDetail = ({ duo: initialDuo, currentUserId, onBack, onRename, onDelete 
   const [name, setName] = useState(duo.duo_name);
   const [recalculating, setRecalculating] = useState(false);
   const [sharedMovies, setSharedMovies] = useState<{ liked: SharedMovie[]; watchlist: SharedMovie[] } | null>(null);
+  const [commonLiked, setCommonLiked] = useState<string[]>([]);
   const [commonExcluded, setCommonExcluded] = useState<string[]>([]);
   const partner = duo.user1_id === currentUserId ? duo.user2_display_name : duo.user1_display_name;
 
   const isOrigin = (g: string) => /cinéma|cinema/i.test(g);
-  const commonLikedGenres  = duo.common_genres.filter(g => !isOrigin(g));
-  const commonLikedOrigins = duo.common_genres.filter(g => isOrigin(g));
+  const commonLikedGenres   = commonLiked.filter(g => !isOrigin(g));
+  const commonLikedOrigins  = commonLiked.filter(g => isOrigin(g));
   const commonExcludedGenres  = commonExcluded.filter(g => !isOrigin(g));
   const commonExcludedOrigins = commonExcluded.filter(g => isOrigin(g));
 
@@ -149,23 +150,24 @@ const DuoDetail = ({ duo: initialDuo, currentUserId, onBack, onRename, onDelete 
     if (duo.user2_id) {
       fetchDuoSharedMovies(duo.user1_id, duo.user2_id).then(setSharedMovies);
 
-      // Fetch excluded genre preferences for both users from user_preferences
-      const fetchExcludedGenres = async (userId: string): Promise<string[]> => {
+      const fetchGenrePrefs = async (userId: string) => {
         const { data } = await supabase
           .from("user_preferences")
           .select("weight, tag:tag_id(category, label)")
-          .eq("user_id", userId)
-          .lt("weight", 0);
-        return (data ?? [])
-          .filter((r: any) => r.tag?.category === "genre")
-          .map((r: any) => r.tag.label as string);
+          .eq("user_id", userId);
+        const genres = (data ?? []).filter((r: any) => r.tag?.category === "genre");
+        return {
+          liked:    genres.filter((r: any) => r.weight > 0).map((r: any) => r.tag.label as string),
+          excluded: genres.filter((r: any) => r.weight < 0).map((r: any) => r.tag.label as string),
+        };
       };
 
       Promise.all([
-        fetchExcludedGenres(duo.user1_id),
-        fetchExcludedGenres(duo.user2_id),
-      ]).then(([ex1, ex2]) => {
-        setCommonExcluded(ex1.filter(g => ex2.includes(g)));
+        fetchGenrePrefs(duo.user1_id),
+        fetchGenrePrefs(duo.user2_id),
+      ]).then(([p1, p2]) => {
+        setCommonLiked(p1.liked.filter(g => p2.liked.includes(g)));
+        setCommonExcluded(p1.excluded.filter(g => p2.excluded.includes(g)));
       });
     }
   }, [duo.id, duo.user1_id, duo.user2_id]);
