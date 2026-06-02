@@ -311,7 +311,7 @@ export default function MatchPage() {
             <button
               onClick={handleTextSearch}
               disabled={!query.trim() || state === "identifying"}
-              className="w-full py-4 bg-primary rounded-2xl text-background font-bold text-[13px] tracking-widest uppercase mb-6 disabled:opacity-40 flex items-center justify-center gap-2"
+              className="w-full py-4 bg-primary rounded-2xl text-background font-bold text-[13px] tracking-widest uppercase mb-6 flex items-center justify-center gap-2"
             >
               {state === "identifying" ? (
                 <><Loader2 className="w-4 h-4 animate-spin" /> Identification en cours…</>
