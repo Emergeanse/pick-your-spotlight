@@ -660,7 +660,7 @@ export default function DuoPage() {
           </motion.div>
         )}
       </AnimatePresence>
-      </div>{/* fin scroll */}
-    </div>{/* fin wrapper fond */}
+      </div>
+    </div>
   );
 }
