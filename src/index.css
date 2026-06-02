@@ -86,7 +86,6 @@
   /* Suppress blue tap flash on all interactive elements */
   button, a, [role="button"] {
     -webkit-tap-highlight-color: transparent;
-    touch-action: manipulation;
   }
 
   /* Prevent text selection on UI elements */
