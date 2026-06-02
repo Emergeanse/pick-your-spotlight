@@ -28,12 +28,13 @@ const HomeScreenChoiceModal = ({
   const [duos, setDuos] = useState<DuoProfile[]>([]);
   const [mode, setMode] = useState<"solo" | "duo">("solo");
   const [selectedDuoId, setSelectedDuoId] = useState<string | null>(null);
+  const [duoListOpen, setDuoListOpen] = useState(false);
 
   useEffect(() => {
     if (open && user) {
       fetchMyDuos(user.id).then(setDuos);
     }
-    if (!open) { setMode("solo"); setSelectedDuoId(null); }
+    if (!open) { setMode("solo"); setSelectedDuoId(null); setDuoListOpen(false); }
   }, [open, user]);
   const title =
     mediaType === "movie"
@@ -164,7 +165,8 @@ const HomeScreenChoiceModal = ({
                   <button
                     onClick={() => {
                       setMode("duo");
-                      if (!selectedDuoId && duos.length === 1) setSelectedDuoId(duos[0].id);
+                      setDuoListOpen(true);
+                      if (duos.length === 1) setSelectedDuoId(duos[0].id);
                     }}
                     className={`relative flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-[13px] font-sans font-medium transition-all overflow-hidden ${
                       mode === "duo"
@@ -180,45 +182,61 @@ const HomeScreenChoiceModal = ({
                   </button>
                 </div>
 
-                {/* Liste des duos */}
+                {/* Sélection duo */}
                 {mode === "duo" && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 6 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.25 }}
-                    className="flex flex-col gap-1.5"
-                  >
-                    {duos.map(duo => {
+                  <AnimatePresence mode="wait">
+                    {/* Duo sélectionné — vue réduite */}
+                    {selectedDuoId && !duoListOpen ? (() => {
+                      const duo = duos.find(d => d.id === selectedDuoId)!;
                       const partner = duo.user1_id === user?.id ? duo.user2_display_name : duo.user1_display_name;
-                      const active = selectedDuoId === duo.id;
                       return (
-                        <button
-                          key={duo.id}
-                          onClick={() => setSelectedDuoId(duo.id)}
-                          className={`relative flex items-center gap-3 px-4 py-3 rounded-[20px] text-[13px] font-sans transition-all overflow-hidden border ${
-                            active
-                              ? "border-primary/40 text-foreground"
-                              : "bg-white/[0.025] border-white/[0.06] text-foreground/80 hover:bg-white/[0.045] hover:border-white/[0.12]"
-                          }`}
+                        <motion.button
+                          key="selected"
+                          initial={{ opacity: 0, y: 4 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -4 }}
+                          transition={{ duration: 0.2 }}
+                          onClick={() => setDuoListOpen(true)}
+                          className="relative flex items-center gap-3 px-4 py-3 rounded-[20px] text-[13px] font-sans transition-all overflow-hidden border border-primary/40 text-foreground w-full"
                         >
-                          {active && (
-                            <div className="absolute inset-0 rounded-[20px]" style={{ background: "linear-gradient(135deg, hsl(var(--primary) / 0.35) 0%, hsl(var(--primary) / 0.10) 100%)" }} />
-                          )}
-                          <div className={`relative w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${active ? "bg-primary/30 border border-primary/50" : "bg-white/[0.04] border border-white/[0.08]"}`}>
+                          <div className="absolute inset-0 rounded-[20px]" style={{ background: "linear-gradient(135deg, hsl(var(--primary) / 0.35) 0%, hsl(var(--primary) / 0.10) 100%)" }} />
+                          <div className="relative w-8 h-8 rounded-xl flex items-center justify-center shrink-0 bg-primary/30 border border-primary/50">
                             <Heart className="w-3.5 h-3.5" />
                           </div>
                           <span className="relative flex-1 text-left font-medium">{duo.duo_name}</span>
-                          <span className="relative text-[11px] text-foreground/45 shrink-0">avec {partner ?? "—"}</span>
-                          {active && <Check className="relative w-3.5 h-3.5 shrink-0 text-primary" />}
-                        </button>
+                          <span className="relative text-[11px] text-foreground/50 shrink-0">avec {partner ?? "—"}</span>
+                          <Check className="relative w-3.5 h-3.5 shrink-0 text-primary" />
+                        </motion.button>
                       );
-                    })}
-                    {!selectedDuoId && (
-                      <p className="text-[11px] text-foreground/35 font-sans text-center pt-0.5">
-                        Sélectionne un duo
-                      </p>
+                    })() : (
+                      /* Liste dépliante */
+                      <motion.div
+                        key="list"
+                        initial={{ opacity: 0, y: 6 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -4 }}
+                        transition={{ duration: 0.22 }}
+                        className="flex flex-col gap-1.5"
+                      >
+                        {duos.map(duo => {
+                          const partner = duo.user1_id === user?.id ? duo.user2_display_name : duo.user1_display_name;
+                          return (
+                            <button
+                              key={duo.id}
+                              onClick={() => { setSelectedDuoId(duo.id); setDuoListOpen(false); }}
+                              className="relative flex items-center gap-3 px-4 py-3 rounded-[20px] text-[13px] font-sans transition-all overflow-hidden border bg-white/[0.025] border-white/[0.06] text-foreground/80 hover:bg-white/[0.045] hover:border-white/[0.12] w-full"
+                            >
+                              <div className="relative w-8 h-8 rounded-xl flex items-center justify-center shrink-0 bg-white/[0.04] border border-white/[0.08]">
+                                <Heart className="w-3.5 h-3.5" />
+                              </div>
+                              <span className="relative flex-1 text-left font-medium">{duo.duo_name}</span>
+                              <span className="relative text-[11px] text-foreground/45 shrink-0">avec {partner ?? "—"}</span>
+                            </button>
+                          );
+                        })}
+                      </motion.div>
                     )}
-                  </motion.div>
+                  </AnimatePresence>
                 )}
               </div>
             )}
