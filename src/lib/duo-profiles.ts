@@ -312,6 +312,59 @@ export async function loadAcceptedFriends(userId: string): Promise<DuoFriendCand
   }));
 }
 
+/** Recalcule les vecteurs et l'affinité d'un duo existant (utile quand les profils ont évolué) */
+export async function recalculateDuo(duo: DuoProfile): Promise<DuoProfile | null> {
+  if (!duo.user2_id) return null;
+
+  const [{ data: vec1 }, { data: vec2 }] = await Promise.all([
+    supabase.from("user_taste_vectors").select("taste_vector, avoidance_vector, top_clusters, rejected_clusters").eq("user_id", duo.user1_id).maybeSingle(),
+    supabase.from("user_taste_vectors").select("taste_vector, avoidance_vector, top_clusters, rejected_clusters").eq("user_id", duo.user2_id).maybeSingle(),
+  ]);
+  const [{ data: prof1 }, { data: prof2 }] = await Promise.all([
+    supabase.from("profiles").select("favorite_genres, excluded_genres").eq("id", duo.user1_id).maybeSingle(),
+    supabase.from("profiles").select("favorite_genres, excluded_genres").eq("id", duo.user2_id).maybeSingle(),
+  ]);
+
+  const tv1 = parseVector(vec1?.taste_vector ?? null);
+  const tv2 = parseVector(vec2?.taste_vector ?? null);
+  const av1 = parseVector(vec1?.avoidance_vector ?? null);
+  const av2 = parseVector(vec2?.avoidance_vector ?? null);
+
+  const mergedTaste = tv1 && tv2 ? averageVectors(tv1, tv2) : (tv1 ?? tv2);
+  const mergedAvoidance = av1 && av2 ? averageVectors(av1, av2) : (av1 ?? av2);
+  const affinity = tv1 && tv2 ? Math.round(cosineSimilarity(tv1, tv2) * 100) : 0;
+
+  const clusters1: string[] = vec1?.top_clusters ?? [];
+  const clusters2: string[] = vec2?.top_clusters ?? [];
+  const rejected1: string[] = vec1?.rejected_clusters ?? [];
+  const rejected2: string[] = vec2?.rejected_clusters ?? [];
+  const genres1: string[] = prof1?.favorite_genres ?? [];
+  const genres2: string[] = prof2?.favorite_genres ?? [];
+  const excluded1: string[] = prof1?.excluded_genres ?? [];
+  const excluded2: string[] = prof2?.excluded_genres ?? [];
+
+  const { data, error } = await db
+    .from("duo_taste_profiles")
+    .update({
+      taste_vector: mergedTaste ? JSON.stringify(mergedTaste) : null,
+      avoidance_vector: mergedAvoidance ? JSON.stringify(mergedAvoidance) : null,
+      affinity_score: affinity,
+      top_clusters: clusters1.filter((c: string) => clusters2.includes(c)),
+      rejected_clusters: [...new Set([...rejected1, ...rejected2])],
+      excluded_genres: [...new Set([...excluded1, ...excluded2])],
+      user1_genres: genres1,
+      user2_genres: genres2,
+      common_genres: genres1.filter((g: string) => genres2.includes(g)),
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", duo.id)
+    .select()
+    .single();
+
+  if (error || !data) return null;
+  return data as DuoProfile;
+}
+
 /** Supprime un duo */
 export async function deleteDuo(duoId: string): Promise<boolean> {
   const { error } = await db

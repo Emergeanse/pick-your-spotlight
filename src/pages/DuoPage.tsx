@@ -3,13 +3,13 @@ import { useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Users, Plus, Copy, Check, Trash2, Pencil, ChevronRight,
-  Heart, Loader2, Share2, ArrowLeft, Clock
+  Heart, Loader2, Share2, ArrowLeft, Clock, RefreshCw
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import {
   createDuo, createDuoWithFriend, fetchMyDuos, fetchPendingDuos,
-  updateDuoName, deleteDuo, loadAcceptedFriends,
+  updateDuoName, deleteDuo, loadAcceptedFriends, recalculateDuo,
   type DuoProfile, type DuoFriendCandidate,
 } from "@/lib/duo-profiles";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -99,12 +99,14 @@ const PendingDuoCard = ({ duo, onShare, onDelete }: {
 );
 
 /* ── Vue détail d'un duo ── */
-const DuoDetail = ({ duo, currentUserId, onBack, onRename, onDelete }: {
+const DuoDetail = ({ duo: initialDuo, currentUserId, onBack, onRename, onDelete }: {
   duo: DuoProfile; currentUserId: string;
   onBack: () => void; onRename: (name: string) => void; onDelete: () => void;
 }) => {
+  const [duo, setDuo] = useState(initialDuo);
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(duo.duo_name);
+  const [recalculating, setRecalculating] = useState(false);
   const partner = duo.user1_id === currentUserId ? duo.user2_display_name : duo.user1_display_name;
   const myGenres = duo.user1_id === currentUserId ? duo.user1_genres : duo.user2_genres;
   const partnerGenres = duo.user1_id === currentUserId ? duo.user2_genres : duo.user1_genres;
@@ -112,6 +114,13 @@ const DuoDetail = ({ duo, currentUserId, onBack, onRename, onDelete }: {
   const soloPartnerGenres = partnerGenres.filter(g => !duo.common_genres.includes(g));
 
   const saveRename = () => { setEditing(false); if (name.trim()) onRename(name.trim()); };
+
+  const handleRecalculate = async () => {
+    setRecalculating(true);
+    const updated = await recalculateDuo(duo);
+    if (updated) setDuo(updated);
+    setRecalculating(false);
+  };
 
   return (
     <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} className="w-full">
@@ -148,10 +157,20 @@ const DuoDetail = ({ duo, currentUserId, onBack, onRename, onDelete }: {
         <div className="w-14 h-14 rounded-full bg-primary/10 border-2 border-primary/25 flex items-center justify-center shrink-0">
           <Heart className="w-6 h-6 text-primary" />
         </div>
-        <div>
+        <div className="flex-1">
           <p className={`font-serif text-3xl font-bold ${affinityColor(duo.affinity_score)}`}>{duo.affinity_score}%</p>
           <p className="text-foreground/50 font-sans text-xs mt-0.5">d'affinité cinématographique</p>
         </div>
+        <button
+          onClick={handleRecalculate}
+          disabled={recalculating}
+          className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-foreground/[0.06] hover:bg-foreground/10 border border-border/15 hover:border-primary/25 transition-all text-foreground/50 hover:text-foreground disabled:opacity-40"
+        >
+          {recalculating
+            ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            : <RefreshCw className="w-3.5 h-3.5" />}
+          <span className="font-sans text-xs font-medium">Recalc.</span>
+        </button>
       </div>
 
       {/* Genres en commun */}
