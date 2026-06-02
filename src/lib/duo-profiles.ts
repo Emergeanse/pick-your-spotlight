@@ -414,6 +414,65 @@ export async function recalculateDuo(duo: DuoProfile): Promise<DuoProfile | null
   return data as DuoProfile;
 }
 
+export interface SharedMovie {
+  tmdb_id: number;
+  title: string;
+  poster_path: string | null;
+  media_type: string;
+  types: Array<"like" | "love" | "watchlist">;
+}
+
+/** Films que deux utilisateurs ont likés, adorés ou mis en watchlist en commun */
+export async function fetchDuoSharedMovies(
+  user1Id: string,
+  user2Id: string
+): Promise<{ liked: SharedMovie[]; watchlist: SharedMovie[] }> {
+  const fetchFeedback = async (userId: string) => {
+    const { data } = await supabase
+      .from("user_item_feedback")
+      .select("item_id, feedback_type")
+      .eq("user_id", userId)
+      .in("feedback_type", ["like", "love", "watchlist"]);
+    return (data ?? []) as { item_id: string; feedback_type: string }[];
+  };
+
+  const [fb1, fb2] = await Promise.all([fetchFeedback(user1Id), fetchFeedback(user2Id)]);
+
+  // Index par item_id → types pour chaque utilisateur
+  const map1 = new Map<string, string[]>();
+  for (const f of fb1) {
+    if (!map1.has(f.item_id)) map1.set(f.item_id, []);
+    map1.get(f.item_id)!.push(f.feedback_type);
+  }
+  const map2 = new Map<string, string[]>();
+  for (const f of fb2) {
+    if (!map2.has(f.item_id)) map2.set(f.item_id, []);
+    map2.get(f.item_id)!.push(f.feedback_type);
+  }
+
+  // item_ids présents chez les deux
+  const commonIds = [...map1.keys()].filter(id => map2.has(id));
+  if (commonIds.length === 0) return { liked: [], watchlist: [] };
+
+  // Récupérer les métadonnées
+  const { data: catalogItems } = await supabase
+    .from("catalog_items")
+    .select("id, tmdb_id, title, poster_path, media_type")
+    .in("id", commonIds);
+
+  const movies: SharedMovie[] = (catalogItems ?? []).map((ci: any) => {
+    const t1 = map1.get(ci.id) ?? [];
+    const t2 = map2.get(ci.id) ?? [];
+    const allTypes = [...new Set([...t1, ...t2])] as Array<"like" | "love" | "watchlist">;
+    return { tmdb_id: ci.tmdb_id, title: ci.title, poster_path: ci.poster_path, media_type: ci.media_type, types: allTypes };
+  });
+
+  return {
+    liked: movies.filter(m => m.types.some(t => t === "like" || t === "love")),
+    watchlist: movies.filter(m => m.types.includes("watchlist")),
+  };
+}
+
 /** Supprime un duo */
 export async function deleteDuo(duoId: string): Promise<boolean> {
   const { error } = await db

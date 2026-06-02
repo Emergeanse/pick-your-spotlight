@@ -9,8 +9,8 @@ import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import {
   createDuo, createDuoWithFriend, fetchMyDuos, fetchPendingDuos,
-  updateDuoName, deleteDuo, loadAcceptedFriends, recalculateDuo,
-  type DuoProfile, type DuoFriendCandidate,
+  updateDuoName, deleteDuo, loadAcceptedFriends, recalculateDuo, fetchDuoSharedMovies,
+  type DuoProfile, type DuoFriendCandidate, type SharedMovie,
 } from "@/lib/duo-profiles";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -99,6 +99,32 @@ const PendingDuoCard = ({ duo, onShare, onDelete }: {
 );
 
 /* ── Vue détail d'un duo ── */
+const IMG = "https://image.tmdb.org/t/p/w154";
+
+/* ── Ligne de posters ── */
+const MovieRow = ({ movies, label }: { movies: SharedMovie[]; label: string }) => {
+  if (movies.length === 0) return null;
+  return (
+    <div className="mb-4">
+      <p className="text-[10px] uppercase tracking-widest text-foreground/30 font-sans font-semibold mb-2">{label}</p>
+      <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-hide">
+        {movies.slice(0, 10).map(m => (
+          <div key={m.tmdb_id} className="shrink-0 w-14 flex flex-col gap-1">
+            <div className="w-14 h-20 rounded-lg overflow-hidden bg-foreground/[0.06]">
+              {m.poster_path
+                ? <img src={`${IMG}${m.poster_path}`} alt={m.title} className="w-full h-full object-cover" />
+                : <div className="w-full h-full flex items-center justify-center text-foreground/20 text-[10px] text-center px-1 leading-tight">{m.title}</div>
+              }
+            </div>
+            <p className="text-[9px] text-foreground/40 font-sans leading-tight line-clamp-2 text-center">{m.title}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+/* ── Vue détail d'un duo ── */
 const DuoDetail = ({ duo: initialDuo, currentUserId, onBack, onRename, onDelete }: {
   duo: DuoProfile; currentUserId: string;
   onBack: () => void; onRename: (name: string) => void; onDelete: () => void;
@@ -107,11 +133,18 @@ const DuoDetail = ({ duo: initialDuo, currentUserId, onBack, onRename, onDelete 
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(duo.duo_name);
   const [recalculating, setRecalculating] = useState(false);
+  const [sharedMovies, setSharedMovies] = useState<{ liked: SharedMovie[]; watchlist: SharedMovie[] } | null>(null);
   const partner = duo.user1_id === currentUserId ? duo.user2_display_name : duo.user1_display_name;
   const myGenres = duo.user1_id === currentUserId ? duo.user1_genres : duo.user2_genres;
   const partnerGenres = duo.user1_id === currentUserId ? duo.user2_genres : duo.user1_genres;
   const soloMyGenres = myGenres.filter(g => !duo.common_genres.includes(g));
   const soloPartnerGenres = partnerGenres.filter(g => !duo.common_genres.includes(g));
+
+  useEffect(() => {
+    if (duo.user2_id) {
+      fetchDuoSharedMovies(duo.user1_id, duo.user2_id).then(setSharedMovies);
+    }
+  }, [duo.id, duo.user1_id, duo.user2_id]);
 
   const saveRename = () => { setEditing(false); if (name.trim()) onRename(name.trim()); };
 
@@ -231,6 +264,15 @@ const DuoDetail = ({ duo: initialDuo, currentUserId, onBack, onRename, onDelete 
           <div className="flex flex-wrap gap-1.5">
             {duo.excluded_genres.map(g => <GenreBadge key={g} label={g} variant="excluded" />)}
           </div>
+        </div>
+      )}
+
+      {/* Films en commun */}
+      {sharedMovies && (sharedMovies.liked.length > 0 || sharedMovies.watchlist.length > 0) && (
+        <div className="mb-2">
+          <div className="h-px bg-border/10 mb-4" />
+          <MovieRow movies={sharedMovies.liked} label="Vous avez tous les deux aimé" />
+          <MovieRow movies={sharedMovies.watchlist} label="Dans vos deux listes" />
         </div>
       )}
     </motion.div>
