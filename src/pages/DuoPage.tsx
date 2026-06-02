@@ -136,15 +136,26 @@ const DuoDetail = ({ duo: initialDuo, currentUserId, onBack, onRename, onDelete 
   const [name, setName] = useState(duo.duo_name);
   const [recalculating, setRecalculating] = useState(false);
   const [sharedMovies, setSharedMovies] = useState<{ liked: SharedMovie[]; watchlist: SharedMovie[] } | null>(null);
+  const [commonExcluded, setCommonExcluded] = useState<string[]>([]);
   const partner = duo.user1_id === currentUserId ? duo.user2_display_name : duo.user1_display_name;
-  const myGenres = duo.user1_id === currentUserId ? duo.user1_genres : duo.user2_genres;
-  const partnerGenres = duo.user1_id === currentUserId ? duo.user2_genres : duo.user1_genres;
-  const soloMyGenres = myGenres.filter(g => !duo.common_genres.includes(g));
-  const soloPartnerGenres = partnerGenres.filter(g => !duo.common_genres.includes(g));
+
+  const isOrigin = (g: string) => /cinéma|cinema/i.test(g);
+  const commonLikedGenres  = duo.common_genres.filter(g => !isOrigin(g));
+  const commonLikedOrigins = duo.common_genres.filter(g => isOrigin(g));
+  const commonExcludedGenres  = commonExcluded.filter(g => !isOrigin(g));
+  const commonExcludedOrigins = commonExcluded.filter(g => isOrigin(g));
 
   useEffect(() => {
     if (duo.user2_id) {
       fetchDuoSharedMovies(duo.user1_id, duo.user2_id).then(setSharedMovies);
+      Promise.all([
+        supabase.from("profiles").select("excluded_genres").eq("id", duo.user1_id).maybeSingle(),
+        supabase.from("profiles").select("excluded_genres").eq("id", duo.user2_id).maybeSingle(),
+      ]).then(([{ data: p1 }, { data: p2 }]) => {
+        const ex1: string[] = (p1 as any)?.excluded_genres ?? [];
+        const ex2: string[] = (p2 as any)?.excluded_genres ?? [];
+        setCommonExcluded(ex1.filter((g: string) => ex2.includes(g)));
+      });
     }
   }, [duo.id, duo.user1_id, duo.user2_id]);
 
@@ -218,66 +229,58 @@ const DuoDetail = ({ duo: initialDuo, currentUserId, onBack, onRename, onDelete 
         Trouve-moi 1 film en duo
       </button>
 
-      {/* Genres en commun */}
-      {duo.common_genres.length > 0 && (
-        <div className="mb-4">
-          <p className="text-[10px] uppercase tracking-widest text-foreground/30 font-sans font-semibold mb-2">
-            Vous aimez tous les deux
-          </p>
-          <div className="flex flex-wrap gap-1.5">
-            {duo.common_genres.map(g => <GenreBadge key={g} label={g} variant="common" />)}
-          </div>
-        </div>
-      )}
+      {/* Goûts fusionnés */}
+      <div className="space-y-4 mb-6">
 
-      {/* Genres solo */}
-      {(soloMyGenres.length > 0 || soloPartnerGenres.length > 0) && (
-        <div className="mb-4">
-          <p className="text-[10px] uppercase tracking-widest text-foreground/30 font-sans font-semibold mb-2">
-            Ce qui vous distingue
-          </p>
-          {soloMyGenres.length > 0 && (
-            <div className="mb-2">
-              <p className="text-foreground/35 font-sans text-xs mb-1">Tes genres</p>
-              <div className="flex flex-wrap gap-1.5">
-                {soloMyGenres.map(g => <GenreBadge key={g} label={g} variant="solo" />)}
-              </div>
+        {/* Genres aimés en commun */}
+        {commonLikedGenres.length > 0 && (
+          <div>
+            <p className="text-[10px] uppercase tracking-widest text-foreground/40 font-sans font-semibold mb-2">
+              Genres aimés par les deux
+            </p>
+            <div className="flex flex-wrap gap-1.5">
+              {commonLikedGenres.map(g => <GenreBadge key={g} label={g} variant="common" />)}
             </div>
-          )}
-          {soloPartnerGenres.length > 0 && (
-            <div>
-              <p className="text-foreground/35 font-sans text-xs mb-1">Ses genres</p>
-              <div className="flex flex-wrap gap-1.5">
-                {soloPartnerGenres.map(g => <GenreBadge key={g} label={g} variant="solo" />)}
-              </div>
+          </div>
+        )}
+
+        {/* Genres non aimés en commun */}
+        {commonExcludedGenres.length > 0 && (
+          <div>
+            <p className="text-[10px] uppercase tracking-widest text-foreground/40 font-sans font-semibold mb-2">
+              Genres non aimés par les deux
+            </p>
+            <div className="flex flex-wrap gap-1.5">
+              {commonExcludedGenres.map(g => <GenreBadge key={g} label={g} variant="excluded" />)}
             </div>
-          )}
-        </div>
-      )}
-
-      {/* Clusters communs */}
-      {duo.top_clusters.length > 0 && (
-        <div className="mb-4">
-          <p className="text-[10px] uppercase tracking-widest text-foreground/30 font-sans font-semibold mb-2">
-            Vibe commune
-          </p>
-          <div className="flex flex-wrap gap-1.5">
-            {duo.top_clusters.map(c => <GenreBadge key={c} label={c} variant="common" />)}
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Genres exclus */}
-      {duo.excluded_genres.length > 0 && (
-        <div className="mb-6">
-          <p className="text-[10px] uppercase tracking-widest text-foreground/30 font-sans font-semibold mb-2">
-            Exclus du duo
-          </p>
-          <div className="flex flex-wrap gap-1.5">
-            {duo.excluded_genres.map(g => <GenreBadge key={g} label={g} variant="excluded" />)}
+        {/* Origines aimées en commun */}
+        {commonLikedOrigins.length > 0 && (
+          <div>
+            <p className="text-[10px] uppercase tracking-widest text-foreground/40 font-sans font-semibold mb-2">
+              Cinémas aimés par les deux
+            </p>
+            <div className="flex flex-wrap gap-1.5">
+              {commonLikedOrigins.map(g => <GenreBadge key={g} label={g} variant="common" />)}
+            </div>
           </div>
-        </div>
-      )}
+        )}
+
+        {/* Origines non aimées en commun */}
+        {commonExcludedOrigins.length > 0 && (
+          <div>
+            <p className="text-[10px] uppercase tracking-widest text-foreground/40 font-sans font-semibold mb-2">
+              Cinémas non aimés par les deux
+            </p>
+            <div className="flex flex-wrap gap-1.5">
+              {commonExcludedOrigins.map(g => <GenreBadge key={g} label={g} variant="excluded" />)}
+            </div>
+          </div>
+        )}
+
+      </div>
 
       {/* Films en commun — toujours visible */}
       <div className="mt-2">
