@@ -690,7 +690,7 @@ const HomeScreen = ({
     return data;
   };
 
-  type DuoOverrides = { topGenres: string[]; excludedGenres: string[]; tasteVector: number[] | null; avoidanceVector: number[] | null; topClusters: string[]; rejectedClusters: string[]; partnerExcludeIds: number[]; user1Name: string | null; user2Name: string | null };
+  type DuoOverrides = { topGenres: string[]; excludedGenres: string[]; tasteVector: number[] | null; avoidanceVector: number[] | null; topClusters: string[]; rejectedClusters: string[]; partnerExcludeIds: number[]; user1Name: string | null; user2Name: string | null; mergedLikedTitles?: string[] };
   const generateTonightPick = async (excludeList: number[] = rejectedIds, rejectionContext?: RejectionContext, voiceFilters?: VoiceSearchFilters | null, duoOverrides?: DuoOverrides) => {
     generateTonightPickRef.current = generateTonightPick;
     const poolIds = (chatMoviesPool || []).map((m) => m.id).filter(Number.isFinite);
@@ -797,7 +797,9 @@ const HomeScreen = ({
 
           tEdgeStart = performance.now();
           const data = await invokeSurprisePersonalized({
-            likedMovies: liked,
+            likedMovies: duoOverrides?.mergedLikedTitles?.length
+              ? duoOverrides.mergedLikedTitles.map((title: string) => ({ title }))
+              : liked,
             userTasteVector,
             tasteProfile: {
               ...tasteProfile,
@@ -1259,21 +1261,35 @@ const HomeScreen = ({
               .filter((id: any) => Number.isFinite(id)) as number[];
           };
 
-          const [prefs1, prefs2, ids1, ids2] = await Promise.all([
+          const fetchLikedTitles = async (userId: string): Promise<string[]> => {
+            const { data } = await supabase
+              .from("user_item_feedback")
+              .select("item:item_id(title)")
+              .eq("user_id", userId)
+              .in("feedback_type", ["like", "love"]);
+            return (data ?? []).map((r: any) => r.item?.title).filter(Boolean) as string[];
+          };
+
+          const [prefs1, prefs2, ids1, ids2, titles1, titles2] = await Promise.all([
             fetchGenrePrefs(duo.user1_id),
             fetchGenrePrefs(duo.user2_id),
             fetchInteractedTmdbIds(duo.user1_id),
             fetchInteractedTmdbIds(duo.user2_id),
+            fetchLikedTitles(duo.user1_id),
+            fetchLikedTitles(duo.user2_id),
           ]);
 
-          const commonLiked    = prefs1.liked.filter((g: string) => prefs2.liked.includes(g));
+          // Union des genres likés pour avoir plus de candidats SQL
+          const unionLiked     = [...new Set([...prefs1.liked, ...prefs2.liked])];
           const commonExcluded = prefs1.excluded.filter((g: string) => prefs2.excluded.includes(g));
+          const mergedLikedTitles = [...new Set([...titles1, ...titles2])];
           const partnerExcludeIds = [...new Set([...ids1, ...ids2])];
           const tv = duo.taste_vector ? JSON.parse(duo.taste_vector) : null;
           const av = duo.avoidance_vector ? JSON.parse(duo.avoidance_vector) : null;
 
           void generateTonightPick(rejectedIds, undefined, undefined, {
-            topGenres: commonLiked,
+            topGenres: unionLiked,
+            mergedLikedTitles,
             excludedGenres: commonExcluded,
             tasteVector: tv,
             avoidanceVector: av,
