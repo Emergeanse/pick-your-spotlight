@@ -544,15 +544,15 @@ export default function DuoPage() {
   }
 
   return (
-    <div className="flex-1 relative min-h-dvh">
-      {/* Fond d'écran fixe — couvre toujours tout l'écran */}
+    <div className="relative min-h-screen">
+      {/* Fond d'écran */}
       <div
-        className="fixed inset-0 bg-cover bg-center bg-no-repeat -z-10"
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
         style={{ backgroundImage: `url(${duoBg})` }}
       />
-      <div className="fixed inset-0 bg-gradient-to-b from-background/20 via-background/50 to-background/92 -z-10" />
+      <div className="absolute inset-0 bg-gradient-to-b from-background/20 via-background/50 to-background/92" />
 
-      {/* Contenu scrollable */}
+      {/* Contenu */}
       <div className="relative z-10 pb-28 px-4 pt-[calc(4.5rem+env(safe-area-inset-top))] max-w-lg mx-auto w-full">
       <AnimatePresence mode="wait">
         {/* ── Vue détail ── */}
