@@ -24,6 +24,9 @@ import GenrePreferences from "@/components/pick/GenrePreferences";
 import CinemaAvatar from "@/components/pick/CinemaAvatar";
 import { RadarChart, PolarGrid, PolarAngleAxis, Radar, ResponsiveContainer } from "recharts";
 import profileBackground from "@/assets/profile-background.png";
+import squirrelHappy from "@/assets/Happy.png";
+import squirrelCritique from "@/assets/Critique.png";
+import squirrelExigeant from "@/assets/Exigeant.png";
 
 const TROPHY_CATEGORIES = [
   {
@@ -664,9 +667,9 @@ const Profile = () => {
             <div className="bg-card rounded-xl p-4">
               <div className="grid grid-cols-3 gap-2">
                 {([
-                  { label: "Je suis ouvert",    emoji: "😌", value: 5 },
-                  { label: "Je suis sélectif",  emoji: "🎯", value: 6 },
-                  { label: "Je suis exigeant",  emoji: "🏆", value: 7 },
+                  { label: "Je suis ouvert",    img: squirrelHappy,    value: 5 },
+                  { label: "Je suis sélectif",  img: squirrelCritique, value: 6 },
+                  { label: "Je suis exigeant",  img: squirrelExigeant, value: 7 },
                 ] as const).map(opt => {
                   const active = opt.value === 5 ? minRating <= 5 : opt.value === 7 ? minRating >= 7 : minRating === 6;
                   return (
@@ -679,7 +682,7 @@ const Profile = () => {
                           : "bg-foreground/[0.03] border-border/20 text-foreground/50 hover:bg-foreground/[0.06] hover:border-border/40"
                       }`}
                     >
-                      <span className="text-lg">{opt.emoji}</span>
+                      <img src={opt.img} alt={opt.label} className="w-10 h-10 object-contain" />
                       <span className="font-sans text-[11px] font-medium leading-tight">{opt.label}</span>
                     </button>
                   );
