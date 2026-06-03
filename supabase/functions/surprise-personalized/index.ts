@@ -1082,7 +1082,7 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
       const genres: string[] = (movie.genres || []).map((g: any) => g.name || g).filter(Boolean);
       const lang: string = movie.original_language || "";
       const primaryGenre: string = genres[0] || "";
-      const genreOk = effectiveExcludedGenresSQL.length === 0 || !effectiveExcludedGenresSQL.includes(primaryGenre);
+      const genreOk = effectiveExcludedGenres.length === 0 || !effectiveExcludedGenres.includes(primaryGenre);
       const langOk  = effectiveExcludedLangsArr.length === 0 || !effectiveExcludedLangsArr.includes(lang);
       return genreOk && langOk;
     });
