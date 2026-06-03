@@ -159,12 +159,15 @@ export default function MatchPage() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col relative overflow-hidden">
-      {/* Background écureuil inspecteur */}
+      {/* Background */}
       <div
-        className="absolute inset-0 bg-cover bg-no-repeat pointer-events-none"
-        style={{ backgroundImage: `url(${matchBackground})`, backgroundPosition: "center 0%" }}
+        className="absolute inset-x-0 top-0 h-[80%] bg-cover bg-top bg-no-repeat pointer-events-none"
+        style={{ backgroundImage: `url(${matchBackground})`, maskImage: "linear-gradient(to bottom, black 60%, transparent 100%)", WebkitMaskImage: "linear-gradient(to bottom, black 60%, transparent 100%)", opacity: 0.4 }}
       />
-      <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-background/30 pointer-events-none" />
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{ background: "linear-gradient(to bottom, transparent 0%, hsl(var(--background)/0.3) 60%, hsl(var(--background)/0.9) 85%, hsl(var(--background)) 100%)" }}
+      />
 
       <AnimatePresence mode="wait">
 
