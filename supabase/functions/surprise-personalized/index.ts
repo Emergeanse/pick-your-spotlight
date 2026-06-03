@@ -389,23 +389,26 @@ serve(async (req) => {
           if (d && (d as any[]).length > candidates.length) candidates = d as any[];
         }
 
-        // 3. Trop peu de candidats sur plateforme : relâche langue/année, garde exclusions complètes
-        if (platformActive && candidates.length < 20) {
-          console.log(`[SP] Plateforme insuffisante (${candidates.length}) — relâche lang/year`);
+        // 3. Trop peu de candidats sur plateforme : réduit les exclusions à 200 récentes, garde plateforme
+        // Les films interagis qui passent ici sont bloqués ensuite par usedIds dans la boucle movies.
+        if (platformActive && candidates.length < 20 && normalizedExcludeIds.length > 200) {
+          const recentExcludes = normalizedExcludeIds.slice(-200);
+          console.log(`[SP] Plateforme insuffisante (${candidates.length}) — réduit excludeIds à ${recentExcludes.length}`);
           const { data: d } = await supabase.rpc("match_movies_for_recommendation",
-            buildRpcParams({ withLang: false, withYear: false, withPlatform: true }));
+            { ...buildRpcParams({ withLang: false, withYear: false, withPlatform: true }), exclude_ids: recentExcludes });
           if (d && (d as any[]).length > candidates.length) candidates = d as any[];
         }
 
-        // 4. Encore trop peu : supprime liked_genres, garde exclusions complètes
+        // 4. Encore trop peu : supprime liked_genres + réduit exclusions, garde plateforme
         if (platformActive && candidates.length < 10) {
+          const reducedExcludes = normalizedExcludeIds.length > 200 ? normalizedExcludeIds.slice(-200) : normalizedExcludeIds;
           console.log(`[SP] Plateforme insuffisante (${candidates.length}) — relâche liked_genres`);
           const { data: d } = await supabase.rpc("match_movies_for_recommendation",
-            { ...buildRpcParams({ withLang: false, withYear: false, withPlatform: true }), liked_genres: [] });
+            { ...buildRpcParams({ withLang: false, withYear: false, withPlatform: true }), liked_genres: [], exclude_ids: reducedExcludes });
           if (d && (d as any[]).length > candidates.length) candidates = d as any[];
         }
 
-        // 5. Dernier recours avec plateforme : relâche toutes les contraintes de goût, garde exclusions
+        // 5. Dernier recours avec plateforme : toutes contraintes goût relâchées, exclusions complètes
         if (platformActive && candidates.length === 0) {
           console.log(`[SP] Plateforme: dernier recours — toutes contraintes goût relâchées`);
           const { data: d } = await supabase.rpc("match_movies_for_recommendation",
