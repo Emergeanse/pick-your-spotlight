@@ -66,6 +66,7 @@ serve(async (req) => {
 
   try {
     const t0 = Date.now();
+    console.log("[SP] ✅ version 2026-06-03-v5 — p_user_id:null, usedIds=normalizedExcludeIds, cascade:recentExcludes");
     const {
       tasteProfile,
       userTasteVector,
