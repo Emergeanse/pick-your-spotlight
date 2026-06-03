@@ -66,7 +66,7 @@ serve(async (req) => {
 
   try {
     const t0 = Date.now();
-    console.log("[SP] ✅ version 2026-06-03-v5 — p_user_id:null, usedIds=normalizedExcludeIds, cascade:recentExcludes");
+    console.log("[SP] ✅ version 2026-06-03-v6 — exclude_ids complet partout, expansion 8×300, sqlMatchCount=300");
     const {
       tasteProfile,
       userTasteVector,
@@ -306,8 +306,8 @@ serve(async (req) => {
     // ── ÉTAPE 1 : SQL — top candidats par similarité vectorielle ──
     // Langue, décennie et exclusions d'origine filtrées en SQL.
     // Le filtre plateforme est fait APRÈS le LLM (sur 10-50 films, pas 200).
-    // La base movie_embeddings est qualitative → 100 candidats SQL suffisent.
-    const sqlMatchCount = 100;
+    // Avec un historique dense (1800+ films), il faut chercher plus loin dans la similarité.
+    const sqlMatchCount = 300;
     // Familles de plateformes : un abonnement inclut plusieurs IDs TMDB distincts
     // IDs sourcés depuis platforms.ts (source de vérité côté app)
     const PLATFORM_FAMILIES: Record<number, number[]> = {
@@ -390,26 +390,23 @@ serve(async (req) => {
           if (d && (d as any[]).length > candidates.length) candidates = d as any[];
         }
 
-        // 3. Trop peu de candidats sur plateforme : réduit les exclusions à 200 récentes, garde plateforme
-        // Les films interagis qui passent ici sont bloqués ensuite par usedIds dans la boucle movies.
-        if (platformActive && candidates.length < 20 && normalizedExcludeIds.length > 200) {
-          const recentExcludes = normalizedExcludeIds.slice(-200);
-          console.log(`[SP] Plateforme insuffisante (${candidates.length}) — réduit excludeIds à ${recentExcludes.length}`);
+        // 3. Trop peu : relâche langue/année — exclude_ids TOUJOURS complet
+        if (platformActive && candidates.length < 20) {
+          console.log(`[SP] Plateforme insuffisante (${candidates.length}) — relâche lang/year`);
           const { data: d } = await supabase.rpc("match_movies_for_recommendation",
-            { ...buildRpcParams({ withLang: false, withYear: false, withPlatform: true }), exclude_ids: recentExcludes });
+            buildRpcParams({ withLang: false, withYear: false, withPlatform: true }));
           if (d && (d as any[]).length > candidates.length) candidates = d as any[];
         }
 
-        // 4. Encore trop peu : supprime liked_genres + réduit exclusions, garde plateforme
+        // 4. Encore trop peu : relâche liked_genres — exclude_ids TOUJOURS complet
         if (platformActive && candidates.length < 10) {
-          const reducedExcludes = normalizedExcludeIds.length > 200 ? normalizedExcludeIds.slice(-200) : normalizedExcludeIds;
           console.log(`[SP] Plateforme insuffisante (${candidates.length}) — relâche liked_genres`);
           const { data: d } = await supabase.rpc("match_movies_for_recommendation",
-            { ...buildRpcParams({ withLang: false, withYear: false, withPlatform: true }), liked_genres: [], exclude_ids: reducedExcludes });
+            { ...buildRpcParams({ withLang: false, withYear: false, withPlatform: true }), liked_genres: [] });
           if (d && (d as any[]).length > candidates.length) candidates = d as any[];
         }
 
-        // 5. Dernier recours avec plateforme : toutes contraintes goût relâchées, exclusions complètes
+        // 5. Dernier recours plateforme : relâche toutes contraintes goût — exclude_ids TOUJOURS complet
         if (platformActive && candidates.length === 0) {
           console.log(`[SP] Plateforme: dernier recours — toutes contraintes goût relâchées`);
           const { data: d } = await supabase.rpc("match_movies_for_recommendation",
@@ -522,25 +519,25 @@ serve(async (req) => {
     const t2 = Date.now();
     if (t2 - t1 > 50) console.log(`[SP⏱] Enrichissement langue TMDB: ${t2 - t1}ms`);
 
-    // ── ÉTAPE 1.8 : Expansion du pool — batch de 100 jusqu'à 30 candidats filtrés ──
-    // Si le SQL initial + filtres JS (origine + plateforme) donnent < 30 films,
-    // on relance par tranche de 100 en excluant les IDs déjà vus.
+    // ── ÉTAPE 1.8 : Expansion du pool — cherche jusqu'à 30 films NON-interagis ──
+    // Relance le SQL par tranches de 300 avec exclude_ids complet (jamais tronqué).
+    // Condition : nombre de candidats non-interagis < 30 (pas total candidates).
     if (SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY && userTasteVector) {
       const TARGET_POOL = 30;
-      const SQL_BATCH = 100;
-      const MAX_ROUNDS = 4;
+      const SQL_BATCH = 300;
+      const MAX_ROUNDS = 8;
+      const excludedSet = new Set(normalizedExcludeIds);
 
-      // La plateforme est filtrée en SQL — on estime uniquement le filtre origine (langue)
-      const estimateFilteredPool = (cands: any[]): number => {
-        if (excludedLangsBoost.size === 0) return cands.length;
-        return cands.filter((c: any) => !excludedLangsBoost.has(c.original_language || "")).length;
-      };
+      // Compte uniquement les candidats qui ne sont PAS dans l'historique interagi
+      const countNonInteracted = (cands: any[]): number =>
+        cands.filter((c: any) => !excludedSet.has(Number(c.tmdb_id))).length;
 
       const seenIds = new Set(filteredCandidates.map((c: any) => Number(c.tmdb_id)));
       let expansionRound = 0;
 
-      while (estimateFilteredPool(filteredCandidates) < TARGET_POOL && expansionRound < MAX_ROUNDS) {
+      while (countNonInteracted(filteredCandidates) < TARGET_POOL && expansionRound < MAX_ROUNDS) {
         expansionRound++;
+        // exclude_ids complet + films déjà vus → SQL retourne uniquement du nouveau
         const expandExcludeIds = [...normalizedExcludeIds, ...[...seenIds]];
         try {
           const sbExpand = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
@@ -555,7 +552,7 @@ serve(async (req) => {
           for (const c of newCandidates) seenIds.add(Number(c.tmdb_id));
           candidates = [...candidates, ...newCandidates];
           filteredCandidates = [...filteredCandidates, ...newCandidates];
-          console.log(`[SP] Pool expansion #${expansionRound}: +${newCandidates.length} → total ${filteredCandidates.length}, pool estimé: ${estimateFilteredPool(filteredCandidates)}/${TARGET_POOL}`);
+          console.log(`[SP] Pool expansion #${expansionRound}: +${newCandidates.length} → non-interagis: ${countNonInteracted(filteredCandidates)}/${TARGET_POOL}`);
           if (newCandidates.length < SQL_BATCH) break;
         } catch (e) {
           console.error("[SP] Pool expansion error:", e);
