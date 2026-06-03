@@ -376,6 +376,15 @@ const HomeScreen = ({
   }, []);
 
   useEffect(() => {
+    // Bridge depuis DuoPage ("Trouve-nous un film !") via sessionStorage
+    const duoIdFromSession = sessionStorage.getItem("pick_open_find_choice_duo_id");
+    if (duoIdFromSession) {
+      sessionStorage.removeItem("pick_open_find_choice_duo_id");
+      setFindChoiceDuoId(duoIdFromSession);
+      setShowFindChoice(true);
+      return;
+    }
+    // Bridge legacy via location.state (autres appelants)
     const state = location.state as { openFindChoice?: boolean; duoId?: string } | null;
     if (state?.openFindChoice) {
       setFindChoiceDuoId(state.duoId);
