@@ -341,7 +341,7 @@ serve(async (req) => {
       match_count: sqlMatchCount,
       exclude_ids: normalizedExcludeIds,
       filter_media_type: effectiveFilterMediaType,
-      min_rating: 6,
+      min_rating: minRating > 0 ? minRating : 6,
       excluded_genres: effectiveExcludedGenres,
       liked_genres: effectiveLikedGenresSQL ?? likedGenresForSQL,
       max_duration: effectiveMaxDuration ?? null,
