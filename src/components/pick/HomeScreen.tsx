@@ -690,7 +690,7 @@ const HomeScreen = ({
     return data;
   };
 
-  type DuoOverrides = { topGenres: string[]; excludedGenres: string[]; tasteVector: number[] | null; avoidanceVector: number[] | null; topClusters: string[]; rejectedClusters: string[]; partnerExcludeIds: number[]; user1Name: string | null; user2Name: string | null; mergedLikedTitles?: string[] };
+  type DuoOverrides = { topGenres: string[]; excludedGenres: string[]; tasteVector: number[] | null; avoidanceVector: number[] | null; topClusters: string[]; rejectedClusters: string[]; partnerExcludeIds: number[]; user1Name: string | null; user2Name: string | null };
   const generateTonightPick = async (excludeList: number[] = rejectedIds, rejectionContext?: RejectionContext, voiceFilters?: VoiceSearchFilters | null, duoOverrides?: DuoOverrides) => {
     generateTonightPickRef.current = generateTonightPick;
     const poolIds = (chatMoviesPool || []).map((m) => m.id).filter(Number.isFinite);
@@ -799,9 +799,7 @@ const HomeScreen = ({
 
           tEdgeStart = performance.now();
           const data = await invokeSurprisePersonalized({
-            likedMovies: duoOverrides?.mergedLikedTitles?.length
-              ? duoOverrides.mergedLikedTitles.map((title: string) => ({ title }))
-              : liked,
+            likedMovies: liked,
             userTasteVector,
             tasteProfile: {
               ...tasteProfile,
@@ -1240,71 +1238,31 @@ const HomeScreen = ({
         const { data: duo } = await (supabase as any)
           .from("duo_taste_profiles").select("*").eq("id", duoId).single();
         if (duo && duo.user2_id) {
-          // Fetch live genre preferences from user_preferences (source de vérité)
-          const fetchGenrePrefs = async (userId: string) => {
-            const { data } = await supabase
-              .from("user_preferences")
-              .select("weight, tag:tag_id(category, label)")
-              .eq("user_id", userId);
-            const genres = (data ?? []).filter((r: any) => r.tag?.category === "genre");
-            return {
-              liked:    genres.filter((r: any) => r.weight > 0).map((r: any) => r.tag.label as string),
-              excluded: genres.filter((r: any) => r.weight < 0).map((r: any) => r.tag.label as string),
-            };
-          };
-
-          // Exclut tous les films interagis SAUF ceux uniquement en watchlist
-          const fetchInteractedTmdbIds = async (userId: string): Promise<number[]> => {
+          // Interactions des deux users à exclure (sauf watchlist-only)
+          const fetchInteractedIds = async (userId: string): Promise<number[]> => {
             const { data } = await supabase
               .from("user_item_feedback")
-              .select("item:item_id(tmdb_id), feedback_type")
+              .select("item:item_id(tmdb_id)")
               .eq("user_id", userId)
               .in("feedback_type", ["like", "love", "seen", "skip", "dislike", "not_for_me"]);
-            return (data ?? [])
-              .map((r: any) => r.item?.tmdb_id)
-              .filter((id: any) => Number.isFinite(id)) as number[];
+            return (data ?? []).map((r: any) => r.item?.tmdb_id).filter(Number.isFinite) as number[];
           };
-
-          const fetchLikedTitles = async (userId: string): Promise<string[]> => {
-            const { data } = await supabase
-              .from("user_item_feedback")
-              .select("item:item_id(title)")
-              .eq("user_id", userId)
-              .in("feedback_type", ["like", "love"]);
-            return (data ?? []).map((r: any) => r.item?.title).filter(Boolean) as string[];
-          };
-
-          const [prefs1, prefs2, ids1, ids2, titles1, titles2] = await Promise.all([
-            fetchGenrePrefs(duo.user1_id),
-            fetchGenrePrefs(duo.user2_id),
-            fetchInteractedTmdbIds(duo.user1_id),
-            fetchInteractedTmdbIds(duo.user2_id),
-            fetchLikedTitles(duo.user1_id),
-            fetchLikedTitles(duo.user2_id),
+          const [ids1, ids2] = await Promise.all([
+            fetchInteractedIds(duo.user1_id),
+            fetchInteractedIds(duo.user2_id),
           ]);
-
-          // Union des genres likés pour le filtre SQL (plus de candidats)
-          // Le LLM et le vecteur duo sélectionnent les films les plus pertinents pour les deux
-          const unionLiked     = [...new Set([...prefs1.liked, ...prefs2.liked])];
-          const commonExcluded = prefs1.excluded.filter((g: string) => prefs2.excluded.includes(g));
-          const mergedLikedTitles = [...new Set([...titles1, ...titles2])];
-          // N'exclure que les interactions récentes/explicites des deux (pas l'historique complet)
-          const partnerExcludeIds = [...new Set([...ids1, ...ids2])];
           const tv = duo.taste_vector ? JSON.parse(duo.taste_vector) : null;
           const av = duo.avoidance_vector ? JSON.parse(duo.avoidance_vector) : null;
 
-          void generateTonightPick(
-            // En mode duo, on réinitialise les rejectedIds pour éviter de bloquer le pool
-            [],
-            undefined, undefined, {
-            topGenres: unionLiked,
-            mergedLikedTitles,
-            excludedGenres: commonExcluded,
+          // Utilise le profil stocké du duo directement (comme un profil solo)
+          void generateTonightPick([], undefined, undefined, {
+            topGenres: duo.common_genres ?? [],
+            excludedGenres: duo.excluded_genres ?? [],
             tasteVector: tv,
             avoidanceVector: av,
             topClusters: duo.top_clusters ?? [],
             rejectedClusters: duo.rejected_clusters ?? [],
-            partnerExcludeIds,
+            partnerExcludeIds: [...new Set([...ids1, ...ids2])],
             user1Name: duo.user1_display_name ?? null,
             user2Name: duo.user2_display_name ?? null,
           });

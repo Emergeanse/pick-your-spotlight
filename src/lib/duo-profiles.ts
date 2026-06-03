@@ -387,13 +387,23 @@ export async function recalculateDuo(duo: DuoProfile): Promise<DuoProfile | null
     computeMultiVectorProfile(duo.user2_id),
   ]);
 
-  const [{ data: vec1 }, { data: vec2 }] = await Promise.all([
+  const fetchGenrePrefsFromPreferences = async (userId: string) => {
+    const { data } = await supabase
+      .from("user_preferences")
+      .select("weight, tag:tag_id(category, label)")
+      .eq("user_id", userId);
+    const genres = (data ?? []).filter((r: any) => r.tag?.category === "genre");
+    return {
+      liked:    genres.filter((r: any) => r.weight > 0).map((r: any) => r.tag.label as string),
+      excluded: genres.filter((r: any) => r.weight < 0).map((r: any) => r.tag.label as string),
+    };
+  };
+
+  const [{ data: vec1 }, { data: vec2 }, prefs1, prefs2] = await Promise.all([
     supabase.from("user_taste_vectors").select("taste_vector, avoidance_vector, top_clusters, rejected_clusters").eq("user_id", duo.user1_id).maybeSingle(),
     supabase.from("user_taste_vectors").select("taste_vector, avoidance_vector, top_clusters, rejected_clusters").eq("user_id", duo.user2_id).maybeSingle(),
-  ]);
-  const [{ data: prof1 }, { data: prof2 }] = await Promise.all([
-    supabase.from("profiles").select("favorite_genres, excluded_genres").eq("id", duo.user1_id).maybeSingle(),
-    supabase.from("profiles").select("favorite_genres, excluded_genres").eq("id", duo.user2_id).maybeSingle(),
+    fetchGenrePrefsFromPreferences(duo.user1_id),
+    fetchGenrePrefsFromPreferences(duo.user2_id),
   ]);
 
   const tv1 = parseVector(vec1?.taste_vector ?? null);
@@ -407,11 +417,11 @@ export async function recalculateDuo(duo: DuoProfile): Promise<DuoProfile | null
   const clusters2: string[] = vec2?.top_clusters ?? [];
   const rejected1: string[] = vec1?.rejected_clusters ?? [];
   const rejected2: string[] = vec2?.rejected_clusters ?? [];
-  const genres1: string[] = prof1?.favorite_genres ?? [];
-  const genres2: string[] = prof2?.favorite_genres ?? [];
-  const excluded1: string[] = prof1?.excluded_genres ?? [];
-  const excluded2: string[] = prof2?.excluded_genres ?? [];
-  const affinity = computeAffinityScore(tv1, tv2, genres1, genres2);
+
+  // Source de vérité : user_preferences (intersection pour liked et excluded)
+  const commonGenres  = prefs1.liked.filter((g: string) => prefs2.liked.includes(g));
+  const commonExcluded = prefs1.excluded.filter((g: string) => prefs2.excluded.includes(g));
+  const affinity = computeAffinityScore(tv1, tv2, prefs1.liked, prefs2.liked);
 
   const { data, error } = await db
     .from("duo_taste_profiles")
@@ -421,10 +431,10 @@ export async function recalculateDuo(duo: DuoProfile): Promise<DuoProfile | null
       affinity_score: affinity,
       top_clusters: clusters1.filter((c: string) => clusters2.includes(c)),
       rejected_clusters: [...new Set([...rejected1, ...rejected2])],
-      excluded_genres: [...new Set([...excluded1, ...excluded2])],
-      user1_genres: genres1,
-      user2_genres: genres2,
-      common_genres: computeCommonGenres(genres1, genres2),
+      excluded_genres: commonExcluded,
+      user1_genres: prefs1.liked,
+      user2_genres: prefs2.liked,
+      common_genres: commonGenres,
       updated_at: new Date().toISOString(),
     })
     .eq("id", duo.id)
