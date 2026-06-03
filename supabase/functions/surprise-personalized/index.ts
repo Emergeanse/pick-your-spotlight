@@ -126,7 +126,12 @@ serve(async (req) => {
     try {
       const jwt = req.headers.get("Authorization")?.replace("Bearer ", "");
       if (jwt) {
-        const payload = JSON.parse(atob(jwt.split(".")[1]));
+        // JWT uses base64URL (- and _ instead of + and /). atob only accepts
+        // standard base64, so convert before decoding.
+        const b64url = jwt.split(".")[1];
+        const b64 = b64url.replace(/-/g, "+").replace(/_/g, "/");
+        const padded = b64 + "==".slice(0, (4 - b64.length % 4) % 4);
+        const payload = JSON.parse(atob(padded));
         userId = payload.sub ?? null;
       }
     } catch {
