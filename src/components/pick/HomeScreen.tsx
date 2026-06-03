@@ -1238,14 +1238,18 @@ const HomeScreen = ({
         const { data: duo } = await (supabase as any)
           .from("duo_taste_profiles").select("*").eq("id", duoId).single();
         if (duo && duo.user2_id) {
-          // Interactions des deux users à exclure (sauf watchlist-only)
+          // Interactions des deux users à exclure — cohérent avec loadUnifiedUserFeedbackState solo
           const fetchInteractedIds = async (userId: string): Promise<number[]> => {
             const { data } = await supabase
               .from("user_item_feedback")
               .select("item:item_id(tmdb_id)")
               .eq("user_id", userId)
-              .in("feedback_type", ["like", "love", "seen", "skip", "dislike", "not_for_me"]);
-            return (data ?? []).map((r: any) => r.item?.tmdb_id).filter(Number.isFinite) as number[];
+              .or("feedback_type.in.(like,love,seen,skip,dislike,not_for_me,unknown),and(feedback_type.is.null,label.in.(like,love,seen,skip,dislike,not_for_me,unknown))");
+            return (data ?? []).map((r: any) => {
+              const item = r.item;
+              const tmdb = Array.isArray(item) ? item[0]?.tmdb_id : item?.tmdb_id;
+              return tmdb;
+            }).filter(Number.isFinite) as number[];
           };
           const [ids1, ids2] = await Promise.all([
             fetchInteractedIds(duo.user1_id),
