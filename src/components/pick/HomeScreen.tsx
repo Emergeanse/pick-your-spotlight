@@ -1244,7 +1244,7 @@ const HomeScreen = ({
               .from("user_item_feedback")
               .select("item:item_id(tmdb_id)")
               .eq("user_id", userId)
-              .or("feedback_type.in.(like,love,seen,skip,dislike,not_for_me,unknown),and(feedback_type.is.null,label.in.(like,love,seen,skip,dislike,not_for_me,unknown))");
+              .or("feedback_type.in.(like,love,seen,skip,dislike,not_for_me,unknown,watchlist),and(feedback_type.is.null,label.in.(like,love,seen,skip,dislike,not_for_me,unknown,watchlist))");
             return (data ?? []).map((r: any) => {
               const item = r.item;
               const tmdb = Array.isArray(item) ? item[0]?.tmdb_id : item?.tmdb_id;
