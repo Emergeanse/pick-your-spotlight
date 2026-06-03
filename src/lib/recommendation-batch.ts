@@ -412,8 +412,9 @@ export async function ensureRecommendationBatch(
     // On n'enrichit que les `size` premiers — l'ordre LLM est déjà fiable
     const toEnrich = finalBatch.slice(0, size);
     const allEnriched = await enrichRecommendationBatchWithTexts(toEnrich, options);
-    const withScores = dedupeMovies(allEnriched)
-      .filter((m) => getRecommendationScore(m.recommendationTexts) !== null);
+    const enrichedDeduped = dedupeMovies(allEnriched);
+    const withScores = enrichedDeduped.filter((m) => getRecommendationScore(m.recommendationTexts) !== null);
+    const withoutScores = enrichedDeduped.filter((m) => getRecommendationScore(m.recommendationTexts) === null);
     // Si onFirstMovieReady est actif, un film est déjà affiché — on preserve l'ordre LLM
     // pour éviter que le film affiché change de position après le tri.
     if (!options.onFirstMovieReady) {
@@ -423,7 +424,9 @@ export async function ensureRecommendationBatch(
         return sb - sa;
       });
     }
-    finalBatch = withScores.slice(0, size);
+    // Complète avec les films sans score si besoin — évite finalCount < size
+    const combined = [...withScores, ...withoutScores];
+    finalBatch = combined.slice(0, size);
     if (options.preloadProviders) {
       finalBatch = await enrichRecommendationBatchWithProviders(finalBatch);
     }

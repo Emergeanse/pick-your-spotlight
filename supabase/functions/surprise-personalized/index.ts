@@ -66,7 +66,7 @@ serve(async (req) => {
 
   try {
     const t0 = Date.now();
-    console.log("[SP] ✅ version 2026-06-03-v7 — boucle SQL niveaux 0-4, 300/round, exclude_ids complet");
+    console.log("[SP] ✅ version 2026-06-03-v8 — mood boost dans fallback discover");
     const {
       tasteProfile,
       userTasteVector,
@@ -864,10 +864,11 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
     console.log(`[SP⏱] TMDB enrichissement batch: ${t4 - t3}ms → ${movies.length} films OK`);
 
     // ── ÉTAPE 4 : Fallback ──
-    // Genre IDs effectifs pour le fallback : voix prime sur profil
+    // Genre IDs effectifs pour le fallback : voix prime sur profil, mood boost ajouté
+    const moodBoostGenreIds = new Set((moodBoostGenres ?? []).map((g: string) => genreNameToId[g]).filter(Boolean));
     const effectiveLikedGenreIds = voiceGenres
       ? new Set(voiceGenres.map((g: string) => genreNameToId[g]).filter(Boolean))
-      : likedGenreIds;
+      : new Set([...likedGenreIds, ...moodBoostGenreIds]);
 
     if (movies.length < requestedCount) {
       console.log(`[SP] Fallback needed: have ${movies.length}/${requestedCount}`);
@@ -1087,7 +1088,7 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
           mode: llmSelections.length > 0 ? "retrieve-rerank" : "discover-fallback",
           candidatesFound: candidates.length,
           platformCandidatesCount,
-          platformFallbackTriggered: platformCandidatesCount < 5 && (expandedPlatformIds?.length ?? 0) > 0,
+          platformFallbackTriggered,
           llmSelected: llmSelections.length,
           llmError: llmDebugError,
           finalCount: finalMovies.length,
