@@ -824,7 +824,9 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
     llmSelections.sort((a: any, b: any) => (b.matchScore || 0) - (a.matchScore || 0));
 
     const movies: any[] = [];
-    const usedIds = new Set<number>(normalizedExcludeIds);
+    // usedIds ne sert qu'à éviter les vrais doublons dans le batch courant.
+    // Les exclusions historiques sont gérées par p_user_id en SQL (ou la cascade).
+    const usedIds = new Set<number>();
     const tmdbDiag: { id: number; title: string; type: string; ok: boolean; reason?: string }[] = [];
     const fallbackTrace: { stage: string; id: number; title: string; type: string }[] = [];
 
