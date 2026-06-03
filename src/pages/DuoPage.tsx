@@ -209,7 +209,7 @@ const DuoDetail = ({ duo: initialDuo, currentUserId, onBack, onRename, onDelete 
   const handleRecalculate = async () => {
     setRecalculating(true);
     const updated = await recalculateDuo(duo);
-    if (updated) setDuo(updated);
+    if (updated) setDuo({ ...updated, user1_avatar_url: duo.user1_avatar_url, user2_avatar_url: duo.user2_avatar_url });
     setRecalculating(false);
   };
 
