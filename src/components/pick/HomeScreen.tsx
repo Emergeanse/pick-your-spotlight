@@ -1021,11 +1021,11 @@ const HomeScreen = ({
           });
           setMovieMatchData((prev) => ({ ...prev, ...matchMap }));
 
-          // Genres/plateforme filtrés côté SQL, mais excludeIds appliqué ici aussi
-          // comme filet de sécurité si l'edge function laisse passer un film déjà interagi.
+          // Tout le filtrage est fait dans le SQL — en mode retrieve-rerank le client
+          // score uniquement les candidats LLM sans re-filtrer par l'historique.
           tBatchStart = performance.now();
           movies = await ensureRecommendationBatch(extracted, {
-            excludeIds: allExcludeIds,
+            excludeIds: [],
             platformIds: userPlatformIds,
             minRating: 0,
             excludedGenres: [],
