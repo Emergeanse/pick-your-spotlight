@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "@/hooks/use-toast";
 import {
-  Check, ChevronDown, ChevronRight, LogOut, Loader2, Star, Info, Camera, Pencil, Shield,
+  Check, ChevronDown, ChevronRight, LogOut, Loader2, Info, Camera, Pencil, Shield,
   ArrowLeft, Sparkles, Brain, Film, Tv, Trophy, Eye, Heart, Bookmark, TrendingUp, Users,
 } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
@@ -177,7 +177,7 @@ const Profile = () => {
       const { data } = await supabase.from("profiles").select("*").eq("id", user.id).single();
       setProfile(data);
       setSelectedPlatforms(data?.preferred_platforms || []);
-      setMinRating((data as any)?.min_rating || 0);
+      setMinRating((data as any)?.min_rating || 5);
       setMatchThreshold((data as any)?.match_threshold ?? 80);
       setDefaultMediaType(((data as any)?.default_media_type as any) || "both");
       setDefaultMaxDuration((data as any)?.default_max_duration ?? null);
@@ -661,15 +661,30 @@ const Profile = () => {
                 </Tooltip>
               </TooltipProvider>
             </div>
-            <div className="bg-card rounded-xl p-4 opacity-50">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <Star className="w-3.5 h-3.5 text-yellow-500" />
-                  <span className="font-sans text-sm">6+ / 10</span>
-                </div>
-                <span className="text-[10px] font-sans text-foreground/40">Géré automatiquement</span>
+            <div className="bg-card rounded-xl p-4">
+              <div className="grid grid-cols-3 gap-2">
+                {([
+                  { label: "Je suis ouvert",    emoji: "😌", value: 5 },
+                  { label: "Je suis sélectif",  emoji: "🎯", value: 6 },
+                  { label: "Je suis exigeant",  emoji: "🏆", value: 7 },
+                ] as const).map(opt => {
+                  const active = opt.value === 5 ? minRating <= 5 : opt.value === 7 ? minRating >= 7 : minRating === 6;
+                  return (
+                    <button
+                      key={opt.value}
+                      onClick={() => setMinRating(opt.value)}
+                      className={`flex flex-col items-center gap-1 py-3 px-2 rounded-xl border transition-all text-center ${
+                        active
+                          ? "bg-primary/10 border-primary/40 text-primary"
+                          : "bg-foreground/[0.03] border-border/20 text-foreground/50 hover:bg-foreground/[0.06] hover:border-border/40"
+                      }`}
+                    >
+                      <span className="text-lg">{opt.emoji}</span>
+                      <span className="font-sans text-[11px] font-medium leading-tight">{opt.label}</span>
+                    </button>
+                  );
+                })}
               </div>
-              <Slider value={[6]} min={0} max={8} step={0.5} className="w-full" disabled />
             </div>
           </div>
         </section>
