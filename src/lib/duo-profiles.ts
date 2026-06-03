@@ -26,6 +26,8 @@ export interface DuoProfile {
   avoidance_vector: string | null;
   created_at: string;
   updated_at: string;
+  user1_avatar_url?: string | null;
+  user2_avatar_url?: string | null;
 }
 
 function cosineSimilarity(a: number[], b: number[]): number {
@@ -319,7 +321,24 @@ export async function fetchMyDuos(userId: string): Promise<DuoProfile[]> {
     .order("updated_at", { ascending: false });
 
   if (error) return [];
-  return (data ?? []) as DuoProfile[];
+  const duos = (data ?? []) as DuoProfile[];
+
+  // Enrich with avatar URLs from profiles table
+  const userIds = [...new Set(duos.flatMap(d => [d.user1_id, d.user2_id].filter(Boolean) as string[]))];
+  if (userIds.length === 0) return duos;
+
+  const { data: profiles } = await supabase
+    .from("profiles")
+    .select("id, avatar_url")
+    .in("id", userIds);
+
+  const avatarMap = new Map((profiles ?? []).map((p: any) => [p.id, p.avatar_url as string | null]));
+
+  return duos.map(d => ({
+    ...d,
+    user1_avatar_url: avatarMap.get(d.user1_id) ?? null,
+    user2_avatar_url: d.user2_id ? (avatarMap.get(d.user2_id) ?? null) : null,
+  }));
 }
 
 /** Récupère les duos pending créés par l'utilisateur (en attente d'acceptation) */

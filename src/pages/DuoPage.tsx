@@ -4,7 +4,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Users, Plus, Copy, Check, Trash2, Pencil, ChevronRight,
-  Heart, Loader2, Share2, ArrowLeft, Clock, RefreshCw, Sparkles
+  Loader2, Share2, ArrowLeft, Clock, RefreshCw, Sparkles
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,6 +15,34 @@ import {
 } from "@/lib/duo-profiles";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+
+/* ── Avatar duo : deux cercles superposés ── */
+const DuoAvatar = ({
+  avatar1, avatar2, name1, name2, size = "sm",
+}: {
+  avatar1?: string | null; avatar2?: string | null;
+  name1?: string | null; name2?: string | null;
+  size?: "sm" | "md";
+}) => {
+  const cfg = size === "md"
+    ? { container: "w-14 h-14", circle: "w-10 h-10", text: "text-xs" }
+    : { container: "w-10 h-10", circle: "w-7 h-7", text: "text-[10px]" };
+
+  const Circle = ({ url, name, cls }: { url?: string | null; name?: string | null; cls: string }) => (
+    <div className={`absolute ${cfg.circle} rounded-full border-2 border-background overflow-hidden bg-primary/20 flex items-center justify-center ${cls}`}>
+      {url
+        ? <img src={url} alt={name ?? ""} className="w-full h-full object-cover" />
+        : <span className={`${cfg.text} font-semibold text-primary`}>{name?.[0]?.toUpperCase() ?? "?"}</span>}
+    </div>
+  );
+
+  return (
+    <div className={`relative ${cfg.container} shrink-0`}>
+      <Circle url={avatar2} name={name2} cls="bottom-0 right-0" />
+      <Circle url={avatar1} name={name1} cls="top-0 left-0 z-10" />
+    </div>
+  );
+};
 
 /* ── Petit utilitaire affinité → couleur ── */
 function affinityColor(score: number) {
@@ -53,9 +81,13 @@ const DuoCard = ({ duo, currentUserId, onOpen }: {
       className="w-full bg-white/[0.07] border border-white/25 rounded-2xl px-4 py-4 flex items-center gap-3 cursor-pointer hover:bg-white/[0.11] hover:border-primary/50 transition-all shadow-[0_2px_16px_-4px_rgba(0,0,0,0.4)]"
       onClick={onOpen}
     >
-      <div className="w-10 h-10 rounded-full bg-primary/15 border border-primary/25 flex items-center justify-center shrink-0">
-        <Heart className="w-4 h-4 text-primary" />
-      </div>
+      <DuoAvatar
+        avatar1={duo.user1_id === currentUserId ? duo.user1_avatar_url : duo.user2_avatar_url}
+        avatar2={duo.user1_id === currentUserId ? duo.user2_avatar_url : duo.user1_avatar_url}
+        name1={duo.user1_id === currentUserId ? duo.user1_display_name : duo.user2_display_name}
+        name2={duo.user1_id === currentUserId ? duo.user2_display_name : duo.user1_display_name}
+        size="sm"
+      />
       <div className="flex-1 min-w-0">
         <p className="font-sans font-semibold text-foreground text-sm truncate">{duo.duo_name}</p>
         <p className="font-sans text-foreground/40 text-xs truncate">avec {partner ?? "—"}</p>
@@ -213,9 +245,13 @@ const DuoDetail = ({ duo: initialDuo, currentUserId, onBack, onRename, onDelete 
 
       {/* Score affinité */}
       <div className="bg-foreground/[0.04] border border-border/15 rounded-2xl px-5 py-5 mb-4 flex items-center gap-4">
-        <div className="w-14 h-14 rounded-full bg-primary/10 border-2 border-primary/25 flex items-center justify-center shrink-0">
-          <Heart className="w-6 h-6 text-primary" />
-        </div>
+        <DuoAvatar
+          avatar1={duo.user1_id === currentUserId ? duo.user1_avatar_url : duo.user2_avatar_url}
+          avatar2={duo.user1_id === currentUserId ? duo.user2_avatar_url : duo.user1_avatar_url}
+          name1={duo.user1_id === currentUserId ? duo.user1_display_name : duo.user2_display_name}
+          name2={duo.user1_id === currentUserId ? duo.user2_display_name : duo.user1_display_name}
+          size="md"
+        />
         <div className="flex-1">
           <p className={`font-serif text-3xl font-bold ${affinityColor(duo.affinity_score)}`}>{duo.affinity_score}%</p>
           <p className="text-foreground/50 font-sans text-xs mt-0.5">d'affinité cinématographique</p>
