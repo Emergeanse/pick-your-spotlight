@@ -1,17 +1,14 @@
 import { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence, useMotionValue, useTransform, PanInfo } from "framer-motion";
-import { Bookmark, Heart, Loader2, Sparkles, X, Eye, Clock, Search, ThumbsDown, ThumbsUp, Timer, Trash2, CheckCircle, SlidersHorizontal } from "lucide-react";
+import { Bookmark, Heart, Loader2, Sparkles, X, Clock, Search, ThumbsDown, ThumbsUp, Trash2, CheckCircle, SlidersHorizontal } from "lucide-react";
 import { getWatchlist, removeFromWatchlist } from "@/lib/watchlist";
 import { getPosterUrl, getMovieDetails } from "@/lib/tmdb";
-import { getLikedMovies, unlikeMovie } from "@/lib/liked-movies";
 import type { MovieDetail } from "@/lib/tmdb";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import PickCharacter from "./PickCharacter";
 import FeedbackBadge from "./FeedbackBadge";
 import FlipCardDetail from "./FlipCardDetail";
-import RecommendationMovieCard from "./RecommendationMovieCard";
-import MovieActionBar from "./MovieActionBar";
 import { useMovieInteractions } from "@/hooks/use-movie-interactions";
 import { listFeedbackByType, clearFeedbackType, type FeedbackType, type MovieInteractionState } from "@/lib/feedback";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -316,7 +313,7 @@ async function hydrateMissingPosters(
 
 const ALL_TABS: ActiveTab[] = ["watchlist", "liked", "loved", "seen", "disliked"];
 
-const WatchlistPage = ({ onMovieSelect, tabs: allowedTabs, title, defaultTab }: WatchlistPageProps) => {
+const WatchlistPage = ({ tabs: allowedTabs, title, defaultTab }: WatchlistPageProps) => {
   const visibleTabs = allowedTabs ?? ALL_TABS;
   const [activeTab, setActiveTab] = useState<ActiveTab>(defaultTab ?? visibleTabs[0]);
   const [watchlistItems, setWatchlistItems] = useState<any[]>([]);
@@ -329,7 +326,6 @@ const WatchlistPage = ({ onMovieSelect, tabs: allowedTabs, title, defaultTab }: 
   const [searchQuery, setSearchQuery] = useState("");
   const [genreFilter, setGenreFilter] = useState<string[]>([]);
   const [filtersOpen, setFiltersOpen] = useState(false);
-  const [previewMovie, setPreviewMovie] = useState<MovieDetail | null>(null);
   const [detailMovie, setDetailMovie] = useState<MovieDetail | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
@@ -440,11 +436,6 @@ const WatchlistPage = ({ onMovieSelect, tabs: allowedTabs, title, defaultTab }: 
     allItems.forEach((item: any) => (item.genres || []).forEach((g: string) => genres.add(g)));
     return Array.from(genres).sort();
   }, [watchlistItems, likedItems, seenItems, dislikedItems]);
-
-  const totalWatchTime = useMemo(
-    () => currentItems.reduce((acc: number, item: any) => acc + (item.runtime || 0), 0),
-    [currentItems],
-  );
 
   const filteredItems = useMemo(() => {
     return currentItems.filter((item: any) => {
@@ -559,19 +550,12 @@ const WatchlistPage = ({ onMovieSelect, tabs: allowedTabs, title, defaultTab }: 
     try {
       const mediaType = item.media_type || (item.first_air_date ? "tv" : "movie");
       const movie = await getMovieDetails(item.tmdb_id, mediaType);
-      setPreviewMovie(movie);
+      setDetailMovie(movie);
     } catch {
       toast.error("Impossible d'ouvrir la fiche");
     } finally {
       setDetailLoading(false);
     }
-  };
-
-  const formatTime = (minutes: number) => {
-    const h = Math.floor(minutes / 60);
-    const m = minutes % 60;
-    if (h === 0) return `${m} min`;
-    return m > 0 ? `${h}h${m.toString().padStart(2, "0")}` : `${h}h`;
   };
 
   const hour = new Date().getHours();
@@ -880,35 +864,7 @@ const WatchlistPage = ({ onMovieSelect, tabs: allowedTabs, title, defaultTab }: 
         )}
       </AnimatePresence>
 
-      {/* Movie preview — affichage style page de reco : vignette + teaser + action bar */}
-      <AnimatePresence>
-        {previewMovie && (
-          <motion.div
-            initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 24 }}
-            transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-            className="fixed inset-0 z-[55] bg-background overflow-y-auto"
-          >
-            <button
-              type="button"
-              onClick={() => setPreviewMovie(null)}
-              className="fixed top-[calc(env(safe-area-inset-top)+0.75rem)] left-4 z-[60] w-9 h-9 rounded-full bg-card/70 backdrop-blur-md border border-border/30 flex items-center justify-center text-foreground/70 hover:text-foreground transition-colors"
-              aria-label="Retour"
-            >
-              <X className="w-4 h-4" />
-            </button>
-            <RecommendationMovieCard
-              movie={previewMovie}
-              onOpenDetails={() => setDetailMovie(previewMovie)}
-              showPrimaryAction={false}
-              showActionBar={false}
-            />
-            {/* Action bar fixée en bas, toujours accessible */}
-            <div className="fixed bottom-0 left-0 right-0 z-[60] px-4 pt-3 pb-[calc(1.25rem+env(safe-area-inset-bottom))] bg-gradient-to-t from-background via-background/90 to-transparent">
-              <MovieActionBar movie={previewMovie} />
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+
 
       <FlipCardDetail
         item={detailMovie}
