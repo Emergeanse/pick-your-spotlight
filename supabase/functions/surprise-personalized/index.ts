@@ -66,7 +66,7 @@ serve(async (req) => {
 
   try {
     const t0 = Date.now();
-    console.log("[SP] ✅ version 2026-06-03-v6 — exclude_ids complet partout, expansion 8×300, sqlMatchCount=300");
+    console.log("[SP] ✅ version 2026-06-03-v7 — boucle SQL niveaux 0-4, 300/round, exclude_ids complet");
     const {
       tasteProfile,
       userTasteVector,
@@ -355,80 +355,81 @@ serve(async (req) => {
       p_platform_ids: opts.withPlatform ? (expandedPlatformIds ?? null) : null,
     });
 
+    // ── ÉTAPE 1 : Génération du pool SQL — 30 films non-interagis sur plateformes ──
+    //
+    // Principe : exclude_ids (historique complet) n'est JAMAIS tronqué.
+    // On boucle par tranches de 300 films en escaladant progressivement les
+    // contraintes de GOÛT jusqu'à obtenir 30 films non-interagis sur plateforme.
+    //
+    // Niveaux de contraintes (escalade si non atteint) :
+    //   0 — tout : lang + année + liked_genres + excluded_genres + note + plateforme
+    //   1 — sans lang/année
+    //   2 — sans liked_genres
+    //   3 — sans excluded_genres ni note min
+    //   4 — sans plateforme (dernier recours)
+
     let candidates: any[] = [];
     let platformCandidatesCount = -1;
+    let platformFallbackTriggered = false;
+
     if (SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY && userTasteVector) {
+      const TARGET = 30;
+      const BATCH = 300;
+      const excludedSet = new Set(normalizedExcludeIds);
+      const seenIds = new Set<number>();
+
+      const countNonInteracted = (cands: any[]) =>
+        cands.filter((c: any) => !excludedSet.has(Number(c.tmdb_id))).length;
+
+      const addBatch = (batch: any[]) => {
+        const fresh = batch.filter((c: any) => !seenIds.has(Number(c.tmdb_id)));
+        fresh.forEach((c: any) => seenIds.add(Number(c.tmdb_id)));
+        candidates = [...candidates, ...fresh];
+      };
+
+      // Niveaux d'escalade des contraintes de goût (exclude_ids TOUJOURS complet)
+      const levels = [
+        // niveau 0 : toutes contraintes, avec voix si présentes
+        (extra: any) => ({ ...buildRpcParams({ withLang: true, withYear: true, withPlatform: true }), ...extra }),
+        // niveau 1 : sans lang/année
+        (extra: any) => ({ ...buildRpcParams({ withLang: false, withYear: false, withPlatform: true }), ...extra }),
+        // niveau 2 : sans liked_genres
+        (extra: any) => ({ ...buildRpcParams({ withLang: false, withYear: false, withPlatform: true }), liked_genres: [], ...extra }),
+        // niveau 3 : sans goût restrictif
+        (extra: any) => ({ ...buildRpcParams({ withLang: false, withYear: false, withPlatform: true }), liked_genres: [], excluded_genres: [], min_rating: 0, p_min_popularity: null, ...extra }),
+        // niveau 4 : sans plateforme (dernier recours absolu)
+        (extra: any) => ({ ...buildRpcParams({ withLang: false, withYear: false, withPlatform: false }), liked_genres: [], excluded_genres: [], min_rating: 0, p_min_popularity: null, ...extra }),
+      ];
+
       try {
-        const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-        const { data, error: rpcError } = await supabase.rpc(
-          "match_movies_for_recommendation",
-          buildRpcParams({ withLang: true, withYear: true, withPlatform: true }),
-        );
-        if (rpcError) console.error("SQL RPC error:", rpcError);
-        if (data) candidates = data as any[];
-        console.log(
-          `[SP] SQL candidates: ${candidates.length} | platform: [${expandedPlatformIds?.join(",") ?? "none"}] | liked: [${(effectiveLikedGenresSQL ?? likedWithTv).slice(0, 4).join(", ")}...] | excludeIds: ${normalizedExcludeIds.length}`,
-        );
+        const sb = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-        // ── Cascade de fallbacks : le filtre plateforme est toujours conservé jusqu'au dernier recours absolu ──
-        platformCandidatesCount = candidates.length;
-        const platformActive = (expandedPlatformIds?.length ?? 0) > 0;
+        for (let level = 0; level < levels.length && countNonInteracted(candidates) < TARGET; level++) {
+          if (level >= 1) platformFallbackTriggered = true;
+          if (level === 4) console.log(`[SP] FALLBACK ABSOLU — sans plateforme`);
 
-        // 1. Filtre voix : relâche langue/année mais garde plateforme
-        if ((voiceOriginalLanguage || voiceDecade) && candidates.length < 10) {
-          console.log(`[SP] Voice lang/year fallback: ${candidates.length} candidats`);
-          const { data: d } = await supabase.rpc("match_movies_for_recommendation",
-            buildRpcParams({ withLang: false, withYear: false, withPlatform: true }));
-          if (d && (d as any[]).length > candidates.length) candidates = d as any[];
+          // Boucle d'expansion : relance jusqu'à trouver TARGET non-interagis à ce niveau
+          let round = 0;
+          const MAX_ROUNDS_PER_LEVEL = 5;
+
+          while (countNonInteracted(candidates) < TARGET && round < MAX_ROUNDS_PER_LEVEL) {
+            const expandExcludeIds = [...normalizedExcludeIds, ...seenIds];
+            const params = levels[level]({ match_count: BATCH, exclude_ids: expandExcludeIds });
+            const { data, error } = await sb.rpc("match_movies_for_recommendation", params);
+            if (error) { console.error(`[SP] SQL error level=${level} round=${round}:`, error); break; }
+            if (!data || (data as any[]).length === 0) break;
+            const before = countNonInteracted(candidates);
+            addBatch(data as any[]);
+            const gained = countNonInteracted(candidates) - before;
+            console.log(`[SP] Level=${level} Round=${round}: +${(data as any[]).length} bruts, +${gained} non-interagis → total non-interagis: ${countNonInteracted(candidates)}/${TARGET}`);
+            if (gained === 0) break; // Plus rien de nouveau à ce niveau
+            round++;
+          }
         }
 
-        // 2. Filtre voix : relâche durée mais garde plateforme
-        if (voiceMaxDuration && candidates.length < 10) {
-          console.log(`[SP] Voice duration fallback: ${candidates.length} candidats`);
-          const { data: d } = await supabase.rpc("match_movies_for_recommendation",
-            { ...buildRpcParams({ withLang: true, withYear: true, withPlatform: true }), max_duration: null });
-          if (d && (d as any[]).length > candidates.length) candidates = d as any[];
-        }
+        platformCandidatesCount = countNonInteracted(candidates);
+        console.log(`[SP] Pool final: ${candidates.length} candidats, ${platformCandidatesCount} non-interagis | excludeIds: ${normalizedExcludeIds.length}`);
 
-        // 3. Trop peu : relâche langue/année — exclude_ids TOUJOURS complet
-        if (platformActive && candidates.length < 20) {
-          console.log(`[SP] Plateforme insuffisante (${candidates.length}) — relâche lang/year`);
-          const { data: d } = await supabase.rpc("match_movies_for_recommendation",
-            buildRpcParams({ withLang: false, withYear: false, withPlatform: true }));
-          if (d && (d as any[]).length > candidates.length) candidates = d as any[];
-        }
-
-        // 4. Encore trop peu : relâche liked_genres — exclude_ids TOUJOURS complet
-        if (platformActive && candidates.length < 10) {
-          console.log(`[SP] Plateforme insuffisante (${candidates.length}) — relâche liked_genres`);
-          const { data: d } = await supabase.rpc("match_movies_for_recommendation",
-            { ...buildRpcParams({ withLang: false, withYear: false, withPlatform: true }), liked_genres: [] });
-          if (d && (d as any[]).length > candidates.length) candidates = d as any[];
-        }
-
-        // 5. Dernier recours plateforme : relâche toutes contraintes goût — exclude_ids TOUJOURS complet
-        if (platformActive && candidates.length === 0) {
-          console.log(`[SP] Plateforme: dernier recours — toutes contraintes goût relâchées`);
-          const { data: d } = await supabase.rpc("match_movies_for_recommendation",
-            { ...buildRpcParams({ withLang: false, withYear: false, withPlatform: true }), liked_genres: [], excluded_genres: [], min_rating: 0, p_min_popularity: null });
-          if (d && (d as any[]).length > 0) candidates = d as any[];
-        }
-
-        // 6. Fallback absolu sans plateforme : uniquement si 0 candidat après tout
-        if (candidates.length === 0) {
-          console.log(`[SP] FALLBACK ABSOLU sans plateforme — aucun film trouvé sur les plateformes`);
-          const { data: d } = await supabase.rpc("match_movies_for_recommendation",
-            buildRpcParams({ withLang: false, withYear: false, withPlatform: false }));
-          if (d && (d as any[]).length > 0) candidates = d as any[];
-        }
-
-        // 7. Dernier recours absolu : relâche max_duration (peut être trop strict après backfill runtime)
-        if (candidates.length === 0 && effectiveMaxDuration != null) {
-          console.log(`[SP] DERNIER RECOURS — relâche max_duration (${effectiveMaxDuration}min)`);
-          const { data: d } = await supabase.rpc("match_movies_for_recommendation",
-            { ...buildRpcParams({ withLang: false, withYear: false, withPlatform: false }), max_duration: null, min_rating: 0, p_min_popularity: null });
-          if (d && (d as any[]).length > 0) candidates = d as any[];
-        }
       } catch (e) {
         console.error("SQL vector search failed:", e);
       }
@@ -436,7 +437,6 @@ serve(async (req) => {
       console.log(`[SP] SQL skipped — userTasteVector: ${!!userTasteVector}, SUPABASE_URL: ${!!SUPABASE_URL}`);
     }
 
-    // Pas de filtre plateforme en SQL — fait après le LLM sur les 50 candidats.
     let filteredCandidates = candidates;
 
     const t1 = Date.now();
@@ -518,48 +518,6 @@ serve(async (req) => {
 
     const t2 = Date.now();
     if (t2 - t1 > 50) console.log(`[SP⏱] Enrichissement langue TMDB: ${t2 - t1}ms`);
-
-    // ── ÉTAPE 1.8 : Expansion du pool — cherche jusqu'à 30 films NON-interagis ──
-    // Relance le SQL par tranches de 300 avec exclude_ids complet (jamais tronqué).
-    // Condition : nombre de candidats non-interagis < 30 (pas total candidates).
-    if (SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY && userTasteVector) {
-      const TARGET_POOL = 30;
-      const SQL_BATCH = 300;
-      const MAX_ROUNDS = 8;
-      const excludedSet = new Set(normalizedExcludeIds);
-
-      // Compte uniquement les candidats qui ne sont PAS dans l'historique interagi
-      const countNonInteracted = (cands: any[]): number =>
-        cands.filter((c: any) => !excludedSet.has(Number(c.tmdb_id))).length;
-
-      const seenIds = new Set(filteredCandidates.map((c: any) => Number(c.tmdb_id)));
-      let expansionRound = 0;
-
-      while (countNonInteracted(filteredCandidates) < TARGET_POOL && expansionRound < MAX_ROUNDS) {
-        expansionRound++;
-        // exclude_ids complet + films déjà vus → SQL retourne uniquement du nouveau
-        const expandExcludeIds = [...normalizedExcludeIds, ...[...seenIds]];
-        try {
-          const sbExpand = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-          const { data: moreData } = await sbExpand.rpc("match_movies_for_recommendation", {
-            ...buildRpcParams({ withLang: false, withYear: false, withPlatform: true }),
-            match_count: SQL_BATCH,
-            exclude_ids: expandExcludeIds,
-          });
-          if (!moreData || (moreData as any[]).length === 0) break;
-          const newCandidates = (moreData as any[]).filter((c: any) => !seenIds.has(Number(c.tmdb_id)));
-          if (newCandidates.length === 0) break;
-          for (const c of newCandidates) seenIds.add(Number(c.tmdb_id));
-          candidates = [...candidates, ...newCandidates];
-          filteredCandidates = [...filteredCandidates, ...newCandidates];
-          console.log(`[SP] Pool expansion #${expansionRound}: +${newCandidates.length} → non-interagis: ${countNonInteracted(filteredCandidates)}/${TARGET_POOL}`);
-          if (newCandidates.length < SQL_BATCH) break;
-        } catch (e) {
-          console.error("[SP] Pool expansion error:", e);
-          break;
-        }
-      }
-    }
 
     // ── ÉTAPE 2 : Filtre plateforme → LLM sur les films disponibles uniquement ──
     let llmSelections: any[] = [];
