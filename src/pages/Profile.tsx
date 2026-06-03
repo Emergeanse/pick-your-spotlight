@@ -459,7 +459,7 @@ const Profile = () => {
         <section className="rounded-2xl bg-card/80 backdrop-blur-sm border border-border/15 p-4">
           <div className="flex items-center gap-2 mb-4">
             <Film className="w-3.5 h-3.5 text-primary/30" />
-            <h2 className="text-xs font-sans font-semibold text-foreground/70 uppercase tracking-widest">Mon profil cinéphile</h2>
+            <h2 className="text-xs font-sans font-semibold text-foreground uppercase tracking-widest">Mon profil cinéphile</h2>
           </div>
           <div className="grid grid-cols-3 gap-2">
             {([
@@ -493,7 +493,7 @@ const Profile = () => {
             3. MON CINÉMA
         ════════════════════════════════ */}
         <section>
-          <h2 className="text-sm font-sans font-semibold text-foreground/35 uppercase tracking-widest mb-4">Mon Cinéma</h2>
+          <h2 className="text-sm font-sans font-semibold text-foreground uppercase tracking-widest mb-4">Mon Cinéma</h2>
 
           {cinemaLoading ? (
             <div className="flex justify-center py-8"><Loader2 className="w-5 h-5 text-primary/30 animate-spin" /></div>
@@ -505,7 +505,7 @@ const Profile = () => {
                 <div className="rounded-2xl bg-card/80 backdrop-blur-sm border border-border/15 p-4">
                   <div className="flex items-center gap-2 mb-3">
                     <Sparkles className="w-3.5 h-3.5 text-primary/30" />
-                    <span className="text-xs font-sans font-semibold text-foreground/70 uppercase tracking-widest">Niveau de personnalisation</span>
+                    <span className="text-xs font-sans font-semibold text-foreground uppercase tracking-widest">Niveau de personnalisation</span>
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger asChild>
@@ -563,7 +563,7 @@ const Profile = () => {
               {/* Radar genres */}
               {radarData.length >= 3 && (
                 <div>
-                  <p className="text-[10px] font-sans font-semibold text-foreground/25 uppercase tracking-widest mb-2">Empreinte cinématographique</p>
+                  <p className="text-[10px] font-sans font-semibold text-foreground uppercase tracking-widest mb-2">Empreinte cinématographique</p>
                   <div className="rounded-2xl bg-card/80 backdrop-blur-sm border border-border/15 p-2 pt-4">
                     <ResponsiveContainer width="100%" height={230}>
                       <RadarChart data={radarData} cx="50%" cy="50%" outerRadius="72%">
@@ -590,14 +590,14 @@ const Profile = () => {
         <section className="rounded-2xl bg-card/80 backdrop-blur-sm border border-border/15 p-4">
           <div className="flex items-center gap-2 mb-4">
             <Sparkles className="w-3.5 h-3.5 text-primary/30" />
-            <h2 className="text-xs font-sans font-semibold text-foreground/70 uppercase tracking-widest">Mes préférences</h2>
+            <h2 className="text-xs font-sans font-semibold text-foreground uppercase tracking-widest">Mes préférences</h2>
           </div>
 
           {/* Genres & Styles */}
           <div className="mb-5">
             <button onClick={() => setShowGenres((v) => !v)} className="w-full flex items-center justify-between mb-2 group">
               <div className="flex items-center gap-2">
-                <span className="text-[10px] font-sans font-semibold text-foreground/25 uppercase tracking-widest">Genres & styles</span>
+                <span className="text-[10px] font-sans font-semibold text-foreground uppercase tracking-widest">Genres & styles</span>
                 {(genresSelected > 0 || genresExcluded > 0) && (
                   <span className="text-[9px] font-sans px-1.5 py-0.5 rounded-full bg-primary/15 text-primary/70 border border-primary/20">
                     {genresSelected > 0 && `${genresSelected} aimé${genresSelected > 1 ? "s" : ""}`}
@@ -648,7 +648,7 @@ const Profile = () => {
           <motion.section ref={platformSectionRef} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
             <button onClick={() => setShowPlatforms((v) => !v)} className="w-full flex items-center justify-between mb-3 group">
               <div className="flex items-center gap-2">
-                <span className="text-[10px] font-sans font-semibold text-foreground/25 uppercase tracking-widest">Plateformes</span>
+                <span className="text-[10px] font-sans font-semibold text-foreground uppercase tracking-widest">Plateformes</span>
                 {selectedPlatforms.length > 0 && (
                   <span className="text-[9px] font-sans px-1.5 py-0.5 rounded-full bg-primary/15 text-primary/70 border border-primary/20">
                     {selectedPlatforms.length} sélectionnée{selectedPlatforms.length > 1 ? "s" : ""}
@@ -700,7 +700,7 @@ const Profile = () => {
             {/* Statistiques */}
             <div>
               <button onClick={() => setShowStats((v) => !v)} className="w-full flex items-center justify-between mb-3 group">
-                <span className="text-[10px] font-sans font-semibold text-foreground/25 uppercase tracking-widest">Statistiques</span>
+                <span className="text-[10px] font-sans font-semibold text-foreground uppercase tracking-widest">Statistiques</span>
                 <ChevronDown className={`w-3.5 h-3.5 text-foreground/25 transition-transform duration-200 ${showStats ? "rotate-180" : ""}`} />
               </button>
               <div className="rounded-2xl bg-card/80 backdrop-blur-sm border border-border/15 overflow-hidden divide-y divide-border/5">
@@ -746,7 +746,7 @@ const Profile = () => {
                   <button onClick={() => setShowTrophies((v) => !v)} className="w-full flex items-center justify-between group">
                     <div className="flex items-center gap-2">
                       <Trophy className="w-3.5 h-3.5 text-primary/30" />
-                      <span className="text-[10px] font-sans font-semibold text-foreground/25 uppercase tracking-widest">Trophées</span>
+                      <span className="text-[10px] font-sans font-semibold text-foreground uppercase tracking-widest">Trophées</span>
                       <span className="text-[10px] font-sans text-primary/40 tabular-nums">{totalUnlocked}/{totalMilestones}</span>
                     </div>
                     <div className="flex items-center gap-1.5">
@@ -805,7 +805,7 @@ const Profile = () => {
             5. COMPTE
         ════════════════════════════════ */}
         <section>
-          <h2 className="text-sm font-sans font-semibold text-foreground/35 uppercase tracking-widest mb-3">Compte</h2>
+          <h2 className="text-sm font-sans font-semibold text-foreground uppercase tracking-widest mb-3">Compte</h2>
           <div className="flex flex-col gap-1 border-t border-border/5 pt-3">
             {isAdmin && (
               <Button variant="ghost" onClick={() => navigate("/admin")} className="justify-start text-primary/50 hover:text-primary text-xs font-sans gap-2 h-10">
