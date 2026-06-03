@@ -472,14 +472,17 @@ const Profile = () => {
                 <button
                   key={opt.value}
                   onClick={() => setMinRating(opt.value)}
-                  className={`flex flex-col items-center gap-1 py-3 px-2 rounded-xl border transition-all text-center ${
+                  className={`relative overflow-hidden rounded-xl border transition-all aspect-square ${
                     active
-                      ? "bg-primary/10 border-primary/40 text-primary"
-                      : "bg-foreground/[0.03] border-border/20 text-foreground/50 hover:bg-foreground/[0.06] hover:border-border/40"
+                      ? "border-primary/60 ring-2 ring-primary/30"
+                      : "border-border/20 hover:border-border/40"
                   }`}
                 >
-                  <img src={opt.img} alt={opt.label} className="w-10 h-10 object-contain" />
-                  <span className="font-sans text-[11px] font-medium leading-tight">{opt.label}</span>
+                  <img src={opt.img} alt={opt.label} className="w-full h-full object-cover" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
+                  <span className={`absolute bottom-1.5 inset-x-1 font-sans text-[11px] font-semibold leading-tight text-center ${active ? "text-white" : "text-white/70"}`}>
+                    {opt.label}
+                  </span>
                 </button>
               );
             })}
