@@ -24,6 +24,33 @@ export async function fetchPopularPeople(page: number = 1): Promise<any[]> {
   );
 }
 
+/** Récupère acteurs et réalisateurs issus des films français populaires */
+export async function fetchFrenchCinemaPeople(): Promise<any[]> {
+  const moviesRes = await fetch(
+    `https://api.themoviedb.org/3/discover/movie?api_key=${TMDB_API_KEY}&language=fr-FR&with_original_language=fr&sort_by=popularity.desc&vote_count.gte=100&page=1`
+  );
+  const moviesData = await moviesRes.json();
+  const movieIds: number[] = (moviesData.results || []).slice(0, 10).map((m: any) => m.id);
+
+  const creditsResults = await Promise.all(
+    movieIds.map((id) =>
+      fetch(`https://api.themoviedb.org/3/movie/${id}/credits?api_key=${TMDB_API_KEY}&language=fr-FR`).then((r) => r.json())
+    )
+  );
+
+  const peopleMap = new Map<number, any>();
+  for (const credits of creditsResults) {
+    const director = (credits.crew || []).find((c: any) => c.job === "Director");
+    if (director?.profile_path) {
+      peopleMap.set(director.id, { ...director, known_for_department: "Directing" });
+    }
+    for (const actor of (credits.cast || []).slice(0, 4).filter((c: any) => c.profile_path)) {
+      peopleMap.set(actor.id, { ...actor, known_for_department: "Acting" });
+    }
+  }
+  return [...peopleMap.values()];
+}
+
 export async function fetchPersonDetail(personId: number): Promise<any> {
   const res = await fetch(
     `https://api.themoviedb.org/3/person/${personId}?api_key=${TMDB_API_KEY}&language=fr-FR&append_to_response=movie_credits`

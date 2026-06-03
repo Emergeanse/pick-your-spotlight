@@ -4,6 +4,7 @@ import { Loader2, Heart, ThumbsDown, HelpCircle, ChevronLeft, ChevronRight } fro
 import { useAuth } from "@/hooks/use-auth";
 import {
   fetchPopularPeople,
+  fetchFrenchCinemaPeople,
   savePersonPreference,
   fetchPersonDetail,
   getUserPeoplePreferences,
@@ -89,6 +90,18 @@ const PeopleTrainer = ({ onBack, filterDepartment }: PeopleTrainerProps) => {
 
         setExistingPreferenceIds(prefIds);
         setPreferencesById(prefMap);
+
+        // Inject French cinema people first, then fill with global popular
+        const frenchPeople = await fetchFrenchCinemaPeople();
+        const frenchFiltered = frenchPeople.filter(
+          (p) => p.profile_path && !prefIds.has(p.id) &&
+            (!filterDepartment || p.known_for_department === filterDepartment)
+        );
+        if (frenchFiltered.length > 0) {
+          setPeople(frenchFiltered);
+          frenchFiltered.forEach((p) => setProcessedIds((prev) => new Set([...prev])));
+        }
+
         await loadPeople(1, prefIds);
       } catch (e) {
         console.error("Failed to bootstrap people trainer:", e);
