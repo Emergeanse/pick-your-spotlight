@@ -433,7 +433,7 @@ const Profile = () => {
                 {dnaTitle ? (
                   <>
                     <h2 className="text-lg font-serif mb-0.5 group-hover:text-primary/90 transition-colors leading-tight">{dnaTitle}</h2>
-                    {dnaArchetype && <p className="text-primary/50 text-xs font-sans mb-1">{dnaArchetype}</p>}
+                    {dnaArchetype && dnaArchetype !== dnaTitle && <p className="text-primary/50 text-xs font-sans mb-1">{dnaArchetype}</p>}
                     {dnaLevel && <span className="inline-block text-[10px] px-2 py-0.5 rounded-full bg-primary/8 text-primary/60 font-sans">{dnaLevel}</span>}
                   </>
                 ) : (
