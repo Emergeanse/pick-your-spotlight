@@ -454,7 +454,40 @@ const Profile = () => {
         </section>
 
         {/* ════════════════════════════════
-            2. MON CINÉMA
+            2. MON PROFIL CINÉPHILE
+        ════════════════════════════════ */}
+        <section className="rounded-2xl bg-card/80 backdrop-blur-sm border border-border/15 p-4">
+          <div className="flex items-center gap-2 mb-4">
+            <Film className="w-3.5 h-3.5 text-primary/30" />
+            <h2 className="text-xs font-sans font-semibold text-foreground/70 uppercase tracking-widest">Mon profil cinéphile</h2>
+          </div>
+          <div className="grid grid-cols-3 gap-2">
+            {([
+              { label: "Je suis ouvert",    img: squirrelHappy,    value: 5 },
+              { label: "Je suis sélectif",  img: squirrelCritique, value: 6 },
+              { label: "Je suis exigeant",  img: squirrelExigeant, value: 7 },
+            ] as const).map(opt => {
+              const active = opt.value === 5 ? minRating <= 5 : opt.value === 7 ? minRating >= 7 : minRating === 6;
+              return (
+                <button
+                  key={opt.value}
+                  onClick={() => setMinRating(opt.value)}
+                  className={`flex flex-col items-center gap-1 py-3 px-2 rounded-xl border transition-all text-center ${
+                    active
+                      ? "bg-primary/10 border-primary/40 text-primary"
+                      : "bg-foreground/[0.03] border-border/20 text-foreground/50 hover:bg-foreground/[0.06] hover:border-border/40"
+                  }`}
+                >
+                  <img src={opt.img} alt={opt.label} className="w-10 h-10 object-contain" />
+                  <span className="font-sans text-[11px] font-medium leading-tight">{opt.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </section>
+
+        {/* ════════════════════════════════
+            3. MON CINÉMA
         ════════════════════════════════ */}
         <section>
           <h2 className="text-sm font-sans font-semibold text-foreground/35 uppercase tracking-widest mb-4">Mon Cinéma</h2>
@@ -653,43 +686,6 @@ const Profile = () => {
             </AnimatePresence>
           </motion.section>
 
-          {/* Note minimale */}
-          <div className="mt-5">
-            <div className="flex items-center gap-2 mb-3">
-              <span className="text-[10px] font-sans font-semibold text-foreground/25 uppercase tracking-widest">Note minimale</span>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild><button className="text-foreground/20"><Info className="w-3 h-3" /></button></TooltipTrigger>
-                  <TooltipContent side="top" className="max-w-[240px] text-xs"><p>Notes TMDB — communauté de millions d'utilisateurs.</p></TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </div>
-            <div className="bg-card rounded-xl p-4">
-              <div className="grid grid-cols-3 gap-2">
-                {([
-                  { label: "Je suis ouvert",    img: squirrelHappy,    value: 5 },
-                  { label: "Je suis sélectif",  img: squirrelCritique, value: 6 },
-                  { label: "Je suis exigeant",  img: squirrelExigeant, value: 7 },
-                ] as const).map(opt => {
-                  const active = opt.value === 5 ? minRating <= 5 : opt.value === 7 ? minRating >= 7 : minRating === 6;
-                  return (
-                    <button
-                      key={opt.value}
-                      onClick={() => setMinRating(opt.value)}
-                      className={`flex flex-col items-center gap-1 py-3 px-2 rounded-xl border transition-all text-center ${
-                        active
-                          ? "bg-primary/10 border-primary/40 text-primary"
-                          : "bg-foreground/[0.03] border-border/20 text-foreground/50 hover:bg-foreground/[0.06] hover:border-border/40"
-                      }`}
-                    >
-                      <img src={opt.img} alt={opt.label} className="w-10 h-10 object-contain" />
-                      <span className="font-sans text-[11px] font-medium leading-tight">{opt.label}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
         </section>
 
         {/* ════════════════════════════════
