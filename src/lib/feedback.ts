@@ -575,7 +575,7 @@ export async function listFeedbackByType(type: FeedbackType) {
       "item_id, score, created_at, catalog_items:item_id(id, tmdb_id, title, poster_path, media_type, year, runtime, overview, vote_average)",
     )
     .eq("user_id", userId)
-    .eq("feedback_type", type)
+    .or(`feedback_type.eq.${type},and(feedback_type.is.null,label.eq.${type})`)
     .order("created_at", { ascending: false })
     .limit(5000);
 

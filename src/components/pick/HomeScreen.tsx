@@ -1021,11 +1021,11 @@ const HomeScreen = ({
           });
           setMovieMatchData((prev) => ({ ...prev, ...matchMap }));
 
-          // Tout le filtrage est fait dans le SQL. Le client score tous les candidats LLM
-          // avec movie-match en parallèle, puis sélectionne les N meilleurs par score movie-match.
+          // Genres/plateforme filtrés côté SQL, mais excludeIds appliqué ici aussi
+          // comme filet de sécurité si l'edge function laisse passer un film déjà interagi.
           tBatchStart = performance.now();
           movies = await ensureRecommendationBatch(extracted, {
-            excludeIds: [],
+            excludeIds: allExcludeIds,
             platformIds: userPlatformIds,
             minRating: 0,
             excludedGenres: [],
