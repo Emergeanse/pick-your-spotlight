@@ -415,7 +415,7 @@ const Profile = () => {
                 </div>
               ) : (
                 <button onClick={() => setEditingName(true)} className="flex items-center gap-2 group">
-                  <h1 className="text-2xl font-serif text-foreground">{nameDisplay}</h1>
+                  <h1 className="text-2xl font-serif text-white font-bold">{nameDisplay}</h1>
                   <Pencil className="w-3 h-3 text-foreground/20 group-hover:text-foreground/50 transition-colors" />
                 </button>
               )}
@@ -474,8 +474,8 @@ const Profile = () => {
                   onClick={() => setMinRating(opt.value)}
                   className={`relative overflow-hidden rounded-xl border transition-all aspect-square ${
                     active
-                      ? "border-primary/60 ring-2 ring-primary/30"
-                      : "border-border/20 hover:border-border/40"
+                      ? "border-primary/60 ring-2 ring-primary/30 opacity-100"
+                      : "border-border/20 opacity-40 hover:opacity-60"
                   }`}
                 >
                   <img src={opt.img} alt={opt.label} className="w-full h-full object-cover" />
