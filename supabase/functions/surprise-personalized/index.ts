@@ -1075,8 +1075,22 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
       console.log(`[SP] Tri origine : préférées [${[...preferredLangsBoost].join(", ")}] exclues [${[...excludedLangsBoost].join(", ")}] → ${movies.slice(0, requestedCount).map((m: any) => `${m.movie?.title || "?"}(${m.movie?.original_language || "?"})`).join(", ")}`);
     }
 
+    // ── Filet de sécurité final : retire les films dont le genre principal ou la langue est exclu ──
+    // Nécessaire car les fallbacks discover/trending ne passent pas par les filtres SQL
+    const safeMovies = movies.filter((m: any) => {
+      const movie = m.movie || m;
+      const genres: string[] = (movie.genres || []).map((g: any) => g.name || g).filter(Boolean);
+      const lang: string = movie.original_language || "";
+      const primaryGenre: string = genres[0] || "";
+      const genreOk = effectiveExcludedGenresSQL.length === 0 || !effectiveExcludedGenresSQL.includes(primaryGenre);
+      const langOk  = effectiveExcludedLangsArr.length === 0 || !effectiveExcludedLangsArr.includes(lang);
+      return genreOk && langOk;
+    });
+    const filteredCount = movies.length - safeMovies.length;
+    if (filteredCount > 0) console.log(`[SP] Filet sécurité: ${filteredCount} film(s) éliminé(s) (genre/langue exclus)`);
+
     // Garde au maximum le nombre souhaité par l'utilisateur
-    const finalMovies = movies.slice(0, requestedCount);
+    const finalMovies = (safeMovies.length >= Math.min(requestedCount, 1) ? safeMovies : movies).slice(0, requestedCount);
 
     const tFinal = Date.now();
     console.log(
