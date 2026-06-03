@@ -344,7 +344,7 @@ serve(async (req) => {
       excluded_genres: effectiveExcludedGenres,
       liked_genres: effectiveLikedGenresSQL ?? likedGenresForSQL,
       max_duration: effectiveMaxDuration ?? null,
-      p_user_id: userId ?? null,
+      p_user_id: null, // exclude_ids + usedIds suffisent — p_user_id réduit trop le pool
       p_original_language: opts.withLang ? (voiceOriginalLanguage ?? null) : null,
       p_min_year: opts.withYear ? (voiceDecade ?? null) : null,
       p_max_year: opts.withYear ? (voiceDecade != null ? voiceDecade + 9 : null) : null,
