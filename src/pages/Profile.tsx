@@ -352,7 +352,7 @@ const Profile = () => {
   // ── Overlays plein écran ──
   if (showDNA) {
     return (
-      <div className="fixed inset-0 bottom-14 bg-background overflow-y-auto z-30">
+      <div className="fixed inset-0 bottom-14 bg-background overflow-y-auto scrollbar-dark z-30">
         <div className="sticky top-0 z-30 bg-background/80 backdrop-blur-xl border-b border-border/10 px-5 py-3 pt-[calc(0.75rem+env(safe-area-inset-top))]">
           <button onClick={() => setShowDNA(false)} className="flex items-center gap-2 text-foreground/50 hover:text-foreground transition-colors">
             <ArrowLeft className="w-4 h-4" /><span className="font-serif text-lg">Profil</span>
@@ -365,7 +365,7 @@ const Profile = () => {
 
   if (showTrainer) {
     return (
-      <div className="fixed inset-0 bottom-14 bg-background overflow-y-auto z-30">
+      <div className="fixed inset-0 bottom-14 bg-background overflow-y-auto scrollbar-dark z-30">
         <div className="sticky top-0 z-30 bg-background/80 backdrop-blur-xl border-b border-border/10 px-5 py-3 pt-[calc(0.75rem+env(safe-area-inset-top))]">
           <button onClick={() => setShowTrainer(false)} className="flex items-center gap-2 text-foreground/50 hover:text-foreground transition-colors">
             <ArrowLeft className="w-4 h-4" /><span className="font-serif text-lg">Profil</span>
