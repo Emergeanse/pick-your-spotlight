@@ -374,7 +374,7 @@ serve(async (req) => {
 
     if (SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY && userTasteVector) {
       const TARGET = 30;
-      const BATCH = 300;
+      const BATCH = 500;
       const excludedSet = new Set(normalizedExcludeIds);
       const seenIds = new Set<number>();
 
