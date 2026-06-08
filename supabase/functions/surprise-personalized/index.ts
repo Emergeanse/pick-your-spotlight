@@ -373,6 +373,7 @@ serve(async (req) => {
     let platformFallbackTriggered = false;
     let finalCascadeLevel = -1;
     let finalRpcParamsSummary: Record<string, any> | null = null;
+    const sqlCountDiag: { level: number; total_in_db: number; available_after_exclusions: number }[] = [];
 
     if (SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY && userTasteVector) {
       const TARGET = 30;
@@ -409,6 +410,30 @@ serve(async (req) => {
         for (let level = 0; level < levels.length && countNonInteracted(candidates) < TARGET; level++) {
           if (level >= 1) platformFallbackTriggered = true;
           if (level === 4) console.log(`[SP] FALLBACK ABSOLU — sans plateforme`);
+
+          // COUNT avant requête : combien de films correspondent aux filtres de ce niveau
+          try {
+            const countParams = levels[level]({ match_count: 1, exclude_ids: normalizedExcludeIds });
+            const { data: countData } = await sb.rpc("count_movie_candidates", {
+              filter_media_type: countParams.filter_media_type ?? null,
+              min_rating: countParams.min_rating ?? 0,
+              excluded_genres: countParams.excluded_genres ?? [],
+              liked_genres: countParams.liked_genres ?? [],
+              max_duration: countParams.max_duration ?? null,
+              p_excluded_languages: countParams.p_excluded_languages ?? [],
+              p_min_popularity: countParams.p_min_popularity ?? null,
+              p_platform_ids: countParams.p_platform_ids ?? null,
+              exclude_ids: normalizedExcludeIds,
+            });
+            if (countData?.[0]) {
+              const total = Number((countData as any[])[0].total_in_db);
+              const available = Number((countData as any[])[0].available_after_exclusions);
+              sqlCountDiag.push({ level, total_in_db: total, available_after_exclusions: available });
+              console.log(`[SP] COUNT niveau ${level}: ${total} films en base, ${available} disponibles après ${normalizedExcludeIds.length} exclusions`);
+            }
+          } catch (e) {
+            console.warn(`[SP] count_movie_candidates level=${level} failed:`, e);
+          }
 
           // Boucle d'expansion : relance jusqu'à trouver TARGET non-interagis à ce niveau
           let round = 0;
@@ -1178,6 +1203,7 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
           sqlCascadeLevel: finalCascadeLevel,
           sqlRpcParams: finalRpcParamsSummary,
           sqlSnippet,
+          sqlCountDiag,
           sql50: candidates.map(toDebugRow), // renommé sql100 en pratique
           top20: llmPool.length > 0 ? llmPool.map(toDebugRow) : candidates.slice(0, llmPoolSize).map(toDebugRow),
           llmFiltered: llmInputPool.map(toDebugRow),

@@ -872,6 +872,16 @@ const HomeScreen = ({
               console.log(`     plateformes      : [${(rpc.p_platform_ids || []).join(", ") || "—"}]`);
               console.log(`     exclude_ids      : ${rpc.exclude_ids_count} IDs`);
             }
+            if (dbg.sqlCountDiag?.length) {
+              console.group(`[PICK-DEBUG] 📊 COUNT par niveau de contrainte`);
+              console.table(dbg.sqlCountDiag.map((d: any) => ({
+                "Niveau": `${d.level} — ${cascadeLabels[d.level] ?? `niveau ${d.level}`}`,
+                "Total en base": d.total_in_db,
+                "Disponibles (après exclusions)": d.available_after_exclusions,
+                "⚠️ excluded_genres actifs ?": d.level < 3 ? "✅ oui" : "❌ non (désactivé)",
+              })));
+              console.groupEnd();
+            }
             if (dbg.sqlSnippet) {
               console.group(`[PICK-DEBUG] 🔍 Snippet SQL (copier dans l'éditeur SQL Supabase)`);
               console.log(dbg.sqlSnippet);
