@@ -690,7 +690,7 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
           const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GOOGLE_AI_KEY}`;
           const geminiBody = JSON.stringify({
             contents: [{ role: "user", parts: [{ text: systemPrompt }] }],
-            generationConfig: { maxOutputTokens: 2000, responseMimeType: "application/json", thinkingConfig: { thinkingBudget: 0 } },
+            generationConfig: { maxOutputTokens: 500, responseMimeType: "application/json", thinkingConfig: { thinkingBudget: 0 } },
           });
           const geminiHeaders = { "Content-Type": "application/json" };
 
