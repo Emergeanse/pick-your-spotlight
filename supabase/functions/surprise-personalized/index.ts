@@ -606,9 +606,10 @@ serve(async (req) => {
 
         const candidateList = llmInputPool
           .map((c: any, i: number) => {
-            const typeLabel = c.media_type === "tv" ? "📺 Série" : "🎬 Film";
+            const typeFlag = c.media_type === "tv" ? "S" : "F";
             const safeTitle = (c.title || "").replace(/[^\x20-\x7EÀ-ɏЀ-ӿ]/g, "").trim();
-            return `N°${i + 1} | ${typeLabel} | "${safeTitle}" (${c.year || "?"}) | ${(c.genres || []).slice(0, 3).join(", ")} | ⭐${c.vote_average > 0 ? c.vote_average.toFixed(1) : "?"}/10`;
+            const note = c.vote_average > 0 ? c.vote_average.toFixed(1) : "?";
+            return `${i + 1}.[${typeFlag}] "${safeTitle}" (${c.year || "?"}) ${(c.genres || []).slice(0, 2).join("/")} ★${note}`;
           })
           .join("\n");
 
@@ -662,7 +663,7 @@ MISSION : Sélectionne exactement ${targetCount} films/séries depuis cette list
 
 RÈGLES DE SÉLECTION :
 - Tu DOIS retourner exactement ${targetCount} entrées, pas moins. Classe-les du meilleur au moins bon.
-- Chaque item est clairement marqué 🎬 Film ou 📺 Série — respecte ce type dans ta réponse
+- Format liste : N°.[F=Film/S=Série] "Titre" (année) genres ★note
 - Diversifie les genres entre les sélections
 - Priorise les films bien notés (⭐7+) si le profil matche
 - Évite 2 films de la même franchise ou très similaires
