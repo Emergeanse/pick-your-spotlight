@@ -371,6 +371,8 @@ serve(async (req) => {
     let candidates: any[] = [];
     let platformCandidatesCount = -1;
     let platformFallbackTriggered = false;
+    let finalCascadeLevel = -1;
+    let finalRpcParamsSummary: Record<string, any> | null = null;
 
     if (SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY && userTasteVector) {
       const TARGET = 30;
@@ -415,6 +417,19 @@ serve(async (req) => {
           while (countNonInteracted(candidates) < TARGET && round < MAX_ROUNDS_PER_LEVEL) {
             const expandExcludeIds = [...normalizedExcludeIds, ...seenIds];
             const params = levels[level]({ match_count: BATCH, exclude_ids: expandExcludeIds });
+            finalCascadeLevel = level;
+            finalRpcParamsSummary = {
+              level,
+              filter_media_type: params.filter_media_type ?? null,
+              min_rating: params.min_rating ?? 0,
+              excluded_genres: params.excluded_genres ?? [],
+              liked_genres: params.liked_genres ?? [],
+              max_duration: params.max_duration ?? null,
+              p_excluded_languages: params.p_excluded_languages ?? [],
+              p_min_popularity: params.p_min_popularity ?? null,
+              p_platform_ids: params.p_platform_ids ?? null,
+              exclude_ids_count: expandExcludeIds.length,
+            };
             const { data, error } = await sb.rpc("match_movies_for_recommendation", params);
             if (error) { console.error(`[SP] SQL error level=${level} round=${round}:`, error); break; }
             if (!data || (data as any[]).length === 0) break;
@@ -1078,6 +1093,31 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
       type: c.media_type,
     });
 
+    const toSqlArray = (arr: any[], type: string) =>
+      arr?.length
+        ? `ARRAY[${arr.map((v: any) => typeof v === "string" ? `'${v.replace(/'/g, "''")}'` : v).join(", ")}]::${type}[]`
+        : `ARRAY[]::${type}[]`;
+
+    const sqlSnippet = finalRpcParamsSummary ? [
+      `-- Appel RPC — niveau cascade ${finalRpcParamsSummary.level} — ${finalRpcParamsSummary.exclude_ids_count} IDs exclus`,
+      `SELECT tmdb_id, title, genres, vote_average, year, media_type, similarity`,
+      `FROM match_movies_for_recommendation(`,
+      `  query_vector := '<coller votre vecteur 32-dim ici>',`,
+      `  match_count := 50,`,
+      `  exclude_ids := ARRAY[]::integer[],  -- ${finalRpcParamsSummary.exclude_ids_count} IDs (omis)`,
+      `  filter_media_type := ${finalRpcParamsSummary.filter_media_type ? `'${finalRpcParamsSummary.filter_media_type}'` : "NULL"},`,
+      `  min_rating := ${finalRpcParamsSummary.min_rating},`,
+      `  excluded_genres := ${toSqlArray(finalRpcParamsSummary.excluded_genres, "text")},`,
+      `  liked_genres := ${toSqlArray(finalRpcParamsSummary.liked_genres, "text")},`,
+      `  max_duration := ${finalRpcParamsSummary.max_duration ?? "NULL"},`,
+      `  p_excluded_languages := ${toSqlArray(finalRpcParamsSummary.p_excluded_languages, "text")},`,
+      `  p_min_popularity := ${finalRpcParamsSummary.p_min_popularity ?? "NULL"},`,
+      `  p_platform_ids := ${finalRpcParamsSummary.p_platform_ids?.length ? toSqlArray(finalRpcParamsSummary.p_platform_ids, "integer") : "NULL"}`,
+      `)`,
+      `ORDER BY similarity DESC`,
+      `LIMIT 50;`,
+    ].join("\n") : null;
+
     return new Response(
       JSON.stringify({
         movies: finalMovies,
@@ -1135,6 +1175,9 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
             minMatchScore,
             mediaType,
           },
+          sqlCascadeLevel: finalCascadeLevel,
+          sqlRpcParams: finalRpcParamsSummary,
+          sqlSnippet,
           sql50: candidates.map(toDebugRow), // renommé sql100 en pratique
           top20: llmPool.length > 0 ? llmPool.map(toDebugRow) : candidates.slice(0, llmPoolSize).map(toDebugRow),
           llmFiltered: llmInputPool.map(toDebugRow),
