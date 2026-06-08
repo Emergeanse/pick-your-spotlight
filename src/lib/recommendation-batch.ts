@@ -265,7 +265,7 @@ export async function enrichRecommendationBatchWithTexts(
   // Parallel calls with staggered start to avoid Gemini rate limiting on concurrent requests
   const generated = await Promise.all(
     eagerMovies.map(async (movie, idx) => {
-      if (idx > 0) await new Promise((r) => setTimeout(r, idx * 150));
+      if (idx > 0) await new Promise((r) => setTimeout(r, idx * 400));
       const t0 = performance.now();
       const recommendationTexts = await fetchRecommendationTextsForMovie(movie, context, options);
       const t1 = performance.now();
