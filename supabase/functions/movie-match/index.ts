@@ -298,7 +298,7 @@ Génère la fiche de match multi-vecteur.`;
             contents: [{ role: "user", parts: [{ text: userPrompt }] }],
             generationConfig: {
               responseMimeType: "application/json",
-              maxOutputTokens: 1200,
+              maxOutputTokens: 700,
               thinkingConfig: { thinkingBudget: 0 },
             },
           }),
