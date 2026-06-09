@@ -297,6 +297,7 @@ serve(async (req) => {
       "Cinéma asiatique": ["ko", "ja", "zh", "cn", "th", "hi", "ta", "te", "ml"],
       "Cinéma Amérique du Sud": ["es", "pt"],
       "Cinéma africain": [],
+      "Cinéma américain": ["en"],
     };
     const genreTagExcludedLangs = effectiveExcludedGenres
       .flatMap((g: string) => GENRE_TAG_LANGS[g] ?? []);
