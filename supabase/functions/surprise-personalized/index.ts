@@ -398,10 +398,10 @@ serve(async (req) => {
         (extra: any) => ({ ...buildRpcParams({ withLang: false, withYear: false, withPlatform: true }), ...extra }),
         // niveau 2 : sans liked_genres
         (extra: any) => ({ ...buildRpcParams({ withLang: false, withYear: false, withPlatform: true }), liked_genres: [], ...extra }),
-        // niveau 3 : sans goût restrictif
-        (extra: any) => ({ ...buildRpcParams({ withLang: false, withYear: false, withPlatform: true }), liked_genres: [], excluded_genres: [], min_rating: 0, p_min_popularity: null, ...extra }),
-        // niveau 4 : sans plateforme (dernier recours absolu)
-        (extra: any) => ({ ...buildRpcParams({ withLang: false, withYear: false, withPlatform: false }), liked_genres: [], excluded_genres: [], min_rating: 0, p_min_popularity: null, ...extra }),
+        // niveau 3 : sans goût restrictif — excluded_genres conservé (contrainte de sécurité, pas de goût)
+        (extra: any) => ({ ...buildRpcParams({ withLang: false, withYear: false, withPlatform: true }), liked_genres: [], min_rating: 0, p_min_popularity: null, ...extra }),
+        // niveau 4 : sans plateforme (dernier recours absolu) — excluded_genres conservé
+        (extra: any) => ({ ...buildRpcParams({ withLang: false, withYear: false, withPlatform: false }), liked_genres: [], min_rating: 0, p_min_popularity: null, ...extra }),
       ];
 
       try {
@@ -1081,14 +1081,13 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
       console.log(`[SP] Tri origine : préférées [${[...preferredLangsBoost].join(", ")}] exclues [${[...excludedLangsBoost].join(", ")}] → ${movies.slice(0, requestedCount).map((m: any) => `${m.movie?.title || "?"}(${m.movie?.original_language || "?"})`).join(", ")}`);
     }
 
-    // ── Filet de sécurité final : retire les films dont le genre principal ou la langue est exclu ──
+    // ── Filet de sécurité final : retire les films dont un genre ou la langue est exclu ──
     // Nécessaire car les fallbacks discover/trending ne passent pas par les filtres SQL
     const safeMovies = movies.filter((m: any) => {
       const movie = m.movie || m;
       const genres: string[] = (movie.genres || []).map((g: any) => g.name || g).filter(Boolean);
       const lang: string = movie.original_language || "";
-      const primaryGenre: string = genres[0] || "";
-      const genreOk = effectiveExcludedGenres.length === 0 || !effectiveExcludedGenres.includes(primaryGenre);
+      const genreOk = effectiveExcludedGenres.length === 0 || !genres.some((g) => effectiveExcludedGenres.includes(g));
       const langOk  = effectiveExcludedLangsArr.length === 0 || !effectiveExcludedLangsArr.includes(lang);
       return genreOk && langOk;
     });
