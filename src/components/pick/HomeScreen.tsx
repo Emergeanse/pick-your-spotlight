@@ -850,8 +850,8 @@ const HomeScreen = ({
 
           console.group("[PICK-DEBUG] ═══ Pipeline de recommandation ═══");
 
-          // ── Étape 1 : SQL ──
-          if (dbg?.sql50?.length) {
+          // ── Étape 1 : SQL — toujours affiché même si 0 candidats ──
+          if (dbg?.filters || dbg?.sqlCountDiag?.length || dbg?.sql50) {
             const f = dbg.filters;
             const cascadeLevel: number = dbg.sqlCascadeLevel ?? -1;
             const cascadeLabels = ["0 — toutes contraintes", "1 — sans lang/année", "2 — sans liked_genres", "3 — sans liked_genres ni note (excluded_genres conservé)", "4 — sans plateforme (excluded_genres conservé)"];
@@ -859,7 +859,9 @@ const HomeScreen = ({
             const rpc = dbg.sqlRpcParams;
             const cascadeWarn = rpc ? (rpc.excluded_genres || []).length === 0 : false;
             const logFn = cascadeWarn ? console.warn.bind(console) : console.log.bind(console);
-            console.group(`[PICK-DEBUG] 1️⃣ SQL — ${dbg.sql50.length} candidats (${f?.excludeCount ?? 0} exclus — déjà vus)`);
+            const candidateCount = dbg.sql50?.length ?? 0;
+            const headerFn = candidateCount === 0 ? console.warn.bind(console) : console.group.bind(console);
+            headerFn(`[PICK-DEBUG] 1️⃣ SQL — ${candidateCount} candidats (${f?.excludeCount ?? 0} exclus — déjà vus)${candidateCount === 0 ? " ⚠️ POOL ÉPUISÉ" : ""}`);
             logFn(`   Cascade SQL : niveau ${cascadeLabel}${cascadeWarn ? " ⚠️ excluded_genres vide !" : ""}`);
             if (rpc) {
               console.log(`   Paramètres RPC effectifs :`);
@@ -872,6 +874,7 @@ const HomeScreen = ({
               console.log(`     plateformes      : [${(rpc.p_platform_ids || []).join(", ") || "—"}]`);
               console.log(`     exclude_ids      : ${rpc.exclude_ids_count} IDs`);
             }
+            // COUNT toujours affiché en premier — même quand sql50 = []
             if (dbg.sqlCountDiag?.length) {
               console.group(`[PICK-DEBUG] 📊 COUNT par niveau de contrainte`);
               console.table(dbg.sqlCountDiag.map((d: any) => ({
@@ -887,17 +890,20 @@ const HomeScreen = ({
               console.log(dbg.sqlSnippet);
               console.groupEnd();
             }
-            console.table(dbg.sql50.map((c: any, i: number) => ({
-              "#": i + 1,
-              "Titre": c.title,
-              "Année": c.year,
-              "Note /10": c.note ?? "–",
-              "Sim%": c.sim ?? "–",
-              "Composite": c.composite ?? "–",
-              "Genres": (c.genres || []).join(", "),
-              "Type": c.type,
-            })));
-            console.groupEnd();
+            // Liste des candidats — seulement s'il y en a
+            if (candidateCount > 0) {
+              console.table(dbg.sql50.map((c: any, i: number) => ({
+                "#": i + 1,
+                "Titre": c.title,
+                "Année": c.year,
+                "Note /10": c.note ?? "–",
+                "Sim%": c.sim ?? "–",
+                "Composite": c.composite ?? "–",
+                "Genres": (c.genres || []).join(", "),
+                "Type": c.type,
+              })));
+            }
+            if (candidateCount > 0) console.groupEnd();
           }
 
           // ── Profil LLM ──
