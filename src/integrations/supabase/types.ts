@@ -1206,6 +1206,23 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      count_movie_candidates: {
+        Args: {
+          exclude_ids?: number[]
+          excluded_genres?: string[]
+          filter_media_type?: string
+          liked_genres?: string[]
+          max_duration?: number
+          min_rating?: number
+          p_excluded_languages?: string[]
+          p_min_popularity?: number
+          p_platform_ids?: number[]
+        }
+        Returns: {
+          available_after_exclusions: number
+          total_in_db: number
+        }[]
+      }
       find_profile_by_friend_code: {
         Args: { _code: string }
         Returns: {
