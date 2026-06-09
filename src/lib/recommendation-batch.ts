@@ -435,7 +435,8 @@ export async function ensureRecommendationBatch(
     // On passe tous les candidats pour que les films en réserve servent de fallback
     // si movie-match échoue sur les premiers (waterfall dans enrichRecommendationBatchWithTexts)
     const toEnrich = finalBatch;
-    const allEnriched = await enrichRecommendationBatchWithTexts(toEnrich, options);
+    // eagerCount = size : seulement `size` films en parallèle, le reste sert de réserve waterfall
+    const allEnriched = await enrichRecommendationBatchWithTexts(toEnrich, { ...options, eagerCount: size });
     const enrichedDeduped = dedupeMovies(allEnriched);
     const withScores = enrichedDeduped.filter((m) => getRecommendationScore(m.recommendationTexts) !== null);
     const withoutScores = enrichedDeduped.filter((m) => getRecommendationScore(m.recommendationTexts) === null);
