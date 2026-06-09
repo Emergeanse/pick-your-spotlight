@@ -275,7 +275,8 @@ export async function enrichRecommendationBatchWithTexts(
         `[Pick⏱] movie-match eager "${movie.title ?? movie.id}": ${Math.round(t1 - t0)}ms` +
           (srv ? ` (embed=${srv.embed}ms gemini=${srv.gemini}ms)` : ""),
       );
-      if (onFirstMovieReady && !firstMovieFired && recommendationTexts?.whyItMatches) {
+      // N'affiche le premier film que si ce n'est pas un fallback (Gemini a répondu correctement)
+      if (onFirstMovieReady && !firstMovieFired && recommendationTexts?.whyItMatches && !(recommendationTexts as any)?.fallback) {
         firstMovieFired = true;
         Promise.resolve().then(() => onFirstMovieReady({ ...movie, recommendationTexts }));
       }
@@ -287,8 +288,10 @@ export async function enrichRecommendationBatchWithTexts(
     generated.map((entry) => [entry.id, entry.recommendationTexts]),
   );
 
-  // Waterfall : si des appels ont échoué (pas de whyItMatches), essayer les films de réserve
-  const failedCount = generated.filter((e) => !e.recommendationTexts?.whyItMatches).length;
+  // Waterfall : si des appels ont retourné un fallback (Gemini KO), essayer les films de réserve
+  const isFallback = (r: RecommendationMatchData | null | undefined) =>
+    !r?.whyItMatches || (r as any)?.fallback === true;
+  const failedCount = generated.filter((e) => isFallback(e.recommendationTexts)).length;
   const extraMovies: RecommendationMovieDetail[] = [];
   if (failedCount > 0 && reserveMovies.length > 0) {
     let recovered = 0;
@@ -302,7 +305,7 @@ export async function enrichRecommendationBatchWithTexts(
         `[Pick⏱] movie-match reserve "${movie.title ?? movie.id}": ${Math.round(t1 - t0)}ms` +
           (srv ? ` (embed=${srv.embed}ms gemini=${srv.gemini}ms)` : ""),
       );
-      if (texts?.whyItMatches) {
+      if (texts?.whyItMatches && !(texts as any)?.fallback) {
         byId.set(movie.id, texts);
         extraMovies.push(movie);
         recovered++;
