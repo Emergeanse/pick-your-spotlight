@@ -443,15 +443,20 @@ export async function ensureRecommendationBatch(
     const enrichedDeduped = dedupeMovies(allEnriched);
     const withScores = enrichedDeduped.filter((m) => getRecommendationScore(m.recommendationTexts) !== null);
     const withoutScores = enrichedDeduped.filter((m) => getRecommendationScore(m.recommendationTexts) === null);
-    // Si onFirstMovieReady est actif, un film est déjà affiché — on preserve l'ordre LLM
-    // pour éviter que le film affiché change de position après le tri.
-    if (!options.onFirstMovieReady) {
-      withScores.sort((a, b) => {
+    // Trier : vrais rich texts (waterfall réussi) avant fallbacks — toujours.
+    // Le sort par score LLM reste désactivé si onFirstMovieReady est actif
+    // (le film déjà affiché garde sa position via le reorder HomeScreen).
+    withScores.sort((a, b) => {
+      const aFallback = (a.recommendationTexts as any)?.fallback ? 1 : 0;
+      const bFallback = (b.recommendationTexts as any)?.fallback ? 1 : 0;
+      if (aFallback !== bFallback) return aFallback - bFallback;
+      if (!options.onFirstMovieReady) {
         const sa = getRecommendationScore(a.recommendationTexts) ?? 0;
         const sb = getRecommendationScore(b.recommendationTexts) ?? 0;
         return sb - sa;
-      });
-    }
+      }
+      return 0;
+    });
     // Complète avec les films sans score si besoin — évite finalCount < size
     const combined = [...withScores, ...withoutScores];
     finalBatch = combined.slice(0, size);
