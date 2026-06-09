@@ -854,7 +854,7 @@ const HomeScreen = ({
           if (dbg?.sql50?.length) {
             const f = dbg.filters;
             const cascadeLevel: number = dbg.sqlCascadeLevel ?? -1;
-            const cascadeLabels = ["0 — toutes contraintes", "1 — sans lang/année", "2 — sans liked_genres", "3 — sans excluded_genres ni note", "4 — sans plateforme (dernier recours)"];
+            const cascadeLabels = ["0 — toutes contraintes", "1 — sans lang/année", "2 — sans liked_genres", "3 — sans liked_genres ni note (excluded_genres conservé)", "4 — sans plateforme (excluded_genres conservé)"];
             const cascadeLabel = cascadeLevel >= 0 ? cascadeLabels[cascadeLevel] ?? `niveau ${cascadeLevel}` : "inconnu";
             const cascadeWarn = cascadeLevel >= 3;
             const logFn = cascadeWarn ? console.warn.bind(console) : console.log.bind(console);

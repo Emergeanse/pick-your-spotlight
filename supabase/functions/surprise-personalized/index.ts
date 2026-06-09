@@ -219,7 +219,13 @@ serve(async (req) => {
     const hardExcludedFormats = ["Reality", "Soap", "Talk", "News", "Téléfilm", "Horreur"];
     const autoExcluded = hardExcludedFormats.filter((g) => !likedWithTv.includes(g));
     // Genres en fatigue (>= 3 occurrences) exclus en SQL — diversification forcée
-    const effectiveExcludedGenres = [...new Set([...(excludedGenres || []), ...autoExcluded, ...fatiguedGenres])];
+    const effectiveExcludedGenres = [...new Set([
+      ...(excludedGenres || []),
+      ...autoExcluded,
+      ...fatiguedGenres,
+      // "Familial" et "Famille" sont le même genre TMDB (ID 10751) — noms variants en base
+      ...((excludedGenres || []).includes("Famille") ? ["Familial"] : []),
+    ])];
 
     const excludedGenreIds = new Set(effectiveExcludedGenres.map((g: string) => genreNameToId[g]).filter(Boolean));
     const likedGenreIds = new Set((topGenres as string[]).map((g) => genreNameToId[g]).filter(Boolean));
