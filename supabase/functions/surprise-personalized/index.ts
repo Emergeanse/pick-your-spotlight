@@ -66,7 +66,7 @@ serve(async (req) => {
 
   try {
     const t0 = Date.now();
-    console.log("[SP] ✅ version 2026-06-03-v8 — mood boost dans fallback discover");
+    console.log("[SP] ✅ version 2026-06-09-v9 — excluded_genres conservé niveaux 3-4 + safety net tous genres");
     const {
       tasteProfile,
       userTasteVector,
@@ -590,7 +590,6 @@ serve(async (req) => {
       513: "Shadowz",
       300: "Pluto TV",
       2601: "Pathé Home",
-      193: "SFR Play",
       701: "OCS", 588: "OCS",
       2077: "Universciné",
       1968: "Canal+",
