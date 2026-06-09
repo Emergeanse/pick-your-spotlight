@@ -856,11 +856,11 @@ const HomeScreen = ({
             const cascadeLevel: number = dbg.sqlCascadeLevel ?? -1;
             const cascadeLabels = ["0 — toutes contraintes", "1 — sans lang/année", "2 — sans liked_genres", "3 — sans liked_genres ni note (excluded_genres conservé)", "4 — sans plateforme (excluded_genres conservé)"];
             const cascadeLabel = cascadeLevel >= 0 ? cascadeLabels[cascadeLevel] ?? `niveau ${cascadeLevel}` : "inconnu";
-            const cascadeWarn = cascadeLevel >= 3;
+            const rpc = dbg.sqlRpcParams;
+            const cascadeWarn = rpc ? (rpc.excluded_genres || []).length === 0 : false;
             const logFn = cascadeWarn ? console.warn.bind(console) : console.log.bind(console);
             console.group(`[PICK-DEBUG] 1️⃣ SQL — ${dbg.sql50.length} candidats (${f?.excludeCount ?? 0} exclus — déjà vus)`);
-            logFn(`   Cascade SQL : niveau ${cascadeLabel}${cascadeWarn ? " ⚠️ genres interdits désactivés !" : ""}`);
-            const rpc = dbg.sqlRpcParams;
+            logFn(`   Cascade SQL : niveau ${cascadeLabel}${cascadeWarn ? " ⚠️ excluded_genres vide !" : ""}`);
             if (rpc) {
               console.log(`   Paramètres RPC effectifs :`);
               console.log(`     note min         : ${rpc.min_rating ?? 0}`);
@@ -878,7 +878,7 @@ const HomeScreen = ({
                 "Niveau": `${d.level} — ${cascadeLabels[d.level] ?? `niveau ${d.level}`}`,
                 "Total en base": d.total_in_db,
                 "Disponibles (après exclusions)": d.available_after_exclusions,
-                "⚠️ excluded_genres actifs ?": d.level < 3 ? "✅ oui" : "❌ non (désactivé)",
+                "excluded_genres": d.level < 3 ? "✅ actifs" : "⚠️ vérifier snippet",
               })));
               console.groupEnd();
             }
