@@ -256,6 +256,7 @@ export async function enrichRecommendationBatchWithTexts(
 
   const eagerCount = options.eagerCount ?? moviesNeedingTexts.length;
   const eagerMovies = moviesNeedingTexts.slice(0, eagerCount);
+  const reserveMovies = moviesNeedingTexts.slice(eagerCount);
   if (!eagerMovies.length) return movies;
 
   const context = await buildMatchContext(options);
@@ -274,14 +275,11 @@ export async function enrichRecommendationBatchWithTexts(
         `[Pick⏱] movie-match eager "${movie.title ?? movie.id}": ${Math.round(t1 - t0)}ms` +
           (srv ? ` (embed=${srv.embed}ms gemini=${srv.gemini}ms)` : ""),
       );
-      // Fire callback on first successful result — non-blocking
-      if (onFirstMovieReady && !firstMovieFired && recommendationTexts) {
+      if (onFirstMovieReady && !firstMovieFired && recommendationTexts?.whyItMatches) {
         firstMovieFired = true;
-        Promise.resolve().then(() =>
-          onFirstMovieReady({ ...movie, recommendationTexts })
-        );
+        Promise.resolve().then(() => onFirstMovieReady({ ...movie, recommendationTexts }));
       }
-      return { id: movie.id, recommendationTexts };
+      return { id: movie.id, movie, recommendationTexts };
     }),
   );
 
@@ -289,17 +287,42 @@ export async function enrichRecommendationBatchWithTexts(
     generated.map((entry) => [entry.id, entry.recommendationTexts]),
   );
 
+  // Waterfall : si des appels ont échoué (pas de whyItMatches), essayer les films de réserve
+  const failedCount = generated.filter((e) => !e.recommendationTexts?.whyItMatches).length;
+  const extraMovies: RecommendationMovieDetail[] = [];
+  if (failedCount > 0 && reserveMovies.length > 0) {
+    let recovered = 0;
+    for (const movie of reserveMovies) {
+      if (recovered >= failedCount) break;
+      const t0 = performance.now();
+      const texts = await fetchRecommendationTextsForMovie(movie, context, options);
+      const t1 = performance.now();
+      const srv = (texts as any)?._timings;
+      console.log(
+        `[Pick⏱] movie-match reserve "${movie.title ?? movie.id}": ${Math.round(t1 - t0)}ms` +
+          (srv ? ` (embed=${srv.embed}ms gemini=${srv.gemini}ms)` : ""),
+      );
+      if (texts?.whyItMatches) {
+        byId.set(movie.id, texts);
+        extraMovies.push(movie);
+        recovered++;
+        if (onFirstMovieReady && !firstMovieFired) {
+          firstMovieFired = true;
+          Promise.resolve().then(() => onFirstMovieReady({ ...movie, recommendationTexts: texts }));
+        }
+      }
+    }
+  }
+
   const useMovieMatchScore = options.scoreAllWithMovieMatch === true;
-  return movies.map((movie) => {
+  const applyTexts = (movie: RecommendationMovieDetail): RecommendationMovieDetail => {
     if (!byId.has(movie.id)) return movie;
     const newTexts = byId.get(movie.id);
     const originalScore = getRecommendationScore(movie.recommendationTexts);
     const originalConfidence = movie.recommendationTexts?.confidence;
     const recommendationTexts = newTexts
       ? useMovieMatchScore
-        // movie-match est le juge final : on garde son score sans l'écraser par le score LLM
         ? { ...newTexts }
-        // mode classique : le score LLM prime (tri déjà fait avant enrichissement)
         : {
             ...newTexts,
             confidence: originalConfidence ?? newTexts.confidence,
@@ -308,7 +331,10 @@ export async function enrichRecommendationBatchWithTexts(
           }
       : movie.recommendationTexts ?? null;
     return recommendationTexts ? { ...movie, recommendationTexts } : movie;
-  });
+  };
+
+  // Films originaux enrichis + films de réserve récupérés via waterfall
+  return [...movies.map(applyTexts), ...extraMovies.map(applyTexts)];
 }
 
 // Enrichit les films restants en arrière-plan et appelle onMovieEnriched pour chaque film.
@@ -406,11 +432,9 @@ export async function ensureRecommendationBatch(
 
   if (options.preloadMatchTexts && options.scoreAllWithMovieMatch) {
     // Mode : movie-match juge final
-    // 1. Score TOUS les candidats LLM en parallèle
-    // 2. Trie par score movie-match (pas score LLM)
-    // 3. Prend le top N — garantit toujours N films sans fallback TMDB
-    // On n'enrichit que les `size` premiers — l'ordre LLM est déjà fiable
-    const toEnrich = finalBatch.slice(0, size);
+    // On passe tous les candidats pour que les films en réserve servent de fallback
+    // si movie-match échoue sur les premiers (waterfall dans enrichRecommendationBatchWithTexts)
+    const toEnrich = finalBatch;
     const allEnriched = await enrichRecommendationBatchWithTexts(toEnrich, options);
     const enrichedDeduped = dedupeMovies(allEnriched);
     const withScores = enrichedDeduped.filter((m) => getRecommendationScore(m.recommendationTexts) !== null);
