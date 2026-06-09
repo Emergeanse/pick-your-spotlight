@@ -1406,10 +1406,11 @@ const HomeScreen = ({
       genres: (tonightPick.genres || []).map((g) => g.name),
     });
 
-    // Exclure les 50 candidats SQL du dernier appel + le pool courant
-    // pour garantir que SQL retourne des films entièrement nouveaux.
+    // Exclure uniquement les 3 films actuellement affichés.
+    // Les autres candidats SQL (jusqu'à 267) restent disponibles pour les prochains appels —
+    // les ajouter tous ici épuisait inutilement le pool à chaque clic "3 autres propositions".
     const currentPoolIds = (chatMoviesPool || []).map((m) => m.id).filter(Number.isFinite);
-    const nextRejected = [...new Set([...rejectedIds, ...currentPoolIds, ...lastSql100Ids])];
+    const nextRejected = [...new Set([...rejectedIds, ...currentPoolIds])];
     setRejectedIds(nextRejected);
 
     const rejContext: RejectionContext = {
