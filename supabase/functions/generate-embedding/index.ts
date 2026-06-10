@@ -155,7 +155,7 @@ Génère le vecteur de goût 32D, les axes sémantiques, et les métadonnées en
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "gemini-2.5-flash",
+        model: "gemini-2.0-flash-lite",
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt },
