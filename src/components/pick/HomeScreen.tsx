@@ -749,7 +749,6 @@ const HomeScreen = ({
       let movies: MovieDetail[] = [];
       let firstMovieShown = false;
       let firstMovieShownId: number | null = null;
-      let batchMoviesShown: MovieDetail[] = [];
       const eagerMoviesGrowing: MovieDetail[] = [];
       let engineMetaResult: any = null;
 
@@ -1085,7 +1084,6 @@ const HomeScreen = ({
               if (!isMountedRef.current || firstMovieShown) return;
               firstMovieShown = true;
               firstMovieShownId = batchMovies[0]?.id ?? null;
-              batchMoviesShown = batchMovies as MovieDetail[];
               // Afficher les 3 films immédiatement avec le texte LLM (reason) comme teaser
               setTonightPick(batchMovies[0] as MovieDetail);
               setTonightPickIndex(0);
@@ -1261,7 +1259,6 @@ const HomeScreen = ({
         // Le TMDB provider check client-side peut manquer des résultats (cache miss / race),
         // ce qui réduirait le pool à 1 film alors que tous sont bien sur la plateforme de l'utilisateur.
         // poolMovies sert uniquement au chemin onFirstMovieReady (pas onBatchReady).
-        // Pour le chemin onBatchReady, on reconstruit depuis batchMoviesShown ci-dessous.
         let poolMovies = movies.slice(0, displayCount);
         // Filet de sécurité onFirstMovieReady : remettre le 1er film affiché en tête si décalé
         if (!firstMovieShown && firstMovieShownId !== null) {
@@ -1286,12 +1283,9 @@ const HomeScreen = ({
         console.groupEnd();
 
         if (firstMovieShown) {
-          // Conserver l'ordre exact de onBatchReady : position 1 → 1, 2 → 2, 3 → 3.
-          // On enrichit les textes depuis movies (résultat movie-match) sans changer l'ordre.
-          const enrichedById = new Map(movies.map((m) => [m.id, m as MovieDetail]));
-          const stablePool = batchMoviesShown.map((b) => enrichedById.get(b.id) ?? b);
-          setChatMoviesPool(stablePool);
-          setTonightPick(stablePool[0]);
+          // onBatchReady a posé les films dans le bon ordre.
+          // onMovieEnriched les a enrichis un à un, sans changer les positions.
+          // Ne rien faire ici : tout appel à setChatMoviesPool risque de réordonner.
         } else {
           // Chemin normal (onBatchReady n'a pas pu s'exécuter)
           setChatMoviesPool(poolMovies);
