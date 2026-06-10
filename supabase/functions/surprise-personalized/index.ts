@@ -572,7 +572,6 @@ serve(async (req) => {
     const llmPoolSize = 30;
     let llmPool: any[] = [];
     let llmInputPool: any[] = [];
-    let platformPool: { title: string; platforms: string[]; match: boolean }[] = [];
     let capturedSystemPrompt: string | null = null;
     let llmDebugError: string | null = null;
     let tPlatform = t2;
@@ -627,21 +626,10 @@ serve(async (req) => {
         ).join("\n")
       );
 
-      // ── ÉTAPE 2.1 : Filtre plateforme déjà appliqué en SQL (p_platform_ids) ──
-      // Les candidats retournés sont tous disponibles sur les plateformes de l'utilisateur.
-      // Ce bloc conserve le debug platformPool et platformCandidatesCount.
+      // Plateforme déjà filtrée en SQL — on passe directement au LLM
       tPlatform = Date.now();
-      platformPool = topPool.map((c: any) => ({
-        title: c.title || "?",
-        platforms: (c.platform_ids || []).map((id: number) => PROVIDER_NAMES[id] ?? `#${id}`),
-        match: true,
-      }));
       platformCandidatesCount = topPool.length;
       llmInputPool = topPool;
-      if (expandedPlatformIds && expandedPlatformIds.length > 0) {
-        const platformNames = (platformIds as number[]).map((id: number) => PROVIDER_NAMES[id] ?? `#${id}`).join(", ");
-        console.log(`[SP] Filtre plateforme SQL: ${topPool.length} films sur [${platformNames}]`);
-      }
 
       // ── ÉTAPE 2.2 : LLM — évalue uniquement les films disponibles ──
       if (llmInputPool.length >= 1) {
@@ -1212,7 +1200,6 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
           sql50: candidates.map(toDebugRow), // renommé sql100 en pratique
           top20: llmPool.length > 0 ? llmPool.map(toDebugRow) : candidates.slice(0, llmPoolSize).map(toDebugRow),
           llmFiltered: llmInputPool.map(toDebugRow),
-          platformPool,
           platformFilterMs: tPlatform - t2,
           llmMs: t3 - tPlatform,
           tmdbEnrichment: tmdbDiag,
