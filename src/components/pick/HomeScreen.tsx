@@ -1095,9 +1095,14 @@ const HomeScreen = ({
             },
             onMovieEnriched: (enrichedMovie) => {
               if (!isMountedRef.current) return;
-              // Mettre à jour le film dans le pool avec les rich texts dès que Gemini répond
+              const isFallbackTexts = !!(enrichedMovie.recommendationTexts as any)?.fallback;
               setChatMoviesPool((prev) =>
-                prev.map((m) => m.id === enrichedMovie.id ? (enrichedMovie as MovieDetail) : m),
+                prev.map((m) => {
+                  if (m.id !== enrichedMovie.id) return m;
+                  // Si movie-match retourne un fallback mais qu'on a déjà un reason LLM, le conserver
+                  if (isFallbackTexts && (m.recommendationTexts as any)?.reason) return m;
+                  return enrichedMovie as MovieDetail;
+                }),
               );
             },
             onFirstMovieReady: (firstMovie) => {
