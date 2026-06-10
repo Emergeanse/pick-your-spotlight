@@ -315,10 +315,10 @@ Génère la fiche de match multi-vecteur.`;
       modelUsed = "gemini-2.0-flash-lite";
     }
     if (response.status === 429 || response.status === 503) {
-      console.warn(`[MM⏱] gemini-2.0-flash-lite ${response.status} — trying gemini-1.5-flash (1s delay)`);
+      console.warn(`[MM⏱] gemini-2.0-flash-lite ${response.status} — trying gemini-2.0-flash (1s delay)`);
       await new Promise((r) => setTimeout(r, 1000));
-      response = await callGeminiModel("gemini-1.5-flash");
-      modelUsed = "gemini-1.5-flash";
+      response = await callGeminiModel("gemini-2.0-flash");
+      modelUsed = "gemini-2.0-flash";
     }
     const mmT3 = Date.now();
     console.log(`[MM⏱] Gemini API: ${mmT3 - mmT2}ms (model=${modelUsed}, status=${response.status}, title="${title}")`);
