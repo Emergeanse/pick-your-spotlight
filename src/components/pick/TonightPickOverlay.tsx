@@ -83,8 +83,8 @@ const TonightPickOverlay = ({
     ? stripped.charAt(0).toUpperCase() + stripped.slice(1)
     : rawReason;
   const teaser = shortReason;
-  // True once movie-match has returned a non-fallback personalised text
-  const isTextsReady = !!(rec && !rec.fallback);
+  // True once movie-match has responded (even fallback) — blur only while truly loading
+  const isTextsReady = rec !== null;
 
   const year = ((movie.release_date || (movie as any).first_air_date) as string | undefined)?.substring(0, 4);
   const primaryGenre = movie.genres?.[0]?.name;
