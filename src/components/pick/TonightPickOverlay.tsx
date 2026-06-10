@@ -83,6 +83,8 @@ const TonightPickOverlay = ({
     ? stripped.charAt(0).toUpperCase() + stripped.slice(1)
     : rawReason;
   const teaser = shortReason;
+  // True once movie-match has returned a non-fallback personalised text
+  const isTextsReady = !!(rec && !rec.fallback);
 
   const year = ((movie.release_date || (movie as any).first_air_date) as string | undefined)?.substring(0, 4);
   const primaryGenre = movie.genres?.[0]?.name;
@@ -311,9 +313,16 @@ const TonightPickOverlay = ({
               onClick={onOpenDetail}
             >
               <div className="w-1 self-stretch min-h-[40px] bg-primary rounded-full shrink-0" />
-              <p className="text-foreground/80 text-[14px] italic font-sans leading-relaxed pt-0.5">
+              <motion.p
+                animate={{
+                  filter: isTextsReady ? "blur(0px)" : "blur(3.5px)",
+                  opacity: isTextsReady ? 0.8 : 0.45,
+                }}
+                transition={{ duration: 0.8, ease: "easeOut" }}
+                className="text-foreground/80 text-[14px] italic font-sans leading-relaxed pt-0.5"
+              >
                 {teaser.length > 300 ? `${teaser.substring(0, 300).trimEnd()}…` : teaser}
-              </p>
+              </motion.p>
             </motion.div>
 
             {/* Glass action bar (Save / Like / Seen via MovieActionBar) */}

@@ -321,36 +321,61 @@ const MovieDetailContent = ({
           </div>
           {/* Body */}
           <div className="px-4 py-3.5">
-            {headline && (
-              <p className="text-foreground/90 text-[14px] font-sans font-semibold leading-snug mb-2">{headline}</p>
-            )}
-            {summary && (
-              <p className="text-foreground/65 text-[13px] font-sans leading-relaxed mb-2.5">{summary}</p>
-            )}
-            {reasons.length > 0 && (
-              <div className="flex flex-wrap gap-1.5 mb-2.5">
-                {reasons.map((reason: string, i: number) => (
-                  <span
-                    key={i}
-                    className="text-[11px] font-sans text-primary/80 bg-primary/10 px-2.5 py-0.5 rounded-full border border-primary/15"
-                  >
-                    {reason}
-                  </span>
-                ))}
-              </div>
-            )}
-            {perfectFor && (
-              <p className="text-foreground/50 text-[12px] font-sans italic mb-1.5">{perfectFor}</p>
-            )}
-            {funFact && (
-              <p className="text-foreground/45 text-[12px] font-sans leading-snug mt-1">
-                💡 {funFact}
-              </p>
-            )}
-            {isEnriching && !headline && (
-              <p className="text-primary/40 text-[11px] font-sans italic mt-1">
-                Personnalisation avancée en cours…
-              </p>
+            {isEnriching && !headline ? (
+              // Placeholder flou pendant la génération des textes
+              <motion.div
+                className="space-y-2 select-none pointer-events-none"
+                animate={{ opacity: [0.5, 0.75, 0.5] }}
+                transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
+                style={{ filter: "blur(5px)" }}
+              >
+                <p className="text-foreground/90 text-[14px] font-sans font-semibold leading-snug mb-2">
+                  Analyse de tes goûts cinématographiques en cours…
+                </p>
+                <p className="text-foreground/65 text-[13px] font-sans leading-relaxed mb-2.5">
+                  Pick compare tes préférences avec les caractéristiques émotionnelles et narratives de ce film pour t'expliquer pourquoi il pourrait vraiment te plaire.
+                </p>
+                <div className="flex flex-wrap gap-1.5 mb-2.5">
+                  {["Correspond à ton goût", "Ambiance similaire", "Bien noté"].map((tag, i) => (
+                    <span key={i} className="text-[11px] font-sans text-primary/80 bg-primary/10 px-2.5 py-0.5 rounded-full border border-primary/15">
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              </motion.div>
+            ) : (
+              <motion.div
+                initial={headline ? { opacity: 0, filter: "blur(6px)" } : false}
+                animate={{ opacity: 1, filter: "blur(0px)" }}
+                transition={{ duration: 0.7, ease: "easeOut" }}
+              >
+                {headline && (
+                  <p className="text-foreground/90 text-[14px] font-sans font-semibold leading-snug mb-2">{headline}</p>
+                )}
+                {summary && (
+                  <p className="text-foreground/65 text-[13px] font-sans leading-relaxed mb-2.5">{summary}</p>
+                )}
+                {reasons.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 mb-2.5">
+                    {reasons.map((reason: string, i: number) => (
+                      <span
+                        key={i}
+                        className="text-[11px] font-sans text-primary/80 bg-primary/10 px-2.5 py-0.5 rounded-full border border-primary/15"
+                      >
+                        {reason}
+                      </span>
+                    ))}
+                  </div>
+                )}
+                {perfectFor && (
+                  <p className="text-foreground/50 text-[12px] font-sans italic mb-1.5">{perfectFor}</p>
+                )}
+                {funFact && (
+                  <p className="text-foreground/45 text-[12px] font-sans leading-snug mt-1">
+                    💡 {funFact}
+                  </p>
+                )}
+              </motion.div>
             )}
           </div>
         </div>
