@@ -236,7 +236,8 @@ export function useRecommendationEngine({
         const [liked, tasteProfile, multiVec] = user
           ? await Promise.all([getLikedMovies(), getUserTasteProfile(), computeMultiVectorProfile(user.id)])
           : ([[], null, null] as const);
-        const excludeIds = [...current.results.map((r) => r.id), ...((tasteProfile as any)?.excludeIds || [])];
+        const displayedCount = current.resultSuggestionCount ?? current.results.length;
+        const excludeIds = [...current.results.slice(0, displayedCount).map((r) => r.id), ...((tasteProfile as any)?.excludeIds || [])];
         const rejectionContext =
           rejectReason && rejectedMovie
             ? {

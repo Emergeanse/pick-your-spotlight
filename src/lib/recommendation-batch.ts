@@ -103,6 +103,8 @@ type RecommendationBatchOptions = {
   scoreAllWithMovieMatch?: boolean;
   // Appelé dès que le premier résultat movie-match est prêt — sans bloquer le reste.
   onFirstMovieReady?: (movie: RecommendationMovieDetail) => void;
+  // Appelé pour chaque film suivant (2ème, 3ème...) dès qu'il est prêt — affichage progressif.
+  onMovieReady?: (movie: RecommendationMovieDetail) => void;
   // Contexte duo : noms des deux utilisateurs pour personnaliser le texte movie-match
   duoContext?: { user1Name: string | null; user2Name: string | null };
 };
@@ -275,10 +277,14 @@ export async function enrichRecommendationBatchWithTexts(
         `[Pick⏱] movie-match eager "${movie.title ?? movie.id}": ${Math.round(t1 - t0)}ms` +
           (srv ? ` (embed=${srv.embed}ms gemini=${srv.gemini}ms)` : ""),
       );
-      // N'affiche le premier film que si ce n'est pas un fallback (Gemini a répondu correctement)
-      if (onFirstMovieReady && !firstMovieFired && recommendationTexts?.whyItMatches && !(recommendationTexts as any)?.fallback) {
-        firstMovieFired = true;
-        Promise.resolve().then(() => onFirstMovieReady({ ...movie, recommendationTexts }));
+      const isRich = !!(recommendationTexts?.whyItMatches && !(recommendationTexts as any)?.fallback);
+      if (isRich) {
+        if (onFirstMovieReady && !firstMovieFired) {
+          firstMovieFired = true;
+          Promise.resolve().then(() => onFirstMovieReady({ ...movie, recommendationTexts }));
+        } else if (options.onMovieReady && firstMovieFired) {
+          Promise.resolve().then(() => options.onMovieReady!({ ...movie, recommendationTexts }));
+        }
       }
       return { id: movie.id, movie, recommendationTexts };
     }),
@@ -317,21 +323,20 @@ export async function enrichRecommendationBatchWithTexts(
     }
   }
 
-  const useMovieMatchScore = options.scoreAllWithMovieMatch === true;
   const applyTexts = (movie: RecommendationMovieDetail): RecommendationMovieDetail => {
     if (!byId.has(movie.id)) return movie;
     const newTexts = byId.get(movie.id);
     const originalScore = getRecommendationScore(movie.recommendationTexts);
     const originalConfidence = movie.recommendationTexts?.confidence;
+    // Always preserve the original score from surprise-personalized — movie-match only adds rich texts.
+    // This prevents a lower movie-match score from making a film appear below the user's threshold.
     const recommendationTexts = newTexts
-      ? useMovieMatchScore
-        ? { ...newTexts }
-        : {
-            ...newTexts,
-            confidence: originalConfidence ?? newTexts.confidence,
-            matchScore: originalScore ?? newTexts.matchScore,
-            score: originalScore ?? newTexts.score,
-          }
+      ? {
+          ...newTexts,
+          confidence: originalConfidence ?? newTexts.confidence,
+          matchScore: originalScore ?? newTexts.matchScore,
+          score: originalScore ?? newTexts.score,
+        }
       : movie.recommendationTexts ?? null;
     return recommendationTexts ? { ...movie, recommendationTexts } : movie;
   };

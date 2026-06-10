@@ -749,6 +749,7 @@ const HomeScreen = ({
       let movies: MovieDetail[] = [];
       let firstMovieShown = false;
       let firstMovieShownId: number | null = null;
+      const eagerMoviesGrowing: MovieDetail[] = [];
       let engineMetaResult: any = null;
 
       if (user) {
@@ -1083,11 +1084,21 @@ const HomeScreen = ({
               if (!isMountedRef.current || firstMovieShown) return;
               firstMovieShown = true;
               firstMovieShownId = firstMovie.id;
+              eagerMoviesGrowing.push(firstMovie as MovieDetail);
               // Seulement setTonightPick — pas loadProviders pour éviter la race condition
               // loadProviders sera appelé une seule fois via setCurrentTonightMovie à la fin
               setTonightPick(firstMovie as MovieDetail);
               setTonightPickIndex(0);
               setTonightSeenMovieIds(new Set([firstMovie.id]));
+              setChatMoviesPool([firstMovie as MovieDetail]);
+            },
+            onMovieReady: (movie) => {
+              if (!isMountedRef.current) return;
+              eagerMoviesGrowing.push(movie as MovieDetail);
+              // Film 1 (firstMovieShownId) reste toujours en position 0
+              const first = eagerMoviesGrowing.find((m) => m.id === firstMovieShownId);
+              const rest = eagerMoviesGrowing.filter((m) => m.id !== firstMovieShownId);
+              setChatMoviesPool(first ? [first, ...rest] : [...eagerMoviesGrowing]);
             },
           });
 
