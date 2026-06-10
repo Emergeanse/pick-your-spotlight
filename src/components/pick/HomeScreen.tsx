@@ -749,6 +749,7 @@ const HomeScreen = ({
       let movies: MovieDetail[] = [];
       let firstMovieShown = false;
       let firstMovieShownId: number | null = null;
+      let batchMoviesShown: MovieDetail[] = [];
       const eagerMoviesGrowing: MovieDetail[] = [];
       let engineMetaResult: any = null;
 
@@ -1084,6 +1085,7 @@ const HomeScreen = ({
               if (!isMountedRef.current || firstMovieShown) return;
               firstMovieShown = true;
               firstMovieShownId = batchMovies[0]?.id ?? null;
+              batchMoviesShown = batchMovies as MovieDetail[];
               // Afficher les 3 films immédiatement avec le texte LLM (reason) comme teaser
               setTonightPick(batchMovies[0] as MovieDetail);
               setTonightPickIndex(0);
@@ -1258,9 +1260,11 @@ const HomeScreen = ({
         // Ne pas re-filtrer par watchProviders : l'edge function a déjà filtré par plateforme.
         // Le TMDB provider check client-side peut manquer des résultats (cache miss / race),
         // ce qui réduirait le pool à 1 film alors que tous sont bien sur la plateforme de l'utilisateur.
+        // poolMovies sert uniquement au chemin onFirstMovieReady (pas onBatchReady).
+        // Pour le chemin onBatchReady, on reconstruit depuis batchMoviesShown ci-dessous.
         let poolMovies = movies.slice(0, displayCount);
-        // Si un film a déjà été affiché via onFirstMovieReady, on s'assure qu'il reste en 1ère position
-        if (firstMovieShownId !== null) {
+        // Filet de sécurité onFirstMovieReady : remettre le 1er film affiché en tête si décalé
+        if (!firstMovieShown && firstMovieShownId !== null) {
           const idx = poolMovies.findIndex((m) => m.id === firstMovieShownId);
           if (idx > 0) {
             const [first] = poolMovies.splice(idx, 1);
@@ -1282,12 +1286,12 @@ const HomeScreen = ({
         console.groupEnd();
 
         if (firstMovieShown) {
-          // onBatchReady a déjà montré les films + chargé les providers du film 1.
-          // onMovieEnriched a enrichi chaque film dans le pool au fil de l'eau.
-          // Ne pas remplacer le pool (évite les substitutions de films visibles).
-          // Mettre à jour uniquement les données enrichies sans toucher aux providers.
-          setChatMoviesPool(poolMovies);
-          setTonightPick(poolMovies[0]);
+          // Conserver l'ordre exact de onBatchReady : position 1 → 1, 2 → 2, 3 → 3.
+          // On enrichit les textes depuis movies (résultat movie-match) sans changer l'ordre.
+          const enrichedById = new Map(movies.map((m) => [m.id, m as MovieDetail]));
+          const stablePool = batchMoviesShown.map((b) => enrichedById.get(b.id) ?? b);
+          setChatMoviesPool(stablePool);
+          setTonightPick(stablePool[0]);
         } else {
           // Chemin normal (onBatchReady n'a pas pu s'exécuter)
           setChatMoviesPool(poolMovies);
