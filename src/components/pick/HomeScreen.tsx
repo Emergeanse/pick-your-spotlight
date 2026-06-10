@@ -1087,8 +1087,11 @@ const HomeScreen = ({
               // Afficher les 3 films immédiatement avec le texte LLM (reason) comme teaser
               setTonightPick(batchMovies[0] as MovieDetail);
               setTonightPickIndex(0);
-              setTonightSeenMovieIds(new Set(batchMovies.map((m) => m.id)));
+              // Marquer seulement le film 1 comme vu — les autres s'ajouteront à la navigation
+              setTonightSeenMovieIds(new Set([batchMovies[0].id]));
               setChatMoviesPool(batchMovies as MovieDetail[]);
+              // Charger les plateformes immédiatement pour le film 1
+              void loadProviders(batchMovies[0] as MovieDetail);
             },
             onMovieEnriched: (enrichedMovie) => {
               if (!isMountedRef.current) return;
@@ -1278,11 +1281,18 @@ const HomeScreen = ({
         console.log(`  Movie-match + batch          ${bar(batch)}  ${fmt(batch)}`);
         console.groupEnd();
 
-        // Mettre à jour le pool et garantir que poolMovies[0] est toujours le film affiché
-        setChatMoviesPool(poolMovies);
-        // On appelle toujours setCurrentTonightMovie avec poolMovies[0] pour éviter tout flicker
-        // Si firstMovieShown=true et poolMovies[0] === film déjà affiché → aucun changement visuel
-        await setCurrentTonightMovie(poolMovies[0], 0, new Set(poolMovies[0] ? [poolMovies[0].id] : []));
+        if (firstMovieShown) {
+          // onBatchReady a déjà montré les films + chargé les providers du film 1.
+          // onMovieEnriched a enrichi chaque film dans le pool au fil de l'eau.
+          // Ne pas remplacer le pool (évite les substitutions de films visibles).
+          // Mettre à jour uniquement les données enrichies sans toucher aux providers.
+          setChatMoviesPool(poolMovies);
+          setTonightPick(poolMovies[0]);
+        } else {
+          // Chemin normal (onBatchReady n'a pas pu s'exécuter)
+          setChatMoviesPool(poolMovies);
+          await setCurrentTonightMovie(poolMovies[0], 0, new Set(poolMovies[0] ? [poolMovies[0].id] : []));
+        }
 
         // All films were enriched in parallel above — nothing to do lazily here.
       }
