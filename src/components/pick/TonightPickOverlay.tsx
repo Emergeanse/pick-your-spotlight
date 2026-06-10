@@ -308,7 +308,7 @@ const TonightPickOverlay = ({
             >
               <div className="w-1 self-stretch min-h-[40px] bg-primary rounded-full shrink-0" />
               <p className="text-foreground/80 text-[14px] italic font-sans leading-relaxed pt-0.5">
-                {teaser.length > 140 ? `${teaser.substring(0, 140).trimEnd()}…` : teaser}
+                {teaser.length > 300 ? `${teaser.substring(0, 300).trimEnd()}…` : teaser}
               </p>
             </motion.div>
 
