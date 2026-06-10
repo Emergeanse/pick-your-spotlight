@@ -1080,22 +1080,38 @@ const HomeScreen = ({
             preloadProviders: true,
             scoreAllWithMovieMatch: true,
             ...(duoOverrides?.user1Name && { duoContext: { user1Name: duoOverrides.user1Name, user2Name: duoOverrides.user2Name ?? null } }),
+            onBatchReady: (batchMovies) => {
+              if (!isMountedRef.current || firstMovieShown) return;
+              firstMovieShown = true;
+              firstMovieShownId = batchMovies[0]?.id ?? null;
+              // Afficher les 3 films immédiatement avec le texte LLM (reason) comme teaser
+              setTonightPick(batchMovies[0] as MovieDetail);
+              setTonightPickIndex(0);
+              setTonightSeenMovieIds(new Set(batchMovies.map((m) => m.id)));
+              setChatMoviesPool(batchMovies as MovieDetail[]);
+            },
+            onMovieEnriched: (enrichedMovie) => {
+              if (!isMountedRef.current) return;
+              // Mettre à jour le film dans le pool avec les rich texts dès que Gemini répond
+              setChatMoviesPool((prev) =>
+                prev.map((m) => m.id === enrichedMovie.id ? (enrichedMovie as MovieDetail) : m),
+              );
+            },
             onFirstMovieReady: (firstMovie) => {
+              // Filet de sécurité : si onBatchReady n'a pas pu s'exécuter
               if (!isMountedRef.current || firstMovieShown) return;
               firstMovieShown = true;
               firstMovieShownId = firstMovie.id;
               eagerMoviesGrowing.push(firstMovie as MovieDetail);
-              // Seulement setTonightPick — pas loadProviders pour éviter la race condition
-              // loadProviders sera appelé une seule fois via setCurrentTonightMovie à la fin
               setTonightPick(firstMovie as MovieDetail);
               setTonightPickIndex(0);
               setTonightSeenMovieIds(new Set([firstMovie.id]));
               setChatMoviesPool([firstMovie as MovieDetail]);
             },
             onMovieReady: (movie) => {
+              // Filet de sécurité : si onBatchReady/onMovieEnriched ne sont pas actifs
               if (!isMountedRef.current) return;
               eagerMoviesGrowing.push(movie as MovieDetail);
-              // Film 1 (firstMovieShownId) reste toujours en position 0
               const first = eagerMoviesGrowing.find((m) => m.id === firstMovieShownId);
               const rest = eagerMoviesGrowing.filter((m) => m.id !== firstMovieShownId);
               setChatMoviesPool(first ? [first, ...rest] : [...eagerMoviesGrowing]);

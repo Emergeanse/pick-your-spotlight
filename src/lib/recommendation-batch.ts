@@ -105,6 +105,11 @@ type RecommendationBatchOptions = {
   onFirstMovieReady?: (movie: RecommendationMovieDetail) => void;
   // Appelé pour chaque film suivant (2ème, 3ème...) dès qu'il est prêt — affichage progressif.
   onMovieReady?: (movie: RecommendationMovieDetail) => void;
+  // Appelé immédiatement avec les N films sélectionnés, AVANT que movie-match commence.
+  // Permet d'afficher les films tout de suite avec le texte LLM, puis de les enrichir en fond.
+  onBatchReady?: (movies: RecommendationMovieDetail[]) => void;
+  // Appelé dès qu'un film est enrichi par movie-match (rich ou fallback) — met à jour le pool.
+  onMovieEnriched?: (movie: RecommendationMovieDetail) => void;
   // Contexte duo : noms des deux utilisateurs pour personnaliser le texte movie-match
   duoContext?: { user1Name: string | null; user2Name: string | null };
 };
@@ -265,6 +270,11 @@ export async function enrichRecommendationBatchWithTexts(
   const onFirstMovieReady = options.onFirstMovieReady;
   let firstMovieFired = false;
 
+  // Afficher les films immédiatement avec les textes LLM, avant que movie-match commence.
+  if (options.onBatchReady && eagerMovies.length > 0) {
+    Promise.resolve().then(() => options.onBatchReady!(eagerMovies));
+  }
+
   // Parallel calls with staggered start to avoid Gemini rate limiting on concurrent requests
   const generated = await Promise.all(
     eagerMovies.map(async (movie, idx) => {
@@ -278,6 +288,16 @@ export async function enrichRecommendationBatchWithTexts(
           (srv ? ` (embed=${srv.embed}ms gemini=${srv.gemini}ms)` : ""),
       );
       const isRich = !!(recommendationTexts?.whyItMatches && !(recommendationTexts as any)?.fallback);
+      // Enrichissement en temps réel du pool — rich ou fallback
+      if (options.onMovieEnriched && recommendationTexts) {
+        const originalScore = getRecommendationScore(movie.recommendationTexts);
+        const mergedTexts = {
+          ...recommendationTexts,
+          matchScore: originalScore ?? recommendationTexts.matchScore,
+          score: originalScore ?? recommendationTexts.score,
+        };
+        Promise.resolve().then(() => options.onMovieEnriched!({ ...movie, recommendationTexts: mergedTexts }));
+      }
       if (isRich) {
         if (onFirstMovieReady && !firstMovieFired) {
           firstMovieFired = true;
@@ -318,6 +338,11 @@ export async function enrichRecommendationBatchWithTexts(
         if (onFirstMovieReady && !firstMovieFired) {
           firstMovieFired = true;
           Promise.resolve().then(() => onFirstMovieReady({ ...movie, recommendationTexts: texts }));
+        }
+        if (options.onMovieEnriched) {
+          const originalScore = getRecommendationScore(movie.recommendationTexts);
+          const mergedTexts = { ...texts, matchScore: originalScore ?? texts.matchScore, score: originalScore ?? texts.score };
+          Promise.resolve().then(() => options.onMovieEnriched!({ ...movie, recommendationTexts: mergedTexts }));
         }
       }
     }
