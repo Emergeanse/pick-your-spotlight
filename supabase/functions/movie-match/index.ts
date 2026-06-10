@@ -287,34 +287,41 @@ ${criteriaText}${tasteSection}
 
 Génère la fiche de match multi-vecteur.`;
 
-    const callGemini = async () =>
-      fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GOOGLE_AI_KEY}`,
+    const callGeminiModel = async (model: string) => {
+      const generationConfig: any = { responseMimeType: "application/json", maxOutputTokens: 700 };
+      // thinkingBudget uniquement supporté par les modèles 2.5
+      if (model.startsWith("gemini-2.5")) generationConfig.thinkingConfig = { thinkingBudget: 0 };
+      return fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GOOGLE_AI_KEY}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             system_instruction: { parts: [{ text: systemPrompt }] },
             contents: [{ role: "user", parts: [{ text: userPrompt }] }],
-            generationConfig: {
-              responseMimeType: "application/json",
-              maxOutputTokens: 700,
-              thinkingConfig: { thinkingBudget: 0 },
-            },
+            generationConfig,
           }),
         },
       );
+    };
 
     const mmT2 = Date.now();
-    let response = await callGemini();
-    // Retry once on rate-limit or temporary overload
+    let response = await callGeminiModel("gemini-2.5-flash");
+    let modelUsed = "gemini-2.5-flash";
+    // Cascade de modèles sur rate-limit : 2.5-flash (250 RPD) → 2.0-flash-lite (1500 RPD) → 1.5-flash (1500 RPD)
     if (response.status === 429 || response.status === 503) {
-      console.warn(`[MM⏱] Gemini ${response.status} — retry in 2s`);
-      await new Promise((r) => setTimeout(r, 2000));
-      response = await callGemini();
+      console.warn(`[MM⏱] gemini-2.5-flash ${response.status} — trying gemini-2.0-flash-lite`);
+      response = await callGeminiModel("gemini-2.0-flash-lite");
+      modelUsed = "gemini-2.0-flash-lite";
+    }
+    if (response.status === 429 || response.status === 503) {
+      console.warn(`[MM⏱] gemini-2.0-flash-lite ${response.status} — trying gemini-1.5-flash (1s delay)`);
+      await new Promise((r) => setTimeout(r, 1000));
+      response = await callGeminiModel("gemini-1.5-flash");
+      modelUsed = "gemini-1.5-flash";
     }
     const mmT3 = Date.now();
-    console.log(`[MM⏱] Gemini API: ${mmT3 - mmT2}ms (status=${response.status}, title="${title}")`);
+    console.log(`[MM⏱] Gemini API: ${mmT3 - mmT2}ms (model=${modelUsed}, status=${response.status}, title="${title}")`);
 
     if (!response.ok) {
       const t = await response.text();
