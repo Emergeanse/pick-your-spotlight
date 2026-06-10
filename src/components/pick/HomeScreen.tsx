@@ -1112,6 +1112,8 @@ const HomeScreen = ({
               // Filet de sécurité : si onBatchReady/onMovieEnriched ne sont pas actifs
               if (!isMountedRef.current) return;
               eagerMoviesGrowing.push(movie as MovieDetail);
+              // Si onBatchReady a déjà montré les films, onMovieEnriched gère les mises à jour
+              if (firstMovieShown) return;
               const first = eagerMoviesGrowing.find((m) => m.id === firstMovieShownId);
               const rest = eagerMoviesGrowing.filter((m) => m.id !== firstMovieShownId);
               setChatMoviesPool(first ? [first, ...rest] : [...eagerMoviesGrowing]);
