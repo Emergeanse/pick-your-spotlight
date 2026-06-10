@@ -25,9 +25,9 @@ const GENRE_MAP_TV: Record<number, string> = {
   10766: "Soap", 10767: "Talk", 10768: "War & Politics", 37: "Western",
 };
 
-async function fetchTmdbPage(mediaType: "movie" | "tv", page: number, minVoteCount: number) {
+async function fetchTmdbPage(mediaType: "movie" | "tv", page: number, minVoteCount: number, originalLanguage = "fr") {
   const endpoint = mediaType === "movie" ? "discover/movie" : "discover/tv";
-  const url = `${TMDB_BASE}/${endpoint}?api_key=${TMDB_API_KEY}&language=fr-FR&with_original_language=fr&watch_region=FR&sort_by=vote_count.desc&vote_count.gte=${minVoteCount}&page=${page}`;
+  const url = `${TMDB_BASE}/${endpoint}?api_key=${TMDB_API_KEY}&language=fr-FR&with_original_language=${originalLanguage}&watch_region=FR&sort_by=vote_count.desc&vote_count.gte=${minVoteCount}&page=${page}`;
   const res = await fetch(url);
   if (!res.ok) throw new Error(`TMDB ${res.status}`);
   const data = await res.json();
@@ -97,10 +97,11 @@ serve(async (req) => {
     const body = req.method === "POST" ? await req.json().catch(() => ({})) : {};
     const {
       startPage = 1,
-      scanUntilPage = 500, // Scanne jusqu'à cette page pour trouver des nouveaux films
-      batchSize = 8,       // Films à traiter quand on en trouve
+      scanUntilPage = 500,
+      batchSize = 8,
       mediaType = "movie" as "movie" | "tv",
       minVoteCount = 20,
+      originalLanguage = "fr", // "fr" | "en" | "de" | "it" | "es" | "pt" | ...
     } = body;
 
     let scannedPages = 0;
@@ -111,7 +112,7 @@ serve(async (req) => {
 
     // Scanne les pages rapidement jusqu'à en trouver une avec des nouveaux films
     for (let page = startPage; page <= scanUntilPage; page++) {
-      const { results: tmdbFilms, totalPages } = await fetchTmdbPage(mediaType, page, minVoteCount);
+      const { results: tmdbFilms, totalPages } = await fetchTmdbPage(mediaType, page, minVoteCount, originalLanguage);
       finalTotalPages = totalPages;
 
       if (tmdbFilms.length === 0 || page > totalPages) break;
