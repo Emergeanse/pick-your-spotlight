@@ -828,7 +828,7 @@ const HomeScreen = ({
             explorationLevel: effectiveExplorationLevel,
             mediaType: effectiveMediaType,
             maxDuration: effectiveMaxDuration,
-            count: (quickFilters.recommendationCount || RECOMMENDATION_BATCH_SIZE) * 3,
+            count: (quickFilters.recommendationCount || RECOMMENDATION_BATCH_SIZE),
             minMatchScore: effectiveMinMatchScore,
             ...(moodCfg?.moodContext && { moodContext: moodCfg.moodContext }),
             ...(moodCfg?.boostGenres && { moodBoostGenres: moodCfg.boostGenres }),

@@ -275,40 +275,40 @@ export async function enrichRecommendationBatchWithTexts(
     Promise.resolve().then(() => options.onBatchReady!(eagerMovies));
   }
 
-  // Parallel calls with staggered start to avoid Gemini rate limiting on concurrent requests
-  const generated = await Promise.all(
-    eagerMovies.map(async (movie, idx) => {
-      if (idx > 0) await new Promise((r) => setTimeout(r, idx * 400));
-      const t0 = performance.now();
-      const recommendationTexts = await fetchRecommendationTextsForMovie(movie, context, options);
-      const t1 = performance.now();
-      const srv = (recommendationTexts as any)?._timings;
-      console.log(
-        `[Pick⏱] movie-match eager "${movie.title ?? movie.id}": ${Math.round(t1 - t0)}ms` +
-          (srv ? ` (embed=${srv.embed}ms gemini=${srv.gemini}ms)` : ""),
-      );
-      const isRich = !!(recommendationTexts?.whyItMatches && !(recommendationTexts as any)?.fallback);
-      // Enrichissement en temps réel du pool — rich ou fallback
-      if (options.onMovieEnriched && recommendationTexts) {
-        const originalScore = getRecommendationScore(movie.recommendationTexts);
-        const mergedTexts = {
-          ...recommendationTexts,
-          matchScore: originalScore ?? recommendationTexts.matchScore,
-          score: originalScore ?? recommendationTexts.score,
-        };
-        Promise.resolve().then(() => options.onMovieEnriched!({ ...movie, recommendationTexts: mergedTexts }));
+  // Sequential calls: film 1 → film 2 → film 3
+  // Each result triggers onMovieEnriched immediately so the UI updates progressively.
+  // Films 4-5 (reserveMovies) are only called as fallback if one of the first 3 fails.
+  const generated: Array<{ id: number; movie: RecommendationMovieDetail; recommendationTexts: RecommendationMatchData | null }> = [];
+  for (const movie of eagerMovies) {
+    const t0 = performance.now();
+    const recommendationTexts = await fetchRecommendationTextsForMovie(movie, context, options);
+    const t1 = performance.now();
+    const srv = (recommendationTexts as any)?._timings;
+    console.log(
+      `[Pick⏱] movie-match eager "${movie.title ?? movie.id}": ${Math.round(t1 - t0)}ms` +
+        (srv ? ` (embed=${srv.embed}ms gemini=${srv.gemini}ms)` : ""),
+    );
+    const isRich = !!(recommendationTexts?.whyItMatches && !(recommendationTexts as any)?.fallback);
+    // Enrichissement en temps réel du pool — rich ou fallback
+    if (options.onMovieEnriched && recommendationTexts) {
+      const originalScore = getRecommendationScore(movie.recommendationTexts);
+      const mergedTexts = {
+        ...recommendationTexts,
+        matchScore: originalScore ?? recommendationTexts.matchScore,
+        score: originalScore ?? recommendationTexts.score,
+      };
+      Promise.resolve().then(() => options.onMovieEnriched!({ ...movie, recommendationTexts: mergedTexts }));
+    }
+    if (isRich) {
+      if (onFirstMovieReady && !firstMovieFired) {
+        firstMovieFired = true;
+        Promise.resolve().then(() => onFirstMovieReady({ ...movie, recommendationTexts }));
+      } else if (options.onMovieReady && firstMovieFired) {
+        Promise.resolve().then(() => options.onMovieReady!({ ...movie, recommendationTexts }));
       }
-      if (isRich) {
-        if (onFirstMovieReady && !firstMovieFired) {
-          firstMovieFired = true;
-          Promise.resolve().then(() => onFirstMovieReady({ ...movie, recommendationTexts }));
-        } else if (options.onMovieReady && firstMovieFired) {
-          Promise.resolve().then(() => options.onMovieReady!({ ...movie, recommendationTexts }));
-        }
-      }
-      return { id: movie.id, movie, recommendationTexts };
-    }),
-  );
+    }
+    generated.push({ id: movie.id, movie, recommendationTexts });
+  }
 
   const byId = new Map<number, RecommendationMatchData | null>(
     generated.map((entry) => [entry.id, entry.recommendationTexts]),
