@@ -296,7 +296,7 @@ Génère la fiche de match multi-vecteur.`;
           "anthropic-version": "2023-06-01",
         },
         body: JSON.stringify({
-          model: "claude-haiku-4-5-20251001",
+          model: "claude-sonnet-4-6",
           max_tokens: 700,
           system: systemPrompt,
           messages: [{ role: "user", content: userPrompt }],
@@ -355,8 +355,9 @@ Génère la fiche de match multi-vecteur.`;
       console.error("Failed to parse movie-match response body:", e);
       throw new Error("AI response parse error");
     }
-    // Anthropic API response: content[0].text
-    const content = (aiData?.content?.[0]?.text || "").trim();
+    // Anthropic API response: content[0].text — strip markdown fences if present
+    const rawContent = (aiData?.content?.[0]?.text || "").trim();
+    const content = rawContent.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/i, "").trim();
 
     let matchData;
     try {
