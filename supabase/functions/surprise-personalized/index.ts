@@ -383,7 +383,7 @@ serve(async (req) => {
     const sqlCountDiag: { level: number; total_in_db: number; available_after_exclusions: number }[] = [];
 
     if (SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY && userTasteVector) {
-      const TARGET = 30;
+      const TARGET = 20; // 20 films de qualité suffisent — inutile de cascader jusqu'au niveau 3 pour en avoir 30
       const BATCH = 500;
       const excludedSet = new Set(normalizedExcludeIds);
       const seenIds = new Set<number>();
@@ -603,7 +603,7 @@ serve(async (req) => {
 
     if (filteredCandidates.length >= 1) {
       const compositeScore = (c: any) => {
-        let score = (c.similarity ?? 0) * 100 + (c.vote_average ?? 0);
+        let score = (c.similarity ?? 0) * 100 + (c.vote_average ?? 0) * 3;
         if (preferredLangsBoost.size > 0 && preferredLangsBoost.has(c.original_language || "")) score += 15;
         return score;
       };
@@ -633,7 +633,7 @@ serve(async (req) => {
 
       // ── ÉTAPE 2.2 : LLM — évalue uniquement les films disponibles ──
       if (llmInputPool.length >= 1) {
-        const poolScores = llmInputPool.map((c: any) => ((c.similarity ?? 0) * 100 + (c.vote_average ?? 0)));
+        const poolScores = llmInputPool.map((c: any) => ((c.similarity ?? 0) * 100 + (c.vote_average ?? 0) * 3));
         const scoreMin = Math.min(...poolScores);
         const scoreMax = Math.max(...poolScores) || 1;
         const scoreRange = scoreMax - scoreMin || 1;
