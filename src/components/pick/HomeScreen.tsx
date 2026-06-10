@@ -1835,6 +1835,7 @@ const HomeScreen = ({
         type="movie"
         isOpen={!!flipDetailMovie}
         onClose={() => setFlipDetailMovie(null)}
+        isEnriching={tonightLoading}
         recommendationTextsByMovieId={
           Object.fromEntries(
             (chatMoviesPool ?? [])

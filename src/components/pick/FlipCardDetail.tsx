@@ -32,6 +32,7 @@ interface FlipCardDetailProps {
   onClose: () => void;
   recommendationTexts?: MatchData | null;
   recommendationTextsByMovieId?: Record<number, MatchData | undefined>;
+  isEnriching?: boolean;
 }
 
 const TMDB_API_KEY = "2dca580c2a14b55200e784d157207b4d";
@@ -48,6 +49,7 @@ const FlipCardDetail = ({
   onClose,
   recommendationTexts,
   recommendationTextsByMovieId,
+  isEnriching,
 }: FlipCardDetailProps) => {
   const [navStack, setNavStack] = useState<NavEntry[]>([]);
   const [currentItem, setCurrentItem] = useState<any>(null);
@@ -171,6 +173,7 @@ const FlipCardDetail = ({
                 cast={cast}
                 isTV={isTV}
                 recommendationText={currentRecommendationText}
+                isEnriching={isEnriching}
                 onPersonClick={(person) => navigateTo(person, "person")}
               />
             ) : (
@@ -195,6 +198,7 @@ const MovieDetailContent = ({
   cast,
   isTV,
   recommendationText,
+  isEnriching,
   onPersonClick,
 }: {
   item: any;
@@ -203,6 +207,7 @@ const MovieDetailContent = ({
   cast: any[];
   isTV?: boolean;
   recommendationText?: MatchData | null;
+  isEnriching?: boolean;
   onPersonClick: (person: any) => void;
 }) => {
   const interaction = useMovieInteraction(item?.id);
@@ -299,12 +304,16 @@ const MovieDetailContent = ({
       <div className="border-t border-border/10 mx-5 mb-5" />
 
       {/* AI recommendation block — visually impactful */}
-      {(headline || summary || reasons.length > 0 || perfectFor || funFact) && (
+      {(headline || summary || reasons.length > 0 || perfectFor || funFact || isEnriching) && (
         <div className="mx-5 mb-5 rounded-2xl bg-primary/[0.06] border border-primary/20 overflow-hidden">
           {/* Header strip */}
           <div className="flex items-center gap-2 px-4 py-3 border-b border-primary/10 bg-primary/[0.04]">
             <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
-              <Sparkles className="w-3.5 h-3.5 text-primary" />
+              {isEnriching && !headline ? (
+                <Loader2 className="w-3.5 h-3.5 text-primary animate-spin" />
+              ) : (
+                <Sparkles className="w-3.5 h-3.5 text-primary" />
+              )}
             </div>
             <p className="text-[11px] uppercase tracking-widest text-primary/70 font-sans font-semibold flex-1">
               Pourquoi c'est pour toi !
@@ -336,6 +345,11 @@ const MovieDetailContent = ({
             {funFact && (
               <p className="text-foreground/45 text-[12px] font-sans leading-snug mt-1">
                 💡 {funFact}
+              </p>
+            )}
+            {isEnriching && !headline && (
+              <p className="text-primary/40 text-[11px] font-sans italic mt-1">
+                Personnalisation avancée en cours…
               </p>
             )}
           </div>
