@@ -26,6 +26,7 @@ interface TonightPickOverlayProps {
   onInteraction: (type: string) => void;
   onMoreSuggestions: () => void;
   expectedCount?: number;
+  userName?: string;
 }
 
 const TonightPickOverlay = ({
@@ -48,6 +49,7 @@ const TonightPickOverlay = ({
   onInteraction,
   onMoreSuggestions,
   expectedCount,
+  userName,
 }: TonightPickOverlayProps) => {
   const interaction = useMovieInteraction(movie?.id);
   const displayCount = expectedCount ?? tonightPool.length;
@@ -66,19 +68,16 @@ const TonightPickOverlay = ({
     (recFromPool ? (recFromPool as any).recommendationTexts : null) || recFromMovie || null;
   const adhesionScore = rec?.matchScore ?? rec?.score ?? rec?.confidence ?? matchInfo?.confidence ?? null;
   const asStr = (v: unknown): string | null => (typeof v === "string" && v.length > 0 ? v : null);
-  const richTeaser =
-    asStr(rec?.summary) ||
-    asStr(rec?.detailedExplanation) ||
-    asStr(rec?.whyItMatches) ||
-    asStr(rec?.headline) ||
-    asStr(rec?.pickNote);
   const recReason = asStr(rec?.reason);
   const matchReason = asStr(matchInfo?.reason);
-  const teaser =
-    richTeaser ||
+  // Overlay shows only the short reason (always available at onBatchReady — no flash).
+  // The full rich teaser is reserved for the detail card.
+  const shortReason =
     (recReason && recReason.length > 40 ? recReason : null) ||
     (matchReason && matchReason.length > 40 ? matchReason : null) ||
     `Pick pense que ${movie.first_air_date ? "cette série est faite" : "ce film est fait"} pour toi.`;
+  const firstName = userName?.trim().split(/\s+/)[0] ?? null;
+  const teaser = firstName ? `${firstName}, ${shortReason.charAt(0).toLowerCase()}${shortReason.slice(1)}` : shortReason;
 
   const year = ((movie.release_date || (movie as any).first_air_date) as string | undefined)?.substring(0, 4);
   const primaryGenre = movie.genres?.[0]?.name;
