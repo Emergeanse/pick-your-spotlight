@@ -37,10 +37,10 @@ serve(async (req) => {
     const mmT0 = Date.now();
     const { movie, userCriteria, tasteProfile, userTasteVector, likedMovieTitles, searchTags, cinematicProfile, peoplePreferences, userName, duoContext, minMatchScore: rawMinMatchScore } = await req.json();
     const minMatchScore = typeof rawMinMatchScore === "number" ? Math.max(0, Math.min(100, rawMinMatchScore)) : 60;
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    const GOOGLE_AI_KEY = Deno.env.get("GOOGLE_AI_KEY");
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
+    if (!GOOGLE_AI_KEY) throw new Error("GOOGLE_AI_KEY is not configured");
 
     const isYouTube = !!(movie._youtube);
     const isTv = !isYouTube && !!(movie.first_air_date || movie.name && !movie.title);
@@ -287,36 +287,38 @@ ${criteriaText}${tasteSection}
 
 Génère la fiche de match multi-vecteur.`;
 
-    const callClaude = async () =>
-      fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-api-key": LOVABLE_API_KEY!,
-          "anthropic-version": "2023-06-01",
+    const callGemini = async () =>
+      fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GOOGLE_AI_KEY}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            system_instruction: { parts: [{ text: systemPrompt }] },
+            contents: [{ role: "user", parts: [{ text: userPrompt }] }],
+            generationConfig: {
+              responseMimeType: "application/json",
+              maxOutputTokens: 700,
+              thinkingConfig: { thinkingBudget: 0 },
+            },
+          }),
         },
-        body: JSON.stringify({
-          model: "claude-sonnet-4-6",
-          max_tokens: 700,
-          system: systemPrompt,
-          messages: [{ role: "user", content: userPrompt }],
-        }),
-      });
+      );
 
     const mmT2 = Date.now();
-    let response = await callClaude();
+    let response = await callGemini();
     // Retry once on rate-limit or temporary overload
-    if (response.status === 429 || response.status === 529) {
-      console.warn(`[MM⏱] Claude ${response.status} — retry in 2s`);
+    if (response.status === 429 || response.status === 503) {
+      console.warn(`[MM⏱] Gemini ${response.status} — retry in 2s`);
       await new Promise((r) => setTimeout(r, 2000));
-      response = await callClaude();
+      response = await callGemini();
     }
     const mmT3 = Date.now();
-    console.log(`[MM⏱] Claude API: ${mmT3 - mmT2}ms (status=${response.status}, title="${title}")`);
+    console.log(`[MM⏱] Gemini API: ${mmT3 - mmT2}ms (status=${response.status}, title="${title}")`);
 
     if (!response.ok) {
       const t = await response.text();
-      console.error(`[MM] Claude HTTP error: status=${response.status} title="${title}" body=${t.slice(0, 300)}`);
+      console.error(`[MM] Gemini HTTP error: status=${response.status} title="${title}" body=${t.slice(0, 300)}`);
       const fallback = {
         matchScore: 70,
         headline: "Celui-là pourrait bien te plaire",
@@ -355,9 +357,8 @@ Génère la fiche de match multi-vecteur.`;
       console.error("Failed to parse movie-match response body:", e);
       throw new Error("AI response parse error");
     }
-    // Anthropic API response: content[0].text — strip markdown fences if present
-    const rawContent = (aiData?.content?.[0]?.text || "").trim();
-    const content = rawContent.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/i, "").trim();
+    // Native Gemini API response: candidates[0].content.parts[0].text
+    const content = (aiData?.candidates?.[0]?.content?.parts?.[0]?.text || "").trim();
 
     let matchData;
     try {
@@ -397,8 +398,8 @@ Génère la fiche de match multi-vecteur.`;
     if (Object.keys(movieSemanticAxes).length > 0) matchData.semanticAxes = movieSemanticAxes;
 
     const mmTFinal = Date.now();
-    console.log(`[MM⏱] TOTAL: ${mmTFinal - mmT0}ms | embed: ${mmT1 - mmT0}ms | claude: ${mmT3 - mmT2}ms | parse: ${mmTFinal - mmT3}ms`);
-    matchData._timings = { total: mmTFinal - mmT0, embed: mmT1 - mmT0, claude: mmT3 - mmT2 };
+    console.log(`[MM⏱] TOTAL: ${mmTFinal - mmT0}ms | embed: ${mmT1 - mmT0}ms | gemini: ${mmT3 - mmT2}ms | parse: ${mmTFinal - mmT3}ms`);
+    matchData._timings = { total: mmTFinal - mmT0, embed: mmT1 - mmT0, gemini: mmT3 - mmT2 };
 
     return new Response(JSON.stringify(matchData), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
