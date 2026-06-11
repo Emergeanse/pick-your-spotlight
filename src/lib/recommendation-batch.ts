@@ -283,11 +283,11 @@ export async function enrichRecommendationBatchWithTexts(
     const t0 = performance.now();
     let recommendationTexts = await fetchRecommendationTextsForMovie(movie, context, options);
 
-    // Retry once if null or fallback (transient Gemini / embedding failure)
+    // Retry once if null or fallback (transient Gemini / rate-limit failure)
     if (!recommendationTexts || (recommendationTexts as any)?.fallback) {
       const elapsed = Math.round(performance.now() - t0);
-      console.log(`[Pick⏱] movie-match fallback "${movie.title ?? movie.id}": ${elapsed}ms — retry in 800ms`);
-      await new Promise((r) => setTimeout(r, 800));
+      console.log(`[Pick⏱] movie-match fallback "${movie.title ?? movie.id}": ${elapsed}ms — retry in 4s`);
+      await new Promise((r) => setTimeout(r, 4000));
       const retried = await fetchRecommendationTextsForMovie(movie, context, options);
       if (retried) recommendationTexts = retried;
     }
