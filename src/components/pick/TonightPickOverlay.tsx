@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useRef } from "react";
+﻿import { useState, useEffect, useRef, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ChevronRight, Dices, Loader2, Info } from "lucide-react";
 import { getBackdropUrl, getDisplayTitle, getPosterUrl, type MovieDetail } from "@/lib/tmdb";
@@ -161,6 +161,23 @@ const TonightPickOverlay = ({
     return result;
   })();
 
+  // Mélange aléatoire stable (recalculé uniquement si le pool change)
+  const shuffledWallPaths = useMemo(() => {
+    if (posterWallPaths.length === 0) return [];
+    const arr = [...posterWallPaths];
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  }, [posterWallPaths.length]);
+
+  // Offsets initiaux aléatoires par colonne (stable, calculé une fois)
+  const colInitialOffsets = useMemo(
+    () => [0, 1, 2, 3].map(() => `${-(Math.random() * 50).toFixed(1)}%`),
+    [],
+  );
+
   const year = movie
     ? ((movie.release_date || (movie as any).first_air_date) as string | undefined)?.substring(0, 4)
     : undefined;
@@ -216,27 +233,31 @@ const TonightPickOverlay = ({
                 className="absolute inset-0 z-20 overflow-hidden"
               >
                 {/* Mur d'affiches : 4 colonnes défilantes à vitesses décalées */}
-                {posterWallPaths.length >= 2 && (
+                {shuffledWallPaths.length >= 2 && (
                   <div
                     className="absolute inset-0 flex gap-1 overflow-hidden"
                     style={{ opacity: 0.42, filter: "grayscale(30%) blur(0.5px)" }}
                   >
                     {[0, 1, 2, 3].map((ci) => {
-                      // Distribution cyclique : toutes les colonnes sont toujours remplies
-                      const perCol = Math.max(1, Math.ceil(posterWallPaths.length / 4));
+                      // Distribution cyclique sur le pool mélangé
+                      const perCol = Math.max(1, Math.ceil(shuffledWallPaths.length / 4));
                       const items = Array.from({ length: perCol }, (_, i) =>
-                        posterWallPaths[(ci + i * 4) % posterWallPaths.length]
+                        shuffledWallPaths[(ci + i * 4) % shuffledWallPaths.length]
                       );
                       const col = [...items, ...items]; // double pour boucle seamless
-                      const dur = [11, 8, 13, 9][ci];
+                      const dur = [6.5, 4.5, 7.5, 5.5][ci]; // ~40% plus rapide qu'avant
                       const goDown = ci % 2 === 1;
+                      const initY = colInitialOffsets[ci];
+                      const endY = goDown
+                        ? `${(parseFloat(initY) + 50).toFixed(1)}%`
+                        : `${(parseFloat(initY) - 50).toFixed(1)}%`;
                       return (
                         <motion.div
                           key={ci}
                           className="flex-1 flex flex-col gap-1"
                           style={{ willChange: "transform" }}
-                          initial={{ y: goDown ? "-50%" : "0%" }}
-                          animate={{ y: goDown ? "0%" : "-50%" }}
+                          initial={{ y: initY }}
+                          animate={{ y: endY }}
                           transition={{ duration: dur, repeat: Infinity, ease: "linear" }}
                         >
                           {col.map((path, pi) => (
