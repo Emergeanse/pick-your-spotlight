@@ -119,33 +119,47 @@ const TonightPickOverlay = ({
   // canReveal = les textes sont prêts ET au moins 2.2s se sont écoulées depuis l'apparition du film
   const canReveal = isTextsReady && localReady;
 
-  // Mémorise le dernier pool non-vide — survit à setChatMoviesPool(null) qui précède setTonightLoading
-  const lastPosterPathsRef = useRef<string[]>([]);
-  useEffect(() => {
-    const paths = tonightPool.map((m) => m.poster_path).filter(Boolean) as string[];
-    if (paths.length >= 2) lastPosterPathsRef.current = paths;
-  }, [tonightPool]);
-
-  // Fallback lambda : popular + top_rated TMDB, fetch lancé au chargement du module
+  // Lambda TMDB : liste fixe popular+top_rated, toujours affichée (cohérence visuelle entre sessions)
   const [lambdaPaths, setLambdaPaths] = useState<string[]>(lambdaCache.paths);
   useEffect(() => {
     if (lambdaCache.paths.length > 0) { setLambdaPaths(lambdaCache.paths); return; }
-    // Polling léger jusqu'à ce que le fetch module-level arrive (stage 1 dure 3-8s)
     const poll = setInterval(() => {
-      if (lambdaCache.paths.length > 0) {
-        setLambdaPaths(lambdaCache.paths);
-        clearInterval(poll);
-      }
+      if (lambdaCache.paths.length > 0) { setLambdaPaths(lambdaCache.paths); clearInterval(poll); }
     }, 300);
     return () => clearInterval(poll);
   }, []);
 
-  // Priorité : pool courant > pool mémorisé > lambda TMDB
-  const rawPosterPaths = tonightPool.map((m) => m.poster_path).filter(Boolean) as string[];
-  const posterWallPaths =
-    rawPosterPaths.length >= 2 ? rawPosterPaths :
-    lastPosterPathsRef.current.length >= 2 ? lastPosterPathsRef.current :
-    lambdaPaths;
+  // Films adorés : persistés en localStorage au fil des interactions positives
+  const LOVED_KEY = "pick_loved_posters";
+  const [lovedPosters, setLovedPosters] = useState<string[]>(() => {
+    try { return JSON.parse(localStorage.getItem(LOVED_KEY) || "[]"); } catch { return []; }
+  });
+  useEffect(() => {
+    const path = movie?.poster_path;
+    if (!path) return;
+    const positive = ["like", "love", "watchlist"];
+    if (!positive.includes(interaction.primaryStatus ?? "")) return;
+    setLovedPosters((prev) => {
+      if (prev.includes(path)) return prev;
+      const updated = [path, ...prev].slice(0, 50);
+      try { localStorage.setItem(LOVED_KEY, JSON.stringify(updated)); } catch {}
+      return updated;
+    });
+  }, [movie?.poster_path, interaction.primaryStatus]);
+
+  // Mur de fond : lambda fixe + films adorés intercalés (1 perso toutes les 4 lambdas)
+  const posterWallPaths = (() => {
+    const base = lambdaPaths.length >= 2 ? lambdaPaths : [];
+    if (base.length === 0) return [];
+    if (lovedPosters.length === 0) return base;
+    const result: string[] = [];
+    let li = 0;
+    for (let i = 0; i < base.length; i++) {
+      result.push(base[i]);
+      if ((i + 1) % 4 === 0 && li < lovedPosters.length) result.push(lovedPosters[li++]);
+    }
+    return result;
+  })();
 
   const year = movie
     ? ((movie.release_date || (movie as any).first_air_date) as string | undefined)?.substring(0, 4)
