@@ -277,7 +277,8 @@ RÈGLES :
 - RAPPEL : matchScore part de 75, ajuste selon les signaux. Plage normale : 70-88%. Excellent : 88-99%.
 - PLANCHER ABSOLU ET NON NÉGOCIABLE : ${minMatchScore}%. Aucune exception sauf genre EXPLICITEMENT rejeté.
 - Profil peu développé (confiance < 40) → reste entre 70-75%, pas moins.
-- COHÉRENCE OBLIGATOIRE : si ton texte est positif, ton score doit être ≥ 70%. Un score < 68% = film qui ne devrait pas être recommandé du tout.`;
+- COHÉRENCE OBLIGATOIRE : si ton texte est positif, ton score doit être ≥ 70%. Un score < 68% = film qui ne devrait pas être recommandé du tout.
+- ⚠️ PIÈGE À ÉVITER : La "similarité d'embedding" (ex: 7%) est un signal technique brut, pas un score final. Elle mesure une distance mathématique sur des vecteurs, pas l'adéquation réelle. NE JAMAIS recopier cette valeur comme matchScore. Un film peut avoir 7% de similarité et 78% de match si le profil est peu développé ou si d'autres signaux sont forts. Le score part TOUJOURS de 75, la similarité est un facteur parmi d'autres.`;
 
     const youtubeExtra = isYouTube ? `\nChaîne YouTube : ${youtubeData.channelTitle || "inconnue"}\nVues : ${youtubeData.viewCount || 0}\nDurée : ${runtime} min` : "";
 
