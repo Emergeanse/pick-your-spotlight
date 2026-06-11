@@ -1783,7 +1783,7 @@ const HomeScreen = ({
       </AnimatePresence>
 
       <TonightPickOverlay
-        open={(tonightLoading || !!tonightPick) && !flipDetailMovie}
+        open={tonightLoading || !!tonightPick}
         movie={tonightPick}
         tonightPool={tonightPool}
         tonightPickIndex={tonightPickIndex}
