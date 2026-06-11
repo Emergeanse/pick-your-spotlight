@@ -1522,8 +1522,8 @@ const HomeScreen = ({
             quelque chose
             <br />
             d
-            <span className="italic bg-gradient-to-br from-primary via-accent to-primary bg-clip-text text-transparent">
-              ’intense
+            <span className="italic text-white" style={{ textShadow: "0 0 14px rgba(139,92,246,0.85), 0 0 4px rgba(192,132,252,0.6)" }}>
+              ‘intense
             </span>
             <span className="text-foreground">.</span>
           </motion.h1>
@@ -1536,7 +1536,7 @@ const HomeScreen = ({
             className="relative mt-2 text-foreground/75 text-[11px] leading-snug font-sans max-w-[62%]"
           >
             <span className="italic font-bold">
-              « Je t’ai préparé une sélection brutale et visuelle ! »
+              « Des pépites rares, trouvées rien que pour toi. »
             </span>
             <span className="mt-1 text-foreground/60 not-italic font-normal">
               — Pick
