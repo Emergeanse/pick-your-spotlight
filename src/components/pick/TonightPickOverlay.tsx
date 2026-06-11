@@ -6,6 +6,29 @@ import { useMovieInteraction } from "@/hooks/use-movie-interactions";
 import MovieActionBar from "./MovieActionBar";
 import FeedbackBadge from "./FeedbackBadge";
 
+// Cache module-level : chargé une fois dès l'import du fichier (avant le 1er clic utilisateur)
+const lambdaCache = { paths: [] as string[] };
+const _fetchLambda = (url: string) =>
+  fetch(url)
+    .then((r) => r.json())
+    .then((d) => (d.results || []).map((m: { poster_path?: string }) => m.poster_path).filter(Boolean) as string[])
+    .catch(() => [] as string[]);
+
+// Lancé immédiatement — popular + top_rated mélangés pour un mur riche dès la 1ère session
+Promise.all([
+  _fetchLambda("https://api.themoviedb.org/3/movie/popular?api_key=2dca580c2a14b55200e784d157207b4d&language=fr-FR&page=1"),
+  _fetchLambda("https://api.themoviedb.org/3/movie/top_rated?api_key=2dca580c2a14b55200e784d157207b4d&language=fr-FR&page=1"),
+]).then(([popular, topRated]) => {
+  // Interleave pour mélanger films actuels et classiques
+  const merged: string[] = [];
+  const max = Math.max(popular.length, topRated.length);
+  for (let i = 0; i < max; i++) {
+    if (popular[i]) merged.push(popular[i]);
+    if (topRated[i]) merged.push(topRated[i]);
+  }
+  lambdaCache.paths = merged;
+});
+
 interface TonightPickOverlayProps {
   open: boolean;
   movie: MovieDetail | null;
@@ -99,9 +122,26 @@ const TonightPickOverlay = ({
     if (paths.length >= 2) lastPosterPathsRef.current = paths;
   }, [tonightPool]);
 
-  // Posters pour le mur de fond en stage 1 : pool courant si dispo, sinon dernier pool mémorisé
+  // Fallback lambda : popular + top_rated TMDB, fetch lancé au chargement du module
+  const [lambdaPaths, setLambdaPaths] = useState<string[]>(lambdaCache.paths);
+  useEffect(() => {
+    if (lambdaCache.paths.length > 0) { setLambdaPaths(lambdaCache.paths); return; }
+    // Polling léger jusqu'à ce que le fetch module-level arrive (stage 1 dure 3-8s)
+    const poll = setInterval(() => {
+      if (lambdaCache.paths.length > 0) {
+        setLambdaPaths(lambdaCache.paths);
+        clearInterval(poll);
+      }
+    }, 300);
+    return () => clearInterval(poll);
+  }, []);
+
+  // Priorité : pool courant > pool mémorisé > lambda TMDB
   const rawPosterPaths = tonightPool.map((m) => m.poster_path).filter(Boolean) as string[];
-  const posterWallPaths = rawPosterPaths.length >= 2 ? rawPosterPaths : lastPosterPathsRef.current;
+  const posterWallPaths =
+    rawPosterPaths.length >= 2 ? rawPosterPaths :
+    lastPosterPathsRef.current.length >= 2 ? lastPosterPathsRef.current :
+    lambdaPaths;
 
   const year = movie
     ? ((movie.release_date || (movie as any).first_air_date) as string | undefined)?.substring(0, 4)
