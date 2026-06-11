@@ -220,6 +220,21 @@ const TonightPickOverlay = ({
             )}
           </div>
 
+          {/* Wrapper apparition — flou + scale pendant que l'IA analyse, révélation quand prêt */}
+          <motion.div
+            animate={{
+              filter: isTextsReady ? "blur(0px)" : "blur(8px)",
+              scale: isTextsReady ? 1 : 0.97,
+              opacity: isTextsReady ? 1 : 0.6,
+            }}
+            transition={{
+              filter: { duration: 1.1, ease: "easeOut" },
+              scale: { duration: 1.1, ease: [0.22, 1, 0.36, 1] },
+              opacity: { duration: 0.9, ease: "easeOut" },
+            }}
+            className="flex-1 flex flex-col min-h-0"
+          >
+
           {/* Poster + flèches de navigation de chaque côté */}
           <div className="relative z-10 flex items-center justify-center gap-4 mt-4">
             <button
@@ -313,16 +328,9 @@ const TonightPickOverlay = ({
               onClick={onOpenDetail}
             >
               <div className="w-1 self-stretch min-h-[40px] bg-primary rounded-full shrink-0" />
-              <motion.p
-                animate={{
-                  filter: isTextsReady ? "blur(0px)" : "blur(3.5px)",
-                  opacity: isTextsReady ? 0.8 : 0.45,
-                }}
-                transition={{ duration: 0.8, ease: "easeOut" }}
-                className="text-foreground/80 text-[14px] italic font-sans leading-relaxed pt-0.5"
-              >
+              <p className="text-foreground/80 text-[14px] italic font-sans leading-relaxed pt-0.5">
                 {teaser.length > 300 ? `${teaser.substring(0, 300).trimEnd()}…` : teaser}
-              </motion.p>
+              </p>
             </motion.div>
 
             {/* Glass action bar (Save / Like / Seen via MovieActionBar) */}
@@ -383,6 +391,8 @@ const TonightPickOverlay = ({
             )}
             <div className="h-8" />
           </div>
+
+          </motion.div>
         </motion.div>
       )}
     </AnimatePresence>
