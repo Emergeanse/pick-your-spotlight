@@ -722,17 +722,20 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
         capturedSystemPrompt = systemPrompt;
 
         try {
-          const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GOOGLE_AI_KEY}`;
           const geminiBody = JSON.stringify({
             contents: [{ role: "user", parts: [{ text: systemPrompt }] }],
             generationConfig: { maxOutputTokens: 500, responseMimeType: "application/json", thinkingConfig: { thinkingBudget: 0 } },
           });
           const geminiHeaders = { "Content-Type": "application/json" };
 
-          let response = await fetch(geminiUrl, { method: "POST", headers: geminiHeaders, body: geminiBody });
+          const callSpModel = (model: string) => fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GOOGLE_AI_KEY}`,
+            { method: "POST", headers: geminiHeaders, body: geminiBody },
+          );
+          let response = await callSpModel("gemini-2.5-flash");
           if (response.status === 429 || response.status === 503) {
-            await new Promise((r) => setTimeout(r, response.status === 503 ? 4000 : 3000));
-            response = await fetch(geminiUrl, { method: "POST", headers: geminiHeaders, body: geminiBody });
+            console.warn(`[SP] gemini-2.5-flash ${response.status} — cascade vers gemini-2.0-flash`);
+            response = await callSpModel("gemini-2.0-flash");
           }
 
           if (response.ok) {

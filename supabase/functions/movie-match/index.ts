@@ -308,15 +308,16 @@ Génère la fiche de match multi-vecteur.`;
     const mmT2 = Date.now();
     let response = await callGeminiModel("gemini-2.5-flash");
     let modelUsed = "gemini-2.5-flash";
-    // Cascade de modèles sur rate-limit : 2.5-flash (250 RPD) → 2.0-flash-lite (1500 RPD) → 1.5-flash (1500 RPD)
+    // Cascade sur rate-limit : 2.5-flash → 2.0-flash-lite → 2.0-flash
     if (response.status === 429 || response.status === 503) {
       console.warn(`[MM⏱] gemini-2.5-flash ${response.status} — trying gemini-2.0-flash-lite`);
       response = await callGeminiModel("gemini-2.0-flash-lite");
       modelUsed = "gemini-2.0-flash-lite";
     }
-    if (response.status === 429 || response.status === 503) {
-      console.warn(`[MM⏱] gemini-2.0-flash-lite ${response.status} — trying gemini-2.0-flash (1s delay)`);
-      await new Promise((r) => setTimeout(r, 1000));
+    // Continue vers 2.0-flash si flash-lite échoue pour n'importe quelle raison (incl. 404 si modèle invalide)
+    if (!response.ok) {
+      console.warn(`[MM⏱] gemini-2.0-flash-lite ${response.status} — trying gemini-2.0-flash`);
+      if (response.status === 429) await new Promise((r) => setTimeout(r, 500));
       response = await callGeminiModel("gemini-2.0-flash");
       modelUsed = "gemini-2.0-flash";
     }
