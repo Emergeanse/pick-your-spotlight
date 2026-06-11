@@ -36,7 +36,9 @@ const toStr = (v: unknown): string | undefined =>
   typeof v === "string" && v.length > 0 ? v : undefined;
 
 const normalizeRecommendationTexts = (data: RecommendationMatchData): RecommendationMatchData => {
-  const score = data.matchScore ?? data.score ?? data.confidence;
+  const rawScore = data.matchScore ?? data.score ?? data.confidence;
+  // LLM prompts specify 60–99; floor aberrant values (negative, <60) to avoid jarring display.
+  const score = rawScore != null && rawScore < 60 ? 65 : rawScore;
   const reason =
     toStr(data.summary) ??
     toStr(data.detailedExplanation) ??
@@ -302,10 +304,16 @@ export async function enrichRecommendationBatchWithTexts(
     // Enrichissement en temps réel du pool — rich ou fallback
     if (options.onMovieEnriched && recommendationTexts) {
       const originalScore = getRecommendationScore(movie.recommendationTexts);
+      const mmScore = getRecommendationScore(recommendationTexts);
+      // SP sometimes returns aberrant values (8%, -4%) — treat anything < 60 as absent.
+      const spValid = originalScore != null && originalScore >= 60 ? originalScore : null;
+      const bestScore = spValid != null && mmScore != null
+        ? Math.max(spValid, mmScore)
+        : (spValid ?? mmScore);
       const mergedTexts = {
         ...recommendationTexts,
-        matchScore: originalScore ?? recommendationTexts.matchScore,
-        score: originalScore ?? recommendationTexts.score,
+        matchScore: bestScore ?? recommendationTexts.matchScore,
+        score: bestScore ?? recommendationTexts.score,
       };
       Promise.resolve().then(() => options.onMovieEnriched!({ ...movie, recommendationTexts: mergedTexts }));
     }
@@ -363,14 +371,19 @@ export async function enrichRecommendationBatchWithTexts(
     const newTexts = byId.get(movie.id);
     const originalScore = getRecommendationScore(movie.recommendationTexts);
     const originalConfidence = movie.recommendationTexts?.confidence;
-    // Always preserve the original score from surprise-personalized — movie-match only adds rich texts.
-    // This prevents a lower movie-match score from making a film appear below the user's threshold.
+    // Use the best score between SP and movie-match. SP LLM sometimes returns aberrant values
+    // (8%, -4%...) — treat anything < 60 as absent so movie-match score prevails.
+    const mmScore2 = getRecommendationScore(newTexts);
+    const spValid2 = originalScore != null && originalScore >= 60 ? originalScore : null;
+    const bestScore2 = spValid2 != null && mmScore2 != null
+      ? Math.max(spValid2, mmScore2)
+      : (spValid2 ?? mmScore2);
     const recommendationTexts = newTexts
       ? {
           ...newTexts,
           confidence: originalConfidence ?? newTexts.confidence,
-          matchScore: originalScore ?? newTexts.matchScore,
-          score: originalScore ?? newTexts.score,
+          matchScore: bestScore2 ?? newTexts.matchScore,
+          score: bestScore2 ?? newTexts.score,
         }
       : movie.recommendationTexts ?? null;
     return recommendationTexts ? { ...movie, recommendationTexts } : movie;
