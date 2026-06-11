@@ -162,7 +162,7 @@ export default function MatchPage() {
       {/* Background */}
       <div
         className="absolute inset-x-0 top-0 h-[90%] bg-cover bg-no-repeat pointer-events-none"
-        style={{ backgroundImage: `url(${matchBackground})`, backgroundPosition: "50% -35%", maskImage: "linear-gradient(to bottom, black 60%, transparent 100%)", WebkitMaskImage: "linear-gradient(to bottom, black 60%, transparent 100%)", opacity: 0.6 }}
+        style={{ backgroundImage: `url(${matchBackground})`, backgroundPosition: "50% 0%", maskImage: "linear-gradient(to bottom, black 60%, transparent 100%)", WebkitMaskImage: "linear-gradient(to bottom, black 60%, transparent 100%)", opacity: 0.6 }}
       />
       <div
         className="absolute inset-0 pointer-events-none"
