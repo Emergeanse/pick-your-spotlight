@@ -216,7 +216,7 @@ const TonightPickOverlay = ({
                         posterWallPaths[(ci + i * 4) % posterWallPaths.length]
                       );
                       const col = [...items, ...items]; // double pour boucle seamless
-                      const dur = [23, 17, 27, 20][ci];
+                      const dur = [11, 8, 13, 9][ci];
                       const goDown = ci % 2 === 1;
                       return (
                         <motion.div
