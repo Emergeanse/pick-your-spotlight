@@ -374,21 +374,19 @@ const HomeScreen = ({
   }, []);
 
   useEffect(() => {
-    // Bridge depuis DuoPage ("Trouve-nous un film !") via sessionStorage
-    const duoIdFromSession = sessionStorage.getItem("pick_open_find_choice_duo_id");
-    if (duoIdFromSession) {
-      sessionStorage.removeItem("pick_open_find_choice_duo_id");
-      setFindChoiceDuoId(duoIdFromSession);
-      // Délai minimal pour éviter le bleed-through du tap depuis DuoPage
-      setTimeout(() => setShowFindChoice(true), 100);
+    const state = location.state as { pickDuoId?: string; openFindChoice?: boolean; duoId?: string } | null;
+    // Bridge depuis DuoPage ("Trouve-nous un film !") via location.state
+    if (state?.pickDuoId) {
+      setFindChoiceDuoId(state.pickDuoId);
+      navigate("/app", { replace: true, state: {} });
+      setTimeout(() => setShowFindChoice(true), 150);
       return;
     }
     // Bridge legacy via location.state (autres appelants)
-    const state = location.state as { openFindChoice?: boolean; duoId?: string } | null;
     if (state?.openFindChoice) {
       setFindChoiceDuoId(state.duoId);
-      setTimeout(() => setShowFindChoice(true), 100);
       navigate("/app", { replace: true, state: {} });
+      setTimeout(() => setShowFindChoice(true), 150);
     }
   }, [location.state]);
 

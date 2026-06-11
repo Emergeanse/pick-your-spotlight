@@ -271,8 +271,7 @@ const DuoDetail = ({ duo: initialDuo, currentUserId, onBack, onRename, onDelete 
       {/* CTA Trouve-moi 1 film */}
       <button
         onClick={() => {
-          sessionStorage.setItem("pick_open_find_choice_duo_id", duo.id);
-          navigate("/app");
+          navigate("/app", { state: { pickDuoId: duo.id } });
         }}
         className="w-full mb-4 py-4 rounded-2xl flex items-center justify-center gap-2.5 font-sans font-semibold text-[14px] text-primary-foreground tracking-wide"
         style={{ background: "linear-gradient(135deg, hsl(var(--primary) / 0.9) 0%, hsl(var(--primary) / 0.65) 100%)" }}
