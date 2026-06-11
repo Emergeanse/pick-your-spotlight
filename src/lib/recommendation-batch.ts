@@ -36,9 +36,7 @@ const toStr = (v: unknown): string | undefined =>
   typeof v === "string" && v.length > 0 ? v : undefined;
 
 const normalizeRecommendationTexts = (data: RecommendationMatchData): RecommendationMatchData => {
-  const rawScore = data.matchScore ?? data.score ?? data.confidence;
-  // LLM prompts specify 60–99; floor aberrant values (negative, <60) to avoid jarring display.
-  const score = rawScore != null && rawScore < 60 ? 65 : rawScore;
+  const score = data.matchScore ?? data.score ?? data.confidence;
   const reason =
     toStr(data.summary) ??
     toStr(data.detailedExplanation) ??

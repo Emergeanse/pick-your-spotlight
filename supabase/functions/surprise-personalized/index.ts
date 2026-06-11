@@ -66,7 +66,7 @@ serve(async (req) => {
 
   try {
     const t0 = Date.now();
-    console.log("[SP] ✅ version 2026-06-09-v9 — excluded_genres conservé niveaux 3-4 + safety net tous genres");
+    console.log("[SP] ✅ version 2026-06-11-v10 — composite sim×100 + note (×1 au lieu de ×3)");
     const {
       tasteProfile,
       userTasteVector,
@@ -603,7 +603,7 @@ serve(async (req) => {
 
     if (filteredCandidates.length >= 1) {
       const compositeScore = (c: any) => {
-        let score = (c.similarity ?? 0) * 100 + (c.vote_average ?? 0) * 3;
+        let score = (c.similarity ?? 0) * 100 + (c.vote_average ?? 0);
         if (preferredLangsBoost.size > 0 && preferredLangsBoost.has(c.original_language || "")) score += 15;
         return score;
       };
