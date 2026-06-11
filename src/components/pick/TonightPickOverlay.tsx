@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from "react";
+﻿import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ChevronRight, Dices, Loader2, Info } from "lucide-react";
 import { getBackdropUrl, getDisplayTitle, getPosterUrl, type MovieDetail } from "@/lib/tmdb";
@@ -92,10 +92,16 @@ const TonightPickOverlay = ({
   // canReveal = les textes sont prêts ET au moins 2.2s se sont écoulées depuis l'apparition du film
   const canReveal = isTextsReady && localReady;
 
-  // Posters disponibles pour le mur de fond en stage 1 (pool de la session précédente)
-  const posterWallPaths = tonightPool
-    .map((m) => m.poster_path)
-    .filter(Boolean) as string[];
+  // Mémorise le dernier pool non-vide — survit à setChatMoviesPool(null) qui précède setTonightLoading
+  const lastPosterPathsRef = useRef<string[]>([]);
+  useEffect(() => {
+    const paths = tonightPool.map((m) => m.poster_path).filter(Boolean) as string[];
+    if (paths.length >= 2) lastPosterPathsRef.current = paths;
+  }, [tonightPool]);
+
+  // Posters pour le mur de fond en stage 1 : pool courant si dispo, sinon dernier pool mémorisé
+  const rawPosterPaths = tonightPool.map((m) => m.poster_path).filter(Boolean) as string[];
+  const posterWallPaths = rawPosterPaths.length >= 2 ? rawPosterPaths : lastPosterPathsRef.current;
 
   const year = movie
     ? ((movie.release_date || (movie as any).first_air_date) as string | undefined)?.substring(0, 4)
@@ -152,14 +158,18 @@ const TonightPickOverlay = ({
                 className="absolute inset-0 z-20 overflow-hidden"
               >
                 {/* Mur d'affiches : 4 colonnes défilantes à vitesses décalées */}
-                {posterWallPaths.length >= 4 && (
+                {posterWallPaths.length >= 2 && (
                   <div
                     className="absolute inset-0 flex gap-1 overflow-hidden"
                     style={{ opacity: 0.42, filter: "grayscale(30%) blur(0.5px)" }}
                   >
                     {[0, 1, 2, 3].map((ci) => {
-                      const raw = posterWallPaths.filter((_, i) => i % 4 === ci);
-                      const col = [...raw, ...raw]; // double pour boucle seamless
+                      // Distribution cyclique : toutes les colonnes sont toujours remplies
+                      const perCol = Math.max(1, Math.ceil(posterWallPaths.length / 4));
+                      const items = Array.from({ length: perCol }, (_, i) =>
+                        posterWallPaths[(ci + i * 4) % posterWallPaths.length]
+                      );
+                      const col = [...items, ...items]; // double pour boucle seamless
                       const dur = [23, 17, 27, 20][ci];
                       const goDown = ci % 2 === 1;
                       return (
@@ -191,7 +201,7 @@ const TonightPickOverlay = ({
                 <div
                   className="absolute inset-0"
                   style={{
-                    background: posterWallPaths.length >= 4
+                    background: posterWallPaths.length >= 2
                       ? "rgba(0,0,0,0.62)"
                       : "hsl(var(--background))",
                   }}
