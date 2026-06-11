@@ -1344,21 +1344,27 @@ const HomeScreen = ({
               return tmdb;
             }).filter(Number.isFinite) as number[];
           };
-          const [ids1, ids2] = await Promise.all([
-            fetchInteractedIds(duo.user1_id),
-            fetchInteractedIds(duo.user2_id),
+          const [[ids1, ids2], { data: vec1 }, { data: vec2 }] = await Promise.all([
+            Promise.all([fetchInteractedIds(duo.user1_id), fetchInteractedIds(duo.user2_id)]),
+            supabase.from("user_taste_vectors").select("top_clusters, rejected_clusters").eq("user_id", duo.user1_id).maybeSingle(),
+            supabase.from("user_taste_vectors").select("top_clusters, rejected_clusters").eq("user_id", duo.user2_id).maybeSingle(),
           ]);
           const tv = duo.taste_vector ? JSON.parse(duo.taste_vector) : null;
           const av = duo.avoidance_vector ? JSON.parse(duo.avoidance_vector) : null;
 
-          // Utilise le profil stocké du duo directement (comme un profil solo)
+          // Union des genres likés (l'un ou l'autre) + union des clusters
+          // Excluded : union des genres exclus par l'un ou l'autre (déjà stocké ainsi)
+          const unionTopGenres = [...new Set([...(duo.user1_genres ?? []), ...(duo.user2_genres ?? [])])];
+          const unionTopClusters = [...new Set([...(vec1?.top_clusters ?? []), ...(vec2?.top_clusters ?? [])])];
+          const unionRejectedClusters = [...new Set([...(vec1?.rejected_clusters ?? []), ...(vec2?.rejected_clusters ?? [])])];
+
           void generateTonightPick([], undefined, undefined, {
-            topGenres: duo.common_genres ?? [],
+            topGenres: unionTopGenres,
             excludedGenres: duo.excluded_genres ?? [],
             tasteVector: tv,
             avoidanceVector: av,
-            topClusters: duo.top_clusters ?? [],
-            rejectedClusters: duo.rejected_clusters ?? [],
+            topClusters: unionTopClusters,
+            rejectedClusters: unionRejectedClusters,
             partnerExcludeIds: [...new Set([...ids1, ...ids2])],
             user1Name: duo.user1_display_name ?? null,
             user2Name: duo.user2_display_name ?? null,
