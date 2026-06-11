@@ -97,7 +97,13 @@ const TonightPickOverlay = ({
   const recFromMovie: any = movie ? (movie as any).recommendationTexts || null : null;
   const rec: any =
     (recFromPool ? (recFromPool as any).recommendationTexts : null) || recFromMovie || null;
-  const adhesionScore = rec?.matchScore ?? rec?.score ?? rec?.confidence ?? matchInfo?.confidence ?? null;
+  const rawAdhesionScore = rec?.matchScore ?? rec?.score ?? rec?.confidence ?? matchInfo?.confidence ?? null;
+  // Floor : ne pas afficher un score inférieur à l'estimation initiale de SP (matchInfo.confidence)
+  // Évite les cas où movie-match renvoie un score très bas pour un film recommandé (ex: 7%)
+  const adhesionScore =
+    rawAdhesionScore != null && matchInfo?.confidence != null
+      ? Math.max(rawAdhesionScore, matchInfo.confidence)
+      : rawAdhesionScore;
   const asStr = (v: unknown): string | null => (typeof v === "string" && v.length > 0 ? v : null);
   const recReason = asStr(rec?.reason);
   const matchReason = asStr(matchInfo?.reason);
