@@ -1802,6 +1802,7 @@ const HomeScreen = ({
         onInteraction={(type) => void handleMovieAction(type)}
         onMoreSuggestions={() => void handleMoreSuggestions()}
         expectedCount={quickFilters.recommendationCount}
+        loadingLog={loadingLog}
         userName={
           (user?.user_metadata?.full_name as string | undefined) ||
           (user?.user_metadata?.name as string | undefined) ||

@@ -27,6 +27,7 @@ interface TonightPickOverlayProps {
   onMoreSuggestions: () => void;
   expectedCount?: number;
   userName?: string;
+  loadingLog?: string[];
 }
 
 const TonightPickOverlay = ({
@@ -50,6 +51,7 @@ const TonightPickOverlay = ({
   onMoreSuggestions,
   expectedCount,
   userName,
+  loadingLog,
 }: TonightPickOverlayProps) => {
   const interaction = useMovieInteraction(movie?.id);
   const displayCount = expectedCount ?? tonightPool.length;
@@ -166,17 +168,39 @@ const TonightPickOverlay = ({
                   animate={{ opacity: [0.05, 0.55, 0.15, 0.5, 0.05], scale: [1, 1.15, 0.92, 1.08, 1] }}
                   transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 1.4 }}
                 />
+                {/* Phrases de recherche */}
+                {loadingLog && loadingLog.length > 0 && (
+                  <div className="absolute bottom-28 left-0 right-0 px-10 flex flex-col items-center gap-1.5">
+                    <AnimatePresence initial={false}>
+                      {loadingLog.slice(-3).map((line, i, arr) => (
+                        <motion.p
+                          key={line}
+                          initial={{ opacity: 0, y: 6 }}
+                          animate={{ opacity: i === arr.length - 1 ? 0.85 : 0.28, y: 0 }}
+                          transition={{ duration: 0.4 }}
+                          className="text-[13px] font-sans text-center leading-snug text-foreground/70"
+                        >
+                          {line}
+                        </motion.p>
+                      ))}
+                    </AnimatePresence>
+                  </div>
+                )}
               </motion.div>
             )}
           </AnimatePresence>
 
-          {/* Stage 2-3 : backdrop cinématographique (apparaît quand le film est connu) */}
+          {/* Stage 2-3 : backdrop flou → net (1-2s de flou avant révélation) */}
           {movie && (
             <motion.div
               key={movie.id}
-              initial={{ scale: 1.08, opacity: 0 }}
-              animate={{ scale: 1.02, opacity: 1 }}
-              transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
+              initial={{ scale: 1.08, opacity: 0, filter: "blur(18px)" }}
+              animate={{ scale: 1.02, opacity: 1, filter: "blur(0px)" }}
+              transition={{
+                opacity: { duration: 0.9, ease: "easeOut" },
+                scale: { duration: 2.5, ease: [0.22, 1, 0.36, 1] },
+                filter: { duration: 1.4, delay: 1.6, ease: "easeOut" },
+              }}
               className="absolute inset-0 bg-cover bg-center bg-no-repeat"
               style={{
                 backgroundImage: `url(${getBackdropUrl(movie.backdrop_path) || getPosterUrl(movie.poster_path, "w780")})`,
