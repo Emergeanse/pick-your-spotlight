@@ -122,24 +122,49 @@ const TonightPickOverlay = ({
           transition={{ duration: 0.4 }}
           className="fixed inset-0 z-50 flex flex-col"
         >
-          {/* Stage 1 : écran générique flouté pendant que surprise-personalized tourne */}
+          {/* Stage 1 : lumières violettes pulsantes pendant que surprise-personalized tourne */}
           <AnimatePresence>
             {!movie && (
               <motion.div
                 key="stage1-loading"
-                initial={{ opacity: 1 }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.8, ease: "easeOut" }}
-                className="absolute inset-0 z-20 bg-background"
+                className="absolute inset-0 z-20 bg-background overflow-hidden"
               >
+                {/* Lumière principale — monte en puissance depuis le bas */}
                 <motion.div
-                  className="absolute inset-0"
+                  className="absolute"
                   style={{
-                    background:
-                      "radial-gradient(ellipse 90% 60% at 50% 55%, rgba(120,80,255,0.07) 0%, transparent 70%)",
+                    width: "160%", height: "65%",
+                    bottom: "-15%", left: "-30%",
+                    background: "radial-gradient(ellipse at 50% 80%, rgba(139,92,246,0.55) 0%, rgba(109,40,217,0.18) 45%, transparent 70%)",
                   }}
-                  animate={{ opacity: [0.4, 1, 0.4] }}
-                  transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
+                  animate={{ opacity: [0.3, 1, 0.55, 1, 0.3], scale: [0.88, 1.06, 0.96, 1.1, 0.88] }}
+                  transition={{ duration: 4.2, repeat: Infinity, ease: "easeInOut" }}
+                />
+                {/* Halo secondaire — légèrement décalé à gauche, rythme différent */}
+                <motion.div
+                  className="absolute"
+                  style={{
+                    width: "100%", height: "55%",
+                    bottom: "0%", left: "-20%",
+                    background: "radial-gradient(ellipse at 40% 90%, rgba(168,85,247,0.35) 0%, transparent 65%)",
+                  }}
+                  animate={{ opacity: [0.1, 0.7, 0.25, 0.65, 0.1], y: [0, -18, 6, -12, 0] }}
+                  transition={{ duration: 3.6, repeat: Infinity, ease: "easeInOut", delay: 0.6 }}
+                />
+                {/* Accent chaud — côté droit, très léger */}
+                <motion.div
+                  className="absolute"
+                  style={{
+                    width: "80%", height: "45%",
+                    bottom: "5%", right: "-20%",
+                    background: "radial-gradient(ellipse at 60% 85%, rgba(192,132,252,0.28) 0%, transparent 65%)",
+                  }}
+                  animate={{ opacity: [0.05, 0.55, 0.15, 0.5, 0.05], scale: [1, 1.15, 0.92, 1.08, 1] }}
+                  transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 1.4 }}
                 />
               </motion.div>
             )}
