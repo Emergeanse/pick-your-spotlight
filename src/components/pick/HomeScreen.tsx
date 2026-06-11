@@ -1100,7 +1100,16 @@ const HomeScreen = ({
                 prev.map((m) => {
                   if (m.id !== enrichedMovie.id) return m;
                   // Si movie-match retourne un fallback mais qu'on a déjà un reason LLM, le conserver
-                  if (isFallbackTexts && (m.recommendationTexts as any)?.reason) return m;
+                  // tout en injectant whyItMatches pour signaler que movie-match a répondu (débloque le flou).
+                  if (isFallbackTexts && (m.recommendationTexts as any)?.reason) {
+                    return {
+                      ...m,
+                      recommendationTexts: {
+                        ...(m.recommendationTexts as any),
+                        whyItMatches: (enrichedMovie.recommendationTexts as any)?.whyItMatches ?? "",
+                      },
+                    } as MovieDetail;
+                  }
                   return enrichedMovie as MovieDetail;
                 }),
               );
