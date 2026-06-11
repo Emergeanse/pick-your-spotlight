@@ -225,11 +225,7 @@ const TonightPickOverlay = ({
           {/* Wrapper apparition — flou + scale pendant que l'IA analyse, révélation quand prêt */}
           <motion.div
             key={movie.id}
-            initial={{
-              filter: isTextsReady ? "blur(0px)" : "blur(8px)",
-              scale: isTextsReady ? 1 : 0.97,
-              opacity: isTextsReady ? 1 : 0.6,
-            }}
+            initial={{ filter: "blur(8px)", scale: 0.97, opacity: 0.6 }}
             animate={{
               filter: isTextsReady ? "blur(0px)" : "blur(8px)",
               scale: isTextsReady ? 1 : 0.97,
