@@ -83,8 +83,10 @@ const TonightPickOverlay = ({
     ? stripped.charAt(0).toUpperCase() + stripped.slice(1)
     : rawReason;
   const teaser = shortReason;
-  // True once movie-match has responded (even fallback) — blur only while truly loading
-  const isTextsReady = rec !== null;
+  // True uniquement quand movie-match a répondu (whyItMatches présent même en fallback).
+  // rec peut être non-null dès l'arrivée du LLM-reason de surprise-personalized (champ "reason"),
+  // mais whyItMatches n'existe que dans la réponse movie-match → bon discriminant.
+  const isTextsReady = !!(rec?.whyItMatches);
 
   const year = ((movie.release_date || (movie as any).first_air_date) as string | undefined)?.substring(0, 4);
   const primaryGenre = movie.genres?.[0]?.name;
@@ -222,6 +224,12 @@ const TonightPickOverlay = ({
 
           {/* Wrapper apparition — flou + scale pendant que l'IA analyse, révélation quand prêt */}
           <motion.div
+            key={movie.id}
+            initial={{
+              filter: isTextsReady ? "blur(0px)" : "blur(8px)",
+              scale: isTextsReady ? 1 : 0.97,
+              opacity: isTextsReady ? 1 : 0.6,
+            }}
             animate={{
               filter: isTextsReady ? "blur(0px)" : "blur(8px)",
               scale: isTextsReady ? 1 : 0.97,
