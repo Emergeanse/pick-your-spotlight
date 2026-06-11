@@ -26,8 +26,6 @@ import { listFeedbackByType } from "@/lib/feedback";
 import { getMyPreferences } from "@/lib/preferences";
 
 import BrandHeader from "./BrandHeader";
-import PickCharacter from "./PickCharacter";
-import pickDefault from "@/assets/pick-squirrel.png";
 import QuickFilters, { type QuickFilterState, type ProfileDefaults } from "./QuickFilters";
 import TasteTrainer from "./TasteTrainer";
 import DiscoverySection from "./DiscoverySection";
@@ -1498,25 +1496,6 @@ const HomeScreen = ({
       <div className="relative z-10 h-full overflow-y-auto overscroll-y-contain touch-[pan-y_pinch-zoom] scrollbar-hide">
         {/* ─── Cinematic Hero ─── */}
         <section className="relative pt-14 pb-2 px-5 md:px-8">
-          {/* Mascot floating on the right with violet halo */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.92, x: 12 }}
-            animate={{ opacity: 1, scale: 1, x: 0 }}
-            transition={{ delay: 0.15, duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-            className="pointer-events-none absolute right-0 top-12 w-[55%] max-w-[280px] flex justify-end pr-1"
-          >
-            <div className="relative">
-              <div
-                className="absolute inset-0 -z-10 blur-3xl opacity-70"
-                style={{
-                  background:
-                    "radial-gradient(ellipse at center, hsl(var(--primary) / 0.32), transparent 70%)",
-                }}
-              />
-              <PickCharacter mood="wave" size="lg" animate />
-            </div>
-          </motion.div>
-
           {/* Eyebrow */}
           <motion.div
             initial={{ opacity: 0, y: 8 }}
@@ -1559,13 +1538,8 @@ const HomeScreen = ({
             <span className="italic font-bold">
               « Je t’ai préparé une sélection brutale et visuelle ! »
             </span>
-            <span className="mt-1 flex items-center gap-1.5 text-foreground/60 not-italic font-normal">
-              <span>— Pick</span>
-              <img
-                src={pickDefault}
-                alt="Pick"
-                className="w-7 h-7 object-contain drop-shadow-sm"
-              />
+            <span className="mt-1 text-foreground/60 not-italic font-normal">
+              — Pick
             </span>
           </motion.p>
 
