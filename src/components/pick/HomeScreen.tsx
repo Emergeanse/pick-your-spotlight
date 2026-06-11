@@ -379,15 +379,15 @@ const HomeScreen = ({
     if (duoIdFromSession) {
       sessionStorage.removeItem("pick_open_find_choice_duo_id");
       setFindChoiceDuoId(duoIdFromSession);
-      // Délai pour éviter le bleed-through du tap depuis DuoPage
-      setTimeout(() => setShowFindChoice(true), 300);
+      // Délai minimal pour éviter le bleed-through du tap depuis DuoPage
+      setTimeout(() => setShowFindChoice(true), 100);
       return;
     }
     // Bridge legacy via location.state (autres appelants)
     const state = location.state as { openFindChoice?: boolean; duoId?: string } | null;
     if (state?.openFindChoice) {
       setFindChoiceDuoId(state.duoId);
-      setTimeout(() => setShowFindChoice(true), 300);
+      setTimeout(() => setShowFindChoice(true), 100);
       navigate("/app", { replace: true, state: {} });
     }
   }, [location.state]);

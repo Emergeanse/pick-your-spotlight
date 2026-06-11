@@ -33,17 +33,18 @@ const HomeScreenChoiceModal = ({
   const [duoListOpen, setDuoListOpen] = useState(false);
 
   useEffect(() => {
-    if (open && user) {
+    if (!open) { setMode("solo"); setSelectedDuoId(null); setDuoListOpen(false); return; }
+    // Appliquer le duo immédiatement (sans attendre l'API) pour éviter le flash "solo"
+    if (initialDuoId) {
+      setMode("duo");
+      setSelectedDuoId(initialDuoId);
+      setDuoListOpen(false);
+    }
+    if (user) {
       fetchMyDuos(user.id).then((fetched) => {
         setDuos(fetched);
-        if (initialDuoId && fetched.some(d => d.id === initialDuoId)) {
-          setMode("duo");
-          setSelectedDuoId(initialDuoId);
-          setDuoListOpen(false);
-        }
       });
     }
-    if (!open) { setMode("solo"); setSelectedDuoId(null); setDuoListOpen(false); }
   }, [open, user, initialDuoId]);
   const title =
     mediaType === "movie"
