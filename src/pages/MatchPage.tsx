@@ -161,8 +161,8 @@ export default function MatchPage() {
     <div className="min-h-screen bg-background flex flex-col relative overflow-hidden">
       {/* Background */}
       <div
-        className="absolute inset-x-0 top-0 h-[80%] bg-cover bg-top bg-no-repeat pointer-events-none"
-        style={{ backgroundImage: `url(${matchBackground})`, maskImage: "linear-gradient(to bottom, black 60%, transparent 100%)", WebkitMaskImage: "linear-gradient(to bottom, black 60%, transparent 100%)", opacity: 0.4 }}
+        className="absolute inset-x-0 top-0 h-[90%] bg-cover bg-no-repeat pointer-events-none"
+        style={{ backgroundImage: `url(${matchBackground})`, backgroundPosition: "50% -8%", maskImage: "linear-gradient(to bottom, black 60%, transparent 100%)", WebkitMaskImage: "linear-gradient(to bottom, black 60%, transparent 100%)", opacity: 0.4 }}
       />
       <div
         className="absolute inset-0 pointer-events-none"
