@@ -1726,40 +1726,7 @@ const HomeScreen = ({
         }}
       />
 
-      <AnimatePresence>
-        {tonightLoading && !tonightPick && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
-            className="absolute inset-0 z-30 flex flex-col items-center justify-center"
-          >
-            <div className="absolute inset-0 bg-cover bg-center bg-no-repeat" style={{ backgroundImage: `url(${loadingBackground})` }} />
-            <div className="absolute inset-0 bg-gradient-to-t from-background via-background/70 to-background/20" />
-            <div className="relative z-10 flex flex-col items-center gap-6 w-full max-w-sm px-6">
-              <div className="w-full max-h-48 overflow-y-auto scrollbar-hide flex flex-col gap-1.5 scroll-smooth">
-                <AnimatePresence initial={false}>
-                  {loadingLog.map((line, i) => (
-                    <motion.p
-                      key={i}
-                      initial={{ opacity: 0, y: 6 }}
-                      animate={{ opacity: i === loadingLog.length - 1 ? 1 : 0.35, y: 0 }}
-                      transition={{ duration: 0.4 }}
-                      className="text-sm text-center leading-snug"
-                      style={{ color: i === loadingLog.length - 1 ? "hsl(var(--foreground))" : "hsl(var(--muted-foreground))" }}
-                    >
-                      {line}
-                    </motion.p>
-                  ))}
-                </AnimatePresence>
-                <div ref={loadingLogEndRef} />
-              </div>
-              <PickCharacter mood="think" size="md" animate />
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* Ancien panneau écureuil remplacé par le stage 1 de TonightPickOverlay */}
 
       {/* Panneau "aucun résultat" — filtres trop stricts */}
       <AnimatePresence>
@@ -1816,7 +1783,7 @@ const HomeScreen = ({
       </AnimatePresence>
 
       <TonightPickOverlay
-        open={!!tonightPick && !flipDetailMovie}
+        open={(tonightLoading || !!tonightPick) && !flipDetailMovie}
         movie={tonightPick}
         tonightPool={tonightPool}
         tonightPickIndex={tonightPickIndex}
