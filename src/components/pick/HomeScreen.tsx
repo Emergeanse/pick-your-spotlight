@@ -1336,13 +1336,13 @@ const HomeScreen = ({
         const { data: duo } = await (supabase as any)
           .from("duo_taste_profiles").select("*").eq("id", duoId).single();
         if (duo && duo.user2_id) {
-          // Interactions des deux users à exclure — cohérent avec loadUnifiedUserFeedbackState solo
+          // Toutes les interactions des deux users (sans filtre sur feedback_type — certaines
+          // anciennes lignes ont feedback_type=null ET label=null mais doivent quand même être exclues)
           const fetchInteractedIds = async (userId: string): Promise<number[]> => {
             const { data } = await supabase
               .from("user_item_feedback")
               .select("item:item_id(tmdb_id)")
-              .eq("user_id", userId)
-              .or("feedback_type.in.(like,love,seen,skip,dislike,not_for_me,unknown),and(feedback_type.is.null,label.in.(like,love,seen,skip,dislike,not_for_me,unknown))");
+              .eq("user_id", userId);
             return (data ?? []).map((r: any) => {
               const item = r.item;
               const tmdb = Array.isArray(item) ? item[0]?.tmdb_id : item?.tmdb_id;
@@ -1356,6 +1356,7 @@ const HomeScreen = ({
             supabase.from("profiles").select("excluded_genres").eq("id", duo.user1_id).maybeSingle(),
             supabase.from("profiles").select("excluded_genres").eq("id", duo.user2_id).maybeSingle(),
           ]);
+          console.log(`[DUO] IDs interagis: user1=${ids1.length} | user2=${ids2.length} | union=${new Set([...ids1, ...ids2]).size}`);
           const tv = duo.taste_vector ? JSON.parse(duo.taste_vector) : null;
           const av = duo.avoidance_vector ? JSON.parse(duo.avoidance_vector) : null;
 
