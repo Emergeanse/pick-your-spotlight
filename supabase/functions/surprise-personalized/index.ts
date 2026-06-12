@@ -150,7 +150,7 @@ serve(async (req) => {
           .from("user_item_feedback")
           .select("item:item_id(tmdb_id)")
           .in("user_id", duoUserIds)
-          .or("action.in.(not_for_me,dislike),feedback_type.in.(not_for_me,dislike)")
+          .or("action.in.(not_for_me,dislike,seen),feedback_type.in.(not_for_me,dislike,seen)")
           .range(0, 9999);
         duoExcludeTmdbIds = (feedbackRows ?? [])
           .map((r: any) => {
@@ -177,7 +177,7 @@ serve(async (req) => {
           .from("user_item_feedback")
           .select("item:item_id(tmdb_id)")
           .eq("user_id", userId)
-          .or("action.in.(not_for_me,dislike),feedback_type.in.(not_for_me,dislike)")
+          .or("action.in.(not_for_me,dislike,seen),feedback_type.in.(not_for_me,dislike,seen)")
           .range(0, 9999);
         mainUserExcludeTmdbIds = (feedbackRows ?? [])
           .map((r: any) => {

@@ -451,7 +451,7 @@ export async function getUserTasteProfile() {
     alreadySeenIds: watchedIds,
     watchlistIds,
     rejectedIds,
-    excludeIds: [...new Set([...rejectedIds, ...unlikedIds])],
+    excludeIds: [...new Set([...watchedIds, ...rejectedIds, ...unlikedIds])],
 
     preferredPlatforms: prefs.platforms.liked,
     excludedPlatforms: prefs.platforms.excluded,

@@ -83,7 +83,7 @@ BEGIN
       JOIN public.catalog_items ci ON ci.id = uif.item_id
       WHERE uif.user_id = p_user_id
         AND ci.tmdb_id = me.tmdb_id
-        AND (uif.action IN ('not_for_me', 'dislike') OR uif.feedback_type IN ('not_for_me', 'dislike'))
+        AND (uif.action IN ('not_for_me', 'dislike', 'seen') OR uif.feedback_type IN ('not_for_me', 'dislike', 'seen'))
     ))
     -- Exclure les films rejetés par le partenaire du duo (p_user_id2)
     AND (p_user_id2 IS NULL OR NOT EXISTS (

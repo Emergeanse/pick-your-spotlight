@@ -1344,7 +1344,7 @@ const HomeScreen = ({
               .from("user_item_feedback")
               .select("item:item_id(tmdb_id)")
               .eq("user_id", userId)
-              .or("action.in.(not_for_me,dislike),feedback_type.in.(not_for_me,dislike)");
+              .or("action.in.(not_for_me,dislike,seen),feedback_type.in.(not_for_me,dislike,seen)");
             return (data ?? []).map((r: any) => {
               const item = r.item;
               const tmdb = Array.isArray(item) ? item[0]?.tmdb_id : item?.tmdb_id;
