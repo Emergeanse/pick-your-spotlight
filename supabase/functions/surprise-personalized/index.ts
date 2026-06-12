@@ -461,6 +461,8 @@ serve(async (req) => {
       };
 
       // Niveaux d'escalade des contraintes de goût (exclude_ids TOUJOURS complet)
+      // La plateforme n'est JAMAIS levée en SQL — si les 4 niveaux échouent, le fallback TMDB discover
+      // prend le relais avec with_watch_providers (côté TMDB API), ce qui est plus fiable.
       const levels = [
         // niveau 0 : toutes contraintes, avec voix si présentes
         (extra: any) => ({ ...buildRpcParams({ withLang: true, withYear: true, withPlatform: true }), ...extra }),
@@ -470,8 +472,6 @@ serve(async (req) => {
         (extra: any) => ({ ...buildRpcParams({ withLang: false, withYear: false, withPlatform: true }), liked_genres: [], ...extra }),
         // niveau 3 : sans goût restrictif — excluded_genres conservé (contrainte de sécurité, pas de goût)
         (extra: any) => ({ ...buildRpcParams({ withLang: false, withYear: false, withPlatform: true }), liked_genres: [], min_rating: 0, p_min_popularity: null, ...extra }),
-        // niveau 4 : sans plateforme (dernier recours absolu) — excluded_genres conservé
-        (extra: any) => ({ ...buildRpcParams({ withLang: false, withYear: false, withPlatform: false }), liked_genres: [], min_rating: 0, p_min_popularity: null, ...extra }),
       ];
 
       try {
@@ -479,7 +479,6 @@ serve(async (req) => {
 
         for (let level = 0; level < levels.length && countNonInteracted(candidates) < TARGET; level++) {
           if (level >= 1) platformFallbackTriggered = true;
-          if (level === 4) console.log(`[SP] FALLBACK ABSOLU — sans plateforme`);
 
           // COUNT avant requête : combien de films correspondent aux filtres de ce niveau
           try {
