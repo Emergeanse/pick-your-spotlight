@@ -305,6 +305,7 @@ const HomeScreen = ({
 
   const [bgImages, setBgImages] = useState<string[]>([]);
   const [findChoiceDuoId, setFindChoiceDuoId] = useState<string | undefined>(undefined);
+  const currentDuoOverridesRef = useRef<DuoOverrides | null>(null);
   const [currentBgIndex, setCurrentBgIndex] = useState(0);
 
   const [tonightPick, setTonightPick] = useState<MovieDetail | null>(null);
@@ -1359,7 +1360,7 @@ const HomeScreen = ({
           const unionRejectedClusters = [...new Set([...(vec1?.rejected_clusters ?? []), ...(vec2?.rejected_clusters ?? [])])];
           const unionExcludedGenres = [...new Set([...((prof1 as any)?.excluded_genres ?? []), ...((prof2 as any)?.excluded_genres ?? [])])];
 
-          void generateTonightPick([], undefined, undefined, {
+          const duoOverrides: DuoOverrides = {
             topGenres: unionTopGenres,
             excludedGenres: unionExcludedGenres,
             tasteVector: tv,
@@ -1369,14 +1370,17 @@ const HomeScreen = ({
             partnerExcludeIds: [...new Set([...ids1, ...ids2])],
             user1Name: duo.user1_display_name ?? null,
             user2Name: duo.user2_display_name ?? null,
-          });
+          };
+          currentDuoOverridesRef.current = duoOverrides;
+          void generateTonightPick([], undefined, undefined, duoOverrides);
           return;
         }
       } catch (e) {
         console.error("[Duo] handleAutoPick fetch error:", e);
       }
     }
-    void generateTonightPick(rejectedIds);
+    currentDuoOverridesRef.current = null;
+    void generateTonightPick(rejectedIds, undefined, null, currentDuoOverridesRef.current ?? undefined);
   };
 
   const handleCloseTonightPick = () => setTonightPick(null);
@@ -1420,7 +1424,7 @@ const HomeScreen = ({
     setTonightSeenMovieIds(new Set());
     setNoResultsInfo(null);
 
-    await generateTonightPick(nextRejected, rejContext);
+    await generateTonightPick(nextRejected, rejContext, null, currentDuoOverridesRef.current ?? undefined);
   };
 
   const handleMovieAction = async (type: "already_seen" | "dislike" | string) => {
@@ -1480,7 +1484,7 @@ const HomeScreen = ({
     setTonightSeenMovieIds(new Set());
     setNoResultsInfo(null);
 
-    await generateTonightPick(nextRejected, rejContext);
+    await generateTonightPick(nextRejected, rejContext, null, currentDuoOverridesRef.current ?? undefined);
   };
 
   return (
@@ -1729,7 +1733,7 @@ const HomeScreen = ({
                     onClick={() => {
                       setQuickFilters((f) => ({ ...f, matchThreshold: noResultsInfo.suggestThreshold! }));
                       setNoResultsInfo(null);
-                      void generateTonightPick(rejectedIds);
+                      void generateTonightPick(rejectedIds, undefined, null, currentDuoOverridesRef.current ?? undefined);
                     }}
                     className="px-3.5 py-1.5 rounded-full bg-primary/15 border border-primary/25 text-primary text-[12px] font-sans font-medium hover:bg-primary/25 transition-colors"
                   >
@@ -1741,7 +1745,7 @@ const HomeScreen = ({
                     onClick={() => {
                       setUserMinRating(0);
                       setNoResultsInfo(null);
-                      void generateTonightPick(rejectedIds);
+                      void generateTonightPick(rejectedIds, undefined, null, currentDuoOverridesRef.current ?? undefined);
                     }}
                     className="px-3.5 py-1.5 rounded-full bg-foreground/8 border border-border/20 text-foreground/60 text-[12px] font-sans font-medium hover:bg-foreground/12 transition-colors"
                   >
@@ -1751,7 +1755,7 @@ const HomeScreen = ({
                 <button
                   onClick={() => {
                     setNoResultsInfo(null);
-                    void generateTonightPick(rejectedIds);
+                    void generateTonightPick(rejectedIds, undefined, null, currentDuoOverridesRef.current ?? undefined);
                   }}
                   className="px-3.5 py-1.5 rounded-full bg-foreground/8 border border-border/20 text-foreground/40 text-[12px] font-sans font-medium hover:bg-foreground/12 transition-colors"
                 >
