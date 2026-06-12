@@ -66,7 +66,7 @@ serve(async (req) => {
 
   try {
     const t0 = Date.now();
-    console.log("[SP] ✅ version 2026-06-12-v12 — duo server-side exclusion + retry qualité");
+    console.log("[SP] ✅ version 2026-06-12-v14 — usedIds complet (solo+duo) via server-side fetch");
     const {
       tasteProfile,
       userTasteVector,
@@ -149,7 +149,8 @@ serve(async (req) => {
         const { data: feedbackRows } = await sbAdmin
           .from("user_item_feedback")
           .select("item:item_id(tmdb_id)")
-          .in("user_id", duoUserIds);
+          .in("user_id", duoUserIds)
+          .range(0, 9999);
         duoExcludeTmdbIds = (feedbackRows ?? [])
           .map((r: any) => {
             const item = r.item;
@@ -163,12 +164,39 @@ serve(async (req) => {
       }
     }
 
+    // Solo : fetch complet des interactions de l'utilisateur principal pour garantir
+    // que usedIds couvre tout l'historique dans le fallback discover/trending.
+    // Le JOIN SQL (p_user_id) couvre la cascade SQL mais usedIds ne contient
+    // en solo que les IDs de session — d'où les films "déjà vus" qui réapparaissent.
+    let mainUserExcludeTmdbIds: number[] = [];
+    if (userId && duoUserIds.length === 0 && SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) {
+      try {
+        const sbAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+        const { data: feedbackRows } = await sbAdmin
+          .from("user_item_feedback")
+          .select("item:item_id(tmdb_id)")
+          .eq("user_id", userId)
+          .range(0, 9999);
+        mainUserExcludeTmdbIds = (feedbackRows ?? [])
+          .map((r: any) => {
+            const item = r.item;
+            const tmdb = Array.isArray(item) ? item[0]?.tmdb_id : item?.tmdb_id;
+            return Number(tmdb);
+          })
+          .filter(Number.isFinite);
+        console.log(`[SP] Solo exclusion server-side: ${mainUserExcludeTmdbIds.length} IDs user`);
+      } catch (e) {
+        console.error("[SP] Solo exclusion fetch failed:", e);
+      }
+    }
+
     const normalizedExcludeIds = [
       ...new Set([
         ...(likedMovies || []).map((m: any) => Number(m.tmdb_id || m.id)).filter(Number.isFinite),
         ...(excludeIds || []).map((id: any) => Number(id)).filter(Number.isFinite),
         ...(tasteProfile?.excludeIds || []).map((id: any) => Number(id)).filter(Number.isFinite),
         ...duoExcludeTmdbIds,
+        ...mainUserExcludeTmdbIds,
       ]),
     ];
     const excludedSet = new Set(normalizedExcludeIds);
