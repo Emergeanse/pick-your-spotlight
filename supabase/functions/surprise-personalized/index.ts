@@ -241,7 +241,7 @@ serve(async (req) => {
           ])]
         : (moodBoostGenres ?? []).filter((g) => g in genreNameToId);
 
-    const hardExcludedFormats = ["Reality", "Soap", "Talk", "News", "Téléfilm", "Horreur"];
+    const hardExcludedFormats = ["Reality", "Soap", "Talk", "News", "Téléfilm", "Horreur", "Animation", "Kids", "Familial", "Famille"];
     const autoExcluded = hardExcludedFormats.filter((g) => !likedWithTv.includes(g));
     // Genres en fatigue (>= 3 occurrences) exclus en SQL — diversification forcée
     const effectiveExcludedGenres = [...new Set([
