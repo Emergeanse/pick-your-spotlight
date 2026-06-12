@@ -368,6 +368,11 @@ serve(async (req) => {
       ? [...new Set((platformIds as number[]).flatMap((id: number) => PLATFORM_FAMILIES[id] ?? [id]))]
       : null;
 
+    // Duo : le second user ID permet au SQL d'exclure ses interactions directement en DB
+    const partnerUserId: string | null = duoUserIds.length === 2
+      ? (duoUserIds.find((id: string) => id !== userId) ?? null)
+      : null;
+
     const buildRpcParams = (opts: { withLang: boolean; withYear: boolean; withPlatform: boolean }) => ({
       query_vector: `[${userTasteVector.join(",")}]`,
       match_count: sqlMatchCount,
@@ -377,7 +382,8 @@ serve(async (req) => {
       excluded_genres: effectiveExcludedGenres,
       liked_genres: effectiveLikedGenresSQL ?? likedGenresForSQL,
       max_duration: effectiveMaxDuration ?? null,
-      p_user_id: null, // exclude_ids + usedIds suffisent — p_user_id réduit trop le pool
+      p_user_id: userId ?? null,
+      p_user_id2: partnerUserId,
       p_original_language: opts.withLang ? (voiceOriginalLanguage ?? null) : null,
       p_min_year: opts.withYear ? (voiceDecade ?? null) : null,
       p_max_year: opts.withYear ? (voiceDecade != null ? voiceDecade + 9 : null) : null,
