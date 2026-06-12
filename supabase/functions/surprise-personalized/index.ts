@@ -66,7 +66,7 @@ serve(async (req) => {
 
   try {
     const t0 = Date.now();
-    console.log("[SP] ✅ version 2026-06-12-v15 — hardExcludedGenreIds dans fallback nucléaire");
+    console.log("[SP] ✅ version 2026-06-12-v16 — exclure uniquement not_for_me/dislike (films rouges)");
     const {
       tasteProfile,
       userTasteVector,
@@ -150,6 +150,7 @@ serve(async (req) => {
           .from("user_item_feedback")
           .select("item:item_id(tmdb_id)")
           .in("user_id", duoUserIds)
+          .or("action.in.(not_for_me,dislike),feedback_type.in.(not_for_me,dislike)")
           .range(0, 9999);
         duoExcludeTmdbIds = (feedbackRows ?? [])
           .map((r: any) => {
@@ -176,6 +177,7 @@ serve(async (req) => {
           .from("user_item_feedback")
           .select("item:item_id(tmdb_id)")
           .eq("user_id", userId)
+          .or("action.in.(not_for_me,dislike),feedback_type.in.(not_for_me,dislike)")
           .range(0, 9999);
         mainUserExcludeTmdbIds = (feedbackRows ?? [])
           .map((r: any) => {

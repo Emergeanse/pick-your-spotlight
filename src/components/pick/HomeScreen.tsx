@@ -1338,13 +1338,13 @@ const HomeScreen = ({
         const { data: duo } = await (supabase as any)
           .from("duo_taste_profiles").select("*").eq("id", duoId).single();
         if (duo && duo.user2_id) {
-          // Toutes les interactions des deux users (sans filtre sur feedback_type — certaines
-          // anciennes lignes ont feedback_type=null ET label=null mais doivent quand même être exclues)
+          // Seuls les films explicitement rejetés (rouge) sont exclus — vus/likés/skippés restent dans le pool
           const fetchInteractedIds = async (userId: string): Promise<number[]> => {
             const { data } = await supabase
               .from("user_item_feedback")
               .select("item:item_id(tmdb_id)")
-              .eq("user_id", userId);
+              .eq("user_id", userId)
+              .or("action.in.(not_for_me,dislike),feedback_type.in.(not_for_me,dislike)");
             return (data ?? []).map((r: any) => {
               const item = r.item;
               const tmdb = Array.isArray(item) ? item[0]?.tmdb_id : item?.tmdb_id;

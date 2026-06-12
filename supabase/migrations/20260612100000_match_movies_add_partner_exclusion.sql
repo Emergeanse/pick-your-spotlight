@@ -76,21 +76,23 @@ BEGIN
     AND (cardinality(p_excluded_clusters) = 0 OR me.cluster_labels IS NULL OR NOT (me.cluster_labels && p_excluded_clusters))
     AND (p_min_popularity IS NULL OR me.popularity IS NULL OR me.popularity >= p_min_popularity)
     AND (p_platform_ids IS NULL OR cardinality(p_platform_ids) = 0 OR me.platform_ids && p_platform_ids)
-    -- Exclure les films interagis par l'utilisateur principal
+    -- Exclure uniquement les films explicitement rejetés (rouge) — pas les vus/likés/skippés
     AND (p_user_id IS NULL OR NOT EXISTS (
       SELECT 1
       FROM public.user_item_feedback uif
       JOIN public.catalog_items ci ON ci.id = uif.item_id
       WHERE uif.user_id = p_user_id
         AND ci.tmdb_id = me.tmdb_id
+        AND (uif.action IN ('not_for_me', 'dislike') OR uif.feedback_type IN ('not_for_me', 'dislike'))
     ))
-    -- Exclure les films interagis par le partenaire du duo (p_user_id2)
+    -- Exclure les films rejetés par le partenaire du duo (p_user_id2)
     AND (p_user_id2 IS NULL OR NOT EXISTS (
       SELECT 1
       FROM public.user_item_feedback uif2
       JOIN public.catalog_items ci2 ON ci2.id = uif2.item_id
       WHERE uif2.user_id = p_user_id2
         AND ci2.tmdb_id = me.tmdb_id
+        AND (uif2.action IN ('not_for_me', 'dislike') OR uif2.feedback_type IN ('not_for_me', 'dislike'))
     ))
   ORDER BY me.embedding <=> query_vector
   LIMIT match_count;
