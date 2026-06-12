@@ -66,7 +66,7 @@ serve(async (req) => {
 
   try {
     const t0 = Date.now();
-    console.log("[SP] ✅ version 2026-06-12-v16 — exclure uniquement not_for_me/dislike (films rouges)");
+    console.log("[SP] ✅ version 2026-06-13-v17 — count avec p_user_id + contraintes dans sqlCountDiag");
     const {
       tasteProfile,
       userTasteVector,
@@ -443,7 +443,7 @@ serve(async (req) => {
     let platformFallbackTriggered = false;
     let finalCascadeLevel = -1;
     let finalRpcParamsSummary: Record<string, any> | null = null;
-    const sqlCountDiag: { level: number; total_in_db: number; available_after_exclusions: number }[] = [];
+    const sqlCountDiag: { level: number; total_in_db: number; available_after_exclusions: number; liked_genres?: string; excluded_genres_count?: number; min_rating?: number; platforms?: string; excluded_langs?: string; max_duration?: any; exclude_ids_count?: number }[] = [];
 
     if (SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY && userTasteVector) {
       const TARGET = 20; // 20 films de qualité suffisent — inutile de cascader jusqu'au niveau 3 pour en avoir 30
@@ -494,12 +494,25 @@ serve(async (req) => {
               p_min_popularity: countParams.p_min_popularity ?? null,
               p_platform_ids: countParams.p_platform_ids ?? null,
               exclude_ids: normalizedExcludeIds,
+              p_user_id: userId ?? null,
+              p_user_id2: partnerUserId,
             });
             if (countData?.[0]) {
               const total = Number((countData as any[])[0].total_in_db);
               const available = Number((countData as any[])[0].available_after_exclusions);
-              sqlCountDiag.push({ level, total_in_db: total, available_after_exclusions: available });
-              console.log(`[SP] COUNT niveau ${level}: ${total} films en base, ${available} disponibles après ${normalizedExcludeIds.length} exclusions`);
+              sqlCountDiag.push({
+                level,
+                total_in_db: total,
+                available_after_exclusions: available,
+                liked_genres: (countParams.liked_genres ?? []).join(", ") || "—",
+                excluded_genres_count: (countParams.excluded_genres ?? []).length,
+                min_rating: countParams.min_rating ?? 0,
+                platforms: countParams.p_platform_ids?.length > 0 ? `${countParams.p_platform_ids.length} plateformes` : "—",
+                excluded_langs: (countParams.p_excluded_languages ?? []).join(", ") || "—",
+                max_duration: countParams.max_duration ?? "—",
+                exclude_ids_count: normalizedExcludeIds.length,
+              });
+              console.log(`[SP] COUNT niveau ${level}: ${total} en base, ${available} dispo | genres_likés=[${(countParams.liked_genres ?? []).join(",")||"—"}] genres_exclus=${(countParams.excluded_genres ?? []).length} note>=${countParams.min_rating ?? 0} plateforme=${countParams.p_platform_ids?.length > 0 ? "oui" : "non"} exclude_ids=${normalizedExcludeIds.length}`);
             }
           } catch (e) {
             console.warn(`[SP] count_movie_candidates level=${level} failed:`, e);

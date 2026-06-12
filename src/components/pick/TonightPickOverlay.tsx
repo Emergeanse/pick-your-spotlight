@@ -344,7 +344,7 @@ const TonightPickOverlay = ({
           {/* Stage 2-3 : backdrop flou → net (1-2s de flou avant révélation) */}
           {movie && (
             <motion.div
-              key={movie.id}
+              key={`backdrop-${movie.id}`}
               initial={{ scale: 1.08, opacity: 0, filter: "blur(18px)" }}
               animate={{ scale: 1.02, opacity: 1, filter: "blur(0px)" }}
               transition={{
@@ -429,7 +429,7 @@ const TonightPickOverlay = ({
 
           {/* Stage 2-3 : wrapper apparition — flou + scale pendant que movie-match tourne */}
           {movie && <motion.div
-            key={movie.id}
+            key={`overlay-${movie.id}`}
             initial={{ filter: "blur(8px)", scale: 0.97, opacity: 0.6 }}
             animate={{
               filter: canReveal ? "blur(0px)" : "blur(8px)",
