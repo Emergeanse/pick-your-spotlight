@@ -66,7 +66,7 @@ serve(async (req) => {
 
   try {
     const t0 = Date.now();
-    console.log("[SP] ✅ version 2026-06-13-v18 — likedMovies hors normalizedExcludeIds");
+    console.log("[SP] ✅ version 2026-06-13-v19 — SQL explicite (sans vecteur) + pool LLM 50");
     const {
       tasteProfile,
       userTasteVector,
@@ -445,24 +445,26 @@ serve(async (req) => {
     let finalRpcParamsSummary: Record<string, any> | null = null;
     const sqlCountDiag: { level: number; total_in_db: number; available_after_exclusions: number; liked_genres?: string; excluded_genres_count?: number; min_rating?: number; platforms?: string; excluded_langs?: string; max_duration?: any; exclude_ids_count?: number }[] = [];
 
+    const TARGET = 20;
+    const EXPLICIT_TARGET = 50;
+    const seenIds = new Set<number>();
+
+    const countNonInteracted = (cands: any[]) =>
+      cands.filter((c: any) => !excludedSet.has(Number(c.tmdb_id))).length;
+
+    const addBatch = (batch: any[]) => {
+      const fresh = batch.filter((c: any) => !seenIds.has(Number(c.tmdb_id)));
+      fresh.forEach((c: any) => seenIds.add(Number(c.tmdb_id)));
+      candidates = [...candidates, ...fresh];
+    };
+
+    // ── ÉTAPE 1 : Cascade vectorielle ──
     if (SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY && userTasteVector) {
-      const TARGET = 20; // 20 films de qualité suffisent — inutile de cascader jusqu'au niveau 3 pour en avoir 30
       const BATCH = 500;
-      const excludedSet = new Set(normalizedExcludeIds);
-      const seenIds = new Set<number>();
-
-      const countNonInteracted = (cands: any[]) =>
-        cands.filter((c: any) => !excludedSet.has(Number(c.tmdb_id))).length;
-
-      const addBatch = (batch: any[]) => {
-        const fresh = batch.filter((c: any) => !seenIds.has(Number(c.tmdb_id)));
-        fresh.forEach((c: any) => seenIds.add(Number(c.tmdb_id)));
-        candidates = [...candidates, ...fresh];
-      };
 
       // Niveaux d'escalade des contraintes de goût (exclude_ids TOUJOURS complet)
-      // La plateforme n'est JAMAIS levée en SQL — si les 4 niveaux échouent, le fallback TMDB discover
-      // prend le relais avec with_watch_providers (côté TMDB API), ce qui est plus fiable.
+      // La plateforme n'est JAMAIS levée — si les 4 niveaux échouent, le SQL explicite
+      // puis le fallback TMDB discover (with_watch_providers) prennent le relais.
       const levels = [
         // niveau 0 : toutes contraintes, avec voix si présentes
         (extra: any) => ({ ...buildRpcParams({ withLang: true, withYear: true, withPlatform: true }), ...extra }),
@@ -474,9 +476,8 @@ serve(async (req) => {
         (extra: any) => ({ ...buildRpcParams({ withLang: false, withYear: false, withPlatform: true }), liked_genres: [], min_rating: 0, p_min_popularity: null, ...extra }),
       ];
 
+      const sb = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
       try {
-        const sb = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-
         for (let level = 0; level < levels.length && countNonInteracted(candidates) < TARGET; level++) {
           if (level >= 1) platformFallbackTriggered = true;
 
@@ -550,13 +551,66 @@ serve(async (req) => {
         }
 
         platformCandidatesCount = countNonInteracted(candidates);
-        console.log(`[SP] Pool final: ${candidates.length} candidats, ${platformCandidatesCount} non-interagis | excludeIds: ${normalizedExcludeIds.length}`);
+        console.log(`[SP] Pool vecteur: ${candidates.length} candidats, ${platformCandidatesCount} non-interagis | excludeIds: ${normalizedExcludeIds.length}`);
 
       } catch (e) {
         console.error("SQL vector search failed:", e);
       }
     } else {
-      console.log(`[SP] SQL skipped — userTasteVector: ${!!userTasteVector}, SUPABASE_URL: ${!!SUPABASE_URL}`);
+      console.log(`[SP] SQL vectoriel skipped — userTasteVector: ${!!userTasteVector}, SUPABASE_URL: ${!!SUPABASE_URL}`);
+    }
+
+    // ── ÉTAPE 1.4 : Fallback SQL explicite (sans vecteur) ──
+    // Activé si le cascade vectoriel n'a pas fourni assez de candidats (ou pas de vecteur de goût).
+    // Tri par note + popularité — plateforme TOUJOURS obligatoire, jamais levée.
+    // 3 niveaux progressifs : goût strict → goût relâché → plateforme seule.
+    if (SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY && countNonInteracted(candidates) < EXPLICIT_TARGET) {
+      console.log(`[SP] SQL explicite (sans vecteur) — pool actuel: ${countNonInteracted(candidates)}/${EXPLICIT_TARGET}`);
+      const sbEx = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+      const baseMinRating = minRating > 0 ? minRating : 6;
+
+      const explicitLevels = [
+        // A : liked_genres + note profil + plateforme + excluded_genres
+        { liked_genres: likedGenresForSQL, min_rating: baseMinRating },
+        // B : sans liked_genres, note assouplie à 5
+        { liked_genres: [] as string[], min_rating: Math.min(baseMinRating, 5) },
+        // C : plateforme seule, tous genres, note 0
+        { liked_genres: [] as string[], min_rating: 0 },
+      ];
+
+      for (const lvl of explicitLevels) {
+        if (countNonInteracted(candidates) >= EXPLICIT_TARGET) break;
+        const expandExcludeIds = [...normalizedExcludeIds, ...seenIds];
+        try {
+          const { data: explData, error: explError } = await sbEx.rpc("match_movies_explicit", {
+            match_count: EXPLICIT_TARGET,
+            exclude_ids: expandExcludeIds,
+            filter_media_type: effectiveFilterMediaType,
+            min_rating: lvl.min_rating,
+            excluded_genres: effectiveExcludedGenres,
+            liked_genres: lvl.liked_genres,
+            max_duration: effectiveMaxDuration ?? null,
+            p_user_id: userId ?? null,
+            p_excluded_languages: effectiveExcludedLangsArr,
+            p_platform_ids: expandedPlatformIds ?? null,
+            p_user_id2: partnerUserId,
+          });
+          if (explError) { console.error("[SP] SQL explicite erreur:", explError); continue; }
+          if (!explData || (explData as any[]).length === 0) {
+            console.log(`[SP] SQL explicite (liked=${lvl.liked_genres.length > 0}, note≥${lvl.min_rating}): 0 résultats`);
+            continue;
+          }
+          const before = countNonInteracted(candidates);
+          addBatch(explData as any[]);
+          const gained = countNonInteracted(candidates) - before;
+          console.log(`[SP] SQL explicite (liked=${lvl.liked_genres.length > 0}, note≥${lvl.min_rating}): +${(explData as any[]).length} bruts, +${gained} non-interagis → total: ${countNonInteracted(candidates)}/${EXPLICIT_TARGET}`);
+        } catch (e) {
+          console.error("[SP] SQL explicite exception:", e);
+        }
+      }
+
+      platformCandidatesCount = countNonInteracted(candidates);
+      console.log(`[SP] Pool final (vecteur+explicite): ${candidates.length} candidats, ${platformCandidatesCount} non-interagis`);
     }
 
     let filteredCandidates = candidates;
@@ -644,7 +698,7 @@ serve(async (req) => {
     // ── ÉTAPE 2 : Filtre plateforme → LLM sur les films disponibles uniquement ──
     let llmSelections: any[] = [];
     let llmFilteredAll = false;
-    const llmPoolSize = 30;
+    const llmPoolSize = 50;
     let llmPool: any[] = [];
     let llmInputPool: any[] = [];
     let capturedSystemPrompt: string | null = null;
