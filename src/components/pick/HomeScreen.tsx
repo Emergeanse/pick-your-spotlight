@@ -306,6 +306,7 @@ const HomeScreen = ({
   const [bgImages, setBgImages] = useState<string[]>([]);
   const [findChoiceDuoId, setFindChoiceDuoId] = useState<string | undefined>(undefined);
   const currentDuoOverridesRef = useRef<DuoOverrides | null>(null);
+  const handleAutoPickRef = useRef<((duoId?: string) => Promise<void>) | undefined>(undefined);
   const [currentBgIndex, setCurrentBgIndex] = useState(0);
 
   const [tonightPick, setTonightPick] = useState<MovieDetail | null>(null);
@@ -376,17 +377,17 @@ const HomeScreen = ({
 
   useEffect(() => {
     const state = location.state as { pickDuoId?: string; openFindChoice?: boolean; duoId?: string } | null;
-    // Bridge depuis DuoPage ("Trouve-nous un film !") via location.state
+    // Bridge depuis DuoPage ("Trouve-nous un film !") — bypass la modal, lance directement
     if (state?.pickDuoId) {
-      setFindChoiceDuoId(state.pickDuoId);
-      navigate("/app", { replace: true, state: {} });
-      setTimeout(() => setShowFindChoice(true), 150);
+      const duoId = state.pickDuoId;
+      window.history.replaceState({}, "", "/app");
+      setTimeout(() => handleAutoPickRef.current?.(duoId), 150);
       return;
     }
     // Bridge legacy via location.state (autres appelants)
     if (state?.openFindChoice) {
       setFindChoiceDuoId(state.duoId);
-      navigate("/app", { replace: true, state: {} });
+      window.history.replaceState({}, "", "/app");
       setTimeout(() => setShowFindChoice(true), 150);
     }
   }, [location.state]);
@@ -1382,6 +1383,9 @@ const HomeScreen = ({
     currentDuoOverridesRef.current = null;
     void generateTonightPick(rejectedIds, undefined, null, currentDuoOverridesRef.current ?? undefined);
   };
+
+  // Garde le ref à jour à chaque render pour éviter les stale closures dans les bridges
+  handleAutoPickRef.current = handleAutoPick;
 
   const handleCloseTonightPick = () => setTonightPick(null);
 
