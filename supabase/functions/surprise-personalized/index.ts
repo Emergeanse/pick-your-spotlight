@@ -66,7 +66,7 @@ serve(async (req) => {
 
   try {
     const t0 = Date.now();
-    console.log("[SP] ✅ version 2026-06-12-v14 — usedIds complet (solo+duo) via server-side fetch");
+    console.log("[SP] ✅ version 2026-06-12-v15 — hardExcludedGenreIds dans fallback nucléaire");
     const {
       tasteProfile,
       userTasteVector,
@@ -282,6 +282,8 @@ serve(async (req) => {
 
     const excludedGenreIds = new Set(effectiveExcludedGenres.map((g: string) => genreNameToId[g]).filter(Boolean));
     const likedGenreIds = new Set((topGenres as string[]).map((g) => genreNameToId[g]).filter(Boolean));
+    // Formats toujours exclus même dans le fallback nucléaire (Animation, Horreur, Reality…)
+    const hardExcludedGenreIds = new Set(autoExcluded.map((g: string) => genreNameToId[g]).filter(Boolean));
 
     const isMovieAllowed = (movie: any): boolean => {
       if (excludedSet.has(movie.id)) return false;
@@ -1093,7 +1095,7 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
           const data = await safeFetchJson(`https://api.themoviedb.org/3/discover/${searchType}?${params}`);
           for (const r of data?.results || []) {
             if (movies.length >= requestedCount) break;
-            if (usedIds.has(r.id) || excludedSet.has(r.id)) continue;
+            if (usedIds.has(r.id) || excludedSet.has(r.id) || r.genre_ids?.some((gid: number) => hardExcludedGenreIds.has(gid))) continue;
             const detail = await getMovieDetails(r.id, searchType);
             if (!detail || usedIds.has(detail.id)) continue;
             usedIds.add(detail.id);
@@ -1123,7 +1125,7 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
           const data = await safeFetchJson(url);
           for (const r of data?.results || []) {
             if (movies.length >= requestedCount) break;
-            if (usedIds.has(r.id) || excludedSet.has(r.id)) continue;
+            if (usedIds.has(r.id) || excludedSet.has(r.id) || r.genre_ids?.some((gid: number) => hardExcludedGenreIds.has(gid))) continue;
             const detail = await getMovieDetails(r.id, searchType);
             if (!detail || usedIds.has(detail.id)) continue;
             usedIds.add(detail.id);
