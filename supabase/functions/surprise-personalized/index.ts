@@ -66,7 +66,7 @@ serve(async (req) => {
 
   try {
     const t0 = Date.now();
-    console.log("[SP] ✅ version 2026-06-11-v10 — composite sim×100 + note (×1 au lieu de ×3)");
+    console.log("[SP] ✅ version 2026-06-12-v11 — retry qualité: <3 films au seuil → suppléments pool SQL");
     const {
       tasteProfile,
       userTasteVector,
@@ -810,6 +810,31 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
               matchScore: Math.round(72 + (((c.similarity ?? 0) * 100 + (c.vote_average ?? 0) - scoreMin) / scoreRange) * 20),
               reason: null,
             }));
+        }
+
+        // ── RETRY QUALITÉ : si < 3 films au seuil d'adhésion, compléter avec le reste du pool SQL ──
+        const qualifyThreshold = minMatchScore; // seuil de l'utilisateur (défaut 60)
+        const qualifyingCount = llmSelections.filter((s: any) => (s.matchScore ?? 0) >= qualifyThreshold).length;
+        if (qualifyingCount < 3) {
+          const evaluatedIds = new Set(llmSelections.map((s: any) => Number(s.tmdb_id)));
+          const remainingCandidates = originEligible
+            .filter((c: any) => !evaluatedIds.has(Number(c.tmdb_id)))
+            .sort((a: any, b: any) => compositeScore(b) - compositeScore(a))
+            .slice(0, targetCount);
+          if (remainingCandidates.length > 0) {
+            const poolScores2 = remainingCandidates.map((c: any) => compositeScore(c));
+            const scoreMin2 = Math.min(...poolScores2);
+            const scoreRange2 = (Math.max(...poolScores2) || 1) - scoreMin2 || 1;
+            const extraSelections = remainingCandidates.map((c: any) => ({
+              tmdb_id: Number(c.tmdb_id),
+              matchScore: Math.round(62 + ((compositeScore(c) - scoreMin2) / scoreRange2) * 15),
+              reason: null,
+            }));
+            console.log(`[SP] Retry qualité: ${qualifyingCount}/${llmSelections.length} films ≥ ${qualifyThreshold}% → +${extraSelections.length} candidats supplémentaires du pool SQL`);
+            llmSelections = [...llmSelections, ...extraSelections];
+          } else {
+            console.log(`[SP] Retry qualité: ${qualifyingCount}/${llmSelections.length} films ≥ ${qualifyThreshold}% mais pool SQL épuisé (${originEligible.length} candidats tous évalués)`);
+          }
         }
       }
     } else {
