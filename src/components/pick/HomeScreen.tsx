@@ -377,11 +377,12 @@ const HomeScreen = ({
 
   useEffect(() => {
     const state = location.state as { pickDuoId?: string; openFindChoice?: boolean; duoId?: string } | null;
-    // Bridge depuis DuoPage ("Trouve-nous un film !") — bypass la modal, lance directement
+    // Bridge depuis DuoPage ("Trouve-nous un film !") — ouvre la modal avec duo pré-sélectionné
     if (state?.pickDuoId) {
       const duoId = state.pickDuoId;
       window.history.replaceState({}, "", "/app");
-      setTimeout(() => handleAutoPickRef.current?.(duoId), 150);
+      setFindChoiceDuoId(duoId);
+      setTimeout(() => setShowFindChoice(true), 80);
       return;
     }
     // Bridge legacy via location.state (autres appelants)

@@ -46,14 +46,19 @@ const HomeScreenChoiceModal = ({
       });
     }
   }, [open, user, initialDuoId]);
-  const title =
-    mediaType === "movie"
+  const isDuo = mode === "duo" && !!selectedDuoId;
+
+  const title = isDuo
+    ? "Ce soir mérite quelque chose pour vous deux."
+    : mediaType === "movie"
       ? "Ce soir mérite un grand film."
       : mediaType === "tv"
         ? "Ce soir mérite une grande série."
         : "Ce soir mérite quelque chose de vrai.";
 
-  const subtitle = "Choisis comment je t'accompagne.";
+  const subtitle = isDuo
+    ? "Choisissez comment je vous accompagne."
+    : "Choisis comment je t'accompagne.";
 
   return (
     <AnimatePresence>
@@ -303,7 +308,7 @@ const HomeScreenChoiceModal = ({
                 </motion.div>
                 <div className="flex-1 min-w-0">
                   <h4 className="font-serif text-[17px] leading-tight text-foreground tracking-tight">
-                    Laisse-moi te surprendre
+                    {isDuo ? "Laissez-moi vous surprendre" : "Laisse-moi te surprendre"}
                   </h4>
                   <p className="text-foreground/65 text-[12.5px] font-sans mt-1 italic">
                     {getAutoPickSubtitle()}
@@ -334,10 +339,10 @@ const HomeScreenChoiceModal = ({
                 </div>
                 <div className="flex-1 min-w-0">
                   <h4 className="font-sans text-[14.5px] font-medium text-foreground/90 tracking-tight">
-                    Décris-moi ton mood
+                    {isDuo ? "Décrivez votre mood à deux" : "Décris-moi ton mood"}
                   </h4>
                   <p className="text-foreground/40 text-[12px] font-sans mt-0.5">
-                    Parle-moi de ton envie du moment.
+                    {isDuo ? "Parlez-moi de vos envies du moment." : "Parle-moi de ton envie du moment."}
                   </p>
                 </div>
               </div>
