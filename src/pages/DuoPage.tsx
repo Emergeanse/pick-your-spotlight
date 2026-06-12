@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import duoBg from "@/assets/duo-background.png";
 import { useLocation, useNavigate } from "react-router-dom";
+import { setPendingDuoPick } from "@/lib/duo-pending";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Users, Plus, Copy, Check, Trash2, Pencil, ChevronRight,
@@ -271,7 +272,8 @@ const DuoDetail = ({ duo: initialDuo, currentUserId, onBack, onRename, onDelete 
       {/* CTA Trouve-moi 1 film */}
       <button
         onClick={() => {
-          navigate("/app", { state: { pickDuoId: duo.id } });
+          setPendingDuoPick(duo.id);
+          navigate("/app");
         }}
         className="w-full mb-4 py-4 rounded-2xl flex items-center justify-center gap-2.5 font-sans font-semibold text-[14px] text-primary-foreground tracking-wide"
         style={{ background: "linear-gradient(135deg, hsl(var(--primary) / 0.9) 0%, hsl(var(--primary) / 0.65) 100%)" }}

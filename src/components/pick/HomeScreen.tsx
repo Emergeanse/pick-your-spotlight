@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate, useLocation } from "react-router-dom";
+import { consumePendingDuoPick } from "@/lib/duo-pending";
 import { toast } from "sonner";
 import { Sparkles, Mic, Flame, Eye, Coffee, Heart, Shuffle } from "lucide-react";
 
@@ -375,17 +376,18 @@ const HomeScreen = ({
     };
   }, []);
 
+  // Bridge depuis DuoPage — variable module-level, zéro dépendance React Router state
   useEffect(() => {
-    const state = location.state as { pickDuoId?: string; openFindChoice?: boolean; duoId?: string } | null;
-    // Bridge depuis DuoPage ("Trouve-nous un film !") — ouvre la modal avec duo pré-sélectionné
-    if (state?.pickDuoId) {
-      const duoId = state.pickDuoId;
-      window.history.replaceState({}, "", "/app");
-      setFindChoiceDuoId(duoId);
-      setTimeout(() => setShowFindChoice(true), 80);
-      return;
+    const pendingDuoId = consumePendingDuoPick();
+    if (pendingDuoId) {
+      setFindChoiceDuoId(pendingDuoId);
+      setShowFindChoice(true);
     }
-    // Bridge legacy via location.state (autres appelants)
+  }, []);
+
+  // Bridge legacy via location.state (autres appelants éventuels)
+  useEffect(() => {
+    const state = location.state as { openFindChoice?: boolean; duoId?: string } | null;
     if (state?.openFindChoice) {
       setFindChoiceDuoId(state.duoId);
       window.history.replaceState({}, "", "/app");
