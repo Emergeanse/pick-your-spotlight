@@ -807,7 +807,7 @@ const HomeScreen = ({
 
           tEdgeStart = performance.now();
           const data = await invokeSurprisePersonalized({
-            likedMovies: liked,
+            likedMovies: [],
             userTasteVector,
             tasteProfile: {
               ...tasteProfile,

@@ -66,7 +66,7 @@ serve(async (req) => {
 
   try {
     const t0 = Date.now();
-    console.log("[SP] ✅ version 2026-06-13-v17 — count avec p_user_id + contraintes dans sqlCountDiag");
+    console.log("[SP] ✅ version 2026-06-13-v18 — likedMovies hors normalizedExcludeIds");
     const {
       tasteProfile,
       userTasteVector,
@@ -194,7 +194,7 @@ serve(async (req) => {
 
     const normalizedExcludeIds = [
       ...new Set([
-        ...(likedMovies || []).map((m: any) => Number(m.tmdb_id || m.id)).filter(Number.isFinite),
+        // likedMovies intentionnellement absent : les films likés restent dans le pool
         ...(excludeIds || []).map((id: any) => Number(id)).filter(Number.isFinite),
         ...(tasteProfile?.excludeIds || []).map((id: any) => Number(id)).filter(Number.isFinite),
         ...duoExcludeTmdbIds,
