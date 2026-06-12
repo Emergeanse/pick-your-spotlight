@@ -66,7 +66,7 @@ serve(async (req) => {
 
   try {
     const t0 = Date.now();
-    console.log("[SP] ✅ version 2026-06-12-v11 — retry qualité: <3 films au seuil → suppléments pool SQL");
+    console.log("[SP] ✅ version 2026-06-12-v12 — duo server-side exclusion + retry qualité");
     const {
       tasteProfile,
       userTasteVector,
@@ -89,6 +89,7 @@ serve(async (req) => {
       voiceDecade: rawVoiceDecade,
       moodContext: rawMoodContext,
       moodBoostGenres: rawMoodBoostGenres,
+      duoUserIds: rawDuoUserIds,
     } = await req.json();
 
     // Voice overrides: what was stated replaces profile; what wasn't keeps profile defaults
@@ -139,11 +140,35 @@ serve(async (req) => {
       /* anonymous */
     }
 
+    // Duo : fetch server-side des interactions des deux users via service role (bypass RLS)
+    const duoUserIds: string[] = Array.isArray(rawDuoUserIds) && rawDuoUserIds.length === 2 ? rawDuoUserIds : [];
+    let duoExcludeTmdbIds: number[] = [];
+    if (duoUserIds.length === 2 && SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) {
+      try {
+        const sbAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+        const { data: feedbackRows } = await sbAdmin
+          .from("user_item_feedback")
+          .select("item:item_id(tmdb_id)")
+          .in("user_id", duoUserIds);
+        duoExcludeTmdbIds = (feedbackRows ?? [])
+          .map((r: any) => {
+            const item = r.item;
+            const tmdb = Array.isArray(item) ? item[0]?.tmdb_id : item?.tmdb_id;
+            return Number(tmdb);
+          })
+          .filter(Number.isFinite);
+        console.log(`[SP] Duo exclusion server-side: ${duoExcludeTmdbIds.length} IDs des 2 users`);
+      } catch (e) {
+        console.error("[SP] Duo exclusion fetch failed:", e);
+      }
+    }
+
     const normalizedExcludeIds = [
       ...new Set([
         ...(likedMovies || []).map((m: any) => Number(m.tmdb_id || m.id)).filter(Number.isFinite),
         ...(excludeIds || []).map((id: any) => Number(id)).filter(Number.isFinite),
         ...(tasteProfile?.excludeIds || []).map((id: any) => Number(id)).filter(Number.isFinite),
+        ...duoExcludeTmdbIds,
       ]),
     ];
     const excludedSet = new Set(normalizedExcludeIds);

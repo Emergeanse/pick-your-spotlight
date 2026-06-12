@@ -699,7 +699,7 @@ const HomeScreen = ({
     return data;
   };
 
-  type DuoOverrides = { topGenres: string[]; excludedGenres: string[]; tasteVector: number[] | null; avoidanceVector: number[] | null; topClusters: string[]; rejectedClusters: string[]; partnerExcludeIds: number[]; user1Name: string | null; user2Name: string | null };
+  type DuoOverrides = { topGenres: string[]; excludedGenres: string[]; tasteVector: number[] | null; avoidanceVector: number[] | null; topClusters: string[]; rejectedClusters: string[]; partnerExcludeIds: number[]; user1Name: string | null; user2Name: string | null; user1Id?: string; user2Id?: string };
   const generateTonightPick = async (excludeList: number[] = rejectedIds, rejectionContext?: RejectionContext, voiceFilters?: VoiceSearchFilters | null, duoOverrides?: DuoOverrides) => {
     generateTonightPickRef.current = generateTonightPick;
     const poolIds = (chatMoviesPool || []).map((m) => m.id).filter(Number.isFinite);
@@ -837,6 +837,10 @@ const HomeScreen = ({
             voiceMediaType: voiceFilters?.mediaType ?? null,
             voiceMaxDuration: voiceFilters?.maxDuration ?? null,
             voiceDecade: voiceFilters?.decade ?? null,
+            // Duo : fetch server-side des interactions des deux users (plus fiable que le client browser)
+            ...(duoOverrides?.user1Id && duoOverrides?.user2Id && {
+              duoUserIds: [duoOverrides.user1Id, duoOverrides.user2Id],
+            }),
           });
           tEdgeEnd = performance.now();
           engineMetaResult = data?.engineMeta ?? null;
@@ -1372,6 +1376,8 @@ const HomeScreen = ({
             partnerExcludeIds: [...new Set([...ids1, ...ids2])],
             user1Name: duo.user1_display_name ?? null,
             user2Name: duo.user2_display_name ?? null,
+            user1Id: duo.user1_id,
+            user2Id: duo.user2_id,
           };
           currentDuoOverridesRef.current = duoOverrides;
           void generateTonightPick([], undefined, undefined, duoOverrides);
