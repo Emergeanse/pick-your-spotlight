@@ -51,6 +51,7 @@ interface TonightPickOverlayProps {
   expectedCount?: number;
   userName?: string;
   loadingLog?: string[];
+  userGenres?: string[];
 }
 
 const TonightPickOverlay = ({
@@ -75,6 +76,7 @@ const TonightPickOverlay = ({
   expectedCount,
   userName,
   loadingLog,
+  userGenres = [],
 }: TonightPickOverlayProps) => {
   const interaction = useMovieInteraction(movie?.id);
   const displayCount = expectedCount ?? tonightPool.length;
@@ -209,6 +211,37 @@ const TonightPickOverlay = ({
     const interval = setInterval(flash, 800);
     return () => { clearInterval(interval); clearTimeout(clearFlash); };
   }, [tonightLoading]);
+
+  // Genres flottants : apparaissent un par un pendant le chargement
+  const [shownGenreCount, setShownGenreCount] = useState(0);
+  useEffect(() => {
+    if (!tonightLoading || userGenres.length === 0) { setShownGenreCount(0); return; }
+    const id = setInterval(() => setShownGenreCount((n) => Math.min(n + 1, userGenres.length)), 650);
+    return () => clearInterval(id);
+  }, [tonightLoading, userGenres.length]);
+
+  // Layout fixe par genre (position, taille, style) — calculé une fois quand la liste change
+  const genreLayouts = useMemo(() => {
+    // Positions réparties sur l'écran en évitant le centre vertical (40-60%)
+    const positions = [
+      { top: 10, left: 8  },  { top: 14, left: 62 },
+      { top: 22, left: 32 },  { top: 75, left: 10 },
+      { top: 68, left: 58 },  { top: 80, left: 30 },
+      { top: 34, left: 72 },  { top: 86, left: 70 },
+    ];
+    const sizes   = [11, 30, 14, 24, 36, 13, 20, 28];
+    const weights = [300, 700, 200, 500, 400, 700, 300, 600];
+    const italics = [false, true, false, true, false, false, true, false];
+    const opacities = [0.30, 0.60, 0.38, 0.50, 0.65, 0.32, 0.52, 0.45];
+    return userGenres.map((_, i) => ({
+      top: positions[i % positions.length].top + (i < positions.length ? 0 : (i * 3) % 7),
+      left: positions[i % positions.length].left + (i < positions.length ? 0 : (i * 5) % 9),
+      size: sizes[i % sizes.length],
+      weight: weights[i % weights.length],
+      italic: italics[i % italics.length],
+      opacity: opacities[i % opacities.length],
+    }));
+  }, [userGenres.join(",")]);
 
   // Offsets initiaux aléatoires par colonne (stable, calculé une fois)
   const colInitialOffsets = useMemo(
@@ -376,24 +409,36 @@ const TonightPickOverlay = ({
                   animate={{ opacity: [0.05, 0.55, 0.15, 0.5, 0.05], scale: [1, 1.15, 0.92, 1.08, 1] }}
                   transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 1.4 }}
                 />
-                {/* Phrases de recherche */}
-                {loadingLog && loadingLog.length > 0 && (
-                  <div className="absolute bottom-28 left-0 right-0 px-10 flex flex-col items-center gap-1.5">
-                    <AnimatePresence initial={false}>
-                      {loadingLog.slice(-3).map((line, i, arr) => (
-                        <motion.p
-                          key={line}
-                          initial={{ opacity: 0, y: 6 }}
-                          animate={{ opacity: i === arr.length - 1 ? 0.85 : 0.28, y: 0 }}
-                          transition={{ duration: 0.4 }}
-                          className="text-[13px] font-sans text-center leading-snug text-foreground/70"
-                        >
-                          {line}
-                        </motion.p>
-                      ))}
-                    </AnimatePresence>
-                  </div>
-                )}
+                {/* Genres de l'utilisateur — flottants, tailles et styles variés */}
+                <AnimatePresence>
+                  {userGenres.slice(0, shownGenreCount).map((genre, i) => {
+                    const lay = genreLayouts[i];
+                    if (!lay) return null;
+                    return (
+                      <motion.span
+                        key={genre}
+                        initial={{ opacity: 0, scale: 0.75, y: 6 }}
+                        animate={{ opacity: lay.opacity, scale: 1, y: 0 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.55, ease: "easeOut" }}
+                        className="absolute select-none pointer-events-none text-white"
+                        style={{
+                          top: `${lay.top}%`,
+                          left: `${lay.left}%`,
+                          fontSize: lay.size,
+                          fontWeight: lay.weight,
+                          fontStyle: lay.italic ? "italic" : "normal",
+                          letterSpacing: lay.size > 20 ? "0.06em" : "0.02em",
+                          textShadow: "0 2px 12px rgba(0,0,0,0.9)",
+                          whiteSpace: "nowrap",
+                          zIndex: 10,
+                        }}
+                      >
+                        {genre}
+                      </motion.span>
+                    );
+                  })}
+                </AnimatePresence>
               </motion.div>
             )}
           </AnimatePresence>

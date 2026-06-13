@@ -312,6 +312,7 @@ const HomeScreen = ({
   const [tonightLoading, setTonightLoading] = useState(false);
   const [tonightLoadingMsg, setTonightLoadingMsg] = useState("");
   const [loadingLog, setLoadingLog] = useState<string[]>([]);
+  const [tonightUserGenres, setTonightUserGenres] = useState<string[]>([]);
   const loadingLogEndRef = useRef<HTMLDivElement | null>(null);
   const activeMessagesRef = useRef<string[]>([]);
   const [tonightProviders, setTonightProviders] = useState<{ name: string; logo_path: string }[]>([]);
@@ -835,6 +836,7 @@ const HomeScreen = ({
 
           const userTasteVector = duoOverrides?.tasteVector ?? (multiProfile?.stableTasteVector || null);
 
+          if (tasteProfile?.topGenres?.length) setTonightUserGenres(tasteProfile.topGenres.slice(0, 8));
           console.group("[PICK-DEBUG] 📤 Paramètres envoyés à surprise-personalized");
           console.log("userTasteVector :", userTasteVector ? `✅ ${userTasteVector.length} dims` : "❌ NULL — SQL sera sauté");
           console.log("mediaType       :", quickFilters.mediaType);
@@ -1932,6 +1934,7 @@ const HomeScreen = ({
         onMoreSuggestions={() => void handleMoreSuggestions()}
         expectedCount={quickFilters.recommendationCount}
         loadingLog={loadingLog}
+        userGenres={tonightUserGenres}
         userName={
           (user?.user_metadata?.full_name as string | undefined) ||
           (user?.user_metadata?.name as string | undefined) ||
