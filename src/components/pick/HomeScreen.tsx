@@ -1936,7 +1936,7 @@ const HomeScreen = ({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 24 }}
             transition={{ type: "spring", stiffness: 340, damping: 30 }}
-            className="absolute inset-x-3 bottom-[calc(3.6rem+env(safe-area-inset-bottom))] z-50"
+            className="fixed inset-x-3 bottom-[calc(3.75rem+env(safe-area-inset-bottom))] z-50"
           >
             <div
               className="flex items-center gap-3 px-3.5 py-2.5 rounded-2xl border border-primary/20 bg-primary/[0.06] backdrop-blur-md"
