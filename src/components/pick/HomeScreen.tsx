@@ -135,6 +135,8 @@ const loadUnifiedUserFeedbackState = async () => {
     ]);
 
   const excludeIds = [
+    ...extractTmdbIdsFromFeedbackRows(likedRows as any[]),
+    ...extractTmdbIdsFromFeedbackRows(lovedRows as any[]),
     ...extractTmdbIdsFromFeedbackRows(seenRows as any[]),
     ...extractTmdbIdsFromFeedbackRows(notForMeRows as any[]),
     ...extractTmdbIdsFromFeedbackRows(dislikeRows as any[]),
