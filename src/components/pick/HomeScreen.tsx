@@ -1867,13 +1867,13 @@ const HomeScreen = ({
               </button>
             )}
           </div>
-          <div className="px-5 flex gap-3">
+          <div className="px-5 flex items-start justify-center gap-5">
             {quickRecos.length > 0 ? (
               quickRecos.slice(0, 3).map((reco) => (
                 <motion.button
                   key={reco.id}
                   whileTap={{ scale: 0.95 }}
-                  className="flex-1 min-w-0 text-left"
+                  className="w-[80px] shrink-0 text-left"
                   onClick={() => setShowFindChoice(true)}
                 >
                   <div className="w-full aspect-[2/3] rounded-xl overflow-hidden bg-white/5 border border-white/10">
@@ -1889,7 +1889,7 @@ const HomeScreen = ({
                       </div>
                     )}
                   </div>
-                  <p className="mt-1.5 text-[10px] font-sans text-foreground/55 leading-tight line-clamp-2">{reco.title}</p>
+                  <p className="mt-1.5 text-[10px] font-sans text-foreground/55 leading-tight line-clamp-2 h-[2.5rem]">{reco.title}</p>
                 </motion.button>
               ))
             ) : (
@@ -1899,7 +1899,7 @@ const HomeScreen = ({
                   key={item?.id ?? i}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => setShowFindChoice(true)}
-                  className="flex-1 min-w-0 text-left"
+                  className="w-[80px] shrink-0 text-left"
                 >
                   <div className="w-full aspect-[2/3] rounded-xl overflow-hidden bg-white/[0.04] border border-white/[0.07]">
                     {item?.poster_path ? (
@@ -1914,7 +1914,7 @@ const HomeScreen = ({
                       </div>
                     )}
                   </div>
-                  <p className="mt-1.5 text-[10px] font-sans text-foreground/50 leading-tight line-clamp-2">
+                  <p className="mt-1.5 text-[10px] font-sans text-foreground/50 leading-tight line-clamp-2 h-[2.5rem]">
                     {item?.title ?? ""}
                   </p>
                 </motion.button>
