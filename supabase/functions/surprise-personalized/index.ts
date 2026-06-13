@@ -66,7 +66,7 @@ serve(async (req) => {
 
   try {
     const t0 = Date.now();
-    console.log("[SP] ✅ version 2026-06-13-v21 — TARGET=100 vecteur + SQL explicite + pool LLM 100");
+    console.log("[SP] ✅ version 2026-06-13-v22 — TARGET=100 vecteur + SQL explicite + pool LLM 50");
     const {
       tasteProfile,
       userTasteVector,
@@ -727,7 +727,7 @@ serve(async (req) => {
     // ── ÉTAPE 2 : Filtre plateforme → LLM sur les films disponibles uniquement ──
     let llmSelections: any[] = [];
     let llmFilteredAll = false;
-    const llmPoolSize = 100;
+    const llmPoolSize = 50;
     let llmPool: any[] = [];
     let llmInputPool: any[] = [];
     let capturedSystemPrompt: string | null = null;
