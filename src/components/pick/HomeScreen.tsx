@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate, useLocation } from "react-router-dom";
 import { consumePendingDuoPick } from "@/lib/duo-pending";
 import { toast } from "sonner";
-import { Sparkles, WandSparkles, Mic, Flame, Eye, Coffee, Heart, Shuffle } from "lucide-react";
+import { Sparkles, WandSparkles, Clapperboard, ChevronRight, Flame, Eye, Coffee, Heart, Shuffle } from "lucide-react";
 
 import { ALL_PLATFORMS } from "@/lib/platforms";
 import type { Movie, MovieDetail } from "@/lib/tmdb";
@@ -1720,100 +1720,32 @@ const HomeScreen = ({
             </motion.button>
           </motion.div>
 
-          {/* Voice card — same premium surface family as cards below */}
+          {/* Event card — organise ta soirée ciné */}
           <motion.button
             type="button"
             initial={{ opacity: 0, y: 14 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.7, duration: 0.55 }}
             whileTap={{ scale: 0.985 }}
-            onClick={onOpenChat}
+            onClick={() => navigate("/app/event")}
             className="relative mt-4 w-full flex items-center py-1.5 px-2.5 pr-4 text-left transition-all gap-[16px] rounded-2xl border border-white/10 bg-white/[0.06] hover:bg-white/[0.10] hover:border-white/20"
           >
             <span className="relative flex-shrink-0">
-              <span className="absolute inset-0 rounded-full bg-primary/20 blur-md animate-subtle-pulse" />
-              <span className="relative flex items-center justify-center w-9 h-9 rounded-full bg-primary/12 border border-primary/40">
-                <Mic className="w-[14px] h-[14px] text-primary" />
+              <span className="absolute inset-0 rounded-full bg-accent/25 blur-md" />
+              <span className="relative flex items-center justify-center w-9 h-9 rounded-full bg-accent/12 border border-accent/35">
+                <Clapperboard className="w-[15px] h-[15px] text-accent" strokeWidth={1.8} />
               </span>
             </span>
             <span className="flex-1 min-w-0">
               <span className="block font-serif text-foreground text-[13px] leading-tight">
-                Parle-moi…
+                Organise ta soirée ciné
               </span>
               <span className="block text-foreground/45 text-[10px] font-sans mt-0.5">
-                Dis ce que tu as envie de voir
+                Solo, en duo, ou programme pour plus tard
               </span>
             </span>
-            <span className="flex items-end gap-[2px] h-4" aria-hidden="true">
-              {[6, 14, 9, 18, 12, 20, 8, 15, 7].map((h, i) => (
-                <motion.span
-                  key={i}
-                  className="w-[2px] rounded-full bg-primary/70"
-                  animate={{ height: [`${h * 0.35}px`, `${h * 0.85}px`, `${h * 0.45}px`] }}
-                  transition={{
-                    duration: 1.2,
-                    repeat: Infinity,
-                    delay: i * 0.08,
-                    ease: "easeInOut",
-                  }}
-                />
-              ))}
-            </span>
+            <ChevronRight className="w-4 h-4 text-foreground/25 flex-shrink-0" />
           </motion.button>
-
-          {/* Ambiance chips — compact single row, directly under "Parle-moi" */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.8, duration: 0.5 }}
-            className="mt-4 w-full rounded-2xl border border-white/10 bg-white/[0.06] hover:bg-white/[0.10] hover:border-white/20 transition-all py-1.5 px-2.5"
-          >
-            <div className="flex items-baseline justify-between mb-1.5 px-0.5">
-              <h3 className="font-serif text-foreground text-[13px] leading-tight">
-                Choisis ton ambiance
-              </h3>
-              <span className="text-[10px] font-sans font-semibold tracking-[0.18em] uppercase text-foreground/40">
-                Filtre rapide
-              </span>
-            </div>
-            <div className="flex gap-[3px] w-full">
-              {AMBIANCES.map(({ id, label, Icon }, i) => {
-                const active = activeAmbiance === id;
-                return (
-                  <motion.button
-                    key={id}
-                    type="button"
-                    initial={{ opacity: 0, y: 6 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.85 + i * 0.04, duration: 0.35 }}
-                    whileTap={{ scale: 0.94 }}
-                    onClick={() => {
-                      setActiveAmbiance(id);
-                      if (id === "surprise") {
-                        handleAutoPick();
-                      } else {
-                        setShowFindChoice(true);
-                      }
-                    }}
-                    className={`inline-flex items-center justify-center gap-0.5 h-7 px-[3px] rounded-full font-sans text-[9px] font-medium transition-all duration-300 min-w-0 ${
-                      active
-                        ? "bg-white/[0.10] text-primary border border-primary/55"
-                        : "bg-white/[0.04] text-foreground/70 border border-white/10 hover:bg-white/[0.10] hover:border-white/20 hover:text-foreground/90"
-                    }`}
-                  >
-                    <Icon
-                      className={`w-2.5 h-2.5 flex-shrink-0 transition-colors ${
-                        active ? "text-primary" : "text-foreground/45"
-                      }`}
-                      strokeWidth={2.5}
-                    />
-                    <span className="truncate">{label}</span>
-                  </motion.button>
-                );
-              })}
-            </div>
-          </motion.div>
-
 
         </section>
 
@@ -1854,6 +1786,15 @@ const HomeScreen = ({
         onOpenMoodCapture={() => {
           setShowFindChoice(false);
           onOpenMoodCapture();
+        }}
+        onPickAmbiance={(mood) => {
+          setShowFindChoice(false);
+          setActiveAmbiance(mood);
+          if (mood === "surprise") {
+            handleAutoPick();
+          } else {
+            void generateTonightPick();
+          }
         }}
       />
 

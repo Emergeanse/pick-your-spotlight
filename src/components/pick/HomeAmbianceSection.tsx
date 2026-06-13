@@ -16,6 +16,8 @@ type LastReco = {
   mediaType: "movie" | "tv";
   itemId: string;
   currentScore: number;
+  createdAt: string | null;
+  watchedWith: string | null;
 };
 
 type FriendWatching = {
@@ -56,7 +58,7 @@ const HomeAmbianceSection = ({ onPickAmbiance, activeAmbiance }: Props) => {
     (async () => {
       const { data } = await supabase
         .from("user_item_feedback")
-        .select("item_id, score, catalog_items:item_id(id, tmdb_id, title, poster_path, media_type)")
+        .select("item_id, score, created_at, catalog_items:item_id(id, tmdb_id, title, poster_path, media_type)")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false })
         .limit(1);
@@ -76,6 +78,19 @@ const HomeAmbianceSection = ({ onPickAmbiance, activeAmbiance }: Props) => {
           }
         } catch {}
       }
+      // Nom du duo partenaire si disponible
+      let watchedWith: string | null = null;
+      try {
+        const { data: duoData } = await supabase
+          .from("duo_profiles" as any)
+          .select("user1_id, user2_id, user1_display_name, user2_display_name")
+          .or(`user1_id.eq.${user.id},user2_id.eq.${user.id}`)
+          .limit(1);
+        const duo = (duoData as any[])?.[0];
+        if (duo) {
+          watchedWith = duo.user1_id === user.id ? duo.user2_display_name : duo.user1_display_name;
+        }
+      } catch {}
       if (cancelled) return;
       setLastReco({
         tmdbId: ci.tmdb_id,
@@ -84,6 +99,8 @@ const HomeAmbianceSection = ({ onPickAmbiance, activeAmbiance }: Props) => {
         mediaType,
         itemId: ci.id,
         currentScore: row.score || 0,
+        createdAt: row.created_at ?? null,
+        watchedWith,
       });
       if (row.score) setRating(Math.round(row.score));
     })();
@@ -175,7 +192,17 @@ const HomeAmbianceSection = ({ onPickAmbiance, activeAmbiance }: Props) => {
                 <p className="mt-0.5 font-serif text-foreground text-[13px] leading-[1.15] tracking-tight line-clamp-1">
                   {lastReco.title}
                 </p>
-                <p className="mt-0.5 text-[10px] font-sans text-foreground/50 leading-snug">
+                {lastReco.createdAt && (() => {
+                  const diff = Math.floor((Date.now() - new Date(lastReco.createdAt!).getTime()) / 86400000);
+                  const dateStr = diff === 0 ? "Aujourd'hui" : diff === 1 ? "Hier" : `Il y a ${diff} j.`;
+                  const withStr = lastReco.watchedWith ? ` · avec ${lastReco.watchedWith}` : "";
+                  return (
+                    <p className="mt-0.5 text-[10px] font-sans text-foreground/45 leading-snug">
+                      {dateStr}{withStr}
+                    </p>
+                  );
+                })()}
+                <p className="mt-0.5 text-[10px] font-sans text-foreground/40 leading-snug">
                   {submitted ? "Merci — j'affine ton goût." : "Comment tu l'as vécu ?"}
                 </p>
               </div>

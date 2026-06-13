@@ -31,12 +31,12 @@ const MatchIcon = ({ className, strokeWidth = 1.7 }: { className?: string; strok
 );
 
 const tabs: { id: TabId; label: string; icon: React.ComponentType<any>; path: string }[] = [
-  { id: "home",     label: "Trouve-moi", icon: Home,        path: "/app" },
-  { id: "together", label: "Match",      icon: MatchIcon,   path: "/app/pick-together" },
-  { id: "ensemble", label: "Ensemble",   icon: UsersRound,  path: "/app/duo" },
+  { id: "home",     label: "Accueil",    icon: Home,         path: "/app" },
   { id: "event",    label: "Événement",  icon: Clapperboard, path: "/app/event" },
-  { id: "cinema",   label: "Biblio",     icon: Library,     path: "/app/my-cinema" },
-  { id: "profile",  label: "Profil",     icon: User,        path: "/app/profile" },
+  { id: "ensemble", label: "Ensemble",   icon: UsersRound,   path: "/app/duo" },
+  { id: "cinema",   label: "Biblio",     icon: Library,      path: "/app/my-cinema" },
+  { id: "together", label: "Match",      icon: MatchIcon,    path: "/app/pick-together" },
+  { id: "profile",  label: "Profil",     icon: User,         path: "/app/profile" },
 ];
 
 const BottomTabBar = () => {

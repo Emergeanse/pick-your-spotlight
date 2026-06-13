@@ -1,10 +1,19 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { Mic, CalendarClock, Heart, Check, User, Users } from "lucide-react";
+import { Mic, CalendarClock, Heart, Check, User, Flame, Eye, Coffee, Shuffle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { getAutoPickSubtitle } from "@/lib/time-context";
 import { useAuth } from "@/hooks/use-auth";
 import { fetchMyDuos, type DuoProfile } from "@/lib/duo-profiles";
+import type { AmbianceMood } from "./HomeAmbianceSection";
+
+const AMBIANCES: { id: AmbianceMood; label: string; Icon: React.ComponentType<any> }[] = [
+  { id: "intense",    label: "Intense",       Icon: Flame   },
+  { id: "mysterious", label: "Mystérieux",    Icon: Eye     },
+  { id: "comfort",    label: "Réconfortant",  Icon: Coffee  },
+  { id: "couple",     label: "À deux",        Icon: Heart   },
+  { id: "surprise",   label: "Surprends-moi", Icon: Shuffle },
+];
 
 interface HomeScreenChoiceModalProps {
   open: boolean;
@@ -14,6 +23,7 @@ interface HomeScreenChoiceModalProps {
   onOpenChat: () => void;
   onOpenMoodCapture: () => void;
   initialDuoId?: string;
+  onPickAmbiance?: (mood: AmbianceMood) => void;
 }
 
 const HomeScreenChoiceModal = ({
@@ -24,6 +34,7 @@ const HomeScreenChoiceModal = ({
   onOpenChat,
   onOpenMoodCapture,
   initialDuoId,
+  onPickAmbiance,
 }: HomeScreenChoiceModalProps) => {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -373,6 +384,33 @@ const HomeScreenChoiceModal = ({
                 </p>
               </div>
             </motion.button>
+
+            {/* Ambiances — filtre rapide */}
+            {onPickAmbiance && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.68, duration: 0.45 }}
+                className="flex flex-col gap-2"
+              >
+                <p className="text-[10px] font-sans font-semibold tracking-[0.18em] uppercase text-foreground/35 px-0.5">
+                  Choisis une ambiance
+                </p>
+                <div className="flex gap-1.5 flex-wrap">
+                  {AMBIANCES.map(({ id, label, Icon }) => (
+                    <button
+                      key={id}
+                      type="button"
+                      onClick={() => { onClose(); onPickAmbiance(id); }}
+                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full border border-white/[0.09] bg-white/[0.04] hover:bg-white/[0.09] hover:border-white/[0.16] text-foreground/70 hover:text-foreground/90 text-[11px] font-sans transition-all"
+                    >
+                      <Icon className="w-3 h-3 text-foreground/45" strokeWidth={2.2} />
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </motion.div>
+            )}
           </motion.div>
         </motion.div>
       )}
