@@ -222,31 +222,32 @@ const TonightPickOverlay = ({
 
   // Layout fixe par genre (position, taille, style) — calculé une fois quand la liste change
   const genreLayouts = useMemo(() => {
-    // anchor "left" ou "right" pour éviter tout débordement hors écran
-    const positions: { top: number; side: "left" | "right"; offset: number }[] = [
-      { top: 10, side: "left",  offset: 6  },
-      { top: 14, side: "right", offset: 6  },
-      { top: 22, side: "left",  offset: 28 },
-      { top: 75, side: "left",  offset: 6  },
-      { top: 68, side: "right", offset: 8  },
-      { top: 80, side: "left",  offset: 24 },
-      { top: 34, side: "right", offset: 5  },
-      { top: 86, side: "right", offset: 12 },
-    ];
-    const sizes     = [11, 28, 14, 22, 32, 13, 18, 26];
-    const weights   = [300, 700, 200, 500, 400, 700, 300, 600];
-    const italics   = [false, true, false, true, false, false, true, false];
-    const opacities = [0.30, 0.60, 0.38, 0.50, 0.65, 0.32, 0.52, 0.45];
-    return userGenres.map((_, i) => {
-      const pos = positions[i % positions.length];
+    const r = () => Math.random();
+    // top aléatoire en évitant la zone centrale (40–62%) où se trouve l'animation
+    const randTop = () => {
+      const t = r() * 80 + 6; // 6–86%
+      return t > 38 && t < 62 ? t < 50 ? t - 16 : t + 16 : t;
+    };
+    // Taille parmi des valeurs variées
+    const randSize = () => [11, 13, 16, 20, 24, 28, 32][Math.floor(r() * 7)];
+    // Ancre aléatoire : left ou right, avec marge sécurisée selon la taille
+    const randSide = (size: number) => {
+      const side = r() < 0.5 ? "left" : "right";
+      // offset max plus petit pour les grands textes (évite débordement)
+      const maxOff = size > 22 ? 30 : size > 16 ? 40 : 50;
+      return { side: side as "left" | "right", offset: Math.round(r() * maxOff + 4) };
+    };
+    return userGenres.map(() => {
+      const size = randSize();
+      const { side, offset } = randSide(size);
       return {
-        top: pos.top + (i < positions.length ? 0 : (i * 3) % 5),
-        side: pos.side,
-        offset: pos.offset,
-        size: sizes[i % sizes.length],
-        weight: weights[i % weights.length],
-        italic: italics[i % italics.length],
-        opacity: opacities[i % opacities.length],
+        top: randTop(),
+        side,
+        offset,
+        size,
+        weight: [200, 300, 400, 500, 600, 700][Math.floor(r() * 6)],
+        italic: r() < 0.35,
+        opacity: 0.25 + r() * 0.45,
       };
     });
   }, [userGenres.join(",")]);
