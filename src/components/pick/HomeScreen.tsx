@@ -954,6 +954,32 @@ const HomeScreen = ({
               })));
             }
             if (candidateCount > 0) console.groupEnd();
+
+            // Détail par niveau de cascade SQL
+            if ((dbg as any)?.sqlLevelDebug?.length) {
+              const cascadeLabels = ["0 — toutes contraintes", "1 — sans lang/année", "2 — sans liked_genres", "3 — sans goût restrictif"];
+              console.group("[PICK-DEBUG] 📈 Détail par niveau de cascade SQL");
+              (dbg as any).sqlLevelDebug.forEach((lvl: any) => {
+                const label = cascadeLabels[lvl.level] ?? `niveau ${lvl.level}`;
+                console.log(`   Niveau ${label} : +${lvl.newFilms} non-interagis (total: ${lvl.totalNonInteracted}/50)`);
+                if (lvl.films?.length) {
+                  console.log(`   → ${lvl.films.slice(0, 5).map((f: any) => `"${f.title}" (${f.year}) ⭐${f.note} sim=${f.sim}%`).join(" | ")}`);
+                }
+              });
+              console.groupEnd();
+            }
+
+            // Fallback SQL explicite (sans vecteur)
+            if ((dbg as any)?.explicitFallbackDebug?.length) {
+              console.group("[PICK-DEBUG] 1️⃣⁺ SQL explicite (sans vecteur) — complément si pool vectoriel insuffisant");
+              (dbg as any).explicitFallbackDebug.forEach((lvl: any) => {
+                console.log(`   liked_genres=${lvl.likedGenres ? "oui" : "non"}, note≥${lvl.minRating}: +${lvl.newFilms} films`);
+                if (lvl.films?.length) {
+                  console.log(`   → ${lvl.films.slice(0, 5).map((f: any) => `"${f.title}" (${f.year}) ⭐${f.note}`).join(" | ")}`);
+                }
+              });
+              console.groupEnd();
+            }
           }
 
           // ── Profil LLM ──
@@ -1063,6 +1089,19 @@ const HomeScreen = ({
             if (failed.length > 0) {
               console.warn(`[PICK-DEBUG] ⚠️ ${failed.length} film(s) LLM perdus au TMDB lookup → fallback trending activé`);
             }
+            console.groupEnd();
+          }
+
+          // ── Étape 4 : Films finaux présentés ──
+          if ((dbg as any)?.finalMoviesList?.length) {
+            console.group(`[PICK-DEBUG] 4️⃣ Films finaux présentés à l'utilisateur (${(dbg as any).finalMoviesList.length})`);
+            console.table((dbg as any).finalMoviesList.map((m: any, i: number) => ({
+              "#": i + 1,
+              "Titre": m.title,
+              "Année": m.year,
+              "Score": m.matchScore != null ? `${m.matchScore}%` : "—",
+              "Raison LLM": m.reason ? m.reason.slice(0, 80) : "—",
+            })));
             console.groupEnd();
           }
 

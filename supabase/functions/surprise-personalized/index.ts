@@ -458,6 +458,10 @@ serve(async (req) => {
       candidates = [...candidates, ...fresh];
     };
 
+    // Debug par étape
+    const sqlLevelDebug: { level: number; newFilms: number; totalNonInteracted: number; films: { title: string; year: string; sim: number; note: number }[] }[] = [];
+    const explicitFallbackDebug: { likedGenres: boolean; minRating: number; newFilms: number; films: { title: string; year: string; note: number }[] }[] = [];
+
     // ── ÉTAPE 1 : Cascade vectorielle ──
     if (SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY && userTasteVector) {
       const BATCH = 500;
@@ -545,6 +549,14 @@ serve(async (req) => {
             addBatch(data as any[]);
             const gained = countNonInteracted(candidates) - before;
             console.log(`[SP] Level=${level} Round=${round}: +${(data as any[]).length} bruts, +${gained} non-interagis → total non-interagis: ${countNonInteracted(candidates)}/${TARGET}`);
+            sqlLevelDebug.push({
+              level, newFilms: gained, totalNonInteracted: countNonInteracted(candidates),
+              films: (data as any[]).slice(0, 10).map((c: any) => ({
+                title: c.title || "?", year: c.year || "?",
+                sim: c.similarity != null ? Math.round(c.similarity * 1000) / 10 : 0,
+                note: c.vote_average > 0 ? Math.round(c.vote_average * 10) / 10 : 0,
+              })),
+            });
             if (gained === 0) break; // Plus rien de nouveau à ce niveau
             round++;
           }
@@ -604,6 +616,15 @@ serve(async (req) => {
           addBatch(explData as any[]);
           const gained = countNonInteracted(candidates) - before;
           console.log(`[SP] SQL explicite (liked=${lvl.liked_genres.length > 0}, note≥${lvl.min_rating}): +${(explData as any[]).length} bruts, +${gained} non-interagis → total: ${countNonInteracted(candidates)}/${EXPLICIT_TARGET}`);
+          if (gained > 0) {
+            explicitFallbackDebug.push({
+              likedGenres: lvl.liked_genres.length > 0, minRating: lvl.min_rating, newFilms: gained,
+              films: (explData as any[]).slice(0, 10).map((c: any) => ({
+                title: c.title || "?", year: c.year || "?",
+                note: c.vote_average > 0 ? Math.round(c.vote_average * 10) / 10 : 0,
+              })),
+            });
+          }
         } catch (e) {
           console.error("[SP] SQL explicite exception:", e);
         }
@@ -1354,6 +1375,8 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
           sqlRpcParams: finalRpcParamsSummary,
           sqlSnippet,
           sqlCountDiag,
+          sqlLevelDebug,
+          explicitFallbackDebug,
           sql50: candidates.map(toDebugRow), // renommé sql100 en pratique
           top20: llmPool.length > 0 ? llmPool.map(toDebugRow) : candidates.slice(0, llmPoolSize).map(toDebugRow),
           llmFiltered: llmInputPool.map(toDebugRow),
@@ -1366,6 +1389,12 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
             title: candidates.find((c: any) => Number(c.tmdb_id) === Number(s.tmdb_id))?.title || "?",
             matchScore: s.matchScore,
             reason: s.reason,
+          })),
+          finalMoviesList: finalMovies.map((m: any) => ({
+            title: m.movie?.title || "?",
+            year: (m.movie?.release_date || m.movie?.first_air_date || "").slice(0, 4) || "?",
+            matchScore: m.confidence ?? m.recommendationTexts?.matchScore ?? null,
+            reason: m.reason || null,
           })),
         },
       }),
