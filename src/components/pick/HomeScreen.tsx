@@ -1874,7 +1874,7 @@ const HomeScreen = ({
                 <motion.button
                   key={reco.id}
                   whileTap={{ scale: 0.95 }}
-                  className="flex-1 text-left"
+                  className="w-[72px] shrink-0 text-left"
                   onClick={() => setShowFindChoice(true)}
                 >
                   <div className="w-full aspect-[2/3] rounded-xl overflow-hidden bg-white/5 border border-white/10">
@@ -1900,7 +1900,7 @@ const HomeScreen = ({
                   key={item?.id ?? i}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => setShowFindChoice(true)}
-                  className="flex-1 text-left"
+                  className="w-[72px] shrink-0 text-left"
                 >
                   <div className="w-full aspect-[2/3] rounded-xl overflow-hidden bg-white/[0.04] border border-white/[0.07]">
                     {item?.poster_path ? (
