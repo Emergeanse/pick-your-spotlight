@@ -66,7 +66,7 @@ serve(async (req) => {
 
   try {
     const t0 = Date.now();
-    console.log("[SP] ✅ version 2026-06-13-v20 — TARGET=50 vecteur + SQL explicite + pool LLM 50");
+    console.log("[SP] ✅ version 2026-06-13-v21 — TARGET=100 vecteur + SQL explicite + pool LLM 100");
     const {
       tasteProfile,
       userTasteVector,
@@ -452,8 +452,8 @@ serve(async (req) => {
     let finalRpcParamsSummary: Record<string, any> | null = null;
     const sqlCountDiag: { level: number; total_in_db: number; available_after_exclusions: number; liked_genres?: string; excluded_genres_count?: number; min_rating?: number; platforms?: string; excluded_langs?: string; max_duration?: any; exclude_ids_count?: number }[] = [];
 
-    const TARGET = 50;
-    const EXPLICIT_TARGET = 50;
+    const TARGET = 100;
+    const EXPLICIT_TARGET = 100;
     const seenIds = new Set<number>();
 
     const countNonInteracted = (cands: any[]) =>
@@ -727,7 +727,7 @@ serve(async (req) => {
     // ── ÉTAPE 2 : Filtre plateforme → LLM sur les films disponibles uniquement ──
     let llmSelections: any[] = [];
     let llmFilteredAll = false;
-    const llmPoolSize = 50;
+    const llmPoolSize = 100;
     let llmPool: any[] = [];
     let llmInputPool: any[] = [];
     let capturedSystemPrompt: string | null = null;
