@@ -81,23 +81,18 @@ const BrandHeader = ({ showBack, onBack, extraActions }: BrandHeaderProps) => {
             </Avatar>
           </div>
 
-          <div className="flex flex-col items-start min-w-0 leading-tight gap-0.5">
-            <span className="text-[13px] font-medium text-foreground/90 truncate max-w-[110px]">
-              {displayName || "…"}
-            </span>
-            <div className="flex items-center gap-1.5">
-              {isPremium && (
-                <span className="inline-flex items-center gap-0.5 px-1.5 py-[2px] rounded-md bg-primary text-primary-foreground text-[9px] font-bold leading-none">
-                  <Crown className="h-2 w-2" strokeWidth={3} />
-                  Pick+
-                </span>
-              )}
-              <span className="flex items-center gap-1 text-[11px] text-foreground/55">
-                <Star className="h-2.5 w-2.5 fill-amber-400 text-amber-400" />
-                <span className="tabular-nums">{interactionCount}</span>
-                <span>films</span>
+          <div className="flex items-center gap-1.5">
+            {isPremium && (
+              <span className="inline-flex items-center gap-0.5 px-1.5 py-[2px] rounded-md bg-primary text-primary-foreground text-[9px] font-bold leading-none">
+                <Crown className="h-2 w-2" strokeWidth={3} />
+                Pick+
               </span>
-            </div>
+            )}
+            <span className="flex items-center gap-1 text-[11px] text-foreground/55">
+              <Star className="h-2.5 w-2.5 fill-amber-400 text-amber-400" />
+              <span className="tabular-nums">{interactionCount}</span>
+              <span>films</span>
+            </span>
           </div>
         </button>
       )}
