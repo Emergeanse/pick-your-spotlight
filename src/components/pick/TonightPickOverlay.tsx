@@ -257,7 +257,7 @@ const TonightPickOverlay = ({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.4 }}
-          className="fixed inset-0 z-50 flex flex-col"
+          className="fixed inset-0 z-50 flex flex-col bg-black"
         >
           {/* Stage 1 : lumières violettes pulsantes pendant que surprise-personalized tourne */}
           <AnimatePresence>
