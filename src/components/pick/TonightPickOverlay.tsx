@@ -188,6 +188,8 @@ const TonightPickOverlay = ({
   const wallPathsRef = useRef<string[]>([]);
   wallPathsRef.current = shuffledWallPaths;
   const lastHighlightRef = useRef<string | null>(null);
+  // Filtre aléatoire généré à chaque flash — contraste/netteté/opacité variables
+  const spotFilterRef = useRef<string>("");
 
   const [highlightedPath, setHighlightedPath] = useState<string | null>(null);
   useEffect(() => {
@@ -196,7 +198,6 @@ const TonightPickOverlay = ({
     const flash = () => {
       const paths = wallPathsRef.current;
       if (paths.length === 0) return;
-      // Évite de retomber sur la même affiche deux fois de suite
       let path: string;
       let tries = 0;
       do {
@@ -204,6 +205,13 @@ const TonightPickOverlay = ({
         tries++;
       } while (path === lastHighlightRef.current && paths.length > 1 && tries < 8);
       lastHighlightRef.current = path;
+      // Valeurs aléatoires à chaque flash : luminosité modérée, contraste et netteté forts
+      const bright   = (1.15 + Math.random() * 0.35).toFixed(2); // 1.15–1.50
+      const contrast = (1.90 + Math.random() * 0.60).toFixed(2); // 1.90–2.50
+      const sat      = (2.80 + Math.random() * 1.20).toFixed(2); // 2.80–4.00
+      const glow     = Math.round(10 + Math.random() * 10);       // 10–20px
+      const glowAlpha = (0.7 + Math.random() * 0.3).toFixed(2);  // 0.70–1.00
+      spotFilterRef.current = `grayscale(0%) blur(0px) brightness(${bright}) contrast(${contrast}) saturate(${sat}) drop-shadow(0 0 ${glow}px rgba(255,255,255,${glowAlpha})) drop-shadow(0 0 4px rgba(167,139,250,0.9))`;
       setHighlightedPath(path);
       clearFlash = setTimeout(() => setHighlightedPath(null), 420);
     };
@@ -324,7 +332,7 @@ const TonightPickOverlay = ({
                   // Filtre normal appliqué sur chaque image (pas sur le conteneur)
                   const normalFilter  = `grayscale(${wallGrayscale}%) blur(${wallBlur}px) brightness(${wallBright}) contrast(${wallContrast})`;
                   // Filtre "identifié" : pleine couleur + lumineux + halo violet
-                  const spotFilter    = "grayscale(0%) blur(0px) brightness(2.2) saturate(3.8) contrast(1.7) drop-shadow(0 0 16px rgba(255,255,255,1)) drop-shadow(0 0 7px rgba(167,139,250,1))";
+                  const spotFilter    = spotFilterRef.current;
                   return (
                     <div
                       className="absolute inset-0 flex gap-1 overflow-hidden"
