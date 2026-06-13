@@ -173,6 +173,10 @@ serve(async (req: Request) => {
       minVoteCount = 50,
       genreId,
       minRating,
+      sortBy = "popularity.desc",
+      releaseYearMin,          // ex: 1980 → primary_release_date.gte=1980-01-01
+      releaseYearMax,          // ex: 1999 → primary_release_date.lte=1999-12-31
+      noStreamingFilter = false, // true → retire le filtre with_watch_providers
       refreshLimit = 20,       // nb de films à rafraîchir en mode refresh-platforms
     } = body;
 
@@ -242,16 +246,19 @@ serve(async (req: Request) => {
         const params = new URLSearchParams({
           api_key: TMDB_API_KEY,
           language: "fr-FR",
-          sort_by: "popularity.desc",
+          sort_by: sortBy,
           "vote_count.gte": String(minVoteCount),
           page: String(page),
-          // Pré-filtre : uniquement films disponibles sur plateformes FR majeures
-          with_watch_providers: "8|381|337|119|350|234|35|1967|11|56",
-          watch_region: "FR",
-          with_watch_monetization_types: "flatrate|free|ads",
         });
+        if (!noStreamingFilter) {
+          params.set("with_watch_providers", "8|381|337|119|350|234|35|1967|11|56");
+          params.set("watch_region", "FR");
+          params.set("with_watch_monetization_types", "flatrate|free|ads");
+        }
         if (genreId) params.set("with_genres", String(genreId));
         if (minRating) params.set("vote_average.gte", String(minRating));
+        if (releaseYearMin) params.set("primary_release_date.gte", `${releaseYearMin}-01-01`);
+        if (releaseYearMax) params.set("primary_release_date.lte", `${releaseYearMax}-12-31`);
         url = `https://api.themoviedb.org/3/discover/${type}?${params}`;
       } else {
         url = `https://api.themoviedb.org/3/${type}/${source}?api_key=${TMDB_API_KEY}&language=fr-FR&page=${page}`;

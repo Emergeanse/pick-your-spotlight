@@ -578,12 +578,12 @@ const HomeScreen = ({
   // ── Enrichissement background : 3 vagues par session pour couvrir des genres variés ──
   useEffect(() => {
     if (!user) return;
-    const key = "bg-seed-v3";
+    const key = "bg-seed-v4";
     if (sessionStorage.getItem(key)) return;
     sessionStorage.setItem(key, "1");
 
     const ALL_COMBOS = [
-      // Films
+      // Films streaming FR (pages 1-80, couvrent le catalogue courant)
       { type: "movie", source: "discover", genreId: 36,    minVoteCount: 20,  minRating: 6   }, // Histoire
       { type: "movie", source: "discover", genreId: 10752, minVoteCount: 20,  minRating: 6   }, // Guerre
       { type: "movie", source: "discover", genreId: 878,   minVoteCount: 30,  minRating: 6.5 }, // Science-Fiction
@@ -597,6 +597,11 @@ const HomeScreen = ({
       { type: "movie", source: "discover", genreId: 28,    minVoteCount: 50,  minRating: 6.5 }, // Action
       { type: "movie", source: "discover", genreId: 12,    minVoteCount: 50,  minRating: 6.5 }, // Aventure
       { type: "movie", source: "top_rated",                minVoteCount: 200, minRating: 7.5 }, // Top qualité
+      // Classiques par décennie — sans filtre streaming (triés par vote_count)
+      { type: "movie", source: "discover", sortBy: "vote_count.desc", noStreamingFilter: true, releaseYearMin: 1970, releaseYearMax: 1989, minVoteCount: 500,  minRating: 7 }, // 70s-80s
+      { type: "movie", source: "discover", sortBy: "vote_count.desc", noStreamingFilter: true, releaseYearMin: 1990, releaseYearMax: 1999, minVoteCount: 1000, minRating: 7 }, // 90s
+      { type: "movie", source: "discover", sortBy: "vote_count.desc", noStreamingFilter: true, releaseYearMin: 2000, releaseYearMax: 2010, minVoteCount: 2000, minRating: 7 }, // 2000s
+      { type: "movie", source: "discover", sortBy: "vote_count.desc", noStreamingFilter: true, releaseYearMin: 2010, releaseYearMax: 2018, minVoteCount: 3000, minRating: 7 }, // 2010s
       // Séries
       { type: "tv", source: "discover", genreId: 10765, minVoteCount: 50,  minRating: 7   }, // SF & Fantastique TV
       { type: "tv", source: "discover", genreId: 18,    minVoteCount: 50,  minRating: 7   }, // Drame TV
@@ -608,9 +613,9 @@ const HomeScreen = ({
 
     const runSeed = (combo: (typeof picks)[0], delayMs: number) => {
       setTimeout(() => {
-        const startPage = Math.floor(Math.random() * 15) + 1;
+        const startPage = Math.floor(Math.random() * 80) + 1;
         supabase.functions.invoke("seed-embeddings", {
-          body: { ...combo, pages: 2, startPage, batchSize: 5 },
+          body: { ...combo, pages: 3, startPage, batchSize: 5 },
         }).then(({ data }) => {
           if ((data?.stats?.processed ?? 0) > 0)
             console.log(`[BG-SEED] ${combo.type} genre=${(combo as any).genreId ?? combo.source} p${startPage}: +${data.stats.processed} films`);
