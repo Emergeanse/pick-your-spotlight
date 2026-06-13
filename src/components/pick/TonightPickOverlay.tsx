@@ -244,7 +244,7 @@ const TonightPickOverlay = ({
                 {/* Mur d'affiches : 4 colonnes défilantes à vitesses décalées */}
                 {shuffledWallPaths.length >= 2 && (() => {
                   // Filtre progressif : sombre+gris au départ → lumineux+coloré au fil du temps
-                  const p = Math.min(loadingElapsed / 12, 1); // 0→1 sur 12 secondes
+                  const p = Math.min(loadingElapsed / 8, 1); // 0→1 sur 8 secondes
                   const wallOpacity  = 0.28 + p * 0.42;       // 0.28 → 0.70
                   const wallGrayscale = Math.round(55 - p * 50); // 55% → 5%
                   const wallBlur     = (1.5 - p * 1.5).toFixed(1); // 1.5px → 0px
