@@ -1710,12 +1710,11 @@ const HomeScreen = ({
 
       <div
         className="absolute inset-0 bg-cover bg-no-repeat"
-        style={{ backgroundImage: `url(${homeBackground})`, backgroundPosition: "50% 20%" }}
+        style={{ backgroundImage: `url(${homeBackground})`, backgroundPosition: "50% 0%", backgroundSize: "cover" }}
       />
 
-      {/* Midnight Curator: cinematic fade — backdrop kept atmospheric, never noisy */}
-      <div className="absolute inset-0 bg-gradient-to-b from-background/10 via-background/40 to-background" />
-      <div className="absolute inset-0 bg-background/20" />
+      {/* Dégradé : image visible en haut, fond opaque en bas */}
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background/55 to-background" />
 
       <div className="relative z-10 h-full overflow-y-auto overscroll-y-contain touch-[pan-y_pinch-zoom] scrollbar-hide pb-[calc(9rem+env(safe-area-inset-bottom))]">
         {/* ─── Hero Greeting ─── */}
@@ -1874,7 +1873,7 @@ const HomeScreen = ({
                 <motion.button
                   key={reco.id}
                   whileTap={{ scale: 0.95 }}
-                  className="w-[72px] shrink-0 text-left"
+                  className="flex-1 min-w-0 text-left"
                   onClick={() => setShowFindChoice(true)}
                 >
                   <div className="w-full aspect-[2/3] rounded-xl overflow-hidden bg-white/5 border border-white/10">
@@ -1900,7 +1899,7 @@ const HomeScreen = ({
                   key={item?.id ?? i}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => setShowFindChoice(true)}
-                  className="w-[72px] shrink-0 text-left"
+                  className="flex-1 min-w-0 text-left"
                 >
                   <div className="w-full aspect-[2/3] rounded-xl overflow-hidden bg-white/[0.04] border border-white/[0.07]">
                     {item?.poster_path ? (
@@ -1949,20 +1948,9 @@ const HomeScreen = ({
               role="button"
               tabIndex={0}
             >
-              {/* Avatars empilés */}
-              <div className="relative flex-shrink-0 w-10 h-8">
-                <div className="absolute left-0 top-0 w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-pink-400 border-2 border-[hsl(240_18%_6%)] flex items-center justify-center">
-                  <span className="text-[11px] font-bold text-white leading-none">S</span>
-                </div>
-                <div className="absolute left-4 top-0 w-8 h-8 rounded-full overflow-hidden border-2 border-[hsl(240_18%_6%)] bg-primary/20 flex items-center justify-center">
-                  {avatarUrl ? (
-                    <img src={avatarUrl} alt="" className="w-full h-full object-cover" />
-                  ) : (
-                    <span className="text-[11px] font-bold text-primary leading-none">
-                      {(firstName || "?").charAt(0).toUpperCase()}
-                    </span>
-                  )}
-                </div>
+              {/* Avatar Sophie */}
+              <div className="flex-shrink-0 w-9 h-9 rounded-full bg-gradient-to-br from-rose-400 via-pink-500 to-violet-500 border-2 border-[hsl(240_18%_6%)] flex items-center justify-center shadow-[0_0_14px_hsl(330_70%_60%/0.45)]">
+                <span className="text-[15px] leading-none">🌸</span>
               </div>
 
               {/* Texte */}
