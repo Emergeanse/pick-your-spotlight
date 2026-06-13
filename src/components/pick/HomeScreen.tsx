@@ -1690,6 +1690,7 @@ const HomeScreen = ({
       <div className="relative z-10 h-full overflow-y-auto overscroll-y-contain touch-[pan-y_pinch-zoom] scrollbar-hide">
         {/* ─── Hero Greeting ─── */}
         <section className="relative pt-[calc(5.5rem+env(safe-area-inset-top))] pb-2 px-5 md:px-8">
+          {/* Greeting + accroche */}
           <motion.div
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
@@ -1698,82 +1699,83 @@ const HomeScreen = ({
             <p className="text-foreground/50 text-[13px] font-sans">
               {firstName ? `Bonsoir ${firstName} 👋` : "Bonsoir 👋"}
             </p>
-            <h1 className="mt-1 font-serif text-foreground text-[28px] leading-[1.1] tracking-tight">
-              Que regardons-nous<br />ce soir ?
+            <h1 className="mt-1.5 font-serif text-foreground text-[24px] leading-[1.15] tracking-tight">
+              Créez une soirée cinéma<br />
+              <span className="italic text-primary" style={{ textShadow: "0 0 18px hsl(var(--primary)/0.5)" }}>
+                et trouvez le film parfait
+              </span>
+              <span className="not-italic text-foreground"> pour tous !</span>
             </h1>
-            <p className="mt-1 text-foreground/40 text-[11px] font-sans">
-              Organise ta prochaine soirée ciné
-            </p>
           </motion.div>
 
-          {/* 4 creation cards */}
-          <div className="grid grid-cols-2 gap-2.5 mt-5">
+          {/* CTA Créer une soirée */}
+          <motion.button
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.30, duration: 0.45 }}
+            whileTap={{ scale: 0.97 }}
+            onClick={() => navigate("/app/event")}
+            className="mt-4 w-full py-3.5 rounded-2xl bg-gradient-to-r from-primary to-accent text-primary-foreground font-sans font-semibold text-[14px] tracking-wide shadow-[0_12px_40px_-10px_hsl(var(--primary)/0.55)]"
+          >
+            Créer une soirée
+          </motion.button>
+
+          {/* 4 widgets côte à côte */}
+          <div className="flex gap-2 mt-4 overflow-x-auto scrollbar-hide pb-1 -mx-1 px-1">
             {/* Soirée Duo */}
             <motion.button
-              initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.28, duration: 0.45 }}
-              whileTap={{ scale: 0.95 }}
+              initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.38, duration: 0.4 }}
+              whileTap={{ scale: 0.93 }}
               onClick={() => setShowFindChoice(true)}
-              className="flex flex-col items-start gap-3 p-4 rounded-2xl border border-white/12 bg-[hsl(240_18%_7%/0.82)] backdrop-blur-md hover:bg-[hsl(240_18%_10%/0.88)] text-left active:bg-[hsl(240_18%_12%/0.90)] shadow-[0_4px_20px_-8px_rgba(0,0,0,0.6)]"
+              className="flex-1 min-w-0 flex flex-col items-center gap-2 py-3.5 px-2 rounded-2xl border border-white/12 bg-[hsl(240_18%_7%/0.82)] backdrop-blur-md active:bg-[hsl(240_18%_12%/0.90)]"
             >
-              <span className="w-9 h-9 rounded-xl bg-primary/15 flex items-center justify-center">
-                <Heart className="w-4 h-4 text-primary" strokeWidth={1.8} />
+              <span className="w-8 h-8 rounded-xl bg-primary/15 flex items-center justify-center shrink-0">
+                <Heart className="w-3.5 h-3.5 text-primary" strokeWidth={1.8} />
               </span>
-              <div>
-                <p className="font-serif text-foreground text-[13px] leading-tight">Soirée Duo</p>
-                <p className="text-foreground/40 text-[10px] font-sans mt-0.5">Film commun à deux</p>
-              </div>
+              <p className="font-sans text-foreground text-[10.5px] font-semibold leading-tight text-center">Soirée<br/>Duo</p>
             </motion.button>
 
             {/* Soirée Famille */}
             <motion.button
-              initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.34, duration: 0.45 }}
-              whileTap={{ scale: 0.95 }}
+              initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.44, duration: 0.4 }}
+              whileTap={{ scale: 0.93 }}
               onClick={() => navigate("/app/event")}
-              className="flex flex-col items-start gap-3 p-4 rounded-2xl border border-white/12 bg-[hsl(240_18%_7%/0.82)] backdrop-blur-md hover:bg-[hsl(240_18%_10%/0.88)] text-left active:bg-[hsl(240_18%_12%/0.90)] shadow-[0_4px_20px_-8px_rgba(0,0,0,0.6)]"
+              className="flex-1 min-w-0 flex flex-col items-center gap-2 py-3.5 px-2 rounded-2xl border border-white/12 bg-[hsl(240_18%_7%/0.82)] backdrop-blur-md active:bg-[hsl(240_18%_12%/0.90)]"
             >
-              <span className="w-9 h-9 rounded-xl bg-accent/15 flex items-center justify-center">
-                <Home className="w-4 h-4 text-accent" strokeWidth={1.8} />
+              <span className="w-8 h-8 rounded-xl bg-accent/15 flex items-center justify-center shrink-0">
+                <Home className="w-3.5 h-3.5 text-accent" strokeWidth={1.8} />
               </span>
-              <div>
-                <p className="font-serif text-foreground text-[13px] leading-tight">Soirée Famille</p>
-                <p className="text-foreground/40 text-[10px] font-sans mt-0.5">Pour tous les âges</p>
-              </div>
+              <p className="font-sans text-foreground text-[10.5px] font-semibold leading-tight text-center">Soirée<br/>Famille</p>
             </motion.button>
 
             {/* Entre amis */}
             <motion.button
-              initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.40, duration: 0.45 }}
-              whileTap={{ scale: 0.95 }}
+              initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.50, duration: 0.4 }}
+              whileTap={{ scale: 0.93 }}
               onClick={() => navigate("/app/event")}
-              className="flex flex-col items-start gap-3 p-4 rounded-2xl border border-white/12 bg-[hsl(240_18%_7%/0.82)] backdrop-blur-md hover:bg-[hsl(240_18%_10%/0.88)] text-left active:bg-[hsl(240_18%_12%/0.90)] shadow-[0_4px_20px_-8px_rgba(0,0,0,0.6)]"
+              className="flex-1 min-w-0 flex flex-col items-center gap-2 py-3.5 px-2 rounded-2xl border border-white/12 bg-[hsl(240_18%_7%/0.82)] backdrop-blur-md active:bg-[hsl(240_18%_12%/0.90)]"
             >
-              <span className="w-9 h-9 rounded-xl bg-emerald-500/15 flex items-center justify-center">
-                <Users className="w-4 h-4 text-emerald-400" strokeWidth={1.8} />
+              <span className="w-8 h-8 rounded-xl bg-emerald-500/15 flex items-center justify-center shrink-0">
+                <Users className="w-3.5 h-3.5 text-emerald-400" strokeWidth={1.8} />
               </span>
-              <div>
-                <p className="font-serif text-foreground text-[13px] leading-tight">Entre amis</p>
-                <p className="text-foreground/40 text-[10px] font-sans mt-0.5">Groupe & Pick Together</p>
-              </div>
+              <p className="font-sans text-foreground text-[10.5px] font-semibold leading-tight text-center">Entre<br/>amis</p>
             </motion.button>
 
             {/* Surprise */}
             <motion.button
-              initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.46, duration: 0.45 }}
-              whileTap={{ scale: 0.95 }}
+              initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.56, duration: 0.4 }}
+              whileTap={{ scale: 0.93 }}
               onClick={() => { setActiveAmbiance("surprise"); void handleAutoPick(); }}
-              className="flex flex-col items-start gap-3 p-4 rounded-2xl border border-white/12 bg-[hsl(240_18%_7%/0.82)] backdrop-blur-md hover:bg-[hsl(240_18%_10%/0.88)] text-left active:bg-[hsl(240_18%_12%/0.90)] shadow-[0_4px_20px_-8px_rgba(0,0,0,0.6)]"
+              className="flex-1 min-w-0 flex flex-col items-center gap-2 py-3.5 px-2 rounded-2xl border border-white/12 bg-[hsl(240_18%_7%/0.82)] backdrop-blur-md active:bg-[hsl(240_18%_12%/0.90)]"
             >
-              <span className="w-9 h-9 rounded-xl bg-amber-500/15 flex items-center justify-center">
-                <WandSparkles className="w-4 h-4 text-amber-400" strokeWidth={1.8} />
+              <span className="w-8 h-8 rounded-xl bg-amber-500/15 flex items-center justify-center shrink-0">
+                <WandSparkles className="w-3.5 h-3.5 text-amber-400" strokeWidth={1.8} />
               </span>
-              <div>
-                <p className="font-serif text-foreground text-[13px] leading-tight">Surprise</p>
-                <p className="text-foreground/40 text-[10px] font-sans mt-0.5">Laisse-moi choisir</p>
-              </div>
+              <p className="font-sans text-foreground text-[10.5px] font-semibold leading-tight text-center">Sur&shy;prise</p>
             </motion.button>
           </div>
         </section>
