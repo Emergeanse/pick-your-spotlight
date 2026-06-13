@@ -146,6 +146,7 @@ Réponds UNIQUEMENT avec ce JSON valide, sans backticks :
       vote_average: detail.vote_average || 0,
       media_type: mediaType,
       platform_ids: platformIds,
+      platform_ids_updated_at: new Date().toISOString(),
     } as any,
     { onConflict: "tmdb_id" },
   );
@@ -163,6 +164,7 @@ serve(async (req: Request) => {
   try {
     const body = await req.json().catch(() => ({}));
     const {
+      mode = "seed",           // "seed" | "refresh-platforms"
       pages = 1,
       startPage = 1,
       type = "movie",
@@ -171,6 +173,7 @@ serve(async (req: Request) => {
       minVoteCount = 50,
       genreId,
       minRating,
+      refreshLimit = 20,       // nb de films à rafraîchir en mode refresh-platforms
     } = body;
 
     // deno-lint-ignore no-undef
@@ -184,6 +187,50 @@ serve(async (req: Request) => {
     if (!GOOGLE_AI_KEY) throw new Error("GOOGLE_AI_KEY not configured — add it in Supabase Secrets");
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+
+    // ── Mode refresh-platforms : mettre à jour platform_ids des films stales ──
+    if (mode === "refresh-platforms") {
+      // Films les plus populaires dont platform_ids_updated_at est NULL ou > 30 jours
+      const cutoff = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+      const { data: staleMovies, error: staleErr } = await supabase
+        .from("movie_embeddings")
+        .select("tmdb_id, title, media_type")
+        .or(`platform_ids_updated_at.is.null,platform_ids_updated_at.lt.${cutoff}`)
+        .order("popularity", { ascending: false })
+        .limit(refreshLimit);
+
+      if (staleErr || !staleMovies?.length) {
+        return new Response(
+          JSON.stringify({ success: true, mode: "refresh-platforms", stats: { refreshed: 0, stale: 0 } }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+
+      let refreshed = 0;
+      const batchRefresh = staleMovies.slice(0, refreshLimit);
+      await Promise.all(
+        batchRefresh.map(async (film: any) => {
+          try {
+            const mediaType: "movie" | "tv" = film.media_type === "tv" ? "tv" : "movie";
+            const platformIds = await getProviderIdsFR(film.tmdb_id, mediaType);
+            const { error: upErr } = await supabase
+              .from("movie_embeddings")
+              .update({
+                platform_ids: platformIds,
+                platform_ids_updated_at: new Date().toISOString(),
+              })
+              .eq("tmdb_id", film.tmdb_id);
+            if (!upErr) refreshed++;
+          } catch { /* silencieux */ }
+        }),
+      );
+
+      console.log(`[refresh-platforms] ${refreshed}/${batchRefresh.length} films mis à jour`);
+      return new Response(
+        JSON.stringify({ success: true, mode: "refresh-platforms", stats: { refreshed, stale: staleMovies.length } }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
 
     // ── 1. Récupération des films depuis TMDB ──
     const allMovies: any[] = [];

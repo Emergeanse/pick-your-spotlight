@@ -619,6 +619,16 @@ const HomeScreen = ({
     runSeed(picks[0], 2000);   // 2s après montage
     runSeed(picks[1], 35000);  // 35s après
     runSeed(picks[2], 90000);  // 90s après
+
+    // 4e vague : rafraîchissement des platform_ids périmés (films déjà en base, pas Gemini)
+    setTimeout(() => {
+      supabase.functions.invoke("seed-embeddings", {
+        body: { mode: "refresh-platforms", refreshLimit: 20 },
+      }).then(({ data }) => {
+        if ((data?.stats?.refreshed ?? 0) > 0)
+          console.log(`[BG-REFRESH] platform_ids: ${data.stats.refreshed} films mis à jour (${data.stats.stale} stales)`);
+      }).catch(() => {});
+    }, 120000); // 2 min après montage
   }, [user]);
 
   useEffect(() => {
