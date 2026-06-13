@@ -543,16 +543,27 @@ const CreateFlow = ({ userId, displayName, onCreated, onCancel }: {
 /* ══════════════════════════════════════════
    PAGE PRINCIPALE
 ══════════════════════════════════════════ */
+type EnsembleTab = "amis" | "duos" | "groupes";
+
+const ENSEMBLE_TABS: { id: EnsembleTab; label: string }[] = [
+  { id: "amis",    label: "Amis" },
+  { id: "duos",    label: "Duos" },
+  { id: "groupes", label: "Groupes" },
+];
+
 export default function DuoPage() {
   const { user, isReady } = useAuth();
   const location = useLocation();
 
+  const [activeTab, setActiveTab] = useState<EnsembleTab>("duos");
   const [duos, setDuos] = useState<DuoProfile[]>([]);
   const [pendingDuos, setPendingDuos] = useState<DuoProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedDuo, setSelectedDuo] = useState<DuoProfile | null>(null);
   const [creating, setCreating] = useState(false);
   const [displayName, setDisplayName] = useState("");
+  const [friends, setFriends] = useState<DuoFriendCandidate[]>([]);
+  const [loadingFriends, setLoadingFriends] = useState(false);
 
   const load = useCallback(async () => {
     if (!user) return;
@@ -570,6 +581,8 @@ export default function DuoPage() {
     load();
     supabase.from("profiles").select("display_name").eq("id", user.id).maybeSingle()
       .then(({ data }) => setDisplayName(data?.display_name ?? user.email?.split("@")[0] ?? "Moi"));
+    setLoadingFriends(true);
+    loadAcceptedFriends(user.id).then(f => { setFriends(f); setLoadingFriends(false); });
 
     // Ouvrir directement le duo si on revient depuis JoinDuo
     const state = location.state as any;
@@ -655,8 +668,8 @@ export default function DuoPage() {
             {/* Header */}
             <div className="flex items-center justify-between mb-2">
               <div>
-                <h1 className="font-serif text-2xl text-foreground">Mes Duos</h1>
-                <p className="text-foreground/40 font-sans text-xs mt-0.5">Profils fusionnés avec tes amis</p>
+                <h1 className="font-serif text-2xl text-foreground">Ensemble</h1>
+                <p className="text-foreground/40 font-sans text-xs mt-0.5">Amis, duos et groupes</p>
               </div>
               <button
                 onClick={() => setCreating(true)}
@@ -666,64 +679,124 @@ export default function DuoPage() {
               </button>
             </div>
 
-            {/* Duos actifs */}
-            {duos.length > 0 && (
-              <div className="flex flex-col gap-2">
-                <p className="text-[10px] uppercase tracking-widest text-foreground/30 font-sans font-semibold">
-                  Duos actifs
-                </p>
-                <AnimatePresence>
-                  {duos.map(duo => (
-                    <DuoCard
-                      key={duo.id}
-                      duo={duo}
-                      currentUserId={user!.id}
-                      onOpen={() => setSelectedDuo(duo)}
-                    />
-                  ))}
-                </AnimatePresence>
-              </div>
-            )}
+            {/* Onglets */}
+            <div className="flex gap-1 p-1 rounded-2xl bg-white/[0.04] border border-white/[0.06]">
+              {ENSEMBLE_TABS.map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`flex-1 py-2 rounded-xl font-sans text-[13px] font-semibold transition-all ${
+                    activeTab === tab.id
+                      ? "bg-primary text-primary-foreground shadow-[0_4px_14px_-4px_hsl(var(--primary)/0.6)]"
+                      : "text-foreground/40 hover:text-foreground/70"
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
 
-            {/* Duos pending */}
-            {pendingDuos.length > 0 && (
-              <div className="flex flex-col gap-2 mt-2">
-                <p className="text-[10px] uppercase tracking-widest text-foreground/30 font-sans font-semibold">
-                  En attente
-                </p>
-                <AnimatePresence>
-                  {pendingDuos.map(duo => (
-                    <PendingDuoCard
-                      key={duo.id}
-                      duo={duo}
-                      onShare={() => handleShare(duo)}
-                      onDelete={() => handleDelete(duo.id)}
-                    />
-                  ))}
-                </AnimatePresence>
-              </div>
-            )}
+            <AnimatePresence mode="wait">
 
-            {/* Empty state */}
-            {duos.length === 0 && pendingDuos.length === 0 && (
-              <motion.div
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="flex flex-col items-center gap-4 pt-16 text-center"
-              >
-                <div className="w-16 h-16 rounded-full bg-foreground/[0.04] border border-border/15 flex items-center justify-center">
-                  <Users className="w-7 h-7 text-foreground/20" />
-                </div>
-                <div className="space-y-1">
-                  <p className="font-sans font-medium text-foreground/60">Aucun duo pour l'instant</p>
-                  <p className="font-sans text-foreground/35 text-sm">Fusionne ton profil avec celui d'un ami pour découvrir vos goûts communs.</p>
-                </div>
-                <Button onClick={() => setCreating(true)} className="mt-2">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Créer mon premier duo
-                </Button>
-              </motion.div>
-            )}
+              {/* ── Onglet Amis ── */}
+              {activeTab === "amis" && (
+                <motion.div key="amis" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="flex flex-col gap-2">
+                  {loadingFriends ? (
+                    <div className="flex justify-center py-8"><Loader2 className="w-5 h-5 animate-spin text-foreground/30" /></div>
+                  ) : friends.length === 0 ? (
+                    <div className="flex flex-col items-center gap-3 pt-12 text-center">
+                      <div className="w-14 h-14 rounded-full bg-foreground/[0.04] border border-border/15 flex items-center justify-center">
+                        <Users className="w-6 h-6 text-foreground/20" />
+                      </div>
+                      <p className="font-sans text-foreground/40 text-sm">Aucun ami pour l'instant.</p>
+                    </div>
+                  ) : (
+                    friends.map((f, i) => (
+                      <motion.div
+                        key={f.id}
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: i * 0.04 }}
+                        className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-white/[0.05] border border-white/[0.08]"
+                      >
+                        <div className="w-10 h-10 rounded-full overflow-hidden bg-primary/20 border border-white/10 shrink-0 flex items-center justify-center">
+                          {f.avatarUrl
+                            ? <img src={f.avatarUrl} alt={f.displayName} className="w-full h-full object-cover" />
+                            : <span className="text-[13px] font-bold text-primary">{f.displayName.charAt(0).toUpperCase()}</span>}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-sans font-semibold text-sm text-foreground truncate">{f.displayName}</p>
+                          <p className="font-sans text-xs text-foreground/35 mt-0.5">Ami Pick</p>
+                        </div>
+                        <button
+                          onClick={() => { setCreating(true); }}
+                          className="shrink-0 flex items-center gap-1 px-3 py-1.5 rounded-xl border border-primary/25 bg-primary/8 text-primary text-[11px] font-sans font-semibold hover:bg-primary/15 transition-colors"
+                        >
+                          <Plus className="w-3 h-3" />
+                          Duo
+                        </button>
+                      </motion.div>
+                    ))
+                  )}
+                </motion.div>
+              )}
+
+              {/* ── Onglet Duos ── */}
+              {activeTab === "duos" && (
+                <motion.div key="duos" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="flex flex-col gap-3">
+                  {duos.length > 0 && (
+                    <div className="flex flex-col gap-2">
+                      <p className="text-[10px] uppercase tracking-widest text-foreground/30 font-sans font-semibold">Duos actifs</p>
+                      <AnimatePresence>
+                        {duos.map(duo => (
+                          <DuoCard key={duo.id} duo={duo} currentUserId={user!.id} onOpen={() => setSelectedDuo(duo)} />
+                        ))}
+                      </AnimatePresence>
+                    </div>
+                  )}
+                  {pendingDuos.length > 0 && (
+                    <div className="flex flex-col gap-2 mt-1">
+                      <p className="text-[10px] uppercase tracking-widest text-foreground/30 font-sans font-semibold">En attente</p>
+                      <AnimatePresence>
+                        {pendingDuos.map(duo => (
+                          <PendingDuoCard key={duo.id} duo={duo} onShare={() => handleShare(duo)} onDelete={() => handleDelete(duo.id)} />
+                        ))}
+                      </AnimatePresence>
+                    </div>
+                  )}
+                  {duos.length === 0 && pendingDuos.length === 0 && (
+                    <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col items-center gap-4 pt-12 text-center">
+                      <div className="w-16 h-16 rounded-full bg-foreground/[0.04] border border-border/15 flex items-center justify-center">
+                        <Users className="w-7 h-7 text-foreground/20" />
+                      </div>
+                      <div className="space-y-1">
+                        <p className="font-sans font-medium text-foreground/60">Aucun duo pour l'instant</p>
+                        <p className="font-sans text-foreground/35 text-sm">Fusionne ton profil avec celui d'un ami pour découvrir vos goûts communs.</p>
+                      </div>
+                      <Button onClick={() => setCreating(true)} className="mt-2">
+                        <Plus className="w-4 h-4 mr-2" />
+                        Créer mon premier duo
+                      </Button>
+                    </motion.div>
+                  )}
+                </motion.div>
+              )}
+
+              {/* ── Onglet Groupes ── */}
+              {activeTab === "groupes" && (
+                <motion.div key="groupes" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="flex flex-col items-center gap-4 pt-12 text-center">
+                  <div className="w-16 h-16 rounded-full bg-foreground/[0.04] border border-border/15 flex items-center justify-center">
+                    <Users className="w-7 h-7 text-foreground/20" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <p className="font-sans font-medium text-foreground/60">Groupes — bientôt</p>
+                    <p className="font-sans text-foreground/35 text-sm max-w-[220px]">Crée des groupes de 3 personnes ou plus pour vos soirées ciné collectives.</p>
+                  </div>
+                  <span className="px-3 py-1 rounded-full border border-white/10 text-[11px] font-sans text-foreground/30">Bientôt disponible</span>
+                </motion.div>
+              )}
+
+            </AnimatePresence>
           </motion.div>
         )}
       </AnimatePresence>
