@@ -262,14 +262,21 @@ serve(async (req) => {
           ]
         : [];
 
-    // Pour le SQL : genres du profil + genres mood, uniquement les genres TMDB valides
+    // Pour le SQL : genres du profil + équivalents TV + genres mood
+    // Les séries ont des noms différents ("Science-Fiction & Fantastique" vs "Science-Fiction") —
+    // inclure les deux pour que liked_genres && me.genres matche films ET séries.
     const likedGenresForSQL =
       topGenres.length >= 2
         ? [...new Set([
             ...(topGenres as string[]).filter((g) => g in genreNameToId),
+            ...(topGenres as string[]).flatMap((g) => tvGenreEquivalents[g] ?? []),
             ...(moodBoostGenres ?? []).filter((g) => g in genreNameToId),
+            ...(moodBoostGenres ?? []).flatMap((g: string) => tvGenreEquivalents[g] ?? []),
           ])]
-        : (moodBoostGenres ?? []).filter((g) => g in genreNameToId);
+        : [
+            ...(moodBoostGenres ?? []).filter((g) => g in genreNameToId),
+            ...(moodBoostGenres ?? []).flatMap((g: string) => tvGenreEquivalents[g] ?? []),
+          ];
 
     const hardExcludedFormats = ["Reality", "Soap", "Talk", "News", "Téléfilm", "Horreur", "Animation", "Kids", "Familial", "Famille"];
     const autoExcluded = hardExcludedFormats.filter((g) => !likedWithTv.includes(g));
@@ -463,6 +470,7 @@ serve(async (req) => {
     const explicitFallbackDebug: { likedGenres: boolean; minRating: number; newFilms: number; films: { title: string; year: string; note: number }[] }[] = [];
 
     // ── ÉTAPE 1 : Cascade vectorielle ──
+    console.log(`[SP] 🎯 Vecteur 32D actif — liked_genres SQL: [${likedGenresForSQL.join(", ")}]`);
     if (SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY && userTasteVector) {
       const BATCH = 500;
 

@@ -921,7 +921,7 @@ const HomeScreen = ({
             const logFn = cascadeWarn ? console.warn.bind(console) : console.log.bind(console);
             const candidateCount = dbg.sql50?.length ?? 0;
             const headerFn = candidateCount === 0 ? console.warn.bind(console) : console.group.bind(console);
-            headerFn(`[PICK-DEBUG] 1️⃣ SQL — ${candidateCount} candidats (${f?.excludeCount ?? 0} exclus — déjà vus)${candidateCount === 0 ? " ⚠️ POOL ÉPUISÉ" : ""}`);
+            headerFn(`[PICK-DEBUG] 1️⃣ SQL vectoriel 32D — ${candidateCount} candidats triés par similarité (Sim% = score vecteur) | ${f?.excludeCount ?? 0} exclus`);
             logFn(`   Cascade SQL : niveau ${cascadeLabel}${cascadeWarn ? " ⚠️ excluded_genres vide !" : ""}`);
             if (rpc) {
               console.log(`   Paramètres RPC effectifs :`);
@@ -957,7 +957,7 @@ const HomeScreen = ({
                 "Titre": c.title,
                 "Année": c.year,
                 "Note /10": c.note ?? "–",
-                "Sim%": c.sim ?? "–",
+                "Sim% (vecteur 32D)": c.sim ?? "–",
                 "Composite": c.composite ?? "–",
                 "Genres": (c.genres || []).join(", "),
                 "Type": c.type,
