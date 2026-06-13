@@ -23,9 +23,9 @@ const MyCinema = () => {
       <div className="h-full pt-[calc(4rem+env(safe-area-inset-top))] pb-[calc(3.5rem+env(safe-area-inset-bottom))] relative">
         <WatchlistPage
           onMovieSelect={handleMovieSelect}
-          tabs={["liked", "loved", "seen", "disliked"]}
+          tabs={["watchlist", "loved", "liked", "seen", "disliked"]}
           title="Ma Bibliothèque"
-          defaultTab="loved"
+          defaultTab="watchlist"
         />
       </div>
     </div>

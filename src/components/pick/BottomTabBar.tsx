@@ -1,8 +1,8 @@
-import { Home, Bookmark, Library, User, UsersRound } from "lucide-react";
+import { Home, Library, User, UsersRound, Clapperboard } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 
-export type TabId = "home" | "watchlist" | "together" | "cinema" | "profile" | "duo";
+export type TabId = "home" | "together" | "cinema" | "profile" | "ensemble" | "event";
 
 // Custom Match icon: film reel inside a magnifying glass
 const MatchIcon = ({ className, strokeWidth = 1.7 }: { className?: string; strokeWidth?: number }) => (
@@ -31,12 +31,12 @@ const MatchIcon = ({ className, strokeWidth = 1.7 }: { className?: string; strok
 );
 
 const tabs: { id: TabId; label: string; icon: React.ComponentType<any>; path: string }[] = [
-  { id: "home", label: "Trouve-moi", icon: Home, path: "/app" },
-  { id: "together", label: "Match", icon: MatchIcon, path: "/app/pick-together" },
-  { id: "duo", label: "Duo", icon: UsersRound, path: "/app/duo" },
-  { id: "watchlist", label: "À voir", icon: Bookmark, path: "/app/watchlist" },
-  { id: "cinema", label: "Biblio", icon: Library, path: "/app/my-cinema" },
-  { id: "profile", label: "Profil", icon: User, path: "/app/profile" },
+  { id: "home",     label: "Trouve-moi", icon: Home,        path: "/app" },
+  { id: "together", label: "Match",      icon: MatchIcon,   path: "/app/pick-together" },
+  { id: "ensemble", label: "Ensemble",   icon: UsersRound,  path: "/app/duo" },
+  { id: "event",    label: "Événement",  icon: Clapperboard, path: "/app/event" },
+  { id: "cinema",   label: "Biblio",     icon: Library,     path: "/app/my-cinema" },
+  { id: "profile",  label: "Profil",     icon: User,        path: "/app/profile" },
 ];
 
 const BottomTabBar = () => {

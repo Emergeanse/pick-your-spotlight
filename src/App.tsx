@@ -23,6 +23,7 @@ import MatchPage from "./pages/MatchPage.tsx";
 import JoinSession from "./pages/JoinSession.tsx";
 import JoinDuo from "./pages/JoinDuo.tsx";
 import DuoPage from "./pages/DuoPage.tsx";
+import EventPage from "./pages/EventPage.tsx";
 import Admin from "./pages/Admin.tsx";
 import PlanSession from "./pages/PlanSession.tsx";
 import History from "./pages/History.tsx";
@@ -74,6 +75,7 @@ const App = () => (
             <Route path="/join" element={<JoinSession />} />
             <Route path="/join-duo/:code" element={<JoinDuo />} />
             <Route path="/app/duo" element={<ProtectedRoute><AppLayout><DuoPage /></AppLayout></ProtectedRoute>} />
+            <Route path="/app/event" element={<ProtectedRoute><AppLayout><EventPage /></AppLayout></ProtectedRoute>} />
             <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
             <Route path="/glossary" element={<ProtectedRoute><AppLayout><Glossary /></AppLayout></ProtectedRoute>} />
             <Route path="/profile" element={<Navigate to="/app/profile" replace />} />
