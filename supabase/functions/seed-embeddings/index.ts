@@ -9,6 +9,21 @@ const corsHeaders = {
 
 const TMDB_API_KEY = "2dca580c2a14b55200e784d157207b4d";
 
+async function getProviderIdsFR(tmdbId: number, mediaType: "movie" | "tv"): Promise<number[]> {
+  try {
+    const res = await fetch(
+      `https://api.themoviedb.org/3/${mediaType}/${tmdbId}/watch/providers?api_key=${TMDB_API_KEY}`,
+    );
+    if (!res.ok) return [];
+    const data = await res.json();
+    const fr = data?.results?.FR;
+    if (!fr) return [];
+    return [...(fr.flatrate || []), ...(fr.free || []), ...(fr.ads || [])].map((p: any) => Number(p.provider_id));
+  } catch {
+    return [];
+  }
+}
+
 const TASTE_DIMENSIONS = [
   "epic_scale",
   "emotional_depth",
@@ -49,6 +64,7 @@ async function generateEmbeddingWithGoogleAI(
   mediaType: string,
   googleApiKey: string,
   supabase: any,
+  platformIds: number[] = [],
 ): Promise<boolean> {
   const title = detail.title || detail.name;
 
@@ -129,7 +145,7 @@ Réponds UNIQUEMENT avec ce JSON valide, sans backticks :
       popularity: detail.popularity || 0,
       vote_average: detail.vote_average || 0,
       media_type: mediaType,
-      platform_ids: [],
+      platform_ids: platformIds,
     } as any,
     { onConflict: "tmdb_id" },
   );
@@ -182,6 +198,10 @@ serve(async (req: Request) => {
           sort_by: "popularity.desc",
           "vote_count.gte": String(minVoteCount),
           page: String(page),
+          // Pré-filtre : uniquement films disponibles sur plateformes FR majeures
+          with_watch_providers: "8|381|337|119|350|234|35|1967|11|56",
+          watch_region: "FR",
+          with_watch_monetization_types: "flatrate|free|ads",
         });
         if (genreId) params.set("with_genres", String(genreId));
         if (minRating) params.set("vote_average.gte", String(minRating));
@@ -230,7 +250,8 @@ serve(async (req: Request) => {
             );
             if (!detailRes.ok) return false;
             const detail = await detailRes.json();
-            const ok = await generateEmbeddingWithGoogleAI(detail, type, GOOGLE_AI_KEY, supabase);
+            const platformIds = await getProviderIdsFR(movie.id, type as "movie" | "tv");
+            const ok = await generateEmbeddingWithGoogleAI(detail, type, GOOGLE_AI_KEY, supabase, platformIds);
             return ok;
           } catch (e) {
             console.error(`Error processing movie ${movie.id}:`, e);

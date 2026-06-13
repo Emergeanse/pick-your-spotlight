@@ -573,6 +573,37 @@ const HomeScreen = ({
     });
   }, [user]);
 
+  // ── Enrichissement background : charge des films pour genres peu fournis, une fois par session ──
+  useEffect(() => {
+    if (!user) return;
+    const key = "bg-seed-v2";
+    if (sessionStorage.getItem(key)) return;
+    sessionStorage.setItem(key, "1");
+
+    // Rotation aléatoire pour couvrir genres et sources différents à chaque session
+    const SEED_COMBOS = [
+      { type: "movie", source: "discover", genreId: 36,    minVoteCount: 20,  minRating: 6 }, // Histoire
+      { type: "movie", source: "discover", genreId: 10752, minVoteCount: 20,  minRating: 6 }, // Guerre
+      { type: "movie", source: "discover", genreId: 878,   minVoteCount: 30,  minRating: 6.5 }, // Science-Fiction
+      { type: "movie", source: "discover", genreId: 14,    minVoteCount: 30,  minRating: 6.5 }, // Fantastique
+      { type: "movie", source: "discover", genreId: 53,    minVoteCount: 50,  minRating: 6.5 }, // Thriller
+      { type: "movie", source: "top_rated",                minVoteCount: 200, minRating: 7.5 }, // Top qualité toutes catégories
+      { type: "movie", source: "discover", genreId: 18,    minVoteCount: 100, minRating: 7   }, // Drame qualitatif
+      { type: "tv",    source: "discover", genreId: 10765, minVoteCount: 50,  minRating: 7   }, // SF & Fantastique TV
+    ];
+
+    const combo = SEED_COMBOS[Math.floor(Math.random() * SEED_COMBOS.length)];
+    const startPage = Math.floor(Math.random() * 10) + 1;
+
+    supabase.functions.invoke("seed-embeddings", {
+      body: { ...combo, pages: 1, startPage, batchSize: 3 },
+    }).then(({ data }) => {
+      if (data?.stats?.processed > 0) {
+        console.log(`[BG-SEED] genre=${combo.genreId ?? combo.source} page=${startPage}: +${data.stats.processed} nouveaux films chargés`);
+      }
+    }).catch(() => { /* silencieux */ });
+  }, [user]);
+
   useEffect(() => {
     if (!user) return;
 
