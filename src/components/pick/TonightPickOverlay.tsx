@@ -231,25 +231,32 @@ const TonightPickOverlay = ({
   // Layout fixe par genre (position, taille, style) — calculé une fois quand la liste change
   const genreLayouts = useMemo(() => {
     const r = () => Math.random();
-    // top aléatoire en évitant la zone centrale (40–62%) où se trouve l'animation
     const randTop = () => {
-      const t = r() * 80 + 6; // 6–86%
-      return t > 38 && t < 62 ? t < 50 ? t - 16 : t + 16 : t;
+      const t = r() * 80 + 6;
+      return t > 38 && t < 62 ? (t < 50 ? t - 16 : t + 16) : t;
     };
-    // Taille parmi des valeurs variées
     const randSize = () => [11, 13, 16, 20, 24, 28, 32][Math.floor(r() * 7)];
-    // Ancre aléatoire : left ou right, avec marge sécurisée selon la taille
     const randSide = (size: number) => {
       const side = r() < 0.5 ? "left" : "right";
-      // offset max plus petit pour les grands textes (évite débordement)
       const maxOff = size > 22 ? 30 : size > 16 ? 40 : 50;
       return { side: side as "left" | "right", offset: Math.round(r() * maxOff + 4) };
     };
+    // Garde les positions déjà placées pour éviter les recouvrements
+    const placed: { top: number }[] = [];
+    const MIN_VGAP = 12; // distance verticale minimale en % entre deux genres
     return userGenres.map(() => {
       const size = randSize();
       const { side, offset } = randSide(size);
+      // Jusqu'à 12 essais pour trouver une position suffisamment éloignée
+      let top = randTop();
+      for (let attempt = 0; attempt < 12; attempt++) {
+        const tooClose = placed.some((p) => Math.abs(p.top - top) < MIN_VGAP);
+        if (!tooClose) break;
+        top = randTop();
+      }
+      placed.push({ top });
       return {
-        top: randTop(),
+        top,
         side,
         offset,
         size,
