@@ -1206,23 +1206,43 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      count_movie_candidates: {
-        Args: {
-          exclude_ids?: number[]
-          excluded_genres?: string[]
-          filter_media_type?: string
-          liked_genres?: string[]
-          max_duration?: number
-          min_rating?: number
-          p_excluded_languages?: string[]
-          p_min_popularity?: number
-          p_platform_ids?: number[]
-        }
-        Returns: {
-          available_after_exclusions: number
-          total_in_db: number
-        }[]
-      }
+      count_movie_candidates:
+        | {
+            Args: {
+              exclude_ids?: number[]
+              excluded_genres?: string[]
+              filter_media_type?: string
+              liked_genres?: string[]
+              max_duration?: number
+              min_rating?: number
+              p_excluded_languages?: string[]
+              p_min_popularity?: number
+              p_platform_ids?: number[]
+            }
+            Returns: {
+              available_after_exclusions: number
+              total_in_db: number
+            }[]
+          }
+        | {
+            Args: {
+              exclude_ids?: number[]
+              excluded_genres?: string[]
+              filter_media_type?: string
+              liked_genres?: string[]
+              max_duration?: number
+              min_rating?: number
+              p_excluded_languages?: string[]
+              p_min_popularity?: number
+              p_platform_ids?: number[]
+              p_user_id?: string
+              p_user_id2?: string
+            }
+            Returns: {
+              available_after_exclusions: number
+              total_in_db: number
+            }[]
+          }
       find_profile_by_friend_code: {
         Args: { _code: string }
         Returns: {
@@ -1263,6 +1283,35 @@ export type Database = {
           taste_tags: string[]
           title: string
           tmdb_id: number
+        }[]
+      }
+      match_movies_explicit: {
+        Args: {
+          exclude_ids?: number[]
+          excluded_genres?: string[]
+          filter_media_type?: string
+          liked_genres?: string[]
+          match_count?: number
+          max_duration?: number
+          min_rating?: number
+          p_excluded_languages?: string[]
+          p_platform_ids?: number[]
+          p_user_id?: string
+          p_user_id2?: string
+        }
+        Returns: {
+          cluster_labels: string[]
+          genres: string[]
+          media_type: string
+          original_language: string
+          platform_ids: number[]
+          popularity: number
+          similarity: number
+          taste_tags: string[]
+          title: string
+          tmdb_id: number
+          vote_average: number
+          year: string
         }[]
       }
       match_movies_for_recommendation:
@@ -1393,6 +1442,7 @@ export type Database = {
               p_original_language?: string
               p_platform_ids?: number[]
               p_user_id?: string
+              p_user_id2?: string
               query_vector: string
             }
             Returns: {
