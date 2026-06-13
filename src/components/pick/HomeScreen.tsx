@@ -338,7 +338,10 @@ const HomeScreen = ({
   const [totalEvaluated, setTotalEvaluated] = useState(0);
   const [activeAmbiance, setActiveAmbiance] = useState<AmbianceMood | null>(null);
   const [firstName, setFirstName] = useState<string>("");
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [quickRecos, setQuickRecos] = useState<QuickReco[]>([]);
+  const [showShareNotif, setShowShareNotif] = useState(false);
+  const [shareNotifDismissed, setShareNotifDismissed] = useState(false);
 
   const [chatMoviesPool, setChatMoviesPool] = useState<MovieDetail[] | null>(null);
   const [movieMatchData, setMovieMatchData] = useState<Record<number, RecommendationMatch>>({});
@@ -410,14 +413,22 @@ const HomeScreen = ({
     return () => window.removeEventListener("pick-voice-search", handler);
   }, []);
 
-  // Prénom de l'utilisateur pour le greeting
+  // Prénom + avatar pour le greeting et la notif
   useEffect(() => {
     if (!user) return;
-    supabase.from("profiles").select("display_name").eq("id", user.id).maybeSingle().then(({ data }) => {
+    supabase.from("profiles").select("display_name, avatar_url").eq("id", user.id).maybeSingle().then(({ data }) => {
       const name = (data as any)?.display_name || user.email?.split("@")[0] || "";
       setFirstName(name.split(" ")[0]);
+      setAvatarUrl((data as any)?.avatar_url || null);
     });
   }, [user]);
+
+  // Apparition de la notif partagée après 2.5s
+  useEffect(() => {
+    if (shareNotifDismissed) return;
+    const t = setTimeout(() => setShowShareNotif(true), 2500);
+    return () => clearTimeout(t);
+  }, [shareNotifDismissed]);
 
   // Charge les dernières recos depuis le cache localStorage
   useEffect(() => {
@@ -1891,6 +1902,63 @@ const HomeScreen = ({
           excludedGenres={userExcludedGenres}
         />
       </div>
+
+      {/* ─── Notification "Partagé avec vous" ─── */}
+      <AnimatePresence>
+        {showShareNotif && !shareNotifDismissed && !tonightLoading && !tonightPick && !showFindChoice && (
+          <motion.div
+            initial={{ opacity: 0, y: 32 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 24 }}
+            transition={{ type: "spring", stiffness: 340, damping: 30 }}
+            className="absolute inset-x-3 bottom-[calc(4.75rem+env(safe-area-inset-bottom))] z-50"
+          >
+            <div
+              className="flex items-center gap-3 px-3.5 py-2.5 rounded-2xl border border-white/10 bg-[hsl(240_22%_8%/0.96)] backdrop-blur-2xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.8)]"
+              onClick={() => { setShowShareNotif(false); setShowFindChoice(true); }}
+              role="button"
+              tabIndex={0}
+            >
+              {/* Avatars empilés */}
+              <div className="relative flex-shrink-0 w-10 h-9">
+                {/* Ami (derrière) */}
+                <div className="absolute left-0 top-0.5 w-7 h-7 rounded-full bg-gradient-to-br from-violet-500 to-pink-500 border-2 border-[hsl(240_22%_8%)] flex items-center justify-center">
+                  <span className="text-[10px] font-bold text-white">S</span>
+                </div>
+                {/* Utilisateur (devant) */}
+                <div className="absolute left-3.5 top-0.5 w-7 h-7 rounded-full overflow-hidden border-2 border-[hsl(240_22%_8%)] bg-primary/20">
+                  {avatarUrl ? (
+                    <img src={avatarUrl} alt="" className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-[10px] font-bold text-foreground/60">
+                      {(firstName || "?").charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Texte */}
+              <div className="flex-1 min-w-0">
+                <p className="text-[12px] font-sans font-semibold text-foreground leading-tight">
+                  Partagé <span className="text-foreground/50 font-normal">avec vous</span>
+                </p>
+                <p className="text-[10.5px] font-sans text-foreground/50 leading-tight mt-0.5 truncate">
+                  <span className="text-foreground/75 font-medium">Sophie</span> pense que tu aimerais ce film
+                </p>
+              </div>
+
+              {/* CTA */}
+              <button
+                onClick={(e) => { e.stopPropagation(); setShowShareNotif(false); setShowFindChoice(true); }}
+                className="flex-shrink-0 flex items-center gap-1 px-3 py-1.5 rounded-xl border border-white/15 bg-white/[0.07] text-foreground/80 text-[12px] font-sans font-semibold hover:bg-white/[0.12] transition-colors"
+              >
+                Voir
+                <ChevronRight className="w-3 h-3" />
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <HomeScreenChoiceModal
         open={showFindChoice}
