@@ -128,6 +128,21 @@ const TonightPickOverlay = ({
     return () => clearInterval(id);
   }, [tonightLoading]);
 
+  // Effet "scan" : un poster aléatoire s'illumine brièvement, comme s'il était identifié
+  const [highlightedPath, setHighlightedPath] = useState<string | null>(null);
+  useEffect(() => {
+    if (!tonightLoading || shuffledWallPaths.length === 0) { setHighlightedPath(null); return; }
+    let clearFlash: ReturnType<typeof setTimeout>;
+    const flash = () => {
+      const path = shuffledWallPaths[Math.floor(Math.random() * shuffledWallPaths.length)];
+      setHighlightedPath(path);
+      clearFlash = setTimeout(() => setHighlightedPath(null), 380);
+    };
+    flash();
+    const interval = setInterval(flash, 750);
+    return () => { clearInterval(interval); clearTimeout(clearFlash); };
+  }, [tonightLoading, shuffledWallPaths.length]);
+
   // Lambda TMDB : liste fixe popular+top_rated, toujours affichée (cohérence visuelle entre sessions)
   const [lambdaPaths, setLambdaPaths] = useState<string[]>(lambdaCache.paths);
   useEffect(() => {
@@ -245,29 +260,28 @@ const TonightPickOverlay = ({
                 {shuffledWallPaths.length >= 2 && (() => {
                   // Filtre progressif : sombre+gris au départ → lumineux+coloré au fil du temps
                   const p = Math.min(loadingElapsed / 8, 1); // 0→1 sur 8 secondes
-                  const wallOpacity  = 0.28 + p * 0.42;       // 0.28 → 0.70
-                  const wallGrayscale = Math.round(55 - p * 50); // 55% → 5%
-                  const wallBlur     = (1.5 - p * 1.5).toFixed(1); // 1.5px → 0px
-                  const wallBright   = (0.65 + p * 0.55).toFixed(2); // 0.65 → 1.20
-                  const wallContrast = (0.80 + p * 0.40).toFixed(2); // 0.80 → 1.20
+                  const wallOpacity   = 0.28 + p * 0.42;
+                  const wallGrayscale = Math.round(55 - p * 50);
+                  const wallBlur      = (1.5 - p * 1.5).toFixed(1);
+                  const wallBright    = (0.65 + p * 0.55).toFixed(2);
+                  const wallContrast  = (0.80 + p * 0.40).toFixed(2);
+                  // Filtre normal appliqué sur chaque image (pas sur le conteneur)
+                  const normalFilter  = `grayscale(${wallGrayscale}%) blur(${wallBlur}px) brightness(${wallBright}) contrast(${wallContrast})`;
+                  // Filtre "identifié" : pleine couleur + lumineux + halo violet
+                  const spotFilter    = "grayscale(0%) blur(0px) brightness(2.6) saturate(2.2) drop-shadow(0 0 10px rgba(255,255,255,0.95)) drop-shadow(0 0 4px rgba(167,139,250,0.9))";
                   return (
                     <div
                       className="absolute inset-0 flex gap-1 overflow-hidden"
-                      style={{
-                        opacity: wallOpacity,
-                        filter: `grayscale(${wallGrayscale}%) blur(${wallBlur}px) brightness(${wallBright}) contrast(${wallContrast})`,
-                        transition: "opacity 0.4s, filter 0.4s",
-                      }}
+                      style={{ opacity: wallOpacity, transition: "opacity 0.4s" }}
                     >
                       {[0, 1, 2, 3].map((ci) => {
                         const perCol = Math.max(8, Math.ceil(shuffledWallPaths.length / 4));
                         const items = Array.from({ length: perCol }, (_, i) =>
                           shuffledWallPaths[(ci + i * 4) % shuffledWallPaths.length]
                         );
-                        const col = [...items, ...items]; // double : -50% boucle exactement sur un cycle
+                        const col = [...items, ...items];
                         const dur = [7, 5, 8.5, 6][ci];
                         const goDown = ci % 2 === 1;
-                        // Phase décalée par colonne via delay négatif → diversité visuelle sans saut
                         const phaseDelay = -(dur * ci * 0.25);
                         return (
                           <motion.div
@@ -278,16 +292,26 @@ const TonightPickOverlay = ({
                             animate={{ y: goDown ? "0%" : "-50%" }}
                             transition={{ duration: dur, repeat: Infinity, repeatType: "loop", ease: "linear", delay: phaseDelay }}
                           >
-                            {col.map((path, pi) => (
-                              <img
-                                key={pi}
-                                src={getPosterUrl(path, "w185") || ""}
-                                alt=""
-                                draggable={false}
-                                className="w-full rounded-md object-cover flex-shrink-0 select-none"
-                                style={{ aspectRatio: "2/3" }}
-                              />
-                            ))}
+                            {col.map((path, pi) => {
+                              const isSpot = path === highlightedPath;
+                              return (
+                                <img
+                                  key={pi}
+                                  src={getPosterUrl(path, "w185") || ""}
+                                  alt=""
+                                  draggable={false}
+                                  className="w-full rounded-md object-cover flex-shrink-0 select-none"
+                                  style={{
+                                    aspectRatio: "2/3",
+                                    filter: isSpot ? spotFilter : normalFilter,
+                                    transform: isSpot ? "scale(1.06)" : "scale(1)",
+                                    transition: "filter 0.12s ease-out, transform 0.12s ease-out",
+                                    position: "relative",
+                                    zIndex: isSpot ? 2 : 0,
+                                  }}
+                                />
+                              );
+                            })}
                           </motion.div>
                         );
                       })}
