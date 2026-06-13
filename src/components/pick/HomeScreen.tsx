@@ -1689,12 +1689,11 @@ const HomeScreen = ({
 
       <div className="relative z-10 h-full overflow-y-auto overscroll-y-contain touch-[pan-y_pinch-zoom] scrollbar-hide">
         {/* ─── Hero Greeting ─── */}
-        <section className="relative pt-[calc(3.5rem+env(safe-area-inset-top))] pb-2 px-5 md:px-8">
+        <section className="relative pt-[calc(5.5rem+env(safe-area-inset-top))] pb-2 px-5 md:px-8">
           <motion.div
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.18, duration: 0.5 }}
-            className="mt-3"
           >
             <p className="text-foreground/50 text-[13px] font-sans">
               {firstName ? `Bonsoir ${firstName} 👋` : "Bonsoir 👋"}
@@ -1715,7 +1714,7 @@ const HomeScreen = ({
               transition={{ delay: 0.28, duration: 0.45 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => setShowFindChoice(true)}
-              className="flex flex-col items-start gap-3 p-4 rounded-2xl border border-white/10 bg-white/[0.05] hover:bg-white/[0.08] text-left active:bg-white/[0.10]"
+              className="flex flex-col items-start gap-3 p-4 rounded-2xl border border-white/12 bg-[hsl(240_18%_7%/0.82)] backdrop-blur-md hover:bg-[hsl(240_18%_10%/0.88)] text-left active:bg-[hsl(240_18%_12%/0.90)] shadow-[0_4px_20px_-8px_rgba(0,0,0,0.6)]"
             >
               <span className="w-9 h-9 rounded-xl bg-primary/15 flex items-center justify-center">
                 <Heart className="w-4 h-4 text-primary" strokeWidth={1.8} />
@@ -1732,7 +1731,7 @@ const HomeScreen = ({
               transition={{ delay: 0.34, duration: 0.45 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => navigate("/app/event")}
-              className="flex flex-col items-start gap-3 p-4 rounded-2xl border border-white/10 bg-white/[0.05] hover:bg-white/[0.08] text-left active:bg-white/[0.10]"
+              className="flex flex-col items-start gap-3 p-4 rounded-2xl border border-white/12 bg-[hsl(240_18%_7%/0.82)] backdrop-blur-md hover:bg-[hsl(240_18%_10%/0.88)] text-left active:bg-[hsl(240_18%_12%/0.90)] shadow-[0_4px_20px_-8px_rgba(0,0,0,0.6)]"
             >
               <span className="w-9 h-9 rounded-xl bg-accent/15 flex items-center justify-center">
                 <Home className="w-4 h-4 text-accent" strokeWidth={1.8} />
@@ -1749,7 +1748,7 @@ const HomeScreen = ({
               transition={{ delay: 0.40, duration: 0.45 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => navigate("/app/event")}
-              className="flex flex-col items-start gap-3 p-4 rounded-2xl border border-white/10 bg-white/[0.05] hover:bg-white/[0.08] text-left active:bg-white/[0.10]"
+              className="flex flex-col items-start gap-3 p-4 rounded-2xl border border-white/12 bg-[hsl(240_18%_7%/0.82)] backdrop-blur-md hover:bg-[hsl(240_18%_10%/0.88)] text-left active:bg-[hsl(240_18%_12%/0.90)] shadow-[0_4px_20px_-8px_rgba(0,0,0,0.6)]"
             >
               <span className="w-9 h-9 rounded-xl bg-emerald-500/15 flex items-center justify-center">
                 <Users className="w-4 h-4 text-emerald-400" strokeWidth={1.8} />
@@ -1766,7 +1765,7 @@ const HomeScreen = ({
               transition={{ delay: 0.46, duration: 0.45 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => { setActiveAmbiance("surprise"); void handleAutoPick(); }}
-              className="flex flex-col items-start gap-3 p-4 rounded-2xl border border-white/10 bg-white/[0.05] hover:bg-white/[0.08] text-left active:bg-white/[0.10]"
+              className="flex flex-col items-start gap-3 p-4 rounded-2xl border border-white/12 bg-[hsl(240_18%_7%/0.82)] backdrop-blur-md hover:bg-[hsl(240_18%_10%/0.88)] text-left active:bg-[hsl(240_18%_12%/0.90)] shadow-[0_4px_20px_-8px_rgba(0,0,0,0.6)]"
             >
               <span className="w-9 h-9 rounded-xl bg-amber-500/15 flex items-center justify-center">
                 <WandSparkles className="w-4 h-4 text-amber-400" strokeWidth={1.8} />
@@ -1821,13 +1820,27 @@ const HomeScreen = ({
           </div>
         </motion.div>
 
-        {/* ─── Quick recos depuis localStorage ─── */}
+        <div className="mt-5">
+          <HomeAmbianceSection
+            activeAmbiance={activeAmbiance}
+            onPickAmbiance={(mood) => {
+              setActiveAmbiance(mood);
+              if (mood === "surprise") {
+                void handleAutoPick();
+              } else {
+                setShowFindChoice(true);
+              }
+            }}
+          />
+        </div>
+
+        {/* ─── Quick recos depuis localStorage (remplace Cercle Pick) ─── */}
         {quickRecos.length > 0 && (
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.62, duration: 0.45 }}
-            className="mt-5"
+            className="mt-4 pb-2"
           >
             <div className="px-5 flex items-center justify-between mb-3">
               <p className="text-[10.5px] font-sans font-semibold tracking-[0.14em] uppercase text-foreground/40">
@@ -1867,20 +1880,6 @@ const HomeScreen = ({
             </div>
           </motion.div>
         )}
-
-        <div className="mt-5">
-          <HomeAmbianceSection
-            activeAmbiance={activeAmbiance}
-            onPickAmbiance={(mood) => {
-              setActiveAmbiance(mood);
-              if (mood === "surprise") {
-                void handleAutoPick();
-              } else {
-                setShowFindChoice(true);
-              }
-            }}
-          />
-        </div>
 
         <DiscoverySection
           onMovieSelect={onMovieSelect}

@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Star, ArrowUpRight } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { Star } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { setFeedback } from "@/lib/feedback";
@@ -20,14 +19,6 @@ type LastReco = {
   watchedWith: string | null;
 };
 
-type FriendWatching = {
-  id: string;
-  name: string;
-  avatarUrl?: string | null;
-  title?: string;
-  online?: boolean;
-};
-
 interface Props {
   onPickAmbiance: (mood: AmbianceMood) => void;
   activeAmbiance?: AmbianceMood | null;
@@ -44,13 +35,10 @@ const SECTION_EYEBROW =
 
 const HomeAmbianceSection = ({ onPickAmbiance, activeAmbiance }: Props) => {
   const { user } = useAuth();
-  const navigate = useNavigate();
   const [lastReco, setLastReco] = useState<LastReco | null>(null);
   const [rating, setRating] = useState<number>(0);
   const [hovered, setHovered] = useState<number>(0);
   const [submitted, setSubmitted] = useState(false);
-  const [friends, setFriends] = useState<FriendWatching[]>([]);
-  const [extraFriends, setExtraFriends] = useState<number>(0);
 
   useEffect(() => {
     if (!user) return;
@@ -103,49 +91,6 @@ const HomeAmbianceSection = ({ onPickAmbiance, activeAmbiance }: Props) => {
         watchedWith,
       });
       if (row.score) setRating(Math.round(row.score));
-    })();
-    return () => { cancelled = true; };
-  }, [user]);
-
-  useEffect(() => {
-    if (!user) return;
-    let cancelled = false;
-    (async () => {
-      const { data: fs } = await supabase
-        .from("friendships" as any)
-        .select("requester_id, addressee_id, status")
-        .or(`requester_id.eq.${user.id},addressee_id.eq.${user.id}`);
-      const accepted = (fs as any[] | null)?.filter((f) => f.status === "accepted") ?? [];
-      if (!accepted.length) { if (!cancelled) setFriends([]); return; }
-      const ids = accepted.map((f: any) =>
-        f.requester_id === user.id ? f.addressee_id : f.requester_id
-      );
-      const { data: profs } = await supabase
-        .from("profiles")
-        .select("id, display_name, avatar_url")
-        .in("id", ids);
-
-      const enriched: FriendWatching[] = await Promise.all(
-        (profs ?? []).slice(0, 4).map(async (p: any) => {
-          const { data: fb } = await supabase
-            .from("user_item_feedback")
-            .select("catalog_items:item_id(title)")
-            .eq("user_id", p.id)
-            .in("feedback_type", ["like", "love", "watchlist"])
-            .order("created_at", { ascending: false })
-            .limit(1);
-          const title = (fb as any)?.[0]?.catalog_items?.title;
-          return {
-            id: p.id,
-            name: (p.display_name || "Ami").split(" ")[0],
-            avatarUrl: p.avatar_url,
-            title,
-          };
-        })
-      );
-      if (cancelled) return;
-      setFriends(enriched);
-      setExtraFriends(Math.max(0, ids.length - 4));
     })();
     return () => { cancelled = true; };
   }, [user]);
@@ -242,64 +187,6 @@ const HomeAmbianceSection = ({ onPickAmbiance, activeAmbiance }: Props) => {
         </motion.div>
       )}
 
-      {/* ─── Friends watching ─── */}
-      {friends.length > 0 && (
-        <motion.section
-          initial={{ opacity: 0, y: 18 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.25, duration: 0.6 }}
-          className={`relative ${PREMIUM_SURFACE} px-3 pt-2 pb-1 border-8`}
-        >
-          <div className="flex items-start justify-between gap-3">
-            <div className="flex-1 min-w-0">
-              <p className={SECTION_EYEBROW}>Cercle Pick</p>
-              <h3 className="mt-0.5 font-serif text-foreground text-[13px] leading-tight">
-                Vos amis regardent
-              </h3>
-              <button
-                onClick={() => navigate("/app/friends")}
-                className="mt-1.5 inline-flex items-center gap-1 text-[10px] font-sans font-medium text-foreground/40 hover:text-foreground transition-colors group"
-              >
-                Voir tout
-                <ArrowUpRight className="w-2.5 h-2.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-              </button>
-            </div>
-
-            <div className="flex gap-1 flex-shrink-0">
-              {friends.slice(0, 2).map((f, i) => (
-                <motion.button
-                  key={f.id}
-                  type="button"
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.32 + i * 0.06, duration: 0.45 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => navigate("/app/friends")}
-                  className="flex-shrink-0 flex flex-col items-center w-[54px] group"
-                >
-                  <div className="relative">
-                    <div className="absolute -inset-0.5 rounded-full bg-gradient-to-br from-primary/30 via-transparent to-transparent opacity-0 group-hover:opacity-100 blur transition-opacity" />
-                    <div className="relative w-[40px] h-[40px] rounded-full overflow-hidden border border-white/10 bg-muted">
-                      {f.avatarUrl ? (
-                        <img src={f.avatarUrl} alt={f.name} className="w-full h-full object-cover" />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-foreground/60 font-serif text-sm">
-                          {f.name.charAt(0)}
-                        </div>
-                      )}
-                    </div>
-                    <span className="absolute bottom-0 right-0 w-2 h-2 rounded-full bg-emerald-400 border-2 border-background" />
-                  </div>
-                  <p className="mt-1 text-[10.5px] font-sans font-medium text-foreground/85 truncate w-full text-center leading-tight">
-                    {f.name}
-                  </p>
-                </motion.button>
-              ))}
-            </div>
-          </div>
-
-        </motion.section>
-      )}
     </div>
   );
 };
