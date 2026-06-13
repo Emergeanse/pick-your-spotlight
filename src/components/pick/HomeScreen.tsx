@@ -575,15 +575,17 @@ const HomeScreen = ({
     });
   }, [user]);
 
-  // ── Enrichissement background : 3 vagues par session pour couvrir des genres variés ──
+  // ── Enrichissement background : 3 vagues par jour pour couvrir des genres variés ──
   useEffect(() => {
     if (!user) return;
-    const key = "bg-seed-v4";
+    // Clé quotidienne — relance une fois par jour même si la session reste ouverte
+    const today = new Date().toISOString().slice(0, 10);
+    const key = `bg-seed-v5-${today}`;
     if (sessionStorage.getItem(key)) return;
     sessionStorage.setItem(key, "1");
 
     const ALL_COMBOS = [
-      // Films streaming FR (pages 1-80, couvrent le catalogue courant)
+      // Films streaming FR — pages 1-200 pour aller au-delà du déjà-seedé
       { type: "movie", source: "discover", genreId: 36,    minVoteCount: 20,  minRating: 6   }, // Histoire
       { type: "movie", source: "discover", genreId: 10752, minVoteCount: 20,  minRating: 6   }, // Guerre
       { type: "movie", source: "discover", genreId: 878,   minVoteCount: 30,  minRating: 6.5 }, // Science-Fiction
@@ -597,6 +599,10 @@ const HomeScreen = ({
       { type: "movie", source: "discover", genreId: 28,    minVoteCount: 50,  minRating: 6.5 }, // Action
       { type: "movie", source: "discover", genreId: 12,    minVoteCount: 50,  minRating: 6.5 }, // Aventure
       { type: "movie", source: "top_rated",                minVoteCount: 200, minRating: 7.5 }, // Top qualité
+      // Sorties récentes — peu de votes au moment du seed initial, donc lacunes importantes
+      { type: "movie", source: "discover", sortBy: "primary_release_date.desc", noStreamingFilter: true, releaseYearMin: 2024, minVoteCount: 10,  minRating: 6   }, // 2024-2026
+      { type: "movie", source: "discover", sortBy: "primary_release_date.desc", noStreamingFilter: true, releaseYearMin: 2022, releaseYearMax: 2023, minVoteCount: 50, minRating: 6.5 }, // 2022-2023
+      { type: "tv",    source: "discover", sortBy: "primary_release_date.desc", noStreamingFilter: true, releaseYearMin: 2023, minVoteCount: 20,  minRating: 7   }, // Séries récentes
       // Classiques par décennie — sans filtre streaming (triés par vote_count)
       { type: "movie", source: "discover", sortBy: "vote_count.desc", noStreamingFilter: true, releaseYearMin: 1970, releaseYearMax: 1989, minVoteCount: 500,  minRating: 7 }, // 70s-80s
       { type: "movie", source: "discover", sortBy: "vote_count.desc", noStreamingFilter: true, releaseYearMin: 1990, releaseYearMax: 1999, minVoteCount: 1000, minRating: 7 }, // 90s
@@ -613,12 +619,12 @@ const HomeScreen = ({
 
     const runSeed = (combo: (typeof picks)[0], delayMs: number) => {
       setTimeout(() => {
-        const startPage = Math.floor(Math.random() * 80) + 1;
+        const startPage = Math.floor(Math.random() * 200) + 1;
         supabase.functions.invoke("seed-embeddings", {
           body: { ...combo, pages: 3, startPage, batchSize: 5 },
         }).then(({ data }) => {
-          if ((data?.stats?.processed ?? 0) > 0)
-            console.log(`[BG-SEED] ${combo.type} genre=${(combo as any).genreId ?? combo.source} p${startPage}: +${data.stats.processed} films`);
+          const s = data?.stats;
+          console.log(`[BG-SEED] ${combo.type} ${(combo as any).genreId ?? (combo as any).sortBy ?? combo.source} p${startPage}: vérifiés=${s?.fetched ?? 0} déjà_en_base=${s?.already_in_db ?? 0} nouveaux=+${s?.processed ?? 0}`);
         }).catch(() => {});
       }, delayMs);
     };
@@ -632,10 +638,9 @@ const HomeScreen = ({
       supabase.functions.invoke("seed-embeddings", {
         body: { mode: "refresh-platforms", refreshLimit: 20 },
       }).then(({ data }) => {
-        if ((data?.stats?.refreshed ?? 0) > 0)
-          console.log(`[BG-REFRESH] platform_ids: ${data.stats.refreshed} films mis à jour (${data.stats.stale} stales)`);
+        console.log(`[BG-REFRESH] platform_ids: ${data?.stats?.refreshed ?? 0} mis à jour / ${data?.stats?.stale ?? 0} stales`);
       }).catch(() => {});
-    }, 120000); // 2 min après montage
+    }, 120000);
   }, [user]);
 
   useEffect(() => {
