@@ -33,7 +33,7 @@ import DiscoverySection from "./DiscoverySection";
 import HomeScreenChoiceModal from "./HomeScreenChoiceModal";
 import TonightPickOverlay from "./TonightPickOverlay";
 import FlipCardDetail from "./FlipCardDetail";
-import HomeAmbianceSection, { type AmbianceMood } from "./HomeAmbianceSection";
+import { type AmbianceMood } from "./HomeAmbianceSection";
 import homeBackground from "@/assets/home-background.png";
 import loadingBackground from "@/assets/loading-background.png";
 
@@ -1791,90 +1791,60 @@ const HomeScreen = ({
           </div>
         </section>
 
-        {/* ─── Prochaine soirée (placeholder fictif) ─── */}
-        <motion.div
+        {/* ─── Prochaine soirée (compact) ─── */}
+        <motion.button
+          type="button"
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.54, duration: 0.5 }}
-          className="mx-5 mt-4 p-4 rounded-2xl border border-primary/20 bg-primary/[0.06]"
+          whileTap={{ scale: 0.985 }}
+          onClick={() => navigate("/app/soirees")}
+          className="mx-5 mt-4 w-[calc(100%-2.5rem)] flex items-center gap-3 px-3.5 py-2.5 rounded-2xl border border-primary/20 bg-primary/[0.06] text-left"
         >
-          <div className="flex items-start justify-between gap-3">
-            <div className="flex-1 min-w-0">
-              <p className="text-[10px] font-sans font-semibold tracking-[0.14em] uppercase text-primary/70">
-                Prochaine soirée
-              </p>
-              <p className="mt-1 font-serif text-foreground text-[15px] leading-tight">Soirée avec Sophie</p>
-              <p className="mt-0.5 text-foreground/45 text-[11px] font-sans">Mercredi 18 juin · 20h30</p>
-              <div className="mt-2 flex items-center gap-1.5">
-                <div className="h-1.5 flex-1 rounded-full bg-white/10 overflow-hidden">
-                  <div className="h-full rounded-full bg-primary" style={{ width: "87%" }} />
-                </div>
-                <span className="text-[10px] text-primary font-semibold font-sans">87%</span>
-                <span className="text-[10px] text-foreground/35 font-sans">compat.</span>
-              </div>
-            </div>
-            <div className="flex-shrink-0 w-12 h-16 rounded-xl bg-white/[0.04] border border-white/10 flex items-center justify-center">
-              <Clapperboard className="w-5 h-5 text-foreground/20" strokeWidth={1.5} />
-            </div>
+          <div className="flex-shrink-0 w-8 h-8 rounded-xl bg-primary/15 flex items-center justify-center">
+            <Clapperboard className="w-4 h-4 text-primary" strokeWidth={1.6} />
           </div>
-          <div className="flex gap-2 mt-3">
-            <button
-              onClick={() => setShowFindChoice(true)}
-              className="flex-1 py-1.5 rounded-xl bg-primary text-primary-foreground text-[11px] font-sans font-semibold"
-            >
-              Voir les films
-            </button>
-            <button
-              onClick={() => navigate("/app/soirees")}
-              className="flex-1 py-1.5 rounded-xl bg-white/[0.06] border border-white/10 text-foreground/50 text-[11px] font-sans"
-            >
-              Modifier
-            </button>
+          <div className="flex-1 min-w-0">
+            <p className="text-[10px] font-sans font-semibold tracking-[0.12em] uppercase text-primary/70 leading-none">Prochaine soirée</p>
+            <p className="mt-0.5 font-serif text-foreground text-[13px] leading-tight truncate">Soirée avec Sophie</p>
+            <p className="text-foreground/40 text-[10px] font-sans">Mercredi 18 juin · 20h30</p>
           </div>
-        </motion.div>
+          <div className="flex-shrink-0 flex items-center gap-1.5">
+            <span className="text-[11px] text-primary font-semibold font-sans">87%</span>
+            <ChevronRight className="w-3.5 h-3.5 text-foreground/25" />
+          </div>
+        </motion.button>
 
-        <div className="mt-5">
-          <HomeAmbianceSection
-            activeAmbiance={activeAmbiance}
-            onPickAmbiance={(mood) => {
-              setActiveAmbiance(mood);
-              if (mood === "surprise") {
-                void handleAutoPick();
-              } else {
-                setShowFindChoice(true);
-              }
-            }}
-          />
-        </div>
-
-        {/* ─── Quick recos depuis localStorage (remplace Cercle Pick) ─── */}
-        {quickRecos.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.62, duration: 0.45 }}
-            className="mt-4 pb-2"
-          >
-            <div className="px-5 flex items-center justify-between mb-3">
-              <p className="text-[10.5px] font-sans font-semibold tracking-[0.14em] uppercase text-foreground/40">
-                Recommandés pour toi
-              </p>
+        {/* ─── 3 films qui pourraient te plaire ─── */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.62, duration: 0.45 }}
+          className="mt-5 pb-4"
+        >
+          <div className="px-5 flex items-center justify-between mb-3">
+            <p className="text-[12px] font-serif text-foreground/80">
+              3 films qui pourraient te plaire
+            </p>
+            {quickRecos.length > 0 && (
               <button
                 onClick={() => setShowFindChoice(true)}
                 className="text-[10px] font-sans text-primary/70 hover:text-primary transition-colors"
               >
                 Actualiser
               </button>
-            </div>
-            <div className="px-5 flex gap-3 overflow-x-auto scrollbar-hide pb-1">
-              {quickRecos.map((reco) => (
+            )}
+          </div>
+          <div className="px-5 flex gap-3">
+            {quickRecos.length > 0 ? (
+              quickRecos.slice(0, 3).map((reco) => (
                 <motion.button
                   key={reco.id}
                   whileTap={{ scale: 0.95 }}
-                  className="flex-shrink-0 w-[88px] text-left"
+                  className="flex-1 text-left"
                   onClick={() => setShowFindChoice(true)}
                 >
-                  <div className="w-[88px] h-[132px] rounded-xl overflow-hidden bg-white/5 border border-white/10">
+                  <div className="w-full aspect-[2/3] rounded-xl overflow-hidden bg-white/5 border border-white/10">
                     {reco.poster_path ? (
                       <img
                         src={`https://image.tmdb.org/t/p/w185${reco.poster_path}`}
@@ -1889,10 +1859,25 @@ const HomeScreen = ({
                   </div>
                   <p className="mt-1.5 text-[10px] font-sans text-foreground/55 leading-tight line-clamp-2">{reco.title}</p>
                 </motion.button>
-              ))}
-            </div>
-          </motion.div>
-        )}
+              ))
+            ) : (
+              // Placeholders vides en attendant la première reco
+              [0, 1, 2].map((i) => (
+                <motion.button
+                  key={i}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setShowFindChoice(true)}
+                  className="flex-1"
+                >
+                  <div className="w-full aspect-[2/3] rounded-xl bg-white/[0.04] border border-white/[0.07] flex items-center justify-center">
+                    <WandSparkles className="w-5 h-5 text-foreground/15" />
+                  </div>
+                  <p className="mt-1.5 text-[10px] font-sans text-foreground/25 leading-tight text-center">Demande-moi</p>
+                </motion.button>
+              ))
+            )}
+          </div>
+        </motion.div>
 
         <DiscoverySection
           onMovieSelect={onMovieSelect}
