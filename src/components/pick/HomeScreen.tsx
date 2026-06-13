@@ -1820,8 +1820,22 @@ const HomeScreen = ({
           onClick={() => navigate("/app/soirees")}
           className="mx-5 mt-4 w-[calc(100%-2.5rem)] flex items-center gap-3 px-3.5 py-2.5 rounded-2xl border border-primary/20 bg-primary/[0.06] text-left"
         >
-          <div className="flex-shrink-0 w-8 h-8 rounded-xl bg-primary/15 flex items-center justify-center">
-            <Clapperboard className="w-4 h-4 text-primary" strokeWidth={1.6} />
+          {/* Avatars duo empilés */}
+          <div className="relative flex-shrink-0 w-11 h-8">
+            {/* Sophie (derrière) */}
+            <div className="absolute left-0 top-0 w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-pink-400 border-2 border-[hsl(240_22%_6%)] flex items-center justify-center">
+              <span className="text-[11px] font-bold text-white leading-none">S</span>
+            </div>
+            {/* Utilisateur (devant) */}
+            <div className="absolute left-4 top-0 w-8 h-8 rounded-full overflow-hidden border-2 border-[hsl(240_22%_6%)] bg-primary/20 flex items-center justify-center">
+              {avatarUrl ? (
+                <img src={avatarUrl} alt="" className="w-full h-full object-cover" />
+              ) : (
+                <span className="text-[11px] font-bold text-primary leading-none">
+                  {(firstName || "?").charAt(0).toUpperCase()}
+                </span>
+              )}
+            </div>
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-[10px] font-sans font-semibold tracking-[0.12em] uppercase text-primary/70 leading-none">Prochaine soirée</p>
