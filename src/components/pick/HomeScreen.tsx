@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate, useLocation } from "react-router-dom";
 import { consumePendingDuoPick } from "@/lib/duo-pending";
 import { toast } from "sonner";
-import { Sparkles, WandSparkles, Clapperboard, ChevronRight, Flame, Eye, Coffee, Heart, Shuffle } from "lucide-react";
+import { Sparkles, WandSparkles, Clapperboard, ChevronRight, Flame, Eye, Coffee, Heart, Shuffle, Home, Users } from "lucide-react";
 
 import { ALL_PLATFORMS } from "@/lib/platforms";
 import type { Movie, MovieDetail } from "@/lib/tmdb";
@@ -117,6 +117,9 @@ const MOOD_CONFIGS: Record<AmbianceMood, MoodConfig> = {
     moodContext: "L'utilisateur veut être surpris — ose des choix audacieux, inattendus, hors des sentiers battus.",
   },
 };
+
+type QuickReco = { id: number; title: string; poster_path: string | null; vote_average?: number };
+const QUICK_RECO_KEY = "pick_last_reco_v1";
 
 const extractTmdbIdsFromFeedbackRows = (rows: any[]): number[] =>
   rows.map((row) => row?.catalog_items?.tmdb_id).filter((id): id is number => typeof id === "number" && id > 0);
@@ -334,6 +337,8 @@ const HomeScreen = ({
   const [explorationLevel] = useState<number>(5);
   const [totalEvaluated, setTotalEvaluated] = useState(0);
   const [activeAmbiance, setActiveAmbiance] = useState<AmbianceMood | null>(null);
+  const [firstName, setFirstName] = useState<string>("");
+  const [quickRecos, setQuickRecos] = useState<QuickReco[]>([]);
 
   const [chatMoviesPool, setChatMoviesPool] = useState<MovieDetail[] | null>(null);
   const [movieMatchData, setMovieMatchData] = useState<Record<number, RecommendationMatch>>({});
@@ -404,6 +409,38 @@ const HomeScreen = ({
     window.addEventListener("pick-voice-search", handler);
     return () => window.removeEventListener("pick-voice-search", handler);
   }, []);
+
+  // Prénom de l'utilisateur pour le greeting
+  useEffect(() => {
+    if (!user) return;
+    supabase.from("profiles").select("display_name").eq("id", user.id).maybeSingle().then(({ data }) => {
+      const name = (data as any)?.display_name || user.email?.split("@")[0] || "";
+      setFirstName(name.split(" ")[0]);
+    });
+  }, [user]);
+
+  // Charge les dernières recos depuis le cache localStorage
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(QUICK_RECO_KEY);
+      if (raw) setQuickRecos(JSON.parse(raw));
+    } catch {}
+  }, []);
+
+  // Sauvegarde les nouvelles recos dès que le pool est rempli
+  useEffect(() => {
+    if (!chatMoviesPool?.length) return;
+    try {
+      const toSave: QuickReco[] = chatMoviesPool.slice(0, 3).map((m) => ({
+        id: m.id,
+        title: (m.title || (m as any).name || ""),
+        poster_path: m.poster_path || null,
+        vote_average: m.vote_average,
+      }));
+      localStorage.setItem(QUICK_RECO_KEY, JSON.stringify(toSave));
+      setQuickRecos(toSave);
+    } catch {}
+  }, [chatMoviesPool]);
 
   const tonightPool = useMemo(() => chatMoviesPool || [], [chatMoviesPool]);
   const canGoPrev = tonightPickIndex > 0;
@@ -1651,117 +1688,198 @@ const HomeScreen = ({
       <div className="absolute inset-0 bg-background/20" />
 
       <div className="relative z-10 h-full overflow-y-auto overscroll-y-contain touch-[pan-y_pinch-zoom] scrollbar-hide">
-        {/* ─── Cinematic Hero ─── */}
-        <section className="relative pt-14 pb-2 px-5 md:px-8">
-          {/* Eyebrow */}
+        {/* ─── Hero Greeting ─── */}
+        <section className="relative pt-[calc(3.5rem+env(safe-area-inset-top))] pb-2 px-5 md:px-8">
           <motion.div
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2, duration: 0.5 }}
-            className="relative flex items-center gap-2 mb-1 mt-6"
+            transition={{ delay: 0.18, duration: 0.5 }}
+            className="mt-3"
           >
-            <Sparkles className="w-4 h-4 text-primary" />
-            <span className="text-[8px] font-sans font-semibold tracking-[0.15em] uppercase text-primary">
-              Pick comprend tes envies
-            </span>
+            <p className="text-foreground/50 text-[13px] font-sans">
+              {firstName ? `Bonsoir ${firstName} 👋` : "Bonsoir 👋"}
+            </p>
+            <h1 className="mt-1 font-serif text-foreground text-[28px] leading-[1.1] tracking-tight">
+              Que regardons-nous<br />ce soir ?
+            </h1>
+            <p className="mt-1 text-foreground/40 text-[11px] font-sans">
+              Organise ta prochaine soirée ciné
+            </p>
           </motion.div>
 
-          {/* Hero serif headline */}
-          <motion.h1
-            initial={{ opacity: 0, y: 14 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.28, duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
-            className="relative font-serif text-foreground text-[34px] sm:text-[40px] leading-[1] tracking-tight max-w-[64%]"
-            translate="no"
-          >
-            Ce soir,
-            <br />
-            quelque chose
-            <br />
-            d
-            <span className="italic text-white" style={{ textShadow: "0 0 14px rgba(139,92,246,0.85), 0 0 4px rgba(192,132,252,0.6)" }}>
-              ‘intense
-            </span>
-            <span className="text-foreground">.</span>
-          </motion.h1>
-
-          {/* Subtitle */}
-          <motion.p
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.42, duration: 0.5 }}
-            className="relative mt-2 text-foreground/75 text-[11px] leading-snug font-sans max-w-[62%]"
-          >
-            <span className="italic font-bold">
-              « Des pépites rares, trouvées rien que pour toi. »
-            </span>
-            <span className="mt-1 text-foreground/60 not-italic font-normal">
-              — Pick
-            </span>
-          </motion.p>
-
-          {/* Primary CTA */}
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.55, duration: 0.5 }}
-            className="relative mt-16 flex justify-center"
-          >
+          {/* 4 creation cards */}
+          <div className="grid grid-cols-2 gap-2.5 mt-5">
+            {/* Soirée Duo */}
             <motion.button
-              data-tour="pick-ce-soir"
-              whileHover={{ scale: 1.01 }}
-              whileTap={{ scale: 0.97 }}
+              initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.28, duration: 0.45 }}
+              whileTap={{ scale: 0.95 }}
               onClick={() => setShowFindChoice(true)}
-              disabled={loading}
-              className="fab-pulse inline-flex items-center justify-center gap-2.5 w-full max-w-[260px] py-[18px] px-7 rounded-full bg-gradient-to-b from-primary to-accent text-primary-foreground font-sans font-semibold text-[15px] tracking-wide shadow-[0_20px_55px_-12px_hsl(var(--primary)/0.65)] hover:shadow-[0_24px_65px_-10px_hsl(var(--primary)/0.8)] transition-shadow disabled:opacity-50"
+              className="flex flex-col items-start gap-3 p-4 rounded-2xl border border-white/10 bg-white/[0.05] hover:bg-white/[0.08] text-left active:bg-white/[0.10]"
             >
-              <WandSparkles className="w-[18px] h-[18px]" />
-              Trouve-moi 1 film
+              <span className="w-9 h-9 rounded-xl bg-primary/15 flex items-center justify-center">
+                <Heart className="w-4 h-4 text-primary" strokeWidth={1.8} />
+              </span>
+              <div>
+                <p className="font-serif text-foreground text-[13px] leading-tight">Soirée Duo</p>
+                <p className="text-foreground/40 text-[10px] font-sans mt-0.5">Film commun à deux</p>
+              </div>
             </motion.button>
-          </motion.div>
 
-          {/* Event card — organise ta soirée ciné */}
-          <motion.button
-            type="button"
-            initial={{ opacity: 0, y: 14 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.7, duration: 0.55 }}
-            whileTap={{ scale: 0.985 }}
-            onClick={() => navigate("/app/event")}
-            className="relative mt-4 w-full flex items-center py-1.5 px-2.5 pr-4 text-left transition-all gap-[16px] rounded-2xl border border-white/10 bg-white/[0.06] hover:bg-white/[0.10] hover:border-white/20"
-          >
-            <span className="relative flex-shrink-0">
-              <span className="absolute inset-0 rounded-full bg-accent/25 blur-md" />
-              <span className="relative flex items-center justify-center w-9 h-9 rounded-full bg-accent/12 border border-accent/35">
-                <Clapperboard className="w-[15px] h-[15px] text-accent" strokeWidth={1.8} />
+            {/* Soirée Famille */}
+            <motion.button
+              initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.34, duration: 0.45 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => navigate("/app/event")}
+              className="flex flex-col items-start gap-3 p-4 rounded-2xl border border-white/10 bg-white/[0.05] hover:bg-white/[0.08] text-left active:bg-white/[0.10]"
+            >
+              <span className="w-9 h-9 rounded-xl bg-accent/15 flex items-center justify-center">
+                <Home className="w-4 h-4 text-accent" strokeWidth={1.8} />
               </span>
-            </span>
-            <span className="flex-1 min-w-0">
-              <span className="block font-serif text-foreground text-[13px] leading-tight">
-                Organise ta soirée ciné
-              </span>
-              <span className="block text-foreground/45 text-[10px] font-sans mt-0.5">
-                Solo, en duo, ou programme pour plus tard
-              </span>
-            </span>
-            <ChevronRight className="w-4 h-4 text-foreground/25 flex-shrink-0" />
-          </motion.button>
+              <div>
+                <p className="font-serif text-foreground text-[13px] leading-tight">Soirée Famille</p>
+                <p className="text-foreground/40 text-[10px] font-sans mt-0.5">Pour tous les âges</p>
+              </div>
+            </motion.button>
 
+            {/* Entre amis */}
+            <motion.button
+              initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.40, duration: 0.45 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => navigate("/app/event")}
+              className="flex flex-col items-start gap-3 p-4 rounded-2xl border border-white/10 bg-white/[0.05] hover:bg-white/[0.08] text-left active:bg-white/[0.10]"
+            >
+              <span className="w-9 h-9 rounded-xl bg-emerald-500/15 flex items-center justify-center">
+                <Users className="w-4 h-4 text-emerald-400" strokeWidth={1.8} />
+              </span>
+              <div>
+                <p className="font-serif text-foreground text-[13px] leading-tight">Entre amis</p>
+                <p className="text-foreground/40 text-[10px] font-sans mt-0.5">Groupe & Pick Together</p>
+              </div>
+            </motion.button>
+
+            {/* Surprise */}
+            <motion.button
+              initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.46, duration: 0.45 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => { setActiveAmbiance("surprise"); void handleAutoPick(); }}
+              className="flex flex-col items-start gap-3 p-4 rounded-2xl border border-white/10 bg-white/[0.05] hover:bg-white/[0.08] text-left active:bg-white/[0.10]"
+            >
+              <span className="w-9 h-9 rounded-xl bg-amber-500/15 flex items-center justify-center">
+                <WandSparkles className="w-4 h-4 text-amber-400" strokeWidth={1.8} />
+              </span>
+              <div>
+                <p className="font-serif text-foreground text-[13px] leading-tight">Surprise</p>
+                <p className="text-foreground/40 text-[10px] font-sans mt-0.5">Laisse-moi choisir</p>
+              </div>
+            </motion.button>
+          </div>
         </section>
 
-        <div className="mt-4">
+        {/* ─── Prochaine soirée (placeholder fictif) ─── */}
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.54, duration: 0.5 }}
+          className="mx-5 mt-4 p-4 rounded-2xl border border-primary/20 bg-primary/[0.06]"
+        >
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex-1 min-w-0">
+              <p className="text-[10px] font-sans font-semibold tracking-[0.14em] uppercase text-primary/70">
+                Prochaine soirée
+              </p>
+              <p className="mt-1 font-serif text-foreground text-[15px] leading-tight">Soirée avec Sophie</p>
+              <p className="mt-0.5 text-foreground/45 text-[11px] font-sans">Mercredi 18 juin · 20h30</p>
+              <div className="mt-2 flex items-center gap-1.5">
+                <div className="h-1.5 flex-1 rounded-full bg-white/10 overflow-hidden">
+                  <div className="h-full rounded-full bg-primary" style={{ width: "87%" }} />
+                </div>
+                <span className="text-[10px] text-primary font-semibold font-sans">87%</span>
+                <span className="text-[10px] text-foreground/35 font-sans">compat.</span>
+              </div>
+            </div>
+            <div className="flex-shrink-0 w-12 h-16 rounded-xl bg-white/[0.04] border border-white/10 flex items-center justify-center">
+              <Clapperboard className="w-5 h-5 text-foreground/20" strokeWidth={1.5} />
+            </div>
+          </div>
+          <div className="flex gap-2 mt-3">
+            <button
+              onClick={() => setShowFindChoice(true)}
+              className="flex-1 py-1.5 rounded-xl bg-primary text-primary-foreground text-[11px] font-sans font-semibold"
+            >
+              Voir les films
+            </button>
+            <button
+              onClick={() => navigate("/app/soirees")}
+              className="flex-1 py-1.5 rounded-xl bg-white/[0.06] border border-white/10 text-foreground/50 text-[11px] font-sans"
+            >
+              Modifier
+            </button>
+          </div>
+        </motion.div>
+
+        {/* ─── Quick recos depuis localStorage ─── */}
+        {quickRecos.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.62, duration: 0.45 }}
+            className="mt-5"
+          >
+            <div className="px-5 flex items-center justify-between mb-3">
+              <p className="text-[10.5px] font-sans font-semibold tracking-[0.14em] uppercase text-foreground/40">
+                Recommandés pour toi
+              </p>
+              <button
+                onClick={() => setShowFindChoice(true)}
+                className="text-[10px] font-sans text-primary/70 hover:text-primary transition-colors"
+              >
+                Actualiser
+              </button>
+            </div>
+            <div className="px-5 flex gap-3 overflow-x-auto scrollbar-hide pb-1">
+              {quickRecos.map((reco) => (
+                <motion.button
+                  key={reco.id}
+                  whileTap={{ scale: 0.95 }}
+                  className="flex-shrink-0 w-[88px] text-left"
+                  onClick={() => setShowFindChoice(true)}
+                >
+                  <div className="w-[88px] h-[132px] rounded-xl overflow-hidden bg-white/5 border border-white/10">
+                    {reco.poster_path ? (
+                      <img
+                        src={`https://image.tmdb.org/t/p/w185${reco.poster_path}`}
+                        alt={reco.title}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-foreground/20 text-[10px] text-center px-2 leading-tight">
+                        {reco.title}
+                      </div>
+                    )}
+                  </div>
+                  <p className="mt-1.5 text-[10px] font-sans text-foreground/55 leading-tight line-clamp-2">{reco.title}</p>
+                </motion.button>
+              ))}
+            </div>
+          </motion.div>
+        )}
+
+        <div className="mt-5">
           <HomeAmbianceSection
             activeAmbiance={activeAmbiance}
             onPickAmbiance={(mood) => {
               setActiveAmbiance(mood);
               if (mood === "surprise") {
-                handleAutoPick();
+                void handleAutoPick();
               } else {
                 setShowFindChoice(true);
               }
             }}
           />
-
         </div>
 
         <DiscoverySection
