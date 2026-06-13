@@ -573,35 +573,52 @@ const HomeScreen = ({
     });
   }, [user]);
 
-  // ── Enrichissement background : charge des films pour genres peu fournis, une fois par session ──
+  // ── Enrichissement background : 3 vagues par session pour couvrir des genres variés ──
   useEffect(() => {
     if (!user) return;
-    const key = "bg-seed-v2";
+    const key = "bg-seed-v3";
     if (sessionStorage.getItem(key)) return;
     sessionStorage.setItem(key, "1");
 
-    // Rotation aléatoire pour couvrir genres et sources différents à chaque session
-    const SEED_COMBOS = [
-      { type: "movie", source: "discover", genreId: 36,    minVoteCount: 20,  minRating: 6 }, // Histoire
-      { type: "movie", source: "discover", genreId: 10752, minVoteCount: 20,  minRating: 6 }, // Guerre
+    const ALL_COMBOS = [
+      // Films
+      { type: "movie", source: "discover", genreId: 36,    minVoteCount: 20,  minRating: 6   }, // Histoire
+      { type: "movie", source: "discover", genreId: 10752, minVoteCount: 20,  minRating: 6   }, // Guerre
       { type: "movie", source: "discover", genreId: 878,   minVoteCount: 30,  minRating: 6.5 }, // Science-Fiction
       { type: "movie", source: "discover", genreId: 14,    minVoteCount: 30,  minRating: 6.5 }, // Fantastique
       { type: "movie", source: "discover", genreId: 53,    minVoteCount: 50,  minRating: 6.5 }, // Thriller
-      { type: "movie", source: "top_rated",                minVoteCount: 200, minRating: 7.5 }, // Top qualité toutes catégories
-      { type: "movie", source: "discover", genreId: 18,    minVoteCount: 100, minRating: 7   }, // Drame qualitatif
-      { type: "tv",    source: "discover", genreId: 10765, minVoteCount: 50,  minRating: 7   }, // SF & Fantastique TV
+      { type: "movie", source: "discover", genreId: 18,    minVoteCount: 100, minRating: 7   }, // Drame
+      { type: "movie", source: "discover", genreId: 35,    minVoteCount: 50,  minRating: 6.5 }, // Comédie
+      { type: "movie", source: "discover", genreId: 80,    minVoteCount: 50,  minRating: 6.5 }, // Crime
+      { type: "movie", source: "discover", genreId: 27,    minVoteCount: 30,  minRating: 6   }, // Horreur
+      { type: "movie", source: "discover", genreId: 10749, minVoteCount: 30,  minRating: 6.5 }, // Romance
+      { type: "movie", source: "discover", genreId: 28,    minVoteCount: 50,  minRating: 6.5 }, // Action
+      { type: "movie", source: "discover", genreId: 12,    minVoteCount: 50,  minRating: 6.5 }, // Aventure
+      { type: "movie", source: "top_rated",                minVoteCount: 200, minRating: 7.5 }, // Top qualité
+      // Séries
+      { type: "tv", source: "discover", genreId: 10765, minVoteCount: 50,  minRating: 7   }, // SF & Fantastique TV
+      { type: "tv", source: "discover", genreId: 18,    minVoteCount: 50,  minRating: 7   }, // Drame TV
+      { type: "tv", source: "discover", genreId: 80,    minVoteCount: 30,  minRating: 7   }, // Crime TV
+      { type: "tv", source: "top_rated",                minVoteCount: 100, minRating: 7.5 }, // Top séries
     ];
 
-    const combo = SEED_COMBOS[Math.floor(Math.random() * SEED_COMBOS.length)];
-    const startPage = Math.floor(Math.random() * 10) + 1;
+    const picks = [...ALL_COMBOS].sort(() => Math.random() - 0.5).slice(0, 3);
 
-    supabase.functions.invoke("seed-embeddings", {
-      body: { ...combo, pages: 1, startPage, batchSize: 3 },
-    }).then(({ data }) => {
-      if (data?.stats?.processed > 0) {
-        console.log(`[BG-SEED] genre=${combo.genreId ?? combo.source} page=${startPage}: +${data.stats.processed} nouveaux films chargés`);
-      }
-    }).catch(() => { /* silencieux */ });
+    const runSeed = (combo: (typeof picks)[0], delayMs: number) => {
+      setTimeout(() => {
+        const startPage = Math.floor(Math.random() * 15) + 1;
+        supabase.functions.invoke("seed-embeddings", {
+          body: { ...combo, pages: 2, startPage, batchSize: 5 },
+        }).then(({ data }) => {
+          if ((data?.stats?.processed ?? 0) > 0)
+            console.log(`[BG-SEED] ${combo.type} genre=${(combo as any).genreId ?? combo.source} p${startPage}: +${data.stats.processed} films`);
+        }).catch(() => {});
+      }, delayMs);
+    };
+
+    runSeed(picks[0], 2000);   // 2s après montage
+    runSeed(picks[1], 35000);  // 35s après
+    runSeed(picks[2], 90000);  // 90s après
   }, [user]);
 
   useEffect(() => {
