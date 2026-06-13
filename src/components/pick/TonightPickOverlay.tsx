@@ -182,19 +182,33 @@ const TonightPickOverlay = ({
   }, [posterWallPaths.length]);
 
   // Effet "scan" : un poster aléatoire s'illumine brièvement, comme s'il était identifié
+  // Ref toujours à jour sur shuffledWallPaths — évite la closure stale dans setInterval
+  const wallPathsRef = useRef<string[]>([]);
+  wallPathsRef.current = shuffledWallPaths;
+  const lastHighlightRef = useRef<string | null>(null);
+
   const [highlightedPath, setHighlightedPath] = useState<string | null>(null);
   useEffect(() => {
-    if (!tonightLoading || shuffledWallPaths.length === 0) { setHighlightedPath(null); return; }
+    if (!tonightLoading) { setHighlightedPath(null); return; }
     let clearFlash: ReturnType<typeof setTimeout>;
     const flash = () => {
-      const path = shuffledWallPaths[Math.floor(Math.random() * shuffledWallPaths.length)];
+      const paths = wallPathsRef.current;
+      if (paths.length === 0) return;
+      // Évite de retomber sur la même affiche deux fois de suite
+      let path: string;
+      let tries = 0;
+      do {
+        path = paths[Math.floor(Math.random() * paths.length)];
+        tries++;
+      } while (path === lastHighlightRef.current && paths.length > 1 && tries < 8);
+      lastHighlightRef.current = path;
       setHighlightedPath(path);
-      clearFlash = setTimeout(() => setHighlightedPath(null), 380);
+      clearFlash = setTimeout(() => setHighlightedPath(null), 420);
     };
     flash();
-    const interval = setInterval(flash, 750);
+    const interval = setInterval(flash, 800);
     return () => { clearInterval(interval); clearTimeout(clearFlash); };
-  }, [tonightLoading, shuffledWallPaths.length]);
+  }, [tonightLoading]);
 
   // Offsets initiaux aléatoires par colonne (stable, calculé une fois)
   const colInitialOffsets = useMemo(
@@ -268,7 +282,7 @@ const TonightPickOverlay = ({
                   // Filtre normal appliqué sur chaque image (pas sur le conteneur)
                   const normalFilter  = `grayscale(${wallGrayscale}%) blur(${wallBlur}px) brightness(${wallBright}) contrast(${wallContrast})`;
                   // Filtre "identifié" : pleine couleur + lumineux + halo violet
-                  const spotFilter    = "grayscale(0%) blur(0px) brightness(2.6) saturate(2.2) drop-shadow(0 0 10px rgba(255,255,255,0.95)) drop-shadow(0 0 4px rgba(167,139,250,0.9))";
+                  const spotFilter    = "grayscale(0%) blur(0px) brightness(2.2) saturate(3.8) contrast(1.7) drop-shadow(0 0 16px rgba(255,255,255,1)) drop-shadow(0 0 7px rgba(167,139,250,1))";
                   return (
                     <div
                       className="absolute inset-0 flex gap-1 overflow-hidden"
