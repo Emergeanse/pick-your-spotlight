@@ -222,25 +222,33 @@ const TonightPickOverlay = ({
 
   // Layout fixe par genre (position, taille, style) — calculé une fois quand la liste change
   const genreLayouts = useMemo(() => {
-    // Positions réparties sur l'écran en évitant le centre vertical (40-60%)
-    const positions = [
-      { top: 10, left: 8  },  { top: 14, left: 62 },
-      { top: 22, left: 32 },  { top: 75, left: 10 },
-      { top: 68, left: 58 },  { top: 80, left: 30 },
-      { top: 34, left: 72 },  { top: 86, left: 70 },
+    // anchor "left" ou "right" pour éviter tout débordement hors écran
+    const positions: { top: number; side: "left" | "right"; offset: number }[] = [
+      { top: 10, side: "left",  offset: 6  },
+      { top: 14, side: "right", offset: 6  },
+      { top: 22, side: "left",  offset: 28 },
+      { top: 75, side: "left",  offset: 6  },
+      { top: 68, side: "right", offset: 8  },
+      { top: 80, side: "left",  offset: 24 },
+      { top: 34, side: "right", offset: 5  },
+      { top: 86, side: "right", offset: 12 },
     ];
-    const sizes   = [11, 30, 14, 24, 36, 13, 20, 28];
-    const weights = [300, 700, 200, 500, 400, 700, 300, 600];
-    const italics = [false, true, false, true, false, false, true, false];
+    const sizes     = [11, 28, 14, 22, 32, 13, 18, 26];
+    const weights   = [300, 700, 200, 500, 400, 700, 300, 600];
+    const italics   = [false, true, false, true, false, false, true, false];
     const opacities = [0.30, 0.60, 0.38, 0.50, 0.65, 0.32, 0.52, 0.45];
-    return userGenres.map((_, i) => ({
-      top: positions[i % positions.length].top + (i < positions.length ? 0 : (i * 3) % 7),
-      left: positions[i % positions.length].left + (i < positions.length ? 0 : (i * 5) % 9),
-      size: sizes[i % sizes.length],
-      weight: weights[i % weights.length],
-      italic: italics[i % italics.length],
-      opacity: opacities[i % opacities.length],
-    }));
+    return userGenres.map((_, i) => {
+      const pos = positions[i % positions.length];
+      return {
+        top: pos.top + (i < positions.length ? 0 : (i * 3) % 5),
+        side: pos.side,
+        offset: pos.offset,
+        size: sizes[i % sizes.length],
+        weight: weights[i % weights.length],
+        italic: italics[i % italics.length],
+        opacity: opacities[i % opacities.length],
+      };
+    });
   }, [userGenres.join(",")]);
 
   // Offsets initiaux aléatoires par colonne (stable, calculé une fois)
@@ -424,7 +432,7 @@ const TonightPickOverlay = ({
                         className="absolute select-none pointer-events-none text-white"
                         style={{
                           top: `${lay.top}%`,
-                          left: `${lay.left}%`,
+                          [lay.side]: `${lay.offset}%`,
                           fontSize: lay.size,
                           fontWeight: lay.weight,
                           fontStyle: lay.italic ? "italic" : "normal",
