@@ -1418,6 +1418,30 @@ const HomeScreen = ({
         }
 
         // All films were enriched in parallel above — nothing to do lazily here.
+
+        // ── Seed post-recommandation : enrichir la base après l'affichage des films ──
+        // Déclenché 3s après que les films sont montrés — pas d'impact sur l'UX.
+        // Priorité aux contenus sous-représentés : récents et classiques sans filtre streaming.
+        setTimeout(() => {
+          const POST_RECO_COMBOS = [
+            { type: "movie", source: "discover", sortBy: "primary_release_date.desc", noStreamingFilter: true, releaseYearMin: 2024, minVoteCount: 10,   minRating: 6   },
+            { type: "movie", source: "discover", sortBy: "primary_release_date.desc", noStreamingFilter: true, releaseYearMin: 2022, releaseYearMax: 2023, minVoteCount: 50,  minRating: 6.5 },
+            { type: "movie", source: "discover", sortBy: "vote_count.desc",           noStreamingFilter: true, releaseYearMin: 1970, releaseYearMax: 1989, minVoteCount: 500, minRating: 7   },
+            { type: "movie", source: "discover", sortBy: "vote_count.desc",           noStreamingFilter: true, releaseYearMin: 1990, releaseYearMax: 1999, minVoteCount: 1000,minRating: 7   },
+            { type: "movie", source: "discover", sortBy: "vote_count.desc",           noStreamingFilter: true, releaseYearMin: 2000, releaseYearMax: 2010, minVoteCount: 2000,minRating: 7   },
+            { type: "tv",    source: "discover", sortBy: "primary_release_date.desc", noStreamingFilter: true, releaseYearMin: 2023, minVoteCount: 20,     minRating: 7   },
+            { type: "movie", source: "top_rated", minVoteCount: 200, minRating: 7.5 },
+          ];
+          const combo = POST_RECO_COMBOS[Math.floor(Math.random() * POST_RECO_COMBOS.length)];
+          const startPage = Math.floor(Math.random() * 300) + 1;
+          supabase.functions.invoke("seed-embeddings", {
+            body: { ...combo, pages: 2, startPage, batchSize: 5 },
+          }).then(({ data }) => {
+            const s = data?.stats;
+            if (s?.processed > 0)
+              console.log(`[POST-RECO-SEED] ${combo.type} ${(combo as any).sortBy ?? combo.source} p${startPage}: +${s.processed} nouveaux films`);
+          }).catch(() => {});
+        }, 3000);
       }
     } catch (e) {
       console.error(e);
