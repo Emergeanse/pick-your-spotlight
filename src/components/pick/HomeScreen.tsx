@@ -922,6 +922,8 @@ const HomeScreen = ({
             const cascadeWarn = rpc ? (rpc.excluded_genres || []).length === 0 : false;
             const logFn = cascadeWarn ? console.warn.bind(console) : console.log.bind(console);
             const candidateCount = dbg.sql50?.length ?? 0;
+            // Log standalone (toujours visible, hors groupe)
+            console.log(`%c[PICK-DEBUG] 🔍 SQL vectoriel 32D → ${candidateCount} candidats | cascade niveau ${cascadeLabel} | ${f?.excludeCount ?? 0} IDs exclus`, "font-weight:bold;color:#6366f1");
             const headerFn = candidateCount === 0 ? console.warn.bind(console) : console.group.bind(console);
             headerFn(`[PICK-DEBUG] 1️⃣ SQL vectoriel 32D — ${candidateCount} candidats triés par similarité (Sim% = score vecteur) | ${f?.excludeCount ?? 0} exclus`);
             logFn(`   Cascade SQL : niveau ${cascadeLabel}${cascadeWarn ? " ⚠️ excluded_genres vide !" : ""}`);
@@ -936,16 +938,15 @@ const HomeScreen = ({
               console.log(`     plateformes      : [${(rpc.p_platform_ids || []).join(", ") || "—"}]`);
               console.log(`     exclude_ids      : ${rpc.exclude_ids_count} IDs`);
             }
-            // COUNT toujours affiché en premier — même quand sql50 = []
+            // COUNT standalone — toujours visible (hors groupe), disponible si SP v20+ déployé
             if (dbg.sqlCountDiag?.length) {
-              console.group(`[PICK-DEBUG] 📊 COUNT par niveau de contrainte`);
+              console.log("%c[PICK-DEBUG] 📊 COUNT SQL — films en base vs disponibles :", "font-weight:bold;color:#10b981");
               console.table(dbg.sqlCountDiag.map((d: any) => ({
                 "Niveau": `${d.level} — ${cascadeLabels[d.level] ?? `niveau ${d.level}`}`,
                 "Total en base": d.total_in_db,
                 "Disponibles (après exclusions)": d.available_after_exclusions,
                 "excluded_genres": d.level < 3 ? "✅ actifs" : "⚠️ vérifier snippet",
               })));
-              console.groupEnd();
             }
             if (dbg.sqlSnippet) {
               console.group(`[PICK-DEBUG] 🔍 Snippet SQL (copier dans l'éditeur SQL Supabase)`);
