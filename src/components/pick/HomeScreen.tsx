@@ -1889,7 +1889,6 @@ const HomeScreen = ({
                       </div>
                     )}
                   </div>
-                  <p className="mt-1.5 text-[10px] font-sans text-foreground/55 leading-tight line-clamp-2 h-[2.5rem]">{reco.title}</p>
                 </motion.button>
               ))
             ) : (
@@ -1914,9 +1913,6 @@ const HomeScreen = ({
                       </div>
                     )}
                   </div>
-                  <p className="mt-1.5 text-[10px] font-sans text-foreground/50 leading-tight line-clamp-2 h-[2.5rem]">
-                    {item?.title ?? ""}
-                  </p>
                 </motion.button>
               ))
             )}
