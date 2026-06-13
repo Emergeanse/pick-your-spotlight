@@ -340,6 +340,7 @@ const HomeScreen = ({
   const [firstName, setFirstName] = useState<string>("");
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [quickRecos, setQuickRecos] = useState<QuickReco[]>([]);
+  const [trendingFallback, setTrendingFallback] = useState<QuickReco[]>([]);
   const [showShareNotif, setShowShareNotif] = useState(false);
   const [shareNotifDismissed, setShareNotifDismissed] = useState(false);
 
@@ -436,6 +437,24 @@ const HomeScreen = ({
       const raw = localStorage.getItem(QUICK_RECO_KEY);
       if (raw) setQuickRecos(JSON.parse(raw));
     } catch {}
+  }, []);
+
+  // Fallback : 3 films tendance si pas encore de recos en cache
+  useEffect(() => {
+    getTrendingMovies(20)
+      .then((movies: Movie[]) => {
+        const picks = movies
+          .filter((m) => m.poster_path)
+          .slice(0, 3)
+          .map((m) => ({
+            id: m.id,
+            title: m.title || (m as any).name || "",
+            poster_path: m.poster_path || null,
+            vote_average: m.vote_average,
+          }));
+        setTrendingFallback(picks);
+      })
+      .catch(() => {});
   }, []);
 
   // Sauvegarde les nouvelles recos dès que le pool est rempli
@@ -1698,7 +1717,7 @@ const HomeScreen = ({
       <div className="absolute inset-0 bg-gradient-to-b from-background/10 via-background/40 to-background" />
       <div className="absolute inset-0 bg-background/20" />
 
-      <div className="relative z-10 h-full overflow-y-auto overscroll-y-contain touch-[pan-y_pinch-zoom] scrollbar-hide">
+      <div className="relative z-10 h-full overflow-y-auto overscroll-y-contain touch-[pan-y_pinch-zoom] scrollbar-hide pb-[calc(9rem+env(safe-area-inset-bottom))]">
         {/* ─── Hero Greeting ─── */}
         <section className="relative pt-[calc(5.5rem+env(safe-area-inset-top))] pb-2 px-5 md:px-8">
           {/* Greeting + accroche */}
@@ -1861,18 +1880,30 @@ const HomeScreen = ({
                 </motion.button>
               ))
             ) : (
-              // Placeholders vides en attendant la première reco
-              [0, 1, 2].map((i) => (
+              // Films tendance comme suggestions initiales
+              (trendingFallback.length > 0 ? trendingFallback : [0, 1, 2] as any[]).map((item: any, i: number) => (
                 <motion.button
-                  key={i}
+                  key={item?.id ?? i}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => setShowFindChoice(true)}
-                  className="flex-1"
+                  className="flex-1 text-left"
                 >
-                  <div className="w-full aspect-[2/3] rounded-xl bg-white/[0.04] border border-white/[0.07] flex items-center justify-center">
-                    <WandSparkles className="w-5 h-5 text-foreground/15" />
+                  <div className="w-full aspect-[2/3] rounded-xl overflow-hidden bg-white/[0.04] border border-white/[0.07]">
+                    {item?.poster_path ? (
+                      <img
+                        src={`https://image.tmdb.org/t/p/w185${item.poster_path}`}
+                        alt={item.title}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <WandSparkles className="w-5 h-5 text-foreground/15" />
+                      </div>
+                    )}
                   </div>
-                  <p className="mt-1.5 text-[10px] font-sans text-foreground/25 leading-tight text-center">Demande-moi</p>
+                  <p className="mt-1.5 text-[10px] font-sans text-foreground/50 leading-tight line-clamp-2">
+                    {item?.title ?? ""}
+                  </p>
                 </motion.button>
               ))
             )}
