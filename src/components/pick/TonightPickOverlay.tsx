@@ -128,21 +128,6 @@ const TonightPickOverlay = ({
     return () => clearInterval(id);
   }, [tonightLoading]);
 
-  // Effet "scan" : un poster aléatoire s'illumine brièvement, comme s'il était identifié
-  const [highlightedPath, setHighlightedPath] = useState<string | null>(null);
-  useEffect(() => {
-    if (!tonightLoading || shuffledWallPaths.length === 0) { setHighlightedPath(null); return; }
-    let clearFlash: ReturnType<typeof setTimeout>;
-    const flash = () => {
-      const path = shuffledWallPaths[Math.floor(Math.random() * shuffledWallPaths.length)];
-      setHighlightedPath(path);
-      clearFlash = setTimeout(() => setHighlightedPath(null), 380);
-    };
-    flash();
-    const interval = setInterval(flash, 750);
-    return () => { clearInterval(interval); clearTimeout(clearFlash); };
-  }, [tonightLoading, shuffledWallPaths.length]);
-
   // Lambda TMDB : liste fixe popular+top_rated, toujours affichée (cohérence visuelle entre sessions)
   const [lambdaPaths, setLambdaPaths] = useState<string[]>(lambdaCache.paths);
   useEffect(() => {
@@ -195,6 +180,21 @@ const TonightPickOverlay = ({
     }
     return arr;
   }, [posterWallPaths.length]);
+
+  // Effet "scan" : un poster aléatoire s'illumine brièvement, comme s'il était identifié
+  const [highlightedPath, setHighlightedPath] = useState<string | null>(null);
+  useEffect(() => {
+    if (!tonightLoading || shuffledWallPaths.length === 0) { setHighlightedPath(null); return; }
+    let clearFlash: ReturnType<typeof setTimeout>;
+    const flash = () => {
+      const path = shuffledWallPaths[Math.floor(Math.random() * shuffledWallPaths.length)];
+      setHighlightedPath(path);
+      clearFlash = setTimeout(() => setHighlightedPath(null), 380);
+    };
+    flash();
+    const interval = setInterval(flash, 750);
+    return () => { clearInterval(interval); clearTimeout(clearFlash); };
+  }, [tonightLoading, shuffledWallPaths.length]);
 
   // Offsets initiaux aléatoires par colonne (stable, calculé une fois)
   const colInitialOffsets = useMemo(
