@@ -119,6 +119,15 @@ const TonightPickOverlay = ({
   // canReveal = les textes sont prêts ET au moins 2.2s se sont écoulées depuis l'apparition du film
   const canReveal = isTextsReady && localReady;
 
+  // Temps écoulé pendant le chargement — pour l'effet crescendo sur le mur d'affiches
+  const [loadingElapsed, setLoadingElapsed] = useState(0);
+  useEffect(() => {
+    if (!tonightLoading) { setLoadingElapsed(0); return; }
+    const start = Date.now();
+    const id = setInterval(() => setLoadingElapsed((Date.now() - start) / 1000), 150);
+    return () => clearInterval(id);
+  }, [tonightLoading]);
+
   // Lambda TMDB : liste fixe popular+top_rated, toujours affichée (cohérence visuelle entre sessions)
   const [lambdaPaths, setLambdaPaths] = useState<string[]>(lambdaCache.paths);
   useEffect(() => {
@@ -233,48 +242,58 @@ const TonightPickOverlay = ({
                 className="absolute inset-0 z-20 overflow-hidden"
               >
                 {/* Mur d'affiches : 4 colonnes défilantes à vitesses décalées */}
-                {shuffledWallPaths.length >= 2 && (
-                  <div
-                    className="absolute inset-0 flex gap-1 overflow-hidden"
-                    style={{ opacity: 0.42, filter: "grayscale(30%) blur(0.5px)" }}
-                  >
-                    {[0, 1, 2, 3].map((ci) => {
-                      // Distribution cyclique sur le pool mélangé
-                      const perCol = Math.max(1, Math.ceil(shuffledWallPaths.length / 4));
-                      const items = Array.from({ length: perCol }, (_, i) =>
-                        shuffledWallPaths[(ci + i * 4) % shuffledWallPaths.length]
-                      );
-                      const col = [...items, ...items]; // double pour boucle seamless
-                      const dur = [6.5, 4.5, 7.5, 5.5][ci]; // ~40% plus rapide qu'avant
-                      const goDown = ci % 2 === 1;
-                      const initY = colInitialOffsets[ci];
-                      const endY = goDown
-                        ? `${(parseFloat(initY) + 50).toFixed(1)}%`
-                        : `${(parseFloat(initY) - 50).toFixed(1)}%`;
-                      return (
-                        <motion.div
-                          key={ci}
-                          className="flex-1 flex flex-col gap-1"
-                          style={{ willChange: "transform" }}
-                          initial={{ y: initY }}
-                          animate={{ y: endY }}
-                          transition={{ duration: dur, repeat: Infinity, ease: "linear" }}
-                        >
-                          {col.map((path, pi) => (
-                            <img
-                              key={pi}
-                              src={getPosterUrl(path, "w185") || ""}
-                              alt=""
-                              draggable={false}
-                              className="w-full rounded-md object-cover flex-shrink-0 select-none"
-                              style={{ aspectRatio: "2/3" }}
-                            />
-                          ))}
-                        </motion.div>
-                      );
-                    })}
-                  </div>
-                )}
+                {shuffledWallPaths.length >= 2 && (() => {
+                  // Filtre progressif : sombre+gris au départ → lumineux+coloré au fil du temps
+                  const p = Math.min(loadingElapsed / 18, 1); // 0→1 sur 18 secondes
+                  const wallOpacity  = 0.28 + p * 0.42;       // 0.28 → 0.70
+                  const wallGrayscale = Math.round(55 - p * 50); // 55% → 5%
+                  const wallBlur     = (1.5 - p * 1.5).toFixed(1); // 1.5px → 0px
+                  const wallBright   = (0.65 + p * 0.55).toFixed(2); // 0.65 → 1.20
+                  const wallContrast = (0.80 + p * 0.40).toFixed(2); // 0.80 → 1.20
+                  return (
+                    <div
+                      className="absolute inset-0 flex gap-1 overflow-hidden"
+                      style={{
+                        opacity: wallOpacity,
+                        filter: `grayscale(${wallGrayscale}%) blur(${wallBlur}px) brightness(${wallBright}) contrast(${wallContrast})`,
+                        transition: "opacity 0.4s, filter 0.4s",
+                      }}
+                    >
+                      {[0, 1, 2, 3].map((ci) => {
+                        const perCol = Math.max(8, Math.ceil(shuffledWallPaths.length / 4));
+                        const items = Array.from({ length: perCol }, (_, i) =>
+                          shuffledWallPaths[(ci + i * 4) % shuffledWallPaths.length]
+                        );
+                        const col = [...items, ...items]; // double : -50% boucle exactement sur un cycle
+                        const dur = [7, 5, 8.5, 6][ci];
+                        const goDown = ci % 2 === 1;
+                        // Phase décalée par colonne via delay négatif → diversité visuelle sans saut
+                        const phaseDelay = -(dur * ci * 0.25);
+                        return (
+                          <motion.div
+                            key={ci}
+                            className="flex-1 flex flex-col gap-1"
+                            style={{ willChange: "transform" }}
+                            initial={{ y: goDown ? "-50%" : "0%" }}
+                            animate={{ y: goDown ? "0%" : "-50%" }}
+                            transition={{ duration: dur, repeat: Infinity, repeatType: "loop", ease: "linear", delay: phaseDelay }}
+                          >
+                            {col.map((path, pi) => (
+                              <img
+                                key={pi}
+                                src={getPosterUrl(path, "w185") || ""}
+                                alt=""
+                                draggable={false}
+                                className="w-full rounded-md object-cover flex-shrink-0 select-none"
+                                style={{ aspectRatio: "2/3" }}
+                              />
+                            ))}
+                          </motion.div>
+                        );
+                      })}
+                    </div>
+                  );
+                })()}
 
                 {/* Voile sombre par-dessus les posters (ou fond opaque si pas de posters) */}
                 <div

@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate, useLocation } from "react-router-dom";
 import { consumePendingDuoPick } from "@/lib/duo-pending";
 import { toast } from "sonner";
-import { Sparkles, Mic, Flame, Eye, Coffee, Heart, Shuffle } from "lucide-react";
+import { Sparkles, WandSparkles, Mic, Flame, Eye, Coffee, Heart, Shuffle } from "lucide-react";
 
 import { ALL_PLATFORMS } from "@/lib/platforms";
 import type { Movie, MovieDetail } from "@/lib/tmdb";
@@ -1689,7 +1689,7 @@ const HomeScreen = ({
               disabled={loading}
               className="fab-pulse inline-flex items-center justify-center gap-2.5 w-full max-w-[260px] py-[18px] px-7 rounded-full bg-gradient-to-b from-primary to-accent text-primary-foreground font-sans font-semibold text-[15px] tracking-wide shadow-[0_20px_55px_-12px_hsl(var(--primary)/0.65)] hover:shadow-[0_24px_65px_-10px_hsl(var(--primary)/0.8)] transition-shadow disabled:opacity-50"
             >
-              <Sparkles className="w-[18px] h-[18px]" />
+              <WandSparkles className="w-[18px] h-[18px]" />
               Trouve-moi 1 film
             </motion.button>
           </motion.div>
