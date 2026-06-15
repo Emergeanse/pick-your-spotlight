@@ -47,6 +47,7 @@ const HomeScreenChoiceModal = ({
   const [duoListOpen, setDuoListOpen] = useState(false);
   const [quand, setQuand] = useState<ModalQuand>("ce-soir");
   const [planDate, setPlanDate] = useState("");
+  const [planTime, setPlanTime] = useState("20:30");
   const [ou, setOu] = useState<ModalOu>(null);
   const [ouDescription, setOuDescription] = useState("");
 
@@ -57,6 +58,7 @@ const HomeScreenChoiceModal = ({
       setDuoListOpen(false);
       setQuand("ce-soir");
       setPlanDate("");
+      setPlanTime("20:30");
       setOu(null);
       setOuDescription("");
       return;
@@ -238,7 +240,7 @@ const HomeScreenChoiceModal = ({
               </div>
               <AnimatePresence>
                 {quand === "planifier" && (
-                  <motion.div initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} className="flex gap-2 items-center">
+                  <motion.div initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} className="flex gap-2">
                     <input
                       type="date"
                       value={planDate}
@@ -246,18 +248,12 @@ const HomeScreenChoiceModal = ({
                       min={new Date().toISOString().split("T")[0]}
                       className="flex-1 bg-white/[0.04] border border-white/[0.08] rounded-xl px-3.5 py-2.5 text-[13px] font-sans text-foreground/80 focus:outline-none focus:border-primary/40 [color-scheme:dark]"
                     />
-                    <button
-                      onClick={() => {
-                        onClose();
-                        const params = new URLSearchParams();
-                        if (mode !== "solo") params.set("context", mode === "duo" ? "duo" : (initialContext === "famille" ? "famille" : "amis"));
-                        if (planDate) params.set("date", planDate);
-                        navigate(`/app/soiree/nouvelle?${params.toString()}`);
-                      }}
-                      className="px-4 py-2.5 rounded-xl bg-primary/20 border border-primary/30 text-primary text-[12.5px] font-sans font-semibold whitespace-nowrap"
-                    >
-                      Planifier
-                    </button>
+                    <input
+                      type="time"
+                      value={planTime}
+                      onChange={(e) => setPlanTime(e.target.value)}
+                      className="w-[88px] bg-white/[0.04] border border-white/[0.08] rounded-xl px-3 py-2.5 text-[13px] font-sans text-foreground/80 focus:outline-none focus:border-primary/40 [color-scheme:dark]"
+                    />
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -333,7 +329,20 @@ const HomeScreenChoiceModal = ({
               transition={{ delay: 0.2, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
               whileHover={{ y: -2 }}
               whileTap={{ scale: 0.985 }}
-              onClick={() => onAutoPick(selectedDuoId ?? undefined)}
+              onClick={() => {
+                if (quand === "planifier") {
+                  onClose();
+                  const params = new URLSearchParams();
+                  const ctx = mode === "duo" ? "duo" : mode === "groupe" ? (initialContext === "famille" ? "famille" : "amis") : "solo";
+                  if (ctx !== "solo") params.set("context", ctx);
+                  if (selectedDuoId) params.set("duoId", selectedDuoId);
+                  if (planDate) params.set("date", planDate);
+                  if (planTime) params.set("time", planTime);
+                  navigate(`/app/soiree/nouvelle?${params.toString()}`);
+                } else {
+                  onAutoPick(selectedDuoId ?? undefined);
+                }
+              }}
               disabled={mode === "duo" && !selectedDuoId}
               className="group relative w-full text-left rounded-[24px] p-5 overflow-hidden disabled:opacity-40"
             >
@@ -347,9 +356,13 @@ const HomeScreenChoiceModal = ({
                 </motion.div>
                 <div className="flex-1 min-w-0">
                   <h4 className="font-serif text-[17px] leading-tight text-foreground tracking-tight">
-                    {isDuo ? "Laissez-moi vous surprendre" : isGroupe ? "Je choisis pour le groupe" : "Laisse-moi te surprendre"}
+                    {quand === "planifier"
+                      ? (isDuo ? "Créer cette soirée" : isGroupe ? "Créer cette soirée" : "Créer cette soirée")
+                      : (isDuo ? "Laissez-moi vous surprendre" : isGroupe ? "Je choisis pour le groupe" : "Laisse-moi te surprendre")}
                   </h4>
-                  <p className="text-foreground/65 text-[12.5px] font-sans mt-1 italic">{getAutoPickSubtitle()}</p>
+                  <p className="text-foreground/65 text-[12.5px] font-sans mt-1 italic">
+                    {quand === "planifier" ? "Je génère le film idéal pour cette date." : getAutoPickSubtitle()}
+                  </p>
                 </div>
               </div>
             </motion.button>
@@ -361,7 +374,21 @@ const HomeScreenChoiceModal = ({
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.28, duration: 0.5 }}
               whileTap={{ scale: 0.985 }}
-              onClick={() => { onClose(); onOpenMoodCapture(); }}
+              onClick={() => {
+                if (quand === "planifier") {
+                  onClose();
+                  const params = new URLSearchParams();
+                  const ctx = mode === "duo" ? "duo" : mode === "groupe" ? (initialContext === "famille" ? "famille" : "amis") : "solo";
+                  if (ctx !== "solo") params.set("context", ctx);
+                  if (selectedDuoId) params.set("duoId", selectedDuoId);
+                  if (planDate) params.set("date", planDate);
+                  if (planTime) params.set("time", planTime);
+                  navigate(`/app/soiree/nouvelle?${params.toString()}`);
+                } else {
+                  onClose();
+                  onOpenMoodCapture();
+                }
+              }}
               className="group relative w-full text-left rounded-[24px] p-5 bg-white/[0.025] hover:bg-white/[0.045] border border-white/[0.06] hover:border-white/[0.12] transition-all"
             >
               <div className="flex items-center gap-4">
