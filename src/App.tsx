@@ -28,6 +28,7 @@ import SoireesPage from "./pages/SoireesPage.tsx";
 import Admin from "./pages/Admin.tsx";
 import PlanSession from "./pages/PlanSession.tsx";
 import History from "./pages/History.tsx";
+import InvitePage from "./pages/InvitePage.tsx";
 
 const queryClient = new QueryClient();
 
@@ -75,6 +76,7 @@ const App = () => (
             <Route path="/app/history" element={<ProtectedRoute><AppLayout><History /></AppLayout></ProtectedRoute>} />
             <Route path="/join" element={<JoinSession />} />
             <Route path="/join-duo/:code" element={<JoinDuo />} />
+            <Route path="/invite/:token" element={<InvitePage />} />
             <Route path="/app/duo" element={<ProtectedRoute><AppLayout><DuoPage /></AppLayout></ProtectedRoute>} />
             <Route path="/app/event" element={<ProtectedRoute><AppLayout><EventPage /></AppLayout></ProtectedRoute>} />
             <Route path="/app/soirees" element={<ProtectedRoute><AppLayout><SoireesPage /></AppLayout></ProtectedRoute>} />

@@ -25,6 +25,8 @@ const Auth = () => {
   const [searchParams] = useSearchParams();
   const inviteCode = searchParams.get("invite");
   const redirectTo = searchParams.get("redirect");
+  const eventToken = searchParams.get("event_token");   // lien invitation soirée
+  const skipOnboarding = searchParams.get("skip_onboarding") === "true";
 
   const { user, isReady } = useAuth();
 
@@ -46,7 +48,10 @@ const Auth = () => {
   }, [isReady, user, inviteCode]);
 
   if (isReady && user && !inviteCode && mode !== "reset") {
-    return <Navigate to={redirectTo || "/app"} replace />;
+    const dest = eventToken
+      ? `/invite/${eventToken}?joined=1`
+      : redirectTo || "/app";
+    return <Navigate to={dest} replace />;
   }
 
   const processInvite = async (userId: string, code: string) => {
@@ -87,11 +92,26 @@ const Auth = () => {
           email,
           password,
           options: {
-            data: { display_name: name, birth_year: birthYear ? parseInt(birthYear) : undefined },
-            emailRedirectTo: inviteCode ? `${window.location.origin}/auth?invite=${inviteCode}` : window.location.origin,
+            data: {
+              display_name: name,
+              birth_year: birthYear ? parseInt(birthYear) : undefined,
+              onboarding_skipped: skipOnboarding,
+            },
+            emailRedirectTo: inviteCode
+              ? `${window.location.origin}/auth?invite=${inviteCode}`
+              : eventToken
+                ? `${window.location.origin}/invite/${eventToken}?joined=1`
+                : window.location.origin,
           },
         });
         if (error) throw error;
+        // Marque le compte comme light/skipped en DB si applicable
+        if (skipOnboarding && signUpData.user) {
+          await supabase.from("profiles").update({
+            onboarding_skipped: true,
+            account_type: "light",
+          } as any).eq("id", signUpData.user.id);
+        }
         toast.success("Vérifie ta boîte mail pour confirmer ton compte !");
 
       } else if (mode === "forgot") {
