@@ -1261,6 +1261,20 @@ export type Database = {
           year: number
         }[]
       }
+      get_pending_duo_by_invite_code: {
+        Args: { _code: string }
+        Returns: {
+          created_at: string
+          created_by: string
+          duo_name: string
+          id: string
+          invite_code: string
+          status: string
+          user1_display_name: string
+          user1_genres: string[]
+          user1_id: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
