@@ -310,42 +310,77 @@ const EventDetailPage = () => {
 
         {/* ── Participants ── */}
         <div>
-          <div className="flex items-center gap-2 mb-3">
-            <Users className="w-4 h-4 text-primary/60" />
-            <p className="text-[11px] font-sans font-semibold tracking-[0.18em] uppercase text-foreground/40">
-              Participants · {confirmed.length} confirmé{confirmed.length > 1 ? "s" : ""}
-            </p>
-          </div>
-
-          <div className="space-y-2">
-            {participants.map((p, i) => (
-              <motion.div
-                key={p.id}
-                initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: i * 0.05 }}
-                className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white/[0.03] border border-white/[0.05]"
-              >
-                <div className="w-8 h-8 rounded-full bg-primary/15 flex items-center justify-center text-[13px] font-serif font-semibold text-primary shrink-0">
-                  {(p.display_name ?? "?")[0].toUpperCase()}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-[13px] font-sans font-medium text-foreground truncate">{p.display_name}</span>
-                    {p.user_id === event.organizer_id && (
-                      <Crown className="w-3 h-3 text-primary/60 shrink-0" />
-                    )}
-                  </div>
-                </div>
-                <span className={`text-[11px] font-sans font-medium ${statusLabel[p.status]?.color ?? "text-foreground/40"}`}>
-                  {statusLabel[p.status]?.label ?? p.status}
-                </span>
-              </motion.div>
-            ))}
-
-            {participants.length === 0 && (
-              <p className="text-sm text-foreground/30 font-sans text-center py-4">Aucun participant pour l'instant</p>
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <Users className="w-4 h-4 text-primary/60" />
+              <p className="text-[11px] font-sans font-semibold tracking-[0.18em] uppercase text-foreground/40">
+                Participants
+              </p>
+            </div>
+            {participants.length > 0 && (
+              <span className="text-[11px] font-sans font-semibold text-emerald-400">
+                {confirmed.length}/{participants.length} confirmé{confirmed.length > 1 ? "s" : ""}
+              </span>
             )}
           </div>
+
+          {participants.length === 0 ? (
+            <div className="rounded-2xl bg-white/[0.02] border border-white/[0.05] px-4 py-6 text-center">
+              <p className="text-sm text-foreground/30 font-sans">Aucun participant pour l'instant</p>
+              {isOrganizer && (
+                <p className="text-[11px] text-foreground/20 font-sans mt-1">Partagez le lien ci-dessous pour inviter</p>
+              )}
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {participants.map((p, i) => {
+                const isOwner = p.user_id === event.organizer_id;
+                const statusConfig = {
+                  confirmed: { label: "Confirmé",   dot: "bg-emerald-400", text: "text-emerald-400",  ring: "ring-emerald-400/30" },
+                  invited:   { label: "En attente", dot: "bg-amber-400 animate-pulse", text: "text-amber-400/80", ring: "ring-amber-400/20" },
+                  declined:  { label: "Décliné",    dot: "bg-red-400",     text: "text-red-400/70",   ring: "ring-transparent" },
+                }[p.status] ?? { label: p.status, dot: "bg-white/20", text: "text-foreground/40", ring: "ring-transparent" };
+
+                return (
+                  <motion.div
+                    key={p.id}
+                    initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.05 }}
+                    className={`flex items-center gap-3.5 px-4 py-3.5 rounded-2xl border transition-colors ${
+                      p.status === "confirmed"
+                        ? "bg-emerald-500/[0.05] border-emerald-500/15"
+                        : p.status === "invited"
+                          ? "bg-amber-500/[0.04] border-amber-500/12"
+                          : "bg-white/[0.02] border-white/[0.05]"
+                    }`}
+                  >
+                    {/* Avatar */}
+                    <div className={`relative w-10 h-10 rounded-full flex items-center justify-center text-[15px] font-serif font-semibold shrink-0 ring-2 ${statusConfig.ring} ${
+                      isOwner ? "bg-primary/25 text-primary" : "bg-white/10 text-foreground/70"
+                    }`}>
+                      {(p.display_name ?? "?")[0].toUpperCase()}
+                      {/* Dot de statut */}
+                      <span className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-background ${statusConfig.dot}`} />
+                    </div>
+
+                    {/* Nom + rôle */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[13.5px] font-sans font-semibold text-foreground truncate">{p.display_name}</span>
+                        {isOwner && <Crown className="w-3 h-3 text-primary/50 shrink-0" />}
+                      </div>
+                      <span className={`text-[11px] font-sans font-medium ${statusConfig.text}`}>
+                        {statusConfig.label}
+                      </span>
+                    </div>
+
+                    {/* Icône statut */}
+                    {p.status === "confirmed" && <Check className="w-4 h-4 text-emerald-400 shrink-0" />}
+                  </motion.div>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         {/* ── Lien d'invitation (organisateur seulement) ── */}
