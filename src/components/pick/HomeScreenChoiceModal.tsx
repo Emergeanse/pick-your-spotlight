@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { Mic, CalendarClock, Heart, Check, User, Flame, Eye, Coffee, Shuffle, Users } from "lucide-react";
+import { Mic, CalendarClock, Heart, Check, User, Flame, Eye, Coffee, Shuffle, Users, MapPin, Wifi } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { getAutoPickSubtitle } from "@/lib/time-context";
@@ -17,6 +17,7 @@ const AMBIANCES: { id: AmbianceMood; label: string; Icon: React.ComponentType<an
 
 type ModalMode = "solo" | "duo" | "groupe";
 type ModalQuand = "ce-soir" | "planifier";
+type ModalOu = "ensemble" | "a-distance" | null;
 
 export type LaunchContext = "solo" | "duo" | "famille" | "amis" | "surprise";
 
@@ -46,6 +47,8 @@ const HomeScreenChoiceModal = ({
   const [duoListOpen, setDuoListOpen] = useState(false);
   const [quand, setQuand] = useState<ModalQuand>("ce-soir");
   const [planDate, setPlanDate] = useState("");
+  const [ou, setOu] = useState<ModalOu>(null);
+  const [ouDescription, setOuDescription] = useState("");
 
   useEffect(() => {
     if (!open) {
@@ -54,6 +57,8 @@ const HomeScreenChoiceModal = ({
       setDuoListOpen(false);
       setQuand("ce-soir");
       setPlanDate("");
+      setOu(null);
+      setOuDescription("");
       return;
     }
     if (initialContext === "duo" || initialDuoId) {
@@ -252,7 +257,69 @@ const HomeScreenChoiceModal = ({
               </AnimatePresence>
             </div>
 
-            {/* ── BLOC 3 : COMMENT ? ── */}
+            {/* ── BLOC 3 : OÙ ? ── (Duo & Groupe uniquement) */}
+            <AnimatePresence>
+              {mode !== "solo" && (
+                <motion.div
+                  key="ou-section"
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+                  className="overflow-hidden"
+                >
+                  <div className="flex flex-col gap-2 pt-0">
+                    <p className="text-[10px] font-sans font-semibold tracking-[0.18em] uppercase text-foreground/35">Où ?</p>
+                    <div className="flex gap-1 p-1 rounded-2xl bg-white/[0.04] border border-white/[0.08]">
+                      <button
+                        onClick={() => setOu(ou === "ensemble" ? null : "ensemble")}
+                        className={`relative flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-[12px] font-sans font-medium transition-all overflow-hidden ${ou === "ensemble" ? "text-foreground border border-primary/40" : "text-foreground/45"}`}
+                      >
+                        {ou === "ensemble" && <div className="absolute inset-0 rounded-xl" style={{ background: TAB_GRADIENT }} />}
+                        <MapPin className="relative w-3.5 h-3.5" />
+                        <span className="relative">Ensemble</span>
+                      </button>
+                      <button
+                        onClick={() => setOu(ou === "a-distance" ? null : "a-distance")}
+                        className={`relative flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-[12px] font-sans font-medium transition-all overflow-hidden ${ou === "a-distance" ? "text-foreground border border-primary/40" : "text-foreground/45"}`}
+                      >
+                        {ou === "a-distance" && <div className="absolute inset-0 rounded-xl" style={{ background: TAB_GRADIENT }} />}
+                        <Wifi className="relative w-3.5 h-3.5" />
+                        <span className="relative">À distance</span>
+                      </button>
+                    </div>
+                    <AnimatePresence>
+                      {ou === "ensemble" && (
+                        <motion.input
+                          key="ensemble-desc"
+                          initial={{ opacity: 0, y: 4 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -4 }}
+                          type="text"
+                          placeholder="Chez nous, home cinéma, salon…"
+                          value={ouDescription}
+                          onChange={(e) => setOuDescription(e.target.value)}
+                          className="bg-white/[0.04] border border-white/[0.08] rounded-xl px-3.5 py-2.5 text-[13px] font-sans text-foreground/80 placeholder:text-foreground/30 focus:outline-none focus:border-primary/40"
+                        />
+                      )}
+                      {ou === "a-distance" && (
+                        <motion.p
+                          key="distance-hint"
+                          initial={{ opacity: 0, y: 4 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -4 }}
+                          className="text-[11px] text-foreground/40 font-sans px-1 leading-snug"
+                        >
+                          Je privilégierai un film disponible sur vos deux plateformes.
+                        </motion.p>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* ── BLOC 4 : COMMENT ? ── */}
             {/* Primary — Laisse-moi te surprendre */}
             <motion.button
               initial={{ opacity: 0, y: 14 }}
