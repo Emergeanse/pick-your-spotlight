@@ -2,8 +2,8 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  ArrowLeft, Calendar, Clock, MapPin, Wifi, Copy, Share2, Check,
-  Loader2, Users, ChevronRight, Sparkles, Film, Crown,
+  ArrowLeft, Calendar, MapPin, Wifi, Copy, Share2, Check,
+  Loader2, Users, Sparkles, Film, Crown, Trash2, AlertTriangle,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -66,6 +66,8 @@ const EventDetailPage = () => {
   const [myParticipation, setMyParticipation] = useState<Participant | null>(null);
   const [confirming, setConfirming] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const isOrganizer = !!user && event?.organizer_id === user.id;
   const inviteLink = event ? `${window.location.origin}/invite/${event.invite_link_token}` : "";
@@ -171,6 +173,23 @@ const EventDetailPage = () => {
     await loadParticipants(event!.id);
   };
 
+  const deleteEvent = async () => {
+    if (!event) return;
+    setDeleting(true);
+    try {
+      const { error } = await supabase
+        .from("events" as any)
+        .delete()
+        .eq("id", event.id);
+      if (error) throw error;
+      toast.success("Soirée supprimée");
+      navigate("/app/soirees");
+    } catch {
+      toast.error("Impossible de supprimer la soirée");
+      setDeleting(false);
+    }
+  };
+
   const copyLink = async () => {
     await navigator.clipboard.writeText(inviteLink);
     setCopied(true);
@@ -210,9 +229,19 @@ const EventDetailPage = () => {
     <div className="fixed inset-0 bg-background flex flex-col">
       {/* Header */}
       <div className="pt-[calc(3rem+env(safe-area-inset-top))] px-5 pb-4 shrink-0">
-        <button onClick={() => navigate("/app/soirees")} className="p-2 -ml-2 rounded-full hover:bg-white/5 transition-colors mb-3">
-          <ArrowLeft className="w-5 h-5 text-foreground/60" />
-        </button>
+        <div className="flex items-center justify-between mb-3">
+          <button onClick={() => navigate("/app/soirees")} className="p-2 -ml-2 rounded-full hover:bg-white/5 transition-colors">
+            <ArrowLeft className="w-5 h-5 text-foreground/60" />
+          </button>
+          {isOrganizer && (
+            <button
+              onClick={() => setShowDeleteConfirm(true)}
+              className="p-2 rounded-full hover:bg-red-500/10 transition-colors"
+            >
+              <Trash2 className="w-4.5 h-4.5 text-red-400/60" />
+            </button>
+          )}
+        </div>
 
         <p className="text-[10px] font-sans font-semibold tracking-[0.18em] uppercase text-primary/70 mb-0.5">
           {event.context ? ({ duo: "Soirée Duo", famille: "Soirée Famille", amis: "Soirée entre amis", solo: "Soirée solo" }[event.context] ?? "Soirée ciné") : "Soirée ciné"}
@@ -365,6 +394,60 @@ const EventDetailPage = () => {
           </div>
         )}
       </div>
+
+      {/* ── Bottom sheet confirmation suppression ── */}
+      <AnimatePresence>
+        {showDeleteConfirm && (
+          <>
+            {/* Overlay */}
+            <motion.div
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              onClick={() => setShowDeleteConfirm(false)}
+              className="fixed inset-0 bg-black/60 z-50"
+            />
+            {/* Sheet */}
+            <motion.div
+              initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
+              transition={{ type: "spring", stiffness: 320, damping: 30 }}
+              className="fixed bottom-0 inset-x-0 z-50 bg-[hsl(240_22%_6%)] border-t border-white/[0.08] rounded-t-3xl px-5 pt-5 pb-[calc(2rem+env(safe-area-inset-bottom))]"
+            >
+              <div className="w-10 h-1 rounded-full bg-white/15 mx-auto mb-5" />
+
+              <div className="flex flex-col items-center gap-3 text-center mb-6">
+                <div className="w-12 h-12 rounded-2xl bg-red-500/15 border border-red-500/25 flex items-center justify-center">
+                  <AlertTriangle className="w-5 h-5 text-red-400" />
+                </div>
+                <div>
+                  <p className="font-serif text-[18px] text-foreground">Supprimer la soirée ?</p>
+                  <p className="text-[12.5px] text-foreground/45 font-sans mt-1 leading-snug">
+                    Cette action est irréversible.<br />
+                    Tous les participants et votes seront supprimés.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <button
+                  onClick={deleteEvent}
+                  disabled={deleting}
+                  className="w-full py-3.5 rounded-2xl bg-red-500/90 text-white font-sans font-semibold text-[13.5px] flex items-center justify-center gap-2 disabled:opacity-60"
+                >
+                  {deleting
+                    ? <Loader2 className="w-4 h-4 animate-spin" />
+                    : <><Trash2 className="w-4 h-4" /> Supprimer définitivement</>
+                  }
+                </button>
+                <button
+                  onClick={() => setShowDeleteConfirm(false)}
+                  className="w-full py-3.5 rounded-2xl border border-white/[0.08] bg-white/[0.03] text-foreground/70 font-sans text-[13.5px]"
+                >
+                  Annuler
+                </button>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

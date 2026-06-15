@@ -1,9 +1,14 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { CalendarDays, UsersRound, Heart, Home, Users, Plus, Loader2, ChevronRight } from "lucide-react";
+import { CalendarDays, Heart, Home, Users, UsersRound, Plus, Loader2, ChevronRight, Check, Clock } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+
+type ParticipantSummary = {
+  total: number;
+  confirmed: number;
+};
 
 type EventRow = {
   id: string;
@@ -14,6 +19,7 @@ type EventRow = {
   status: string;
   reveal_mode: "surprise" | "vote";
   invite_link_token: string;
+  participants: ParticipantSummary;
 };
 
 const CONTEXT_ICON: Record<string, React.ComponentType<any>> = {
@@ -23,15 +29,14 @@ const CONTEXT_ICON: Record<string, React.ComponentType<any>> = {
   solo:    UsersRound,
 };
 
-const CONTEXT_LABEL: Record<string, string> = {
-  duo:     "Duo",
-  famille: "Famille",
-  amis:    "Entre amis",
-  solo:    "Solo",
-};
-
 const isUpcoming = (dateStr: string) =>
   new Date(dateStr + "T23:59:59") >= new Date();
+
+const formatDate = (dateStr: string, time: string | null) => {
+  const d = new Date(dateStr + "T12:00:00");
+  const date = d.toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" });
+  return time ? `${date} · ${time.slice(0, 5)}` : date;
+};
 
 const SoireesPage = () => {
   const navigate = useNavigate();
@@ -41,48 +46,98 @@ const SoireesPage = () => {
 
   useEffect(() => {
     if (!user) return;
-    (async () => {
-      const { data } = await supabase
-        .from("events" as any)
-        .select("id, title, event_date, event_time, context, status, reveal_mode, invite_link_token")
-        .eq("organizer_id", user.id)
-        .neq("status", "cancelled")
-        .order("event_date", { ascending: true });
-      setEvents((data as EventRow[]) ?? []);
-      setLoading(false);
-    })();
+    loadEvents();
   }, [user]);
+
+  const loadEvents = async () => {
+    if (!user) return;
+
+    // Récupère les soirées de l'organisateur
+    const { data: evRows } = await supabase
+      .from("events" as any)
+      .select("id, title, event_date, event_time, context, status, reveal_mode, invite_link_token")
+      .eq("organizer_id", user.id)
+      .neq("status", "cancelled")
+      .order("event_date", { ascending: true });
+
+    if (!evRows?.length) { setEvents([]); setLoading(false); return; }
+
+    const ids = (evRows as any[]).map(e => e.id);
+
+    // Récupère tous les participants de ces soirées en une seule requête
+    const { data: epRows } = await supabase
+      .from("event_participants" as any)
+      .select("event_id, status")
+      .in("event_id", ids);
+
+    // Groupe par event_id
+    const byEvent: Record<string, ParticipantSummary> = {};
+    ids.forEach(id => { byEvent[id] = { total: 0, confirmed: 0 }; });
+    (epRows ?? []).forEach((ep: any) => {
+      if (!byEvent[ep.event_id]) return;
+      byEvent[ep.event_id].total++;
+      if (ep.status === "confirmed") byEvent[ep.event_id].confirmed++;
+    });
+
+    setEvents(
+      (evRows as any[]).map(e => ({ ...e, participants: byEvent[e.id] ?? { total: 0, confirmed: 0 } }))
+    );
+    setLoading(false);
+  };
 
   const upcoming = events.filter(e => isUpcoming(e.event_date));
   const past     = events.filter(e => !isUpcoming(e.event_date));
 
-  const formatDate = (dateStr: string, time: string | null) => {
-    const d = new Date(dateStr + "T12:00:00");
-    const date = d.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" });
-    return time ? `${date} · ${time.slice(0, 5)}` : date;
-  };
-
   const EventCard = ({ evt, i }: { evt: EventRow; i: number }) => {
     const Icon = CONTEXT_ICON[evt.context ?? "solo"] ?? UsersRound;
+    const { total, confirmed } = evt.participants;
+    // -1 pour exclure l'organisateur lui-même du décompte "invités"
+    const invites = Math.max(0, total - 1);
+    const confirmedInvites = Math.max(0, confirmed - 1);
+    const allConfirmed = invites > 0 && confirmedInvites === invites;
+    const someConfirmed = confirmedInvites > 0 && !allConfirmed;
+
     return (
       <motion.button
-        key={evt.id}
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: i * 0.06, duration: 0.35 }}
         onClick={() => navigate(`/app/soirees/${evt.id}`)}
-        className="w-full flex items-center gap-4 p-4 rounded-2xl bg-white/[0.04] border border-white/[0.07] text-left"
+        className="w-full flex items-center gap-3.5 p-4 rounded-2xl bg-white/[0.04] border border-white/[0.07] text-left"
       >
+        {/* Icône */}
         <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
           <Icon className="w-5 h-5 text-primary" strokeWidth={1.7} />
         </div>
+
+        {/* Infos */}
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-sans font-semibold text-foreground truncate">{evt.title}</p>
-          <p className="text-xs text-foreground/45 mt-0.5 capitalize">{formatDate(evt.event_date, evt.event_time)}</p>
+          <p className="text-[13.5px] font-sans font-semibold text-foreground truncate">{evt.title}</p>
+          <p className="text-[11px] text-foreground/45 mt-0.5 capitalize">{formatDate(evt.event_date, evt.event_time)}</p>
+
+          {/* Statut participants */}
+          {invites > 0 && (
+            <div className={`flex items-center gap-1 mt-1.5 ${allConfirmed ? "text-emerald-400" : someConfirmed ? "text-amber-400" : "text-foreground/30"}`}>
+              {allConfirmed
+                ? <Check className="w-3 h-3" />
+                : <Clock className="w-3 h-3" />
+              }
+              <span className="text-[10.5px] font-sans font-medium">
+                {allConfirmed
+                  ? `${invites} invité${invites > 1 ? "s" : ""} confirmé${invites > 1 ? "s" : ""}`
+                  : confirmedInvites > 0
+                    ? `${confirmedInvites}/${invites} confirmé${confirmedInvites > 1 ? "s" : ""}`
+                    : `${invites} invité${invites > 1 ? "s" : ""} · en attente`
+                }
+              </span>
+            </div>
+          )}
         </div>
-        <div className="flex flex-col items-end gap-1 shrink-0">
-          <span className="text-[10px] font-sans font-semibold px-2 py-0.5 rounded-full bg-white/[0.06] text-foreground/50">
-            {evt.reveal_mode === "surprise" ? "🎩 Surprise" : "🗳️ Vote"}
+
+        {/* Mode + chevron */}
+        <div className="flex flex-col items-end gap-1.5 shrink-0">
+          <span className="text-[10px] font-sans font-medium px-2 py-0.5 rounded-full bg-white/[0.06] text-foreground/45">
+            {evt.reveal_mode === "surprise" ? "🎩" : "🗳️"}
           </span>
           <ChevronRight className="w-3.5 h-3.5 text-foreground/20" />
         </div>
@@ -92,23 +147,20 @@ const SoireesPage = () => {
 
   return (
     <div className="fixed inset-0 bg-background flex flex-col">
-      <div className="pt-[calc(3.5rem+env(safe-area-inset-top))] px-5 pb-4">
-        <div className="flex items-center justify-between">
+      <div className="pt-[calc(3.5rem+env(safe-area-inset-top))] px-5 pb-4 shrink-0">
+        <div className="flex items-start justify-between">
           <div>
-            <div className="flex items-center gap-2.5 mb-1">
+            <div className="flex items-center gap-2 mb-1">
               <CalendarDays className="w-5 h-5 text-primary" strokeWidth={1.8} />
-              <span className="text-[11px] font-sans font-semibold tracking-[0.12em] uppercase text-primary/80">
-                Soirées
-              </span>
+              <span className="text-[11px] font-sans font-semibold tracking-[0.12em] uppercase text-primary/80">Soirées</span>
             </div>
             <h1 className="text-[28px] font-serif font-bold text-foreground leading-tight">
-              Tes soirées<br />
-              <span className="italic text-primary">ciné</span>
+              Tes soirées<br /><span className="italic text-primary">ciné</span>
             </h1>
           </div>
           <button
             onClick={() => navigate("/app/soiree/nouvelle")}
-            className="w-10 h-10 rounded-2xl bg-primary/15 border border-primary/25 flex items-center justify-center"
+            className="mt-2 w-10 h-10 rounded-2xl bg-primary/15 border border-primary/25 flex items-center justify-center"
           >
             <Plus className="w-5 h-5 text-primary" />
           </button>
