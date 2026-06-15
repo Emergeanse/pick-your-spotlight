@@ -423,13 +423,16 @@ const Profile = () => {
             </div>
           </motion.div>
 
-          {/* Carte ADN Cinéma */}
+          {/* Carte ADN Cinéma → nouvelle page dédiée */}
           <motion.button initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
-            onClick={() => setShowDNA(true)}
+            onClick={() => navigate("/app/adn")}
             className="w-full text-left rounded-2xl p-4 border border-primary/15 bg-gradient-to-br from-card via-card to-primary/[0.03] hover:border-primary/30 transition-all group relative overflow-hidden active:scale-[0.98]">
+            {/* Halo arrière */}
+            <div className="absolute -top-8 -right-8 w-32 h-32 rounded-full pointer-events-none"
+              style={{ background: "radial-gradient(circle, hsl(var(--primary)/0.2), transparent 70%)", filter: "blur(20px)" }} />
             <div className="relative z-10 flex items-center gap-4">
               <div className="flex-1 min-w-0">
-                <p className="text-[10px] uppercase tracking-[0.2em] text-primary/40 font-sans font-semibold mb-1.5">Ton ADN Cinéma</p>
+                <p className="text-[10px] uppercase tracking-[0.2em] text-primary/40 font-sans font-semibold mb-1.5">Mon ADN Cinéma</p>
                 {dnaTitle ? (
                   <>
                     <h2 className="text-lg font-serif mb-0.5 group-hover:text-primary/90 transition-colors leading-tight">{dnaTitle}</h2>
@@ -440,7 +443,7 @@ const Profile = () => {
                   <h2 className="text-sm font-serif text-foreground/50">Découvre ton profil cinématographique</h2>
                 )}
                 <div className="flex items-center gap-1 mt-2 text-primary/30 group-hover:text-primary/50 transition-colors">
-                  <span className="text-[11px] font-sans">Explorer</span>
+                  <span className="text-[11px] font-sans">Voir mon profil complet</span>
                   <ChevronRight className="w-3 h-3" />
                 </div>
               </div>

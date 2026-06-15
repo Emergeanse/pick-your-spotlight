@@ -12,6 +12,7 @@ import Index from "./pages/Index.tsx";
 import Auth from "./pages/Auth.tsx";
 import Onboarding from "./pages/Onboarding.tsx";
 import Profile from "./pages/Profile.tsx";
+import CinemaDNAPage from "./pages/CinemaDNAPage.tsx";
 import MyCinema from "./pages/MyCinema.tsx";
 import Glossary from "./pages/Glossary.tsx";
 import PickPlusPage from "./pages/PickPlus.tsx";
@@ -66,6 +67,7 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
             <Route path="/app/profile" element={<ProtectedRoute><AppLayout><Profile /></AppLayout></ProtectedRoute>} />
+            <Route path="/app/adn" element={<ProtectedRoute><CinemaDNAPage /></ProtectedRoute>} />
             <Route path="/app/my-cinema" element={<ProtectedRoute><AppLayout><MyCinema /></AppLayout></ProtectedRoute>} />
             <Route path="/app/watchlist" element={<ProtectedRoute><AppLayout><WatchlistPageRoute /></AppLayout></ProtectedRoute>} />
             <Route path="/app/friends" element={<ProtectedRoute><AppLayout><Friends /></AppLayout></ProtectedRoute>} />
