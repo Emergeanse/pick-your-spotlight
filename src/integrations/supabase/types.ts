@@ -323,6 +323,208 @@ export type Database = {
         }
         Relationships: []
       }
+      event_participants: {
+        Row: {
+          created_at: string | null
+          event_id: string
+          guest_email: string | null
+          guest_name: string | null
+          guest_token: string | null
+          id: string
+          status: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          event_id: string
+          guest_email?: string | null
+          guest_name?: string | null
+          guest_token?: string | null
+          id?: string
+          status?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          event_id?: string
+          guest_email?: string | null
+          guest_name?: string | null
+          guest_token?: string | null
+          id?: string
+          status?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_participants_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_participants_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      event_recommendations: {
+        Row: {
+          catalog_item_id: string
+          created_at: string | null
+          event_id: string
+          id: string
+          position: number | null
+        }
+        Insert: {
+          catalog_item_id: string
+          created_at?: string | null
+          event_id: string
+          id?: string
+          position?: number | null
+        }
+        Update: {
+          catalog_item_id?: string
+          created_at?: string | null
+          event_id?: string
+          id?: string
+          position?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_recommendations_catalog_item_id_fkey"
+            columns: ["catalog_item_id"]
+            isOneToOne: false
+            referencedRelation: "catalog_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_recommendations_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      event_votes: {
+        Row: {
+          created_at: string | null
+          event_id: string
+          guest_token: string | null
+          id: string
+          recommendation_id: string
+          voter_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          event_id: string
+          guest_token?: string | null
+          id?: string
+          recommendation_id: string
+          voter_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          event_id?: string
+          guest_token?: string | null
+          id?: string
+          recommendation_id?: string
+          voter_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_votes_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_votes_recommendation_id_fkey"
+            columns: ["recommendation_id"]
+            isOneToOne: false
+            referencedRelation: "event_recommendations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_votes_voter_id_fkey"
+            columns: ["voter_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      events: {
+        Row: {
+          context: string | null
+          created_at: string | null
+          event_date: string
+          event_time: string | null
+          final_pick_id: string | null
+          id: string
+          invite_link_token: string
+          is_remote: boolean | null
+          location: string | null
+          organizer_id: string
+          reveal_mode: string | null
+          status: string | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          context?: string | null
+          created_at?: string | null
+          event_date: string
+          event_time?: string | null
+          final_pick_id?: string | null
+          id?: string
+          invite_link_token?: string
+          is_remote?: boolean | null
+          location?: string | null
+          organizer_id: string
+          reveal_mode?: string | null
+          status?: string | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          context?: string | null
+          created_at?: string | null
+          event_date?: string
+          event_time?: string | null
+          final_pick_id?: string | null
+          id?: string
+          invite_link_token?: string
+          is_remote?: boolean | null
+          location?: string | null
+          organizer_id?: string
+          reveal_mode?: string | null
+          status?: string | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "events_final_pick_id_fkey"
+            columns: ["final_pick_id"]
+            isOneToOne: false
+            referencedRelation: "catalog_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "events_organizer_id_fkey"
+            columns: ["organizer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       friendships: {
         Row: {
           addressee_id: string
@@ -601,6 +803,7 @@ export type Database = {
       profiles: {
         Row: {
           accepted_recommendations: number
+          account_type: string | null
           activation_completed: boolean
           activation_step: string
           avatar_url: string | null
@@ -624,6 +827,7 @@ export type Database = {
           media_preference: string
           min_rating: number | null
           onboarding_completed: boolean
+          onboarding_skipped: boolean | null
           preferred_platforms: number[] | null
           profile_confidence: number
           ritual_enabled: boolean
@@ -635,6 +839,7 @@ export type Database = {
         }
         Insert: {
           accepted_recommendations?: number
+          account_type?: string | null
           activation_completed?: boolean
           activation_step?: string
           avatar_url?: string | null
@@ -658,6 +863,7 @@ export type Database = {
           media_preference?: string
           min_rating?: number | null
           onboarding_completed?: boolean
+          onboarding_skipped?: boolean | null
           preferred_platforms?: number[] | null
           profile_confidence?: number
           ritual_enabled?: boolean
@@ -669,6 +875,7 @@ export type Database = {
         }
         Update: {
           accepted_recommendations?: number
+          account_type?: string | null
           activation_completed?: boolean
           activation_step?: string
           avatar_url?: string | null
@@ -692,6 +899,7 @@ export type Database = {
           media_preference?: string
           min_rating?: number | null
           onboarding_completed?: boolean
+          onboarding_skipped?: boolean | null
           preferred_platforms?: number[] | null
           profile_confidence?: number
           ritual_enabled?: boolean
