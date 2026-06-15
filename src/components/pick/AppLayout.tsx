@@ -11,7 +11,9 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
   // Ces pages gèrent leur propre header — pas besoin du BrandHeader global
   const PAGES_WITH_OWN_HEADER = ["/app", "/app/profile"];
-  const showHeader = !PAGES_WITH_OWN_HEADER.includes(location.pathname);
+  const PREFIXES_WITH_OWN_HEADER = ["/app/soiree", "/app/soirees"];
+  const showHeader = !PAGES_WITH_OWN_HEADER.includes(location.pathname)
+    && !PREFIXES_WITH_OWN_HEADER.some(p => location.pathname.startsWith(p));
 
   return (
     <div className="md:fixed md:inset-0 md:flex md:items-center md:justify-center md:bg-background">
