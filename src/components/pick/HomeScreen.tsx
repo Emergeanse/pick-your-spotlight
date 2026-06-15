@@ -1755,7 +1755,7 @@ const HomeScreen = ({
             onClick={() => { setFindChoiceContext("solo"); setShowFindChoice(true); }}
             className="mt-4 w-full py-3.5 rounded-2xl bg-gradient-to-r from-primary to-accent text-primary-foreground font-sans font-semibold text-[14px] tracking-wide shadow-[0_12px_40px_-10px_hsl(var(--primary)/0.55)]"
           >
-            Crée ta soirée
+            Organiser une soirée ciné !
           </motion.button>
 
           {/* 4 widgets côte à côte */}
