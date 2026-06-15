@@ -247,7 +247,13 @@ const HomeScreenChoiceModal = ({
                       className="flex-1 bg-white/[0.04] border border-white/[0.08] rounded-xl px-3.5 py-2.5 text-[13px] font-sans text-foreground/80 focus:outline-none focus:border-primary/40 [color-scheme:dark]"
                     />
                     <button
-                      onClick={() => { onClose(); navigate("/app/plan", { state: { date: planDate, duoId: selectedDuoId } }); }}
+                      onClick={() => {
+                        onClose();
+                        const params = new URLSearchParams();
+                        if (mode !== "solo") params.set("context", mode === "duo" ? "duo" : (initialContext === "famille" ? "famille" : "amis"));
+                        if (planDate) params.set("date", planDate);
+                        navigate(`/app/soiree/nouvelle?${params.toString()}`);
+                      }}
                       className="px-4 py-2.5 rounded-xl bg-primary/20 border border-primary/30 text-primary text-[12.5px] font-sans font-semibold whitespace-nowrap"
                     >
                       Planifier

@@ -29,6 +29,7 @@ import Admin from "./pages/Admin.tsx";
 import PlanSession from "./pages/PlanSession.tsx";
 import History from "./pages/History.tsx";
 import InvitePage from "./pages/InvitePage.tsx";
+import CreateEventPage from "./pages/CreateEventPage.tsx";
 
 const queryClient = new QueryClient();
 
@@ -80,6 +81,7 @@ const App = () => (
             <Route path="/app/duo" element={<ProtectedRoute><AppLayout><DuoPage /></AppLayout></ProtectedRoute>} />
             <Route path="/app/event" element={<ProtectedRoute><AppLayout><EventPage /></AppLayout></ProtectedRoute>} />
             <Route path="/app/soirees" element={<ProtectedRoute><AppLayout><SoireesPage /></AppLayout></ProtectedRoute>} />
+            <Route path="/app/soiree/nouvelle" element={<ProtectedRoute><CreateEventPage /></ProtectedRoute>} />
             <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
             <Route path="/glossary" element={<ProtectedRoute><AppLayout><Glossary /></AppLayout></ProtectedRoute>} />
             <Route path="/profile" element={<Navigate to="/app/profile" replace />} />

@@ -90,7 +90,7 @@ const SoireesPage = () => {
 
         <motion.button
           whileTap={{ scale: 0.97 }}
-          onClick={() => navigate("/app/event")}
+          onClick={() => navigate("/app/soiree/nouvelle")}
           className="w-full mt-2 py-3.5 rounded-2xl border border-primary/25 bg-primary/8 text-primary text-[13px] font-sans font-semibold"
         >
           + Organiser une soirée
