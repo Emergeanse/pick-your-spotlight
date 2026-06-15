@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { computeMultiVectorProfile } from "@/lib/taste-engine";
 import { getUserTasteProfile } from "@/lib/interactions";
+import { fetchMyDuos, loadAcceptedFriends, type DuoProfile, type DuoFriendCandidate } from "@/lib/duo-profiles";
 import { toast } from "sonner";
 
 // ─────────────────────────────────────────
@@ -56,6 +57,7 @@ const CreateEventPage = () => {
   const preTime     = searchParams.get("time") ?? "";
   const preLocation = searchParams.get("location") ?? "";
   const preRemote   = searchParams.get("remote") === "true";
+  const preDuoId    = searchParams.get("duoId") ?? null;
 
   const [step, setStep] = useState(0);
 
@@ -67,6 +69,32 @@ const CreateEventPage = () => {
   const [time, setTime]             = useState(preTime);
   const [isRemote, setIsRemote]     = useState(preRemote);
   const [location, setLocation]     = useState(preLocation);
+
+  // Sélection duo / groupe
+  const [duos, setDuos]             = useState<DuoProfile[]>([]);
+  const [duosLoaded, setDuosLoaded] = useState(false);
+  const [selectedDuoId, setSelectedDuoId] = useState<string | null>(preDuoId);
+  const [groupFriends, setGroupFriends]   = useState<DuoFriendCandidate[]>([]);
+  const [selectedParticipants, setSelectedParticipants] = useState<string[]>([]);
+
+  // Chargement duos / amis selon le contexte
+  useEffect(() => {
+    if (!user) return;
+    if (context === "duo") {
+      setDuosLoaded(false);
+      fetchMyDuos(user.id).then(d => {
+        setDuos(d);
+        setDuosLoaded(true);
+        // Auto-sélection si 1 seul duo ou si duoId pré-rempli
+        if (!selectedDuoId) {
+          if (preDuoId && d.find(duo => duo.id === preDuoId)) setSelectedDuoId(preDuoId);
+          else if (d.length === 1) setSelectedDuoId(d[0].id);
+        }
+      });
+    } else if (context === "famille" || context === "amis") {
+      loadAcceptedFriends(user.id).then(setGroupFriends);
+    }
+  }, [context, user]);
 
   // Step 2 — Le film
   const [revealMode, setRevealMode] = useState<RevealMode>("surprise");
@@ -87,7 +115,8 @@ const CreateEventPage = () => {
   }, [context, date, titleEdited]);
 
   // Validation step 1
-  const step1Valid = !!context && !!date;
+  const step1Valid = !!context && !!date &&
+    (context !== "duo" || !!selectedDuoId);
 
   // ── Création de l'événement ──────────────────────────────
   const createEvent = async () => {
@@ -122,26 +151,26 @@ const CreateEventPage = () => {
         status: "confirmed",
       });
 
-      // 2b. Duo → invite automatiquement le partenaire
-      if (context === "duo") {
-        const { data: duo } = await supabase
-          .from("duo_taste_profiles" as any)
-          .select("user1_id, user2_id")
-          .or(`user1_id.eq.${user.id},user2_id.eq.${user.id}`)
-          .eq("status", "active")
-          .maybeSingle();
-        if (duo) {
-          const partnerId = (duo as any).user1_id === user.id
-            ? (duo as any).user2_id
-            : (duo as any).user1_id;
-          if (partnerId) {
-            await supabase.from("event_participants" as any).insert({
-              event_id: eid,
-              user_id: partnerId,
-              status: "invited",
-            }).then(() => null); // non bloquant si doublon
-          }
+      // 2b. Duo → invite le partenaire du duo sélectionné
+      if (context === "duo" && selectedDuoId) {
+        const selectedDuo = duos.find(d => d.id === selectedDuoId);
+        const partnerId = selectedDuo
+          ? (selectedDuo.user1_id === user.id ? selectedDuo.user2_id : selectedDuo.user1_id)
+          : null;
+        if (partnerId) {
+          await supabase.from("event_participants" as any).insert({
+            event_id: eid, user_id: partnerId, status: "invited",
+          }).then(() => null);
         }
+      }
+
+      // 2c. Groupe → invite les participants sélectionnés
+      if ((context === "famille" || context === "amis") && selectedParticipants.length > 0) {
+        await Promise.all(selectedParticipants.map(pid =>
+          supabase.from("event_participants" as any).insert({
+            event_id: eid, user_id: pid, status: "invited",
+          }).then(() => null)
+        ));
       }
 
       // 3. Génère les recommandations (profil de l'organisateur)
@@ -275,6 +304,91 @@ const CreateEventPage = () => {
                   ))}
                 </div>
               </div>
+
+              {/* Sélection du duo */}
+              {context === "duo" && (
+                <div className="flex flex-col gap-2">
+                  <label className="text-[10px] font-sans font-semibold tracking-[0.18em] uppercase text-foreground/40">Avec qui ?</label>
+                  {!duosLoaded ? (
+                    <div className="flex items-center justify-center py-4">
+                      <Loader2 className="w-5 h-5 animate-spin text-foreground/30" />
+                    </div>
+                  ) : duos.length === 0 ? (
+                    <div className="flex flex-col items-center gap-3 py-5 rounded-2xl border border-white/[0.08] bg-white/[0.02]">
+                      <p className="text-sm text-foreground/40 font-sans">Aucun duo actif pour l'instant.</p>
+                      <button
+                        onClick={() => navigate("/app/duo")}
+                        className="px-4 py-2 rounded-xl bg-primary/20 border border-primary/30 text-primary text-[12.5px] font-sans font-semibold"
+                      >
+                        Créer un duo →
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col gap-2">
+                      {duos.map(duo => {
+                        const partnerName = duo.user1_id === user?.id ? duo.user2_display_name : duo.user1_display_name;
+                        const isSelected = selectedDuoId === duo.id;
+                        return (
+                          <button
+                            key={duo.id}
+                            onClick={() => setSelectedDuoId(duo.id)}
+                            className={`relative flex items-center gap-3 p-3.5 rounded-2xl border text-left transition-all overflow-hidden ${isSelected ? "border-primary/50" : "border-white/[0.08]"}`}
+                          >
+                            {isSelected && <div className="absolute inset-0 rounded-2xl" style={{ background: TAB_ACTIVE }} />}
+                            <span className="relative text-xl">💑</span>
+                            <div className="relative flex-1 min-w-0">
+                              <p className="font-sans font-semibold text-[13px] text-foreground">{duo.duo_name}</p>
+                              <p className="font-sans text-[11px] text-foreground/50">avec {partnerName ?? "…"}</p>
+                            </div>
+                            {duo.affinity_score > 0 && (
+                              <span className="relative text-[11px] font-sans font-semibold text-primary/70">{duo.affinity_score}%</span>
+                            )}
+                            {isSelected && <Check className="relative w-4 h-4 text-primary shrink-0" />}
+                          </button>
+                        );
+                      })}
+                      <button
+                        onClick={() => navigate("/app/duo")}
+                        className="text-[11.5px] font-sans text-primary/50 text-center py-1.5 hover:text-primary/70 transition-colors"
+                      >
+                        + Créer un nouveau duo
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Sélection des participants groupe */}
+              {(context === "famille" || context === "amis") && (
+                <div className="flex flex-col gap-2">
+                  <label className="text-[10px] font-sans font-semibold tracking-[0.18em] uppercase text-foreground/40">Qui invite-t-on ?</label>
+                  {groupFriends.length === 0 ? (
+                    <p className="text-sm text-foreground/40 font-sans py-2">Aucun ami pour l'instant — commence par en ajouter.</p>
+                  ) : (
+                    <div className="flex flex-col gap-2">
+                      {groupFriends.map(friend => {
+                        const isSelected = selectedParticipants.includes(friend.id);
+                        return (
+                          <button
+                            key={friend.id}
+                            onClick={() => setSelectedParticipants(prev =>
+                              isSelected ? prev.filter(id => id !== friend.id) : [...prev, friend.id]
+                            )}
+                            className={`relative flex items-center gap-3 p-3.5 rounded-2xl border text-left transition-all overflow-hidden ${isSelected ? "border-primary/50" : "border-white/[0.08]"}`}
+                          >
+                            {isSelected && <div className="absolute inset-0 rounded-2xl" style={{ background: TAB_ACTIVE }} />}
+                            <div className="relative w-8 h-8 rounded-full bg-primary/20 border border-primary/20 flex items-center justify-center shrink-0">
+                              <span className="text-[13px] font-semibold text-primary">{friend.displayName[0].toUpperCase()}</span>
+                            </div>
+                            <p className="relative flex-1 font-sans text-[13px] font-medium text-foreground">{friend.displayName}</p>
+                            {isSelected && <Check className="relative w-4 h-4 text-primary shrink-0" />}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Titre */}
               <div className="flex flex-col gap-2">
