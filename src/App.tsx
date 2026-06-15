@@ -30,6 +30,7 @@ import PlanSession from "./pages/PlanSession.tsx";
 import History from "./pages/History.tsx";
 import InvitePage from "./pages/InvitePage.tsx";
 import CreateEventPage from "./pages/CreateEventPage.tsx";
+import EventDetailPage from "./pages/EventDetailPage.tsx";
 
 const queryClient = new QueryClient();
 
@@ -82,6 +83,7 @@ const App = () => (
             <Route path="/app/event" element={<ProtectedRoute><AppLayout><EventPage /></AppLayout></ProtectedRoute>} />
             <Route path="/app/soirees" element={<ProtectedRoute><AppLayout><SoireesPage /></AppLayout></ProtectedRoute>} />
             <Route path="/app/soiree/nouvelle" element={<ProtectedRoute><AppLayout><CreateEventPage /></AppLayout></ProtectedRoute>} />
+            <Route path="/app/soirees/:id" element={<ProtectedRoute><AppLayout><EventDetailPage /></AppLayout></ProtectedRoute>} />
             <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
             <Route path="/glossary" element={<ProtectedRoute><AppLayout><Glossary /></AppLayout></ProtectedRoute>} />
             <Route path="/profile" element={<Navigate to="/app/profile" replace />} />
