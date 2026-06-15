@@ -1717,18 +1717,25 @@ const HomeScreen = ({
       {/* Dégradé : image visible en haut, fond opaque en bas */}
       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background/55 to-background" />
 
+      {/* Greeting flottant juste sous la BrandHeader */}
+      <motion.p
+        initial={{ opacity: 0, y: -4 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.22, duration: 0.4 }}
+        className="absolute left-5 z-20 text-foreground/55 text-[13px] font-sans"
+        style={{ top: "calc(3.6rem + env(safe-area-inset-top))" }}
+      >
+        {firstName ? `Bonsoir ${firstName} 👋` : "Bonsoir 👋"}
+      </motion.p>
+
       <div className="relative z-10 h-full overflow-y-auto overscroll-y-contain touch-[pan-y_pinch-zoom] scrollbar-hide pb-[calc(9rem+env(safe-area-inset-bottom))]">
-        {/* ─── Hero Greeting ─── */}
+        {/* ─── Hero ─── */}
         <section className="relative pt-[calc(11rem+env(safe-area-inset-top))] pb-2 px-5 md:px-8">
-          {/* Greeting + accroche */}
           <motion.div
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.18, duration: 0.5 }}
           >
-            <p className="text-foreground/50 text-[13px] font-sans">
-              {firstName ? `Bonsoir ${firstName} 👋` : "Bonsoir 👋"}
-            </p>
             <h1 className="mt-1.5 font-serif text-foreground text-[24px] leading-[1.15] tracking-tight">
               Créez une soirée cinéma<br />
               <span className="italic text-primary" style={{ textShadow: "0 0 18px hsl(var(--primary)/0.5)" }}>
