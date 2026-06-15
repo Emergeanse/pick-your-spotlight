@@ -19,7 +19,9 @@ type EventRow = {
   status: string;
   reveal_mode: "surprise" | "vote";
   invite_link_token: string;
+  organizer_id: string;
   participants: ParticipantSummary;
+  myStatus?: "confirmed" | "invited" | "declined";
 };
 
 const CONTEXT_ICON: Record<string, React.ComponentType<any>> = {
@@ -52,35 +54,63 @@ const SoireesPage = () => {
   const loadEvents = async () => {
     if (!user) return;
 
-    // Récupère les soirées de l'organisateur
-    const { data: evRows } = await supabase
+    // 1. Soirées où je suis organisateur
+    const { data: orgRows } = await supabase
       .from("events" as any)
-      .select("id, title, event_date, event_time, context, status, reveal_mode, invite_link_token")
+      .select("id, title, event_date, event_time, context, status, reveal_mode, invite_link_token, organizer_id")
       .eq("organizer_id", user.id)
-      .neq("status", "cancelled")
-      .order("event_date", { ascending: true });
+      .neq("status", "cancelled");
 
-    if (!evRows?.length) { setEvents([]); setLoading(false); return; }
-
-    const ids = (evRows as any[]).map(e => e.id);
-
-    // Récupère tous les participants de ces soirées en une seule requête
-    const { data: epRows } = await supabase
+    // 2. Soirées où je suis participant invité (pas organisateur)
+    const { data: myEps } = await supabase
       .from("event_participants" as any)
       .select("event_id, status")
+      .eq("user_id", user.id);
+
+    const participatingIds = (myEps ?? [])
+      .map((ep: any) => ep.event_id)
+      .filter((eid: string) => !(orgRows ?? []).find((e: any) => e.id === eid));
+
+    let guestRows: any[] = [];
+    if (participatingIds.length > 0) {
+      const { data } = await supabase
+        .from("events" as any)
+        .select("id, title, event_date, event_time, context, status, reveal_mode, invite_link_token, organizer_id")
+        .in("id", participatingIds)
+        .neq("status", "cancelled");
+      guestRows = data ?? [];
+    }
+
+    const allEvents = [...(orgRows ?? []), ...guestRows];
+    if (!allEvents.length) { setEvents([]); setLoading(false); return; }
+
+    allEvents.sort((a, b) => a.event_date.localeCompare(b.event_date));
+
+    const ids = allEvents.map((e: any) => e.id);
+
+    // Participants de toutes ces soirées
+    const { data: epRows } = await supabase
+      .from("event_participants" as any)
+      .select("event_id, status, user_id")
       .in("event_id", ids);
 
     // Groupe par event_id
     const byEvent: Record<string, ParticipantSummary> = {};
-    ids.forEach(id => { byEvent[id] = { total: 0, confirmed: 0 }; });
+    const myStatusByEvent: Record<string, "confirmed" | "invited" | "declined"> = {};
+    ids.forEach((id: string) => { byEvent[id] = { total: 0, confirmed: 0 }; });
     (epRows ?? []).forEach((ep: any) => {
       if (!byEvent[ep.event_id]) return;
       byEvent[ep.event_id].total++;
       if (ep.status === "confirmed") byEvent[ep.event_id].confirmed++;
+      if (ep.user_id === user.id) myStatusByEvent[ep.event_id] = ep.status;
     });
 
     setEvents(
-      (evRows as any[]).map(e => ({ ...e, participants: byEvent[e.id] ?? { total: 0, confirmed: 0 } }))
+      allEvents.map((e: any) => ({
+        ...e,
+        participants: byEvent[e.id] ?? { total: 0, confirmed: 0 },
+        myStatus: myStatusByEvent[e.id],
+      }))
     );
     setLoading(false);
   };
@@ -90,12 +120,19 @@ const SoireesPage = () => {
 
   const EventCard = ({ evt, i }: { evt: EventRow; i: number }) => {
     const Icon = CONTEXT_ICON[evt.context ?? "solo"] ?? UsersRound;
+    const isOrganizer = evt.organizer_id === user?.id;
     const { total, confirmed } = evt.participants;
-    // -1 pour exclure l'organisateur lui-même du décompte "invités"
     const invites = Math.max(0, total - 1);
     const confirmedInvites = Math.max(0, confirmed - 1);
     const allConfirmed = invites > 0 && confirmedInvites === invites;
     const someConfirmed = confirmedInvites > 0 && !allConfirmed;
+
+    // Badge mon statut (vue invité)
+    const myStatusBadge = !isOrganizer && evt.myStatus ? (
+      evt.myStatus === "confirmed"
+        ? <span className="flex items-center gap-1 text-[10px] font-sans font-semibold text-emerald-400"><Check className="w-3 h-3" />Confirmé</span>
+        : <span className="text-[10px] font-sans font-medium text-amber-400/80">En attente</span>
+    ) : null;
 
     return (
       <motion.button
@@ -103,7 +140,11 @@ const SoireesPage = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: i * 0.06, duration: 0.35 }}
         onClick={() => navigate(`/app/soirees/${evt.id}`)}
-        className="w-full flex items-center gap-3.5 p-4 rounded-2xl bg-white/[0.04] border border-white/[0.07] text-left"
+        className={`w-full flex items-center gap-3.5 p-4 rounded-2xl border text-left transition-colors ${
+          !isOrganizer && evt.myStatus === "invited"
+            ? "bg-primary/[0.06] border-primary/20"
+            : "bg-white/[0.04] border-white/[0.07]"
+        }`}
       >
         {/* Icône */}
         <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
@@ -112,16 +153,18 @@ const SoireesPage = () => {
 
         {/* Infos */}
         <div className="flex-1 min-w-0">
-          <p className="text-[13.5px] font-sans font-semibold text-foreground truncate">{evt.title}</p>
+          <div className="flex items-center gap-1.5">
+            <p className="text-[13.5px] font-sans font-semibold text-foreground truncate">{evt.title}</p>
+            {!isOrganizer && (
+              <span className="text-[9px] font-sans font-semibold tracking-wide uppercase text-primary/50 bg-primary/10 px-1.5 py-0.5 rounded-full shrink-0">invité</span>
+            )}
+          </div>
           <p className="text-[11px] text-foreground/45 mt-0.5 capitalize">{formatDate(evt.event_date, evt.event_time)}</p>
 
-          {/* Statut participants */}
-          {invites > 0 && (
+          {/* Vue organisateur : statut des invités */}
+          {isOrganizer && invites > 0 && (
             <div className={`flex items-center gap-1 mt-1.5 ${allConfirmed ? "text-emerald-400" : someConfirmed ? "text-amber-400" : "text-foreground/30"}`}>
-              {allConfirmed
-                ? <Check className="w-3 h-3" />
-                : <Clock className="w-3 h-3" />
-              }
+              {allConfirmed ? <Check className="w-3 h-3" /> : <Clock className="w-3 h-3" />}
               <span className="text-[10.5px] font-sans font-medium">
                 {allConfirmed
                   ? `${invites} invité${invites > 1 ? "s" : ""} confirmé${invites > 1 ? "s" : ""}`
@@ -132,6 +175,9 @@ const SoireesPage = () => {
               </span>
             </div>
           )}
+
+          {/* Vue invité : mon statut */}
+          {!isOrganizer && <div className="mt-1.5">{myStatusBadge}</div>}
         </div>
 
         {/* Mode + chevron */}

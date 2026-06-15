@@ -119,6 +119,28 @@ const CreateEventPage = () => {
         status: "confirmed",
       });
 
+      // 2b. Duo → invite automatiquement le partenaire
+      if (context === "duo") {
+        const { data: duo } = await supabase
+          .from("duo_taste_profiles" as any)
+          .select("user1_id, user2_id")
+          .or(`user1_id.eq.${user.id},user2_id.eq.${user.id}`)
+          .eq("status", "active")
+          .maybeSingle();
+        if (duo) {
+          const partnerId = (duo as any).user1_id === user.id
+            ? (duo as any).user2_id
+            : (duo as any).user1_id;
+          if (partnerId) {
+            await supabase.from("event_participants" as any).insert({
+              event_id: eid,
+              user_id: partnerId,
+              status: "invited",
+            }).then(() => null); // non bloquant si doublon
+          }
+        }
+      }
+
       // 3. Génère les recommandations (profil de l'organisateur)
       await generateRecommendations(eid);
 
