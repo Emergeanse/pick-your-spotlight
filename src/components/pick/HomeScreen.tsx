@@ -791,6 +791,8 @@ const HomeScreen = ({
       setTonightLoading(false);
       setFlipDetailMovie(null);
       setActiveAmbiance(null);
+      setShowFindChoice(false);
+      setFindChoiceDuoId(undefined);
     };
     window.addEventListener("home-reset", handler);
     return () => window.removeEventListener("home-reset", handler);
