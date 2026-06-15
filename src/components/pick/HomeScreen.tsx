@@ -1718,7 +1718,7 @@ const HomeScreen = ({
 
       <div className="relative z-10 h-full overflow-y-auto overscroll-y-contain touch-[pan-y_pinch-zoom] scrollbar-hide pb-[calc(9rem+env(safe-area-inset-bottom))]">
         {/* ─── Hero Greeting ─── */}
-        <section className="relative pt-[calc(5.5rem+env(safe-area-inset-top))] pb-2 px-5 md:px-8">
+        <section className="relative pt-[calc(9rem+env(safe-area-inset-top))] pb-2 px-5 md:px-8">
           {/* Greeting + accroche */}
           <motion.div
             initial={{ opacity: 0, y: 8 }}
