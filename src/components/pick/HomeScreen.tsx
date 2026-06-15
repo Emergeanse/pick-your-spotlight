@@ -1799,7 +1799,7 @@ const HomeScreen = ({
               <span className="w-8 h-8 rounded-xl bg-accent/15 flex items-center justify-center shrink-0">
                 <Home className="w-3.5 h-3.5 text-accent" strokeWidth={1.8} />
               </span>
-              <p className={`font-sans text-[10.5px] font-semibold leading-tight text-center ${activeWidget === "famille" ? "text-accent" : "text-foreground"}`}>Soirée<br/>Famille</p>
+              <p className={`font-sans text-[10.5px] font-semibold leading-tight text-center ${activeWidget === "famille" ? "text-accent" : "text-foreground"}`}>Film en<br/>famille</p>
             </motion.button>
 
             {/* Entre amis */}
