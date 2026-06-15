@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { requireAuth } from "../_shared/auth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -35,6 +36,8 @@ serve(async (req) => {
   }
 
   try {
+    const auth = await requireAuth(req, corsHeaders);
+    if (auth.response) return auth.response;
     const { messages, userTasteContext } = await req.json();
     const GOOGLE_AI_KEY = Deno.env.get("GOOGLE_AI_KEY");
     if (!GOOGLE_AI_KEY) throw new Error("GOOGLE_AI_KEY is not configured");

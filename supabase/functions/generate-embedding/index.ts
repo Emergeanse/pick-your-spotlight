@@ -1,5 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { requireAuth } from "../_shared/auth.ts";
+
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -49,7 +51,10 @@ serve(async (req) => {
   }
 
   try {
+    const auth = await requireAuth(req, corsHeaders);
+    if (auth.response) return auth.response;
     const { tmdbId, title, overview, genres, year, runtime, popularity, voteAverage, mediaType, platformIds, originalLanguage } = await req.json();
+    
     
     const GOOGLE_AI_KEY = Deno.env.get("GOOGLE_AI_KEY");
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL");

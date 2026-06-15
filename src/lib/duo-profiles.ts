@@ -207,16 +207,13 @@ export async function createDuoWithFriend(
 
 /** Récupère un duo par son invite_code (pour la page d'acceptation) */
 export async function getDuoByInviteCode(inviteCode: string): Promise<DuoProfile | null> {
-  const { data, error } = await db
-    .from("duo_taste_profiles")
-    .select("*")
-    .eq("invite_code", inviteCode)
-    .eq("status", "pending")
-    .single();
-
-  if (error || !data) return null;
-  return data as DuoProfile;
+  // Uses SECURITY DEFINER RPC so only the invite-code holder can read pending duo data
+  const { data, error } = await db.rpc("get_pending_duo_by_invite_code", { _code: inviteCode });
+  if (error || !data || (Array.isArray(data) && data.length === 0)) return null;
+  const row = Array.isArray(data) ? data[0] : data;
+  return row as DuoProfile;
 }
+
 
 /** Accepte un duo : fusionne les profils et active le duo */
 export async function acceptDuo(

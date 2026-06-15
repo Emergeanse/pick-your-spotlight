@@ -74,7 +74,7 @@ const EventPage = () => {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-sans font-semibold text-foreground truncate">
-                  Soirée avec {duo.partner_name || "votre duo"}
+                  Soirée avec {duo.user2_display_name || duo.user1_display_name || "votre duo"}
                 </p>
                 <p className="text-xs text-foreground/45 mt-0.5">Film commun · ce soir</p>
               </div>
