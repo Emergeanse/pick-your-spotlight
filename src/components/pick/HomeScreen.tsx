@@ -30,7 +30,7 @@ import BrandHeader from "./BrandHeader";
 import QuickFilters, { type QuickFilterState, type ProfileDefaults } from "./QuickFilters";
 import TasteTrainer from "./TasteTrainer";
 import DiscoverySection from "./DiscoverySection";
-import HomeScreenChoiceModal from "./HomeScreenChoiceModal";
+import HomeScreenChoiceModal, { type LaunchContext } from "./HomeScreenChoiceModal";
 import TonightPickOverlay from "./TonightPickOverlay";
 import FlipCardDetail from "./FlipCardDetail";
 import { type AmbianceMood } from "./HomeAmbianceSection";
@@ -344,6 +344,7 @@ const HomeScreen = ({
   const [showShareNotif, setShowShareNotif] = useState(false);
   const [shareNotifDismissed, setShareNotifDismissed] = useState(false);
   const [activeWidget, setActiveWidget] = useState<"duo" | "famille" | "amis" | "surprise">("duo");
+  const [findChoiceContext, setFindChoiceContext] = useState<LaunchContext>("solo");
 
   const [chatMoviesPool, setChatMoviesPool] = useState<MovieDetail[] | null>(null);
   const [movieMatchData, setMovieMatchData] = useState<Record<number, RecommendationMatch>>({});
@@ -1730,7 +1731,7 @@ const HomeScreen = ({
 
       <div className="relative z-10 h-full overflow-y-auto overscroll-y-contain touch-[pan-y_pinch-zoom] scrollbar-hide pb-[calc(9rem+env(safe-area-inset-bottom))]">
         {/* ─── Hero ─── */}
-        <section className="relative pt-[calc(11rem+env(safe-area-inset-top))] pb-2 px-5 md:px-8">
+        <section className="relative pt-[calc(13rem+env(safe-area-inset-top))] pb-2 px-5 md:px-8">
           <motion.div
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
@@ -1751,7 +1752,7 @@ const HomeScreen = ({
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.30, duration: 0.45 }}
             whileTap={{ scale: 0.97 }}
-            onClick={() => navigate("/app/event")}
+            onClick={() => { setFindChoiceContext("solo"); setShowFindChoice(true); }}
             className="mt-4 w-full py-3.5 rounded-2xl bg-gradient-to-r from-primary to-accent text-primary-foreground font-sans font-semibold text-[14px] tracking-wide shadow-[0_12px_40px_-10px_hsl(var(--primary)/0.55)]"
           >
             Crée ta soirée
@@ -1764,7 +1765,7 @@ const HomeScreen = ({
               initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.38, duration: 0.4 }}
               whileTap={{ scale: 0.93 }}
-              onClick={() => { setActiveWidget("duo"); setShowFindChoice(true); }}
+              onClick={() => { setFindChoiceContext("duo"); setActiveWidget("duo"); setShowFindChoice(true); }}
               className={`flex-1 min-w-0 flex flex-col items-center gap-2 py-3.5 px-2 rounded-2xl backdrop-blur-md transition-all ${activeWidget === "duo" ? "border border-primary/60 bg-primary/20 shadow-[0_0_18px_hsl(var(--primary)/0.35)]" : "border border-white/12 bg-[hsl(240_18%_7%/0.82)]"}`}
             >
               <span className="w-8 h-8 rounded-xl bg-primary/15 flex items-center justify-center shrink-0">
@@ -1778,7 +1779,7 @@ const HomeScreen = ({
               initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.44, duration: 0.4 }}
               whileTap={{ scale: 0.93 }}
-              onClick={() => { setActiveWidget("famille"); navigate("/app/event"); }}
+              onClick={() => { setFindChoiceContext("famille"); setActiveWidget("famille"); setShowFindChoice(true); }}
               className={`flex-1 min-w-0 flex flex-col items-center gap-2 py-3.5 px-2 rounded-2xl backdrop-blur-md transition-all ${activeWidget === "famille" ? "border border-accent/60 bg-accent/20 shadow-[0_0_18px_hsl(var(--accent)/0.35)]" : "border border-white/12 bg-[hsl(240_18%_7%/0.82)]"}`}
             >
               <span className="w-8 h-8 rounded-xl bg-accent/15 flex items-center justify-center shrink-0">
@@ -1792,7 +1793,7 @@ const HomeScreen = ({
               initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.50, duration: 0.4 }}
               whileTap={{ scale: 0.93 }}
-              onClick={() => { setActiveWidget("amis"); navigate("/app/event"); }}
+              onClick={() => { setFindChoiceContext("amis"); setActiveWidget("amis"); setShowFindChoice(true); }}
               className={`flex-1 min-w-0 flex flex-col items-center gap-2 py-3.5 px-2 rounded-2xl backdrop-blur-md transition-all ${activeWidget === "amis" ? "border border-emerald-400/60 bg-emerald-400/15 shadow-[0_0_18px_rgba(52,211,153,0.3)]" : "border border-white/12 bg-[hsl(240_18%_7%/0.82)]"}`}
             >
               <span className="w-8 h-8 rounded-xl bg-emerald-500/15 flex items-center justify-center shrink-0">
@@ -1806,7 +1807,7 @@ const HomeScreen = ({
               initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.56, duration: 0.4 }}
               whileTap={{ scale: 0.93 }}
-              onClick={() => { setActiveWidget("surprise"); setActiveAmbiance("surprise"); void handleAutoPick(); }}
+              onClick={() => { setFindChoiceContext("surprise"); setActiveWidget("surprise"); setShowFindChoice(true); }}
               className={`flex-1 min-w-0 flex flex-col items-center gap-2 py-3.5 px-2 rounded-2xl backdrop-blur-md transition-all ${activeWidget === "surprise" ? "border border-amber-400/60 bg-amber-400/15 shadow-[0_0_18px_rgba(251,191,36,0.3)]" : "border border-white/12 bg-[hsl(240_18%_7%/0.82)]"}`}
             >
               <span className="w-8 h-8 rounded-xl bg-amber-500/15 flex items-center justify-center shrink-0">
@@ -1875,7 +1876,7 @@ const HomeScreen = ({
               </button>
             )}
           </div>
-          <div className="px-5 flex items-start justify-center gap-5">
+          <div className="px-5 flex items-start justify-center gap-8">
             {quickRecos.length > 0 ? (
               quickRecos.slice(0, 3).map((reco) => (
                 <motion.button
@@ -1983,9 +1984,10 @@ const HomeScreen = ({
       <HomeScreenChoiceModal
         open={showFindChoice}
         mediaType={quickFilters.mediaType}
-        onClose={() => { setShowFindChoice(false); setFindChoiceDuoId(undefined); }}
+        onClose={() => { setShowFindChoice(false); setFindChoiceDuoId(undefined); setFindChoiceContext("solo"); }}
         onAutoPick={handleAutoPick}
-        initialDuoId={findChoiceDuoId}
+        initialDuoId={findChoiceContext === "duo" ? findChoiceDuoId : undefined}
+        initialContext={findChoiceContext}
         onOpenChat={() => {
           setShowFindChoice(false);
           onOpenChat();
