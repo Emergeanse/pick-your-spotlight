@@ -25,6 +25,8 @@ serve(async (req) => {
   }
 
   try {
+    const auth = await requireAuth(req, corsHeaders);
+    if (auth.response) return auth.response;
     const { text } = await req.json();
     if (!text || typeof text !== "string") {
       return new Response(JSON.stringify({ error: "Missing text" }), {

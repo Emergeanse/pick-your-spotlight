@@ -67,6 +67,8 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
+    const auth = await requireAuth(req, corsHeaders);
+    if (auth.response) return auth.response;
     const t0 = Date.now();
     console.log("[SP] ✅ version 2026-06-13-v22 — TARGET=100 vecteur + SQL explicite + pool LLM 50");
     const {
