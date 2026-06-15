@@ -310,7 +310,7 @@ const HomeScreenChoiceModal = ({
                           exit={{ opacity: 0, y: -4 }}
                           className="text-[11px] text-foreground/40 font-sans px-1 leading-snug"
                         >
-                          Je privilégierai un film disponible sur vos deux plateformes.
+                          Je trouverai un film dispo pour vous deux.
                         </motion.p>
                       )}
                     </AnimatePresence>
