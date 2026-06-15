@@ -19,11 +19,9 @@ import NotFound from "./pages/NotFound.tsx";
 import WatchlistPageRoute from "./pages/WatchlistRoute.tsx";
 import Friends from "./pages/Friends.tsx";
 import PickTogether from "./pages/PickTogether.tsx";
-import MatchPage from "./pages/MatchPage.tsx";
 import JoinSession from "./pages/JoinSession.tsx";
 import JoinDuo from "./pages/JoinDuo.tsx";
 import DuoPage from "./pages/DuoPage.tsx";
-import EventPage from "./pages/EventPage.tsx";
 import SoireesPage from "./pages/SoireesPage.tsx";
 import Admin from "./pages/Admin.tsx";
 import PlanSession from "./pages/PlanSession.tsx";
@@ -71,7 +69,7 @@ const App = () => (
             <Route path="/app/my-cinema" element={<ProtectedRoute><AppLayout><MyCinema /></AppLayout></ProtectedRoute>} />
             <Route path="/app/watchlist" element={<ProtectedRoute><AppLayout><WatchlistPageRoute /></AppLayout></ProtectedRoute>} />
             <Route path="/app/friends" element={<ProtectedRoute><AppLayout><Friends /></AppLayout></ProtectedRoute>} />
-            <Route path="/app/pick-together" element={<ProtectedRoute><AppLayout><MatchPage /></AppLayout></ProtectedRoute>} />
+            <Route path="/app/pick-together" element={<Navigate to="/app" replace />} />
             <Route path="/app/pick-together-group" element={<ProtectedRoute><AppLayout><PickTogether /></AppLayout></ProtectedRoute>} />
             <Route path="/app/pick-plus" element={<ProtectedRoute><AppLayout><PickPlusPage /></AppLayout></ProtectedRoute>} />
             <Route path="/app/plan" element={<ProtectedRoute><AppLayout><PlanSession /></AppLayout></ProtectedRoute>} />
@@ -80,7 +78,7 @@ const App = () => (
             <Route path="/join-duo/:code" element={<JoinDuo />} />
             <Route path="/invite/:token" element={<InvitePage />} />
             <Route path="/app/duo" element={<ProtectedRoute><AppLayout><DuoPage /></AppLayout></ProtectedRoute>} />
-            <Route path="/app/event" element={<ProtectedRoute><AppLayout><EventPage /></AppLayout></ProtectedRoute>} />
+            <Route path="/app/event" element={<Navigate to="/app/soirees" replace />} />
             <Route path="/app/soirees" element={<ProtectedRoute><AppLayout><SoireesPage /></AppLayout></ProtectedRoute>} />
             <Route path="/app/soiree/nouvelle" element={<ProtectedRoute><AppLayout><CreateEventPage /></AppLayout></ProtectedRoute>} />
             <Route path="/app/soirees/:id" element={<ProtectedRoute><AppLayout><EventDetailPage /></AppLayout></ProtectedRoute>} />
