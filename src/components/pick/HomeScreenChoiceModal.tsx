@@ -290,32 +290,21 @@ const HomeScreenChoiceModal = ({
                         <span className="relative">À distance</span>
                       </button>
                     </div>
-                    <AnimatePresence>
-                      {ou === "ensemble" && (
-                        <motion.input
-                          key="ensemble-desc"
-                          initial={{ opacity: 0, y: 4 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: -4 }}
-                          type="text"
-                          placeholder="Chez nous, home cinéma, salon…"
-                          value={ouDescription}
-                          onChange={(e) => setOuDescription(e.target.value)}
-                          className="bg-white/[0.04] border border-white/[0.08] rounded-xl px-3.5 py-2.5 text-[13px] font-sans text-foreground/80 placeholder:text-foreground/30 focus:outline-none focus:border-primary/40"
-                        />
-                      )}
-                      {ou === "a-distance" && (
-                        <motion.p
-                          key="distance-hint"
-                          initial={{ opacity: 0, y: 4 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: -4 }}
-                          className="text-[11px] text-foreground/40 font-sans px-1 leading-snug"
-                        >
-                          Je trouverai un film dispo pour vous deux.
-                        </motion.p>
-                      )}
-                    </AnimatePresence>
+                    {ou === "ensemble" && (
+                      <input
+                        autoFocus
+                        type="text"
+                        placeholder="Chez nous, home cinéma, salon…"
+                        value={ouDescription}
+                        onChange={(e) => setOuDescription(e.target.value)}
+                        className="bg-white/[0.04] border border-white/[0.08] rounded-xl px-3.5 py-2.5 text-[13px] font-sans text-foreground/80 placeholder:text-foreground/30 focus:outline-none focus:border-primary/40"
+                      />
+                    )}
+                    {ou === "a-distance" && (
+                      <p className="text-[11px] text-foreground/40 font-sans px-1 leading-snug">
+                        Je trouverai un film dispo pour vous deux.
+                      </p>
+                    )}
                   </div>
                 </motion.div>
               )}
