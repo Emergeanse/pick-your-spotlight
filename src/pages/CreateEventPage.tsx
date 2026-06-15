@@ -499,7 +499,7 @@ const CreateEventPage = () => {
       </div>
 
       {/* Footer CTA */}
-      <div className="absolute bottom-0 inset-x-0 pb-[calc(1.5rem+env(safe-area-inset-bottom))] px-5 pt-3 bg-gradient-to-t from-background via-background/95 to-transparent">
+      <div className="absolute bottom-0 inset-x-0 pb-[calc(5.5rem+env(safe-area-inset-bottom))] px-5 pt-6 bg-gradient-to-t from-background via-background/95 to-transparent">
         {step === 0 && (
           <button
             onClick={() => setStep(1)}
