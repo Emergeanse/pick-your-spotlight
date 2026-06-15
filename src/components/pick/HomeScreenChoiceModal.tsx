@@ -71,7 +71,13 @@ const HomeScreenChoiceModal = ({
     } else {
       setMode("solo");
     }
-    if (user) fetchMyDuos(user.id).then(setDuos);
+    if (user) fetchMyDuos(user.id).then(d => {
+      setDuos(d);
+      // Auto-sélectionne le duo favori (le plus récent) si on ouvre en mode duo
+      if ((initialContext === "duo" || initialDuoId) && !initialDuoId && d.length > 0) {
+        setSelectedDuoId(d[0].id);
+      }
+    });
   }, [open, user, initialDuoId, initialContext]);
 
   const isDuo = mode === "duo" && !!selectedDuoId;
@@ -100,7 +106,8 @@ const HomeScreenChoiceModal = ({
     setMode(m);
     if (m !== "duo") setSelectedDuoId(null);
     if (m === "duo") {
-      if (duos.length === 1) { setSelectedDuoId(duos[0].id); setDuoListOpen(false); }
+      // Auto-sélectionne le duo favori (le + récent, premier de la liste)
+      if (duos.length >= 1) { setSelectedDuoId(duos[0].id); setDuoListOpen(duos.length > 1); }
       else setDuoListOpen(true);
     }
   };
