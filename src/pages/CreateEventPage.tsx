@@ -51,8 +51,11 @@ const CreateEventPage = () => {
   const { user } = useAuth();
 
   // Pré-remplissage depuis le contexte home
-  const preContext = (searchParams.get("context") as EventContext | null) ?? null;
-  const preDate    = searchParams.get("date") ?? "";
+  const preContext  = (searchParams.get("context") as EventContext | null) ?? null;
+  const preDate     = searchParams.get("date") ?? "";
+  const preTime     = searchParams.get("time") ?? "";
+  const preLocation = searchParams.get("location") ?? "";
+  const preRemote   = searchParams.get("remote") === "true";
 
   const [step, setStep] = useState(0);
 
@@ -61,9 +64,9 @@ const CreateEventPage = () => {
   const [title, setTitle]           = useState("");
   const [titleEdited, setTitleEdited] = useState(false);
   const [date, setDate]             = useState(preDate);
-  const [time, setTime]             = useState("");
-  const [isRemote, setIsRemote]     = useState(false);
-  const [location, setLocation]     = useState("");
+  const [time, setTime]             = useState(preTime);
+  const [isRemote, setIsRemote]     = useState(preRemote);
+  const [location, setLocation]     = useState(preLocation);
 
   // Step 2 — Le film
   const [revealMode, setRevealMode] = useState<RevealMode>("surprise");

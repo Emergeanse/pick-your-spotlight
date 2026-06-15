@@ -327,6 +327,8 @@ const HomeScreenChoiceModal = ({
                   if (selectedDuoId) params.set("duoId", selectedDuoId);
                   if (planDate) params.set("date", planDate);
                   if (planTime) params.set("time", planTime);
+                  if (ou === "a-distance") params.set("remote", "true");
+                  if (ou === "ensemble" && ouDescription.trim()) params.set("location", ouDescription.trim());
                   navigate(`/app/soiree/nouvelle?${params.toString()}`);
                 } else {
                   onAutoPick(selectedDuoId ?? undefined);
@@ -372,6 +374,8 @@ const HomeScreenChoiceModal = ({
                   if (selectedDuoId) params.set("duoId", selectedDuoId);
                   if (planDate) params.set("date", planDate);
                   if (planTime) params.set("time", planTime);
+                  if (ou === "a-distance") params.set("remote", "true");
+                  if (ou === "ensemble" && ouDescription.trim()) params.set("location", ouDescription.trim());
                   navigate(`/app/soiree/nouvelle?${params.toString()}`);
                 } else {
                   onClose();
