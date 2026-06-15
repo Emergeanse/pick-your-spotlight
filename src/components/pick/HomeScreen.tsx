@@ -1765,7 +1765,7 @@ const HomeScreen = ({
               initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.38, duration: 0.4 }}
               whileTap={{ scale: 0.93 }}
-              onClick={() => { setFindChoiceContext("surprise"); setActiveWidget("surprise"); setShowFindChoice(true); }}
+              onClick={() => { setFindChoiceContext("surprise"); setActiveWidget("surprise"); setTimeout(() => setShowFindChoice(true), 150); }}
               className={`flex-1 min-w-0 flex flex-col items-center gap-2 py-3.5 px-2 rounded-2xl backdrop-blur-md transition-all ${activeWidget === "surprise" ? "border border-amber-400/60 bg-amber-400/15 shadow-[0_0_18px_rgba(251,191,36,0.3)]" : "border border-white/12 bg-[hsl(240_18%_7%/0.82)]"}`}
             >
               <span className="w-8 h-8 rounded-xl bg-amber-500/15 flex items-center justify-center shrink-0">
@@ -1779,7 +1779,7 @@ const HomeScreen = ({
               initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.44, duration: 0.4 }}
               whileTap={{ scale: 0.93 }}
-              onClick={() => { setFindChoiceContext("duo"); setActiveWidget("duo"); setShowFindChoice(true); }}
+              onClick={() => { setFindChoiceContext("duo"); setActiveWidget("duo"); setTimeout(() => setShowFindChoice(true), 150); }}
               className={`flex-1 min-w-0 flex flex-col items-center gap-2 py-3.5 px-2 rounded-2xl backdrop-blur-md transition-all ${activeWidget === "duo" ? "border border-violet-400/60 bg-violet-400/15 shadow-[0_0_18px_rgba(167,139,250,0.35)]" : "border border-white/12 bg-[hsl(240_18%_7%/0.82)]"}`}
             >
               <span className="w-8 h-8 rounded-xl bg-violet-500/15 flex items-center justify-center shrink-0">
@@ -1793,7 +1793,7 @@ const HomeScreen = ({
               initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.50, duration: 0.4 }}
               whileTap={{ scale: 0.93 }}
-              onClick={() => { setFindChoiceContext("famille"); setActiveWidget("famille"); setShowFindChoice(true); }}
+              onClick={() => { setFindChoiceContext("famille"); setActiveWidget("famille"); setTimeout(() => setShowFindChoice(true), 150); }}
               className={`flex-1 min-w-0 flex flex-col items-center gap-2 py-3.5 px-2 rounded-2xl backdrop-blur-md transition-all ${activeWidget === "famille" ? "border border-rose-400/60 bg-rose-400/15 shadow-[0_0_18px_rgba(251,113,133,0.35)]" : "border border-white/12 bg-[hsl(240_18%_7%/0.82)]"}`}
             >
               <span className="w-8 h-8 rounded-xl bg-rose-500/15 flex items-center justify-center shrink-0">
@@ -1807,7 +1807,7 @@ const HomeScreen = ({
               initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.56, duration: 0.4 }}
               whileTap={{ scale: 0.93 }}
-              onClick={() => { setFindChoiceContext("amis"); setActiveWidget("amis"); setShowFindChoice(true); }}
+              onClick={() => { setFindChoiceContext("amis"); setActiveWidget("amis"); setTimeout(() => setShowFindChoice(true), 150); }}
               className={`flex-1 min-w-0 flex flex-col items-center gap-2 py-3.5 px-2 rounded-2xl backdrop-blur-md transition-all ${activeWidget === "amis" ? "border border-emerald-400/60 bg-emerald-400/15 shadow-[0_0_18px_rgba(52,211,153,0.3)]" : "border border-white/12 bg-[hsl(240_18%_7%/0.82)]"}`}
             >
               <span className="w-8 h-8 rounded-xl bg-emerald-500/15 flex items-center justify-center shrink-0">
