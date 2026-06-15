@@ -81,7 +81,7 @@ const App = () => (
             <Route path="/app/duo" element={<ProtectedRoute><AppLayout><DuoPage /></AppLayout></ProtectedRoute>} />
             <Route path="/app/event" element={<ProtectedRoute><AppLayout><EventPage /></AppLayout></ProtectedRoute>} />
             <Route path="/app/soirees" element={<ProtectedRoute><AppLayout><SoireesPage /></AppLayout></ProtectedRoute>} />
-            <Route path="/app/soiree/nouvelle" element={<ProtectedRoute><CreateEventPage /></ProtectedRoute>} />
+            <Route path="/app/soiree/nouvelle" element={<ProtectedRoute><AppLayout><CreateEventPage /></AppLayout></ProtectedRoute>} />
             <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
             <Route path="/glossary" element={<ProtectedRoute><AppLayout><Glossary /></AppLayout></ProtectedRoute>} />
             <Route path="/profile" element={<Navigate to="/app/profile" replace />} />
