@@ -68,6 +68,8 @@ const EventDetailPage = () => {
   const [copied, setCopied] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [duoPartner, setDuoPartner] = useState<{ id: string; name: string } | null>(null);
+  const [addingPartner, setAddingPartner] = useState(false);
 
   const isOrganizer = !!user && event?.organizer_id === user.id;
   const inviteLink = event ? `${window.location.origin}/invite/${event.invite_link_token}` : "";
@@ -90,11 +92,12 @@ const EventDetailPage = () => {
     if (error || !ev) { setNotFound(true); setLoading(false); return; }
     setEvent(ev as EventData);
 
-    await loadParticipants(id);
+    await loadParticipants(id, ev as EventData);
     setLoading(false);
   };
 
-  const loadParticipants = async (eventId: string) => {
+  const loadParticipants = async (eventId: string, evData?: EventData) => {
+    const currentEvent = evData ?? event;
     const { data: eps } = await supabase
       .from("event_participants" as any)
       .select("id, user_id, guest_name, guest_email, status")
@@ -121,6 +124,35 @@ const EventDetailPage = () => {
     if (user) {
       const mine = enriched.find(p => p.user_id === user.id);
       setMyParticipation(mine ?? null);
+    }
+
+    // Détecte si le partenaire duo est absent des participants (soirée Duo)
+    // Permet de l'ajouter rétroactivement si la soirée a été créée avant le fix auto-invite
+    if (user && currentEvent?.context === "duo" && user.id === currentEvent?.organizer_id) {
+      const { data: duo } = await supabase
+        .from("duo_taste_profiles" as any)
+        .select("user1_id, user2_id")
+        .or(`user1_id.eq.${user.id},user2_id.eq.${user.id}`)
+        .eq("status", "active")
+        .maybeSingle();
+      if (duo) {
+        const partnerId = (duo as any).user1_id === user.id
+          ? (duo as any).user2_id
+          : (duo as any).user1_id;
+        if (partnerId && !enriched.find(p => p.user_id === partnerId)) {
+          const { data: pProfile } = await supabase
+            .from("profiles")
+            .select("display_name")
+            .eq("id", partnerId)
+            .maybeSingle();
+          setDuoPartner({
+            id: partnerId,
+            name: (pProfile as any)?.display_name ?? "Ton duo",
+          });
+        } else {
+          setDuoPartner(null);
+        }
+      }
     }
   };
 
@@ -161,6 +193,25 @@ const EventDetailPage = () => {
       toast.error("Une erreur est survenue");
     } finally {
       setConfirming(false);
+    }
+  };
+
+  const addDuoPartner = async () => {
+    if (!duoPartner || !event) return;
+    setAddingPartner(true);
+    try {
+      await supabase.from("event_participants" as any).insert({
+        event_id: event.id,
+        user_id: duoPartner.id,
+        status: "invited",
+      });
+      setDuoPartner(null);
+      await loadParticipants(event.id);
+      toast.success(`${duoPartner.name} a été invité·e !`);
+    } catch {
+      toast.error("Impossible d'ajouter le partenaire");
+    } finally {
+      setAddingPartner(false);
     }
   };
 
@@ -307,6 +358,32 @@ const EventDetailPage = () => {
             )}
           </AnimatePresence>
         )}
+
+        {/* ── Partenaire duo manquant ── */}
+        <AnimatePresence>
+          {duoPartner && isOrganizer && (
+            <motion.div
+              key="duo-missing"
+              initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }}
+              className="rounded-2xl bg-primary/[0.08] border border-primary/25 p-4 flex items-center gap-3"
+            >
+              <div className="w-9 h-9 rounded-full bg-primary/20 flex items-center justify-center text-[14px] font-serif font-semibold text-primary shrink-0">
+                {duoPartner.name[0].toUpperCase()}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[13px] font-sans font-semibold text-foreground">{duoPartner.name}</p>
+                <p className="text-[11px] text-foreground/40 mt-0.5">Pas encore invité·e à cette soirée</p>
+              </div>
+              <button
+                onClick={addDuoPartner}
+                disabled={addingPartner}
+                className="shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl bg-primary text-primary-foreground text-[12px] font-sans font-semibold disabled:opacity-60"
+              >
+                {addingPartner ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : "Inviter"}
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* ── Participants ── */}
         <div>
