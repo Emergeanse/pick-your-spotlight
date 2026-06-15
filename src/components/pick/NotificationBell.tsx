@@ -64,16 +64,22 @@ const NotificationBell = () => {
     if (notif.type === "friend_request" || notif.type === "friend_accepted") {
       navigate("/app/friends");
     } else if (notif.type === "session_invite") {
-      navigate("/app/pick-together");
+      navigate("/app/pick-together-group");
+    } else if (notif.type === "event_invite" || notif.type === "event_confirmed") {
+      const eventId = notif.data?.event_id;
+      if (eventId) navigate(`/app/soirees/${eventId}`);
+      else navigate("/app/soirees");
     }
     setOpen(false);
   };
 
   const getIcon = (type: string) => {
     switch (type) {
-      case "friend_request": return "👋";
+      case "friend_request":  return "👋";
       case "friend_accepted": return "🤝";
-      case "session_invite": return "🎬";
+      case "session_invite":  return "🎬";
+      case "event_invite":    return "🎉";
+      case "event_confirmed": return "✅";
       default: return "🔔";
     }
   };
