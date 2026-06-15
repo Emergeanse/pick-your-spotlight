@@ -798,6 +798,21 @@ const HomeScreen = ({
     return () => window.removeEventListener("home-reset", handler);
   }, []);
 
+  // Ouvre la modale depuis le FAB "+" (event ou param URL)
+  useEffect(() => {
+    const handler = () => setShowFindChoice(true);
+    window.addEventListener("open-find-choice", handler);
+    return () => window.removeEventListener("open-find-choice", handler);
+  }, []);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("openFindChoice")) {
+      setShowFindChoice(true);
+      window.history.replaceState({}, "", "/app");
+    }
+  }, []);
+
   useEffect(() => {
     getTrendingMovies(20)
       .then((movies: Movie[]) => {

@@ -34,7 +34,13 @@ const BottomTabBar = () => {
           <div className="relative flex items-center justify-center flex-1">
             <motion.button
               whileTap={{ scale: 0.9 }}
-              onClick={() => navigate("/app/soiree/nouvelle")}
+              onClick={() => {
+                if (location.pathname === "/app") {
+                  window.dispatchEvent(new CustomEvent("open-find-choice"));
+                } else {
+                  navigate("/app?openFindChoice=1");
+                }
+              }}
               className="absolute -top-5 w-14 h-14 rounded-full bg-gradient-to-b from-primary to-accent shadow-[0_8px_30px_-6px_hsl(var(--primary)/0.7)] flex items-center justify-center active:scale-95 transition-transform"
               aria-label="Créer une soirée"
             >
