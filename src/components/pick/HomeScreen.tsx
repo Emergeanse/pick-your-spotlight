@@ -343,7 +343,7 @@ const HomeScreen = ({
   const [trendingFallback, setTrendingFallback] = useState<QuickReco[]>([]);
   const [showShareNotif, setShowShareNotif] = useState(false);
   const [shareNotifDismissed, setShareNotifDismissed] = useState(false);
-  const [activeWidget, setActiveWidget] = useState<"duo" | "famille" | "amis" | "surprise">("duo");
+  const [activeWidget, setActiveWidget] = useState<"duo" | "famille" | "amis" | "surprise">("surprise");
   const [findChoiceContext, setFindChoiceContext] = useState<LaunchContext>("solo");
 
   const [chatMoviesPool, setChatMoviesPool] = useState<MovieDetail[] | null>(null);
