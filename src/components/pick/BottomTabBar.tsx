@@ -17,7 +17,9 @@ const BottomTabBar = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const currentTab = tabs.find((t) => location.pathname === t.path)?.id || "home";
+  const currentTab =
+    tabs.find((t) => location.pathname === t.path)?.id ||
+    (location.pathname.startsWith("/app/soiree") ? "soirees" : "home");
 
   return (
     <nav className="fixed md:absolute bottom-0 left-0 right-0 z-40 pb-[env(safe-area-inset-bottom)] md:pb-0">
@@ -32,7 +34,7 @@ const BottomTabBar = () => {
           <div className="relative flex items-center justify-center flex-1">
             <motion.button
               whileTap={{ scale: 0.9 }}
-              onClick={() => navigate("/app/event")}
+              onClick={() => navigate("/app/soiree/nouvelle")}
               className="absolute -top-5 w-14 h-14 rounded-full bg-gradient-to-b from-primary to-accent shadow-[0_8px_30px_-6px_hsl(var(--primary)/0.7)] flex items-center justify-center active:scale-95 transition-transform"
               aria-label="Créer une soirée"
             >
