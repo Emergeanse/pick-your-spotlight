@@ -116,26 +116,26 @@ ALTER TABLE event_votes         ENABLE ROW LEVEL SECURITY;
 
 -- ── events ───────────────────────────────────────────────────
 
--- Lecture publique (le token UUID dans l'URL joue le rôle de secret)
+DROP POLICY IF EXISTS "events_select" ON events;
 CREATE POLICY "events_select" ON events
   FOR SELECT USING (true);
 
--- Création : utilisateur authentifié uniquement
+DROP POLICY IF EXISTS "events_insert" ON events;
 CREATE POLICY "events_insert" ON events
   FOR INSERT WITH CHECK (auth.uid() = organizer_id);
 
--- Modification : organisateur uniquement
+DROP POLICY IF EXISTS "events_update" ON events;
 CREATE POLICY "events_update" ON events
   FOR UPDATE USING (auth.uid() = organizer_id)
   WITH CHECK (auth.uid() = organizer_id);
 
--- Suppression : organisateur uniquement
+DROP POLICY IF EXISTS "events_delete" ON events;
 CREATE POLICY "events_delete" ON events
   FOR DELETE USING (auth.uid() = organizer_id);
 
 -- ── event_participants ───────────────────────────────────────
 
--- Lecture : organisateur ou participant enregistré du même événement
+DROP POLICY IF EXISTS "ep_select" ON event_participants;
 CREATE POLICY "ep_select" ON event_participants
   FOR SELECT USING (
     auth.uid() = user_id
@@ -151,13 +151,13 @@ CREATE POLICY "ep_select" ON event_participants
     )
   );
 
--- Insertion utilisateur connecté (se rejoint lui-même)
+DROP POLICY IF EXISTS "ep_insert_auth" ON event_participants;
 CREATE POLICY "ep_insert_auth" ON event_participants
   FOR INSERT WITH CHECK (
     auth.uid() = user_id
   );
 
--- Insertion invité temporaire (sans compte, guest_name obligatoire, event doit exister)
+DROP POLICY IF EXISTS "ep_insert_guest" ON event_participants;
 CREATE POLICY "ep_insert_guest" ON event_participants
   FOR INSERT WITH CHECK (
     user_id IS NULL
@@ -165,7 +165,7 @@ CREATE POLICY "ep_insert_guest" ON event_participants
     AND EXISTS (SELECT 1 FROM events WHERE id = event_participants.event_id)
   );
 
--- Mise à jour : soi-même ou organisateur
+DROP POLICY IF EXISTS "ep_update" ON event_participants;
 CREATE POLICY "ep_update" ON event_participants
   FOR UPDATE USING (
     auth.uid() = user_id
@@ -178,9 +178,7 @@ CREATE POLICY "ep_update" ON event_participants
 
 -- ── event_recommendations ────────────────────────────────────
 
--- Lecture : participants de l'événement
--- En mode "surprise", la lecture côté app est gérée : on ne montre pas les films aux participants
--- La restriction métier (cache) est côté frontend, pas SQL.
+DROP POLICY IF EXISTS "er_select" ON event_recommendations;
 CREATE POLICY "er_select" ON event_recommendations
   FOR SELECT USING (
     EXISTS (
@@ -195,7 +193,7 @@ CREATE POLICY "er_select" ON event_recommendations
     )
   );
 
--- Insertion : organisateur uniquement
+DROP POLICY IF EXISTS "er_insert" ON event_recommendations;
 CREATE POLICY "er_insert" ON event_recommendations
   FOR INSERT WITH CHECK (
     EXISTS (
@@ -205,7 +203,7 @@ CREATE POLICY "er_insert" ON event_recommendations
     )
   );
 
--- Suppression : organisateur
+DROP POLICY IF EXISTS "er_delete" ON event_recommendations;
 CREATE POLICY "er_delete" ON event_recommendations
   FOR DELETE USING (
     EXISTS (
@@ -217,7 +215,7 @@ CREATE POLICY "er_delete" ON event_recommendations
 
 -- ── event_votes ──────────────────────────────────────────────
 
--- Lecture : l'organisateur voit tous les votes, chacun voit le sien
+DROP POLICY IF EXISTS "ev_select" ON event_votes;
 CREATE POLICY "ev_select" ON event_votes
   FOR SELECT USING (
     auth.uid() = voter_id
@@ -228,7 +226,7 @@ CREATE POLICY "ev_select" ON event_votes
     )
   );
 
--- Vote utilisateur connecté
+DROP POLICY IF EXISTS "ev_insert_auth" ON event_votes;
 CREATE POLICY "ev_insert_auth" ON event_votes
   FOR INSERT WITH CHECK (
     auth.uid() = voter_id
@@ -240,10 +238,15 @@ CREATE POLICY "ev_insert_auth" ON event_votes
     )
   );
 
--- Suppression de son propre vote (changer d'avis)
+DROP POLICY IF EXISTS "ev_delete_own" ON event_votes;
 CREATE POLICY "ev_delete_own" ON event_votes
   FOR DELETE USING (auth.uid() = voter_id);
 
--- ── Realtime sur event_votes (pour affichage live des votes) ─
-ALTER PUBLICATION supabase_realtime ADD TABLE event_votes;
-ALTER PUBLICATION supabase_realtime ADD TABLE event_participants;
+-- ── Realtime ─────────────────────────────────────────────────
+DO $$ BEGIN
+  ALTER PUBLICATION supabase_realtime ADD TABLE event_votes;
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+  ALTER PUBLICATION supabase_realtime ADD TABLE event_participants;
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
