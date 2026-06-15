@@ -1774,35 +1774,35 @@ const HomeScreen = ({
               <p className={`font-sans text-[10.5px] font-semibold leading-tight text-center ${activeWidget === "surprise" ? "text-amber-400" : "text-foreground"}`}>Surprise<br/>solo</p>
             </motion.button>
 
-            {/* Soirée Duo */}
+            {/* Soirée Duo — violet */}
             <motion.button
               initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.44, duration: 0.4 }}
               whileTap={{ scale: 0.93 }}
               onClick={() => { setFindChoiceContext("duo"); setActiveWidget("duo"); setShowFindChoice(true); }}
-              className={`flex-1 min-w-0 flex flex-col items-center gap-2 py-3.5 px-2 rounded-2xl backdrop-blur-md transition-all ${activeWidget === "duo" ? "border border-primary/60 bg-primary/20 shadow-[0_0_18px_hsl(var(--primary)/0.35)]" : "border border-white/12 bg-[hsl(240_18%_7%/0.82)]"}`}
+              className={`flex-1 min-w-0 flex flex-col items-center gap-2 py-3.5 px-2 rounded-2xl backdrop-blur-md transition-all ${activeWidget === "duo" ? "border border-violet-400/60 bg-violet-400/15 shadow-[0_0_18px_rgba(167,139,250,0.35)]" : "border border-white/12 bg-[hsl(240_18%_7%/0.82)]"}`}
             >
-              <span className="w-8 h-8 rounded-xl bg-primary/15 flex items-center justify-center shrink-0">
-                <Heart className="w-3.5 h-3.5 text-primary" strokeWidth={1.8} />
+              <span className="w-8 h-8 rounded-xl bg-violet-500/15 flex items-center justify-center shrink-0">
+                <Heart className="w-3.5 h-3.5 text-violet-400" strokeWidth={1.8} />
               </span>
-              <p className={`font-sans text-[10.5px] font-semibold leading-tight text-center ${activeWidget === "duo" ? "text-primary" : "text-foreground"}`}>Soirée<br/>Duo</p>
+              <p className={`font-sans text-[10.5px] font-semibold leading-tight text-center ${activeWidget === "duo" ? "text-violet-400" : "text-foreground"}`}>Soirée<br/>Duo</p>
             </motion.button>
 
-            {/* Soirée Famille */}
+            {/* Film en famille — rose */}
             <motion.button
               initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.50, duration: 0.4 }}
               whileTap={{ scale: 0.93 }}
               onClick={() => { setFindChoiceContext("famille"); setActiveWidget("famille"); setShowFindChoice(true); }}
-              className={`flex-1 min-w-0 flex flex-col items-center gap-2 py-3.5 px-2 rounded-2xl backdrop-blur-md transition-all ${activeWidget === "famille" ? "border border-accent/60 bg-accent/20 shadow-[0_0_18px_hsl(var(--accent)/0.35)]" : "border border-white/12 bg-[hsl(240_18%_7%/0.82)]"}`}
+              className={`flex-1 min-w-0 flex flex-col items-center gap-2 py-3.5 px-2 rounded-2xl backdrop-blur-md transition-all ${activeWidget === "famille" ? "border border-rose-400/60 bg-rose-400/15 shadow-[0_0_18px_rgba(251,113,133,0.35)]" : "border border-white/12 bg-[hsl(240_18%_7%/0.82)]"}`}
             >
-              <span className="w-8 h-8 rounded-xl bg-accent/15 flex items-center justify-center shrink-0">
-                <Home className="w-3.5 h-3.5 text-accent" strokeWidth={1.8} />
+              <span className="w-8 h-8 rounded-xl bg-rose-500/15 flex items-center justify-center shrink-0">
+                <Home className="w-3.5 h-3.5 text-rose-400" strokeWidth={1.8} />
               </span>
-              <p className={`font-sans text-[10.5px] font-semibold leading-tight text-center ${activeWidget === "famille" ? "text-accent" : "text-foreground"}`}>Film en<br/>famille</p>
+              <p className={`font-sans text-[10.5px] font-semibold leading-tight text-center ${activeWidget === "famille" ? "text-rose-400" : "text-foreground"}`}>Film en<br/>famille</p>
             </motion.button>
 
-            {/* Entre amis */}
+            {/* Entre amis — émeraude */}
             <motion.button
               initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.56, duration: 0.4 }}
