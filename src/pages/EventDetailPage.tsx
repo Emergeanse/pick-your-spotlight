@@ -287,22 +287,22 @@ const EventDetailPage = () => {
 
       if (event.context === "duo") {
         // ── Pipeline DUO : cherche le profil mergé ────────
-        const partner = participants.find(p => p.user_id && p.user_id !== user.id);
         let duoProfile: any = null;
 
-        if (partner?.user_id) {
-          const { data: duo } = await (supabase as any)
-            .from("duo_taste_profiles")
-            .select("*")
-            .or(`and(user1_id.eq.${user.id},user2_id.eq.${partner.user_id}),and(user1_id.eq.${partner.user_id},user2_id.eq.${user.id})`)
-            .eq("status", "active")
-            .maybeSingle();
-          duoProfile = duo;
-        }
+        // Cherche le duo actif impliquant le current user
+        const { data: duo } = await (supabase as any)
+          .from("duo_taste_profiles")
+          .select("*")
+          .or(`user1_id.eq.${user.id},user2_id.eq.${user.id}`)
+          .eq("status", "active")
+          .maybeSingle();
+        duoProfile = duo ?? null;
+        console.log("[Reveal] Duo profile:", duoProfile ? `found (id=${duoProfile.id}, tv=${!!duoProfile.taste_vector})` : "NOT FOUND → fallback solo");
 
         if (duoProfile) {
           const tv = duoProfile.taste_vector ? JSON.parse(duoProfile.taste_vector) : null;
           const av = duoProfile.avoidance_vector ? JSON.parse(duoProfile.avoidance_vector) : null;
+          console.log("[Reveal] Duo vectors: tv=", !!tv, "av=", !!av, "genres=", [...(duoProfile.user1_genres ?? []), ...(duoProfile.user2_genres ?? [])]);
           const unionTopGenres = [...new Set([...(duoProfile.user1_genres ?? []), ...(duoProfile.user2_genres ?? [])])];
 
           // Récupère clusters + exclusions des deux users en parallèle
