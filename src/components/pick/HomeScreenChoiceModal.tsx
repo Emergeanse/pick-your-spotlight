@@ -266,43 +266,32 @@ const HomeScreenChoiceModal = ({
                 <ChevronDown className={`w-4 h-4 shrink-0 text-foreground/40 transition-transform duration-200 ${themeOpen ? "rotate-180" : ""}`} />
               </button>
 
-              <AnimatePresence>
-                {themeOpen && (
-                  <motion.div
-                    initial={{ height: 0 }}
-                    animate={{ height: "auto" }}
-                    exit={{ height: 0 }}
-                    transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
-                    style={{ overflow: "hidden" }}
-                  >
-                    <div className="flex gap-2 flex-wrap pt-2 px-1">
-                      {GENRES.map(({ key, label, emoji }) => (
-                        <button
-                          key={key}
-                          onClick={() => { setSelectedGenre(selectedGenre === key ? null : key); setThemeOpen(false); }}
-                          style={{
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: "6px",
-                            padding: "8px 14px",
-                            borderRadius: "999px",
-                            fontSize: "13px",
-                            fontWeight: 600,
-                            border: selectedGenre === key ? "2px solid hsl(var(--primary))" : "2px solid rgba(255,255,255,0.55)",
-                            background: selectedGenre === key ? "hsl(var(--primary) / 0.35)" : "rgba(255,255,255,0.18)",
-                            color: "white",
-                            cursor: "pointer",
-                            transition: "all 0.15s",
-                          }}
-                        >
-                          <span style={{ fontSize: "14px", lineHeight: 1 }}>{emoji}</span>
-                          {label}
-                        </button>
-                      ))}
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+              {themeOpen && (
+                <div className="flex gap-2 flex-wrap pt-2 px-1">
+                  {GENRES.map(({ key, label, emoji }) => (
+                    <button
+                      key={key}
+                      onClick={() => { setSelectedGenre(selectedGenre === key ? null : key); setThemeOpen(false); }}
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "6px",
+                        padding: "8px 14px",
+                        borderRadius: "999px",
+                        fontSize: "13px",
+                        fontWeight: 600,
+                        border: selectedGenre === key ? "2px solid hsl(var(--primary))" : "2px solid rgba(255,255,255,0.6)",
+                        background: selectedGenre === key ? "hsl(var(--primary) / 0.35)" : "rgba(255,255,255,0.22)",
+                        color: "#ffffff",
+                        cursor: "pointer",
+                      }}
+                    >
+                      <span style={{ fontSize: "14px", lineHeight: "1" }}>{emoji}</span>
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* ── BLOC 3 : QUAND ? ── */}
