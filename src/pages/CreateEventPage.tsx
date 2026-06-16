@@ -59,7 +59,8 @@ const CreateEventPage = () => {
   const preRemote   = searchParams.get("remote") === "true";
   const preDuoId    = searchParams.get("duoId") ?? null;
 
-  const [step, setStep] = useState(0);
+  // Si on arrive depuis le modal (context + date pré-remplis), sauter l'étape 0
+  const [step, setStep] = useState(preContext && preDate ? 1 : 0);
 
   // Step 1 — La soirée
   const [context, setContext]       = useState<EventContext | null>(preContext);
@@ -261,7 +262,7 @@ const CreateEventPage = () => {
       {/* Header */}
       <div className="pt-[calc(3rem+env(safe-area-inset-top))] px-5 pb-4 flex items-center gap-3 shrink-0">
         <button
-          onClick={() => step > 0 ? setStep(s => s - 1) : navigate(-1)}
+          onClick={() => (step > 0 && !(step === 1 && preContext && preDate)) ? setStep(s => s - 1) : navigate(-1)}
           className="p-2 -ml-2 rounded-full hover:bg-white/5 transition-colors"
         >
           <ArrowLeft className="w-5 h-5 text-foreground/60" />
