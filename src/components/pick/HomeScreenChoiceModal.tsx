@@ -57,7 +57,7 @@ const HomeScreenChoiceModal = ({
   const [planDate, setPlanDate] = useState("");
   const [planTime, setPlanTime] = useState("20:30");
   const [planConfirmed, setPlanConfirmed] = useState(false);
-  const [themeOpen, setThemeOpen] = useState(false);
+  const [orientMode, setOrientMode] = useState<"theme" | "mood" | null>(null);
   const [ou, setOu] = useState<ModalOu>(null);
   const [ouDescription, setOuDescription] = useState("");
   const [selectedGenre, setSelectedGenre] = useState<string | null>(null);
@@ -74,7 +74,7 @@ const HomeScreenChoiceModal = ({
       setOu(null);
       setOuDescription("");
       setSelectedGenre(null);
-      setThemeOpen(false);
+      setOrientMode(null);
       return;
     }
     if (initialContext === "duo" || initialDuoId) {
@@ -240,66 +240,46 @@ const HomeScreenChoiceModal = ({
               )}
             </div>
 
-            {/* ── BLOC 2 : THÈME (accordéon) ── */}
-            <div className="relative z-10 flex flex-col gap-0">
-              <button
-                onClick={() => setThemeOpen(o => !o)}
-                style={{
-                  position: "relative",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "12px",
-                  padding: "12px 16px",
-                  borderRadius: "20px",
-                  border: selectedGenre ? "1px solid hsl(var(--primary) / 0.6)" : "1px solid rgba(255,255,255,0.18)",
-                  background: selectedGenre ? "hsl(var(--primary) / 0.2)" : "rgba(255,255,255,0.07)",
-                  color: "#ffffff",
-                  width: "100%",
-                  cursor: "pointer",
-                  fontSize: "13px",
-                  fontWeight: 500,
-                }}
-              >
-                <Tag style={{ width: "16px", height: "16px", flexShrink: 0, opacity: 0.7 }} />
-                <span style={{ flex: 1, textAlign: "left" }}>
-                  {selectedGenre
-                    ? <>{GENRES.find(g => g.key === selectedGenre)?.emoji} {selectedGenre}</>
-                    : "Thème — optionnel"
-                  }
-                </span>
-                {selectedGenre && (
-                  <span
-                    onClick={(e) => { e.stopPropagation(); setSelectedGenre(null); }}
-                    style={{ fontSize: "11px", opacity: 0.5, padding: "0 4px", cursor: "pointer" }}
-                  >✕</span>
-                )}
-                <ChevronDown style={{ width: "16px", height: "16px", flexShrink: 0, opacity: 0.5, transform: themeOpen ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }} />
-              </button>
+            {/* ── BLOC 2 : THÈME ou MOOD ── */}
+            <div className="relative flex flex-col gap-2">
+              <p className="text-[10px] font-sans font-semibold tracking-[0.18em] uppercase text-foreground/35">Envie de…</p>
+              <div className="flex gap-1 p-1 rounded-2xl bg-white/[0.04] border border-white/[0.08]">
+                <button
+                  onClick={() => { setOrientMode(orientMode === "theme" ? null : "theme"); setSelectedGenre(null); }}
+                  className={`relative flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-[12px] font-sans font-medium transition-all overflow-hidden ${orientMode === "theme" ? "text-foreground border border-primary/40" : "text-foreground/55 hover:text-foreground/80"}`}
+                >
+                  {orientMode === "theme" && <div className="absolute inset-0 rounded-xl" style={{ background: TAB_GRADIENT }} />}
+                  <Tag className="relative w-3.5 h-3.5" />
+                  <span className="relative">{selectedGenre ? `${GENRES.find(g => g.key === selectedGenre)?.emoji} ${selectedGenre}` : "Thème"}</span>
+                  {selectedGenre && orientMode === "theme" && (
+                    <span className="relative text-[10px] opacity-50 ml-0.5" onClick={(e) => { e.stopPropagation(); setSelectedGenre(null); }}>✕</span>
+                  )}
+                </button>
+                <button
+                  onClick={() => setOrientMode(orientMode === "mood" ? null : "mood")}
+                  className={`relative flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-[12px] font-sans font-medium transition-all overflow-hidden ${orientMode === "mood" ? "text-foreground border border-primary/40" : "text-foreground/55 hover:text-foreground/80"}`}
+                >
+                  {orientMode === "mood" && <div className="absolute inset-0 rounded-xl" style={{ background: TAB_GRADIENT }} />}
+                  <Mic className="relative w-3.5 h-3.5" />
+                  <span className="relative">Décrire mon mood</span>
+                </button>
+              </div>
 
-              {themeOpen && (
-                <div style={{ position: "relative", zIndex: 10, display: "flex", gap: "8px", flexWrap: "wrap", paddingTop: "8px", paddingLeft: "4px", paddingRight: "4px" }}>
+              {/* Chips genre — visibles seulement si mode thème actif */}
+              {orientMode === "theme" && (
+                <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", paddingTop: "4px" }}>
                   {GENRES.map(({ key, label, emoji }) => (
                     <button
                       key={key}
-                      onClick={() => { setSelectedGenre(selectedGenre === key ? null : key); setThemeOpen(false); }}
+                      onClick={() => setSelectedGenre(selectedGenre === key ? null : key)}
                       style={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: "6px",
-                        padding: "8px 14px",
-                        borderRadius: "999px",
-                        fontSize: "13px",
-                        fontWeight: 600,
-                        border: selectedGenre === key
-                          ? "2px solid hsl(var(--primary))"
-                          : "2px solid rgba(255,255,255,0.55)",
-                        background: selectedGenre === key
-                          ? "hsl(var(--primary) / 0.5)"
-                          : "rgba(120,100,200,0.45)",
-                        color: "#ffffff",
-                        cursor: "pointer",
-                        backdropFilter: "none",
-                        WebkitBackdropFilter: "none",
+                        display: "inline-flex", alignItems: "center", gap: "6px",
+                        padding: "8px 14px", borderRadius: "999px",
+                        fontSize: "13px", fontWeight: 600,
+                        border: selectedGenre === key ? "2px solid hsl(var(--primary))" : "2px solid rgba(255,255,255,0.55)",
+                        background: selectedGenre === key ? "hsl(var(--primary) / 0.5)" : "rgba(120,100,200,0.45)",
+                        color: "#ffffff", cursor: "pointer",
+                        backdropFilter: "none", WebkitBackdropFilter: "none",
                       }}
                     >
                       <span style={{ fontSize: "14px", lineHeight: "1" }}>{emoji}</span>
@@ -438,6 +418,9 @@ const HomeScreenChoiceModal = ({
                   if (ou === "a-distance") params.set("remote", "true");
                   if (ou === "ensemble" && ouDescription.trim()) params.set("location", ouDescription.trim());
                   navigate(`/app/soiree/nouvelle?${params.toString()}`);
+                } else if (orientMode === "mood") {
+                  onClose();
+                  onOpenMoodCapture();
                 } else {
                   onAutoPick(selectedDuoId ?? undefined, { genre: selectedGenre ?? undefined });
                 }
@@ -451,58 +434,24 @@ const HomeScreenChoiceModal = ({
               <motion.div animate={{ opacity: [0.4, 0.85, 0.4] }} transition={{ duration: 3.8, repeat: Infinity, ease: "easeInOut" }} className="absolute inset-x-6 top-0 h-px" style={{ background: "linear-gradient(90deg, transparent, hsl(var(--primary) / 0.7), transparent)" }} />
               <div className="relative flex items-center gap-4">
                 <motion.div animate={{ scale: [1, 1.04, 1] }} transition={{ duration: 3.2, repeat: Infinity, ease: "easeInOut" }} className="w-12 h-12 rounded-2xl bg-primary/30 border border-primary/50 flex items-center justify-center shrink-0 shadow-[0_0_24px_-4px_hsl(var(--primary)/0.7)]">
-                  <span className="text-[22px] drop-shadow-[0_0_8px_hsl(var(--primary)/0.6)]">🍿</span>
+                  <span className="text-[22px] drop-shadow-[0_0_8px_hsl(var(--primary)/0.6)]">
+                    {orientMode === "mood" ? "🎙️" : "🍿"}
+                  </span>
                 </motion.div>
                 <div className="flex-1 min-w-0">
                   <h4 className="font-serif text-[17px] leading-tight text-foreground tracking-tight">
                     {quand === "planifier"
-                      ? (isDuo ? "Créer cette soirée" : isGroupe ? "Créer cette soirée" : "Créer cette soirée")
-                      : (isDuo ? "Laissez-moi vous surprendre" : isGroupe ? "Je choisis pour le groupe" : "Laisse-moi te surprendre")}
+                      ? "Créer cette soirée"
+                      : orientMode === "mood"
+                        ? (isDuo ? "Décrivez votre mood à deux" : "Décris-moi ton mood")
+                        : (isDuo ? "Laissez-moi vous surprendre" : isGroupe ? "Je choisis pour le groupe" : "Laisse-moi te surprendre")}
                   </h4>
                   <p className="text-foreground/65 text-[12.5px] font-sans mt-1 italic">
-                    {quand === "planifier" ? "Je génère le film idéal pour cette date." : getAutoPickSubtitle()}
-                  </p>
-                </div>
-              </div>
-            </motion.button>
-
-            {/* Secondary — Mood */}
-            <motion.button
-              data-tour="parle-a-pick"
-              initial={{ opacity: 0, y: 14 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.28, duration: 0.5 }}
-              whileTap={{ scale: 0.985 }}
-              onClick={() => {
-                if (quand === "planifier") {
-                  onClose();
-                  const params = new URLSearchParams();
-                  const ctx = mode === "duo" ? "duo" : mode === "groupe" ? (initialContext === "famille" ? "famille" : "amis") : "solo";
-                  if (ctx !== "solo") params.set("context", ctx);
-                  if (selectedDuoId) params.set("duoId", selectedDuoId);
-                  if (planDate) params.set("date", planDate);
-                  if (planTime) params.set("time", planTime);
-                  if (ou === "a-distance") params.set("remote", "true");
-                  if (ou === "ensemble" && ouDescription.trim()) params.set("location", ouDescription.trim());
-                  navigate(`/app/soiree/nouvelle?${params.toString()}`);
-                } else {
-                  onClose();
-                  onOpenMoodCapture();
-                }
-              }}
-              className="group relative w-full text-left rounded-[24px] p-5 bg-white/[0.025] hover:bg-white/[0.045] border border-white/[0.06] hover:border-white/[0.12] transition-all"
-            >
-              <div className="flex items-center gap-4">
-                <div className="relative w-11 h-11 rounded-2xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center shrink-0">
-                  <motion.div animate={{ scale: [1, 1.18, 1], opacity: [0.3, 0.6, 0.3] }} transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }} className="absolute inset-0 rounded-2xl bg-primary/20" />
-                  <Mic className="relative w-[18px] h-[18px] text-foreground/75" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h4 className="font-sans text-[14.5px] font-medium text-foreground/90 tracking-tight">
-                    {isDuo ? "Décrivez votre mood à deux" : isGroupe ? "Décrivez le mood du groupe" : "Décris-moi ton mood"}
-                  </h4>
-                  <p className="text-foreground/40 text-[12px] font-sans mt-0.5">
-                    {isDuo || isGroupe ? "Parlez-moi de vos envies du moment." : "Parle-moi de ton envie du moment."}
+                    {quand === "planifier"
+                      ? "Je génère le film idéal pour cette date."
+                      : orientMode === "mood"
+                        ? (isDuo ? "Parlez-moi de vos envies du moment." : "Parle-moi de ton envie du moment.")
+                        : getAutoPickSubtitle()}
                   </p>
                 </div>
               </div>
