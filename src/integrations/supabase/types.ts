@@ -808,6 +808,7 @@ export type Database = {
           activation_step: string
           avatar_url: string | null
           best_streak: number
+          bio: string | null
           birth_year: number | null
           created_at: string
           default_max_duration: number | null
@@ -828,6 +829,7 @@ export type Database = {
           min_rating: number | null
           onboarding_completed: boolean
           onboarding_skipped: boolean | null
+          podium_film_ids: number[] | null
           preferred_platforms: number[] | null
           profile_confidence: number
           ritual_enabled: boolean
@@ -844,6 +846,7 @@ export type Database = {
           activation_step?: string
           avatar_url?: string | null
           best_streak?: number
+          bio?: string | null
           birth_year?: number | null
           created_at?: string
           default_max_duration?: number | null
@@ -864,6 +867,7 @@ export type Database = {
           min_rating?: number | null
           onboarding_completed?: boolean
           onboarding_skipped?: boolean | null
+          podium_film_ids?: number[] | null
           preferred_platforms?: number[] | null
           profile_confidence?: number
           ritual_enabled?: boolean
@@ -880,6 +884,7 @@ export type Database = {
           activation_step?: string
           avatar_url?: string | null
           best_streak?: number
+          bio?: string | null
           birth_year?: number | null
           created_at?: string
           default_max_duration?: number | null
@@ -900,6 +905,7 @@ export type Database = {
           min_rating?: number | null
           onboarding_completed?: boolean
           onboarding_skipped?: boolean | null
+          podium_film_ids?: number[] | null
           preferred_platforms?: number[] | null
           profile_confidence?: number
           ritual_enabled?: boolean
