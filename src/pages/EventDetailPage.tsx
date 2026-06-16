@@ -30,7 +30,7 @@ type Participant = {
   id: string;
   user_id: string | null;
   guest_name: string | null;
-  guest_email: string | null;
+  guest_email?: string | null;
   status: "invited" | "confirmed" | "declined";
   display_name?: string;
 };
@@ -90,9 +90,9 @@ const EventDetailPage = () => {
       .maybeSingle();
 
     if (error || !ev) { setNotFound(true); setLoading(false); return; }
-    setEvent(ev as EventData);
+    setEvent(ev as unknown as EventData);
 
-    await loadParticipants(id, ev as EventData);
+    await loadParticipants(id, ev as unknown as EventData);
     setLoading(false);
   };
 
@@ -100,14 +100,14 @@ const EventDetailPage = () => {
     const currentEvent = evData ?? event;
     const { data: eps } = await supabase
       .from("event_participants" as any)
-      .select("id, user_id, guest_name, guest_email, status")
+      .select("id, user_id, guest_name, status")
       .eq("event_id", eventId);
 
     if (!eps) return;
 
     // Enrichit avec les display_name des comptes enregistrés
     const enriched: Participant[] = await Promise.all(
-      (eps as Participant[]).map(async (ep) => {
+      (eps as unknown as Participant[]).map(async (ep) => {
         if (ep.user_id) {
           const { data: p } = await supabase
             .from("profiles")

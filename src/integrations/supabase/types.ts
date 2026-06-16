@@ -808,6 +808,7 @@ export type Database = {
           activation_step: string
           avatar_url: string | null
           best_streak: number
+          bio: string | null
           birth_year: number | null
           created_at: string
           default_max_duration: number | null
@@ -828,6 +829,7 @@ export type Database = {
           min_rating: number | null
           onboarding_completed: boolean
           onboarding_skipped: boolean | null
+          podium_film_ids: number[] | null
           preferred_platforms: number[] | null
           profile_confidence: number
           ritual_enabled: boolean
@@ -844,6 +846,7 @@ export type Database = {
           activation_step?: string
           avatar_url?: string | null
           best_streak?: number
+          bio?: string | null
           birth_year?: number | null
           created_at?: string
           default_max_duration?: number | null
@@ -864,6 +867,7 @@ export type Database = {
           min_rating?: number | null
           onboarding_completed?: boolean
           onboarding_skipped?: boolean | null
+          podium_film_ids?: number[] | null
           preferred_platforms?: number[] | null
           profile_confidence?: number
           ritual_enabled?: boolean
@@ -880,6 +884,7 @@ export type Database = {
           activation_step?: string
           avatar_url?: string | null
           best_streak?: number
+          bio?: string | null
           birth_year?: number | null
           created_at?: string
           default_max_duration?: number | null
@@ -900,6 +905,7 @@ export type Database = {
           min_rating?: number | null
           onboarding_completed?: boolean
           onboarding_skipped?: boolean | null
+          podium_film_ids?: number[] | null
           preferred_platforms?: number[] | null
           profile_confidence?: number
           ritual_enabled?: boolean
@@ -1461,6 +1467,29 @@ export type Database = {
       }
       generate_friend_code: { Args: never; Returns: string }
       generate_session_code: { Args: never; Returns: string }
+      get_event_by_invite_token: {
+        Args: { _token: string }
+        Returns: {
+          context: string
+          event_date: string
+          event_time: string
+          id: string
+          is_remote: boolean
+          location: string
+          organizer_id: string
+          organizer_name: string
+          reveal_mode: string
+          status: string
+          title: string
+        }[]
+      }
+      get_event_guest_emails: {
+        Args: { _event_id: string }
+        Returns: {
+          guest_email: string
+          participant_id: string
+        }[]
+      }
       get_movies_needing_language: {
         Args: { p_limit?: number }
         Returns: {
@@ -1494,6 +1523,11 @@ export type Database = {
         Args: { _session_id: string; _user_id: string }
         Returns: boolean
       }
+      join_event_as_guest: {
+        Args: { _guest_email?: string; _guest_name: string; _token: string }
+        Returns: string
+      }
+      join_event_as_user: { Args: { _token: string }; Returns: string }
       match_movies_by_taste: {
         Args: {
           exclude_ids?: number[]

@@ -47,22 +47,12 @@ const InvitePage = () => {
     if (!token) { setNotFound(true); setLoading(false); return; }
     (async () => {
       const { data, error } = await supabase
-        .from("events" as any)
-        .select("id, title, event_date, event_time, location, is_remote, context, reveal_mode, status, organizer_id")
-        .eq("invite_link_token", token)
-        .neq("status", "cancelled")
-        .maybeSingle();
+        .rpc("get_event_by_invite_token" as any, { _token: token });
 
-      if (error || !data) { setNotFound(true); setLoading(false); return; }
+      const row = Array.isArray(data) ? data[0] : data;
+      if (error || !row) { setNotFound(true); setLoading(false); return; }
 
-      // Charge le nom de l'organisateur
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("display_name")
-        .eq("id", (data as any).organizer_id)
-        .maybeSingle();
-
-      setEvent({ ...(data as any), organizer_name: (profile as any)?.display_name || "Quelqu'un" });
+      setEvent({ ...(row as any), organizer_name: (row as any).organizer_name || "Quelqu'un" });
       setLoading(false);
     })();
   }, [token]);
@@ -89,12 +79,10 @@ const InvitePage = () => {
   }, [isReady, user, event, alreadyJoined]);
 
   const joinAsAuthUser = async () => {
-    if (!user || !event) return;
+    if (!user || !event || !token) return;
     setJoining(true);
     try {
-      const { error } = await supabase
-        .from("event_participants" as any)
-        .insert({ event_id: event.id, user_id: user.id, status: "confirmed" });
+      const { error } = await supabase.rpc("join_event_as_user" as any, { _token: token });
       if (error && !error.message.includes("duplicate")) throw error;
       setAlreadyJoined(true);
       setStep("joined");
@@ -106,24 +94,14 @@ const InvitePage = () => {
   };
 
   const joinAsGuest = async () => {
-    if (!guestName.trim() || !event) return;
+    if (!guestName.trim() || !event || !token) return;
     setJoining(true);
     try {
-      // Génère un guest_token persisté dans localStorage
-      let guestToken = localStorage.getItem(`guest_token_${event.id}`);
-      if (!guestToken) {
-        guestToken = crypto.randomUUID();
-        localStorage.setItem(`guest_token_${event.id}`, guestToken);
-      }
-      const { error } = await supabase
-        .from("event_participants" as any)
-        .insert({
-          event_id: event.id,
-          guest_token: guestToken,
-          guest_name: guestName.trim(),
-          guest_email: guestEmail.trim() || null,
-          status: "confirmed",
-        });
+      const { error } = await supabase.rpc("join_event_as_guest" as any, {
+        _token: token,
+        _guest_name: guestName.trim(),
+        _guest_email: guestEmail.trim() || null,
+      });
       if (error && !error.message.includes("duplicate")) throw error;
       setStep("joined");
     } catch (e: any) {
