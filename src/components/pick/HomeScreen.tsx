@@ -308,7 +308,7 @@ const HomeScreen = ({
   const [bgImages, setBgImages] = useState<string[]>([]);
   const [findChoiceDuoId, setFindChoiceDuoId] = useState<string | undefined>(undefined);
   const currentDuoOverridesRef = useRef<DuoOverrides | null>(null);
-  const handleAutoPickRef = useRef<((duoId?: string, opts?: { genre?: string }) => Promise<void>) | undefined>(undefined);
+  const handleAutoPickRef = useRef<((duoId?: string, opts?: { genres?: string[] }) => Promise<void>) | undefined>(undefined);
   const [currentBgIndex, setCurrentBgIndex] = useState(0);
 
   const [tonightPick, setTonightPick] = useState<MovieDetail | null>(null);
@@ -1543,15 +1543,15 @@ const HomeScreen = ({
     }
   };
 
-  const handleAutoPick = async (duoId?: string, opts?: { genre?: string }) => {
+  const handleAutoPick = async (duoId?: string, opts?: { genres?: string[] }) => {
     setShowFindChoice(false);
     setFindChoiceDuoId(undefined);
     setTonightPick(null);
     setChatMoviesPool(null);
     setTonightPickIndex(0);
     setNoResultsInfo(null);
-    const genreFilter: import("./VoiceChat").VoiceSearchFilters | null = opts?.genre
-      ? { genres: [opts.genre], originalLanguage: null, mediaType: null, maxDuration: null, decade: null }
+    const genreFilter: import("./VoiceChat").VoiceSearchFilters | null = opts?.genres?.length
+      ? { genres: opts.genres, originalLanguage: null, mediaType: null, maxDuration: null, decade: null }
       : null;
 
     if (duoId) {

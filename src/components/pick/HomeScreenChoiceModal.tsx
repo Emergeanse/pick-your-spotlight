@@ -33,7 +33,7 @@ interface HomeScreenChoiceModalProps {
   open: boolean;
   mediaType: "both" | "movie" | "tv";
   onClose: () => void;
-  onAutoPick: (duoId?: string, opts?: { genre?: string }) => void;
+  onAutoPick: (duoId?: string, opts?: { genres?: string[] }) => void;
   onOpenChat: () => void;
   onOpenMoodCapture: () => void;
   initialDuoId?: string;
@@ -58,7 +58,9 @@ const HomeScreenChoiceModal = ({
   const [planTime, setPlanTime] = useState("20:30");
   const [planConfirmed, setPlanConfirmed] = useState(false);
   const [orientMode, setOrientMode] = useState<"theme" | "mood" | null>(null);
-  const [ou, setOu] = useState<ModalOu>(null);
+  const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
+  const [themeExpanded, setThemeExpanded] = useState(false);
+  const [ou, setOu] = useState<ModalOu>("ensemble");
   const [ouDescription, setOuDescription] = useState("");
   const [selectedGenre, setSelectedGenre] = useState<string | null>(null);
 
@@ -71,9 +73,10 @@ const HomeScreenChoiceModal = ({
       setPlanDate("");
       setPlanTime("20:30");
       setPlanConfirmed(false);
-      setOu(null);
+      setOu("ensemble");
       setOuDescription("");
-      setSelectedGenre(null);
+      setSelectedGenres([]);
+      setThemeExpanded(false);
       setOrientMode(null);
       return;
     }
@@ -245,14 +248,23 @@ const HomeScreenChoiceModal = ({
               <p className="text-[10px] font-sans font-semibold tracking-[0.18em] uppercase text-foreground/35">Envie de…</p>
               <div className="flex gap-1 p-1 rounded-2xl bg-white/[0.04] border border-white/[0.08]">
                 <button
-                  onClick={() => { setOrientMode(orientMode === "theme" ? null : "theme"); setSelectedGenre(null); }}
+                  onClick={() => {
+                    if (orientMode === "theme") { setThemeExpanded(e => !e); }
+                    else { setOrientMode("theme"); setThemeExpanded(true); setSelectedGenres([]); }
+                  }}
                   className={`relative flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-[12px] font-sans font-medium transition-all overflow-hidden ${orientMode === "theme" ? "text-foreground border border-primary/40" : "text-foreground/55 hover:text-foreground/80"}`}
                 >
                   {orientMode === "theme" && <div className="absolute inset-0 rounded-xl" style={{ background: TAB_GRADIENT }} />}
                   <Tag className="relative w-3.5 h-3.5" />
-                  <span className="relative">{selectedGenre ? `${GENRES.find(g => g.key === selectedGenre)?.emoji} ${selectedGenre}` : "Thème"}</span>
-                  {selectedGenre && orientMode === "theme" && (
-                    <span className="relative text-[10px] opacity-50 ml-0.5" onClick={(e) => { e.stopPropagation(); setSelectedGenre(null); }}>✕</span>
+                  <span className="relative">
+                    {selectedGenres.length > 0
+                      ? selectedGenres.length === 1
+                        ? `${GENRES.find(g => g.key === selectedGenres[0])?.emoji} ${selectedGenres[0]}`
+                        : `${selectedGenres.length} thèmes`
+                      : "Thème"}
+                  </span>
+                  {selectedGenres.length > 0 && (
+                    <span className="relative text-[10px] opacity-50 ml-0.5" onClick={(e) => { e.stopPropagation(); setSelectedGenres([]); }}>✕</span>
                   )}
                 </button>
                 <button
@@ -265,27 +277,47 @@ const HomeScreenChoiceModal = ({
                 </button>
               </div>
 
-              {/* Chips genre — visibles seulement si mode thème actif */}
-              {orientMode === "theme" && (
-                <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", paddingTop: "4px" }}>
-                  {GENRES.map(({ key, label, emoji }) => (
-                    <button
-                      key={key}
-                      onClick={() => setSelectedGenre(selectedGenre === key ? null : key)}
-                      style={{
-                        display: "inline-flex", alignItems: "center", gap: "6px",
-                        padding: "8px 14px", borderRadius: "999px",
-                        fontSize: "13px", fontWeight: 600,
-                        border: selectedGenre === key ? "2px solid hsl(var(--primary))" : "2px solid rgba(255,255,255,0.55)",
-                        background: selectedGenre === key ? "hsl(var(--primary) / 0.5)" : "rgba(120,100,200,0.45)",
-                        color: "#ffffff", cursor: "pointer",
-                        backdropFilter: "none", WebkitBackdropFilter: "none",
-                      }}
-                    >
-                      <span style={{ fontSize: "14px", lineHeight: "1" }}>{emoji}</span>
-                      {label}
-                    </button>
-                  ))}
+              {/* Chips genre multi-sélection + bouton Valider */}
+              {orientMode === "theme" && themeExpanded && (
+                <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                  <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+                    {GENRES.map(({ key, label, emoji }) => {
+                      const selected = selectedGenres.includes(key);
+                      return (
+                        <button
+                          key={key}
+                          onClick={() => setSelectedGenres(prev => selected ? prev.filter(g => g !== key) : [...prev, key])}
+                          style={{
+                            display: "inline-flex", alignItems: "center", gap: "6px",
+                            padding: "8px 14px", borderRadius: "999px",
+                            fontSize: "13px", fontWeight: 600,
+                            border: selected ? "2px solid hsl(var(--primary))" : "2px solid rgba(255,255,255,0.55)",
+                            background: selected ? "hsl(var(--primary) / 0.5)" : "rgba(120,100,200,0.45)",
+                            color: "#ffffff", cursor: "pointer",
+                            backdropFilter: "none", WebkitBackdropFilter: "none",
+                          }}
+                        >
+                          <span style={{ fontSize: "14px", lineHeight: "1" }}>{emoji}</span>
+                          {label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <button
+                    onClick={() => setThemeExpanded(false)}
+                    style={{
+                      alignSelf: "flex-end",
+                      display: "inline-flex", alignItems: "center", gap: "6px",
+                      padding: "7px 16px", borderRadius: "12px",
+                      fontSize: "12px", fontWeight: 600,
+                      border: "1px solid hsl(var(--primary) / 0.6)",
+                      background: TAB_GRADIENT,
+                      color: "#ffffff", cursor: "pointer",
+                    }}
+                  >
+                    <Check style={{ width: "13px", height: "13px" }} />
+                    Valider
+                  </button>
                 </div>
               )}
             </div>
@@ -422,7 +454,7 @@ const HomeScreenChoiceModal = ({
                   onClose();
                   onOpenMoodCapture();
                 } else {
-                  onAutoPick(selectedDuoId ?? undefined, { genre: selectedGenre ?? undefined });
+                  onAutoPick(selectedDuoId ?? undefined, { genres: selectedGenres.length > 0 ? selectedGenres : undefined });
                 }
               }}
               disabled={mode === "duo" && !selectedDuoId}
@@ -451,7 +483,9 @@ const HomeScreenChoiceModal = ({
                       ? "Je génère le film idéal pour cette date."
                       : orientMode === "mood"
                         ? (isDuo ? "Parlez-moi de vos envies du moment." : "Parle-moi de ton envie du moment.")
-                        : getAutoPickSubtitle()}
+                        : selectedGenres.length > 0
+                          ? `Filtré sur : ${selectedGenres.join(", ")}`
+                          : getAutoPickSubtitle()}
                   </p>
                 </div>
               </div>
