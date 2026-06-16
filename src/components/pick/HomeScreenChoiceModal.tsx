@@ -241,33 +241,43 @@ const HomeScreenChoiceModal = ({
             </div>
 
             {/* ── BLOC 2 : THÈME (accordéon) ── */}
-            <div className="flex flex-col gap-0">
+            <div className="relative z-10 flex flex-col gap-0">
               <button
                 onClick={() => setThemeOpen(o => !o)}
-                className={`relative flex items-center gap-3 px-4 py-3 rounded-[20px] border w-full transition-all overflow-hidden ${
-                  selectedGenre
-                    ? "border-primary/50 bg-primary/15 text-foreground"
-                    : "border-white/[0.10] bg-white/[0.05] text-foreground/70 hover:bg-white/[0.08] hover:text-foreground/90"
-                }`}
+                style={{
+                  position: "relative",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "12px",
+                  padding: "12px 16px",
+                  borderRadius: "20px",
+                  border: selectedGenre ? "1px solid hsl(var(--primary) / 0.6)" : "1px solid rgba(255,255,255,0.18)",
+                  background: selectedGenre ? "hsl(var(--primary) / 0.2)" : "rgba(255,255,255,0.07)",
+                  color: "#ffffff",
+                  width: "100%",
+                  cursor: "pointer",
+                  fontSize: "13px",
+                  fontWeight: 500,
+                }}
               >
-                <Tag className="w-4 h-4 shrink-0 text-foreground/50" />
-                <span className="flex-1 text-left text-[13px] font-sans font-medium">
+                <Tag style={{ width: "16px", height: "16px", flexShrink: 0, opacity: 0.7 }} />
+                <span style={{ flex: 1, textAlign: "left" }}>
                   {selectedGenre
                     ? <>{GENRES.find(g => g.key === selectedGenre)?.emoji} {selectedGenre}</>
                     : "Thème — optionnel"
                   }
                 </span>
                 {selectedGenre && (
-                  <button
+                  <span
                     onClick={(e) => { e.stopPropagation(); setSelectedGenre(null); }}
-                    className="text-[10px] text-foreground/40 hover:text-foreground/70 px-1 shrink-0"
-                  >✕</button>
+                    style={{ fontSize: "11px", opacity: 0.5, padding: "0 4px", cursor: "pointer" }}
+                  >✕</span>
                 )}
-                <ChevronDown className={`w-4 h-4 shrink-0 text-foreground/40 transition-transform duration-200 ${themeOpen ? "rotate-180" : ""}`} />
+                <ChevronDown style={{ width: "16px", height: "16px", flexShrink: 0, opacity: 0.5, transform: themeOpen ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }} />
               </button>
 
               {themeOpen && (
-                <div className="flex gap-2 flex-wrap pt-2 px-1">
+                <div style={{ position: "relative", zIndex: 10, display: "flex", gap: "8px", flexWrap: "wrap", paddingTop: "8px", paddingLeft: "4px", paddingRight: "4px" }}>
                   {GENRES.map(({ key, label, emoji }) => (
                     <button
                       key={key}
@@ -280,10 +290,16 @@ const HomeScreenChoiceModal = ({
                         borderRadius: "999px",
                         fontSize: "13px",
                         fontWeight: 600,
-                        border: selectedGenre === key ? "2px solid hsl(var(--primary))" : "2px solid rgba(255,255,255,0.6)",
-                        background: selectedGenre === key ? "hsl(var(--primary) / 0.35)" : "rgba(255,255,255,0.22)",
+                        border: selectedGenre === key
+                          ? "2px solid hsl(var(--primary))"
+                          : "2px solid rgba(255,255,255,0.55)",
+                        background: selectedGenre === key
+                          ? "hsl(var(--primary) / 0.5)"
+                          : "rgba(120,100,200,0.45)",
                         color: "#ffffff",
                         cursor: "pointer",
+                        backdropFilter: "none",
+                        WebkitBackdropFilter: "none",
                       }}
                     >
                       <span style={{ fontSize: "14px", lineHeight: "1" }}>{emoji}</span>
