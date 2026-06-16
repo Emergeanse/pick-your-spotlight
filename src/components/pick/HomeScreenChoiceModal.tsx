@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { Mic, CalendarClock, Heart, Check, User, Flame, Eye, Coffee, Shuffle, Users, MapPin, Wifi } from "lucide-react";
+import { Mic, CalendarClock, Heart, Check, User, Flame, Eye, Coffee, Shuffle, Users, MapPin, Wifi, ChevronDown, Tag } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { getAutoPickSubtitle } from "@/lib/time-context";
@@ -57,6 +57,7 @@ const HomeScreenChoiceModal = ({
   const [planDate, setPlanDate] = useState("");
   const [planTime, setPlanTime] = useState("20:30");
   const [planConfirmed, setPlanConfirmed] = useState(false);
+  const [themeOpen, setThemeOpen] = useState(false);
   const [ou, setOu] = useState<ModalOu>(null);
   const [ouDescription, setOuDescription] = useState("");
   const [selectedGenre, setSelectedGenre] = useState<string | null>(null);
@@ -73,6 +74,7 @@ const HomeScreenChoiceModal = ({
       setOu(null);
       setOuDescription("");
       setSelectedGenre(null);
+      setThemeOpen(false);
       return;
     }
     if (initialContext === "duo" || initialDuoId) {
@@ -238,27 +240,60 @@ const HomeScreenChoiceModal = ({
               )}
             </div>
 
-            {/* ── BLOC 2 : THÈME ── */}
-            <div className="flex flex-col gap-2">
-              <p className="text-[10px] font-sans font-semibold tracking-[0.18em] uppercase text-white/60">
-                Thème
-              </p>
-              <div className="flex gap-2 flex-wrap">
-                {GENRES.map(({ key, label, emoji }) => (
+            {/* ── BLOC 2 : THÈME (accordéon) ── */}
+            <div className="flex flex-col gap-0">
+              <button
+                onClick={() => setThemeOpen(o => !o)}
+                className={`relative flex items-center gap-3 px-4 py-3 rounded-[20px] border w-full transition-all overflow-hidden ${
+                  selectedGenre
+                    ? "border-primary/50 bg-primary/15 text-foreground"
+                    : "border-white/[0.10] bg-white/[0.05] text-foreground/70 hover:bg-white/[0.08] hover:text-foreground/90"
+                }`}
+              >
+                <Tag className="w-4 h-4 shrink-0 text-foreground/50" />
+                <span className="flex-1 text-left text-[13px] font-sans font-medium">
+                  {selectedGenre
+                    ? <>{GENRES.find(g => g.key === selectedGenre)?.emoji} {selectedGenre}</>
+                    : "Thème — optionnel"
+                  }
+                </span>
+                {selectedGenre && (
                   <button
-                    key={key}
-                    onClick={() => setSelectedGenre(selectedGenre === key ? null : key)}
-                    className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full border text-[13px] font-sans font-semibold transition-all ${
-                      selectedGenre === key
-                        ? "border-primary/80 bg-primary/30 text-white"
-                        : "border-white/35 bg-white/[0.10] text-white/90 hover:bg-white/[0.18] hover:border-white/50"
-                    }`}
+                    onClick={(e) => { e.stopPropagation(); setSelectedGenre(null); }}
+                    className="text-[10px] text-foreground/40 hover:text-foreground/70 px-1 shrink-0"
+                  >✕</button>
+                )}
+                <ChevronDown className={`w-4 h-4 shrink-0 text-foreground/40 transition-transform duration-200 ${themeOpen ? "rotate-180" : ""}`} />
+              </button>
+
+              <AnimatePresence>
+                {themeOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+                    className="overflow-hidden"
                   >
-                    <span className="text-[14px] leading-none">{emoji}</span>
-                    {label}
-                  </button>
-                ))}
-              </div>
+                    <div className="flex gap-2 flex-wrap pt-2 px-1">
+                      {GENRES.map(({ key, label, emoji }) => (
+                        <button
+                          key={key}
+                          onClick={() => { setSelectedGenre(selectedGenre === key ? null : key); setThemeOpen(false); }}
+                          className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full border text-[13px] font-sans font-semibold transition-all ${
+                            selectedGenre === key
+                              ? "border-primary/80 bg-primary/30 text-white"
+                              : "border-white/30 bg-white/[0.08] text-white/85 hover:bg-white/[0.15] hover:border-white/45"
+                          }`}
+                        >
+                          <span className="text-[14px] leading-none">{emoji}</span>
+                          {label}
+                        </button>
+                      ))}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
 
             {/* ── BLOC 3 : QUAND ? ── */}
