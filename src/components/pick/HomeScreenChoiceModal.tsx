@@ -250,8 +250,8 @@ const HomeScreenChoiceModal = ({
                     onClick={() => setSelectedGenre(selectedGenre === key ? null : key)}
                     className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-[12px] font-sans font-medium transition-all ${
                       selectedGenre === key
-                        ? "border-primary/55 bg-primary/20 text-foreground"
-                        : "border-white/[0.09] bg-white/[0.04] text-foreground/55 hover:bg-white/[0.09] hover:text-foreground/80"
+                        ? "border-primary/70 bg-primary/25 text-foreground"
+                        : "border-white/20 bg-white/[0.08] text-foreground/85 hover:bg-white/[0.13] hover:border-white/30"
                     }`}
                   >
                     <span className="text-[13px] leading-none">{emoji}</span>
