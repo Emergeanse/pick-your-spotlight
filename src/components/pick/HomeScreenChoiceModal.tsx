@@ -411,7 +411,7 @@ const HomeScreenChoiceModal = ({
                       />
                     )}
                     {ou === "a-distance" && (
-                      <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.65)", padding: "0 4px", lineHeight: "1.4" }}>Je trouverai un film dispo pour vous deux.</p>
+                      <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.65)", padding: "0 4px", lineHeight: "1.4" }}>Film disponible sur vos plateformes communes.</p>
                     )}
                   </div>
                 </motion.div>
