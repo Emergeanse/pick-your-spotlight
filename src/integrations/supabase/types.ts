@@ -373,25 +373,34 @@ export type Database = {
       }
       event_recommendations: {
         Row: {
-          catalog_item_id: string
+          catalog_item_id: string | null
           created_at: string | null
           event_id: string
           id: string
+          movie_title: string | null
           position: number | null
+          poster_path: string | null
+          tmdb_id: number | null
         }
         Insert: {
-          catalog_item_id: string
+          catalog_item_id?: string | null
           created_at?: string | null
           event_id: string
           id?: string
+          movie_title?: string | null
           position?: number | null
+          poster_path?: string | null
+          tmdb_id?: number | null
         }
         Update: {
-          catalog_item_id?: string
+          catalog_item_id?: string | null
           created_at?: string | null
           event_id?: string
           id?: string
+          movie_title?: string | null
           position?: number | null
+          poster_path?: string | null
+          tmdb_id?: number | null
         }
         Relationships: [
           {
@@ -466,10 +475,16 @@ export type Database = {
           event_date: string
           event_time: string | null
           final_pick_id: string | null
+          final_pick_poster: string | null
+          final_pick_title: string | null
+          final_pick_tmdb_id: number | null
+          genre_tags: string[] | null
           id: string
           invite_link_token: string
           is_remote: boolean | null
           location: string | null
+          media_type: string | null
+          mood: string | null
           organizer_id: string
           reveal_mode: string | null
           status: string | null
@@ -482,10 +497,16 @@ export type Database = {
           event_date: string
           event_time?: string | null
           final_pick_id?: string | null
+          final_pick_poster?: string | null
+          final_pick_title?: string | null
+          final_pick_tmdb_id?: number | null
+          genre_tags?: string[] | null
           id?: string
           invite_link_token?: string
           is_remote?: boolean | null
           location?: string | null
+          media_type?: string | null
+          mood?: string | null
           organizer_id: string
           reveal_mode?: string | null
           status?: string | null
@@ -498,10 +519,16 @@ export type Database = {
           event_date?: string
           event_time?: string | null
           final_pick_id?: string | null
+          final_pick_poster?: string | null
+          final_pick_title?: string | null
+          final_pick_tmdb_id?: number | null
+          genre_tags?: string[] | null
           id?: string
           invite_link_token?: string
           is_remote?: boolean | null
           location?: string | null
+          media_type?: string | null
+          mood?: string | null
           organizer_id?: string
           reveal_mode?: string | null
           status?: string | null
@@ -1420,6 +1447,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      auth_uid_is_event_member: {
+        Args: { p_event_id: string }
+        Returns: boolean
+      }
       count_movie_candidates:
         | {
             Args: {
