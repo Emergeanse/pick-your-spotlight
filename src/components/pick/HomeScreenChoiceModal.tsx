@@ -280,10 +280,10 @@ const HomeScreenChoiceModal = ({
                         <button
                           key={key}
                           onClick={() => { setSelectedGenre(selectedGenre === key ? null : key); setThemeOpen(false); }}
-                          className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full border text-[13px] font-sans font-semibold transition-all ${
+                          className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full text-[13px] font-sans font-semibold transition-all ${
                             selectedGenre === key
-                              ? "border-primary/80 bg-primary/30 text-white"
-                              : "border-white/30 bg-white/[0.08] text-white/85 hover:bg-white/[0.15] hover:border-white/45"
+                              ? "border-2 border-primary bg-primary/40 text-white"
+                              : "border-2 border-white/50 bg-white/20 text-white hover:bg-white/30 hover:border-white/70"
                           }`}
                         >
                           <span className="text-[14px] leading-none">{emoji}</span>
