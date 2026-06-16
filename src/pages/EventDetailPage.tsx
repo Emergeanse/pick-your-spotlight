@@ -100,7 +100,7 @@ const EventDetailPage = () => {
     const currentEvent = evData ?? event;
     const { data: eps } = await supabase
       .from("event_participants" as any)
-      .select("id, user_id, guest_name, guest_email, status")
+      .select("id, user_id, guest_name, status")
       .eq("event_id", eventId);
 
     if (!eps) return;
