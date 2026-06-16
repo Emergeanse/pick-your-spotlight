@@ -137,6 +137,7 @@ const CreateEventPage = () => {
           context,
           reveal_mode: revealMode,
           status: "planning",
+          mood: mood.trim() || null,
         })
         .select("id, invite_link_token")
         .single();

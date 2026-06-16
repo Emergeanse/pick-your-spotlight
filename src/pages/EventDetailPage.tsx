@@ -24,6 +24,8 @@ type EventData = {
   status: string;
   organizer_id: string;
   invite_link_token: string;
+  mood: string | null;
+  final_pick_id: string | null;
 };
 
 type Participant = {
@@ -70,6 +72,7 @@ const EventDetailPage = () => {
   const [deleting, setDeleting] = useState(false);
   const [duoPartner, setDuoPartner] = useState<{ id: string; name: string } | null>(null);
   const [addingPartner, setAddingPartner] = useState(false);
+  const [revealing, setRevealing] = useState(false);
 
   const isOrganizer = !!user && event?.organizer_id === user.id;
   const inviteLink = event ? `${window.location.origin}/invite/${event.invite_link_token}` : "";
@@ -85,7 +88,7 @@ const EventDetailPage = () => {
 
     const { data: ev, error } = await supabase
       .from("events" as any)
-      .select("id, title, event_date, event_time, location, is_remote, context, reveal_mode, status, organizer_id, invite_link_token")
+      .select("id, title, event_date, event_time, location, is_remote, context, reveal_mode, status, organizer_id, invite_link_token, mood, final_pick_id")
       .eq("id", id)
       .maybeSingle();
 
@@ -240,6 +243,43 @@ const EventDetailPage = () => {
     }
   };
 
+  const revealFilm = async () => {
+    if (!event) return;
+    setRevealing(true);
+    try {
+      // Récupère les recommandations déjà générées (position 1 en priorité)
+      const { data: recs } = await supabase
+        .from("event_recommendations" as any)
+        .select("id, catalog_item_id, position")
+        .eq("event_id", event.id)
+        .order("position", { ascending: true })
+        .limit(1);
+
+      const rec = (recs as any)?.[0];
+      if (!rec) {
+        toast.error("Aucun film recommandé trouvé pour cette soirée.");
+        return;
+      }
+
+      // Stocke le film révélé + passe le statut à "done"
+      const { error } = await supabase
+        .from("events" as any)
+        .update({ final_pick_id: rec.catalog_item_id, status: "done" })
+        .eq("id", event.id);
+
+      if (error) throw error;
+
+      setEvent(prev => prev ? { ...prev, final_pick_id: rec.catalog_item_id, status: "done" } : prev);
+      toast.success("Le film est révélé ! 🎩", {
+        description: "Les participants vont recevoir une notification.",
+      });
+    } catch (e: any) {
+      toast.error(e?.message ?? "Impossible de révéler le film");
+    } finally {
+      setRevealing(false);
+    }
+  };
+
   const copyLink = async () => {
     await navigator.clipboard.writeText(inviteLink);
     setCopied(true);
@@ -312,6 +352,12 @@ const EventDetailPage = () => {
             <Film className="w-3.5 h-3.5 text-primary/50 shrink-0" />
             <span>{event.reveal_mode === "surprise" ? "Film surprise · révélé le soir J" : "Vote pour choisir le film"}</span>
           </div>
+          {event.mood && (
+            <div className="flex items-start gap-2 text-[13px] font-sans text-foreground/60 mt-0.5">
+              <Sparkles className="w-3.5 h-3.5 text-primary/50 shrink-0 mt-0.5" />
+              <span className="italic">"{event.mood}"</span>
+            </div>
+          )}
         </div>
       </div>
 
@@ -459,8 +505,8 @@ const EventDetailPage = () => {
           )}
         </div>
 
-        {/* ── Lien d'invitation (organisateur seulement) ── */}
-        {isOrganizer && (
+        {/* ── Lien d'invitation (organisateur, hors soirée Duo) ── */}
+        {isOrganizer && event.context !== "duo" && (
           <div>
             <p className="text-[11px] font-sans font-semibold tracking-[0.18em] uppercase text-foreground/40 mb-2">
               Inviter des amis
@@ -496,12 +542,24 @@ const EventDetailPage = () => {
               <p className="text-[11.5px] text-foreground/40 mt-0.5">Annonce le film Pick à tous les participants.</p>
             </div>
             <button
-              onClick={() => toast("Bientôt disponible !", { description: "La révélation arrive dans la prochaine mise à jour." })}
-              className="shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl bg-primary/15 border border-primary/25 text-primary text-[12px] font-sans font-semibold"
+              onClick={revealFilm}
+              disabled={revealing}
+              className="shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl bg-primary/15 border border-primary/25 text-primary text-[12px] font-sans font-semibold disabled:opacity-60"
             >
-              <Sparkles className="w-3.5 h-3.5" />
+              {revealing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
               Révéler
             </button>
+          </div>
+        )}
+
+        {/* ── Film révélé ── */}
+        {event.status === "done" && event.final_pick_id && (
+          <div className="rounded-2xl bg-primary/[0.08] border border-primary/20 p-4 flex items-center gap-3">
+            <span className="text-2xl">🎬</span>
+            <div className="flex-1">
+              <p className="text-[13px] font-sans font-semibold text-foreground">Film révélé !</p>
+              <p className="text-[11.5px] text-foreground/40 mt-0.5">Le pick a été annoncé aux participants.</p>
+            </div>
           </div>
         )}
       </div>
