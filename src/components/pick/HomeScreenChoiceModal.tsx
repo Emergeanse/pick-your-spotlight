@@ -416,10 +416,10 @@ const HomeScreenChoiceModal = ({
                     {ou === "ensemble" && (
                       <input
                         autoFocus type="text"
-                        placeholder="Chez nous, home cinéma, salon…"
+                        placeholder="Chez nous, salon, home cinéma…"
                         value={ouDescription}
                         onChange={(e) => setOuDescription(e.target.value)}
-                        className="bg-white/20 border-2 border-white/50 rounded-xl px-3.5 py-2.5 text-[13px] font-sans font-medium text-white placeholder:text-white/50 focus:outline-none focus:border-primary/70"
+                        style={{ background: "rgba(120,100,200,0.3)", border: "2px solid rgba(255,255,255,0.5)", borderRadius: "12px", padding: "10px 14px", fontSize: "13px", fontWeight: 500, color: "#ffffff", outline: "none", width: "100%" }}
                       />
                     )}
                     {ou === "a-distance" && (
