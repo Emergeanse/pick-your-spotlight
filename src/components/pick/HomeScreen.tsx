@@ -308,7 +308,7 @@ const HomeScreen = ({
   const [bgImages, setBgImages] = useState<string[]>([]);
   const [findChoiceDuoId, setFindChoiceDuoId] = useState<string | undefined>(undefined);
   const currentDuoOverridesRef = useRef<DuoOverrides | null>(null);
-  const handleAutoPickRef = useRef<((duoId?: string) => Promise<void>) | undefined>(undefined);
+  const handleAutoPickRef = useRef<((duoId?: string, opts?: { genre?: string }) => Promise<void>) | undefined>(undefined);
   const [currentBgIndex, setCurrentBgIndex] = useState(0);
 
   const [tonightPick, setTonightPick] = useState<MovieDetail | null>(null);
@@ -1543,13 +1543,16 @@ const HomeScreen = ({
     }
   };
 
-  const handleAutoPick = async (duoId?: string) => {
+  const handleAutoPick = async (duoId?: string, opts?: { genre?: string }) => {
     setShowFindChoice(false);
     setFindChoiceDuoId(undefined);
     setTonightPick(null);
     setChatMoviesPool(null);
     setTonightPickIndex(0);
     setNoResultsInfo(null);
+    const genreFilter: import("./VoiceChat").VoiceSearchFilters | null = opts?.genre
+      ? { genres: [opts.genre], originalLanguage: null, mediaType: null, maxDuration: null, decade: null }
+      : null;
 
     if (duoId) {
       try {
@@ -1601,7 +1604,7 @@ const HomeScreen = ({
             user2Id: duo.user2_id,
           };
           currentDuoOverridesRef.current = duoOverrides;
-          void generateTonightPick([], undefined, undefined, duoOverrides);
+          void generateTonightPick([], undefined, genreFilter ?? undefined, duoOverrides);
           return;
         }
       } catch (e) {
@@ -1609,7 +1612,7 @@ const HomeScreen = ({
       }
     }
     currentDuoOverridesRef.current = null;
-    void generateTonightPick(rejectedIds, undefined, null, currentDuoOverridesRef.current ?? undefined);
+    void generateTonightPick(rejectedIds, undefined, genreFilter, currentDuoOverridesRef.current ?? undefined);
   };
 
   // Garde le ref à jour à chaque render pour éviter les stale closures dans les bridges
@@ -1805,33 +1808,29 @@ const HomeScreen = ({
               <p className={`font-sans text-[10.5px] font-semibold leading-tight text-center ${activeWidget === "duo" ? "text-violet-400" : "text-foreground"}`}>Soirée<br/>Duo</p>
             </motion.button>
 
-            {/* Film en famille — rose */}
-            <motion.button
+            {/* Film en famille — désactivé */}
+            <motion.div
               initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.50, duration: 0.4 }}
-              whileTap={{ scale: 0.93 }}
-              onClick={() => { setFindChoiceContext("famille"); setActiveWidget("famille"); setTimeout(() => setShowFindChoice(true), 150); }}
-              className={`flex-1 min-w-0 flex flex-col items-center gap-2 py-3.5 px-2 rounded-2xl backdrop-blur-md transition-all ${activeWidget === "famille" ? "border border-rose-400/60 bg-rose-400/15 shadow-[0_0_18px_rgba(251,113,133,0.35)]" : "border border-white/12 bg-[hsl(240_18%_7%/0.82)]"}`}
+              className="flex-1 min-w-0 flex flex-col items-center gap-2 py-3.5 px-2 rounded-2xl border border-white/[0.06] bg-[hsl(240_18%_7%/0.82)] opacity-35 cursor-not-allowed"
             >
-              <span className="w-8 h-8 rounded-xl bg-rose-500/15 flex items-center justify-center shrink-0">
-                <Home className="w-3.5 h-3.5 text-rose-400" strokeWidth={1.8} />
+              <span className="w-8 h-8 rounded-xl bg-rose-500/10 flex items-center justify-center shrink-0">
+                <Home className="w-3.5 h-3.5 text-rose-400/50" strokeWidth={1.8} />
               </span>
-              <p className={`font-sans text-[10.5px] font-semibold leading-tight text-center ${activeWidget === "famille" ? "text-rose-400" : "text-foreground"}`}>Film en<br/>famille</p>
-            </motion.button>
+              <p className="font-sans text-[10.5px] font-semibold leading-tight text-center text-foreground/50">Film en<br/>famille</p>
+            </motion.div>
 
-            {/* Entre amis — émeraude */}
-            <motion.button
+            {/* Entre amis — désactivé */}
+            <motion.div
               initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.56, duration: 0.4 }}
-              whileTap={{ scale: 0.93 }}
-              onClick={() => { setFindChoiceContext("amis"); setActiveWidget("amis"); setTimeout(() => setShowFindChoice(true), 150); }}
-              className={`flex-1 min-w-0 flex flex-col items-center gap-2 py-3.5 px-2 rounded-2xl backdrop-blur-md transition-all ${activeWidget === "amis" ? "border border-emerald-400/60 bg-emerald-400/15 shadow-[0_0_18px_rgba(52,211,153,0.3)]" : "border border-white/12 bg-[hsl(240_18%_7%/0.82)]"}`}
+              className="flex-1 min-w-0 flex flex-col items-center gap-2 py-3.5 px-2 rounded-2xl border border-white/[0.06] bg-[hsl(240_18%_7%/0.82)] opacity-35 cursor-not-allowed"
             >
-              <span className="w-8 h-8 rounded-xl bg-emerald-500/15 flex items-center justify-center shrink-0">
-                <Users className="w-3.5 h-3.5 text-emerald-400" strokeWidth={1.8} />
+              <span className="w-8 h-8 rounded-xl bg-emerald-500/10 flex items-center justify-center shrink-0">
+                <Users className="w-3.5 h-3.5 text-emerald-400/50" strokeWidth={1.8} />
               </span>
-              <p className={`font-sans text-[10.5px] font-semibold leading-tight text-center ${activeWidget === "amis" ? "text-emerald-400" : "text-foreground"}`}>Entre<br/>amis</p>
-            </motion.button>
+              <p className="font-sans text-[10.5px] font-semibold leading-tight text-center text-foreground/50">Entre<br/>amis</p>
+            </motion.div>
           </div>
         </section>
 

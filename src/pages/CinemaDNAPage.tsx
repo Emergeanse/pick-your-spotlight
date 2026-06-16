@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, Pencil, Check, X, Plus, Trophy, Heart, Users, Sparkles } from "lucide-react";
 import { RadarChart, PolarGrid, PolarAngleAxis, Radar, ResponsiveContainer } from "recharts";
@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { fetchMyDuos, loadAcceptedFriends, type DuoProfile, type DuoFriendCandidate } from "@/lib/duo-profiles";
 import { getLikedMovies } from "@/lib/liked-movies";
+import { listFeedbackByType } from "@/lib/feedback";
 import { getMyPreferences } from "@/lib/preferences";
 import squirrelHappy from "@/assets/Happy.png";
 import squirrelCritique from "@/assets/Critique.png";
@@ -144,7 +145,10 @@ const PodiumSelector = ({
 // ─── Page principale ──────────────────────────────────────────────────────────
 const CinemaDNAPage = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { user } = useAuth();
+  const targetUserId = searchParams.get("userId") || user?.id;
+  const isOwnProfile = !searchParams.get("userId");
 
   // Profil
   const [profile, setProfile] = useState<any>(null);
@@ -180,61 +184,94 @@ const CinemaDNAPage = () => {
   useEffect(() => {
     if (!user) return;
     load();
-  }, [user]);
+  }, [user, searchParams]);
 
   const load = async () => {
     if (!user) return;
+    const tid = searchParams.get("userId") || user.id;
+    const isOwn = !searchParams.get("userId") || searchParams.get("userId") === user.id;
     setLoading(true);
     try {
-      const [profileRes, dnaRes, likedData, prefsData, duosData, friendsData, lovedRes, seenRes] =
-        await Promise.all([
-          supabase.from("profiles").select("*").eq("id", user.id).single(),
-          supabase.from("cinematic_profiles" as any).select("personality_title,dna_archetype").eq("user_id", user.id).maybeSingle(),
-          getLikedMovies().catch(() => []),
-          getMyPreferences().catch(() => []),
-          fetchMyDuos(user.id),
-          loadAcceptedFriends(user.id),
-          supabase.from("user_item_feedback").select("id", { count: "exact", head: true }).eq("user_id", user.id).eq("feedback_type", "love"),
-          supabase.from("user_item_feedback").select("id", { count: "exact", head: true }).eq("user_id", user.id).eq("feedback_type", "seen"),
-        ]);
+      // ── Profil & ADN (commun own + friend) ───────────────────────────────
+      const [profileRes, dnaRes] = await Promise.all([
+        supabase.from("profiles").select("*").eq("id", tid).single(),
+        supabase.from("cinematic_profiles" as any).select("personality_title,dna_archetype").eq("user_id", tid).maybeSingle(),
+      ]);
 
-      // Profil
       const p = profileRes.data as any;
       setProfile(p);
-      setDisplayName(p?.display_name || user.email?.split("@")[0] || "");
+      setDisplayName(p?.display_name || (isOwn ? user.email?.split("@")[0] : "") || "");
       setAvatarUrl(p?.avatar_url || null);
       setBio(p?.bio || "");
 
-      // Podium
       const savedIds: (number | null)[] = p?.podium_film_ids ?? [null, null, null];
       setPodiumIds([savedIds[0] ?? null, savedIds[1] ?? null, savedIds[2] ?? null]);
 
-      // ADN
       if (dnaRes.data) {
         setDnaTitle((dnaRes.data as any).personality_title || null);
         setDnaArchetype((dnaRes.data as any).dna_archetype || null);
       }
 
-      // Genres pour radar
-      const genreCounts: Record<string, number> = {};
-      likedData.forEach((m: any) => {
-        (m.genres || []).forEach((g: string) => { genreCounts[g] = (genreCounts[g] || 0) + 1; });
-      });
-      // Compléter avec les préférences déclarées
-      prefsData.filter((p: any) => p.tag.category === "genre" && p.weight > 0).forEach((p: any) => {
-        const g = p.tag.label;
-        genreCounts[g] = (genreCounts[g] || 0) + Math.round(p.weight * 3);
-      });
-      setGenreStats(Object.entries(genreCounts).sort((a, b) => b[1] - a[1]).map(([genre, count]) => ({ genre, count })));
+      if (isOwn) {
+        // ── Données propres ───────────────────────────────────────────────
+        const [likedData, prefsData, duosData, friendsData, loveRows, lovedRes, seenRes] =
+          await Promise.all([
+            getLikedMovies().catch(() => []),
+            getMyPreferences().catch(() => []),
+            fetchMyDuos(user.id),
+            loadAcceptedFriends(user.id),
+            listFeedbackByType("love").catch(() => []),
+            supabase.from("user_item_feedback").select("id", { count: "exact", head: true }).eq("user_id", user.id).eq("feedback_type", "love"),
+            supabase.from("user_item_feedback").select("id", { count: "exact", head: true }).eq("user_id", user.id).eq("feedback_type", "seen"),
+          ]);
 
-      // Films adorés (❤️) pour le podium
-      const loved = likedData.filter((m: any) => m.feedback_type === "love" || m.loved);
-      setLovedFilms(loved.length > 0 ? loved : likedData.slice(0, 30));
-      setLovedCount(lovedRes.count || 0);
-      setSeenCount(seenRes.count || 0);
+        // Films adorés depuis les vrais feedbacks "love"
+        const loved = (loveRows as any[]).map((row: any) => {
+          const ci = row.catalog_items;
+          if (!ci) return null;
+          return { id: row.item_id, tmdb_id: ci.tmdb_id, title: ci.title, poster_path: ci.poster_path, media_type: ci.media_type };
+        }).filter(Boolean);
+        setLovedFilms(loved);
+        setLovedCount(lovedRes.count || 0);
+        setSeenCount(seenRes.count || 0);
 
-      setDuos(duosData);
-      setFriends(friendsData);
+        // Genres depuis movie_embeddings (genres réels des films vus)
+        const tmdbIds = (likedData as any[]).map((m: any) => m.tmdb_id).filter(Boolean);
+        const genreCounts: Record<string, number> = {};
+        if (tmdbIds.length > 0) {
+          const { data: embData } = await supabase
+            .from("movie_embeddings" as any)
+            .select("genres")
+            .in("tmdb_id", tmdbIds.slice(0, 100));
+          (embData ?? []).forEach((m: any) => {
+            (m.genres || []).forEach((g: string) => {
+              genreCounts[g] = (genreCounts[g] || 0) + 1;
+            });
+          });
+        }
+        // Fallback préférences explicites si données insuffisantes
+        if (Object.keys(genreCounts).length < 3) {
+          (prefsData as any[])
+            .filter((pref: any) => pref.tag.category === "genre" && pref.weight > 0)
+            .forEach((pref: any) => {
+              genreCounts[pref.tag.label] = (genreCounts[pref.tag.label] || 0) + 1;
+            });
+        }
+        setGenreStats(Object.entries(genreCounts).sort((a, b) => b[1] - a[1]).map(([genre, count]) => ({ genre, count })));
+
+        setDuos(duosData);
+        setFriends(friendsData);
+      } else {
+        // ── Profil d'un ami : afficher son podium ─────────────────────────
+        const podFilmIds = ((p?.podium_film_ids ?? []) as number[]).filter(Boolean);
+        if (podFilmIds.length > 0) {
+          const { data: catData } = await supabase
+            .from("catalog_items" as any)
+            .select("tmdb_id, title, poster_path")
+            .in("tmdb_id", podFilmIds);
+          setLovedFilms((catData ?? []) as any[]);
+        }
+      }
     } catch (e) { console.error(e); }
     finally { setLoading(false); }
   };
@@ -304,7 +341,9 @@ const CinemaDNAPage = () => {
             className="p-2 -ml-2 rounded-full hover:bg-white/5 transition-colors">
             <ArrowLeft className="w-5 h-5 text-foreground/60" />
           </button>
-          <h1 className="font-serif text-[20px] text-foreground leading-tight">Mon ADN Cinéma</h1>
+          <h1 className="font-serif text-[20px] text-foreground leading-tight">
+            {isOwnProfile ? "Mon ADN Cinéma" : (displayName ? `ADN de ${displayName}` : "Profil cinéphile")}
+          </h1>
         </div>
       </div>
 
@@ -364,9 +403,9 @@ const CinemaDNAPage = () => {
                 )}
               </div>
 
-              {/* Bio éditable */}
+              {/* Bio */}
               <div className="mt-3">
-                {editingBio ? (
+                {isOwnProfile && editingBio ? (
                   <div className="flex flex-col gap-2">
                     <textarea
                       autoFocus value={bioDraft}
@@ -385,7 +424,7 @@ const CinemaDNAPage = () => {
                       </button>
                     </div>
                   </div>
-                ) : (
+                ) : isOwnProfile ? (
                   <button onClick={() => { setBioDraft(bio); setEditingBio(true); }}
                     className="flex items-start gap-1.5 group text-left w-full">
                     <p className={`text-[12px] font-sans leading-snug flex-1 ${bio ? "text-foreground/60" : "text-foreground/25 italic"}`}>
@@ -393,7 +432,9 @@ const CinemaDNAPage = () => {
                     </p>
                     <Pencil className="w-3 h-3 text-foreground/20 group-hover:text-foreground/50 shrink-0 mt-0.5 transition-colors" />
                   </button>
-                )}
+                ) : bio ? (
+                  <p className="text-[12px] font-sans leading-snug text-foreground/60">{bio}</p>
+                ) : null}
               </div>
             </div>
           </div>
@@ -453,9 +494,9 @@ const CinemaDNAPage = () => {
           </div>
           <div className="flex items-end gap-3">
             {/* Ordre visuel podium : 🥈 | 🥇 | 🥉 */}
-            <PodiumSlot rank={2} film={podiumFilms[1]} onSelect={() => setSelectingRank(2)} />
-            <PodiumSlot rank={1} film={podiumFilms[0]} onSelect={() => setSelectingRank(1)} />
-            <PodiumSlot rank={3} film={podiumFilms[2]} onSelect={() => setSelectingRank(3)} />
+            <PodiumSlot rank={2} film={podiumFilms[1]} onSelect={isOwnProfile ? () => setSelectingRank(2) : () => {}} />
+            <PodiumSlot rank={1} film={podiumFilms[0]} onSelect={isOwnProfile ? () => setSelectingRank(1) : () => {}} />
+            <PodiumSlot rank={3} film={podiumFilms[2]} onSelect={isOwnProfile ? () => setSelectingRank(3) : () => {}} />
           </div>
         </motion.div>
 
@@ -551,8 +592,9 @@ const CinemaDNAPage = () => {
             {friends.length > 0 && (
               <div className="flex flex-wrap gap-2">
                 {friends.map(friend => (
-                  <div key={friend.id}
-                    className="flex items-center gap-2 px-3 py-2 rounded-full border border-white/[0.06]"
+                  <button key={friend.id}
+                    onClick={() => navigate(`/app/adn?userId=${friend.id}`)}
+                    className="flex items-center gap-2 px-3 py-2 rounded-full border border-white/[0.06] hover:border-primary/20 transition-colors"
                     style={{ background: "hsl(var(--card)/0.5)" }}>
                     <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
                       <span className="text-[10px] font-semibold text-primary">
@@ -560,7 +602,7 @@ const CinemaDNAPage = () => {
                       </span>
                     </div>
                     <span className="text-[11px] font-sans text-foreground/60">{friend.displayName}</span>
-                  </div>
+                  </button>
                 ))}
               </div>
             )}

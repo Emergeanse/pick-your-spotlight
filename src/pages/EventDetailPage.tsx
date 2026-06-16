@@ -199,20 +199,19 @@ const EventDetailPage = () => {
   const addDuoPartner = async () => {
     if (!duoPartner || !event) return;
     setAddingPartner(true);
-    try {
-      await supabase.from("event_participants" as any).insert({
-        event_id: event.id,
-        user_id: duoPartner.id,
-        status: "invited",
-      });
-      setDuoPartner(null);
-      await loadParticipants(event.id);
-      toast.success(`${duoPartner.name} a été invité·e !`);
-    } catch {
-      toast.error("Impossible d'ajouter le partenaire");
-    } finally {
-      setAddingPartner(false);
+    const { error } = await supabase.from("event_participants" as any).insert({
+      event_id: event.id,
+      user_id: duoPartner.id,
+      status: "invited",
+    });
+    setAddingPartner(false);
+    if (error) {
+      toast.error("Impossible d'inviter le partenaire", { description: error.message });
+      return;
     }
+    setDuoPartner(null);
+    await loadParticipants(event.id);
+    toast.success(`${duoPartner.name} a été invité·e !`);
   };
 
   const decline = async () => {

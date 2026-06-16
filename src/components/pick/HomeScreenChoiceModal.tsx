@@ -15,6 +15,14 @@ const AMBIANCES: { id: AmbianceMood; label: string; Icon: React.ComponentType<an
   { id: "surprise",   label: "Surprends-moi", Icon: Shuffle },
 ];
 
+const GENRES: { key: string; label: string; emoji: string }[] = [
+  { key: "Comédie",    label: "Comédie",    emoji: "😄" },
+  { key: "Drame",      label: "Drame",      emoji: "🎭" },
+  { key: "Thriller",   label: "Thriller",   emoji: "🔪" },
+  { key: "Fantastique",label: "Fantastique",emoji: "✨" },
+  { key: "Histoire",   label: "Histoire",   emoji: "📜" },
+];
+
 type ModalMode = "solo" | "duo" | "groupe";
 type ModalQuand = "ce-soir" | "planifier";
 type ModalOu = "ensemble" | "a-distance" | null;
@@ -25,7 +33,7 @@ interface HomeScreenChoiceModalProps {
   open: boolean;
   mediaType: "both" | "movie" | "tv";
   onClose: () => void;
-  onAutoPick: (duoId?: string) => void;
+  onAutoPick: (duoId?: string, opts?: { genre?: string }) => void;
   onOpenChat: () => void;
   onOpenMoodCapture: () => void;
   initialDuoId?: string;
@@ -48,8 +56,10 @@ const HomeScreenChoiceModal = ({
   const [quand, setQuand] = useState<ModalQuand>("ce-soir");
   const [planDate, setPlanDate] = useState("");
   const [planTime, setPlanTime] = useState("20:30");
+  const [planConfirmed, setPlanConfirmed] = useState(false);
   const [ou, setOu] = useState<ModalOu>(null);
   const [ouDescription, setOuDescription] = useState("");
+  const [selectedGenre, setSelectedGenre] = useState<string | null>(null);
 
   useEffect(() => {
     if (!open) {
@@ -59,8 +69,10 @@ const HomeScreenChoiceModal = ({
       setQuand("ce-soir");
       setPlanDate("");
       setPlanTime("20:30");
+      setPlanConfirmed(false);
       setOu(null);
       setOuDescription("");
+      setSelectedGenre(null);
       return;
     }
     if (initialContext === "duo" || initialDuoId) {
@@ -156,16 +168,17 @@ const HomeScreenChoiceModal = ({
               <p className="text-[10px] font-sans font-semibold tracking-[0.18em] uppercase text-foreground/35">Pour qui ?</p>
               <div className="flex gap-1 p-1 rounded-2xl bg-white/[0.04] border border-white/[0.08]">
                 {([
-                  { m: "solo" as ModalMode,   Icon: User,  label: "Solo"   },
-                  { m: "duo" as ModalMode,    Icon: Heart, label: "Duo"    },
-                  { m: "groupe" as ModalMode, Icon: Users, label: "Groupe" },
-                ]).map(({ m, Icon, label }) => (
+                  { m: "solo" as ModalMode,   Icon: User,  label: "Solo",   disabled: false },
+                  { m: "duo" as ModalMode,    Icon: Heart, label: "Duo",    disabled: false },
+                  { m: "groupe" as ModalMode, Icon: Users, label: "Groupe", disabled: true  },
+                ]).map(({ m, Icon, label, disabled }) => (
                   <button
                     key={m}
-                    onClick={() => handleModeChange(m)}
-                    className={`relative flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-[12px] font-sans font-medium transition-all overflow-hidden ${mode === m ? "text-foreground border border-primary/40" : "text-foreground/45 hover:text-foreground/70"}`}
+                    onClick={() => !disabled && handleModeChange(m)}
+                    disabled={disabled}
+                    className={`relative flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-[12px] font-sans font-medium transition-all overflow-hidden ${disabled ? "text-foreground/20 cursor-not-allowed" : mode === m ? "text-foreground border border-primary/40" : "text-foreground/45 hover:text-foreground/70"}`}
                   >
-                    {mode === m && <div className="absolute inset-0 rounded-xl" style={{ background: TAB_GRADIENT }} />}
+                    {mode === m && !disabled && <div className="absolute inset-0 rounded-xl" style={{ background: TAB_GRADIENT }} />}
                     <Icon className="relative w-3.5 h-3.5" />
                     <span className="relative">{label}</span>
                   </button>
@@ -225,48 +238,90 @@ const HomeScreenChoiceModal = ({
               )}
             </div>
 
-            {/* ── BLOC 2 : QUAND ? ── */}
+            {/* ── BLOC 2 : THÈME ── */}
+            <div className="flex flex-col gap-2">
+              <p className="text-[10px] font-sans font-semibold tracking-[0.18em] uppercase text-foreground/35">
+                Thème <span className="normal-case font-normal tracking-normal text-foreground/25">— optionnel</span>
+              </p>
+              <div className="flex gap-1.5 flex-wrap">
+                {GENRES.map(({ key, label, emoji }) => (
+                  <button
+                    key={key}
+                    onClick={() => setSelectedGenre(selectedGenre === key ? null : key)}
+                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-[12px] font-sans font-medium transition-all ${
+                      selectedGenre === key
+                        ? "border-primary/55 bg-primary/20 text-foreground"
+                        : "border-white/[0.09] bg-white/[0.04] text-foreground/55 hover:bg-white/[0.09] hover:text-foreground/80"
+                    }`}
+                  >
+                    <span className="text-[13px] leading-none">{emoji}</span>
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* ── BLOC 3 : QUAND ? ── */}
             <div className="relative flex flex-col gap-2">
               <p className="text-[10px] font-sans font-semibold tracking-[0.18em] uppercase text-foreground/35">Quand ?</p>
               <div className="flex gap-1 p-1 rounded-2xl bg-white/[0.04] border border-white/[0.08]">
                 <button
-                  onClick={() => setQuand("ce-soir")}
+                  onClick={() => { setQuand("ce-soir"); setPlanConfirmed(false); }}
                   className={`relative flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-[12px] font-sans font-medium transition-all overflow-hidden ${quand === "ce-soir" ? "text-foreground border border-primary/40" : "text-foreground/45"}`}
                 >
                   {quand === "ce-soir" && <div className="absolute inset-0 rounded-xl" style={{ background: TAB_GRADIENT }} />}
                   <span className="relative">🎬 Ce soir</span>
                 </button>
                 <button
-                  onClick={() => setQuand("planifier")}
+                  onClick={() => {
+                    if (quand === "planifier" && planConfirmed) { setPlanConfirmed(false); }
+                    else setQuand("planifier");
+                  }}
                   className={`relative flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-[12px] font-sans font-medium transition-all overflow-hidden ${quand === "planifier" ? "text-foreground border border-primary/40" : "text-foreground/45"}`}
                 >
                   {quand === "planifier" && <div className="absolute inset-0 rounded-xl" style={{ background: TAB_GRADIENT }} />}
                   <CalendarClock className="relative w-3.5 h-3.5" />
-                  <span className="relative">Planifier</span>
+                  {quand === "planifier" && planConfirmed && planDate
+                    ? <span className="relative text-[11px]">{new Date(planDate + "T" + planTime).toLocaleDateString("fr-FR", { day: "numeric", month: "short" })} · {planTime}</span>
+                    : <span className="relative">Planifier</span>
+                  }
                 </button>
               </div>
               <AnimatePresence>
-                {quand === "planifier" && (
-                  <motion.div initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} className="flex gap-2">
-                    <input
-                      type="date"
-                      value={planDate}
-                      onChange={(e) => setPlanDate(e.target.value)}
-                      min={new Date().toISOString().split("T")[0]}
-                      className="flex-1 bg-white/[0.04] border border-white/[0.08] rounded-xl px-3.5 py-2.5 text-[13px] font-sans text-foreground/80 focus:outline-none focus:border-primary/40 [color-scheme:dark]"
-                    />
-                    <input
-                      type="time"
-                      value={planTime}
-                      onChange={(e) => setPlanTime(e.target.value)}
-                      className="w-[88px] bg-white/[0.04] border border-white/[0.08] rounded-xl px-3 py-2.5 text-[13px] font-sans text-foreground/80 focus:outline-none focus:border-primary/40 [color-scheme:dark]"
-                    />
+                {quand === "planifier" && !planConfirmed && (
+                  <motion.div initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} className="flex flex-col gap-2">
+                    <div className="flex gap-2">
+                      <input
+                        type="date"
+                        value={planDate}
+                        onChange={(e) => setPlanDate(e.target.value)}
+                        min={new Date().toISOString().split("T")[0]}
+                        className="flex-1 bg-white/[0.04] border border-white/[0.08] rounded-xl px-3.5 py-2.5 text-[13px] font-sans text-foreground/80 focus:outline-none focus:border-primary/40 [color-scheme:dark]"
+                      />
+                      <input
+                        type="time"
+                        value={planTime}
+                        onChange={(e) => setPlanTime(e.target.value)}
+                        className="w-[88px] bg-white/[0.04] border border-white/[0.08] rounded-xl px-3 py-2.5 text-[13px] font-sans text-foreground/80 focus:outline-none focus:border-primary/40 [color-scheme:dark]"
+                      />
+                    </div>
+                    {planDate && planTime && (
+                      <motion.button
+                        initial={{ opacity: 0, y: 3 }} animate={{ opacity: 1, y: 0 }}
+                        onClick={() => setPlanConfirmed(true)}
+                        className="self-end flex items-center gap-1.5 px-4 py-2 rounded-xl text-[12px] font-sans font-semibold border border-primary/50 text-foreground/90 transition-all"
+                        style={{ background: TAB_GRADIENT }}
+                      >
+                        <Check className="w-3.5 h-3.5" />
+                        Valider
+                      </motion.button>
+                    )}
                   </motion.div>
                 )}
               </AnimatePresence>
             </div>
 
-            {/* ── BLOC 3 : OÙ ? ── (Duo & Groupe uniquement) */}
+            {/* ── BLOC 4 : OÙ ? ── (Duo & Groupe uniquement) */}
             <AnimatePresence>
               {mode !== "solo" && (
                 <motion.div
@@ -277,7 +332,7 @@ const HomeScreenChoiceModal = ({
                   transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
                   className="overflow-hidden"
                 >
-                  <div className="flex flex-col gap-2 pt-0">
+                  <div className="flex flex-col gap-2">
                     <p className="text-[10px] font-sans font-semibold tracking-[0.18em] uppercase text-foreground/35">Où ?</p>
                     <div className="flex gap-1 p-1 rounded-2xl bg-white/[0.04] border border-white/[0.08]">
                       <button
@@ -299,8 +354,7 @@ const HomeScreenChoiceModal = ({
                     </div>
                     {ou === "ensemble" && (
                       <input
-                        autoFocus
-                        type="text"
+                        autoFocus type="text"
                         placeholder="Chez nous, home cinéma, salon…"
                         value={ouDescription}
                         onChange={(e) => setOuDescription(e.target.value)}
@@ -308,16 +362,14 @@ const HomeScreenChoiceModal = ({
                       />
                     )}
                     {ou === "a-distance" && (
-                      <p className="text-[11px] text-foreground/40 font-sans px-1 leading-snug">
-                        Je trouverai un film dispo pour vous deux.
-                      </p>
+                      <p className="text-[11px] text-foreground/40 font-sans px-1 leading-snug">Je trouverai un film dispo pour vous deux.</p>
                     )}
                   </div>
                 </motion.div>
               )}
             </AnimatePresence>
 
-            {/* ── BLOC 4 : COMMENT ? ── */}
+            {/* ── BLOC 5 : COMMENT ? ── */}
             {/* Primary — Laisse-moi te surprendre */}
             <motion.button
               initial={{ opacity: 0, y: 14 }}
@@ -338,7 +390,7 @@ const HomeScreenChoiceModal = ({
                   if (ou === "ensemble" && ouDescription.trim()) params.set("location", ouDescription.trim());
                   navigate(`/app/soiree/nouvelle?${params.toString()}`);
                 } else {
-                  onAutoPick(selectedDuoId ?? undefined);
+                  onAutoPick(selectedDuoId ?? undefined, { genre: selectedGenre ?? undefined });
                 }
               }}
               disabled={mode === "duo" && !selectedDuoId}
@@ -407,22 +459,6 @@ const HomeScreenChoiceModal = ({
               </div>
             </motion.button>
 
-            {/* Ambiances */}
-            {onPickAmbiance && (
-              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.36, duration: 0.45 }} className="flex flex-col gap-2">
-                <p className="text-[10px] font-sans font-semibold tracking-[0.18em] uppercase text-foreground/35 px-0.5">Ambiance</p>
-                <div className="flex gap-1.5 flex-wrap">
-                  {AMBIANCES.map(({ id, label, Icon }) => (
-                    <button key={id} type="button" onClick={() => { onClose(); onPickAmbiance(id); }}
-                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full border border-white/[0.09] bg-white/[0.04] hover:bg-white/[0.09] hover:border-white/[0.16] text-foreground/70 hover:text-foreground/90 text-[11px] font-sans transition-all"
-                    >
-                      <Icon className="w-3 h-3 text-foreground/45" strokeWidth={2.2} />
-                      {label}
-                    </button>
-                  ))}
-                </div>
-              </motion.div>
-            )}
           </motion.div>
         </motion.div>
       )}

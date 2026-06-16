@@ -19,10 +19,10 @@ type EventContext = "duo" | "famille" | "amis";
 type RevealMode  = "surprise" | "vote";
 type MediaType   = "movie" | "tv" | "both";
 
-const CONTEXT_CONFIG: Record<EventContext, { label: string; Icon: React.ComponentType<any>; color: string; emoji: string }> = {
+const CONTEXT_CONFIG: Record<EventContext, { label: string; Icon: React.ComponentType<any>; color: string; emoji: string; disabled?: boolean }> = {
   duo:     { label: "Duo",          Icon: Heart, color: "text-primary",     emoji: "💑" },
-  famille: { label: "Famille",      Icon: Home,  color: "text-accent",      emoji: "🏠" },
-  amis:    { label: "Entre amis",   Icon: Users, color: "text-emerald-400", emoji: "🎉" },
+  famille: { label: "Famille",      Icon: Home,  color: "text-accent",      emoji: "🏠", disabled: true },
+  amis:    { label: "Entre amis",   Icon: Users, color: "text-emerald-400", emoji: "🎉", disabled: true },
 };
 
 const TAB_ACTIVE = "linear-gradient(135deg, hsl(var(--primary) / 0.40) 0%, hsl(var(--primary) / 0.15) 100%)";
@@ -158,9 +158,10 @@ const CreateEventPage = () => {
           ? (selectedDuo.user1_id === user.id ? selectedDuo.user2_id : selectedDuo.user1_id)
           : null;
         if (partnerId) {
-          await supabase.from("event_participants" as any).insert({
+          const { error: inviteErr } = await supabase.from("event_participants" as any).insert({
             event_id: eid, user_id: partnerId, status: "invited",
-          }).then(() => null);
+          });
+          if (inviteErr) console.warn("[CreateEvent] Invite partner failed:", inviteErr.message);
         }
       }
 
@@ -294,10 +295,11 @@ const CreateEventPage = () => {
                   {(Object.entries(CONTEXT_CONFIG) as [EventContext, typeof CONTEXT_CONFIG["duo"]][]).map(([key, cfg]) => (
                     <button
                       key={key}
-                      onClick={() => setContext(key)}
-                      className={`relative flex-1 flex flex-col items-center gap-1.5 py-3 rounded-2xl text-[11.5px] font-sans font-semibold transition-all overflow-hidden border ${context === key ? "border-primary/50 text-foreground" : "border-white/[0.08] text-foreground/50"}`}
+                      onClick={() => !cfg.disabled && setContext(key)}
+                      disabled={cfg.disabled}
+                      className={`relative flex-1 flex flex-col items-center gap-1.5 py-3 rounded-2xl text-[11.5px] font-sans font-semibold transition-all overflow-hidden border ${cfg.disabled ? "border-white/[0.05] text-foreground/20 opacity-35 cursor-not-allowed" : context === key ? "border-primary/50 text-foreground" : "border-white/[0.08] text-foreground/50"}`}
                     >
-                      {context === key && <div className="absolute inset-0 rounded-2xl" style={{ background: TAB_ACTIVE }} />}
+                      {context === key && !cfg.disabled && <div className="absolute inset-0 rounded-2xl" style={{ background: TAB_ACTIVE }} />}
                       <span className="relative text-lg">{cfg.emoji}</span>
                       <span className="relative">{cfg.label}</span>
                     </button>
