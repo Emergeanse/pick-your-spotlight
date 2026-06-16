@@ -30,7 +30,7 @@ type Participant = {
   id: string;
   user_id: string | null;
   guest_name: string | null;
-  guest_email: string | null;
+  guest_email?: string | null;
   status: "invited" | "confirmed" | "declined";
   display_name?: string;
 };
