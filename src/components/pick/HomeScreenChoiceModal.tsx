@@ -269,24 +269,33 @@ const HomeScreenChoiceModal = ({
               <AnimatePresence>
                 {themeOpen && (
                   <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: "auto" }}
-                    exit={{ opacity: 0, height: 0 }}
+                    initial={{ height: 0 }}
+                    animate={{ height: "auto" }}
+                    exit={{ height: 0 }}
                     transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
-                    className="overflow-hidden"
+                    style={{ overflow: "hidden" }}
                   >
                     <div className="flex gap-2 flex-wrap pt-2 px-1">
                       {GENRES.map(({ key, label, emoji }) => (
                         <button
                           key={key}
                           onClick={() => { setSelectedGenre(selectedGenre === key ? null : key); setThemeOpen(false); }}
-                          className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full text-[13px] font-sans font-semibold transition-all ${
-                            selectedGenre === key
-                              ? "border-2 border-primary bg-primary/40 text-white"
-                              : "border-2 border-white/50 bg-white/20 text-white hover:bg-white/30 hover:border-white/70"
-                          }`}
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "6px",
+                            padding: "8px 14px",
+                            borderRadius: "999px",
+                            fontSize: "13px",
+                            fontWeight: 600,
+                            border: selectedGenre === key ? "2px solid hsl(var(--primary))" : "2px solid rgba(255,255,255,0.55)",
+                            background: selectedGenre === key ? "hsl(var(--primary) / 0.35)" : "rgba(255,255,255,0.18)",
+                            color: "white",
+                            cursor: "pointer",
+                            transition: "all 0.15s",
+                          }}
                         >
-                          <span className="text-[14px] leading-none">{emoji}</span>
+                          <span style={{ fontSize: "14px", lineHeight: 1 }}>{emoji}</span>
                           {label}
                         </button>
                       ))}
