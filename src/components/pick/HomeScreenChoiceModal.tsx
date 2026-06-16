@@ -240,21 +240,21 @@ const HomeScreenChoiceModal = ({
 
             {/* ── BLOC 2 : THÈME ── */}
             <div className="flex flex-col gap-2">
-              <p className="text-[10px] font-sans font-semibold tracking-[0.18em] uppercase text-foreground/35">
-                Thème <span className="normal-case font-normal tracking-normal text-foreground/25">— optionnel</span>
+              <p className="text-[10px] font-sans font-semibold tracking-[0.18em] uppercase text-white/60">
+                Thème
               </p>
-              <div className="flex gap-1.5 flex-wrap">
+              <div className="flex gap-2 flex-wrap">
                 {GENRES.map(({ key, label, emoji }) => (
                   <button
                     key={key}
                     onClick={() => setSelectedGenre(selectedGenre === key ? null : key)}
-                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-[12px] font-sans font-medium transition-all ${
+                    className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full border text-[13px] font-sans font-semibold transition-all ${
                       selectedGenre === key
-                        ? "border-primary/70 bg-primary/25 text-foreground"
-                        : "border-white/20 bg-white/[0.08] text-foreground/85 hover:bg-white/[0.13] hover:border-white/30"
+                        ? "border-primary/80 bg-primary/30 text-white"
+                        : "border-white/35 bg-white/[0.10] text-white/90 hover:bg-white/[0.18] hover:border-white/50"
                     }`}
                   >
-                    <span className="text-[13px] leading-none">{emoji}</span>
+                    <span className="text-[14px] leading-none">{emoji}</span>
                     {label}
                   </button>
                 ))}
