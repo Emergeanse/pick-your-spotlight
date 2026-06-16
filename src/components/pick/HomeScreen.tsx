@@ -1904,7 +1904,7 @@ const HomeScreen = ({
                   setLoadingMovieId(item.id);
                   try {
                     const detail = await getMovieDetails(item.id, "movie");
-                    onMovieSelect(detail);
+                    setFlipDetailMovie(detail);
                   } catch {
                     setShowFindChoice(true);
                   } finally {
