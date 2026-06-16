@@ -393,7 +393,7 @@ const HomeScreenChoiceModal = ({
                         placeholder="Chez nous, home cinéma, salon…"
                         value={ouDescription}
                         onChange={(e) => setOuDescription(e.target.value)}
-                        className="bg-white/[0.08] border border-white/20 rounded-xl px-3.5 py-2.5 text-[13px] font-sans text-foreground/90 placeholder:text-foreground/45 focus:outline-none focus:border-primary/50"
+                        className="bg-white/20 border-2 border-white/50 rounded-xl px-3.5 py-2.5 text-[13px] font-sans font-medium text-white placeholder:text-white/50 focus:outline-none focus:border-primary/70"
                       />
                     )}
                     {ou === "a-distance" && (
