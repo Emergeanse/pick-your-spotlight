@@ -8,7 +8,7 @@ import { Sparkles, WandSparkles, Clapperboard, ChevronRight, Flame, Eye, Coffee,
 import { ALL_PLATFORMS } from "@/lib/platforms";
 import type { Movie, MovieDetail } from "@/lib/tmdb";
 import type { VoiceSearchFilters } from "./VoiceChat";
-import { getTrendingMovies, getBackdropUrl, getWatchProviders } from "@/lib/tmdb";
+import { getTrendingMovies, getBackdropUrl, getWatchProviders, getMovieDetails } from "@/lib/tmdb";
 import { getLikedMovies } from "@/lib/liked-movies";
 import { trackInteraction, getUserTasteProfile } from "@/lib/interactions";
 import { useAuth } from "@/hooks/use-auth";
@@ -341,6 +341,7 @@ const HomeScreen = ({
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [quickRecos, setQuickRecos] = useState<QuickReco[]>([]);
   const [trendingFallback, setTrendingFallback] = useState<QuickReco[]>([]);
+  const [loadingMovieId, setLoadingMovieId] = useState<number | null>(null);
   const [showShareNotif, setShowShareNotif] = useState(false);
   const [shareNotifDismissed, setShareNotifDismissed] = useState(false);
   const [activeWidget, setActiveWidget] = useState<"duo" | "famille" | "amis" | "surprise">("surprise");
@@ -1893,54 +1894,45 @@ const HomeScreen = ({
             )}
           </div>
           <div className="px-5 flex items-start justify-center gap-8">
-            {quickRecos.length > 0 ? (
-              quickRecos.slice(0, 3).map((reco) => (
-                <motion.button
-                  key={reco.id}
-                  whileTap={{ scale: 0.95 }}
-                  className="w-[80px] shrink-0 text-left"
-                  onClick={() => setShowFindChoice(true)}
-                >
-                  <div className="w-full aspect-[2/3] rounded-xl overflow-hidden bg-white/5 border border-white/10">
-                    {reco.poster_path ? (
-                      <img
-                        src={`https://image.tmdb.org/t/p/w185${reco.poster_path}`}
-                        alt={reco.title}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-foreground/20 text-[10px] text-center px-2 leading-tight">
-                        {reco.title}
-                      </div>
-                    )}
-                  </div>
-                </motion.button>
-              ))
-            ) : (
-              // Films tendance comme suggestions initiales
-              (trendingFallback.length > 0 ? trendingFallback : [0, 1, 2] as any[]).map((item: any, i: number) => (
-                <motion.button
-                  key={item?.id ?? i}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => setShowFindChoice(true)}
-                  className="w-[80px] shrink-0 text-left"
-                >
-                  <div className="w-full aspect-[2/3] rounded-xl overflow-hidden bg-white/[0.04] border border-white/[0.07]">
-                    {item?.poster_path ? (
-                      <img
-                        src={`https://image.tmdb.org/t/p/w185${item.poster_path}`}
-                        alt={item.title}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center">
-                        <WandSparkles className="w-5 h-5 text-foreground/15" />
-                      </div>
-                    )}
-                  </div>
-                </motion.button>
-              ))
-            )}
+            {(quickRecos.length > 0 ? quickRecos.slice(0, 3) : trendingFallback.length > 0 ? trendingFallback.slice(0, 3) : [null, null, null]).map((item: QuickReco | null, i: number) => (
+              <motion.button
+                key={item?.id ?? i}
+                whileTap={{ scale: 0.95 }}
+                disabled={loadingMovieId !== null}
+                onClick={async () => {
+                  if (!item?.id) { setShowFindChoice(true); return; }
+                  setLoadingMovieId(item.id);
+                  try {
+                    const detail = await getMovieDetails(item.id, "movie");
+                    onMovieSelect(detail);
+                  } catch {
+                    setShowFindChoice(true);
+                  } finally {
+                    setLoadingMovieId(null);
+                  }
+                }}
+                className="w-[80px] shrink-0 text-left relative"
+              >
+                <div className="w-full aspect-[2/3] rounded-xl overflow-hidden bg-white/[0.04] border border-white/[0.07]">
+                  {item?.poster_path ? (
+                    <img
+                      src={`https://image.tmdb.org/t/p/w185${item.poster_path}`}
+                      alt={item.title}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <WandSparkles className="w-5 h-5 text-foreground/15" />
+                    </div>
+                  )}
+                  {loadingMovieId === item?.id && (
+                    <div className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-xl">
+                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    </div>
+                  )}
+                </div>
+              </motion.button>
+            ))}
           </div>
         </motion.div>
 
