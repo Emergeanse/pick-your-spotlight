@@ -81,9 +81,8 @@ const EventDetailPage = () => {
   const [leaving, setLeaving] = useState(false);
   const [duoPartner, setDuoPartner] = useState<{ id: string; name: string } | null>(null);
   const [addingPartner, setAddingPartner] = useState(false);
-  const [revealing, setRevealing] = useState(false);
+  const [revealState, setRevealState] = useState<"idle" | "generating" | "selecting">("idle");
   const [revealRecs, setRevealRecs] = useState<any[]>([]);
-  const [showRevealSheet, setShowRevealSheet] = useState(false);
   const [confirmingPick, setConfirmingPick] = useState(false);
 
   const isOrganizer = !!user && event?.organizer_id === user.id;
@@ -274,54 +273,113 @@ const EventDetailPage = () => {
 
   const revealFilm = async () => {
     if (!event || !user) return;
-    setRevealing(true);
+    setRevealState("generating");
+
     try {
-      // 1. Charger les recommandations existantes avec données film
-      const { data: existingRecs } = await supabase
-        .from("event_recommendations" as any)
-        .select("id, catalog_item_id, position, tmdb_id, movie_title, poster_path")
-        .eq("event_id", event.id)
-        .order("position", { ascending: true });
-
-      const withData = (existingRecs as any[])?.filter((r: any) => r.movie_title) ?? [];
-
-      if (withData.length > 0) {
-        // Recommandations déjà générées → montrer directement
-        setRevealRecs(withData);
-        setShowRevealSheet(true);
-        return;
-      }
-
-      // 2. Aucune reco → générer maintenant avec le profil de l'organisateur
-      const [multiProfile, tasteProfile] = await Promise.all([
-        computeMultiVectorProfile(user.id),
-        getUserTasteProfile(),
-      ]);
-
+      // ── Contexte thème/ambiance de la soirée ─────────────
       const moodParts: string[] = [];
       if (event.genre_tags?.length) moodParts.push(`Genres souhaités : ${event.genre_tags.join(", ")}.`);
       if (event.mood) moodParts.push(`Ambiance : "${event.mood}".`);
+      const moodContext = moodParts.length ? moodParts.join(" ") : undefined;
+      const voiceGenres = event.genre_tags?.length ? event.genre_tags : null;
 
-      const { data } = await supabase.functions.invoke("surprise-personalized", {
-        body: {
+      let body: Record<string, any>;
+
+      if (event.context === "duo") {
+        // ── Pipeline DUO : cherche le profil mergé ────────
+        const partner = participants.find(p => p.user_id && p.user_id !== user.id);
+        let duoProfile: any = null;
+
+        if (partner?.user_id) {
+          const { data: duo } = await (supabase as any)
+            .from("duo_taste_profiles")
+            .select("*")
+            .or(`and(user1_id.eq.${user.id},user2_id.eq.${partner.user_id}),and(user1_id.eq.${partner.user_id},user2_id.eq.${user.id})`)
+            .eq("status", "active")
+            .maybeSingle();
+          duoProfile = duo;
+        }
+
+        if (duoProfile) {
+          const tv = duoProfile.taste_vector ? JSON.parse(duoProfile.taste_vector) : null;
+          const av = duoProfile.avoidance_vector ? JSON.parse(duoProfile.avoidance_vector) : null;
+          const unionTopGenres = [...new Set([...(duoProfile.user1_genres ?? []), ...(duoProfile.user2_genres ?? [])])];
+
+          // Récupère clusters + exclusions des deux users en parallèle
+          const [{ data: vec1 }, { data: vec2 }, { data: prof1 }, { data: prof2 }] = await Promise.all([
+            supabase.from("user_taste_vectors" as any).select("top_clusters, rejected_clusters").eq("user_id", duoProfile.user1_id).maybeSingle(),
+            supabase.from("user_taste_vectors" as any).select("top_clusters, rejected_clusters").eq("user_id", duoProfile.user2_id).maybeSingle(),
+            supabase.from("profiles").select("excluded_genres").eq("id", duoProfile.user1_id).maybeSingle(),
+            supabase.from("profiles").select("excluded_genres").eq("id", duoProfile.user2_id).maybeSingle(),
+          ]);
+
+          const unionTopClusters      = [...new Set([...(vec1?.top_clusters ?? []), ...(vec2?.top_clusters ?? [])])];
+          const unionRejectedClusters = [...new Set([...(vec1?.rejected_clusters ?? []), ...(vec2?.rejected_clusters ?? [])])];
+          const unionExcludedGenres   = [...new Set([...((prof1 as any)?.excluded_genres ?? []), ...((prof2 as any)?.excluded_genres ?? [])])];
+
+          body = {
+            userTasteVector: tv,
+            avoidanceVector: av,
+            tasteProfile: { topGenres: voiceGenres ?? unionTopGenres },
+            tasteClusters: unionTopClusters,
+            rejectedClusters: unionRejectedClusters,
+            excludedGenres: unionExcludedGenres,
+            voiceGenres,
+            mediaType: event.media_type ?? "both",
+            count: 3,
+            minMatchScore: 60,
+            duoUserIds: [duoProfile.user1_id, duoProfile.user2_id],
+            ...(moodContext && { moodContext }),
+          };
+        } else {
+          // Duo non trouvé → fallback solo
+          const [multiProfile, tasteProfile] = await Promise.all([
+            computeMultiVectorProfile(user.id),
+            getUserTasteProfile(),
+          ]);
+          body = {
+            userTasteVector: multiProfile?.stableTasteVector ?? null,
+            recentTasteVector: multiProfile?.recentTasteVector ?? null,
+            avoidanceVector: multiProfile?.avoidanceVector ?? null,
+            tasteProfile,
+            voiceGenres,
+            mediaType: event.media_type ?? "both",
+            count: 3,
+            minMatchScore: 60,
+            ...(moodContext && { moodContext }),
+          };
+        }
+      } else {
+        // ── Pipeline SOLO ──────────────────────────────────
+        const [multiProfile, tasteProfile] = await Promise.all([
+          computeMultiVectorProfile(user.id),
+          getUserTasteProfile(),
+        ]);
+        body = {
           userTasteVector: multiProfile?.stableTasteVector ?? null,
           recentTasteVector: multiProfile?.recentTasteVector ?? null,
           avoidanceVector: multiProfile?.avoidanceVector ?? null,
           tasteProfile,
+          voiceGenres,
           mediaType: event.media_type ?? "both",
           count: 3,
           minMatchScore: 60,
-          ...(moodParts.length && { moodContext: moodParts.join(" ") }),
-        },
-      });
+          ...(moodContext && { moodContext }),
+        };
+      }
 
+      const { data } = await supabase.functions.invoke("surprise-personalized", { body });
       const movies: any[] = data?.movies ?? [];
+
       if (!movies.length) {
-        toast.error("Aucun film trouvé pour cette soirée.");
+        toast.error("Aucun film trouvé. Essayez avec d'autres préférences.");
+        setRevealState("idle");
         return;
       }
 
-      // Sauvegarder + afficher
+      // Remplace les anciennes recommandations
+      await supabase.from("event_recommendations" as any).delete().eq("event_id", event.id);
+
       const saved: any[] = [];
       await Promise.all(
         movies.slice(0, 3).map(async (m: any, i: number) => {
@@ -334,8 +392,8 @@ const EventDetailPage = () => {
           const { data: ci } = await supabase
             .from("catalog_items").select("id").eq("tmdb_id", tmdbId).maybeSingle();
 
-          const { data: inserted } = await supabase
-            .from("event_recommendations" as any)
+          const { data: inserted } = await (supabase as any)
+            .from("event_recommendations")
             .insert({
               event_id: event.id,
               catalog_item_id: (ci as any)?.id ?? null,
@@ -351,12 +409,11 @@ const EventDetailPage = () => {
         })
       );
 
-      setRevealRecs(saved.sort((a, b) => a.position - b.position));
-      setShowRevealSheet(true);
+      setRevealRecs(saved.sort((a: any, b: any) => a.position - b.position));
+      setRevealState("selecting");
     } catch (e: any) {
-      toast.error(e?.message ?? "Impossible de générer les recommandations");
-    } finally {
-      setRevealing(false);
+      toast.error(e?.message ?? "Erreur lors de la génération");
+      setRevealState("idle");
     }
   };
 
@@ -673,15 +730,17 @@ const EventDetailPage = () => {
             <span className="text-2xl">🎩</span>
             <div className="flex-1">
               <p className="text-[13px] font-sans font-semibold text-foreground">Révéler le film</p>
-              <p className="text-[11.5px] text-foreground/40 mt-0.5">Annonce le film Pick à tous les participants.</p>
+              <p className="text-[11.5px] text-foreground/40 mt-0.5">
+                {event.context === "duo" ? "Pick analyse vos deux profils et propose 3 films." : "Pick analyse ton profil et propose 3 films."}
+              </p>
             </div>
             <button
               onClick={revealFilm}
-              disabled={revealing}
+              disabled={revealState !== "idle"}
               className="shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl bg-primary/15 border border-primary/25 text-primary text-[12px] font-sans font-semibold disabled:opacity-60"
             >
-              {revealing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
-              Révéler
+              {revealState === "generating" ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
+              {revealState === "generating" ? "Analyse…" : "Révéler"}
             </button>
           </div>
         )}
@@ -770,11 +829,11 @@ const EventDetailPage = () => {
 
       {/* ── Bottom sheet sélection du film ── */}
       <AnimatePresence>
-        {showRevealSheet && (
+        {revealState === "selecting" && (
           <>
             <motion.div
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              onClick={() => setShowRevealSheet(false)}
+              onClick={() => setRevealState("idle")}
               className="fixed inset-0 bg-black/70 z-50"
             />
             <motion.div
@@ -784,7 +843,10 @@ const EventDetailPage = () => {
             >
               <div className="w-10 h-1 rounded-full bg-white/15 mx-auto mb-4" />
               <p className="font-serif text-[19px] text-foreground mb-1">Quel film pour ce soir ?</p>
-              <p className="text-[12px] font-sans text-foreground/40 mb-4">Pick a sélectionné {revealRecs.length} film{revealRecs.length > 1 ? "s" : ""} pour toi. Choisis celui que tu révèles.</p>
+              <p className="text-[12px] font-sans text-foreground/40 mb-4">
+                {revealRecs.length} film{revealRecs.length > 1 ? "s" : ""} sélectionné{revealRecs.length > 1 ? "s" : ""} pour vous.
+                {event?.genre_tags?.length ? ` · ${event.genre_tags.join(", ")}` : ""}
+              </p>
 
               <div className="flex flex-col gap-3 mb-4">
                 {revealRecs.map((rec: any) => (
@@ -792,7 +854,7 @@ const EventDetailPage = () => {
                     key={rec.id}
                     onClick={() => confirmPick(rec)}
                     disabled={confirmingPick}
-                    className="flex items-center gap-3 p-3 rounded-2xl border border-white/[0.08] bg-white/[0.03] text-left hover:border-primary/40 hover:bg-primary/[0.06] transition-all disabled:opacity-60"
+                    className="flex items-center gap-3 p-3 rounded-2xl border border-white/[0.08] bg-white/[0.03] text-left hover:border-primary/40 hover:bg-primary/[0.06] transition-all disabled:opacity-60 active:scale-[0.98]"
                   >
                     {rec.poster_path ? (
                       <img
@@ -807,21 +869,22 @@ const EventDetailPage = () => {
                     )}
                     <div className="flex-1 min-w-0">
                       <p className="font-serif text-[15px] text-foreground leading-snug line-clamp-2">{rec.movie_title}</p>
+                      <p className="text-[11px] font-sans text-foreground/35 mt-0.5">Appuie pour choisir ce film</p>
                     </div>
                     {confirmingPick ? (
                       <Loader2 className="w-4 h-4 animate-spin text-primary shrink-0" />
                     ) : (
-                      <Sparkles className="w-4 h-4 text-primary/40 shrink-0" />
+                      <Check className="w-4 h-4 text-primary/30 shrink-0" />
                     )}
                   </button>
                 ))}
               </div>
 
               <button
-                onClick={() => setShowRevealSheet(false)}
+                onClick={() => setRevealState("idle")}
                 className="w-full py-3 rounded-2xl border border-white/[0.08] bg-white/[0.03] text-foreground/50 font-sans text-[13px]"
               >
-                Annuler
+                Annuler — générer d'autres suggestions
               </button>
             </motion.div>
           </>
