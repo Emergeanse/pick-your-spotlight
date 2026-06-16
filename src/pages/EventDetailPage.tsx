@@ -107,7 +107,7 @@ const EventDetailPage = () => {
 
     // Enrichit avec les display_name des comptes enregistrés
     const enriched: Participant[] = await Promise.all(
-      (eps as Participant[]).map(async (ep) => {
+      (eps as unknown as Participant[]).map(async (ep) => {
         if (ep.user_id) {
           const { data: p } = await supabase
             .from("profiles")
