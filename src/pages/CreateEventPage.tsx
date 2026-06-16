@@ -58,6 +58,7 @@ const CreateEventPage = () => {
   const preLocation = searchParams.get("location") ?? "";
   const preRemote   = searchParams.get("remote") === "true";
   const preDuoId    = searchParams.get("duoId") ?? null;
+  const preGenres   = searchParams.get("genres")?.split(",").filter(Boolean) ?? [];
 
   // Si on arrive depuis le modal (context + date pré-remplis), sauter l'étape 0
   const [step, setStep] = useState(preContext && preDate ? 1 : 0);
@@ -138,6 +139,7 @@ const CreateEventPage = () => {
           reveal_mode: revealMode,
           status: "planning",
           mood: mood.trim() || null,
+          genre_tags: preGenres.length > 0 ? preGenres : null,
         })
         .select("id, invite_link_token")
         .single();

@@ -450,6 +450,7 @@ const HomeScreenChoiceModal = ({
                   if (planTime) params.set("time", planTime);
                   if (ou === "a-distance") params.set("remote", "true");
                   if (ou === "ensemble" && ouDescription.trim()) params.set("location", ouDescription.trim());
+                  if (selectedGenres.length > 0) params.set("genres", selectedGenres.join(","));
                   navigate(`/app/soiree/nouvelle?${params.toString()}`);
                 } else if (orientMode === "mood") {
                   onClose();

@@ -25,6 +25,7 @@ type EventData = {
   organizer_id: string;
   invite_link_token: string;
   mood: string | null;
+  genre_tags: string[] | null;
   final_pick_id: string | null;
 };
 
@@ -90,7 +91,7 @@ const EventDetailPage = () => {
 
     const { data: ev, error } = await supabase
       .from("events" as any)
-      .select("id, title, event_date, event_time, location, is_remote, context, reveal_mode, status, organizer_id, invite_link_token, mood, final_pick_id")
+      .select("id, title, event_date, event_time, location, is_remote, context, reveal_mode, status, organizer_id, invite_link_token, mood, genre_tags, final_pick_id")
       .eq("id", id)
       .maybeSingle();
 
@@ -378,10 +379,24 @@ const EventDetailPage = () => {
             <Film className="w-3.5 h-3.5 text-primary/50 shrink-0" />
             <span>{event.reveal_mode === "surprise" ? "Film surprise · révélé le soir J" : "Vote pour choisir le film"}</span>
           </div>
-          {event.mood && (
-            <div className="flex items-start gap-2 text-[13px] font-sans text-foreground/60 mt-0.5">
+          {(event.genre_tags?.length || event.mood) && (
+            <div className="flex items-start gap-2 mt-1.5">
               <Sparkles className="w-3.5 h-3.5 text-primary/50 shrink-0 mt-0.5" />
-              <span className="italic">"{event.mood}"</span>
+              <div className="flex flex-col gap-1.5">
+                {event.genre_tags && event.genre_tags.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5">
+                    {event.genre_tags.map(tag => (
+                      <span key={tag} className="px-2.5 py-0.5 rounded-full text-[11px] font-sans font-semibold"
+                        style={{ background: "hsl(var(--primary) / 0.20)", border: "1px solid hsl(var(--primary) / 0.35)", color: "hsl(var(--primary))" }}>
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                )}
+                {event.mood && (
+                  <span className="text-[12.5px] font-sans text-foreground/55 italic">"{event.mood}"</span>
+                )}
+              </div>
             </div>
           )}
         </div>
