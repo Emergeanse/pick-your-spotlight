@@ -90,9 +90,9 @@ const EventDetailPage = () => {
       .maybeSingle();
 
     if (error || !ev) { setNotFound(true); setLoading(false); return; }
-    setEvent(ev as EventData);
+    setEvent(ev as unknown as EventData);
 
-    await loadParticipants(id, ev as EventData);
+    await loadParticipants(id, ev as unknown as EventData);
     setLoading(false);
   };
 
