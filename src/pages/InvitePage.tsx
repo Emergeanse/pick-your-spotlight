@@ -47,22 +47,12 @@ const InvitePage = () => {
     if (!token) { setNotFound(true); setLoading(false); return; }
     (async () => {
       const { data, error } = await supabase
-        .from("events" as any)
-        .select("id, title, event_date, event_time, location, is_remote, context, reveal_mode, status, organizer_id")
-        .eq("invite_link_token", token)
-        .neq("status", "cancelled")
-        .maybeSingle();
+        .rpc("get_event_by_invite_token" as any, { _token: token });
 
-      if (error || !data) { setNotFound(true); setLoading(false); return; }
+      const row = Array.isArray(data) ? data[0] : data;
+      if (error || !row) { setNotFound(true); setLoading(false); return; }
 
-      // Charge le nom de l'organisateur
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("display_name")
-        .eq("id", (data as any).organizer_id)
-        .maybeSingle();
-
-      setEvent({ ...(data as any), organizer_name: (profile as any)?.display_name || "Quelqu'un" });
+      setEvent({ ...(row as any), organizer_name: (row as any).organizer_name || "Quelqu'un" });
       setLoading(false);
     })();
   }, [token]);
