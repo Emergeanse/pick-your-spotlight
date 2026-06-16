@@ -8,6 +8,8 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
+import { computeMultiVectorProfile } from "@/lib/taste-engine";
+import { getUserTasteProfile } from "@/lib/interactions";
 
 // ─────────────────────────────────────────
 // Types
@@ -26,7 +28,11 @@ type EventData = {
   invite_link_token: string;
   mood: string | null;
   genre_tags: string[] | null;
+  media_type: string | null;
   final_pick_id: string | null;
+  final_pick_title: string | null;
+  final_pick_poster: string | null;
+  final_pick_tmdb_id: number | null;
 };
 
 type Participant = {
@@ -76,6 +82,9 @@ const EventDetailPage = () => {
   const [duoPartner, setDuoPartner] = useState<{ id: string; name: string } | null>(null);
   const [addingPartner, setAddingPartner] = useState(false);
   const [revealing, setRevealing] = useState(false);
+  const [revealRecs, setRevealRecs] = useState<any[]>([]);
+  const [showRevealSheet, setShowRevealSheet] = useState(false);
+  const [confirmingPick, setConfirmingPick] = useState(false);
 
   const isOrganizer = !!user && event?.organizer_id === user.id;
   const inviteLink = event ? `${window.location.origin}/invite/${event.invite_link_token}` : "";
@@ -91,7 +100,7 @@ const EventDetailPage = () => {
 
     const { data: ev, error } = await supabase
       .from("events" as any)
-      .select("id, title, event_date, event_time, location, is_remote, context, reveal_mode, status, organizer_id, invite_link_token, mood, genre_tags, final_pick_id")
+      .select("id, title, event_date, event_time, location, is_remote, context, reveal_mode, status, organizer_id, invite_link_token, mood, genre_tags, media_type, final_pick_id, final_pick_title, final_pick_poster, final_pick_tmdb_id")
       .eq("id", id)
       .maybeSingle();
 
@@ -264,39 +273,123 @@ const EventDetailPage = () => {
   };
 
   const revealFilm = async () => {
-    if (!event) return;
+    if (!event || !user) return;
     setRevealing(true);
     try {
-      // Récupère les recommandations déjà générées (position 1 en priorité)
-      const { data: recs } = await supabase
+      // 1. Charger les recommandations existantes avec données film
+      const { data: existingRecs } = await supabase
         .from("event_recommendations" as any)
-        .select("id, catalog_item_id, position")
+        .select("id, catalog_item_id, position, tmdb_id, movie_title, poster_path")
         .eq("event_id", event.id)
-        .order("position", { ascending: true })
-        .limit(1);
+        .order("position", { ascending: true });
 
-      const rec = (recs as any)?.[0];
-      if (!rec) {
-        toast.error("Aucun film recommandé trouvé pour cette soirée.");
+      const withData = (existingRecs as any[])?.filter((r: any) => r.movie_title) ?? [];
+
+      if (withData.length > 0) {
+        // Recommandations déjà générées → montrer directement
+        setRevealRecs(withData);
+        setShowRevealSheet(true);
         return;
       }
 
-      // Stocke le film révélé + passe le statut à "done"
+      // 2. Aucune reco → générer maintenant avec le profil de l'organisateur
+      const [multiProfile, tasteProfile] = await Promise.all([
+        computeMultiVectorProfile(user.id),
+        getUserTasteProfile(),
+      ]);
+
+      const moodParts: string[] = [];
+      if (event.genre_tags?.length) moodParts.push(`Genres souhaités : ${event.genre_tags.join(", ")}.`);
+      if (event.mood) moodParts.push(`Ambiance : "${event.mood}".`);
+
+      const { data } = await supabase.functions.invoke("surprise-personalized", {
+        body: {
+          userTasteVector: multiProfile?.stableTasteVector ?? null,
+          recentTasteVector: multiProfile?.recentTasteVector ?? null,
+          avoidanceVector: multiProfile?.avoidanceVector ?? null,
+          tasteProfile,
+          mediaType: event.media_type ?? "both",
+          count: 3,
+          minMatchScore: 60,
+          ...(moodParts.length && { moodContext: moodParts.join(" ") }),
+        },
+      });
+
+      const movies: any[] = data?.movies ?? [];
+      if (!movies.length) {
+        toast.error("Aucun film trouvé pour cette soirée.");
+        return;
+      }
+
+      // Sauvegarder + afficher
+      const saved: any[] = [];
+      await Promise.all(
+        movies.slice(0, 3).map(async (m: any, i: number) => {
+          const movie = m?.movie ?? m;
+          const tmdbId = movie?.id;
+          if (!tmdbId) return;
+          const movieTitle = movie?.title ?? movie?.name ?? "Film";
+          const posterPath = movie?.poster_path ?? null;
+
+          const { data: ci } = await supabase
+            .from("catalog_items").select("id").eq("tmdb_id", tmdbId).maybeSingle();
+
+          const { data: inserted } = await supabase
+            .from("event_recommendations" as any)
+            .insert({
+              event_id: event.id,
+              catalog_item_id: (ci as any)?.id ?? null,
+              position: i + 1,
+              tmdb_id: tmdbId,
+              movie_title: movieTitle,
+              poster_path: posterPath,
+            })
+            .select("id, catalog_item_id, position, tmdb_id, movie_title, poster_path")
+            .single();
+
+          if (inserted) saved.push(inserted);
+        })
+      );
+
+      setRevealRecs(saved.sort((a, b) => a.position - b.position));
+      setShowRevealSheet(true);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Impossible de générer les recommandations");
+    } finally {
+      setRevealing(false);
+    }
+  };
+
+  const confirmPick = async (rec: any) => {
+    if (!event) return;
+    setConfirmingPick(true);
+    try {
       const { error } = await supabase
         .from("events" as any)
-        .update({ final_pick_id: rec.catalog_item_id, status: "done" })
+        .update({
+          final_pick_id: rec.catalog_item_id ?? null,
+          final_pick_title: rec.movie_title,
+          final_pick_poster: rec.poster_path,
+          final_pick_tmdb_id: rec.tmdb_id,
+          status: "done",
+        })
         .eq("id", event.id);
 
       if (error) throw error;
 
-      setEvent(prev => prev ? { ...prev, final_pick_id: rec.catalog_item_id, status: "done" } : prev);
-      toast.success("Le film est révélé ! 🎩", {
-        description: "Les participants vont recevoir une notification.",
-      });
+      setEvent(prev => prev ? {
+        ...prev,
+        final_pick_title: rec.movie_title,
+        final_pick_poster: rec.poster_path,
+        final_pick_tmdb_id: rec.tmdb_id,
+        status: "done",
+      } : prev);
+      setShowRevealSheet(false);
+      toast.success("Film révélé ! 🎩", { description: "Tous les participants peuvent maintenant le voir." });
     } catch (e: any) {
-      toast.error(e?.message ?? "Impossible de révéler le film");
+      toast.error(e?.message ?? "Impossible de sauvegarder le choix");
     } finally {
-      setRevealing(false);
+      setConfirmingPick(false);
     }
   };
 
@@ -593,13 +686,29 @@ const EventDetailPage = () => {
           </div>
         )}
 
-        {/* ── Film révélé ── */}
-        {event.status === "done" && event.final_pick_id && (
-          <div className="rounded-2xl bg-primary/[0.08] border border-primary/20 p-4 flex items-center gap-3">
-            <span className="text-2xl">🎬</span>
-            <div className="flex-1">
-              <p className="text-[13px] font-sans font-semibold text-foreground">Film révélé !</p>
-              <p className="text-[11.5px] text-foreground/40 mt-0.5">Le pick a été annoncé aux participants.</p>
+        {/* ── Film révélé (visible par tous) ── */}
+        {event.status === "done" && event.final_pick_title && (
+          <div className="rounded-2xl overflow-hidden border border-primary/25">
+            <div className="flex items-center gap-3 px-4 py-2.5 bg-primary/[0.08]">
+              <span className="text-base">🎩</span>
+              <p className="text-[11px] font-sans font-semibold tracking-[0.15em] uppercase text-primary/80">Le pick de la soirée</p>
+            </div>
+            <div className="flex gap-3 p-3 bg-white/[0.02]">
+              {event.final_pick_poster ? (
+                <img
+                  src={`https://image.tmdb.org/t/p/w185${event.final_pick_poster}`}
+                  alt={event.final_pick_title}
+                  className="w-16 h-24 object-cover rounded-xl shrink-0"
+                />
+              ) : (
+                <div className="w-16 h-24 rounded-xl bg-white/[0.06] flex items-center justify-center shrink-0">
+                  <Film className="w-5 h-5 text-foreground/20" />
+                </div>
+              )}
+              <div className="flex-1 flex flex-col justify-center gap-1">
+                <p className="font-serif text-[16px] text-foreground leading-tight">{event.final_pick_title}</p>
+                <p className="text-[11px] font-sans text-foreground/40">Choisi par l'organisateur</p>
+              </div>
             </div>
           </div>
         )}
@@ -654,6 +763,66 @@ const EventDetailPage = () => {
                   Annuler
                 </button>
               </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* ── Bottom sheet sélection du film ── */}
+      <AnimatePresence>
+        {showRevealSheet && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              onClick={() => setShowRevealSheet(false)}
+              className="fixed inset-0 bg-black/70 z-50"
+            />
+            <motion.div
+              initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
+              transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              className="fixed bottom-0 inset-x-0 z-50 bg-[hsl(240_22%_6%)] border-t border-white/[0.08] rounded-t-3xl px-5 pt-5 pb-[calc(2rem+env(safe-area-inset-bottom))]"
+            >
+              <div className="w-10 h-1 rounded-full bg-white/15 mx-auto mb-4" />
+              <p className="font-serif text-[19px] text-foreground mb-1">Quel film pour ce soir ?</p>
+              <p className="text-[12px] font-sans text-foreground/40 mb-4">Pick a sélectionné {revealRecs.length} film{revealRecs.length > 1 ? "s" : ""} pour toi. Choisis celui que tu révèles.</p>
+
+              <div className="flex flex-col gap-3 mb-4">
+                {revealRecs.map((rec: any) => (
+                  <button
+                    key={rec.id}
+                    onClick={() => confirmPick(rec)}
+                    disabled={confirmingPick}
+                    className="flex items-center gap-3 p-3 rounded-2xl border border-white/[0.08] bg-white/[0.03] text-left hover:border-primary/40 hover:bg-primary/[0.06] transition-all disabled:opacity-60"
+                  >
+                    {rec.poster_path ? (
+                      <img
+                        src={`https://image.tmdb.org/t/p/w92${rec.poster_path}`}
+                        alt={rec.movie_title}
+                        className="w-12 h-[72px] object-cover rounded-xl shrink-0"
+                      />
+                    ) : (
+                      <div className="w-12 h-[72px] rounded-xl bg-white/[0.06] flex items-center justify-center shrink-0">
+                        <Film className="w-4 h-4 text-foreground/20" />
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className="font-serif text-[15px] text-foreground leading-snug line-clamp-2">{rec.movie_title}</p>
+                    </div>
+                    {confirmingPick ? (
+                      <Loader2 className="w-4 h-4 animate-spin text-primary shrink-0" />
+                    ) : (
+                      <Sparkles className="w-4 h-4 text-primary/40 shrink-0" />
+                    )}
+                  </button>
+                ))}
+              </div>
+
+              <button
+                onClick={() => setShowRevealSheet(false)}
+                className="w-full py-3 rounded-2xl border border-white/[0.08] bg-white/[0.03] text-foreground/50 font-sans text-[13px]"
+              >
+                Annuler
+              </button>
             </motion.div>
           </>
         )}

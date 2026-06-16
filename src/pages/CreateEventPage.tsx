@@ -140,6 +140,7 @@ const CreateEventPage = () => {
           status: "planning",
           mood: mood.trim() || null,
           genre_tags: preGenres.length > 0 ? preGenres : null,
+          media_type: mediaType,
         })
         .select("id, invite_link_token")
         .single();
@@ -219,21 +220,28 @@ const CreateEventPage = () => {
       const movies: any[] = data?.movies ?? [];
       if (!movies.length) return;
 
-      // Récupère les catalog_item_id pour chaque film TMDB
+      // Sauvegarde les recommandations avec données film pour l'affichage
       await Promise.all(
         movies.slice(0, 3).map(async (m: any, i: number) => {
-          const tmdbId = m?.movie?.id ?? m?.id;
+          const movie = m?.movie ?? m;
+          const tmdbId = movie?.id;
           if (!tmdbId) return;
+          const movieTitle = movie?.title ?? movie?.name ?? "Film";
+          const posterPath = movie?.poster_path ?? null;
+
           const { data: ci } = await supabase
             .from("catalog_items")
             .select("id")
             .eq("tmdb_id", tmdbId)
             .maybeSingle();
-          if (!ci) return;
+
           await supabase.from("event_recommendations" as any).insert({
             event_id: eid,
-            catalog_item_id: (ci as any).id,
+            catalog_item_id: (ci as any)?.id ?? null,
             position: i + 1,
+            tmdb_id: tmdbId,
+            movie_title: movieTitle,
+            poster_path: posterPath,
           });
         })
       );
