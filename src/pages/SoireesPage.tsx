@@ -32,6 +32,13 @@ const CONTEXT_ICON: Record<string, React.ComponentType<any>> = {
   solo:    UsersRound,
 };
 
+const CONTEXT_COLOR: Record<string, { bg: string; border: string; icon: string; iconBg: string }> = {
+  duo:     { bg: "rgba(236,72,153,0.10)",  border: "rgba(236,72,153,0.22)",  icon: "#ec4899", iconBg: "rgba(236,72,153,0.15)" },
+  famille: { bg: "rgba(99,102,241,0.10)",  border: "rgba(99,102,241,0.22)",  icon: "#818cf8", iconBg: "rgba(99,102,241,0.15)" },
+  amis:    { bg: "rgba(16,185,129,0.10)",  border: "rgba(16,185,129,0.22)",  icon: "#34d399", iconBg: "rgba(16,185,129,0.15)" },
+  solo:    { bg: "rgba(251,146,60,0.10)",  border: "rgba(251,146,60,0.22)",  icon: "#fb923c", iconBg: "rgba(251,146,60,0.15)" },
+};
+
 const isUpcoming = (dateStr: string) =>
   new Date(dateStr + "T23:59:59") >= new Date();
 
@@ -121,6 +128,7 @@ const SoireesPage = () => {
 
   const EventCard = ({ evt, i }: { evt: EventRow; i: number }) => {
     const Icon = CONTEXT_ICON[evt.context ?? "solo"] ?? UsersRound;
+    const colors = CONTEXT_COLOR[evt.context ?? "solo"] ?? CONTEXT_COLOR.solo;
     const isOrganizer = evt.organizer_id === user?.id;
     const { total, confirmed } = evt.participants;
     const invites = Math.max(0, total - 1);
@@ -141,15 +149,12 @@ const SoireesPage = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: i * 0.06, duration: 0.35 }}
         onClick={() => navigate(`/app/soirees/${evt.id}`)}
-        className={`w-full flex items-center gap-3.5 p-4 rounded-2xl border text-left transition-colors ${
-          !isOrganizer && evt.myStatus === "invited"
-            ? "bg-primary/[0.06] border-primary/20"
-            : "bg-white/[0.04] border-white/[0.07]"
-        }`}
+        className="w-full flex items-center gap-3.5 p-4 rounded-2xl border text-left transition-colors backdrop-blur-sm"
+        style={{ background: colors.bg, borderColor: colors.border }}
       >
         {/* Icône */}
-        <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-          <Icon className="w-5 h-5 text-primary" strokeWidth={1.7} />
+        <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: colors.iconBg }}>
+          <Icon className="w-5 h-5" style={{ color: colors.icon }} strokeWidth={1.7} />
         </div>
 
         {/* Infos */}
