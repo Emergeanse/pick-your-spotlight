@@ -262,14 +262,54 @@ const CinemaDNAPage = () => {
         setDuos(duosData);
         setFriends(friendsData);
       } else {
-        // ── Profil d'un ami : afficher son podium ─────────────────────────
+        // ── Profil d'un ami ───────────────────────────────────────────────
+        const [loveRes, seenRes, loveRows] = await Promise.all([
+          supabase.from("user_item_feedback").select("id", { count: "exact", head: true }).eq("user_id", tid).eq("feedback_type", "love"),
+          supabase.from("user_item_feedback").select("id", { count: "exact", head: true }).eq("user_id", tid).eq("feedback_type", "seen"),
+          supabase.from("user_item_feedback").select("item_id, catalog_items(tmdb_id, title, poster_path)").eq("user_id", tid).eq("feedback_type", "love").limit(50),
+        ]);
+        setLovedCount(loveRes.count || 0);
+        setSeenCount(seenRes.count || 0);
+
+        // Films adorés
+        const loved = ((loveRows.data ?? []) as any[]).map((row: any) => {
+          const ci = row.catalog_items;
+          if (!ci) return null;
+          return { id: row.item_id, tmdb_id: ci.tmdb_id, title: ci.title, poster_path: ci.poster_path };
+        }).filter(Boolean);
+        setLovedFilms(loved);
+
+        // Genres depuis les films aimés
+        const tmdbIds = loved.map((m: any) => m.tmdb_id).filter(Boolean);
+        const genreCounts: Record<string, number> = {};
+        if (tmdbIds.length > 0) {
+          const { data: embData } = await supabase
+            .from("movie_embeddings" as any)
+            .select("genres")
+            .in("tmdb_id", tmdbIds.slice(0, 100));
+          (embData ?? []).forEach((m: any) => {
+            (m.genres || []).forEach((g: string) => {
+              genreCounts[g] = (genreCounts[g] || 0) + 1;
+            });
+          });
+        }
+        setGenreStats(Object.entries(genreCounts).sort((a, b) => b[1] - a[1]).map(([genre, count]) => ({ genre, count })));
+
+        // Podium
         const podFilmIds = ((p?.podium_film_ids ?? []) as number[]).filter(Boolean);
         if (podFilmIds.length > 0) {
           const { data: catData } = await supabase
             .from("catalog_items" as any)
             .select("tmdb_id, title, poster_path")
             .in("tmdb_id", podFilmIds);
-          setLovedFilms((catData ?? []) as any[]);
+          // Merge avec lovedFilms pour avoir les données podium
+          setLovedFilms(prev => {
+            const merged = [...prev];
+            ((catData ?? []) as any[]).forEach((c: any) => {
+              if (!merged.find((m: any) => m.tmdb_id === c.tmdb_id)) merged.push(c);
+            });
+            return merged;
+          });
         }
       }
     } catch (e) { console.error(e); }
@@ -391,7 +431,7 @@ const CinemaDNAPage = () => {
                     <Heart className="w-2.5 h-2.5" />{lovedCount} adorés
                   </span>
                 )}
-                {duos.length > 0 && (
+                {isOwnProfile && duos.length > 0 && (
                   <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-violet-500/15 border border-violet-500/20 text-[10px] font-sans text-violet-400">
                     💑 {duos.length} duo{duos.length > 1 ? "s" : ""}
                   </span>
@@ -506,7 +546,7 @@ const CinemaDNAPage = () => {
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
                 <Heart className="w-3.5 h-3.5 text-rose-400/70" />
-                <p className="text-[10px] font-sans font-semibold tracking-[0.18em] uppercase text-foreground/40">Films adorés</p>
+                <p className="text-[10px] font-sans font-semibold tracking-[0.18em] uppercase text-foreground/40">{isOwnProfile ? "Films adorés" : "Films adorés"}</p>
               </div>
               <span className="text-[10px] font-sans text-foreground/25">{lovedCount > 0 ? lovedCount : lovedFilms.length} films</span>
             </div>
