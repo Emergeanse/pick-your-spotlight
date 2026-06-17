@@ -68,7 +68,7 @@ const formatCountdown = (ms: number) => {
   const h = Math.floor((s % 86400) / 3600);
   const m = Math.floor((s % 3600) / 60);
   const sec = s % 60;
-  if (d > 0) return `${d}j ${h}h ${m}m`;
+  if (d > 0) return `${d}j ${h}h ${m}m ${sec}s`;
   if (h > 0) return `${h}h ${m}m ${sec}s`;
   return `${m}m ${sec}s`;
 };
