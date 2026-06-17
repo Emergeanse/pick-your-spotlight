@@ -414,14 +414,15 @@ const HomeScreenChoiceModal = ({
                         <span className="relative">À distance</span>
                       </button>
                     </div>
-                    <input
-                      type="text"
-                      placeholder="Chez nous, salon, home cinéma…"
-                      value={ouDescription}
-                      onChange={(e) => setOuDescription(e.target.value)}
-                      disabled={ou === "a-distance"}
-                      className={`w-full rounded-xl bg-white/[0.10] border border-white/30 px-4 py-3 text-[13px] font-sans font-medium text-white placeholder:text-white/60 outline-none focus:border-primary/60 focus:bg-white/[0.14] transition-all ${ou === "a-distance" ? "opacity-40 cursor-not-allowed" : ""}`}
-                    />
+                    {ou !== "a-distance" && (
+                      <input
+                        type="text"
+                        placeholder="Chez nous, salon, home cinéma…"
+                        value={ouDescription}
+                        onChange={(e) => setOuDescription(e.target.value)}
+                        className="w-full rounded-xl bg-white/[0.06] border border-white/[0.12] px-4 py-3 text-[13px] font-sans font-medium text-foreground placeholder:text-foreground/35 outline-none focus:border-primary/50 focus:bg-white/[0.09] transition-colors"
+                      />
+                    )}
                     {ou === "a-distance" && (
                       <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.65)", padding: "0 4px", lineHeight: "1.4" }}>Film disponible sur vos plateformes communes.</p>
                     )}
