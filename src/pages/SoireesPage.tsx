@@ -4,6 +4,7 @@ import { CalendarDays, Heart, Home, Users, UsersRound, Plus, Loader2, ChevronRig
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import soireesBackground from "@/assets/soirees-background.png";
 
 type ParticipantSummary = {
   total: number;
@@ -193,7 +194,10 @@ const SoireesPage = () => {
 
   return (
     <div className="fixed inset-0 bg-background flex flex-col">
-      <div className="pt-[calc(3.5rem+env(safe-area-inset-top))] px-5 pb-4 shrink-0">
+      {/* Background image */}
+      <img src={soireesBackground} alt="" aria-hidden className="absolute inset-0 w-full h-full object-cover opacity-20 pointer-events-none select-none" />
+      <div className="absolute inset-0 bg-gradient-to-b from-background/60 via-background/40 to-background/80 pointer-events-none" />
+      <div className="relative pt-[calc(3.5rem+env(safe-area-inset-top))] px-5 pb-4 shrink-0">
         <div className="flex items-start justify-between">
           <div>
             <div className="flex items-center gap-2 mb-1">
@@ -213,7 +217,7 @@ const SoireesPage = () => {
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-5 pb-[calc(5rem+env(safe-area-inset-bottom))] space-y-5">
+      <div className="relative flex-1 overflow-y-auto px-5 pb-[calc(5rem+env(safe-area-inset-bottom))] space-y-5">
         {loading ? (
           <div className="flex justify-center pt-12">
             <Loader2 className="w-5 h-5 animate-spin text-primary/50" />
