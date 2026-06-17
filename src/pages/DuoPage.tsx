@@ -553,6 +553,7 @@ const ENSEMBLE_TABS: { id: EnsembleTab; label: string }[] = [
 
 export default function DuoPage() {
   const { user, isReady } = useAuth();
+  const navigate = useNavigate();
   const location = useLocation();
 
   const [activeTab, setActiveTab] = useState<EnsembleTab>("duos");
