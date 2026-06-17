@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { CalendarDays, Heart, Home, Users, UsersRound, Plus, Loader2, ChevronRight, Check, Clock } from "lucide-react";
+import { CalendarDays, Heart, Home, Users, UsersRound, Plus, Loader2, ChevronRight, Check, Clock, Eye, Timer } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -18,7 +18,7 @@ type EventRow = {
   event_time: string | null;
   context: "duo" | "famille" | "amis" | "solo" | null;
   status: string;
-  reveal_mode: "surprise" | "vote";
+  reveal_mode: "surprise" | "vote" | "timed";
   invite_link_token: string;
   organizer_id: string;
   participants: ParticipantSummary;
@@ -187,10 +187,18 @@ const SoireesPage = () => {
         </div>
 
         {/* Mode + chevron */}
-        <div className="flex flex-col items-end gap-1.5 shrink-0">
-          <span className="text-[10px] font-sans font-medium px-2 py-0.5 rounded-full bg-white/[0.06] text-foreground/45">
-            {evt.reveal_mode === "surprise" ? "🎩" : "🗳️"}
-          </span>
+        <div className="flex flex-col items-end gap-2 shrink-0">
+          {evt.reveal_mode === "timed" ? (
+            <div className="flex items-center gap-1 px-2 py-1 rounded-xl bg-amber-500/15 border border-amber-500/25">
+              <Timer className="w-3 h-3 text-amber-400" />
+              <span className="text-[10px] font-sans font-semibold text-amber-400">Surprise</span>
+            </div>
+          ) : (
+            <div className="flex items-center gap-1 px-2 py-1 rounded-xl bg-violet-500/15 border border-violet-500/25">
+              <Eye className="w-3 h-3 text-violet-400" />
+              <span className="text-[10px] font-sans font-semibold text-violet-400">Révélation</span>
+            </div>
+          )}
           <ChevronRight className="w-3.5 h-3.5 text-foreground/20" />
         </div>
       </motion.button>
