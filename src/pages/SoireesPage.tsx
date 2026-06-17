@@ -195,8 +195,8 @@ const SoireesPage = () => {
   return (
     <div className="fixed inset-0 bg-background flex flex-col">
       {/* Background image */}
-      <img src={soireesBackground} alt="" aria-hidden className="absolute inset-0 w-full h-full object-cover opacity-20 pointer-events-none select-none" />
-      <div className="absolute inset-0 bg-gradient-to-b from-background/60 via-background/40 to-background/80 pointer-events-none" />
+      <img src={soireesBackground} alt="" aria-hidden className="absolute inset-0 w-full h-full object-cover opacity-50 pointer-events-none select-none" />
+      <div className="absolute inset-0 bg-gradient-to-b from-background/50 via-background/20 to-background/70 pointer-events-none" />
       <div className="relative pt-[calc(3.5rem+env(safe-area-inset-top))] px-5 pb-4 shrink-0">
         <div className="flex items-start justify-between">
           <div>
