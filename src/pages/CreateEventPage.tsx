@@ -16,7 +16,7 @@ import { toast } from "sonner";
 // Types
 // ─────────────────────────────────────────
 type EventContext = "duo" | "famille" | "amis";
-type RevealMode  = "surprise" | "vote";
+type RevealMode  = "surprise" | "timed";
 type MediaType   = "movie" | "tv" | "both";
 
 const CONTEXT_CONFIG: Record<EventContext, { label: string; Icon: React.ComponentType<any>; color: string; emoji: string; disabled?: boolean }> = {
@@ -487,8 +487,8 @@ const CreateEventPage = () => {
                 <label className="text-[10px] font-sans font-semibold tracking-[0.18em] uppercase text-foreground/40">Mode</label>
                 <div className="flex gap-3">
                   {([
-                    { id: "surprise" as RevealMode, label: "Surprise", desc: "Pick choisit, révélé le soir J", emoji: "🎩" },
-                    { id: "vote"     as RevealMode, label: "Vote",     desc: "2-3 films, les invités votent", emoji: "🗳️" },
+                    { id: "surprise" as RevealMode, label: "Révélation avant",      desc: "Tu lances le film quand tu veux, avant la soirée",     emoji: "🎩" },
+                    { id: "timed"    as RevealMode, label: "Surprise sur le moment", desc: "Révélation automatique à l'heure de la soirée",          emoji: "⏰" },
                   ]).map(opt => (
                     <button
                       key={opt.id}
@@ -597,15 +597,15 @@ const CreateEventPage = () => {
 
                   {/* Infos sur le mode */}
                   <div className="rounded-2xl bg-white/[0.03] border border-white/[0.06] px-4 py-3.5 flex items-start gap-3">
-                    <span className="text-xl shrink-0 mt-0.5">{revealMode === "surprise" ? "🎩" : "🗳️"}</span>
+                    <span className="text-xl shrink-0 mt-0.5">{revealMode === "timed" ? "⏰" : "🎩"}</span>
                     <div>
                       <p className="text-[12.5px] font-sans font-semibold text-foreground/80">
-                        {revealMode === "surprise" ? "Mode Surprise activé" : "Mode Vote activé"}
+                        {revealMode === "timed" ? "Surprise sur le moment" : "Révélation avant"}
                       </p>
                       <p className="text-[11.5px] text-foreground/45 font-sans mt-0.5 leading-snug">
-                        {revealMode === "surprise"
-                          ? "Pick a sélectionné des films pour toi. Ils seront révélés le soir de la soirée."
-                          : "Les invités pourront voter parmi les films proposés. Tu trancheras."}
+                        {revealMode === "timed"
+                          ? "Le film sera révélé automatiquement à l'heure de la soirée."
+                          : "Tu pourras lancer la révélation quand tu le souhaites depuis la fiche soirée."}
                       </p>
                     </div>
                   </div>

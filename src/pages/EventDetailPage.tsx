@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowLeft, Calendar, MapPin, Wifi, Copy, Share2, Check,
-  Loader2, Users, Sparkles, Film, Crown, Trash2, AlertTriangle, LogOut,
+  Loader2, Users, Sparkles, Film, Crown, Trash2, AlertTriangle, LogOut, Clock,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -21,7 +21,7 @@ type EventData = {
   location: string | null;
   is_remote: boolean;
   context: string | null;
-  reveal_mode: "surprise" | "vote";
+  reveal_mode: "surprise" | "vote" | "timed";
   status: string;
   organizer_id: string;
   invite_link_token: string;
@@ -60,6 +60,20 @@ const statusLabel: Record<string, { label: string; color: string }> = {
 };
 
 // ─────────────────────────────────────────
+// Helpers
+// ─────────────────────────────────────────
+const formatCountdown = (ms: number) => {
+  const s = Math.floor(ms / 1000);
+  const d = Math.floor(s / 86400);
+  const h = Math.floor((s % 86400) / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const sec = s % 60;
+  if (d > 0) return `${d}j ${h}h ${m}m`;
+  if (h > 0) return `${h}h ${m}m ${sec}s`;
+  return `${m}m ${sec}s`;
+};
+
+// ─────────────────────────────────────────
 // Component
 // ─────────────────────────────────────────
 const EventDetailPage = () => {
@@ -82,6 +96,20 @@ const EventDetailPage = () => {
   const [addingPartner, setAddingPartner] = useState(false);
   const isOrganizer = !!user && event?.organizer_id === user.id;
   const inviteLink = event ? `${window.location.origin}/invite/${event.invite_link_token}` : "";
+
+  // Compte à rebours pour le mode "surprise sur le moment"
+  const [timeLeft, setTimeLeft] = useState<number | null>(null);
+  useEffect(() => {
+    if (!event || event.reveal_mode !== "timed" || event.status === "done") return;
+    const getEventMs = () => {
+      const t = event.event_time ?? "20:00:00";
+      return new Date(`${event.event_date}T${t}`).getTime();
+    };
+    const update = () => setTimeLeft(Math.max(0, getEventMs() - Date.now()));
+    update();
+    const timer = setInterval(update, 1000);
+    return () => clearInterval(timer);
+  }, [event]);
 
   // ── Chargement initial ───────────────────────────────────
   useEffect(() => {
@@ -373,7 +401,13 @@ const EventDetailPage = () => {
           </div>
           <div className="flex items-center gap-2 text-[13px] font-sans text-foreground/60">
             <Film className="w-3.5 h-3.5 text-primary/50 shrink-0" />
-            <span>{event.reveal_mode === "surprise" ? "Film surprise · révélé le soir J" : "Vote pour choisir le film"}</span>
+            <span>{
+              event.reveal_mode === "timed"
+                ? "Surprise sur le moment · révélation à l'heure de la soirée"
+                : event.reveal_mode === "surprise"
+                  ? "Révélation avant · l'organisateur choisit quand"
+                  : "Vote pour choisir le film"
+            }</span>
           </div>
           {(event.genre_tags?.length || event.mood) && (
             <div className="flex items-start gap-2 mt-1.5">
@@ -570,23 +604,39 @@ const EventDetailPage = () => {
           </div>
         )}
 
-        {/* ── Révéler le film (organisateur, mode surprise) ── */}
-        {isOrganizer && event.reveal_mode === "surprise" && event.status !== "done" && (
+        {/* ── Révéler le film (organisateur) ── */}
+        {isOrganizer && (event.reveal_mode === "surprise" || event.reveal_mode === "timed") && event.status !== "done" && (
           <div className="rounded-2xl bg-white/[0.03] border border-white/[0.06] p-4 flex items-center gap-3">
-            <span className="text-2xl">🎩</span>
-            <div className="flex-1">
-              <p className="text-[13px] font-sans font-semibold text-foreground">Révéler le film</p>
-              <p className="text-[11.5px] text-foreground/40 mt-0.5">
-                {event.context === "duo" ? "Pick analyse vos deux profils et propose 3 films." : "Pick analyse ton profil et propose 3 films."}
-              </p>
-            </div>
-            <button
-              onClick={revealFilm}
-              className="shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl bg-primary/15 border border-primary/25 text-primary text-[12px] font-sans font-semibold"
-            >
-              <Sparkles className="w-3.5 h-3.5" />
-              Révéler
-            </button>
+            {event.reveal_mode === "timed" && timeLeft !== null && timeLeft > 0 ? (
+              <>
+                <Clock className="w-6 h-6 text-primary/60 shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-[13px] font-sans font-semibold text-foreground">Surprise sur le moment</p>
+                  <p className="text-[11.5px] text-foreground/40 mt-0.5">
+                    Révélation dans <span className="text-primary/70 font-semibold tabular-nums">{formatCountdown(timeLeft)}</span>
+                  </p>
+                </div>
+              </>
+            ) : (
+              <>
+                <span className="text-2xl">🎩</span>
+                <div className="flex-1">
+                  <p className="text-[13px] font-sans font-semibold text-foreground">
+                    {event.reveal_mode === "timed" ? "L'heure est venue !" : "Révéler le film"}
+                  </p>
+                  <p className="text-[11.5px] text-foreground/40 mt-0.5">
+                    {event.context === "duo" ? "Pick analyse vos deux profils et propose 3 films." : "Pick analyse ton profil et propose 3 films."}
+                  </p>
+                </div>
+                <button
+                  onClick={revealFilm}
+                  className="shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl bg-primary/15 border border-primary/25 text-primary text-[12px] font-sans font-semibold"
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                  Révéler
+                </button>
+              </>
+            )}
           </div>
         )}
 
