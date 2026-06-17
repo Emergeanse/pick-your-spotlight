@@ -25,7 +25,7 @@ const GENRES: { key: string; label: string; emoji: string }[] = [
 
 type ModalMode = "solo" | "duo" | "groupe";
 type ModalQuand = "ce-soir" | "planifier";
-type ModalOu = "ensemble" | "a-distance" | null;
+type ModalOu = "ensemble" | "a-distance";
 
 export type LaunchContext = "solo" | "duo" | "famille" | "amis" | "surprise";
 
@@ -122,6 +122,7 @@ const HomeScreenChoiceModal = ({
   const handleModeChange = (m: ModalMode) => {
     setMode(m);
     if (m !== "duo") setSelectedDuoId(null);
+    if (m !== "solo") setOu("ensemble");
     if (m === "duo") {
       // Auto-sélectionne le duo favori (le + récent, premier de la liste)
       if (duos.length >= 1) { setSelectedDuoId(duos[0].id); setDuoListOpen(duos.length > 1); }
@@ -397,7 +398,7 @@ const HomeScreenChoiceModal = ({
                     <p className="text-[10px] font-sans font-semibold tracking-[0.18em] uppercase text-foreground/35">Où ?</p>
                     <div className="flex gap-1 p-1 rounded-2xl bg-white/[0.04] border border-white/[0.08]">
                       <button
-                        onClick={() => setOu(ou === "ensemble" ? null : "ensemble")}
+                        onClick={() => setOu("ensemble")}
                         className={`relative flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-[12px] font-sans font-medium transition-all overflow-hidden ${ou === "ensemble" ? "text-foreground border border-primary/40" : "text-foreground/45"}`}
                       >
                         {ou === "ensemble" && <div className="absolute inset-0 rounded-xl" style={{ background: TAB_GRADIENT }} />}
@@ -405,7 +406,7 @@ const HomeScreenChoiceModal = ({
                         <span className="relative">Ensemble</span>
                       </button>
                       <button
-                        onClick={() => setOu(ou === "a-distance" ? null : "a-distance")}
+                        onClick={() => setOu("a-distance")}
                         className={`relative flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-[12px] font-sans font-medium transition-all overflow-hidden ${ou === "a-distance" ? "text-foreground border border-primary/40" : "text-foreground/45"}`}
                       >
                         {ou === "a-distance" && <div className="absolute inset-0 rounded-xl" style={{ background: TAB_GRADIENT }} />}
