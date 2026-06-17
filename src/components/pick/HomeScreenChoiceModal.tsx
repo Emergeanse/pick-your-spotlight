@@ -453,7 +453,7 @@ const HomeScreenChoiceModal = ({
                   onClose();
                   const params = new URLSearchParams();
                   const ctx = mode === "duo" ? "duo" : mode === "groupe" ? (initialContext === "famille" ? "famille" : "amis") : "solo";
-                  if (ctx !== "solo") params.set("context", ctx);
+                  params.set("context", ctx);
                   if (selectedDuoId) params.set("duoId", selectedDuoId);
                   if (planDate) params.set("date", planDate);
                   if (planTime) params.set("time", planTime);

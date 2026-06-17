@@ -15,7 +15,7 @@ import { toast } from "sonner";
 // ─────────────────────────────────────────
 // Types
 // ─────────────────────────────────────────
-type EventContext = "duo" | "famille" | "amis";
+type EventContext = "duo" | "famille" | "amis" | "solo";
 type RevealMode  = "surprise" | "timed";
 type MediaType   = "movie" | "tv" | "both";
 
@@ -23,6 +23,7 @@ const CONTEXT_CONFIG: Record<EventContext, { label: string; Icon: React.Componen
   duo:     { label: "Duo",          Icon: Heart, color: "text-primary",     emoji: "💑" },
   famille: { label: "Famille",      Icon: Home,  color: "text-accent",      emoji: "🏠", disabled: true },
   amis:    { label: "Entre amis",   Icon: Users, color: "text-emerald-400", emoji: "🎉", disabled: true },
+  solo:    { label: "Solo",         Icon: Users, color: "text-orange-400",  emoji: "🎬" },
 };
 
 const TAB_ACTIVE = "linear-gradient(135deg, hsl(var(--primary) / 0.40) 0%, hsl(var(--primary) / 0.15) 100%)";
@@ -35,6 +36,7 @@ const autoTitle = (context: EventContext | null, date: string) => {
     duo:     "Soirée Duo",
     famille: "Soirée Famille",
     amis:    "Soirée entre amis",
+    solo:    "Soirée Solo",
   };
   const dateStr = date
     ? new Date(date + "T12:00:00").toLocaleDateString("fr-FR", { day: "numeric", month: "long" })
