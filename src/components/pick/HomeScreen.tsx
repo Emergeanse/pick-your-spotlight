@@ -343,6 +343,10 @@ const HomeScreen = ({
   const [trendingFallback, setTrendingFallback] = useState<QuickReco[]>([]);
   const [loadingMovieId, setLoadingMovieId] = useState<number | null>(null);
   const [showShareNotif, setShowShareNotif] = useState(false);
+  const [nextEvent, setNextEvent] = useState<{
+    id: string; title: string; event_date: string; event_time: string | null;
+    context: string | null; partnerInitial: string; partnerName: string;
+  } | null>(null);
   const [shareNotifDismissed, setShareNotifDismissed] = useState(false);
   const [activeWidget, setActiveWidget] = useState<"duo" | "famille" | "amis" | "surprise">("surprise");
   const [findChoiceContext, setFindChoiceContext] = useState<LaunchContext>("solo");
@@ -458,6 +462,79 @@ const HomeScreen = ({
       setFirstName(name.split(" ")[0]);
       setAvatarUrl((data as any)?.avatar_url || null);
     });
+  }, [user]);
+
+  // Prochaine soirée — charge l'événement le plus proche dans le futur
+  useEffect(() => {
+    if (!user) return;
+    const today = new Date().toISOString().slice(0, 10);
+    (async () => {
+      // Soirées en tant qu'organisateur
+      const { data: orgEvents } = await (supabase as any)
+        .from("events")
+        .select("id, title, event_date, event_time, context, organizer_id")
+        .eq("organizer_id", user.id)
+        .gte("event_date", today)
+        .not("status", "in", '("done","cancelled")')
+        .order("event_date", { ascending: true })
+        .limit(1);
+
+      // Soirées en tant que participant
+      const { data: myEps } = await (supabase as any)
+        .from("event_participants")
+        .select("event_id")
+        .eq("user_id", user.id);
+      const participatingIds: string[] = (myEps ?? []).map((e: any) => e.event_id);
+
+      let guestEvent: any = null;
+      if (participatingIds.length > 0) {
+        const { data } = await (supabase as any)
+          .from("events")
+          .select("id, title, event_date, event_time, context, organizer_id")
+          .in("id", participatingIds)
+          .neq("organizer_id", user.id)
+          .gte("event_date", today)
+          .not("status", "in", '("done","cancelled")')
+          .order("event_date", { ascending: true })
+          .limit(1);
+        guestEvent = data?.[0] ?? null;
+      }
+
+      const orgEvent = orgEvents?.[0] ?? null;
+      // Choisit le plus proche entre les deux
+      let chosen = orgEvent;
+      if (guestEvent && (!orgEvent || guestEvent.event_date <= orgEvent.event_date)) {
+        chosen = guestEvent;
+      }
+      if (!chosen) { setNextEvent(null); return; }
+
+      // Récupère les participants pour trouver le partenaire
+      const { data: eps } = await (supabase as any)
+        .from("event_participants")
+        .select("user_id, guest_name")
+        .eq("event_id", chosen.id)
+        .neq("user_id", user.id)
+        .limit(1);
+      const partner = eps?.[0];
+      let partnerName = "?";
+      if (partner?.user_id) {
+        const { data: prof } = await supabase
+          .from("profiles").select("display_name").eq("id", partner.user_id).maybeSingle();
+        partnerName = (prof as any)?.display_name || partner.guest_name || "Invité";
+      } else if (partner?.guest_name) {
+        partnerName = partner.guest_name;
+      }
+
+      setNextEvent({
+        id: chosen.id,
+        title: chosen.title,
+        event_date: chosen.event_date,
+        event_time: chosen.event_time,
+        context: chosen.context,
+        partnerInitial: partnerName.charAt(0).toUpperCase(),
+        partnerName,
+      });
+    })();
   }, [user]);
 
   // Apparition de la notif partagée après 2.5s
@@ -1869,42 +1946,42 @@ const HomeScreen = ({
         </section>
 
         {/* ─── Prochaine soirée (compact) ─── */}
-        <motion.button
-          type="button"
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.54, duration: 0.5 }}
-          whileTap={{ scale: 0.985 }}
-          onClick={() => navigate("/app/soirees")}
-          className="mx-5 mt-4 w-[calc(100%-2.5rem)] flex items-center gap-3 px-3.5 py-2.5 rounded-2xl border border-primary/20 bg-primary/[0.06] text-left"
-        >
-          {/* Avatars duo empilés */}
-          <div className="relative flex-shrink-0 w-11 h-8">
-            {/* Sophie (derrière) */}
-            <div className="absolute left-0 top-0 w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-pink-400 border-2 border-[hsl(240_22%_6%)] flex items-center justify-center">
-              <span className="text-[11px] font-bold text-white leading-none">S</span>
+        {nextEvent && (
+          <motion.button
+            type="button"
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.54, duration: 0.5 }}
+            whileTap={{ scale: 0.985 }}
+            onClick={() => navigate(`/app/soirees/${nextEvent.id}`)}
+            className="mx-5 mt-4 w-[calc(100%-2.5rem)] flex items-center gap-3 px-3.5 py-2.5 rounded-2xl border border-primary/20 bg-primary/[0.06] text-left"
+          >
+            {/* Avatars empilés : partenaire (derrière) + utilisateur (devant) */}
+            <div className="relative flex-shrink-0 w-11 h-8">
+              <div className="absolute left-0 top-0 w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-pink-400 border-2 border-[hsl(240_22%_6%)] flex items-center justify-center">
+                <span className="text-[11px] font-bold text-white leading-none">{nextEvent.partnerInitial}</span>
+              </div>
+              <div className="absolute left-4 top-0 w-8 h-8 rounded-full overflow-hidden border-2 border-[hsl(240_22%_6%)] bg-primary/20 flex items-center justify-center">
+                {avatarUrl ? (
+                  <img src={avatarUrl} alt="" className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-[11px] font-bold text-primary leading-none">
+                    {(firstName || "?").charAt(0).toUpperCase()}
+                  </span>
+                )}
+              </div>
             </div>
-            {/* Utilisateur (devant) */}
-            <div className="absolute left-4 top-0 w-8 h-8 rounded-full overflow-hidden border-2 border-[hsl(240_22%_6%)] bg-primary/20 flex items-center justify-center">
-              {avatarUrl ? (
-                <img src={avatarUrl} alt="" className="w-full h-full object-cover" />
-              ) : (
-                <span className="text-[11px] font-bold text-primary leading-none">
-                  {(firstName || "?").charAt(0).toUpperCase()}
-                </span>
-              )}
+            <div className="flex-1 min-w-0">
+              <p className="text-[10px] font-sans font-semibold tracking-[0.12em] uppercase text-primary/70 leading-none">Prochaine soirée</p>
+              <p className="mt-0.5 font-serif text-foreground text-[13px] leading-tight truncate">{nextEvent.title}</p>
+              <p className="text-foreground/40 text-[10px] font-sans capitalize">
+                {new Date(nextEvent.event_date + "T12:00:00").toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })}
+                {nextEvent.event_time ? ` · ${nextEvent.event_time.slice(0, 5)}` : ""}
+              </p>
             </div>
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-[10px] font-sans font-semibold tracking-[0.12em] uppercase text-primary/70 leading-none">Prochaine soirée</p>
-            <p className="mt-0.5 font-serif text-foreground text-[13px] leading-tight truncate">Soirée avec Sophie</p>
-            <p className="text-foreground/40 text-[10px] font-sans">Mercredi 18 juin · 20h30</p>
-          </div>
-          <div className="flex-shrink-0 flex items-center gap-1.5">
-            <span className="text-[11px] text-primary font-semibold font-sans">87%</span>
-            <ChevronRight className="w-3.5 h-3.5 text-foreground/25" />
-          </div>
-        </motion.button>
+            <ChevronRight className="w-3.5 h-3.5 text-foreground/25 flex-shrink-0" />
+          </motion.button>
+        )}
 
         {/* ─── 3 films qui pourraient te plaire ─── */}
         <motion.div
