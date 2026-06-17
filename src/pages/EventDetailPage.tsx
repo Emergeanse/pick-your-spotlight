@@ -123,7 +123,21 @@ const EventDetailPage = () => {
             .select("display_name")
             .eq("id", ep.user_id)
             .maybeSingle();
-          return { ...ep, display_name: (p as any)?.display_name ?? ep.user_id.slice(0, 8) };
+          let name: string = (p as any)?.display_name;
+          if (!name) {
+            // Fallback : cherche le nom dans le profil duo
+            const { data: duo } = await (supabase as any)
+              .from("duo_taste_profiles")
+              .select("user1_id, user1_display_name, user2_id, user2_display_name")
+              .or(`user1_id.eq.${ep.user_id},user2_id.eq.${ep.user_id}`)
+              .maybeSingle();
+            if (duo) {
+              name = (duo as any).user1_id === ep.user_id
+                ? (duo as any).user1_display_name
+                : (duo as any).user2_display_name;
+            }
+          }
+          return { ...ep, display_name: name ?? "Participant" };
         }
         return { ...ep, display_name: ep.guest_name ?? "Invité" };
       })
