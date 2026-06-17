@@ -308,7 +308,8 @@ const HomeScreen = ({
   const [bgImages, setBgImages] = useState<string[]>([]);
   const [findChoiceDuoId, setFindChoiceDuoId] = useState<string | undefined>(undefined);
   const currentDuoOverridesRef = useRef<DuoOverrides | null>(null);
-  const handleAutoPickRef = useRef<((duoId?: string, opts?: { genres?: string[] }) => Promise<void>) | undefined>(undefined);
+  const handleAutoPickRef = useRef<((duoId?: string, opts?: { genres?: string[]; moodContext?: string }) => Promise<void>) | undefined>(undefined);
+  const revealTriggeredRef = useRef(false);
   const [currentBgIndex, setCurrentBgIndex] = useState(0);
 
   const [tonightPick, setTonightPick] = useState<MovieDetail | null>(null);
@@ -418,13 +419,14 @@ const HomeScreen = ({
       revealGenres?: string[];
       revealMood?: string;
     } | null;
-    if (!state?.revealEventId) return;
-    const { revealContext, revealGenres } = state;
+    if (!state?.revealEventId || !user || revealTriggeredRef.current) return;
+    revealTriggeredRef.current = true;
+    const { revealContext, revealGenres, revealMood } = state;
     window.history.replaceState({}, "", "/app");
 
     const triggerReveal = async () => {
       let duoId: string | undefined;
-      if (revealContext === "duo" && user) {
+      if (revealContext === "duo") {
         try {
           const { data: duo } = await (supabase as any)
             .from("duo_taste_profiles")
@@ -437,11 +439,14 @@ const HomeScreen = ({
           console.error("[Reveal] Duo fetch error:", e);
         }
       }
-      handleAutoPickRef.current?.(duoId, revealGenres?.length ? { genres: revealGenres } : undefined);
+      const opts: { genres?: string[]; moodContext?: string } = {};
+      if (revealGenres?.length) opts.genres = revealGenres;
+      if (revealMood) opts.moodContext = revealMood;
+      handleAutoPickRef.current?.(duoId, Object.keys(opts).length ? opts : undefined);
     };
 
     setTimeout(() => { void triggerReveal(); }, 200);
-  }, [location.state]);
+  }, [location.state, user]);
 
   // Écoute le custom event émis par handleVoiceSearchIntent
   // pour router la recherche vocale dans le même pipeline que la recherche standard
@@ -966,7 +971,7 @@ const HomeScreen = ({
   };
 
   type DuoOverrides = { topGenres: string[]; excludedGenres: string[]; tasteVector: number[] | null; avoidanceVector: number[] | null; topClusters: string[]; rejectedClusters: string[]; partnerExcludeIds: number[]; user1Name: string | null; user2Name: string | null; user1Id?: string; user2Id?: string };
-  const generateTonightPick = async (excludeList: number[] = rejectedIds, rejectionContext?: RejectionContext, voiceFilters?: VoiceSearchFilters | null, duoOverrides?: DuoOverrides) => {
+  const generateTonightPick = async (excludeList: number[] = rejectedIds, rejectionContext?: RejectionContext, voiceFilters?: VoiceSearchFilters | null, duoOverrides?: DuoOverrides, extraMoodContext?: string) => {
     generateTonightPickRef.current = generateTonightPick;
     const poolIds = (chatMoviesPool || []).map((m) => m.id).filter(Number.isFinite);
     // En mode duo : on n'utilise pas l'historique solo (trop restrictif), juste les interactions des deux users
@@ -1096,7 +1101,7 @@ const HomeScreen = ({
             maxDuration: effectiveMaxDuration,
             count: (quickFilters.recommendationCount || RECOMMENDATION_BATCH_SIZE),
             minMatchScore: effectiveMinMatchScore,
-            ...(moodCfg?.moodContext && { moodContext: moodCfg.moodContext }),
+            ...((extraMoodContext || moodCfg?.moodContext) && { moodContext: extraMoodContext ?? moodCfg!.moodContext }),
             ...(moodCfg?.boostGenres && { moodBoostGenres: moodCfg.boostGenres }),
             // Overrides vocaux — priment sur les defaults SQL
             voiceGenres: voiceFilters?.genres ?? null,
@@ -1654,7 +1659,7 @@ const HomeScreen = ({
     }
   };
 
-  const handleAutoPick = async (duoId?: string, opts?: { genres?: string[] }) => {
+  const handleAutoPick = async (duoId?: string, opts?: { genres?: string[]; moodContext?: string }) => {
     setShowFindChoice(false);
     setFindChoiceDuoId(undefined);
     setTonightPick(null);
@@ -1715,7 +1720,7 @@ const HomeScreen = ({
             user2Id: duo.user2_id,
           };
           currentDuoOverridesRef.current = duoOverrides;
-          void generateTonightPick([], undefined, genreFilter ?? undefined, duoOverrides);
+          void generateTonightPick([], undefined, genreFilter ?? undefined, duoOverrides, opts?.moodContext);
           return;
         }
       } catch (e) {
@@ -1723,7 +1728,7 @@ const HomeScreen = ({
       }
     }
     currentDuoOverridesRef.current = null;
-    void generateTonightPick(rejectedIds, undefined, genreFilter, currentDuoOverridesRef.current ?? undefined);
+    void generateTonightPick(rejectedIds, undefined, genreFilter, currentDuoOverridesRef.current ?? undefined, opts?.moodContext);
   };
 
   // Garde le ref à jour à chaque render pour éviter les stale closures dans les bridges
