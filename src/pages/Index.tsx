@@ -26,6 +26,7 @@ import { useProfilePrefs } from "./index/use-profile-prefs";
 import { useRecommendationEngine } from "./index/use-recommendation-engine";
 import { useOverlayOrchestrator } from "./index/use-overlay-orchestrator";
 import { useExternalBridges } from "./index/use-external-bridges";
+import { getRevealEvent, clearRevealEvent } from "@/lib/event-reveal";
 
 const Index = () => {
   usePresenceTracker();
@@ -34,6 +35,7 @@ const Index = () => {
   const pickPlus = usePickPlus();
 
   const [state, dispatch] = useReducer(indexReducer, initialIndexState);
+  const [revealEventId, setRevealEventId] = useState<string | null>(null);
 
   const { profilePrefs, showTour, showActivation, setShowTour, setShowActivation } = useProfilePrefs({
     user,
@@ -64,6 +66,19 @@ const Index = () => {
     abandonCurrentSession: engine.abandonCurrentSession,
     onOpenTrainerOnMount: () => overlays.setOpenTrainerOnMount(true),
   });
+
+  // Capture le revealEventId quand le pipeline soirée démarre (singleton event-reveal)
+  useEffect(() => {
+    if (state.step === "result") {
+      const reveal = getRevealEvent();
+      if (reveal) {
+        setRevealEventId(reveal.eventId);
+        clearRevealEvent();
+      }
+    } else if (state.step === "home") {
+      setRevealEventId(null);
+    }
+  }, [state.step]);
 
   // ─── Composition handlers (need both engine + overlay context) ───
 
@@ -233,6 +248,7 @@ const Index = () => {
               onVisitedMovieIdsChange={setVisitedMovieIds}
               batchRejectedIds={state.batchRejectedIds}
               onBatchRejectedIdsChange={setBatchRejectedIds}
+              revealEventId={revealEventId}
             />
           </motion.div>
         )}

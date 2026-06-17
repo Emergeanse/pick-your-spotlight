@@ -1,5 +1,6 @@
 import { useState, useEffect, forwardRef, useCallback, useRef, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 import {
   Loader2,
   Sparkles,
@@ -16,6 +17,7 @@ import {
   Lock,
   Tv,
   Dices,
+  CalendarCheck,
 } from "lucide-react";
 import type { MovieDetail } from "@/lib/tmdb";
 import type { RecommendationMovieDetail } from "@/lib/recommendation-batch";
@@ -349,6 +351,7 @@ interface ResultScreenProps {
   sessionId?: string | null;
   onFeedback?: (type: string, movie: MovieDetail) => void;
   recommendationBatch?: RecommendationMovieDetail[];
+  revealEventId?: string | null;
 }
 
 const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
@@ -379,6 +382,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
       onFeedback,
       recommendationBatch,
       suggestionCount,
+      revealEventId,
     },
     ref,
   ) => {
@@ -425,6 +429,8 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
     };
 
     const { user } = useAuth();
+    const navigate = useNavigate();
+    const [programmingEvent, setProgrammingEvent] = useState(false);
     const interaction = useMovieInteraction(movie.id, inferCatalogMediaType(movie));
     const currentFeedback = interaction.primaryStatus;
     const recommendationCandidates = useMemo(() => {
@@ -514,6 +520,31 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
 
     const allVisited = visitedMovieIds.size >= displayedTotal;
     const isWhyUnlocked = true;
+
+    const programmerPourLaSoiree = async () => {
+      if (!revealEventId || programmingEvent) return;
+      setProgrammingEvent(true);
+      try {
+        const { data: ci } = await supabase
+          .from("catalog_items").select("id").eq("tmdb_id", movie.id).maybeSingle();
+        const { error } = await (supabase as any)
+          .from("events")
+          .update({
+            final_pick_id: (ci as any)?.id ?? null,
+            final_pick_title: getDisplayTitle(movie),
+            final_pick_poster: movie.poster_path ?? null,
+            final_pick_tmdb_id: movie.id,
+            status: "done",
+          })
+          .eq("id", revealEventId);
+        if (error) throw error;
+        toast.success("Film programmé pour la soirée !", { description: getDisplayTitle(movie) });
+        navigate(`/app/soirees/${revealEventId}`);
+      } catch (e: any) {
+        toast.error(e?.message ?? "Impossible de programmer le film");
+        setProgrammingEvent(false);
+      }
+    };
 
     const hasRichTexts = (t: MatchData | null | undefined): boolean =>
       !!(t?.headline || t?.detailedExplanation || t?.emotionalJourney);
@@ -1085,6 +1116,19 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
                   <Dices className="h-5 w-5" />
                 </button>
               </div>
+
+              {revealEventId && (
+                <button
+                  onClick={() => void programmerPourLaSoiree()}
+                  disabled={programmingEvent}
+                  className="w-full mb-3 flex items-center justify-center gap-2 py-3 rounded-2xl bg-gradient-to-r from-primary to-accent text-primary-foreground text-[13.5px] font-sans font-semibold disabled:opacity-60 active:scale-[0.98] transition-transform"
+                >
+                  {programmingEvent
+                    ? <Loader2 className="w-4 h-4 animate-spin" />
+                    : <CalendarCheck className="w-4 h-4" />}
+                  {programmingEvent ? "Programmation…" : "Programmer pour la soirée"}
+                </button>
+              )}
 
               <MovieActionBar
                 movie={movie}

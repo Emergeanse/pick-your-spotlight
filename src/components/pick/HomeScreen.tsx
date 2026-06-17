@@ -406,6 +406,39 @@ const HomeScreen = ({
     }
   }, [location.state]);
 
+  // Bridge soirée : lance le pipeline depuis EventDetailPage via location.state
+  useEffect(() => {
+    const state = location.state as {
+      revealEventId?: string;
+      revealContext?: string;
+      revealGenres?: string[];
+      revealMood?: string;
+    } | null;
+    if (!state?.revealEventId) return;
+    const { revealContext, revealGenres } = state;
+    window.history.replaceState({}, "", "/app");
+
+    const triggerReveal = async () => {
+      let duoId: string | undefined;
+      if (revealContext === "duo" && user) {
+        try {
+          const { data: duo } = await (supabase as any)
+            .from("duo_taste_profiles")
+            .select("id")
+            .or(`user1_id.eq.${user.id},user2_id.eq.${user.id}`)
+            .eq("status", "active")
+            .maybeSingle();
+          duoId = (duo as any)?.id ?? undefined;
+        } catch (e) {
+          console.error("[Reveal] Duo fetch error:", e);
+        }
+      }
+      handleAutoPickRef.current?.(duoId, revealGenres?.length ? { genres: revealGenres } : undefined);
+    };
+
+    setTimeout(() => { void triggerReveal(); }, 200);
+  }, [location.state]);
+
   // Écoute le custom event émis par handleVoiceSearchIntent
   // pour router la recherche vocale dans le même pipeline que la recherche standard
   useEffect(() => {
