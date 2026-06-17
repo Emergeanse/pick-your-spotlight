@@ -481,15 +481,17 @@ serve(async (req) => {
       // Niveaux d'escalade des contraintes de goût (exclude_ids TOUJOURS complet)
       // La plateforme n'est JAMAIS levée — si les 4 niveaux échouent, le SQL explicite
       // puis le fallback TMDB discover (with_watch_providers) prennent le relais.
+      // voiceGenres explicites = contrainte forte, jamais supprimée par la cascade
+      const hardGenres = voiceGenres ?? [];
       const levels = [
         // niveau 0 : toutes contraintes, avec voix si présentes
         (extra: any) => ({ ...buildRpcParams({ withLang: true, withYear: true, withPlatform: true }), ...extra }),
         // niveau 1 : sans lang/année
         (extra: any) => ({ ...buildRpcParams({ withLang: false, withYear: false, withPlatform: true }), ...extra }),
-        // niveau 2 : sans liked_genres
-        (extra: any) => ({ ...buildRpcParams({ withLang: false, withYear: false, withPlatform: true }), liked_genres: [], ...extra }),
-        // niveau 3 : sans goût restrictif — excluded_genres conservé (contrainte de sécurité, pas de goût)
-        (extra: any) => ({ ...buildRpcParams({ withLang: false, withYear: false, withPlatform: true }), liked_genres: [], min_rating: 0, p_min_popularity: null, ...extra }),
+        // niveau 2 : sans genres profil — mais genres explicitement demandés conservés
+        (extra: any) => ({ ...buildRpcParams({ withLang: false, withYear: false, withPlatform: true }), liked_genres: hardGenres, ...extra }),
+        // niveau 3 : sans goût restrictif — genres explicites toujours conservés
+        (extra: any) => ({ ...buildRpcParams({ withLang: false, withYear: false, withPlatform: true }), liked_genres: hardGenres, min_rating: 0, p_min_popularity: null, ...extra }),
       ];
 
       const sb = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
@@ -835,8 +837,11 @@ serve(async (req) => {
           ? `\n⛔ GENRES INTERDITS (élimination absolue) : ${effectiveExcludedGenres.join(", ")}\nÉlimine immédiatement tout film de la liste dont un genre correspond à cette liste — ne les propose pas, même s'ils semblent bien noter.\n`
           : "";
 
+        const voiceGenreNote = voiceGenres?.length
+          ? `\n🎯 GENRE EXPLICITEMENT DEMANDÉ : ${voiceGenres.join(", ")}\nL'utilisateur a choisi ce genre — donne-lui la PRIORITÉ ABSOLUE. Préfère les films/séries dont ce genre figure en tête de liste. Ne sélectionne un film sans ce genre que si le pool est trop limité.\n`
+          : "";
         const systemPrompt = `Tu es Pick, moteur de recommandation cinéphile. Sélectionne les meilleurs films depuis une liste pré-validée.
-${moodContext ? `\n🎭 AMBIANCE CHOISIE : ${moodContext}\n` : ""}${platformNote}${hardExcludedNote}
+${voiceGenreNote}${moodContext ? `\n🎭 AMBIANCE CHOISIE : ${moodContext}\n` : ""}${platformNote}${hardExcludedNote}
 PROFIL UTILISATEUR :
 - Genres préférés : ${likedWithTv.join(", ") || "non déterminés"}
 ${moodBoostGenres ? `- 🎯 Genres prioritaires (ambiance) : ${moodBoostGenres.join(", ")}` : ""}

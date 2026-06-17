@@ -197,9 +197,8 @@ const SoireesPage = () => {
       {/* Background image — screen blend : les noirs deviennent transparents, les lueurs violettes ressortent */}
       <div
         className="absolute inset-0 bg-cover bg-center bg-no-repeat pointer-events-none"
-        style={{ backgroundImage: `url(${soireesBackground})`, opacity: 0.65 }}
+        style={{ backgroundImage: `url(${soireesBackground})`, mixBlendMode: "screen", opacity: 0.9 }}
       />
-      <div className="absolute inset-0 bg-gradient-to-b from-background/30 via-background/50 to-background/90 pointer-events-none" />
       <div className="relative pt-[calc(3.5rem+env(safe-area-inset-top))] px-5 pb-4 shrink-0">
         <div className="flex items-start justify-between">
           <div>
