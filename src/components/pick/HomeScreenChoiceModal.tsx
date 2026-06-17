@@ -420,7 +420,10 @@ const HomeScreenChoiceModal = ({
                         placeholder="Chez nous, salon, home cinéma…"
                         value={ouDescription}
                         onChange={(e) => setOuDescription(e.target.value)}
-                        className="w-full rounded-xl bg-white/[0.06] border border-white/[0.12] px-4 py-3 text-[13px] font-sans font-medium text-foreground placeholder:text-foreground/35 outline-none focus:border-primary/50 focus:bg-white/[0.09] transition-colors"
+                        className="w-full rounded-xl px-4 py-3 text-[13px] font-sans font-medium text-white placeholder:text-white/50 outline-none transition-colors"
+                        style={{ background: "rgba(255,255,255,0.12)", border: "1.5px solid rgba(255,255,255,0.22)" }}
+                        onFocus={(e) => { e.currentTarget.style.borderColor = "hsl(var(--primary) / 0.6)"; e.currentTarget.style.background = "rgba(255,255,255,0.16)"; }}
+                        onBlur={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.22)"; e.currentTarget.style.background = "rgba(255,255,255,0.12)"; }}
                       />
                     )}
                     {ou === "a-distance" && (
