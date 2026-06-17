@@ -564,6 +564,9 @@ export default function DuoPage() {
   const [displayName, setDisplayName] = useState("");
   const [friends, setFriends] = useState<DuoFriendCandidate[]>([]);
   const [loadingFriends, setLoadingFriends] = useState(false);
+  const [selectedFriendDNA, setSelectedFriendDNA] = useState<DuoFriendCandidate | null>(null);
+  const [friendDNA, setFriendDNA] = useState<any>(null);
+  const [loadingFriendDNA, setLoadingFriendDNA] = useState(false);
 
   const load = useCallback(async () => {
     if (!user) return;
@@ -608,6 +611,24 @@ export default function DuoPage() {
     setDuos(prev => prev.filter(d => d.id !== duoId));
     setPendingDuos(prev => prev.filter(d => d.id !== duoId));
     if (selectedDuo?.id === duoId) setSelectedDuo(null);
+  };
+
+  const handleViewFriendDNA = async (f: DuoFriendCandidate) => {
+    setSelectedFriendDNA(f);
+    setLoadingFriendDNA(true);
+    setFriendDNA(null);
+    try {
+      const [{ data: prof }, { data: cin }] = await Promise.all([
+        supabase.from("profiles").select("favorite_genres, avatar_url").eq("id", f.id).single(),
+        supabase.from("cinematic_profiles" as any).select("personality_title, dna_archetype, global_level, taste_traits, narrative").eq("user_id", f.id).maybeSingle(),
+      ]);
+      setFriendDNA({
+        favoriteGenres: (prof as any)?.favorite_genres ?? [],
+        avatarUrl: (prof as any)?.avatar_url ?? f.avatarUrl,
+        cinematicProfile: cin ?? null,
+      });
+    } catch { setFriendDNA({}); }
+    finally { setLoadingFriendDNA(false); }
   };
 
   const handleShare = (duo: DuoProfile) => {
@@ -712,12 +733,13 @@ export default function DuoPage() {
                     </div>
                   ) : (
                     friends.map((f, i) => (
-                      <motion.div
+                      <motion.button
                         key={f.id}
                         initial={{ opacity: 0, y: 8 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: i * 0.04 }}
-                        className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-white/[0.05] border border-white/[0.08]"
+                        onClick={() => handleViewFriendDNA(f)}
+                        className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl bg-white/[0.05] border border-white/[0.08] text-left hover:bg-white/[0.08] transition-colors"
                       >
                         <div className="w-10 h-10 rounded-full overflow-hidden bg-primary/20 border border-white/10 shrink-0 flex items-center justify-center">
                           {f.avatarUrl
@@ -728,14 +750,11 @@ export default function DuoPage() {
                           <p className="font-sans font-semibold text-sm text-foreground truncate">{f.displayName}</p>
                           <p className="font-sans text-xs text-foreground/35 mt-0.5">Ami Pick</p>
                         </div>
-                        <button
-                          onClick={() => { setCreating(true); }}
-                          className="shrink-0 flex items-center gap-1 px-3 py-1.5 rounded-xl border border-primary/25 bg-primary/8 text-primary text-[11px] font-sans font-semibold hover:bg-primary/15 transition-colors"
-                        >
+                        <div className="shrink-0 flex items-center gap-1 px-3 py-1.5 rounded-xl border border-primary/25 bg-primary/8 text-primary text-[11px] font-sans font-semibold">
                           <Plus className="w-3 h-3" />
                           Duo
-                        </button>
-                      </motion.div>
+                        </div>
+                      </motion.button>
                     ))
                   )}
                 </motion.div>
@@ -801,6 +820,96 @@ export default function DuoPage() {
         )}
       </AnimatePresence>
       </div>
+
+      {/* ── Drawer ADN cinéma d'un ami ── */}
+      <AnimatePresence>
+        {selectedFriendDNA && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 flex items-end justify-center">
+            <div className="absolute inset-0 bg-background/75 backdrop-blur-sm" onClick={() => setSelectedFriendDNA(null)} />
+            <motion.div
+              initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
+              transition={{ type: "spring", damping: 28, stiffness: 300 }}
+              className="relative w-full max-w-lg rounded-t-3xl bg-card border-t border-white/10 max-h-[85vh] overflow-y-auto"
+            >
+              {/* Handle */}
+              <div className="flex justify-center pt-3 pb-1">
+                <div className="w-8 h-1 rounded-full bg-white/20" />
+              </div>
+
+              {/* Header */}
+              <div className="px-6 pt-3 pb-5 flex items-center gap-4">
+                <div className="w-14 h-14 rounded-full overflow-hidden bg-primary/20 border-2 border-primary/20 shrink-0 flex items-center justify-center">
+                  {friendDNA?.avatarUrl ?? selectedFriendDNA.avatarUrl
+                    ? <img src={friendDNA?.avatarUrl ?? selectedFriendDNA.avatarUrl} alt={selectedFriendDNA.displayName} className="w-full h-full object-cover" />
+                    : <span className="text-xl font-serif font-bold text-primary">{selectedFriendDNA.displayName.charAt(0).toUpperCase()}</span>}
+                </div>
+                <div>
+                  <p className="font-serif text-xl text-foreground">{selectedFriendDNA.displayName}</p>
+                  <p className="text-[11px] text-foreground/40 font-sans mt-0.5">ADN Cinéma</p>
+                </div>
+              </div>
+
+              <div className="px-6 pb-[calc(2.5rem+env(safe-area-inset-bottom))] space-y-4">
+                {loadingFriendDNA ? (
+                  <div className="flex justify-center py-10"><Loader2 className="w-5 h-5 animate-spin text-primary/50" /></div>
+                ) : !friendDNA ? null : (
+                  <>
+                    {/* Profil cinématique */}
+                    {friendDNA.cinematicProfile ? (
+                      <div className="rounded-2xl bg-gradient-to-br from-primary/10 to-accent/5 border border-primary/20 p-4 space-y-2">
+                        <p className="font-serif text-[18px] text-foreground leading-tight">{friendDNA.cinematicProfile.personality_title}</p>
+                        {friendDNA.cinematicProfile.dna_archetype && (
+                          <p className="text-[11px] font-sans font-semibold text-primary/80 uppercase tracking-widest">{friendDNA.cinematicProfile.dna_archetype}</p>
+                        )}
+                        {friendDNA.cinematicProfile.narrative && (
+                          <p className="text-[12px] text-foreground/50 font-sans leading-relaxed">{friendDNA.cinematicProfile.narrative}</p>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="rounded-2xl bg-white/[0.03] border border-white/[0.07] p-5 text-center">
+                        <p className="text-foreground/30 text-sm font-sans">Pas encore de profil cinéma généré</p>
+                      </div>
+                    )}
+
+                    {/* Traits de goût */}
+                    {friendDNA.cinematicProfile?.taste_traits?.length > 0 && (
+                      <div>
+                        <p className="text-[10px] font-sans font-semibold text-foreground/30 uppercase tracking-widest mb-2">Traits cinéma</p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {friendDNA.cinematicProfile.taste_traits.map((t: string) => (
+                            <span key={t} className="px-2.5 py-1 rounded-full bg-white/[0.06] border border-white/[0.08] text-[11px] font-sans text-foreground/60">{t}</span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Genres favoris */}
+                    {friendDNA.favoriteGenres?.length > 0 && (
+                      <div>
+                        <p className="text-[10px] font-sans font-semibold text-foreground/30 uppercase tracking-widest mb-2">Genres préférés</p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {friendDNA.favoriteGenres.map((g: string) => (
+                            <span key={g} className="px-2.5 py-1 rounded-full bg-primary/10 border border-primary/20 text-[11px] font-sans text-primary/80">{g}</span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* CTA créer duo */}
+                    <button
+                      onClick={() => { setSelectedFriendDNA(null); setCreating(true); }}
+                      className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-gradient-to-r from-primary to-accent text-primary-foreground text-sm font-sans font-semibold mt-2"
+                    >
+                      <Plus className="w-4 h-4" />
+                      Créer un duo avec {selectedFriendDNA.displayName}
+                    </button>
+                  </>
+                )}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
