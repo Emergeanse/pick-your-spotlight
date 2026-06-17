@@ -138,20 +138,20 @@ const HomeScreenChoiceModal = ({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-          className="fixed inset-0 z-50 flex items-center justify-center"
+          className="fixed inset-0 z-50 overflow-y-auto flex justify-center scrollbar-hide"
           onClick={onClose}
         >
-          <div className="absolute inset-0 bg-background/75 backdrop-blur-2xl pointer-events-none" />
-          <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(ellipse at center, transparent 30%, hsl(var(--background) / 0.85) 100%)" }} />
-          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] max-w-[640px] aspect-square pointer-events-none" style={{ background: "radial-gradient(circle, hsl(var(--primary) / 0.22) 0%, hsl(var(--primary) / 0.08) 35%, transparent 65%)", filter: "blur(40px)" }} />
-          <div className="absolute inset-0 pointer-events-none opacity-[0.025] mix-blend-overlay" style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E\")" }} />
+          <div className="fixed inset-0 bg-background/75 backdrop-blur-2xl pointer-events-none" />
+          <div className="fixed inset-0 pointer-events-none" style={{ background: "radial-gradient(ellipse at center, transparent 30%, hsl(var(--background) / 0.85) 100%)" }} />
+          <div className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] max-w-[640px] aspect-square pointer-events-none" style={{ background: "radial-gradient(circle, hsl(var(--primary) / 0.22) 0%, hsl(var(--primary) / 0.08) 35%, transparent 65%)", filter: "blur(40px)" }} />
+          <div className="fixed inset-0 pointer-events-none opacity-[0.025] mix-blend-overlay" style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E\")" }} />
 
           <motion.div
             initial={{ y: 24, opacity: 0, scale: 0.97 }}
             animate={{ y: 0, opacity: 1, scale: 1 }}
             exit={{ y: 24, opacity: 0, scale: 0.97 }}
             transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-            className="relative w-full max-w-md mx-5 px-6 pt-8 pb-7 flex flex-col gap-4 max-h-[88vh] overflow-y-auto scrollbar-hide"
+            className="relative w-full max-w-md mx-5 my-auto px-6 pt-8 pb-[calc(2rem+env(safe-area-inset-bottom))] flex flex-col gap-4"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Glass surface */}
