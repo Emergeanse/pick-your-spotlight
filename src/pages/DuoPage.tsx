@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
+import { toast } from "sonner";
 import duoBg from "@/assets/duo-background.png";
 import { useLocation, useNavigate } from "react-router-dom";
 import { setPendingDuoPick } from "@/lib/duo-pending";
@@ -673,7 +674,11 @@ export default function DuoPage() {
                 <p className="text-foreground/40 font-sans text-xs mt-0.5">Amis, duos et groupes</p>
               </div>
               <button
-                onClick={() => setCreating(true)}
+                onClick={() => {
+                  if (activeTab === "amis") navigate("/app/friends");
+                  else if (activeTab === "duos") setCreating(true);
+                  else toast.info("Les groupes arrivent bientôt !");
+                }}
                 className="w-9 h-9 rounded-full bg-primary/15 border border-primary/25 flex items-center justify-center hover:bg-primary/25 transition-colors"
               >
                 <Plus className="w-4 h-4 text-primary" />
