@@ -9,7 +9,7 @@ interface LandingStepProps {
 
 const LandingStep = ({ onCreateSoiree, creating }: LandingStepProps) => (
   <motion.div key="landing" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, x: -40 }}
-    className="h-full flex flex-col items-center justify-center px-6 relative overflow-hidden"
+    className="h-full flex flex-col items-center justify-center px-6 pb-[calc(5rem+env(safe-area-inset-bottom))] relative overflow-hidden"
   >
     {/* Atmospheric background orbs */}
     <div className="absolute inset-0 pointer-events-none overflow-hidden">

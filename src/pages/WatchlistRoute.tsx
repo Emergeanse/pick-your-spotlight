@@ -21,7 +21,7 @@ const WatchlistRoute = () => {
         className="absolute inset-0 pointer-events-none"
         style={{ background: "linear-gradient(to bottom, transparent 0%, hsl(var(--background)/0.3) 60%, hsl(var(--background)/0.9) 85%, hsl(var(--background)) 100%)" }}
       />
-      <div className="h-full pt-[calc(4rem+env(safe-area-inset-top))] pb-[calc(3.5rem+env(safe-area-inset-bottom))] relative">
+      <div className="h-full pt-[calc(4rem+env(safe-area-inset-top))] pb-[calc(5rem+env(safe-area-inset-bottom))] relative">
         <WatchlistPage
           onMovieSelect={handleMovieSelect}
           tabs={["watchlist"]}

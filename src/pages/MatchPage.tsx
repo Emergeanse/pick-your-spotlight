@@ -212,7 +212,7 @@ export default function MatchPage() {
             </div>
 
             {/* Info scrollable */}
-            <div className="relative z-10 mt-auto px-6 pb-[calc(5rem+env(safe-area-inset-bottom))] overflow-y-auto scrollbar-hide max-h-[60vh]">
+            <div className="relative z-10 mt-auto px-6 pb-[calc(5rem+env(safe-area-inset-bottom))] overflow-y-auto scrollbar-hide max-h-[70dvh]">
               {/* Chips */}
               <div className="flex gap-2 mb-4 flex-wrap">
                 {year && (

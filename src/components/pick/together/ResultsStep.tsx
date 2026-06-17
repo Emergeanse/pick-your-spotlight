@@ -60,7 +60,7 @@ const ResultsStep = ({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="h-full overflow-y-auto"
+      className="h-full overflow-y-auto pb-[calc(5rem+env(safe-area-inset-bottom))]"
     >
       <div className="relative min-h-[70vh]">
         <div

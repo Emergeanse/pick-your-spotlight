@@ -280,7 +280,7 @@ const Friends = () => {
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 flex items-end justify-center">
             <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" onClick={() => setSelectedFriend(null)} />
             <motion.div initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }} transition={{ type: "spring", damping: 28, stiffness: 300 }}
-              className="relative w-full max-w-lg rounded-t-2xl bg-card border-t border-border/20 max-h-[80vh] overflow-y-auto">
+              className="relative w-full max-w-lg rounded-t-2xl bg-card border-t border-border/20 max-h-[90dvh] overflow-y-auto">
               <div className="sticky top-0 bg-card/90 backdrop-blur-xl z-10 px-6 pt-4 pb-3 flex items-center justify-between">
                 <h3 className="text-base font-serif">Profil</h3>
                 <div className="flex items-center gap-2">
