@@ -137,6 +137,7 @@ const Profile = () => {
   const [seedLog, setSeedLog] = useState<string[]>([]);
   const [seedLang, setSeedLang] = useState("fr");
   const [seedGenreId, setSeedGenreId] = useState<number | null>(null);
+  const [seedPageStart, setSeedPageStart] = useState(1);
 
   const fetchDbCount = async () => {
     const { count } = await supabase.from("movie_embeddings").select("*", { count: "exact", head: true });
@@ -152,7 +153,9 @@ const Profile = () => {
       : SEED_GENRES.filter(g => g.id !== null) as { id: number; label: string }[];
     let totalAdded = 0;
     for (const genre of genresToRun) {
-      for (const startPage of [1, 3, 5]) {
+      // 3 appels de 2 pages chacun à partir de seedPageStart
+      for (const offset of [0, 2, 4]) {
+        const startPage = seedPageStart + offset;
         try {
           const { data } = await supabase.functions.invoke("seed-embeddings", {
             body: {
@@ -169,8 +172,13 @@ const Profile = () => {
           });
           const s = data?.stats;
           const added = s?.processed ?? 0;
+          const alreadyInDb = s?.already_in_db ?? 0;
+          const fetched = s?.fetched ?? 0;
           totalAdded += added;
-          setSeedLog(prev => [...prev, `${genre.label} p${startPage}: +${added} / ${s?.skipped ?? 0} déjà`]);
+          const label = fetched === 0
+            ? `${genre.label} p${startPage}: aucun film TMDB`
+            : `${genre.label} p${startPage}: +${added} nouveaux / ${alreadyInDb} déjà (${fetched} TMDB)`;
+          setSeedLog(prev => [...prev, label]);
         } catch {
           setSeedLog(prev => [...prev, `${genre.label} p${startPage}: erreur`]);
         }
@@ -913,6 +921,23 @@ const Profile = () => {
                       {SEED_GENRES.map(g => (
                         <option key={g.id ?? "all"} value={g.id === null ? "" : String(g.id)}>{g.label}</option>
                       ))}
+                    </select>
+                  </div>
+                  {/* Page de départ */}
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[10px] font-sans text-foreground/40 uppercase tracking-wide">Pages TMDB (départ)</span>
+                    <select
+                      value={seedPageStart}
+                      onChange={e => setSeedPageStart(Number(e.target.value))}
+                      disabled={seedRunning}
+                      className="w-full text-xs font-sans bg-background border border-border/30 rounded-md px-2 py-1 text-foreground/80 disabled:opacity-50"
+                    >
+                      <option value={1}>Pages 1–6 (les plus populaires)</option>
+                      <option value={7}>Pages 7–12</option>
+                      <option value={13}>Pages 13–18</option>
+                      <option value={19}>Pages 19–24</option>
+                      <option value={25}>Pages 25–30</option>
+                      <option value={31}>Pages 31–36</option>
                     </select>
                   </div>
                   <Button
