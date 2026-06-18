@@ -1647,8 +1647,12 @@ const HomeScreen = ({
             body: { ...combo, pages: 2, startPage, batchSize: 5 },
           }).then(({ data }) => {
             const s = data?.stats;
-            if (s?.processed > 0)
-              console.log(`[POST-RECO-SEED] ${combo.type} ${(combo as any).originalLanguage ?? ""} ${(combo as any).sortBy ?? combo.source} p${startPage}: +${s.processed} nouveaux films`);
+            const lang = (combo as any).originalLanguage ? ` [${(combo as any).originalLanguage.toUpperCase()}]` : "";
+            const genreTag = (combo as any).genreId ? ` genre#${(combo as any).genreId}` : "";
+            console.log(`[POST-RECO-SEED]${lang}${genreTag} ${combo.type} ${(combo as any).sortBy ?? combo.source} p${startPage}: +${s?.processed ?? 0} nouveaux / ${s?.skipped ?? 0} déjà en base / ${s?.failed ?? 0} erreurs`);
+            if (s?.processed > 0) {
+              toast.success(`+${s.processed} nouveaux films ajoutés à la base${lang}`, { duration: 3000, position: "bottom-center" });
+            }
           }).catch(() => {});
         }, 3000);
       }
