@@ -394,6 +394,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
     const [matchData, setMatchData] = useState<MatchData | null>(null);
     const [prefetchedMatchData, setPrefetchedMatchData] = useState<Record<number, MatchData>>({});
     const [matchLoading, setMatchLoading] = useState(false);
+    const [retryingText, setRetryingText] = useState(false);
     const [synopsisExpanded, setSynopsisExpanded] = useState(false);
     const [showOptions, setShowOptions] = useState(false);
     const [showRejectReasons, setShowRejectReasons] = useState(false);
@@ -549,6 +550,8 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
     const hasRichTexts = (t: MatchData | null | undefined): boolean =>
       !!(t?.headline || t?.detailedExplanation || t?.emotionalJourney);
 
+    const isFallbackText = !!(currentRecommendationText as any)?.fallback;
+
     const title = getDisplayTitle(movie);
     const backdrop = getBackdropUrl(movie.backdrop_path);
     const poster = getPosterUrl(movie.poster_path, "w780");
@@ -661,6 +664,18 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
       },
       [user, userCriteria, searchTags],
     );
+
+    const handleRetryText = async () => {
+      setRetryingText(true);
+      try {
+        const richData = await fetchMatchDataForMovie(movie);
+        if (richData && !((richData as any)?.fallback)) {
+          setPrefetchedMatchData((prev) => ({ ...prev, [movie.id]: richData }));
+        }
+      } finally {
+        setRetryingText(false);
+      }
+    };
 
     useEffect(() => {
       let cancelled = false;
@@ -900,14 +915,29 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
               </div>
             ) : currentRecommendationText ? (
               <>
-                <MatchAnalysis
-                  matchData={movie.recommendationTexts?.confidence != null
-                    ? { ...currentRecommendationText, confidence: movie.recommendationTexts.confidence }
-                    : currentRecommendationText}
-                  mediaType={mediaType}
-                  movieId={movie.id}
-                  onOpenDetails={() => setMovieDetailOpen(true)}
-                />
+                {!isFallbackText && (
+                  <MatchAnalysis
+                    matchData={movie.recommendationTexts?.confidence != null
+                      ? { ...currentRecommendationText, confidence: movie.recommendationTexts.confidence }
+                      : currentRecommendationText}
+                    mediaType={mediaType}
+                    movieId={movie.id}
+                    onOpenDetails={() => setMovieDetailOpen(true)}
+                  />
+                )}
+                {isFallbackText && (
+                  <button
+                    onClick={handleRetryText}
+                    disabled={retryingText}
+                    className="mb-5 flex items-center gap-2 text-sm text-primary font-sans font-medium border border-primary/30 rounded-full px-4 py-2.5 hover:bg-primary/10 transition-colors disabled:opacity-50"
+                  >
+                    {retryingText ? (
+                      <><Loader2 className="w-4 h-4 animate-spin shrink-0" /><span>Analyse en cours…</span></>
+                    ) : (
+                      <><Sparkles className="w-4 h-4 shrink-0" /><span>Pourquoi tu vas aimer ?</span></>
+                    )}
+                  </button>
+                )}
               </>
             ) : null}
 
