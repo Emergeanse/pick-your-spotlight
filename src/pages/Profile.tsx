@@ -468,7 +468,7 @@ const Profile = () => {
             {([
               { label: "Je suis ouvert",    img: squirrelHappy,    value: 5 },
               { label: "Je suis sélectif",  img: squirrelCritique, value: 6 },
-              { label: "Je suis exigeant",  img: squirrelExigeant, value: 7 },
+              { label: "Je suis très exigeant",  img: squirrelExigeant, value: 7 },
             ] as const).map(opt => {
               const active = opt.value === 5 ? minRating <= 5 : opt.value === 7 ? minRating >= 7 : minRating === 6;
               return (
