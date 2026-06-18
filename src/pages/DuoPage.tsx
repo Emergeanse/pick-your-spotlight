@@ -557,7 +557,7 @@ export default function DuoPage() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const [activeTab, setActiveTab] = useState<EnsembleTab>("duos");
+  const [activeTab, setActiveTab] = useState<EnsembleTab>((location.state as any)?.tab || "duos");
   const [duos, setDuos] = useState<DuoProfile[]>([]);
   const [pendingDuos, setPendingDuos] = useState<DuoProfile[]>([]);
   const [loading, setLoading] = useState(true);
@@ -723,7 +723,7 @@ export default function DuoPage() {
                         initial={{ opacity: 0, y: 8 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: i * 0.04 }}
-                        onClick={() => navigate(`/app/adn?userId=${f.id}`)}
+                        onClick={() => navigate(`/app/adn?userId=${f.id}`, { state: { from: "amis" } })}
                         className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl bg-white/[0.05] border border-white/[0.08] text-left hover:bg-white/[0.08] transition-colors"
                       >
                         <div className="w-10 h-10 rounded-full overflow-hidden bg-primary/20 border border-white/10 shrink-0 flex items-center justify-center">

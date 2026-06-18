@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, Pencil, Check, X, Plus, Trophy, Heart, Users, Sparkles } from "lucide-react";
 import { RadarChart, PolarGrid, PolarAngleAxis, Radar, ResponsiveContainer } from "recharts";
@@ -145,6 +145,7 @@ const PodiumSelector = ({
 // ─── Page principale ──────────────────────────────────────────────────────────
 const CinemaDNAPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
   const { user } = useAuth();
   const targetUserId = searchParams.get("userId") || user?.id;
@@ -377,8 +378,13 @@ const CinemaDNAPage = () => {
       <div className="sticky top-0 z-30 pt-[env(safe-area-inset-top)] px-4 pb-3 backdrop-blur-xl border-b border-white/[0.04]"
         style={{ background: "hsl(var(--background)/0.88)" }}>
         <div className="flex items-center gap-3 pt-3">
-          <button onClick={() => navigate(-1)}
-            className="p-2 -ml-2 rounded-full hover:bg-white/5 transition-colors">
+          <button
+            onClick={() => {
+              const from = (location.state as any)?.from;
+              if (from === "amis") navigate("/app/duo", { state: { tab: "amis" } });
+              else navigate(-1);
+            }}
+            className="w-11 h-11 -ml-2 flex items-center justify-center rounded-full hover:bg-white/5 transition-colors">
             <ArrowLeft className="w-5 h-5 text-foreground/60" />
           </button>
           <h1 className="font-serif text-[20px] text-foreground leading-tight">
