@@ -117,47 +117,67 @@ const Profile = () => {
   const { isAdmin } = useAdmin();
 
   // ── Admin seed ──
+  const SEED_GENRES: { id: number | null; label: string }[] = [
+    { id: null, label: "Tous les genres" },
+    { id: 28, label: "Action" }, { id: 12, label: "Aventure" }, { id: 16, label: "Animation" },
+    { id: 35, label: "Comédie" }, { id: 80, label: "Crime" }, { id: 99, label: "Documentaire" },
+    { id: 18, label: "Drame" }, { id: 10751, label: "Famille" }, { id: 14, label: "Fantastique" },
+    { id: 36, label: "Histoire" }, { id: 27, label: "Horreur" }, { id: 10402, label: "Musique" },
+    { id: 9648, label: "Mystère" }, { id: 10749, label: "Romance" }, { id: 878, label: "SF" },
+    { id: 53, label: "Thriller" }, { id: 10752, label: "Guerre" }, { id: 37, label: "Western" },
+  ];
+  const SEED_LANGUAGES = [
+    { code: "fr", label: "🇫🇷 Français" }, { code: "en", label: "🇺🇸 Anglais" },
+    { code: "ko", label: "🇰🇷 Coréen" }, { code: "ja", label: "🇯🇵 Japonais" },
+    { code: "es", label: "🇪🇸 Espagnol" }, { code: "it", label: "🇮🇹 Italien" },
+    { code: "de", label: "🇩🇪 Allemand" }, { code: "", label: "Toutes langues" },
+  ];
   const [dbCount, setDbCount] = useState<number | null>(null);
   const [seedRunning, setSeedRunning] = useState(false);
   const [seedLog, setSeedLog] = useState<string[]>([]);
+  const [seedLang, setSeedLang] = useState("fr");
+  const [seedGenreId, setSeedGenreId] = useState<number | null>(null);
 
   const fetchDbCount = async () => {
     const { count } = await supabase.from("movie_embeddings").select("*", { count: "exact", head: true });
     setDbCount(count ?? null);
   };
 
-  const runFrenchSeed = async () => {
+  const runSeed = async () => {
     setSeedRunning(true);
     setSeedLog([]);
     await fetchDbCount();
-    // TMDB genre IDs : Action, Aventure, Animation, Comédie, Crime, Documentaire,
-    // Drame, Famille, Fantastique, Histoire, Horreur, Musique, Mystère, Romance, SF, Thriller, Guerre, Western
-    const GENRES = [28, 12, 16, 35, 80, 99, 18, 10751, 14, 36, 27, 10402, 9648, 10749, 878, 53, 10752, 37];
-    const GENRE_NAMES: Record<number, string> = {
-      28: "Action", 12: "Aventure", 16: "Animation", 35: "Comédie", 80: "Crime",
-      99: "Documentaire", 18: "Drame", 10751: "Famille", 14: "Fantastique", 36: "Histoire",
-      27: "Horreur", 10402: "Musique", 9648: "Mystère", 10749: "Romance", 878: "SF",
-      53: "Thriller", 10752: "Guerre", 37: "Western",
-    };
+    const genresToRun = seedGenreId !== null
+      ? [{ id: seedGenreId, label: SEED_GENRES.find(g => g.id === seedGenreId)?.label ?? String(seedGenreId) }]
+      : SEED_GENRES.filter(g => g.id !== null) as { id: number; label: string }[];
     let totalAdded = 0;
-    for (const genreId of GENRES) {
+    for (const genre of genresToRun) {
       for (const startPage of [1, 3, 5]) {
         try {
           const { data } = await supabase.functions.invoke("seed-embeddings", {
-            body: { source: "discover", originalLanguage: "fr", genreId, noStreamingFilter: true, pages: 2, startPage, batchSize: 8, minVoteCount: 20, minRating: 5 },
+            body: {
+              source: "discover",
+              ...(seedLang ? { originalLanguage: seedLang } : {}),
+              genreId: genre.id,
+              noStreamingFilter: true,
+              pages: 2,
+              startPage,
+              batchSize: 8,
+              minVoteCount: 20,
+              minRating: 5,
+            },
           });
           const s = data?.stats;
           const added = s?.processed ?? 0;
           totalAdded += added;
-          const line = `${GENRE_NAMES[genreId]} p${startPage}: +${added} ajoutés / ${s?.skipped ?? 0} déjà en base`;
-          setSeedLog(prev => [...prev, line]);
+          setSeedLog(prev => [...prev, `${genre.label} p${startPage}: +${added} / ${s?.skipped ?? 0} déjà`]);
         } catch {
-          setSeedLog(prev => [...prev, `${GENRE_NAMES[genreId]} p${startPage}: erreur`]);
+          setSeedLog(prev => [...prev, `${genre.label} p${startPage}: erreur`]);
         }
       }
     }
     await fetchDbCount();
-    setSeedLog(prev => [...prev, `✅ Terminé — ${totalAdded} films ajoutés au total`]);
+    setSeedLog(prev => [...prev, `✅ Terminé — ${totalAdded} films ajoutés`]);
     setSeedRunning(false);
   };
 
@@ -860,24 +880,52 @@ const Profile = () => {
                 <Button variant="ghost" onClick={() => navigate("/admin")} className="justify-start text-primary/50 hover:text-primary text-xs font-sans gap-2 h-10">
                   <Shield className="w-3.5 h-3.5" /> Administration
                 </Button>
-                <div className="mt-2 p-3 rounded-xl border border-border/20 bg-foreground/[0.02]">
-                  <div className="flex items-center justify-between mb-2">
+                <div className="mt-2 p-3 rounded-xl border border-border/20 bg-foreground/[0.02] flex flex-col gap-2">
+                  <div className="flex items-center justify-between">
                     <span className="text-xs font-sans font-semibold text-foreground/60">Base de films</span>
                     <button onClick={fetchDbCount} className="text-xs text-primary/60 hover:text-primary font-sans">
                       {dbCount !== null ? `${dbCount.toLocaleString("fr-FR")} films` : "Charger le compteur"}
                     </button>
                   </div>
+                  {/* Langue */}
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[10px] font-sans text-foreground/40 uppercase tracking-wide">Langue d'origine</span>
+                    <select
+                      value={seedLang}
+                      onChange={e => setSeedLang(e.target.value)}
+                      disabled={seedRunning}
+                      className="w-full text-xs font-sans bg-background border border-border/30 rounded-md px-2 py-1 text-foreground/80 disabled:opacity-50"
+                    >
+                      {SEED_LANGUAGES.map(l => (
+                        <option key={l.code} value={l.code}>{l.label}</option>
+                      ))}
+                    </select>
+                  </div>
+                  {/* Genre */}
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[10px] font-sans text-foreground/40 uppercase tracking-wide">Genre</span>
+                    <select
+                      value={seedGenreId === null ? "" : String(seedGenreId)}
+                      onChange={e => setSeedGenreId(e.target.value === "" ? null : Number(e.target.value))}
+                      disabled={seedRunning}
+                      className="w-full text-xs font-sans bg-background border border-border/30 rounded-md px-2 py-1 text-foreground/80 disabled:opacity-50"
+                    >
+                      {SEED_GENRES.map(g => (
+                        <option key={g.id ?? "all"} value={g.id === null ? "" : String(g.id)}>{g.label}</option>
+                      ))}
+                    </select>
+                  </div>
                   <Button
                     size="sm"
                     variant="outline"
                     disabled={seedRunning}
-                    onClick={runFrenchSeed}
+                    onClick={runSeed}
                     className="w-full text-xs font-sans gap-2 h-8"
                   >
-                    {seedRunning ? <><Loader2 className="w-3 h-3 animate-spin" /> Seed en cours…</> : "🇫🇷 Seed films français (18 genres)"}
+                    {seedRunning ? <><Loader2 className="w-3 h-3 animate-spin" /> Seed en cours…</> : "▶ Lancer le seed"}
                   </Button>
                   {seedLog.length > 0 && (
-                    <div className="mt-2 max-h-40 overflow-y-auto flex flex-col gap-0.5">
+                    <div className="mt-1 max-h-40 overflow-y-auto flex flex-col gap-0.5">
                       {seedLog.map((line, i) => (
                         <p key={i} className="text-[10px] font-mono text-foreground/50">{line}</p>
                       ))}
