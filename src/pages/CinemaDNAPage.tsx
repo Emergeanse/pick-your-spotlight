@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Pencil, Check, X, Plus, Trophy, Heart, Users, Sparkles } from "lucide-react";
+import { ArrowLeft, Pencil, Check, X, Plus, Trophy, Heart, Users, Sparkles, Film, CalendarDays } from "lucide-react";
 import { RadarChart, PolarGrid, PolarAngleAxis, Radar, ResponsiveContainer } from "recharts";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -393,7 +393,7 @@ const CinemaDNAPage = () => {
         </div>
       </div>
 
-      <div className="pb-[calc(6rem+env(safe-area-inset-bottom))] px-4 pt-5 flex flex-col gap-6">
+      <div className={`px-4 pt-5 flex flex-col gap-6 ${isOwnProfile ? "pb-[calc(6rem+env(safe-area-inset-bottom))]" : "pb-[calc(9rem+env(safe-area-inset-bottom))]"}`}>
 
         {/* ══ 1. HERO CARD ══ */}
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
@@ -661,6 +661,29 @@ const CinemaDNAPage = () => {
           </div>
         )}
       </div>
+
+      {/* ── CTA Regarder ensemble (profil ami uniquement) ── */}
+      {!isOwnProfile && !loading && (
+        <div className="fixed bottom-0 left-0 right-0 z-40 pb-[calc(5rem+env(safe-area-inset-bottom))] px-4 pt-3 pointer-events-none"
+          style={{ background: "linear-gradient(to top, hsl(var(--background)) 60%, transparent)" }}>
+          <div className="flex gap-2.5 pointer-events-auto">
+            <button
+              onClick={() => navigate("/app/soiree/nouvelle", { state: { friendId: targetUserId, friendName: displayName } })}
+              className="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-2xl border border-primary/25 bg-primary/10 active:scale-[0.97] transition-transform"
+            >
+              <CalendarDays className="w-4 h-4 text-primary" strokeWidth={1.8} />
+              <span className="text-[13px] font-sans font-semibold text-primary">Soirée ciné</span>
+            </button>
+            <button
+              onClick={() => navigate("/app", { state: { friendId: targetUserId, friendName: displayName, mode: "duo" } })}
+              className="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-gradient-to-r from-primary to-accent active:scale-[0.97] transition-transform"
+            >
+              <Film className="w-4 h-4 text-primary-foreground" strokeWidth={1.8} />
+              <span className="text-[13px] font-sans font-semibold text-primary-foreground">Regarder ensemble</span>
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
