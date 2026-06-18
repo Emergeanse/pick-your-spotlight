@@ -15,6 +15,7 @@ import {
   updateDuoName, deleteDuo, loadAcceptedFriends, recalculateDuo, fetchDuoSharedMovies,
   type DuoProfile, type DuoFriendCandidate, type SharedMovie,
 } from "@/lib/duo-profiles";
+import { sendNotification } from "@/lib/notifications";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 
@@ -401,8 +402,16 @@ const CreateFlow = ({ userId, displayName, onCreated, onCancel }: {
       if (selectedFriend) {
         // Création directe avec un ami → duo actif immédiatement
         const duo = await createDuoWithFriend(userId, displayName, selectedFriend.id, selectedFriend.displayName, duoName.trim());
-        if (duo) onCreated(duo);
-        else setError("Erreur lors de la création. Réessaie.");
+        if (duo) {
+          sendNotification(
+            selectedFriend.id,
+            "duo_accepted",
+            `${displayName} t'a créé un duo !`,
+            `Le duo « ${duo.duo_name} » est actif — pick ensemble !`,
+            { duo_id: duo.id },
+          ).catch(() => {});
+          onCreated(duo);
+        } else setError("Erreur lors de la création. Réessaie.");
       } else {
         // Lien d'invitation
         const result = await createDuo(userId, displayName, duoName.trim());

@@ -5,6 +5,7 @@ import { Users, Heart, Loader2, AlertCircle } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { getDuoByInviteCode, acceptDuo } from "@/lib/duo-profiles";
 import { supabase } from "@/integrations/supabase/client";
+import { sendNotification } from "@/lib/notifications";
 import { Button } from "@/components/ui/button";
 
 export default function JoinDuo() {
@@ -48,6 +49,15 @@ export default function JoinDuo() {
     try {
       const result = await acceptDuo(code, user.id, displayName);
       if (result) {
+        if (duo?.user1_id) {
+          sendNotification(
+            duo.user1_id,
+            "duo_accepted",
+            `${displayName} a rejoint ton duo !`,
+            `Le duo « ${result.duo_name} » est maintenant actif.`,
+            { duo_id: result.id },
+          ).catch(() => {});
+        }
         navigate("/app/duo", { state: { newDuoId: result.id, duoName: result.duo_name } });
       } else {
         setError("Une erreur est survenue. Réessaie.");

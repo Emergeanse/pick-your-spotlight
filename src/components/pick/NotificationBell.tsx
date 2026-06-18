@@ -63,6 +63,8 @@ const NotificationBell = () => {
   const handleNotificationClick = (notif: Notification) => {
     if (notif.type === "friend_request" || notif.type === "friend_accepted") {
       navigate("/app/friends");
+    } else if (notif.type === "duo_accepted") {
+      navigate("/app/duo");
     } else if (notif.type === "session_invite") {
       navigate("/app/pick-together-group");
     } else if (notif.type === "event_invite" || notif.type === "event_confirmed") {
@@ -77,6 +79,7 @@ const NotificationBell = () => {
     switch (type) {
       case "friend_request":  return "👋";
       case "friend_accepted": return "🤝";
+      case "duo_accepted":    return "💑";
       case "session_invite":  return "🎬";
       case "event_invite":    return "🎉";
       case "event_confirmed": return "✅";
