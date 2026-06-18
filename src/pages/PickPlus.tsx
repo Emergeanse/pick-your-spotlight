@@ -65,8 +65,8 @@ const PickPlusPage = () => {
         >
           {/* Table header */}
           <div className="grid grid-cols-[1fr_60px_60px] bg-card/60 border-b border-border/10 px-4 py-3">
-            <span className="text-[11px] uppercase tracking-widest text-foreground/30 font-sans font-semibold">Fonctionnalité</span>
-            <span className="text-[11px] uppercase tracking-widest text-foreground/30 font-sans font-semibold text-center">Gratuit</span>
+            <span className="text-[11px] uppercase tracking-widest text-foreground/45 font-sans font-semibold">Fonctionnalité</span>
+            <span className="text-[11px] uppercase tracking-widest text-foreground/45 font-sans font-semibold text-center">Gratuit</span>
             <span className="text-[11px] uppercase tracking-widest text-gold/70 font-sans font-semibold text-center">Pick+</span>
           </div>
 
@@ -124,7 +124,7 @@ const PickPlusPage = () => {
               >
                 Mensuel — 3,99€/mois
               </Button>
-              <p className="text-center text-foreground/25 text-[11px] font-sans mt-2">
+              <p className="text-center text-foreground/45 text-[11px] font-sans mt-2">
                 Bientôt disponible — Pick+ arrive très bientôt !
               </p>
             </>

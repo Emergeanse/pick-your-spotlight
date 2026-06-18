@@ -244,7 +244,7 @@ const PeopleTrainer = ({ onBack, filterDepartment }: PeopleTrainerProps) => {
         <div className="absolute inset-0 bg-gradient-to-r from-background/90 via-background/60 to-transparent" />
       )}
       <div className="px-4 pb-2">
-        <p className="text-center text-[11px] font-sans text-foreground/25">
+        <p className="text-center text-[11px] font-sans text-foreground/45">
           {ratedCount} évalué{ratedCount > 1 ? "s" : ""}
         </p>
       </div>
@@ -253,7 +253,7 @@ const PeopleTrainer = ({ onBack, filterDepartment }: PeopleTrainerProps) => {
         {loading && people.length === 0 ? (
           <div className="flex flex-col items-center gap-4">
             <Loader2 className="h-6 w-6 animate-spin text-primary/50" />
-            <p className="text-sm font-sans text-foreground/30">Chargement…</p>
+            <p className="text-sm font-sans text-foreground/45">Chargement…</p>
           </div>
         ) : !currentPersonDetail ? (
           <div className="flex flex-col items-center gap-4 text-center">
@@ -276,7 +276,7 @@ const PeopleTrainer = ({ onBack, filterDepartment }: PeopleTrainerProps) => {
               <button
                 onClick={goBack}
                 disabled={history.length === 0}
-                className="rounded-full bg-foreground/5 p-2 text-foreground/30 transition-all hover:bg-foreground/10 disabled:opacity-20"
+                className="rounded-full bg-foreground/5 p-2 text-foreground/45 transition-all hover:bg-foreground/10 disabled:opacity-20"
                 aria-label="Précédent"
               >
                 <ChevronLeft className="h-5 w-5" />
@@ -319,7 +319,7 @@ const PeopleTrainer = ({ onBack, filterDepartment }: PeopleTrainerProps) => {
 
               <button
                 onClick={skip}
-                className="rounded-full bg-foreground/5 p-2 text-foreground/30 transition-all hover:bg-foreground/10"
+                className="rounded-full bg-foreground/5 p-2 text-foreground/45 transition-all hover:bg-foreground/10"
                 aria-label="Suivant"
               >
                 <ChevronRight className="h-5 w-5" />

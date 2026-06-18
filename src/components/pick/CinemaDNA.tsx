@@ -261,7 +261,7 @@ const CinemaDNA = ({ userId, teaser, onOpenFull }: CinemaDNAProps) => {
                 <span className="text-[10px] font-sans text-foreground/40">/ {MIN_LIKED_FOR_DNA}</span>
               </div>
             </div>
-            <p className="text-foreground/30 text-[11px] font-sans mb-4">
+            <p className="text-foreground/45 text-[11px] font-sans mb-4">
               Utilise « Entraîne ton Pick » pour évaluer rapidement des films
             </p>
           </>
@@ -460,7 +460,7 @@ const CinemaDNA = ({ userId, teaser, onOpenFull }: CinemaDNAProps) => {
                   <div key={category}>
                     <div className="flex items-center gap-2 mb-2">
                       <Icon className="w-3.5 h-3.5 text-gold/50" />
-                      <span className="text-[10px] uppercase tracking-wider text-foreground/30 font-sans font-semibold">
+                      <span className="text-[10px] uppercase tracking-wider text-foreground/45 font-sans font-semibold">
                         {category}
                       </span>
                     </div>
@@ -587,7 +587,7 @@ const CinemaDNA = ({ userId, teaser, onOpenFull }: CinemaDNAProps) => {
 
 function SectionHeader({ label }: { label: string }) {
   return (
-    <p className="text-[10px] uppercase tracking-[0.15em] text-foreground/25 font-sans font-semibold mb-3 text-center">
+    <p className="text-[10px] uppercase tracking-[0.15em] text-foreground/45 font-sans font-semibold mb-3 text-center">
       {label}
     </p>
   );
@@ -612,14 +612,14 @@ function CollapsibleSection({
         onClick={onToggle}
         className="w-full flex items-center justify-center gap-2 mb-3 group"
       >
-        <p className="text-[10px] uppercase tracking-[0.15em] text-foreground/25 font-sans font-semibold group-hover:text-foreground/40 transition-colors">
+        <p className="text-[10px] uppercase tracking-[0.15em] text-foreground/45 font-sans font-semibold group-hover:text-foreground/40 transition-colors">
           {label}
         </p>
-        <span className="text-[10px] text-foreground/20 font-sans">({count})</span>
+        <span className="text-[10px] text-foreground/40 font-sans">({count})</span>
         {isOpen ? (
-          <ChevronUp className="w-3 h-3 text-foreground/20" />
+          <ChevronUp className="w-3 h-3 text-foreground/40" />
         ) : (
-          <ChevronDown className="w-3 h-3 text-foreground/20" />
+          <ChevronDown className="w-3 h-3 text-foreground/40" />
         )}
       </button>
       <AnimatePresence>

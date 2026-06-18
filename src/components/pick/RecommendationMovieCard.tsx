@@ -58,7 +58,7 @@ export const RecommendationMovieCardHeader = ({
         initial={{ opacity: 0 }}
         animate={{ opacity: [0.55, 0.85, 0.55] }}
         transition={{ duration: 4.5, repeat: Infinity, ease: "easeInOut" }}
-        className="absolute -inset-6 rounded-[28px] -z-10 pointer-events-none"
+        className="absolute -inset-6 rounded-3xl -z-10 pointer-events-none"
         style={{
           background:
             "radial-gradient(ellipse at center, hsl(var(--primary) / 0.4) 0%, hsl(var(--primary) / 0.12) 45%, transparent 70%)",
@@ -161,7 +161,7 @@ export const RecommendationMovieCardHeader = ({
           {year && <span className="font-medium text-foreground/70">{year}</span>}
           {mediaType === "tv" && seasons && seasons > 0 && (
             <>
-              <span className="text-foreground/20">•</span>
+              <span className="text-foreground/40">•</span>
               <span>
                 {seasons} saison{seasons > 1 ? "s" : ""}
               </span>
@@ -169,7 +169,7 @@ export const RecommendationMovieCardHeader = ({
           )}
           {runtime > 0 && (
             <>
-              <span className="text-foreground/20">•</span>
+              <span className="text-foreground/40">•</span>
               <span className="flex items-center gap-1">
                 <Clock className="w-3 h-3" />
                 {runtime} min
@@ -178,7 +178,7 @@ export const RecommendationMovieCardHeader = ({
           )}
           {movie.vote_average > 0 && (
             <>
-              <span className="text-foreground/20">•</span>
+              <span className="text-foreground/40">•</span>
               <span className="flex items-center gap-1 text-primary font-medium">
                 <Star className="w-3 h-3 fill-primary" />
                 {movie.vote_average.toFixed(1)}
@@ -290,7 +290,7 @@ const RecommendationMovieCard = ({
               className="mb-4"
               onClick={(e) => e.stopPropagation()}
             >
-              <p className="text-[10px] uppercase tracking-widest text-foreground/30 font-sans font-semibold mb-2">
+              <p className="text-[10px] uppercase tracking-widest text-foreground/45 font-sans font-semibold mb-2">
                 Où regarder
               </p>
               <div className="flex flex-wrap gap-2">

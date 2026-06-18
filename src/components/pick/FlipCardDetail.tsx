@@ -270,7 +270,7 @@ const MovieDetailContent = ({
           {detail?.vote_average > 0 && (
             <p className="text-sm text-foreground/55 font-sans mb-2">
               <span className="text-yellow-400">★</span> {detail.vote_average.toFixed(1)}
-              <span className="text-foreground/30">/10</span>
+              <span className="text-foreground/45">/10</span>
             </p>
           )}
 
@@ -384,7 +384,7 @@ const MovieDetailContent = ({
       {/* Synopsis */}
       {detail?.overview && (
         <div className="px-5 mb-5">
-          <h4 className="mb-2 text-[11px] font-sans font-semibold uppercase tracking-wider text-foreground/35 flex items-center gap-1.5">
+          <h4 className="mb-2 text-[11px] font-sans font-semibold uppercase tracking-wider text-foreground/50 flex items-center gap-1.5">
             <span className="w-4 h-px bg-foreground/20 inline-block" />
             Synopsis
           </h4>
@@ -395,7 +395,7 @@ const MovieDetailContent = ({
       {/* Director */}
       {director && (
         <div className="px-5 mb-4">
-          <h4 className="mb-2 text-[11px] font-sans font-semibold uppercase tracking-wider text-foreground/35 flex items-center gap-1.5">
+          <h4 className="mb-2 text-[11px] font-sans font-semibold uppercase tracking-wider text-foreground/50 flex items-center gap-1.5">
             <Clapperboard className="h-3 w-3" />
             {isTV ? "Créateur" : "Réalisateur"}
           </h4>
@@ -411,7 +411,7 @@ const MovieDetailContent = ({
       {/* Cast grid */}
       {cast.length > 0 && (
         <div className="px-5">
-          <h4 className="mb-3 text-[11px] font-sans font-semibold uppercase tracking-wider text-foreground/35 flex items-center gap-1.5">
+          <h4 className="mb-3 text-[11px] font-sans font-semibold uppercase tracking-wider text-foreground/50 flex items-center gap-1.5">
             <User className="h-3 w-3" />
             Casting
           </h4>
@@ -431,7 +431,7 @@ const MovieDetailContent = ({
                   {c.name}
                 </span>
                 {c.character && (
-                  <span className="text-center text-[10px] text-foreground/25 leading-tight font-sans">{c.character}</span>
+                  <span className="text-center text-[10px] text-foreground/45 leading-tight font-sans">{c.character}</span>
                 )}
               </button>
             ))}
@@ -469,12 +469,12 @@ const PersonDetailContent = ({
           </p>
         )}
         {detail?.birthday && (
-          <p className="text-[12px] text-foreground/35 font-sans">
+          <p className="text-[12px] text-foreground/50 font-sans">
             Né(e) le {new Date(detail.birthday).toLocaleDateString("fr-FR")}
           </p>
         )}
         {detail?.place_of_birth && (
-          <p className="text-[11px] text-foreground/25 font-sans mt-0.5">{detail.place_of_birth}</p>
+          <p className="text-[11px] text-foreground/45 font-sans mt-0.5">{detail.place_of_birth}</p>
         )}
       </div>
     </div>
@@ -483,7 +483,7 @@ const PersonDetailContent = ({
 
     {detail?.biography && (
       <div className="px-5 mb-5">
-        <h4 className="mb-2 text-[11px] font-sans font-semibold uppercase tracking-wider text-foreground/35 flex items-center gap-1.5">
+        <h4 className="mb-2 text-[11px] font-sans font-semibold uppercase tracking-wider text-foreground/50 flex items-center gap-1.5">
           <span className="w-4 h-px bg-foreground/20 inline-block" />
           Biographie
         </h4>
@@ -493,7 +493,7 @@ const PersonDetailContent = ({
 
     {filmography.length > 0 && (
       <div className="px-5">
-        <h4 className="mb-3 text-[11px] font-sans font-semibold uppercase tracking-wider text-foreground/35 flex items-center gap-1.5">
+        <h4 className="mb-3 text-[11px] font-sans font-semibold uppercase tracking-wider text-foreground/50 flex items-center gap-1.5">
           <Film className="h-3 w-3" />
           Filmographie
         </h4>

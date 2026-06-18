@@ -27,7 +27,7 @@ const MediaStep = ({ onSelect }: MediaStepProps) => (
         <h2 className="text-2xl font-serif text-foreground mb-1.5" style={{ lineHeight: "1.15" }}>
           Vous cherchez quoi ?
         </h2>
-        <p className="text-foreground/35 text-[13px] font-sans">Film, série, ou on verra</p>
+        <p className="text-foreground/50 text-[13px] font-sans">Film, série, ou on verra</p>
       </motion.div>
 
       <div className="flex flex-col gap-2.5 w-full max-w-sm">
@@ -48,9 +48,9 @@ const MediaStep = ({ onSelect }: MediaStepProps) => (
               </div>
               <div className="flex-1 min-w-0">
                 <span className="font-sans text-[15px] font-medium text-foreground block">{opt.label}</span>
-                <span className="text-foreground/30 text-[11px] font-sans">{opt.desc}</span>
+                <span className="text-foreground/45 text-[11px] font-sans">{opt.desc}</span>
               </div>
-              <ChevronRight className="w-4 h-4 text-foreground/10 group-hover:text-foreground/25 transition-colors shrink-0" />
+              <ChevronRight className="w-4 h-4 text-foreground/10 group-hover:text-foreground/45 transition-colors shrink-0" />
             </motion.button>
           );
         })}

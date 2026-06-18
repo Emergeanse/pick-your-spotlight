@@ -102,7 +102,7 @@ const TAB_CONFIG: Record<ActiveTab, { label: string; icon: React.ReactNode; colo
   liked: { label: "Aimés", icon: <ThumbsUp className="w-3.5 h-3.5" />, color: "text-primary" },
   loved: { label: "Adorés", icon: <Heart className="w-3.5 h-3.5" />, color: "text-rose-400" },
   seen: { label: "Vus", icon: <CheckCircle className="w-3.5 h-3.5" />, color: "text-emerald-400" },
-  disliked: { label: "Écartés", icon: <ThumbsDown className="w-3.5 h-3.5" />, color: "text-foreground/30" },
+  disliked: { label: "Écartés", icon: <ThumbsDown className="w-3.5 h-3.5" />, color: "text-foreground/45" },
 };
 
 const SwipeableCard = ({
@@ -174,7 +174,7 @@ const SwipeableCard = ({
             )}
             {isDisliked && item.feedback_type && (
               <div className="absolute -bottom-1 left-0 right-0 flex justify-center">
-                <span className="text-[8px] font-sans text-foreground/30 bg-background/80 px-1.5 py-0.5 rounded-full border border-border/10 leading-none">
+                <span className="text-[8px] font-sans text-foreground/45 bg-background/80 px-1.5 py-0.5 rounded-full border border-border/10 leading-none">
                   {DISLIKE_LABELS[item.feedback_type] ?? item.feedback_type}
                 </span>
               </div>
@@ -186,17 +186,17 @@ const SwipeableCard = ({
               {item.title}
             </p>
             <div className="flex items-center gap-2 mb-1.5">
-              <p className="text-[11px] text-foreground/30 font-sans capitalize">
+              <p className="text-[11px] text-foreground/45 font-sans capitalize">
                 {mediaType === "tv" ? "Série" : "Film"}
               </p>
               {item.runtime && (
-                <span className="text-[10px] text-foreground/25 font-sans flex items-center gap-0.5">
+                <span className="text-[10px] text-foreground/45 font-sans flex items-center gap-0.5">
                   <Clock className="w-2.5 h-2.5" />
                   {item.runtime} min
                 </span>
               )}
               {item.vote_average > 0 && (
-                <span className="text-[10px] text-foreground/25 font-sans">
+                <span className="text-[10px] text-foreground/45 font-sans">
                   ★ {item.vote_average.toFixed(1)}
                 </span>
               )}
@@ -212,7 +212,7 @@ const SwipeableCard = ({
               </div>
             )}
 
-            <p className={`text-[10px] font-sans italic line-clamp-1 ${isDisliked ? "text-foreground/20" : "text-primary/50"}`}>
+            <p className={`text-[10px] font-sans italic line-clamp-1 ${isDisliked ? "text-foreground/40" : "text-primary/50"}`}>
               💬 {comment}
             </p>
           </div>
@@ -220,7 +220,7 @@ const SwipeableCard = ({
 
         <button
           onClick={(e) => { e.stopPropagation(); onRemove(); }}
-          className="shrink-0 self-center w-8 h-8 rounded-full flex items-center justify-center text-foreground/25 hover:text-destructive hover:bg-destructive/10 transition-all active:scale-90"
+          className="shrink-0 self-center w-8 h-8 rounded-full flex items-center justify-center text-foreground/45 hover:text-destructive hover:bg-destructive/10 transition-all active:scale-90"
           aria-label="Supprimer"
         >
           <X className="w-4 h-4" />
@@ -612,7 +612,7 @@ const WatchlistPage = ({ tabs: allowedTabs, title, defaultTab }: WatchlistPagePr
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex items-center justify-between mb-4">
           <div>
             <h1 className="text-2xl font-serif leading-tight">{title ?? "Ma Collection"}</h1>
-            <p className="text-foreground/35 text-[11px] font-sans mt-0.5 tabular-nums">
+            <p className="text-foreground/50 text-[11px] font-sans mt-0.5 tabular-nums">
               {TABS.reduce((acc, t) => acc + (itemsByTab[t]?.length ?? 0), 0)} titres au total
             </p>
           </div>
@@ -654,7 +654,7 @@ const WatchlistPage = ({ tabs: allowedTabs, title, defaultTab }: WatchlistPagePr
                   <span>{cfg.label}</span>
                   {count > 0 && (
                     <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium tabular-nums ${
-                      active ? "bg-primary/15 text-primary/80" : "bg-foreground/5 text-foreground/35"
+                      active ? "bg-primary/15 text-primary/80" : "bg-foreground/5 text-foreground/50"
                     }`}>
                       {count}
                     </span>
@@ -690,13 +690,13 @@ const WatchlistPage = ({ tabs: allowedTabs, title, defaultTab }: WatchlistPagePr
         >
           {/* Search */}
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-foreground/25" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-foreground/45" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Rechercher un titre…"
-              className="w-full h-9 pl-9 pr-3 rounded-xl bg-white/[0.05] backdrop-blur-sm border border-white/[0.08] text-sm font-sans text-foreground placeholder:text-foreground/25 focus:outline-none focus:border-primary/30 transition-colors"
+              className="w-full h-9 pl-9 pr-3 rounded-xl bg-white/[0.05] backdrop-blur-sm border border-white/[0.08] text-sm font-sans text-foreground placeholder:text-foreground/45 focus:outline-none focus:border-primary/30 transition-colors"
             />
           </div>
 
@@ -728,7 +728,7 @@ const WatchlistPage = ({ tabs: allowedTabs, title, defaultTab }: WatchlistPagePr
               </button>
             )}
 
-            <p className="ml-auto text-[10px] font-sans text-foreground/30">
+            <p className="ml-auto text-[10px] font-sans text-foreground/45">
               {filteredItems.length} résultat{filteredItems.length > 1 ? "s" : ""}
             </p>
           </div>
@@ -776,7 +776,7 @@ const WatchlistPage = ({ tabs: allowedTabs, title, defaultTab }: WatchlistPagePr
                             className={`px-3 py-1.5 rounded-full text-[11px] font-sans font-medium border transition-all ${
                               active
                                 ? "bg-primary/15 border-primary/30 text-primary"
-                                : "bg-card/40 border-border/15 text-foreground/35 hover:text-foreground/60"
+                                : "bg-card/40 border-border/15 text-foreground/50 hover:text-foreground/60"
                             }`}
                           >
                             {g}
@@ -807,7 +807,7 @@ const WatchlistPage = ({ tabs: allowedTabs, title, defaultTab }: WatchlistPagePr
             size="md"
             animate
           />
-          <p className="text-foreground/25 text-xs font-sans mt-4">
+          <p className="text-foreground/45 text-xs font-sans mt-4">
             {activeTab === "watchlist" ? "Ta liste est vide"
             : activeTab === "liked" ? "Aucun film aimé"
             : activeTab === "loved" ? "Aucun coup de cœur"
@@ -826,7 +826,7 @@ const WatchlistPage = ({ tabs: allowedTabs, title, defaultTab }: WatchlistPagePr
         </div>
       ) : filteredItems.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-center">
-          <p className="text-foreground/30 text-sm font-sans">
+          <p className="text-foreground/45 text-sm font-sans">
             Aucun résultat{searchQuery ? ` pour "${searchQuery}"` : " avec ces filtres"}
           </p>
           <button

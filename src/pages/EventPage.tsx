@@ -38,7 +38,7 @@ const EventPage = () => {
 
         {/* Ce soir en duo */}
         <div className="space-y-2">
-          <p className="text-[11px] font-sans font-semibold tracking-widest uppercase text-foreground/35 px-1">
+          <p className="text-[11px] font-sans font-semibold tracking-widest uppercase text-foreground/50 px-1">
             Ce soir
           </p>
 
@@ -55,7 +55,7 @@ const EventPage = () => {
               <p className="text-sm font-sans font-semibold text-foreground">Trouve-moi un film</p>
               <p className="text-xs text-foreground/45 mt-0.5">Sélection personnalisée pour toi</p>
             </div>
-            <ChevronRight className="w-4 h-4 text-foreground/25 shrink-0" />
+            <ChevronRight className="w-4 h-4 text-foreground/45 shrink-0" />
           </motion.button>
 
           {/* Duo existants */}
@@ -78,7 +78,7 @@ const EventPage = () => {
                 </p>
                 <p className="text-xs text-foreground/45 mt-0.5">Film commun · ce soir</p>
               </div>
-              <ChevronRight className="w-4 h-4 text-foreground/25 shrink-0" />
+              <ChevronRight className="w-4 h-4 text-foreground/45 shrink-0" />
             </motion.button>
           ))}
 
@@ -96,14 +96,14 @@ const EventPage = () => {
                 <p className="text-sm font-sans font-semibold text-foreground">Soirée en duo</p>
                 <p className="text-xs text-foreground/45 mt-0.5">Crée un duo pour commencer</p>
               </div>
-              <ChevronRight className="w-4 h-4 text-foreground/25 shrink-0" />
+              <ChevronRight className="w-4 h-4 text-foreground/45 shrink-0" />
             </motion.button>
           )}
         </div>
 
         {/* Programmer */}
         <div className="space-y-2 pt-2">
-          <p className="text-[11px] font-sans font-semibold tracking-widest uppercase text-foreground/35 px-1">
+          <p className="text-[11px] font-sans font-semibold tracking-widest uppercase text-foreground/50 px-1">
             Programmer
           </p>
 
@@ -119,7 +119,7 @@ const EventPage = () => {
               <p className="text-sm font-sans font-semibold text-foreground">Planifier une soirée</p>
               <p className="text-xs text-foreground/45 mt-0.5">Choisis une date, Pick s'occupe du reste</p>
             </div>
-            <ChevronRight className="w-4 h-4 text-foreground/25 shrink-0" />
+            <ChevronRight className="w-4 h-4 text-foreground/45 shrink-0" />
           </motion.button>
 
           {/* Groupe — à venir */}
@@ -131,7 +131,7 @@ const EventPage = () => {
               <p className="text-sm font-sans font-semibold text-foreground">Soirée en groupe</p>
               <p className="text-xs text-foreground/45 mt-0.5">Bientôt disponible</p>
             </div>
-            <span className="text-[10px] font-sans text-foreground/30 border border-white/10 rounded-full px-2 py-0.5 shrink-0">
+            <span className="text-[10px] font-sans text-foreground/45 border border-white/10 rounded-full px-2 py-0.5 shrink-0">
               Bientôt
             </span>
           </div>

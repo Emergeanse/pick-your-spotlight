@@ -77,7 +77,7 @@ const ActivationOverlay = ({ onStartTraining, onSkip }: ActivationOverlayProps) 
           
           <button
             onClick={onSkip}
-            className="text-foreground/30 text-xs font-sans hover:text-foreground/50 transition-colors"
+            className="text-foreground/45 text-xs font-sans hover:text-foreground/50 transition-colors"
           >
             Plus tard
           </button>

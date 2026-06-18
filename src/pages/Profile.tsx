@@ -416,10 +416,10 @@ const Profile = () => {
               ) : (
                 <button onClick={() => setEditingName(true)} className="flex items-center gap-2 group">
                   <h1 className="text-2xl font-serif text-white font-bold">{nameDisplay}</h1>
-                  <Pencil className="w-3 h-3 text-foreground/20 group-hover:text-foreground/50 transition-colors" />
+                  <Pencil className="w-3 h-3 text-foreground/40 group-hover:text-foreground/50 transition-colors" />
                 </button>
               )}
-              <p className="text-foreground/30 text-[11px] font-sans mt-0.5">{user.email}</p>
+              <p className="text-foreground/45 text-[11px] font-sans mt-0.5">{user.email}</p>
             </div>
           </motion.div>
 
@@ -512,7 +512,7 @@ const Profile = () => {
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <button className="text-foreground/15 hover:text-foreground/30 transition-colors"><Info className="w-3 h-3" /></button>
+                          <button className="text-foreground/15 hover:text-foreground/45 transition-colors"><Info className="w-3 h-3" /></button>
                         </TooltipTrigger>
                         <TooltipContent side="top" className="max-w-[280px] text-xs leading-relaxed">
                           <p>Ce score reflète à quel point Pick te connaît. Plus tu interagis (recos, likes, watchlist, training), plus les suggestions sont personnalisées.</p>
@@ -523,7 +523,7 @@ const Profile = () => {
                   <div className="flex items-end justify-between mb-3">
                     <div>
                       <span className={`text-3xl font-serif font-bold tabular-nums ${confidenceColor}`}>{confidenceTotal}</span>
-                      <span className="text-foreground/20 text-sm font-sans">/100</span>
+                      <span className="text-foreground/40 text-sm font-sans">/100</span>
                     </div>
                     <span className={`text-xs font-sans font-semibold ${confidenceColor}`}>{confidenceLabel}</span>
                   </div>
@@ -543,7 +543,7 @@ const Profile = () => {
                         <div key={i}>
                           <div className="flex items-center justify-between mb-1">
                             <span className="text-[11px] font-sans text-foreground/40">{item.label}</span>
-                            <span className="text-[11px] font-sans text-foreground/30 tabular-nums">{item.score}/{item.max}</span>
+                            <span className="text-[11px] font-sans text-foreground/45 tabular-nums">{item.score}/{item.max}</span>
                           </div>
                           <div className="h-1 rounded-full bg-foreground/[0.04] overflow-hidden">
                             <motion.div initial={{ width: 0 }} animate={{ width: `${(item.score / item.max) * 100}%` }}
@@ -609,7 +609,7 @@ const Profile = () => {
                   </span>
                 )}
               </div>
-              <ChevronDown className={`w-3.5 h-3.5 text-foreground/25 transition-transform duration-200 ${showGenres ? "rotate-180" : ""}`} />
+              <ChevronDown className={`w-3.5 h-3.5 text-foreground/45 transition-transform duration-200 ${showGenres ? "rotate-180" : ""}`} />
             </button>
             <div className={showGenres || genresSelected > 0 ? "" : "hidden"}>
               <div className={`rounded-2xl bg-card/80 backdrop-blur-sm border border-border/15 transition-all ${showGenres ? "p-4" : "px-4 py-3"}`}>
@@ -617,7 +617,7 @@ const Profile = () => {
                   {showGenres && (
                     <motion.p key="desc" initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }}
                       exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.2 }}
-                      className="text-[10px] text-foreground/20 font-sans overflow-hidden mb-3">
+                      className="text-[10px] text-foreground/40 font-sans overflow-hidden mb-3">
                       1 clic = tu aimes · 2 clics = tu n'aimes pas · 3 clics = neutre
                     </motion.p>
                   )}
@@ -658,12 +658,12 @@ const Profile = () => {
                   </span>
                 )}
               </div>
-              <ChevronDown className={`w-3.5 h-3.5 text-foreground/25 transition-transform duration-200 ${showPlatforms ? "rotate-180" : ""}`} />
+              <ChevronDown className={`w-3.5 h-3.5 text-foreground/45 transition-transform duration-200 ${showPlatforms ? "rotate-180" : ""}`} />
             </button>
             {!showPlatforms && (
               <div className="flex flex-wrap gap-1.5">
                 {selectedPlatforms.length === 0
-                  ? <span className="text-foreground/20 text-[10px] font-sans">Toutes les plateformes</span>
+                  ? <span className="text-foreground/40 text-[10px] font-sans">Toutes les plateformes</span>
                   : ALL_PLATFORMS.filter((p) => selectedPlatforms.includes(p.id)).map((p) => (
                       <img key={p.id} src={p.logo} alt={p.label} className="w-7 h-7 rounded-lg object-cover opacity-80" />
                     ))}
@@ -686,7 +686,7 @@ const Profile = () => {
                       );
                     })}
                   </div>
-                  <p className="text-foreground/20 text-[10px] font-sans mt-2">Aucune sélection = toutes les plateformes</p>
+                  <p className="text-foreground/40 text-[10px] font-sans mt-2">Aucune sélection = toutes les plateformes</p>
                 </motion.div>
               )}
             </AnimatePresence>
@@ -704,7 +704,7 @@ const Profile = () => {
             <div>
               <button onClick={() => setShowStats((v) => !v)} className="w-full flex items-center justify-between mb-3 group">
                 <span className="text-[10px] font-sans font-semibold text-foreground uppercase tracking-widest">Statistiques</span>
-                <ChevronDown className={`w-3.5 h-3.5 text-foreground/25 transition-transform duration-200 ${showStats ? "rotate-180" : ""}`} />
+                <ChevronDown className={`w-3.5 h-3.5 text-foreground/45 transition-transform duration-200 ${showStats ? "rotate-180" : ""}`} />
               </button>
               <div className="rounded-2xl bg-card/80 backdrop-blur-sm border border-border/15 overflow-hidden divide-y divide-border/5">
                 {[
@@ -754,7 +754,7 @@ const Profile = () => {
                     </div>
                     <div className="flex items-center gap-1.5">
                       {!showTrophies && allUnlocked.slice(-5).map((m, i) => <span key={i} className="text-sm">{m.icon}</span>)}
-                      <ChevronDown className={`w-4 h-4 text-foreground/20 transition-transform duration-300 ${showTrophies ? "rotate-180" : ""}`} />
+                      <ChevronDown className={`w-4 h-4 text-foreground/40 transition-transform duration-300 ${showTrophies ? "rotate-180" : ""}`} />
                     </div>
                   </button>
                   <AnimatePresence>
@@ -770,7 +770,7 @@ const Profile = () => {
                             return (
                               <div key={cat.key}>
                                 <div className="flex items-center justify-between mb-2">
-                                  <p className="text-[9px] font-sans text-foreground/20 uppercase tracking-widest">{cat.label}</p>
+                                  <p className="text-[9px] font-sans text-foreground/40 uppercase tracking-widest">{cat.label}</p>
                                   <span className="text-[9px] font-sans text-primary/30 tabular-nums">{unlockedCount}/{cat.milestones.length}</span>
                                 </div>
                                 <div className="grid grid-cols-4 gap-1.5">
@@ -786,7 +786,7 @@ const Profile = () => {
                                   })}
                                 </div>
                                 {nextM && (
-                                  <p className="text-foreground/20 text-[10px] font-sans mt-1.5 text-center">
+                                  <p className="text-foreground/40 text-[10px] font-sans mt-1.5 text-center">
                                     Plus que <span className="text-primary/30 tabular-nums">{nextM.count - value}</span> pour « {nextM.label} »
                                   </p>
                                 )}
@@ -815,7 +815,7 @@ const Profile = () => {
                 <Shield className="w-3.5 h-3.5" /> Administration
               </Button>
             )}
-            <Button variant="ghost" onClick={async () => { await signOut(); navigate("/"); }} className="justify-start text-foreground/30 hover:text-foreground text-xs font-sans gap-2 h-10">
+            <Button variant="ghost" onClick={async () => { await signOut(); navigate("/"); }} className="justify-start text-foreground/45 hover:text-foreground text-xs font-sans gap-2 h-10">
               <LogOut className="w-3.5 h-3.5" /> Déconnexion
             </Button>
           </div>

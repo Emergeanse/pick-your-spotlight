@@ -57,7 +57,7 @@ export default function PickPlusPaywall({ open, onClose, trigger = "general" }: 
               <div className="w-10 h-1 rounded-full bg-foreground/10 mx-auto mb-5" />
 
               {/* Close */}
-              <button onClick={onClose} className="absolute top-5 right-5 text-foreground/30 hover:text-foreground/60 transition-colors">
+              <button onClick={onClose} className="absolute top-5 right-5 text-foreground/45 hover:text-foreground/60 transition-colors">
                 <X className="w-5 h-5" />
               </button>
 
@@ -107,7 +107,7 @@ export default function PickPlusPaywall({ open, onClose, trigger = "general" }: 
                 >
                   Mensuel — 3,99€/mois
                 </Button>
-                <p className="text-center text-foreground/25 text-[11px] font-sans mt-2">
+                <p className="text-center text-foreground/45 text-[11px] font-sans mt-2">
                   Bientôt disponible — Pick+ arrive très bientôt !
                 </p>
               </div>

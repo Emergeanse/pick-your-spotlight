@@ -212,7 +212,7 @@ const Auth = () => {
                   <p className="text-foreground/50 text-sm font-sans">
                     Vérifie ta boîte mail ({email}) et clique sur le lien pour choisir un nouveau mot de passe.
                   </p>
-                  <p className="text-foreground/35 text-xs font-sans mt-1">
+                  <p className="text-foreground/50 text-xs font-sans mt-1">
                     Le lien expire dans 24 h. Pense à vérifier les spams.
                   </p>
                   <button
@@ -393,7 +393,7 @@ const Auth = () => {
               {/* Divider */}
               <div className="flex items-center gap-3 my-6">
                 <div className="flex-1 h-px bg-border/30" />
-                <span className="text-foreground/30 text-xs font-sans">ou</span>
+                <span className="text-foreground/45 text-xs font-sans">ou</span>
                 <div className="flex-1 h-px bg-border/30" />
               </div>
 

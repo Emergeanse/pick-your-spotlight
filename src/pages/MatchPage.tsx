@@ -298,12 +298,12 @@ export default function MatchPage() {
                 onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleTextSearch(); }}}
                 placeholder="Ex: le film avec DiCaprio dans l'espace... ou simplement « Interstellar »"
                 rows={3}
-                className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-foreground text-[15px] font-sans placeholder:text-foreground/30 focus:outline-none focus:border-primary/50 resize-none"
+                className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-foreground text-[15px] font-sans placeholder:text-foreground/45 focus:outline-none focus:border-primary/50 resize-none"
               />
               {query && (
                 <button
                   onClick={() => setQuery("")}
-                  className="absolute top-3 right-3 text-foreground/30 hover:text-foreground/60"
+                  className="absolute top-3 right-3 text-foreground/45 hover:text-foreground/60"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -326,7 +326,7 @@ export default function MatchPage() {
             {/* Séparateur */}
             <div className="flex items-center gap-3 mb-6">
               <div className="flex-1 h-px bg-white/10" />
-              <span className="text-foreground/30 text-xs font-sans">ou</span>
+              <span className="text-foreground/45 text-xs font-sans">ou</span>
               <div className="flex-1 h-px bg-white/10" />
             </div>
 
@@ -377,7 +377,7 @@ export default function MatchPage() {
 
             {/* Tip pour le scan photo */}
             {state === "idle" && (
-              <p className="mt-8 text-center text-foreground/25 text-xs font-sans leading-relaxed">
+              <p className="mt-8 text-center text-foreground/45 text-xs font-sans leading-relaxed">
                 Photo d'une affiche, d'une pochette DVD ou d'un écran de télé
               </p>
             )}

@@ -98,7 +98,7 @@ const DuoCard = ({ duo, currentUserId, onOpen }: {
         <span className={`font-sans font-bold text-sm ${affinityColor(duo.affinity_score)}`}>
           {duo.affinity_score}%
         </span>
-        <ChevronRight className="w-4 h-4 text-foreground/25" />
+        <ChevronRight className="w-4 h-4 text-foreground/45" />
       </div>
     </motion.div>
   );
@@ -116,17 +116,17 @@ const PendingDuoCard = ({ duo, onShare, onDelete }: {
     className="w-full bg-foreground/[0.03] border border-border/30 border-dashed rounded-2xl px-4 py-4 flex items-center gap-3"
   >
     <div className="w-10 h-10 rounded-full bg-foreground/8 flex items-center justify-center shrink-0">
-      <Clock className="w-4 h-4 text-foreground/30" />
+      <Clock className="w-4 h-4 text-foreground/45" />
     </div>
     <div className="flex-1 min-w-0">
       <p className="font-sans font-semibold text-foreground/70 text-sm truncate">{duo.duo_name}</p>
-      <p className="font-sans text-foreground/35 text-xs">En attente d'acceptation</p>
+      <p className="font-sans text-foreground/50 text-xs">En attente d'acceptation</p>
     </div>
     <div className="flex items-center gap-1 shrink-0">
       <button onClick={onShare} className="p-1.5 rounded-lg hover:bg-foreground/8 transition-colors text-foreground/40 hover:text-primary">
         <Share2 className="w-4 h-4" />
       </button>
-      <button onClick={onDelete} className="p-1.5 rounded-lg hover:bg-destructive/10 transition-colors text-foreground/25 hover:text-destructive">
+      <button onClick={onDelete} className="p-1.5 rounded-lg hover:bg-destructive/10 transition-colors text-foreground/45 hover:text-destructive">
         <Trash2 className="w-4 h-4" />
       </button>
     </div>
@@ -141,14 +141,14 @@ const MovieRow = ({ movies, label }: { movies: SharedMovie[]; label: string }) =
   if (movies.length === 0) return null;
   return (
     <div className="mb-4">
-      <p className="text-[10px] uppercase tracking-widest text-foreground/30 font-sans font-semibold mb-2">{label}</p>
+      <p className="text-[10px] uppercase tracking-widest text-foreground/45 font-sans font-semibold mb-2">{label}</p>
       <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-hide">
         {movies.slice(0, 10).map(m => (
           <div key={m.tmdb_id} className="shrink-0 w-14 flex flex-col gap-1">
             <div className="w-14 h-20 rounded-lg overflow-hidden bg-foreground/[0.06]">
               {m.poster_path
                 ? <img src={`${IMG}${m.poster_path}`} alt={m.title} className="w-full h-full object-cover" />
-                : <div className="w-full h-full flex items-center justify-center text-foreground/20 text-[10px] text-center px-1 leading-tight">{m.title}</div>
+                : <div className="w-full h-full flex items-center justify-center text-foreground/40 text-[10px] text-center px-1 leading-tight">{m.title}</div>
               }
             </div>
             <p className="text-[9px] text-foreground/40 font-sans leading-tight line-clamp-2 text-center">{m.title}</p>
@@ -235,12 +235,12 @@ const DuoDetail = ({ duo: initialDuo, currentUserId, onBack, onRename, onDelete 
           ) : (
             <button onClick={() => setEditing(true)} className="flex items-center gap-2 group">
               <h2 className="font-serif text-xl text-foreground truncate">{duo.duo_name}</h2>
-              <Pencil className="w-3.5 h-3.5 text-foreground/25 group-hover:text-primary transition-colors" />
+              <Pencil className="w-3.5 h-3.5 text-foreground/45 group-hover:text-primary transition-colors" />
             </button>
           )}
           <p className="text-foreground/40 font-sans text-xs mt-0.5">avec {partner ?? "—"}</p>
         </div>
-        <button onClick={onDelete} className="p-2 rounded-xl hover:bg-destructive/10 transition-colors text-foreground/25 hover:text-destructive">
+        <button onClick={onDelete} className="p-2 rounded-xl hover:bg-destructive/10 transition-colors text-foreground/45 hover:text-destructive">
           <Trash2 className="w-4 h-4" />
         </button>
       </div>
@@ -341,13 +341,13 @@ const DuoDetail = ({ duo: initialDuo, currentUserId, onBack, onRename, onDelete 
         <div className="h-px bg-border/10 mb-4" />
         {sharedMovies === null ? (
           <div className="flex items-center gap-2 py-4 justify-center">
-            <Loader2 className="w-4 h-4 animate-spin text-foreground/25" />
-            <p className="text-foreground/30 font-sans text-xs">Chargement des films en commun…</p>
+            <Loader2 className="w-4 h-4 animate-spin text-foreground/45" />
+            <p className="text-foreground/45 font-sans text-xs">Chargement des films en commun…</p>
           </div>
         ) : sharedMovies.liked.length === 0 && sharedMovies.watchlist.length === 0 ? (
           <div className="py-4 text-center">
-            <p className="text-foreground/30 font-sans text-xs">Aucun film en commun pour l'instant.</p>
-            <p className="text-foreground/20 font-sans text-[11px] mt-1">Likez ou ajoutez des films à votre liste pour voir les points communs.</p>
+            <p className="text-foreground/45 font-sans text-xs">Aucun film en commun pour l'instant.</p>
+            <p className="text-foreground/40 font-sans text-[11px] mt-1">Likez ou ajoutez des films à votre liste pour voir les points communs.</p>
           </div>
         ) : (
           <>
@@ -465,7 +465,7 @@ const CreateFlow = ({ userId, displayName, onCreated, onCancel }: {
           value={duoName}
           onChange={e => setDuoName(e.target.value)}
           onKeyDown={e => e.key === "Enter" && handleCreate()}
-          className="w-full bg-foreground/[0.04] border border-border/20 rounded-xl px-4 py-3 font-sans text-sm text-foreground placeholder:text-foreground/25 outline-none focus:border-primary/40 transition-colors"
+          className="w-full bg-foreground/[0.04] border border-border/20 rounded-xl px-4 py-3 font-sans text-sm text-foreground placeholder:text-foreground/45 outline-none focus:border-primary/40 transition-colors"
         />
         {error && <p className="text-destructive text-xs font-sans">{error}</p>}
         <div className="flex gap-3">
@@ -493,10 +493,10 @@ const CreateFlow = ({ userId, displayName, onCreated, onCancel }: {
 
       {/* Liste d'amis */}
       {loadingFriends ? (
-        <div className="flex justify-center py-6"><Loader2 className="w-5 h-5 animate-spin text-foreground/30" /></div>
+        <div className="flex justify-center py-6"><Loader2 className="w-5 h-5 animate-spin text-foreground/45" /></div>
       ) : friends.length > 0 ? (
         <div className="flex flex-col gap-2">
-          <p className="text-[10px] uppercase tracking-widest text-foreground/30 font-sans font-semibold">Mes amis</p>
+          <p className="text-[10px] uppercase tracking-widest text-foreground/45 font-sans font-semibold">Mes amis</p>
           {friends.map(friend => (
             <button
               key={friend.id}
@@ -510,18 +510,18 @@ const CreateFlow = ({ userId, displayName, onCreated, onCancel }: {
                 </AvatarFallback>
               </Avatar>
               <span className="flex-1 font-sans font-medium text-sm text-foreground">{friend.displayName}</span>
-              <ChevronRight className="w-4 h-4 text-foreground/25 shrink-0" />
+              <ChevronRight className="w-4 h-4 text-foreground/45 shrink-0" />
             </button>
           ))}
         </div>
       ) : (
-        <p className="text-foreground/35 font-sans text-sm text-center py-4">Aucun ami dans ta liste pour l'instant.</p>
+        <p className="text-foreground/50 font-sans text-sm text-center py-4">Aucun ami dans ta liste pour l'instant.</p>
       )}
 
       {/* Séparateur + option lien */}
       <div className="flex items-center gap-3 my-1">
         <div className="flex-1 h-px bg-border/15" />
-        <span className="text-foreground/25 font-sans text-xs">ou</span>
+        <span className="text-foreground/45 font-sans text-xs">ou</span>
         <div className="flex-1 h-px bg-border/15" />
       </div>
       <button
@@ -533,9 +533,9 @@ const CreateFlow = ({ userId, displayName, onCreated, onCancel }: {
         </div>
         <div className="flex-1">
           <p className="font-sans font-medium text-sm text-foreground/70">Inviter par lien</p>
-          <p className="font-sans text-xs text-foreground/35">Partager un lien d'invitation</p>
+          <p className="font-sans text-xs text-foreground/50">Partager un lien d'invitation</p>
         </div>
-        <ChevronRight className="w-4 h-4 text-foreground/20 shrink-0" />
+        <ChevronRight className="w-4 h-4 text-foreground/40 shrink-0" />
       </button>
     </motion.div>
   );
@@ -708,11 +708,11 @@ export default function DuoPage() {
               {activeTab === "amis" && (
                 <motion.div key="amis" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="flex flex-col gap-2">
                   {loadingFriends ? (
-                    <div className="flex justify-center py-8"><Loader2 className="w-5 h-5 animate-spin text-foreground/30" /></div>
+                    <div className="flex justify-center py-8"><Loader2 className="w-5 h-5 animate-spin text-foreground/45" /></div>
                   ) : friends.length === 0 ? (
                     <div className="flex flex-col items-center gap-3 pt-12 text-center">
                       <div className="w-14 h-14 rounded-full bg-foreground/[0.04] border border-border/15 flex items-center justify-center">
-                        <Users className="w-6 h-6 text-foreground/20" />
+                        <Users className="w-6 h-6 text-foreground/40" />
                       </div>
                       <p className="font-sans text-foreground/40 text-sm">Aucun ami pour l'instant.</p>
                     </div>
@@ -733,7 +733,7 @@ export default function DuoPage() {
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="font-sans font-semibold text-sm text-foreground truncate">{f.displayName}</p>
-                          <p className="font-sans text-xs text-foreground/35 mt-0.5">Ami Pick</p>
+                          <p className="font-sans text-xs text-foreground/50 mt-0.5">Ami Pick</p>
                         </div>
                         <div className="shrink-0 flex items-center gap-1 px-3 py-1.5 rounded-xl border border-primary/25 bg-primary/8 text-primary text-[11px] font-sans font-semibold">
                           <Plus className="w-3 h-3" />
@@ -750,7 +750,7 @@ export default function DuoPage() {
                 <motion.div key="duos" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="flex flex-col gap-3">
                   {duos.length > 0 && (
                     <div className="flex flex-col gap-2">
-                      <p className="text-[10px] uppercase tracking-widest text-foreground/30 font-sans font-semibold">Duos actifs</p>
+                      <p className="text-[10px] uppercase tracking-widest text-foreground/45 font-sans font-semibold">Duos actifs</p>
                       <AnimatePresence>
                         {duos.map(duo => (
                           <DuoCard key={duo.id} duo={duo} currentUserId={user!.id} onOpen={() => setSelectedDuo(duo)} />
@@ -760,7 +760,7 @@ export default function DuoPage() {
                   )}
                   {pendingDuos.length > 0 && (
                     <div className="flex flex-col gap-2 mt-1">
-                      <p className="text-[10px] uppercase tracking-widest text-foreground/30 font-sans font-semibold">En attente</p>
+                      <p className="text-[10px] uppercase tracking-widest text-foreground/45 font-sans font-semibold">En attente</p>
                       <AnimatePresence>
                         {pendingDuos.map(duo => (
                           <PendingDuoCard key={duo.id} duo={duo} onShare={() => handleShare(duo)} onDelete={() => handleDelete(duo.id)} />
@@ -771,11 +771,11 @@ export default function DuoPage() {
                   {duos.length === 0 && pendingDuos.length === 0 && (
                     <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col items-center gap-4 pt-12 text-center">
                       <div className="w-16 h-16 rounded-full bg-foreground/[0.04] border border-border/15 flex items-center justify-center">
-                        <Users className="w-7 h-7 text-foreground/20" />
+                        <Users className="w-7 h-7 text-foreground/40" />
                       </div>
                       <div className="space-y-1">
                         <p className="font-sans font-medium text-foreground/60">Aucun duo pour l'instant</p>
-                        <p className="font-sans text-foreground/35 text-sm">Fusionne ton profil avec celui d'un ami pour découvrir vos goûts communs.</p>
+                        <p className="font-sans text-foreground/50 text-sm">Fusionne ton profil avec celui d'un ami pour découvrir vos goûts communs.</p>
                       </div>
                       <Button onClick={() => setCreating(true)} className="mt-2">
                         <Plus className="w-4 h-4 mr-2" />
@@ -790,13 +790,13 @@ export default function DuoPage() {
               {activeTab === "groupes" && (
                 <motion.div key="groupes" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="flex flex-col items-center gap-4 pt-12 text-center">
                   <div className="w-16 h-16 rounded-full bg-foreground/[0.04] border border-border/15 flex items-center justify-center">
-                    <Users className="w-7 h-7 text-foreground/20" />
+                    <Users className="w-7 h-7 text-foreground/40" />
                   </div>
                   <div className="space-y-1.5">
                     <p className="font-sans font-medium text-foreground/60">Groupes — bientôt</p>
-                    <p className="font-sans text-foreground/35 text-sm max-w-[220px]">Crée des groupes de 3 personnes ou plus pour vos soirées ciné collectives.</p>
+                    <p className="font-sans text-foreground/50 text-sm max-w-[220px]">Crée des groupes de 3 personnes ou plus pour vos soirées ciné collectives.</p>
                   </div>
-                  <span className="px-3 py-1 rounded-full border border-white/10 text-[11px] font-sans text-foreground/30">Bientôt disponible</span>
+                  <span className="px-3 py-1 rounded-full border border-white/10 text-[11px] font-sans text-foreground/45">Bientôt disponible</span>
                 </motion.div>
               )}
 

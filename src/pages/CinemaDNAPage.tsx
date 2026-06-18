@@ -125,7 +125,7 @@ const PodiumSelector = ({
                         className="w-full h-full object-cover" />
                     ) : (
                       <div className="w-full h-full bg-white/5 flex items-center justify-center">
-                        <span className="text-foreground/20 text-xs">?</span>
+                        <span className="text-foreground/40 text-xs">?</span>
                       </div>
                     )}
                   </div>
@@ -391,7 +391,7 @@ const CinemaDNAPage = () => {
 
         {/* ══ 1. HERO CARD ══ */}
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
-          className="relative rounded-[28px] overflow-hidden border border-white/[0.06]"
+          className="relative rounded-3xl overflow-hidden border border-white/[0.06]"
           style={{ background: "linear-gradient(145deg, hsl(var(--primary)/0.25) 0%, hsl(var(--background)/0.6) 50%, hsl(var(--accent)/0.15) 100%)" }}>
           {/* Halo */}
           <div className="absolute -top-12 -right-12 w-48 h-48 rounded-full pointer-events-none"
@@ -453,7 +453,7 @@ const CinemaDNAPage = () => {
                       maxLength={120}
                       rows={2}
                       placeholder="En 1-2 phrases, ton rapport au cinéma…"
-                      className="w-full bg-white/[0.06] border border-white/[0.12] rounded-xl px-3 py-2 text-[12px] font-sans text-foreground/80 placeholder:text-foreground/25 focus:outline-none focus:border-primary/40 resize-none"
+                      className="w-full bg-white/[0.06] border border-white/[0.12] rounded-xl px-3 py-2 text-[12px] font-sans text-foreground/80 placeholder:text-foreground/45 focus:outline-none focus:border-primary/40 resize-none"
                     />
                     <div className="flex gap-2 justify-end">
                       <button onClick={() => { setEditingBio(false); setBioDraft(bio); }}
@@ -467,10 +467,10 @@ const CinemaDNAPage = () => {
                 ) : isOwnProfile ? (
                   <button onClick={() => { setBioDraft(bio); setEditingBio(true); }}
                     className="flex items-start gap-1.5 group text-left w-full">
-                    <p className={`text-[12px] font-sans leading-snug flex-1 ${bio ? "text-foreground/60" : "text-foreground/25 italic"}`}>
+                    <p className={`text-[12px] font-sans leading-snug flex-1 ${bio ? "text-foreground/60" : "text-foreground/45 italic"}`}>
                       {bio || "Ajoute une courte description…"}
                     </p>
-                    <Pencil className="w-3 h-3 text-foreground/20 group-hover:text-foreground/50 shrink-0 mt-0.5 transition-colors" />
+                    <Pencil className="w-3 h-3 text-foreground/40 group-hover:text-foreground/50 shrink-0 mt-0.5 transition-colors" />
                   </button>
                 ) : bio ? (
                   <p className="text-[12px] font-sans leading-snug text-foreground/60">{bio}</p>
@@ -483,7 +483,7 @@ const CinemaDNAPage = () => {
         {/* ══ 2. EMPREINTE CINÉMATOGRAPHIQUE (RADAR) ══ */}
         {radarData.length >= 3 && (
           <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }}
-            className="rounded-[24px] border border-white/[0.06] overflow-hidden"
+            className="rounded-3xl border border-white/[0.06] overflow-hidden"
             style={{ background: "hsl(var(--card)/0.6)" }}>
             <div className="px-4 pt-4 pb-2 flex items-center gap-2">
               <Sparkles className="w-3.5 h-3.5 text-primary/50" />
@@ -518,7 +518,7 @@ const CinemaDNAPage = () => {
                         className="h-full rounded-full"
                         style={{ background: `hsl(var(--primary)/${0.9 - i * 0.15})` }} />
                     </div>
-                    <p className="text-[10px] font-sans text-foreground/30 w-8 text-right shrink-0">{pct}%</p>
+                    <p className="text-[10px] font-sans text-foreground/45 w-8 text-right shrink-0">{pct}%</p>
                   </div>
                 );
               })}
@@ -548,7 +548,7 @@ const CinemaDNAPage = () => {
                 <Heart className="w-3.5 h-3.5 text-rose-400/70" />
                 <p className="text-[10px] font-sans font-semibold tracking-[0.18em] uppercase text-foreground/40">{isOwnProfile ? "Films adorés" : "Films adorés"}</p>
               </div>
-              <span className="text-[10px] font-sans text-foreground/25">{lovedCount > 0 ? lovedCount : lovedFilms.length} films</span>
+              <span className="text-[10px] font-sans text-foreground/45">{lovedCount > 0 ? lovedCount : lovedFilms.length} films</span>
             </div>
             <div className="flex gap-2.5 overflow-x-auto scrollbar-hide pb-1 -mx-4 px-4">
               {lovedFilms.slice(0, 20).map((film: any) => {
@@ -561,7 +561,7 @@ const CinemaDNAPage = () => {
                           className="w-full h-full object-cover" />
                       ) : (
                         <div className="w-full h-full bg-white/5 flex items-center justify-center">
-                          <span className="text-foreground/20 text-xs">?</span>
+                          <span className="text-foreground/40 text-xs">?</span>
                         </div>
                       )}
                     </div>

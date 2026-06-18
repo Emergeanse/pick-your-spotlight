@@ -186,7 +186,7 @@ const HistoryPage = () => {
                       />
                     ) : (
                       <div className="w-12 h-16 rounded-md bg-muted/30 flex items-center justify-center shrink-0">
-                        <Users className="w-5 h-5 text-foreground/30" />
+                        <Users className="w-5 h-5 text-foreground/45" />
                       </div>
                     )}
                     <div className="flex-1 min-w-0">
@@ -239,7 +239,7 @@ const HistoryPage = () => {
                       />
                     ) : (
                       <div className="w-12 h-16 rounded-md bg-muted/30 flex items-center justify-center shrink-0">
-                        {r.audience_type === "group" ? <Users className="w-5 h-5 text-foreground/30" /> : <Sparkles className="w-5 h-5 text-foreground/30" />}
+                        {r.audience_type === "group" ? <Users className="w-5 h-5 text-foreground/45" /> : <Sparkles className="w-5 h-5 text-foreground/45" />}
                       </div>
                     )}
                     <div className="flex-1 min-w-0">
@@ -261,9 +261,9 @@ const HistoryPage = () => {
                             <Clock className="w-3 h-3" /> {formatDate(r.created_at)}
                           </>
                         )}
-                        <span className="text-foreground/30">·</span>
+                        <span className="text-foreground/45">·</span>
                         <span>{r.audience_type === "group" ? "Groupe" : "Solo"}</span>
-                        {r.decision_mode === "planned" && <span className="text-foreground/30">· Planifiée</span>}
+                        {r.decision_mode === "planned" && <span className="text-foreground/45">· Planifiée</span>}
                       </div>
                     </div>
                   </div>

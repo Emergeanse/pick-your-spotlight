@@ -171,7 +171,7 @@ const HomeScreenChoiceModal = ({
 
             {/* ── BLOC 1 : POUR QUI ? ── */}
             <div className="relative flex flex-col gap-2">
-              <p className="text-[10px] font-sans font-semibold tracking-[0.18em] uppercase text-foreground/35">Pour qui ?</p>
+              <p className="text-[10px] font-sans font-semibold tracking-[0.18em] uppercase text-foreground/50">Pour qui ?</p>
               <div className="flex gap-1 p-1 rounded-2xl bg-white/[0.04] border border-white/[0.08]">
                 {([
                   { m: "solo" as ModalMode,   Icon: User,  label: "Solo",   disabled: false },
@@ -182,7 +182,7 @@ const HomeScreenChoiceModal = ({
                     key={m}
                     onClick={() => !disabled && handleModeChange(m)}
                     disabled={disabled}
-                    className={`relative flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-[12px] font-sans font-medium transition-all overflow-hidden ${disabled ? "text-foreground/20 cursor-not-allowed" : mode === m ? "text-foreground border border-primary/40" : "text-foreground/45 hover:text-foreground/70"}`}
+                    className={`relative flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-[12px] font-sans font-medium transition-all overflow-hidden ${disabled ? "text-foreground/40 cursor-not-allowed" : mode === m ? "text-foreground border border-primary/40" : "text-foreground/45 hover:text-foreground/70"}`}
                   >
                     {mode === m && !disabled && <div className="absolute inset-0 rounded-xl" style={{ background: TAB_GRADIENT }} />}
                     <Icon className="relative w-3.5 h-3.5" />
@@ -200,9 +200,9 @@ const HomeScreenChoiceModal = ({
                     return (
                       <motion.button key="selected" initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} transition={{ duration: 0.2 }}
                         onClick={() => setDuoListOpen(true)}
-                        className="relative flex items-center gap-3 px-4 py-3 rounded-[20px] text-[13px] font-sans border border-primary/40 text-foreground w-full overflow-hidden"
+                        className="relative flex items-center gap-3 px-4 py-3 rounded-2xl text-[13px] font-sans border border-primary/40 text-foreground w-full overflow-hidden"
                       >
-                        <div className="absolute inset-0 rounded-[20px]" style={{ background: "linear-gradient(135deg, hsl(var(--primary) / 0.35) 0%, hsl(var(--primary) / 0.10) 100%)" }} />
+                        <div className="absolute inset-0 rounded-2xl" style={{ background: "linear-gradient(135deg, hsl(var(--primary) / 0.35) 0%, hsl(var(--primary) / 0.10) 100%)" }} />
                         <div className="relative w-8 h-8 rounded-xl bg-primary/30 border border-primary/50 flex items-center justify-center shrink-0"><Heart className="w-3.5 h-3.5" /></div>
                         <span className="relative flex-1 text-left font-medium">{duo.duo_name}</span>
                         <span className="relative text-[11px] text-foreground/50 shrink-0">avec {partner ?? "—"}</span>
@@ -215,7 +215,7 @@ const HomeScreenChoiceModal = ({
                         const partner = duo.user1_id === user?.id ? duo.user2_display_name : duo.user1_display_name;
                         return (
                           <button key={duo.id} onClick={() => { setSelectedDuoId(duo.id); setDuoListOpen(false); }}
-                            className="flex items-center gap-3 px-4 py-3 rounded-[20px] text-[13px] font-sans border bg-white/[0.025] border-white/[0.06] text-foreground/80 hover:bg-white/[0.045] w-full"
+                            className="flex items-center gap-3 px-4 py-3 rounded-2xl text-[13px] font-sans border bg-white/[0.025] border-white/[0.06] text-foreground/80 hover:bg-white/[0.045] w-full"
                           >
                             <div className="w-8 h-8 rounded-xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center shrink-0"><Heart className="w-3.5 h-3.5" /></div>
                             <span className="flex-1 text-left font-medium">{duo.duo_name}</span>
@@ -230,7 +230,7 @@ const HomeScreenChoiceModal = ({
 
               {/* Groupe placeholder */}
               {mode === "groupe" && (
-                <motion.div initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} className="flex items-center gap-3 px-4 py-3 rounded-[20px] bg-white/[0.025] border border-white/[0.06]">
+                <motion.div initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-white/[0.025] border border-white/[0.06]">
                   <div className="w-8 h-8 rounded-xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center shrink-0">
                     <Users className="w-3.5 h-3.5 text-foreground/50" />
                   </div>
@@ -246,7 +246,7 @@ const HomeScreenChoiceModal = ({
 
             {/* ── BLOC 2 : THÈME ou MOOD ── */}
             <div className="relative flex flex-col gap-2">
-              <p className="text-[10px] font-sans font-semibold tracking-[0.18em] uppercase text-foreground/35">Envie de…</p>
+              <p className="text-[10px] font-sans font-semibold tracking-[0.18em] uppercase text-foreground/50">Envie de…</p>
               <div className="flex gap-1 p-1 rounded-2xl bg-white/[0.04] border border-white/[0.08]">
                 <button
                   onClick={() => {
@@ -325,7 +325,7 @@ const HomeScreenChoiceModal = ({
 
             {/* ── BLOC 3 : QUAND ? ── */}
             <div className="relative flex flex-col gap-2">
-              <p className="text-[10px] font-sans font-semibold tracking-[0.18em] uppercase text-foreground/35">Quand ?</p>
+              <p className="text-[10px] font-sans font-semibold tracking-[0.18em] uppercase text-foreground/50">Quand ?</p>
               <div className="flex gap-1 p-1 rounded-2xl bg-white/[0.04] border border-white/[0.08]">
                 <button
                   onClick={() => { setQuand("ce-soir"); setPlanConfirmed(false); }}
@@ -395,7 +395,7 @@ const HomeScreenChoiceModal = ({
                   className="overflow-hidden"
                 >
                   <div className="flex flex-col gap-2">
-                    <p className="text-[10px] font-sans font-semibold tracking-[0.18em] uppercase text-foreground/35">Où ?</p>
+                    <p className="text-[10px] font-sans font-semibold tracking-[0.18em] uppercase text-foreground/50">Où ?</p>
                     <div className="flex gap-1 p-1 rounded-2xl bg-white/[0.04] border border-white/[0.08]">
                       <button
                         onClick={() => setOu("ensemble")}
@@ -469,11 +469,11 @@ const HomeScreenChoiceModal = ({
                 }
               }}
               disabled={mode === "duo" && !selectedDuoId}
-              className="group relative w-full text-left rounded-[24px] p-5 overflow-hidden disabled:opacity-40"
+              className="group relative w-full text-left rounded-3xl p-5 overflow-hidden disabled:opacity-40"
             >
-              <div className="absolute inset-0 rounded-[24px]" style={{ background: "linear-gradient(135deg, hsl(var(--primary) / 0.45) 0%, hsl(var(--primary) / 0.18) 55%, hsl(var(--primary) / 0.08) 100%)" }} />
-              <div className="absolute inset-0 rounded-[24px] border border-primary/40 group-hover:border-primary/60 transition-colors" />
-              <div className="absolute -inset-4 rounded-[28px] pointer-events-none -z-10 opacity-70 group-hover:opacity-100 transition-opacity" style={{ background: "radial-gradient(ellipse at top left, hsl(var(--primary) / 0.55), transparent 60%)", filter: "blur(28px)" }} />
+              <div className="absolute inset-0 rounded-3xl" style={{ background: "linear-gradient(135deg, hsl(var(--primary) / 0.45) 0%, hsl(var(--primary) / 0.18) 55%, hsl(var(--primary) / 0.08) 100%)" }} />
+              <div className="absolute inset-0 rounded-3xl border border-primary/40 group-hover:border-primary/60 transition-colors" />
+              <div className="absolute -inset-4 rounded-3xl pointer-events-none -z-10 opacity-70 group-hover:opacity-100 transition-opacity" style={{ background: "radial-gradient(ellipse at top left, hsl(var(--primary) / 0.55), transparent 60%)", filter: "blur(28px)" }} />
               <motion.div animate={{ opacity: [0.4, 0.85, 0.4] }} transition={{ duration: 3.8, repeat: Infinity, ease: "easeInOut" }} className="absolute inset-x-6 top-0 h-px" style={{ background: "linear-gradient(90deg, transparent, hsl(var(--primary) / 0.7), transparent)" }} />
               <div className="relative flex items-center gap-4">
                 <motion.div animate={{ scale: [1, 1.04, 1] }} transition={{ duration: 3.2, repeat: Infinity, ease: "easeInOut" }} className="w-12 h-12 rounded-2xl bg-primary/30 border border-primary/50 flex items-center justify-center shrink-0 shadow-[0_0_24px_-4px_hsl(var(--primary)/0.7)]">

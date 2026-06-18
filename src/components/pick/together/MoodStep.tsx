@@ -41,17 +41,17 @@ const MoodStep = ({ mood, onSetMood, onStart, selectedCount, selectedFriends }: 
             ))}
             {selectedCount > 4 && (
               <div className="w-8 h-8 rounded-full bg-card border-2 border-background flex items-center justify-center">
-                <span className="text-[9px] font-sans font-bold text-foreground/30">+{selectedCount - 4}</span>
+                <span className="text-[9px] font-sans font-bold text-foreground/45">+{selectedCount - 4}</span>
               </div>
             )}
           </div>
-          <span className="text-foreground/25 text-[11px] font-sans">{selectedCount} personnes</span>
+          <span className="text-foreground/45 text-[11px] font-sans">{selectedCount} personnes</span>
         </div>
 
         <h2 className="text-2xl font-serif mb-1.5" style={{ lineHeight: "1.15" }}>
           Quelle ambiance<br />pour ce soir ?
         </h2>
-        <p className="text-foreground/35 text-[13px] font-sans">Choisis une vibe ou laisse Pick décider</p>
+        <p className="text-foreground/50 text-[13px] font-sans">Choisis une vibe ou laisse Pick décider</p>
       </motion.div>
 
       {/* Mood cards */}
@@ -79,12 +79,12 @@ const MoodStep = ({ mood, onSetMood, onStart, selectedCount, selectedFriends }: 
                 <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-3 transition-colors duration-300 ${
                   selected ? "bg-primary/15 border border-primary/25" : "bg-foreground/5 border border-border/10"
                 }`}>
-                  <Icon className={`w-5 h-5 transition-colors duration-300 ${selected ? "text-primary" : "text-foreground/30"}`} />
+                  <Icon className={`w-5 h-5 transition-colors duration-300 ${selected ? "text-primary" : "text-foreground/45"}`} />
                 </div>
                 <span className={`text-sm font-sans font-semibold block mb-0.5 transition-colors ${selected ? "text-foreground" : "text-foreground/65"}`}>
                   {m.label}
                 </span>
-                <span className={`text-[11px] font-sans transition-colors ${selected ? "text-foreground/50" : "text-foreground/25"}`}>
+                <span className={`text-[11px] font-sans transition-colors ${selected ? "text-foreground/50" : "text-foreground/45"}`}>
                   {m.desc}
                 </span>
               </div>
@@ -106,7 +106,7 @@ const MoodStep = ({ mood, onSetMood, onStart, selectedCount, selectedFriends }: 
           <Sparkles className="w-4 h-4" />Trouver le film parfait
         </Button>
         <button onClick={() => onStart(true)}
-          className="w-full text-center text-foreground/25 text-xs font-sans hover:text-foreground/40 transition-colors py-2"
+          className="w-full text-center text-foreground/45 text-xs font-sans hover:text-foreground/40 transition-colors py-2"
         >
           Passer — surprise totale
         </button>

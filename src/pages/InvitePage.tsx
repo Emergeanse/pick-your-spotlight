@@ -317,7 +317,7 @@ const InvitePage = () => {
                   >
                     Rejoindre en invité
                   </button>
-                  <p className="text-center text-[11px] text-foreground/30 font-sans">
+                  <p className="text-center text-[11px] text-foreground/45 font-sans">
                     Compte Pick = tes goûts retenus pour les prochaines soirées
                   </p>
                 </div>

@@ -405,7 +405,7 @@ const Landing = () => {
                     <div key={g.genre}>
                       <div className="flex justify-between mb-0.5">
                         <span className="text-[10px] font-sans text-foreground/50">{g.genre}</span>
-                        <span className="text-[10px] font-sans text-foreground/30">{g.pct}%</span>
+                        <span className="text-[10px] font-sans text-foreground/45">{g.pct}%</span>
                       </div>
                       <div className="h-1.5 rounded-full bg-foreground/5 overflow-hidden">
                         <motion.div
@@ -489,7 +489,7 @@ const Landing = () => {
                     </div>
                     <div>
                       <p className="text-[11px] font-serif text-foreground leading-tight">Inception</p>
-                      <p className="text-[9px] font-sans text-foreground/35 mt-0.5">2h28 · Sci-Fi, Action</p>
+                      <p className="text-[9px] font-sans text-foreground/50 mt-0.5">2h28 · Sci-Fi, Action</p>
                       <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gold/15 border border-gold/25 mt-1.5">
                         <span className="text-[9px] font-sans font-bold text-gold">91% compatibilité</span>
                       </div>
@@ -525,7 +525,7 @@ const Landing = () => {
                 <div className="w-14 h-14 md:w-18 md:h-18 rounded-2xl overflow-hidden border border-border/12 hover:border-gold/25 transition-all duration-300 hover:scale-105 shadow-lg">
                   <img src={p.logo} alt={p.label} className="w-full h-full object-cover" />
                 </div>
-                <span className="text-[10px] font-sans text-foreground/25">{p.label}</span>
+                <span className="text-[10px] font-sans text-foreground/45">{p.label}</span>
               </motion.div>
             ))}
           </motion.div>
@@ -546,7 +546,7 @@ const Landing = () => {
             {/* Free */}
             <motion.div variants={fadeUp} custom={0} className="rounded-2xl border border-border/12 bg-card/30 p-6 md:p-8">
               <h3 className="text-xl font-serif mb-1">Gratuit</h3>
-              <p className="text-foreground/35 text-sm font-sans mb-1">Pour toujours</p>
+              <p className="text-foreground/50 text-sm font-sans mb-1">Pour toujours</p>
               <p className="text-3xl font-serif text-foreground mb-5">0€</p>
               <div className="space-y-3">
                 {["3 recommandations / jour", "Parle à Pick (1/jour)", "ADN Cinéma de base", "Watchlist & films aimés", "Liens plateformes", "Mode Compagnon (1 question/film)"].map((f) => (
@@ -560,8 +560,8 @@ const Landing = () => {
                 <Crown className="w-3 h-3 text-gold" /><span className="text-gold text-[10px] font-sans font-bold uppercase tracking-wider">Populaire</span>
               </div>
               <h3 className="text-xl font-serif mb-1 text-gold">Pick+</h3>
-              <p className="text-foreground/35 text-sm font-sans mb-1">L'expérience complète</p>
-              <div className="flex items-baseline gap-1 mb-5"><p className="text-3xl font-serif text-foreground">3,99€</p><span className="text-foreground/35 text-sm font-sans">/mois</span></div>
+              <p className="text-foreground/50 text-sm font-sans mb-1">L'expérience complète</p>
+              <div className="flex items-baseline gap-1 mb-5"><p className="text-3xl font-serif text-foreground">3,99€</p><span className="text-foreground/50 text-sm font-sans">/mois</span></div>
               <div className="space-y-3">
                 {["Tout le plan Gratuit", "Recommandations illimitées", "Chatbot complet", "Mode Compagnon illimité", "ADN Cinéma avancé", "Pick Ensemble", "Profils multiples"].map((f) => (
                   <div key={f} className="flex items-center gap-2.5"><Check className="w-4 h-4 text-gold shrink-0" /><span className="text-foreground/60 text-sm font-sans">{f}</span></div>
@@ -572,7 +572,7 @@ const Landing = () => {
                   <Crown className="w-4 h-4" />Annuel — 29,99€/an
                 </Button>
                 <Button variant="outline" className="w-full rounded-full border-gold/15 text-foreground/40 font-sans text-sm h-10" disabled>Mensuel — 3,99€/mois</Button>
-                <p className="text-center text-foreground/20 text-[10px] font-sans">Bientôt disponible</p>
+                <p className="text-center text-foreground/40 text-[10px] font-sans">Bientôt disponible</p>
               </div>
             </motion.div>
           </motion.div>
@@ -587,9 +587,9 @@ const Landing = () => {
             <img src={pickLogo} alt="Pick" className="w-5 h-5 object-contain invert brightness-200" />
             <span className="font-serif text-lg">Pick</span>
             <span className="text-foreground/15 text-xs font-sans">·</span>
-            <span className="text-foreground/25 text-xs font-sans">Ton expert cinéma</span>
+            <span className="text-foreground/45 text-xs font-sans">Ton expert cinéma</span>
           </div>
-          <div className="flex items-center gap-6 text-foreground/25 text-xs font-sans">
+          <div className="flex items-center gap-6 text-foreground/45 text-xs font-sans">
             <span className="hover:text-foreground/50 transition-colors cursor-default">À propos</span>
             <span className="hover:text-foreground/50 transition-colors cursor-default">Confidentialité</span>
             <span className="hover:text-foreground/50 transition-colors cursor-default">Conditions</span>

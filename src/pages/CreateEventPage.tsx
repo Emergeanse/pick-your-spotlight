@@ -311,7 +311,7 @@ const CreateEventPage = () => {
                       key={key}
                       onClick={() => !cfg.disabled && setContext(key)}
                       disabled={cfg.disabled}
-                      className={`relative flex-1 flex flex-col items-center gap-1.5 py-3 rounded-2xl text-[11.5px] font-sans font-semibold transition-all overflow-hidden border ${cfg.disabled ? "border-white/[0.05] text-foreground/20 opacity-35 cursor-not-allowed" : context === key ? "border-primary/50 text-foreground" : "border-white/[0.08] text-foreground/50"}`}
+                      className={`relative flex-1 flex flex-col items-center gap-1.5 py-3 rounded-2xl text-[11.5px] font-sans font-semibold transition-all overflow-hidden border ${cfg.disabled ? "border-white/[0.05] text-foreground/40 opacity-35 cursor-not-allowed" : context === key ? "border-primary/50 text-foreground" : "border-white/[0.08] text-foreground/50"}`}
                     >
                       {context === key && !cfg.disabled && <div className="absolute inset-0 rounded-2xl" style={{ background: TAB_ACTIVE }} />}
                       <span className="relative text-lg">{cfg.emoji}</span>
@@ -327,7 +327,7 @@ const CreateEventPage = () => {
                   <label className="text-[10px] font-sans font-semibold tracking-[0.18em] uppercase text-foreground/40">Avec qui ?</label>
                   {!duosLoaded ? (
                     <div className="flex items-center justify-center py-4">
-                      <Loader2 className="w-5 h-5 animate-spin text-foreground/30" />
+                      <Loader2 className="w-5 h-5 animate-spin text-foreground/45" />
                     </div>
                   ) : duos.length === 0 ? (
                     <div className="flex flex-col items-center gap-3 py-5 rounded-2xl border border-white/[0.08] bg-white/[0.02]">
@@ -533,7 +533,7 @@ const CreateEventPage = () => {
               {/* Mood libre */}
               <div className="flex flex-col gap-2">
                 <label className="text-[10px] font-sans font-semibold tracking-[0.18em] uppercase text-foreground/40">
-                  Ambiance <span className="normal-case font-normal text-foreground/30">(optionnel)</span>
+                  Ambiance <span className="normal-case font-normal text-foreground/45">(optionnel)</span>
                 </label>
                 <textarea
                   value={mood}
@@ -621,7 +621,7 @@ const CreateEventPage = () => {
                       <p className="text-[13px] font-sans font-semibold text-foreground">Gérer la soirée</p>
                       <p className="text-[11px] text-foreground/45 mt-0.5">Participants, votes, révélation</p>
                     </div>
-                    <ChevronRight className="w-4 h-4 text-foreground/25 shrink-0" />
+                    <ChevronRight className="w-4 h-4 text-foreground/45 shrink-0" />
                   </button>
                 </>
               )}

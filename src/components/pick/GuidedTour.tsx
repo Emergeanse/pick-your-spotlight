@@ -105,7 +105,7 @@ const GuidedTour = ({ onComplete, onStartTraining }: GuidedTourProps) => {
                     </Button>
                     <button
                       onClick={handleFinish}
-                      className="text-foreground/30 text-xs font-sans hover:text-foreground/60 transition-colors py-2"
+                      className="text-foreground/45 text-xs font-sans hover:text-foreground/60 transition-colors py-2"
                     >
                       Plus tard, je veux explorer
                     </button>

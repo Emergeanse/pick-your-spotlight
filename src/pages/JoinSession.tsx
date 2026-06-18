@@ -221,7 +221,7 @@ const JoinSession = () => {
             className="flex items-center gap-4 my-7"
           >
             <div className="flex-1 h-px bg-border/50" />
-            <span className="text-foreground/30 text-xs font-sans uppercase tracking-wider">ou</span>
+            <span className="text-foreground/45 text-xs font-sans uppercase tracking-wider">ou</span>
             <div className="flex-1 h-px bg-border/50" />
           </motion.div>
 
@@ -273,7 +273,7 @@ const JoinSession = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 1.2 }}
-            className="text-foreground/20 text-[11px] font-sans text-center mt-5"
+            className="text-foreground/40 text-[11px] font-sans text-center mt-5"
           >
             En invité, tes recommandations ne seront pas sauvegardées
           </motion.p>

@@ -43,7 +43,7 @@ const ProfilePreferences = ({
           <h2 className="text-sm font-sans font-semibold text-foreground/50 uppercase tracking-widest">Niveau de correspondance</h2>
           <TooltipProvider>
             <Tooltip>
-              <TooltipTrigger asChild><button className="text-foreground/20"><Info className="w-3 h-3" /></button></TooltipTrigger>
+              <TooltipTrigger asChild><button className="text-foreground/40"><Info className="w-3 h-3" /></button></TooltipTrigger>
               <TooltipContent side="top" className="max-w-[260px] text-xs">
                 <p>Plus le pourcentage est élevé, plus les recommandations seront proches de vos goûts.</p>
               </TooltipContent>

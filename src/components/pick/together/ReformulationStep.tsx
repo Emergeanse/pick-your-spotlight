@@ -45,7 +45,7 @@ const ReformulationStep = ({ parsed, loading, onConfirm, onEdit }: Reformulation
             <span className="text-primary text-[11px] font-sans font-semibold uppercase tracking-wide">
               Envie du moment
             </span>
-            <span className="text-foreground/30 text-[10px] font-sans ml-auto">non mémorisé</span>
+            <span className="text-foreground/45 text-[10px] font-sans ml-auto">non mémorisé</span>
           </div>
           {wishBits.length > 0 ? (
             <p className="text-foreground/85 text-[14px] font-sans leading-relaxed">

@@ -82,7 +82,7 @@ const ActorCard = ({ actor, onClick }: { actor: CastMember; onClick?: () => void
         <img src={`${IMG_BASE}/w185${actor.profile_path}`} alt={actor.name} className="w-full h-full object-cover" />
       ) : (
         <div className="w-full h-full flex items-center justify-center">
-          <span className="text-foreground/30 text-[11px] font-sans font-bold">{actor.name.charAt(0)}</span>
+          <span className="text-foreground/45 text-[11px] font-sans font-bold">{actor.name.charAt(0)}</span>
         </div>
       )}
     </div>
@@ -90,7 +90,7 @@ const ActorCard = ({ actor, onClick }: { actor: CastMember; onClick?: () => void
       <p className="text-foreground/70 text-[10px] font-sans font-medium leading-tight truncate group-hover:text-primary transition-colors">
         {actor.name}
       </p>
-      <p className="text-foreground/30 text-[9px] font-sans leading-tight truncate">{actor.character}</p>
+      <p className="text-foreground/45 text-[9px] font-sans leading-tight truncate">{actor.character}</p>
     </div>
   </button>
 );
@@ -162,7 +162,7 @@ const StreamingSection = ({ streamingLinks }: { streamingLinks: StreamingLink[] 
       transition={{ delay: 0.35 }}
       className="mb-4"
     >
-      <p className="text-[10px] uppercase tracking-widest text-foreground/30 font-sans font-semibold mb-2">
+      <p className="text-[10px] uppercase tracking-widest text-foreground/45 font-sans font-semibold mb-2">
         Où regarder
       </p>
       <div className="flex flex-wrap gap-2">
@@ -233,7 +233,7 @@ const RefineSheet = ({
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               placeholder="Dis-moi ce que tu cherches de différent…"
-              className="w-full h-20 rounded-xl bg-foreground/[0.04] border border-border/15 p-3 text-sm font-sans text-foreground placeholder:text-foreground/30 resize-none focus:outline-none focus:border-primary/30"
+              className="w-full h-20 rounded-xl bg-foreground/[0.04] border border-border/15 p-3 text-sm font-sans text-foreground placeholder:text-foreground/45 resize-none focus:outline-none focus:border-primary/30"
             />
             <button
               onClick={handleSend}
@@ -882,7 +882,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
               <div className="mb-4 max-w-xl">
                 <button
                   onClick={() => setSynopsisExpanded((v) => !v)}
-                  className="flex items-center gap-2 text-[10px] uppercase tracking-widest text-foreground/30 font-sans font-semibold mb-2"
+                  className="flex items-center gap-2 text-[10px] uppercase tracking-widest text-foreground/45 font-sans font-semibold mb-2"
                 >
                   Synopsis
                   {synopsisExpanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
@@ -997,7 +997,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
 
             {cast.length > 0 && (
               <div className="mb-4">
-                <p className="text-[10px] uppercase tracking-widest text-foreground/30 font-sans font-semibold mb-2">
+                <p className="text-[10px] uppercase tracking-widest text-foreground/45 font-sans font-semibold mb-2">
                   Casting
                 </p>
                 <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
@@ -1023,13 +1023,13 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
                   href={trailerUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="group relative inline-flex w-full sm:w-auto items-center justify-center gap-2.5 px-7 py-4 rounded-[24px] bg-primary text-primary-foreground font-sans font-semibold text-[14px] tracking-wide shadow-[0_22px_60px_-14px_hsl(var(--primary)/0.7)] hover:shadow-[0_22px_70px_-10px_hsl(var(--primary)/0.85)] transition-shadow"
+                  className="group relative inline-flex w-full sm:w-auto items-center justify-center gap-2.5 px-7 py-4 rounded-3xl bg-primary text-primary-foreground font-sans font-semibold text-[14px] tracking-wide shadow-[0_22px_60px_-14px_hsl(var(--primary)/0.7)] hover:shadow-[0_22px_70px_-10px_hsl(var(--primary)/0.85)] transition-shadow"
                 >
                   <motion.span
                     aria-hidden
                     animate={{ opacity: [0.35, 0.65, 0.35] }}
                     transition={{ duration: 2.6, repeat: Infinity, ease: "easeInOut" }}
-                    className="absolute -inset-1 rounded-[26px] bg-primary/40 blur-xl -z-10"
+                    className="absolute -inset-1 rounded-3xl bg-primary/40 blur-xl -z-10"
                   />
                   <Play className="w-4 h-4 fill-current" />
                   On lance la séance ?
@@ -1079,7 +1079,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
                     className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border text-[12px] font-sans font-medium transition-all ${
                       allVisited
                         ? "border-primary/50 text-primary/80 bg-primary/5 hover:bg-primary/10 hover:border-primary/70 hover:text-primary shadow-[0_0_12px_hsl(var(--primary)/0.12)]"
-                        : "border-foreground/10 text-foreground/30 cursor-not-allowed"
+                        : "border-foreground/10 text-foreground/45 cursor-not-allowed"
                     }`}
                   >
                     {refining ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
@@ -1091,7 +1091,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
               <div className="mb-3 flex items-center justify-between gap-3">
                 <button
                   onClick={onRestart}
-                  className="rounded-full bg-foreground/5 p-2 text-foreground/30 transition-all hover:bg-foreground/10"
+                  className="rounded-full bg-foreground/5 p-2 text-foreground/45 transition-all hover:bg-foreground/10"
                   aria-label="Revenir"
                 >
                   <ChevronLeft className="h-5 w-5" />
@@ -1110,7 +1110,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
 
                 <button
                   onClick={() => setShowOptions(true)}
-                  className="rounded-full bg-foreground/5 p-2 text-foreground/30 transition-all hover:bg-foreground/10"
+                  className="rounded-full bg-foreground/5 p-2 text-foreground/45 transition-all hover:bg-foreground/10"
                   aria-label="Options"
                 >
                   <Dices className="h-5 w-5" />

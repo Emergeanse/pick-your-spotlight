@@ -55,14 +55,14 @@ const PromptStep = ({ initialPrompt = "", initialGuests = [], loading, onSubmit 
           onChange={(e) => setPrompt(e.target.value)}
           rows={4}
           placeholder="Ex : trouve un film pour moi et Elisa pour ce soir, elle aime les comédies des années 80"
-          className="w-full rounded-2xl bg-card border border-border/20 px-4 py-3 text-[14px] font-sans text-foreground placeholder:text-foreground/30 focus:outline-none focus:border-primary/50 transition-colors resize-none"
+          className="w-full rounded-2xl bg-card border border-border/20 px-4 py-3 text-[14px] font-sans text-foreground placeholder:text-foreground/45 focus:outline-none focus:border-primary/50 transition-colors resize-none"
           autoFocus
         />
 
         <div className="mt-5">
           <div className="flex items-center justify-between mb-2">
             <span className="text-foreground/55 text-xs font-sans font-medium">Avec qui ?</span>
-            <span className="text-foreground/30 text-[10px] font-sans">Prénom + (optionnel) un mot</span>
+            <span className="text-foreground/45 text-[10px] font-sans">Prénom + (optionnel) un mot</span>
           </div>
 
           {guests.length > 0 && (
@@ -122,7 +122,7 @@ const PromptStep = ({ initialPrompt = "", initialGuests = [], loading, onSubmit 
             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
             Trouver le film
           </Button>
-          <p className="text-center text-foreground/25 text-[10px] font-sans mt-3">
+          <p className="text-center text-foreground/45 text-[10px] font-sans mt-3">
             Pick distingue ton envie du moment et les goûts durables de chacun.
           </p>
         </div>

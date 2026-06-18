@@ -145,7 +145,7 @@ const FlipCardBack = ({ item, type }: FlipCardBackProps) => {
 
         {director && (
           <div className="mb-2">
-            <p className="mb-0.5 text-[9px] font-sans font-semibold uppercase tracking-wider text-foreground/25">
+            <p className="mb-0.5 text-[9px] font-sans font-semibold uppercase tracking-wider text-foreground/45">
               <Clapperboard className="mr-0.5 inline h-2.5 w-2.5" />
               {type === "tv" ? "Créateur" : "Réalisateur"}
             </p>
@@ -155,7 +155,7 @@ const FlipCardBack = ({ item, type }: FlipCardBackProps) => {
 
         {cast.length > 0 && (
           <div>
-            <p className="mb-1 text-[9px] font-sans font-semibold uppercase tracking-wider text-foreground/25">
+            <p className="mb-1 text-[9px] font-sans font-semibold uppercase tracking-wider text-foreground/45">
               <User className="mr-0.5 inline h-2.5 w-2.5" />
               Casting
             </p>
@@ -251,7 +251,7 @@ const PersonDetailContent = ({
             </p>
           )}
           {detail?.birthday && (
-            <p className="text-[10px] font-sans text-foreground/25">
+            <p className="text-[10px] font-sans text-foreground/45">
               Né(e) le {new Date(detail.birthday).toLocaleDateString("fr-FR")}
               {detail?.place_of_birth && ` · ${detail.place_of_birth.split(",").pop()?.trim()}`}
             </p>
@@ -272,7 +272,7 @@ const PersonDetailContent = ({
 
       {filmography.length > 0 && (
         <div>
-          <p className="mb-1.5 text-[9px] font-sans font-semibold uppercase tracking-wider text-foreground/25">
+          <p className="mb-1.5 text-[9px] font-sans font-semibold uppercase tracking-wider text-foreground/45">
             <Film className="mr-0.5 inline h-2.5 w-2.5" />
             Filmographie
           </p>

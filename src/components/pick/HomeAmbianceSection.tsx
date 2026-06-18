@@ -28,7 +28,7 @@ const POSTER_BASE = "https://image.tmdb.org/t/p/w342";
 
 // Unified premium surface — same family across all home cards
 const PREMIUM_SURFACE =
-  "rounded-[26px] border-white/[0.05] bg-[linear-gradient(180deg,hsl(240_14%_9%/0.85),hsl(240_18%_5%/0.7))] backdrop-blur-2xl shadow-[0_30px_80px_-40px_rgba(0,0,0,0.95),inset_0_1px_0_rgba(255,255,255,0.04)]";
+  "rounded-3xl border-white/[0.05] bg-[linear-gradient(180deg,hsl(240_14%_9%/0.85),hsl(240_18%_5%/0.7))] backdrop-blur-2xl shadow-[0_30px_80px_-40px_rgba(0,0,0,0.95),inset_0_1px_0_rgba(255,255,255,0.04)]";
 
 const SECTION_EYEBROW =
   "text-[10.5px] font-sans font-semibold tracking-[0.18em] uppercase text-foreground/40";
@@ -173,7 +173,7 @@ const HomeAmbianceSection = ({ onPickAmbiance, activeAmbiance }: Props) => {
                         className={`w-[16px] h-[16px] transition-all ${
                           filled
                             ? "fill-primary text-primary drop-shadow-[0_0_10px_hsl(var(--primary)/0.55)]"
-                            : "text-foreground/25"
+                            : "text-foreground/45"
                         }`}
                         strokeWidth={1.5}
                       />

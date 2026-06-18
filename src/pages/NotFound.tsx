@@ -29,7 +29,7 @@ const NotFound = () => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.2 }}
-          className="text-6xl font-serif text-foreground/20 mt-6 mb-2"
+          className="text-6xl font-serif text-foreground/40 mt-6 mb-2"
         >
           404
         </motion.h1>

@@ -107,7 +107,7 @@ function TabButton({ tab, isActive, navigate, location }: {
         className="relative flex items-center justify-center h-[26px]"
       >
         <Icon
-          className={`w-[20px] h-[20px] transition-colors duration-200 ${isActive ? "text-primary" : "text-foreground/35"}`}
+          className={`w-[20px] h-[20px] transition-colors duration-200 ${isActive ? "text-primary" : "text-foreground/50"}`}
           strokeWidth={isActive ? 2.2 : 1.7}
         />
       </motion.div>

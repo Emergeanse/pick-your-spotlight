@@ -467,7 +467,7 @@ const EventDetailPage = () => {
                 <div className="flex-1">
                   <p className="text-[13px] font-sans font-semibold text-emerald-400">Ta présence est confirmée</p>
                 </div>
-                <button onClick={decline} className="text-[11px] text-foreground/30 font-sans hover:text-foreground/60 transition-colors">
+                <button onClick={decline} className="text-[11px] text-foreground/45 font-sans hover:text-foreground/60 transition-colors">
                   Annuler
                 </button>
               </motion.div>
@@ -519,9 +519,9 @@ const EventDetailPage = () => {
 
           {participants.length === 0 ? (
             <div className="rounded-2xl bg-white/[0.02] border border-white/[0.05] px-4 py-6 text-center">
-              <p className="text-sm text-foreground/30 font-sans">Aucun participant pour l'instant</p>
+              <p className="text-sm text-foreground/45 font-sans">Aucun participant pour l'instant</p>
               {isOrganizer && (
-                <p className="text-[11px] text-foreground/20 font-sans mt-1">Partagez le lien ci-dessous pour inviter</p>
+                <p className="text-[11px] text-foreground/40 font-sans mt-1">Partagez le lien ci-dessous pour inviter</p>
               )}
             </div>
           ) : (
@@ -656,7 +656,7 @@ const EventDetailPage = () => {
                 />
               ) : (
                 <div className="w-16 h-24 rounded-xl bg-white/[0.06] flex items-center justify-center shrink-0">
-                  <Film className="w-5 h-5 text-foreground/20" />
+                  <Film className="w-5 h-5 text-foreground/40" />
                 </div>
               )}
               <div className="flex-1 flex flex-col justify-center gap-1">

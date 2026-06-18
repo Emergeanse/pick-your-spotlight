@@ -173,7 +173,7 @@ const GenrePreferences = ({ onCountChange, onRejectedCountChange, collapsed = fa
       {visibleOrigins.length > 0 && (
         <div>
           {!collapsed && (
-            <p className="text-[9px] font-sans text-foreground/20 uppercase tracking-widest mb-2">
+            <p className="text-[9px] font-sans text-foreground/40 uppercase tracking-widest mb-2">
               Styles cinématographiques · 1 clic = aimé · 2 clics = exclu
             </p>
           )}
@@ -184,7 +184,7 @@ const GenrePreferences = ({ onCountChange, onRejectedCountChange, collapsed = fa
       )}
 
       {!collapsed && (selectedCount > 0 || rejectedCount > 0) && (
-        <p className="text-[10px] font-sans text-foreground/30 mt-1">
+        <p className="text-[10px] font-sans text-foreground/45 mt-1">
           {selectedCount > 0 && (
             <span className="text-primary/40">{selectedCount} aimé{selectedCount > 1 ? "s" : ""}</span>
           )}

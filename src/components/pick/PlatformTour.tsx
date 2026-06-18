@@ -244,7 +244,7 @@ const PlatformTour = ({ onComplete }: PlatformTourProps) => {
               <p className="text-foreground/50 text-sm font-sans leading-relaxed mb-4">{step.desc}</p>
 
               <div className="flex items-center justify-between">
-                <button onClick={onComplete} className="text-foreground/30 text-xs font-sans hover:text-foreground/60 transition-colors">
+                <button onClick={onComplete} className="text-foreground/45 text-xs font-sans hover:text-foreground/60 transition-colors">
                   Passer le tour
                 </button>
                 <Button variant="hero" size="sm" onClick={handleNext}>

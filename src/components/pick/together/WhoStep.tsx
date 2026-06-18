@@ -89,7 +89,7 @@ const WhoStep = ({
           <h2 className="text-2xl font-serif mb-1.5" style={{ lineHeight: "1.15" }}>
             Qui sera là ?
           </h2>
-          <p className="text-foreground/35 text-[13px] font-sans">
+          <p className="text-foreground/50 text-[13px] font-sans">
             Sélectionne tes amis ou ajoute des invités
           </p>
         </motion.div>
@@ -101,7 +101,7 @@ const WhoStep = ({
           </div>
           <div className="flex-1">
             <p className="text-sm font-sans font-semibold text-foreground">Toi</p>
-            <p className="text-foreground/30 text-[10px] font-sans">Organisateur</p>
+            <p className="text-foreground/45 text-[10px] font-sans">Organisateur</p>
           </div>
           <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center">
             <Check className="w-3.5 h-3.5 text-primary-foreground" />
@@ -115,7 +115,7 @@ const WhoStep = ({
               <Users className="w-7 h-7 text-muted-foreground/30" />
             </div>
             <p className="text-foreground/50 text-sm font-sans mb-1">Pas encore d'amis sur Pick</p>
-            <p className="text-foreground/30 text-xs font-sans mb-4">Partage ton code ami pour commencer</p>
+            <p className="text-foreground/45 text-xs font-sans mb-4">Partage ton code ami pour commencer</p>
             <Button onClick={onNavigateToProfile} variant="outline" className="rounded-xl font-sans border-primary/30 text-primary">
               Ajouter des amis
             </Button>
@@ -191,7 +191,7 @@ const WhoStep = ({
                     <Copy className="w-3.5 h-3.5" />Copier le lien
                   </button>
                 </div>
-                <p className="text-foreground/25 text-[10px] font-sans text-center font-mono tracking-wider">{sessionInviteCode}</p>
+                <p className="text-foreground/45 text-[10px] font-sans text-center font-mono tracking-wider">{sessionInviteCode}</p>
               </div>
             </div>
             {realtimeMembers.length > 0 && (
@@ -213,7 +213,7 @@ const WhoStep = ({
 
         {/* Guests */}
         <div className="mt-5">
-          <p className="text-[10px] font-sans font-semibold text-foreground/30 uppercase tracking-widest mb-3">Invités (sans compte)</p>
+          <p className="text-[10px] font-sans font-semibold text-foreground/45 uppercase tracking-widest mb-3">Invités (sans compte)</p>
           {guests.map((g) => (
             <div key={g.id} className="flex items-center gap-3 p-3.5 rounded-2xl bg-accent/5 border border-accent/15 mb-2">
               <div className="w-10 h-10 rounded-full bg-accent/15 border border-accent/25 flex items-center justify-center">
@@ -221,12 +221,12 @@ const WhoStep = ({
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-sans font-medium text-foreground">{g.name}</p>
-                <p className="text-foreground/30 text-[10px] font-sans truncate">
+                <p className="text-foreground/45 text-[10px] font-sans truncate">
                   {[g.age ? `${g.age} ans` : null, g.gender, g.favoriteGenres.length > 0 ? g.favoriteGenres.slice(0, 2).join(", ") : null].filter(Boolean).join(" · ") || "Invité"}
                 </p>
               </div>
               <button onClick={() => onRemoveGuest(g.id)} className="w-6 h-6 rounded-full bg-muted/30 flex items-center justify-center hover:bg-destructive/10 transition-colors">
-                <X className="w-3 h-3 text-foreground/30" />
+                <X className="w-3 h-3 text-foreground/45" />
               </button>
             </div>
           ))}
@@ -242,11 +242,11 @@ const WhoStep = ({
                 className="w-full flex items-center gap-3 p-3.5 rounded-2xl border border-dashed border-border/20 hover:border-primary/30 transition-all text-left group"
               >
                 <div className="w-10 h-10 rounded-full bg-muted/20 border border-border/15 flex items-center justify-center group-hover:bg-primary/10 group-hover:border-primary/20 transition-colors">
-                  <UserPlus className="w-4 h-4 text-foreground/30 group-hover:text-primary transition-colors" />
+                  <UserPlus className="w-4 h-4 text-foreground/45 group-hover:text-primary transition-colors" />
                 </div>
                 <div>
                   <p className="text-sm font-sans font-medium text-foreground/50 group-hover:text-foreground/70 transition-colors">Ajouter un invité</p>
-                  <p className="text-foreground/25 text-[10px] font-sans">Quelqu'un sans compte Pick</p>
+                  <p className="text-foreground/45 text-[10px] font-sans">Quelqu'un sans compte Pick</p>
                 </div>
               </motion.button>
             ) : (
@@ -259,23 +259,23 @@ const WhoStep = ({
               >
                 <div className="flex items-center justify-between">
                   <p className="text-sm font-sans font-semibold text-foreground">Nouvel invité</p>
-                  <button onClick={() => setShowGuestForm(false)} className="text-foreground/30 hover:text-foreground/60 transition-colors">
+                  <button onClick={() => setShowGuestForm(false)} className="text-foreground/45 hover:text-foreground/60 transition-colors">
                     <X className="w-4 h-4" />
                   </button>
                 </div>
                 <div>
-                  <label className="text-[10px] font-sans font-semibold text-foreground/30 uppercase tracking-widest block mb-1.5">Prénom *</label>
+                  <label className="text-[10px] font-sans font-semibold text-foreground/45 uppercase tracking-widest block mb-1.5">Prénom *</label>
                   <input type="text" value={guestName} onChange={e => setGuestName(e.target.value)} placeholder="Ex: Sarah" maxLength={30}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-background/60 border border-border/15 text-foreground text-base md:text-sm font-sans placeholder:text-foreground/20 focus:outline-none focus:border-primary/40 transition-colors" />
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-background/60 border border-border/15 text-foreground text-base md:text-sm font-sans placeholder:text-foreground/40 focus:outline-none focus:border-primary/40 transition-colors" />
                 </div>
                 <div className="flex gap-3">
                   <div className="flex-1">
-                    <label className="text-[10px] font-sans font-semibold text-foreground/30 uppercase tracking-widest block mb-1.5">Âge</label>
+                    <label className="text-[10px] font-sans font-semibold text-foreground/45 uppercase tracking-widest block mb-1.5">Âge</label>
                     <input type="number" value={guestAge} onChange={e => setGuestAge(e.target.value)} placeholder="25" min={5} max={99}
-                      className="w-full px-3.5 py-2.5 rounded-xl bg-background/60 border border-border/15 text-foreground text-base md:text-sm font-sans placeholder:text-foreground/20 focus:outline-none focus:border-primary/40 transition-colors" />
+                      className="w-full px-3.5 py-2.5 rounded-xl bg-background/60 border border-border/15 text-foreground text-base md:text-sm font-sans placeholder:text-foreground/40 focus:outline-none focus:border-primary/40 transition-colors" />
                   </div>
                   <div className="flex-1">
-                    <label className="text-[10px] font-sans font-semibold text-foreground/30 uppercase tracking-widest block mb-1.5">Genre</label>
+                    <label className="text-[10px] font-sans font-semibold text-foreground/45 uppercase tracking-widest block mb-1.5">Genre</label>
                     <div className="flex gap-1.5">
                       {(["homme", "femme", "autre"] as const).map(g => (
                         <button key={g} onClick={() => setGuestGender(guestGender === g ? "" : g)}
@@ -290,7 +290,7 @@ const WhoStep = ({
                   </div>
                 </div>
                 <div>
-                  <label className="text-[10px] font-sans font-semibold text-foreground/30 uppercase tracking-widest block mb-1.5">Genres préférés</label>
+                  <label className="text-[10px] font-sans font-semibold text-foreground/45 uppercase tracking-widest block mb-1.5">Genres préférés</label>
                   <div className="flex flex-wrap gap-1.5">
                     {GENRE_OPTIONS.map(genre => {
                       const selected = guestGenres.has(genre);

@@ -169,7 +169,7 @@ const SoireesPage = () => {
 
           {/* Vue organisateur : statut des invités */}
           {isOrganizer && invites > 0 && (
-            <div className={`flex items-center gap-1 mt-1.5 ${allConfirmed ? "text-emerald-400" : someConfirmed ? "text-amber-400" : "text-foreground/30"}`}>
+            <div className={`flex items-center gap-1 mt-1.5 ${allConfirmed ? "text-emerald-400" : someConfirmed ? "text-amber-400" : "text-foreground/45"}`}>
               {allConfirmed ? <Check className="w-3 h-3" /> : <Clock className="w-3 h-3" />}
               <span className="text-[10.5px] font-sans font-medium">
                 {allConfirmed
@@ -199,7 +199,7 @@ const SoireesPage = () => {
               <span className="text-[10px] font-sans font-semibold text-violet-400">Révélation</span>
             </div>
           )}
-          <ChevronRight className="w-3.5 h-3.5 text-foreground/20" />
+          <ChevronRight className="w-3.5 h-3.5 text-foreground/40" />
         </div>
       </motion.button>
     );
@@ -253,13 +253,13 @@ const SoireesPage = () => {
           <>
             {upcoming.length > 0 && (
               <div className="space-y-2">
-                <p className="text-[11px] font-sans font-semibold tracking-widest uppercase text-foreground/35 px-1">À venir</p>
+                <p className="text-[11px] font-sans font-semibold tracking-widest uppercase text-foreground/50 px-1">À venir</p>
                 {upcoming.map((evt, i) => <EventCard key={evt.id} evt={evt} i={i} />)}
               </div>
             )}
             {past.length > 0 && (
               <div className="space-y-2">
-                <p className="text-[11px] font-sans font-semibold tracking-widest uppercase text-foreground/35 px-1">Passées</p>
+                <p className="text-[11px] font-sans font-semibold tracking-widest uppercase text-foreground/50 px-1">Passées</p>
                 {past.map((evt, i) => <EventCard key={evt.id} evt={evt} i={i} />)}
               </div>
             )}

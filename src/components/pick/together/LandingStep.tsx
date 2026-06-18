@@ -88,7 +88,7 @@ const LandingStep = ({ onCreateSoiree, creating }: LandingStepProps) => (
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 + i * 0.08 }}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-card/50 border border-border/10 text-foreground/35 text-[11px] font-sans"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-card/50 border border-border/10 text-foreground/50 text-[11px] font-sans"
         >
           <pill.icon className="w-3 h-3" />
           {pill.label}

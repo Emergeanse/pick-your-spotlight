@@ -441,7 +441,7 @@ export default function CompanionMode({ movie, onClose, pickPlus }: CompanionMod
               <span className="text-foreground/70 text-[13px] font-sans leading-snug flex-1">{proactiveSuggestion}</span>
               <button
                 onClick={(e) => { e.stopPropagation(); setProactiveSuggestion(null); }}
-                className="text-foreground/30 hover:text-foreground/60 transition-colors flex-shrink-0"
+                className="text-foreground/45 hover:text-foreground/60 transition-colors flex-shrink-0"
               >
                 <X className="w-3.5 h-3.5" />
               </button>

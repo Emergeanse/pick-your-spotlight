@@ -677,7 +677,7 @@ const TonightPickOverlay = ({
             <motion.button
               whileTap={{ scale: 0.97 }}
               onClick={onConfirm}
-              className="w-full py-[18px] bg-foreground text-background rounded-[28px] font-sans font-bold text-[13px] tracking-[0.18em] uppercase mb-5 shadow-[0_18px_50px_-12px_rgba(255,255,255,0.25)]"
+              className="w-full py-[18px] bg-foreground text-background rounded-3xl font-sans font-bold text-[13px] tracking-[0.18em] uppercase mb-5 shadow-[0_18px_50px_-12px_rgba(255,255,255,0.25)]"
             >
               On regarde ?
             </motion.button>
@@ -701,7 +701,7 @@ const TonightPickOverlay = ({
                     />
                   ))}
                 </div>
-                <span className="text-foreground/30 text-[9px] font-sans tracking-[0.3em] uppercase">
+                <span className="text-foreground/45 text-[9px] font-sans tracking-[0.3em] uppercase">
                   Suggestion {tonightPickIndex + 1} / {tonightPool.length}
                 </span>
               </div>

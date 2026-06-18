@@ -130,18 +130,18 @@ const Friends = () => {
 
       <div className="max-w-lg mx-auto px-5 py-6 pb-32">
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="mb-6">
-          <h2 className="text-[11px] font-sans font-semibold text-foreground/30 uppercase tracking-widest mb-2">Mon code ami</h2>
+          <h2 className="text-[11px] font-sans font-semibold text-foreground/45 uppercase tracking-widest mb-2">Mon code ami</h2>
           <div className="flex items-center gap-2 px-4 py-3 rounded-2xl bg-card border border-border/10">
             <span className="font-mono font-bold text-primary text-lg tracking-wider flex-1">{myFriendCode || "..."}</span>
             <button onClick={handleCopyCode} className="p-2 rounded-xl hover:bg-primary/10 transition-colors active:scale-95">
-              {codeCopied ? <Check className="w-4 h-4 text-primary" /> : <Copy className="w-4 h-4 text-foreground/30" />}
+              {codeCopied ? <Check className="w-4 h-4 text-primary" /> : <Copy className="w-4 h-4 text-foreground/45" />}
             </button>
             <button onClick={() => setShowQR(!showQR)} className="p-2 rounded-xl hover:bg-primary/10 transition-colors active:scale-95">
-              <QrCode className="w-4 h-4 text-foreground/30" />
+              <QrCode className="w-4 h-4 text-foreground/45" />
             </button>
             {typeof navigator.share === "function" && (
               <button onClick={() => navigator.share({ title: "Ajoute-moi sur Pick !", url: inviteUrl })} className="p-2 rounded-xl hover:bg-primary/10 transition-colors active:scale-95">
-                <Share2 className="w-4 h-4 text-foreground/30" />
+                <Share2 className="w-4 h-4 text-foreground/45" />
               </button>
             )}
           </div>
@@ -152,7 +152,7 @@ const Friends = () => {
             <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden mb-6">
               <div className="flex flex-col items-center py-4">
                 <div className="bg-white p-3 rounded-xl"><QRCodeSVG value={inviteUrl} size={160} /></div>
-                <p className="text-foreground/20 text-[10px] font-sans mt-2">Scanne pour m'ajouter</p>
+                <p className="text-foreground/40 text-[10px] font-sans mt-2">Scanne pour m'ajouter</p>
               </div>
             </motion.div>
           )}
@@ -166,7 +166,7 @@ const Friends = () => {
 
         {pendingReceived.length > 0 && (
           <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="mb-4">
-            <h2 className="text-[11px] font-sans font-semibold text-foreground/30 uppercase tracking-widest mb-2">Demandes reçues</h2>
+            <h2 className="text-[11px] font-sans font-semibold text-foreground/45 uppercase tracking-widest mb-2">Demandes reçues</h2>
             <div className="space-y-2">
               {pendingReceived.map((f: any) => (
                 <div key={f.friendshipId} className="flex items-center justify-between p-3 rounded-xl bg-card border border-primary/15">
@@ -177,12 +177,12 @@ const Friends = () => {
                     </div>
                     <div>
                       <p className="text-sm font-sans font-medium">{f.displayName}</p>
-                      <p className="text-foreground/20 text-[10px] font-mono">{f.friendCode}</p>
+                      <p className="text-foreground/40 text-[10px] font-mono">{f.friendCode}</p>
                     </div>
                   </div>
                   <div className="flex gap-2">
                     <Button size="sm" onClick={() => handleAcceptFriend(f.friendshipId, f.id)} className="rounded-lg h-8 px-3 text-[11px]">Accepter</Button>
-                    <button onClick={() => handleDeclineFriend(f.friendshipId)} className="p-1 text-foreground/20 hover:text-destructive"><X className="w-3.5 h-3.5" /></button>
+                    <button onClick={() => handleDeclineFriend(f.friendshipId)} className="p-1 text-foreground/40 hover:text-destructive"><X className="w-3.5 h-3.5" /></button>
                   </div>
                 </div>
               ))}
@@ -191,13 +191,13 @@ const Friends = () => {
         )}
 
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
-          <h2 className="text-[11px] font-sans font-semibold text-foreground/30 uppercase tracking-widest mb-2">
+          <h2 className="text-[11px] font-sans font-semibold text-foreground/45 uppercase tracking-widest mb-2">
             {acceptedFriends.length > 0 ? `Amis (${acceptedFriends.length})` : "Amis"}
           </h2>
           {acceptedFriends.length === 0 && pendingSent.length === 0 ? (
             <div className="text-center py-12 rounded-2xl bg-card/30 border border-border/5">
               <Users className="w-8 h-8 mx-auto mb-3 text-foreground/10" />
-              <p className="text-foreground/25 text-sm font-sans mb-1">Aucun ami pour le moment</p>
+              <p className="text-foreground/45 text-sm font-sans mb-1">Aucun ami pour le moment</p>
               <p className="text-foreground/15 text-xs font-sans">Partage ton code pour te connecter</p>
             </div>
           ) : (
@@ -216,7 +216,7 @@ const Friends = () => {
               {pendingSent.map((f: any) => (
                 <div key={f.friendshipId} className="flex items-center justify-between p-3 rounded-xl bg-card/30 border border-border/5">
                   <span className="text-sm font-sans text-foreground/40">{f.displayName}</span>
-                  <span className="text-[10px] font-sans text-foreground/20">En attente</span>
+                  <span className="text-[10px] font-sans text-foreground/40">En attente</span>
                 </div>
               ))}
             </div>
@@ -231,7 +231,7 @@ const Friends = () => {
             <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" onClick={() => setShowAddModal(false)} />
             <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} transition={{ type: "spring", damping: 25 }}
               className="relative w-full max-w-md rounded-2xl bg-card border border-border/20 p-6 shadow-xl">
-              <button onClick={() => setShowAddModal(false)} className="absolute top-4 right-4 p-1 text-foreground/30 hover:text-foreground/60"><X className="w-4 h-4" /></button>
+              <button onClick={() => setShowAddModal(false)} className="absolute top-4 right-4 p-1 text-foreground/45 hover:text-foreground/60"><X className="w-4 h-4" /></button>
               <h3 className="text-base font-serif mb-4">Ajouter un ami</h3>
 
               {/* Toggle code / email */}
@@ -285,7 +285,7 @@ const Friends = () => {
                 <h3 className="text-base font-serif">Profil</h3>
                 <div className="flex items-center gap-2">
                   <button onClick={() => handleRemoveFriend(selectedFriend.friendshipId)} className="text-[11px] font-sans text-destructive/50 hover:text-destructive px-2 py-1">Retirer</button>
-                  <button onClick={() => setSelectedFriend(null)} className="p-1 text-foreground/30"><X className="w-4 h-4" /></button>
+                  <button onClick={() => setSelectedFriend(null)} className="p-1 text-foreground/45"><X className="w-4 h-4" /></button>
                 </div>
               </div>
               <div className="px-6 pb-[calc(2rem+env(safe-area-inset-bottom))]">
@@ -302,7 +302,7 @@ const Friends = () => {
                     </div>
                     {friendProfile.favoriteGenres?.length > 0 && (
                       <div>
-                        <p className="text-[10px] font-sans font-semibold text-foreground/25 uppercase tracking-widest mb-2">Genres</p>
+                        <p className="text-[10px] font-sans font-semibold text-foreground/45 uppercase tracking-widest mb-2">Genres</p>
                         <div className="flex flex-wrap gap-1.5">
                           {friendProfile.favoriteGenres.map((g: string) => <span key={g} className="px-2.5 py-1 rounded-full bg-primary/8 text-primary/80 text-[11px] font-sans">{g}</span>)}
                         </div>
@@ -316,7 +316,7 @@ const Friends = () => {
                       </div>
                     ) : (
                       <div className="rounded-xl bg-background/50 border border-border/10 p-5 text-center">
-                        <p className="text-foreground/25 text-sm font-sans">Pas encore de profil cinéma</p>
+                        <p className="text-foreground/45 text-sm font-sans">Pas encore de profil cinéma</p>
                       </div>
                     )}
                   </div>

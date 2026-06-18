@@ -325,7 +325,7 @@ const MoodVoiceSheet = ({ onClose, onSearchIntent }: MoodVoiceSheetProps) => {
 
         {/* Bug 3 : indicateur timeout */}
         {phase === "recording" && (
-          <p className="text-center text-foreground/30 text-[10px] font-sans mt-4">
+          <p className="text-center text-foreground/45 text-[10px] font-sans mt-4">
             S'arrête automatiquement après 30s
           </p>
         )}

@@ -1984,7 +1984,7 @@ const HomeScreen = ({
                 {nextEvent.event_time ? ` · ${nextEvent.event_time.slice(0, 5)}` : ""}
               </p>
             </div>
-            <ChevronRight className="w-3.5 h-3.5 text-foreground/25 flex-shrink-0" />
+            <ChevronRight className="w-3.5 h-3.5 text-foreground/45 flex-shrink-0" />
           </motion.button>
         )}
 

@@ -395,7 +395,7 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
         <div className="flex flex-1 flex-col items-center justify-center px-5 pb-10">
           <Sparkles className="mb-3 h-7 w-7 text-primary/60" />
           <h3 className="mb-1 text-center text-lg font-serif font-bold text-foreground">Que veux-tu évaluer ?</h3>
-          <p className="mb-8 text-center text-[12px] font-sans text-foreground/35 max-w-[260px]">
+          <p className="mb-8 text-center text-[12px] font-sans text-foreground/50 max-w-[260px]">
             Plus tu évalues, plus Pick te comprend et affine ses recommandations.
           </p>
 
@@ -409,7 +409,7 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
               >
                 <cat.icon className="h-6 w-6 text-foreground/70" />
                 <span className="text-sm font-sans font-semibold text-foreground/90">{cat.label}</span>
-                <span className="text-[10px] font-sans leading-snug text-foreground/35">{cat.desc}</span>
+                <span className="text-[10px] font-sans leading-snug text-foreground/50">{cat.desc}</span>
               </motion.button>
             ))}
           </div>
@@ -490,7 +490,7 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
               transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
             />
           </div>
-          <span className="shrink-0 text-[11px] font-sans tabular-nums text-foreground/25">
+          <span className="shrink-0 text-[11px] font-sans tabular-nums text-foreground/45">
             {cumulativeTotal} signaux
           </span>
         </div>
@@ -518,14 +518,14 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
         {loading && movies.length === 0 ? (
           <div className="flex flex-col items-center gap-4">
             <Loader2 className="h-6 w-6 animate-spin text-primary/50" />
-            <p className="text-sm font-sans text-foreground/30">Chargement…</p>
+            <p className="text-sm font-sans text-foreground/45">Chargement…</p>
           </div>
         ) : !currentMovie || !currentMovieDetail ? (
           <div className="flex flex-col items-center gap-4 text-center">
             {cardLoading ? (
               <>
                 <Loader2 className="h-6 w-6 animate-spin text-primary/50" />
-                <p className="text-sm font-sans text-foreground/30">Préparation de la vignette…</p>
+                <p className="text-sm font-sans text-foreground/45">Préparation de la vignette…</p>
               </>
             ) : (
               <>
@@ -559,7 +559,7 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
             <button
               onClick={goBack}
               disabled={history.length === 0}
-              className="rounded-full bg-foreground/5 p-2 text-foreground/30 transition-all hover:bg-foreground/10 disabled:opacity-20"
+              className="rounded-full bg-foreground/5 p-2 text-foreground/45 transition-all hover:bg-foreground/10 disabled:opacity-20"
             >
               <ChevronLeft className="h-5 w-5" />
             </button>
@@ -577,7 +577,7 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
 
             <button
               onClick={skipMovie}
-              className="rounded-full bg-foreground/5 p-2 text-foreground/30 transition-all hover:bg-foreground/10"
+              className="rounded-full bg-foreground/5 p-2 text-foreground/45 transition-all hover:bg-foreground/10"
             >
               <SkipForward className="h-5 w-5" />
             </button>
@@ -596,7 +596,7 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
 
           <button
             onClick={skipMovie}
-            className="mt-3 flex w-full items-center justify-center gap-1.5 py-2 text-foreground/30 transition-colors hover:text-foreground/45"
+            className="mt-3 flex w-full items-center justify-center gap-1.5 py-2 text-foreground/45 transition-colors hover:text-foreground/45"
           >
             <SkipForward className="h-3 w-3" />
             <span className="text-[11px] font-sans">Je ne connais pas</span>
@@ -626,7 +626,7 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
               </Button>
               <button
                 onClick={() => setShowActivationCTA(false)}
-                className="py-1 text-xs font-sans text-foreground/20 transition-colors hover:text-foreground/35"
+                className="py-1 text-xs font-sans text-foreground/40 transition-colors hover:text-foreground/50"
               >
                 Continuer à évaluer
               </button>
