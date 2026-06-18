@@ -70,7 +70,7 @@ serve(async (req) => {
     const auth = await requireAuth(req, corsHeaders);
     if (auth.response) return auth.response;
     const t0 = Date.now();
-    console.log("[SP] ✅ version 2026-06-18-v23 — post-filtre voiceGenres + fallback explicite respecte genre vocal");
+    console.log("[SP] ✅ version 2026-06-18-v24 — post-filtre voiceDecade + note LLM décennie");
     const {
       tasteProfile,
       userTasteVector,
@@ -798,6 +798,20 @@ serve(async (req) => {
         }
       }
 
+      // Post-filtre voiceDecade : même logique que voiceGenres
+      if (voiceDecade !== null) {
+        const decadeMatching = voiceEligible.filter((c: any) => {
+          const year = parseInt(c.year || "0");
+          return year >= voiceDecade && year <= voiceDecade + 9;
+        });
+        if (decadeMatching.length >= 5) {
+          console.log(`[SP] Post-filtre voiceDecade [${voiceDecade}s]: ${decadeMatching.length}/${voiceEligible.length} films retenus`);
+          voiceEligible = decadeMatching;
+        } else {
+          console.log(`[SP] Post-filtre voiceDecade [${voiceDecade}s]: ${decadeMatching.length} films seulement — pool complet conservé`);
+        }
+      }
+
       const topPool = [...voiceEligible]
         .sort((a, b) => compositeScore(b) - compositeScore(a))
         .slice(0, llmPoolSize);
@@ -859,8 +873,11 @@ serve(async (req) => {
         const voiceGenreNote = voiceGenres?.length
           ? `\n🎯 GENRE EXPLICITEMENT DEMANDÉ : ${voiceGenres.join(", ")}\nL'utilisateur a choisi ce genre — donne-lui la PRIORITÉ ABSOLUE. Préfère les films/séries dont ce genre figure en tête de liste. Ne sélectionne un film sans ce genre que si le pool est trop limité.\n`
           : "";
+        const voiceDecadeNote = voiceDecade !== null
+          ? `\n📅 DÉCENNIE EXPLICITEMENT DEMANDÉE : années ${voiceDecade} (${voiceDecade}–${voiceDecade + 9})\nPrivilégie absolument les films sortis entre ${voiceDecade} et ${voiceDecade + 9}. Si le pool en contient suffisamment, ne sélectionne pas de films d'autres décennies.\n`
+          : "";
         const systemPrompt = `Tu es Pick, moteur de recommandation cinéphile. Sélectionne les meilleurs films depuis une liste pré-validée.
-${voiceGenreNote}${moodContext ? `\n🎭 AMBIANCE CHOISIE : ${moodContext}\n` : ""}${platformNote}${hardExcludedNote}
+${voiceGenreNote}${voiceDecadeNote}${moodContext ? `\n🎭 AMBIANCE CHOISIE : ${moodContext}\n` : ""}${platformNote}${hardExcludedNote}
 PROFIL UTILISATEUR :
 - Genres préférés : ${likedWithTv.join(", ") || "non déterminés"}
 ${moodBoostGenres ? `- 🎯 Genres prioritaires (ambiance) : ${moodBoostGenres.join(", ")}` : ""}
