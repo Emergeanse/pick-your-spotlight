@@ -415,6 +415,24 @@ Génère la fiche de match multi-vecteur.`;
     if (movieSuitabilityTags.length > 0) matchData.suitabilityTags = movieSuitabilityTags;
     if (Object.keys(movieSemanticAxes).length > 0) matchData.semanticAxes = movieSemanticAxes;
 
+    // ── Plafond mathématique basé sur la similarité d'embedding ──────────────
+    // Le LLM gonfle toujours le score quand le film correspond à la demande.
+    // On plafonne le score final selon l'alignement vectoriel réel avec le profil.
+    if (embeddingSimilarity !== null && !matchData.fallback) {
+      const simPct = embeddingSimilarity * 100;
+      let cap: number;
+      if (simPct < 15)      cap = 68;
+      else if (simPct < 30) cap = 74;
+      else if (simPct < 50) cap = 80;
+      else if (simPct < 70) cap = 87;
+      else                  cap = 99; // >70% : pas de plafond
+      if (matchData.matchScore > cap) {
+        console.log(`[MM] 🔒 Score plafonné ${matchData.matchScore}% → ${cap}% (embedding ${Math.round(simPct)}%)`);
+        matchData.matchScore = cap;
+        matchData.scoreCapped = true;
+      }
+    }
+
     const mmTFinal = Date.now();
     console.log(`[MM⏱] TOTAL: ${mmTFinal - mmT0}ms | embed: ${mmT1 - mmT0}ms | gemini: ${mmT3 - mmT2}ms | parse: ${mmTFinal - mmT3}ms`);
     matchData._timings = { total: mmTFinal - mmT0, embed: mmT1 - mmT0, gemini: mmT3 - mmT2 };
