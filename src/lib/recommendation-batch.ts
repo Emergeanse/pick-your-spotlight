@@ -456,7 +456,11 @@ export async function ensureRecommendationBatch(
   });
   const usedIds = new Set<number>([...excludeSet, ...batch.map((movie) => movie.id)]);
 
-  if (batch.length < size) {
+  // En mode scoreAllWithMovieMatch (pipeline HomeScreen), on ne complète PAS avec des films
+  // aléatoires : la SP est la source de vérité. Remplir les slots manquants sans connaître
+  // les filtres vocaux (genre, décennie) produit des résultats hors-sujet (ex: Fenêtre sur cour
+  // après une demande "films historiques français"). Mieux vaut montrer 1 bon film que 3 dont 2 faux.
+  if (batch.length < size && !options.scoreAllWithMovieMatch) {
     const needed = size - batch.length;
     const usedSnapshot = Array.from(usedIds);
     const rawResults = await Promise.allSettled(
