@@ -1731,8 +1731,9 @@ const HomeScreen = ({
     void generateTonightPick(rejectedIds, undefined, genreFilter, currentDuoOverridesRef.current ?? undefined, opts?.moodContext);
   };
 
-  // Garde le ref à jour à chaque render pour éviter les stale closures dans les bridges
+  // Garde les refs à jour à chaque render pour éviter les stale closures dans les bridges
   handleAutoPickRef.current = handleAutoPick;
+  generateTonightPickRef.current = generateTonightPick;
 
   const handleCloseTonightPick = () => setTonightPick(null);
 
