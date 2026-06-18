@@ -269,10 +269,9 @@ const HomeScreenChoiceModal = ({
                   )}
                 </button>
                 <button
-                  onClick={() => setOrientMode(orientMode === "mood" ? null : "mood")}
-                  className={`relative flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-[12px] font-sans font-medium transition-all overflow-hidden ${orientMode === "mood" ? "text-foreground border border-primary/40" : "text-foreground/55 hover:text-foreground/80"}`}
+                  onClick={() => { onClose(); onOpenMoodCapture(); }}
+                  className="relative flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-[12px] font-sans font-medium transition-all overflow-hidden text-foreground/55 hover:text-foreground/80 active:text-foreground"
                 >
-                  {orientMode === "mood" && <div className="absolute inset-0 rounded-xl" style={{ background: TAB_GRADIENT }} />}
                   <Mic className="relative w-3.5 h-3.5" />
                   <span className="relative">Décrire mon mood</span>
                 </button>
@@ -461,9 +460,6 @@ const HomeScreenChoiceModal = ({
                   if (ou === "ensemble" && ouDescription.trim()) params.set("location", ouDescription.trim());
                   if (selectedGenres.length > 0) params.set("genres", selectedGenres.join(","));
                   navigate(`/app/soiree/nouvelle?${params.toString()}`);
-                } else if (orientMode === "mood") {
-                  onClose();
-                  onOpenMoodCapture();
                 } else {
                   onAutoPick(selectedDuoId ?? undefined, { genres: selectedGenres.length > 0 ? selectedGenres : undefined });
                 }
@@ -477,26 +473,20 @@ const HomeScreenChoiceModal = ({
               <motion.div animate={{ opacity: [0.4, 0.85, 0.4] }} transition={{ duration: 3.8, repeat: Infinity, ease: "easeInOut" }} className="absolute inset-x-6 top-0 h-px" style={{ background: "linear-gradient(90deg, transparent, hsl(var(--primary) / 0.7), transparent)" }} />
               <div className="relative flex items-center gap-4">
                 <motion.div animate={{ scale: [1, 1.04, 1] }} transition={{ duration: 3.2, repeat: Infinity, ease: "easeInOut" }} className="w-12 h-12 rounded-2xl bg-primary/30 border border-primary/50 flex items-center justify-center shrink-0 shadow-[0_0_24px_-4px_hsl(var(--primary)/0.7)]">
-                  <span className="text-[22px] drop-shadow-[0_0_8px_hsl(var(--primary)/0.6)]">
-                    {orientMode === "mood" ? "🎙️" : "🍿"}
-                  </span>
+                  <span className="text-[22px] drop-shadow-[0_0_8px_hsl(var(--primary)/0.6)]">🍿</span>
                 </motion.div>
                 <div className="flex-1 min-w-0">
                   <h4 className="font-serif text-[17px] leading-tight text-foreground tracking-tight">
                     {quand === "planifier"
                       ? "Créer cette soirée"
-                      : orientMode === "mood"
-                        ? (isDuo ? "Décrivez votre mood à deux" : "Décris-moi ton mood")
-                        : (isDuo ? "Laissez-moi vous surprendre" : isGroupe ? "Je choisis pour le groupe" : "Laisse-moi te surprendre")}
+                      : (isDuo ? "Laissez-moi vous surprendre" : isGroupe ? "Je choisis pour le groupe" : "Laisse-moi te surprendre")}
                   </h4>
                   <p className="text-foreground/65 text-[12.5px] font-sans mt-1 italic">
                     {quand === "planifier"
                       ? "Je génère le film idéal pour cette date."
-                      : orientMode === "mood"
-                        ? (isDuo ? "Parlez-moi de vos envies du moment." : "Parle-moi de ton envie du moment.")
-                        : selectedGenres.length > 0
-                          ? `Filtré sur : ${selectedGenres.join(", ")}`
-                          : getAutoPickSubtitle()}
+                      : selectedGenres.length > 0
+                        ? `Filtré sur : ${selectedGenres.join(", ")}`
+                        : getAutoPickSubtitle()}
                   </p>
                 </div>
               </div>

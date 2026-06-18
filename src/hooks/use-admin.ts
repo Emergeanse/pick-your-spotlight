@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./use-auth";
 
+const ADMIN_EMAILS = ["cbilleux@gmail.com"];
+
 export function useAdmin() {
   const { user, isReady } = useAuth();
   const [isAdmin, setIsAdmin] = useState(false);
@@ -10,6 +12,13 @@ export function useAdmin() {
   useEffect(() => {
     if (!isReady || !user) {
       setIsAdmin(false);
+      setLoading(false);
+      return;
+    }
+
+    // Fallback email-based check (always admin for known addresses)
+    if (ADMIN_EMAILS.includes(user.email ?? "")) {
+      setIsAdmin(true);
       setLoading(false);
       return;
     }

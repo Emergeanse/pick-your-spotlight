@@ -17,9 +17,10 @@ const RECORDING_TIMEOUT_MS = 30_000; // Bug 3 fix : timeout 30s
 interface MoodVoiceSheetProps {
   onClose: () => void;
   onSearchIntent: (filters: VoiceSearchFilters, recap: string[]) => void;
+  autoStart?: boolean;
 }
 
-const MoodVoiceSheet = ({ onClose, onSearchIntent }: MoodVoiceSheetProps) => {
+const MoodVoiceSheet = ({ onClose, onSearchIntent, autoStart }: MoodVoiceSheetProps) => {
   const { user } = useAuth();
   const [phase, setPhase] = useState<Phase>("ready");
   const [partialText, setPartialText] = useState("");
@@ -49,6 +50,16 @@ const MoodVoiceSheet = ({ onClose, onSearchIntent }: MoodVoiceSheetProps) => {
       })
       .catch(console.error);
   }, [user]);
+
+  // Auto-démarre l'enregistrement si demandé par le parent
+  const autoStartedRef = useRef(false);
+  useEffect(() => {
+    if (autoStart && !autoStartedRef.current) {
+      autoStartedRef.current = true;
+      startRecording();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoStart]);
 
   // Bug 3 fix : timeout enregistrement 30s
   useEffect(() => {

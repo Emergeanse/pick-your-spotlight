@@ -269,6 +269,7 @@ const Index = () => {
       <AnimatePresence>
         {showMoodCapture && (
           <MoodVoiceSheet
+            autoStart
             onClose={() => setShowMoodCapture(false)}
             onSearchIntent={(filters, recap) => {
               setShowMoodCapture(false);
