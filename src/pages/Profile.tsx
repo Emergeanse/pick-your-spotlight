@@ -116,6 +116,51 @@ const Profile = () => {
   const [searchParams] = useSearchParams();
   const { isAdmin } = useAdmin();
 
+  // ── Admin seed ──
+  const [dbCount, setDbCount] = useState<number | null>(null);
+  const [seedRunning, setSeedRunning] = useState(false);
+  const [seedLog, setSeedLog] = useState<string[]>([]);
+
+  const fetchDbCount = async () => {
+    const { count } = await supabase.from("movie_embeddings").select("*", { count: "exact", head: true });
+    setDbCount(count ?? null);
+  };
+
+  const runFrenchSeed = async () => {
+    setSeedRunning(true);
+    setSeedLog([]);
+    await fetchDbCount();
+    // TMDB genre IDs : Action, Aventure, Animation, Comédie, Crime, Documentaire,
+    // Drame, Famille, Fantastique, Histoire, Horreur, Musique, Mystère, Romance, SF, Thriller, Guerre, Western
+    const GENRES = [28, 12, 16, 35, 80, 99, 18, 10751, 14, 36, 27, 10402, 9648, 10749, 878, 53, 10752, 37];
+    const GENRE_NAMES: Record<number, string> = {
+      28: "Action", 12: "Aventure", 16: "Animation", 35: "Comédie", 80: "Crime",
+      99: "Documentaire", 18: "Drame", 10751: "Famille", 14: "Fantastique", 36: "Histoire",
+      27: "Horreur", 10402: "Musique", 9648: "Mystère", 10749: "Romance", 878: "SF",
+      53: "Thriller", 10752: "Guerre", 37: "Western",
+    };
+    let totalAdded = 0;
+    for (const genreId of GENRES) {
+      for (const startPage of [1, 3, 5]) {
+        try {
+          const { data } = await supabase.functions.invoke("seed-embeddings", {
+            body: { source: "discover", originalLanguage: "fr", genreId, noStreamingFilter: true, pages: 2, startPage, batchSize: 8, minVoteCount: 20, minRating: 5 },
+          });
+          const s = data?.stats;
+          const added = s?.processed ?? 0;
+          totalAdded += added;
+          const line = `${GENRE_NAMES[genreId]} p${startPage}: +${added} ajoutés / ${s?.skipped ?? 0} déjà en base`;
+          setSeedLog(prev => [...prev, line]);
+        } catch {
+          setSeedLog(prev => [...prev, `${GENRE_NAMES[genreId]} p${startPage}: erreur`]);
+        }
+      }
+    }
+    await fetchDbCount();
+    setSeedLog(prev => [...prev, `✅ Terminé — ${totalAdded} films ajoutés au total`]);
+    setSeedRunning(false);
+  };
+
   // ── Préférences ──
   const [profile, setProfile] = useState<any>(null);
   const [selectedPlatforms, setSelectedPlatforms] = useState<number[]>([]);
@@ -678,7 +723,7 @@ const Profile = () => {
                       const on = selectedPlatforms.includes(p.id);
                       return (
                         <button key={p.id} onClick={() => togglePlatform(p.id)}
-                          className={`relative bg-card rounded-xl p-2.5 flex flex-col items-center gap-1.5 transition-all active:scale-95 border ${on ? "border-primary/50 bg-primary/5" : "border-transparent hover:border-border/30"}`}>
+                          className={`relative bg-card rounded-xl p-2.5 flex flex-col items-center gap-1.5 transition-all active:scale-[0.96] border ${on ? "border-primary/50 bg-primary/5" : "border-transparent hover:border-border/30"}`}>
                           {on && <div className="absolute top-1 right-1 w-3.5 h-3.5 rounded-full bg-primary flex items-center justify-center"><Check className="w-2 h-2 text-primary-foreground" /></div>}
                           <img src={p.logo} alt={p.label} className="w-7 h-7 rounded-lg object-cover" />
                           <span className="font-sans text-[9px] text-foreground/60 leading-tight text-center">{p.label}</span>
@@ -811,9 +856,35 @@ const Profile = () => {
           <h2 className="text-sm font-sans font-semibold text-foreground uppercase tracking-widest mb-3">Compte</h2>
           <div className="flex flex-col gap-1 border-t border-border/5 pt-3">
             {isAdmin && (
-              <Button variant="ghost" onClick={() => navigate("/admin")} className="justify-start text-primary/50 hover:text-primary text-xs font-sans gap-2 h-10">
-                <Shield className="w-3.5 h-3.5" /> Administration
-              </Button>
+              <>
+                <Button variant="ghost" onClick={() => navigate("/admin")} className="justify-start text-primary/50 hover:text-primary text-xs font-sans gap-2 h-10">
+                  <Shield className="w-3.5 h-3.5" /> Administration
+                </Button>
+                <div className="mt-2 p-3 rounded-xl border border-border/20 bg-foreground/[0.02]">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs font-sans font-semibold text-foreground/60">Base de films</span>
+                    <button onClick={fetchDbCount} className="text-xs text-primary/60 hover:text-primary font-sans">
+                      {dbCount !== null ? `${dbCount.toLocaleString("fr-FR")} films` : "Charger le compteur"}
+                    </button>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={seedRunning}
+                    onClick={runFrenchSeed}
+                    className="w-full text-xs font-sans gap-2 h-8"
+                  >
+                    {seedRunning ? <><Loader2 className="w-3 h-3 animate-spin" /> Seed en cours…</> : "🇫🇷 Seed films français (18 genres)"}
+                  </Button>
+                  {seedLog.length > 0 && (
+                    <div className="mt-2 max-h-40 overflow-y-auto flex flex-col gap-0.5">
+                      {seedLog.map((line, i) => (
+                        <p key={i} className="text-[10px] font-mono text-foreground/50">{line}</p>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </>
             )}
             <Button variant="ghost" onClick={async () => { await signOut(); navigate("/"); }} className="justify-start text-foreground/45 hover:text-foreground text-xs font-sans gap-2 h-10">
               <LogOut className="w-3.5 h-3.5" /> Déconnexion
