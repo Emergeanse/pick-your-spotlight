@@ -83,7 +83,7 @@ const PickPlusPage = () => {
                 {f.free ? (
                   <Check className="w-4 h-4 text-primary/60" />
                 ) : (
-                  <XIcon className="w-4 h-4 text-foreground/15" />
+                  <XIcon className="w-4 h-4 text-foreground/40" />
                 )}
               </div>
               <div className="flex justify-center">

@@ -123,10 +123,10 @@ const PendingDuoCard = ({ duo, onShare, onDelete }: {
       <p className="font-sans text-foreground/50 text-xs">En attente d'acceptation</p>
     </div>
     <div className="flex items-center gap-1 shrink-0">
-      <button onClick={onShare} className="p-1.5 rounded-lg hover:bg-foreground/8 transition-colors text-foreground/40 hover:text-primary">
+      <button onClick={onShare} className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-foreground/8 transition-colors text-foreground/40 hover:text-primary active:scale-[0.97]">
         <Share2 className="w-4 h-4" />
       </button>
-      <button onClick={onDelete} className="p-1.5 rounded-lg hover:bg-destructive/10 transition-colors text-foreground/45 hover:text-destructive">
+      <button onClick={onDelete} className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-destructive/10 transition-colors text-foreground/45 hover:text-destructive active:scale-[0.97]">
         <Trash2 className="w-4 h-4" />
       </button>
     </div>
@@ -435,7 +435,7 @@ const CreateFlow = ({ userId, displayName, onCreated, onCancel }: {
         </div>
         <div className="bg-foreground/[0.04] border border-border/15 rounded-xl px-3 py-3 flex items-center gap-2">
           <p className="flex-1 font-mono text-xs text-foreground/60 truncate">{inviteUrl}</p>
-          <button onClick={copy} className="shrink-0 p-1.5 rounded-lg hover:bg-primary/10 transition-colors">
+          <button onClick={copy} className="shrink-0 w-9 h-9 flex items-center justify-center rounded-lg hover:bg-primary/10 transition-colors active:scale-[0.97]">
             {copied ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4 text-foreground/40" />}
           </button>
         </div>

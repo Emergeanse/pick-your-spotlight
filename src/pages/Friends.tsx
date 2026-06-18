@@ -182,7 +182,7 @@ const Friends = () => {
                   </div>
                   <div className="flex gap-2">
                     <Button size="sm" onClick={() => handleAcceptFriend(f.friendshipId, f.id)} className="rounded-lg h-8 px-3 text-[11px]">Accepter</Button>
-                    <button onClick={() => handleDeclineFriend(f.friendshipId)} className="p-1 text-foreground/40 hover:text-destructive"><X className="w-3.5 h-3.5" /></button>
+                    <button onClick={() => handleDeclineFriend(f.friendshipId)} className="w-9 h-9 flex items-center justify-center rounded-lg text-foreground/40 hover:text-destructive hover:bg-destructive/10 transition-colors active:scale-[0.97]"><X className="w-3.5 h-3.5" /></button>
                   </div>
                 </div>
               ))}
@@ -198,7 +198,7 @@ const Friends = () => {
             <div className="text-center py-12 rounded-2xl bg-card/30 border border-border/5">
               <Users className="w-8 h-8 mx-auto mb-3 text-foreground/10" />
               <p className="text-foreground/45 text-sm font-sans mb-1">Aucun ami pour le moment</p>
-              <p className="text-foreground/15 text-xs font-sans">Partage ton code pour te connecter</p>
+              <p className="text-foreground/40 text-xs font-sans">Partage ton code pour te connecter</p>
             </div>
           ) : (
             <div className="space-y-1.5">
@@ -210,7 +210,7 @@ const Friends = () => {
                       <span className="text-sm font-sans font-bold text-primary">{(f.displayName || "A")[0].toUpperCase()}</span>}
                   </div>
                   <span className="text-sm font-sans flex-1">{f.displayName}</span>
-                  <ChevronRight className="w-3.5 h-3.5 text-foreground/15" />
+                  <ChevronRight className="w-3.5 h-3.5 text-foreground/40" />
                 </button>
               ))}
               {pendingSent.map((f: any) => (
@@ -251,7 +251,7 @@ const Friends = () => {
                   <p className="text-foreground/40 text-sm font-sans mb-3">Entre le code ami (ex: PICK-A3F2)</p>
                   <div className="flex gap-3">
                     <input type="text" value={addCode} onChange={(e) => setAddCode(e.target.value.toUpperCase())} placeholder="PICK-XXXX"
-                      className="flex-1 h-12 rounded-xl bg-background border border-border/20 px-4 font-mono text-foreground placeholder:text-foreground/15 focus:outline-none focus:border-primary/40 transition-colors" maxLength={9} />
+                      className="flex-1 h-12 rounded-xl bg-background border border-border/20 px-4 font-mono text-foreground placeholder:text-foreground/40 focus:outline-none focus:border-primary/40 transition-colors" maxLength={9} />
                     <Button onClick={handleAddFriend} disabled={addingFriend || addCode.length < 9} className="rounded-xl h-12 px-6">
                       {addingFriend ? <Loader2 className="w-4 h-4 animate-spin" /> : <UserPlus className="w-4 h-4" />}
                     </Button>
@@ -262,7 +262,7 @@ const Friends = () => {
                   <p className="text-foreground/40 text-sm font-sans mb-3">Entre l'adresse email de ton ami</p>
                   <div className="flex gap-3">
                     <input type="email" value={addEmail} onChange={(e) => setAddEmail(e.target.value)} placeholder="ami@exemple.com"
-                      className="flex-1 h-12 rounded-xl bg-background border border-border/20 px-4 font-sans text-base text-foreground placeholder:text-foreground/15 focus:outline-none focus:border-primary/40 transition-colors" />
+                      className="flex-1 h-12 rounded-xl bg-background border border-border/20 px-4 font-sans text-base text-foreground placeholder:text-foreground/40 focus:outline-none focus:border-primary/40 transition-colors" />
                     <Button onClick={handleAddFriend} disabled={addingFriend || !addEmail.includes("@")} className="rounded-xl h-12 px-6">
                       {addingFriend ? <Loader2 className="w-4 h-4 animate-spin" /> : <UserPlus className="w-4 h-4" />}
                     </Button>
@@ -285,7 +285,7 @@ const Friends = () => {
                 <h3 className="text-base font-serif">Profil</h3>
                 <div className="flex items-center gap-2">
                   <button onClick={() => handleRemoveFriend(selectedFriend.friendshipId)} className="text-[11px] font-sans text-destructive/50 hover:text-destructive px-2 py-1">Retirer</button>
-                  <button onClick={() => setSelectedFriend(null)} className="p-1 text-foreground/45"><X className="w-4 h-4" /></button>
+                  <button onClick={() => setSelectedFriend(null)} className="w-9 h-9 flex items-center justify-center rounded-lg text-foreground/45 hover:bg-foreground/5 transition-colors active:scale-[0.97]"><X className="w-4 h-4" /></button>
                 </div>
               </div>
               <div className="px-6 pb-[calc(2rem+env(safe-area-inset-bottom))]">

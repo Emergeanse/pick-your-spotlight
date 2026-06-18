@@ -463,9 +463,9 @@ const CinemaDNAPage = () => {
                     />
                     <div className="flex gap-2 justify-end">
                       <button onClick={() => { setEditingBio(false); setBioDraft(bio); }}
-                        className="p-1.5 rounded-lg hover:bg-white/5"><X className="w-3.5 h-3.5 text-foreground/40" /></button>
+                        className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-white/5 active:scale-[0.97] transition-colors"><X className="w-3.5 h-3.5 text-foreground/40" /></button>
                       <button onClick={saveBio} disabled={savingBio}
-                        className="p-1.5 rounded-lg bg-primary/20 border border-primary/30">
+                        className="w-9 h-9 flex items-center justify-center rounded-lg bg-primary/20 border border-primary/30 active:scale-[0.97] transition-colors">
                         <Check className="w-3.5 h-3.5 text-primary" />
                       </button>
                     </div>

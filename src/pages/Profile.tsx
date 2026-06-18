@@ -468,7 +468,7 @@ const Profile = () => {
             {([
               { label: "Je suis ouvert",    img: squirrelHappy,    value: 5 },
               { label: "Je suis sélectif",  img: squirrelCritique, value: 6 },
-              { label: "Je suis très exigeant",  img: squirrelExigeant, value: 7 },
+              { label: "Je suis intraitable",  img: squirrelExigeant, value: 7 },
             ] as const).map(opt => {
               const active = opt.value === 5 ? minRating <= 5 : opt.value === 7 ? minRating >= 7 : minRating === 6;
               return (
@@ -550,7 +550,7 @@ const Profile = () => {
                               transition={{ delay: 0.4 + i * 0.08, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
                               className="h-full rounded-full bg-primary/40" />
                           </div>
-                          <p className="text-[9px] font-sans text-foreground/15 mt-0.5">{item.detail}</p>
+                          <p className="text-[9px] font-sans text-foreground/40 mt-0.5">{item.detail}</p>
                         </div>
                       ))}
                     </motion.div>
