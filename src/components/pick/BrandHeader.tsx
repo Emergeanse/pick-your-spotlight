@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { ArrowLeft, Users, Crown, Star } from "lucide-react";
+import { ArrowLeft, Users, Crown, Star, Search } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { ReactNode, useEffect, useState } from "react";
 import NotificationBell from "./NotificationBell";
@@ -99,6 +99,13 @@ const BrandHeader = ({ showBack, onBack, extraActions }: BrandHeaderProps) => {
 
       <div className="flex items-center gap-1">
         {extraActions}
+        <button
+          onClick={() => navigate("/app/match")}
+          className="relative p-2 rounded-full hover:bg-foreground/5 transition-colors active:scale-95"
+          aria-label="Rechercher un film"
+        >
+          <Search className="w-[18px] h-[18px] text-foreground/40" />
+        </button>
         <button
           onClick={() => navigate("/app/duo")}
           className="relative p-2 rounded-full hover:bg-foreground/5 transition-colors active:scale-95"
