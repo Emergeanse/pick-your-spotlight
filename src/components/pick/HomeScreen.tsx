@@ -1627,6 +1627,8 @@ const HomeScreen = ({
         // Déclenché 3s après que les films sont montrés — pas d'impact sur l'UX.
         // Priorité aux contenus sous-représentés : récents et classiques sans filtre streaming.
         setTimeout(() => {
+          // TMDB genre IDs pour les films français
+          const FR_GENRE_IDS = [28, 12, 16, 35, 80, 99, 18, 10751, 14, 36, 27, 10402, 9648, 10749, 878, 53, 10752, 37];
           const POST_RECO_COMBOS = [
             { type: "movie", source: "discover", sortBy: "primary_release_date.desc", noStreamingFilter: true, releaseYearMin: 2024, minVoteCount: 10,   minRating: 6   },
             { type: "movie", source: "discover", sortBy: "primary_release_date.desc", noStreamingFilter: true, releaseYearMin: 2022, releaseYearMax: 2023, minVoteCount: 50,  minRating: 6.5 },
@@ -1635,15 +1637,18 @@ const HomeScreen = ({
             { type: "movie", source: "discover", sortBy: "vote_count.desc",           noStreamingFilter: true, releaseYearMin: 2000, releaseYearMax: 2010, minVoteCount: 2000,minRating: 7   },
             { type: "tv",    source: "discover", sortBy: "primary_release_date.desc", noStreamingFilter: true, releaseYearMin: 2023, minVoteCount: 20,     minRating: 7   },
             { type: "movie", source: "top_rated", minVoteCount: 200, minRating: 7.5 },
+            // Films français par genre — seed ciblé pour couvrir tous les genres en langue fr
+            { type: "movie", source: "discover", sortBy: "vote_count.desc", noStreamingFilter: true, originalLanguage: "fr", genreId: FR_GENRE_IDS[Math.floor(Math.random() * FR_GENRE_IDS.length)], minVoteCount: 50, minRating: 6 },
+            { type: "movie", source: "discover", sortBy: "popularity.desc", noStreamingFilter: true, originalLanguage: "fr", minVoteCount: 100, minRating: 6 },
           ];
           const combo = POST_RECO_COMBOS[Math.floor(Math.random() * POST_RECO_COMBOS.length)];
-          const startPage = Math.floor(Math.random() * 300) + 1;
+          const startPage = Math.floor(Math.random() * 100) + 1;
           supabase.functions.invoke("seed-embeddings", {
             body: { ...combo, pages: 2, startPage, batchSize: 5 },
           }).then(({ data }) => {
             const s = data?.stats;
             if (s?.processed > 0)
-              console.log(`[POST-RECO-SEED] ${combo.type} ${(combo as any).sortBy ?? combo.source} p${startPage}: +${s.processed} nouveaux films`);
+              console.log(`[POST-RECO-SEED] ${combo.type} ${(combo as any).originalLanguage ?? ""} ${(combo as any).sortBy ?? combo.source} p${startPage}: +${s.processed} nouveaux films`);
           }).catch(() => {});
         }, 3000);
       }

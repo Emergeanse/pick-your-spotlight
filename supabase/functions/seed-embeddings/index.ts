@@ -177,6 +177,7 @@ serve(async (req: Request) => {
       releaseYearMin,          // ex: 1980 → primary_release_date.gte=1980-01-01
       releaseYearMax,          // ex: 1999 → primary_release_date.lte=1999-12-31
       noStreamingFilter = false, // true → retire le filtre with_watch_providers
+      originalLanguage,        // ex: "fr" → with_original_language=fr (films français)
       refreshLimit = 20,       // nb de films à rafraîchir en mode refresh-platforms
     } = body;
 
@@ -256,6 +257,7 @@ serve(async (req: Request) => {
           params.set("with_watch_monetization_types", "flatrate|free|ads");
         }
         if (genreId) params.set("with_genres", String(genreId));
+        if (originalLanguage) params.set("with_original_language", String(originalLanguage));
         if (minRating) params.set("vote_average.gte", String(minRating));
         if (releaseYearMin) params.set("primary_release_date.gte", `${releaseYearMin}-01-01`);
         if (releaseYearMax) params.set("primary_release_date.lte", `${releaseYearMax}-12-31`);
