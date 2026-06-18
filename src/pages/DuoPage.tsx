@@ -123,10 +123,10 @@ const PendingDuoCard = ({ duo, onShare, onDelete }: {
       <p className="font-sans text-foreground/50 text-xs">En attente d'acceptation</p>
     </div>
     <div className="flex items-center gap-1 shrink-0">
-      <button onClick={onShare} className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-foreground/8 transition-colors text-foreground/40 hover:text-primary active:scale-[0.97]">
+      <button aria-label="Partager le lien d'invitation" onClick={onShare} className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-foreground/8 transition-colors text-foreground/40 hover:text-primary active:scale-[0.97]">
         <Share2 className="w-4 h-4" />
       </button>
-      <button onClick={onDelete} className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-destructive/10 transition-colors text-foreground/45 hover:text-destructive active:scale-[0.97]">
+      <button aria-label="Annuler ce duo" onClick={onDelete} className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-destructive/10 transition-colors text-foreground/45 hover:text-destructive active:scale-[0.97]">
         <Trash2 className="w-4 h-4" />
       </button>
     </div>
@@ -219,7 +219,7 @@ const DuoDetail = ({ duo: initialDuo, currentUserId, onBack, onRename, onDelete 
     <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} className="w-full">
       {/* Header */}
       <div className="flex items-center gap-3 mb-6">
-        <button onClick={onBack} className="p-2 rounded-xl hover:bg-foreground/8 transition-colors text-foreground/50">
+        <button aria-label="Retour" onClick={onBack} className="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-foreground/8 transition-colors text-foreground/50">
           <ArrowLeft className="w-5 h-5" />
         </button>
         <div className="flex-1 min-w-0">
@@ -240,7 +240,7 @@ const DuoDetail = ({ duo: initialDuo, currentUserId, onBack, onRename, onDelete 
           )}
           <p className="text-foreground/40 font-sans text-xs mt-0.5">avec {partner ?? "—"}</p>
         </div>
-        <button onClick={onDelete} className="p-2 rounded-xl hover:bg-destructive/10 transition-colors text-foreground/45 hover:text-destructive">
+        <button aria-label="Supprimer ce duo" onClick={onDelete} className="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-destructive/10 transition-colors text-foreground/45 hover:text-destructive">
           <Trash2 className="w-4 h-4" />
         </button>
       </div>
@@ -435,7 +435,7 @@ const CreateFlow = ({ userId, displayName, onCreated, onCancel }: {
         </div>
         <div className="bg-foreground/[0.04] border border-border/15 rounded-xl px-3 py-3 flex items-center gap-2">
           <p className="flex-1 font-mono text-xs text-foreground/60 truncate">{inviteUrl}</p>
-          <button onClick={copy} className="shrink-0 w-9 h-9 flex items-center justify-center rounded-lg hover:bg-primary/10 transition-colors active:scale-[0.97]">
+          <button aria-label="Copier le lien" onClick={copy} className="shrink-0 w-9 h-9 flex items-center justify-center rounded-lg hover:bg-primary/10 transition-colors active:scale-[0.97]">
             {copied ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4 text-foreground/40" />}
           </button>
         </div>
@@ -449,7 +449,7 @@ const CreateFlow = ({ userId, displayName, onCreated, onCancel }: {
     return (
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="w-full flex flex-col gap-5">
         <div className="flex items-center gap-3">
-          <button onClick={() => setStep("choose")} className="p-2 rounded-xl hover:bg-foreground/8 transition-colors text-foreground/40">
+          <button aria-label="Retour" onClick={() => setStep("choose")} className="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-foreground/8 transition-colors text-foreground/40">
             <ArrowLeft className="w-4 h-4" />
           </button>
           <div>
@@ -546,10 +546,10 @@ const CreateFlow = ({ userId, displayName, onCreated, onCancel }: {
 ══════════════════════════════════════════ */
 type EnsembleTab = "amis" | "duos" | "groupes";
 
-const ENSEMBLE_TABS: { id: EnsembleTab; label: string }[] = [
+const ENSEMBLE_TABS: { id: EnsembleTab; label: string; soon?: boolean }[] = [
   { id: "amis",    label: "Amis" },
   { id: "duos",    label: "Duos" },
-  { id: "groupes", label: "Groupes" },
+  { id: "groupes", label: "Groupes", soon: true },
 ];
 
 export default function DuoPage() {
@@ -619,8 +619,34 @@ export default function DuoPage() {
 
   if (!isReady || loading) {
     return (
-      <div className="flex-1 flex items-center justify-center">
-        <Loader2 className="w-6 h-6 animate-spin text-primary" />
+      <div className="relative min-h-screen">
+        <div className="absolute inset-0 bg-cover bg-center bg-no-repeat" style={{ backgroundImage: `url(${duoBg})` }} />
+        <div className="absolute inset-0 bg-gradient-to-b from-background/55 via-background/75 to-background/97" />
+        <div className="relative z-10 pb-28 px-4 pt-[calc(4.5rem+env(safe-area-inset-top))] max-w-lg mx-auto animate-pulse">
+          {/* Header */}
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex flex-col gap-1.5">
+              <div className="h-7 w-32 rounded-xl bg-foreground/[0.08]" />
+              <div className="h-3 w-44 rounded bg-foreground/[0.06]" />
+            </div>
+            <div className="w-9 h-9 rounded-full bg-foreground/[0.08]" />
+          </div>
+          {/* Tabs */}
+          <div className="flex gap-1 p-1 rounded-2xl bg-white/[0.04] border border-white/[0.06] mb-5">
+            {[1,2,3].map(i => <div key={i} className="flex-1 h-9 rounded-xl bg-foreground/[0.06]" />)}
+          </div>
+          {/* Cards */}
+          {[1,2,3].map(i => (
+            <div key={i} className="mb-3 rounded-2xl border border-white/[0.10] p-4 flex items-center gap-3" style={{ background: "hsl(var(--card)/0.4)" }}>
+              <div className="w-10 h-10 rounded-full bg-foreground/[0.08] shrink-0" />
+              <div className="flex-1 flex flex-col gap-1.5">
+                <div className="h-4 w-36 rounded-lg bg-foreground/[0.08]" />
+                <div className="h-3 w-24 rounded bg-foreground/[0.06]" />
+              </div>
+              <div className="h-4 w-10 rounded bg-foreground/[0.06]" />
+            </div>
+          ))}
+        </div>
       </div>
     );
   }
@@ -691,13 +717,18 @@ export default function DuoPage() {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`flex-1 py-2 rounded-xl font-sans text-[13px] font-semibold transition-all ${
+                  className={`relative flex-1 py-2 rounded-xl font-sans text-[13px] font-semibold transition-all ${
                     activeTab === tab.id
                       ? "bg-primary text-primary-foreground shadow-[0_4px_14px_-4px_hsl(var(--primary)/0.6)]"
                       : "text-foreground/40 hover:text-foreground/70"
                   }`}
                 >
                   {tab.label}
+                  {tab.soon && (
+                    <span className="absolute -top-1.5 -right-1 text-[7px] font-sans font-bold tracking-wide uppercase px-1 py-px rounded-full bg-foreground/15 text-foreground/50 leading-none">
+                      Bientôt
+                    </span>
+                  )}
                 </button>
               ))}
             </div>

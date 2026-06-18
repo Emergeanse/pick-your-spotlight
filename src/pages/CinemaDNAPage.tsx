@@ -395,7 +395,43 @@ const CinemaDNAPage = () => {
 
       <div className={`px-4 pt-5 flex flex-col gap-6 ${isOwnProfile ? "pb-[calc(6rem+env(safe-area-inset-bottom))]" : "pb-[calc(9rem+env(safe-area-inset-bottom))]"}`}>
 
-        {/* ══ 1. HERO CARD ══ */}
+        {/* ── Skeleton chargement ── */}
+        {loading && (
+          <div className="flex flex-col gap-6 animate-pulse">
+            <div className="rounded-3xl border border-white/[0.06] p-5 flex gap-4" style={{ background: "hsl(var(--card)/0.4)" }}>
+              <div className="w-20 h-20 rounded-2xl bg-foreground/[0.08] shrink-0" />
+              <div className="flex-1 flex flex-col gap-2 pt-1">
+                <div className="h-5 w-36 rounded-xl bg-foreground/[0.08]" />
+                <div className="flex gap-2 mt-1">
+                  <div className="h-4 w-16 rounded-full bg-foreground/[0.06]" />
+                  <div className="h-4 w-12 rounded-full bg-foreground/[0.06]" />
+                </div>
+                <div className="h-3 w-full rounded bg-foreground/[0.06] mt-2" />
+                <div className="h-3 w-2/3 rounded bg-foreground/[0.06]" />
+              </div>
+            </div>
+            <div className="rounded-3xl border border-white/[0.06] p-4" style={{ background: "hsl(var(--card)/0.4)" }}>
+              <div className="h-3 w-44 rounded bg-foreground/[0.06] mb-4" />
+              <div className="h-[220px] rounded-2xl bg-foreground/[0.05] mb-4" />
+              {[1,2,3,4].map(i => (
+                <div key={i} className="flex items-center gap-2 mb-1.5">
+                  <div className="h-2.5 w-24 rounded bg-foreground/[0.06]" />
+                  <div className="flex-1 h-1.5 rounded-full bg-foreground/[0.06]" />
+                  <div className="h-2.5 w-8 rounded bg-foreground/[0.06]" />
+                </div>
+              ))}
+            </div>
+            <div>
+              <div className="h-3 w-20 rounded bg-foreground/[0.06] mb-3" />
+              <div className="flex items-end gap-3">
+                <div className="flex-1 h-36 rounded-2xl bg-foreground/[0.06]" />
+                <div className="flex-1 h-44 rounded-2xl bg-foreground/[0.08]" />
+                <div className="flex-1 h-32 rounded-2xl bg-foreground/[0.06]" />
+              </div>
+            </div>
+          </div>
+        )}
+        {!loading && (
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
           className="relative rounded-3xl overflow-hidden border border-white/[0.06]"
           style={{ background: "linear-gradient(145deg, hsl(var(--primary)/0.25) 0%, hsl(var(--background)/0.6) 50%, hsl(var(--accent)/0.15) 100%)" }}>
@@ -485,6 +521,7 @@ const CinemaDNAPage = () => {
             </div>
           </div>
         </motion.div>
+        )}
 
         {/* ══ 2. EMPREINTE CINÉMATOGRAPHIQUE (RADAR) ══ */}
         {radarData.length >= 3 && (
@@ -532,7 +569,7 @@ const CinemaDNAPage = () => {
           </motion.div>
         )}
 
-        {/* ══ 3. MON PODIUM ══ */}
+        {!loading && (
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.14 }}>
           <div className="flex items-center gap-2 mb-3">
             <Trophy className="w-3.5 h-3.5 text-amber-400/70" />
@@ -545,6 +582,7 @@ const CinemaDNAPage = () => {
             <PodiumSlot rank={3} film={podiumFilms[2]} onSelect={isOwnProfile ? () => setSelectingRank(3) : () => {}} />
           </div>
         </motion.div>
+        )}
 
         {/* ══ 4. FILMS ADORÉS ══ */}
         {lovedFilms.length > 0 && (
@@ -655,11 +693,6 @@ const CinemaDNAPage = () => {
           </motion.div>
         )}
 
-        {loading && (
-          <div className="flex items-center justify-center py-20">
-            <div className="w-8 h-8 rounded-full border-2 border-primary/30 border-t-primary animate-spin" />
-          </div>
-        )}
       </div>
 
       {/* ── CTA Regarder ensemble (profil ami uniquement) ── */}
