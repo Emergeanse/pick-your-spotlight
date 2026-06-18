@@ -55,7 +55,7 @@ function shouldResetStreak(lastDate: string | null): boolean {
  * Record that a recommendation was accepted (user watched/liked/started companion).
  * Updates streak and acceptance rate.
  */
-export async function recordAcceptedRecommendation(userId: string): Promise<void> {
+export async function recordAcceptedRecommendation(userId: string, incrementTotal = true): Promise<void> {
   const engagement = await getEngagementData(userId);
   if (!engagement) return;
 
@@ -64,7 +64,8 @@ export async function recordAcceptedRecommendation(userId: string): Promise<void
   // Reset streak if user has been inactive for 48h+
   const currentStreak = shouldResetStreak(engagement.lastRecommendationDate) ? 0 : engagement.streakCount;
 
-  const newTotal = engagement.totalRecommendations + 1;
+  // incrementTotal=false quand appelé depuis le flow principal (le skip incrémente déjà total)
+  const newTotal = incrementTotal ? engagement.totalRecommendations + 1 : engagement.totalRecommendations;
   const newAccepted = engagement.acceptedRecommendations + 1;
   const newStreak = currentStreak + 1;
   const newBestStreak = Math.max(engagement.bestStreak, newStreak);

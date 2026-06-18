@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { recordAcceptedRecommendation } from "@/lib/engagement";
 import { Bookmark, Heart, Eye, ThumbsDown, ThumbsUp } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
@@ -46,6 +47,15 @@ const MovieActionBar = ({
   const activeFeedback = interaction.primaryStatus;
 
   const [loading, setLoading] = useState(false);
+  // Mémorise les films déjà comptés comme "acceptés" pour ne pas doubler-compter
+  const acceptedMovieIds = useRef(new Set<number>());
+
+  const recordAccepted = useCallback(() => {
+    if (!user || contextType !== "solo_session") return;
+    if (acceptedMovieIds.current.has(movie.id)) return;
+    acceptedMovieIds.current.add(movie.id);
+    recordAcceptedRecommendation(user.id, false).catch(() => {});
+  }, [user, movie.id, contextType]);
 
   useEffect(() => {
     currentMovieIdRef.current = movie.id;
@@ -257,6 +267,7 @@ const MovieActionBar = ({
         toast.success("Retiré de ta watchlist");
       } else {
         await persistFeedback("watchlist");
+        recordAccepted();
         toast.success("Ajouté à ta watchlist !");
       }
 
@@ -278,6 +289,7 @@ const MovieActionBar = ({
         toast.success("Like retiré");
       } else {
         await persistFeedback("like");
+        recordAccepted();
         ensureMovieEmbedding(
           movie.id,
           movie.title || (movie as any).name || "",
@@ -305,6 +317,7 @@ const MovieActionBar = ({
         toast.success("Coup de cœur retiré");
       } else {
         await persistFeedback("love");
+        recordAccepted();
         ensureMovieEmbedding(
           movie.id,
           movie.title || (movie as any).name || "",
