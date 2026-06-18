@@ -70,7 +70,7 @@ serve(async (req) => {
     const auth = await requireAuth(req, corsHeaders);
     if (auth.response) return auth.response;
     const t0 = Date.now();
-    console.log("[SP] ✅ version 2026-06-13-v22 — TARGET=100 vecteur + SQL explicite + pool LLM 50");
+    console.log("[SP] ✅ version 2026-06-18-v23 — post-filtre voiceGenres + fallback explicite respecte genre vocal");
     const {
       tasteProfile,
       userTasteVector,
@@ -595,12 +595,15 @@ serve(async (req) => {
       const sbEx = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
       const baseMinRating = minRating > 0 ? minRating : 6;
 
+      // Quand un genre vocal est demandé, le fallback explicite l'utilise aussi pour éviter
+      // d'injecter des films hors-genre (qui domineraient ensuite le pool LLM par similarité vectorielle)
+      const explicitLikedGenres = voiceGenres ?? likedGenresForSQL;
       const explicitLevels = [
-        // A : liked_genres + note profil + plateforme + excluded_genres
-        { liked_genres: likedGenresForSQL, min_rating: baseMinRating },
-        // B : sans liked_genres, note assouplie à 5
-        { liked_genres: [] as string[], min_rating: Math.min(baseMinRating, 5) },
-        // C : plateforme seule, tous genres, note 0
+        // A : liked_genres (voix ou profil) + note + plateforme + excluded_genres
+        { liked_genres: explicitLikedGenres, min_rating: baseMinRating },
+        // B : liked_genres (voix ou profil) sans note stricte
+        { liked_genres: explicitLikedGenres, min_rating: Math.min(baseMinRating, 5) },
+        // C : plateforme seule, tous genres, note 0 (dernier recours)
         { liked_genres: [] as string[], min_rating: 0 },
       ];
 
@@ -779,7 +782,23 @@ serve(async (req) => {
         const removed = filteredCandidates.length - originEligible.length;
         console.log(`[SP] Filtre origine: ${originEligible.length}/${filteredCandidates.length} films gardés (${removed} retirés — langues exclues: [${[...excludedLangsBoost].join(",")}])`);
       }
-      const topPool = [...originEligible]
+
+      // Post-filtre voiceGenres : limiter le pool LLM aux films du genre explicitement demandé.
+      // Sans ce filtre, le fallback explicite injecte des films hors-genre qui dominent par similarité vectorielle.
+      let voiceEligible = originEligible;
+      if (voiceGenres && voiceGenres.length > 0) {
+        const voiceMatching = originEligible.filter((c: any) =>
+          voiceGenres.some((g: string) => (c.genres || []).includes(g))
+        );
+        if (voiceMatching.length >= 5) {
+          console.log(`[SP] Post-filtre voiceGenres [${voiceGenres.join(",")}]: ${voiceMatching.length}/${originEligible.length} films retenus`);
+          voiceEligible = voiceMatching;
+        } else {
+          console.log(`[SP] Post-filtre voiceGenres [${voiceGenres.join(",")}]: ${voiceMatching.length} films seulement — pool complet conservé`);
+        }
+      }
+
+      const topPool = [...voiceEligible]
         .sort((a, b) => compositeScore(b) - compositeScore(a))
         .slice(0, llmPoolSize);
       llmPool = topPool;
