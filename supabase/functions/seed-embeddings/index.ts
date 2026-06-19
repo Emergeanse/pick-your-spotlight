@@ -313,8 +313,8 @@ serve(async (req: Request) => {
     const existingIds = new Set((existing || []).map((r: any) => r.tmdb_id));
     const toProcess = allMovies.filter((m) => !existingIds.has(m.id));
 
-    // Cap à 15 films par appel pour tenir dans le timeout Supabase (≈60s × 4s/film)
-    const toProcessCapped = toProcess.slice(0, 15);
+    // Cap à 40 films (Tier 1 = 1000 RPM, pas de délai nécessaire)
+    const toProcessCapped = toProcess.slice(0, 40);
     console.log(`Fetched: ${allMovies.length} | Already in DB: ${existingIds.size} | To process: ${toProcessCapped.length}/${toProcess.length}`);
 
     // ── 3. Génération des embeddings via Google AI ──
@@ -322,23 +322,27 @@ serve(async (req: Request) => {
     let processed = 0;
     let errors = 0;
 
-    for (let i = 0; i < toProcessCapped.length; i++) {
-      const movie = toProcessCapped[i];
-      try {
-        const detailRes = await fetch(
-          `https://api.themoviedb.org/3/${type}/${movie.id}?api_key=${TMDB_API_KEY}&language=fr-FR`,
-        );
-        if (!detailRes.ok) { errors++; continue; }
-        const detail = await detailRes.json();
-        const platformIds = await getProviderIdsFR(movie.id, type as "movie" | "tv");
-        const ok = await generateEmbeddingWithGoogleAI(detail, type, GOOGLE_AI_KEY, supabase, platformIds);
-        if (ok) processed++; else errors++;
-      } catch (e) {
-        console.error(`Error processing movie ${movie.id}:`, e);
-        errors++;
-      }
-      // 4s entre chaque appel Gemini pour rester sous la limite de 15 RPM
-      if (i < toProcessCapped.length - 1) await new Promise(r => setTimeout(r, 4000));
+    // Tier 1 → traitement par mini-batches parallèles de 5 (1000 RPM disponibles)
+    for (let i = 0; i < toProcessCapped.length; i += 5) {
+      const batch = toProcessCapped.slice(i, i + 5);
+      const results = await Promise.all(
+        batch.map(async (movie) => {
+          try {
+            const detailRes = await fetch(
+              `https://api.themoviedb.org/3/${type}/${movie.id}?api_key=${TMDB_API_KEY}&language=fr-FR`,
+            );
+            if (!detailRes.ok) return false;
+            const detail = await detailRes.json();
+            const platformIds = await getProviderIdsFR(movie.id, type as "movie" | "tv");
+            return await generateEmbeddingWithGoogleAI(detail, type, GOOGLE_AI_KEY, supabase, platformIds);
+          } catch (e) {
+            console.error(`Error processing movie ${movie.id}:`, e);
+            return false;
+          }
+        }),
+      );
+      processed += results.filter(Boolean).length;
+      errors += results.filter((r) => !r).length;
     }
 
     return new Response(
