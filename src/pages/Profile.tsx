@@ -174,10 +174,13 @@ const Profile = () => {
           const added = s?.processed ?? 0;
           const alreadyInDb = s?.already_in_db ?? 0;
           const fetched = s?.fetched ?? 0;
+          const errors = s?.errors ?? 0;
           totalAdded += added;
           const label = fetched === 0
             ? `${genre.label} p${startPage}: aucun film TMDB`
-            : `${genre.label} p${startPage}: +${added} nouveaux / ${alreadyInDb} déjà (${fetched} TMDB)`;
+            : errors > 0 && added === 0
+              ? `${genre.label} p${startPage}: ❌ ${errors} erreurs Gemini / ${alreadyInDb} déjà (${fetched} TMDB)`
+              : `${genre.label} p${startPage}: +${added} nouveaux / ${alreadyInDb} déjà${errors > 0 ? ` / ${errors} erreurs` : ""} (${fetched} TMDB)`;
           setSeedLog(prev => [...prev, label]);
         } catch {
           setSeedLog(prev => [...prev, `${genre.label} p${startPage}: erreur`]);
