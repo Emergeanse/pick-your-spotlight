@@ -93,7 +93,11 @@ Réponds UNIQUEMENT avec ce JSON valide, sans backticks :
   const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${googleApiKey}`;
   const geminiBody = JSON.stringify({
     contents: [{ parts: [{ text: prompt }] }],
-    generationConfig: { temperature: 0.3, maxOutputTokens: 1024 },
+    generationConfig: {
+      temperature: 0.3,
+      maxOutputTokens: 1024,
+      thinkingConfig: { thinkingBudget: 0 },  // désactive le "thinking" de gemini-2.5-flash
+    },
   });
 
   let res = await fetch(geminiUrl, { method: "POST", headers: { "Content-Type": "application/json" }, body: geminiBody });
@@ -111,7 +115,9 @@ Réponds UNIQUEMENT avec ce JSON valide, sans backticks :
   }
 
   const aiData = await res.json();
-  const content = aiData.candidates?.[0]?.content?.parts?.[0]?.text || "";
+  // gemini-2.5-flash peut retourner une partie "thought" avant la réponse — on cherche la partie texte non-thought
+  const parts: any[] = aiData.candidates?.[0]?.content?.parts ?? [];
+  const content = parts.find((p: any) => p.text && !p.thought)?.text ?? parts[0]?.text ?? "";
 
   let parsed: any;
   try {
