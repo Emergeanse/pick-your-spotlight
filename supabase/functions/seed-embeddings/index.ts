@@ -93,13 +93,19 @@ Réponds UNIQUEMENT avec ce JSON valide, sans backticks :
 {"vector":[32 floats 0.0-1.0],"tags":["tag1","tag2","tag3"],"semantic_axes":{"emotional_depth":0.0,"pacing":0.0,"darkness":0.0,"humor":0.0,"complexity":0.0,"romance":0.0,"suspense":0.0,"action_intensity":0.0,"visual_richness":0.0,"philosophical_depth":0.0,"realism":0.0,"weirdness":0.0,"comfort_level":0.0,"prestige_level":0.0,"mainstreamness":0.0,"twist_factor":0.0,"rewatchability":0.0,"intimacy":0.0,"epic_scale":0.0,"low_cognitive_load":0.0,"surprise_tolerance":0.0},"safety_tags":[],"suitability_tags":["solo","couple"],"cluster_labels":["label1","label2"]}`;
 
   const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${googleApiKey}`,
+    "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
     {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        Authorization: `Bearer ${googleApiKey}`,
+        "Content-Type": "application/json",
+      },
       body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: { temperature: 0.3, maxOutputTokens: 1024, responseMimeType: "application/json" },
+        model: "gemini-2.0-flash-lite",
+        messages: [{ role: "user", content: prompt }],
+        response_format: { type: "json_object" },
+        max_tokens: 2048,
+        temperature: 0.3,
       }),
     },
   );
@@ -110,8 +116,7 @@ Réponds UNIQUEMENT avec ce JSON valide, sans backticks :
   }
 
   const aiData = await res.json();
-  const parts: any[] = aiData.candidates?.[0]?.content?.parts ?? [];
-  const content = parts.find((p: any) => p.text && !p.thought)?.text ?? parts[0]?.text ?? "";
+  const content = aiData.choices?.[0]?.message?.content || "";
 
   if (!content) {
     return { ok: false, step: "gemini_empty", detail: JSON.stringify(aiData).slice(0, 120) };
