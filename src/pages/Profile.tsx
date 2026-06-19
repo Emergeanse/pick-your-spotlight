@@ -959,13 +959,18 @@ const Profile = () => {
                       onClick={async () => {
                         setSeedRunning(true);
                         setSeedLog(["🔍 Test de la clé Gemini en cours…"]);
-                        const { data } = await supabase.functions.invoke("seed-embeddings", { body: { mode: "testGemini" } });
-                        if (data?.success) {
-                          setSeedLog([`✅ Clé OK — modèles : ${(data.availableModels as string[]).join(", ")}`]);
-                        } else {
-                          setSeedLog([`❌ Gemini inaccessible — ${data?.geminiStatus} : ${data?.geminiError}`]);
+                        try {
+                          const { data } = await supabase.functions.invoke("seed-embeddings", { body: { mode: "testGemini" } });
+                          if (data?.success) {
+                            setSeedLog([`✅ Clé OK — modèles : ${(data.availableModels as string[]).join(", ")}`]);
+                          } else {
+                            setSeedLog([`❌ Gemini inaccessible — ${data?.geminiStatus} : ${data?.geminiError}`]);
+                          }
+                        } catch (e) {
+                          setSeedLog([`❌ Timeout ou erreur réseau : ${String(e).slice(0, 80)}`]);
+                        } finally {
+                          setSeedRunning(false);
                         }
-                        setSeedRunning(false);
                       }}
                       className="flex-1 text-xs font-sans gap-1 h-8"
                     >

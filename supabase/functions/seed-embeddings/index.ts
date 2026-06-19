@@ -218,22 +218,32 @@ serve(async (req: Request) => {
     // ── Mode refresh-platforms : mettre à jour platform_ids des films stales ──
     // ── Mode testGemini : vérifie la clé et liste les modèles disponibles ──
     if (mode === "testGemini") {
-      const testRes = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models?key=${GOOGLE_AI_KEY}&pageSize=20`,
-      );
-      const testBody = await testRes.text();
-      if (!testRes.ok) {
+      try {
+        const ctrl = new AbortController();
+        const timer = setTimeout(() => ctrl.abort(), 12000);
+        const testRes = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models?key=${GOOGLE_AI_KEY}&pageSize=20`,
+          { signal: ctrl.signal },
+        ).finally(() => clearTimeout(timer));
+        const testBody = await testRes.text();
+        if (!testRes.ok) {
+          return new Response(
+            JSON.stringify({ success: false, geminiStatus: `HTTP ${testRes.status}`, geminiError: testBody.slice(0, 300) }),
+            { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+          );
+        }
+        const testData = JSON.parse(testBody);
+        const models = (testData.models || []).map((m: any) => m.name);
         return new Response(
-          JSON.stringify({ success: false, geminiStatus: `HTTP ${testRes.status}`, geminiError: testBody.slice(0, 300) }),
+          JSON.stringify({ success: true, geminiStatus: "OK", availableModels: models }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      } catch (e) {
+        return new Response(
+          JSON.stringify({ success: false, geminiStatus: "timeout_or_network", geminiError: String(e) }),
           { headers: { ...corsHeaders, "Content-Type": "application/json" } },
         );
       }
-      const testData = JSON.parse(testBody);
-      const models = (testData.models || []).map((m: any) => m.name);
-      return new Response(
-        JSON.stringify({ success: true, geminiStatus: "OK", availableModels: models }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
     }
 
     if (mode === "refresh-platforms") {
