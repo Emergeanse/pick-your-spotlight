@@ -90,17 +90,20 @@ ${detail.runtime ? `Durée : ${detail.runtime} min` : ""}
 Réponds UNIQUEMENT avec ce JSON valide, sans backticks :
 {"vector":[32 floats 0.0-1.0],"tags":["tag1","tag2","tag3"],"semantic_axes":{"emotional_depth":0.0,"pacing":0.0,"darkness":0.0,"humor":0.0,"complexity":0.0,"romance":0.0,"suspense":0.0,"action_intensity":0.0,"visual_richness":0.0,"philosophical_depth":0.0,"realism":0.0,"weirdness":0.0,"comfort_level":0.0,"prestige_level":0.0,"mainstreamness":0.0,"twist_factor":0.0,"rewatchability":0.0,"intimacy":0.0,"epic_scale":0.0,"low_cognitive_load":0.0,"surprise_tolerance":0.0},"safety_tags":[],"suitability_tags":["solo","couple"],"cluster_labels":["label1","label2"]}`;
 
-  const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${googleApiKey}`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: { temperature: 0.3, maxOutputTokens: 1024 },
-      }),
-    },
-  );
+  const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${googleApiKey}`;
+  const geminiBody = JSON.stringify({
+    contents: [{ parts: [{ text: prompt }] }],
+    generationConfig: { temperature: 0.3, maxOutputTokens: 1024 },
+  });
+
+  let res = await fetch(geminiUrl, { method: "POST", headers: { "Content-Type": "application/json" }, body: geminiBody });
+
+  // Retry once on rate-limit (429)
+  if (res.status === 429) {
+    console.warn(`[Gemini] 429 rate-limit for "${title}", retry in 8s…`);
+    await new Promise(r => setTimeout(r, 8000));
+    res = await fetch(geminiUrl, { method: "POST", headers: { "Content-Type": "application/json" }, body: geminiBody });
+  }
 
   if (!res.ok) {
     console.error(`Google AI error for "${title}": ${res.status}`);
@@ -290,33 +293,32 @@ serve(async (req: Request) => {
     const existingIds = new Set((existing || []).map((r: any) => r.tmdb_id));
     const toProcess = allMovies.filter((m) => !existingIds.has(m.id));
 
-    console.log(`Fetched: ${allMovies.length} | Already in DB: ${existingIds.size} | To process: ${toProcess.length}`);
+    // Cap à 15 films par appel pour tenir dans le timeout Supabase (≈60s × 4s/film)
+    const toProcessCapped = toProcess.slice(0, 15);
+    console.log(`Fetched: ${allMovies.length} | Already in DB: ${existingIds.size} | To process: ${toProcessCapped.length}/${toProcess.length}`);
 
-    // ── 3. Génération des embeddings via Google AI (pas de crédits Lovable) ──
+    // ── 3. Génération des embeddings via Google AI ──
+    // Traitement séquentiel avec délai pour respecter la limite Gemini (~15 RPM free tier)
     let processed = 0;
     let errors = 0;
 
-    for (let i = 0; i < toProcess.length; i += batchSize) {
-      const batch = toProcess.slice(i, i + batchSize);
-      const results = await Promise.all(
-        batch.map(async (movie) => {
-          try {
-            const detailRes = await fetch(
-              `https://api.themoviedb.org/3/${type}/${movie.id}?api_key=${TMDB_API_KEY}&language=fr-FR`,
-            );
-            if (!detailRes.ok) return false;
-            const detail = await detailRes.json();
-            const platformIds = await getProviderIdsFR(movie.id, type as "movie" | "tv");
-            const ok = await generateEmbeddingWithGoogleAI(detail, type, GOOGLE_AI_KEY, supabase, platformIds);
-            return ok;
-          } catch (e) {
-            console.error(`Error processing movie ${movie.id}:`, e);
-            return false;
-          }
-        }),
-      );
-      processed += results.filter(Boolean).length;
-      errors += results.filter((r) => !r).length;
+    for (let i = 0; i < toProcessCapped.length; i++) {
+      const movie = toProcessCapped[i];
+      try {
+        const detailRes = await fetch(
+          `https://api.themoviedb.org/3/${type}/${movie.id}?api_key=${TMDB_API_KEY}&language=fr-FR`,
+        );
+        if (!detailRes.ok) { errors++; continue; }
+        const detail = await detailRes.json();
+        const platformIds = await getProviderIdsFR(movie.id, type as "movie" | "tv");
+        const ok = await generateEmbeddingWithGoogleAI(detail, type, GOOGLE_AI_KEY, supabase, platformIds);
+        if (ok) processed++; else errors++;
+      } catch (e) {
+        console.error(`Error processing movie ${movie.id}:`, e);
+        errors++;
+      }
+      // 4s entre chaque appel Gemini pour rester sous la limite de 15 RPM
+      if (i < toProcessCapped.length - 1) await new Promise(r => setTimeout(r, 4000));
     }
 
     return new Response(
