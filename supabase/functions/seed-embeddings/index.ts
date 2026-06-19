@@ -59,13 +59,15 @@ const TASTE_DIMENSIONS = [
   "international",
 ];
 
+type EmbedResult = { ok: true } | { ok: false; step: string; detail: string };
+
 async function generateEmbeddingWithGoogleAI(
   detail: any,
   mediaType: string,
   googleApiKey: string,
   supabase: any,
   platformIds: number[] = [],
-): Promise<boolean> {
+): Promise<EmbedResult> {
   const title = detail.title || detail.name;
 
   // Skip if already in DB
@@ -74,7 +76,7 @@ async function generateEmbeddingWithGoogleAI(
     .select("tmdb_id")
     .eq("tmdb_id", detail.id)
     .maybeSingle();
-  if (existing) return true;
+  if (existing) return { ok: true };
 
   const prompt = `Tu es un expert en analyse cinématographique. Positionne ce contenu sur 32 dimensions de goût et génère des métadonnées enrichies.
 
@@ -103,27 +105,28 @@ Réponds UNIQUEMENT avec ce JSON valide, sans backticks :
   );
 
   if (!res.ok) {
-    console.error(`Google AI error for "${title}": ${res.status}`);
-    return false;
+    const body = await res.text().catch(() => "");
+    return { ok: false, step: "gemini_api", detail: `HTTP ${res.status}: ${body.slice(0, 120)}` };
   }
 
   const aiData = await res.json();
   const content = aiData.candidates?.[0]?.content?.parts?.[0]?.text || "";
+  if (!content) {
+    return { ok: false, step: "gemini_empty", detail: JSON.stringify(aiData).slice(0, 120) };
+  }
 
   let parsed: any;
   try {
-    const cleaned = content
-      .replace(/```json\n?/g, "")
-      .replace(/```\n?/g, "")
-      .trim();
+    const cleaned = content.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
     parsed = JSON.parse(cleaned);
   } catch {
-    console.error(`Failed to parse embedding for "${title}"`);
-    return false;
+    return { ok: false, step: "json_parse", detail: content.slice(0, 120) };
   }
 
   const vector = parsed.vector;
-  if (!Array.isArray(vector) || vector.length < 28) return false;
+  if (!Array.isArray(vector) || vector.length < 28) {
+    return { ok: false, step: "vector_invalid", detail: `length=${vector?.length}` };
+  }
 
   const padded = [...vector];
   while (padded.length < 32) padded.push(0.5);
@@ -152,10 +155,9 @@ Réponds UNIQUEMENT avec ce JSON valide, sans backticks :
   );
 
   if (error) {
-    console.error(`DB insert error for "${title}":`, error);
-    return false;
+    return { ok: false, step: "db_insert", detail: error.message };
   }
-  return true;
+  return { ok: true };
 }
 
 serve(async (req: Request) => {
@@ -295,11 +297,9 @@ serve(async (req: Request) => {
     console.log(`Fetched: ${allMovies.length} | Already in DB: ${existingIds.size} | To process: ${toProcessCapped.length}/${toProcess.length}`);
 
     // ── 3. Génération des embeddings via Google AI ──
-    // Traitement séquentiel avec délai pour respecter la limite Gemini (~15 RPM free tier)
     let processed = 0;
-    let errors = 0;
+    const errorSamples: Record<string, string> = {};
 
-    // Tier 1 → traitement par mini-batches parallèles de 5 (1000 RPM disponibles)
     for (let i = 0; i < toProcessCapped.length; i += 5) {
       const batch = toProcessCapped.slice(i, i + 5);
       const results = await Promise.all(
@@ -308,20 +308,22 @@ serve(async (req: Request) => {
             const detailRes = await fetch(
               `https://api.themoviedb.org/3/${type}/${movie.id}?api_key=${TMDB_API_KEY}&language=fr-FR`,
             );
-            if (!detailRes.ok) return false;
+            if (!detailRes.ok) return { ok: false, step: "tmdb_detail", detail: `HTTP ${detailRes.status}` } as EmbedResult;
             const detail = await detailRes.json();
             const platformIds = await getProviderIdsFR(movie.id, type as "movie" | "tv");
             return await generateEmbeddingWithGoogleAI(detail, type, GOOGLE_AI_KEY, supabase, platformIds);
           } catch (e) {
-            console.error(`Error processing movie ${movie.id}:`, e);
-            return false;
+            return { ok: false, step: "exception", detail: String(e).slice(0, 80) } as EmbedResult;
           }
         }),
       );
-      processed += results.filter(Boolean).length;
-      errors += results.filter((r) => !r).length;
+      for (const r of results) {
+        if (r.ok) { processed++; }
+        else if (!errorSamples[r.step]) { errorSamples[r.step] = r.detail; }
+      }
     }
 
+    const errors = toProcessCapped.length - processed;
     return new Response(
       JSON.stringify({
         success: true,
@@ -330,6 +332,7 @@ serve(async (req: Request) => {
           already_in_db: existingIds.size,
           processed,
           errors,
+          errorSamples,
           total_in_db: (existing?.length || 0) + processed,
         },
       }),

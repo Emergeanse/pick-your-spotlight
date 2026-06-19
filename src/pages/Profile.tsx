@@ -175,12 +175,20 @@ const Profile = () => {
           const alreadyInDb = s?.already_in_db ?? 0;
           const fetched = s?.fetched ?? 0;
           const errors = s?.errors ?? 0;
+          const errorSamples: Record<string, string> = s?.errorSamples ?? {};
+          const errorTypes = Object.keys(errorSamples);
           totalAdded += added;
-          const label = fetched === 0
-            ? `${genre.label} p${startPage}: aucun film TMDB`
-            : errors > 0 && added === 0
-              ? `${genre.label} p${startPage}: ❌ ${errors} erreurs Gemini / ${alreadyInDb} déjà (${fetched} TMDB)`
-              : `${genre.label} p${startPage}: +${added} nouveaux / ${alreadyInDb} déjà${errors > 0 ? ` / ${errors} erreurs` : ""} (${fetched} TMDB)`;
+          let label: string;
+          if (fetched === 0) {
+            label = `${genre.label} p${startPage}: aucun film TMDB`;
+          } else if (errors > 0 && added === 0) {
+            const errInfo = errorTypes.length > 0
+              ? `[${errorTypes[0]}] ${errorSamples[errorTypes[0]].slice(0, 60)}`
+              : "erreur inconnue";
+            label = `${genre.label} p${startPage}: ❌ ${errors} erreurs — ${errInfo}`;
+          } else {
+            label = `${genre.label} p${startPage}: +${added} nouveaux / ${alreadyInDb} déjà${errors > 0 ? ` / ${errors} err` : ""} (${fetched} TMDB)`;
+          }
           setSeedLog(prev => [...prev, label]);
         } catch {
           setSeedLog(prev => [...prev, `${genre.label} p${startPage}: erreur`]);
