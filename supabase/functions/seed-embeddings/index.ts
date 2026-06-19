@@ -119,8 +119,16 @@ Réponds UNIQUEMENT avec ce JSON valide, sans backticks :
 
   let parsed: any;
   try {
-    const cleaned = content.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
-    parsed = JSON.parse(cleaned);
+    // Extrait le bloc JSON { ... } en ignorant le texte avant/après (le modèle peut en ajouter)
+    const start = content.indexOf("{");
+    let jsonStr = start >= 0 ? content.slice(start) : content;
+    let depth = 0, end = -1;
+    for (let i = 0; i < jsonStr.length; i++) {
+      if (jsonStr[i] === "{") depth++;
+      else if (jsonStr[i] === "}") { depth--; if (depth === 0) { end = i; break; } }
+    }
+    if (end >= 0) jsonStr = jsonStr.slice(0, end + 1);
+    parsed = JSON.parse(jsonStr);
   } catch {
     return { ok: false, step: "json_parse", detail: content.slice(0, 120) };
   }
