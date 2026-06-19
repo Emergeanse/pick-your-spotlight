@@ -1451,6 +1451,7 @@ export type Database = {
         Args: { p_event_id: string }
         Returns: boolean
       }
+      claim_pending_duo: { Args: { _invite_code: string }; Returns: string }
       count_movie_candidates:
         | {
             Args: {
