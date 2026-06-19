@@ -90,34 +90,48 @@ ${detail.runtime ? `Durée : ${detail.runtime} min` : ""}
 Réponds UNIQUEMENT avec ce JSON valide, sans backticks :
 {"vector":[32 floats 0.0-1.0],"tags":["tag1","tag2","tag3"],"semantic_axes":{"emotional_depth":0.0,"pacing":0.0,"darkness":0.0,"humor":0.0,"complexity":0.0,"romance":0.0,"suspense":0.0,"action_intensity":0.0,"visual_richness":0.0,"philosophical_depth":0.0,"realism":0.0,"weirdness":0.0,"comfort_level":0.0,"prestige_level":0.0,"mainstreamness":0.0,"twist_factor":0.0,"rewatchability":0.0,"intimacy":0.0,"epic_scale":0.0,"low_cognitive_load":0.0,"surprise_tolerance":0.0},"safety_tags":[],"suitability_tags":["solo","couple"],"cluster_labels":["label1","label2"]}`;
 
-  const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${googleApiKey}`;
-  const geminiBody = JSON.stringify({
-    contents: [{ parts: [{ text: prompt }] }],
-    generationConfig: {
-      temperature: 0.3,
-      maxOutputTokens: 1024,
-      thinkingConfig: { thinkingBudget: 0 },  // désactive le "thinking" de gemini-2.5-flash
-    },
-  });
+  // Essaie gemini-2.5-flash (thinking désactivé), puis gemini-2.0-flash en fallback
+  const MODELS = [
+    { url: `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${googleApiKey}`, thinking: false },
+    { url: `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${googleApiKey}`, thinking: false },
+  ];
 
-  let res = await fetch(geminiUrl, { method: "POST", headers: { "Content-Type": "application/json" }, body: geminiBody });
+  let content = "";
+  let modelSuccess = false;
 
-  // Retry once on rate-limit (429)
-  if (res.status === 429) {
-    console.warn(`[Gemini] 429 rate-limit for "${title}", retry in 8s…`);
-    await new Promise(r => setTimeout(r, 8000));
-    res = await fetch(geminiUrl, { method: "POST", headers: { "Content-Type": "application/json" }, body: geminiBody });
+  for (const model of MODELS) {
+    const body = JSON.stringify({
+      contents: [{ parts: [{ text: prompt }] }],
+      generationConfig: {
+        temperature: 0.3,
+        maxOutputTokens: 1024,
+        ...(model.thinking ? {} : { thinkingConfig: { thinkingBudget: 0 } }),
+      },
+    });
+
+    let res = await fetch(model.url, { method: "POST", headers: { "Content-Type": "application/json" }, body });
+
+    if (res.status === 429) {
+      console.warn(`[Gemini] 429 for "${title}", retry in 6s…`);
+      await new Promise(r => setTimeout(r, 6000));
+      res = await fetch(model.url, { method: "POST", headers: { "Content-Type": "application/json" }, body });
+    }
+
+    if (!res.ok) {
+      console.warn(`[Gemini] ${res.status} for "${title}" on ${model.url.includes("2.5") ? "2.5-flash" : "2.0-flash"}, trying next…`);
+      continue;
+    }
+
+    const aiData = await res.json();
+    const parts: any[] = aiData.candidates?.[0]?.content?.parts ?? [];
+    const rawText = parts.find((p: any) => p.text && !p.thought)?.text ?? parts[0]?.text ?? "";
+    if (rawText) { content = rawText; modelSuccess = true; break; }
   }
 
-  if (!res.ok) {
-    console.error(`Google AI error for "${title}": ${res.status}`);
+  if (!modelSuccess) {
+    console.error(`[Gemini] All models failed for "${title}"`);
     return false;
   }
-
-  const aiData = await res.json();
-  // gemini-2.5-flash peut retourner une partie "thought" avant la réponse — on cherche la partie texte non-thought
-  const parts: any[] = aiData.candidates?.[0]?.content?.parts ?? [];
-  const content = parts.find((p: any) => p.text && !p.thought)?.text ?? parts[0]?.text ?? "";
 
   let parsed: any;
   try {
@@ -127,7 +141,7 @@ Réponds UNIQUEMENT avec ce JSON valide, sans backticks :
       .trim();
     parsed = JSON.parse(cleaned);
   } catch {
-    console.error(`Failed to parse embedding for "${title}"`);
+    console.error(`Failed to parse embedding for "${title}": ${content.slice(0, 100)}`);
     return false;
   }
 
