@@ -961,10 +961,12 @@ const Profile = () => {
                         setSeedLog(["🔍 Test de la clé Gemini en cours…"]);
                         try {
                           const { data } = await supabase.functions.invoke("seed-embeddings", { body: { mode: "testGemini" } });
-                          if (data?.success) {
+                          if (data?.availableModels) {
                             setSeedLog([`✅ Clé OK — modèles : ${(data.availableModels as string[]).join(", ")}`]);
-                          } else {
+                          } else if (data?.success === false || data?.geminiStatus) {
                             setSeedLog([`❌ Gemini inaccessible — ${data?.geminiStatus} : ${data?.geminiError}`]);
+                          } else {
+                            setSeedLog([`⚠️ Edge function non mise à jour — réponse reçue : ${JSON.stringify(data).slice(0, 120)}`]);
                           }
                         } catch (e) {
                           setSeedLog([`❌ Timeout ou erreur réseau : ${String(e).slice(0, 80)}`]);
