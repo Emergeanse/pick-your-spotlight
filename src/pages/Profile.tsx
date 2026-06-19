@@ -951,15 +951,36 @@ const Profile = () => {
                       <option value={31}>Pages 31–36</option>
                     </select>
                   </div>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    disabled={seedRunning}
-                    onClick={runSeed}
-                    className="w-full text-xs font-sans gap-2 h-8"
-                  >
-                    {seedRunning ? <><Loader2 className="w-3 h-3 animate-spin" /> Seed en cours…</> : "▶ Lancer le seed"}
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={seedRunning}
+                      onClick={async () => {
+                        setSeedRunning(true);
+                        setSeedLog(["🔍 Test de la clé Gemini en cours…"]);
+                        const { data } = await supabase.functions.invoke("seed-embeddings", { body: { mode: "testGemini" } });
+                        if (data?.success) {
+                          setSeedLog([`✅ Clé OK — modèles : ${(data.availableModels as string[]).join(", ")}`]);
+                        } else {
+                          setSeedLog([`❌ Gemini inaccessible — ${data?.geminiStatus} : ${data?.geminiError}`]);
+                        }
+                        setSeedRunning(false);
+                      }}
+                      className="flex-1 text-xs font-sans gap-1 h-8"
+                    >
+                      {seedRunning ? <Loader2 className="w-3 h-3 animate-spin" /> : "🔍 Tester Gemini"}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={seedRunning}
+                      onClick={runSeed}
+                      className="flex-1 text-xs font-sans gap-2 h-8"
+                    >
+                      {seedRunning ? <><Loader2 className="w-3 h-3 animate-spin" /> En cours…</> : "▶ Seed"}
+                    </Button>
+                  </div>
                   {seedLog.length > 0 && (
                     <div className="mt-1 max-h-40 overflow-y-auto flex flex-col gap-0.5">
                       {seedLog.map((line, i) => (

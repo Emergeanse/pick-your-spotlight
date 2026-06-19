@@ -216,6 +216,26 @@ serve(async (req: Request) => {
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
     // ── Mode refresh-platforms : mettre à jour platform_ids des films stales ──
+    // ── Mode testGemini : vérifie la clé et liste les modèles disponibles ──
+    if (mode === "testGemini") {
+      const testRes = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models?key=${GOOGLE_AI_KEY}&pageSize=20`,
+      );
+      const testBody = await testRes.text();
+      if (!testRes.ok) {
+        return new Response(
+          JSON.stringify({ success: false, geminiStatus: `HTTP ${testRes.status}`, geminiError: testBody.slice(0, 300) }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+      const testData = JSON.parse(testBody);
+      const models = (testData.models || []).map((m: any) => m.name);
+      return new Response(
+        JSON.stringify({ success: true, geminiStatus: "OK", availableModels: models }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
     if (mode === "refresh-platforms") {
       // Films les plus populaires dont platform_ids_updated_at est NULL ou > 30 jours
       const cutoff = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
