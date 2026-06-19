@@ -92,47 +92,30 @@ ${detail.runtime ? `Durée : ${detail.runtime} min` : ""}
 Réponds UNIQUEMENT avec ce JSON valide, sans backticks :
 {"vector":[32 floats 0.0-1.0],"tags":["tag1","tag2","tag3"],"semantic_axes":{"emotional_depth":0.0,"pacing":0.0,"darkness":0.0,"humor":0.0,"complexity":0.0,"romance":0.0,"suspense":0.0,"action_intensity":0.0,"visual_richness":0.0,"philosophical_depth":0.0,"realism":0.0,"weirdness":0.0,"comfort_level":0.0,"prestige_level":0.0,"mainstreamness":0.0,"twist_factor":0.0,"rewatchability":0.0,"intimacy":0.0,"epic_scale":0.0,"low_cognitive_load":0.0,"surprise_tolerance":0.0},"safety_tags":[],"suitability_tags":["solo","couple"],"cluster_labels":["label1","label2"]}`;
 
-  // Essaie plusieurs noms de modèles dans l'ordre (certains peuvent être dépréciés)
-  const MODELS_TO_TRY = [
-    "gemini-2.5-flash",
-    "gemini-2.5-flash-preview-05-20",
-    "gemini-1.5-flash",
-    "gemini-1.5-flash-latest",
-  ];
+  const res = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${googleApiKey}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: { temperature: 0.3, maxOutputTokens: 1024 },
+        thinkingConfig: { thinkingBudget: 0 },
+      }),
+    },
+  );
 
-  let content = "";
-  let lastError = "";
-
-  for (const modelName of MODELS_TO_TRY) {
-    const r = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${googleApiKey}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: { temperature: 0.3, maxOutputTokens: 1024 },
-          ...(modelName.includes("2.5") ? { thinkingConfig: { thinkingBudget: 0 } } : {}),
-        }),
-      },
-    );
-
-    if (!r.ok) {
-      const body = await r.text().catch(() => "");
-      lastError = `${modelName}: HTTP ${r.status}: ${body.slice(0, 80)}`;
-      console.warn(`[Gemini] ${lastError}`);
-      continue;
-    }
-
-    const aiData = await r.json();
-    const parts: any[] = aiData.candidates?.[0]?.content?.parts ?? [];
-    const text = parts.find((p: any) => p.text && !p.thought)?.text ?? parts[0]?.text ?? "";
-    if (text) { content = text; console.log(`[Gemini] OK avec ${modelName}`); break; }
-    lastError = `${modelName}: réponse vide`;
+  if (!res.ok) {
+    const body = await res.text().catch(() => "");
+    return { ok: false, step: "gemini_api", detail: `HTTP ${res.status}: ${body.slice(0, 120)}` };
   }
 
+  const aiData = await res.json();
+  const parts: any[] = aiData.candidates?.[0]?.content?.parts ?? [];
+  const content = parts.find((p: any) => p.text && !p.thought)?.text ?? parts[0]?.text ?? "";
+
   if (!content) {
-    return { ok: false, step: "gemini_api", detail: lastError };
+    return { ok: false, step: "gemini_empty", detail: JSON.stringify(aiData).slice(0, 120) };
   }
 
   let parsed: any;
