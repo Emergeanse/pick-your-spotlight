@@ -310,28 +310,24 @@ const EventDetailPage = () => {
 
   const revealFilm = () => {
     if (!event) return;
-    // Les user_id réels des participants enregistrés (exclut les invités sans compte)
     const participantIds = participants
       .filter(p => p.user_id)
       .map(p => p.user_id as string);
 
-    setRevealEvent({
-      eventId: event.id,
-      eventTitle: event.title,
-      context: event.context ?? undefined,
-      genres: event.genre_tags ?? [],
-      mood: event.mood ?? "",
+    // sessionStorage : mécanisme le plus fiable (synchrone, persiste entre navigations SPA)
+    sessionStorage.setItem("pick-reveal-intent", JSON.stringify({
+      eventId:        event.id,
+      eventTitle:     event.title,
+      context:        event.context ?? "solo",
+      genres:         event.genre_tags ?? [],
+      mood:           event.mood ?? "",
       participantIds,
-    });
-    navigate("/app", {
-      state: {
-        revealEventId: event.id,
-        revealContext: event.context,
-        revealGenres: event.genre_tags ?? [],
-        revealMood: event.mood ?? "",
-        revealParticipantIds: participantIds,
-      },
-    });
+    }));
+
+    // Singleton event-reveal : nécessaire pour sauvegarder le film choisi
+    setRevealEvent({ eventId: event.id, eventTitle: event.title });
+
+    navigate("/app");
   };
 
 
