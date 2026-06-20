@@ -105,6 +105,13 @@ const TAB_CONFIG: Record<ActiveTab, { label: string; icon: React.ReactNode; colo
   disliked: { label: "Écartés", icon: <ThumbsDown className="w-3.5 h-3.5" />, color: "text-foreground/45" },
 };
 
+const CARD_COLORS = [
+  { bg: "bg-violet-500/10 border-violet-500/20",  hover: "hover:bg-violet-500/15" },
+  { bg: "bg-blue-500/10 border-blue-500/20",       hover: "hover:bg-blue-500/15" },
+  { bg: "bg-rose-500/10 border-rose-500/20",       hover: "hover:bg-rose-500/15" },
+  { bg: "bg-amber-500/10 border-amber-500/20",     hover: "hover:bg-amber-500/15" },
+];
+
 const SwipeableCard = ({
   item,
   index,
@@ -128,17 +135,18 @@ const SwipeableCard = ({
   const comment = COMMENTS[tab][index % COMMENTS[tab].length];
   const mediaType = item.media_type || (item.first_air_date ? "tv" : "movie");
   const isDisliked = tab === "disliked";
+  const colorScheme = CARD_COLORS[index % CARD_COLORS.length];
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.03 }}
-      className="relative overflow-hidden rounded-xl"
+      className="relative overflow-hidden rounded-2xl"
     >
       <motion.div
         style={{ opacity: removeBgOpacity }}
-        className="absolute inset-0 bg-destructive/20 flex items-center justify-end pr-5 rounded-xl"
+        className="absolute inset-0 bg-destructive/20 flex items-center justify-end pr-5 rounded-2xl"
       >
         <span className="text-destructive text-xs font-sans font-medium">Retirer</span>
       </motion.div>
@@ -152,7 +160,7 @@ const SwipeableCard = ({
         className={`relative flex items-start gap-3.5 p-3.5 rounded-2xl border backdrop-blur-sm transition-colors ${
           isDisliked
             ? "bg-card/15 border-border/10 hover:bg-card/25"
-            : "bg-card/25 border-border/15 hover:bg-card/40"
+            : `${colorScheme.bg} ${colorScheme.hover}`
         }`}
       >
         <button onClick={onSelect} className="flex items-start gap-3.5 flex-1 min-w-0 text-left">
