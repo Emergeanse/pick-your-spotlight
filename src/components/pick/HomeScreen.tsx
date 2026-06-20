@@ -412,16 +412,35 @@ const HomeScreen = ({
     }
   }, [location.state]);
 
-  // Bridge soirée — basé sur sessionStorage (synchrone, pas de race condition)
+  // Bridge soirée — sessionStorage (primaire) + location.state (fallback)
   useEffect(() => {
     if (!user || revealTriggeredRef.current) return;
 
+    // Source 1 : sessionStorage (synchrone, fiable)
     const raw = sessionStorage.getItem("pick-reveal-intent");
-    if (!raw) return;
 
-    let intent: { eventId?: string; context?: string; genres?: string[]; mood?: string; participantIds?: string[] };
-    try { intent = JSON.parse(raw); } catch { sessionStorage.removeItem("pick-reveal-intent"); return; }
-    if (!intent.eventId) { sessionStorage.removeItem("pick-reveal-intent"); return; }
+    // Source 2 : location.state (fallback React Router)
+    const lsState = location.state as {
+      revealEventId?: string; revealContext?: string;
+      revealGenres?: string[]; revealMood?: string;
+      revealParticipantIds?: string[];
+    } | null;
+
+    let intent: { eventId?: string; context?: string; genres?: string[]; mood?: string; participantIds?: string[] } | null = null;
+    if (raw) {
+      try { intent = JSON.parse(raw); } catch { /* ignore */ }
+      sessionStorage.removeItem("pick-reveal-intent");
+    }
+    if (!intent?.eventId && lsState?.revealEventId) {
+      intent = {
+        eventId:        lsState.revealEventId,
+        context:        lsState.revealContext ?? "solo",
+        genres:         lsState.revealGenres ?? [],
+        mood:           lsState.revealMood ?? "",
+        participantIds: lsState.revealParticipantIds ?? [],
+      };
+    }
+    if (!intent?.eventId) return;
 
     sessionStorage.removeItem("pick-reveal-intent");
     revealTriggeredRef.current = true;
@@ -465,7 +484,8 @@ const HomeScreen = ({
     };
 
     void run();
-  }, [user]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, location.state]);
 
   // Écoute le custom event émis par handleVoiceSearchIntent
   // pour router la recherche vocale dans le même pipeline que la recherche standard

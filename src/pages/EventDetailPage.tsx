@@ -327,7 +327,16 @@ const EventDetailPage = () => {
     // Singleton event-reveal : nécessaire pour sauvegarder le film choisi
     setRevealEvent({ eventId: event.id, eventTitle: event.title });
 
-    navigate("/app");
+    // Passe aussi via location.state (compatibilité si sessionStorage non lu)
+    navigate("/app", {
+      state: {
+        revealEventId: event.id,
+        revealContext: event.context,
+        revealGenres: event.genre_tags ?? [],
+        revealMood: event.mood ?? "",
+        revealParticipantIds: participantIds,
+      },
+    });
   };
 
 
