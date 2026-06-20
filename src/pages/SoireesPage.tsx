@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { CalendarDays, Heart, Home, Users, UsersRound, Plus, Loader2, ChevronRight, Check, Clock, Eye, Timer } from "lucide-react";
+import { CalendarDays, Heart, Home, Users, User, Plus, Loader2, ChevronRight, Check, Clock, Eye, Timer } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -29,14 +29,14 @@ const CONTEXT_ICON: Record<string, React.ComponentType<any>> = {
   duo:     Heart,
   famille: Home,
   amis:    Users,
-  solo:    UsersRound,
+  solo:    User,
 };
 
-const CONTEXT_COLOR: Record<string, { bg: string; border: string; icon: string; iconBg: string }> = {
-  duo:     { bg: "rgba(236,72,153,0.10)",  border: "rgba(236,72,153,0.22)",  icon: "#ec4899", iconBg: "rgba(236,72,153,0.15)" },
-  famille: { bg: "rgba(99,102,241,0.10)",  border: "rgba(99,102,241,0.22)",  icon: "#818cf8", iconBg: "rgba(99,102,241,0.15)" },
-  amis:    { bg: "rgba(16,185,129,0.10)",  border: "rgba(16,185,129,0.22)",  icon: "#34d399", iconBg: "rgba(16,185,129,0.15)" },
-  solo:    { bg: "rgba(251,146,60,0.10)",  border: "rgba(251,146,60,0.22)",  icon: "#fb923c", iconBg: "rgba(251,146,60,0.15)" },
+const CONTEXT_COLOR: Record<string, { card: string; iconBg: string; iconText: string }> = {
+  duo:     { card: "bg-pink-500/10 border-pink-500/20",     iconBg: "bg-pink-500/15",    iconText: "text-pink-400" },
+  famille: { card: "bg-indigo-500/10 border-indigo-500/20", iconBg: "bg-indigo-500/15",  iconText: "text-indigo-400" },
+  amis:    { card: "bg-emerald-500/10 border-emerald-500/20", iconBg: "bg-emerald-500/15", iconText: "text-emerald-400" },
+  solo:    { card: "bg-orange-400/10 border-orange-400/20", iconBg: "bg-orange-400/15",  iconText: "text-orange-400" },
 };
 
 const isUpcoming = (dateStr: string) =>
@@ -149,12 +149,11 @@ const SoireesPage = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: i * 0.06, duration: 0.35 }}
         onClick={() => navigate(`/app/soirees/${evt.id}`)}
-        className="w-full flex items-center gap-3.5 p-4 rounded-2xl border text-left transition-colors backdrop-blur-sm"
-        style={{ background: colors.bg, borderColor: colors.border }}
+        className={`w-full flex items-center gap-3.5 p-4 rounded-2xl border text-left transition-colors backdrop-blur-sm ${colors.card}`}
       >
         {/* Icône */}
-        <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: colors.iconBg }}>
-          <Icon className="w-5 h-5" style={{ color: colors.icon }} strokeWidth={1.7} />
+        <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${colors.iconBg}`}>
+          <Icon className={`w-5 h-5 ${colors.iconText}`} strokeWidth={1.7} />
         </div>
 
         {/* Infos */}
@@ -235,7 +234,7 @@ const SoireesPage = () => {
       <div className="relative flex-1 overflow-y-auto px-5 pb-[calc(5rem+env(safe-area-inset-bottom))] space-y-5">
         {loading ? (
           <div className="flex justify-center pt-12">
-            <Loader2 className="w-5 h-5 animate-spin text-primary/50" />
+            <Loader2 className="w-5 h-5 animate-spin text-primary" />
           </div>
         ) : events.length === 0 ? (
           <div className="flex flex-col items-center gap-3 pt-16 text-center px-4">

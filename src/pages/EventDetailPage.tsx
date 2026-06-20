@@ -364,7 +364,7 @@ const EventDetailPage = () => {
       {/* Header */}
       <div className="pt-[calc(3rem+env(safe-area-inset-top))] px-5 pb-4 shrink-0">
         <div className="flex items-center justify-between mb-3">
-          <button onClick={() => navigate("/app/soirees")} className="p-2 -ml-2 rounded-full hover:bg-white/5 transition-colors">
+          <button aria-label="Retour aux soirées" onClick={() => navigate("/app/soirees")} className="w-11 h-11 -ml-2 flex items-center justify-center rounded-full hover:bg-white/5 transition-colors">
             <ArrowLeft className="w-5 h-5 text-foreground/60" />
           </button>
           {isOrganizer ? (
@@ -416,8 +416,7 @@ const EventDetailPage = () => {
                 {event.genre_tags && event.genre_tags.length > 0 && (
                   <div className="flex flex-wrap gap-1.5">
                     {event.genre_tags.map(tag => (
-                      <span key={tag} className="px-2.5 py-0.5 rounded-full text-[11px] font-sans font-semibold"
-                        style={{ background: "hsl(var(--primary) / 0.20)", border: "1px solid hsl(var(--primary) / 0.35)", color: "hsl(var(--primary))" }}>
+                      <span key={tag} className="px-2.5 py-0.5 rounded-full text-[11px] font-sans font-semibold bg-primary/20 border border-primary/35 text-primary">
                         {tag}
                       </span>
                     ))}
@@ -541,10 +540,10 @@ const EventDetailPage = () => {
                     transition={{ delay: i * 0.05 }}
                     className={`flex items-center gap-3.5 px-4 py-3.5 rounded-2xl border transition-colors ${
                       p.status === "confirmed"
-                        ? "bg-emerald-500/[0.05] border-emerald-500/15"
+                        ? "bg-emerald-500/5 border-emerald-500/15"
                         : p.status === "invited"
-                          ? "bg-amber-500/[0.04] border-amber-500/12"
-                          : "bg-white/[0.02] border-white/[0.05]"
+                          ? "bg-amber-500/5 border-amber-500/15"
+                          : "bg-white/5 border-white/10"
                     }`}
                   >
                     {/* Avatar */}

@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Mic, MicOff, Camera, Search, X, RefreshCw, ChevronLeft, Loader2 } from "lucide-react";
+import { Mic, MicOff, Camera, Search, X, RefreshCw, ArrowLeft, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { getBackdropUrl, getPosterUrl, getDisplayTitle, getWatchProviders } from "@/lib/tmdb";
@@ -193,7 +193,7 @@ export default function MatchPage() {
                 onClick={reset}
                 className="w-10 h-10 rounded-full bg-black/40 backdrop-blur-xl border border-white/10 flex items-center justify-center text-foreground"
               >
-                <ChevronLeft className="w-5 h-5" />
+                <ArrowLeft className="w-5 h-5" />
               </button>
               <HazelnutScore score={adhesionScore} size={56} />
             </div>
@@ -201,7 +201,7 @@ export default function MatchPage() {
             {/* Poster */}
             <div className="relative z-10 flex justify-center mt-4">
               {movie.poster_path && (
-                <button onClick={() => setDetailOpen(true)} className="active:scale-95 transition-transform">
+                <button onClick={() => setDetailOpen(true)} className="active:scale-[0.96] transition-transform">
                   <img
                     src={getPosterUrl(movie.poster_path, "w500") || ""}
                     alt={getDisplayTitle(movie)}

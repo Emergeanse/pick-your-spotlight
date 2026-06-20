@@ -311,11 +311,16 @@ const CreateEventPage = () => {
                       key={key}
                       onClick={() => !cfg.disabled && setContext(key)}
                       disabled={cfg.disabled}
-                      className={`relative flex-1 flex flex-col items-center gap-1.5 py-3 rounded-2xl text-[11.5px] font-sans font-semibold transition-all overflow-hidden border ${cfg.disabled ? "border-white/[0.05] text-foreground/40 opacity-35 cursor-not-allowed" : context === key ? "border-primary/50 text-foreground" : "border-white/[0.08] text-foreground/50"}`}
+                      className={`relative flex-1 flex flex-col items-center gap-1.5 py-3 rounded-2xl text-[11.5px] font-sans font-semibold transition-all overflow-hidden border ${cfg.disabled ? "border-white/[0.05] text-foreground/40 opacity-50 cursor-not-allowed" : context === key ? "border-primary/50 text-foreground" : "border-white/[0.08] text-foreground/50"}`}
                     >
                       {context === key && !cfg.disabled && <div className="absolute inset-0 rounded-2xl" style={{ background: TAB_ACTIVE }} />}
                       <span className="relative text-lg">{cfg.emoji}</span>
                       <span className="relative">{cfg.label}</span>
+                      {cfg.disabled && (
+                        <span className="absolute top-1.5 right-1.5 text-[8px] font-sans font-bold tracking-wide uppercase px-1.5 py-0.5 rounded-full bg-foreground/10 text-foreground/50 leading-none">
+                          Bientôt
+                        </span>
+                      )}
                     </button>
                   ))}
                 </div>
@@ -552,7 +557,7 @@ const CreateEventPage = () => {
 
               {creating ? (
                 <div className="flex flex-col items-center gap-4 py-12">
-                  <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                  <Loader2 className="w-6 h-6 animate-spin text-primary" />
                   <p className="font-serif text-lg text-foreground">Pick prépare ta soirée…</p>
                   <p className="text-foreground/40 text-sm font-sans text-center">Je génère les meilleures suggestions pour le groupe.</p>
                 </div>
