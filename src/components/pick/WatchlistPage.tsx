@@ -151,8 +151,8 @@ const SwipeableCard = ({
         style={{ x }}
         className={`relative flex items-start gap-3.5 p-3.5 rounded-2xl border backdrop-blur-sm transition-colors ${
           isDisliked
-            ? "bg-card/30 border-border/10 hover:bg-card/40"
-            : "bg-card/50 border-border/20 hover:bg-card/70"
+            ? "bg-card/15 border-border/10 hover:bg-card/25"
+            : "bg-card/25 border-border/15 hover:bg-card/40"
         }`}
       >
         <button onClick={onSelect} className="flex items-start gap-3.5 flex-1 min-w-0 text-left">
@@ -212,7 +212,7 @@ const SwipeableCard = ({
               </div>
             )}
 
-            <p className={`text-[10.5px] font-sans italic line-clamp-1 ${isDisliked ? "text-foreground/35" : "text-foreground/45"}`}>
+            <p className={`text-[10.5px] font-sans italic line-clamp-1 ${isDisliked ? "text-foreground/35" : "text-primary/55"}`}>
               {comment}
             </p>
           </div>
