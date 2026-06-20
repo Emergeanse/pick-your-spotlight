@@ -106,7 +106,8 @@ Réponds UNIQUEMENT avec ce JSON valide, sans backticks :
 
   if (!res.ok) {
     const body = await res.text().catch(() => "");
-    return { ok: false, step: "gemini_api", detail: `HTTP ${res.status}: ${body.slice(0, 120)}` };
+    console.error("Gemini API error:", res.status, body);
+    return { ok: false, step: "gemini_api", detail: `HTTP ${res.status}: ${body.slice(0, 600)}` };
   }
 
   const aiData = await res.json();
