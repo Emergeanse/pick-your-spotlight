@@ -412,58 +412,27 @@ const HomeScreen = ({
     }
   }, [location.state]);
 
-  // Bridge soirée — sessionStorage (primaire) + location.state (fallback)
+  // Bridge soirée — écoute l'événement "pick-reveal-event" émis par EventDetailPage
+  // Utilise un CustomEvent car le concurrent rendering (v7_startTransition) fait monter
+  // HomeScreen AVANT que sessionStorage/location.state soient disponibles.
   useEffect(() => {
-    if (!user || revealTriggeredRef.current) return;
+    const handler = async (e: Event) => {
+      if (revealTriggeredRef.current) return;
+      revealTriggeredRef.current = true;
 
-    // Source 1 : sessionStorage (synchrone, fiable)
-    const raw = sessionStorage.getItem("pick-reveal-intent");
+      const { context, genres, mood, participantIds } =
+        (e as CustomEvent<{ context: string; genres: string[]; mood: string; participantIds: string[] }>).detail;
 
-    // Source 2 : location.state (fallback React Router)
-    const lsState = location.state as {
-      revealEventId?: string; revealContext?: string;
-      revealGenres?: string[]; revealMood?: string;
-      revealParticipantIds?: string[];
-    } | null;
+      const genreFilter: VoiceSearchFilters | null = genres?.length
+        ? { genres, originalLanguage: null, mediaType: null, maxDuration: null, decade: null }
+        : null;
 
-    let intent: { eventId?: string; context?: string; genres?: string[]; mood?: string; participantIds?: string[] } | null = null;
-    if (raw) {
-      try { intent = JSON.parse(raw); } catch { /* ignore */ }
-      sessionStorage.removeItem("pick-reveal-intent");
-    }
-    if (!intent?.eventId && lsState?.revealEventId) {
-      intent = {
-        eventId:        lsState.revealEventId,
-        context:        lsState.revealContext ?? "solo",
-        genres:         lsState.revealGenres ?? [],
-        mood:           lsState.revealMood ?? "",
-        participantIds: lsState.revealParticipantIds ?? [],
-      };
-    }
-    if (!intent?.eventId) {
-      toast.info(`[DBG2] Bridge HomeScreen — AUCUN intent (ss=${!!raw} ls=${!!lsState?.revealEventId} user=${!!user})`, { duration: 6000 });
-      return;
-    }
-
-    toast.info(`[DBG3] Bridge HomeScreen — intent OK eventId=${intent.eventId} context=${intent.context}`, { duration: 6000 });
-
-    sessionStorage.removeItem("pick-reveal-intent");
-    revealTriggeredRef.current = true;
-
-    const { context, genres, mood, participantIds } = intent;
-    const genreFilter: VoiceSearchFilters | null = genres?.length
-      ? { genres, originalLanguage: null, mediaType: null, maxDuration: null, decade: null }
-      : null;
-
-    const run = async () => {
-      // Solo : pipeline direct
       if (!context || context === "solo") {
-        toast.info(`[DBG4-SOLO] generateTonightPick appelé — genreFilter=${!!genreFilter}`, { duration: 6000 });
         generateTonightPickRef.current?.([], undefined, genreFilter, undefined, mood || undefined);
         return;
       }
 
-      // Duo / famille / amis : trouve le duo_taste_profiles des vrais participants
+      // Duo / famille / amis : cherche le profil duo des participants réels
       let duoId: string | undefined;
       const ids = (participantIds ?? []).filter(Boolean);
       try {
@@ -475,24 +444,26 @@ const HomeScreen = ({
             .eq("status", "active").maybeSingle();
           duoId = (data as any)?.id ?? undefined;
         }
-        if (!duoId) {
+        if (!duoId && user) {
           const { data } = await (supabase as any)
             .from("duo_taste_profiles").select("id")
             .or(`user1_id.eq.${user.id},user2_id.eq.${user.id}`)
             .eq("status", "active").maybeSingle();
           duoId = (data as any)?.id ?? undefined;
         }
-      } catch (e) { console.error("[Reveal] duo fetch:", e); }
+      } catch (err) { console.error("[Reveal] duo fetch:", err); }
 
-      toast.info(`[DBG4-DUO] handleAutoPick appelé — duoId=${duoId ?? "AUCUN"} handleRef=${!!handleAutoPickRef.current}`, { duration: 6000 });
-      handleAutoPickRef.current?.(duoId, Object.keys({ ...(genres?.length && { genres }), ...(mood && { moodContext: mood }) }).length
-        ? { ...(genres?.length && { genres }), ...(mood && { moodContext: mood }) }
-        : undefined);
+      handleAutoPickRef.current?.(duoId,
+        genres?.length || mood
+          ? { ...(genres?.length && { genres }), ...(mood && { moodContext: mood }) }
+          : undefined
+      );
     };
 
-    void run();
+    window.addEventListener("pick-reveal-event", handler);
+    return () => window.removeEventListener("pick-reveal-event", handler);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, location.state]);
+  }, [user]);
 
   // Écoute le custom event émis par handleVoiceSearchIntent
   // pour router la recherche vocale dans le même pipeline que la recherche standard

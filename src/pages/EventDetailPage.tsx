@@ -314,31 +314,22 @@ const EventDetailPage = () => {
       .filter(p => p.user_id)
       .map(p => p.user_id as string);
 
-    toast.info(`[DBG1] Révéler cliqué — context=${event.context ?? "solo"} participants=${participantIds.length}`, { duration: 6000 });
-
-    // sessionStorage : mécanisme le plus fiable (synchrone, persiste entre navigations SPA)
-    sessionStorage.setItem("pick-reveal-intent", JSON.stringify({
-      eventId:        event.id,
-      eventTitle:     event.title,
+    const detail = {
       context:        event.context ?? "solo",
       genres:         event.genre_tags ?? [],
       mood:           event.mood ?? "",
       participantIds,
-    }));
+    };
 
     // Singleton event-reveal : nécessaire pour sauvegarder le film choisi
     setRevealEvent({ eventId: event.id, eventTitle: event.title });
 
-    // Passe aussi via location.state (compatibilité si sessionStorage non lu)
-    navigate("/app", {
-      state: {
-        revealEventId: event.id,
-        revealContext: event.context,
-        revealGenres: event.genre_tags ?? [],
-        revealMood: event.mood ?? "",
-        revealParticipantIds: participantIds,
-      },
-    });
+    // Navigate d'abord, puis émet le CustomEvent après un tick
+    // pour que HomeScreen soit déjà monté et son listener actif
+    navigate("/app");
+    setTimeout(() => {
+      window.dispatchEvent(new CustomEvent("pick-reveal-event", { detail }));
+    }, 50);
   };
 
 
