@@ -149,13 +149,13 @@ const SwipeableCard = ({
         dragElastic={0.3}
         onDragEnd={handleDragEnd}
         style={{ x }}
-        className={`relative flex items-start gap-3 p-3 rounded-xl border backdrop-blur-sm transition-colors ${
+        className={`relative flex items-start gap-3.5 p-3.5 rounded-2xl border backdrop-blur-sm transition-colors ${
           isDisliked
-            ? "bg-white/[0.02] border-white/[0.05] hover:bg-white/[0.05]"
-            : "bg-white/[0.04] border-white/[0.07] hover:bg-white/[0.07]"
+            ? "bg-card/30 border-border/10 hover:bg-card/40"
+            : "bg-card/50 border-border/20 hover:bg-card/70"
         }`}
       >
-        <button onClick={onSelect} className="flex items-start gap-3 flex-1 min-w-0 text-left">
+        <button onClick={onSelect} className="flex items-start gap-3.5 flex-1 min-w-0 text-left">
           <div className="relative shrink-0">
             {item.poster_path ? (
               <img
@@ -182,7 +182,7 @@ const SwipeableCard = ({
           </div>
 
           <div className="flex-1 min-w-0 py-0.5">
-            <p className={`text-sm font-sans font-medium line-clamp-1 mb-0.5 ${isDisliked ? "text-foreground/40" : "text-foreground"}`}>
+            <p className={`text-[13.5px] font-sans font-semibold line-clamp-1 mb-1 ${isDisliked ? "text-foreground/40" : "text-foreground"}`}>
               {item.title}
             </p>
             <div className="flex items-center gap-2 mb-1.5">
@@ -190,30 +190,30 @@ const SwipeableCard = ({
                 {mediaType === "tv" ? "Série" : "Film"}
               </p>
               {item.runtime && (
-                <span className="text-[10px] text-foreground/45 font-sans flex items-center gap-0.5">
+                <span className="text-[11px] text-foreground/45 font-sans flex items-center gap-0.5">
                   <Clock className="w-2.5 h-2.5" />
                   {item.runtime} min
                 </span>
               )}
               {item.vote_average > 0 && (
-                <span className="text-[10px] text-foreground/45 font-sans">
+                <span className="text-[11px] text-foreground/45 font-sans">
                   ★ {item.vote_average.toFixed(1)}
                 </span>
               )}
             </div>
 
             {item.genres && item.genres.length > 0 && (
-              <div className="flex gap-1 flex-wrap mb-1">
+              <div className="flex gap-1 flex-wrap mb-1.5">
                 {item.genres.slice(0, 2).map((g: string) => (
-                  <span key={g} className="text-[9px] px-1.5 py-0.5 rounded-full bg-primary/8 text-primary/50 font-sans">
+                  <span key={g} className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary/10 text-primary/60 font-sans font-medium">
                     {g}
                   </span>
                 ))}
               </div>
             )}
 
-            <p className={`text-[10px] font-sans italic line-clamp-1 ${isDisliked ? "text-foreground/40" : "text-primary/50"}`}>
-              💬 {comment}
+            <p className={`text-[10.5px] font-sans italic line-clamp-1 ${isDisliked ? "text-foreground/35" : "text-foreground/45"}`}>
+              {comment}
             </p>
           </div>
         </button>
@@ -330,9 +330,20 @@ const WatchlistPage = ({ tabs: allowedTabs, title, defaultTab }: WatchlistPagePr
   const [detailLoading, setDetailLoading] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [resetting, setResetting] = useState(false);
+  const [showSwipeHint, setShowSwipeHint] = useState(false);
 
   useEffect(() => {
     loadData();
+    if (!localStorage.getItem("pick_swipe_hint_seen")) {
+      const t = setTimeout(() => {
+        setShowSwipeHint(true);
+        setTimeout(() => {
+          setShowSwipeHint(false);
+          localStorage.setItem("pick_swipe_hint_seen", "1");
+        }, 2800);
+      }, 900);
+      return () => clearTimeout(t);
+    }
   }, []);
 
   const loadData = async () => {
@@ -791,6 +802,21 @@ const WatchlistPage = ({ tabs: allowedTabs, title, defaultTab }: WatchlistPagePr
           </AnimatePresence>
         </motion.div>
       )}
+
+      {/* Swipe hint — once only */}
+      <AnimatePresence>
+        {showSwipeHint && filteredItems.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: -6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            transition={{ duration: 0.3 }}
+            className="flex items-center justify-center gap-1.5 mb-3 px-3 py-1.5 rounded-full bg-destructive/10 border border-destructive/20 mx-auto w-fit"
+          >
+            <span className="text-[11px] font-sans text-destructive/70">← Glisser vers la gauche pour retirer</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Item list */}
       {currentItems.length === 0 ? (
