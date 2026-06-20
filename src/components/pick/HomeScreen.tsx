@@ -311,6 +311,7 @@ const HomeScreen = ({
   const currentDuoOverridesRef = useRef<DuoOverrides | null>(null);
   const handleAutoPickRef = useRef<((duoId?: string, opts?: { genres?: string[]; moodContext?: string }) => Promise<void>) | undefined>(undefined);
   const revealTriggeredRef = useRef(false);
+  const pendingRevealRef = useRef<{ context?: string; genres?: string[]; mood?: string } | null>(null);
   const [currentBgIndex, setCurrentBgIndex] = useState(0);
 
   const [tonightPick, setTonightPick] = useState<MovieDetail | null>(null);
@@ -413,35 +414,36 @@ const HomeScreen = ({
     }
   }, [location.state]);
 
-  // Bridge soirée : lance le pipeline depuis EventDetailPage
-  // Source primaire : singleton event-reveal (plus fiable que location.state)
-  // Source secondaire : location.state (backup React Router)
+  // Étape 1 — détecte le reveal au montage (indépendant du user)
+  // Lit le singleton event-reveal en priorité, location.state en fallback
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
-    if (!user || revealTriggeredRef.current) return;
-
-    // Priorité au singleton (stocké juste avant la navigation dans revealFilm())
+    if (revealTriggeredRef.current) return;
     const singleton = getRevealEvent();
     const lsState = location.state as {
-      revealEventId?: string;
-      revealContext?: string;
-      revealGenres?: string[];
-      revealMood?: string;
+      revealEventId?: string; revealContext?: string;
+      revealGenres?: string[]; revealMood?: string;
     } | null;
-
     const revealId = singleton?.eventId || lsState?.revealEventId;
     if (!revealId) return;
-
-    revealTriggeredRef.current = true;
-    const revealContext = singleton?.context ?? lsState?.revealContext;
-    const revealGenres = singleton?.genres ?? lsState?.revealGenres ?? [];
-    const revealMood = singleton?.mood ?? lsState?.revealMood ?? "";
-
-    // Ne pas clearRevealEvent ici — Index.tsx en a besoin quand step passe à "result"
+    pendingRevealRef.current = {
+      context: singleton?.context ?? lsState?.revealContext,
+      genres:  singleton?.genres  ?? lsState?.revealGenres ?? [],
+      mood:    singleton?.mood    ?? lsState?.revealMood   ?? "",
+    };
     window.history.replaceState({}, "", "/app");
+  }, []); // une seule fois au montage
 
-    const triggerReveal = async () => {
+  // Étape 2 — exécute dès que user est disponible (résout la race condition auth)
+  useEffect(() => {
+    if (!user || !pendingRevealRef.current || revealTriggeredRef.current) return;
+    revealTriggeredRef.current = true;
+    const { context, genres, mood } = pendingRevealRef.current;
+    pendingRevealRef.current = null;
+
+    const run = async () => {
       let duoId: string | undefined;
-      if (revealContext === "duo") {
+      if (context === "duo") {
         try {
           const { data: duo } = await (supabase as any)
             .from("duo_taste_profiles")
@@ -455,13 +457,13 @@ const HomeScreen = ({
         }
       }
       const opts: { genres?: string[]; moodContext?: string } = {};
-      if (revealGenres?.length) opts.genres = revealGenres;
-      if (revealMood) opts.moodContext = revealMood;
+      if (genres?.length) opts.genres = genres;
+      if (mood) opts.moodContext = mood;
       handleAutoPickRef.current?.(duoId, Object.keys(opts).length ? opts : undefined);
     };
 
-    setTimeout(() => { void triggerReveal(); }, 200);
-  }, [location.state, user]);
+    void run();
+  }, [user]);
 
   // Écoute le custom event émis par handleVoiceSearchIntent
   // pour router la recherche vocale dans le même pipeline que la recherche standard
