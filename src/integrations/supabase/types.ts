@@ -711,6 +711,7 @@ export type Database = {
           media_type: string
           original_language: string | null
           platform_ids: number[]
+          platform_ids_updated_at: string | null
           popularity: number | null
           runtime: number | null
           safety_tags: string[]
@@ -732,6 +733,7 @@ export type Database = {
           media_type?: string
           original_language?: string | null
           platform_ids?: number[]
+          platform_ids_updated_at?: string | null
           popularity?: number | null
           runtime?: number | null
           safety_tags?: string[]
@@ -753,6 +755,7 @@ export type Database = {
           media_type?: string
           original_language?: string | null
           platform_ids?: number[]
+          platform_ids_updated_at?: string | null
           popularity?: number | null
           runtime?: number | null
           safety_tags?: string[]
