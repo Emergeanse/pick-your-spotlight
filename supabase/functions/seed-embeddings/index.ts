@@ -160,7 +160,6 @@ Réponds UNIQUEMENT avec ce JSON valide, sans backticks :
       vote_average: detail.vote_average || 0,
       media_type: mediaType,
       platform_ids: platformIds,
-      platform_ids_updated_at: new Date().toISOString(),
     } as any,
     { onConflict: "tmdb_id" },
   );
