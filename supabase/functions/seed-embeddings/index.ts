@@ -112,7 +112,7 @@ Réponds UNIQUEMENT avec ce JSON valide, sans backticks :
 
   const aiData = await res.json();
   const parts: any[] = aiData.candidates?.[0]?.content?.parts ?? [];
-  const content = parts.find((p: any) => p.text)?.text ?? parts[0]?.text ?? "";
+  const content = parts.find((p: any) => p.text && !p.thought)?.text ?? parts[0]?.text ?? "";
 
   if (!content) {
     return { ok: false, step: "gemini_empty", detail: JSON.stringify(aiData).slice(0, 120) };
