@@ -383,6 +383,7 @@ const HomeScreen = ({
   const msgIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const historyExcludeIdsRef = useRef<number[]>([]);
   const generateTonightPickRef = useRef<typeof generateTonightPick | null>(null);
+  const activeVoiceFiltersRef = useRef<VoiceSearchFilters | null>(null);
 
   useEffect(() => {
     isMountedRef.current = true;
@@ -973,6 +974,7 @@ const HomeScreen = ({
   type DuoOverrides = { topGenres: string[]; excludedGenres: string[]; tasteVector: number[] | null; avoidanceVector: number[] | null; topClusters: string[]; rejectedClusters: string[]; partnerExcludeIds: number[]; user1Name: string | null; user2Name: string | null; user1Id?: string; user2Id?: string };
   const generateTonightPick = async (excludeList: number[] = rejectedIds, rejectionContext?: RejectionContext, voiceFilters?: VoiceSearchFilters | null, duoOverrides?: DuoOverrides, extraMoodContext?: string) => {
     generateTonightPickRef.current = generateTonightPick;
+    if (voiceFilters !== undefined) activeVoiceFiltersRef.current = voiceFilters;
     const poolIds = (chatMoviesPool || []).map((m) => m.id).filter(Number.isFinite);
     // En mode duo : on n'utilise pas l'historique solo (trop restrictif), juste les interactions des deux users
     const soloHistory = duoOverrides ? [] : historyExcludeIdsRef.current;
@@ -1675,6 +1677,7 @@ const HomeScreen = ({
     setChatMoviesPool(null);
     setTonightPickIndex(0);
     setNoResultsInfo(null);
+    activeVoiceFiltersRef.current = null;
     const genreFilter: import("./VoiceChat").VoiceSearchFilters | null = opts?.genres?.length
       ? { genres: opts.genres, originalLanguage: null, mediaType: null, maxDuration: null, decade: null }
       : null;
@@ -1785,7 +1788,7 @@ const HomeScreen = ({
     setTonightSeenMovieIds(new Set());
     setNoResultsInfo(null);
 
-    await generateTonightPick(nextRejected, rejContext, null, currentDuoOverridesRef.current ?? undefined);
+    await generateTonightPick(nextRejected, rejContext, activeVoiceFiltersRef.current, currentDuoOverridesRef.current ?? undefined);
   };
 
   const handleMovieAction = async (type: "already_seen" | "dislike" | string) => {
@@ -1845,7 +1848,7 @@ const HomeScreen = ({
     setTonightSeenMovieIds(new Set());
     setNoResultsInfo(null);
 
-    await generateTonightPick(nextRejected, rejContext, null, currentDuoOverridesRef.current ?? undefined);
+    await generateTonightPick(nextRejected, rejContext, activeVoiceFiltersRef.current, currentDuoOverridesRef.current ?? undefined);
   };
 
   return (
