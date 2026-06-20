@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate, useLocation } from "react-router-dom";
 import { consumePendingDuoPick } from "@/lib/duo-pending";
+import { getRevealIntent, clearRevealIntent, type RevealIntent } from "@/lib/event-reveal";
 import { toast } from "sonner";
 import { Sparkles, WandSparkles, Clapperboard, ChevronRight, Flame, Eye, Coffee, Heart, Shuffle, Home, Users } from "lucide-react";
 
@@ -412,58 +413,68 @@ const HomeScreen = ({
     }
   }, [location.state]);
 
-  // Bridge soirée — écoute l'événement "pick-reveal-event" émis par EventDetailPage
-  // Utilise un CustomEvent car le concurrent rendering (v7_startTransition) fait monter
-  // HomeScreen AVANT que sessionStorage/location.state soient disponibles.
-  useEffect(() => {
-    const handler = async (e: Event) => {
-      if (revealTriggeredRef.current) return;
-      revealTriggeredRef.current = true;
+  // Bridge soirée — mécanisme dual :
+  // 1) Singleton (lu au montage) : mécanisme principal, résout le problème de timing du concurrent rendering
+  // 2) CustomEvent "pick-reveal-event" : backup si HomeScreen est déjà monté
+  const runRevealPipeline = useRef<((intent: RevealIntent) => Promise<void>) | null>(null);
+  runRevealPipeline.current = async (intent: RevealIntent) => {
+    if (revealTriggeredRef.current) return;
+    revealTriggeredRef.current = true;
+    clearRevealIntent();
 
-      const { context, genres, mood, participantIds } =
-        (e as CustomEvent<{ context: string; genres: string[]; mood: string; participantIds: string[] }>).detail;
+    const { context, genres, mood, participantIds } = intent;
+    const genreFilter: VoiceSearchFilters | null = genres?.length
+      ? { genres, originalLanguage: null, mediaType: null, maxDuration: null, decade: null }
+      : null;
 
-      const genreFilter: VoiceSearchFilters | null = genres?.length
-        ? { genres, originalLanguage: null, mediaType: null, maxDuration: null, decade: null }
-        : null;
+    if (!context || context === "solo") {
+      generateTonightPickRef.current?.([], undefined, genreFilter, undefined, mood || undefined);
+      return;
+    }
 
-      if (!context || context === "solo") {
-        generateTonightPickRef.current?.([], undefined, genreFilter, undefined, mood || undefined);
-        return;
+    let duoId: string | undefined;
+    const ids = (participantIds ?? []).filter(Boolean);
+    try {
+      if (ids.length >= 2) {
+        const [id1, id2] = ids;
+        const { data } = await (supabase as any)
+          .from("duo_taste_profiles").select("id")
+          .or(`and(user1_id.eq.${id1},user2_id.eq.${id2}),and(user1_id.eq.${id2},user2_id.eq.${id1})`)
+          .eq("status", "active").maybeSingle();
+        duoId = (data as any)?.id ?? undefined;
       }
+      if (!duoId && user) {
+        const { data } = await (supabase as any)
+          .from("duo_taste_profiles").select("id")
+          .or(`user1_id.eq.${user.id},user2_id.eq.${user.id}`)
+          .eq("status", "active").maybeSingle();
+        duoId = (data as any)?.id ?? undefined;
+      }
+    } catch (err) { console.error("[Reveal] duo fetch:", err); }
 
-      // Duo / famille / amis : cherche le profil duo des participants réels
-      let duoId: string | undefined;
-      const ids = (participantIds ?? []).filter(Boolean);
-      try {
-        if (ids.length >= 2) {
-          const [id1, id2] = ids;
-          const { data } = await (supabase as any)
-            .from("duo_taste_profiles").select("id")
-            .or(`and(user1_id.eq.${id1},user2_id.eq.${id2}),and(user1_id.eq.${id2},user2_id.eq.${id1})`)
-            .eq("status", "active").maybeSingle();
-          duoId = (data as any)?.id ?? undefined;
-        }
-        if (!duoId && user) {
-          const { data } = await (supabase as any)
-            .from("duo_taste_profiles").select("id")
-            .or(`user1_id.eq.${user.id},user2_id.eq.${user.id}`)
-            .eq("status", "active").maybeSingle();
-          duoId = (data as any)?.id ?? undefined;
-        }
-      } catch (err) { console.error("[Reveal] duo fetch:", err); }
+    handleAutoPickRef.current?.(duoId,
+      genres?.length || mood
+        ? { ...(genres?.length && { genres }), ...(mood && { moodContext: mood }) }
+        : undefined
+    );
+  };
 
-      handleAutoPickRef.current?.(duoId,
-        genres?.length || mood
-          ? { ...(genres?.length && { genres }), ...(mood && { moodContext: mood }) }
-          : undefined
-      );
+  // Mécanisme 1 : vérification du singleton au montage du composant
+  useEffect(() => {
+    const intent = getRevealIntent();
+    if (intent) void runRevealPipeline.current?.(intent);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Mécanisme 2 : CustomEvent (backup si HomeScreen déjà monté au moment du dispatch)
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const intent = (e as CustomEvent<RevealIntent>).detail;
+      if (intent) void runRevealPipeline.current?.(intent);
     };
-
     window.addEventListener("pick-reveal-event", handler);
     return () => window.removeEventListener("pick-reveal-event", handler);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user]);
+  }, []);
 
   // Écoute le custom event émis par handleVoiceSearchIntent
   // pour router la recherche vocale dans le même pipeline que la recherche standard

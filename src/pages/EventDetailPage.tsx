@@ -8,7 +8,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
-import { setRevealEvent } from "@/lib/event-reveal";
+import { setRevealEvent, setRevealIntent } from "@/lib/event-reveal";
 
 // ─────────────────────────────────────────
 // Types
@@ -314,7 +314,7 @@ const EventDetailPage = () => {
       .filter(p => p.user_id)
       .map(p => p.user_id as string);
 
-    const detail = {
+    const intent = {
       context:        event.context ?? "solo",
       genres:         event.genre_tags ?? [],
       mood:           event.mood ?? "",
@@ -324,12 +324,16 @@ const EventDetailPage = () => {
     // Singleton event-reveal : nécessaire pour sauvegarder le film choisi
     setRevealEvent({ eventId: event.id, eventTitle: event.title });
 
-    // Navigate d'abord, puis émet le CustomEvent après un tick
-    // pour que HomeScreen soit déjà monté et son listener actif
+    // Singleton reveal intent : lu par HomeScreen au montage (mécanisme principal)
+    setRevealIntent(intent);
+
     navigate("/app");
+
+    // CustomEvent en backup : utile si HomeScreen est déjà monté
+    // Délai 500ms pour être sûr que HomeScreen a eu le temps de se monter et d'écouter
     setTimeout(() => {
-      window.dispatchEvent(new CustomEvent("pick-reveal-event", { detail }));
-    }, 50);
+      window.dispatchEvent(new CustomEvent("pick-reveal-event", { detail: intent }));
+    }, 500);
   };
 
 
