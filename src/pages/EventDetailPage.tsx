@@ -314,6 +314,8 @@ const EventDetailPage = () => {
       .filter(p => p.user_id)
       .map(p => p.user_id as string);
 
+    toast.info(`[DBG1] Révéler cliqué — context=${event.context ?? "solo"} participants=${participantIds.length}`, { duration: 6000 });
+
     // sessionStorage : mécanisme le plus fiable (synchrone, persiste entre navigations SPA)
     sessionStorage.setItem("pick-reveal-intent", JSON.stringify({
       eventId:        event.id,

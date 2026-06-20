@@ -440,7 +440,12 @@ const HomeScreen = ({
         participantIds: lsState.revealParticipantIds ?? [],
       };
     }
-    if (!intent?.eventId) return;
+    if (!intent?.eventId) {
+      toast.info(`[DBG2] Bridge HomeScreen — AUCUN intent (ss=${!!raw} ls=${!!lsState?.revealEventId} user=${!!user})`, { duration: 6000 });
+      return;
+    }
+
+    toast.info(`[DBG3] Bridge HomeScreen — intent OK eventId=${intent.eventId} context=${intent.context}`, { duration: 6000 });
 
     sessionStorage.removeItem("pick-reveal-intent");
     revealTriggeredRef.current = true;
@@ -453,6 +458,7 @@ const HomeScreen = ({
     const run = async () => {
       // Solo : pipeline direct
       if (!context || context === "solo") {
+        toast.info(`[DBG4-SOLO] generateTonightPick appelé — genreFilter=${!!genreFilter}`, { duration: 6000 });
         generateTonightPickRef.current?.([], undefined, genreFilter, undefined, mood || undefined);
         return;
       }
@@ -478,6 +484,7 @@ const HomeScreen = ({
         }
       } catch (e) { console.error("[Reveal] duo fetch:", e); }
 
+      toast.info(`[DBG4-DUO] handleAutoPick appelé — duoId=${duoId ?? "AUCUN"} handleRef=${!!handleAutoPickRef.current}`, { duration: 6000 });
       handleAutoPickRef.current?.(duoId, Object.keys({ ...(genres?.length && { genres }), ...(mood && { moodContext: mood }) }).length
         ? { ...(genres?.length && { genres }), ...(mood && { moodContext: mood }) }
         : undefined);
