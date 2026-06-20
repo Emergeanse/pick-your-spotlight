@@ -310,9 +310,15 @@ const EventDetailPage = () => {
 
   const revealFilm = () => {
     if (!event) return;
-    // Stocke l'ID de l'événement pour que ResultScreen puisse sauvegarder le choix
-    setRevealEvent({ eventId: event.id, eventTitle: event.title });
-    // Lance le vrai pipeline de recommandation via la page principale
+    // Stocke l'ID + tous les paramètres pipeline dans le singleton (source de vérité primaire)
+    setRevealEvent({
+      eventId: event.id,
+      eventTitle: event.title,
+      context: event.context ?? undefined,
+      genres: event.genre_tags ?? [],
+      mood: event.mood ?? "",
+    });
+    // location.state comme backup secondaire
     navigate("/app", {
       state: {
         revealEventId: event.id,

@@ -4,6 +4,9 @@
 type RevealState = {
   eventId: string;
   eventTitle: string;
+  context?: string;
+  genres?: string[];
+  mood?: string;
 } | null;
 
 let _reveal: RevealState = null;

@@ -25,6 +25,7 @@ import {
 import { getEngagementData, getProgressionMessage, type EngagementData } from "@/lib/engagement";
 import { listFeedbackByType } from "@/lib/feedback";
 import { getMyPreferences } from "@/lib/preferences";
+import { getRevealEvent } from "@/lib/event-reveal";
 
 import BrandHeader from "./BrandHeader";
 import QuickFilters, { type QuickFilterState, type ProfileDefaults } from "./QuickFilters";
@@ -412,17 +413,30 @@ const HomeScreen = ({
     }
   }, [location.state]);
 
-  // Bridge soirée : lance le pipeline depuis EventDetailPage via location.state
+  // Bridge soirée : lance le pipeline depuis EventDetailPage
+  // Source primaire : singleton event-reveal (plus fiable que location.state)
+  // Source secondaire : location.state (backup React Router)
   useEffect(() => {
-    const state = location.state as {
+    if (!user || revealTriggeredRef.current) return;
+
+    // Priorité au singleton (stocké juste avant la navigation dans revealFilm())
+    const singleton = getRevealEvent();
+    const lsState = location.state as {
       revealEventId?: string;
       revealContext?: string;
       revealGenres?: string[];
       revealMood?: string;
     } | null;
-    if (!state?.revealEventId || !user || revealTriggeredRef.current) return;
+
+    const revealId = singleton?.eventId || lsState?.revealEventId;
+    if (!revealId) return;
+
     revealTriggeredRef.current = true;
-    const { revealContext, revealGenres, revealMood } = state;
+    const revealContext = singleton?.context ?? lsState?.revealContext;
+    const revealGenres = singleton?.genres ?? lsState?.revealGenres ?? [];
+    const revealMood = singleton?.mood ?? lsState?.revealMood ?? "";
+
+    // Ne pas clearRevealEvent ici — Index.tsx en a besoin quand step passe à "result"
     window.history.replaceState({}, "", "/app");
 
     const triggerReveal = async () => {
