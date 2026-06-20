@@ -382,7 +382,7 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
         <div className="relative z-10 flex items-center justify-between px-4 pt-[calc(0.75rem+env(safe-area-inset-top))] pb-1">
           <button
             onClick={handleClose}
-            className="flex h-8 w-8 items-center justify-center rounded-full bg-foreground/5 text-foreground/40 transition-all hover:bg-foreground/10 hover:text-foreground active:scale-95"
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-foreground/5 text-foreground/40 transition-all hover:bg-foreground/10 hover:text-foreground active:scale-[0.96]"
           >
             <ChevronLeft className="h-4 w-4" />
           </button>
@@ -405,7 +405,7 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
                 key={cat.id}
                 whileTap={{ scale: 0.96 }}
                 onClick={() => setSelectedCategory(cat.id)}
-                className={`flex flex-col items-center gap-2 rounded-2xl border border-border/20 bg-gradient-to-b ${cat.gradient} p-5 text-center transition-all hover:border-primary/20 active:scale-95`}
+                className={`flex flex-col items-center gap-2 rounded-2xl border border-border/20 bg-gradient-to-b ${cat.gradient} p-5 text-center transition-all hover:border-primary/20 active:scale-[0.96]`}
               >
                 <cat.icon className="h-6 w-6 text-foreground/70" />
                 <span className="text-sm font-sans font-semibold text-foreground/90">{cat.label}</span>
@@ -431,7 +431,7 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
         <div className="relative z-10 flex items-center justify-between px-4 pt-[calc(0.75rem+env(safe-area-inset-top))] pb-1">
           <button
             onClick={() => setSelectedCategory(null)}
-            className="flex h-8 w-8 items-center justify-center rounded-full bg-foreground/5 text-foreground/40 transition-all hover:bg-foreground/10 hover:text-foreground active:scale-95"
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-foreground/5 text-foreground/40 transition-all hover:bg-foreground/10 hover:text-foreground active:scale-[0.96]"
           >
             <ChevronLeft className="h-4 w-4" />
           </button>
@@ -440,7 +440,7 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
           </h2>
           <button
             onClick={() => setSelectedCategory(null)}
-            className="flex h-8 w-8 items-center justify-center rounded-full bg-foreground/5 text-foreground/40 transition-all hover:bg-foreground/10 hover:text-foreground active:scale-95"
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-foreground/5 text-foreground/40 transition-all hover:bg-foreground/10 hover:text-foreground active:scale-[0.96]"
           >
             <X className="h-4 w-4" />
           </button>
@@ -465,7 +465,7 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
       <div className="relative z-10 flex items-center justify-between px-4 pt-[calc(0.75rem+env(safe-area-inset-top))] pb-1">
         <button
           onClick={() => setSelectedCategory(null)}
-          className="flex h-8 w-8 items-center justify-center rounded-full bg-foreground/5 text-foreground/40 transition-all hover:bg-foreground/10 hover:text-foreground active:scale-95"
+          className="flex h-8 w-8 items-center justify-center rounded-full bg-foreground/5 text-foreground/40 transition-all hover:bg-foreground/10 hover:text-foreground active:scale-[0.96]"
         >
           <ChevronLeft className="h-4 w-4" />
         </button>
@@ -474,7 +474,7 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
         </h2>
         <button
           onClick={() => setSelectedCategory(null)}
-          className="flex h-8 w-8 items-center justify-center rounded-full bg-foreground/5 text-foreground/40 transition-all hover:bg-foreground/10 hover:text-foreground active:scale-95"
+          className="flex h-8 w-8 items-center justify-center rounded-full bg-foreground/5 text-foreground/40 transition-all hover:bg-foreground/10 hover:text-foreground active:scale-[0.96]"
         >
           <X className="h-4 w-4" />
         </button>

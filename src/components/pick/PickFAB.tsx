@@ -53,7 +53,7 @@ export default function PickFAB() {
             if (navigator.vibrate) navigator.vibrate(10);
             openOverlay();
           }}
-          className={`relative w-14 h-14 rounded-full flex items-center justify-center shadow-[0_4px_20px_hsl(var(--primary)/0.4)] transition-all active:scale-95 ${
+          className={`relative w-14 h-14 rounded-full flex items-center justify-center shadow-[0_4px_20px_hsl(var(--primary)/0.4)] transition-all active:scale-[0.96] ${
             isCompanion ? "fab-pulse" : ""
           }`}
           style={{ backgroundColor: "hsl(var(--primary))" }}

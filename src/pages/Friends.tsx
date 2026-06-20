@@ -133,14 +133,14 @@ const Friends = () => {
           <h2 className="text-[11px] font-sans font-semibold text-foreground/45 uppercase tracking-widest mb-2">Mon code ami</h2>
           <div className="flex items-center gap-2 px-4 py-3 rounded-2xl bg-card border border-border/10">
             <span className="font-mono font-bold text-primary text-lg tracking-wider flex-1">{myFriendCode || "..."}</span>
-            <button onClick={handleCopyCode} className="p-2 rounded-xl hover:bg-primary/10 transition-colors active:scale-95">
+            <button aria-label="Copier mon code" onClick={handleCopyCode} className="p-2 rounded-xl hover:bg-primary/10 transition-colors active:scale-[0.96]">
               {codeCopied ? <Check className="w-4 h-4 text-primary" /> : <Copy className="w-4 h-4 text-foreground/45" />}
             </button>
-            <button onClick={() => setShowQR(!showQR)} className="p-2 rounded-xl hover:bg-primary/10 transition-colors active:scale-95">
+            <button aria-label="Afficher le QR code" onClick={() => setShowQR(!showQR)} className="p-2 rounded-xl hover:bg-primary/10 transition-colors active:scale-[0.96]">
               <QrCode className="w-4 h-4 text-foreground/45" />
             </button>
             {typeof navigator.share === "function" && (
-              <button onClick={() => navigator.share({ title: "Ajoute-moi sur Pick !", url: inviteUrl })} className="p-2 rounded-xl hover:bg-primary/10 transition-colors active:scale-95">
+              <button aria-label="Partager mon lien d'invitation" onClick={() => navigator.share({ title: "Ajoute-moi sur Pick !", url: inviteUrl })} className="p-2 rounded-xl hover:bg-primary/10 transition-colors active:scale-[0.96]">
                 <Share2 className="w-4 h-4 text-foreground/45" />
               </button>
             )}
@@ -231,7 +231,7 @@ const Friends = () => {
             <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" onClick={() => setShowAddModal(false)} />
             <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} transition={{ type: "spring", damping: 25 }}
               className="relative w-full max-w-md rounded-2xl bg-card border border-border/20 p-6 shadow-xl">
-              <button onClick={() => setShowAddModal(false)} className="absolute top-4 right-4 p-1 text-foreground/45 hover:text-foreground/60"><X className="w-4 h-4" /></button>
+              <button aria-label="Fermer" onClick={() => setShowAddModal(false)} className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-lg text-foreground/45 hover:text-foreground/60 hover:bg-foreground/5 transition-colors"><X className="w-4 h-4" /></button>
               <h3 className="text-base font-serif mb-4">Ajouter un ami</h3>
 
               {/* Toggle code / email */}

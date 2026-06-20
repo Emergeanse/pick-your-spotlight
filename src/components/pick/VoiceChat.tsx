@@ -451,7 +451,7 @@ const VoiceChat = ({ onClose, onMovieSuggested, onSearchIntent, initialMessages,
                 type="button"
                 onClick={startListening}
                 data-tour="voice-chat-mic"
-                className="w-24 h-24 rounded-full bg-primary/10 border-2 border-primary/30 flex items-center justify-center mb-6 transition-all duration-200 active:scale-95 active:bg-primary/20 cursor-pointer select-none hover:bg-primary/15 hover:border-primary/40"
+                className="w-24 h-24 rounded-full bg-primary/10 border-2 border-primary/30 flex items-center justify-center mb-6 transition-all duration-200 active:scale-[0.96] active:bg-primary/20 cursor-pointer select-none hover:bg-primary/15 hover:border-primary/40"
                 style={{ WebkitTapHighlightColor: "transparent", touchAction: "manipulation" }}
               >
                 <Mic className="w-10 h-10 text-primary pointer-events-none" />
@@ -511,7 +511,7 @@ const VoiceChat = ({ onClose, onMovieSuggested, onSearchIntent, initialMessages,
                 <button
                   type="button"
                   onClick={stopListening}
-                  className="w-24 h-24 rounded-full bg-primary/20 border-2 border-primary flex items-center justify-center cursor-pointer active:scale-95 transition-transform select-none"
+                  className="w-24 h-24 rounded-full bg-primary/20 border-2 border-primary flex items-center justify-center cursor-pointer active:scale-[0.96] transition-transform select-none"
                   style={{ WebkitTapHighlightColor: "transparent", touchAction: "manipulation" }}
                 >
                   <MicOff className="w-10 h-10 text-primary pointer-events-none" />
@@ -619,7 +619,7 @@ const VoiceChat = ({ onClose, onMovieSuggested, onSearchIntent, initialMessages,
                 transition={{ delay: 0.4 }}
                 type="button"
                 onClick={startListening}
-                className="mt-6 w-16 h-16 rounded-full bg-primary/10 border-2 border-primary/30 flex items-center justify-center transition-all duration-200 active:scale-95 cursor-pointer hover:bg-primary/15 hover:border-primary/40"
+                className="mt-6 w-16 h-16 rounded-full bg-primary/10 border-2 border-primary/30 flex items-center justify-center transition-all duration-200 active:scale-[0.96] cursor-pointer hover:bg-primary/15 hover:border-primary/40"
                 style={{ WebkitTapHighlightColor: "transparent", touchAction: "manipulation" }}
               >
                 <Mic className="w-7 h-7 text-primary pointer-events-none" />
