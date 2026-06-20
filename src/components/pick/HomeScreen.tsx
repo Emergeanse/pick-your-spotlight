@@ -311,7 +311,7 @@ const HomeScreen = ({
   const currentDuoOverridesRef = useRef<DuoOverrides | null>(null);
   const handleAutoPickRef = useRef<((duoId?: string, opts?: { genres?: string[]; moodContext?: string }) => Promise<void>) | undefined>(undefined);
   const revealTriggeredRef = useRef(false);
-  const pendingRevealRef = useRef<{ context?: string; genres?: string[]; mood?: string } | null>(null);
+  const pendingRevealRef = useRef<{ context?: string; genres?: string[]; mood?: string; participantIds?: string[] } | null>(null);
   const [currentBgIndex, setCurrentBgIndex] = useState(0);
 
   const [tonightPick, setTonightPick] = useState<MovieDetail | null>(null);
@@ -423,13 +423,15 @@ const HomeScreen = ({
     const lsState = location.state as {
       revealEventId?: string; revealContext?: string;
       revealGenres?: string[]; revealMood?: string;
+      revealParticipantIds?: string[];
     } | null;
     const revealId = singleton?.eventId || lsState?.revealEventId;
     if (!revealId) return;
     pendingRevealRef.current = {
-      context: singleton?.context ?? lsState?.revealContext,
-      genres:  singleton?.genres  ?? lsState?.revealGenres ?? [],
-      mood:    singleton?.mood    ?? lsState?.revealMood   ?? "",
+      context:        singleton?.context        ?? lsState?.revealContext,
+      genres:         singleton?.genres         ?? lsState?.revealGenres         ?? [],
+      mood:           singleton?.mood           ?? lsState?.revealMood           ?? "",
+      participantIds: singleton?.participantIds ?? lsState?.revealParticipantIds ?? [],
     };
     window.history.replaceState({}, "", "/app");
   }, []); // une seule fois au montage
@@ -438,13 +440,43 @@ const HomeScreen = ({
   useEffect(() => {
     if (!user || !pendingRevealRef.current || revealTriggeredRef.current) return;
     revealTriggeredRef.current = true;
-    const { context, genres, mood } = pendingRevealRef.current;
+    const { context, genres, mood, participantIds } = pendingRevealRef.current;
     pendingRevealRef.current = null;
 
     const run = async () => {
+      const opts: { genres?: string[]; moodContext?: string } = {};
+      if (genres?.length) opts.genres = genres;
+      if (mood) opts.moodContext = mood;
+
+      // Solo : pas d'overrides duo, pipeline direct
+      if (!context || context === "solo") {
+        void generateTonightPickRef.current?.(
+          [], undefined,
+          genres?.length ? { genres, originalLanguage: null, mediaType: null, maxDuration: null, decade: null } : null,
+          undefined,
+          mood || undefined,
+        );
+        return;
+      }
+
+      // Duo / famille / amis : cherche le duo_taste_profiles correspondant
+      // aux participants réels de l'événement (pas juste l'utilisateur courant)
       let duoId: string | undefined;
-      if (context === "duo") {
-        try {
+      const ids = (participantIds ?? []).filter(Boolean);
+      try {
+        if (ids.length >= 2) {
+          // Cherche le profil correspondant exactement aux deux participants
+          const [id1, id2] = ids;
+          const { data: duo } = await (supabase as any)
+            .from("duo_taste_profiles")
+            .select("id")
+            .or(`and(user1_id.eq.${id1},user2_id.eq.${id2}),and(user1_id.eq.${id2},user2_id.eq.${id1})`)
+            .eq("status", "active")
+            .maybeSingle();
+          duoId = (duo as any)?.id ?? undefined;
+        }
+        if (!duoId && ids.length > 0) {
+          // Fallback : profil duo lié à l'utilisateur courant
           const { data: duo } = await (supabase as any)
             .from("duo_taste_profiles")
             .select("id")
@@ -452,13 +484,11 @@ const HomeScreen = ({
             .eq("status", "active")
             .maybeSingle();
           duoId = (duo as any)?.id ?? undefined;
-        } catch (e) {
-          console.error("[Reveal] Duo fetch error:", e);
         }
+      } catch (e) {
+        console.error("[Reveal] Duo profile fetch error:", e);
       }
-      const opts: { genres?: string[]; moodContext?: string } = {};
-      if (genres?.length) opts.genres = genres;
-      if (mood) opts.moodContext = mood;
+
       handleAutoPickRef.current?.(duoId, Object.keys(opts).length ? opts : undefined);
     };
 

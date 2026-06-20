@@ -7,6 +7,7 @@ type RevealState = {
   context?: string;
   genres?: string[];
   mood?: string;
+  participantIds?: string[];
 } | null;
 
 let _reveal: RevealState = null;

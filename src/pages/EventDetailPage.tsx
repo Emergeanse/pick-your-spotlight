@@ -310,21 +310,26 @@ const EventDetailPage = () => {
 
   const revealFilm = () => {
     if (!event) return;
-    // Stocke l'ID + tous les paramètres pipeline dans le singleton (source de vérité primaire)
+    // Les user_id réels des participants enregistrés (exclut les invités sans compte)
+    const participantIds = participants
+      .filter(p => p.user_id)
+      .map(p => p.user_id as string);
+
     setRevealEvent({
       eventId: event.id,
       eventTitle: event.title,
       context: event.context ?? undefined,
       genres: event.genre_tags ?? [],
       mood: event.mood ?? "",
+      participantIds,
     });
-    // location.state comme backup secondaire
     navigate("/app", {
       state: {
         revealEventId: event.id,
         revealContext: event.context,
         revealGenres: event.genre_tags ?? [],
         revealMood: event.mood ?? "",
+        revealParticipantIds: participantIds,
       },
     });
   };
