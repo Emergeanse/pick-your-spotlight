@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { CalendarDays, Heart, Home, Users, User, Plus, Loader2, ChevronRight, Check, Clock, Eye, Timer } from "lucide-react";
+import { CalendarDays, Heart, Home, Users, UsersRound, User, Plus, Loader2, ChevronRight, Check, Clock, Eye, Timer } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
