@@ -1056,6 +1056,8 @@ const HomeScreen = ({
   type DuoOverrides = { topGenres: string[]; excludedGenres: string[]; tasteVector: number[] | null; avoidanceVector: number[] | null; topClusters: string[]; rejectedClusters: string[]; partnerExcludeIds: number[]; user1Name: string | null; user2Name: string | null; user1Id?: string; user2Id?: string };
   const generateTonightPick = async (excludeList: number[] = rejectedIds, rejectionContext?: RejectionContext, voiceFilters?: VoiceSearchFilters | null, duoOverrides?: DuoOverrides, extraMoodContext?: string) => {
     generateTonightPickRef.current = generateTonightPick;
+    // Ouvrir l'overlay immédiatement — avant tout await, dans le même batch que l'appelant
+    setTonightLoading(true);
     if (voiceFilters !== undefined) activeVoiceFiltersRef.current = voiceFilters;
     const poolIds = (chatMoviesPool || []).map((m) => m.id).filter(Number.isFinite);
     // En mode duo : on n'utilise pas l'historique solo (trop restrictif), juste les interactions des deux users
@@ -1072,7 +1074,6 @@ const HomeScreen = ({
     console.log("[PICK-DEBUG] poolIds (chat pool):", poolIds.length, "IDs");
     console.log("[PICK-DEBUG] TOTAL allExcludeIds envoyés à l'edge function:", allExcludeIds.length);
 
-    setTonightLoading(true);
     setTonightProviders([]);
     setLoadingLog([]);
 
@@ -1755,6 +1756,9 @@ const HomeScreen = ({
 
   const handleAutoPick = async (duoId?: string, opts?: { genres?: string[]; moodContext?: string }) => {
     console.log("[REVEAL] 🎭 handleAutoPick — duoId:", duoId, "| opts:", opts);
+    // Ouvrir l'overlay en premier — dans le même batch React que setShowFindChoice(false)
+    // → pas de frame où le fond est visible entre la fermeture du modal et l'ouverture de l'overlay
+    setTonightLoading(true);
     setShowFindChoice(false);
     setFindChoiceDuoId(undefined);
     setTonightPick(null);
