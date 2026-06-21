@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate, useLocation } from "react-router-dom";
 import { consumePendingDuoPick } from "@/lib/duo-pending";
-import type { RevealIntent } from "@/lib/event-reveal";
+import { clearRevealIntent, type RevealIntent } from "@/lib/event-reveal";
 import { toast } from "sonner";
 import { Sparkles, WandSparkles, Clapperboard, ChevronRight, Flame, Eye, Coffee, Heart, Shuffle, Home, Users } from "lucide-react";
 
