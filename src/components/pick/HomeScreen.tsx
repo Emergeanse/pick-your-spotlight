@@ -318,7 +318,12 @@ const HomeScreen = ({
 
   const [revealPendingIntent, setRevealPendingIntent] = useState<RevealIntent | null>(null);
   const [tonightPick, setTonightPick] = useState<MovieDetail | null>(null);
-  const [tonightLoading, setTonightLoading] = useState(false);
+  // Initialisation synchrone : si on arrive depuis EventDetailPage avec revealPending=true
+  // ET qu'un intent est queué, l'overlay s'ouvre dès le premier rendu → zéro flash.
+  const [tonightLoading, setTonightLoading] = useState<boolean>(() => {
+    const st = location.state as { revealPending?: boolean } | null;
+    return !!(st?.revealPending && peekForReveal());
+  });
   const [tonightLoadingMsg, setTonightLoadingMsg] = useState("");
   const [loadingLog, setLoadingLog] = useState<string[]>([]);
   const [tonightUserGenres, setTonightUserGenres] = useState<string[]>([]);
@@ -482,12 +487,9 @@ const HomeScreen = ({
     }
     console.log("[REVEAL] 🎯 Montage HomeScreen — singleton pending:", !!peekForReveal());
 
-    // Si on arrive depuis EventDetailPage avec revealPending=true et qu'un intent est queué,
-    // ouvrir l'overlay de chargement IMMÉDIATEMENT pour éviter le flash de la home.
+    // Effacer le state revealPending pour ne pas retrigger si l'utilisateur revient en arrière
     const state = location.state as { revealPending?: boolean } | null;
-    if (state?.revealPending && peekForReveal()) {
-      setTonightLoading(true);
-      // Effacer le state de navigation pour ne pas retrigger si l'utilisateur revient
+    if (state?.revealPending) {
       navigate(location.pathname, { replace: true, state: {} });
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
