@@ -481,6 +481,15 @@ const HomeScreen = ({
       queueForReveal(intentFromWindow); // alimente le singleton (idempotent)
     }
     console.log("[REVEAL] 🎯 Montage HomeScreen — singleton pending:", !!peekForReveal());
+
+    // Si on arrive depuis EventDetailPage avec revealPending=true et qu'un intent est queué,
+    // ouvrir l'overlay de chargement IMMÉDIATEMENT pour éviter le flash de la home.
+    const state = location.state as { revealPending?: boolean } | null;
+    if (state?.revealPending && peekForReveal()) {
+      setTonightLoading(true);
+      // Effacer le state de navigation pour ne pas retrigger si l'utilisateur revient
+      navigate(location.pathname, { replace: true, state: {} });
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

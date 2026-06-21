@@ -330,7 +330,7 @@ const EventDetailPage = () => {
     (window as any).__pickRevealIntent = intent;
     console.log("[REVEAL] 📤 Intent posé — context:", intent.context, "| genres:", intent.genres);
 
-    navigate("/app");
+    navigate("/app", { state: { revealPending: true } });
 
     // CustomEvent en backup (si HomeScreen déjà monté) — délai 500ms
     setTimeout(() => {
