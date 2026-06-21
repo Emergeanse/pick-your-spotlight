@@ -326,6 +326,7 @@ const EventDetailPage = () => {
 
     // Variable globale window : garantie d'accès cross-module, zéro race condition
     (window as any).__pickRevealIntent = intent;
+    console.log("[REVEAL] 📤 Intent posé sur window:", JSON.stringify(intent));
 
     navigate("/app");
 

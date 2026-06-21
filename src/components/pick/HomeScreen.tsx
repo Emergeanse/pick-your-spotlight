@@ -421,16 +421,18 @@ const HomeScreen = ({
   // 2) CustomEvent "pick-reveal-event" : backup si HomeScreen est déjà monté
   const runRevealPipeline = useRef<((intent: RevealIntent) => Promise<void>) | null>(null);
   runRevealPipeline.current = async (intent: RevealIntent) => {
-    if (revealTriggeredRef.current) return;
+    if (revealTriggeredRef.current) { console.log("[REVEAL] ⛔ déjà déclenché, abandon"); return; }
     revealTriggeredRef.current = true;
     clearRevealIntent();
 
     const { context, genres, mood, participantIds } = intent;
+    console.log("[REVEAL] 🏃 runRevealPipeline — context:", context, "| genres:", genres, "| mood:", mood, "| participantIds:", participantIds);
     const genreFilter: VoiceSearchFilters | null = genres?.length
       ? { genres, originalLanguage: null, mediaType: null, maxDuration: null, decade: null }
       : null;
 
     if (!context || context === "solo") {
+      console.log("[REVEAL] → solo, appel generateTonightPick direct");
       generateTonightPickRef.current?.([], undefined, genreFilter, undefined, mood || undefined);
       return;
     }
@@ -467,11 +469,14 @@ const HomeScreen = ({
   // chargé (userPlatformIds, quickFilters…) pour que le pipeline ait toutes les données.
   useEffect(() => {
     const intent = (window as any).__pickRevealIntent as RevealIntent | undefined;
+    console.log("[REVEAL] 🎯 Montage HomeScreen — intent trouvé:", !!intent, "| profil chargé:", profileLoadedRef.current);
     if (intent) {
       delete (window as any).__pickRevealIntent;
       if (profileLoadedRef.current) {
+        console.log("[REVEAL] ⚡ Profil déjà chargé, lancement immédiat");
         void runRevealPipeline.current?.(intent);
       } else {
+        console.log("[REVEAL] ⏳ Attente du profil...");
         revealIntentPendingRef.current = intent;
         // Fallback : lancer quand même après 5 s si le profil ne charge pas
         setTimeout(() => {
@@ -499,6 +504,7 @@ const HomeScreen = ({
   // Mécanisme 3 : déclenché après re-render post-profil (userPlatformIds chargé)
   useEffect(() => {
     if (!revealPendingIntent) return;
+    console.log("[REVEAL] 🚀 Re-render post-profil OK, lancement pipeline:", JSON.stringify(revealPendingIntent));
     setRevealPendingIntent(null);
     void runRevealPipeline.current?.(revealPendingIntent);
   }, [revealPendingIntent]);
@@ -931,6 +937,7 @@ const HomeScreen = ({
         // On utilise setState pour provoquer un re-render AVANT le pipeline,
         // garantissant que userPlatformIds est dans la closure de generateTonightPick.
         profileLoadedRef.current = true;
+        console.log("[REVEAL] ✅ Profil chargé — platformIds:", (data as any)?.preferred_platforms ?? [], "| intent en attente:", !!revealIntentPendingRef.current);
         if (revealIntentPendingRef.current) {
           const pending = revealIntentPendingRef.current;
           revealIntentPendingRef.current = null;
@@ -1089,6 +1096,7 @@ const HomeScreen = ({
 
       if (user) {
         const liked = await getLikedMovies();
+        console.log("[REVEAL] 🎬 generateTonightPick — user:", user.id.slice(0, 8), "| liked.length:", liked.length, "| platformIds:", userPlatformIds);
 
         if (liked.length > 0) {
           const likedTitles = liked.slice(0, 8).map((m: any) => m.title).filter(Boolean) as string[];
