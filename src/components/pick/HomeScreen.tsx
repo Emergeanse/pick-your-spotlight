@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate, useLocation } from "react-router-dom";
 import { consumePendingDuoPick } from "@/lib/duo-pending";
-import { getRevealIntent, clearRevealIntent, type RevealIntent } from "@/lib/event-reveal";
+import type { RevealIntent } from "@/lib/event-reveal";
 import { toast } from "sonner";
 import { Sparkles, WandSparkles, Clapperboard, ChevronRight, Flame, Eye, Coffee, Heart, Shuffle, Home, Users } from "lucide-react";
 
@@ -459,10 +459,13 @@ const HomeScreen = ({
     );
   };
 
-  // Mécanisme 1 : vérification du singleton au montage du composant
+  // Mécanisme 1 : lecture de window.__pickRevealIntent au montage (variable globale, zéro race condition)
   useEffect(() => {
-    const intent = getRevealIntent();
-    if (intent) void runRevealPipeline.current?.(intent);
+    const intent = (window as any).__pickRevealIntent as RevealIntent | undefined;
+    if (intent) {
+      delete (window as any).__pickRevealIntent;
+      void runRevealPipeline.current?.(intent);
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

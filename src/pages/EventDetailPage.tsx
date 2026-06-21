@@ -8,7 +8,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
-import { setRevealEvent, setRevealIntent } from "@/lib/event-reveal";
+import { setRevealEvent } from "@/lib/event-reveal";
 
 // ─────────────────────────────────────────
 // Types
@@ -324,13 +324,12 @@ const EventDetailPage = () => {
     // Singleton event-reveal : nécessaire pour sauvegarder le film choisi
     setRevealEvent({ eventId: event.id, eventTitle: event.title });
 
-    // Singleton reveal intent : lu par HomeScreen au montage (mécanisme principal)
-    setRevealIntent(intent);
+    // Variable globale window : garantie d'accès cross-module, zéro race condition
+    (window as any).__pickRevealIntent = intent;
 
     navigate("/app");
 
-    // CustomEvent en backup : utile si HomeScreen est déjà monté
-    // Délai 500ms pour être sûr que HomeScreen a eu le temps de se monter et d'écouter
+    // CustomEvent en backup (si HomeScreen déjà monté) — délai 500ms
     setTimeout(() => {
       window.dispatchEvent(new CustomEvent("pick-reveal-event", { detail: intent }));
     }, 500);
