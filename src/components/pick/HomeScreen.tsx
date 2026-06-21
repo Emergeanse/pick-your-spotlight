@@ -311,8 +311,11 @@ const HomeScreen = ({
   const currentDuoOverridesRef = useRef<DuoOverrides | null>(null);
   const handleAutoPickRef = useRef<((duoId?: string, opts?: { genres?: string[]; moodContext?: string }) => Promise<void>) | undefined>(undefined);
   const revealTriggeredRef = useRef(false);
+  const profileLoadedRef = useRef(false);
+  const revealIntentPendingRef = useRef<RevealIntent | null>(null);
   const [currentBgIndex, setCurrentBgIndex] = useState(0);
 
+  const [revealPendingIntent, setRevealPendingIntent] = useState<RevealIntent | null>(null);
   const [tonightPick, setTonightPick] = useState<MovieDetail | null>(null);
   const [tonightLoading, setTonightLoading] = useState(false);
   const [tonightLoadingMsg, setTonightLoadingMsg] = useState("");
@@ -459,12 +462,26 @@ const HomeScreen = ({
     );
   };
 
-  // Mécanisme 1 : lecture de window.__pickRevealIntent au montage (variable globale, zéro race condition)
+  // Mécanisme 1 : lecture de window.__pickRevealIntent au montage.
+  // L'intent est stocké dans revealIntentPendingRef et déclenché APRÈS que le profil soit
+  // chargé (userPlatformIds, quickFilters…) pour que le pipeline ait toutes les données.
   useEffect(() => {
     const intent = (window as any).__pickRevealIntent as RevealIntent | undefined;
     if (intent) {
       delete (window as any).__pickRevealIntent;
-      void runRevealPipeline.current?.(intent);
+      if (profileLoadedRef.current) {
+        void runRevealPipeline.current?.(intent);
+      } else {
+        revealIntentPendingRef.current = intent;
+        // Fallback : lancer quand même après 5 s si le profil ne charge pas
+        setTimeout(() => {
+          if (revealIntentPendingRef.current) {
+            const pending = revealIntentPendingRef.current;
+            revealIntentPendingRef.current = null;
+            void runRevealPipeline.current?.(pending);
+          }
+        }, 5000);
+      }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -478,6 +495,13 @@ const HomeScreen = ({
     window.addEventListener("pick-reveal-event", handler);
     return () => window.removeEventListener("pick-reveal-event", handler);
   }, []);
+
+  // Mécanisme 3 : déclenché après re-render post-profil (userPlatformIds chargé)
+  useEffect(() => {
+    if (!revealPendingIntent) return;
+    setRevealPendingIntent(null);
+    void runRevealPipeline.current?.(revealPendingIntent);
+  }, [revealPendingIntent]);
 
   // Écoute le custom event émis par handleVoiceSearchIntent
   // pour router la recherche vocale dans le même pipeline que la recherche standard
@@ -903,6 +927,15 @@ const HomeScreen = ({
 
         setProfileDefaults(defaults);
         setQuickFilters(defaults);
+        // Profil chargé → déclencher le pipeline de révélation en attente.
+        // On utilise setState pour provoquer un re-render AVANT le pipeline,
+        // garantissant que userPlatformIds est dans la closure de generateTonightPick.
+        profileLoadedRef.current = true;
+        if (revealIntentPendingRef.current) {
+          const pending = revealIntentPendingRef.current;
+          revealIntentPendingRef.current = null;
+          setRevealPendingIntent(pending);
+        }
       });
 
     loadUnifiedUserFeedbackState().then(({ excludeIds, evaluatedCount }) => {
