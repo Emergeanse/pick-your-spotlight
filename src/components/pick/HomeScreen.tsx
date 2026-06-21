@@ -4,7 +4,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { consumePendingDuoPick } from "@/lib/duo-pending";
 import { clearRevealIntent, type RevealIntent, peekForReveal, consumeForReveal, queueForReveal, _pipelineFns } from "@/lib/event-reveal";
 import { toast } from "sonner";
-import { Sparkles, WandSparkles, Clapperboard, ChevronRight, Flame, Eye, Coffee, Heart, Shuffle, Home, Users } from "lucide-react";
+import { Sparkles, WandSparkles, Clapperboard, ChevronRight, Flame, Eye, Coffee, Heart, Shuffle, Home, Users, Crown, Star } from "lucide-react";
 
 import { ALL_PLATFORMS } from "@/lib/platforms";
 import type { Movie, MovieDetail } from "@/lib/tmdb";
@@ -13,6 +13,7 @@ import { getTrendingMovies, getBackdropUrl, getWatchProviders, getMovieDetails }
 import { getLikedMovies } from "@/lib/liked-movies";
 import { trackInteraction, getUserTasteProfile } from "@/lib/interactions";
 import { useAuth } from "@/hooks/use-auth";
+import { usePickPlus } from "@/hooks/use-pick-plus";
 import { supabase } from "@/integrations/supabase/client";
 import { computeMultiVectorProfile } from "@/lib/taste-engine";
 import {
@@ -344,6 +345,8 @@ const HomeScreen = ({
   const [activeAmbiance, setActiveAmbiance] = useState<AmbianceMood | null>(null);
   const [firstName, setFirstName] = useState<string>("");
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [interactionCount, setInteractionCount] = useState<number>(0);
+  const { isPremium } = usePickPlus();
   const [quickRecos, setQuickRecos] = useState<QuickReco[]>([]);
   const [trendingFallback, setTrendingFallback] = useState<QuickReco[]>([]);
   const [loadingMovieId, setLoadingMovieId] = useState<number | null>(null);
@@ -515,13 +518,17 @@ const HomeScreen = ({
     return () => window.removeEventListener("pick-voice-search", handler);
   }, []);
 
-  // Prénom + avatar pour le greeting et la notif
+  // Prénom + avatar + compteur pour le greeting
   useEffect(() => {
     if (!user) return;
-    supabase.from("profiles").select("display_name, avatar_url").eq("id", user.id).maybeSingle().then(({ data }) => {
+    Promise.all([
+      supabase.from("profiles").select("display_name, avatar_url").eq("id", user.id).maybeSingle(),
+      supabase.from("user_item_feedback").select("*", { count: "exact", head: true }).eq("user_id", user.id),
+    ]).then(([{ data }, { count }]) => {
       const name = (data as any)?.display_name || user.email?.split("@")[0] || "";
       setFirstName(name.split(" ")[0]);
       setAvatarUrl((data as any)?.avatar_url || null);
+      setInteractionCount(count || 0);
     });
   }, [user]);
 
@@ -1938,15 +1945,41 @@ const HomeScreen = ({
       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background/55 to-background" />
 
       {/* Greeting flottant juste sous la BrandHeader */}
-      <motion.p
+      <motion.div
         initial={{ opacity: 0, y: -4 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.22, duration: 0.4 }}
-        className="absolute left-5 z-20 text-foreground/55 text-[13px] font-sans"
-        style={{ top: "calc(3.6rem + env(safe-area-inset-top))" }}
+        className="absolute left-5 z-20"
+        style={{ top: "calc(3.4rem + env(safe-area-inset-top))" }}
       >
-        {firstName ? `Bonsoir ${firstName} 👋` : "Bonsoir 👋"}
-      </motion.p>
+        <p className="text-foreground/55 text-[13px] font-sans">
+          {firstName ? `Bonsoir ${firstName} 👋` : "Bonsoir 👋"}
+        </p>
+        <div className="flex items-center gap-2 mt-1.5">
+          {/* Avatar */}
+          <div className="w-7 h-7 rounded-full overflow-hidden ring-1 ring-white/15 bg-primary/20 flex items-center justify-center shrink-0">
+            {avatarUrl
+              ? <img src={avatarUrl} alt={firstName} className="w-full h-full object-cover" />
+              : <span className="text-[10px] font-bold text-primary leading-none">{(firstName || "?").charAt(0).toUpperCase()}</span>
+            }
+          </div>
+          {/* Badge Pick+ */}
+          {isPremium && (
+            <span className="inline-flex items-center gap-0.5 px-1.5 py-[2px] rounded-md bg-primary text-primary-foreground text-[9px] font-bold leading-none">
+              <Crown className="h-2 w-2" strokeWidth={3} />
+              Pick+
+            </span>
+          )}
+          {/* Compteur films */}
+          {interactionCount > 0 && (
+            <span className="flex items-center gap-1 text-[11px] text-foreground/50">
+              <Star className="h-2.5 w-2.5 fill-amber-400 text-amber-400" />
+              <span className="tabular-nums">{interactionCount}</span>
+              <span>films</span>
+            </span>
+          )}
+        </div>
+      </motion.div>
 
       <div className="relative z-10 h-full overflow-y-auto overscroll-y-contain touch-[pan-y_pinch-zoom] scrollbar-hide pb-[calc(9rem+env(safe-area-inset-bottom))]">
         {/* ─── Hero ─── */}
