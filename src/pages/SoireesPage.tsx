@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { CalendarDays, Heart, Home, Users, UsersRound, User, Plus, Loader2, ChevronRight, Check, Clock, Eye, Timer } from "lucide-react";
+import { CalendarDays, Heart, Home, Users, UsersRound, User, Plus, Loader2, ChevronRight, Check, Clock, Eye, Timer, Film } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -23,6 +23,8 @@ type EventRow = {
   organizer_id: string;
   participants: ParticipantSummary;
   myStatus?: "confirmed" | "invited" | "declined";
+  final_pick_title: string | null;
+  final_pick_poster: string | null;
 };
 
 const CONTEXT_ICON: Record<string, React.ComponentType<any>> = {
@@ -65,7 +67,7 @@ const SoireesPage = () => {
     // 1. Soirées où je suis organisateur
     const { data: orgRows } = await supabase
       .from("events" as any)
-      .select("id, title, event_date, event_time, context, status, reveal_mode, invite_link_token, organizer_id")
+      .select("id, title, event_date, event_time, context, status, reveal_mode, invite_link_token, organizer_id, final_pick_title, final_pick_poster")
       .eq("organizer_id", user.id)
       .neq("status", "cancelled");
 
@@ -83,7 +85,7 @@ const SoireesPage = () => {
     if (participatingIds.length > 0) {
       const { data } = await supabase
         .from("events" as any)
-        .select("id, title, event_date, event_time, context, status, reveal_mode, invite_link_token, organizer_id")
+        .select("id, title, event_date, event_time, context, status, reveal_mode, invite_link_token, organizer_id, final_pick_title, final_pick_poster")
         .in("id", participatingIds)
         .neq("status", "cancelled");
       guestRows = data ?? [];
@@ -118,6 +120,8 @@ const SoireesPage = () => {
         ...e,
         participants: byEvent[e.id] ?? { total: 0, confirmed: 0 },
         myStatus: myStatusByEvent[e.id],
+        final_pick_title: e.final_pick_title ?? null,
+        final_pick_poster: e.final_pick_poster ?? null,
       }))
     );
     setLoading(false);
@@ -135,6 +139,8 @@ const SoireesPage = () => {
     const confirmedInvites = Math.max(0, confirmed - 1);
     const allConfirmed = invites > 0 && confirmedInvites === invites;
     const someConfirmed = confirmedInvites > 0 && !allConfirmed;
+    const isRevealed = evt.status === "done";
+    const hasFilm = isRevealed && !!evt.final_pick_title;
 
     // Badge mon statut (vue invité)
     const myStatusBadge = !isOrganizer && evt.myStatus ? (
@@ -149,12 +155,28 @@ const SoireesPage = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: i * 0.06, duration: 0.35 }}
         onClick={() => navigate(`/app/soirees/${evt.id}`)}
-        className={`w-full flex items-center gap-3.5 p-4 rounded-2xl border text-left transition-colors backdrop-blur-sm ${colors.card}`}
+        className={`w-full flex items-center gap-3.5 p-4 rounded-2xl border text-left transition-colors backdrop-blur-sm ${
+          hasFilm ? "bg-white/[0.03] border-white/[0.08]" : colors.card
+        }`}
       >
-        {/* Icône */}
-        <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${colors.iconBg}`}>
-          <Icon className={`w-5 h-5 ${colors.iconText}`} strokeWidth={1.7} />
-        </div>
+        {/* Icône ou affiche du film */}
+        {hasFilm ? (
+          evt.final_pick_poster ? (
+            <img
+              src={`https://image.tmdb.org/t/p/w92${evt.final_pick_poster}`}
+              alt={evt.final_pick_title!}
+              className="w-10 h-14 object-cover rounded-xl shrink-0 shadow-md"
+            />
+          ) : (
+            <div className="w-10 h-14 rounded-xl bg-white/[0.06] flex items-center justify-center shrink-0">
+              <Film className="w-4 h-4 text-foreground/40" />
+            </div>
+          )
+        ) : (
+          <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${colors.iconBg}`}>
+            <Icon className={`w-5 h-5 ${colors.iconText}`} strokeWidth={1.7} />
+          </div>
+        )}
 
         {/* Infos */}
         <div className="flex-1 min-w-0">
@@ -166,8 +188,15 @@ const SoireesPage = () => {
           </div>
           <p className="text-[11px] text-foreground/45 mt-0.5 capitalize">{formatDate(evt.event_date, evt.event_time)}</p>
 
-          {/* Vue organisateur : statut des invités */}
-          {isOrganizer && invites > 0 && (
+          {/* Film révélé */}
+          {hasFilm && (
+            <p className="text-[11px] font-sans font-medium text-primary/70 mt-1 truncate italic">
+              {evt.final_pick_title}
+            </p>
+          )}
+
+          {/* Vue organisateur : statut des invités (si pas révélé) */}
+          {!isRevealed && isOrganizer && invites > 0 && (
             <div className={`flex items-center gap-1 mt-1.5 ${allConfirmed ? "text-emerald-400" : someConfirmed ? "text-amber-400" : "text-foreground/45"}`}>
               {allConfirmed ? <Check className="w-3 h-3" /> : <Clock className="w-3 h-3" />}
               <span className="text-[10.5px] font-sans font-medium">
@@ -185,9 +214,18 @@ const SoireesPage = () => {
           {!isOrganizer && <div className="mt-1.5">{myStatusBadge}</div>}
         </div>
 
-        {/* Mode + chevron */}
+        {/* Badge mode / état + chevron */}
         <div className="flex flex-col items-end gap-2 shrink-0">
-          {evt.reveal_mode === "timed" ? (
+          {hasFilm ? (
+            <div className="flex items-center gap-1 px-2 py-1 rounded-xl bg-emerald-500/15 border border-emerald-500/25">
+              <Check className="w-3 h-3 text-emerald-400" />
+              <span className="text-[10px] font-sans font-semibold text-emerald-400">Film révélé</span>
+            </div>
+          ) : isRevealed ? (
+            <div className="flex items-center gap-1 px-2 py-1 rounded-xl bg-white/[0.06] border border-white/[0.1]">
+              <span className="text-[10px] font-sans font-semibold text-foreground/40">Terminée</span>
+            </div>
+          ) : evt.reveal_mode === "timed" ? (
             <div className="flex items-center gap-1 px-2 py-1 rounded-xl bg-amber-500/15 border border-amber-500/25">
               <Timer className="w-3 h-3 text-amber-400" />
               <span className="text-[10px] font-sans font-semibold text-amber-400">Surprise</span>
