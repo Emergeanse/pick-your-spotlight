@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate, useLocation } from "react-router-dom";
 import { consumePendingDuoPick } from "@/lib/duo-pending";
-import { clearRevealIntent, type RevealIntent } from "@/lib/event-reveal";
+import { clearRevealIntent, type RevealIntent, peekForReveal, consumeForReveal, queueForReveal } from "@/lib/event-reveal";
 import { toast } from "sonner";
 import { Sparkles, WandSparkles, Clapperboard, ChevronRight, Flame, Eye, Coffee, Heart, Shuffle, Home, Users } from "lucide-react";
 
@@ -464,30 +464,16 @@ const HomeScreen = ({
     );
   };
 
-  // Mécanisme 1 : lecture de window.__pickRevealIntent au montage.
-  // L'intent est stocké dans revealIntentPendingRef et déclenché APRÈS que le profil soit
-  // chargé (userPlatformIds, quickFilters…) pour que le pipeline ait toutes les données.
+  // Mécanisme 1 : au montage, s'assurer que le singleton module est alimenté.
+  // Le singleton survit aux remontages multiples (double-mount React/v7_startTransition).
+  // La window global sert de backup si le module est dans un chunk différent.
   useEffect(() => {
-    const intent = (window as any).__pickRevealIntent as RevealIntent | undefined;
-    console.log("[REVEAL] 🎯 Montage HomeScreen — intent trouvé:", !!intent, "| profil chargé:", profileLoadedRef.current);
-    if (intent) {
+    const intentFromWindow = (window as any).__pickRevealIntent as RevealIntent | undefined;
+    if (intentFromWindow) {
       delete (window as any).__pickRevealIntent;
-      if (profileLoadedRef.current) {
-        console.log("[REVEAL] ⚡ Profil déjà chargé, lancement immédiat");
-        void runRevealPipeline.current?.(intent);
-      } else {
-        console.log("[REVEAL] ⏳ Attente du profil...");
-        revealIntentPendingRef.current = intent;
-        // Fallback : lancer quand même après 5 s si le profil ne charge pas
-        setTimeout(() => {
-          if (revealIntentPendingRef.current) {
-            const pending = revealIntentPendingRef.current;
-            revealIntentPendingRef.current = null;
-            void runRevealPipeline.current?.(pending);
-          }
-        }, 5000);
-      }
+      queueForReveal(intentFromWindow); // alimente le singleton (idempotent)
     }
+    console.log("[REVEAL] 🎯 Montage HomeScreen — singleton pending:", !!peekForReveal());
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -501,12 +487,17 @@ const HomeScreen = ({
     return () => window.removeEventListener("pick-reveal-event", handler);
   }, []);
 
-  // Mécanisme 3 : déclenché après re-render post-profil (userPlatformIds chargé)
+  // Mécanisme 3 : déclenché après re-render post-profil (userPlatformIds chargé).
+  // consumeForReveal() est le verrou atomique : un seul montage (même s'il y en a deux)
+  // obtient l'intent et lance le pipeline. Le second trouve null et s'arrête.
   useEffect(() => {
     if (!revealPendingIntent) return;
-    console.log("[REVEAL] 🚀 Re-render post-profil OK, lancement pipeline:", JSON.stringify(revealPendingIntent));
+    const locked = consumeForReveal();
+    if (!locked) { console.log("[REVEAL] ⛔ Singleton déjà consommé par un autre montage"); setRevealPendingIntent(null); return; }
+    console.log("[REVEAL] 🚀 Lancement pipeline — context:", locked.context, "| platformIds:", userPlatformIds);
     setRevealPendingIntent(null);
-    void runRevealPipeline.current?.(revealPendingIntent);
+    void runRevealPipeline.current?.(locked);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [revealPendingIntent]);
 
   // Écoute le custom event émis par handleVoiceSearchIntent
@@ -933,15 +924,14 @@ const HomeScreen = ({
 
         setProfileDefaults(defaults);
         setQuickFilters(defaults);
-        // Profil chargé → déclencher le pipeline de révélation en attente.
-        // On utilise setState pour provoquer un re-render AVANT le pipeline,
-        // garantissant que userPlatformIds est dans la closure de generateTonightPick.
+        // Profil chargé → déclencher le pipeline si un intent est en attente dans le singleton.
+        // peekForReveal() lit sans consommer (consumeForReveal est appelé dans useEffect, verrou atomique).
+        // setState force un re-render : userPlatformIds est dans la closure de generateTonightPick.
         profileLoadedRef.current = true;
-        console.log("[REVEAL] ✅ Profil chargé — platformIds:", (data as any)?.preferred_platforms ?? [], "| intent en attente:", !!revealIntentPendingRef.current);
-        if (revealIntentPendingRef.current) {
-          const pending = revealIntentPendingRef.current;
-          revealIntentPendingRef.current = null;
-          setRevealPendingIntent(pending);
+        const pendingReveal = peekForReveal();
+        console.log("[REVEAL] ✅ Profil chargé — platformIds:", (data as any)?.preferred_platforms ?? [], "| intent en attente:", !!pendingReveal);
+        if (pendingReveal) {
+          setRevealPendingIntent(pendingReveal);
         }
       });
 

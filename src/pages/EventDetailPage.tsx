@@ -8,7 +8,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
-import { setRevealEvent } from "@/lib/event-reveal";
+import { setRevealEvent, queueForReveal } from "@/lib/event-reveal";
 
 // ─────────────────────────────────────────
 // Types
@@ -324,9 +324,11 @@ const EventDetailPage = () => {
     // Singleton event-reveal : nécessaire pour sauvegarder le film choisi
     setRevealEvent({ eventId: event.id, eventTitle: event.title });
 
-    // Variable globale window : garantie d'accès cross-module, zéro race condition
+    // Singleton module-level : survit aux remontages du HomeScreen
+    queueForReveal(intent);
+    // Window global en backup (au cas où le module serait splitté)
     (window as any).__pickRevealIntent = intent;
-    console.log("[REVEAL] 📤 Intent posé sur window:", JSON.stringify(intent));
+    console.log("[REVEAL] 📤 Intent posé — context:", intent.context, "| genres:", intent.genres);
 
     navigate("/app");
 
