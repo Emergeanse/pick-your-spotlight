@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate, useLocation } from "react-router-dom";
 import { consumePendingDuoPick } from "@/lib/duo-pending";
-import { clearRevealIntent, type RevealIntent, peekForReveal, consumeForReveal, queueForReveal } from "@/lib/event-reveal";
+import { clearRevealIntent, type RevealIntent, peekForReveal, consumeForReveal, queueForReveal, _pipelineFns } from "@/lib/event-reveal";
 import { toast } from "sonner";
 import { Sparkles, WandSparkles, Clapperboard, ChevronRight, Flame, Eye, Coffee, Heart, Shuffle, Home, Users } from "lucide-react";
 
@@ -432,8 +432,8 @@ const HomeScreen = ({
       : null;
 
     if (!context || context === "solo") {
-      console.log("[REVEAL] → solo, appel generateTonightPick direct");
-      generateTonightPickRef.current?.([], undefined, genreFilter, undefined, mood || undefined);
+      console.log("[REVEAL] → solo, _pipelineFns.generateTonightPick set:", !!_pipelineFns.generateTonightPick);
+      _pipelineFns.generateTonightPick?.([], undefined, genreFilter, undefined, mood || undefined);
       return;
     }
 
@@ -457,7 +457,8 @@ const HomeScreen = ({
       }
     } catch (err) { console.error("[Reveal] duo fetch:", err); }
 
-    handleAutoPickRef.current?.(duoId,
+    console.log("[REVEAL] 🔍 duo fetch résultat — duoId:", duoId, "| _pipelineFns.handleAutoPick set:", !!_pipelineFns.handleAutoPick);
+    void _pipelineFns.handleAutoPick?.(duoId,
       genres?.length || mood
         ? { ...(genres?.length && { genres }), ...(mood && { moodContext: mood }) }
         : undefined
@@ -1732,6 +1733,7 @@ const HomeScreen = ({
   };
 
   const handleAutoPick = async (duoId?: string, opts?: { genres?: string[]; moodContext?: string }) => {
+    console.log("[REVEAL] 🎭 handleAutoPick — duoId:", duoId, "| opts:", opts);
     setShowFindChoice(false);
     setFindChoiceDuoId(undefined);
     setTonightPick(null);
@@ -1807,6 +1809,10 @@ const HomeScreen = ({
   // Garde les refs à jour à chaque render pour éviter les stale closures dans les bridges
   handleAutoPickRef.current = handleAutoPick;
   generateTonightPickRef.current = generateTonightPick;
+  // Met à jour les singletons module-level pour que le code async de Mount 1
+  // appelle les fonctions de Mount 2 (composant vivant) et non de Mount 1 (démonté)
+  _pipelineFns.handleAutoPick = handleAutoPick;
+  _pipelineFns.generateTonightPick = generateTonightPick as unknown as (excludeList?: number[], ctx?: unknown, filters?: unknown, overrides?: unknown, mood?: string) => void;
 
   const handleCloseTonightPick = () => setTonightPick(null);
 

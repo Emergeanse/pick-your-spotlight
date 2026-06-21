@@ -26,6 +26,16 @@ export const setRevealIntent = (intent: RevealIntent) => { _intent = intent; };
 export const getRevealIntent = () => _intent;
 export const clearRevealIntent = () => { _intent = null; };
 
+// Refs module-level pour les fonctions du pipeline.
+// Chaque render de HomeScreen les met à jour → le code async de Mount 1
+// appellera les fonctions de Mount 2 (composant affiché) au lieu de celles de Mount 1 (démonté).
+type GenTonightFn = (excludeList?: number[], ctx?: unknown, filters?: unknown, overrides?: unknown, mood?: string) => void;
+type HandleAutoPickFn = (duoId?: string, opts?: { genres?: string[]; moodContext?: string }) => Promise<void>;
+export const _pipelineFns: {
+  generateTonightPick?: GenTonightFn;
+  handleAutoPick?: HandleAutoPickFn;
+} = {};
+
 // File d'attente de révélation — survit aux remontages multiples du HomeScreen.
 // queueForReveal   : appelé dans EventDetailPage avant navigate()
 // peekForReveal    : lu dans la callback du profil (sans consommer)
