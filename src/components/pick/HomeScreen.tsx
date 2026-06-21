@@ -432,6 +432,9 @@ const HomeScreen = ({
       : null;
 
     if (!context || context === "solo") {
+      // Délai minimal pour laisser React finaliser le double-mount et que _pipelineFns
+      // soit mis à jour par le composant vivant (Mount 2) avant l'appel
+      await new Promise<void>(r => setTimeout(r, 50));
       console.log("[REVEAL] → solo, _pipelineFns.generateTonightPick set:", !!_pipelineFns.generateTonightPick);
       _pipelineFns.generateTonightPick?.([], undefined, genreFilter, undefined, mood || undefined);
       return;

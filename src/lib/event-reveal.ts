@@ -36,15 +36,27 @@ export const _pipelineFns: {
   handleAutoPick?: HandleAutoPickFn;
 } = {};
 
-// File d'attente de révélation — survit aux remontages multiples du HomeScreen.
-// queueForReveal   : appelé dans EventDetailPage avant navigate()
-// peekForReveal    : lu dans la callback du profil (sans consommer)
-// consumeForReveal : verrou atomique — un seul montage déclenche le pipeline
-let _pendingForReveal: RevealIntent | null = null;
-export const queueForReveal   = (intent: RevealIntent) => { _pendingForReveal = intent; };
-export const peekForReveal    = (): RevealIntent | null => _pendingForReveal;
+// File d'attente de révélation — stockée dans sessionStorage.
+// sessionStorage survit aux rechargements de modules HMR (contrairement aux variables module-level)
+// et aux double-mounts React, tout en restant synchrone/atomique (JS mono-thread).
+const SESSION_KEY = 'pick_reveal_intent_v1';
+
+export const queueForReveal = (intent: RevealIntent): void => {
+  try { sessionStorage.setItem(SESSION_KEY, JSON.stringify(intent)); } catch {}
+};
+
+export const peekForReveal = (): RevealIntent | null => {
+  try {
+    const raw = sessionStorage.getItem(SESSION_KEY);
+    return raw ? (JSON.parse(raw) as RevealIntent) : null;
+  } catch { return null; }
+};
+
 export const consumeForReveal = (): RevealIntent | null => {
-  const v = _pendingForReveal;
-  _pendingForReveal = null;
-  return v;
+  try {
+    const raw = sessionStorage.getItem(SESSION_KEY);
+    if (!raw) return null;
+    sessionStorage.removeItem(SESSION_KEY);
+    return JSON.parse(raw) as RevealIntent;
+  } catch { return null; }
 };
