@@ -425,7 +425,21 @@ const HomeScreen = ({
 
   // Bridge legacy via location.state (autres appelants éventuels)
   useEffect(() => {
-    const state = location.state as { openFindChoice?: boolean; duoId?: string } | null;
+    const state = location.state as {
+      openFindChoice?: boolean;
+      duoId?: string;
+      onboardingFirstPick?: boolean;
+      genres?: string[];
+      moodContext?: string;
+    } | null;
+    if (state?.onboardingFirstPick) {
+      window.history.replaceState({}, "", "/app");
+      const opts: { genres?: string[]; moodContext?: string } = {};
+      if (state.genres?.length) opts.genres = state.genres;
+      if (state.moodContext) opts.moodContext = state.moodContext;
+      setTimeout(() => void (handleAutoPickRef.current)?.(undefined, opts), 450);
+      return;
+    }
     if (state?.openFindChoice) {
       setFindChoiceDuoId(state.duoId);
       window.history.replaceState({}, "", "/app");
