@@ -221,7 +221,7 @@ const EventDetailPage = () => {
     setEvent(ev as unknown as EventData);
 
     await loadParticipants(id, ev as unknown as EventData);
-    if ((ev as EventData).reveal_mode === "vote") {
+    if ((ev as unknown as EventData).reveal_mode === "vote") {
       await loadVoteData(id);
     }
     setLoading(false);
