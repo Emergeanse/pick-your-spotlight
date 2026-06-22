@@ -90,6 +90,7 @@ const App = () => (
             <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
             <Route path="/glossary" element={<ProtectedRoute><AppLayout><Glossary /></AppLayout></ProtectedRoute>} />
             <Route path="/profile" element={<Navigate to="/app/profile" replace />} />
+            <Route path="/trust" element={<TrustPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
           </ErrorBoundary>
