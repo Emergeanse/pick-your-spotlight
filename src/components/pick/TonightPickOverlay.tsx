@@ -8,8 +8,30 @@ import FeedbackBadge from "./FeedbackBadge";
 
 import { fetchFromTMDB } from "@/lib/tmdb-proxy-client";
 
+// Affiches de secours — affichage immédiat du mur sans attendre le proxy TMDB
+const FALLBACK_POSTER_PATHS = [
+  "/qJ2tW6WMUDux911r6Pg7cbxOnOo.jpg", "/9gk7adHYeDvHkCSEqAvQNLV5Jpu.jpg", "/6ELCZlTA5zlZQvm52vuDDD5YlNY.jpg",
+  "/7WsyChQLEftFiDOVTGkv3hFpyyt.jpg", "/8Gxv8gSqFCzlqjeyTV4vv6pHua6.jpg", "/1X7l2bgUxmeBPujGiqHZrtyXdWI.jpg",
+  "/5a4JDuFwQ5psXlwOrV2Jkpif26U.jpg", "/iuFNOMDHjPjvftoVsoa5ylMlQVY.jpg", "/7RyHsO4yMXtOk1XIZTlzN2Z0saF.jpg",
+  "/7I6VUdPp6F7gJZ6pbA6YzW35VZDC.jpg", "/pB8BM7pdSp6B6Ih7QZ4DrRu3PmR.jpg", "/q6y0Go1tsY1WlCbGCRgs3tFQFdB.jpg",
+  "/7c9UVPPiRGXdwKzRReq0g525kva.jpg", "/8Vt6mWEReuy4OfCGauysjPHY5eF.jpg", "/vZloEGZJj6u6WfBTfLg8jXzJ9mL.jpg",
+  "/b0PlSFJbDwIFkTcMMFwYANJhIvS.jpg", "/4HodYYKEIsg8DIbNYrChk6L9Rvu.jpg", "/z2y57lt1dkbmjtcZ0NddoyDdYtm.jpg",
+  "/tmU7GEvjtQ1CExiqzh25C8T4Lru.jpg", "/kxfKsanpBz8rJFbB6NNZUQGK3CH.jpg", "/6oom5QYQ2yQTMJIbIY6G42TxzW3.jpg",
+  "/rSPw7tgCHPcbXtGSmx0AcAqI3R6.jpg", "/7dFZJ2ZJJdcmGyzD8Btp4nng1g9.jpg", "/f89U3ADr1oiB1s7GvdPuViIuQvV.jpg",
+  "/v4mhrC0CScIu7DlagWUF0kQB9bU.jpg", "/b9GoIakfbA4AW1J5fGn1OktloO.jpg", "/4Y1WNkd88JXAUdH99v4Y2D1oqF.jpg",
+  "/wPUmJMEdbmi9s9Jh4NaQ5zGv1mi.jpg", "/9GBhzXMFjgc77kNRm7hnF3jajj1.jpg", "/ldWIBNr6t0O7WikCwqIsAPjtn3N.jpg",
+  "/7gKI9pzHAJBgjfpnK8RNQp8Y3qV.jpg", "/2CAL2433ZeThihM7PFa5hJ1nart.jpg", "/or06FN3Dka5tukK1e9sl16pB3iy.jpg",
+  "/7IiTTgloJzvGI1TAYymCBfbLxF.jpg", "/1g0dhYtq4irTY1GPXvft6kZYLj4.jpg", "/sKCr78MPLbWCxjBOc3F3q1Wayqs.jpg",
+  "/7lTnXOg0im3NvBcrqmx3xoiBeIn.jpg", "/9PFonBhy4cQy7Jz20NpMygczOkv.jpg", "/AcoiTXW9MHA5PZPjXyFmfnhAPv.jpg",
+];
+
 // Cache module-level : chargé après authentification (proxy TMDB requiert une session)
 const lambdaCache = { paths: [] as string[], loading: false };
+
+/** Précharge le mur d'affiches (appeler depuis HomeScreen dès la connexion). */
+export function preloadPosterWallCache(): Promise<void> {
+  return loadLambdaCache();
+}
 
 async function loadLambdaCache() {
   if (lambdaCache.paths.length > 0 || lambdaCache.loading) return;
@@ -29,7 +51,7 @@ async function loadLambdaCache() {
       if (popular[i]) merged.push(popular[i]);
       if (topRated[i]) merged.push(topRated[i]);
     }
-    lambdaCache.paths = merged;
+    if (merged.length >= 2) lambdaCache.paths = merged;
   } finally {
     lambdaCache.loading = false;
   }
@@ -137,7 +159,9 @@ const TonightPickOverlay = ({
   }, [tonightLoading]);
 
   // Lambda TMDB : liste fixe popular+top_rated, toujours affichée (cohérence visuelle entre sessions)
-  const [lambdaPaths, setLambdaPaths] = useState<string[]>(lambdaCache.paths);
+  const [lambdaPaths, setLambdaPaths] = useState<string[]>(
+    () => (lambdaCache.paths.length >= 2 ? lambdaCache.paths : FALLBACK_POSTER_PATHS)
+  );
   useEffect(() => {
     void loadLambdaCache();
     if (lambdaCache.paths.length > 0) { setLambdaPaths(lambdaCache.paths); return; }
@@ -146,6 +170,14 @@ const TonightPickOverlay = ({
     }, 300);
     return () => clearInterval(poll);
   }, []);
+
+  // Recharger dès l'ouverture de l'overlay (révélation / surprise)
+  useEffect(() => {
+    if (!open) return;
+    void loadLambdaCache().then(() => {
+      if (lambdaCache.paths.length > 0) setLambdaPaths(lambdaCache.paths);
+    });
+  }, [open]);
 
   // Films adorés : persistés en localStorage au fil des interactions positives
   const LOVED_KEY = "pick_loved_posters";
@@ -165,10 +197,9 @@ const TonightPickOverlay = ({
     });
   }, [movie?.poster_path, interaction.primaryStatus]);
 
-  // Mur de fond : lambda fixe + films adorés intercalés (1 perso toutes les 4 lambdas)
-  const posterWallPaths = (() => {
-    const base = lambdaPaths.length >= 2 ? lambdaPaths : [];
-    if (base.length === 0) return [];
+  // Mur de fond : TMDB live ou fallback immédiat + films adorés intercalés
+  const posterWallPaths = useMemo(() => {
+    const base = lambdaPaths.length >= 2 ? lambdaPaths : FALLBACK_POSTER_PATHS;
     if (lovedPosters.length === 0) return base;
     const result: string[] = [];
     let li = 0;
@@ -177,9 +208,9 @@ const TonightPickOverlay = ({
       if ((i + 1) % 4 === 0 && li < lovedPosters.length) result.push(lovedPosters[li++]);
     }
     return result;
-  })();
+  }, [lambdaPaths, lovedPosters]);
 
-  // Mélange aléatoire stable (recalculé uniquement si le pool change)
+  // Mélange aléatoire stable (recalculé quand le pool change)
   const shuffledWallPaths = useMemo(() => {
     if (posterWallPaths.length === 0) return [];
     const arr = [...posterWallPaths];
@@ -188,7 +219,7 @@ const TonightPickOverlay = ({
       [arr[i], arr[j]] = [arr[j], arr[i]];
     }
     return arr;
-  }, [posterWallPaths.length]);
+  }, [posterWallPaths]);
 
   // Effet "scan" : un poster aléatoire s'illumine brièvement, comme s'il était identifié
   // Ref toujours à jour sur shuffledWallPaths — évite la closure stale dans setInterval
@@ -330,10 +361,10 @@ const TonightPickOverlay = ({
             {!movie && (
               <motion.div
                 key="stage1-loading"
-                initial={{ opacity: 0 }}
+                initial={{ opacity: instantCover ? 1 : 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                transition={{ duration: 0.8, ease: "easeOut" }}
+                transition={{ duration: instantCover ? 0 : 0.8, ease: "easeOut" }}
                 className="absolute inset-0 z-20 overflow-hidden"
               >
                 {/* Mur d'affiches : 4 colonnes défilantes à vitesses décalées */}

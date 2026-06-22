@@ -33,7 +33,7 @@ import QuickFilters, { type QuickFilterState, type ProfileDefaults } from "./Qui
 import TasteTrainer from "./TasteTrainer";
 import DiscoverySection from "./DiscoverySection";
 import HomeScreenChoiceModal, { type LaunchContext } from "./HomeScreenChoiceModal";
-import TonightPickOverlay from "./TonightPickOverlay";
+import TonightPickOverlay, { preloadPosterWallCache } from "./TonightPickOverlay";
 import FlipCardDetail from "./FlipCardDetail";
 import { type AmbianceMood } from "./HomeAmbianceSection";
 import homeBackground from "@/assets/home-background.png";
@@ -408,6 +408,11 @@ const HomeScreen = ({
       if (msgIntervalRef.current !== null) clearInterval(msgIntervalRef.current);
     };
   }, []);
+
+  // Précharge le mur d'affiches TMDB pour l'effet « waouh » dès l'accueil
+  useEffect(() => {
+    if (user) void preloadPosterWallCache();
+  }, [user]);
 
   // Bridge depuis DuoPage — variable module-level, zéro dépendance React Router state
   useEffect(() => {
