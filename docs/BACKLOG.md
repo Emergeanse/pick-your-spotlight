@@ -1,7 +1,78 @@
 # Backlog Pick — suivi équipe
 
 > **Référence unique** pour prioriser, assigner et suivre l'avancement alpha → beta.  
-> Dernière mise à jour : **22 juin 2026**
+> Dernière mise à jour : **22 juin 2026** (audit TNR + refonte onboarding)
+
+---
+
+## TNR & smoke — état et lancement
+
+> Guide détaillé : **[SMOKE_TESTS.md](SMOKE_TESTS.md)**
+
+### Ce qui existe aujourd'hui
+
+| Couche | Outil | Fichiers | État local (22/06) |
+|--------|-------|----------|---------------------|
+| **TNR unitaires** | Vitest | `event-reveal`, `recommendation-non-regression`, `movie-interactions` | **32/32 OK** |
+| **Smoke rapide** | build + Vitest + Playwright (`auth`) | `npm run test:smoke` | build + unit OK · E2E si Chromium installé |
+| **Smoke complet** | + 5 specs E2E | `npm run test:smoke:full` | requiert `.env.test` + Playwright |
+| **CI GitHub** | Actions sur `main` + PR | `.github/workflows/ci.yml` | unit + tsc sur PR · E2E sur push `main` |
+
+**E2E Playwright (29 scénarios)** : `auth`, `navigation`, `pipeline`, `reveal`, `cinema`, `soirees` — mocks edge functions pour pipeline/révéler.
+
+**Non automatisé** : onboarding initiatique (refonte juin), duo/invite, TMDB proxy prod, création soirée bout-en-bout.
+
+### Lancer les premiers TNR (ordre recommandé)
+
+**Étape 0 — une fois par machine**
+
+```powershell
+cd pick-your-spotlight
+npm ci
+npx playwright install chromium
+```
+
+**Étape 1 — TNR unitaires (sans réseau, ~10 s)**
+
+```powershell
+npm run test:unit
+```
+
+Couvre : file sessionStorage « Révéler », exclusion films déjà vus, états feedback/watchlist.
+
+**Étape 2 — Smoke minimal (sans compte test, ~2 min)**
+
+```powershell
+npm run test:smoke
+```
+
+Couvre : `vite build` + `event-reveal` + garde routes `/app/*` → auth (4 tests publics).
+
+**Étape 3 — Smoke E2E complet (avec compte test, ~5–10 min)**
+
+```powershell
+cp .env.test.example .env.test
+# Renseigner E2E_TEST_EMAIL / E2E_TEST_PASSWORD (ex. testpick@gmail.com)
+# Créer le compte si besoin : node scripts/create-test-user.mjs
+
+npm run test:smoke:full
+# ou : .\scripts\smoke-test.ps1 -Full
+```
+
+**Étape 4 — Checklist manuelle Sprint A** (§ [Checklist smoke test](#checklist-smoke-test-03)) — onboarding, soirée + invite, edge functions prod.
+
+### Prérequis CI (secrets GitHub)
+
+| Secret | Usage |
+|--------|--------|
+| `E2E_TEST_EMAIL` | Login E2E sur push `main` |
+| `E2E_TEST_PASSWORD` | Idem |
+
+Sans secrets → job E2E CI exécute les tests mais **skip** la majorité (guard `E2E_TEST_EMAIL`).
+
+### Migrations Supabase (onboarding — manuel prod)
+
+Exécuter sur Supabase si pas déjà fait : `onboarding_films_progress`, `onboarding_films_liked_ids`, `onboarding_films_proposed_ids` (fichiers `supabase/migrations/2026062214*.sql`).
 
 ---
 
@@ -52,14 +123,14 @@ Valider que l'app alpha est utilisable de bout en bout : smoke tests OK, edge fu
 | # | ID | Tâche | Statut | Action |
 |---|-----|--------|--------|--------|
 | 1 | 0.4 | `.env` hors Git | `done` | — |
-| 2 | 0.3 | Smoke tests | `in_progress` | `npm run test:smoke` + [SMOKE_TESTS.md](SMOKE_TESTS.md) |
+| 2 | 0.3 | Smoke tests | `in_progress` | TNR unit OK · smoke auto partiel · checklist manuelle restante → [TNR & smoke](#tnr--smoke--état-et-lancement) |
 | 3 | 0.2 | Déployer edge functions | `todo` | Seulement si prod ≠ code local · `deploy-edge-functions.ps1` |
 | 4 | 1.11 | README projet | `todo` | Install, `.env`, commandes dev/test |
 
 ### Definition of done — Sprint A
 
-- [ ] `npm run build` OK
-- [ ] `npm run test:smoke` OK (ou documenté pourquoi skip E2E)
+- [x] `npm run build` OK
+- [ ] `npm run test:smoke` OK (build + unit OK · E2E = `npx playwright install chromium`)
 - [ ] Checklist manuelle 0.3 cochée (au moins une passe équipe)
 - [ ] README à jour (1.11)
 
@@ -67,7 +138,7 @@ Valider que l'app alpha est utilisable de bout en bout : smoke tests OK, edge fu
 
 | Sprint | Thème | Tâches |
 |--------|-------|--------|
-| B | Testeurs heureux | 1.3–1.6, 1.9, **1.16** |
+| B | Testeurs heureux | 1.3–1.6, **1.16**, seed compte E2E |
 | C | Social fiable | 1.7–1.8, 1.10, 1.12–1.13 |
 
 > **En parallèle alpha** (hors clôture Sprint A) : **1.6** soirées, correctifs UX — déjà **1.14** / **1.15** faits.
@@ -101,11 +172,17 @@ Valider que l'app alpha est utilisable de bout en bout : smoke tests OK, edge fu
 
 ```powershell
 cd pick-your-spotlight
+npm ci
+npx playwright install chromium          # une fois par machine
+
+npm run test:unit                        # TNR rapides (32 tests)
+npm run test:smoke                       # build + unit + auth E2E public
+# npm run test:smoke:full                # + pipeline, reveal, cinema, soirees (nécessite .env.test)
+
 npx supabase login
 npx supabase link --project-ref lrjhpflvkrebbngfnaif
-.\scripts\deploy-edge-functions.ps1   # optionnel en alpha si prod déjà à jour
-npm run test:smoke
-npm run dev                           # puis checklist manuelle (SMOKE_TESTS.md)
+.\scripts\deploy-edge-functions.ps1      # optionnel en alpha si prod déjà à jour
+npm run dev                              # puis checklist manuelle (SMOKE_TESTS.md)
 ```
 
 > Secret `TMDB_API_KEY` : **pas requis en alpha** — traiter avant l'ouverture aux beta testeurs (**1.16**).
@@ -122,13 +199,13 @@ npm run dev                           # puis checklist manuelle (SMOKE_TESTS.md)
 | 1.2 | Assouplir limites freemium en alpha | S | `done` | — | Idem — paywall « Bientôt » encore visible sur `/app/pick-plus` |
 | 1.3 | Marquer explicitement « Bientôt » (groupes Duo, options soirée) | S | `todo` | — | `DuoPage`, `CreateEventPage`, `HomeScreenChoiceModal` |
 | 1.4 | Messages d'erreur clairs si TMDB / edge function down | M | `todo` | — | `tmdb-proxy-client.ts`, écrans reco |
-| 1.5 | Rappeler / forcer onboarding incomplet | M | `todo` | — | `profiles.onboarding_completed` |
+| 1.5 | Rappeler / forcer onboarding incomplet | M | `in_progress` | — | Parcours initiatique refondu (8 étapes) · redirect partiel depuis `/app` · E2E absent |
 
 ### Soirées & social
 
 | ID | Tâche | Effort | Statut | Owner | Notes |
 |----|--------|--------|--------|-------|-------|
-| 1.6 | Stabiliser soirées bout-en-bout (création → invite → révélation) | L | `in_progress` | — | Tests E2E : `soirees.spec.ts`, `reveal.spec.ts` |
+| 1.6 | Stabiliser soirées bout-en-bout (création → invite → révélation) | L | `in_progress` | — | E2E `soirees.spec.ts`, `reveal.spec.ts` · **seed soirée non révélée** sur compte test |
 | 1.14 | Révéler sans flash accueil (overlay instantané) | S | `done` | — | 22/06 — `TonightPickOverlay`, `Index`, `HomeScreen` |
 | 1.15 | Intent soirée complet (genres, mood, mediaType → pipeline) | S | `done` | — | 22/06 — `RevealIntent`, `EventDetailPage`, `runRevealPipeline` |
 | 1.7 | Documenter + tester flow Duo | M | `todo` | — | `/app/duo`, `/join-duo/:code` |
@@ -139,17 +216,24 @@ npm run dev                           # puis checklist manuelle (SMOKE_TESTS.md)
 | ID | Tâche | Effort | Statut | Owner | Notes |
 |----|--------|--------|--------|-------|-------|
 | 1.16 | Secret `TMDB_API_KEY` Supabase + rotation clé projet | S | `todo` | — | **Avant beta testeurs externes** — `npx supabase secrets set TMDB_API_KEY=...` · lien **2.2** |
-| 1.9 | CI GitHub Actions : lint + build + Vitest | M | `todo` | — | Pas de `.github/workflows` aujourd'hui |
-| 1.10 | Étendre E2E Playwright (reco, onboarding) | M | `todo` | — | Voir matrice dans `docs/SMOKE_TESTS.md` |
+| 1.9 | CI GitHub Actions : Vitest + tsc + E2E Playwright | M | `done` | — | `.github/workflows/ci.yml` · unit + lint sur PR · E2E sur push `main` · secrets `E2E_TEST_*` à vérifier |
+| 1.10 | E2E Playwright — onboarding initiatique | M | `todo` | — | Films (10 likes, refresh, pause), acteurs, réalisateurs · voir [SMOKE_TESTS.md](SMOKE_TESTS.md) §6 |
+| 1.10b | E2E Playwright — création soirée complète | M | `todo` | — | Wizard 3 étapes + invite · complète `soirees.spec.ts` |
 | 1.11 | README projet (install, `.env`, secrets Supabase) | S | `todo` | — | Remplacer template Lovable |
 | 1.12 | Retirer `ADMIN_EMAILS` du client → rôle serveur uniquement | S | `todo` | — | `hooks/use-admin.ts` |
 | 1.13 | Restreindre `find-user-by-email` (amis + rate limit) | M | `todo` | — | Edge function |
 
-### Tests connus (hors backlog actif)
+### Tests — état connu
 
-- `movie-interactions.test.tsx` : **8 tests en échec** (juin 2026) — à traiter avant de fiabiliser la CI (1.9).
+| Suite | Tests | Statut | Inclus smoke ? |
+|-------|-------|--------|----------------|
+| `event-reveal.test.ts` | 11 | ✅ | Oui (`test:smoke`) |
+| `recommendation-non-regression.test.ts` | 12 | ✅ | Non (via `test:unit`) |
+| `movie-interactions.test.tsx` | 9 | ✅ | Non (via `test:unit`) |
+| E2E Playwright | 29 | ⚠️ credentials + Playwright | Partiel (`test:smoke` = 4 publics) |
 
----
+**Dette** : `reveal.spec.ts` / `soirees.spec.ts` skip souvent si compte test sans soirée adaptée → tâche seed (1.6).
+
 
 ## P2 — Avant beta publique
 
@@ -184,6 +268,7 @@ npm run dev                           # puis checklist manuelle (SMOKE_TESTS.md)
 
 | Zone | Maturité | Routes / fichiers clés |
 |------|----------|------------------------|
+| Onboarding initiatique | Alpha avancée | `/onboarding`, `OnboardingFilmTrainer`, migrations `onboarding_films_*` |
 | Reco personnalisée | Alpha avancée | `/app`, `surprise-personalized`, `HomeScreen` |
 | Profil & bibliothèque | Beta | `/app/profile`, `/app/my-cinema`, `taste-engine.ts` |
 | Soirées | Beta | `/app/soirees`, `CreateEventPage`, `EventDetailPage` |
@@ -199,6 +284,8 @@ npm run dev                           # puis checklist manuelle (SMOKE_TESTS.md)
 
 | Date | Qui | Changement |
 |------|-----|------------|
+| 2026-06-22 | — | Audit TNR : 32 tests Vitest OK · CI documentée (1.9 `done`) · section [TNR & smoke](#tnr--smoke--état-et-lancement) · 1.10 scindé (onboarding / soirée) |
+| 2026-06-22 | — | Refonte onboarding initiatique poussée sur `main` (films, acteurs, pools élargis, migrations SQL) |
 | 2026-06-22 | — | Sprint A recentré : 0.3 → 0.2 → 1.11 · 0.1 hors scope alpha |
 | 2026-06-22 | — | Création backlog + audit fonctionnel |
 | 2026-06-22 | — | Correctifs sécurité P0 (TMDB proxy, edge functions, debugData, `.env`) |
@@ -211,8 +298,10 @@ npm run dev                           # puis checklist manuelle (SMOKE_TESTS.md)
 
 ## Prochaine action recommandée — Sprint A
 
-1. **0.3** — Lancer `npm run test:smoke`, puis checklist manuelle ([SMOKE_TESTS.md](SMOKE_TESTS.md))
-2. **0.2** — Déployer edge functions si besoin (comparer prod / repo)
-3. **1.11** — README install + commandes dev/test
+1. **TNR unit** — `npm run test:unit` (32 tests, ~10 s)
+2. **Smoke auto** — `npx playwright install chromium` puis `npm run test:smoke`
+3. **0.3 manuel** — checklist §3 ([SMOKE_TESTS.md](SMOKE_TESTS.md)), dont onboarding initiatique
+4. **0.2** — Déployer edge functions + migrations onboarding si prod ≠ repo
+5. **1.11** — README install + commandes dev/test
 
 *Secret TMDB : **1.16**, uniquement avant beta testeurs.*

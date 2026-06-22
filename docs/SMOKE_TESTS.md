@@ -69,9 +69,10 @@ npm run test:smoke:full
 | Couche | Fichiers | Credentials |
 |--------|----------|-------------|
 | Build | `vite build` | — |
-| Unit | `event-reveal.test.ts` (file sessionStorage révélation) | — |
+| Unit | `event-reveal.test.ts` (11 tests) | — |
 | E2E public | `auth.spec.ts` (garde `/app` → auth) | Non |
-| E2E auth | `auth`, `navigation` (si `E2E_TEST_EMAIL`) | Oui |
+
+> Les **32 tests Vitest** complets : `npm run test:unit` (ajoute reco + movie-interactions).
 
 ### Ce que couvre `test:smoke:full`
 
@@ -179,7 +180,7 @@ Duo / invite ami    │  —   │    —     │    —     │   ✅   │
 | Fiche film vide | TMDB / proxy down | Vérifier prod ; en alpha pas de changement secret (**1.16** si beta) |
 | `surprise-personalized` 500 | Functions pas déployées (0.2) | `deploy-edge-functions.ps1` |
 | Navigateurs Playwright absents | Première install | `npx playwright install chromium` |
-| Tests `movie-interactions` en échec | Dette connue | Hors smoke — traiter avant CI 1.9 |
+| Tests `movie-interactions` en échec | Dette résolue (juin 2026) | Inclus dans `npm run test:unit` — 9/9 OK |
 
 ---
 
@@ -187,11 +188,12 @@ Duo / invite ami    │  —   │    —     │    —     │   ✅   │
 
 | ID | Amélioration |
 |----|--------------|
-| 0.3 | Exécuter checklist manuelle |
-| 1.9 | CI : `test:smoke` sur chaque PR |
-| 1.10 | E2E onboarding + création soirée complète |
+| 0.3 | Exécuter checklist manuelle (automatisé partiellement OK) |
+| 1.9 | CI GitHub — **done** (`.github/workflows/ci.yml`) |
+| 1.10 | E2E onboarding initiatique (films, acteurs, réalisateurs) |
+| 1.10b | E2E création soirée complète |
+| 1.6 | Seed compte test (soirée non révélée pour `reveal.spec.ts`) |
 | 1.16 | Secret TMDB avant beta testeurs externes |
-| 1.6 | Stabiliser données test (seed soirée dédiée) |
 
 ---
 
