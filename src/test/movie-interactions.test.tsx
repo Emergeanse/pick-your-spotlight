@@ -53,27 +53,30 @@ vi.mock("@/integrations/supabase/client", () => {
   };
 });
 
-vi.mock("@/lib/catalog", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@/lib/catalog")>();
-  return {
-    ...actual, // préserve normalizeCatalogMediaType, catalogLookupKey, etc.
-    // getInteractionStateBatch appelle getCatalogItemIdsByLookup (clé = "movie:{tmdbId}")
-    getCatalogItemIdsByLookup: async (lookups: Array<{ tmdbId: number; mediaType?: string }>) => {
-      const out: Record<string, string> = {};
-      for (const l of lookups) {
-        const mediaType = l.mediaType ?? "movie";
-        out[`${mediaType}:${l.tmdbId}`] = `item-${l.tmdbId}`;
-      }
-      return out;
-    },
-    getCatalogItemIds: async (tmdbIds: number[]) => {
-      const out: Record<number, string> = {};
-      for (const id of tmdbIds) out[id] = `item-${id}`;
-      return out;
-    },
-    getOrCreateCatalogItem: async () => "item-x",
-  };
-});
+vi.mock("@/lib/catalog", () => ({
+  // Fonctions pures — copiées depuis catalog.ts
+  normalizeCatalogMediaType: (mt?: string | null) =>
+    mt === "tv" || mt === "person" ? mt : "movie",
+  catalogLookupKey: (tmdbId: number, mediaType = "movie") =>
+    `${tmdbId}:${mediaType}`,
+  inferCatalogMediaType: () => "movie",
+
+  // getInteractionStateBatch appelle getCatalogItemIdsByLookup (clé = "mediaType:tmdbId")
+  getCatalogItemIdsByLookup: async (lookups: Array<{ tmdbId: number; mediaType?: string }>) => {
+    const out: Record<string, string> = {};
+    for (const l of lookups) {
+      const mt = l.mediaType ?? "movie";
+      out[`${l.tmdbId}:${mt}`] = `item-${l.tmdbId}`;
+    }
+    return out;
+  },
+  getCatalogItemIds: async (tmdbIds: number[]) => {
+    const out: Record<number, string> = {};
+    for (const id of tmdbIds) out[id] = `item-${id}`;
+    return out;
+  },
+  getOrCreateCatalogItem: async () => "item-x",
+}));
 
 vi.mock("@/hooks/use-auth", () => ({
   useAuth: () => ({ user: { id: "user-1" } }),
