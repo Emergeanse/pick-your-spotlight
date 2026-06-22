@@ -120,8 +120,8 @@ const MOOD_CONFIGS: Record<AmbianceMood, MoodConfig> = {
   },
 };
 
-type QuickReco = { id: number; title: string; poster_path: string | null; vote_average?: number; detail?: MovieDetail };
-const QUICK_RECO_KEY = "pick_last_reco_v1";
+type QuickReco = { id: number; title: string; poster_path: string | null; vote_average?: number; media_type?: string; detail?: MovieDetail };
+const QUICK_RECO_KEY = "pick_last_reco_v2";
 
 const extractTmdbIdsFromFeedbackRows = (rows: any[]): number[] =>
   rows.map((row) => row?.catalog_items?.tmdb_id).filter((id): id is number => typeof id === "number" && id > 0);
@@ -707,6 +707,7 @@ const HomeScreen = ({
         title: (m.title || (m as any).name || ""),
         poster_path: m.poster_path || null,
         vote_average: m.vote_average,
+        media_type: m.media_type || (m.first_air_date ? "tv" : "movie"),
         detail: m,
       }));
       localStorage.setItem(QUICK_RECO_KEY, JSON.stringify(toSave));
@@ -1934,7 +1935,7 @@ const HomeScreen = ({
       for (const q of slice) {
         const cached = q.detail ?? chatMoviesPool?.find((m) => m.id === q.id);
         if (cached) pool.push(cached);
-        else pool.push(await getMovieDetails(q.id, "movie"));
+        else pool.push(await getMovieDetails(q.id, q.media_type || "movie"));
       }
       const safeIndex = Math.min(startIndex, pool.length - 1);
       setHomeBrowsePool(pool);
