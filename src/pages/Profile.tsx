@@ -3,11 +3,21 @@ import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "@/hooks/use-toast";
 import {
   Check, ChevronDown, ChevronRight, LogOut, Loader2, Info, Camera, Pencil, Shield,
-  ArrowLeft, Sparkles, Brain, Film, Tv, Trophy, Eye, Heart, Bookmark, TrendingUp, Users,
+  ArrowLeft, Sparkles, Brain, Film, Tv, Trophy, Eye, Heart, Bookmark, TrendingUp, Users, RotateCcw,
 } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/use-auth";
@@ -18,6 +28,7 @@ import { ALL_PLATFORMS } from "@/lib/platforms";
 import { getEngagementData, type EngagementData } from "@/lib/engagement";
 import { getLikedMovies } from "@/lib/liked-movies";
 import { getMyPreferences } from "@/lib/preferences";
+import { resetProfileForOnboarding, onboardingErrorMessage } from "@/lib/onboarding-progress";
 import CinemaDNA from "@/components/pick/CinemaDNA";
 import TasteTrainer from "@/components/pick/TasteTrainer";
 import GenrePreferences from "@/components/pick/GenrePreferences";
@@ -89,11 +100,15 @@ function computeDetailedConfidence(data: {
 }) {
   const { totalRecos, acceptedRecos, likedCount, watchlistCount, streakCount, peopleEvaluated, genresSelected } = data;
   const totalSignals = totalRecos + likedCount + watchlistCount;
-  const volumeScore = Math.min(Math.sqrt(totalSignals) * 3.5, 25);
+  // volumeScore : sature à ~200 signaux (sqrt(200)*1.77 ≈ 25)
+  const volumeScore = Math.min(Math.sqrt(totalSignals) * 1.77, 25);
   const acceptRate = totalRecos > 0 ? acceptedRecos / totalRecos : 0;
-  const acceptScore = Math.min(acceptRate * 25, 25);
+  // acceptScore : pondéré par le volume — peu de données = score partiel même à 100%
+  const acceptScore = Math.min(acceptRate * Math.min(totalRecos / 20, 1) * 25, 25);
   const streakScore = Math.min(streakCount * 2, 10);
-  const trainingScore = Math.min(likedCount * 1.5, 15);
+  // trainingScore : sature à 30 likes (30 * 0.5 = 15)
+  const trainingScore = Math.min(likedCount * 0.5, 15);
+  // peopleScore : sature à ~25 personnes (sqrt(25)*3 = 15)
   const peopleScore = Math.min(Math.sqrt(peopleEvaluated) * 3, 15);
   const genresScore = Math.min(genresSelected, 10);
   const total = Math.round(volumeScore + acceptScore + streakScore + trainingScore + peopleScore + genresScore);
@@ -138,6 +153,30 @@ const Profile = () => {
   const [seedLang, setSeedLang] = useState("fr");
   const [seedGenreId, setSeedGenreId] = useState<number | null>(null);
   const [seedPageStart, setSeedPageStart] = useState(1);
+  const [resetDialogOpen, setResetDialogOpen] = useState(false);
+  const [resettingProfile, setResettingProfile] = useState(false);
+
+  const handleResetOnboarding = async () => {
+    setResettingProfile(true);
+    try {
+      await resetProfileForOnboarding();
+      setResetDialogOpen(false);
+      toast({
+        title: "Profil réinitialisé",
+        description: "Tu vas repasser par le parcours initiatique.",
+      });
+      navigate("/onboarding", { replace: true });
+    } catch (e) {
+      console.error(e);
+      toast({
+        title: "Réinitialisation impossible",
+        description: onboardingErrorMessage(e),
+        variant: "destructive",
+      });
+    } finally {
+      setResettingProfile(false);
+    }
+  };
 
   const fetchDbCount = async () => {
     const { count } = await supabase.from("movie_embeddings").select("*", { count: "exact", head: true });
@@ -998,6 +1037,13 @@ const Profile = () => {
                 </div>
               </>
             )}
+            <Button
+              variant="ghost"
+              onClick={() => setResetDialogOpen(true)}
+              className="justify-start text-foreground/45 hover:text-destructive text-xs font-sans gap-2 h-10"
+            >
+              <RotateCcw className="w-3.5 h-3.5" /> Réinitialiser mon parcours initiatique
+            </Button>
             <Button variant="ghost" onClick={async () => { await signOut(); navigate("/"); }} className="justify-start text-foreground/45 hover:text-foreground text-xs font-sans gap-2 h-10">
               <LogOut className="w-3.5 h-3.5" /> Déconnexion
             </Button>
@@ -1005,6 +1051,42 @@ const Profile = () => {
         </section>
 
       </div>
+
+      <AlertDialog open={resetDialogOpen} onOpenChange={setResetDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Réinitialiser le parcours initiatique ?</AlertDialogTitle>
+            <AlertDialogDescription className="text-left space-y-2">
+              <span className="block">
+                Tes genres, plateformes et acteurs/réalisateurs choisis à l&apos;initiation seront effacés.
+                Tu repasseras par tout le parcours (films, Solo/Duo, Soirées).
+              </span>
+              <span className="block text-foreground/70">
+                Tes films likés, ta watchlist et ton historique ne sont pas supprimés.
+              </span>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={resettingProfile}>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={resettingProfile}
+              onClick={(e) => {
+                e.preventDefault();
+                void handleResetOnboarding();
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {resettingProfile ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" /> Réinitialisation…
+                </>
+              ) : (
+                "Réinitialiser"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Save bar */}
       {hasChanges && (
