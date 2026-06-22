@@ -25,6 +25,29 @@ const FALLBACK_POSTER_PATHS = [
   "/7lTnXOg0im3NvBcrqmx3xoiBeIn.jpg", "/9PFonBhy4cQy7Jz20NpMygczOkv.jpg", "/AcoiTXW9MHA5PZPjXyFmfnhAPv.jpg",
 ];
 
+/** Défilement GPU (translate3d) — plus fluide que Framer Motion % sur des dizaines d'images */
+const WALL_SCROLL_KEYFRAMES = `
+@keyframes pick-wall-scroll-up {
+  from { transform: translate3d(0, 0, 0); }
+  to   { transform: translate3d(0, -50%, 0); }
+}
+@keyframes pick-wall-scroll-down {
+  from { transform: translate3d(0, -50%, 0); }
+  to   { transform: translate3d(0, 0, 0); }
+}
+.pick-wall-col {
+  will-change: transform;
+  backface-visibility: hidden;
+  transform: translateZ(0);
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+.pick-wall-col-up   { animation-name: pick-wall-scroll-up; }
+.pick-wall-col-down { animation-name: pick-wall-scroll-down; }
+`;
+
+const WALL_COLUMN_SECONDS = [28, 22, 32, 25] as const;
+
 // Cache module-level : chargé après authentification (proxy TMDB requiert une session)
 const lambdaCache = { paths: [] as string[], loading: false };
 
@@ -149,12 +172,14 @@ const TonightPickOverlay = ({
   // canReveal = les textes sont prêts ET au moins 2.2s se sont écoulées depuis l'apparition du film
   const canReveal = isTextsReady && localReady;
 
-  // Temps écoulé pendant le chargement — pour l'effet crescendo sur le mur d'affiches
+  // Temps écoulé pendant le chargement — voile progressif (throttle pour limiter les repaints)
   const [loadingElapsed, setLoadingElapsed] = useState(0);
   useEffect(() => {
     if (!tonightLoading) { setLoadingElapsed(0); return; }
     const start = Date.now();
-    const id = setInterval(() => setLoadingElapsed((Date.now() - start) / 1000), 150);
+    const tick = () => setLoadingElapsed((Date.now() - start) / 1000);
+    tick();
+    const id = setInterval(tick, 400);
     return () => clearInterval(id);
   }, [tonightLoading]);
 
@@ -210,16 +235,36 @@ const TonightPickOverlay = ({
     return result;
   }, [lambdaPaths, lovedPosters]);
 
-  // Mélange aléatoire stable (recalculé quand le pool change)
-  const shuffledWallPaths = useMemo(() => {
-    if (posterWallPaths.length === 0) return [];
+  // Mélange stable pour la session d'overlay (évite un saut si le pool TMDB arrive en cours de route)
+  const [sessionWallPaths, setSessionWallPaths] = useState<string[]>([]);
+  useEffect(() => {
+    if (!open) {
+      setSessionWallPaths([]);
+      return;
+    }
+    if (sessionWallPaths.length >= 2) return;
+    if (posterWallPaths.length < 2) return;
     const arr = [...posterWallPaths];
     for (let i = arr.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [arr[i], arr[j]] = [arr[j], arr[i]];
     }
-    return arr;
-  }, [posterWallPaths]);
+    setSessionWallPaths(arr);
+  }, [open, posterWallPaths, sessionWallPaths.length]);
+
+  const shuffledWallPaths = sessionWallPaths.length >= 2 ? sessionWallPaths : posterWallPaths;
+
+  // Précharge les affiches du mur (évite les saccades au scroll)
+  useEffect(() => {
+    if (!open || shuffledWallPaths.length < 2) return;
+    shuffledWallPaths.slice(0, 16).forEach((path) => {
+      const src = getPosterUrl(path, "w154");
+      if (!src) return;
+      const img = new Image();
+      img.decoding = "async";
+      img.src = src;
+    });
+  }, [open, shuffledWallPaths]);
 
   // Effet "scan" : un poster aléatoire s'illumine brièvement, comme s'il était identifié
   // Ref toujours à jour sur shuffledWallPaths — évite la closure stale dans setInterval
@@ -254,7 +299,7 @@ const TonightPickOverlay = ({
       clearFlash = setTimeout(() => setHighlightedPath(null), 420);
     };
     flash();
-    const interval = setInterval(flash, 800);
+    const interval = setInterval(flash, 1100);
     return () => { clearInterval(interval); clearTimeout(clearFlash); };
   }, [tonightLoading]);
 
@@ -345,6 +390,10 @@ const TonightPickOverlay = ({
   })();
 
   const instantCover = tonightLoading && !movie;
+  const wallProgress = Math.min(loadingElapsed / 8, 1);
+  const wallVeilOpacity = 0.78 - wallProgress * 0.42;
+  const wallSaturation = 0.65 + wallProgress * 0.55;
+  const wallBrightness = 0.58 + wallProgress * 0.48;
 
   return (
     <AnimatePresence>
@@ -367,75 +416,70 @@ const TonightPickOverlay = ({
                 transition={{ duration: instantCover ? 0 : 0.8, ease: "easeOut" }}
                 className="absolute inset-0 z-20 overflow-hidden"
               >
-                {/* Mur d'affiches : 4 colonnes défilantes à vitesses décalées */}
-                {shuffledWallPaths.length >= 2 && (() => {
-                  // Filtre progressif : sombre+gris au départ → lumineux+coloré au fil du temps
-                  const p = Math.min(loadingElapsed / 8, 1); // 0→1 sur 8 secondes
-                  const wallOpacity   = 0.28 + p * 0.42;
-                  const wallGrayscale = Math.round(55 - p * 50);
-                  const wallBlur      = (1.5 - p * 1.5).toFixed(1);
-                  const wallBright    = (0.65 + p * 0.55).toFixed(2);
-                  const wallContrast  = (0.80 + p * 0.40).toFixed(2);
-                  // Filtre normal appliqué sur chaque image (pas sur le conteneur)
-                  const normalFilter  = `grayscale(${wallGrayscale}%) blur(${wallBlur}px) brightness(${wallBright}) contrast(${wallContrast})`;
-                  // Filtre "identifié" : pleine couleur + lumineux + halo violet
-                  const spotFilter    = spotFilterRef.current;
-                  return (
-                    <div
-                      className="absolute inset-0 flex gap-1 overflow-hidden"
-                      style={{ opacity: wallOpacity, transition: "opacity 0.4s" }}
-                    >
-                      {[0, 1, 2, 3].map((ci) => {
-                        const perCol = Math.max(8, Math.ceil(shuffledWallPaths.length / 4));
-                        const items = Array.from({ length: perCol }, (_, i) =>
-                          shuffledWallPaths[(ci + i * 4) % shuffledWallPaths.length]
-                        );
-                        const col = [...items, ...items];
-                        const dur = [7, 5, 8.5, 6][ci];
-                        const goDown = ci % 2 === 1;
-                        const phaseDelay = -(dur * ci * 0.25);
-                        return (
-                          <motion.div
-                            key={ci}
-                            className="flex-1 flex flex-col gap-1"
-                            style={{ willChange: "transform" }}
-                            initial={{ y: goDown ? "-50%" : "0%" }}
-                            animate={{ y: goDown ? "0%" : "-50%" }}
-                            transition={{ duration: dur, repeat: Infinity, repeatType: "loop", ease: "linear", delay: phaseDelay }}
-                          >
-                            {col.map((path, pi) => {
-                              const isSpot = path === highlightedPath;
-                              return (
-                                <img
-                                  key={pi}
-                                  src={getPosterUrl(path, "w185") || ""}
-                                  alt=""
-                                  draggable={false}
-                                  className="w-full rounded-md object-cover flex-shrink-0 select-none"
-                                  style={{
-                                    aspectRatio: "2/3",
-                                    filter: isSpot ? spotFilter : normalFilter,
-                                    transform: isSpot ? "scale(1.06)" : "scale(1)",
-                                    transition: "filter 0.12s ease-out, transform 0.12s ease-out",
-                                    position: "relative",
-                                    zIndex: isSpot ? 2 : 0,
-                                  }}
-                                />
-                              );
-                            })}
-                          </motion.div>
-                        );
-                      })}
-                    </div>
-                  );
-                })()}
+                <style>{WALL_SCROLL_KEYFRAMES}</style>
+                {/* Mur d'affiches : 4 colonnes CSS GPU + voile progressif (1 filtre global, pas par image) */}
+                {shuffledWallPaths.length >= 2 && (
+                  <div
+                    className="absolute inset-0 flex gap-1 overflow-hidden"
+                    style={{
+                      opacity: 0.32 + wallProgress * 0.48,
+                      filter: `saturate(${wallSaturation}) brightness(${wallBrightness})`,
+                      transition: "opacity 0.5s ease-out, filter 0.5s ease-out",
+                      contain: "layout style paint",
+                    }}
+                  >
+                    {[0, 1, 2, 3].map((ci) => {
+                      const perCol = Math.max(8, Math.ceil(shuffledWallPaths.length / 4));
+                      const items = Array.from({ length: perCol }, (_, i) =>
+                        shuffledWallPaths[(ci + i * 4) % shuffledWallPaths.length]
+                      );
+                      const col = [...items, ...items];
+                      const dur = WALL_COLUMN_SECONDS[ci];
+                      const goDown = ci % 2 === 1;
+                      const phaseDelay = -(dur * ci * 0.22);
+                      return (
+                        <div
+                          key={ci}
+                          className={`pick-wall-col flex-1 flex flex-col gap-1 ${goDown ? "pick-wall-col-down" : "pick-wall-col-up"}`}
+                          style={{
+                            animationDuration: `${dur}s`,
+                            animationDelay: `${phaseDelay}s`,
+                          }}
+                        >
+                          {col.map((path, pi) => {
+                            const isSpot = path === highlightedPath;
+                            return (
+                              <img
+                                key={`${path}-${pi}`}
+                                src={getPosterUrl(path, "w154") || ""}
+                                alt=""
+                                draggable={false}
+                                loading="eager"
+                                decoding="async"
+                                className="w-full rounded-md object-cover flex-shrink-0 select-none"
+                                style={{
+                                  aspectRatio: "2/3",
+                                  transform: isSpot ? "scale(1.05) translateZ(0)" : "translateZ(0)",
+                                  filter: isSpot ? spotFilterRef.current : undefined,
+                                  transition: isSpot ? "filter 0.15s ease-out, transform 0.15s ease-out" : undefined,
+                                  position: "relative",
+                                  zIndex: isSpot ? 2 : 0,
+                                }}
+                              />
+                            );
+                          })}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
 
-                {/* Voile sombre par-dessus les posters (ou fond opaque si pas de posters) */}
+                {/* Voile sombre — s'éclaircit progressivement (léger, pas de blur par affiche) */}
                 <div
-                  className="absolute inset-0"
+                  className="absolute inset-0 pointer-events-none transition-opacity duration-500"
                   style={{
                     background: posterWallPaths.length >= 2
-                      ? "rgba(0,0,0,0.62)"
+                      ? `rgba(0,0,0,${wallVeilOpacity})`
                       : "hsl(var(--background))",
                   }}
                 />
