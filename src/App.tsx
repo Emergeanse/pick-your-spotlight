@@ -31,6 +31,7 @@ import InvitePage from "./pages/InvitePage.tsx";
 import CreateEventPage from "./pages/CreateEventPage.tsx";
 import EventDetailPage from "./pages/EventDetailPage.tsx";
 import MatchPage from "./pages/MatchPage.tsx";
+import TrustPage from "./pages/Trust.tsx";
 
 const queryClient = new QueryClient();
 
