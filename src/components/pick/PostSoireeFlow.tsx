@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, ArrowRight, Send, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -59,6 +59,8 @@ const PHRASES: Record<FilmRating, string[]> = {
   ],
 };
 
+type Friend = { id: string; name: string; avatarUrl?: string | null };
+
 export default function PostSoireeFlow({ event, onClose, onComplete }: Props) {
   const { user } = useAuth();
   const [step, setStep]               = useState<1 | 2 | 3>(1);
@@ -68,8 +70,42 @@ export default function PostSoireeFlow({ event, onClose, onComplete }: Props) {
   const [recommended,  setRecommended]  = useState<Set<string>>(new Set());
   const [saving,       setSaving]       = useState(false);
   const [done,         setDone]         = useState(false);
+  const [friends,      setFriends]      = useState<Friend[]>([]);
+  const [loadingFriends, setLoadingFriends] = useState(false);
 
   const posterSrc = event.filmPoster ? getPosterUrl(event.filmPoster, "w185") : null;
+
+  // Charge tous les amis acceptés dès le montage
+  useEffect(() => {
+    if (!user) return;
+    setLoadingFriends(true);
+    supabase
+      .from("friendships" as any)
+      .select("requester_id, addressee_id, status")
+      .or(`requester_id.eq.${user.id},addressee_id.eq.${user.id}`)
+      .eq("status", "accepted")
+      .then(async ({ data: friendships }) => {
+        if (!friendships?.length) { setLoadingFriends(false); return; }
+        const otherIds = (friendships as any[]).map((f: any) =>
+          f.requester_id === user.id ? f.addressee_id : f.requester_id,
+        );
+        const { data: profiles } = await supabase
+          .from("profiles" as any)
+          .select("id, display_name, avatar_url")
+          .in("id", otherIds);
+        const participantIds = new Set(event.participants.map((p) => p.id));
+        const list: Friend[] = (profiles ?? []).map((p: any) => ({
+          id: p.id,
+          name: p.display_name || "Ami",
+          avatarUrl: p.avatar_url,
+        }));
+        // Participants de la soirée en premier (s'ils ne sont pas déjà dans friends)
+        const extras = event.participants.filter((p) => !list.find((f) => f.id === p.id));
+        setFriends([...extras.map((p) => ({ id: p.id, name: p.name })), ...list]);
+        setLoadingFriends(false);
+      })
+      .catch(() => setLoadingFriends(false));
+  }, [user?.id]);
 
   const saveFeedback = async () => {
     if (!user || !soireeRating || !filmRating || !filmPhrase) return;
@@ -316,9 +352,13 @@ export default function PostSoireeFlow({ event, onClose, onComplete }: Props) {
                     Ce film ferait plaisir à quelqu'un ?
                   </p>
 
-                  {event.participants.length > 0 && (
+                  {loadingFriends ? (
+                    <div className="flex justify-center py-6">
+                      <div className="w-5 h-5 rounded-full border-2 border-primary/40 border-t-primary animate-spin" />
+                    </div>
+                  ) : friends.length > 0 ? (
                     <div className="flex flex-col gap-2 mb-6">
-                      {event.participants.map((p) => (
+                      {friends.map((p) => (
                         <button
                           key={p.id}
                           onClick={() => void sendRecommendation(p.id)}
@@ -329,18 +369,30 @@ export default function PostSoireeFlow({ event, onClose, onComplete }: Props) {
                               : "border-border/20 hover:border-border/40"
                           }`}
                         >
-                          <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-sm font-sans font-semibold text-primary">
-                            {p.name.charAt(0).toUpperCase()}
-                          </div>
-                          <span className="text-sm font-sans">{p.name}</span>
-                          {recommended.has(p.id) ? (
-                            <Check className="w-4 h-4 text-primary ml-auto" />
+                          {p.avatarUrl ? (
+                            <img
+                              src={p.avatarUrl}
+                              alt={p.name}
+                              className="w-8 h-8 rounded-full object-cover shrink-0"
+                            />
                           ) : (
-                            <Send className="w-3.5 h-3.5 text-foreground/30 ml-auto" />
+                            <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-sm font-sans font-semibold text-primary shrink-0">
+                              {p.name.charAt(0).toUpperCase()}
+                            </div>
+                          )}
+                          <span className="text-sm font-sans flex-1 text-left">{p.name}</span>
+                          {recommended.has(p.id) ? (
+                            <Check className="w-4 h-4 text-primary ml-auto shrink-0" />
+                          ) : (
+                            <Send className="w-3.5 h-3.5 text-foreground/30 ml-auto shrink-0" />
                           )}
                         </button>
                       ))}
                     </div>
+                  ) : (
+                    <p className="text-sm font-sans text-foreground/40 text-center py-4 mb-4">
+                      Aucun ami dans l'app pour l'instant.
+                    </p>
                   )}
 
                   <div className="flex flex-col gap-2">
