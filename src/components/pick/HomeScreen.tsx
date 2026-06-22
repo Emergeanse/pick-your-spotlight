@@ -121,7 +121,7 @@ const MOOD_CONFIGS: Record<AmbianceMood, MoodConfig> = {
   },
 };
 
-type QuickReco = { id: number; title: string; poster_path: string | null; vote_average?: number; media_type?: string; detail?: MovieDetail; matchData?: RecommendationMatch };
+type QuickReco = { id: number; title: string; poster_path: string | null; vote_average?: number; media_type?: string; detail?: MovieDetail; matchData?: RecommendationMatch; recommendedBy?: string };
 const QUICK_RECO_KEY = "pick_last_reco_v2";
 
 const extractTmdbIdsFromFeedbackRows = (rows: any[]): number[] =>
@@ -470,6 +470,46 @@ const HomeScreen = ({
       };
       setPendingFeedbackEvent(postEv);
       setShowPostSoiree(true);
+    })().catch(console.error);
+  }, [user?.id]);
+
+  // Recommandations reçues d'amis → injectées en tête des quickRecos
+  useEffect(() => {
+    if (!user) return;
+    (async () => {
+      const { data: recos } = await supabase
+        .from("shared_recommendations" as any)
+        .select("id, tmdb_id, title, poster_path, sender_id")
+        .eq("receiver_id", user.id)
+        .eq("seen", false)
+        .order("created_at", { ascending: false })
+        .limit(3);
+      if (!recos?.length) return;
+
+      // Récupère les noms des expéditeurs
+      const senderIds = [...new Set((recos as any[]).map((r: any) => r.sender_id))];
+      const { data: profiles } = await supabase
+        .from("profiles" as any)
+        .select("id, display_name")
+        .in("id", senderIds);
+      const nameById = Object.fromEntries((profiles ?? []).map((p: any) => [p.id, p.display_name ?? "Un ami"]));
+
+      const friendRecos: QuickReco[] = (recos as any[]).map((r: any) => ({
+        id:            r.tmdb_id,
+        title:         r.title,
+        poster_path:   r.poster_path,
+        recommendedBy: nameById[r.sender_id] ?? "Un ami",
+      }));
+
+      // Injecte en tête, max 3 au total
+      setQuickRecos((prev) => {
+        const merged = [...friendRecos, ...prev.filter((q) => !friendRecos.find((f) => f.id === q.id))].slice(0, 3);
+        return merged;
+      });
+
+      // Marque comme vues
+      const ids = (recos as any[]).map((r: any) => r.id);
+      await supabase.from("shared_recommendations" as any).update({ seen: true } as any).in("id", ids);
     })().catch(console.error);
   }, [user?.id]);
 
@@ -2364,6 +2404,12 @@ const HomeScreen = ({
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
                       <WandSparkles className="w-5 h-5 text-foreground/15" />
+                    </div>
+                  )}
+                  {item?.recommendedBy && (
+                    <div className="absolute top-1.5 left-1.5 right-1.5 flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-black/70 backdrop-blur-sm">
+                      <span className="text-[8px] leading-none">💌</span>
+                      <span className="text-[8px] font-sans text-white/80 truncate leading-tight">{item.recommendedBy}</span>
                     </div>
                   )}
                   {loadingMovieId === item?.id && (
