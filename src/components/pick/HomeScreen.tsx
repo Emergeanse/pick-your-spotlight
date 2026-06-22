@@ -120,7 +120,7 @@ const MOOD_CONFIGS: Record<AmbianceMood, MoodConfig> = {
   },
 };
 
-type QuickReco = { id: number; title: string; poster_path: string | null; vote_average?: number; media_type?: string; detail?: MovieDetail };
+type QuickReco = { id: number; title: string; poster_path: string | null; vote_average?: number; media_type?: string; detail?: MovieDetail; matchData?: RecommendationMatch };
 const QUICK_RECO_KEY = "pick_last_reco_v2";
 
 const extractTmdbIdsFromFeedbackRows = (rows: any[]): number[] =>
@@ -709,11 +709,12 @@ const HomeScreen = ({
         vote_average: m.vote_average,
         media_type: m.media_type || (m.first_air_date ? "tv" : "movie"),
         detail: m,
+        matchData: movieMatchData[m.id] ?? undefined,
       }));
       localStorage.setItem(QUICK_RECO_KEY, JSON.stringify(toSave));
       setQuickRecos(toSave);
     } catch {}
-  }, [chatMoviesPool]);
+  }, [chatMoviesPool, movieMatchData]);
 
   const tonightPool = useMemo(() => chatMoviesPool || [], [chatMoviesPool]);
   const canGoPrev = tonightPickIndex > 0;
@@ -1938,6 +1939,14 @@ const HomeScreen = ({
         else pool.push(await getMovieDetails(q.id, q.media_type || "movie"));
       }
       const safeIndex = Math.min(startIndex, pool.length - 1);
+      // Restaurer les raisons de reco depuis le cache localStorage
+      const restoredMatchData: Record<number, RecommendationMatch> = {};
+      for (const q of slice) {
+        if (q.matchData) restoredMatchData[q.id] = q.matchData;
+      }
+      if (Object.keys(restoredMatchData).length > 0) {
+        setMovieMatchData((prev) => ({ ...prev, ...restoredMatchData }));
+      }
       setHomeBrowsePool(pool);
       setHomeBrowseIndex(safeIndex);
       setHomeBrowseSeenIds(new Set([pool[safeIndex]?.id].filter(Boolean) as number[]));
