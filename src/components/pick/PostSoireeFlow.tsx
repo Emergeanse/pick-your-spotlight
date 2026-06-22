@@ -202,12 +202,13 @@ export default function PostSoireeFlow({ event, onClose, onComplete }: Props) {
           ))}
         </div>
 
-        <div className="flex-1 overflow-y-auto px-5 pb-8">
+        <div className="flex-1 flex flex-col overflow-hidden px-5">
 
           {/* ── ÉTAPE 1 : SOIRÉE ── */}
           {step === 1 && (
             <motion.div
               key="step1"
+              className="flex-1 overflow-y-auto pb-8"
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
@@ -252,6 +253,7 @@ export default function PostSoireeFlow({ event, onClose, onComplete }: Props) {
           {step === 2 && (
             <motion.div
               key="step2"
+              className="flex-1 overflow-y-auto pb-8"
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
@@ -334,12 +336,13 @@ export default function PostSoireeFlow({ event, onClose, onComplete }: Props) {
           {step === 3 && (
             <motion.div
               key="step3"
+              className="flex-1 flex flex-col overflow-hidden"
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
             >
               {done ? (
-                <div className="flex flex-col items-center justify-center py-16 gap-4">
+                <div className="flex flex-col items-center justify-center flex-1 gap-4">
                   <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center">
                     <Check className="w-7 h-7 text-primary" />
                   </div>
@@ -347,55 +350,52 @@ export default function PostSoireeFlow({ event, onClose, onComplete }: Props) {
                 </div>
               ) : (
                 <>
-                  <h3 className="text-2xl font-serif mb-1">Recommander</h3>
-                  <p className="text-sm text-foreground/50 font-sans mb-6">
+                  {/* Titre — fixe */}
+                  <h3 className="text-2xl font-serif mb-1 shrink-0">Recommander</h3>
+                  <p className="text-sm text-foreground/50 font-sans mb-4 shrink-0">
                     Ce film ferait plaisir à quelqu'un ?
                   </p>
 
-                  {loadingFriends ? (
-                    <div className="flex justify-center py-6">
-                      <div className="w-5 h-5 rounded-full border-2 border-primary/40 border-t-primary animate-spin" />
-                    </div>
-                  ) : friends.length > 0 ? (
-                    <div className="flex flex-col gap-2 mb-6">
-                      {friends.map((p) => (
+                  {/* Liste scrollable */}
+                  <div className="flex-1 overflow-y-auto min-h-0 flex flex-col gap-2 pr-0.5">
+                    {loadingFriends ? (
+                      <div className="flex justify-center py-6">
+                        <div className="w-5 h-5 rounded-full border-2 border-primary/40 border-t-primary animate-spin" />
+                      </div>
+                    ) : friends.length > 0 ? (
+                      friends.map((p) => (
                         <button
                           key={p.id}
                           onClick={() => void sendRecommendation(p.id)}
                           disabled={recommended.has(p.id)}
-                          className={`flex items-center gap-3 p-3.5 rounded-2xl border transition-all ${
+                          className={`flex items-center gap-3 p-3.5 rounded-2xl border transition-all shrink-0 ${
                             recommended.has(p.id)
                               ? "border-primary/30 bg-primary/8 opacity-70"
                               : "border-border/20 hover:border-border/40"
                           }`}
                         >
                           {p.avatarUrl ? (
-                            <img
-                              src={p.avatarUrl}
-                              alt={p.name}
-                              className="w-8 h-8 rounded-full object-cover shrink-0"
-                            />
+                            <img src={p.avatarUrl} alt={p.name} className="w-8 h-8 rounded-full object-cover shrink-0" />
                           ) : (
                             <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-sm font-sans font-semibold text-primary shrink-0">
                               {p.name.charAt(0).toUpperCase()}
                             </div>
                           )}
                           <span className="text-sm font-sans flex-1 text-left">{p.name}</span>
-                          {recommended.has(p.id) ? (
-                            <Check className="w-4 h-4 text-primary ml-auto shrink-0" />
-                          ) : (
-                            <Send className="w-3.5 h-3.5 text-foreground/30 ml-auto shrink-0" />
-                          )}
+                          {recommended.has(p.id)
+                            ? <Check className="w-4 h-4 text-primary ml-auto shrink-0" />
+                            : <Send className="w-3.5 h-3.5 text-foreground/30 ml-auto shrink-0" />}
                         </button>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-sm font-sans text-foreground/40 text-center py-4 mb-4">
-                      Aucun ami dans l'app pour l'instant.
-                    </p>
-                  )}
+                      ))
+                    ) : (
+                      <p className="text-sm font-sans text-foreground/40 text-center py-4">
+                        Aucun ami dans l'app pour l'instant.
+                      </p>
+                    )}
+                  </div>
 
-                  <div className="flex flex-col gap-2">
+                  {/* Boutons fixés en bas */}
+                  <div className="flex flex-col gap-2 pt-4 pb-8 shrink-0 border-t border-border/10 mt-3">
                     <Button
                       variant="hero"
                       size="xl"
