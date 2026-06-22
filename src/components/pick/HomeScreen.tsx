@@ -35,6 +35,7 @@ import DiscoverySection from "./DiscoverySection";
 import HomeScreenChoiceModal, { type LaunchContext } from "./HomeScreenChoiceModal";
 import TonightPickOverlay, { preloadPosterWallCache } from "./TonightPickOverlay";
 import FlipCardDetail from "./FlipCardDetail";
+import PostSoireeFlow, { type PostSoireeEvent } from "./PostSoireeFlow";
 import { type AmbianceMood } from "./HomeAmbianceSection";
 import homeBackground from "@/assets/home-background.png";
 import loadingBackground from "@/assets/loading-background.png";
@@ -380,6 +381,8 @@ const HomeScreen = ({
   const [homeBrowseIndex, setHomeBrowseIndex] = useState(0);
   const [homeBrowseSeenIds, setHomeBrowseSeenIds] = useState<Set<number>>(new Set());
   const [homeBrowseProviders, setHomeBrowseProviders] = useState<{ name: string; logo_path: string }[]>([]);
+  const [pendingFeedbackEvent, setPendingFeedbackEvent] = useState<PostSoireeEvent | null>(null);
+  const [showPostSoiree, setShowPostSoiree] = useState(false);
   const [noResultsInfo, setNoResultsInfo] = useState<{
     message: string;
     suggestThreshold?: number;
@@ -419,6 +422,56 @@ const HomeScreen = ({
   useEffect(() => {
     if (user) void preloadPosterWallCache();
   }, [user]);
+
+  // Détection événements passés sans feedback → carte persistante + auto-modal
+  useEffect(() => {
+    if (!user) return;
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 3600 * 1000).toISOString().slice(0, 10);
+    (async () => {
+      const { data: events } = await supabase
+        .from("events" as any)
+        .select("id, title, event_date, context, final_pick_title, final_pick_poster, final_pick_tmdb_id")
+        .eq("status", "done")
+        .gte("event_date", sevenDaysAgo)
+        .lte("event_date", new Date().toISOString().slice(0, 10))
+        .or(`organizer_id.eq.${user.id}`)
+        .not("final_pick_title", "is", null)
+        .order("event_date", { ascending: false })
+        .limit(1);
+      if (!events?.length) return;
+      const ev = events[0] as any;
+      const { data: fb } = await supabase
+        .from("event_film_feedback" as any)
+        .select("id")
+        .eq("event_id", ev.id)
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (fb) return;
+
+      // Récupère les participants confirmés
+      const { data: parts } = await supabase
+        .from("event_participants" as any)
+        .select("user_id, guest_name, status")
+        .eq("event_id", ev.id)
+        .eq("status", "confirmed")
+        .neq("user_id", user.id);
+
+      const postEv: PostSoireeEvent = {
+        eventId:      ev.id,
+        eventTitle:   ev.title,
+        eventDate:    ev.event_date,
+        context:      ev.context ?? "solo",
+        filmTitle:    ev.final_pick_title ?? "",
+        filmPoster:   ev.final_pick_poster,
+        filmTmdbId:   ev.final_pick_tmdb_id,
+        participants: (parts ?? [])
+          .filter((p: any) => p.user_id)
+          .map((p: any) => ({ id: p.user_id, name: p.guest_name ?? "Participant" })),
+      };
+      setPendingFeedbackEvent(postEv);
+      setShowPostSoiree(true);
+    })().catch(console.error);
+  }, [user?.id]);
 
   // Bridge depuis DuoPage — variable module-level, zéro dépendance React Router state
   useEffect(() => {
@@ -2247,6 +2300,27 @@ const HomeScreen = ({
           </motion.button>
         )}
 
+        {/* ─── Carte post-soirée persistante ─── */}
+        {pendingFeedbackEvent && !showPostSoiree && (
+          <motion.button
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            onClick={() => setShowPostSoiree(true)}
+            className="mx-5 mt-4 w-[calc(100%-2.5rem)] flex items-center gap-3 p-3.5 rounded-2xl bg-primary/[0.07] border border-primary/20 hover:bg-primary/[0.11] transition-all text-left"
+          >
+            <span className="text-xl shrink-0">🌟</span>
+            <div className="flex-1 min-w-0">
+              <p className="text-[12.5px] font-sans font-semibold text-foreground leading-tight">
+                Comment s'est passée la soirée ?
+              </p>
+              <p className="text-[10.5px] font-sans text-foreground/45 mt-0.5 truncate">
+                {pendingFeedbackEvent.filmTitle} · En attente de ton avis
+              </p>
+            </div>
+            <span className="text-[11px] font-sans font-semibold text-primary shrink-0">Évaluer →</span>
+          </motion.button>
+        )}
+
         {/* ─── 3 films qui pourraient te plaire ─── */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
@@ -2530,6 +2604,18 @@ const HomeScreen = ({
           />
         )}
       </AnimatePresence>
+
+      {/* ── Post-soirée flow ── */}
+      {showPostSoiree && pendingFeedbackEvent && (
+        <PostSoireeFlow
+          event={pendingFeedbackEvent}
+          onClose={() => setShowPostSoiree(false)}
+          onComplete={() => {
+            setShowPostSoiree(false);
+            setPendingFeedbackEvent(null);
+          }}
+        />
+      )}
     </div>
   );
 };

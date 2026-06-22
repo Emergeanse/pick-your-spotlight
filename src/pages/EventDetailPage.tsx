@@ -3,12 +3,13 @@ import { useParams, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowLeft, Calendar, MapPin, Wifi, Copy, Share2, Check,
-  Loader2, Users, Sparkles, Film, Crown, Trash2, AlertTriangle, LogOut, Clock, Vote,
+  Loader2, Users, Sparkles, Film, Crown, Trash2, AlertTriangle, LogOut, Clock, Vote, Star,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
 import { setRevealEvent, queueForReveal } from "@/lib/event-reveal";
+import PostSoireeFlow, { type PostSoireeEvent } from "@/components/pick/PostSoireeFlow";
 
 // ─────────────────────────────────────────
 // Types
@@ -152,6 +153,8 @@ const EventDetailPage = () => {
   const [loadingVotes, setLoadingVotes] = useState(false);
   const [castingVoteId, setCastingVoteId] = useState<string | null>(null);
   const [revealingWinner, setRevealingWinner] = useState(false);
+  const [hasFeedback, setHasFeedback] = useState(false);
+  const [showPostSoiree, setShowPostSoiree] = useState(false);
   const autoRevealTriggeredRef = useRef(false);
   const isOrganizer = !!user && event?.organizer_id === user.id;
   const inviteLink = event ? `${window.location.origin}/invite/${event.invite_link_token}` : "";
@@ -173,6 +176,18 @@ const EventDetailPage = () => {
   useEffect(() => {
     autoRevealTriggeredRef.current = false;
   }, [id]);
+
+  // Vérifie si le feedback post-soirée a déjà été donné
+  useEffect(() => {
+    if (!user || !event || event.status !== "done") return;
+    supabase
+      .from("event_film_feedback" as any)
+      .select("id")
+      .eq("event_id", event.id)
+      .eq("user_id", user.id)
+      .maybeSingle()
+      .then(({ data }) => setHasFeedback(!!data));
+  }, [user, event?.id, event?.status]);
 
   const loadVoteData = useCallback(async (eventId: string) => {
     setLoadingVotes(true);
@@ -973,6 +988,29 @@ const EventDetailPage = () => {
             </div>
           </div>
         )}
+
+        {/* ── Badge post-soirée ── */}
+        {event.status === "done" && !hasFeedback && (
+          <button
+            onClick={() => setShowPostSoiree(true)}
+            className="w-full flex items-center gap-3 p-4 rounded-2xl bg-primary/[0.07] border border-primary/20 hover:bg-primary/[0.11] transition-all text-left"
+          >
+            <div className="w-9 h-9 rounded-xl bg-primary/15 flex items-center justify-center shrink-0">
+              <Star className="w-4.5 h-4.5 text-primary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[13px] font-sans font-semibold text-foreground">Comment c'était ?</p>
+              <p className="text-[11px] font-sans text-foreground/45 mt-0.5">Évalue la soirée et le film</p>
+            </div>
+            <span className="text-[11px] font-sans font-semibold text-primary shrink-0">Évaluer →</span>
+          </button>
+        )}
+        {event.status === "done" && hasFeedback && (
+          <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-white/[0.02] border border-white/[0.06]">
+            <Check className="w-4 h-4 text-primary/60 shrink-0" />
+            <p className="text-[12px] font-sans text-foreground/40">Tu as évalué cette soirée</p>
+          </div>
+        )}
       </div>
 
       {/* ── Bottom sheet confirmation suppression ── */}
@@ -1077,6 +1115,26 @@ const EventDetailPage = () => {
           </>
         )}
       </AnimatePresence>
+
+      {/* ── Post-soirée flow ── */}
+      {showPostSoiree && event && (
+        <PostSoireeFlow
+          event={{
+            eventId:      event.id,
+            eventTitle:   event.title,
+            eventDate:    event.event_date,
+            context:      event.context ?? "solo",
+            filmTitle:    event.final_pick_title ?? "",
+            filmPoster:   event.final_pick_poster,
+            filmTmdbId:   event.final_pick_tmdb_id,
+            participants: participants
+              .filter((p) => p.user_id && p.user_id !== user?.id && p.status === "confirmed")
+              .map((p) => ({ id: p.user_id!, name: p.display_name ?? p.guest_name ?? "Participant" })),
+          }}
+          onClose={() => setShowPostSoiree(false)}
+          onComplete={() => { setShowPostSoiree(false); setHasFeedback(true); }}
+        />
+      )}
     </div>
   );
 };
