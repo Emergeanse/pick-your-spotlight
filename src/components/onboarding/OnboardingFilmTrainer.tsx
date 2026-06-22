@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { getDisplayTitle, getPosterUrl, type Movie } from "@/lib/tmdb";
 import {
   buildOnboardingFilmDisplayPool,
+  fetchMoviesByIds,
   getOnboardingFilmOriginLabel,
   ONBOARDING_FILM_TARGET,
 } from "@/lib/onboarding-films";
@@ -18,14 +19,26 @@ import OnboardingStepLayout from "@/components/onboarding/OnboardingStepLayout";
 interface OnboardingFilmTrainerProps {
   favoriteGenres: string[];
   excludedGenres?: string[];
+  initialFilmsLikedIds?: number[];
+  initialFilmsProposedIds?: number[];
   onFilmsProgressChange?: (count: number) => void;
+  onFilmsLikedIdsChange?: (ids: number[]) => void;
+  onFilmsProposedIdsChange?: (ids: number[]) => void;
   onComplete: () => void;
+}
+
+function mergeProposedIds(target: Set<number>, ids: number[]) {
+  ids.forEach((id) => target.add(id));
 }
 
 export default function OnboardingFilmTrainer({
   favoriteGenres,
   excludedGenres = [],
+  initialFilmsLikedIds = [],
+  initialFilmsProposedIds = [],
   onFilmsProgressChange,
+  onFilmsLikedIdsChange,
+  onFilmsProposedIdsChange,
   onComplete,
 }: OnboardingFilmTrainerProps) {
   const { user } = useAuth();
@@ -37,27 +50,39 @@ export default function OnboardingFilmTrainer({
   const [saving, setSaving] = useState(false);
   const likedIdsRef = useRef(likedIds);
   likedIdsRef.current = likedIds;
+  const proposedIdsRef = useRef<Set<number>>(
+    new Set([...initialFilmsProposedIds, ...initialFilmsLikedIds]),
+  );
 
   const genresKey = favoriteGenres.join(",");
   const excludedKey = excludedGenres.join(",");
 
+  const persistState = useCallback(
+    async (liked: Set<number>, proposed: Set<number>) => {
+      const likedArr = [...liked];
+      const proposedArr = [...proposed];
+      onFilmsProgressChange?.(likedArr.length);
+      onFilmsLikedIdsChange?.(likedArr);
+      onFilmsProposedIdsChange?.(proposedArr);
+      try {
+        await saveOnboardingFilmsProgress(likedArr, proposedArr);
+      } catch (e) {
+        console.error("onboarding films progress save failed", e);
+      }
+    },
+    [onFilmsProgressChange, onFilmsLikedIdsChange, onFilmsProposedIdsChange],
+  );
+
   const loadPool = useCallback(
-    async (pinnedIds: number[], opts?: { silent?: boolean }) => {
+    async (opts?: { silent?: boolean }) => {
       if (!opts?.silent) setLoading(true);
       else setRefreshing(true);
       try {
-        const pool = await buildOnboardingFilmDisplayPool(favoriteGenres, excludedGenres, pinnedIds);
+        const excludeIds = [...proposedIdsRef.current];
+        const pool = await buildOnboardingFilmDisplayPool(favoriteGenres, excludedGenres, excludeIds);
+        mergeProposedIds(proposedIdsRef.current, pool.map((m) => m.id));
         setMovies(pool);
-        if (opts?.silent) {
-          setLikedIds((prev) => {
-            const poolIds = new Set(pool.map((m) => m.id));
-            const next = new Set<number>();
-            prev.forEach((id) => {
-              if (poolIds.has(id)) next.add(id);
-            });
-            return next;
-          });
-        }
+        void persistState(likedIdsRef.current, proposedIdsRef.current);
         return pool;
       } catch (e) {
         console.error("onboarding film pool failed", e);
@@ -72,20 +97,23 @@ export default function OnboardingFilmTrainer({
         else setRefreshing(false);
       }
     },
-    [genresKey, excludedKey, toast],
+    [genresKey, excludedKey, toast, persistState],
   );
 
-  // Chargement initial uniquement — pas de re-fetch à chaque render parent
+  // Chargement initial — compteur restauré, grille sans titres déjà proposés
   useEffect(() => {
     let cancelled = false;
+    const savedLikes = initialFilmsLikedIds.slice(0, ONBOARDING_FILM_TARGET);
+    proposedIdsRef.current = new Set([...initialFilmsProposedIds, ...savedLikes]);
     setLoading(true);
-    setMovies([]);
-    setLikedIds(new Set());
+    setLikedIds(new Set(savedLikes));
 
-    buildOnboardingFilmDisplayPool(favoriteGenres, excludedGenres, [])
+    buildOnboardingFilmDisplayPool(favoriteGenres, excludedGenres, [...proposedIdsRef.current])
       .then((pool) => {
         if (cancelled) return;
+        mergeProposedIds(proposedIdsRef.current, pool.map((m) => m.id));
         setMovies(pool);
+        void saveOnboardingFilmsProgress(savedLikes, [...proposedIdsRef.current]);
       })
       .catch((e) => {
         console.error("onboarding film pool failed", e);
@@ -104,21 +132,9 @@ export default function OnboardingFilmTrainer({
     return () => { cancelled = true; };
   }, [genresKey, excludedKey, toast]);
 
-  const persistProgress = useCallback(
-    async (count: number) => {
-      onFilmsProgressChange?.(count);
-      try {
-        await saveOnboardingFilmsProgress(count);
-      } catch (e) {
-        console.error("onboarding films progress save failed", e);
-      }
-    },
-    [onFilmsProgressChange],
-  );
-
   const handleRefresh = () => {
     if (likedIdsRef.current.size >= ONBOARDING_FILM_TARGET) return;
-    void loadPool([...likedIdsRef.current], { silent: true });
+    void loadPool({ silent: true });
   };
 
   const toggleLike = (movie: Movie) => {
@@ -126,14 +142,22 @@ export default function OnboardingFilmTrainer({
       const next = new Set(prev);
       if (next.has(movie.id)) next.delete(movie.id);
       else if (next.size < ONBOARDING_FILM_TARGET) next.add(movie.id);
-      void persistProgress(next.size);
+      mergeProposedIds(proposedIdsRef.current, [movie.id]);
+      void persistState(next, proposedIdsRef.current);
       return next;
     });
   };
 
   const handleComplete = async () => {
     if (!user || likedIds.size < ONBOARDING_FILM_TARGET) return;
-    const selected = movies.filter((m) => likedIds.has(m.id));
+    const selectedIds = [...likedIds];
+    const byId = new Map(movies.map((m) => [m.id, m]));
+    const missingIds = selectedIds.filter((id) => !byId.has(id));
+    if (missingIds.length) {
+      const fetched = await fetchMoviesByIds(missingIds);
+      fetched.forEach((m) => byId.set(m.id, m));
+    }
+    const selected = selectedIds.map((id) => byId.get(id)).filter((m): m is Movie => !!m);
     if (selected.length < ONBOARDING_FILM_TARGET) {
       toast({
         title: "Sélection incomplète",
@@ -156,7 +180,7 @@ export default function OnboardingFilmTrainer({
           await recordAcceptedRecommendation(user.id).catch(() => {});
         }),
       );
-      await persistProgress(ONBOARDING_FILM_TARGET);
+      await persistState(new Set(selectedIds), proposedIdsRef.current);
       onComplete();
     } catch (e) {
       console.error("onboarding films save failed", e);
@@ -178,12 +202,12 @@ export default function OnboardingFilmTrainer({
     <OnboardingStepLayout>
       <h1 className="text-2xl md:text-3xl font-serif mb-2">Quelques films pour te connaître</h1>
       <p className="text-sm text-muted-foreground font-sans mb-4 leading-relaxed">
-        10 affiches au hasard — coche celles que tu aimes. Pas assez de titres connus ? Clique sur « Autres films ».
+        10 affiches à la fois — coche celles que tu aimes. Tes choix restent comptés ; « Autres films » te propose 10 nouveaux titres.
       </p>
 
       <div className="flex items-center justify-between gap-3 mb-3">
         <p className="text-[10px] font-sans text-foreground/40 uppercase tracking-wide">
-          {movies.length} proposés · choisis {ONBOARDING_FILM_TARGET}
+          {movies.length} affichés · objectif {ONBOARDING_FILM_TARGET}
         </p>
         <button
           type="button"

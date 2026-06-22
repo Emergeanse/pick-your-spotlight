@@ -54,8 +54,10 @@ export const CURATED_ONBOARDING_DIRECTOR_IDS = [
 ] as const;
 
 export const ONBOARDING_PEOPLE_TARGET = 5;
-/** Visages proposés à chaque passage (tirage aléatoire dans le pool curaté). */
-export const ONBOARDING_PEOPLE_DISPLAY = 10;
+export const ONBOARDING_ACTOR_DISPLAY = 10;
+export const ONBOARDING_DIRECTOR_DISPLAY = 5;
+/** @deprecated Utiliser ONBOARDING_ACTOR_DISPLAY */
+export const ONBOARDING_PEOPLE_DISPLAY = ONBOARDING_ACTOR_DISPLAY;
 
 export type OnboardingPerson = {
   id: number;
@@ -99,30 +101,53 @@ async function buildPeoplePool(
   curatedIds: readonly number[],
   filter: (p: OnboardingPerson) => boolean,
   department: "Acting" | "Directing",
-  pinnedIds: number[] = [],
+  excludeIds: number[] = [],
+  displayCount: number,
 ): Promise<OnboardingPerson[]> {
-  const pinnedSet = new Set(pinnedIds);
-  const orderedIds = shuffleOnboarding(curatedIds.filter((id) => !pinnedSet.has(id)));
-  const fetched = await fetchPeopleByIds([...pinnedIds, ...orderedIds]);
-  const valid = fetched.filter(filter);
-  const pinned = pinnedIds
-    .map((id) => valid.find((p) => p.id === id))
-    .filter((p): p is OnboardingPerson => !!p);
-  const rest = valid.filter((p) => !pinnedSet.has(p.id));
-  const slots = Math.max(0, ONBOARDING_PEOPLE_DISPLAY - pinned.length);
-  const picked = pickRandomOnboarding(rest, slots);
-  return [...pinned, ...picked].map((p) => ({
+  const excludeSet = new Set(excludeIds);
+  const availableIds = shuffleOnboarding(curatedIds.filter((id) => !excludeSet.has(id)));
+  const fetched = await fetchPeopleByIds(availableIds);
+  const valid = fetched.filter(filter).filter((p) => !excludeSet.has(p.id));
+  const picked = pickRandomOnboarding(valid, displayCount);
+  return picked.map((p) => ({
     ...p,
     known_for_department: department,
   }));
 }
 
-export async function fetchOnboardingActors(pinnedIds: number[] = []): Promise<OnboardingPerson[]> {
-  return buildPeoplePool(CURATED_ONBOARDING_ACTOR_IDS, isActorPerson, "Acting", pinnedIds);
+export async function fetchOnboardingPeopleByIds(
+  ids: number[],
+  personType: "actor" | "director",
+): Promise<OnboardingPerson[]> {
+  const filter = personType === "director" ? isDirectorPerson : isActorPerson;
+  const department = personType === "director" ? "Directing" : "Acting";
+  const unique = [...new Set(ids.filter((id) => Number.isFinite(id) && id > 0))];
+  if (!unique.length) return [];
+  const fetched = await fetchPeopleByIds(unique);
+  return fetched.filter(filter).map((p) => ({
+    ...p,
+    known_for_department: department,
+  }));
 }
 
-export async function fetchOnboardingDirectors(pinnedIds: number[] = []): Promise<OnboardingPerson[]> {
-  return buildPeoplePool(CURATED_ONBOARDING_DIRECTOR_IDS, isDirectorPerson, "Directing", pinnedIds);
+export async function fetchOnboardingActors(excludeIds: number[] = []): Promise<OnboardingPerson[]> {
+  return buildPeoplePool(
+    CURATED_ONBOARDING_ACTOR_IDS,
+    isActorPerson,
+    "Acting",
+    excludeIds,
+    ONBOARDING_ACTOR_DISPLAY,
+  );
+}
+
+export async function fetchOnboardingDirectors(excludeIds: number[] = []): Promise<OnboardingPerson[]> {
+  return buildPeoplePool(
+    CURATED_ONBOARDING_DIRECTOR_IDS,
+    isDirectorPerson,
+    "Directing",
+    excludeIds,
+    ONBOARDING_DIRECTOR_DISPLAY,
+  );
 }
 
 export function getPersonPhotoUrl(path: string | null, size = "w185"): string {

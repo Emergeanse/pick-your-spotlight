@@ -3,7 +3,7 @@ import type { Movie } from "@/lib/tmdb";
 import { pickRandomOnboarding, shuffleOnboarding } from "@/lib/onboarding-random";
 
 export const ONBOARDING_FILM_TARGET = 10;
-/** Affiches proposées par tirage (comme acteurs : 10 visibles, refresh remplace les non cochés). */
+/** Affiches proposées par tirage — toujours 10 titres non encore aimés. */
 export const ONBOARDING_FILM_DISPLAY = 10;
 export const CURATED_FR_TMDB_IDS = [
   77338, 9919, 82676, 10376, 406, 8290, 10649, 7345, 9603, 9423, 9746, 140078,
@@ -90,21 +90,22 @@ async function buildCandidatePool(
   return interleaveFrEn(frPool, enPool);
 }
 
-/** Tirage aléatoire pour la grille — conserve les films déjà cochés (comme acteurs). */
+export async function fetchMoviesByIds(ids: number[]): Promise<Movie[]> {
+  const unique = [...new Set(ids.filter((id) => Number.isFinite(id) && id > 0))];
+  if (!unique.length) return [];
+  return fetchCuratedByIds(unique);
+}
+
+/** Tirage aléatoire — exclut les ids déjà proposés (likés ou passés). */
 export async function buildOnboardingFilmDisplayPool(
   favoriteGenres: string[] = [],
   excludedGenres: string[] = [],
-  pinnedIds: number[] = [],
+  excludeIds: number[] = [],
 ): Promise<Movie[]> {
   const candidates = await buildCandidatePool(favoriteGenres, excludedGenres);
-  const pinnedSet = new Set(pinnedIds);
-  const pinned = pinnedIds
-    .map((id) => candidates.find((m) => m.id === id))
-    .filter((m): m is Movie => !!m);
-  const rest = candidates.filter((m) => !pinnedSet.has(m.id));
-  const slots = Math.max(0, ONBOARDING_FILM_DISPLAY - pinned.length);
-  const picked = pickRandomOnboarding(rest, slots);
-  return [...pinned, ...picked];
+  const excludeSet = new Set(excludeIds);
+  const available = candidates.filter((m) => !excludeSet.has(m.id));
+  return pickRandomOnboarding(available, ONBOARDING_FILM_DISPLAY);
 }
 
 /** @deprecated Utiliser buildOnboardingFilmDisplayPool */

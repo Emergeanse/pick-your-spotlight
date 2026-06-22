@@ -34,6 +34,7 @@ export type OnboardingProgressData = {
   paused: boolean;
   filmsProgress: number;
   filmsLikedIds: number[];
+  filmsProposedIds: number[];
 };
 
 function normalizeStep(raw: string | null | undefined): OnboardingStep {
@@ -48,7 +49,7 @@ export async function loadOnboardingProgress(): Promise<OnboardingProgressData |
   const { data } = await supabase
     .from("profiles")
     .select(
-      "onboarding_step, onboarding_paused, onboarding_films_progress, onboarding_films_liked_ids, favorite_genres, excluded_genres, preferred_platforms, onboarding_completed",
+      "onboarding_step, onboarding_paused, onboarding_films_progress, onboarding_films_liked_ids, onboarding_films_proposed_ids, favorite_genres, excluded_genres, preferred_platforms, onboarding_completed",
     )
     .eq("id", userId)
     .single();
@@ -68,7 +69,13 @@ export async function loadOnboardingProgress(): Promise<OnboardingProgressData |
     paused: Boolean((data as any).onboarding_paused),
     filmsProgress: Math.min(ONBOARDING_FILM_TARGET, Math.max(0, Number((data as any).onboarding_films_progress) || 0)),
     filmsLikedIds: normalizeOnboardingFilmsLikedIds((data as any).onboarding_films_liked_ids),
+    filmsProposedIds: normalizeOnboardingFilmsProposedIds((data as any).onboarding_films_proposed_ids),
   };
+}
+
+function normalizeOnboardingFilmsProposedIds(raw: unknown): number[] {
+  if (!Array.isArray(raw)) return [];
+  return [...new Set(raw.map((id) => Number(id)).filter((id) => Number.isFinite(id) && id > 0))];
 }
 
 function normalizeOnboardingFilmsLikedIds(raw: unknown): number[] {
@@ -79,16 +86,24 @@ function normalizeOnboardingFilmsLikedIds(raw: unknown): number[] {
   );
 }
 
-export async function saveOnboardingFilmsProgress(likedIds: number[]): Promise<void> {
+export async function saveOnboardingFilmsProgress(
+  likedIds: number[],
+  proposedIds: number[] = [],
+): Promise<void> {
   const userId = (await supabase.auth.getUser()).data.user?.id;
   if (!userId) return;
 
-  const safeIds = normalizeOnboardingFilmsLikedIds(likedIds);
+  const safeLiked = normalizeOnboardingFilmsLikedIds(likedIds);
+  const safeProposed = normalizeOnboardingFilmsProposedIds([
+    ...proposedIds,
+    ...safeLiked,
+  ]);
   await supabase
     .from("profiles")
     .update({
-      onboarding_films_progress: safeIds.length,
-      onboarding_films_liked_ids: safeIds,
+      onboarding_films_progress: safeLiked.length,
+      onboarding_films_liked_ids: safeLiked,
+      onboarding_films_proposed_ids: safeProposed,
     } as any)
     .eq("id", userId);
 }
@@ -203,11 +218,17 @@ export async function resetProfileForOnboarding(): Promise<void> {
 
   const { error: filmsProgressError } = await supabase
     .from("profiles")
-    .update({ onboarding_films_progress: 0, onboarding_films_liked_ids: [] } as any)
+    .update({
+      onboarding_films_progress: 0,
+      onboarding_films_liked_ids: [],
+      onboarding_films_proposed_ids: [],
+    } as any)
     .eq("id", userId);
   if (
     filmsProgressError &&
-    !/onboarding_films_progress|onboarding_films_liked_ids/i.test(filmsProgressError.message)
+    !/onboarding_films_progress|onboarding_films_liked_ids|onboarding_films_proposed_ids/i.test(
+      filmsProgressError.message,
+    )
   ) {
     throw filmsProgressError;
   }
@@ -231,8 +252,8 @@ export function onboardingErrorMessage(error: unknown): string {
     if (/onboarding_step|onboarding_paused/i.test(msg)) {
       return "Migration initiatique manquante sur Supabase (onboarding_step). Exécute le SQL de migration puis réessaie.";
     }
-    if (/onboarding_films_progress|onboarding_films_liked_ids/i.test(msg)) {
-      return "Migration films manquante (onboarding_films_progress / onboarding_films_liked_ids). Exécute le SQL de migration puis réessaie.";
+    if (/onboarding_films_progress|onboarding_films_liked_ids|onboarding_films_proposed_ids/i.test(msg)) {
+      return "Migration films manquante (onboarding_films_*). Exécute le SQL de migration puis réessaie.";
     }
     return msg;
   }

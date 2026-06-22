@@ -42,6 +42,8 @@ const Onboarding = () => {
   const [genreChoices, setGenreChoices] = useState<Map<string, GenreChoice>>(new Map());
   const [platformIds, setPlatformIds] = useState<number[]>(DEFAULT_ONBOARDING_PLATFORM_IDS);
   const [filmsProgress, setFilmsProgress] = useState(0);
+  const [filmsLikedIds, setFilmsLikedIds] = useState<number[]>([]);
+  const [filmsProposedIds, setFilmsProposedIds] = useState<number[]>([]);
   const [loading, setLoading] = useState(true);
   const [pausing, setPausing] = useState(false);
   const [finishing, setFinishing] = useState(false);
@@ -65,6 +67,8 @@ const Onboarding = () => {
         setGenreChoices(map);
         setPlatformIds(progress.platformIds);
         setFilmsProgress(progress.filmsProgress);
+        setFilmsLikedIds(progress.filmsLikedIds);
+        setFilmsProposedIds(progress.filmsProposedIds);
         setStep(progress.step);
         if (progress.paused) {
           await saveOnboardingProgress(progress.step, {
@@ -323,8 +327,11 @@ const Onboarding = () => {
             <OnboardingFilmTrainer
               favoriteGenres={likedGenres}
               excludedGenres={excludedGenres}
-              initialFilmsProgress={filmsProgress}
+              initialFilmsLikedIds={filmsLikedIds}
+              initialFilmsProposedIds={filmsProposedIds}
               onFilmsProgressChange={setFilmsProgress}
+              onFilmsLikedIdsChange={setFilmsLikedIds}
+              onFilmsProposedIdsChange={setFilmsProposedIds}
               onComplete={() => void goToStep("actors")}
             />
           </motion.div>

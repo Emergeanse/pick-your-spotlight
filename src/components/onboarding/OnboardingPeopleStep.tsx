@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { motion } from "framer-motion";
 import { ArrowRight, Check, Loader2, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -7,7 +7,10 @@ import { useAuth } from "@/hooks/use-auth";
 import {
   fetchOnboardingActors,
   fetchOnboardingDirectors,
+  fetchOnboardingPeopleByIds,
   getPersonPhotoUrl,
+  ONBOARDING_ACTOR_DISPLAY,
+  ONBOARDING_DIRECTOR_DISPLAY,
   ONBOARDING_PEOPLE_TARGET,
   type OnboardingPerson,
 } from "@/lib/onboarding-people";
@@ -23,6 +26,10 @@ interface OnboardingPeopleStepProps {
   onComplete: () => void;
 }
 
+function mergeProposedIds(target: Set<number>, ids: number[]) {
+  ids.forEach((id) => target.add(id));
+}
+
 export default function OnboardingPeopleStep({
   personType,
   onComplete,
@@ -34,29 +41,27 @@ export default function OnboardingPeopleStep({
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [saving, setSaving] = useState(false);
+  const selectedIdsRef = useRef(selectedIds);
+  selectedIdsRef.current = selectedIds;
+  const proposedIdsRef = useRef<Set<number>>(new Set());
 
   const isDirector = personType === "director";
+  const displayCount = isDirector ? ONBOARDING_DIRECTOR_DISPLAY : ONBOARDING_ACTOR_DISPLAY;
   const title = isDirector ? "5 réalisateurs" : "5 acteurs ou actrices";
   const subtitle = isDirector
-    ? "10 noms au hasard — sélectionne 5. Pas assez de noms connus ? Actualise la liste."
-    : "10 noms au hasard — sélectionne 5. Pas assez de noms connus ? Actualise la liste.";
+    ? "5 noms à la fois — sélectionne ceux que tu aimes. Tes choix restent comptés ; « Autres noms » te propose 5 nouveaux profils."
+    : "10 noms à la fois — sélectionne ceux que tu aimes. Tes choix restent comptés ; « Autres noms » te propose 10 nouveaux profils.";
 
   const loadPool = useCallback(
-    async (pinnedIds: number[], opts?: { silent?: boolean }) => {
+    async (opts?: { silent?: boolean }) => {
       if (!opts?.silent) setLoading(true);
       else setRefreshing(true);
       try {
         const fetchPool = isDirector ? fetchOnboardingDirectors : fetchOnboardingActors;
-        const pool = await fetchPool(pinnedIds);
+        const excludeIds = [...proposedIdsRef.current];
+        const pool = await fetchPool(excludeIds);
+        mergeProposedIds(proposedIdsRef.current, pool.map((p) => p.id));
         setPeople(pool);
-        setSelectedIds((prev) => {
-          const poolIds = new Set(pool.map((p) => p.id));
-          const next = new Set<number>();
-          prev.forEach((id) => {
-            if (poolIds.has(id)) next.add(id);
-          });
-          return next;
-        });
         return pool;
       } catch (e) {
         console.error("onboarding people load failed", e);
@@ -79,26 +84,29 @@ export default function OnboardingPeopleStep({
     setLoading(true);
     setPeople([]);
     setSelectedIds(new Set());
+    proposedIdsRef.current = new Set();
 
     Promise.all([
-      isDirector ? fetchOnboardingDirectors() : fetchOnboardingActors(),
       user ? getUserPeoplePreferences() : Promise.resolve([]),
     ])
-      .then(([pool, prefs]) => {
+      .then(async ([prefs]) => {
         if (cancelled) return;
-        setPeople(pool);
-        const poolIds = new Set(pool.map((p) => p.id));
         const existing = new Set(
           prefs
             .filter(
               (p) =>
                 p.person_type === personType &&
-                poolIds.has(p.person_id) &&
                 (p.preference === "liked" || p.preference === "loved"),
             )
             .map((p) => p.person_id),
         );
         setSelectedIds(existing);
+        mergeProposedIds(proposedIdsRef.current, [...existing]);
+        const fetchPool = isDirector ? fetchOnboardingDirectors : fetchOnboardingActors;
+        const pool = await fetchPool([...proposedIdsRef.current]);
+        if (cancelled) return;
+        mergeProposedIds(proposedIdsRef.current, pool.map((p) => p.id));
+        setPeople(pool);
       })
       .catch(console.error)
       .finally(() => { if (!cancelled) setLoading(false); });
@@ -107,8 +115,8 @@ export default function OnboardingPeopleStep({
   }, [personType, user?.id, isDirector]);
 
   const handleRefresh = () => {
-    if (selectedIds.size >= ONBOARDING_PEOPLE_TARGET) return;
-    void loadPool([...selectedIds], { silent: true });
+    if (selectedIdsRef.current.size >= ONBOARDING_PEOPLE_TARGET) return;
+    void loadPool({ silent: true });
   };
 
   const toggle = (id: number) => {
@@ -116,6 +124,7 @@ export default function OnboardingPeopleStep({
       const next = new Set(prev);
       if (next.has(id)) next.delete(id);
       else if (next.size < ONBOARDING_PEOPLE_TARGET) next.add(id);
+      mergeProposedIds(proposedIdsRef.current, [id]);
       return next;
     });
   };
@@ -124,7 +133,8 @@ export default function OnboardingPeopleStep({
     if (!user || selectedIds.size < ONBOARDING_PEOPLE_TARGET) return;
     setSaving(true);
     try {
-      const selected = people.filter((p) => selectedIds.has(p.id));
+      const selectedIdsList = [...selectedIds];
+      const selected = await fetchOnboardingPeopleByIds(selectedIdsList, personType);
       if (selected.length < ONBOARDING_PEOPLE_TARGET) {
         toast({
           title: "Sélection incomplète",
@@ -172,7 +182,7 @@ export default function OnboardingPeopleStep({
 
       <div className="flex items-center justify-between gap-3 mb-3">
         <p className="text-[10px] font-sans text-foreground/40 uppercase tracking-wide">
-          {people.length} proposés · choisis {ONBOARDING_PEOPLE_TARGET}
+          {people.length} affichés · objectif {ONBOARDING_PEOPLE_TARGET}
         </p>
         <button
           type="button"
