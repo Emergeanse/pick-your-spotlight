@@ -3,54 +3,26 @@ import { pickRandomOnboarding, shuffleOnboarding } from "@/lib/onboarding-random
 
 /** Acteurs très connus (FR + international) — TMDB person id */
 export const CURATED_ONBOARDING_ACTOR_IDS = [
-  52743,  // Jean Dujardin
-  1921,   // Marion Cotillard
-  78423,  // Omar Sy
-  8293,   // Audrey Tautou
-  6972,   // Vincent Cassel
-  113640, // Léa Seydoux
-  37627,  // Dany Boon
-  78124,  // Gad Elmaleh
-  114711, // François Cluzet
-  17807,  // Isabelle Huppert
-  37642,  // André Dussollier
-  6193,   // Leonardo DiCaprio
-  31,     // Tom Hanks
-  287,    // Brad Pitt
-  1245,   // Scarlett Johansson
-  976,    // Jason Statham
-  30614,  // Ryan Gosling
-  54693,  // Emma Stone
-  192,    // Morgan Freeman
-  1247,   // Angelina Jolie
-  1892,   // Robert De Niro
-  6384,   // Keanu Reeves
+  // France
+  52743, 1921, 78423, 8293, 6972, 113640, 37627, 78124, 114711, 17807, 37642,
+  30162, 1978, 1427, 5445, 81134, 23478, 19806, 35029, 1190664, 72536, 5448,
+  81838, 25067, 13240, 81827, 81835, 933099, 78435,
+  // International
+  6193, 31, 287, 1245, 976, 30614, 54693, 192, 1247, 1892, 6384, 500, 3223,
+  17647, 74568, 16828, 9030, 4173, 18976, 10990, 72129, 1813, 17288, 4430,
+  62, 27104, 1381396, 88047, 18999, 85, 12835, 3896, 6968, 84223, 17052,
+  7399, 8688, 1333,
 ] as const;
 
-/** Réalisateurs très connus — IDs vérifiés (pas d’acteurs sans film réalisé notable). */
+/** Réalisateurs très connus — TMDB person id */
 export const CURATED_ONBOARDING_DIRECTOR_IDS = [
-  5281,   // Christopher Nolan
-  138,    // Quentin Tarantino
-  5740,   // Luc Besson
-  3768,   // Jean-Pierre Jeunet
-  1032,   // Steven Spielberg
-  10783,  // François Ozon
-  17898,  // Jacques Audiard
-  137427, // Ladj Ly
-  5621,   // Denis Villeneuve
-  7467,   // Ridley Scott
-  108,    // Peter Jackson
-  10770,  // Céline Sciamma
-  2039,   // Maïwenn
-  77918,  // Michel Hazanavicius
-  58425,  // Albert Dupontel
-  2405,   // Claude Lelouch
-  5655,   // James Cameron
-  525,    // Martin Scorsese
-  103644, // Jordan Peele
-  3708,   // Thomas Vinterberg
-  97130,  // Damien Chazelle
-  37341,  // Alain Resnais
+  // France
+  5740, 3768, 10783, 17898, 137427, 10770, 2039, 77918, 58425, 2405, 37341,
+  2434, 2283, 1937, 45297, 2290, 129894, 20565, 10059, 23386,
+  // International
+  5281, 138, 1032, 5621, 7467, 108, 5655, 525, 103644, 3708, 97130, 52121,
+  1776, 1223, 5953, 57130, 55890, 510, 12418, 6884, 18870, 15208, 10863,
+  114552, 24045, 62554, 15344,
 ] as const;
 
 export const ONBOARDING_PEOPLE_TARGET = 5;
@@ -71,18 +43,17 @@ const ACTOR_ID_SET = new Set<number>(CURATED_ONBOARDING_ACTOR_IDS);
 const DIRECTOR_ID_SET = new Set<number>(CURATED_ONBOARDING_DIRECTOR_IDS);
 
 function isActorPerson(p: OnboardingPerson): boolean {
-  if (!ACTOR_ID_SET.has(p.id) || DIRECTOR_ID_SET.has(p.id)) return false;
-  return p.known_for_department !== "Directing";
+  return ACTOR_ID_SET.has(p.id);
 }
 
 function isDirectorPerson(p: OnboardingPerson): boolean {
-  if (!DIRECTOR_ID_SET.has(p.id)) return false;
-  return p.known_for_department === "Directing";
+  return DIRECTOR_ID_SET.has(p.id);
 }
 
 async function fetchPeopleByIds(ids: readonly number[]): Promise<OnboardingPerson[]> {
+  const unique = [...new Set(ids)];
   const results = await Promise.allSettled(
-    ids.map((id) => fetchFromTMDB(`/person/${id}`, { language: "fr-FR" })),
+    unique.map((id) => fetchFromTMDB(`/person/${id}`, { language: "fr-FR" })),
   );
   return results
     .filter((r): r is PromiseFulfilledResult<any> => r.status === "fulfilled")
