@@ -100,16 +100,16 @@ function computeDetailedConfidence(data: {
 }) {
   const { totalRecos, acceptedRecos, likedCount, watchlistCount, streakCount, peopleEvaluated, genresSelected } = data;
   const totalSignals = totalRecos + likedCount + watchlistCount;
-  // volumeScore : sature à ~200 signaux (sqrt(200)*1.77 ≈ 25)
-  const volumeScore = Math.min(Math.sqrt(totalSignals) * 1.77, 25);
+  // volumeScore : sature à ~500 signaux (sqrt(500)*1.12 ≈ 25)
+  const volumeScore = Math.min(Math.sqrt(totalSignals) * 1.12, 25);
   const acceptRate = totalRecos > 0 ? acceptedRecos / totalRecos : 0;
-  // acceptScore : pondéré par le volume — peu de données = score partiel même à 100%
-  const acceptScore = Math.min(acceptRate * Math.min(totalRecos / 20, 1) * 25, 25);
+  // acceptScore : pondéré par le volume — il faut 30 recos validées pour le score plein
+  const acceptScore = Math.min(acceptRate * Math.min(totalRecos / 30, 1) * 25, 25);
   const streakScore = Math.min(streakCount * 2, 10);
-  // trainingScore : sature à 30 likes (30 * 0.5 = 15)
-  const trainingScore = Math.min(likedCount * 0.5, 15);
-  // peopleScore : sature à ~25 personnes (sqrt(25)*3 = 15)
-  const peopleScore = Math.min(Math.sqrt(peopleEvaluated) * 3, 15);
+  // trainingScore : sature à 80 likes (80 * 0.1875 = 15)
+  const trainingScore = Math.min(likedCount * 0.1875, 15);
+  // peopleScore : sature à ~56 personnes (sqrt(56)*2 ≈ 15)
+  const peopleScore = Math.min(Math.sqrt(peopleEvaluated) * 2, 15);
   const genresScore = Math.min(genresSelected, 10);
   const total = Math.round(volumeScore + acceptScore + streakScore + trainingScore + peopleScore + genresScore);
   return {
