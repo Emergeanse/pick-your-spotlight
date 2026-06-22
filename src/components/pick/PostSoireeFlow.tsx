@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { getPosterUrl } from "@/lib/tmdb";
+import { getOrCreateCatalogItem } from "@/lib/catalog";
+import { toast } from "sonner";
 
 export type SoireeRating = "memorable" | "good" | "meh";
 export type FilmRating   = "love" | "like" | "not_for_me";
@@ -112,27 +114,28 @@ export default function PostSoireeFlow({ event, onClose, onComplete }: Props) {
     setSaving(true);
     try {
       await supabase.from("event_film_feedback" as any).upsert({
-        event_id:     event.eventId,
-        user_id:      user.id,
+        event_id:      event.eventId,
+        user_id:       user.id,
         soiree_rating: soireeRating,
         film_rating:   filmRating,
         film_phrase:   filmPhrase,
       }, { onConflict: "event_id,user_id" });
 
-      // Sync avec user_item_feedback si le film a un tmdb_id
+      // Sync vers user_item_feedback via getOrCreateCatalogItem
+      // → crée l'entrée catalog_items si elle n'existe pas encore
       if (event.filmTmdbId) {
         const feedbackMap: Record<FilmRating, string> = {
           love: "love", like: "like", not_for_me: "not_for_me",
         };
-        const { data: catalogItem } = await supabase
-          .from("catalog_items")
-          .select("id")
-          .eq("tmdb_id", event.filmTmdbId)
-          .maybeSingle();
-        if (catalogItem?.id) {
+        const itemId = await getOrCreateCatalogItem(event.filmTmdbId, {
+          title:       event.filmTitle,
+          poster_path: event.filmPoster,
+          media_type:  "movie",
+        });
+        if (itemId) {
           await supabase.from("user_item_feedback").upsert({
             user_id:       user.id,
-            item_id:       catalogItem.id,
+            item_id:       itemId,
             feedback_type: feedbackMap[filmRating],
           }, { onConflict: "user_id,item_id,feedback_type" });
         }
@@ -141,6 +144,7 @@ export default function PostSoireeFlow({ event, onClose, onComplete }: Props) {
       setTimeout(onComplete, 1200);
     } catch (e) {
       console.error("PostSoireeFlow save error", e);
+      toast.error("Impossible d'enregistrer ton évaluation", { description: "Vérifie ta connexion et réessaie." });
     } finally {
       setSaving(false);
     }
