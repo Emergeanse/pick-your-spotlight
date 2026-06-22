@@ -3,26 +3,86 @@ import { pickRandomOnboarding, shuffleOnboarding } from "@/lib/onboarding-random
 
 /** Acteurs très connus (FR + international) — TMDB person id */
 export const CURATED_ONBOARDING_ACTOR_IDS = [
-  // France
-  52743, 1921, 78423, 8293, 6972, 113640, 37627, 78124, 114711, 17807, 37642,
-  30162, 1978, 1427, 5445, 81134, 23478, 19806, 35029, 1190664, 72536, 5448,
-  81838, 25067, 13240, 81827, 81835, 933099, 78435,
-  // International
-  6193, 31, 287, 1245, 976, 30614, 54693, 192, 1247, 1892, 6384, 500, 3223,
-  17647, 74568, 16828, 9030, 4173, 18976, 10990, 72129, 1813, 17288, 4430,
-  62, 27104, 1381396, 88047, 18999, 85, 12835, 3896, 6968, 84223, 17052,
-  7399, 8688, 1333,
+  // France — stars indiscutables
+  1921,   // Jean-Paul Belmondo
+  1978,   // Juliette Binoche
+  6972,   // Audrey Tautou
+  5445,   // Omar Sy
+  1427,   // Vincent Cassel
+  8293,   // Guillaume Canet
+  78423,  // Jean Reno
+  30162,  // Daniel Auteuil
+  5448,   // Sophie Marceau
+  37627,  // Gad Elmaleh
+  19806,  // Gérard Depardieu
+  1190664,// Tahar Rahim
+  72536,  // François Cluzet
+  17807,  // Mathieu Kassovitz
+  23478,  // Jamel Debbouze
+  // International — stars mondiales
+  31,     // Tom Hanks
+  287,    // Brad Pitt
+  192,    // Morgan Freeman
+  6384,   // Keanu Reeves
+  500,    // Tom Cruise
+  3223,   // Robert Downey Jr.
+  62,     // Denzel Washington
+  1245,   // Scarlett Johansson
+  976,    // Cate Blanchett
+  1892,   // Natalie Portman
+  6193,   // Joaquin Phoenix
+  74568,  // Leonardo DiCaprio
+  85,     // Johnny Depp
+  1247,   // Meryl Streep
+  9030,   // Charlize Theron
+  18976,  // Ryan Gosling
+  1813,   // Anne Hathaway
+  30614,  // Jake Gyllenhaal
+  10990,  // Emma Stone
+  4430,   // Chadwick Boseman
+  54693,  // Chris Hemsworth
+  7399,   // Christoph Waltz
+  16828,  // Christian Bale
+  4173,   // Daniel Craig
+  8688,   // Viggo Mortensen
+  1333,   // Idris Elba
 ] as const;
 
 /** Réalisateurs très connus — TMDB person id */
 export const CURATED_ONBOARDING_DIRECTOR_IDS = [
-  // France
-  5740, 3768, 10783, 17898, 137427, 10770, 2039, 77918, 58425, 2405, 37341,
-  2434, 2283, 1937, 45297, 2290, 129894, 20565, 10059, 23386,
-  // International
-  5281, 138, 1032, 5621, 7467, 108, 5655, 525, 103644, 3708, 97130, 52121,
-  1776, 1223, 5953, 57130, 55890, 510, 12418, 6884, 18870, 15208, 10863,
-  114552, 24045, 62554, 15344,
+  // France — réalisateurs incontournables
+  5740,   // Luc Besson
+  3768,   // François Truffaut
+  10783,  // Jean-Luc Godard
+  2039,   // Claude Lelouch
+  2405,   // Jacques Audiard
+  37341,  // Olivier Nakache
+  2434,   // Michel Gondry
+  2283,   // Christophe Barratier
+  2290,   // Jean-Pierre Jeunet
+  1937,   // Louis Malle
+  10059,  // Laurent Cantet
+  // International — réalisateurs mondialement reconnus
+  5281,   // Steven Spielberg
+  138,    // Quentin Tarantino
+  1032,   // Christopher Nolan
+  7467,   // Martin Scorsese
+  108,    // Tim Burton
+  525,    // Alfred Hitchcock
+  510,    // Ridley Scott
+  5621,   // James Cameron
+  5655,   // David Fincher
+  3708,   // Pedro Almodóvar
+  1776,   // Stanley Kubrick
+  1223,   // Woody Allen
+  57130,  // Denis Villeneuve
+  55890,  // Wes Anderson
+  12418,  // Clint Eastwood
+  6884,   // Spike Lee
+  18870,  // David Lynch
+  10863,  // Francis Ford Coppola
+  24045,  // Park Chan-wook
+  15344,  // Wong Kar-wai
 ] as const;
 
 export const ONBOARDING_PEOPLE_TARGET = 5;
@@ -43,11 +103,11 @@ const ACTOR_ID_SET = new Set<number>(CURATED_ONBOARDING_ACTOR_IDS);
 const DIRECTOR_ID_SET = new Set<number>(CURATED_ONBOARDING_DIRECTOR_IDS);
 
 function isActorPerson(p: OnboardingPerson): boolean {
-  return ACTOR_ID_SET.has(p.id);
+  return ACTOR_ID_SET.has(p.id) && p.known_for_department === "Acting";
 }
 
 function isDirectorPerson(p: OnboardingPerson): boolean {
-  return DIRECTOR_ID_SET.has(p.id);
+  return DIRECTOR_ID_SET.has(p.id) && p.known_for_department === "Directing";
 }
 
 async function fetchPeopleByIds(ids: readonly number[]): Promise<OnboardingPerson[]> {
