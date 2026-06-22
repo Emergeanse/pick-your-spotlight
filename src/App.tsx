@@ -35,10 +35,21 @@ import TrustPage from "./pages/Trust.tsx";
 
 const queryClient = new QueryClient();
 
+function AuthLoadingScreen() {
+  return (
+    <div className="min-h-dvh bg-background text-foreground flex items-center justify-center px-6">
+      <div className="flex flex-col items-center gap-4 text-center">
+        <div className="h-10 w-10 rounded-full border border-primary/30 border-t-primary animate-spin" aria-hidden="true" />
+        <p className="text-sm text-foreground/60 font-sans">Pick se prépare…</p>
+      </div>
+    </div>
+  );
+}
+
 function HomePage() {
   const { user, isReady } = useAuth();
-  if (!isReady) return null;
-  return user ? <Navigate to="/app" replace /> : <Landing />;
+  if (isReady && user) return <Navigate to="/app" replace />;
+  return <Landing />;
 }
 
 function AppRoute() {
@@ -50,7 +61,7 @@ function AppRoute() {
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, isReady } = useAuth();
-  if (!isReady) return null;
+  if (!isReady) return <AuthLoadingScreen />;
   if (!user) return <Navigate to="/auth" replace />;
   return <>{children}</>;
 }
