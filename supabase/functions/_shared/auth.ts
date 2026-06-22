@@ -43,3 +43,17 @@ export async function requireAdmin(req: Request, corsHeaders: Record<string, str
   }
   return auth;
 }
+
+export async function isAdminUser(userId: string): Promise<boolean> {
+  const url = Deno.env.get("SUPABASE_URL");
+  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  if (!url || !serviceKey) return false;
+  const admin = createClient(url, serviceKey);
+  const { data } = await admin
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", userId)
+    .eq("role", "admin")
+    .maybeSingle();
+  return !!data;
+}

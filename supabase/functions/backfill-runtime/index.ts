@@ -1,15 +1,18 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { requireAdmin } from "../_shared/auth.ts";
+import { tmdbUrl } from "../_shared/tmdb.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const TMDB_API_KEY = "2dca580c2a14b55200e784d157207b4d";
-
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+
+  const adminAuth = await requireAdmin(req, corsHeaders);
+  if (adminAuth.response) return adminAuth.response;
 
   const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
   const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -18,7 +21,6 @@ serve(async (req) => {
   const { batchSize = 100, mediaType = "movie" } =
     req.method === "POST" ? await req.json().catch(() => ({})) : {};
 
-  // Récupère le prochain batch de films sans runtime
   let query = supabase
     .from("movie_embeddings")
     .select("tmdb_id, media_type, title")
@@ -51,11 +53,8 @@ serve(async (req) => {
   for (const film of films) {
     const type = film.media_type === "tv" ? "tv" : "movie";
     try {
-      const res = await fetch(
-        `https://api.themoviedb.org/3/${type}/${film.tmdb_id}?api_key=${TMDB_API_KEY}&language=fr-FR`,
-      );
+      const res = await fetch(tmdbUrl(`/${type}/${film.tmdb_id}`, { language: "fr-FR" }));
       if (res.status === 404) {
-        // Marquer comme traité (runtime=0) pour éviter de re-boucler indéfiniment
         await supabase.from("movie_embeddings").update({ runtime: 0 }).eq("tmdb_id", film.tmdb_id);
         skipped++;
         await new Promise((r) => setTimeout(r, 300));
@@ -69,7 +68,6 @@ serve(async (req) => {
         : (detail.runtime || null);
 
       if (!runtime) {
-        // Marquer comme traité (runtime=0) pour éviter de re-boucler
         await supabase.from("movie_embeddings").update({ runtime: 0 }).eq("tmdb_id", film.tmdb_id);
         skipped++;
         await new Promise((r) => setTimeout(r, 300));
@@ -90,7 +88,6 @@ serve(async (req) => {
     }
   }
 
-  // Compte combien il en reste
   let countQuery = supabase
     .from("movie_embeddings")
     .select("*", { count: "exact", head: true })

@@ -1,9 +1,8 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Loader2, Film, User, Clapperboard, ChevronLeft, Sparkles } from "lucide-react";
-import { getPosterUrl, getDisplayTitle } from "@/lib/tmdb";
+import { getPosterUrl, getDisplayTitle, getMovieDetailsWithCredits, type Movie } from "@/lib/tmdb";
 import { getPersonPhotoUrl, fetchPersonDetail } from "@/lib/people-preferences";
-import type { Movie } from "@/lib/tmdb";
 import FeedbackBadge from "@/components/pick/FeedbackBadge";
 import { useMovieInteraction } from "@/hooks/use-movie-interactions";
 import MovieActionBar from "@/components/pick/MovieActionBar";
@@ -34,8 +33,6 @@ interface FlipCardDetailProps {
   recommendationTextsByMovieId?: Record<number, MatchData | undefined>;
   isEnriching?: boolean;
 }
-
-const TMDB_API_KEY = "2dca580c2a14b55200e784d157207b4d";
 
 type NavEntry = {
   item: any;
@@ -79,11 +76,7 @@ const FlipCardDetail = ({
 
     if (currentType === "movie") {
       const isTV = !!currentItem.first_air_date;
-      const endpoint = isTV
-        ? `https://api.themoviedb.org/3/tv/${currentItem.id}?api_key=${TMDB_API_KEY}&language=fr-FR&append_to_response=credits`
-        : `https://api.themoviedb.org/3/movie/${currentItem.id}?api_key=${TMDB_API_KEY}&language=fr-FR&append_to_response=credits`;
-      fetch(endpoint)
-        .then((r) => r.json())
+      getMovieDetailsWithCredits(currentItem.id, isTV ? "tv" : "movie")
         .then((d) => setDetail(d))
         .finally(() => setLoading(false));
     } else {

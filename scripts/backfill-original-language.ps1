@@ -14,7 +14,8 @@ param(
     [int]$DelayMs   = 80     # pause entre appels TMDB (ms)
 )
 
-$TMDB_KEY     = "2dca580c2a14b55200e784d157207b4d"
+$TMDB_KEY = $env:TMDB_API_KEY
+if (-not $TMDB_KEY) { throw "TMDB_API_KEY doit être défini dans l'environnement" }
 $SUPABASE_URL = "https://lrjhpflvkrebbngfnaif.supabase.co"
 $ANON_KEY     = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyamhwZmx2a3JlYmJuZ2ZuYWlmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMxODMwODMsImV4cCI6MjA4ODc1OTA4M30.uqrxehgcnJTHmhGcmSKpu8GNngUkSE5iuHUcw7z4tPk"
 

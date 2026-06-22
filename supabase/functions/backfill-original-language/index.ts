@@ -1,15 +1,18 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { requireAdmin } from "../_shared/auth.ts";
+import { tmdbUrl } from "../_shared/tmdb.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const TMDB_API_KEY = "2dca580c2a14b55200e784d157207b4d";
-
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+
+  const adminAuth = await requireAdmin(req, corsHeaders);
+  if (adminAuth.response) return adminAuth.response;
 
   const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
   const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -17,7 +20,6 @@ serve(async (req) => {
 
   const { batchSize = 100 } = req.method === "POST" ? await req.json().catch(() => ({})) : {};
 
-  // Récupère le prochain batch de films sans original_language
   const { data: films, error } = await supabase
     .from("movie_embeddings")
     .select("tmdb_id, media_type, year")
@@ -41,13 +43,10 @@ serve(async (req) => {
   let updated = 0;
   let errors = 0;
 
-  // Traitement séquentiel pour ne pas saturer TMDB
   for (const film of films) {
     const type = film.media_type === "tv" ? "tv" : "movie";
     try {
-      const res = await fetch(
-        `https://api.themoviedb.org/3/${type}/${film.tmdb_id}?api_key=${TMDB_API_KEY}`,
-      );
+      const res = await fetch(tmdbUrl(`/${type}/${film.tmdb_id}`));
       if (!res.ok) { errors++; continue; }
       const detail = await res.json();
 
@@ -56,7 +55,6 @@ serve(async (req) => {
 
       const patch: Record<string, any> = { original_language: origLang };
 
-      // Remplit year si absent
       if (!film.year) {
         const dateStr = type === "tv" ? detail.first_air_date : detail.release_date;
         if (dateStr && dateStr.length >= 4) {
@@ -71,13 +69,12 @@ serve(async (req) => {
 
       if (patchError) { errors++; } else { updated++; }
 
-      await new Promise((r) => setTimeout(r, 80)); // respect TMDB rate limit
+      await new Promise((r) => setTimeout(r, 80));
     } catch {
       errors++;
     }
   }
 
-  // Compte combien il en reste
   const { count: remaining } = await supabase
     .from("movie_embeddings")
     .select("*", { count: "exact", head: true })

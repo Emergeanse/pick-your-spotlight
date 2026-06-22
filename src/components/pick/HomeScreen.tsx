@@ -326,7 +326,11 @@ const HomeScreen = ({
   });
   const [tonightLoadingMsg, setTonightLoadingMsg] = useState("");
   const [loadingLog, setLoadingLog] = useState<string[]>([]);
-  const [tonightUserGenres, setTonightUserGenres] = useState<string[]>([]);
+  const [tonightUserGenres, setTonightUserGenres] = useState<string[]>(() => {
+    const st = location.state as { revealPending?: boolean } | null;
+    if (st?.revealPending) return peekForReveal()?.genres ?? [];
+    return [];
+  });
   const loadingLogEndRef = useRef<HTMLDivElement | null>(null);
   const activeMessagesRef = useRef<string[]>([]);
   const [tonightProviders, setTonightProviders] = useState<{ name: string; logo_path: string }[]>([]);
@@ -433,18 +437,27 @@ const HomeScreen = ({
     revealTriggeredRef.current = true;
     clearRevealIntent();
 
-    const { context, genres, mood, participantIds } = intent;
-    console.log("[REVEAL] 🏃 runRevealPipeline — context:", context, "| genres:", genres, "| mood:", mood, "| participantIds:", participantIds);
-    const genreFilter: VoiceSearchFilters | null = genres?.length
-      ? { genres, originalLanguage: null, mediaType: null, maxDuration: null, decade: null }
-      : null;
+    const { context, genres, mood, participantIds, mediaType } = intent;
+    console.log("[REVEAL] 🏃 runRevealPipeline — context:", context, "| genres:", genres, "| mood:", mood, "| mediaType:", mediaType, "| participantIds:", participantIds);
+
+    setTonightLoading(true);
+    if (genres?.length) setTonightUserGenres(genres);
+
+    const genreFilter: VoiceSearchFilters | null =
+      genres?.length || mood || mediaType
+        ? {
+            genres: genres ?? [],
+            originalLanguage: null,
+            mediaType: mediaType && mediaType !== "both" ? mediaType : null,
+            maxDuration: null,
+            decade: null,
+          }
+        : null;
 
     if (!context || context === "solo") {
-      // Délai minimal pour laisser React finaliser le double-mount et que _pipelineFns
-      // soit mis à jour par le composant vivant (Mount 2) avant l'appel
-      await new Promise<void>(r => setTimeout(r, 50));
-      console.log("[REVEAL] → solo, _pipelineFns.generateTonightPick set:", !!_pipelineFns.generateTonightPick);
-      _pipelineFns.generateTonightPick?.([], undefined, genreFilter, undefined, mood || undefined);
+      const pick = generateTonightPickRef.current ?? _pipelineFns.generateTonightPick;
+      console.log("[REVEAL] → solo, generateTonightPick set:", !!pick);
+      pick?.([], undefined, genreFilter, undefined, mood || undefined);
       return;
     }
 
@@ -468,12 +481,17 @@ const HomeScreen = ({
       }
     } catch (err) { console.error("[Reveal] duo fetch:", err); }
 
-    console.log("[REVEAL] 🔍 duo fetch résultat — duoId:", duoId, "| _pipelineFns.handleAutoPick set:", !!_pipelineFns.handleAutoPick);
-    void _pipelineFns.handleAutoPick?.(duoId,
-      genres?.length || mood
-        ? { ...(genres?.length && { genres }), ...(mood && { moodContext: mood }) }
-        : undefined
-    );
+    const duoOpts =
+      genres?.length || mood || (mediaType && mediaType !== "both")
+        ? {
+            ...(genres?.length && { genres }),
+            ...(mood && { moodContext: mood }),
+            ...(mediaType && mediaType !== "both" && { mediaType }),
+          }
+        : undefined;
+
+    console.log("[REVEAL] 🔍 duo fetch résultat — duoId:", duoId, "| handleAutoPick set:", !!_pipelineFns.handleAutoPick);
+    void (handleAutoPickRef.current ?? _pipelineFns.handleAutoPick)?.(duoId, duoOpts);
   };
 
   // Mécanisme 1 : au montage, s'assurer que le singleton module est alimenté.
@@ -1078,8 +1096,8 @@ const HomeScreen = ({
     setLoadingLog([]);
 
     const buildMsgs = (likedTitles: string[] = []) => buildPersonalizedLoadingMessages({
-      genres: userGenres,
-      mediaType: quickFilters.mediaType,
+      genres: voiceFilters?.genres?.length ? voiceFilters.genres : userGenres,
+      mediaType: voiceFilters?.mediaType ?? quickFilters.mediaType,
       explorationLevel,
       ambiance: activeAmbiance ?? null,
       platformIds: userPlatformIds,
@@ -1202,13 +1220,10 @@ const HomeScreen = ({
           });
           tEdgeEnd = performance.now();
           engineMetaResult = data?.engineMeta ?? null;
-          const dbg = data?.debugData;
-
-          // Mémoriser les 50 candidats SQL évalués pour les exclure au prochain appel
-          if (dbg?.sql50?.length) {
-            const sql50Ids = (dbg.sql50 as any[]).map((c) => Number(c.id)).filter(Number.isFinite);
-            setLastSql50Ids(sql50Ids);
+          if (data?.excludeCandidateIds?.length) {
+            setLastSql50Ids(data.excludeCandidateIds);
           }
+          const dbg = import.meta.env.DEV ? data?.debugData : undefined;
 
           console.group("[PICK-DEBUG] ═══ Pipeline de recommandation ═══");
 
@@ -1754,7 +1769,7 @@ const HomeScreen = ({
     }
   };
 
-  const handleAutoPick = async (duoId?: string, opts?: { genres?: string[]; moodContext?: string }) => {
+  const handleAutoPick = async (duoId?: string, opts?: { genres?: string[]; moodContext?: string; mediaType?: "movie" | "tv" }) => {
     console.log("[REVEAL] 🎭 handleAutoPick — duoId:", duoId, "| opts:", opts);
     // Ouvrir l'overlay en premier — dans le même batch React que setShowFindChoice(false)
     // → pas de frame où le fond est visible entre la fermeture du modal et l'ouverture de l'overlay
@@ -1766,9 +1781,16 @@ const HomeScreen = ({
     setTonightPickIndex(0);
     setNoResultsInfo(null);
     activeVoiceFiltersRef.current = null;
-    const genreFilter: import("./VoiceChat").VoiceSearchFilters | null = opts?.genres?.length
-      ? { genres: opts.genres, originalLanguage: null, mediaType: null, maxDuration: null, decade: null }
-      : null;
+    const genreFilter: import("./VoiceChat").VoiceSearchFilters | null =
+      opts?.genres?.length || opts?.mediaType
+        ? {
+            genres: opts.genres ?? [],
+            originalLanguage: null,
+            mediaType: opts.mediaType ?? null,
+            maxDuration: null,
+            decade: null,
+          }
+        : null;
 
     if (duoId) {
       try {
@@ -1943,8 +1965,11 @@ const HomeScreen = ({
     await generateTonightPick(nextRejected, rejContext, activeVoiceFiltersRef.current, currentDuoOverridesRef.current ?? undefined);
   };
 
+  const hideHomeDuringReveal = tonightLoading && !tonightPick;
+
   return (
     <div className="relative w-full h-full overflow-x-hidden">
+      <div className={hideHomeDuringReveal ? "invisible" : undefined}>
       <BrandHeader
         extraActions={
           <QuickFilters filters={quickFilters} onFiltersChange={setQuickFilters} profileDefaults={profileDefaults} />
@@ -2316,6 +2341,7 @@ const HomeScreen = ({
           </motion.div>
         )}
       </AnimatePresence>
+      </div>
 
       <TonightPickOverlay
         open={tonightLoading || !!tonightPick}

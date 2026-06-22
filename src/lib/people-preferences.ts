@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { fetchFromTMDB } from "@/lib/tmdb-proxy-client";
 
 export type PersonType = "actor" | "director";
 export type PreferenceValue = "loved" | "liked" | "disliked";
@@ -12,13 +13,8 @@ export interface PersonPreference {
   known_for: string[];
 }
 
-const TMDB_API_KEY = "2dca580c2a14b55200e784d157207b4d";
-
 export async function fetchPopularPeople(page: number = 1): Promise<any[]> {
-  const res = await fetch(
-    `https://api.themoviedb.org/3/person/popular?api_key=${TMDB_API_KEY}&language=fr-FR&page=${page}`
-  );
-  const data = await res.json();
+  const data = await fetchFromTMDB("/person/popular", { page: String(page) });
   return (data.results || []).filter(
     (p: any) => p.profile_path && p.known_for_department && ["Acting", "Directing"].includes(p.known_for_department)
   );
@@ -26,16 +22,16 @@ export async function fetchPopularPeople(page: number = 1): Promise<any[]> {
 
 /** Récupère acteurs et réalisateurs issus des films français populaires */
 export async function fetchFrenchCinemaPeople(): Promise<any[]> {
-  const moviesRes = await fetch(
-    `https://api.themoviedb.org/3/discover/movie?api_key=${TMDB_API_KEY}&language=fr-FR&with_original_language=fr&sort_by=popularity.desc&vote_count.gte=100&page=1`
-  );
-  const moviesData = await moviesRes.json();
+  const moviesData = await fetchFromTMDB("/discover/movie", {
+    with_original_language: "fr",
+    sort_by: "popularity.desc",
+    "vote_count.gte": "100",
+    page: "1",
+  });
   const movieIds: number[] = (moviesData.results || []).slice(0, 10).map((m: any) => m.id);
 
   const creditsResults = await Promise.all(
-    movieIds.map((id) =>
-      fetch(`https://api.themoviedb.org/3/movie/${id}/credits?api_key=${TMDB_API_KEY}&language=fr-FR`).then((r) => r.json())
-    )
+    movieIds.map((id) => fetchFromTMDB(`/movie/${id}/credits`)),
   );
 
   const peopleMap = new Map<number, any>();
@@ -52,10 +48,7 @@ export async function fetchFrenchCinemaPeople(): Promise<any[]> {
 }
 
 export async function fetchPersonDetail(personId: number): Promise<any> {
-  const res = await fetch(
-    `https://api.themoviedb.org/3/person/${personId}?api_key=${TMDB_API_KEY}&language=fr-FR&append_to_response=movie_credits`
-  );
-  return res.json();
+  return fetchFromTMDB(`/person/${personId}`, { append_to_response: "movie_credits" });
 }
 
 export function getPersonPhotoUrl(path: string | null, size = "w185"): string {

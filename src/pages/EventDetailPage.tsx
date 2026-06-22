@@ -1,9 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowLeft, Calendar, MapPin, Wifi, Copy, Share2, Check,
-  Loader2, Users, Sparkles, Film, Crown, Trash2, AlertTriangle, LogOut, Clock,
+  Loader2, Users, Sparkles, Film, Crown, Trash2, AlertTriangle, LogOut, Clock, Vote,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -43,6 +43,15 @@ type Participant = {
   display_name?: string;
 };
 
+type EventRecommendation = {
+  id: string;
+  movie_title: string | null;
+  poster_path: string | null;
+  tmdb_id: number | null;
+  position: number | null;
+  catalog_item_id: string | null;
+};
+
 // ─────────────────────────────────────────
 // Helpers
 // ─────────────────────────────────────────
@@ -73,6 +82,48 @@ const formatCountdown = (ms: number) => {
   return `${m}m ${sec}s`;
 };
 
+const mediaTypeLabel = (mt: string | null | undefined) => {
+  if (mt === "movie") return "Film";
+  if (mt === "tv") return "Série";
+  if (mt === "both") return "Film ou série";
+  return null;
+};
+
+/** Résumé compact des critères de la soirée (genres, mood, type) */
+const EventPickSummary = ({ event }: { event: EventData }) => {
+  const mt = mediaTypeLabel(event.media_type);
+  const hasGenres = (event.genre_tags?.length ?? 0) > 0;
+  const hasMood = !!event.mood?.trim();
+  if (!mt && !hasGenres && !hasMood) return null;
+
+  return (
+    <div className="flex flex-col gap-1.5 mt-2 pt-2 border-t border-white/[0.06]">
+      {mt && (
+        <p className="text-[11px] font-sans text-foreground/45">
+          Type · <span className="text-foreground/65">{mt}</span>
+        </p>
+      )}
+      {hasGenres && (
+        <div className="flex flex-wrap gap-1">
+          {event.genre_tags!.map((tag) => (
+            <span
+              key={tag}
+              className="px-2 py-0.5 rounded-full text-[10px] font-sans font-semibold bg-primary/15 border border-primary/25 text-primary/90"
+            >
+              {tag}
+            </span>
+          ))}
+        </div>
+      )}
+      {hasMood && (
+        <p className="text-[11px] font-sans text-foreground/50 italic line-clamp-2">
+          « {event.mood} »
+        </p>
+      )}
+    </div>
+  );
+};
+
 // ─────────────────────────────────────────
 // Component
 // ─────────────────────────────────────────
@@ -94,6 +145,14 @@ const EventDetailPage = () => {
   const [leaving, setLeaving] = useState(false);
   const [duoPartner, setDuoPartner] = useState<{ id: string; name: string } | null>(null);
   const [addingPartner, setAddingPartner] = useState(false);
+  const [isRevealing, setIsRevealing] = useState(false);
+  const [recommendations, setRecommendations] = useState<EventRecommendation[]>([]);
+  const [voteCounts, setVoteCounts] = useState<Record<string, number>>({});
+  const [myVoteId, setMyVoteId] = useState<string | null>(null);
+  const [loadingVotes, setLoadingVotes] = useState(false);
+  const [castingVoteId, setCastingVoteId] = useState<string | null>(null);
+  const [revealingWinner, setRevealingWinner] = useState(false);
+  const autoRevealTriggeredRef = useRef(false);
   const isOrganizer = !!user && event?.organizer_id === user.id;
   const inviteLink = event ? `${window.location.origin}/invite/${event.invite_link_token}` : "";
 
@@ -110,6 +169,38 @@ const EventDetailPage = () => {
     const timer = setInterval(update, 1000);
     return () => clearInterval(timer);
   }, [event]);
+
+  useEffect(() => {
+    autoRevealTriggeredRef.current = false;
+  }, [id]);
+
+  const loadVoteData = useCallback(async (eventId: string) => {
+    setLoadingVotes(true);
+    try {
+      const { data: recs } = await supabase
+        .from("event_recommendations" as any)
+        .select("id, movie_title, poster_path, tmdb_id, position, catalog_item_id")
+        .eq("event_id", eventId)
+        .order("position", { ascending: true });
+      setRecommendations((recs ?? []) as EventRecommendation[]);
+
+      const { data: votes } = await supabase
+        .from("event_votes" as any)
+        .select("recommendation_id, voter_id")
+        .eq("event_id", eventId);
+
+      const counts: Record<string, number> = {};
+      let mine: string | null = null;
+      (votes ?? []).forEach((v: { recommendation_id: string; voter_id: string | null }) => {
+        counts[v.recommendation_id] = (counts[v.recommendation_id] ?? 0) + 1;
+        if (user && v.voter_id === user.id) mine = v.recommendation_id;
+      });
+      setVoteCounts(counts);
+      setMyVoteId(mine);
+    } finally {
+      setLoadingVotes(false);
+    }
+  }, [user]);
 
   // ── Chargement initial ───────────────────────────────────
   useEffect(() => {
@@ -130,6 +221,9 @@ const EventDetailPage = () => {
     setEvent(ev as unknown as EventData);
 
     await loadParticipants(id, ev as unknown as EventData);
+    if ((ev as EventData).reveal_mode === "vote") {
+      await loadVoteData(id);
+    }
     setLoading(false);
   };
 
@@ -221,6 +315,20 @@ const EventDetailPage = () => {
     return () => { supabase.removeChannel(channel); };
   }, [id, user]);
 
+  // Realtime votes (mode vote)
+  useEffect(() => {
+    if (!id || event?.reveal_mode !== "vote") return;
+    const channel = supabase
+      .channel(`event_votes_${id}`)
+      .on(
+        "postgres_changes" as any,
+        { event: "*", schema: "public", table: "event_votes", filter: `event_id=eq.${id}` },
+        () => { void loadVoteData(id); }
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [id, event?.reveal_mode, loadVoteData]);
+
   // ── Confirmer / annuler sa participation ─────────────────
   const confirm = async () => {
     if (!user || !event) return;
@@ -308,8 +416,10 @@ const EventDetailPage = () => {
     }
   };
 
-  const revealFilm = () => {
-    if (!event) return;
+  const revealFilm = useCallback(() => {
+    if (!event || isRevealing) return;
+    setIsRevealing(true);
+
     const participantIds = participants
       .filter(p => p.user_id)
       .map(p => p.user_id as string);
@@ -319,23 +429,96 @@ const EventDetailPage = () => {
       genres:         event.genre_tags ?? [],
       mood:           event.mood ?? "",
       participantIds,
+      mediaType:      (event.media_type as "movie" | "tv" | "both" | null) ?? "both",
     };
 
-    // Singleton event-reveal : nécessaire pour sauvegarder le film choisi
     setRevealEvent({ eventId: event.id, eventTitle: event.title });
-
-    // Singleton module-level : survit aux remontages du HomeScreen
     queueForReveal(intent);
-    // Window global en backup (au cas où le module serait splitté)
     (window as any).__pickRevealIntent = intent;
-    console.log("[REVEAL] 📤 Intent posé — context:", intent.context, "| genres:", intent.genres);
+    console.log("[REVEAL] 📤 Intent posé — context:", intent.context, "| genres:", intent.genres, "| mediaType:", intent.mediaType);
 
+    window.dispatchEvent(new CustomEvent("pick-reveal-event", { detail: intent }));
     navigate("/app", { state: { revealPending: true } });
+  }, [event, isRevealing, participants, navigate]);
 
-    // CustomEvent en backup (si HomeScreen déjà monté) — délai 500ms
-    setTimeout(() => {
-      window.dispatchEvent(new CustomEvent("pick-reveal-event", { detail: intent }));
-    }, 500);
+  const revealFilmRef = useRef(revealFilm);
+  revealFilmRef.current = revealFilm;
+
+  // Mode timed : révélation auto quand le compte à rebours atteint 0
+  useEffect(() => {
+    if (!isOrganizer || !event || event.reveal_mode !== "timed" || event.status === "done") return;
+    if (timeLeft === null || timeLeft > 0) return;
+    if (autoRevealTriggeredRef.current || isRevealing) return;
+
+    autoRevealTriggeredRef.current = true;
+    toast.info("C'est l'heure de la soirée — Pick prépare le film…", { duration: 4000 });
+    const timer = setTimeout(() => revealFilmRef.current(), 900);
+    return () => clearTimeout(timer);
+  }, [timeLeft, isOrganizer, event, isRevealing]);
+
+  const canVote = !!user && (isOrganizer || myParticipation?.status === "confirmed");
+  const totalVotes = Object.values(voteCounts).reduce((a, b) => a + b, 0);
+
+  const castVote = async (recommendationId: string) => {
+    if (!user || !event || !canVote || castingVoteId) return;
+    setCastingVoteId(recommendationId);
+    try {
+      await supabase
+        .from("event_votes" as any)
+        .delete()
+        .eq("event_id", event.id)
+        .eq("voter_id", user.id);
+      const { error } = await supabase.from("event_votes" as any).insert({
+        event_id: event.id,
+        recommendation_id: recommendationId,
+        voter_id: user.id,
+      });
+      if (error) throw error;
+      toast.success("Vote enregistré !");
+      await loadVoteData(event.id);
+    } catch {
+      toast.error("Impossible d'enregistrer ton vote");
+    } finally {
+      setCastingVoteId(null);
+    }
+  };
+
+  const revealVoteWinner = async () => {
+    if (!event || !isOrganizer || revealingWinner) return;
+    if (totalVotes === 0) {
+      toast.error("Aucun vote pour l'instant — attends que les participants votent.");
+      return;
+    }
+    const sorted = [...recommendations].sort((a, b) => {
+      const diff = (voteCounts[b.id] ?? 0) - (voteCounts[a.id] ?? 0);
+      return diff !== 0 ? diff : (a.position ?? 99) - (b.position ?? 99);
+    });
+    const winner = sorted[0];
+    if (!winner?.movie_title) {
+      toast.error("Aucune suggestion à révéler");
+      return;
+    }
+
+    setRevealingWinner(true);
+    try {
+      const { error } = await supabase
+        .from("events" as any)
+        .update({
+          final_pick_id: winner.catalog_item_id,
+          final_pick_title: winner.movie_title,
+          final_pick_poster: winner.poster_path,
+          final_pick_tmdb_id: winner.tmdb_id,
+          status: "done",
+        })
+        .eq("id", event.id);
+      if (error) throw error;
+      toast.success(`Le gagnant : ${winner.movie_title}`);
+      await loadEvent();
+    } catch {
+      toast.error("Impossible de révéler le gagnant");
+    } finally {
+      setRevealingWinner(false);
+    }
   };
 
 
@@ -618,38 +801,148 @@ const EventDetailPage = () => {
           </div>
         )}
 
-        {/* ── Révéler le film (organisateur) ── */}
+        {/* ── Révéler le film (organisateur — surprise / timed) ── */}
         {isOrganizer && (event.reveal_mode === "surprise" || event.reveal_mode === "timed") && event.status !== "done" && (
-          <div className="rounded-2xl bg-white/[0.03] border border-white/[0.06] p-4 flex items-center gap-3">
+          <div className="rounded-2xl bg-white/[0.03] border border-white/[0.06] p-4">
             {event.reveal_mode === "timed" && timeLeft !== null && timeLeft > 0 ? (
-              <>
+              <div className="flex items-center gap-3">
                 <Clock className="w-6 h-6 text-primary/60 shrink-0" />
                 <div className="flex-1 min-w-0">
                   <p className="text-[13px] font-sans font-semibold text-foreground">Surprise sur le moment</p>
                   <p className="text-[11.5px] text-foreground/40 mt-0.5">
-                    Révélation dans <span className="text-primary/70 font-semibold tabular-nums">{formatCountdown(timeLeft)}</span>
+                    Révélation automatique dans{" "}
+                    <span className="text-primary/70 font-semibold tabular-nums">{formatCountdown(timeLeft)}</span>
                   </p>
+                  <EventPickSummary event={event} />
                 </div>
-              </>
-            ) : (
-              <>
-                <span className="text-2xl">🎩</span>
+              </div>
+            ) : isRevealing ? (
+              <div className="flex items-center gap-3">
+                <Loader2 className="w-6 h-6 text-primary animate-spin shrink-0" />
                 <div className="flex-1">
+                  <p className="text-[13px] font-sans font-semibold text-foreground">Pick prépare la surprise…</p>
+                  <p className="text-[11.5px] text-foreground/40 mt-0.5">Analyse de ton profil en cours</p>
+                  <EventPickSummary event={event} />
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center gap-3">
+                <span className="text-2xl shrink-0">🎩</span>
+                <div className="flex-1 min-w-0">
                   <p className="text-[13px] font-sans font-semibold text-foreground">
                     {event.reveal_mode === "timed" ? "L'heure est venue !" : "Révéler le film"}
                   </p>
                   <p className="text-[11.5px] text-foreground/40 mt-0.5">
-                    {event.context === "duo" ? "Pick analyse vos deux profils et propose 3 films." : "Pick analyse ton profil et propose 3 films."}
+                    {event.context === "duo"
+                      ? "Pick analyse vos deux profils et propose 3 films."
+                      : "Pick analyse ton profil et propose 3 films."}
                   </p>
+                  <EventPickSummary event={event} />
                 </div>
                 <button
                   onClick={revealFilm}
-                  className="shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl bg-primary/15 border border-primary/25 text-primary text-[12px] font-sans font-semibold"
+                  disabled={isRevealing}
+                  className="shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl bg-primary/15 border border-primary/25 text-primary text-[12px] font-sans font-semibold disabled:opacity-50 disabled:pointer-events-none"
                 >
                   <Sparkles className="w-3.5 h-3.5" />
                   Révéler
                 </button>
-              </>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── Mode vote ── */}
+        {event.reveal_mode === "vote" && event.status !== "done" && (
+          <div className="rounded-2xl bg-white/[0.03] border border-white/[0.06] p-4 flex flex-col gap-3">
+            <div className="flex items-start gap-3">
+              <Vote className="w-5 h-5 text-violet-400 shrink-0 mt-0.5" />
+              <div className="flex-1 min-w-0">
+                <p className="text-[13px] font-sans font-semibold text-foreground">Vote pour le film</p>
+                <p className="text-[11.5px] text-foreground/40 mt-0.5">
+                  {isOrganizer
+                    ? "Les participants votent · tu révèles le gagnant quand tu veux."
+                    : canVote
+                      ? "Choisis ta préférence parmi les suggestions."
+                      : "Confirme ta participation pour voter."}
+                </p>
+                <EventPickSummary event={event} />
+              </div>
+            </div>
+
+            {loadingVotes ? (
+              <div className="flex justify-center py-6">
+                <Loader2 className="w-5 h-5 animate-spin text-primary/60" />
+              </div>
+            ) : recommendations.length === 0 ? (
+              <p className="text-[12px] font-sans text-foreground/45 text-center py-4">
+                Les suggestions sont en cours de génération… Reviens dans un instant.
+              </p>
+            ) : (
+              <div className="flex flex-col gap-2">
+                {recommendations.map((rec) => {
+                  const count = voteCounts[rec.id] ?? 0;
+                  const isMine = myVoteId === rec.id;
+                  const isCasting = castingVoteId === rec.id;
+                  return (
+                    <button
+                      key={rec.id}
+                      type="button"
+                      disabled={!canVote || !!castingVoteId}
+                      onClick={() => void castVote(rec.id)}
+                      className={`flex items-center gap-3 p-2.5 rounded-xl border text-left transition-all ${
+                        isMine
+                          ? "border-primary/40 bg-primary/10"
+                          : "border-white/[0.08] bg-white/[0.02] hover:border-white/[0.14]"
+                      } ${!canVote ? "opacity-70 cursor-default" : ""}`}
+                    >
+                      {rec.poster_path ? (
+                        <img
+                          src={`https://image.tmdb.org/t/p/w92${rec.poster_path}`}
+                          alt=""
+                          className="w-10 h-14 object-cover rounded-lg shrink-0"
+                        />
+                      ) : (
+                        <div className="w-10 h-14 rounded-lg bg-white/[0.06] flex items-center justify-center shrink-0">
+                          <Film className="w-4 h-4 text-foreground/30" />
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[13px] font-sans font-semibold text-foreground truncate">
+                          {rec.movie_title ?? "Film"}
+                        </p>
+                        <p className="text-[11px] font-sans text-foreground/45 mt-0.5">
+                          {count} vote{count !== 1 ? "s" : ""}
+                          {isMine && <span className="text-primary ml-1.5">· Ton choix</span>}
+                        </p>
+                      </div>
+                      {isCasting ? (
+                        <Loader2 className="w-4 h-4 animate-spin text-primary shrink-0" />
+                      ) : isMine ? (
+                        <Check className="w-4 h-4 text-primary shrink-0" />
+                      ) : canVote ? (
+                        <span className="text-[10px] font-sans font-semibold text-primary/70 shrink-0">Voter</span>
+                      ) : null}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
+            {isOrganizer && recommendations.length > 0 && (
+              <button
+                type="button"
+                onClick={() => void revealVoteWinner()}
+                disabled={revealingWinner || totalVotes === 0}
+                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-primary/15 border border-primary/25 text-primary text-[12.5px] font-sans font-semibold disabled:opacity-45 disabled:pointer-events-none"
+              >
+                {revealingWinner ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Sparkles className="w-4 h-4" />
+                )}
+                {revealingWinner ? "Révélation…" : `Révéler le gagnant${totalVotes > 0 ? ` (${totalVotes} vote${totalVotes !== 1 ? "s" : ""})` : ""}`}
+              </button>
             )}
           </div>
         )}

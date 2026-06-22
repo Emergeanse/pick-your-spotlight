@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { requireAuth } from "../_shared/auth.ts";
+import { tmdbUrl } from "../_shared/tmdb.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -7,11 +8,8 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const TMDB_API_KEY = "2dca580c2a14b55200e784d157207b4d";
-
 async function searchMulti(query: string): Promise<any[]> {
-  const url = `https://api.themoviedb.org/3/search/multi?api_key=${TMDB_API_KEY}&language=fr-FR&query=${encodeURIComponent(query)}&page=1`;
-  const res = await fetch(url);
+  const res = await fetch(tmdbUrl("/search/multi", { language: "fr-FR", query, page: "1" }));
   const data = await res.json();
   return (data.results || [])
     .filter((r: any) => r.media_type === "movie" || r.media_type === "tv")
@@ -19,14 +17,12 @@ async function searchMulti(query: string): Promise<any[]> {
 }
 
 async function getMovieDetails(id: number): Promise<any> {
-  const url = `https://api.themoviedb.org/3/movie/${id}?api_key=${TMDB_API_KEY}&language=fr-FR`;
-  const res = await fetch(url);
+  const res = await fetch(tmdbUrl(`/movie/${id}`, { language: "fr-FR" }));
   return res.json();
 }
 
 async function getTVDetails(id: number): Promise<any> {
-  const url = `https://api.themoviedb.org/3/tv/${id}?api_key=${TMDB_API_KEY}&language=fr-FR`;
-  const res = await fetch(url);
+  const res = await fetch(tmdbUrl(`/tv/${id}`, { language: "fr-FR" }));
   return res.json();
 }
 

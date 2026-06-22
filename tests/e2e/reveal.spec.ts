@@ -108,6 +108,41 @@ test.describe('Bouton Révéler — TNR régression', () => {
   });
 
   // ── Test 2 : pipeline déclenché (résultat visible dans HomeScreen) ─────
+  test('RÉGRESSION — Révéler ouvre l\'overlay sans flash de l\'accueil', async ({ page }) => {
+    await mockEdgeFunctions(page as any);
+
+    await page.goto('/app/soirees');
+    await page.waitForLoadState('networkidle');
+
+    const eventCards = page.locator('button').filter({ hasText: /\w/ });
+    if ((await eventCards.count()) === 0) {
+      test.skip();
+      return;
+    }
+    await eventCards.first().click();
+    await page.waitForURL('**/soirees/**');
+    await page.waitForLoadState('networkidle');
+
+    const revealBtn = page.getByRole('button', { name: 'Révéler' });
+    if (!(await revealBtn.isVisible().catch(() => false))) {
+      test.skip();
+      return;
+    }
+
+    const t0 = Date.now();
+    await revealBtn.click();
+    await page.waitForURL(/\/app$/, { timeout: 10_000 });
+
+    // Overlay plein écran (TonightPickOverlay — fond noir z-50)
+    const overlay = page.locator('.fixed.inset-0.z-50.bg-black').first();
+    await expect(overlay).toBeVisible({ timeout: 2_000 });
+    expect(Date.now() - t0).toBeLessThan(1_500);
+
+    // Le greeting accueil ne doit pas être visible pendant le chargement
+    const greeting = page.getByText(/Bonsoir/i).first();
+    await expect(greeting).not.toBeVisible({ timeout: 500 });
+  });
+
   test('le pipeline démarre et affiche un résultat après Révéler solo', async ({ page }) => {
     await mockEdgeFunctions(page as any);
 

@@ -1,7 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
-import { requireAuth } from "../_shared/auth.ts";
-
+import { requireAuth, isAdminUser } from "../_shared/auth.ts";
+import { tmdbUrl } from "../_shared/tmdb.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -9,11 +9,9 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const TMDB_API_KEY = "2dca580c2a14b55200e784d157207b4d";
-
 async function getMovieDetails(id: number, type: "movie" | "tv" = "movie"): Promise<any> {
   try {
-    const res = await fetch(`https://api.themoviedb.org/3/${type}/${id}?api_key=${TMDB_API_KEY}&language=fr-FR`);
+    const res = await fetch(tmdbUrl(`/${type}/${id}`, { language: "fr-FR" }));
     if (!res.ok) return null;
     const text = await res.text();
     if (!text) return null;
@@ -27,12 +25,9 @@ async function getMovieDetails(id: number, type: "movie" | "tv" = "movie"): Prom
   }
 }
 
-
 async function getProviderIdsFR(tmdbId: number, mediaType: "movie" | "tv"): Promise<number[]> {
   try {
-    const res = await fetch(
-      `https://api.themoviedb.org/3/${mediaType}/${tmdbId}/watch/providers?api_key=${TMDB_API_KEY}`,
-    );
+    const res = await fetch(tmdbUrl(`/${mediaType}/${tmdbId}/watch/providers`));
     if (!res.ok) return [];
     const text = await res.text();
     if (!text) return [];
@@ -94,6 +89,7 @@ serve(async (req) => {
       moodContext: rawMoodContext,
       moodBoostGenres: rawMoodBoostGenres,
       duoUserIds: rawDuoUserIds,
+      debug: rawDebug,
     } = await req.json();
 
     // Voice overrides: what was stated replaces profile; what wasn't keeps profile defaults
@@ -702,7 +698,7 @@ serve(async (req) => {
             try {
               const type = c.media_type === "tv" ? "tv" : "movie";
               const res = await fetch(
-                `https://api.themoviedb.org/3/${type}/${c.tmdb_id}?api_key=${TMDB_API_KEY}&language=fr-FR`,
+                tmdbUrl(`/${type}/${c.tmdb_id}`, { language: "fr-FR" }),
               );
               if (res.ok) {
                 const tmdbData = await res.json();
@@ -1139,29 +1135,27 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
     if (movies.length < requestedCount) {
       console.log(`[SP] Fallback needed: have ${movies.length}/${requestedCount}`);
       for (let attempt = 0; attempt < 4 && movies.length < requestedCount; attempt++) {
-        const params = new URLSearchParams({
-          api_key: TMDB_API_KEY,
+        const discoverParams: Record<string, string> = {
           language: "fr-FR",
           sort_by: "popularity.desc",
           "vote_count.gte": "50",
           page: String(Math.floor(Math.random() * 5) + 1),
-        });
-        if (minRating > 0) params.set("vote_average.gte", String(minRating));
-        if (effectiveMaxDuration && searchType === "movie") params.set("with_runtime.lte", String(effectiveMaxDuration));
-        if (excludedGenreIds.size > 0) params.set("without_genres", [...excludedGenreIds].join(","));
-        if (effectiveLikedGenreIds.size > 0) params.set("with_genres", [...effectiveLikedGenreIds].join("|"));
-        if (voiceOriginalLanguage) params.set("with_original_language", voiceOriginalLanguage);
+        };
+        if (minRating > 0) discoverParams["vote_average.gte"] = String(minRating);
+        if (effectiveMaxDuration && searchType === "movie") discoverParams["with_runtime.lte"] = String(effectiveMaxDuration);
+        if (excludedGenreIds.size > 0) discoverParams["without_genres"] = [...excludedGenreIds].join(",");
+        if (effectiveLikedGenreIds.size > 0) discoverParams["with_genres"] = [...effectiveLikedGenreIds].join("|");
+        if (voiceOriginalLanguage) discoverParams["with_original_language"] = voiceOriginalLanguage;
         if (voiceDecade) {
-          params.set("release_date.gte", `${voiceDecade}-01-01`);
-          params.set("release_date.lte", `${voiceDecade + 9}-12-31`);
+          discoverParams["release_date.gte"] = `${voiceDecade}-01-01`;
+          discoverParams["release_date.lte"] = `${voiceDecade + 9}-12-31`;
         }
         if (platformIds?.length > 0) {
-          params.set("with_watch_providers", platformIds.join("|"));
-          params.set("watch_region", "FR");
-          // Exclut location/achat — uniquement abonnement/gratuit/AVOD comme le filtre SQL
-          params.set("with_watch_monetization_types", "flatrate|free|ads");
+          discoverParams["with_watch_providers"] = platformIds.join("|");
+          discoverParams["watch_region"] = "FR";
+          discoverParams["with_watch_monetization_types"] = "flatrate|free|ads";
         }
-        const data = await safeFetchJson(`https://api.themoviedb.org/3/discover/${searchType}?${params}`);
+        const data = await safeFetchJson(tmdbUrl(`/discover/${searchType}`, discoverParams));
         const found = (data?.results || []).find(
           (r: any) => isMovieAllowed(r) && isGenreCompatibleForFallback(r) && !usedIds.has(r.id),
         );
@@ -1189,9 +1183,9 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
     // (les URLs trending ne supportent pas le filtre watch_providers)
     if (!platformIds?.length) {
       for (const url of [
-        `https://api.themoviedb.org/3/trending/${searchType}/week?api_key=${TMDB_API_KEY}&language=fr-FR`,
-        `https://api.themoviedb.org/3/${searchType}/popular?api_key=${TMDB_API_KEY}&language=fr-FR&page=1`,
-        `https://api.themoviedb.org/3/${searchType}/top_rated?api_key=${TMDB_API_KEY}&language=fr-FR&page=1`,
+        tmdbUrl(`/trending/${searchType}/week`, { language: "fr-FR" }),
+        tmdbUrl(`/${searchType}/popular`, { language: "fr-FR", page: "1" }),
+        tmdbUrl(`/${searchType}/top_rated`, { language: "fr-FR", page: "1" }),
       ]) {
         if (movies.length >= requestedCount) break;
         const data = await safeFetchJson(url);
@@ -1225,16 +1219,15 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
       if (platformIds?.length > 0) {
         // Avec plateformes : discover filtré par plateforme, tous genres/notes acceptés
         for (let page = 1; page <= 3 && movies.length < requestedCount; page++) {
-          const params = new URLSearchParams({
-            api_key: TMDB_API_KEY,
+          const nuclearParams: Record<string, string> = {
             language: "fr-FR",
             sort_by: "popularity.desc",
             "vote_count.gte": "10",
             with_watch_providers: platformIds.join("|"),
             watch_region: "FR",
             page: String(page),
-          });
-          const data = await safeFetchJson(`https://api.themoviedb.org/3/discover/${searchType}?${params}`);
+          };
+          const data = await safeFetchJson(tmdbUrl(`/discover/${searchType}`, nuclearParams));
           for (const r of data?.results || []) {
             if (movies.length >= requestedCount) break;
             if (usedIds.has(r.id) || excludedSet.has(r.id) || r.genre_ids?.some((gid: number) => hardExcludedGenreIds.has(gid))) continue;
@@ -1258,9 +1251,9 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
       } else {
         // Sans plateformes : trending/popular, tous filtres levés
         const nuclearUrls = [
-          `https://api.themoviedb.org/3/${searchType}/popular?api_key=${TMDB_API_KEY}&language=fr-FR&page=1`,
-          `https://api.themoviedb.org/3/${searchType}/popular?api_key=${TMDB_API_KEY}&language=fr-FR&page=2`,
-          `https://api.themoviedb.org/3/trending/${searchType}/week?api_key=${TMDB_API_KEY}&language=fr-FR`,
+          tmdbUrl(`/${searchType}/popular`, { language: "fr-FR", page: "1" }),
+          tmdbUrl(`/${searchType}/popular`, { language: "fr-FR", page: "2" }),
+          tmdbUrl(`/trending/${searchType}/week`, { language: "fr-FR" }),
         ];
         for (const url of nuclearUrls) {
           if (movies.length >= requestedCount) break;
@@ -1367,12 +1360,19 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
       `LIMIT 50;`,
     ].join("\n") : null;
 
-    return new Response(
-      JSON.stringify({
+    const excludeCandidateIds = candidates
+      .map((c: any) => Number(c.tmdb_id))
+      .filter(Number.isFinite);
+    const includeDebug = rawDebug === true && auth.user?.id
+      ? await isAdminUser(auth.user.id)
+      : false;
+
+    const responseBody: Record<string, unknown> = {
         movies: finalMovies,
         movie: finalMovies[0]?.movie || null,
         reason: finalMovies[0]?.reason || "",
         confidence: finalMovies[0]?.confidence || minMatchScore,
+        excludeCandidateIds,
         engineMeta: {
           profileConfidence: confidence.score,
           mode: llmSelections.length > 0 ? "retrieve-rerank" : "discover-fallback",
@@ -1394,7 +1394,10 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
             fallback: tFinal - t4,
           },
         },
-        debugData: {
+    };
+
+    if (includeDebug) {
+      responseBody.debugData = {
           filters: {
             excludeCount: normalizedExcludeIds.length,
             minRating,
@@ -1430,7 +1433,7 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
           sqlCountDiag,
           sqlLevelDebug,
           explicitFallbackDebug,
-          sql50: candidates.map(toDebugRow), // renommé sql100 en pratique
+          sql50: candidates.map(toDebugRow),
           top20: llmPool.length > 0 ? llmPool.map(toDebugRow) : candidates.slice(0, llmPoolSize).map(toDebugRow),
           llmFiltered: llmInputPool.map(toDebugRow),
           platformFilterMs: tPlatform - t2,
@@ -1449,8 +1452,11 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
             matchScore: m.confidence ?? m.recommendationTexts?.matchScore ?? null,
             reason: m.reason || null,
           })),
-        },
-      }),
+      };
+    }
+
+    return new Response(
+      JSON.stringify(responseBody),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   } catch (e) {

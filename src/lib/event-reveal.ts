@@ -18,6 +18,8 @@ export type RevealIntent = {
   genres: string[];
   mood: string;
   participantIds: string[];
+  /** Type de contenu choisi à la création de la soirée */
+  mediaType?: "movie" | "tv" | "both";
 };
 
 let _intent: RevealIntent | null = null;
@@ -30,7 +32,7 @@ export const clearRevealIntent = () => { _intent = null; };
 // Chaque render de HomeScreen les met à jour → le code async de Mount 1
 // appellera les fonctions de Mount 2 (composant affiché) au lieu de celles de Mount 1 (démonté).
 type GenTonightFn = (excludeList?: number[], ctx?: unknown, filters?: unknown, overrides?: unknown, mood?: string) => void;
-type HandleAutoPickFn = (duoId?: string, opts?: { genres?: string[]; moodContext?: string }) => Promise<void>;
+type HandleAutoPickFn = (duoId?: string, opts?: { genres?: string[]; moodContext?: string; mediaType?: "movie" | "tv" }) => Promise<void>;
 export const _pipelineFns: {
   generateTonightPick?: GenTonightFn;
   handleAutoPick?: HandleAutoPickFn;

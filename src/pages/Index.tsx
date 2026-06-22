@@ -1,6 +1,7 @@
 import { useReducer, useState, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
+import { peekForReveal } from "@/lib/event-reveal";
 import HomeScreen from "@/components/pick/HomeScreen";
 import ResultScreen from "@/components/pick/ResultScreen";
 import VoiceChat from "@/components/pick/VoiceChat";
@@ -32,6 +33,10 @@ const Index = () => {
   usePresenceTracker();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const isRevealEntry = !!(
+    (location.state as { revealPending?: boolean } | null)?.revealPending && peekForReveal()
+  );
   const pickPlus = usePickPlus();
 
   const [state, dispatch] = useReducer(indexReducer, initialIndexState);
@@ -155,10 +160,10 @@ const Index = () => {
         {state.step === "home" && (
           <motion.div
             key="home"
-            initial={{ opacity: 0 }}
+            initial={{ opacity: isRevealEntry ? 1 : 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.4 }}
+            transition={{ duration: isRevealEntry ? 0 : 0.4 }}
             className={`absolute inset-0 ${showActivation && !showTour ? "pt-12" : ""} pb-[calc(5rem+env(safe-area-inset-bottom))]`}
           >
             <HomeScreen

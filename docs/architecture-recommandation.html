@@ -1,0 +1,1133 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pick Your Spotlight — Architecture de recommandation</title>
+  <style>
+    :root {
+      --bg: #0d0d14;
+      --bg2: #13131f;
+      --bg3: #1a1a2e;
+      --border: #2a2a42;
+      --accent: #7c5cbf;
+      --accent2: #a87ee8;
+      --accent3: #e066b0;
+      --green: #3ecf8e;
+      --yellow: #f0b429;
+      --red: #e05a5a;
+      --text: #e8e8f0;
+      --muted: #8888aa;
+      --card: #16162a;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      font-size: 15px;
+      line-height: 1.6;
+      padding: 40px 20px 80px;
+    }
+
+    /* ── Header ── */
+    header {
+      text-align: center;
+      margin-bottom: 60px;
+    }
+    header .eyebrow {
+      font-size: 12px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--accent2);
+      margin-bottom: 12px;
+    }
+    header h1 {
+      font-size: clamp(28px, 5vw, 48px);
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--accent2), var(--accent3));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 12px;
+    }
+    header p {
+      color: var(--muted);
+      font-size: 16px;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    /* ── Section titles ── */
+    .section {
+      max-width: 1000px;
+      margin: 0 auto 60px;
+    }
+    .section-title {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+    .section-num {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), var(--accent3));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+    .section-title h2 {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .section-title .subtitle {
+      font-size: 13px;
+      color: var(--muted);
+      margin-left: 4px;
+    }
+
+    /* ── Entry points grid ── */
+    .entries-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+    }
+    .entry-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px 20px;
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.2s, border-color 0.2s;
+    }
+    .entry-card:hover { transform: translateY(-2px); border-color: var(--accent); }
+    .entry-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: var(--accent-bar, linear-gradient(90deg, var(--accent), var(--accent2)));
+    }
+    .entry-card .icon { font-size: 28px; margin-bottom: 12px; }
+    .entry-card h3 { font-size: 15px; font-weight: 700; margin-bottom: 6px; }
+    .entry-card p { font-size: 13px; color: var(--muted); line-height: 1.5; }
+    .entry-card .badge {
+      display: inline-block;
+      margin-top: 12px;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      background: rgba(124,92,191,0.2);
+      color: var(--accent2);
+      border: 1px solid rgba(124,92,191,0.3);
+    }
+    .entry-card.duo { --accent-bar: linear-gradient(90deg, var(--accent3), var(--yellow)); }
+    .entry-card.vocal { --accent-bar: linear-gradient(90deg, var(--green), var(--accent2)); }
+
+    /* ── Pipeline flow ── */
+    .pipeline {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0;
+    }
+    .pipe-step {
+      width: 100%;
+      max-width: 720px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px 28px;
+      position: relative;
+    }
+    .pipe-step .step-header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 14px;
+    }
+    .pipe-step .step-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+    .pipe-step .step-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: var(--muted);
+      margin-bottom: 2px;
+    }
+    .pipe-step h3 { font-size: 17px; font-weight: 700; }
+
+    .pipe-arrow {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 40px;
+      color: var(--accent2);
+      font-size: 22px;
+      opacity: 0.6;
+    }
+
+    .tags-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+    }
+    .tag {
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 500;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--border);
+      color: var(--muted);
+    }
+    .tag.purple { background: rgba(124,92,191,0.15); color: var(--accent2); border-color: rgba(124,92,191,0.3); }
+    .tag.green  { background: rgba(62,207,142,0.12); color: var(--green);   border-color: rgba(62,207,142,0.3); }
+    .tag.yellow { background: rgba(240,180,41,0.12); color: var(--yellow);  border-color: rgba(240,180,41,0.3); }
+    .tag.pink   { background: rgba(224,102,176,0.15); color: var(--accent3); border-color: rgba(224,102,176,0.3); }
+
+    .step-context { font-size: 13px; color: var(--muted); margin-top: 10px; }
+
+    .volumes {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 14px;
+    }
+    .vol-box {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 16px;
+    }
+    .vol-box .vol-num {
+      font-size: 28px;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--accent2), var(--accent3));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .vol-box .vol-label { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+    /* ── Weights bar ── */
+    .weights {
+      margin-top: 14px;
+      display: flex;
+      height: 10px;
+      border-radius: 6px;
+      overflow: hidden;
+      gap: 2px;
+    }
+    .w-seg { height: 100%; border-radius: 6px; }
+    .weights-legend {
+      display: flex;
+      gap: 16px;
+      margin-top: 8px;
+      flex-wrap: wrap;
+    }
+    .wl-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); }
+    .wl-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+
+    /* ── LLM box ── */
+    .llm-io {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      gap: 16px;
+      align-items: center;
+      margin-top: 14px;
+    }
+    .llm-io .io-block {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px;
+    }
+    .io-block .io-title { font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--muted); margin-bottom: 8px; }
+    .io-block ul { list-style: none; display: flex; flex-direction: column; gap: 5px; }
+    .io-block li { font-size: 13px; display: flex; gap: 8px; align-items: flex-start; }
+    .io-block li::before { content: '→'; color: var(--accent2); font-size: 11px; margin-top: 2px; flex-shrink: 0; }
+    .llm-arrow { font-size: 28px; color: var(--accent2); text-align: center; }
+
+    /* ── Results cards ── */
+    .results-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+    .result-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+      transition: transform 0.2s;
+    }
+    .result-card:hover { transform: translateY(-3px); }
+    .result-card .rc-top {
+      padding: 20px;
+      border-bottom: 1px solid var(--border);
+      text-align: center;
+    }
+    .rc-count {
+      font-size: 40px;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--accent2), var(--accent3));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .rc-label { font-size: 12px; color: var(--muted); margin-top: 4px; }
+    .result-card .rc-body { padding: 16px 20px; }
+    .rc-body ul { list-style: none; display: flex; flex-direction: column; gap: 6px; }
+    .rc-body li { font-size: 13px; color: var(--muted); display: flex; gap: 8px; }
+    .rc-body li .dot { color: var(--accent2); flex-shrink: 0; }
+
+    /* ── Status table ── */
+    .status-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .status-table th {
+      text-align: left;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--muted);
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    .status-table td {
+      padding: 12px 16px;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      font-size: 14px;
+    }
+    .status-table tr:last-child td { border-bottom: none; }
+    .status-table tr:hover td { background: rgba(255,255,255,0.02); }
+    .status-done   { color: var(--green); font-weight: 700; }
+    .status-todo   { color: var(--yellow); font-weight: 700; }
+
+    /* ── Components table ── */
+    .comp-table { width: 100%; border-collapse: collapse; }
+    .comp-table th {
+      text-align: left;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--muted);
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    .comp-table td {
+      padding: 10px 16px;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      font-size: 13px;
+      vertical-align: top;
+    }
+    .comp-table tr:last-child td { border-bottom: none; }
+    .comp-table tr:hover td { background: rgba(255,255,255,0.02); }
+    .comp-table code {
+      font-family: 'Cascadia Code', 'Fira Code', monospace;
+      font-size: 12px;
+      background: rgba(255,255,255,0.06);
+      padding: 2px 8px;
+      border-radius: 5px;
+      color: var(--accent2);
+    }
+    .comp-table .role { color: var(--muted); }
+
+    /* ── Divider ── */
+    hr {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 60px auto;
+      max-width: 1000px;
+    }
+
+    /* ── Footer ── */
+    footer {
+      text-align: center;
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 60px;
+    }
+    footer strong { color: var(--accent2); }
+
+    @media (max-width: 640px) {
+      .results-grid { grid-template-columns: 1fr; }
+      .llm-io { grid-template-columns: 1fr; }
+      .llm-arrow { transform: rotate(90deg); }
+      .volumes { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── HEADER ── -->
+<header>
+  <div class="eyebrow">Documentation technique</div>
+  <h1>Architecture de recommandation</h1>
+  <p>Pipeline complet — de l'intention utilisateur à la sélection personnalisée par IA</p>
+</header>
+
+<!-- ── 0. ARCHITECTURE GLOBALE ── -->
+<div class="section">
+  <div class="section-title">
+    <div class="section-num" style="background:linear-gradient(135deg,#3ecf8e,#7c5cbf);">⬡</div>
+    <div>
+      <h2>Architecture globale — flux de données</h2>
+      <span class="subtitle">— Les 6 couches du système de personnalisation</span>
+    </div>
+  </div>
+
+  <div style="display:flex;flex-direction:column;align-items:center;gap:0;max-width:680px;margin:0 auto;">
+
+    <!-- Couche 1 -->
+    <div style="width:100%;background:rgba(168,126,232,0.08);border:1px solid rgba(168,126,232,0.25);border-radius:16px;padding:18px 24px;">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
+        <div style="width:28px;height:28px;border-radius:8px;background:rgba(168,126,232,0.2);display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;">1</div>
+        <div>
+          <div style="font-size:11px;text-transform:uppercase;letter-spacing:2px;color:var(--accent2);">Capture</div>
+          <div style="font-weight:700;font-size:15px;">UI Events</div>
+        </div>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;">
+        <span class="tag purple">Swipe like / love / dislike</span>
+        <span class="tag purple">Ajout watchlist</span>
+        <span class="tag purple">Skip</span>
+        <span class="tag purple">Vocal</span>
+        <span class="tag purple">Scan affiche</span>
+        <span class="tag purple">Temps sur la carte</span>
+      </div>
+    </div>
+
+    <div class="pipe-arrow" style="height:28px;font-size:13px;color:var(--muted);">stockage brut ↓</div>
+
+    <!-- Couche 2 — triple source -->
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;width:100%;">
+      <div style="background:rgba(62,207,142,0.06);border:1px solid rgba(62,207,142,0.2);border-radius:14px;padding:14px 16px;">
+        <div style="font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:var(--green);margin-bottom:6px;">Table</div>
+        <div style="font-weight:700;font-size:13px;font-family:'Cascadia Code','Fira Code',monospace;margin-bottom:6px;">user_interactions</div>
+        <p style="font-size:12px;color:var(--muted);">Swipes, skips, rejections de session</p>
+      </div>
+      <div style="background:rgba(62,207,142,0.06);border:1px solid rgba(62,207,142,0.2);border-radius:14px;padding:14px 16px;">
+        <div style="font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:var(--green);margin-bottom:6px;">Table</div>
+        <div style="font-weight:700;font-size:13px;font-family:'Cascadia Code','Fira Code',monospace;margin-bottom:6px;">liked_movies</div>
+        <p style="font-size:12px;color:var(--muted);">Likes et coups de cœur explicites</p>
+      </div>
+      <div style="background:rgba(62,207,142,0.06);border:1px solid rgba(62,207,142,0.2);border-radius:14px;padding:14px 16px;">
+        <div style="font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:var(--green);margin-bottom:6px;">Table</div>
+        <div style="font-weight:700;font-size:13px;font-family:'Cascadia Code','Fira Code',monospace;margin-bottom:6px;">watchlist</div>
+        <p style="font-size:12px;color:var(--muted);">Ajouts et retraits de la liste</p>
+      </div>
+    </div>
+    <div style="font-size:12px;color:var(--muted);text-align:center;margin-top:-4px;">triggers automatiques sur chaque table ↓</div>
+
+    <!-- Couche 3 -->
+    <div style="width:100%;background:rgba(240,180,41,0.06);border:1px solid rgba(240,180,41,0.2);border-radius:16px;padding:18px 24px;">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">
+        <div style="width:28px;height:28px;border-radius:8px;background:rgba(240,180,41,0.15);display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;">3</div>
+        <div>
+          <div style="font-size:11px;text-transform:uppercase;letter-spacing:2px;color:var(--yellow);">Traitement</div>
+          <div style="font-weight:700;font-size:15px;">Interprétation / Scoring</div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+        <div style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:8px;padding:10px 12px;">
+          <div style="font-size:11px;color:var(--muted);margin-bottom:6px;">Pondération par type</div>
+          <div style="font-size:12px;display:flex;flex-direction:column;gap:3px;">
+            <span>💜 love <strong style="color:var(--green);">+2.0</strong></span>
+            <span>❤️ like <strong style="color:var(--green);">+1.0</strong></span>
+            <span>🔖 watchlist <strong style="color:var(--green);">+0.5</strong></span>
+            <span>→ skip <strong style="color:var(--yellow);">−0.3</strong></span>
+            <span>✕ dislike <strong style="color:var(--red);">−1.5</strong></span>
+          </div>
+        </div>
+        <div style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:8px;padding:10px 12px;">
+          <div style="font-size:11px;color:var(--muted);margin-bottom:6px;">Règles appliquées</div>
+          <div style="font-size:12px;display:flex;flex-direction:column;gap:4px;color:var(--muted);">
+            <span>⏱ Décroissance temporelle</span>
+            <span>✦ Amplification trainer ×1.2</span>
+            <span>⊕ Fusion si films dupliqués</span>
+            <span>⚡ Détection patterns genre</span>
+            <span>🔗 Contexte session</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="pipe-arrow" style="height:28px;font-size:13px;color:var(--muted);">résultat normalisé ↓</div>
+
+    <!-- Couche 4 -->
+    <div style="width:100%;background:rgba(224,102,176,0.06);border:1px solid rgba(62,207,142,0.4);border-radius:16px;padding:18px 24px;position:relative;">
+      <div style="position:absolute;top:14px;right:16px;background:rgba(62,207,142,0.15);border:1px solid rgba(62,207,142,0.4);border-radius:20px;padding:3px 10px;font-size:11px;color:var(--green);font-weight:600;">✓ En production</div>
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
+        <div style="width:28px;height:28px;border-radius:8px;background:rgba(224,102,176,0.15);display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;">4</div>
+        <div>
+          <div style="font-size:11px;text-transform:uppercase;letter-spacing:2px;color:var(--accent3);">Table Supabase — migration 20260526</div>
+          <div style="font-weight:700;font-size:15px;font-family:'Cascadia Code','Fira Code',monospace;">user_movie_scores</div>
+        </div>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;">
+        <span class="tag pink">score [−1, +1]</span>
+        <span class="tag pink">confidence 0–1</span>
+        <span class="tag pink">signals JSON</span>
+        <span class="tag pink">last_updated</span>
+      </div>
+      <p style="font-size:12px;color:var(--muted);border-top:1px solid var(--border);padding-top:10px;margin-top:2px;">
+        <strong style="color:var(--accent3);">Avantage clé :</strong> si la logique de scoring évolue, on relance <code style="font-size:11px;background:rgba(255,255,255,0.05);padding:1px 6px;border-radius:4px;color:var(--accent2);">recompute_user_movie_score()</code> sans toucher aux événements bruts.
+      </p>
+    </div>
+
+    <div class="pipe-arrow" style="height:28px;font-size:13px;color:var(--muted);">agrégation vectorielle ↓</div>
+
+    <!-- Couche 5 -->
+    <div style="width:100%;background:rgba(124,92,191,0.08);border:1px solid rgba(124,92,191,0.3);border-radius:16px;padding:18px 24px;">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+        <div style="width:28px;height:28px;border-radius:8px;background:rgba(124,92,191,0.2);display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;">5</div>
+        <div>
+          <div style="font-size:11px;text-transform:uppercase;letter-spacing:2px;color:var(--accent2);">Profil utilisateur</div>
+          <div style="font-weight:700;font-size:15px;">Taste Vectors</div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px;">
+        <div style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:8px;padding:10px 12px;text-align:center;">
+          <div style="font-size:11px;color:var(--accent2);margin-bottom:4px;">STABLE</div>
+          <div style="font-size:20px;font-weight:800;color:var(--accent2);">150j</div>
+          <div style="font-size:11px;color:var(--muted);">half-life</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px;">Goûts durables</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:8px;padding:10px 12px;text-align:center;">
+          <div style="font-size:11px;color:var(--green);margin-bottom:4px;">RÉCENT</div>
+          <div style="font-size:20px;font-weight:800;color:var(--green);">21j</div>
+          <div style="font-size:11px;color:var(--muted);">half-life</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px;">Tendances actuelles</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:8px;padding:10px 12px;text-align:center;">
+          <div style="font-size:11px;color:var(--red);margin-bottom:4px;">ÉVITEMENT</div>
+          <div style="font-size:20px;font-weight:800;color:var(--red);">60j</div>
+          <div style="font-size:11px;color:var(--muted);">half-life</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px;">Ce qu'il faut éviter</div>
+        </div>
+      </div>
+      <!-- État actuel vs cible -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;border-top:1px solid var(--border);padding-top:12px;">
+        <div style="background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:8px;padding:12px;">
+          <div style="font-size:11px;color:var(--yellow);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px;">État actuel</div>
+          <ul style="list-style:none;display:flex;flex-direction:column;gap:4px;">
+            <li style="font-size:12px;color:var(--muted);display:flex;gap:6px;"><span style="color:var(--green);">·</span>liked_movies → vecteur stable/récent</li>
+            <li style="font-size:12px;color:var(--muted);display:flex;gap:6px;"><span style="color:var(--green);">·</span>watchlist → vecteur stable/récent</li>
+            <li style="font-size:12px;color:var(--muted);display:flex;gap:6px;"><span style="color:var(--green);">·</span>user_interactions → avoidance (inline)</li>
+            <li style="font-size:12px;color:var(--accent3);display:flex;gap:6px;"><span>✓</span>user_movie_scores → avoidance (score ≤ −0.6)</li>
+          </ul>
+        </div>
+        <div style="background:rgba(168,126,232,0.05);border:1px solid rgba(168,126,232,0.2);border-radius:8px;padding:12px;">
+          <div style="font-size:11px;color:var(--accent2);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px;">Cible (refonte future)</div>
+          <ul style="list-style:none;display:flex;flex-direction:column;gap:4px;">
+            <li style="font-size:12px;color:var(--muted);display:flex;gap:6px;"><span style="color:var(--accent2);">→</span>user_movie_scores (score > 0) → vecteur stable/récent</li>
+            <li style="font-size:12px;color:var(--muted);display:flex;gap:6px;"><span style="color:var(--accent2);">→</span>user_movie_scores (score ≤ −0.6) → avoidance</li>
+            <li style="font-size:12px;color:var(--muted);margin-top:4px;font-style:italic;">Suppression des 3 lectures parallèles — tout déjà calculé en base</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="pipe-arrow" style="height:28px;font-size:13px;color:var(--muted);">requête personnalisée ↓</div>
+
+    <!-- Couche 6 -->
+    <div style="width:100%;background:rgba(168,126,232,0.08);border:1px solid rgba(168,126,232,0.25);border-radius:16px;padding:18px 24px;">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
+        <div style="width:28px;height:28px;border-radius:8px;background:rgba(168,126,232,0.2);display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;">6</div>
+        <div>
+          <div style="font-size:11px;text-transform:uppercase;letter-spacing:2px;color:var(--accent2);">Moteur</div>
+          <div style="font-weight:700;font-size:15px;">Recommendation Engine</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+        <span class="tag purple">SQL 200–300 candidats</span>
+        <span style="color:var(--muted);font-size:12px;">→</span>
+        <span class="tag purple">Top 20–30</span>
+        <span style="color:var(--muted);font-size:12px;">→</span>
+        <span class="tag purple">LLM movie-match</span>
+        <span style="color:var(--muted);font-size:12px;">→</span>
+        <span class="tag purple">1–3 films + texte</span>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<hr style="max-width:1000px;margin:40px auto;border:none;border-top:1px solid var(--border);">
+
+<!-- ── 1. ENTRÉES ── -->
+<div class="section">
+  <div class="section-title">
+    <div class="section-num">1</div>
+    <div>
+      <h2>Points d'entrée</h2>
+      <span class="subtitle">— Comment la recherche est déclenchée</span>
+    </div>
+  </div>
+  <div class="entries-grid">
+
+    <div class="entry-card">
+      <div class="icon">🔍</div>
+      <h3>Search solo</h3>
+      <p>L'utilisateur clique sur "Rechercher". Le pipeline utilise son profil complet.</p>
+      <span class="badge">Profil courant</span>
+    </div>
+
+    <div class="entry-card duo">
+      <div class="icon">👥</div>
+      <h3>Search duo</h3>
+      <p>Recherche à deux. Profil B existant ou saisie minimale (genres + plateformes).</p>
+      <span class="badge">Fusion de profils</span>
+    </div>
+
+    <div class="entry-card vocal">
+      <div class="icon">🎙️</div>
+      <h3>Vocal solo</h3>
+      <p>Micro Pick. L'intention vocale enrichit le filtre (genre, époque, ambiance…).</p>
+      <span class="badge">NLP + profil</span>
+    </div>
+
+    <div class="entry-card vocal duo">
+      <div class="icon">🎙️👥</div>
+      <h3>Vocal duo</h3>
+      <p>Micro Pick à deux. Fusion des profils + intention vocale commune.</p>
+      <span class="badge">NLP + fusion</span>
+    </div>
+
+  </div>
+</div>
+
+<!-- ── 2. PIPELINE ── -->
+<div class="section">
+  <div class="section-title">
+    <div class="section-num">2</div>
+    <div>
+      <h2>Pipeline de traitement</h2>
+      <span class="subtitle">— Les 4 étapes de chaque recherche</span>
+    </div>
+  </div>
+
+  <div class="pipeline">
+
+    <!-- ÉTAPE A : Contexte -->
+    <div class="pipe-step">
+      <div class="step-header">
+        <div class="step-icon" style="background:rgba(168,126,232,0.15);">🧠</div>
+        <div>
+          <div class="step-label">Étape 1</div>
+          <h3>Construction du contexte</h3>
+        </div>
+      </div>
+      <div class="tags-row">
+        <span class="tag purple">Vecteur de goût stable (150 j)</span>
+        <span class="tag purple">Vecteur récent (21 j)</span>
+        <span class="tag purple">Vecteur d'évitement (60 j)</span>
+        <span class="tag green">Plateformes actives</span>
+        <span class="tag">Films exclus (déjà vus)</span>
+        <span class="tag">Langue préférée</span>
+        <span class="tag">Décennie</span>
+      </div>
+      <p class="step-context" style="margin-top:14px;">
+        <strong style="color:var(--accent3);">Mode duo</strong> — les deux vecteurs sont fusionnés par moyenne pondérée (poids = nombre d'interactions). Les plateformes sont l'<em>intersection</em> des deux listes.<br>
+        <strong style="color:var(--green);">Mode vocal</strong> — <code style="font-family:monospace;font-size:12px;background:rgba(255,255,255,0.05);padding:2px 8px;border-radius:4px;color:var(--green);">pick-chat → extract_search_intent</code> extrait genre, ambiance, époque, acteur, durée, langue.
+      </p>
+    </div>
+
+    <div class="pipe-arrow">↓</div>
+
+    <!-- ÉTAPE B : SQL -->
+    <div class="pipe-step">
+      <div class="step-header">
+        <div class="step-icon" style="background:rgba(62,207,142,0.12);">🗄️</div>
+        <div>
+          <div class="step-label">Étape 2</div>
+          <h3>Filtre SQL — requête vectorielle</h3>
+        </div>
+      </div>
+      <p class="step-context">Requête cosinus 32 dimensions sur <strong>movie_embeddings</strong> via <code style="font-family:monospace;font-size:12px;background:rgba(255,255,255,0.05);padding:2px 8px;border-radius:4px;color:var(--green);">match_movies_for_recommendation</code>. Filtres optionnels : plateforme, langue, décennie, exclusions.</p>
+      <div class="volumes">
+        <div class="vol-box">
+          <div class="vol-num">200</div>
+          <div class="vol-label">candidats — sans filtre plateforme</div>
+        </div>
+        <div class="vol-box">
+          <div class="vol-num">300</div>
+          <div class="vol-label">candidats — filtre plateforme actif ou duo</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="pipe-arrow">↓</div>
+
+    <!-- ÉTAPE C : Présélection -->
+    <div class="pipe-step">
+      <div class="step-header">
+        <div class="step-icon" style="background:rgba(240,180,41,0.12);">⚖️</div>
+        <div>
+          <div class="step-label">Étape 3</div>
+          <h3>Présélection — tri avant LLM</h3>
+        </div>
+      </div>
+      <div class="weights">
+        <div class="w-seg" style="width:70%;background:linear-gradient(90deg,var(--accent),var(--accent2));"></div>
+        <div class="w-seg" style="width:20%;background:var(--yellow);"></div>
+        <div class="w-seg" style="width:10%;background:var(--green);"></div>
+      </div>
+      <div class="weights-legend">
+        <div class="wl-item"><div class="wl-dot" style="background:var(--accent2);"></div>Similarité cosinus — 70 %</div>
+        <div class="wl-item"><div class="wl-dot" style="background:var(--yellow);"></div>Note TMDB — 20 %</div>
+        <div class="wl-item"><div class="wl-dot" style="background:var(--green);"></div>Popularité — 10 %</div>
+      </div>
+      <div class="tags-row" style="margin-top:14px;">
+        <span class="tag yellow">Top 20 films → LLM (solo)</span>
+        <span class="tag pink">Top 30 films → LLM (duo)</span>
+      </div>
+    </div>
+
+    <div class="pipe-arrow">↓</div>
+
+    <!-- ÉTAPE D : LLM -->
+    <div class="pipe-step">
+      <div class="step-header">
+        <div class="step-icon" style="background:rgba(224,102,176,0.12);">✨</div>
+        <div>
+          <div class="step-label">Étape 4</div>
+          <h3>Évaluation LLM — movie-match</h3>
+        </div>
+      </div>
+      <div class="llm-io">
+        <div class="io-block">
+          <div class="io-title">Entrées LLM</div>
+          <ul>
+            <li>Films candidats (titre, genres, synopsis, année)</li>
+            <li>Vecteur(s) de goût utilisateur</li>
+            <li>Contexte de recherche actif</li>
+            <li>Seuil <code style="font-size:11px;background:rgba(255,255,255,0.05);padding:1px 6px;border-radius:4px;color:var(--accent2);">minMatchScore</code> du profil</li>
+          </ul>
+        </div>
+        <div class="llm-arrow">→</div>
+        <div class="io-block">
+          <div class="io-title">Sorties LLM</div>
+          <ul>
+            <li>Score d'adhésion 0 – 100</li>
+            <li>Texte de recommandation personnalisé (2–4 phrases)</li>
+            <li>Classement suggéré</li>
+          </ul>
+        </div>
+      </div>
+      <p class="step-context" style="margin-top:14px;">
+        Filtre post-LLM : seuls les films au-dessus du seuil sont retenus. Si insuffisant → tolérance <strong style="color:var(--yellow);">+10 pts</strong> automatique.
+        <br>En mode duo, le texte mentionne explicitement les goûts des deux personnes.
+      </p>
+    </div>
+
+  </div>
+</div>
+
+<!-- ── 3. RÉSULTATS ── -->
+<div class="section">
+  <div class="section-title">
+    <div class="section-num">3</div>
+    <div>
+      <h2>Résultats affichés</h2>
+      <span class="subtitle">— Selon le réglage du profil</span>
+    </div>
+  </div>
+  <div class="results-grid">
+
+    <div class="result-card">
+      <div class="rc-top">
+        <div class="rc-count">1</div>
+        <div class="rc-label">film recommandé</div>
+      </div>
+      <div class="rc-body">
+        <ul>
+          <li><span class="dot">·</span>Carte unique centrée</li>
+          <li><span class="dot">·</span>Texte LLM personnalisé</li>
+          <li><span class="dot">·</span>Plateformes disponibles</li>
+          <li><span class="dot">·</span>Actions : watchlist / affiner</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="result-card">
+      <div class="rc-top">
+        <div class="rc-count">2</div>
+        <div class="rc-label">films recommandés</div>
+      </div>
+      <div class="rc-body">
+        <ul>
+          <li><span class="dot">·</span>2 cartes navigables</li>
+          <li><span class="dot">·</span>Flèches de navigation</li>
+          <li><span class="dot">·</span>Texte LLM par film</li>
+          <li><span class="dot">·</span>Pastilles de progression</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="result-card">
+      <div class="rc-top">
+        <div class="rc-count">3</div>
+        <div class="rc-label">films recommandés</div>
+      </div>
+      <div class="rc-body">
+        <ul>
+          <li><span class="dot">·</span>3 cartes navigables</li>
+          <li><span class="dot">·</span>Flèches + pastilles (3 dots)</li>
+          <li><span class="dot">·</span>Texte LLM par film</li>
+          <li><span class="dot">·</span>Affiner avec Pick</li>
+        </ul>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ── 4. COMPOSANTS ── -->
+<div class="section">
+  <div class="section-title">
+    <div class="section-num">4</div>
+    <div>
+      <h2>Composants techniques</h2>
+      <span class="subtitle">— Qui fait quoi</span>
+    </div>
+  </div>
+  <table class="comp-table">
+    <thead>
+      <tr>
+        <th>Composant</th>
+        <th>Type</th>
+        <th>Rôle</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>src/pages/Index.tsx</code></td>
+        <td class="role">Page</td>
+        <td>Orchestration principale, dispatch des flux</td>
+      </tr>
+      <tr>
+        <td><code>use-recommendation-engine.ts</code></td>
+        <td class="role">Hook</td>
+        <td>Logique de recherche, appels edge functions</td>
+      </tr>
+      <tr>
+        <td><code>src/lib/recommendation-batch.ts</code></td>
+        <td class="role">Lib</td>
+        <td><code>ensureRecommendationBatch</code> — scoring + providers côté client</td>
+      </tr>
+      <tr>
+        <td><code>src/lib/taste-engine.ts</code></td>
+        <td class="role">Lib</td>
+        <td>Construction et fusion des vecteurs de goût</td>
+      </tr>
+      <tr>
+        <td><code>src/components/pick/VoiceChat.tsx</code></td>
+        <td class="role">UI</td>
+        <td>Interface vocale, extraction d'intention</td>
+      </tr>
+      <tr>
+        <td><code>surprise-personalized/</code></td>
+        <td class="role">Edge fn</td>
+        <td>Requête SQL vectorielle + sélection top N</td>
+      </tr>
+      <tr>
+        <td><code>movie-match/</code></td>
+        <td class="role">Edge fn</td>
+        <td>Scoring LLM + génération du texte personnalisé</td>
+      </tr>
+      <tr>
+        <td><code>pick-chat/</code></td>
+        <td class="role">Edge fn</td>
+        <td>NLP conversationnel + extraction SearchIntent</td>
+      </tr>
+      <tr>
+        <td><code>movie_embeddings</code></td>
+        <td class="role">Table</td>
+        <td>Embeddings 32 dim + métadonnées films</td>
+      </tr>
+      <tr>
+        <td><code>user_taste_vectors</code></td>
+        <td class="role">Table</td>
+        <td>Vecteurs de goût mis en cache par profil</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ── MATCH ── -->
+<div class="section">
+  <div class="section-title">
+    <div class="section-num" style="background:linear-gradient(135deg,var(--green),var(--accent2));">✦</div>
+    <div>
+      <h2>Fonctionnalité Match</h2>
+      <span class="subtitle">— "Ce film me correspond ?"</span>
+    </div>
+  </div>
+
+  <!-- Concept -->
+  <p style="color:var(--muted);font-size:14px;max-width:720px;margin-bottom:28px;line-height:1.7;">
+    L'utilisateur saisit le nom d'un film ou <strong style="color:var(--text);">scanne son affiche</strong> (caméra ou photo). Pick vérifie l'historique et répond de deux façons selon ce qu'il trouve.
+  </p>
+
+  <!-- Entrées Match -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:32px;">
+    <div class="entry-card" style="--accent-bar:linear-gradient(90deg,var(--green),var(--accent2));">
+      <div class="icon">🔎</div>
+      <h3>Saisie texte</h3>
+      <p>L'utilisateur tape le nom du film. Résolution via l'API TMDB Search → TMDB ID.</p>
+      <span class="badge" style="background:rgba(62,207,142,0.15);color:var(--green);border-color:rgba(62,207,142,0.3);">TMDB Search API</span>
+    </div>
+    <div class="entry-card" style="--accent-bar:linear-gradient(90deg,var(--accent3),var(--yellow));">
+      <div class="icon">📷</div>
+      <h3>Scan d'affiche</h3>
+      <p>Photo ou caméra. Claude Vision extrait le titre + l'année → résolution TMDB. Fallback : champ texte pré-rempli à confirmer.</p>
+      <span class="badge" style="background:rgba(224,102,176,0.15);color:var(--accent3);border-color:rgba(224,102,176,0.3);">Claude Vision</span>
+    </div>
+  </div>
+
+  <!-- Pipeline Match -->
+  <div style="display:grid;grid-template-columns:1fr 48px 1fr;align-items:start;gap:0;max-width:820px;margin:0 auto;">
+
+    <!-- Colonne gauche : déjà interagi -->
+    <div>
+      <div style="text-align:center;margin-bottom:12px;">
+        <span class="tag green" style="font-size:13px;padding:5px 16px;">Film déjà connu</span>
+      </div>
+      <div class="pipe-step" style="border-color:rgba(62,207,142,0.3);background:rgba(62,207,142,0.04);">
+        <div class="step-header">
+          <div class="step-icon" style="background:rgba(62,207,142,0.15);">💬</div>
+          <div>
+            <div class="step-label">Résultat</div>
+            <h3>Fiche interaction</h3>
+          </div>
+        </div>
+        <ul style="list-style:none;display:flex;flex-direction:column;gap:6px;">
+          <li style="font-size:13px;display:flex;gap:8px;"><span style="color:var(--green);">·</span>Badge interaction (like / love / watchlist / dislike…)</li>
+          <li style="font-size:13px;display:flex;gap:8px;"><span style="color:var(--green);">·</span>Date de l'interaction</li>
+          <li style="font-size:13px;display:flex;gap:8px;"><span style="color:var(--green);">·</span>Plateformes actuelles (rechargées en live)</li>
+          <li style="font-size:13px;display:flex;gap:8px;"><span style="color:var(--green);">·</span>Action : modifier l'interaction</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Séparateur central -->
+    <div style="display:flex;flex-direction:column;align-items:center;padding-top:44px;gap:4px;">
+      <div style="width:1px;flex:1;background:var(--border);"></div>
+      <div style="width:28px;height:28px;border-radius:50%;border:1px solid var(--border);background:var(--bg2);display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--muted);flex-shrink:0;">ou</div>
+      <div style="width:1px;flex:1;background:var(--border);"></div>
+    </div>
+
+    <!-- Colonne droite : film inconnu -->
+    <div>
+      <div style="text-align:center;margin-bottom:12px;">
+        <span class="tag pink" style="font-size:13px;padding:5px 16px;">Film jamais vu</span>
+      </div>
+      <div class="pipe-step" style="border-color:rgba(224,102,176,0.3);background:rgba(224,102,176,0.04);">
+        <div class="step-header">
+          <div class="step-icon" style="background:rgba(224,102,176,0.12);">✨</div>
+          <div>
+            <div class="step-label">Résultat</div>
+            <h3>Évaluation LLM</h3>
+          </div>
+        </div>
+        <ul style="list-style:none;display:flex;flex-direction:column;gap:6px;">
+          <li style="font-size:13px;display:flex;gap:8px;"><span style="color:var(--accent3);">·</span>1 film envoyé à movie-match (pas de batch)</li>
+          <li style="font-size:13px;display:flex;gap:8px;"><span style="color:var(--accent3);">·</span>Score d'adhésion 0 – 100</li>
+          <li style="font-size:13px;display:flex;gap:8px;"><span style="color:var(--accent3);">·</span>Texte personnalisé "pourquoi ce film te correspond"</li>
+          <li style="font-size:13px;display:flex;gap:8px;"><span style="color:var(--accent3);">·</span>Plateformes disponibles</li>
+          <li style="font-size:13px;display:flex;gap:8px;"><span style="color:var(--accent3);">·</span>Actions : like / watchlist / dislike / affiner</li>
+        </ul>
+        <p style="font-size:12px;color:var(--muted);margin-top:12px;border-top:1px solid var(--border);padding-top:10px;">
+          Le film n'a pas besoin d'être dans <code style="font-size:11px;background:rgba(255,255,255,0.05);padding:1px 6px;border-radius:4px;color:var(--accent2);">movie_embeddings</code> — l'évaluation utilise les métadonnées TMDB brutes + le profil.
+        </p>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Étape commune : résolution -->
+  <div style="max-width:820px;margin:32px auto 0;display:flex;flex-direction:column;align-items:center;gap:0;">
+    <div style="text-align:center;color:var(--muted);font-size:12px;margin-bottom:4px;">Étape commune avant bifurcation</div>
+    <div class="pipe-step" style="width:100%;">
+      <div class="step-header">
+        <div class="step-icon" style="background:rgba(168,126,232,0.15);">🎬</div>
+        <div>
+          <div class="step-label">Résolution</div>
+          <h3>Identification du film + vérification historique</h3>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:10px;">
+        <div>
+          <div style="font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);margin-bottom:6px;">1 — TMDB</div>
+          <p style="font-size:13px;color:var(--muted);">Récupération titre, affiche, année, genres, note, durée, plateformes.</p>
+        </div>
+        <div>
+          <div style="font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);margin-bottom:6px;">2 — Supabase</div>
+          <p style="font-size:13px;color:var(--muted);">Requête <code style="font-size:11px;background:rgba(255,255,255,0.05);padding:1px 6px;border-radius:4px;color:var(--accent2);">user_interactions</code> WHERE <code style="font-size:11px;background:rgba(255,255,255,0.05);padding:1px 6px;border-radius:4px;color:var(--accent2);">movie_id = tmdb_id</code>. Si résultat → cas 1. Sinon → cas 2.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Composants à créer -->
+  <div style="margin-top:32px;">
+    <div style="font-size:12px;text-transform:uppercase;letter-spacing:2px;color:var(--muted);margin-bottom:14px;">Composants à créer</div>
+    <table class="comp-table">
+      <thead>
+        <tr><th>Composant</th><th>Type</th><th>Rôle</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>src/pages/Match.tsx</code></td><td class="role">Page</td><td>Page dédiée à la fonctionnalité Match</td></tr>
+        <tr><td><code>MatchSearch.tsx</code></td><td class="role">UI</td><td>Barre de recherche texte + bouton scan</td></tr>
+        <tr><td><code>PosterScanner.tsx</code></td><td class="role">UI</td><td>Accès caméra + envoi image + résultat reconnaissance</td></tr>
+        <tr><td><code>MatchResultCard.tsx</code></td><td class="role">UI</td><td>Carte unifiée : interaction existante ou évaluation LLM</td></tr>
+        <tr><td><code>match-movie/</code></td><td class="role">Edge fn</td><td>Résolution TMDB + check interaction + évaluation LLM</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ── 5. ÉTAT ── -->
+<div class="section">
+  <div class="section-title">
+    <div class="section-num">5</div>
+    <div>
+      <h2>État d'avancement</h2>
+      <span class="subtitle">— En place vs. à construire</span>
+    </div>
+  </div>
+  <table class="status-table">
+    <thead>
+      <tr>
+        <th>Fonctionnalité</th>
+        <th>Statut</th>
+        <th>Notes</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Search solo (profil)</td>
+        <td class="status-done">✓ En production</td>
+        <td style="color:var(--muted);font-size:13px;">Pipeline complet SQL + LLM</td>
+      </tr>
+      <tr>
+        <td>Vocal solo (pick-chat → surprise-personalized)</td>
+        <td class="status-done">✓ En production</td>
+        <td style="color:var(--muted);font-size:13px;">voiceMode force extract_search_intent</td>
+      </tr>
+      <tr>
+        <td>Filtre plateforme SQL (300 candidats)</td>
+        <td class="status-done">✓ En production</td>
+        <td style="color:var(--muted);font-size:13px;">match_count conditionnel</td>
+      </tr>
+      <tr>
+        <td>Scoring movie-match + texte LLM</td>
+        <td class="status-done">✓ En production</td>
+        <td style="color:var(--muted);font-size:13px;">Calibré avec tolérance +10 pts</td>
+      </tr>
+      <tr>
+        <td>Résultat 1 / 2 / 3 films configurable</td>
+        <td class="status-done">✓ En production</td>
+        <td style="color:var(--muted);font-size:13px;">Réglage dans le profil utilisateur</td>
+      </tr>
+      <tr>
+        <td>Search duo (fusion de vecteurs)</td>
+        <td class="status-todo">⬜ À construire</td>
+        <td style="color:var(--muted);font-size:13px;">Moyenne pondérée + intersection plateformes</td>
+      </tr>
+      <tr>
+        <td>Vocal duo</td>
+        <td class="status-todo">⬜ À construire</td>
+        <td style="color:var(--muted);font-size:13px;">Dépend du Search duo</td>
+      </tr>
+      <tr>
+        <td>Invité sans compte (saisie minimale)</td>
+        <td class="status-todo">⬜ À construire</td>
+        <td style="color:var(--muted);font-size:13px;">Session éphémère, non persistée</td>
+      </tr>
+      <tr>
+        <td>Texte LLM adapté au duo</td>
+        <td class="status-todo">⬜ À construire</td>
+        <td style="color:var(--muted);font-size:13px;">Prompt movie-match à adapter</td>
+      </tr>
+      <tr>
+        <td>Match — recherche par nom</td>
+        <td class="status-todo">⬜ À construire</td>
+        <td style="color:var(--muted);font-size:13px;">TMDB Search → résolution ID</td>
+      </tr>
+      <tr>
+        <td>Match — scan d'affiche (Vision IA)</td>
+        <td class="status-todo">⬜ À construire</td>
+        <td style="color:var(--muted);font-size:13px;">Claude Vision → titre → TMDB ID</td>
+      </tr>
+      <tr>
+        <td>Match — fiche interaction existante</td>
+        <td class="status-todo">⬜ À construire</td>
+        <td style="color:var(--muted);font-size:13px;">Query user_interactions + affichage badge</td>
+      </tr>
+      <tr>
+        <td>Match — évaluation LLM film inconnu</td>
+        <td class="status-todo">⬜ À construire</td>
+        <td style="color:var(--muted);font-size:13px;">1 film → movie-match → score + texte</td>
+      </tr>
+      <tr>
+        <td colspan="3" style="padding:8px 16px;font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:var(--accent2);border-bottom:1px solid var(--border);">Couche de scoring — implémenté</td>
+      </tr>
+      <tr>
+        <td>Table <code>user_movie_scores</code> + triggers</td>
+        <td class="status-done">✓ Migration créée</td>
+        <td style="color:var(--muted);font-size:13px;">20260526100000 — triggers sur liked_movies / watchlist / user_interactions</td>
+      </tr>
+      <tr>
+        <td>Backfill données existantes</td>
+        <td class="status-done">✓ Inclus</td>
+        <td style="color:var(--muted);font-size:13px;">DO block dans la migration — traite tous les (user, film) distincts</td>
+      </tr>
+      <tr>
+        <td>Correction bug avoidance vector</td>
+        <td class="status-done">✓ Corrigé</td>
+        <td style="color:var(--muted);font-size:13px;">taste-engine.ts lisait <code>feedback_type</code> (inexistant) — corrigé</td>
+      </tr>
+      <tr>
+        <td>taste-engine lit <code>user_movie_scores</code> pour l'évitement</td>
+        <td class="status-done">✓ Implémenté</td>
+        <td style="color:var(--muted);font-size:13px;">Score ≤ −0.6 → signal d'évitement fort dans le vecteur d'avoidance</td>
+      </tr>
+      <tr>
+        <td>taste-engine lit entièrement depuis <code>user_movie_scores</code></td>
+        <td class="status-todo">⬜ Prochaine étape</td>
+        <td style="color:var(--muted);font-size:13px;">Remplacer les lectures liked_movies/watchlist/user_interactions inline</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<footer>
+  <strong>Pick Your Spotlight</strong> · Architecture de recommandation · Mai 2026
+</footer>
+
+</body>
+</html>

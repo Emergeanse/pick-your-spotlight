@@ -1,23 +1,21 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { requireAuth } from "../_shared/auth.ts";
+import { tmdbUrl } from "../_shared/tmdb.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const TMDB_API_KEY = "2dca580c2a14b55200e784d157207b4d";
-const TMDB_BASE = "https://api.themoviedb.org/3";
-
 async function tmdbSearch(title: string, year?: string): Promise<any[]> {
-  const params = new URLSearchParams({
-    api_key: TMDB_API_KEY,
+  const params: Record<string, string> = {
     query: title,
     language: "fr-FR",
     include_adult: "false",
-  });
-  if (year) params.set("year", year);
+  };
+  if (year) params.year = year;
 
-  const res = await fetch(`${TMDB_BASE}/search/multi?${params}`);
+  const res = await fetch(tmdbUrl("/search/multi", params));
   if (!res.ok) return [];
   const data = await res.json();
   return (data.results || []).filter(
@@ -26,9 +24,7 @@ async function tmdbSearch(title: string, year?: string): Promise<any[]> {
 }
 
 async function getDetails(tmdbId: number, mediaType: "movie" | "tv"): Promise<any> {
-  const res = await fetch(
-    `${TMDB_BASE}/${mediaType}/${tmdbId}?api_key=${TMDB_API_KEY}&language=fr-FR`
-  );
+  const res = await fetch(tmdbUrl(`/${mediaType}/${tmdbId}`, { language: "fr-FR" }));
   if (!res.ok) return null;
   const d = await res.json();
   if (mediaType === "tv") {
@@ -43,6 +39,9 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
+    const auth = await requireAuth(req, corsHeaders);
+    if (auth.response) return auth.response;
+
     const { query, imageBase64, imageMimeType, excludeTmdbIds = [] } = await req.json();
 
     const GOOGLE_AI_KEY = Deno.env.get("GOOGLE_AI_KEY");

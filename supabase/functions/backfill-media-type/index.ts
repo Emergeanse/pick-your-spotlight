@@ -1,12 +1,12 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { requireAdmin } from "../_shared/auth.ts";
+import { tmdbUrl } from "../_shared/tmdb.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
-
-const TMDB_API_KEY = "2dca580c2a14b55200e784d157207b4d";
 const CONCURRENCY = 5; // appels TMDB simultanés
 
 async function checkAndFix(
@@ -14,15 +14,11 @@ async function checkAndFix(
   film: { tmdb_id: number; title: string },
 ): Promise<"confirmed" | "corrected" | "error"> {
   try {
-    const movieRes = await fetch(
-      `https://api.themoviedb.org/3/movie/${film.tmdb_id}?api_key=${TMDB_API_KEY}&language=fr-FR`,
-    );
+    const movieRes = await fetch(tmdbUrl(`/movie/${film.tmdb_id}`, { language: "fr-FR" }));
     if (movieRes.ok) return "confirmed";
 
     // /movie null ou 404 → tester /tv
-    const tvRes = await fetch(
-      `https://api.themoviedb.org/3/tv/${film.tmdb_id}?api_key=${TMDB_API_KEY}&language=fr-FR`,
-    );
+    const tvRes = await fetch(tmdbUrl(`/tv/${film.tmdb_id}`, { language: "fr-FR" }));
     if (!tvRes.ok) {
       console.warn(`[backfill] Introuvable movie ni tv: ${film.tmdb_id} "${film.title}"`);
       return "error";
@@ -47,6 +43,9 @@ async function checkAndFix(
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+
+  const adminAuth = await requireAdmin(req, corsHeaders);
+  if (adminAuth.response) return adminAuth.response;
 
   const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
   const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;

@@ -1,12 +1,10 @@
 import { useState, useEffect, useMemo } from "react";
 import { Loader2, Film, User, Clapperboard } from "lucide-react";
-import { getPosterUrl, getDisplayTitle } from "@/lib/tmdb";
+import { getPosterUrl, getDisplayTitle, getMovieDetailsWithCredits } from "@/lib/tmdb";
 import { getPersonPhotoUrl, fetchPersonDetail } from "@/lib/people-preferences";
 import type { Movie } from "@/lib/tmdb";
 import FeedbackBadge from "@/components/pick/FeedbackBadge";
 import { useMovieInteraction, useMovieInteractions } from "@/hooks/use-movie-interactions";
-
-const TMDB_API_KEY = "2dca580c2a14b55200e784d157207b4d";
 
 interface FlipCardBackProps {
   item: Movie | any;
@@ -51,18 +49,12 @@ const FlipCardBack = ({ item, type }: FlipCardBackProps) => {
     };
 
     if (type === "movie") {
-      fetch(
-        `https://api.themoviedb.org/3/movie/${item.id}?api_key=${TMDB_API_KEY}&language=fr-FR&append_to_response=credits`,
-      )
-        .then((r) => r.json())
+      getMovieDetailsWithCredits(item.id, "movie")
         .then(handleSuccess)
         .catch(handleError)
         .finally(handleFinally);
     } else if (type === "tv") {
-      fetch(
-        `https://api.themoviedb.org/3/tv/${item.id}?api_key=${TMDB_API_KEY}&language=fr-FR&append_to_response=credits`,
-      )
-        .then((r) => r.json())
+      getMovieDetailsWithCredits(item.id, "tv")
         .then(handleSuccess)
         .catch(handleError)
         .finally(handleFinally);

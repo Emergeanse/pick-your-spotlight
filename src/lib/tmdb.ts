@@ -1,5 +1,5 @@
-const TMDB_API_KEY = "2dca580c2a14b55200e784d157207b4d";
-const BASE_URL = "https://api.themoviedb.org/3";
+import { fetchFromTMDB as proxyFetch } from "@/lib/tmdb-proxy-client";
+
 const IMG_BASE = "https://image.tmdb.org/t/p";
 
 export interface Movie {
@@ -85,16 +85,7 @@ function getBackdropUrl(path: string | null): string {
 }
 
 async function fetchFromTMDB(endpoint: string, params: Record<string, string> = {}): Promise<any> {
-  const url = new URL(`${BASE_URL}${endpoint}`);
-  url.searchParams.set("api_key", TMDB_API_KEY);
-  url.searchParams.set("language", "fr-FR");
-  url.searchParams.set("region", "FR");
-  url.searchParams.set("watch_region", "FR");
-  Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
-  
-  const res = await fetch(url.toString());
-  if (!res.ok) throw new Error(`TMDB Error: ${res.status}`);
-  return res.json();
+  return proxyFetch(endpoint, params);
 }
 
 async function getMovieDetails(id: number, mediaType: string): Promise<MovieDetail> {
@@ -508,4 +499,9 @@ export async function getPersonDetails(personId: number): Promise<PersonDetails>
   };
 }
 
-export { getDisplayTitle, getYear, getPosterUrl, getBackdropUrl, getMovieDetails };
+export async function getMovieDetailsWithCredits(id: number, mediaType: string): Promise<any> {
+  const endpoint = mediaType === "tv" ? `/tv/${id}` : `/movie/${id}`;
+  return fetchFromTMDB(endpoint, { append_to_response: "credits" });
+}
+
+export { getDisplayTitle, getYear, getPosterUrl, getBackdropUrl, getMovieDetails, fetchFromTMDB };

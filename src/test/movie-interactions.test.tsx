@@ -6,39 +6,74 @@ import { renderHook, act, waitFor } from "@testing-library/react";
 let feedbackRows: Array<{ item_id: string; feedback_type: string; label?: string; created_at: string; score?: number }> = [];
 
 vi.mock("@/integrations/supabase/client", () => {
-  const select = vi.fn(() => ({
-    eq: () => ({
-      in: () => ({
-        order: () => Promise.resolve({ data: feedbackRows, error: null }),
-      }),
-      eq: () => ({
-        order: () => ({
-          limit: () => ({
-            maybeSingle: () =>
-              Promise.resolve({ data: feedbackRows[0] ?? null, error: null }),
-          }),
-        }),
-      }),
-    }),
-  }));
+  // Builder chainable différencié par table :
+  // - "catalog_items" → retourne des lignes { id, tmdb_id, media_type }
+  // - "user_item_feedback" → retourne feedbackRows
+  const makeChain = (resolveData: () => unknown[]): Record<string, unknown> => {
+    const chain: Record<string, unknown> = {
+      eq:          () => chain,
+      neq:         () => chain,
+      in:          () => chain,
+      not:         () => chain,
+      or:          () => chain,
+      filter:      () => chain,
+      order:       () => chain,
+      limit:       () => chain,
+      range:       () => chain,
+      select:      () => chain,
+      single:      () => Promise.resolve({ data: resolveData()[0] ?? null, error: null }),
+      maybeSingle: () => Promise.resolve({ data: resolveData()[0] ?? null, error: null }),
+      // Thenable : supabase client builder s'await directement
+      then: (resolve: (v: { data: unknown[]; error: null }) => void) =>
+        Promise.resolve().then(() => resolve({ data: resolveData(), error: null })),
+    };
+    return chain;
+  };
+
   return {
     supabase: {
       auth: {
         getUser: () => Promise.resolve({ data: { user: { id: "user-1" } } }),
       },
-      from: () => ({ select }),
+      from: (table: string) => {
+        if (table === "catalog_items") {
+          // getCatalogItemIdsByLookup attend [{ id, tmdb_id, media_type }]
+          return makeChain(() =>
+            [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 100].map((n) => ({
+              id: `item-${n}`,
+              tmdb_id: n,
+              media_type: "movie",
+            }))
+          );
+        }
+        // user_item_feedback → feedbackRows (variable let mise à jour par chaque test)
+        return makeChain(() => feedbackRows);
+      },
     },
   };
 });
 
-vi.mock("@/lib/catalog", () => ({
-  getCatalogItemIds: async (tmdbIds: number[]) => {
-    const out: Record<number, string> = {};
-    for (const id of tmdbIds) out[id] = `item-${id}`;
-    return out;
-  },
-  getOrCreateCatalogItem: async () => "item-x",
-}));
+vi.mock("@/lib/catalog", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/catalog")>();
+  return {
+    ...actual, // préserve normalizeCatalogMediaType, catalogLookupKey, etc.
+    // getInteractionStateBatch appelle getCatalogItemIdsByLookup (clé = "movie:{tmdbId}")
+    getCatalogItemIdsByLookup: async (lookups: Array<{ tmdbId: number; mediaType?: string }>) => {
+      const out: Record<string, string> = {};
+      for (const l of lookups) {
+        const mediaType = l.mediaType ?? "movie";
+        out[`${mediaType}:${l.tmdbId}`] = `item-${l.tmdbId}`;
+      }
+      return out;
+    },
+    getCatalogItemIds: async (tmdbIds: number[]) => {
+      const out: Record<number, string> = {};
+      for (const id of tmdbIds) out[id] = `item-${id}`;
+      return out;
+    },
+    getOrCreateCatalogItem: async () => "item-x",
+  };
+});
 
 vi.mock("@/hooks/use-auth", () => ({
   useAuth: () => ({ user: { id: "user-1" } }),

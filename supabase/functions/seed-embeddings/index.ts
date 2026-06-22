@@ -1,5 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { requireAdmin } from "../_shared/auth.ts";
+import { tmdbUrl } from "../_shared/tmdb.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -7,13 +9,9 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const TMDB_API_KEY = "2dca580c2a14b55200e784d157207b4d";
-
 async function getProviderIdsFR(tmdbId: number, mediaType: "movie" | "tv"): Promise<number[]> {
   try {
-    const res = await fetch(
-      `https://api.themoviedb.org/3/${mediaType}/${tmdbId}/watch/providers?api_key=${TMDB_API_KEY}`,
-    );
+    const res = await fetch(tmdbUrl(`/${mediaType}/${tmdbId}/watch/providers`));
     if (!res.ok) return [];
     const data = await res.json();
     const fr = data?.results?.FR;
@@ -173,6 +171,9 @@ Réponds UNIQUEMENT avec ce JSON valide, sans backticks :
 serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
+  const adminAuth = await requireAdmin(req, corsHeaders);
+  if (adminAuth.response) return adminAuth.response;
+
   try {
     const body = await req.json().catch(() => ({}));
     const {
@@ -284,28 +285,27 @@ serve(async (req: Request) => {
     for (let page = startPage; page < startPage + pages; page++) {
       let url: string;
       if (source === "trending") {
-        url = `https://api.themoviedb.org/3/trending/${type}/week?api_key=${TMDB_API_KEY}&language=fr-FR&page=${page}`;
+        url = tmdbUrl(`/trending/${type}/week`, { language: "fr-FR", page: String(page) });
       } else if (source === "discover") {
-        const params = new URLSearchParams({
-          api_key: TMDB_API_KEY,
+        const discoverParams: Record<string, string> = {
           language: "fr-FR",
           sort_by: sortBy,
           "vote_count.gte": String(minVoteCount),
           page: String(page),
-        });
+        };
         if (!noStreamingFilter) {
-          params.set("with_watch_providers", "8|381|337|119|350|234|35|1967|11|56");
-          params.set("watch_region", "FR");
-          params.set("with_watch_monetization_types", "flatrate|free|ads");
+          discoverParams["with_watch_providers"] = "8|381|337|119|350|234|35|1967|11|56";
+          discoverParams["watch_region"] = "FR";
+          discoverParams["with_watch_monetization_types"] = "flatrate|free|ads";
         }
-        if (genreId) params.set("with_genres", String(genreId));
-        if (originalLanguage) params.set("with_original_language", String(originalLanguage));
-        if (minRating) params.set("vote_average.gte", String(minRating));
-        if (releaseYearMin) params.set("primary_release_date.gte", `${releaseYearMin}-01-01`);
-        if (releaseYearMax) params.set("primary_release_date.lte", `${releaseYearMax}-12-31`);
-        url = `https://api.themoviedb.org/3/discover/${type}?${params}`;
+        if (genreId) discoverParams["with_genres"] = String(genreId);
+        if (originalLanguage) discoverParams["with_original_language"] = String(originalLanguage);
+        if (minRating) discoverParams["vote_average.gte"] = String(minRating);
+        if (releaseYearMin) discoverParams["primary_release_date.gte"] = `${releaseYearMin}-01-01`;
+        if (releaseYearMax) discoverParams["primary_release_date.lte"] = `${releaseYearMax}-12-31`;
+        url = tmdbUrl(`/discover/${type}`, discoverParams);
       } else {
-        url = `https://api.themoviedb.org/3/${type}/${source}?api_key=${TMDB_API_KEY}&language=fr-FR&page=${page}`;
+        url = tmdbUrl(`/${type}/${source}`, { language: "fr-FR", page: String(page) });
       }
       try {
         const res = await fetch(url);
@@ -345,9 +345,7 @@ serve(async (req: Request) => {
       const results = await Promise.all(
         batch.map(async (movie) => {
           try {
-            const detailRes = await fetch(
-              `https://api.themoviedb.org/3/${type}/${movie.id}?api_key=${TMDB_API_KEY}&language=fr-FR`,
-            );
+            const detailRes = await fetch(tmdbUrl(`/${type}/${movie.id}`, { language: "fr-FR" }));
             if (!detailRes.ok) return { ok: false, step: "tmdb_detail", detail: `HTTP ${detailRes.status}` } as EmbedResult;
             const detail = await detailRes.json();
             const platformIds = await getProviderIdsFR(movie.id, type as "movie" | "tv");

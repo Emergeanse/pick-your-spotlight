@@ -3,12 +3,12 @@ import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, Loader2, Sparkles, ArrowRight, SkipForward, Film, Users, Tv, Clapperboard, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { getDisplayTitle } from "@/lib/tmdb";
+import { getDisplayTitle, getMovieDetails, type Movie, type MovieDetail } from "@/lib/tmdb";
+import { fetchFromTMDB } from "@/lib/tmdb-proxy-client";
 import { recordAcceptedRecommendation, recordSkippedRecommendation } from "@/lib/engagement";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
-import type { Movie, MovieDetail } from "@/lib/tmdb";
 import { THRESHOLDS } from "./TrainingProgress";
 import PeopleTrainer from "./PeopleTrainer";
 import FeedbackBadge from "./FeedbackBadge";
@@ -16,8 +16,6 @@ import FlipCardDetail from "./FlipCardDetail";
 import RecommendationMovieCard from "./RecommendationMovieCard";
 import MovieActionBar from "./MovieActionBar";
 import { useMovieInteractions } from "@/hooks/use-movie-interactions";
-
-const TMDB_API_KEY = "2dca580c2a14b55200e784d157207b4d";
 
 interface TasteTrainerProps {
   onClose: () => void;
@@ -28,18 +26,22 @@ interface TasteTrainerProps {
 type SelectedCategory = null | "movies" | "series" | "actors" | "directors";
 
 async function fetchTrainingMovies(page: number): Promise<Movie[]> {
-  const res = await fetch(
-    `https://api.themoviedb.org/3/discover/movie?api_key=${TMDB_API_KEY}&language=fr-FR&sort_by=popularity.desc&vote_count.gte=500&vote_average.gte=6&page=${page}&region=FR`,
-  );
-  const data = await res.json();
+  const data = await fetchFromTMDB("/discover/movie", {
+    sort_by: "popularity.desc",
+    "vote_count.gte": "500",
+    "vote_average.gte": "6",
+    page: String(page),
+  });
   return (data.results || []) as Movie[];
 }
 
 async function fetchTrainingSeries(page: number): Promise<Movie[]> {
-  const res = await fetch(
-    `https://api.themoviedb.org/3/discover/tv?api_key=${TMDB_API_KEY}&language=fr-FR&sort_by=popularity.desc&vote_count.gte=200&vote_average.gte=6&page=${page}&watch_region=FR`,
-  );
-  const data = await res.json();
+  const data = await fetchFromTMDB("/discover/tv", {
+    sort_by: "popularity.desc",
+    "vote_count.gte": "200",
+    "vote_average.gte": "6",
+    page: String(page),
+  });
   return (data.results || []).map((s: any) => ({
     ...s,
     title: s.name,
@@ -49,17 +51,15 @@ async function fetchTrainingSeries(page: number): Promise<Movie[]> {
 }
 
 async function fetchMovieDetail(id: number): Promise<MovieDetail> {
-  const res = await fetch(`https://api.themoviedb.org/3/movie/${id}?api_key=${TMDB_API_KEY}&language=fr-FR`);
-  return res.json();
+  return getMovieDetails(id, "movie");
 }
 
 async function fetchSeriesDetail(id: number): Promise<MovieDetail> {
-  const res = await fetch(`https://api.themoviedb.org/3/tv/${id}?api_key=${TMDB_API_KEY}&language=fr-FR`);
-  const data = await res.json();
+  const data = await getMovieDetails(id, "tv");
   return {
     ...data,
-    title: data.name,
-    release_date: data.first_air_date,
+    title: data.name || data.title,
+    release_date: data.first_air_date || data.release_date,
     media_type: "tv",
   } as MovieDetail;
 }

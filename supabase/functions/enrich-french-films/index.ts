@@ -1,14 +1,13 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { requireAdmin } from "../_shared/auth.ts";
+import { tmdbUrl } from "../_shared/tmdb.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type",
 };
-
-const TMDB_API_KEY = "2dca580c2a14b55200e784d157207b4d";
-const TMDB_BASE = "https://api.themoviedb.org/3";
 
 const GENRE_MAP_MOVIE: Record<number, string> = {
   28: "Action", 12: "Aventure", 16: "Animation", 35: "Comédie", 80: "Crime",
@@ -27,22 +26,28 @@ const GENRE_MAP_TV: Record<number, string> = {
 
 async function fetchTmdbPage(mediaType: "movie" | "tv", page: number, minVoteCount: number, originalLanguage = "fr") {
   const endpoint = mediaType === "movie" ? "discover/movie" : "discover/tv";
-  const url = `${TMDB_BASE}/${endpoint}?api_key=${TMDB_API_KEY}&language=fr-FR&with_original_language=${originalLanguage}&watch_region=FR&sort_by=vote_count.desc&vote_count.gte=${minVoteCount}&page=${page}`;
-  const res = await fetch(url);
+  const res = await fetch(tmdbUrl(`/${endpoint}`, {
+    language: "fr-FR",
+    with_original_language: originalLanguage,
+    watch_region: "FR",
+    sort_by: "vote_count.desc",
+    "vote_count.gte": String(minVoteCount),
+    page: String(page),
+  }));
   if (!res.ok) throw new Error(`TMDB ${res.status}`);
   const data = await res.json();
   return { results: data.results || [], totalPages: Math.min(data.total_pages || 1, 500) };
 }
 
 async function fetchTmdbDetail(tmdbId: number, mediaType: "movie" | "tv") {
-  const res = await fetch(`${TMDB_BASE}/${mediaType}/${tmdbId}?api_key=${TMDB_API_KEY}&language=fr-FR`);
+  const res = await fetch(tmdbUrl(`/${mediaType}/${tmdbId}`, { language: "fr-FR" }));
   if (!res.ok) return null;
   return res.json();
 }
 
 async function getProviderIdsFR(tmdbId: number, mediaType: "movie" | "tv"): Promise<number[]> {
   try {
-    const res = await fetch(`${TMDB_BASE}/${mediaType}/${tmdbId}/watch/providers?api_key=${TMDB_API_KEY}`);
+    const res = await fetch(tmdbUrl(`/${mediaType}/${tmdbId}/watch/providers`));
     if (!res.ok) return [];
     const data = await res.json();
     const fr = data?.results?.FR;
@@ -88,6 +93,9 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
+    const adminAuth = await requireAdmin(req, corsHeaders);
+    if (adminAuth.response) return adminAuth.response;
+
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) throw new Error("Missing env vars");

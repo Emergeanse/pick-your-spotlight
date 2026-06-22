@@ -1,7 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { requireAdmin } from "../_shared/auth.ts";
-
+import { tmdbUrl } from "../_shared/tmdb.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -9,14 +9,11 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const TMDB_API_KEY = "2dca580c2a14b55200e784d157207b4d";
-const PARALLEL = 30; // appels TMDB simultanés — TMDB tolère ~40 req/10s
+const PARALLEL = 30;
 
 async function getProviderIdsFR(tmdbId: number, mediaType: "movie" | "tv"): Promise<number[]> {
   try {
-    const res = await fetch(
-      `https://api.themoviedb.org/3/${mediaType}/${tmdbId}/watch/providers?api_key=${TMDB_API_KEY}`,
-    );
+    const res = await fetch(tmdbUrl(`/${mediaType}/${tmdbId}/watch/providers`));
     if (!res.ok) return [];
     const data = await res.json();
     const fr = data?.results?.FR;

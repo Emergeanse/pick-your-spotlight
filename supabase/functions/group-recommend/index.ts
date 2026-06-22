@@ -1,7 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { requireAuth } from "../_shared/auth.ts";
-
+import { tmdbUrl } from "../_shared/tmdb.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -9,7 +9,6 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const TMDB_API_KEY = "2dca580c2a14b55200e784d157207b4d";
 const VECTOR_DIM = 32;
 
 function parseVector(v: any): number[] | null {
@@ -20,12 +19,12 @@ function parseVector(v: any): number[] | null {
 }
 
 async function getDetails(id: number, type: "movie" | "tv" = "movie"): Promise<any> {
-  const res = await fetch(`https://api.themoviedb.org/3/${type}/${id}?api_key=${TMDB_API_KEY}&language=fr-FR`);
+  const res = await fetch(tmdbUrl(`/${type}/${id}`, { language: "fr-FR" }));
   return res.json();
 }
 
 async function getWatchProvidersFR(tmdbId: number, mediaType = "movie"): Promise<any[]> {
-  const res = await fetch(`https://api.themoviedb.org/3/${mediaType}/${tmdbId}/watch/providers?api_key=${TMDB_API_KEY}`);
+  const res = await fetch(tmdbUrl(`/${mediaType}/${tmdbId}/watch/providers`));
   const data = await res.json();
   return data.results?.FR?.flatrate || [];
 }
@@ -356,7 +355,12 @@ Structure :
       if (resolvedMovies.length >= 5) break;
       try {
         const recType: "movie" | "tv" = rec.type === "tv" ? "tv" : mediaType === "tv" ? "tv" : mediaType === "movie" ? "movie" : (rec.type || "movie");
-        const searchUrl = `https://api.themoviedb.org/3/search/${recType}?api_key=${TMDB_API_KEY}&language=fr-FR&query=${encodeURIComponent(rec.title)}&page=1&region=FR`;
+        const searchUrl = tmdbUrl(`/search/${recType}`, {
+          language: "fr-FR",
+          query: rec.title,
+          page: "1",
+          region: "FR",
+        });
         const searchRes = await fetch(searchUrl);
         const searchData = await searchRes.json();
         const found = (searchData.results || []).find((r: any) => !seenIds.has(r.id) && !resolvedIds.has(r.id));

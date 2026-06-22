@@ -1,33 +1,39 @@
 ﻿import { useState, useEffect, useRef, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ChevronRight, Dices, Loader2, Info } from "lucide-react";
-import { getBackdropUrl, getDisplayTitle, getPosterUrl, type MovieDetail } from "@/lib/tmdb";
+import { getBackdropUrl, getDisplayTitle, getPosterUrl, getMovieDetailsWithCredits, type MovieDetail } from "@/lib/tmdb";
 import { useMovieInteraction } from "@/hooks/use-movie-interactions";
 import MovieActionBar from "./MovieActionBar";
 import FeedbackBadge from "./FeedbackBadge";
 
-// Cache module-level : chargé une fois dès l'import du fichier (avant le 1er clic utilisateur)
-const lambdaCache = { paths: [] as string[] };
-const _fetchLambda = (url: string) =>
-  fetch(url)
-    .then((r) => r.json())
-    .then((d) => (d.results || []).map((m: { poster_path?: string }) => m.poster_path).filter(Boolean) as string[])
-    .catch(() => [] as string[]);
+import { fetchFromTMDB } from "@/lib/tmdb-proxy-client";
 
-// Lancé immédiatement — popular + top_rated mélangés pour un mur riche dès la 1ère session
-Promise.all([
-  _fetchLambda("https://api.themoviedb.org/3/movie/popular?api_key=2dca580c2a14b55200e784d157207b4d&language=fr-FR&page=1"),
-  _fetchLambda("https://api.themoviedb.org/3/movie/top_rated?api_key=2dca580c2a14b55200e784d157207b4d&language=fr-FR&page=1"),
-]).then(([popular, topRated]) => {
-  // Interleave pour mélanger films actuels et classiques
-  const merged: string[] = [];
-  const max = Math.max(popular.length, topRated.length);
-  for (let i = 0; i < max; i++) {
-    if (popular[i]) merged.push(popular[i]);
-    if (topRated[i]) merged.push(topRated[i]);
+// Cache module-level : chargé après authentification (proxy TMDB requiert une session)
+const lambdaCache = { paths: [] as string[], loading: false };
+
+async function loadLambdaCache() {
+  if (lambdaCache.paths.length > 0 || lambdaCache.loading) return;
+  lambdaCache.loading = true;
+  try {
+    const [popular, topRated] = await Promise.all([
+      fetchFromTMDB("/movie/popular", { page: "1" })
+        .then((d) => (d.results || []).map((m: { poster_path?: string }) => m.poster_path).filter(Boolean) as string[])
+        .catch(() => [] as string[]),
+      fetchFromTMDB("/movie/top_rated", { page: "1" })
+        .then((d) => (d.results || []).map((m: { poster_path?: string }) => m.poster_path).filter(Boolean) as string[])
+        .catch(() => [] as string[]),
+    ]);
+    const merged: string[] = [];
+    const max = Math.max(popular.length, topRated.length);
+    for (let i = 0; i < max; i++) {
+      if (popular[i]) merged.push(popular[i]);
+      if (topRated[i]) merged.push(topRated[i]);
+    }
+    lambdaCache.paths = merged;
+  } finally {
+    lambdaCache.loading = false;
   }
-  lambdaCache.paths = merged;
-});
+}
 
 interface TonightPickOverlayProps {
   open: boolean;
@@ -133,6 +139,7 @@ const TonightPickOverlay = ({
   // Lambda TMDB : liste fixe popular+top_rated, toujours affichée (cohérence visuelle entre sessions)
   const [lambdaPaths, setLambdaPaths] = useState<string[]>(lambdaCache.paths);
   useEffect(() => {
+    void loadLambdaCache();
     if (lambdaCache.paths.length > 0) { setLambdaPaths(lambdaCache.paths); return; }
     const poll = setInterval(() => {
       if (lambdaCache.paths.length > 0) { setLambdaPaths(lambdaCache.paths); clearInterval(poll); }
@@ -306,14 +313,16 @@ const TonightPickOverlay = ({
     };
   })();
 
+  const instantCover = tonightLoading && !movie;
+
   return (
     <AnimatePresence>
       {open && (
         <motion.div
-          initial={{ opacity: 0 }}
+          initial={{ opacity: instantCover ? 1 : 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.4 }}
+          transition={{ duration: instantCover ? 0 : 0.4 }}
           className="fixed inset-0 z-50 flex flex-col bg-black"
         >
           {/* Stage 1 : lumières violettes pulsantes pendant que surprise-personalized tourne */}

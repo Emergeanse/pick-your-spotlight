@@ -1,0 +1,97 @@
+name: CI — Tests de non-régression
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# Annule les runs précédents sur la même branche pour éviter les files
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ── Job 1 : Tests unitaires Vitest ────────────────────────────────────────
+  # S'exécute sur chaque push et chaque PR. Rapide, sans dépendance réseau.
+  unit-tests:
+    name: Tests unitaires (Vitest)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Installer les dépendances
+        run: npm ci
+
+      - name: Lancer les tests unitaires
+        run: npm run test:unit
+
+  # ── Job 2 : Lint TypeScript ───────────────────────────────────────────────
+  # Vérifie qu'il n'y a pas d'erreurs de type ou de lint.
+  typecheck:
+    name: TypeScript + Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Installer les dépendances
+        run: npm ci
+
+      - name: Vérification des types TypeScript
+        run: npx tsc --noEmit
+
+      - name: ESLint
+        run: npm run lint
+        continue-on-error: true  # Ne bloque pas le CI, juste informatif pour l'instant
+
+  # ── Job 3 : Tests E2E Playwright ─────────────────────────────────────────
+  # S'exécute uniquement sur push main (pas sur les PRs pour éviter de consommer
+  # des credentials sur des branches non fiables) et si unit-tests passe.
+  # Requiert les secrets GitHub :
+  #   - E2E_TEST_EMAIL      : email du compte Supabase de test
+  #   - E2E_TEST_PASSWORD   : mot de passe du compte
+  e2e:
+    name: Tests E2E (Playwright)
+    runs-on: ubuntu-latest
+    needs: unit-tests
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    env:
+      # Clé anon publique — pas un secret, déjà dans le code source
+      VITE_SUPABASE_URL: https://lrjhpflvkrebbngfnaif.supabase.co
+      VITE_SUPABASE_PUBLISHABLE_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyamhwZmx2a3JlYmJuZ2ZuYWlmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMxODMwODMsImV4cCI6MjA4ODc1OTA4M30.uqrxehgcnJTHmhGcmSKpu8GNngUkSE5iuHUcw7z4tPk
+      E2E_TEST_EMAIL: ${{ secrets.E2E_TEST_EMAIL }}
+      E2E_TEST_PASSWORD: ${{ secrets.E2E_TEST_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Installer les dépendances
+        run: npm ci
+
+      - name: Installer Playwright (Chromium uniquement)
+        run: npx playwright install --with-deps chromium
+
+      - name: Lancer les tests E2E
+        run: npm run test:e2e
+
+      - name: Uploader le rapport Playwright en cas d'échec
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report-${{ github.run_number }}
+          path: playwright-report/
+          retention-days: 14
