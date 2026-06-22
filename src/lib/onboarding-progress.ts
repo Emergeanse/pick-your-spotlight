@@ -148,3 +148,31 @@ export async function fetchOnboardingPaused(): Promise<boolean> {
   if (!data) return false;
   return !(data as any).onboarding_completed && Boolean((data as any).onboarding_paused);
 }
+
+export function onboardingErrorMessage(error: unknown): string {
+  if (error instanceof Error && error.message) return error.message;
+  if (typeof error === "string" && error.trim()) return error;
+  return "Réessaie dans un instant.";
+}
+
+export async function resetProfileForOnboarding(): Promise<void> {
+  const userId = (await supabase.auth.getUser()).data.user?.id;
+  if (!userId) throw new Error("Session introuvable.");
+
+  const { error } = await supabase
+    .from("profiles")
+    .update({
+      onboarding_completed: false,
+      onboarding_paused: false,
+      onboarding_step: "welcome",
+      favorite_genres: [],
+      excluded_genres: [],
+      preferred_platforms: [...DEFAULT_ONBOARDING_PLATFORM_IDS],
+      tour_completed: false,
+      activation_completed: false,
+      activation_step: "start",
+    } as any)
+    .eq("id", userId);
+
+  if (error) throw error;
+}
