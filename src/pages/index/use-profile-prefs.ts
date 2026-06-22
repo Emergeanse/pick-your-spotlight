@@ -88,7 +88,7 @@ export function useProfilePrefs({ user, onRecommendationBatchSizeChange }: Optio
               .select("id", { count: "exact", head: true })
               .eq("user_id", user.id)
               .then(({ count }) => {
-                if (count && count >= 20) {
+                if (count && count >= 10) {
                   supabase
                     .from("profiles")
                     .update({ activation_completed: true } as any)

@@ -374,6 +374,11 @@ const HomeScreen = ({
   const [tonightSeenMovieIds, setTonightSeenMovieIds] = useState<Set<number>>(new Set());
 
   const [flipDetailMovie, setFlipDetailMovie] = useState<MovieDetail | null>(null);
+  const [flipDetailFromBrowse, setFlipDetailFromBrowse] = useState(false);
+  const [homeBrowseOpen, setHomeBrowseOpen] = useState(false);
+  const [homeBrowsePool, setHomeBrowsePool] = useState<MovieDetail[]>([]);
+  const [homeBrowseIndex, setHomeBrowseIndex] = useState(0);
+  const [homeBrowseSeenIds, setHomeBrowseSeenIds] = useState<Set<number>>(new Set());
   const [noResultsInfo, setNoResultsInfo] = useState<{
     message: string;
     suggestThreshold?: number;
@@ -652,6 +657,12 @@ const HomeScreen = ({
       });
     })();
   }, [user]);
+
+  useEffect(() => {
+    if (tonightLoading || tonightPick) {
+      setHomeBrowseOpen(false);
+    }
+  }, [tonightLoading, tonightPick]);
 
   // Apparition de la notif partagée après 2.5s
   useEffect(() => {
@@ -1897,7 +1908,66 @@ const HomeScreen = ({
 
   const handleOpenMovieDetail = () => {
     if (!tonightPick) return;
+    setFlipDetailFromBrowse(true);
     setFlipDetailMovie(tonightPick);
+  };
+
+  const handleOpenHomeBrowseDetail = () => {
+    const movie = homeBrowsePool[homeBrowseIndex];
+    if (!movie) return;
+    setFlipDetailFromBrowse(true);
+    setFlipDetailMovie(movie);
+  };
+
+  const handleCloseFlipDetail = () => {
+    setFlipDetailMovie(null);
+    if (!homeBrowseOpen && !tonightPick && !tonightLoading) {
+      setFlipDetailFromBrowse(false);
+    }
+  };
+
+  const openHomeBrowseAt = async (items: QuickReco[], startIndex: number) => {
+    const slice = items.filter((q) => q?.id).slice(0, 3);
+    if (slice.length === 0) {
+      setShowFindChoice(true);
+      return;
+    }
+    setLoadingMovieId(slice[startIndex]?.id ?? null);
+    try {
+      const pool: MovieDetail[] = [];
+      for (const q of slice) {
+        const fromChat = chatMoviesPool?.find((m) => m.id === q.id);
+        if (fromChat) pool.push(fromChat);
+        else pool.push(await getMovieDetails(q.id, "movie"));
+      }
+      const safeIndex = Math.min(startIndex, pool.length - 1);
+      setHomeBrowsePool(pool);
+      setHomeBrowseIndex(safeIndex);
+      setHomeBrowseSeenIds(new Set([pool[safeIndex]?.id].filter(Boolean) as number[]));
+      setHomeBrowseOpen(true);
+    } catch {
+      setShowFindChoice(true);
+    } finally {
+      setLoadingMovieId(null);
+    }
+  };
+
+  const handleNavigateHomeBrowse = (direction: "prev" | "next") => {
+    const nextIndex = direction === "next" ? homeBrowseIndex + 1 : homeBrowseIndex - 1;
+    if (nextIndex < 0 || nextIndex >= homeBrowsePool.length) return;
+    const currentId = homeBrowsePool[homeBrowseIndex]?.id;
+    if (currentId) {
+      setHomeBrowseSeenIds((prev) => new Set(prev).add(currentId));
+    }
+    setHomeBrowseIndex(nextIndex);
+  };
+
+  const handleCloseHomeBrowse = () => {
+    setHomeBrowseOpen(false);
+    setHomeBrowsePool([]);
+    setHomeBrowseIndex(0);
+    setHomeBrowseSeenIds(new Set());
+    setFlipDetailFromBrowse(false);
   };
 
   const handleWatchNow = () => {
@@ -2191,15 +2261,8 @@ const HomeScreen = ({
                 disabled={loadingMovieId !== null}
                 onClick={async () => {
                   if (!item?.id) { setShowFindChoice(true); return; }
-                  setLoadingMovieId(item.id);
-                  try {
-                    const detail = await getMovieDetails(item.id, "movie");
-                    setFlipDetailMovie(detail);
-                  } catch {
-                    setShowFindChoice(true);
-                  } finally {
-                    setLoadingMovieId(null);
-                  }
+                  const list = quickRecos.length > 0 ? quickRecos.slice(0, 3) : trendingFallback.slice(0, 3);
+                  await openHomeBrowseAt(list, i);
                 }}
                 className="w-[80px] shrink-0 text-left relative"
               >
@@ -2363,6 +2426,34 @@ const HomeScreen = ({
       </div>
 
       <TonightPickOverlay
+        open={homeBrowseOpen && !tonightLoading && !tonightPick}
+        movie={homeBrowsePool[homeBrowseIndex] ?? null}
+        tonightPool={homeBrowsePool}
+        tonightPickIndex={homeBrowseIndex}
+        tonightSeenMovieIds={homeBrowseSeenIds}
+        tonightProviders={[]}
+        movieMatchData={movieMatchData}
+        canGoPrev={homeBrowseIndex > 0}
+        canGoNext={homeBrowseIndex < homeBrowsePool.length - 1}
+        tonightAllVisited={homeBrowseSeenIds.size >= homeBrowsePool.length}
+        tonightLoading={false}
+        onClose={handleCloseHomeBrowse}
+        onPrev={() => handleNavigateHomeBrowse("prev")}
+        onNext={() => handleNavigateHomeBrowse("next")}
+        onOpenDetail={handleOpenHomeBrowseDetail}
+        onConfirm={handleOpenHomeBrowseDetail}
+        onInteraction={() => {}}
+        onMoreSuggestions={() => setShowFindChoice(true)}
+        expectedCount={homeBrowsePool.length}
+        userGenres={userGenres}
+        userName={
+          (user?.user_metadata?.full_name as string | undefined) ||
+          (user?.user_metadata?.name as string | undefined) ||
+          (user?.email?.split("@")[0])
+        }
+      />
+
+      <TonightPickOverlay
         open={tonightLoading || !!tonightPick}
         movie={tonightPick}
         tonightPool={tonightPool}
@@ -2395,11 +2486,12 @@ const HomeScreen = ({
         item={flipDetailMovie}
         type="movie"
         isOpen={!!flipDetailMovie}
-        onClose={() => setFlipDetailMovie(null)}
+        onClose={handleCloseFlipDetail}
+        onPosterClick={flipDetailFromBrowse ? handleCloseFlipDetail : undefined}
         isEnriching={tonightLoading}
         recommendationTextsByMovieId={
           Object.fromEntries(
-            (chatMoviesPool ?? [])
+            [...(chatMoviesPool ?? []), ...homeBrowsePool]
               .filter((m): m is RecommendationMovieDetail => !!(m as RecommendationMovieDetail).recommendationTexts)
               .map((m) => [m.id, (m as RecommendationMovieDetail).recommendationTexts])
           )

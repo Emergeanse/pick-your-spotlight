@@ -88,15 +88,16 @@ export function preloadPosterWallCache(): Promise<void> {
 
 async function loadLambdaCache() {
   if (lambdaCache.loading) return;
-  if (lambdaCache.paths.length >= FALLBACK_POSTER_PATHS.length) return;
   lambdaCache.loading = true;
   try {
     const endpoints = [
       fetchFromTMDB("/movie/popular", { page: "1" }),
       fetchFromTMDB("/movie/popular", { page: "2" }),
+      fetchFromTMDB("/movie/popular", { page: "3" }),
       fetchFromTMDB("/movie/top_rated", { page: "1" }),
       fetchFromTMDB("/movie/top_rated", { page: "2" }),
       fetchFromTMDB("/trending/movie/week", { page: "1" }),
+      fetchFromTMDB("/trending/movie/week", { page: "2" }),
     ];
     const pages = await Promise.all(
       endpoints.map((p) => p.then((d) => extractPosterPaths(d.results)).catch(() => [] as string[])),
@@ -112,12 +113,21 @@ async function loadLambdaCache() {
 function preloadPosterImages(paths: string[], size: string = WALL_POSTER_SIZE) {
   const unique = [...new Set(paths)];
   unique.forEach((path) => {
-    const src = getPosterUrl(path, size);
-    if (!src || src.endsWith("/placeholder.svg")) return;
-    const img = new Image();
-    img.decoding = "async";
-    img.src = src;
+    for (const s of [size, "w342"]) {
+      const src = getPosterUrl(path, s);
+      if (!src || src.endsWith("/placeholder.svg")) continue;
+      const img = new Image();
+      img.decoding = "async";
+      img.src = src;
+    }
   });
+}
+
+function fallbackPathFor(path: string, attempt: number): string {
+  let hash = 0;
+  for (let i = 0; i < path.length; i++) hash = (hash + path.charCodeAt(i) * (i + 1)) | 0;
+  const idx = Math.abs(hash + attempt * 7) % FALLBACK_POSTER_PATHS.length;
+  return FALLBACK_POSTER_PATHS[idx];
 }
 
 const WALL_POSTER_SIZES = [WALL_POSTER_SIZE, "w342", "w500"] as const;
@@ -132,7 +142,10 @@ function WallPosterCell({
   spotFilter: string;
 }) {
   const [sizeIndex, setSizeIndex] = useState(0);
-  const src = getPosterUrl(path, WALL_POSTER_SIZES[sizeIndex]) || "";
+  const [altPath, setAltPath] = useState<string | null>(null);
+  const [errorAttempts, setErrorAttempts] = useState(0);
+  const activePath = altPath ?? path;
+  const src = getPosterUrl(activePath, WALL_POSTER_SIZES[sizeIndex]) || "";
   return (
     <img
       src={src}
@@ -141,12 +154,20 @@ function WallPosterCell({
       loading="eager"
       decoding="async"
       onError={() => {
-        setSizeIndex((i) => (i < WALL_POSTER_SIZES.length - 1 ? i + 1 : i));
+        if (sizeIndex < WALL_POSTER_SIZES.length - 1) {
+          setSizeIndex((i) => i + 1);
+          return;
+        }
+        if (errorAttempts < 3) {
+          setErrorAttempts((n) => n + 1);
+          setAltPath(fallbackPathFor(path, errorAttempts));
+          setSizeIndex(0);
+        }
       }}
-      className="w-full rounded-md object-cover flex-shrink-0 select-none bg-white/5"
+      className="w-full rounded-md object-cover flex-shrink-0 select-none bg-gradient-to-br from-primary/15 to-white/5"
       style={{
         aspectRatio: "2/3",
-        minHeight: "4.5rem",
+        minHeight: "5rem",
         transform: isSpot ? "scale(1.05) translateZ(0)" : "translateZ(0)",
         filter: isSpot ? spotFilter : undefined,
         transition: isSpot ? "filter 0.15s ease-out, transform 0.15s ease-out" : undefined,
@@ -320,21 +341,33 @@ const TonightPickOverlay = ({
     return result;
   }, [lambdaPaths, lovedPosters]);
 
-  // Mélange stable pour la session d'overlay (évite un saut si le pool TMDB arrive en cours de route)
+  // Mélange stable pour la session d'overlay — attend brièvement le cache TMDB si besoin
   const [sessionWallPaths, setSessionWallPaths] = useState<string[]>([]);
   useEffect(() => {
     if (!open) {
       setSessionWallPaths([]);
       return;
     }
-    if (sessionWallPaths.length >= 2) return;
+    const minPool = 24;
+    if (sessionWallPaths.length >= minPool) return;
     if (posterWallPaths.length < 2) return;
-    const arr = [...posterWallPaths];
-    for (let i = arr.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [arr[i], arr[j]] = [arr[j], arr[i]];
+
+    const buildShuffle = () => {
+      const arr = [...posterWallPaths];
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      setSessionWallPaths(arr);
+    };
+
+    if (posterWallPaths.length >= minPool || !lambdaCache.loading) {
+      buildShuffle();
+      return;
     }
-    setSessionWallPaths(arr);
+
+    const wait = setTimeout(buildShuffle, 500);
+    return () => clearTimeout(wait);
   }, [open, posterWallPaths, sessionWallPaths.length]);
 
   const shuffledWallPaths = sessionWallPaths.length >= 2 ? sessionWallPaths : posterWallPaths;
@@ -507,9 +540,9 @@ const TonightPickOverlay = ({
                     }}
                   >
                     {[0, 1, 2, 3].map((ci) => {
-                      const perCol = Math.max(8, Math.ceil(shuffledWallPaths.length / 4));
+                      const perCol = Math.max(12, Math.ceil(shuffledWallPaths.length / 4));
                       const items = Array.from({ length: perCol }, (_, i) =>
-                        shuffledWallPaths[(ci + i * 4) % shuffledWallPaths.length]
+                        shuffledWallPaths[(ci * 3 + i) % shuffledWallPaths.length]
                       );
                       const col = [...items, ...items];
                       const dur = WALL_COLUMN_SECONDS[ci];

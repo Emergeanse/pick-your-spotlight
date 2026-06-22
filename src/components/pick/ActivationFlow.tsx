@@ -20,7 +20,7 @@ interface Mission {
 }
 
 const MISSIONS: Mission[] = [
-  { id: "train_20", title: "Apprends-moi qui tu es", desc: "Évalue 20 films pour que Pick comprenne tes goûts", hint: "C'est rapide, promis — swipe à droite si tu aimes, à gauche sinon.", icon: Brain, emoji: "🧠", threshold: 20 },
+  { id: "train_20", title: "Apprends-moi qui tu es", desc: "Évalue 10 films pour que Pick comprenne tes goûts", hint: "C'est rapide, promis — swipe à droite si tu aimes, à gauche sinon.", icon: Brain, emoji: "🧠", threshold: 10 },
   { id: "first_reco", title: "Ta première recommandation", desc: "Lance « Pick pour ce soir » et découvre ta suggestion", hint: "Voyons ce que Pick a trouvé pour toi !", icon: Sparkles, emoji: "🍿", threshold: 1 },
   { id: "talk_to_pick", title: "Parle à Pick", desc: "Envoie un message à Pick pour découvrir le chat", hint: "Essaie : « Un thriller psychologique récent » ou « Quelque chose de léger »", icon: MessageCircle, emoji: "💬", threshold: 1 },
   { id: "watchlist_3", title: "Crée ta liste", desc: "Sauvegarde 3 films dans ta watchlist", hint: "Tu ne les perdras plus jamais.", icon: Bookmark, emoji: "📌", threshold: 3 },
@@ -190,35 +190,42 @@ const ActivationFlow = ({ onStartMission, onComplete }: ActivationFlowProps) => 
   // Persistent progress bar (always visible at top)
   const ProgressBar = () => (
     <motion.div initial={{ y: -60 }} animate={{ y: 0 }} className="fixed top-0 left-0 right-0 z-[90] bg-background/80 backdrop-blur-lg border-b border-border/30 px-4 py-2 safe-area-top">
-      <div className="flex items-center gap-2 max-w-lg mx-auto">
-        <div className="flex items-center gap-1.5 flex-1">
+      <div className="max-w-lg mx-auto">
+        <div className="flex items-center gap-1.5 mb-1.5">
           {MISSIONS.map((m, i) => {
             const isDone = i < currentMissionIndex || (i === currentMissionIndex && progress[m.id] >= m.threshold);
             const isCurrent = i === currentMissionIndex;
             return (
-              <div key={m.id} className="flex-1 flex items-center gap-1">
-                <div className={`h-1.5 flex-1 rounded-full transition-all duration-500 ${
-                  isDone ? "bg-primary" : isCurrent ? "bg-primary/40" : "bg-muted"
-                }`}>
-                  {isCurrent && (
-                    <motion.div className="h-full rounded-full bg-primary" style={{ width: `${progressPercent}%` }}
-                      transition={{ duration: 0.3 }} />
-                  )}
-                </div>
-              </div>
+              <div
+                key={m.id}
+                title={m.title}
+                className={`h-2 flex-1 rounded-full transition-all duration-500 ${
+                  isDone ? "bg-primary" : isCurrent ? "bg-primary/25 ring-1 ring-primary/30" : "bg-muted"
+                }`}
+              />
             );
           })}
         </div>
-        <button onClick={() => setShowMissionCard(true)} className="text-xs font-sans text-primary/80 hover:text-primary shrink-0">
-          {currentMission?.emoji}
-        </button>
+        <div className="h-1.5 rounded-full bg-muted overflow-hidden mb-0.5">
+          <motion.div
+            className="h-full rounded-full bg-primary"
+            animate={{ width: `${progressPercent}%` }}
+            transition={{ duration: 0.35 }}
+          />
+        </div>
+        <div className="flex items-center justify-between gap-2">
+          <button
+            type="button"
+            onClick={() => setShowMissionCard(true)}
+            className="text-[11px] font-sans text-foreground/55 hover:text-foreground/80 transition-colors truncate text-left"
+          >
+            {currentMission?.title} — {currentProgress}/{currentThreshold}
+          </button>
+          <button type="button" onClick={() => setShowMissionCard(true)} className="text-xs shrink-0" aria-label="Voir la mission">
+            {currentMission?.emoji}
+          </button>
+        </div>
       </div>
-      {!showMissionCard && (
-        <button onClick={() => setShowMissionCard(true)}
-          className="text-[11px] font-sans text-foreground/40 text-center w-full mt-0.5 hover:text-foreground/60 transition-colors">
-          {currentMission?.title} — {currentProgress}/{currentThreshold}
-        </button>
-      )}
     </motion.div>
   );
 

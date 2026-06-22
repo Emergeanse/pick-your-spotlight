@@ -29,6 +29,8 @@ interface FlipCardDetailProps {
   type: "movie" | "person";
   isOpen: boolean;
   onClose: () => void;
+  /** Clic sur l'affiche — ex. retour au carrousel de recommandations */
+  onPosterClick?: () => void;
   recommendationTexts?: MatchData | null;
   recommendationTextsByMovieId?: Record<number, MatchData | undefined>;
   isEnriching?: boolean;
@@ -44,6 +46,7 @@ const FlipCardDetail = ({
   type,
   isOpen,
   onClose,
+  onPosterClick,
   recommendationTexts,
   recommendationTextsByMovieId,
   isEnriching,
@@ -168,6 +171,7 @@ const FlipCardDetail = ({
                 recommendationText={currentRecommendationText}
                 isEnriching={isEnriching}
                 onPersonClick={(person) => navigateTo(person, "person")}
+                onPosterClick={navStack.length === 0 ? onPosterClick : undefined}
               />
             ) : (
               <PersonDetailContent
@@ -193,6 +197,7 @@ const MovieDetailContent = ({
   recommendationText,
   isEnriching,
   onPersonClick,
+  onPosterClick,
 }: {
   item: any;
   detail: any;
@@ -202,6 +207,7 @@ const MovieDetailContent = ({
   recommendationText?: MatchData | null;
   isEnriching?: boolean;
   onPersonClick: (person: any) => void;
+  onPosterClick?: () => void;
 }) => {
   const interaction = useMovieInteraction(item?.id);
 
@@ -223,13 +229,28 @@ const MovieDetailContent = ({
       {/* Hero poster + metadata — larger, more cinematic */}
       <div className="flex gap-4 px-5 pt-5 mb-5">
         <div className="relative shrink-0">
-          <img
-            src={getPosterUrl(item.poster_path, "w342")}
-            alt={getDisplayTitle(item)}
-            className="h-52 w-auto rounded-2xl shadow-[0_16px_40px_-8px_rgba(0,0,0,0.5)] border border-white/8"
-          />
+          {onPosterClick ? (
+            <button
+              type="button"
+              onClick={onPosterClick}
+              aria-label="Retour à la sélection"
+              className="block rounded-2xl transition-transform active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+            >
+              <img
+                src={getPosterUrl(item.poster_path, "w342")}
+                alt={getDisplayTitle(item)}
+                className="h-52 w-auto rounded-2xl shadow-[0_16px_40px_-8px_rgba(0,0,0,0.5)] border border-white/8"
+              />
+            </button>
+          ) : (
+            <img
+              src={getPosterUrl(item.poster_path, "w342")}
+              alt={getDisplayTitle(item)}
+              className="h-52 w-auto rounded-2xl shadow-[0_16px_40px_-8px_rgba(0,0,0,0.5)] border border-white/8"
+            />
+          )}
           {interaction.hasInteraction && (
-            <div className="absolute top-2 left-2">
+            <div className="absolute top-2 left-2 pointer-events-none">
               <FeedbackBadge
                 type={interaction.primaryStatus}
                 inWatchlist={interaction.watchlist}
