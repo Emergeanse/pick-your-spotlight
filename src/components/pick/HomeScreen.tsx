@@ -379,6 +379,7 @@ const HomeScreen = ({
   const [homeBrowsePool, setHomeBrowsePool] = useState<MovieDetail[]>([]);
   const [homeBrowseIndex, setHomeBrowseIndex] = useState(0);
   const [homeBrowseSeenIds, setHomeBrowseSeenIds] = useState<Set<number>>(new Set());
+  const [homeBrowseProviders, setHomeBrowseProviders] = useState<{ name: string; logo_path: string }[]>([]);
   const [noResultsInfo, setNoResultsInfo] = useState<{
     message: string;
     suggestThreshold?: number;
@@ -812,30 +813,24 @@ const HomeScreen = ({
     return filtered.length > 0 ? filtered : providers;
   };
 
-  const loadProviders = async (movie: MovieDetail) => {
-    // Priorité 1 : platform_ids depuis movie_embeddings (SQL) — intersection avec plateformes user
+  const resolveProviders = async (movie: MovieDetail): Promise<{ name: string; logo_path: string; provider_id?: number }[]> => {
     const embeddingPlatformIds = (movie as any).platform_ids as number[] | undefined;
     if (Array.isArray(embeddingPlatformIds) && embeddingPlatformIds.length > 0 && userPlatformIds?.length) {
       const fromEmbedding = buildProvidersFromPlatformIds(embeddingPlatformIds);
-      if (fromEmbedding.length > 0) {
-        setTonightProviders(fromEmbedding);
-        return;
-      }
+      if (fromEmbedding.length > 0) return fromEmbedding;
     }
-    // Priorité 2 : watchProviders pré-chargés (avec logos TMDB)
     const cached = (movie as any).watchProviders as { name: string; logo_path: string; provider_id?: number }[] | undefined;
-    if (cached && Array.isArray(cached)) {
-      setTonightProviders(filterProvidersByUserPlatforms(cached));
-      return;
-    }
-    // Priorité 3 : appel TMDB watch/providers
+    if (cached && Array.isArray(cached)) return filterProvidersByUserPlatforms(cached);
     const mediaType = movie.first_air_date ? "tv" : "movie";
     try {
-      const providers = await getWatchProviders(movie.id, mediaType);
-      setTonightProviders(filterProvidersByUserPlatforms(providers));
+      return filterProvidersByUserPlatforms(await getWatchProviders(movie.id, mediaType));
     } catch {
-      setTonightProviders([]);
+      return [];
     }
+  };
+
+  const loadProviders = async (movie: MovieDetail) => {
+    setTonightProviders(await resolveProviders(movie));
   };
 
   const setCurrentTonightMovie = async (movie: MovieDetail, index: number, seenIds?: Set<number>) => {
@@ -1945,7 +1940,9 @@ const HomeScreen = ({
       setHomeBrowsePool(pool);
       setHomeBrowseIndex(safeIndex);
       setHomeBrowseSeenIds(new Set([pool[safeIndex]?.id].filter(Boolean) as number[]));
+      setHomeBrowseProviders([]);
       setHomeBrowseOpen(true);
+      if (pool[safeIndex]) resolveProviders(pool[safeIndex]).then(setHomeBrowseProviders).catch(() => {});
     } catch {
       setShowFindChoice(true);
     } finally {
@@ -1961,6 +1958,11 @@ const HomeScreen = ({
       setHomeBrowseSeenIds((prev) => new Set(prev).add(currentId));
     }
     setHomeBrowseIndex(nextIndex);
+    const nextMovie = homeBrowsePool[nextIndex];
+    if (nextMovie) {
+      setHomeBrowseProviders([]);
+      resolveProviders(nextMovie).then(setHomeBrowseProviders).catch(() => {});
+    }
   };
 
   const handleCloseHomeBrowse = () => {
@@ -1968,6 +1970,7 @@ const HomeScreen = ({
     setHomeBrowsePool([]);
     setHomeBrowseIndex(0);
     setHomeBrowseSeenIds(new Set());
+    setHomeBrowseProviders([]);
     setFlipDetailFromBrowse(false);
   };
 
@@ -2432,7 +2435,7 @@ const HomeScreen = ({
         tonightPool={homeBrowsePool}
         tonightPickIndex={homeBrowseIndex}
         tonightSeenMovieIds={homeBrowseSeenIds}
-        tonightProviders={[]}
+        tonightProviders={homeBrowseProviders}
         movieMatchData={movieMatchData}
         canGoPrev={homeBrowseIndex > 0}
         canGoNext={homeBrowseIndex < homeBrowsePool.length - 1}
