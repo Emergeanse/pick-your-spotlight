@@ -182,7 +182,7 @@ const EventDetailPage = () => {
         .select("id, movie_title, poster_path, tmdb_id, position, catalog_item_id")
         .eq("event_id", eventId)
         .order("position", { ascending: true });
-      setRecommendations((recs ?? []) as EventRecommendation[]);
+      setRecommendations((recs ?? []) as unknown as EventRecommendation[]);
 
       const { data: votes } = await supabase
         .from("event_votes" as any)
@@ -191,7 +191,7 @@ const EventDetailPage = () => {
 
       const counts: Record<string, number> = {};
       let mine: string | null = null;
-      (votes ?? []).forEach((v: { recommendation_id: string; voter_id: string | null }) => {
+      ((votes ?? []) as unknown as Array<{ recommendation_id: string; voter_id: string | null }>).forEach((v) => {
         counts[v.recommendation_id] = (counts[v.recommendation_id] ?? 0) + 1;
         if (user && v.voter_id === user.id) mine = v.recommendation_id;
       });
@@ -221,7 +221,7 @@ const EventDetailPage = () => {
     setEvent(ev as unknown as EventData);
 
     await loadParticipants(id, ev as unknown as EventData);
-    if ((ev as EventData).reveal_mode === "vote") {
+    if ((ev as unknown as EventData).reveal_mode === "vote") {
       await loadVoteData(id);
     }
     setLoading(false);

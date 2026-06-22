@@ -31,6 +31,7 @@ import InvitePage from "./pages/InvitePage.tsx";
 import CreateEventPage from "./pages/CreateEventPage.tsx";
 import EventDetailPage from "./pages/EventDetailPage.tsx";
 import MatchPage from "./pages/MatchPage.tsx";
+import TrustPage from "./pages/Trust.tsx";
 
 const queryClient = new QueryClient();
 
@@ -89,6 +90,7 @@ const App = () => (
             <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
             <Route path="/glossary" element={<ProtectedRoute><AppLayout><Glossary /></AppLayout></ProtectedRoute>} />
             <Route path="/profile" element={<Navigate to="/app/profile" replace />} />
+            <Route path="/trust" element={<TrustPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
           </ErrorBoundary>
