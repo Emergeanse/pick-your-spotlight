@@ -47,6 +47,36 @@ const WALL_SCROLL_KEYFRAMES = `
 `;
 
 const WALL_COLUMN_SECONDS = [28, 22, 32, 25] as const;
+const WALL_POSTER_SIZE = "w185" as const;
+
+function normalizePosterPath(path: string | null | undefined): string | null {
+  if (!path || typeof path !== "string") return null;
+  const trimmed = path.trim();
+  if (!trimmed) return null;
+  return trimmed.startsWith("/") ? trimmed : `/${trimmed}`;
+}
+
+function extractPosterPaths(results: unknown): string[] {
+  if (!Array.isArray(results)) return [];
+  return results
+    .map((m) => normalizePosterPath((m as { poster_path?: string }).poster_path))
+    .filter((p): p is string => !!p);
+}
+
+/** Fusionne fallbacks + TMDB sans doublons — le mur reste rempli même si le proxy échoue. */
+function mergePosterPools(...pools: string[][]): string[] {
+  const seen = new Set<string>();
+  const merged: string[] = [];
+  for (const pool of pools) {
+    for (const raw of pool) {
+      const path = normalizePosterPath(raw);
+      if (!path || seen.has(path)) continue;
+      seen.add(path);
+      merged.push(path);
+    }
+  }
+  return merged;
+}
 
 // Cache module-level : chargé après authentification (proxy TMDB requiert une session)
 const lambdaCache = { paths: [] as string[], loading: false };
@@ -57,27 +87,74 @@ export function preloadPosterWallCache(): Promise<void> {
 }
 
 async function loadLambdaCache() {
-  if (lambdaCache.paths.length > 0 || lambdaCache.loading) return;
+  if (lambdaCache.loading) return;
+  if (lambdaCache.paths.length >= FALLBACK_POSTER_PATHS.length) return;
   lambdaCache.loading = true;
   try {
-    const [popular, topRated] = await Promise.all([
-      fetchFromTMDB("/movie/popular", { page: "1" })
-        .then((d) => (d.results || []).map((m: { poster_path?: string }) => m.poster_path).filter(Boolean) as string[])
-        .catch(() => [] as string[]),
-      fetchFromTMDB("/movie/top_rated", { page: "1" })
-        .then((d) => (d.results || []).map((m: { poster_path?: string }) => m.poster_path).filter(Boolean) as string[])
-        .catch(() => [] as string[]),
-    ]);
-    const merged: string[] = [];
-    const max = Math.max(popular.length, topRated.length);
-    for (let i = 0; i < max; i++) {
-      if (popular[i]) merged.push(popular[i]);
-      if (topRated[i]) merged.push(topRated[i]);
-    }
+    const endpoints = [
+      fetchFromTMDB("/movie/popular", { page: "1" }),
+      fetchFromTMDB("/movie/popular", { page: "2" }),
+      fetchFromTMDB("/movie/top_rated", { page: "1" }),
+      fetchFromTMDB("/movie/top_rated", { page: "2" }),
+      fetchFromTMDB("/trending/movie/week", { page: "1" }),
+    ];
+    const pages = await Promise.all(
+      endpoints.map((p) => p.then((d) => extractPosterPaths(d.results)).catch(() => [] as string[])),
+    );
+    const fromApi = pages.flat();
+    const merged = mergePosterPools(FALLBACK_POSTER_PATHS, fromApi);
     if (merged.length >= 2) lambdaCache.paths = merged;
   } finally {
     lambdaCache.loading = false;
   }
+}
+
+function preloadPosterImages(paths: string[], size: string = WALL_POSTER_SIZE) {
+  const unique = [...new Set(paths)];
+  unique.forEach((path) => {
+    const src = getPosterUrl(path, size);
+    if (!src || src.endsWith("/placeholder.svg")) return;
+    const img = new Image();
+    img.decoding = "async";
+    img.src = src;
+  });
+}
+
+const WALL_POSTER_SIZES = [WALL_POSTER_SIZE, "w342", "w500"] as const;
+
+function WallPosterCell({
+  path,
+  isSpot,
+  spotFilter,
+}: {
+  path: string;
+  isSpot: boolean;
+  spotFilter: string;
+}) {
+  const [sizeIndex, setSizeIndex] = useState(0);
+  const src = getPosterUrl(path, WALL_POSTER_SIZES[sizeIndex]) || "";
+  return (
+    <img
+      src={src}
+      alt=""
+      draggable={false}
+      loading="eager"
+      decoding="async"
+      onError={() => {
+        setSizeIndex((i) => (i < WALL_POSTER_SIZES.length - 1 ? i + 1 : i));
+      }}
+      className="w-full rounded-md object-cover flex-shrink-0 select-none bg-white/5"
+      style={{
+        aspectRatio: "2/3",
+        minHeight: "4.5rem",
+        transform: isSpot ? "scale(1.05) translateZ(0)" : "translateZ(0)",
+        filter: isSpot ? spotFilter : undefined,
+        transition: isSpot ? "filter 0.15s ease-out, transform 0.15s ease-out" : undefined,
+        position: "relative",
+        zIndex: isSpot ? 2 : 0,
+      }}
+    />
+  );
 }
 
 interface TonightPickOverlayProps {
@@ -183,15 +260,21 @@ const TonightPickOverlay = ({
     return () => clearInterval(id);
   }, [tonightLoading]);
 
-  // Lambda TMDB : liste fixe popular+top_rated, toujours affichée (cohérence visuelle entre sessions)
+  // Pool TMDB + fallbacks — jamais remplacé entièrement par l'API seule
   const [lambdaPaths, setLambdaPaths] = useState<string[]>(
-    () => (lambdaCache.paths.length >= 2 ? lambdaCache.paths : FALLBACK_POSTER_PATHS)
+    () => mergePosterPools(FALLBACK_POSTER_PATHS, lambdaCache.paths),
   );
   useEffect(() => {
     void loadLambdaCache();
-    if (lambdaCache.paths.length > 0) { setLambdaPaths(lambdaCache.paths); return; }
+    if (lambdaCache.paths.length > 0) {
+      setLambdaPaths(mergePosterPools(FALLBACK_POSTER_PATHS, lambdaCache.paths));
+      return;
+    }
     const poll = setInterval(() => {
-      if (lambdaCache.paths.length > 0) { setLambdaPaths(lambdaCache.paths); clearInterval(poll); }
+      if (lambdaCache.paths.length > 0) {
+        setLambdaPaths(mergePosterPools(FALLBACK_POSTER_PATHS, lambdaCache.paths));
+        clearInterval(poll);
+      }
     }, 300);
     return () => clearInterval(poll);
   }, []);
@@ -200,7 +283,9 @@ const TonightPickOverlay = ({
   useEffect(() => {
     if (!open) return;
     void loadLambdaCache().then(() => {
-      if (lambdaCache.paths.length > 0) setLambdaPaths(lambdaCache.paths);
+      if (lambdaCache.paths.length > 0) {
+        setLambdaPaths(mergePosterPools(FALLBACK_POSTER_PATHS, lambdaCache.paths));
+      }
     });
   }, [open]);
 
@@ -222,9 +307,9 @@ const TonightPickOverlay = ({
     });
   }, [movie?.poster_path, interaction.primaryStatus]);
 
-  // Mur de fond : TMDB live ou fallback immédiat + films adorés intercalés
+  // Mur de fond : fallbacks + TMDB + films adorés intercalés
   const posterWallPaths = useMemo(() => {
-    const base = lambdaPaths.length >= 2 ? lambdaPaths : FALLBACK_POSTER_PATHS;
+    const base = mergePosterPools(FALLBACK_POSTER_PATHS, lambdaPaths);
     if (lovedPosters.length === 0) return base;
     const result: string[] = [];
     let li = 0;
@@ -254,16 +339,10 @@ const TonightPickOverlay = ({
 
   const shuffledWallPaths = sessionWallPaths.length >= 2 ? sessionWallPaths : posterWallPaths;
 
-  // Précharge les affiches du mur (évite les saccades au scroll)
+  // Précharge toutes les affiches uniques du mur (évite les cases vides au scroll)
   useEffect(() => {
     if (!open || shuffledWallPaths.length < 2) return;
-    shuffledWallPaths.slice(0, 16).forEach((path) => {
-      const src = getPosterUrl(path, "w154");
-      if (!src) return;
-      const img = new Image();
-      img.decoding = "async";
-      img.src = src;
-    });
+    preloadPosterImages(shuffledWallPaths, WALL_POSTER_SIZE);
   }, [open, shuffledWallPaths]);
 
   // Effet "scan" : un poster aléatoire s'illumine brièvement, comme s'il était identifié
@@ -391,7 +470,7 @@ const TonightPickOverlay = ({
 
   const instantCover = tonightLoading && !movie;
   const wallProgress = Math.min(loadingElapsed / 8, 1);
-  const wallVeilOpacity = 0.78 - wallProgress * 0.42;
+  const wallVeilOpacity = 0.62 - wallProgress * 0.34;
   const wallSaturation = 0.65 + wallProgress * 0.55;
   const wallBrightness = 0.58 + wallProgress * 0.48;
 
@@ -422,10 +501,9 @@ const TonightPickOverlay = ({
                   <div
                     className="absolute inset-0 flex gap-1 overflow-hidden"
                     style={{
-                      opacity: 0.32 + wallProgress * 0.48,
+                      opacity: 0.42 + wallProgress * 0.46,
                       filter: `saturate(${wallSaturation}) brightness(${wallBrightness})`,
                       transition: "opacity 0.5s ease-out, filter 0.5s ease-out",
-                      contain: "layout style paint",
                     }}
                   >
                     {[0, 1, 2, 3].map((ci) => {
@@ -446,28 +524,14 @@ const TonightPickOverlay = ({
                             animationDelay: `${phaseDelay}s`,
                           }}
                         >
-                          {col.map((path, pi) => {
-                            const isSpot = path === highlightedPath;
-                            return (
-                              <img
-                                key={`${path}-${pi}`}
-                                src={getPosterUrl(path, "w154") || ""}
-                                alt=""
-                                draggable={false}
-                                loading="eager"
-                                decoding="async"
-                                className="w-full rounded-md object-cover flex-shrink-0 select-none"
-                                style={{
-                                  aspectRatio: "2/3",
-                                  transform: isSpot ? "scale(1.05) translateZ(0)" : "translateZ(0)",
-                                  filter: isSpot ? spotFilterRef.current : undefined,
-                                  transition: isSpot ? "filter 0.15s ease-out, transform 0.15s ease-out" : undefined,
-                                  position: "relative",
-                                  zIndex: isSpot ? 2 : 0,
-                                }}
-                              />
-                            );
-                          })}
+                          {col.map((path, pi) => (
+                            <WallPosterCell
+                              key={`${path}-${pi}`}
+                              path={path}
+                              isSpot={path === highlightedPath}
+                              spotFilter={spotFilterRef.current}
+                            />
+                          ))}
                         </div>
                       );
                     })}
