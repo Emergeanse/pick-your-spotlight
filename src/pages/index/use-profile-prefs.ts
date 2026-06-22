@@ -48,12 +48,12 @@ export function useProfilePrefs({ user, onRecommendationBatchSizeChange }: Optio
     supabase
       .from("profiles")
       .select(
-        "onboarding_completed, onboarding_skipped, preferred_platforms, excluded_platforms, favorite_genres, excluded_genres, min_rating, profile_confidence, tour_completed, activation_completed, default_recommendation_count, match_threshold",
+        "onboarding_completed, onboarding_skipped, onboarding_paused, preferred_platforms, excluded_platforms, favorite_genres, excluded_genres, min_rating, profile_confidence, tour_completed, activation_completed, default_recommendation_count, match_threshold",
       )
       .eq("id", user.id)
       .single()
       .then(({ data }) => {
-        if (data && !data.onboarding_completed && !(data as any).onboarding_skipped) {
+        if (data && !data.onboarding_completed && !(data as any).onboarding_skipped && !(data as any).onboarding_paused) {
           navigate("/onboarding");
           return;
         }

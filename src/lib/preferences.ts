@@ -181,6 +181,38 @@ export async function setSinglePreference(
     .insert({ user_id: userId, tag_id: tag.id, weight: 1, source } as any);
 }
 
+/** Replace genre prefs in one shot (liked + excluded). */
+export async function setGenrePreferences(
+  likedLabels: string[],
+  excludedLabels: string[],
+  source: "explicit" | "onboarding" = "explicit",
+) {
+  const userId = (await supabase.auth.getUser()).data.user?.id;
+  if (!userId) return;
+
+  const { data: tags } = await supabase
+    .from("preference_tags")
+    .select("id, key, label")
+    .eq("category", "genre");
+  if (!tags?.length) return;
+
+  const allIds = (tags as any[]).map((t) => t.id);
+  await supabase.from("user_preferences").delete().eq("user_id", userId).in("tag_id", allIds);
+
+  const rows: { user_id: string; tag_id: string; weight: number; source: string }[] = [];
+  const likedSet = new Set(likedLabels);
+  for (const label of likedLabels) {
+    const tag = (tags as any[]).find((t) => t.label === label);
+    if (tag) rows.push({ user_id: userId, tag_id: tag.id, weight: 1, source });
+  }
+  for (const label of excludedLabels) {
+    if (likedSet.has(label)) continue;
+    const tag = (tags as any[]).find((t) => t.label === label);
+    if (tag) rows.push({ user_id: userId, tag_id: tag.id, weight: -1, source });
+  }
+  if (rows.length) await supabase.from("user_preferences").insert(rows as any);
+}
+
 /** Helpers used by onboarding/profile UI. */
 export async function setLikedGenres(genreLabels: string[], source: "explicit" | "onboarding" = "explicit") {
   // Map labels back to keys (slug-style stored in preference_tags.key)

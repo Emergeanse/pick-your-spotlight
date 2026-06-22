@@ -858,7 +858,9 @@ export type Database = {
           media_preference: string
           min_rating: number | null
           onboarding_completed: boolean
+          onboarding_paused: boolean
           onboarding_skipped: boolean | null
+          onboarding_step: string
           podium_film_ids: number[] | null
           preferred_platforms: number[] | null
           profile_confidence: number
@@ -896,7 +898,9 @@ export type Database = {
           media_preference?: string
           min_rating?: number | null
           onboarding_completed?: boolean
+          onboarding_paused?: boolean
           onboarding_skipped?: boolean | null
+          onboarding_step?: string
           podium_film_ids?: number[] | null
           preferred_platforms?: number[] | null
           profile_confidence?: number
@@ -934,7 +938,9 @@ export type Database = {
           media_preference?: string
           min_rating?: number | null
           onboarding_completed?: boolean
+          onboarding_paused?: boolean
           onboarding_skipped?: boolean | null
+          onboarding_step?: string
           podium_film_ids?: number[] | null
           preferred_platforms?: number[] | null
           profile_confidence?: number

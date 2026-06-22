@@ -1,6 +1,7 @@
 import { useLocation } from "react-router-dom";
 import BottomTabBar from "@/components/pick/BottomTabBar";
 import BrandHeader from "@/components/pick/BrandHeader";
+import OnboardingResumeBanner from "@/components/onboarding/OnboardingResumeBanner";
 
 /**
  * Mobile-first layout. On md+ we frame the app as a centered phone-shaped
@@ -23,6 +24,7 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
             <BrandHeader />
           </div>
         )}
+        <OnboardingResumeBanner />
         {children}
         <BottomTabBar />
       </div>
