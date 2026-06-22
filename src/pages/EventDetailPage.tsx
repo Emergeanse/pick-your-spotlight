@@ -191,7 +191,7 @@ const EventDetailPage = () => {
 
       const counts: Record<string, number> = {};
       let mine: string | null = null;
-      (votes ?? []).forEach((v: { recommendation_id: string; voter_id: string | null }) => {
+      ((votes ?? []) as unknown as Array<{ recommendation_id: string; voter_id: string | null }>).forEach((v) => {
         counts[v.recommendation_id] = (counts[v.recommendation_id] ?? 0) + 1;
         if (user && v.voter_id === user.id) mine = v.recommendation_id;
       });
