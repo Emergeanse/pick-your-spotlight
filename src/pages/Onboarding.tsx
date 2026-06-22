@@ -44,6 +44,10 @@ const Onboarding = () => {
   const [filmsProgress, setFilmsProgress] = useState(0);
   const [filmsLikedIds, setFilmsLikedIds] = useState<number[]>([]);
   const [filmsProposedIds, setFilmsProposedIds] = useState<number[]>([]);
+  const [actorsSelectedIds, setActorsSelectedIds] = useState<number[]>([]);
+  const [actorsProposedIds, setActorsProposedIds] = useState<number[]>([]);
+  const [directorsSelectedIds, setDirectorsSelectedIds] = useState<number[]>([]);
+  const [directorsProposedIds, setDirectorsProposedIds] = useState<number[]>([]);
   const [loading, setLoading] = useState(true);
   const [pausing, setPausing] = useState(false);
   const [finishing, setFinishing] = useState(false);
@@ -69,6 +73,10 @@ const Onboarding = () => {
         setFilmsProgress(progress.filmsProgress);
         setFilmsLikedIds(progress.filmsLikedIds);
         setFilmsProposedIds(progress.filmsProposedIds);
+        setActorsSelectedIds(progress.actorsSelectedIds);
+        setActorsProposedIds(progress.actorsProposedIds);
+        setDirectorsSelectedIds(progress.directorsSelectedIds);
+        setDirectorsProposedIds(progress.directorsProposedIds);
         setStep(progress.step);
         if (progress.paused) {
           await saveOnboardingProgress(progress.step, {
@@ -347,6 +355,10 @@ const Onboarding = () => {
           >
             <OnboardingPeopleStep
               personType="actor"
+              initialSelectedIds={actorsSelectedIds}
+              initialProposedIds={actorsProposedIds}
+              onSelectedIdsChange={setActorsSelectedIds}
+              onProposedIdsChange={setActorsProposedIds}
               onComplete={() => void goToStep("directors")}
             />
           </motion.div>
@@ -362,6 +374,10 @@ const Onboarding = () => {
           >
             <OnboardingPeopleStep
               personType="director"
+              initialSelectedIds={directorsSelectedIds}
+              initialProposedIds={directorsProposedIds}
+              onSelectedIdsChange={setDirectorsSelectedIds}
+              onProposedIdsChange={setDirectorsProposedIds}
               onComplete={() => void goToStep("modes")}
             />
           </motion.div>

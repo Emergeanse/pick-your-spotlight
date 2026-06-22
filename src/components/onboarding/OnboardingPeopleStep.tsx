@@ -14,8 +14,8 @@ import {
   ONBOARDING_PEOPLE_TARGET,
   type OnboardingPerson,
 } from "@/lib/onboarding-people";
+import { saveOnboardingPeopleProgress } from "@/lib/onboarding-progress";
 import {
-  getUserPeoplePreferences,
   savePersonPreference,
   type PersonType,
 } from "@/lib/people-preferences";
@@ -23,6 +23,10 @@ import OnboardingStepLayout from "@/components/onboarding/OnboardingStepLayout";
 
 interface OnboardingPeopleStepProps {
   personType: PersonType;
+  initialSelectedIds?: number[];
+  initialProposedIds?: number[];
+  onSelectedIdsChange?: (ids: number[]) => void;
+  onProposedIdsChange?: (ids: number[]) => void;
   onComplete: () => void;
 }
 
@@ -32,6 +36,10 @@ function mergeProposedIds(target: Set<number>, ids: number[]) {
 
 export default function OnboardingPeopleStep({
   personType,
+  initialSelectedIds = [],
+  initialProposedIds = [],
+  onSelectedIdsChange,
+  onProposedIdsChange,
   onComplete,
 }: OnboardingPeopleStepProps) {
   const { user } = useAuth();
@@ -43,14 +51,30 @@ export default function OnboardingPeopleStep({
   const [saving, setSaving] = useState(false);
   const selectedIdsRef = useRef(selectedIds);
   selectedIdsRef.current = selectedIds;
-  const proposedIdsRef = useRef<Set<number>>(new Set());
+  const proposedIdsRef = useRef<Set<number>>(
+    new Set([...initialProposedIds, ...initialSelectedIds]),
+  );
 
   const isDirector = personType === "director";
-  const displayCount = isDirector ? ONBOARDING_DIRECTOR_DISPLAY : ONBOARDING_ACTOR_DISPLAY;
   const title = isDirector ? "5 réalisateurs" : "5 acteurs ou actrices";
   const subtitle = isDirector
     ? "5 noms à la fois — sélectionne ceux que tu aimes. Tes choix restent comptés ; « Autres noms » te propose 5 nouveaux profils."
     : "10 noms à la fois — sélectionne ceux que tu aimes. Tes choix restent comptés ; « Autres noms » te propose 10 nouveaux profils.";
+
+  const persistState = useCallback(
+    async (selected: Set<number>, proposed: Set<number>) => {
+      const selectedArr = [...selected];
+      const proposedArr = [...proposed];
+      onSelectedIdsChange?.(selectedArr);
+      onProposedIdsChange?.(proposedArr);
+      try {
+        await saveOnboardingPeopleProgress(personType, selectedArr, proposedArr);
+      } catch (e) {
+        console.error("onboarding people progress save failed", e);
+      }
+    },
+    [personType, onSelectedIdsChange, onProposedIdsChange],
+  );
 
   const loadPool = useCallback(
     async (opts?: { silent?: boolean }) => {
@@ -62,6 +86,7 @@ export default function OnboardingPeopleStep({
         const pool = await fetchPool(excludeIds);
         mergeProposedIds(proposedIdsRef.current, pool.map((p) => p.id));
         setPeople(pool);
+        void persistState(selectedIdsRef.current, proposedIdsRef.current);
         return pool;
       } catch (e) {
         console.error("onboarding people load failed", e);
@@ -76,43 +101,40 @@ export default function OnboardingPeopleStep({
         else setRefreshing(false);
       }
     },
-    [isDirector, toast],
+    [isDirector, toast, persistState],
   );
 
   useEffect(() => {
     let cancelled = false;
+    const savedSelected = initialSelectedIds.slice(0, ONBOARDING_PEOPLE_TARGET);
+    proposedIdsRef.current = new Set([...initialProposedIds, ...savedSelected]);
     setLoading(true);
-    setPeople([]);
-    setSelectedIds(new Set());
-    proposedIdsRef.current = new Set();
+    setSelectedIds(new Set(savedSelected));
 
-    Promise.all([
-      user ? getUserPeoplePreferences() : Promise.resolve([]),
-    ])
-      .then(async ([prefs]) => {
-        if (cancelled) return;
-        const existing = new Set(
-          prefs
-            .filter(
-              (p) =>
-                p.person_type === personType &&
-                (p.preference === "liked" || p.preference === "loved"),
-            )
-            .map((p) => p.person_id),
-        );
-        setSelectedIds(existing);
-        mergeProposedIds(proposedIdsRef.current, [...existing]);
-        const fetchPool = isDirector ? fetchOnboardingDirectors : fetchOnboardingActors;
-        const pool = await fetchPool([...proposedIdsRef.current]);
+    const fetchPool = isDirector ? fetchOnboardingDirectors : fetchOnboardingActors;
+    fetchPool([...proposedIdsRef.current])
+      .then((pool) => {
         if (cancelled) return;
         mergeProposedIds(proposedIdsRef.current, pool.map((p) => p.id));
         setPeople(pool);
+        void saveOnboardingPeopleProgress(personType, savedSelected, [...proposedIdsRef.current]);
       })
-      .catch(console.error)
-      .finally(() => { if (!cancelled) setLoading(false); });
+      .catch((e) => {
+        console.error("onboarding people load failed", e);
+        if (!cancelled) {
+          toast({
+            title: "Chargement impossible",
+            description: "Vérifie ta connexion et réessaie.",
+            variant: "destructive",
+          });
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
 
     return () => { cancelled = true; };
-  }, [personType, user?.id, isDirector]);
+  }, [personType, isDirector, toast]);
 
   const handleRefresh = () => {
     if (selectedIdsRef.current.size >= ONBOARDING_PEOPLE_TARGET) return;
@@ -125,6 +147,7 @@ export default function OnboardingPeopleStep({
       if (next.has(id)) next.delete(id);
       else if (next.size < ONBOARDING_PEOPLE_TARGET) next.add(id);
       mergeProposedIds(proposedIdsRef.current, [id]);
+      void persistState(next, proposedIdsRef.current);
       return next;
     });
   };
@@ -158,6 +181,7 @@ export default function OnboardingPeopleStep({
           }),
         ),
       );
+      await persistState(new Set(selectedIdsList), proposedIdsRef.current);
       onComplete();
     } catch (e) {
       console.error("onboarding people save failed", e);

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import type { User } from "@supabase/supabase-js";
 import { RECOMMENDATION_BATCH_SIZE } from "@/lib/recommendation-batch";
@@ -35,7 +35,6 @@ type Options = {
  * platform tour / activation flow. Mirrors the original effect from Index.tsx 1:1.
  */
 export function useProfilePrefs({ user, onRecommendationBatchSizeChange }: Options) {
-  const navigate = useNavigate();
   const location = useLocation();
 
   const [profilePrefs, setProfilePrefs] = useState<ProfilePrefs>(defaultProfilePrefs);
@@ -53,10 +52,6 @@ export function useProfilePrefs({ user, onRecommendationBatchSizeChange }: Optio
       .eq("id", user.id)
       .single()
       .then(({ data }) => {
-        if (data && !data.onboarding_completed && !(data as any).onboarding_skipped && !(data as any).onboarding_paused) {
-          navigate("/onboarding");
-          return;
-        }
         if (data) {
           const recommendationBatchSize = Math.min(
             Math.max((data as any).default_recommendation_count || RECOMMENDATION_BATCH_SIZE, 1),
@@ -104,7 +99,7 @@ export function useProfilePrefs({ user, onRecommendationBatchSizeChange }: Optio
         }
       });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, navigate, location.state]);
+  }, [user, location.state]);
 
   return { profilePrefs, profileLoaded, showTour, showActivation, setShowTour, setShowActivation };
 }

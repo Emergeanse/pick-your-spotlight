@@ -72,7 +72,11 @@ Sans secrets → job E2E CI exécute les tests mais **skip** la majorité (guard
 
 ### Migrations Supabase (onboarding — manuel prod)
 
-Exécuter sur Supabase si pas déjà fait : `onboarding_films_progress`, `onboarding_films_liked_ids`, `onboarding_films_proposed_ids` (fichiers `supabase/migrations/2026062214*.sql`).
+Exécuter dans Supabase SQL Editor (idempotent) :
+
+`supabase/migrations/20260622180000_onboarding_migrations_verify.sql`
+
+Inclut : `onboarding_step`, `onboarding_paused`, films (`progress`, `liked_ids`, `proposed_ids`), personnes (`actors_*`, `directors_*`).
 
 ---
 
