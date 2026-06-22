@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, Loader2 } from "lucide-react";
+import { ArrowRight, Loader2, Star, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,6 +13,10 @@ const ONBOARDING_GENRES = [
   "Comédie", "Drame", "Thriller", "Action", "Romance", "Fantastique",
   "Animation", "Science-Fiction", "Horreur", "Aventure", "Mystère", "Famille",
 ];
+
+/** Préréglages reco pour les nouveaux profils (modifiables plus tard dans Profil) */
+const ONBOARDING_MIN_RATING = 6;
+const ONBOARDING_MATCH_THRESHOLD = 60;
 
 type OnboardingStep = "welcome" | "genres" | "films" | "solo";
 const STEPS: OnboardingStep[] = ["welcome", "genres", "films", "solo"];
@@ -49,6 +53,8 @@ const Onboarding = () => {
       preferred_platforms: [],
       birth_year: null,
       media_preference: "both",
+      min_rating: ONBOARDING_MIN_RATING,
+      match_threshold: ONBOARDING_MATCH_THRESHOLD,
       tour_completed: true,
       activation_completed: true,
       activation_step: "done",
@@ -59,6 +65,7 @@ const Onboarding = () => {
       await Promise.all([
         setLikedGenres(genres, "onboarding"),
         setSinglePreference("media_type", "both", "onboarding"),
+        setSinglePreference("rating_threshold", "good", "onboarding"),
       ]);
     } catch (e) {
       console.warn("preferences mirror failed", e);
@@ -155,10 +162,10 @@ const Onboarding = () => {
               <img src={pickLogo} alt="Pick" className="w-10 h-10 object-contain shrink-0" />
               <h1 className="text-2xl md:text-3xl font-serif">Tes genres préférés</h1>
             </div>
-            <p className="text-muted-foreground text-sm font-sans mb-6 text-center max-w-lg">
-              Coche au moins 2 genres — on s&apos;en servira pour tes reco et la démo Solo.
+            <p className="text-muted-foreground text-sm font-sans mb-4 text-center max-w-lg">
+              Coche au moins 2 genres — Pick partira avec des réglages souples pour te proposer vite des idées.
             </p>
-            <div className="flex flex-wrap gap-2 justify-center max-w-lg mb-10">
+            <div className="flex flex-wrap gap-2 justify-center max-w-lg mb-6">
               {ONBOARDING_GENRES.map((genre) => {
                 const isSelected = selectedGenres.has(genre);
                 return (
@@ -178,6 +185,29 @@ const Onboarding = () => {
                 );
               })}
             </div>
+
+            <div className="w-full max-w-lg mb-8 grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="rounded-xl border border-border/30 bg-card/60 px-4 py-3 flex items-start gap-3">
+                <Star className="w-4 h-4 text-yellow-500 shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-xs font-sans font-semibold text-foreground/85">Note minimum</p>
+                  <p className="text-sm font-serif">{ONBOARDING_MIN_RATING}+ / 10</p>
+                  <p className="text-[10px] font-sans text-muted-foreground mt-0.5">Films corrects et mieux notés</p>
+                </div>
+              </div>
+              <div className="rounded-xl border border-border/30 bg-card/60 px-4 py-3 flex items-start gap-3">
+                <Sparkles className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-xs font-sans font-semibold text-foreground/85">Similarité</p>
+                  <p className="text-sm font-serif">{ONBOARDING_MATCH_THRESHOLD}%</p>
+                  <p className="text-[10px] font-sans text-muted-foreground mt-0.5">Assez ouvert pour découvrir</p>
+                </div>
+              </div>
+            </div>
+            <p className="text-[10px] font-sans text-muted-foreground text-center max-w-sm mb-6">
+              Tu pourras affiner note et similarité dans ton profil à tout moment.
+            </p>
+
             <Button
               variant="hero"
               size="xl"
