@@ -120,7 +120,7 @@ const MOOD_CONFIGS: Record<AmbianceMood, MoodConfig> = {
   },
 };
 
-type QuickReco = { id: number; title: string; poster_path: string | null; vote_average?: number };
+type QuickReco = { id: number; title: string; poster_path: string | null; vote_average?: number; detail?: MovieDetail };
 const QUICK_RECO_KEY = "pick_last_reco_v1";
 
 const extractTmdbIdsFromFeedbackRows = (rows: any[]): number[] =>
@@ -706,6 +706,7 @@ const HomeScreen = ({
         title: (m.title || (m as any).name || ""),
         poster_path: m.poster_path || null,
         vote_average: m.vote_average,
+        detail: m,
       }));
       localStorage.setItem(QUICK_RECO_KEY, JSON.stringify(toSave));
       setQuickRecos(toSave);
@@ -1936,8 +1937,8 @@ const HomeScreen = ({
     try {
       const pool: MovieDetail[] = [];
       for (const q of slice) {
-        const fromChat = chatMoviesPool?.find((m) => m.id === q.id);
-        if (fromChat) pool.push(fromChat);
+        const cached = q.detail ?? chatMoviesPool?.find((m) => m.id === q.id);
+        if (cached) pool.push(cached);
         else pool.push(await getMovieDetails(q.id, "movie"));
       }
       const safeIndex = Math.min(startIndex, pool.length - 1);

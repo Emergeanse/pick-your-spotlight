@@ -1,11 +1,9 @@
 import { motion } from "framer-motion";
-import {
-  ArrowRight, ChevronLeft, Heart, Home, Plus, User, Users, WandSparkles,
-} from "lucide-react";
+import { ArrowRight, Heart, Home, Plus, User, Users, WandSparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import OnboardingStepLayout from "@/components/onboarding/OnboardingStepLayout";
 
 interface OnboardingModesGuideProps {
-  onBack: () => void;
   onContinue: () => void;
 }
 
@@ -27,29 +25,18 @@ const STEPS = [
   },
 ];
 
-export default function OnboardingModesGuide({ onBack, onContinue }: OnboardingModesGuideProps) {
+export default function OnboardingModesGuide({ onContinue }: OnboardingModesGuideProps) {
   return (
-    <div className="flex flex-col min-h-full px-5 pb-8">
-      <button
-        type="button"
-        onClick={onBack}
-        className="mb-3 w-9 h-9 rounded-full bg-foreground/5 flex items-center justify-center text-foreground/50"
-      >
-        <ChevronLeft className="w-4 h-4" />
-      </button>
-
-      <h1 className="text-2xl md:text-3xl font-serif mb-2 max-w-lg">
-        Une soirée Solo ou Duo
-      </h1>
-      <p className="text-sm text-muted-foreground font-sans mb-6 max-w-lg leading-relaxed">
+    <OnboardingStepLayout>
+      <h1 className="text-2xl md:text-3xl font-serif mb-2">Une soirée Solo ou Duo</h1>
+      <p className="text-sm text-muted-foreground font-sans mb-6 leading-relaxed">
         Pick t&apos;aide à trouver le film — seul ou à deux. Voici comment ça marche sur l&apos;accueil.
       </p>
 
-      {/* Mini accueil */}
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        className="rounded-2xl border border-border/30 bg-card/70 p-4 mb-5 shadow-lg max-w-lg"
+        className="rounded-2xl border border-border/30 bg-card/70 p-4 mb-5 shadow-lg"
       >
         <p className="text-[10px] font-sans uppercase tracking-widest text-foreground/40 mb-3 text-center">
           Aperçu — écran d&apos;accueil
@@ -84,8 +71,7 @@ export default function OnboardingModesGuide({ onBack, onContinue }: OnboardingM
         </p>
       </motion.div>
 
-      {/* Étapes */}
-      <div className="space-y-3 max-w-lg mb-8">
+      <div className="space-y-3 mb-8">
         {STEPS.map((s, i) => (
           <motion.div
             key={s.n}
@@ -105,7 +91,7 @@ export default function OnboardingModesGuide({ onBack, onContinue }: OnboardingM
         ))}
       </div>
 
-      <div className="rounded-xl border border-primary/20 bg-primary/5 px-4 py-3 max-w-lg mb-6 flex gap-3">
+      <div className="rounded-xl border border-primary/20 bg-primary/5 px-4 py-3 mb-6 flex gap-3">
         <User className="w-4 h-4 text-primary shrink-0 mt-0.5" />
         <p className="text-xs font-sans text-foreground/60 leading-relaxed">
           <strong className="text-foreground/80">Solo</strong> = tes goûts uniquement.
@@ -113,9 +99,9 @@ export default function OnboardingModesGuide({ onBack, onContinue }: OnboardingM
         </p>
       </div>
 
-      <Button variant="hero" size="xl" className="w-full max-w-lg" onClick={onContinue}>
+      <Button variant="hero" size="xl" className="w-full" onClick={onContinue}>
         Et après, où les retrouver ? <ArrowRight className="w-4 h-4" />
       </Button>
-    </div>
+    </OnboardingStepLayout>
   );
 }

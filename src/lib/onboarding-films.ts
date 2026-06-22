@@ -1,48 +1,21 @@
 import { fetchFromTMDB } from "@/lib/tmdb-proxy-client";
 import type { Movie } from "@/lib/tmdb";
+import { pickRandomOnboarding, shuffleOnboarding } from "@/lib/onboarding-random";
 
 export const ONBOARDING_FILM_TARGET = 10;
-
-/** Films français très connus du grand public (TMDB movie id) */
+/** Affiches proposées par tirage (comme acteurs : 10 visibles, refresh remplace les non cochés). */
+export const ONBOARDING_FILM_DISPLAY = 10;
 export const CURATED_FR_TMDB_IDS = [
-  77338,  // Intouchables
-  9919,   // Le Fabuleux Destin d'Amélie Poulain
-  82676,  // Bienvenue chez les Ch'tis
-  10376,  // Les Choristes
-  406,    // La Haine
-  8290,   // La Grande Vadrouille
-  10649,  // Le Dîner de cons
-  7345,   // Un prophète
-  9603,   // Astérix & Obélix : Mission Cléopâtre
-  9423,   // Les Visiteurs
-  9746,   // OSS 117
-  140078, // Le Prénom
-  11051,  // Le Pacte des loups
-  11653,  // L'Auberge espagnole
-  11645,  // Les Triplettes de Belleville
-];
+  77338, 9919, 82676, 10376, 406, 8290, 10649, 7345, 9603, 9423, 9746, 140078,
+  11051, 11653, 11645, 11638, 10683, 11659, 11216, 6538, 146,
+] as const;
 
-/** Blockbusters et classiques US très connus */
 export const CURATED_EN_TMDB_IDS = [
-  27205,  // Inception
-  155,    // The Dark Knight
-  13,     // Forrest Gump
-  680,    // Pulp Fiction
-  603,    // The Matrix
-  278,    // The Shawshank Redemption
-  157336, // Interstellar
-  597,    // Titanic
-  19995,  // Avatar
-  550,    // Fight Club
-  105,    // Back to the Future
-  671,    // Harry Potter
-  122,    // Le Seigneur des anneaux (forte notoriété FR aussi)
-  11,     // Star Wars
-  329,    // Jurassic Park
-  98,     // Gladiator
-  76341,  // Mad Max Fury Road
-  299534, // Avengers: Endgame
-];
+  27205, 155, 13, 680, 603, 278, 157336, 597, 19995, 550, 105, 671, 122, 11, 329, 98,
+  76341, 299534, 238, 424, 769, 1891, 120, 181808, 177572,
+] as const;
+const FR_ID_SET = new Set<number>(CURATED_FR_TMDB_IDS);
+const EN_ID_SET = new Set<number>(CURATED_EN_TMDB_IDS);
 
 const GENRE_NAME_TO_ID: Record<string, number> = {
   Action: 28, Aventure: 12, Animation: 16, Comédie: 35, Crime: 80,
@@ -66,24 +39,7 @@ function genreMatchScore(movie: Movie, likedGenreIds: number[]): number {
   return ids.filter((id) => likedGenreIds.includes(id)).length;
 }
 
-async function fetchDiscoverWellKnown(
-  lang: "fr" | "en",
-  page: number,
-  genreIds?: number[],
-): Promise<Movie[]> {
-  const params: Record<string, string> = {
-    sort_by: "vote_count.desc",
-    "vote_count.gte": lang === "fr" ? "350" : "900",
-    "vote_average.gte": "6.8",
-    with_original_language: lang,
-    page: String(page),
-  };
-  if (genreIds?.length) params.with_genres = genreIds.slice(0, 2).join(",");
-  const data = await fetchFromTMDB("/discover/movie", params);
-  return (data.results || []) as Movie[];
-}
-
-async function fetchCuratedByIds(ids: number[]): Promise<Movie[]> {
+async function fetchCuratedByIds(ids: readonly number[]): Promise<Movie[]> {
   const results = await Promise.allSettled(
     ids.map((id) => fetchFromTMDB(`/movie/${id}`, { language: "fr-FR" })),
   );
@@ -103,69 +59,64 @@ function interleaveFrEn(fr: Movie[], en: Movie[]): Movie[] {
   return out;
 }
 
-function shuffleStable<T>(arr: T[]): T[] {
-  const copy = [...arr];
-  for (let i = copy.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [copy[i], copy[j]] = [copy[j], copy[i]];
-  }
-  return copy;
+function weightedShuffle(movies: Movie[], likedGenreIds: number[]): Movie[] {
+  return shuffleOnboarding(
+    movies.map((movie) => ({
+      movie,
+      weight: genreMatchScore(movie, likedGenreIds) + Math.random(),
+    })),
+  )
+    .sort((a, b) => b.weight - a.weight)
+    .map(({ movie }) => movie);
 }
 
-function movieOriginLang(movie: Movie, frIds: Set<number>, enIds: Set<number>): "fr" | "en" {
-  if (frIds.has(movie.id)) return "fr";
-  if (enIds.has(movie.id)) return "en";
-  const lang = (movie as Movie & { original_language?: string }).original_language;
-  return lang === "fr" ? "fr" : "en";
-}
-
-/**
- * Pool initiation : alternance cinéma FR / US, titres très connus,
- * filtrés par genres aimés / exclus.
- */
-export async function buildOnboardingFilmPool(
+/** Pool curaté complet — classiques FR/US, léger bonus genres aimés. */
+async function buildCandidatePool(
   favoriteGenres: string[] = [],
   excludedGenres: string[] = [],
 ): Promise<Movie[]> {
   const likedIds = genreNamesToIds(favoriteGenres);
   const excludedIds = genreNamesToIds(excludedGenres);
-  const frIdSet = new Set(CURATED_FR_TMDB_IDS);
-  const enIdSet = new Set(CURATED_EN_TMDB_IDS);
 
-  const [curatedFr, curatedEn, discFr, discEn] = await Promise.all([
+  const [curatedFr, curatedEn] = await Promise.all([
     fetchCuratedByIds(CURATED_FR_TMDB_IDS),
     fetchCuratedByIds(CURATED_EN_TMDB_IDS),
-    fetchDiscoverWellKnown("fr", 1, likedIds).catch(() => [] as Movie[]),
-    fetchDiscoverWellKnown("en", 1, likedIds).catch(() => [] as Movie[]),
   ]);
 
-  const seen = new Set<number>();
-  const candidates: Movie[] = [];
+  const candidates = [...curatedFr, ...curatedEn].filter((m) => !hasExcludedGenre(m, excludedIds));
+  const frPool = weightedShuffle(candidates.filter((m) => FR_ID_SET.has(m.id)), likedIds);
+  const enPool = weightedShuffle(candidates.filter((m) => EN_ID_SET.has(m.id)), likedIds);
 
-  const add = (list: Movie[]) => {
-    for (const m of list) {
-      if (!m?.id || !m.poster_path || seen.has(m.id)) continue;
-      if (hasExcludedGenre(m, excludedIds)) continue;
-      seen.add(m.id);
-      candidates.push(m);
-    }
-  };
+  return interleaveFrEn(frPool, enPool);
+}
 
-  add(curatedFr);
-  add(curatedEn);
-  add(discFr);
-  add(discEn);
+/** Tirage aléatoire pour la grille — conserve les films déjà cochés (comme acteurs). */
+export async function buildOnboardingFilmDisplayPool(
+  favoriteGenres: string[] = [],
+  excludedGenres: string[] = [],
+  pinnedIds: number[] = [],
+): Promise<Movie[]> {
+  const candidates = await buildCandidatePool(favoriteGenres, excludedGenres);
+  const pinnedSet = new Set(pinnedIds);
+  const pinned = pinnedIds
+    .map((id) => candidates.find((m) => m.id === id))
+    .filter((m): m is Movie => !!m);
+  const rest = candidates.filter((m) => !pinnedSet.has(m.id));
+  const slots = Math.max(0, ONBOARDING_FILM_DISPLAY - pinned.length);
+  const picked = pickRandomOnboarding(rest, slots);
+  return [...pinned, ...picked];
+}
 
-  candidates.sort((a, b) => {
-    const diff = genreMatchScore(b, likedIds) - genreMatchScore(a, likedIds);
-    if (diff !== 0) return diff;
-    return (b.vote_average ?? 0) - (a.vote_average ?? 0);
-  });
-
-  const frSorted = candidates.filter((m) => movieOriginLang(m, frIdSet, enIdSet) === "fr");
-  const enSorted = candidates.filter((m) => movieOriginLang(m, frIdSet, enIdSet) === "en");
-
-  const interleaved = interleaveFrEn(shuffleStable(frSorted), shuffleStable(enSorted));
-
-  return interleaved.slice(0, 40);
+/** @deprecated Utiliser buildOnboardingFilmDisplayPool */
+export async function buildOnboardingFilmPool(
+  favoriteGenres: string[] = [],
+  excludedGenres: string[] = [],
+): Promise<Movie[]> {
+  const pool = await buildCandidatePool(favoriteGenres, excludedGenres);
+  return pool.slice(0, 40);
+}
+export function getOnboardingFilmOriginLabel(movieId: number): string | null {
+  if (FR_ID_SET.has(movieId)) return "Cinéma français";
+  if (EN_ID_SET.has(movieId)) return "Blockbuster US";
+  return null;
 }

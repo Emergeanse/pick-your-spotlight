@@ -2,16 +2,14 @@ import { motion } from "framer-motion";
 import { Clock, Star } from "lucide-react";
 import type { MovieDetail } from "@/lib/tmdb";
 import { getBackdropUrl, getDisplayTitle, getPosterUrl, getYear } from "@/lib/tmdb";
+import { getOnboardingFilmOriginLabel } from "@/lib/onboarding-films";
 
 interface OnboardingFilmCardProps {
   movie: MovieDetail;
 }
 
 function originLabel(movie: MovieDetail): string | null {
-  const lang = (movie as MovieDetail & { original_language?: string }).original_language;
-  if (lang === "fr") return "Cinéma français";
-  if (lang === "en") return "Blockbuster US";
-  return null;
+  return getOnboardingFilmOriginLabel(movie.id);
 }
 
 export function OnboardingFilmCardSkeleton() {

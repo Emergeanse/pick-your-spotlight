@@ -130,6 +130,32 @@ function fallbackPathFor(path: string, attempt: number): string {
   return FALLBACK_POSTER_PATHS[idx];
 }
 
+function buildWallColumns(paths: string[], columnCount = 4): string[][] {
+  const valid = paths.filter((p) => p.startsWith("/"));
+  const pool = valid.length >= 8 ? valid : [...FALLBACK_POSTER_PATHS];
+
+  const perCol = Math.max(8, Math.ceil(pool.length / columnCount));
+  return Array.from({ length: columnCount }, (_, ci) => {
+    const items: string[] = [];
+    for (let i = 0; i < perCol; i++) {
+      let idx = (ci + i * columnCount) % pool.length;
+      let path = pool[idx];
+      let guard = 0;
+      while (items.at(-1) === path && guard < pool.length) {
+        idx = (idx + 1) % pool.length;
+        path = pool[idx];
+        guard++;
+      }
+      items.push(path);
+    }
+    const loop = items.map((_, i) => {
+      const idx = (ci + (i + items.length) * columnCount + 1) % pool.length;
+      return pool[idx];
+    });
+    return [...items, ...loop];
+  });
+}
+
 const WALL_POSTER_SIZES = [WALL_POSTER_SIZE, "w342", "w500"] as const;
 
 function WallPosterCell({
@@ -144,8 +170,29 @@ function WallPosterCell({
   const [sizeIndex, setSizeIndex] = useState(0);
   const [altPath, setAltPath] = useState<string | null>(null);
   const [errorAttempts, setErrorAttempts] = useState(0);
+  const [failed, setFailed] = useState(false);
   const activePath = altPath ?? path;
   const src = getPosterUrl(activePath, WALL_POSTER_SIZES[sizeIndex]) || "";
+  const cellStyle = {
+    aspectRatio: "2/3" as const,
+    minHeight: "5rem",
+    transform: isSpot ? "scale(1.05) translateZ(0)" : "translateZ(0)",
+    filter: isSpot ? spotFilter : undefined,
+    transition: isSpot ? "filter 0.15s ease-out, transform 0.15s ease-out" : undefined,
+    position: "relative" as const,
+    zIndex: isSpot ? 2 : 0,
+  };
+
+  if (failed || !src || src.includes("placeholder")) {
+    return (
+      <div
+        className="w-full rounded-md flex-shrink-0 select-none bg-gradient-to-br from-primary/20 via-violet-950/30 to-black/50 border border-white/[0.04]"
+        style={cellStyle}
+        aria-hidden
+      />
+    );
+  }
+
   return (
     <img
       src={src}
@@ -162,18 +209,12 @@ function WallPosterCell({
           setErrorAttempts((n) => n + 1);
           setAltPath(fallbackPathFor(path, errorAttempts));
           setSizeIndex(0);
+          return;
         }
+        setFailed(true);
       }}
       className="w-full rounded-md object-cover flex-shrink-0 select-none bg-gradient-to-br from-primary/15 to-white/5"
-      style={{
-        aspectRatio: "2/3",
-        minHeight: "5rem",
-        transform: isSpot ? "scale(1.05) translateZ(0)" : "translateZ(0)",
-        filter: isSpot ? spotFilter : undefined,
-        transition: isSpot ? "filter 0.15s ease-out, transform 0.15s ease-out" : undefined,
-        position: "relative",
-        zIndex: isSpot ? 2 : 0,
-      }}
+      style={cellStyle}
     />
   );
 }
@@ -419,7 +460,10 @@ const TonightPickOverlay = ({
   const [shownGenreCount, setShownGenreCount] = useState(0);
   useEffect(() => {
     if (!tonightLoading || userGenres.length === 0) { setShownGenreCount(0); return; }
-    const id = setInterval(() => setShownGenreCount((n) => Math.min(n + 1, userGenres.length)), 650);
+    const id = setInterval(
+      () => setShownGenreCount((n) => Math.min(n + 1, Math.min(3, userGenres.length))),
+      650,
+    );
     return () => clearInterval(id);
   }, [tonightLoading, userGenres.length]);
 
@@ -427,19 +471,19 @@ const TonightPickOverlay = ({
   const genreLayouts = useMemo(() => {
     const r = () => Math.random();
     const randTop = () => {
-      const t = r() * 80 + 6;
-      return t > 38 && t < 62 ? (t < 50 ? t - 16 : t + 16) : t;
+      const band = r();
+      if (band < 0.5) return 4 + r() * 14;
+      return 78 + r() * 14;
     };
-    const randSize = () => [11, 13, 16, 20, 24, 28, 32][Math.floor(r() * 7)];
+    const randSize = () => [11, 13, 16, 18][Math.floor(r() * 4)];
     const randSide = (size: number) => {
       const side = r() < 0.5 ? "left" : "right";
-      const maxOff = size > 22 ? 30 : size > 16 ? 40 : 50;
-      return { side: side as "left" | "right", offset: Math.round(r() * maxOff + 4) };
+      const maxOff = size > 16 ? 28 : 38;
+      return { side: side as "left" | "right", offset: Math.round(r() * maxOff + 6) };
     };
-    // Garde les positions déjà placées pour éviter les recouvrements
     const placed: { top: number }[] = [];
-    const MIN_VGAP = 12; // distance verticale minimale en % entre deux genres
-    return userGenres.map(() => {
+    const MIN_VGAP = 14;
+    return userGenres.slice(0, 3).map(() => {
       const size = randSize();
       const { side, offset } = randSide(size);
       // Jusqu'à 12 essais pour trouver une position suffisamment éloignée
@@ -457,10 +501,15 @@ const TonightPickOverlay = ({
         size,
         weight: [200, 300, 400, 500, 600, 700][Math.floor(r() * 6)],
         italic: r() < 0.35,
-        opacity: 0.25 + r() * 0.45,
+        opacity: 0.18 + r() * 0.22,
       };
     });
   }, [userGenres.join(",")]);
+
+  const wallColumns = useMemo(
+    () => buildWallColumns(shuffledWallPaths),
+    [shuffledWallPaths],
+  );
 
   // Offsets initiaux aléatoires par colonne (stable, calculé une fois)
   const colInitialOffsets = useMemo(
@@ -515,7 +564,7 @@ const TonightPickOverlay = ({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: instantCover ? 0 : 0.4 }}
-          className="fixed inset-0 z-50 flex flex-col bg-black"
+          className="fixed inset-0 z-[55] flex flex-col bg-black"
         >
           {/* Stage 1 : lumières violettes pulsantes pendant que surprise-personalized tourne */}
           <AnimatePresence>
@@ -539,12 +588,7 @@ const TonightPickOverlay = ({
                       transition: "opacity 0.5s ease-out, filter 0.5s ease-out",
                     }}
                   >
-                    {[0, 1, 2, 3].map((ci) => {
-                      const perCol = Math.max(12, Math.ceil(shuffledWallPaths.length / 4));
-                      const items = Array.from({ length: perCol }, (_, i) =>
-                        shuffledWallPaths[(ci * 3 + i) % shuffledWallPaths.length]
-                      );
-                      const col = [...items, ...items];
+                    {wallColumns.map((col, ci) => {
                       const dur = WALL_COLUMN_SECONDS[ci];
                       const goDown = ci % 2 === 1;
                       const phaseDelay = -(dur * ci * 0.22);
@@ -559,7 +603,7 @@ const TonightPickOverlay = ({
                         >
                           {col.map((path, pi) => (
                             <WallPosterCell
-                              key={`${path}-${pi}`}
+                              key={`${ci}-${pi}-${path}`}
                               path={path}
                               isSpot={path === highlightedPath}
                               spotFilter={spotFilterRef.current}

@@ -1,221 +1,290 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { ChevronLeft, SkipForward, Sparkles, ArrowRight } from "lucide-react";
+import { motion } from "framer-motion";
+import { ArrowRight, Check, Loader2, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { getMovieDetails, getPosterUrl, type MovieDetail } from "@/lib/tmdb";
-import { buildOnboardingFilmPool, ONBOARDING_FILM_TARGET } from "@/lib/onboarding-films";
-import { recordAcceptedRecommendation, recordSkippedRecommendation } from "@/lib/engagement";
+import { getDisplayTitle, getPosterUrl, type Movie } from "@/lib/tmdb";
+import {
+  buildOnboardingFilmDisplayPool,
+  getOnboardingFilmOriginLabel,
+  ONBOARDING_FILM_TARGET,
+} from "@/lib/onboarding-films";
+import { saveOnboardingFilmsProgress } from "@/lib/onboarding-progress";
+import { setFeedback } from "@/lib/feedback";
+import { recordAcceptedRecommendation } from "@/lib/engagement";
 import { useAuth } from "@/hooks/use-auth";
-import OnboardingFilmCard, { OnboardingFilmCardSkeleton } from "@/components/onboarding/OnboardingFilmCard";
-import MovieActionBar from "@/components/pick/MovieActionBar";
-import { useMovieInteractions } from "@/hooks/use-movie-interactions";
+import { useToast } from "@/hooks/use-toast";
+import OnboardingStepLayout from "@/components/onboarding/OnboardingStepLayout";
 
 interface OnboardingFilmTrainerProps {
   favoriteGenres: string[];
   excludedGenres?: string[];
+  onFilmsProgressChange?: (count: number) => void;
   onComplete: () => void;
-  onBack: () => void;
 }
 
 export default function OnboardingFilmTrainer({
   favoriteGenres,
   excludedGenres = [],
+  onFilmsProgressChange,
   onComplete,
-  onBack,
 }: OnboardingFilmTrainerProps) {
   const { user } = useAuth();
-  const [movies, setMovies] = useState<Awaited<ReturnType<typeof buildOnboardingFilmPool>>>([]);
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const { toast } = useToast();
+  const [movies, setMovies] = useState<Movie[]>([]);
+  const [likedIds, setLikedIds] = useState<Set<number>>(new Set());
   const [loading, setLoading] = useState(true);
-  const [sessionCount, setSessionCount] = useState(0);
-  const [detail, setDetail] = useState<MovieDetail | null>(null);
-  const [cardLoading, setCardLoading] = useState(false);
-  const [history, setHistory] = useState<number[]>([]);
-  const seenIds = useRef<Set<number>>(new Set());
-  const advancedIds = useRef<Set<number>>(new Set());
+  const [refreshing, setRefreshing] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const likedIdsRef = useRef(likedIds);
+  likedIdsRef.current = likedIds;
 
-  const currentMovie = movies[currentIndex];
-  const interactions = useMovieInteractions(
-    movies.map((m) => ({ tmdbId: m.id, mediaType: "movie" as const })),
+  const genresKey = favoriteGenres.join(",");
+  const excludedKey = excludedGenres.join(",");
+
+  const loadPool = useCallback(
+    async (pinnedIds: number[], opts?: { silent?: boolean }) => {
+      if (!opts?.silent) setLoading(true);
+      else setRefreshing(true);
+      try {
+        const pool = await buildOnboardingFilmDisplayPool(favoriteGenres, excludedGenres, pinnedIds);
+        setMovies(pool);
+        if (opts?.silent) {
+          setLikedIds((prev) => {
+            const poolIds = new Set(pool.map((m) => m.id));
+            const next = new Set<number>();
+            prev.forEach((id) => {
+              if (poolIds.has(id)) next.add(id);
+            });
+            return next;
+          });
+        }
+        return pool;
+      } catch (e) {
+        console.error("onboarding film pool failed", e);
+        toast({
+          title: "Chargement impossible",
+          description: "Vérifie ta connexion et réessaie.",
+          variant: "destructive",
+        });
+        return [];
+      } finally {
+        if (!opts?.silent) setLoading(false);
+        else setRefreshing(false);
+      }
+    },
+    [genresKey, excludedKey, toast],
   );
-  const currentInteraction = currentMovie ? interactions[currentMovie.id] : undefined;
-  const done = sessionCount >= ONBOARDING_FILM_TARGET;
-  const progress = Math.min(100, Math.round((sessionCount / ONBOARDING_FILM_TARGET) * 100));
 
+  // Chargement initial uniquement — pas de re-fetch à chaque render parent
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
     setMovies([]);
-    setCurrentIndex(0);
-    seenIds.current.clear();
-    buildOnboardingFilmPool(favoriteGenres, excludedGenres)
+    setLikedIds(new Set());
+
+    buildOnboardingFilmDisplayPool(favoriteGenres, excludedGenres, [])
       .then((pool) => {
         if (cancelled) return;
-        pool.forEach((m) => seenIds.current.add(m.id));
         setMovies(pool);
       })
-      .catch((e) => console.error("onboarding pool failed", e))
-      .finally(() => { if (!cancelled) setLoading(false); });
-    return () => { cancelled = true; };
-  }, [favoriteGenres.join(","), excludedGenres.join(",")]);
+      .catch((e) => {
+        console.error("onboarding film pool failed", e);
+        if (!cancelled) {
+          toast({
+            title: "Chargement impossible",
+            description: "Vérifie ta connexion et réessaie.",
+            variant: "destructive",
+          });
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
 
-  useEffect(() => {
-    if (!currentMovie) {
-      setDetail(null);
+    return () => { cancelled = true; };
+  }, [genresKey, excludedKey, toast]);
+
+  const persistProgress = useCallback(
+    async (count: number) => {
+      onFilmsProgressChange?.(count);
+      try {
+        await saveOnboardingFilmsProgress(count);
+      } catch (e) {
+        console.error("onboarding films progress save failed", e);
+      }
+    },
+    [onFilmsProgressChange],
+  );
+
+  const handleRefresh = () => {
+    if (likedIdsRef.current.size >= ONBOARDING_FILM_TARGET) return;
+    void loadPool([...likedIdsRef.current], { silent: true });
+  };
+
+  const toggleLike = (movie: Movie) => {
+    setLikedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(movie.id)) next.delete(movie.id);
+      else if (next.size < ONBOARDING_FILM_TARGET) next.add(movie.id);
+      void persistProgress(next.size);
+      return next;
+    });
+  };
+
+  const handleComplete = async () => {
+    if (!user || likedIds.size < ONBOARDING_FILM_TARGET) return;
+    const selected = movies.filter((m) => likedIds.has(m.id));
+    if (selected.length < ONBOARDING_FILM_TARGET) {
+      toast({
+        title: "Sélection incomplète",
+        description: "Choisis 10 films ou actualise la liste pour en trouver d'autres.",
+        variant: "destructive",
+      });
       return;
     }
-    let cancelled = false;
-    setCardLoading(true);
-    getMovieDetails(currentMovie.id, "movie")
-      .then((d) => { if (!cancelled) setDetail(d); })
-      .catch(() => { if (!cancelled) setDetail(currentMovie as unknown as MovieDetail); })
-      .finally(() => { if (!cancelled) setCardLoading(false); });
-    return () => { cancelled = true; };
-  }, [currentMovie?.id]);
 
-  const nextMovie = movies[currentIndex + 1];
-  useEffect(() => {
-    if (!nextMovie?.poster_path) return;
-    const img = new Image();
-    img.src = getPosterUrl(nextMovie.poster_path, "w500") || "";
-  }, [nextMovie?.id, nextMovie?.poster_path]);
-
-  const advance = useCallback(async (mode: "liked" | "skipped") => {
-    if (!currentMovie || !user || advancedIds.current.has(currentMovie.id)) return;
-    advancedIds.current.add(currentMovie.id);
-    if (mode === "liked") await recordAcceptedRecommendation(user.id).catch(() => {});
-    else await recordSkippedRecommendation(user.id).catch(() => {});
-    setSessionCount((c) => c + 1);
-    setHistory((h) => [...h, currentIndex]);
-    setCurrentIndex((i) => i + 1);
-  }, [currentMovie, currentIndex, user]);
-
-  const handleInteraction = async (type: string) => {
-    if (type === "like" || type === "love" || type === "watchlist") await advance("liked");
-    else if (type === "dislike" || type === "skip" || type === "already_seen") await advance("skipped");
-    else await advance("skipped");
+    setSaving(true);
+    try {
+      await Promise.all(
+        selected.map(async (movie) => {
+          await setFeedback(
+            movie.id,
+            "like",
+            { title: movie.title, poster_path: movie.poster_path, media_type: "movie" },
+            { context_type: "browse", source: "onboarding" },
+          );
+          await recordAcceptedRecommendation(user.id).catch(() => {});
+        }),
+      );
+      await persistProgress(ONBOARDING_FILM_TARGET);
+      onComplete();
+    } catch (e) {
+      console.error("onboarding films save failed", e);
+      toast({
+        title: "Enregistrement impossible",
+        description: "Vérifie ta connexion et réessaie.",
+        variant: "destructive",
+      });
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const skipMovie = () => void advance("skipped");
-
-  const goBack = () => {
-    if (history.length === 0) return;
-    const prev = history[history.length - 1];
-    setHistory((h) => h.slice(0, -1));
-    setCurrentIndex(prev);
-    setSessionCount((c) => Math.max(0, c - 1));
-    if (currentMovie) advancedIds.current.delete(currentMovie.id);
-  };
+  const count = likedIds.size;
+  const done = count >= ONBOARDING_FILM_TARGET;
+  const canRefresh = !loading && !done;
 
   return (
-    <div className="flex flex-col min-h-full">
-      <div className="w-full max-w-xl mx-auto px-5">
-        <div className="flex items-center gap-3 mb-2 mt-4">
-          <button
-            type="button"
-            onClick={onBack}
-            className="w-9 h-9 rounded-full bg-foreground/5 flex items-center justify-center text-foreground/50"
-          >
-            <ChevronLeft className="w-4 h-4" />
-          </button>
-          <div className="flex-1">
-            <h1 className="text-xl md:text-2xl font-serif">Quelques films pour te connaître</h1>
-            <p className="text-muted-foreground text-xs font-sans mt-0.5">
-              Des classiques FR &amp; US — {ONBOARDING_FILM_TARGET} avis suffisent
-            </p>
-          </div>
-        </div>
+    <OnboardingStepLayout>
+      <h1 className="text-2xl md:text-3xl font-serif mb-2">Quelques films pour te connaître</h1>
+      <p className="text-sm text-muted-foreground font-sans mb-4 leading-relaxed">
+        10 affiches au hasard — coche celles que tu aimes. Pas assez de titres connus ? Clique sur « Autres films ».
+      </p>
 
-        <div className="flex items-center gap-3 mb-4">
-          <div className="h-1.5 flex-1 rounded-full bg-foreground/10 overflow-hidden">
-            <motion.div
-              className="h-full bg-primary rounded-full"
-              animate={{ width: `${progress}%` }}
-              transition={{ duration: 0.4 }}
-            />
-          </div>
-          <span className="text-xs font-sans tabular-nums text-foreground/50">
-            {Math.min(sessionCount, ONBOARDING_FILM_TARGET)}/{ONBOARDING_FILM_TARGET}
-          </span>
-        </div>
+      <div className="flex items-center justify-between gap-3 mb-3">
+        <p className="text-[10px] font-sans text-foreground/40 uppercase tracking-wide">
+          {movies.length} proposés · choisis {ONBOARDING_FILM_TARGET}
+        </p>
+        <button
+          type="button"
+          onClick={handleRefresh}
+          disabled={!canRefresh || refreshing}
+          className="inline-flex items-center gap-1.5 text-[11px] font-sans font-medium text-primary/80 hover:text-primary disabled:opacity-40 disabled:pointer-events-none transition-colors"
+        >
+          <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? "animate-spin" : ""}`} />
+          {refreshing ? "Actualisation…" : "Autres films"}
+        </button>
       </div>
 
-      <div className="flex-1 flex items-center justify-center px-4 py-3 min-h-[380px] overflow-y-auto">
-        {loading && movies.length === 0 ? (
-          <OnboardingFilmCardSkeleton />
-        ) : cardLoading || !detail ? (
-          <OnboardingFilmCardSkeleton />
-        ) : (
-          <AnimatePresence mode="wait">
-            {detail && (
-              <motion.div
-                key={detail.id}
-                initial={{ opacity: 0, y: 20, filter: "blur(10px)" }}
-                animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-                exit={{ opacity: 0, y: -12, filter: "blur(6px)" }}
-                transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-                className="w-full"
-              >
-                <OnboardingFilmCard movie={detail} />
-              </motion.div>
-            )}
-          </AnimatePresence>
-        )}
-      </div>
-
-      {currentMovie && detail && !done && !cardLoading && (
-        <div className="px-4 pb-[calc(1.25rem+env(safe-area-inset-bottom))] border-t border-border/20 bg-background/90 backdrop-blur-xl">
-          <div className="flex items-center justify-between mb-3 pt-3">
-            <button
-              type="button"
-              onClick={goBack}
-              disabled={history.length === 0}
-              className="rounded-full bg-foreground/5 p-2 disabled:opacity-20"
-            >
-              <ChevronLeft className="w-5 h-5" />
-            </button>
-            {currentInteraction?.hasInteraction && (
-              <span className="text-[10px] font-sans text-primary/70">Déjà noté</span>
-            )}
-            <button type="button" onClick={skipMovie} className="rounded-full bg-foreground/5 p-2">
-              <SkipForward className="w-5 h-5" />
-            </button>
-          </div>
-          <MovieActionBar
-            key={`${detail.id}-${currentIndex}`}
-            movie={detail}
-            size="md"
-            onInteraction={handleInteraction}
+      <div className="flex items-center gap-3 mb-4">
+        <div className="h-1.5 flex-1 rounded-full bg-foreground/10 overflow-hidden">
+          <motion.div
+            className="h-full bg-primary rounded-full"
+            animate={{ width: `${Math.min(100, (count / ONBOARDING_FILM_TARGET) * 100)}%` }}
           />
-          <button
-            type="button"
-            onClick={skipMovie}
-            className="mt-3 w-full py-2 text-[11px] font-sans text-foreground/45 flex items-center justify-center gap-1"
-          >
-            <SkipForward className="w-3 h-3" /> Je ne connais pas ce film
-          </button>
+        </div>
+        <span className="text-xs font-sans tabular-nums text-foreground/50">
+          {count}/{ONBOARDING_FILM_TARGET}
+        </span>
+      </div>
+
+      {loading ? (
+        <div className="flex justify-center py-16">
+          <Loader2 className="w-6 h-6 animate-spin text-primary/50" />
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5 mb-6">
+          {movies.map((movie, i) => {
+            const on = likedIds.has(movie.id);
+            const full = !on && count >= ONBOARDING_FILM_TARGET;
+            const origin = getOnboardingFilmOriginLabel(movie.id);
+            const poster = getPosterUrl(movie.poster_path, "w342");
+            return (
+              <motion.button
+                key={movie.id}
+                type="button"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: i * 0.025 }}
+                whileTap={full ? undefined : { scale: 0.96 }}
+                disabled={full}
+                onClick={() => toggleLike(movie)}
+                className={`relative rounded-xl overflow-hidden border text-left transition-all ${
+                  on
+                    ? "border-primary ring-2 ring-primary/30"
+                    : full
+                      ? "border-border/15 opacity-40"
+                      : "border-border/25 hover:border-primary/30"
+                }`}
+              >
+                {poster ? (
+                  <img
+                    src={poster}
+                    alt={getDisplayTitle(movie)}
+                    className="w-full aspect-[2/3] object-cover"
+                  />
+                ) : (
+                  <div className="w-full aspect-[2/3] bg-foreground/10" />
+                )}
+                {origin && (
+                  <span className="absolute top-1 left-1 rounded-md bg-black/60 px-1 py-0.5 text-[7px] font-sans font-semibold uppercase tracking-wide text-primary/90">
+                    {origin === "Cinéma français" ? "FR" : "US"}
+                  </span>
+                )}
+                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 to-transparent px-1.5 pt-5 pb-1.5">
+                  <p className="text-[8px] font-sans font-semibold text-white leading-tight line-clamp-2">
+                    {getDisplayTitle(movie)}
+                  </p>
+                </div>
+                {on && (
+                  <span className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-primary flex items-center justify-center">
+                    <Check className="w-3 h-3 text-primary-foreground" />
+                  </span>
+                )}
+              </motion.button>
+            );
+          })}
         </div>
       )}
 
-      <AnimatePresence>
-        {done && (
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="px-5 pb-[calc(1.5rem+env(safe-area-inset-bottom))]"
-          >
-            <div className="rounded-2xl border border-primary/20 bg-card/60 p-5 text-center">
-              <Sparkles className="w-7 h-7 text-primary mx-auto mb-2" />
-              <p className="font-serif text-lg mb-1">Parfait, je commence à te cerner</p>
-              <p className="text-sm text-foreground/50 font-sans mb-4">Découvrons comment lancer une recherche Solo.</p>
-              <Button variant="hero" size="xl" className="w-full" onClick={onComplete}>
-                Continuer <ArrowRight className="w-4 h-4" />
-              </Button>
-            </div>
-          </motion.div>
+      <Button
+        variant="hero"
+        size="xl"
+        className="w-full"
+        disabled={!done || saving}
+        onClick={() => void handleComplete()}
+      >
+        {saving ? (
+          <>
+            <Loader2 className="w-4 h-4 animate-spin" /> Enregistrement…
+          </>
+        ) : (
+          <>
+            Continuer <ArrowRight className="w-4 h-4" />
+          </>
         )}
-      </AnimatePresence>
-    </div>
+      </Button>
+    </OnboardingStepLayout>
   );
 }
 

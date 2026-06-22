@@ -1,12 +1,12 @@
 import { motion } from "framer-motion";
 import {
-  ArrowRight, CalendarDays, ChevronLeft, ChevronRight, Heart, Home, Library, Loader2,
+  ArrowRight, CalendarDays, ChevronRight, Heart, Home, Library, Loader2,
   Sparkles, User,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import OnboardingStepLayout from "@/components/onboarding/OnboardingStepLayout";
 
 interface OnboardingSoireesGuideProps {
-  onBack: () => void;
   onFinish: () => void;
   finishing?: boolean;
 }
@@ -17,46 +17,33 @@ const MOCK_EVENTS = [
     title: "Soirée Solo · ce soir",
     date: "Mar. 22 juin · 21:00",
     context: "solo" as const,
-    status: "active",
   },
   {
     id: "duo",
     title: "Soirée Duo · samedi",
     date: "Sam. 28 juin · 20:30",
     context: "duo" as const,
-    status: "planned",
   },
 ];
 
 const CONTEXT_STYLE = {
-  solo: { Icon: User, card: "bg-orange-400/10 border-orange-400/20", icon: "text-orange-400", label: "Solo" },
-  duo: { Icon: Heart, card: "bg-pink-500/10 border-pink-500/20", icon: "text-pink-400", label: "Duo" },
+  solo: { Icon: User, card: "bg-orange-400/10 border-orange-400/20", icon: "text-orange-400" },
+  duo: { Icon: Heart, card: "bg-pink-500/10 border-pink-500/20", icon: "text-pink-400" },
 };
 
-export default function OnboardingSoireesGuide({ onBack, onFinish, finishing }: OnboardingSoireesGuideProps) {
+export default function OnboardingSoireesGuide({ onFinish, finishing }: OnboardingSoireesGuideProps) {
   return (
-    <div className="flex flex-col min-h-full px-5 pb-8">
-      <button
-        type="button"
-        onClick={onBack}
-        className="mb-3 w-9 h-9 rounded-full bg-foreground/5 flex items-center justify-center text-foreground/50"
-      >
-        <ChevronLeft className="w-4 h-4" />
-      </button>
-
-      <h1 className="text-2xl md:text-3xl font-serif mb-2 max-w-lg">
-        Retrouve tes soirées
-      </h1>
-      <p className="text-sm text-muted-foreground font-sans mb-5 max-w-lg leading-relaxed">
+    <OnboardingStepLayout>
+      <h1 className="text-2xl md:text-3xl font-serif mb-2">Retrouve tes soirées</h1>
+      <p className="text-sm text-muted-foreground font-sans mb-5 leading-relaxed">
         Chaque session Solo ou Duo peut devenir une <strong className="text-foreground/75">soirée</strong> enregistrée.
         Tu les retrouves dans l&apos;onglet <strong className="text-primary">Soirées</strong>.
       </p>
 
-      {/* Tab bar mock */}
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="rounded-2xl border border-border/30 bg-card/60 overflow-hidden mb-5 max-w-lg"
+        className="rounded-2xl border border-border/30 bg-card/60 overflow-hidden mb-5"
       >
         <div className="flex items-stretch justify-around h-14 px-2 border-b border-border/20 bg-background/40">
           {[
@@ -65,7 +52,7 @@ export default function OnboardingSoireesGuide({ onBack, onFinish, finishing }: 
             { Icon: Library, label: "Biblio", active: false },
             { Icon: User, label: "Profil", active: false },
           ].map(({ Icon, label, active }) => (
-            <div key={label} className="flex flex-col items-center justify-center flex-1 gap-0.5">
+            <div key={label} className="relative flex flex-col items-center justify-center flex-1 gap-0.5">
               <Icon className={`w-[18px] h-[18px] ${active ? "text-primary" : "text-foreground/35"}`} strokeWidth={active ? 2.2 : 1.7} />
               <span className={`text-[9px] font-sans ${active ? "text-primary font-semibold" : "text-foreground/35"}`}>
                 {label}
@@ -106,7 +93,7 @@ export default function OnboardingSoireesGuide({ onBack, onFinish, finishing }: 
         </div>
       </motion.div>
 
-      <div className="space-y-3 max-w-lg mb-8">
+      <div className="space-y-3 mb-8">
         {[
           "Crée une soirée planifiée (date, Duo ou Solo, mode surprise ou vote).",
           "Ou laisse une session spontanée — elle apparaît aussi dans la liste.",
@@ -119,14 +106,14 @@ export default function OnboardingSoireesGuide({ onBack, onFinish, finishing }: 
         ))}
       </div>
 
-      <div className="rounded-xl border border-border/25 bg-card/40 px-4 py-3 max-w-lg mb-6 flex gap-3">
+      <div className="rounded-xl border border-border/25 bg-card/40 px-4 py-3 mb-6 flex gap-3">
         <CalendarDays className="w-4 h-4 text-primary shrink-0 mt-0.5" />
         <p className="text-xs font-sans text-foreground/55 leading-relaxed">
           Tu peux aussi créer une soirée depuis l&apos;onglet Soirées via le bouton <strong className="text-foreground/75">+</strong> en haut à droite.
         </p>
       </div>
 
-      <Button variant="hero" size="xl" className="w-full max-w-lg" onClick={onFinish} disabled={finishing}>
+      <Button variant="hero" size="xl" className="w-full" onClick={onFinish} disabled={finishing}>
         {finishing ? (
           <>
             <Loader2 className="w-4 h-4 animate-spin" /> Un instant…
@@ -138,6 +125,6 @@ export default function OnboardingSoireesGuide({ onBack, onFinish, finishing }: 
           </>
         )}
       </Button>
-    </div>
+    </OnboardingStepLayout>
   );
 }

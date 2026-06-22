@@ -20,6 +20,16 @@ import {
   type OnboardingStep,
 } from "@/lib/onboarding-progress";
 
+const PREVIOUS_STEP: Partial<Record<OnboardingStep, OnboardingStep>> = {
+  genres: "welcome",
+  platforms: "genres",
+  films: "platforms",
+  actors: "films",
+  directors: "actors",
+  modes: "directors",
+  soirees: "modes",
+};
+
 const ONBOARDING_GENRES = [
   "Comédie", "Drame", "Thriller", "Action", "Romance", "Fantastique",
   "Animation", "Science-Fiction", "Horreur", "Aventure", "Mystère", "Famille",
@@ -31,6 +41,7 @@ const Onboarding = () => {
   const [step, setStep] = useState<OnboardingStep>("welcome");
   const [genreChoices, setGenreChoices] = useState<Map<string, GenreChoice>>(new Map());
   const [platformIds, setPlatformIds] = useState<number[]>(DEFAULT_ONBOARDING_PLATFORM_IDS);
+  const [filmsProgress, setFilmsProgress] = useState(0);
   const [loading, setLoading] = useState(true);
   const [pausing, setPausing] = useState(false);
   const [finishing, setFinishing] = useState(false);
@@ -53,6 +64,7 @@ const Onboarding = () => {
         progress.excludedGenres.forEach((g) => map.set(g, "excluded"));
         setGenreChoices(map);
         setPlatformIds(progress.platformIds);
+        setFilmsProgress(progress.filmsProgress);
         setStep(progress.step);
         if (progress.paused) {
           await saveOnboardingProgress(progress.step, {
@@ -90,6 +102,11 @@ const Onboarding = () => {
     await saveOnboardingProgress(next, progressPayload());
     setStep(next);
   }, [progressPayload]);
+
+  const handleStepBack = useCallback(() => {
+    const prev = PREVIOUS_STEP[step];
+    if (prev) void goToStep(prev);
+  }, [step, goToStep]);
 
   const handlePause = useCallback(async () => {
     setPausing(true);
@@ -135,7 +152,13 @@ const Onboarding = () => {
   return (
     <div className="fixed inset-0 bg-background flex flex-col overflow-y-auto overscroll-y-contain touch-pan-y">
       {step !== "welcome" && (
-        <OnboardingChrome step={step} onPause={handlePause} pausing={pausing} />
+        <OnboardingChrome
+          step={step}
+          onPause={handlePause}
+          onBack={PREVIOUS_STEP[step] ? handleStepBack : undefined}
+          pausing={pausing}
+          filmsProgress={filmsProgress}
+        />
       )}
 
       <AnimatePresence mode="wait">
@@ -284,7 +307,6 @@ const Onboarding = () => {
           >
             <OnboardingPlatformStep
               initialPlatformIds={platformIds}
-              onBack={() => void goToStep("genres")}
               onContinue={(ids) => void handlePlatformsContinue(ids)}
             />
           </motion.div>
@@ -301,7 +323,8 @@ const Onboarding = () => {
             <OnboardingFilmTrainer
               favoriteGenres={likedGenres}
               excludedGenres={excludedGenres}
-              onBack={() => void goToStep("platforms")}
+              initialFilmsProgress={filmsProgress}
+              onFilmsProgressChange={setFilmsProgress}
               onComplete={() => void goToStep("actors")}
             />
           </motion.div>
@@ -317,7 +340,6 @@ const Onboarding = () => {
           >
             <OnboardingPeopleStep
               personType="actor"
-              onBack={() => void goToStep("films")}
               onComplete={() => void goToStep("directors")}
             />
           </motion.div>
@@ -333,7 +355,6 @@ const Onboarding = () => {
           >
             <OnboardingPeopleStep
               personType="director"
-              onBack={() => void goToStep("actors")}
               onComplete={() => void goToStep("modes")}
             />
           </motion.div>
@@ -347,10 +368,7 @@ const Onboarding = () => {
             exit={{ opacity: 0, x: -40 }}
             className="min-h-full"
           >
-            <OnboardingModesGuide
-              onBack={() => void goToStep("directors")}
-              onContinue={() => void goToStep("soirees")}
-            />
+            <OnboardingModesGuide onContinue={() => void goToStep("soirees")} />
           </motion.div>
         )}
 
@@ -363,7 +381,6 @@ const Onboarding = () => {
             className="min-h-full"
           >
             <OnboardingSoireesGuide
-              onBack={() => void goToStep("modes")}
               onFinish={() => void handleFinish()}
               finishing={finishing}
             />
