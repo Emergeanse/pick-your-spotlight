@@ -1,7 +1,7 @@
 # Backlog Pick — suivi équipe
 
 > **Référence unique** pour prioriser, assigner et suivre l'avancement alpha → beta.  
-> Dernière mise à jour : **24 juin 2026** (intégration audit technique Claude Code)
+> Dernière mise à jour : **24 juin 2026** (session Claude Code terminée · file Cursor recalibrée)
 
 ---
 
@@ -17,10 +17,10 @@
 | **TNR unitaires** | Vitest                               | `event-reveal`, `recommendation-non-regression`, `movie-interactions`, `tonight-poster-wall`, `onboarding-initiation` | **60/60 OK**                               |
 | **Smoke rapide**  | build + Vitest + Playwright (`auth`) | `npm run test:smoke`                                                  | build + unit OK · E2E si Chromium installé |
 | **Smoke complet** | + 5 specs E2E                        | `npm run test:smoke:full`                                             | requiert `.env.test` + Playwright          |
-| **CI GitHub**     | Actions sur `main` + PR              | `.github/workflows/ci.yml`                                            | unit + tsc sur PR · E2E sur push `main`    |
+| **CI GitHub**     | Actions sur `main` + PR              | `.github/workflows/ci.yml`                                            | unit + tsc sur PR · E2E sur push `main` · lockfile sync `f46ea156` |
 
 
-**E2E Playwright (33 scénarios)** : `auth`, `navigation`, `pipeline` (+ carrousel affiches), `reveal`, `cinema`, `soirees`, `onboarding` (smoke 3/3) — mocks edge functions pour pipeline/révéler.
+**E2E Playwright (33 scénarios)** : `auth`, `navigation`, `pipeline` (+ carrousel affiches), `reveal`, `cinema`, `soirees` (fix sélecteur `3295ae55`), `onboarding` (smoke 3/3) — mocks edge functions pour pipeline/révéler.
 
 **Non automatisé** : onboarding complet (films/acteurs/réalisateurs), duo/invite, TMDB proxy prod, création soirée bout-en-bout.
 
@@ -89,8 +89,8 @@ Inclut : `onboarding_step`, `onboarding_paused`, films (`progress`, `liked_ids`,
 
 ## Comment utiliser ce fichier
 
-1. **Prendre un sujet** : choisir la première tâche `todo` ou `blocked` du sprint en cours (voir [Sprint actif](#sprint-actif)).
-2. **La réserver** : passer le statut à `in_progress`, renseigner **Owner** et la date dans [Journal](#journal-des-mises-à-jour).
+1. **Prendre un sujet** : choisir la première tâche `todo` du [Sprint actif](#sprint-actif) ou de la [file Cursor](#file-dattente-cursor-recalibrée--24-juin).
+2. **La réserver** : passer le statut à `in_progress`, renseigner **Mode** / **Owner** et la date dans [Journal](#journal-des-mises-à-jour).
 3. **La terminer** : statut `done`, cocher la case, noter la PR ou le commit en **Notes**.
 4. **Bloquer** : statut `blocked` + explication en Notes.
 
@@ -120,6 +120,53 @@ Inclut : `onboarding_step`, `onboarding_paused`, films (`progress`, `liked_ids`,
 ### Effort (indicatif)
 
 `S` < 1 j · `M` 1–3 j · `L` 1–2 sem · `XL` > 2 sem
+
+### Mode d'exécution
+
+
+| Mode            | Signification                                              |
+| --------------- | ---------------------------------------------------------- |
+| **Claude ✅**   | Traitée en session Claude Code (24 juin 2026)              |
+| **Cursor**      | Prochaine file d'attente IDE Cursor                        |
+| **Pair humain** | Découpe sensible — revue humaine, PR par étapes            |
+
+---
+
+## Session Claude Code — 24 juin 2026 (terminé ✅)
+
+> Travail livré en commits locaux (`87416704` → `e73e3e8e`). Extraction plateformes Cursor = **redondante** — fusionnée par Claude (#3).
+
+| Audit | Sujet                         | Résultat                                                                 | ID     |
+| ----- | ----------------------------- | ------------------------------------------------------------------------ | ------ |
+| #2    | `console.log` en prod         | 5 lignes `main.tsx` neutralisent **218** appels (no-op prod)           | 1.17   |
+| #3    | Plateformes dupliquées        | `platforms.ts` source unique · **−80 lignes** `HomeScreen`               | 1.18   |
+| #7    | Cache profil localStorage     | Greeting instantané via clé `pys_greeting`                               | 1.21   |
+| #8    | Erreurs pipeline silencieuses | `toast.error` différencié rate-limit / réseau                          | 1.4    |
+| #10   | Validation localStorage       | Déjà protégé côté code — rien à faire                                    | 1.22   |
+
+**HomeScreen** : pas de gros refactor pour l'instant — cartographie hooks faite (candidats A/B/C ci-dessous), petits diffs uniquement.
+
+---
+
+## File d'attente Cursor (recalibrée · 24 juin)
+
+> Ordre strict — **1.19 avant** tout changement pipeline / hooks HomeScreen profonds.
+
+| #   | Audit | ID   | Tâche                                              | Mode          | Statut | Notes                                                                 |
+| --- | ----- | ---- | -------------------------------------------------- | ------------- | ------ | --------------------------------------------------------------------- |
+| 1   | #4    | 1.19 | Tests unitaires `taste-engine.ts` (+ batch)        | Cursor        | `todo` | Priorité · 70 % `src/lib/` · prérequis refactor reco                  |
+| 2   | #5    | 2.11 | `aria-label` boutons icon-only                       | Cursor        | `todo` | Complète **2.9** a11y                                                 |
+| 3   | #1    | 2.5  | Hooks `HomeScreen` — **reporté**                     | Cursor        | `todo` | Rationalisation seule · cartographie A/B/C faite · pas de gros diff   |
+| 4   | #6    | 1.20 | `TonightPickContext`                               | Pair humain   | `todo` | PR par étapes · après **1.19** si touch pipeline                      |
+| 5   | #9    | 2.10 | Split `ResultScreen` + `TonightPickOverlay`        | Cursor        | `todo` | Sprint Tech 3 · >1000 l. chacun                                       |
+
+### Cartographie hooks `HomeScreen` (2.5 — candidats A/B/C)
+
+| Candidat | Hook proposé               | Périmètre                                      | Risque refactor |
+| -------- | -------------------------- | ---------------------------------------------- | --------------- |
+| **A**    | `useProfileLoader`         | Profil, greeting, cache `pys_greeting`         | Faible · **1.21** adresse le cache |
+| **B**    | `useRecommendationEngine`  | Pipeline `generateTonightPick`, états reco     | Élevé · bloqué sans **1.19** |
+| **C**    | `useTonightMovieState`     | État soirée / overlay / film du soir           | Moyen · couplé **1.20** |
 
 ---
 
@@ -171,14 +218,16 @@ Valider que l'app alpha est utilisable de bout en bout : smoke tests OK, edge fu
 
 ### Sprint Tech 1 — « Fondations code » (audit juin 2026)
 
-| #   | ID   | Tâche (audit)                                      | Effort | Priorité audit | Dépendances                          |
-| --- | ---- | -------------------------------------------------- | ------ | -------------- | ------------------------------------ |
-| 1   | 1.17 | Logger centralisé — remplacer `console.log` prod   | S      | 🔴             | Aucune                               |
-| 2   | 1.18 | Centraliser logique plateformes (`platforms.ts`)   | M      | 🔴             | Aucune                               |
-| 3   | 2.5  | Extraire hooks `HomeScreen` (~2700 lignes)         | L      | 🔴             | Préférer après **1.17** (logs propres) |
+| #   | ID   | Tâche (audit)                                      | Effort | Mode     | Statut | Notes                                              |
+| --- | ---- | -------------------------------------------------- | ------ | -------- | ------ | -------------------------------------------------- |
+| 1   | 1.17 | Logger / neutralisation `console.log` prod         | S      | Claude ✅ | `done` | `main.tsx` no-op prod · 218 appels · `87416704`    |
+| 2   | 1.18 | Centraliser logique plateformes (`platforms.ts`)   | M      | Claude ✅ | `done` | Source unique · −80 l. HomeScreen · `737c0617`     |
+| 3   | 1.19 | Tests unitaires `taste-engine` (+ batch)           | L      | Cursor   | `todo` | **Prochaine priorité Cursor** · voir file ci-dessus |
+| 4   | 2.11 | `aria-label` boutons icon-only                     | M      | Cursor   | `todo` | File Cursor #2                                     |
+| 5   | 2.5  | Hooks `HomeScreen` (~2700 l.)                      | L      | Cursor   | `todo` | **Reporté** · candidats A/B/C · petits diffs seulement |
 
 
-**Règle audit** : ne pas refactorer le pipeline reco (hooks HomeScreen profonds, splits overlay) **sans** tests **1.19** en place.
+**Règle audit** : ne pas refactorer le pipeline reco (hooks HomeScreen profonds, splits overlay) **sans** tests **1.19** en place. Pas de gros refactor `HomeScreen` — analyse faite, diffs ciblés uniquement.
 
 ### Sprints suivants (planifiés)
 
@@ -186,9 +235,9 @@ Valider que l'app alpha est utilisable de bout en bout : smoke tests OK, edge fu
 | Sprint    | Thème              | Tâches clés                                              |
 | --------- | ------------------ | -------------------------------------------------------- |
 | B         | Testeurs heureux   | 1.3–1.6, **1.16**, seed compte E2E, **1.10**             |
-| Tech 2    | Qualité & perf     | **1.19** tests lib · **1.20** context · **1.4** erreurs · **1.21** cache |
+| Tech 2    | Qualité & perf     | **1.19** tests lib · **1.20** context (pair) · ~~**1.4**~~ · ~~**1.21**~~ |
 | C         | Social fiable      | 1.7–1.8, 1.12–1.13, **1.10b**                            |
-| Tech 3    | Découpe & a11y     | **2.10** splits · **2.11** aria-labels · **1.22** zod    |
+| Tech 3    | Découpe & a11y     | **2.10** splits · **2.11** aria-labels · ~~**1.22**~~ (N/A) |
 
 
 > **En parallèle alpha** (hors clôture Sprint A) : **1.6** soirées, correctifs UX — déjà **1.14** / **1.15** faits.
@@ -197,30 +246,30 @@ Valider que l'app alpha est utilisable de bout en bout : smoke tests OK, edge fu
 
 ## Audit technique (juin 2026)
 
-> Synthèse audit Claude Code · croisée avec le backlog existant. Les IDs backlog priment ; la colonne **Audit** est la référence d'origine.
+> Synthèse audit Claude Code · croisée avec le backlog existant. Les IDs backlog priment ; la colonne **Audit** est la référence d'origine. Voir aussi [Session Claude Code](#session-claude-code--24-juin-2026-terminé-) et [File d'attente Cursor](#file-dattente-cursor-recalibrée--24-juin).
 
 ### 🔴 Critique
 
 
-| Audit | ID backlog | Tâche                                                                 | Effort | Statut | Lien existant                          |
-| ----- | ---------- | --------------------------------------------------------------------- | ------ | ------ | -------------------------------------- |
-| #1    | **2.5**    | `HomeScreen.tsx` (~2700 l.) → hooks `useRecommendationEngine`, `useProfileLoader`, `useTonightMovieState` | L      | `todo` | P2 · était ~2300 l.                    |
-| #2    | **1.17**   | 50+ `console.log` en prod → `src/lib/logger.ts` (niveaux, no-op prod) | S      | `todo` | Nouveau                                |
-| #3    | **1.18**   | Logique plateformes dupliquée 4× → `src/lib/platforms.ts` + edge `_shared` | M      | `todo` | Nouveau                                |
-| #4    | **1.19**   | Tests unitaires `taste-engine.ts`, `recommendation-batch.ts` — objectif **70 % `src/lib/`** | L      | `todo` | Complète TNR (60 tests actuels) · [SMOKE_TESTS.md](SMOKE_TESTS.md) §6 |
-| #5    | **2.11**   | `aria-label` sur boutons icônes (sans texte visible)                  | M      | `todo` | Complète **2.9** a11y                  |
+| Audit | ID backlog | Tâche                                                                 | Effort | Mode     | Statut | Notes                                                                 |
+| ----- | ---------- | --------------------------------------------------------------------- | ------ | -------- | ------ | --------------------------------------------------------------------- |
+| #1    | **2.5**    | `HomeScreen.tsx` (~2700 l.) → hooks A/B/C (voir cartographie)         | L      | Cursor   | `todo` | **Reporté** · pas de gros refactor · rationalisation seule            |
+| #2    | **1.17**   | 50+ `console.log` en prod → no-op `main.tsx`                          | S      | Claude ✅ | `done` | 218 appels neutralisés · `87416704`                                   |
+| #3    | **1.18**   | Logique plateformes dupliquée 4× → `platforms.ts`                     | M      | Claude ✅ | `done` | −80 l. HomeScreen · extraction Cursor = redondante                    |
+| #4    | **1.19**   | Tests unitaires `taste-engine.ts`, `recommendation-batch.ts`          | L      | Cursor   | `todo` | **Priorité Cursor #1** · 70 % `src/lib/` · [SMOKE_TESTS.md](SMOKE_TESTS.md) §6 |
+| #5    | **2.11**   | `aria-label` sur boutons icônes (sans texte visible)                  | M      | Cursor   | `todo` | Priorité Cursor #2 · complète **2.9** a11y                            |
 
 
 ### 🟠 Important
 
 
-| Audit | ID backlog | Tâche                                              | Effort | Statut | Lien existant                |
-| ----- | ---------- | -------------------------------------------------- | ------ | ------ | ---------------------------- |
-| #6    | **1.20**   | `TonightPickOverlay` (~30 props) → `TonightPickContext` | M      | `todo` | Bloqué par **1.19** si touch pipeline |
-| #7    | **1.21**   | Cache profil `localStorage` (TTL, invalidation)    | S      | `todo` | Nouveau                      |
-| #8    | **1.4**    | Erreurs pipeline reco : toast + retry              | S–M    | `todo` | Déjà P1 « messages d'erreur » |
-| #9    | **2.10**   | Découper `ResultScreen` + `TonightPickOverlay` (>1000 l. chacun) | L      | `todo` | Complète **3.2**             |
-| #10   | **1.22**   | Validation `localStorage` (schémas zod)            | S      | `todo` | Couplé à **1.21**            |
+| Audit | ID backlog | Tâche                                              | Effort | Mode        | Statut | Notes                                                                 |
+| ----- | ---------- | -------------------------------------------------- | ------ | ----------- | ------ | --------------------------------------------------------------------- |
+| #6    | **1.20**   | `TonightPickOverlay` (~30 props) → `TonightPickContext` | M      | Pair humain | `todo` | Cursor #4 · PR par étapes · après **1.19** si touch pipeline        |
+| #7    | **1.21**   | Cache profil `localStorage` (TTL, invalidation)    | S      | Claude ✅   | `done` | `pys_greeting` · greeting instantané · `737c0617`                     |
+| #8    | **1.4**    | Erreurs pipeline reco : toast + retry              | S–M    | Claude ✅   | `done` | Rate-limit / réseau · `e73e3e8e`                                      |
+| #9    | **2.10**   | Découper `ResultScreen` + `TonightPickOverlay`     | L      | Cursor      | `todo` | Cursor #5 · complète **3.2**                                        |
+| #10   | **1.22**   | Validation `localStorage` (schémas zod)            | S      | Claude ✅   | `done` | Déjà protégé — rien à faire                                           |
 
 
 ### 🟡 Backlog / dette (P3)
@@ -293,7 +342,7 @@ npm run dev                              # puis checklist manuelle (SMOKE_TESTS.
 | 1.1 | Clarifier Pick+ dans l'UI (alpha = gratuit)                     | S      | `done`        | —     | `isPremium = true` temporaire dans `use-pick-plus.ts`                                 |
 | 1.2 | Assouplir limites freemium en alpha                             | S      | `done`        | —     | Idem — paywall « Bientôt » encore visible sur `/app/pick-plus`                        |
 | 1.3 | Marquer explicitement « Bientôt » (groupes Duo, options soirée) | S      | `todo`        | —     | `DuoPage`, `CreateEventPage`, `HomeScreenChoiceModal`                                 |
-| 1.4 | Messages d'erreur clairs si TMDB / edge function down           | M      | `todo`        | —     | Audit #8 · toast + retry pipeline · `tmdb-proxy-client.ts`, écrans reco               |
+| 1.4 | Messages d'erreur clairs si TMDB / edge function down           | M      | `done`        | Claude ✅ | Audit #8 · toast rate-limit / réseau · `e73e3e8e`                                   |
 | 1.5 | Rappeler / forcer onboarding incomplet                          | M      | `in_progress` | —     | Parcours initiatique refondu (8 étapes) · redirect partiel depuis `/app` · E2E absent |
 
 
@@ -312,14 +361,14 @@ npm run dev                              # puis checklist manuelle (SMOKE_TESTS.
 ### Qualité code (audit)
 
 
-| ID    | Tâche                                                      | Effort | Statut | Owner | Notes                                                                                                   |
-| ----- | ---------------------------------------------------------- | ------ | ------ | ----- | ------------------------------------------------------------------------------------------------------- |
-| 1.17  | Logger centralisé (`src/lib/logger.ts`)                    | S      | `todo` | —     | Audit #2 · remplacer 50+ `console.log` · Sprint Tech 1                                                  |
-| 1.18  | Centraliser plateformes (`platforms.ts` + edge `_shared`)  | M      | `todo` | —     | Audit #3 · 4 duplications · Sprint Tech 1                                                               |
-| 1.19  | Tests unitaires `taste-engine` + `recommendation-batch`    | L      | `todo` | —     | Audit #4 · objectif 70 % `src/lib/` · **prérequis** refactor reco · Sprint Tech 2                       |
-| 1.20  | `TonightPickContext` (réduire props overlay)               | M      | `todo` | —     | Audit #6 · après **1.19** · Sprint Tech 2                                                               |
-| 1.21  | Cache profil `localStorage`                                | S      | `todo` | —     | Audit #7 · Sprint Tech 2                                                                                |
-| 1.22  | Validation `localStorage` (zod)                            | S      | `todo` | —     | Audit #10 · couplé **1.21** · Sprint Tech 3                                                             |
+| ID    | Tâche                                                      | Effort | Statut | Mode      | Notes                                                                                                   |
+| ----- | ---------------------------------------------------------- | ------ | ------ | --------- | ------------------------------------------------------------------------------------------------------- |
+| 1.17  | Neutralisation `console.log` prod (`main.tsx`)             | S      | `done` | Claude ✅ | Audit #2 · 218 appels · `87416704`                                                                      |
+| 1.18  | Centraliser plateformes (`platforms.ts`)                   | M      | `done` | Claude ✅ | Audit #3 · −80 l. HomeScreen · extraction Cursor redondante · `737c0617`                                |
+| 1.19  | Tests unitaires `taste-engine` + `recommendation-batch`    | L      | `todo` | Cursor    | Audit #4 · **priorité Cursor #1** · 70 % `src/lib/` · prérequis refactor reco                           |
+| 1.20  | `TonightPickContext` (réduire props overlay)               | M      | `todo` | Pair humain | Audit #6 · Cursor #4 · PR par étapes · après **1.19**                                                 |
+| 1.21  | Cache profil `localStorage` (`pys_greeting`)               | S      | `done` | Claude ✅ | Audit #7 · greeting instantané · `737c0617`                                                             |
+| 1.22  | Validation `localStorage` (zod)                            | S      | `done` | Claude ✅ | Audit #10 · déjà protégé — N/A                                                                            |
 
 
 ### Qualité & docs
@@ -362,13 +411,13 @@ npm run dev                              # puis checklist manuelle (SMOKE_TESTS.
 | 2.2  | Rotation / compte TMDB « projet »                     | S      | `todo` | —     | Couplé à **1.16** — avant beta testeurs, pas en alpha |
 | 2.3  | Attribution TMDB (logo + mention légale)              | S      | `todo` | —     | Obligatoire TMDB en prod                              |
 | 2.4  | Pick Together groupe : finaliser ou retirer de la nav | L      | `todo` | —     | `/app/pick-together` → redirect `/app`                |
-| 2.5  | Refactor `HomeScreen.tsx` — extraction hooks          | L      | `todo` | —     | Audit #1 · ~2700 l. · Sprint Tech 1                   |
-| 2.6  | Monitoring erreurs (Sentry ou équivalent)             | M      | `todo` | —     | Edge + frontend                                       |
-| 2.7  | CGU + politique de confidentialité                    | M      | `todo` | —     | Comptes réels                                         |
-| 2.8  | Perf reco : timeouts UX, métriques `engineMeta`       | M      | `todo` | —     | `surprise-personalized`                               |
-| 2.9  | Accessibilité mobile (safe areas, voix)               | M      | `todo` | —     | Complété par **2.11** (aria-labels)                   |
-| 2.10 | Découper `ResultScreen` + `TonightPickOverlay`        | L      | `todo` | —     | Audit #9 · >1000 l. chacun · Sprint Tech 3            |
-| 2.11 | `aria-label` boutons icônes                           | M      | `todo` | —     | Audit #5 · Sprint Tech 3                              |
+| 2.5  | Refactor `HomeScreen.tsx` — extraction hooks (A/B/C)      | L      | `todo` | Cursor    | Audit #1 · **reporté** · cartographie faite · pas de gros refactor                                      |
+| 2.6  | Monitoring erreurs (Sentry ou équivalent)             | M      | `todo` | —         | Edge + frontend                                                                                         |
+| 2.7  | CGU + politique de confidentialité                    | M      | `todo` | —         | Comptes réels                                                                                           |
+| 2.8  | Perf reco : timeouts UX, métriques `engineMeta`       | M      | `todo` | —         | `surprise-personalized`                                                                                 |
+| 2.9  | Accessibilité mobile (safe areas, voix)               | M      | `todo` | —         | Complété par **2.11** (aria-labels)                                                                     |
+| 2.10 | Découper `ResultScreen` + `TonightPickOverlay`        | L      | `todo` | Cursor    | Audit #9 · Cursor #5 · >1000 l. chacun · Sprint Tech 3                                                  |
+| 2.11 | `aria-label` boutons icônes                           | M      | `todo` | Cursor    | Audit #5 · **priorité Cursor #2** · Sprint Tech 1                                                       |
 
 
 ---
@@ -414,9 +463,12 @@ npm run dev                              # puis checklist manuelle (SMOKE_TESTS.
 ## Journal des mises à jour
 
 
-| Date       | Qui | Changement                                                                                                                                              |
-| ---------- | --- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 2026-06-24 | —   | Intégration audit technique Claude Code : IDs **1.17–1.22**, **2.10–2.11**, **3.7–3.11** · sprints Tech 1–3 · section [Prochain sprint](#prochain-sprint--b-produit--tech-1-audit) |
+| Date       | Qui    | Changement                                                                                                                                              |
+| ---------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-06-24 | Cursor | Recap session Claude (#2 #3 #7 #8 #10 `done`) · file Cursor recalibrée (#4 → #5 → #1 reporté → #6 pair → #9) · colonne **Mode** · candidats hooks A/B/C · note « pas de gros refactor HomeScreen » |
+| 2026-06-24 | —      | TNR : 60 tests unit OK · CI lockfile `f46ea156` · E2E `soirees` fix `3295ae55` · commits locaux à fusionner si diverge (lockfile, soirees, backlog `3268db9b` + travail Claude `87416704`–`e73e3e8e`) |
+| 2026-06-24 | Claude | Session audit : **1.17** no-op prod · **1.18** `platforms.ts` · **1.21** `pys_greeting` · **1.4** toast pipeline · **1.22** N/A (déjà protégé)        |
+| 2026-06-24 | —      | Intégration audit technique Claude Code : IDs **1.17–1.22**, **2.10–2.11**, **3.7–3.11** · sprints Tech 1–3 · section [Prochain sprint](#prochain-sprint--b-produit--tech-1-audit) |
 | 2026-06-22 | —   | Audit TNR : 60 tests Vitest OK · CI documentée (1.9 `done`) · section [TNR & smoke](#tnr--smoke--état-et-lancement) · 1.10 scindé (onboarding / soirée) |
 | 2026-06-22 | —   | Refonte onboarding initiatique poussée sur `main` (films, acteurs, pools élargis, migrations SQL)                                                       |
 | 2026-06-22 | —   | Sprint A recentré : 0.3 → 0.2 → 1.11 · 0.1 hors scope alpha                                                                                             |
@@ -444,11 +496,14 @@ npm run dev                              # puis checklist manuelle (SMOKE_TESTS.
 2. **1.6** — Seed compte E2E + soirées stables
 3. **1.10** — E2E onboarding complet (films, acteurs, réalisateurs)
 
-### En parallèle (si capacité) — Sprint Tech 1
+### File Cursor (priorité technique)
 
-1. **1.17** — Logger (`S`)
-2. **1.18** — Plateformes centralisées (`M`)
-3. **2.5** — Hooks HomeScreen (`L`) — sans toucher pipeline reco profond
+1. **1.19** — Tests unitaires `taste-engine.ts` (`L`) — **avant** tout changement pipeline / hooks HomeScreen
+2. **2.11** — `aria-label` boutons icon-only (`M`)
+3. **2.5** — Hooks HomeScreen — **reporté** · candidats A/B/C cartographiés · petits diffs seulement
+4. **1.20** — `TonightPickContext` — **pair humain** · PR par étapes
+5. **2.10** — Split `ResultScreen` + `TonightPickOverlay` (`L`)
 
 *Secret TMDB : **1.16**, uniquement avant beta testeurs.*  
-*Refactor pipeline reco : **bloqué** tant que **1.19** (tests lib) n'est pas `done`.*
+*Refactor pipeline reco : **bloqué** tant que **1.19** (tests lib) n'est pas `done`.*  
+*Sprint Tech 1 Claude : **1.17**, **1.18**, **1.21**, **1.4**, **1.22** = `done` ✅*
