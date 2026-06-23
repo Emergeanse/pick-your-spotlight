@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useRef, useMemo } from "react";
+﻿import { useState, useEffect, useRef, useMemo, type MutableRefObject } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ChevronRight, Dices, Loader2, Info } from "lucide-react";
 import { getBackdropUrl, getDisplayTitle, getPosterUrl, getMovieDetailsWithCredits, type MovieDetail } from "@/lib/tmdb";
@@ -52,7 +52,7 @@ const WALL_POSTER_SIZE = "w185" as const;
 function normalizePosterPath(path: string | null | undefined): string | null {
   if (!path || typeof path !== "string") return null;
   const trimmed = path.trim();
-  if (!trimmed) return null;
+  if (!trimmed || trimmed === "null" || trimmed === "undefined") return null;
   return trimmed.startsWith("/") ? trimmed : `/${trimmed}`;
 }
 
@@ -130,9 +130,31 @@ function fallbackPathFor(path: string, attempt: number): string {
   return FALLBACK_POSTER_PATHS[idx];
 }
 
+/** Remplace une affiche en échec par un fallback pas déjà visible à l'écran. */
+function pickUnusedPosterPath(
+  seed: string,
+  attempt: number,
+  visible: Iterable<string>,
+  pool: readonly string[] = FALLBACK_POSTER_PATHS,
+): string {
+  const seen = new Set(visible);
+  seen.add(seed);
+  let hash = 0;
+  for (let i = 0; i < seed.length; i++) hash = (hash + seed.charCodeAt(i) * (i + 1)) | 0;
+  const start = Math.abs(hash + attempt * 7) % pool.length;
+  for (let i = 0; i < pool.length; i++) {
+    const candidate = pool[(start + i) % pool.length];
+    if (!seen.has(candidate)) return candidate;
+  }
+  return fallbackPathFor(seed, attempt);
+}
+
+/** Mur d'affiches : pool TMDB mélangé (cache API + picks), fallbacks seulement si trop petit. */
 function buildWallColumns(paths: string[], columnCount = 4): string[][] {
-  const valid = paths.filter((p) => p.startsWith("/"));
-  const pool = valid.length >= 8 ? valid : [...FALLBACK_POSTER_PATHS];
+  const valid = paths
+    .map((p) => normalizePosterPath(p))
+    .filter((p): p is string => !!p);
+  const pool = valid.length >= 8 ? valid : mergePosterPools(FALLBACK_POSTER_PATHS, valid);
 
   const perCol = Math.max(8, Math.ceil(pool.length / columnCount));
   return Array.from({ length: columnCount }, (_, ci) => {
@@ -159,19 +181,27 @@ function buildWallColumns(paths: string[], columnCount = 4): string[][] {
 const WALL_POSTER_SIZES = [WALL_POSTER_SIZE, "w342", "w500"] as const;
 
 function WallPosterCell({
+  cellId,
   path,
   isSpot,
   spotFilter,
+  cellPathsRef,
+  pool,
 }: {
+  cellId: string;
   path: string;
   isSpot: boolean;
   spotFilter: string;
+  cellPathsRef: MutableRefObject<Map<string, string>>;
+  pool: string[];
 }) {
+  const seedPath = normalizePosterPath(path) ?? FALLBACK_POSTER_PATHS[0];
   const [sizeIndex, setSizeIndex] = useState(0);
   const [altPath, setAltPath] = useState<string | null>(null);
   const [errorAttempts, setErrorAttempts] = useState(0);
+  const [loaded, setLoaded] = useState(false);
   const [failed, setFailed] = useState(false);
-  const activePath = altPath ?? path;
+  const activePath = altPath ?? seedPath;
   const src = getPosterUrl(activePath, WALL_POSTER_SIZES[sizeIndex]) || "";
   const cellStyle = {
     aspectRatio: "2/3" as const,
@@ -182,6 +212,21 @@ function WallPosterCell({
     position: "relative" as const,
     zIndex: isSpot ? 2 : 0,
   };
+
+  useEffect(() => {
+    setSizeIndex(0);
+    setAltPath(null);
+    setErrorAttempts(0);
+    setLoaded(false);
+    setFailed(false);
+  }, [seedPath]);
+
+  useEffect(() => {
+    cellPathsRef.current.set(cellId, activePath);
+    return () => {
+      cellPathsRef.current.delete(cellId);
+    };
+  }, [cellId, activePath, cellPathsRef]);
 
   if (failed || !src || src.includes("placeholder")) {
     return (
@@ -200,21 +245,30 @@ function WallPosterCell({
       draggable={false}
       loading="eager"
       decoding="async"
+      onLoad={() => setLoaded(true)}
       onError={() => {
+        setLoaded(false);
         if (sizeIndex < WALL_POSTER_SIZES.length - 1) {
           setSizeIndex((i) => i + 1);
           return;
         }
-        if (errorAttempts < 3) {
+        const fallbackPool = pool.length > FALLBACK_POSTER_PATHS.length ? pool : FALLBACK_POSTER_PATHS;
+        if (errorAttempts < fallbackPool.length) {
+          const next = pickUnusedPosterPath(
+            seedPath,
+            errorAttempts,
+            cellPathsRef.current.values(),
+            fallbackPool,
+          );
           setErrorAttempts((n) => n + 1);
-          setAltPath(fallbackPathFor(path, errorAttempts));
+          setAltPath(next);
           setSizeIndex(0);
           return;
         }
         setFailed(true);
       }}
       className="w-full rounded-md object-cover flex-shrink-0 select-none bg-gradient-to-br from-primary/15 to-white/5"
-      style={cellStyle}
+      style={{ ...cellStyle, opacity: loaded ? 1 : 0 }}
     />
   );
 }
@@ -354,10 +408,16 @@ const TonightPickOverlay = ({
   // Films adorés : persistés en localStorage au fil des interactions positives
   const LOVED_KEY = "pick_loved_posters";
   const [lovedPosters, setLovedPosters] = useState<string[]>(() => {
-    try { return JSON.parse(localStorage.getItem(LOVED_KEY) || "[]"); } catch { return []; }
+    try {
+      return JSON.parse(localStorage.getItem(LOVED_KEY) || "[]")
+        .map((p: unknown) => normalizePosterPath(typeof p === "string" ? p : null))
+        .filter((p: string | null): p is string => !!p);
+    } catch {
+      return [];
+    }
   });
   useEffect(() => {
-    const path = movie?.poster_path;
+    const path = normalizePosterPath(movie?.poster_path);
     if (!path) return;
     const positive = ["like", "love", "watchlist"];
     if (!positive.includes(interaction.primaryStatus ?? "")) return;
@@ -369,18 +429,36 @@ const TonightPickOverlay = ({
     });
   }, [movie?.poster_path, interaction.primaryStatus]);
 
-  // Mur de fond : fallbacks + TMDB + films adorés intercalés
+  const tonightPosterPaths = useMemo(
+    () =>
+      (tonightPool || [])
+        .map((m) => normalizePosterPath(m.poster_path))
+        .filter((p): p is string => !!p),
+    [tonightPool],
+  );
+
+  // Mur de fond : fallbacks + TMDB + picks du soir + films adorés intercalés
   const posterWallPaths = useMemo(() => {
-    const base = mergePosterPools(FALLBACK_POSTER_PATHS, lambdaPaths);
-    if (lovedPosters.length === 0) return base;
+    const normalizedLoved = lovedPosters
+      .map((p) => normalizePosterPath(p))
+      .filter((p): p is string => !!p);
+    const base = mergePosterPools(
+      FALLBACK_POSTER_PATHS,
+      lambdaPaths,
+      tonightPosterPaths,
+      normalizedLoved,
+    );
+    if (normalizedLoved.length === 0) return base;
     const result: string[] = [];
     let li = 0;
     for (let i = 0; i < base.length; i++) {
       result.push(base[i]);
-      if ((i + 1) % 4 === 0 && li < lovedPosters.length) result.push(lovedPosters[li++]);
+      if ((i + 1) % 4 === 0 && li < normalizedLoved.length) result.push(normalizedLoved[li++]);
     }
-    return result;
-  }, [lambdaPaths, lovedPosters]);
+    return mergePosterPools(result);
+  }, [lambdaPaths, lovedPosters, tonightPosterPaths]);
+
+  const cellPathsRef = useRef<Map<string, string>>(new Map());
 
   // Mélange stable pour la session d'overlay — attend brièvement le cache TMDB si besoin
   const [sessionWallPaths, setSessionWallPaths] = useState<string[]>([]);
@@ -604,9 +682,12 @@ const TonightPickOverlay = ({
                           {col.map((path, pi) => (
                             <WallPosterCell
                               key={`${ci}-${pi}-${path}`}
+                              cellId={`${ci}-${pi}`}
                               path={path}
                               isSpot={path === highlightedPath}
                               spotFilter={spotFilterRef.current}
+                              cellPathsRef={cellPathsRef}
+                              pool={shuffledWallPaths}
                             />
                           ))}
                         </div>
