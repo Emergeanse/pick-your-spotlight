@@ -6,7 +6,7 @@ import { clearRevealIntent, type RevealIntent, peekForReveal, consumeForReveal, 
 import { toast } from "sonner";
 import { Sparkles, WandSparkles, Clapperboard, ChevronRight, Flame, Eye, Coffee, Heart, Shuffle, Home, Users, Crown, Star } from "lucide-react";
 
-import { ALL_PLATFORMS } from "@/lib/platforms";
+import { ALL_PLATFORMS, PLATFORM_FAMILIES, PLATFORM_LABEL_MAP, PLATFORM_LOGO_PATH_MAP } from "@/lib/platforms";
 import type { Movie, MovieDetail } from "@/lib/tmdb";
 import type { VoiceSearchFilters } from "./VoiceChat";
 import { getTrendingMovies, getBackdropUrl, getWatchProviders, getMovieDetails } from "@/lib/tmdb";
@@ -181,10 +181,6 @@ const LOADING_MESSAGES = [
   "Ça cogite sévère de mon côté !",
 ];
 
-const PLATFORM_LABELS: Record<number, string> = {
-  8: "Netflix", 119: "Amazon Prime", 337: "Disney+",
-  381: "Canal+", 56: "Paramount+", 350: "Apple TV+", 234: "OCS",
-};
 
 const rnd = <T,>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
 
@@ -208,7 +204,7 @@ function buildPersonalizedLoadingMessages({
   const g2 = topGenres[1];
   const genreStr = g2 ? `${g1} & ${g2}` : g1;
   const typeStr = mediaType === "tv" ? rnd(["série", "émission"]) : rnd(["film", "long métrage"]);
-  const platformNames = platformIds.map((id) => PLATFORM_LABELS[id]).filter(Boolean).slice(0, 2).join(" et ");
+  const platformNames = platformIds.map((id) => PLATFORM_LABEL_MAP[id]).filter(Boolean).slice(0, 2).join(" et ");
   const likedTitle = likedTitles.length > 0 ? likedTitles[Math.floor(Math.random() * likedTitles.length)] : null;
 
   return [
@@ -816,96 +812,27 @@ const HomeScreen = ({
   const canGoNext = tonightPickIndex < tonightPool.length - 1;
   const tonightAllVisited = tonightSeenMovieIds.size >= tonightPool.length && tonightPool.length > 0;
 
-  const PLATFORM_FAMILIES_CLIENT: Record<number, number[]> = {
-    381: [381, 538, 685, 193, 1754, 2285],
-    119: [119, 1024, 10, 2100],
-    8:   [8, 1796],
-    337: [337],
-    56:  [56, 531, 582, 2303],
-    236: [236, 531, 582, 2303],
-    384: [384, 1899, 1825],
-    1899: [1899, 1825],
-    35:  [35],
-    234: [234],
-    11:  [11],
-    1967: [1967],
-    350: [350],
-    147: [147],
-    415: [415],
-    310: [310],
-    513: [513],
-    300: [300],
-    2601: [2601],
-    193: [193],
-  };
-
-  const PLATFORM_LABELS_CLIENT: Record<number, string> = {
-    8: "Netflix", 1796: "Netflix",
-    119: "Amazon Prime", 1024: "Amazon Prime", 10: "Amazon Prime", 2100: "Amazon",
-    337: "Disney+",
-    381: "Canal+", 538: "Canal+ Cinéma", 685: "Canal+ Séries", 193: "Canal+ Box Office", 1754: "myCanal", 2285: "Cine+",
-    56: "Paramount+", 236: "Paramount+", 531: "Paramount+", 582: "Paramount+", 2303: "Paramount+",
-    384: "Max", 1899: "Max", 1825: "Max",
-    350: "Apple TV+",
-    35: "Rakuten TV",
-    234: "Arte",
-    11: "MUBI",
-    1967: "Molotov TV",
-    147: "M6+",
-    415: "ADN",
-    310: "LaCinetek",
-    513: "Shadowz",
-    300: "Pluto TV",
-    2601: "Pathé Home",
-    2077: "Universciné",
-  };
-
-  const PLATFORM_LOGO_PATHS_CLIENT: Record<number, string> = {
-    8:    "/pbpMk2JmcoNnQwx5JGpXngfoWtp.jpg", 1796: "/pbpMk2JmcoNnQwx5JGpXngfoWtp.jpg",
-    119:  "/pvske1MyAoymrs5bguRfVqYiM9a.jpg",  1024: "/pvske1MyAoymrs5bguRfVqYiM9a.jpg",
-    10:   "/pvske1MyAoymrs5bguRfVqYiM9a.jpg",  2100: "/pvske1MyAoymrs5bguRfVqYiM9a.jpg",
-    337:  "/97yvRBw1GzX7fXprcF80er19ot.jpg",
-    381:  "/geOzgeKZWpZC3lymAVEHVIk3X0q.jpg",  538: "/geOzgeKZWpZC3lymAVEHVIk3X0q.jpg",
-    685:  "/geOzgeKZWpZC3lymAVEHVIk3X0q.jpg",  193: "/geOzgeKZWpZC3lymAVEHVIk3X0q.jpg",
-    1754: "/blrBF9R2ONYu04ifGkYEb3k779N.jpg",  2285: "/geOzgeKZWpZC3lymAVEHVIk3X0q.jpg",
-    56:   "/h5DcR0J2EESLitnhR8xLG1QymTE.jpg",  236: "/h5DcR0J2EESLitnhR8xLG1QymTE.jpg",
-    531:  "/h5DcR0J2EESLitnhR8xLG1QymTE.jpg",  582: "/h5DcR0J2EESLitnhR8xLG1QymTE.jpg",
-    2303: "/h5DcR0J2EESLitnhR8xLG1QymTE.jpg",
-    350:  "/mcbz1LgtErU9p4UdbZ0rG6RTWHX.jpg",
-    384:  "/bZvc9dXrXNly7cA0V4D9pR8yJwm.jpg",  1899: "/bZvc9dXrXNly7cA0V4D9pR8yJwm.jpg",
-    1825: "/bZvc9dXrXNly7cA0V4D9pR8yJwm.jpg",
-    35:   "/bZvc9dXrXNly7cA0V4D9pR8yJwm.jpg",
-    234:  "/vPZrjHe7wvALuwJEXT2kwYLi0gV.jpg",
-    11:   "/x570VpH2C9EKDf1riP83rYc5dnL.jpg",
-    1967: "/8qSG9LtUhBQIWy2Fr6fzeW7gBdd.jpg",
-    147:  "/tmYzlEKeiWStvXwC1QdpXIASpN4.jpg",
-    415:  "/w86FOwg0bbgUSHWWnjOTuEjsUvq.jpg",
-    310:  "/1syoSwH2yIskHUqeOiK9re8AMJC.jpg",
-    513:  "/qwRq7klF8EijYs7XgvxSaYd6v6w.jpg",
-    300:  "/dB8G41Q6tSL5NBisrIeqByfepBc.jpg",
-    2601: "/yvui9yFtpWHt0ZrsPelItbuTavI.jpg",
-  };
 
   const buildProvidersFromPlatformIds = (platformIds: number[]): { name: string; logo_path: string; provider_id: number }[] => {
     if (!userPlatformIds?.length) return [];
-    const expandedUserIds = new Set(userPlatformIds.flatMap((id) => PLATFORM_FAMILIES_CLIENT[id] ?? [id]));
+    const expandedUserIds = new Set(userPlatformIds.flatMap((id) => PLATFORM_FAMILIES[id] ?? [id]));
     const matched = platformIds.filter((id) => expandedUserIds.has(id));
     const seenIds = new Set<number>();
     const seenLogos = new Set<string>();
     return matched
       .filter((id) => {
-        const logo = PLATFORM_LOGO_PATHS_CLIENT[id] ?? "";
-        if (!PLATFORM_LABELS_CLIENT[id] || seenIds.has(id) || (logo && seenLogos.has(logo))) return false;
+        const logo = PLATFORM_LOGO_PATH_MAP[id] ?? "";
+        if (!PLATFORM_LABEL_MAP[id] || seenIds.has(id) || (logo && seenLogos.has(logo))) return false;
         seenIds.add(id);
         if (logo) seenLogos.add(logo);
         return true;
       })
-      .map((id) => ({ name: PLATFORM_LABELS_CLIENT[id], logo_path: PLATFORM_LOGO_PATHS_CLIENT[id] ?? "", provider_id: id }));
+      .map((id) => ({ name: PLATFORM_LABEL_MAP[id], logo_path: PLATFORM_LOGO_PATH_MAP[id] ?? "", provider_id: id }));
   };
 
   const filterProvidersByUserPlatforms = (providers: { name: string; logo_path: string; provider_id?: number }[]) => {
     if (!userPlatformIds?.length) return providers;
-    const expandedIds = new Set(userPlatformIds.flatMap((id) => PLATFORM_FAMILIES_CLIENT[id] ?? [id]));
+    const expandedIds = new Set(userPlatformIds.flatMap((id) => PLATFORM_FAMILIES[id] ?? [id]));
     const filtered = providers.filter((p) => p.provider_id != null && expandedIds.has(p.provider_id));
     return filtered.length > 0 ? filtered : providers;
   };
