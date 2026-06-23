@@ -61,6 +61,8 @@ function saveConfirmedCache(set: Set<string>) {
 }
 const confirmedPaths = loadConfirmedCache();
 const rejectedPaths = new Set<string>();
+// URLs dont le chargement image est terminé — WallPosterCell peut démarrer à loaded=true
+const loadedImageUrls = new Set<string>();
 
 // Chargement immédiat des 36 affiches de secours dans le cache navigateur.
 // S'exécute dès l'import du module (avant auth, avant toute interaction)
@@ -71,7 +73,11 @@ const rejectedPaths = new Set<string>();
     if (confirmedPaths.has(path) || rejectedPaths.has(path)) return;
     const src = `https://image.tmdb.org/t/p/${WALL_POSTER_SIZE}${path}`;
     const img = new Image();
-    img.onload = () => { confirmedPaths.add(path); saveConfirmedCache(confirmedPaths); };
+    img.onload = () => {
+      confirmedPaths.add(path);
+      loadedImageUrls.add(src);
+      saveConfirmedCache(confirmedPaths);
+    };
     img.onerror = () => rejectedPaths.add(path);
     img.src = src;
   });
@@ -119,7 +125,11 @@ function preloadPosterImages(paths: string[], size: string = WALL_POSTER_SIZE) {
     if (!src || src.endsWith("/placeholder.svg")) { rejectedPaths.add(path); return; }
     const img = new Image();
     img.decoding = "async";
-    img.onload  = () => { confirmedPaths.add(path); saveConfirmedCache(confirmedPaths); };
+    img.onload  = () => {
+      confirmedPaths.add(path);
+      loadedImageUrls.add(src);
+      saveConfirmedCache(confirmedPaths);
+    };
     img.onerror = () => rejectedPaths.add(path);
     img.src = src;
   });
@@ -156,10 +166,11 @@ function WallPosterCell({
   const [sizeIndex, setSizeIndex] = useState(0);
   const [altPath, setAltPath] = useState<string | null>(null);
   const [errorAttempts, setErrorAttempts] = useState(0);
-  const [loaded, setLoaded] = useState(false);
-  const [failed, setFailed] = useState(false);
   const activePath = altPath ?? seedPath;
   const src = getPosterUrl(activePath, WALL_POSTER_SIZES[sizeIndex]) || "";
+  // Démarrer à loaded=true si l'image est déjà dans le registre module-level
+  const [loaded, setLoaded] = useState(() => !!src && loadedImageUrls.has(src));
+  const [failed, setFailed] = useState(false);
   const cellStyle = {
     aspectRatio: "2/3" as const,
     minHeight: "5rem",
@@ -171,10 +182,11 @@ function WallPosterCell({
   };
 
   useEffect(() => {
+    const initialSrc = getPosterUrl(seedPath, WALL_POSTER_SIZES[0]) || "";
     setSizeIndex(0);
     setAltPath(null);
     setErrorAttempts(0);
-    setLoaded(false);
+    setLoaded(!!initialSrc && loadedImageUrls.has(initialSrc));
     setFailed(false);
   }, [seedPath]);
 
