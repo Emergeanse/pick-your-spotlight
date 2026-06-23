@@ -323,6 +323,44 @@ export type Database = {
         }
         Relationships: []
       }
+      event_film_feedback: {
+        Row: {
+          created_at: string | null
+          event_id: string
+          film_phrase: string | null
+          film_rating: string | null
+          id: string
+          soiree_rating: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          event_id: string
+          film_phrase?: string | null
+          film_rating?: string | null
+          id?: string
+          soiree_rating?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          event_id?: string
+          film_phrase?: string | null
+          film_rating?: string | null
+          id?: string
+          soiree_rating?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_film_feedback_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       event_participants: {
         Row: {
           created_at: string | null
@@ -857,12 +895,19 @@ export type Database = {
           match_threshold: number
           media_preference: string
           min_rating: number | null
+          onboarding_actors_proposed_ids: number[]
+          onboarding_actors_selected_ids: number[]
           onboarding_completed: boolean
+          onboarding_directors_proposed_ids: number[]
+          onboarding_directors_selected_ids: number[]
           onboarding_films_liked_ids: number[]
+          onboarding_films_progress: number
+          onboarding_films_proposed_ids: number[]
           onboarding_paused: boolean
           onboarding_skipped: boolean | null
           onboarding_step: string
           podium_film_ids: number[] | null
+          preferred_decades: number[] | null
           preferred_platforms: number[] | null
           profile_confidence: number
           ritual_enabled: boolean
@@ -898,12 +943,19 @@ export type Database = {
           match_threshold?: number
           media_preference?: string
           min_rating?: number | null
+          onboarding_actors_proposed_ids?: number[]
+          onboarding_actors_selected_ids?: number[]
           onboarding_completed?: boolean
+          onboarding_directors_proposed_ids?: number[]
+          onboarding_directors_selected_ids?: number[]
           onboarding_films_liked_ids?: number[]
+          onboarding_films_progress?: number
+          onboarding_films_proposed_ids?: number[]
           onboarding_paused?: boolean
           onboarding_skipped?: boolean | null
           onboarding_step?: string
           podium_film_ids?: number[] | null
+          preferred_decades?: number[] | null
           preferred_platforms?: number[] | null
           profile_confidence?: number
           ritual_enabled?: boolean
@@ -939,12 +991,19 @@ export type Database = {
           match_threshold?: number
           media_preference?: string
           min_rating?: number | null
+          onboarding_actors_proposed_ids?: number[]
+          onboarding_actors_selected_ids?: number[]
           onboarding_completed?: boolean
+          onboarding_directors_proposed_ids?: number[]
+          onboarding_directors_selected_ids?: number[]
           onboarding_films_liked_ids?: number[]
+          onboarding_films_progress?: number
+          onboarding_films_proposed_ids?: number[]
           onboarding_paused?: boolean
           onboarding_skipped?: boolean | null
           onboarding_step?: string
           podium_film_ids?: number[] | null
+          preferred_decades?: number[] | null
           preferred_platforms?: number[] | null
           profile_confidence?: number
           ritual_enabled?: boolean
@@ -1097,6 +1156,42 @@ export type Database = {
           status?: string
           taste_snapshot?: Json | null
           user_id?: string
+        }
+        Relationships: []
+      }
+      shared_recommendations: {
+        Row: {
+          created_at: string | null
+          id: string
+          message: string | null
+          poster_path: string | null
+          receiver_id: string
+          seen: boolean
+          sender_id: string
+          title: string
+          tmdb_id: number
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          message?: string | null
+          poster_path?: string | null
+          receiver_id: string
+          seen?: boolean
+          sender_id: string
+          title: string
+          tmdb_id: number
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          message?: string | null
+          poster_path?: string | null
+          receiver_id?: string
+          seen?: boolean
+          sender_id?: string
+          title?: string
+          tmdb_id?: number
         }
         Relationships: []
       }
