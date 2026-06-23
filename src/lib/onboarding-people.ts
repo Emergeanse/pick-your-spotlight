@@ -86,10 +86,11 @@ export const CURATED_ONBOARDING_DIRECTOR_IDS = [
 ] as const;
 
 export const ONBOARDING_PEOPLE_TARGET = 5;
-export const ONBOARDING_ACTOR_DISPLAY = 10;
-export const ONBOARDING_DIRECTOR_DISPLAY = 5;
-/** @deprecated Utiliser ONBOARDING_ACTOR_DISPLAY */
-export const ONBOARDING_PEOPLE_DISPLAY = ONBOARDING_ACTOR_DISPLAY;
+export const ONBOARDING_PEOPLE_PAGE_SIZE = 6;
+export const ONBOARDING_ACTOR_DISPLAY = ONBOARDING_PEOPLE_PAGE_SIZE;
+export const ONBOARDING_DIRECTOR_DISPLAY = ONBOARDING_PEOPLE_PAGE_SIZE;
+/** @deprecated Utiliser ONBOARDING_PEOPLE_PAGE_SIZE */
+export const ONBOARDING_PEOPLE_DISPLAY = ONBOARDING_PEOPLE_PAGE_SIZE;
 
 export type OnboardingPerson = {
   id: number;
@@ -128,6 +129,27 @@ async function fetchPeopleByIds(ids: readonly number[]): Promise<OnboardingPerso
     }));
 }
 
+async function fetchPeoplePage(
+  curatedIds: readonly number[],
+  filter: (p: OnboardingPerson) => boolean,
+  department: "Acting" | "Directing",
+  excludeIds: number[] = [],
+  limit: number,
+): Promise<OnboardingPerson[]> {
+  const excludeSet = new Set(excludeIds);
+  const filteredIds = curatedIds.filter((id) => !excludeSet.has(id));
+  const availableIds = shuffleOnboarding(filteredIds.length ? filteredIds : [...curatedIds]);
+  const fetched = await fetchPeopleByIds(availableIds);
+  let valid = fetched.filter(filter).filter((p) => !excludeSet.has(p.id));
+  if (!valid.length) valid = fetched.filter(filter);
+  const picked = pickRandomOnboarding(valid, limit);
+  return picked.map((p) => ({
+    ...p,
+    known_for_department: department,
+  }));
+}
+
+/** @deprecated Utiliser fetchOnboardingActorsPage */
 async function buildPeoplePool(
   curatedIds: readonly number[],
   filter: (p: OnboardingPerson) => boolean,
@@ -161,24 +183,40 @@ export async function fetchOnboardingPeopleByIds(
   }));
 }
 
-export async function fetchOnboardingActors(excludeIds: number[] = []): Promise<OnboardingPerson[]> {
-  return buildPeoplePool(
+export async function fetchOnboardingActorsPage(
+  excludeIds: number[] = [],
+  limit: number = ONBOARDING_PEOPLE_PAGE_SIZE,
+): Promise<OnboardingPerson[]> {
+  return fetchPeoplePage(
     CURATED_ONBOARDING_ACTOR_IDS,
     isActorPerson,
     "Acting",
     excludeIds,
-    ONBOARDING_ACTOR_DISPLAY,
+    limit,
   );
 }
 
-export async function fetchOnboardingDirectors(excludeIds: number[] = []): Promise<OnboardingPerson[]> {
-  return buildPeoplePool(
+export async function fetchOnboardingDirectorsPage(
+  excludeIds: number[] = [],
+  limit: number = ONBOARDING_PEOPLE_PAGE_SIZE,
+): Promise<OnboardingPerson[]> {
+  return fetchPeoplePage(
     CURATED_ONBOARDING_DIRECTOR_IDS,
     isDirectorPerson,
     "Directing",
     excludeIds,
-    ONBOARDING_DIRECTOR_DISPLAY,
+    limit,
   );
+}
+
+/** @deprecated Utiliser fetchOnboardingActorsPage */
+export async function fetchOnboardingActors(excludeIds: number[] = []): Promise<OnboardingPerson[]> {
+  return fetchOnboardingActorsPage(excludeIds, ONBOARDING_PEOPLE_PAGE_SIZE);
+}
+
+/** @deprecated Utiliser fetchOnboardingDirectorsPage */
+export async function fetchOnboardingDirectors(excludeIds: number[] = []): Promise<OnboardingPerson[]> {
+  return fetchOnboardingDirectorsPage(excludeIds, ONBOARDING_PEOPLE_PAGE_SIZE);
 }
 
 export function getPersonPhotoUrl(path: string | null, size = "w185"): string {

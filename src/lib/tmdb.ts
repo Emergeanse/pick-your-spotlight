@@ -74,9 +74,27 @@ function getYear(movie: Movie): string {
   return date ? date.substring(0, 4) : "";
 }
 
+function normalizePosterPath(path: string | null | undefined): string | null {
+  if (!path || typeof path !== "string") return null;
+  const trimmed = path.trim();
+  if (!trimmed || trimmed === "null" || trimmed === "undefined") return null;
+  return trimmed.startsWith("/") ? trimmed : `/${trimmed}`;
+}
+
+function hasUsablePoster(posterPath: string | null | undefined): boolean {
+  const normalized = normalizePosterPath(posterPath);
+  if (!normalized) return false;
+  return !getPosterUrl(normalized).endsWith("/placeholder.svg");
+}
+
+function hasMoviePoster(movie: Pick<Movie, "poster_path">): boolean {
+  return hasUsablePoster(movie.poster_path);
+}
+
 function getPosterUrl(path: string | null, size: string = "w500"): string {
-  if (!path) return "/placeholder.svg";
-  return `${IMG_BASE}/${size}${path}`;
+  const normalized = normalizePosterPath(path);
+  if (!normalized) return "/placeholder.svg";
+  return `${IMG_BASE}/${size}${normalized}`;
 }
 
 function getBackdropUrl(path: string | null): string {
@@ -504,4 +522,14 @@ export async function getMovieDetailsWithCredits(id: number, mediaType: string):
   return fetchFromTMDB(endpoint, { append_to_response: "credits" });
 }
 
-export { getDisplayTitle, getYear, getPosterUrl, getBackdropUrl, getMovieDetails, fetchFromTMDB };
+export {
+  getDisplayTitle,
+  getYear,
+  getPosterUrl,
+  getBackdropUrl,
+  getMovieDetails,
+  fetchFromTMDB,
+  normalizePosterPath,
+  hasUsablePoster,
+  hasMoviePoster,
+};

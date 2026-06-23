@@ -1,12 +1,13 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { motion } from "framer-motion";
-import { ArrowRight, Check, Loader2, RefreshCw } from "lucide-react";
+import { ArrowRight, Check, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { getDisplayTitle, getPosterUrl, type Movie } from "@/lib/tmdb";
+import { getDisplayTitle, getPosterUrl, hasMoviePoster, type Movie } from "@/lib/tmdb";
 import {
-  buildOnboardingFilmDisplayPool,
+  fetchOnboardingFilmPage,
   fetchMoviesByIds,
   getOnboardingFilmOriginLabel,
+  ONBOARDING_FILM_PAGE_SIZE,
   ONBOARDING_FILM_TARGET,
 } from "@/lib/onboarding-films";
 import { saveOnboardingFilmsProgress } from "@/lib/onboarding-progress";
@@ -14,7 +15,44 @@ import { setFeedback } from "@/lib/feedback";
 import { recordAcceptedRecommendation } from "@/lib/engagement";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
+import { useOnboardingInfiniteScroll } from "@/hooks/use-onboarding-infinite-scroll";
 import OnboardingStepLayout from "@/components/onboarding/OnboardingStepLayout";
+
+const POSTER_SIZES = ["w92", "w154", "w185"] as const;
+
+function OnboardingFilmPoster({
+  movie,
+  onFailed,
+}: {
+  movie: Movie;
+  onFailed: (movie: Movie) => void;
+}) {
+  const [sizeIndex, setSizeIndex] = useState(0);
+
+  useEffect(() => {
+    setSizeIndex(0);
+  }, [movie.id, movie.poster_path]);
+
+  if (!hasMoviePoster(movie)) return null;
+
+  const src = getPosterUrl(movie.poster_path, POSTER_SIZES[sizeIndex]);
+
+  return (
+    <img
+      src={src}
+      alt=""
+      className="w-full h-full object-cover"
+      referrerPolicy="no-referrer"
+      onError={() => {
+        if (sizeIndex < POSTER_SIZES.length - 1) {
+          setSizeIndex((i) => i + 1);
+          return;
+        }
+        onFailed(movie);
+      }}
+    />
+  );
+}
 
 interface OnboardingFilmTrainerProps {
   favoriteGenres: string[];
@@ -25,10 +63,6 @@ interface OnboardingFilmTrainerProps {
   onFilmsLikedIdsChange?: (ids: number[]) => void;
   onFilmsProposedIdsChange?: (ids: number[]) => void;
   onComplete: () => void;
-}
-
-function mergeProposedIds(target: Set<number>, ids: number[]) {
-  ids.forEach((id) => target.add(id));
 }
 
 export default function OnboardingFilmTrainer({
@@ -43,29 +77,28 @@ export default function OnboardingFilmTrainer({
 }: OnboardingFilmTrainerProps) {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [movies, setMovies] = useState<Movie[]>([]);
-  const [likedIds, setLikedIds] = useState<Set<number>>(new Set());
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
+  const [likedIds, setLikedIds] = useState<Set<number>>(() => new Set());
   const [saving, setSaving] = useState(false);
   const likedIdsRef = useRef(likedIds);
   likedIdsRef.current = likedIds;
-  const proposedIdsRef = useRef<Set<number>>(
-    new Set([...initialFilmsProposedIds, ...initialFilmsLikedIds]),
+  const replacingPosterRef = useRef<Set<number>>(new Set());
+
+  const initialProposed = useMemo(
+    () => [...new Set([...initialFilmsProposedIds, ...initialFilmsLikedIds])],
+    [initialFilmsLikedIds.join(","), initialFilmsProposedIds.join(",")],
   );
 
   const genresKey = favoriteGenres.join(",");
   const excludedKey = excludedGenres.join(",");
 
   const persistState = useCallback(
-    async (liked: Set<number>, proposed: Set<number>) => {
+    async (liked: Set<number>, proposed: number[]) => {
       const likedArr = [...liked];
-      const proposedArr = [...proposed];
       onFilmsProgressChange?.(likedArr.length);
       onFilmsLikedIdsChange?.(likedArr);
-      onFilmsProposedIdsChange?.(proposedArr);
+      onFilmsProposedIdsChange?.(proposed);
       try {
-        await saveOnboardingFilmsProgress(likedArr, proposedArr);
+        await saveOnboardingFilmsProgress(likedArr, proposed);
       } catch (e) {
         console.error("onboarding films progress save failed", e);
       }
@@ -73,77 +106,100 @@ export default function OnboardingFilmTrainer({
     [onFilmsProgressChange, onFilmsLikedIdsChange, onFilmsProposedIdsChange],
   );
 
-  const loadPool = useCallback(
-    async (opts?: { silent?: boolean }) => {
-      if (!opts?.silent) setLoading(true);
-      else setRefreshing(true);
-      try {
-        const excludeIds = [...proposedIdsRef.current];
-        const pool = await buildOnboardingFilmDisplayPool(favoriteGenres, excludedGenres, excludeIds);
-        mergeProposedIds(proposedIdsRef.current, pool.map((m) => m.id));
-        setMovies(pool);
-        void persistState(likedIdsRef.current, proposedIdsRef.current);
-        return pool;
-      } catch (e) {
-        console.error("onboarding film pool failed", e);
-        toast({
-          title: "Chargement impossible",
-          description: "Vérifie ta connexion et réessaie.",
-          variant: "destructive",
-        });
-        return [];
-      } finally {
-        if (!opts?.silent) setLoading(false);
-        else setRefreshing(false);
-      }
+  const fetchPage = useCallback(
+    async (excludeIds: number[]) => {
+      const page = await fetchOnboardingFilmPage(
+        favoriteGenres,
+        excludedGenres,
+        excludeIds,
+        ONBOARDING_FILM_PAGE_SIZE,
+      );
+      return page.filter(hasMoviePoster);
     },
-    [genresKey, excludedKey, toast, persistState],
+    [genresKey, excludedKey],
   );
 
-  // Chargement initial — compteur restauré, grille sans titres déjà proposés
-  useEffect(() => {
-    let cancelled = false;
-    const savedLikes = initialFilmsLikedIds.slice(0, ONBOARDING_FILM_TARGET);
-    proposedIdsRef.current = new Set([...initialFilmsProposedIds, ...savedLikes]);
-    setLoading(true);
-    setLikedIds(new Set(savedLikes));
+  const count = likedIds.size;
+  const done = count >= ONBOARDING_FILM_TARGET;
 
-    buildOnboardingFilmDisplayPool(favoriteGenres, excludedGenres, [...proposedIdsRef.current])
-      .then((pool) => {
-        if (cancelled) return;
-        mergeProposedIds(proposedIdsRef.current, pool.map((m) => m.id));
-        setMovies(pool);
-        void saveOnboardingFilmsProgress(savedLikes, [...proposedIdsRef.current]);
-      })
-      .catch((e) => {
-        console.error("onboarding film pool failed", e);
-        if (!cancelled) {
-          toast({
-            title: "Chargement impossible",
-            description: "Vérifie ta connexion et réessaie.",
-            variant: "destructive",
+  const handleProposedPersist = useCallback(
+    (proposed: number[]) => {
+      void saveOnboardingFilmsProgress([...likedIdsRef.current], proposed);
+    },
+    [],
+  );
+
+  const handleLoadError = useCallback(() => {
+    toast({
+      title: "Chargement impossible",
+      description: "Vérifie ta connexion et réessaie.",
+      variant: "destructive",
+    });
+  }, [toast]);
+
+  const {
+    items: movies,
+    loading,
+    loadingMore,
+    exhausted,
+    sentinelRef,
+    getProposedIds,
+    replaceItem,
+    reload,
+  } = useOnboardingInfiniteScroll({
+    fetchPage,
+    initialProposedIds: initialProposed,
+    pageSize: ONBOARDING_FILM_PAGE_SIZE,
+    enabled: !done,
+    onPersistProposed: handleProposedPersist,
+    onLoadError: handleLoadError,
+  });
+
+  useEffect(() => {
+    const savedLikes = initialFilmsLikedIds.slice(0, ONBOARDING_FILM_TARGET);
+    setLikedIds(new Set(savedLikes));
+    onFilmsProgressChange?.(savedLikes.length);
+  }, [genresKey, excludedKey]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const handlePosterFailed = useCallback(
+    async (failed: Movie) => {
+      if (replacingPosterRef.current.has(failed.id)) return;
+      replacingPosterRef.current.add(failed.id);
+      try {
+        const visibleIds = movies.map((m) => m.id);
+        const [replacement] = await fetchOnboardingFilmPage(
+          favoriteGenres,
+          excludedGenres,
+          [...visibleIds, failed.id],
+          1,
+        );
+        if (replacement && !visibleIds.includes(replacement.id)) {
+          replaceItem(failed.id, replacement);
+          setLikedIds((prev) => {
+            if (!prev.has(failed.id)) return prev;
+            const next = new Set(prev);
+            next.delete(failed.id);
+            return next;
           });
         }
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
+      } finally {
+        replacingPosterRef.current.delete(failed.id);
+      }
+    },
+    [movies, favoriteGenres, excludedGenres, replaceItem],
+  );
 
-    return () => { cancelled = true; };
-  }, [genresKey, excludedKey, toast]);
-
-  const handleRefresh = () => {
-    if (likedIdsRef.current.size >= ONBOARDING_FILM_TARGET) return;
-    void loadPool({ silent: true });
-  };
+  useEffect(() => {
+    movies.filter((m) => !hasMoviePoster(m)).forEach((m) => void handlePosterFailed(m));
+  }, [movies, handlePosterFailed]);
 
   const toggleLike = (movie: Movie) => {
     setLikedIds((prev) => {
       const next = new Set(prev);
       if (next.has(movie.id)) next.delete(movie.id);
       else if (next.size < ONBOARDING_FILM_TARGET) next.add(movie.id);
-      mergeProposedIds(proposedIdsRef.current, [movie.id]);
-      void persistState(next, proposedIdsRef.current);
+      void persistState(next, getProposedIds());
+      onFilmsProposedIdsChange?.(getProposedIds());
       return next;
     });
   };
@@ -161,7 +217,7 @@ export default function OnboardingFilmTrainer({
     if (selected.length < ONBOARDING_FILM_TARGET) {
       toast({
         title: "Sélection incomplète",
-        description: "Choisis 10 films ou actualise la liste pour en trouver d'autres.",
+        description: "Choisis 10 films en faisant défiler la liste.",
         variant: "destructive",
       });
       return;
@@ -180,7 +236,7 @@ export default function OnboardingFilmTrainer({
           await recordAcceptedRecommendation(user.id).catch(() => {});
         }),
       );
-      await persistState(new Set(selectedIds), proposedIdsRef.current);
+      await persistState(new Set(selectedIds), getProposedIds());
       onComplete();
     } catch (e) {
       console.error("onboarding films save failed", e);
@@ -194,31 +250,12 @@ export default function OnboardingFilmTrainer({
     }
   };
 
-  const count = likedIds.size;
-  const done = count >= ONBOARDING_FILM_TARGET;
-  const canRefresh = !loading && !done;
-
   return (
     <OnboardingStepLayout>
       <h1 className="text-2xl md:text-3xl font-serif mb-2">Quelques films pour te connaître</h1>
       <p className="text-sm text-muted-foreground font-sans mb-4 leading-relaxed">
-        10 affiches à la fois — coche celles que tu aimes. Tes choix restent comptés ; « Autres films » te propose 10 nouveaux titres.
+        Fais défiler la liste et coche les films que tu aimes. De nouveaux titres apparaissent au fil du scroll — tes choix restent comptés.
       </p>
-
-      <div className="flex items-center justify-between gap-3 mb-3">
-        <p className="text-[10px] font-sans text-foreground/40 uppercase tracking-wide">
-          {movies.length} affichés · objectif {ONBOARDING_FILM_TARGET}
-        </p>
-        <button
-          type="button"
-          onClick={handleRefresh}
-          disabled={!canRefresh || refreshing}
-          className="inline-flex items-center gap-1.5 text-[11px] font-sans font-medium text-primary/80 hover:text-primary disabled:opacity-40 disabled:pointer-events-none transition-colors"
-        >
-          <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? "animate-spin" : ""}`} />
-          {refreshing ? "Actualisation…" : "Autres films"}
-        </button>
-      </div>
 
       <div className="flex items-center gap-3 mb-4">
         <div className="h-1.5 flex-1 rounded-full bg-foreground/10 overflow-hidden">
@@ -237,57 +274,79 @@ export default function OnboardingFilmTrainer({
           <Loader2 className="w-6 h-6 animate-spin text-primary/50" />
         </div>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5 mb-6">
-          {movies.map((movie, i) => {
+        <div className="flex flex-col gap-2 mb-4">
+          {movies.map((movie) => {
             const on = likedIds.has(movie.id);
             const full = !on && count >= ONBOARDING_FILM_TARGET;
             const origin = getOnboardingFilmOriginLabel(movie.id);
-            const poster = getPosterUrl(movie.poster_path, "w342");
+            const showPoster = hasMoviePoster(movie);
             return (
               <motion.button
                 key={movie.id}
                 type="button"
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: i * 0.025 }}
-                whileTap={full ? undefined : { scale: 0.96 }}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                whileTap={full ? undefined : { scale: 0.99 }}
                 disabled={full}
                 onClick={() => toggleLike(movie)}
-                className={`relative rounded-xl overflow-hidden border text-left transition-all ${
+                className={`flex items-center gap-3 w-full rounded-xl border p-2 text-left transition-all ${
                   on
-                    ? "border-primary ring-2 ring-primary/30"
+                    ? "border-primary bg-primary/5 ring-1 ring-primary/20"
                     : full
                       ? "border-border/15 opacity-40"
-                      : "border-border/25 hover:border-primary/30"
+                      : "border-border/25 hover:border-primary/30 hover:bg-foreground/[0.02]"
                 }`}
               >
-                {poster ? (
-                  <img
-                    src={poster}
-                    alt={getDisplayTitle(movie)}
-                    className="w-full aspect-[2/3] object-cover"
-                  />
-                ) : (
-                  <div className="w-full aspect-[2/3] bg-foreground/10" />
-                )}
-                {origin && (
-                  <span className="absolute top-1 left-1 rounded-md bg-black/60 px-1 py-0.5 text-[7px] font-sans font-semibold uppercase tracking-wide text-primary/90">
-                    {origin === "Cinéma français" ? "FR" : "US"}
-                  </span>
-                )}
-                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 to-transparent px-1.5 pt-5 pb-1.5">
-                  <p className="text-[8px] font-sans font-semibold text-white leading-tight line-clamp-2">
-                    {getDisplayTitle(movie)}
-                  </p>
+                <div className="relative shrink-0 w-12 h-[4.5rem] rounded-lg overflow-hidden bg-foreground/10">
+                  {showPoster ? (
+                    <OnboardingFilmPoster movie={movie} onFailed={handlePosterFailed} />
+                  ) : null}
+                  {origin && (
+                    <span className="absolute top-0.5 left-0.5 rounded bg-black/60 px-1 text-[6px] font-sans font-semibold uppercase text-primary/90">
+                      {origin === "Cinéma français" ? "FR" : "US"}
+                    </span>
+                  )}
                 </div>
-                {on && (
-                  <span className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-primary flex items-center justify-center">
-                    <Check className="w-3 h-3 text-primary-foreground" />
-                  </span>
-                )}
+                <p className="flex-1 text-sm font-sans font-medium leading-snug line-clamp-2">
+                  {getDisplayTitle(movie)}
+                </p>
+                <span
+                  className={`shrink-0 w-8 h-8 rounded-full border-2 flex items-center justify-center transition-colors ${
+                    on
+                      ? "border-primary bg-primary text-primary-foreground"
+                      : "border-foreground/20"
+                  }`}
+                >
+                  {on ? <Check className="w-4 h-4" /> : null}
+                </span>
               </motion.button>
             );
           })}
+
+          <div ref={sentinelRef} className="h-1" aria-hidden />
+
+          {loadingMore && (
+            <div className="flex justify-center py-4">
+              <Loader2 className="w-5 h-5 animate-spin text-primary/40" />
+            </div>
+          )}
+
+          {!loadingMore && exhausted && movies.length === 0 && (
+            <div className="text-center py-8 space-y-3">
+              <p className="text-sm text-muted-foreground font-sans">
+                Impossible de charger les films pour le moment.
+              </p>
+              <Button type="button" variant="outline" size="sm" onClick={() => void reload()}>
+                Réessayer
+              </Button>
+            </div>
+          )}
+
+          {!loadingMore && exhausted && movies.length > 0 && (
+            <p className="text-center text-[11px] text-muted-foreground font-sans py-2">
+              Fin de la liste — tu peux continuer avec tes {count} choix.
+            </p>
+          )}
         </div>
       )}
 

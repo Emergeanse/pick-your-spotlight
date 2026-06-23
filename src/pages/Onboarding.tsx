@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, Loader2, Star, Sparkles, Ban } from "lucide-react";
+import { ArrowRight, Loader2, Star, Sparkles, Ban, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import pickLogo from "@/assets/pick-logo.png";
@@ -10,6 +10,7 @@ import OnboardingSoireesGuide from "@/components/onboarding/OnboardingSoireesGui
 import OnboardingPlatformStep from "@/components/onboarding/OnboardingPlatformStep";
 import OnboardingPeopleStep from "@/components/onboarding/OnboardingPeopleStep";
 import OnboardingChrome from "@/components/onboarding/OnboardingChrome";
+import OnboardingStickyFooter from "@/components/onboarding/OnboardingStickyFooter";
 import { DEFAULT_ONBOARDING_PLATFORM_IDS } from "@/lib/onboarding-platforms";
 import {
   ONBOARDING_MIN_RATING,
@@ -35,7 +36,23 @@ const ONBOARDING_GENRES = [
   "Animation", "Science-Fiction", "Horreur", "Aventure", "Mystère", "Famille",
 ];
 
+/** Exemples visuels — montrer j'aime / j'exclus avant que l'utilisateur touche aux chips. */
+const DEMO_LIKED_GENRE = "Comédie";
+const DEMO_EXCLUDED_GENRE = "Horreur";
+
 type GenreChoice = "none" | "liked" | "excluded";
+
+function hasGenreSelection(map: Map<string, GenreChoice>): boolean {
+  return [...map.values()].some((v) => v === "liked" || v === "excluded");
+}
+
+function withGenreDemosIfEmpty(map: Map<string, GenreChoice>): Map<string, GenreChoice> {
+  if (hasGenreSelection(map)) return map;
+  const next = new Map(map);
+  next.set(DEMO_LIKED_GENRE, "liked");
+  next.set(DEMO_EXCLUDED_GENRE, "excluded");
+  return next;
+}
 
 const Onboarding = () => {
   const [step, setStep] = useState<OnboardingStep>("welcome");
@@ -68,7 +85,7 @@ const Onboarding = () => {
         const map = new Map<string, GenreChoice>();
         progress.likedGenres.forEach((g) => map.set(g, "liked"));
         progress.excludedGenres.forEach((g) => map.set(g, "excluded"));
-        setGenreChoices(map);
+        setGenreChoices(withGenreDemosIfEmpty(map));
         setPlatformIds(progress.platformIds);
         setFilmsProgress(progress.filmsProgress);
         setFilmsLikedIds(progress.filmsLikedIds);
@@ -92,6 +109,11 @@ const Onboarding = () => {
   }, []);
 
   useEffect(() => { window.scrollTo(0, 0); }, [step]);
+
+  useEffect(() => {
+    if (loading || step !== "genres") return;
+    setGenreChoices((prev) => withGenreDemosIfEmpty(prev));
+  }, [step, loading]);
 
   const cycleGenre = (g: string) => {
     setGenreChoices((prev) => {
@@ -203,10 +225,18 @@ const Onboarding = () => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.45 }}
-              className="text-foreground/50 text-sm font-sans text-center max-w-sm mb-8 leading-relaxed"
+              className="text-foreground/50 text-sm font-sans text-center max-w-sm mb-2 leading-relaxed"
             >
-              Genres, plateformes, films, acteurs et réalisateurs — puis comment lancer
-              une soirée Solo ou Duo et la retrouver dans l&apos;onglet Soirées.
+              Environ <strong className="text-foreground/70 font-medium">2 minutes</strong> pour calibrer
+              tes recommandations — genres, plateformes, films et quelques visages du 7e art.
+            </motion.p>
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.5 }}
+              className="text-[11px] font-sans text-foreground/40 text-center max-w-sm mb-8"
+            >
+              Tu peux t&apos;arrêter à tout moment avec «&nbsp;Plus tard&nbsp;» et reprendre où tu en étais.
             </motion.p>
             <motion.div
               initial={{ opacity: 0, y: 10 }}
@@ -236,8 +266,9 @@ const Onboarding = () => {
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -40 }}
             transition={{ duration: 0.3 }}
-            className="flex flex-col items-center justify-start min-h-full px-5 py-4"
+            className="flex flex-col min-h-full"
           >
+            <div className="flex-1 flex flex-col items-center justify-start px-5 py-4 pb-2">
             <div className="flex items-center gap-3 mb-2 mt-2 max-w-lg w-full">
               <img src={pickLogo} alt="Pick" className="w-10 h-10 object-contain shrink-0" />
               <h1 className="text-2xl md:text-3xl font-serif">Tes genres</h1>
@@ -245,8 +276,13 @@ const Onboarding = () => {
             <p className="text-muted-foreground text-sm font-sans mb-2 text-center max-w-lg">
               Choisis ce que tu aimes — et ce que tu veux éviter.
             </p>
-            <p className="text-[10px] font-sans text-foreground/45 text-center max-w-lg mb-4 uppercase tracking-wide">
+            <p className="text-[10px] font-sans text-foreground/45 text-center max-w-lg mb-1 uppercase tracking-wide">
               1 clic = j&apos;aime · 2 clics = j&apos;exclus · 3 clics = neutre
+            </p>
+            <p className="text-[11px] font-sans text-foreground/50 text-center max-w-lg mb-4 leading-relaxed">
+              <span className="text-primary/75">{DEMO_LIKED_GENRE}</span> et{" "}
+              <span className="text-destructive/75">{DEMO_EXCLUDED_GENRE}</span> sont des exemples — adapte-les
+              ou choisis d&apos;autres genres (minimum 2 aimés).
             </p>
             <div className="flex flex-wrap gap-2 justify-center max-w-lg mb-4">
               {ONBOARDING_GENRES.map((genre) => {
@@ -265,6 +301,7 @@ const Onboarding = () => {
                           : "bg-card border-transparent text-foreground/60 hover:border-primary/20"
                     }`}
                   >
+                    {state === "liked" && <Check className="w-3 h-3 shrink-0" />}
                     {state === "excluded" && <Ban className="w-3 h-3 shrink-0" />}
                     {genre}
                   </motion.button>
@@ -282,7 +319,7 @@ const Onboarding = () => {
                 )}
               </p>
             )}
-            <div className="w-full max-w-lg mb-8 grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="w-full max-w-lg mb-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="rounded-xl border border-border/30 bg-card/60 px-4 py-3 flex items-start gap-3">
                 <Star className="w-4 h-4 text-yellow-500 shrink-0 mt-0.5" />
                 <div>
@@ -298,14 +335,18 @@ const Onboarding = () => {
                 </div>
               </div>
             </div>
-            <Button
-              variant="hero"
-              size="xl"
-              onClick={() => void goToStep("platforms")}
-              disabled={likedGenres.length < 2}
-            >
-              Continuer <ArrowRight className="w-4 h-4" />
-            </Button>
+            </div>
+            <OnboardingStickyFooter>
+              <Button
+                variant="hero"
+                size="xl"
+                className="w-full"
+                onClick={() => void goToStep("platforms")}
+                disabled={likedGenres.length < 2}
+              >
+                Continuer <ArrowRight className="w-4 h-4" />
+              </Button>
+            </OnboardingStickyFooter>
           </motion.div>
         )}
 

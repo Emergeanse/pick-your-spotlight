@@ -9,6 +9,7 @@ import {
   isLockedFreePlatform,
 } from "@/lib/onboarding-platforms";
 import OnboardingStepLayout from "@/components/onboarding/OnboardingStepLayout";
+import OnboardingStickyFooter from "@/components/onboarding/OnboardingStickyFooter";
 
 interface OnboardingPlatformStepProps {
   initialPlatformIds?: number[];
@@ -53,8 +54,9 @@ export default function OnboardingPlatformStep({
   const optionalSelectedCount = optional.filter((p) => selected.includes(p.id)).length;
 
   return (
-    <OnboardingStepLayout>
-      <h1 className="text-2xl md:text-3xl font-serif mb-2">Où tu regardes ?</h1>
+    <div className="flex flex-col min-h-full">
+      <OnboardingStepLayout>
+        <h1 className="text-2xl md:text-3xl font-serif mb-2">Où tu regardes ?</h1>
       <p className="text-sm text-muted-foreground font-sans mb-5 leading-relaxed">
         Pick ne te propose que des films disponibles sur tes plateformes.
       </p>
@@ -121,15 +123,17 @@ export default function OnboardingPlatformStep({
         </div>
       </div>
 
-      <p className="text-[10px] font-sans text-muted-foreground text-center mb-6">
+      <p className="text-[10px] font-sans text-muted-foreground text-center mb-2">
         {includedFree.length} gratuit{includedFree.length > 1 ? "s" : ""}
         {optionalSelectedCount > 0 && ` + ${optionalSelectedCount} abonnement${optionalSelectedCount > 1 ? "s" : ""}`}
         {" · "}modifiable dans ton profil
       </p>
-
-      <Button variant="hero" size="xl" className="w-full" onClick={() => onContinue(ensureOnboardingPlatforms(selected))}>
-        Continuer <ArrowRight className="w-4 h-4" />
-      </Button>
-    </OnboardingStepLayout>
+      </OnboardingStepLayout>
+      <OnboardingStickyFooter>
+        <Button variant="hero" size="xl" className="w-full" onClick={() => onContinue(ensureOnboardingPlatforms(selected))}>
+          Continuer <ArrowRight className="w-4 h-4" />
+        </Button>
+      </OnboardingStickyFooter>
+    </div>
   );
 }

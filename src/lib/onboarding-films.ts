@@ -1,10 +1,12 @@
 import { fetchFromTMDB } from "@/lib/tmdb-proxy-client";
-import type { Movie } from "@/lib/tmdb";
+import { hasMoviePoster, type Movie } from "@/lib/tmdb";
 import { pickRandomOnboarding, shuffleOnboarding } from "@/lib/onboarding-random";
 
 export const ONBOARDING_FILM_TARGET = 10;
-/** Affiches proposées par tirage — toujours 10 titres non encore aimés. */
-export const ONBOARDING_FILM_DISPLAY = 10;
+/** Titres chargés par page au scroll. */
+export const ONBOARDING_FILM_PAGE_SIZE = 8;
+/** @deprecated Utiliser ONBOARDING_FILM_PAGE_SIZE */
+export const ONBOARDING_FILM_DISPLAY = ONBOARDING_FILM_PAGE_SIZE;
 export const CURATED_FR_TMDB_IDS = [
   // Comédies & succès populaires
   77338, 9919, 82676, 10376, 7345, 9423, 82587, 9326, 11318, 140078, 344871,
@@ -62,7 +64,7 @@ async function fetchCuratedByIds(ids: readonly number[]): Promise<Movie[]> {
   return results
     .filter((r): r is PromiseFulfilledResult<any> => r.status === "fulfilled")
     .map((r) => r.value as Movie)
-    .filter((m) => m?.id && m.poster_path);
+    .filter((m) => m?.id && hasMoviePoster(m));
 }
 
 function interleaveFrEn(fr: Movie[], en: Movie[]): Movie[] {
@@ -87,10 +89,21 @@ function weightedShuffle(movies: Movie[], likedGenreIds: number[]): Movie[] {
 }
 
 /** Pool curaté complet — classiques FR/US, léger bonus genres aimés. */
+let candidatePoolCache: { key: string; pool: Movie[]; at: number } | null = null;
+const CANDIDATE_POOL_TTL_MS = 10 * 60 * 1000;
+
 async function buildCandidatePool(
   favoriteGenres: string[] = [],
   excludedGenres: string[] = [],
 ): Promise<Movie[]> {
+  const cacheKey = `${favoriteGenres.join(",")}|${excludedGenres.join(",")}`;
+  if (
+    candidatePoolCache?.key === cacheKey &&
+    Date.now() - candidatePoolCache.at < CANDIDATE_POOL_TTL_MS
+  ) {
+    return candidatePoolCache.pool;
+  }
+
   const likedIds = genreNamesToIds(favoriteGenres);
   const excludedIds = genreNamesToIds(excludedGenres);
 
@@ -103,7 +116,31 @@ async function buildCandidatePool(
   const frPool = weightedShuffle(candidates.filter((m) => FR_ID_SET.has(m.id)), likedIds);
   const enPool = weightedShuffle(candidates.filter((m) => EN_ID_SET.has(m.id)), likedIds);
 
-  return interleaveFrEn(frPool, enPool);
+  const pool = interleaveFrEn(frPool, enPool).filter(hasMoviePoster);
+  candidatePoolCache = { key: cacheKey, pool, at: Date.now() };
+  return pool;
+}
+
+function pickFilmsWithPosters(available: Movie[], limit: number): Movie[] {
+  const eligible = available.filter(hasMoviePoster);
+  if (!eligible.length || limit <= 0) return [];
+
+  const picked: Movie[] = [];
+  const usedIds = new Set<number>();
+  let pool = eligible;
+
+  while (picked.length < limit && pool.length > 0) {
+    const batch = pickRandomOnboarding(pool, limit - picked.length);
+    if (!batch.length) break;
+    for (const movie of batch) {
+      if (usedIds.has(movie.id) || !hasMoviePoster(movie)) continue;
+      picked.push(movie);
+      usedIds.add(movie.id);
+    }
+    pool = pool.filter((m) => !usedIds.has(m.id));
+  }
+
+  return picked;
 }
 
 export async function fetchMoviesByIds(ids: number[]): Promise<Movie[]> {
@@ -112,16 +149,29 @@ export async function fetchMoviesByIds(ids: number[]): Promise<Movie[]> {
   return fetchCuratedByIds(unique);
 }
 
+/** Page suivante — exclut les ids déjà proposés (likés ou passés). */
+export async function fetchOnboardingFilmPage(
+  favoriteGenres: string[] = [],
+  excludedGenres: string[] = [],
+  excludeIds: number[] = [],
+  limit: number = ONBOARDING_FILM_PAGE_SIZE,
+): Promise<Movie[]> {
+  const candidates = await buildCandidatePool(favoriteGenres, excludedGenres);
+  if (!candidates.length) return [];
+  const excludeSet = new Set(excludeIds);
+  let available = candidates.filter((m) => !excludeSet.has(m.id));
+  // Pool épuisé (trop de propositions sauvegardées) — recycler le catalogue
+  if (!available.length) available = candidates;
+  return pickFilmsWithPosters(available, limit);
+}
+
 /** Tirage aléatoire — exclut les ids déjà proposés (likés ou passés). */
 export async function buildOnboardingFilmDisplayPool(
   favoriteGenres: string[] = [],
   excludedGenres: string[] = [],
   excludeIds: number[] = [],
 ): Promise<Movie[]> {
-  const candidates = await buildCandidatePool(favoriteGenres, excludedGenres);
-  const excludeSet = new Set(excludeIds);
-  const available = candidates.filter((m) => !excludeSet.has(m.id));
-  return pickRandomOnboarding(available, ONBOARDING_FILM_DISPLAY);
+  return fetchOnboardingFilmPage(favoriteGenres, excludedGenres, excludeIds, ONBOARDING_FILM_PAGE_SIZE);
 }
 
 /** @deprecated Utiliser buildOnboardingFilmDisplayPool */
@@ -135,5 +185,19 @@ export async function buildOnboardingFilmPool(
 export function getOnboardingFilmOriginLabel(movieId: number): string | null {
   if (FR_ID_SET.has(movieId)) return "Cinéma français";
   if (EN_ID_SET.has(movieId)) return "Blockbuster US";
+  return null;
+}
+
+/** Remplace un film dont l'affiche est absente ou en erreur — jamais déjà visible à l'écran. */
+export function pickOnboardingFilmReplacement(
+  pool: Movie[],
+  visibleIds: Iterable<number>,
+  failedId: number,
+): Movie | null {
+  const used = new Set(visibleIds);
+  used.add(failedId);
+  for (const movie of pool) {
+    if (!used.has(movie.id) && hasMoviePoster(movie)) return movie;
+  }
   return null;
 }
