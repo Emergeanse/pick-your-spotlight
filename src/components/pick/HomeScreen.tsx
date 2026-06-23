@@ -1786,6 +1786,16 @@ const HomeScreen = ({
       }
     } catch (e) {
       console.error(e);
+      if (isMountedRef.current && !isStale()) {
+        const errMsg = e instanceof Error ? e.message : String(e);
+        const isRateLimit = errMsg.includes("429") || errMsg.includes("Trop de requêtes");
+        toast.error(
+          isRateLimit
+            ? "Trop de requêtes — réessaie dans quelques secondes."
+            : "Impossible de charger des recommandations. Vérifie ta connexion et réessaie.",
+          { duration: 6000 }
+        );
+      }
     } finally {
       clearInterval(msgInterval);
       msgIntervalRef.current = null;
