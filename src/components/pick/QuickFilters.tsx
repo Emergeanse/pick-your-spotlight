@@ -40,14 +40,8 @@ interface QuickFiltersProps {
 
 const QuickFilters = ({ filters, onFiltersChange, profileDefaults }: QuickFiltersProps) => {
   const [open, setOpen] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
-
-  useEffect(() => {
-    const check = () => setIsMobile(window.innerWidth < 768);
-    check();
-    window.addEventListener("resize", check);
-    return () => window.removeEventListener("resize", check);
-  }, []);
+  // L'app est toujours dans un conteneur ≤420px → toujours bottom-sheet
+  const isMobile = true;
 
   const hasActiveFilters = filters.mediaType !== "both" || filters.maxDuration !== null || filters.matchThreshold !== 80 || filters.minRating !== 0 || filters.recommendationCount !== 3;
 
