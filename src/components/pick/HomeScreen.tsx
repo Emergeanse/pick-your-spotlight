@@ -2225,7 +2225,7 @@ const HomeScreen = ({
         </div>
       </motion.div>
 
-      <div className="relative z-10 h-full overflow-y-auto overscroll-y-contain touch-[pan-y_pinch-zoom] scrollbar-hide pb-[calc(9rem+env(safe-area-inset-bottom))]">
+      <div className="relative z-10 h-full overflow-y-auto overscroll-y-contain touch-[pan-y_pinch-zoom] scrollbar-hide pb-[calc(6rem+env(safe-area-inset-bottom))]">
         {/* ─── Hero ─── */}
         <section className="relative pt-[calc(13rem+env(safe-area-inset-top))] pb-2 px-5 md:px-8">
           <motion.div
@@ -2438,51 +2438,46 @@ const HomeScreen = ({
           minRating={userMinRating}
           excludedGenres={userExcludedGenres}
         />
-      </div>
 
-      {/* ─── Notification "Partagé avec vous" ─── */}
-      <AnimatePresence>
-        {showShareNotif && !shareNotifDismissed && !tonightLoading && !tonightPick && !showFindChoice && (
-          <motion.div
-            initial={{ opacity: 0, y: 32 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 24 }}
-            transition={{ type: "spring", stiffness: 340, damping: 30 }}
-            className="fixed inset-x-3 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-50"
-          >
-            <div
-              className="flex items-center gap-3 px-3.5 py-2.5 rounded-2xl border border-primary/20 bg-primary/[0.06] backdrop-blur-md"
-              onClick={() => { setShowShareNotif(false); setShowFindChoice(true); }}
-              role="button"
-              tabIndex={0}
+        {/* ─── Notification "Partagé avec vous" — dans le flow scrollable ─── */}
+        <AnimatePresence>
+          {showShareNotif && !shareNotifDismissed && !tonightLoading && !tonightPick && !showFindChoice && (
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 8 }}
+              transition={{ type: "spring", stiffness: 340, damping: 30 }}
+              className="mx-5 mt-3"
             >
-              {/* Avatar Sophie */}
-              <div className="flex-shrink-0 w-9 h-9 rounded-full bg-gradient-to-br from-rose-400 via-pink-500 to-violet-500 border-2 border-[hsl(240_18%_6%)] flex items-center justify-center shadow-[0_0_14px_hsl(330_70%_60%/0.45)]">
-                <span className="text-[15px] leading-none">🌸</span>
-              </div>
-
-              {/* Texte */}
-              <div className="flex-1 min-w-0">
-                <p className="text-[12px] font-sans font-semibold text-foreground leading-tight">
-                  Partagé <span className="text-foreground/50 font-normal">avec vous</span>
-                </p>
-                <p className="text-[10.5px] font-sans text-foreground/50 leading-tight mt-0.5 truncate">
-                  <span className="text-foreground/75 font-medium">Sophie</span> pense que tu aimerais ce film
-                </p>
-              </div>
-
-              {/* CTA */}
-              <button
-                onClick={(e) => { e.stopPropagation(); setShowShareNotif(false); setShowFindChoice(true); }}
-                className="flex-shrink-0 flex items-center gap-1 px-3 py-1.5 rounded-xl border border-primary/25 bg-primary/10 text-primary text-[12px] font-sans font-semibold"
+              <div
+                className="flex items-center gap-3 px-3.5 py-2.5 rounded-2xl border border-primary/20 bg-primary/[0.06] backdrop-blur-md"
+                onClick={() => { setShowShareNotif(false); setShowFindChoice(true); }}
+                role="button"
+                tabIndex={0}
               >
-                Voir
-                <ChevronRight className="w-3 h-3" />
-              </button>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+                <div className="flex-shrink-0 w-9 h-9 rounded-full bg-gradient-to-br from-rose-400 via-pink-500 to-violet-500 border-2 border-[hsl(240_18%_6%)] flex items-center justify-center shadow-[0_0_14px_hsl(330_70%_60%/0.45)]">
+                  <span className="text-[15px] leading-none">🌸</span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[12px] font-sans font-semibold text-foreground leading-tight">
+                    Partagé <span className="text-foreground/50 font-normal">avec vous</span>
+                  </p>
+                  <p className="text-[10.5px] font-sans text-foreground/50 leading-tight mt-0.5 truncate">
+                    <span className="text-foreground/75 font-medium">Sophie</span> pense que tu aimerais ce film
+                  </p>
+                </div>
+                <button
+                  onClick={(e) => { e.stopPropagation(); setShowShareNotif(false); setShowFindChoice(true); }}
+                  className="flex-shrink-0 flex items-center gap-1 px-3 py-1.5 rounded-xl border border-primary/25 bg-primary/10 text-primary text-[12px] font-sans font-semibold"
+                >
+                  Voir
+                  <ChevronRight className="w-3 h-3" />
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
 
       <HomeScreenChoiceModal
         open={showFindChoice}
