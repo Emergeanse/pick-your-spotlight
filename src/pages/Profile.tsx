@@ -242,6 +242,7 @@ const Profile = () => {
   // ── Préférences ──
   const [profile, setProfile] = useState<any>(null);
   const [selectedPlatforms, setSelectedPlatforms] = useState<number[]>([]);
+  const [selectedDecades, setSelectedDecades] = useState<number[]>([]);
   const [minRating, setMinRating] = useState<number>(0);
   const [matchThreshold, setMatchThreshold] = useState<number>(80);
   const [defaultMediaType, setDefaultMediaType] = useState<"both" | "movie" | "tv">("both");
@@ -303,6 +304,7 @@ const Profile = () => {
       const { data } = await supabase.from("profiles").select("*").eq("id", user.id).single();
       setProfile(data);
       setSelectedPlatforms(data?.preferred_platforms || []);
+      setSelectedDecades((data as any)?.preferred_decades || []);
       setMinRating((data as any)?.min_rating || 5);
       setMatchThreshold((data as any)?.match_threshold ?? 80);
       setDefaultMediaType(((data as any)?.default_media_type as any) || "both");
@@ -410,6 +412,7 @@ const Profile = () => {
       const { error } = await supabase.from("profiles").update({
         preferred_platforms: selectedPlatforms,
         excluded_platforms: [],
+        preferred_decades: selectedDecades,
         min_rating: minRating,
         match_threshold: matchThreshold,
         default_media_type: defaultMediaType,
@@ -431,6 +434,7 @@ const Profile = () => {
       setProfile((prev: any) => ({
         ...prev,
         preferred_platforms: [...selectedPlatforms],
+        preferred_decades: [...selectedDecades],
         min_rating: minRating,
         match_threshold: matchThreshold,
         default_media_type: defaultMediaType,
@@ -444,6 +448,7 @@ const Profile = () => {
 
   const hasChanges = profile && (
     JSON.stringify([...selectedPlatforms].sort()) !== JSON.stringify([...(profile.preferred_platforms || [])].sort()) ||
+    JSON.stringify([...selectedDecades].sort((a, b) => a - b)) !== JSON.stringify([...((profile as any)?.preferred_decades || [])].sort((a: number, b: number) => a - b)) ||
     minRating !== ((profile as any)?.min_rating || 0) ||
     matchThreshold !== ((profile as any)?.match_threshold ?? 80) ||
     defaultMediaType !== ((profile as any)?.default_media_type || "both") ||
@@ -609,6 +614,47 @@ const Profile = () => {
                   <span className={`absolute bottom-1.5 inset-x-1 font-sans text-[11px] font-semibold leading-tight text-center ${active ? "text-white" : "text-white/70"}`}>
                     {opt.label}
                   </span>
+                </button>
+              );
+            })}
+          </div>
+        </section>
+
+        {/* ════════════════════════════════
+            2b. DÉCENNIES PRÉFÉRÉES
+        ════════════════════════════════ */}
+        <section className="rounded-2xl bg-card/80 backdrop-blur-sm border border-border/15 p-4">
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-primary/30 text-sm">📅</span>
+            <h2 className="text-xs font-sans font-semibold text-foreground uppercase tracking-widest">Époques préférées</h2>
+          </div>
+          <p className="text-[11px] text-muted-foreground font-sans mb-3">
+            Aucune sélection = toutes les époques. Peut être surchargé lors d'une recherche.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {([
+              { label: "Avant 1970", value: 1900 },
+              { label: "Années 70",  value: 1970 },
+              { label: "Années 80",  value: 1980 },
+              { label: "Années 90",  value: 1990 },
+              { label: "Années 2000", value: 2000 },
+              { label: "Années 2010", value: 2010 },
+              { label: "Depuis 2020", value: 2020 },
+            ] as const).map((d) => {
+              const active = selectedDecades.includes(d.value);
+              return (
+                <button
+                  key={d.value}
+                  onClick={() => setSelectedDecades((prev) =>
+                    active ? prev.filter((x) => x !== d.value) : [...prev, d.value]
+                  )}
+                  className={`px-3 py-1.5 rounded-full text-xs font-sans font-medium border transition-all ${
+                    active
+                      ? "bg-primary/15 border-primary/50 text-primary"
+                      : "bg-transparent border-border/20 text-foreground/50 hover:border-border/40 hover:text-foreground/70"
+                  }`}
+                >
+                  {d.label}
                 </button>
               );
             })}

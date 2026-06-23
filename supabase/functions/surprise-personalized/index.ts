@@ -192,6 +192,24 @@ serve(async (req) => {
       }
     }
 
+    // Préférence décennie : lecture profil (utilisée si voiceDecade absent)
+    let profileDecades: number[] = [];
+    if (userId && SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) {
+      try {
+        const sbAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+        const { data: profileRow } = await sbAdmin
+          .from("profiles")
+          .select("preferred_decades")
+          .eq("id", userId)
+          .maybeSingle();
+        if (Array.isArray((profileRow as any)?.preferred_decades)) {
+          profileDecades = (profileRow as any).preferred_decades.filter((d: any) => typeof d === "number");
+        }
+      } catch (e) {
+        console.warn("[SP] preferred_decades fetch failed:", e);
+      }
+    }
+
     const normalizedExcludeIds = [
       ...new Set([
         // likedMovies intentionnellement absent : les films likés restent dans le pool
@@ -794,7 +812,7 @@ serve(async (req) => {
         }
       }
 
-      // Post-filtre voiceDecade : même logique que voiceGenres
+      // Post-filtre voiceDecade : priorité absolue (demande explicite)
       if (voiceDecade !== null) {
         const decadeMatching = voiceEligible.filter((c: any) => {
           const year = parseInt(c.year || "0");
@@ -805,6 +823,20 @@ serve(async (req) => {
           voiceEligible = decadeMatching;
         } else {
           console.log(`[SP] Post-filtre voiceDecade [${voiceDecade}s]: ${decadeMatching.length} films seulement — pool complet conservé`);
+        }
+      } else if (profileDecades.length > 0) {
+        // Post-filtre profil décennies : préférence soft (pas de voiceDecade)
+        const decadeMatching = voiceEligible.filter((c: any) => {
+          const year = parseInt(c.year || "0");
+          if (!year) return true; // si pas d'année connue, on garde
+          return profileDecades.some((d: number) => year >= d && year <= d + 9);
+        });
+        const threshold = Math.min(8, Math.ceil(requestedCount * 1.5));
+        if (decadeMatching.length >= threshold) {
+          console.log(`[SP] Post-filtre profileDecades [${profileDecades.join(",")}]: ${decadeMatching.length}/${voiceEligible.length} films retenus`);
+          voiceEligible = decadeMatching;
+        } else {
+          console.log(`[SP] Post-filtre profileDecades: ${decadeMatching.length} films seulement — pool complet conservé`);
         }
       }
 
