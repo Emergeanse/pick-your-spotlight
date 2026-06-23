@@ -14,13 +14,13 @@
 
 | Couche            | Outil                                | Fichiers                                                              | État local (22/06)                         |
 | ----------------- | ------------------------------------ | --------------------------------------------------------------------- | ------------------------------------------ |
-| **TNR unitaires** | Vitest                               | `event-reveal`, `recommendation-non-regression`, `movie-interactions` | **32/32 OK**                               |
+| **TNR unitaires** | Vitest                               | `event-reveal`, `recommendation-non-regression`, `movie-interactions`, `tonight-poster-wall`, `onboarding-initiation` | **60/60 OK**                               |
 | **Smoke rapide**  | build + Vitest + Playwright (`auth`) | `npm run test:smoke`                                                  | build + unit OK · E2E si Chromium installé |
 | **Smoke complet** | + 5 specs E2E                        | `npm run test:smoke:full`                                             | requiert `.env.test` + Playwright          |
 | **CI GitHub**     | Actions sur `main` + PR              | `.github/workflows/ci.yml`                                            | unit + tsc sur PR · E2E sur push `main`    |
 
 
-**E2E Playwright (32 scénarios)** : `auth`, `navigation`, `pipeline`, `reveal`, `cinema`, `soirees`, `onboarding` (smoke 3/3) — mocks edge functions pour pipeline/révéler.
+**E2E Playwright (33 scénarios)** : `auth`, `navigation`, `pipeline` (+ carrousel affiches), `reveal`, `cinema`, `soirees`, `onboarding` (smoke 3/3) — mocks edge functions pour pipeline/révéler.
 
 **Non automatisé** : onboarding complet (films/acteurs/réalisateurs), duo/invite, TMDB proxy prod, création soirée bout-en-bout.
 
@@ -194,7 +194,7 @@ cd pick-your-spotlight
 npm ci
 npx playwright install chromium          # une fois par machine
 
-npm run test:unit                        # TNR rapides (32 tests)
+npm run test:unit                        # TNR rapides (60 tests)
 npm run test:smoke                       # build + unit + auth E2E public
 # npm run test:smoke:full                # + pipeline, reveal, cinema, soirees (nécessite .env.test)
 
@@ -254,9 +254,11 @@ npm run dev                              # puis checklist manuelle (SMOKE_TESTS.
 | Suite                                   | Tests | Statut                      | Inclus smoke ?                     |
 | --------------------------------------- | ----- | --------------------------- | ---------------------------------- |
 | `event-reveal.test.ts`                  | 11    | ✅                           | Oui (`test:smoke`)                 |
+| `tonight-poster-wall.test.ts`           | 13    | ✅                           | Non (via `test:unit`)              |
+| `onboarding-initiation.test.ts`         | 15    | ✅                           | Non (via `test:unit`)              |
 | `recommendation-non-regression.test.ts` | 12    | ✅                           | Non (via `test:unit`)              |
 | `movie-interactions.test.tsx`           | 9     | ✅                           | Non (via `test:unit`)              |
-| E2E Playwright                          | 29    | ⚠️ credentials + Playwright | Partiel (`test:smoke` = 4 publics) |
+| E2E Playwright                          | 33    | ⚠️ credentials + Playwright | Partiel (`test:smoke` = 4 publics) |
 
 
 **Dette** : `reveal.spec.ts` / `soirees.spec.ts` skip souvent si compte test sans soirée adaptée → tâche seed (1.6).
@@ -332,7 +334,7 @@ npm run dev                              # puis checklist manuelle (SMOKE_TESTS.
 
 ## Prochaine action recommandée — Sprint A
 
-1. **TNR unit** — `npm run test:unit` (32 tests, ~10 s)
+1. **TNR unit** — `npm run test:unit` (60 tests, ~10 s)
 2. **Smoke auto** — `npx playwright install chromium` puis `npm run test:smoke`
 3. **0.3 manuel** — checklist §3 ([SMOKE_TESTS.md](SMOKE_TESTS.md)), dont onboarding initiatique
 4. **0.2** — Déployer edge functions + migrations onboarding si prod ≠ repo

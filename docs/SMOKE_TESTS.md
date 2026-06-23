@@ -117,10 +117,10 @@ Risque : incompatibilité binaire si la révision source ne correspond pas au ru
 | Couche | Fichiers | Credentials |
 |--------|----------|-------------|
 | Build | `vite build` | — |
-| Unit | `event-reveal.test.ts` (11 tests) | — |
+| Unit | `event-reveal.test.ts` (11 tests), `tonight-poster-wall.test.ts` (13 tests) | — |
 | E2E public | `auth.spec.ts` (garde `/app` → auth) | Non |
 
-> Les **32 tests Vitest** complets : `npm run test:unit` (ajoute reco + movie-interactions).
+> Les **60 tests Vitest** complets : `npm run test:unit` (reco + movie-interactions + mur d'affiches + onboarding).
 
 ### Ce que couvre `test:smoke:full`
 
@@ -146,7 +146,7 @@ Cocher dans `BACKLOG.md` ou ici après chaque session.
 | # | Action | Résultat attendu | E2E |
 |---|--------|------------------|-----|
 | 1 | Ouvrir modal « Ce soir » / FAB | Modal choix visible | `pipeline.spec` |
-| 2 | « Laisse-moi te surprendre » | **Overlay noir immédiat** (< 500 ms), pas de flash accueil | `pipeline.spec` |
+| 2 | « Laisse-moi te surprendre » | **Overlay noir immédiat** (< 500 ms), carrousel d'affiches visible | `pipeline.spec` |
 | 3 | Attendre fin reco | 1–3 films proposés, affiches TMDB | Manuel (prod) |
 | 4 | Confirmer un film | `ResultScreen`, actions like/dislike | Manuel |
 
@@ -180,7 +180,7 @@ Cocher dans `BACKLOG.md` ou ici après chaque session.
 | # | Action | Résultat attendu | E2E |
 |---|--------|------------------|-----|
 | 1 | Détail soirée → « Révéler » | Navigation `/app`, **pas de flash accueil** | `reveal.spec` |
-| 2 | Pendant chargement | Mur d'affiches / messages, fond noir opaque | Manuel |
+| 2 | Pendant chargement | Mur d'affiches (4 colonnes, posters TMDB) / messages, fond noir opaque | `pipeline.spec` |
 | 3 | Résultat | Films proposés ; mood/genres/media de la soirée pris en compte | Manuel |
 | 4 | Confirmer | `final_pick_*` mis à jour sur la soirée | Manuel |
 | 5 | Mode `timed` avant l'heure | Compte à rebours, bouton Révéler masqué | Manuel |
@@ -206,6 +206,7 @@ Appeler depuis l'app connectée — vérifier pas de 500 :
 Auth / routes       │  —   │    ✅    │    ✅    │   ✅   │
 Navigation tabs     │  —   │    ✅    │    ✅    │   ✅   │
 Pipeline surprise   │  —   │    ✅    │    ⚠️    │   ✅   │
+Mur d'affiches reco │  ✅  │    ✅    │    ⚠️    │   ✅   │
 Révéler soirée      │  ✅  │    ✅    │    ⚠️    │   ✅   │
 Biblio              │  —   │    ✅    │    ✅    │   ✅   │
 Liste soirées       │  —   │    ✅    │    ✅    │   ✅   │

@@ -7,6 +7,7 @@
  *   3. L'overlay de chargement s'affiche (tonightLoading=true) dès le clic
  *   4. Le résultat final est affiché (flip card ou affiche)
  *   5. RÉGRESSION — pas de flash de la page d'accueil avant l'overlay
+ *   6. RÉGRESSION — carrousel d'affiches (4 colonnes `.pick-wall-col`) pendant le chargement
  *
  * Variables d'environnement requises :
  *   E2E_TEST_EMAIL / E2E_TEST_PASSWORD
@@ -106,6 +107,39 @@ test.describe('Pipeline de recommandation', () => {
 
     // Si l'overlay met plus de 500ms, il y a un problème (flash probable)
     expect(elapsed).toBeLessThan(500);
+  });
+
+  test('RÉGRESSION — le carrousel d\'affiches remplit l\'overlay pendant le chargement', async ({ page }) => {
+    const fab = page.locator('button').filter({ hasText: /pick|ce soir|choisir/i }).or(
+      page.locator('[class*="fab"]')
+    ).first();
+    const hasFab = await fab.isVisible({ timeout: 3_000 }).catch(() => false);
+    if (hasFab) {
+      await fab.click();
+      await page.waitForTimeout(300);
+    }
+
+    const surprendreBtn = page.getByRole('button', { name: /laisse.moi te surprendre|laissez-moi/i }).first();
+    const hasBtn = await surprendreBtn.isVisible({ timeout: 5_000 }).catch(() => false);
+    if (!hasBtn) {
+      test.skip();
+      return;
+    }
+
+    await surprendreBtn.click();
+
+    await expect(page.locator('.fixed.inset-0.z-50.bg-black').first()).toBeVisible({ timeout: 2_000 });
+
+    const wallCols = page.locator('.pick-wall-col');
+    await expect(wallCols).toHaveCount(4, { timeout: 3_000 });
+
+    const posters = wallCols.locator('img');
+    const posterCount = await posters.count();
+    expect(posterCount).toBeGreaterThan(8);
+
+    const src = await posters.first().getAttribute('src');
+    expect(src).toBeTruthy();
+    expect(src).not.toContain('placeholder');
   });
 
   test('le pipeline affiche un résultat après "Laisse moi te surprendre"', async ({ page }) => {
