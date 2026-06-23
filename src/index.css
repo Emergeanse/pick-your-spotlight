@@ -311,3 +311,12 @@
 .cinematic-ring-secondary {
   animation: cinematicBreathe 5s ease-in-out infinite reverse;
 }
+
+/* Masquer toutes les scrollbars — app mobile-first, jamais de barre visible */
+*::-webkit-scrollbar {
+  display: none;
+}
+* {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
