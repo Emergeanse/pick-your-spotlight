@@ -1,7 +1,7 @@
 # Backlog Pick — suivi équipe
 
 > **Référence unique** pour prioriser, assigner et suivre l'avancement alpha → beta.  
-> Dernière mise à jour : **22 juin 2026** (audit TNR + refonte onboarding)
+> Dernière mise à jour : **24 juin 2026** (intégration audit technique Claude Code)
 
 ---
 
@@ -12,7 +12,7 @@
 ### Ce qui existe aujourd'hui
 
 
-| Couche            | Outil                                | Fichiers                                                              | État local (22/06)                         |
+| Couche            | Outil                                | Fichiers                                                              | État local (24/06)                         |
 | ----------------- | ------------------------------------ | --------------------------------------------------------------------- | ------------------------------------------ |
 | **TNR unitaires** | Vitest                               | `event-reveal`, `recommendation-non-regression`, `movie-interactions`, `tonight-poster-wall`, `onboarding-initiation` | **60/60 OK**                               |
 | **Smoke rapide**  | build + Vitest + Playwright (`auth`) | `npm run test:smoke`                                                  | build + unit OK · E2E si Chromium installé |
@@ -23,6 +23,8 @@
 **E2E Playwright (33 scénarios)** : `auth`, `navigation`, `pipeline` (+ carrousel affiches), `reveal`, `cinema`, `soirees`, `onboarding` (smoke 3/3) — mocks edge functions pour pipeline/révéler.
 
 **Non automatisé** : onboarding complet (films/acteurs/réalisateurs), duo/invite, TMDB proxy prod, création soirée bout-en-bout.
+
+**Gap audit (→ 1.19)** : pas encore de tests unitaires sur `taste-engine.ts` ni `recommendation-batch.ts` — objectif **70 % couverture `src/lib/`** avant refactor pipeline reco.
 
 ### Lancer les premiers TNR (ordre recommandé)
 
@@ -81,7 +83,7 @@ Exécuter dans Supabase SQL Editor (idempotent) :
 
 `supabase/migrations/20260622180000_onboarding_migrations_verify.sql`
 
-Inclut : `onboarding_step`, `onboarding_paused`, films (`progress`, `liked_ids`, `proposed_ids`), personnes (`actors_`*, `directors_*`).
+Inclut : `onboarding_step`, `onboarding_paused`, films (`progress`, `liked_ids`, `proposed_ids`), personnes (`actors_*`, `directors_*`).
 
 ---
 
@@ -121,7 +123,7 @@ Inclut : `onboarding_step`, `onboarding_paused`, films (`progress`, `liked_ids`,
 
 ---
 
-## Sprint actif — **A** (focus équipe)
+## Sprint actif — **A** (clôture alpha)
 
 **Sprint A — « Ça marche chez nous »** · alpha interne · semaine du 22 juin 2026
 
@@ -149,16 +151,89 @@ Valider que l'app alpha est utilisable de bout en bout : smoke tests OK, edge fu
 - [ ] Checklist manuelle 0.3 cochée (au moins une passe équipe)
 - [ ] README à jour (1.11)
 
-### Sprints suivants (pas maintenant)
+---
+
+## Prochain sprint — **B** (produit) + **Tech 1** (audit)
+
+> **Ordre recommandé** : clôturer Sprint A (0.3, 1.11) **puis** enchaîner Sprint B produit. Le **Sprint Tech 1** peut démarrer en parallèle limité dès que A est stable (pas de gros refactor reco sans **1.19**).
+
+### Sprint B — « Testeurs heureux » (produit · beta fermée)
 
 
-| Sprint | Thème            | Tâches                             |
-| ------ | ---------------- | ---------------------------------- |
-| B      | Testeurs heureux | 1.3–1.6, **1.16**, seed compte E2E |
-| C      | Social fiable    | 1.7–1.8, 1.10, 1.12–1.13           |
+| #   | ID   | Tâche                                                            | Effort | Statut | Notes                                      |
+| --- | ---- | ---------------------------------------------------------------- | ------ | ------ | ------------------------------------------ |
+| 1   | 1.3  | Marquer « Bientôt » (Duo, options soirée)                        | S      | `todo` | `DuoPage`, `CreateEventPage`               |
+| 2   | 1.16 | Secret `TMDB_API_KEY` Supabase + rotation (**2.2**)              | S      | `todo` | **Avant** ouverture beta testeurs externes |
+| 3   | 1.6  | Soirées bout-en-bout (création → invite → révélation)            | L      | `in_progress` | Seed compte E2E · `soirees` / `reveal` |
+| 4   | 1.5  | Rappeler / forcer onboarding incomplet                           | M      | `in_progress` | Parcours 8 étapes · E2E films/acteurs manquant |
+| 5   | 1.10 | E2E onboarding initiatique (films, acteurs, réalisateurs)        | M      | `in_progress` | Smoke 3/3 OK · reste parcours complet      |
+
+
+### Sprint Tech 1 — « Fondations code » (audit juin 2026)
+
+| #   | ID   | Tâche (audit)                                      | Effort | Priorité audit | Dépendances                          |
+| --- | ---- | -------------------------------------------------- | ------ | -------------- | ------------------------------------ |
+| 1   | 1.17 | Logger centralisé — remplacer `console.log` prod   | S      | 🔴             | Aucune                               |
+| 2   | 1.18 | Centraliser logique plateformes (`platforms.ts`)   | M      | 🔴             | Aucune                               |
+| 3   | 2.5  | Extraire hooks `HomeScreen` (~2700 lignes)         | L      | 🔴             | Préférer après **1.17** (logs propres) |
+
+
+**Règle audit** : ne pas refactorer le pipeline reco (hooks HomeScreen profonds, splits overlay) **sans** tests **1.19** en place.
+
+### Sprints suivants (planifiés)
+
+
+| Sprint    | Thème              | Tâches clés                                              |
+| --------- | ------------------ | -------------------------------------------------------- |
+| B         | Testeurs heureux   | 1.3–1.6, **1.16**, seed compte E2E, **1.10**             |
+| Tech 2    | Qualité & perf     | **1.19** tests lib · **1.20** context · **1.4** erreurs · **1.21** cache |
+| C         | Social fiable      | 1.7–1.8, 1.12–1.13, **1.10b**                            |
+| Tech 3    | Découpe & a11y     | **2.10** splits · **2.11** aria-labels · **1.22** zod    |
 
 
 > **En parallèle alpha** (hors clôture Sprint A) : **1.6** soirées, correctifs UX — déjà **1.14** / **1.15** faits.
+
+---
+
+## Audit technique (juin 2026)
+
+> Synthèse audit Claude Code · croisée avec le backlog existant. Les IDs backlog priment ; la colonne **Audit** est la référence d'origine.
+
+### 🔴 Critique
+
+
+| Audit | ID backlog | Tâche                                                                 | Effort | Statut | Lien existant                          |
+| ----- | ---------- | --------------------------------------------------------------------- | ------ | ------ | -------------------------------------- |
+| #1    | **2.5**    | `HomeScreen.tsx` (~2700 l.) → hooks `useRecommendationEngine`, `useProfileLoader`, `useTonightMovieState` | L      | `todo` | P2 · était ~2300 l.                    |
+| #2    | **1.17**   | 50+ `console.log` en prod → `src/lib/logger.ts` (niveaux, no-op prod) | S      | `todo` | Nouveau                                |
+| #3    | **1.18**   | Logique plateformes dupliquée 4× → `src/lib/platforms.ts` + edge `_shared` | M      | `todo` | Nouveau                                |
+| #4    | **1.19**   | Tests unitaires `taste-engine.ts`, `recommendation-batch.ts` — objectif **70 % `src/lib/`** | L      | `todo` | Complète TNR (60 tests actuels) · [SMOKE_TESTS.md](SMOKE_TESTS.md) §6 |
+| #5    | **2.11**   | `aria-label` sur boutons icônes (sans texte visible)                  | M      | `todo` | Complète **2.9** a11y                  |
+
+
+### 🟠 Important
+
+
+| Audit | ID backlog | Tâche                                              | Effort | Statut | Lien existant                |
+| ----- | ---------- | -------------------------------------------------- | ------ | ------ | ---------------------------- |
+| #6    | **1.20**   | `TonightPickOverlay` (~30 props) → `TonightPickContext` | M      | `todo` | Bloqué par **1.19** si touch pipeline |
+| #7    | **1.21**   | Cache profil `localStorage` (TTL, invalidation)    | S      | `todo` | Nouveau                      |
+| #8    | **1.4**    | Erreurs pipeline reco : toast + retry              | S–M    | `todo` | Déjà P1 « messages d'erreur » |
+| #9    | **2.10**   | Découper `ResultScreen` + `TonightPickOverlay` (>1000 l. chacun) | L      | `todo` | Complète **3.2**             |
+| #10   | **1.22**   | Validation `localStorage` (schémas zod)            | S      | `todo` | Couplé à **1.21**            |
+
+
+### 🟡 Backlog / dette (P3)
+
+
+| Sujet audit              | ID backlog | Notes                                      |
+| ------------------------ | ---------- | ------------------------------------------ |
+| Réduire types `any`      | **3.7**    | Fichiers lib + composants pick             |
+| `React.memo` composants lourds | **3.8** | Après splits **2.10**                      |
+| Skeleton loaders         | **3.9**    | Reco, biblio, profil                       |
+| Regénérer types Supabase | **3.10**   | `supabase gen types typescript`            |
+| Preload batch affiches TMDB | **3.11** | Mur d'affiches, carrousel                  |
+| Rotation clé API TMDB    | **2.2** / **1.16** | Déjà backlog · avant beta testeurs   |
 
 ---
 
@@ -218,7 +293,7 @@ npm run dev                              # puis checklist manuelle (SMOKE_TESTS.
 | 1.1 | Clarifier Pick+ dans l'UI (alpha = gratuit)                     | S      | `done`        | —     | `isPremium = true` temporaire dans `use-pick-plus.ts`                                 |
 | 1.2 | Assouplir limites freemium en alpha                             | S      | `done`        | —     | Idem — paywall « Bientôt » encore visible sur `/app/pick-plus`                        |
 | 1.3 | Marquer explicitement « Bientôt » (groupes Duo, options soirée) | S      | `todo`        | —     | `DuoPage`, `CreateEventPage`, `HomeScreenChoiceModal`                                 |
-| 1.4 | Messages d'erreur clairs si TMDB / edge function down           | M      | `todo`        | —     | `tmdb-proxy-client.ts`, écrans reco                                                   |
+| 1.4 | Messages d'erreur clairs si TMDB / edge function down           | M      | `todo`        | —     | Audit #8 · toast + retry pipeline · `tmdb-proxy-client.ts`, écrans reco               |
 | 1.5 | Rappeler / forcer onboarding incomplet                          | M      | `in_progress` | —     | Parcours initiatique refondu (8 étapes) · redirect partiel depuis `/app` · E2E absent |
 
 
@@ -234,16 +309,29 @@ npm run dev                              # puis checklist manuelle (SMOKE_TESTS.
 | 1.8  | Vérifier notifications (ami, soirée, duo)                        | M      | `todo`        | —     | `lib/notifications.ts`                                                                |
 
 
+### Qualité code (audit)
+
+
+| ID    | Tâche                                                      | Effort | Statut | Owner | Notes                                                                                                   |
+| ----- | ---------------------------------------------------------- | ------ | ------ | ----- | ------------------------------------------------------------------------------------------------------- |
+| 1.17  | Logger centralisé (`src/lib/logger.ts`)                    | S      | `todo` | —     | Audit #2 · remplacer 50+ `console.log` · Sprint Tech 1                                                  |
+| 1.18  | Centraliser plateformes (`platforms.ts` + edge `_shared`)  | M      | `todo` | —     | Audit #3 · 4 duplications · Sprint Tech 1                                                               |
+| 1.19  | Tests unitaires `taste-engine` + `recommendation-batch`    | L      | `todo` | —     | Audit #4 · objectif 70 % `src/lib/` · **prérequis** refactor reco · Sprint Tech 2                       |
+| 1.20  | `TonightPickContext` (réduire props overlay)               | M      | `todo` | —     | Audit #6 · après **1.19** · Sprint Tech 2                                                               |
+| 1.21  | Cache profil `localStorage`                                | S      | `todo` | —     | Audit #7 · Sprint Tech 2                                                                                |
+| 1.22  | Validation `localStorage` (zod)                            | S      | `todo` | —     | Audit #10 · couplé **1.21** · Sprint Tech 3                                                             |
+
+
 ### Qualité & docs
 
 
 | ID    | Tâche                                                      | Effort | Statut | Owner | Notes                                                                                                   |
 | ----- | ---------------------------------------------------------- | ------ | ------ | ----- | ------------------------------------------------------------------------------------------------------- |
 | 1.16  | Secret `TMDB_API_KEY` Supabase + rotation clé projet       | S      | `todo` | —     | **Avant beta testeurs externes** — `npx supabase secrets set TMDB_API_KEY=...` · lien **2.2**           |
-| 1.9   | CI GitHub Actions : Vitest + tsc + E2E Playwright          | M      | `done` | —     | `.github/workflows/ci.yml` · unit + lint sur PR · E2E sur push `main` · secrets `E2E_TEST_`* à vérifier |
+| 1.9   | CI GitHub Actions : Vitest + tsc + E2E Playwright          | M      | `done` | —     | `.github/workflows/ci.yml` · unit + lint sur PR · E2E sur push `main` · secrets `E2E_TEST_*` à vérifier |
 | 1.10  | E2E Playwright — onboarding initiatique                    | M      | `in_progress` | —     | Smoke `onboarding.spec.ts` **3/3 OK** · reste films (10 likes), acteurs, réalisateurs |
 | 1.10b | E2E Playwright — création soirée complète                  | M      | `todo` | —     | Wizard 3 étapes + invite · complète `soirees.spec.ts`                                                   |
-| 1.11  | README projet (install, `.env`, secrets Supabase)          | S      | `todo` | —     | Remplacer template Lovable                                                                              |
+| 1.11  | README projet (install, `.env`, secrets Supabase)          | S      | `todo` | —     | Remplacer template Lovable · clôture Sprint A                                                           |
 | 1.12  | Retirer `ADMIN_EMAILS` du client → rôle serveur uniquement | S      | `todo` | —     | `hooks/use-admin.ts`                                                                                    |
 | 1.13  | Restreindre `find-user-by-email` (amis + rate limit)       | M      | `todo` | —     | Edge function                                                                                           |
 
@@ -258,6 +346,8 @@ npm run dev                              # puis checklist manuelle (SMOKE_TESTS.
 | `onboarding-initiation.test.ts`         | 15    | ✅                           | Non (via `test:unit`)              |
 | `recommendation-non-regression.test.ts` | 12    | ✅                           | Non (via `test:unit`)              |
 | `movie-interactions.test.tsx`           | 9     | ✅                           | Non (via `test:unit`)              |
+| `taste-engine.test.ts`                  | —     | ❌ manquant                  | — · **1.19**                       |
+| `recommendation-batch.test.ts`          | —     | ❌ manquant                  | — · **1.19**                       |
 | E2E Playwright                          | 33    | ⚠️ credentials + Playwright | Partiel (`test:smoke` = 4 publics) |
 
 
@@ -266,17 +356,19 @@ npm run dev                              # puis checklist manuelle (SMOKE_TESTS.
 ## P2 — Avant beta publique
 
 
-| ID  | Tâche                                                 | Effort | Statut | Owner | Notes                                                 |
-| --- | ----------------------------------------------------- | ------ | ------ | ----- | ----------------------------------------------------- |
-| 2.1 | Pick+ : Stripe **ou** gratuit prolongé explicite      | L      | `todo` | —     | Gating codé, paiement absent                          |
-| 2.2 | Rotation / compte TMDB « projet »                     | S      | `todo` | —     | Couplé à **1.16** — avant beta testeurs, pas en alpha |
-| 2.3 | Attribution TMDB (logo + mention légale)              | S      | `todo` | —     | Obligatoire TMDB en prod                              |
-| 2.4 | Pick Together groupe : finaliser ou retirer de la nav | L      | `todo` | —     | `/app/pick-together` → redirect `/app`                |
-| 2.5 | Refactor `HomeScreen.tsx` (~2300 lignes)              | XL     | `todo` | —     | Maintenabilité                                        |
-| 2.6 | Monitoring erreurs (Sentry ou équivalent)             | M      | `todo` | —     | Edge + frontend                                       |
-| 2.7 | CGU + politique de confidentialité                    | M      | `todo` | —     | Comptes réels                                         |
-| 2.8 | Perf reco : timeouts UX, métriques `engineMeta`       | M      | `todo` | —     | `surprise-personalized`                               |
-| 2.9 | Accessibilité mobile (safe areas, voix)               | M      | `todo` | —     |                                                       |
+| ID   | Tâche                                                 | Effort | Statut | Owner | Notes                                                 |
+| ---- | ----------------------------------------------------- | ------ | ------ | ----- | ----------------------------------------------------- |
+| 2.1  | Pick+ : Stripe **ou** gratuit prolongé explicite      | L      | `todo` | —     | Gating codé, paiement absent                          |
+| 2.2  | Rotation / compte TMDB « projet »                     | S      | `todo` | —     | Couplé à **1.16** — avant beta testeurs, pas en alpha |
+| 2.3  | Attribution TMDB (logo + mention légale)              | S      | `todo` | —     | Obligatoire TMDB en prod                              |
+| 2.4  | Pick Together groupe : finaliser ou retirer de la nav | L      | `todo` | —     | `/app/pick-together` → redirect `/app`                |
+| 2.5  | Refactor `HomeScreen.tsx` — extraction hooks          | L      | `todo` | —     | Audit #1 · ~2700 l. · Sprint Tech 1                   |
+| 2.6  | Monitoring erreurs (Sentry ou équivalent)             | M      | `todo` | —     | Edge + frontend                                       |
+| 2.7  | CGU + politique de confidentialité                    | M      | `todo` | —     | Comptes réels                                         |
+| 2.8  | Perf reco : timeouts UX, métriques `engineMeta`       | M      | `todo` | —     | `surprise-personalized`                               |
+| 2.9  | Accessibilité mobile (safe areas, voix)               | M      | `todo` | —     | Complété par **2.11** (aria-labels)                   |
+| 2.10 | Découper `ResultScreen` + `TonightPickOverlay`        | L      | `todo` | —     | Audit #9 · >1000 l. chacun · Sprint Tech 3            |
+| 2.11 | `aria-label` boutons icônes                           | M      | `todo` | —     | Audit #5 · Sprint Tech 3                              |
 
 
 ---
@@ -284,14 +376,19 @@ npm run dev                              # puis checklist manuelle (SMOKE_TESTS.
 ## P3 — Plus tard / dette
 
 
-| ID  | Tâche                                           | Statut | Notes                        |
-| --- | ----------------------------------------------- | ------ | ---------------------------- |
-| 3.1 | Groupes Duo (au-delà du duo à 2)                | `todo` | UI « Bientôt » déjà présente |
-| 3.2 | Découper `Profile.tsx`, `surprise-personalized` | `todo` |                              |
-| 3.3 | Un seul lockfile (npm vs bun)                   | `todo` |                              |
-| 3.4 | Choisir une licence                             | `todo` |                              |
-| 3.5 | Internationalisation (au-delà du FR)            | `todo` |                              |
-| 3.6 | Purge historique Git si passage en public       | `todo` | Si secrets ont été commités  |
+| ID   | Tâche                                           | Statut | Notes                        |
+| ---- | ----------------------------------------------- | ------ | ---------------------------- |
+| 3.1  | Groupes Duo (au-delà du duo à 2)                | `todo` | UI « Bientôt » déjà présente |
+| 3.2  | Découper `Profile.tsx`, `surprise-personalized` | `todo` | Complété par **2.10**        |
+| 3.3  | Un seul lockfile (npm vs bun)                   | `todo` |                              |
+| 3.4  | Choisir une licence                             | `todo` |                              |
+| 3.5  | Internationalisation (au-delà du FR)            | `todo` |                              |
+| 3.6  | Purge historique Git si passage en public       | `todo` | Si secrets ont été commités  |
+| 3.7  | Réduire types `any` (lib + pick)                | `todo` | Audit backlog                |
+| 3.8  | `React.memo` composants lourds                  | `todo` | Après **2.10**               |
+| 3.9  | Skeleton loaders (reco, biblio, profil)         | `todo` | Audit backlog                |
+| 3.10 | Regénérer types Supabase (`gen types`)          | `todo` | Audit backlog                |
+| 3.11 | Preload batch affiches TMDB                     | `todo` | Mur d'affiches, carrousel    |
 
 
 ---
@@ -301,7 +398,7 @@ npm run dev                              # puis checklist manuelle (SMOKE_TESTS.
 
 | Zone                   | Maturité      | Routes / fichiers clés                                                  |
 | ---------------------- | ------------- | ----------------------------------------------------------------------- |
-| Onboarding initiatique | Alpha avancée | `/onboarding`, `OnboardingFilmTrainer`, migrations `onboarding_films_`* |
+| Onboarding initiatique | Alpha avancée | `/onboarding`, `OnboardingFilmTrainer`, migrations `onboarding_films_*` |
 | Reco personnalisée     | Alpha avancée | `/app`, `surprise-personalized`, `HomeScreen`                           |
 | Profil & bibliothèque  | Beta          | `/app/profile`, `/app/my-cinema`, `taste-engine.ts`                     |
 | Soirées                | Beta          | `/app/soirees`, `CreateEventPage`, `EventDetailPage`                    |
@@ -319,7 +416,8 @@ npm run dev                              # puis checklist manuelle (SMOKE_TESTS.
 
 | Date       | Qui | Changement                                                                                                                                              |
 | ---------- | --- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 2026-06-22 | —   | Audit TNR : 32 tests Vitest OK · CI documentée (1.9 `done`) · section [TNR & smoke](#tnr--smoke--état-et-lancement) · 1.10 scindé (onboarding / soirée) |
+| 2026-06-24 | —   | Intégration audit technique Claude Code : IDs **1.17–1.22**, **2.10–2.11**, **3.7–3.11** · sprints Tech 1–3 · section [Prochain sprint](#prochain-sprint--b-produit--tech-1-audit) |
+| 2026-06-22 | —   | Audit TNR : 60 tests Vitest OK · CI documentée (1.9 `done`) · section [TNR & smoke](#tnr--smoke--état-et-lancement) · 1.10 scindé (onboarding / soirée) |
 | 2026-06-22 | —   | Refonte onboarding initiatique poussée sur `main` (films, acteurs, pools élargis, migrations SQL)                                                       |
 | 2026-06-22 | —   | Sprint A recentré : 0.3 → 0.2 → 1.11 · 0.1 hors scope alpha                                                                                             |
 | 2026-06-22 | —   | Création backlog + audit fonctionnel                                                                                                                    |
@@ -328,11 +426,11 @@ npm run dev                              # puis checklist manuelle (SMOKE_TESTS.
 | 2026-06-22 | —   | Script `scripts/deploy-edge-functions.ps1` ajouté                                                                                                       |
 
 
-
-
 ---
 
-## Prochaine action recommandée — Sprint A
+## Prochaine action recommandée
+
+### Immédiat — clôturer Sprint A
 
 1. **TNR unit** — `npm run test:unit` (60 tests, ~10 s)
 2. **Smoke auto** — `npx playwright install chromium` puis `npm run test:smoke`
@@ -340,4 +438,17 @@ npm run dev                              # puis checklist manuelle (SMOKE_TESTS.
 4. **0.2** — Déployer edge functions + migrations onboarding si prod ≠ repo
 5. **1.11** — README install + commandes dev/test
 
-*Secret TMDB : **1.16**, uniquement avant beta testeurs.*
+### Ensuite — Sprint B (produit)
+
+1. **1.16** — Secret TMDB avant tout testeur externe
+2. **1.6** — Seed compte E2E + soirées stables
+3. **1.10** — E2E onboarding complet (films, acteurs, réalisateurs)
+
+### En parallèle (si capacité) — Sprint Tech 1
+
+1. **1.17** — Logger (`S`)
+2. **1.18** — Plateformes centralisées (`M`)
+3. **2.5** — Hooks HomeScreen (`L`) — sans toucher pipeline reco profond
+
+*Secret TMDB : **1.16**, uniquement avant beta testeurs.*  
+*Refactor pipeline reco : **bloqué** tant que **1.19** (tests lib) n'est pas `done`.*

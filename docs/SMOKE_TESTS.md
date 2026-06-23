@@ -245,6 +245,7 @@ Duo / invite ami    │  —   │    —     │    —     │   ✅   │
 | 1.10b | E2E création soirée complète |
 | 1.6 | Seed compte test (soirée non révélée pour `reveal.spec.ts`) |
 | 1.16 | Secret TMDB avant beta testeurs externes |
+| **1.19** | **Tests unitaires `taste-engine.ts` + `recommendation-batch.ts`** — objectif 70 % couverture `src/lib/` (audit juin 2026). Prérequis avant refactor pipeline reco ; complète les 60 TNR actuels. Voir [BACKLOG.md](BACKLOG.md) § Audit technique. |
 
 ---
 
