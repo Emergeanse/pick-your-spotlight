@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { getPosterUrl } from "@/lib/tmdb";
-import { getOrCreateCatalogItem } from "@/lib/catalog";
+import { setFeedback } from "@/lib/feedback";
 import { toast } from "sonner";
 
 export type SoireeRating = "memorable" | "good" | "meh";
@@ -80,14 +80,18 @@ export default function PostSoireeFlow({ event, onClose, onComplete }: Props) {
   // Charge tous les amis acceptés dès le montage
   useEffect(() => {
     if (!user) return;
-    setLoadingFriends(true);
-    supabase
-      .from("friendships" as any)
-      .select("requester_id, addressee_id, status")
-      .or(`requester_id.eq.${user.id},addressee_id.eq.${user.id}`)
-      .eq("status", "accepted")
-      .then(async ({ data: friendships }) => {
-        if (!friendships?.length) { setLoadingFriends(false); return; }
+
+    const loadFriends = async () => {
+      setLoadingFriends(true);
+      try {
+        const { data: friendships } = await supabase
+          .from("friendships" as any)
+          .select("requester_id, addressee_id, status")
+          .or(`requester_id.eq.${user.id},addressee_id.eq.${user.id}`)
+          .eq("status", "accepted");
+
+        if (!friendships?.length) return;
+
         const otherIds = (friendships as any[]).map((f: any) =>
           f.requester_id === user.id ? f.addressee_id : f.requester_id,
         );
@@ -95,7 +99,7 @@ export default function PostSoireeFlow({ event, onClose, onComplete }: Props) {
           .from("profiles" as any)
           .select("id, display_name, avatar_url")
           .in("id", otherIds);
-        const participantIds = new Set(event.participants.map((p) => p.id));
+
         const list: Friend[] = (profiles ?? []).map((p: any) => ({
           id: p.id,
           name: p.display_name || "Ami",
@@ -104,9 +108,12 @@ export default function PostSoireeFlow({ event, onClose, onComplete }: Props) {
         // Participants de la soirée en premier (s'ils ne sont pas déjà dans friends)
         const extras = event.participants.filter((p) => !list.find((f) => f.id === p.id));
         setFriends([...extras.map((p) => ({ id: p.id, name: p.name })), ...list]);
+      } finally {
         setLoadingFriends(false);
-      })
-      .catch(() => setLoadingFriends(false));
+      }
+    };
+
+    loadFriends().catch(() => setLoadingFriends(false));
   }, [user?.id]);
 
   const saveFeedback = async () => {
@@ -121,24 +128,18 @@ export default function PostSoireeFlow({ event, onClose, onComplete }: Props) {
         film_phrase:   filmPhrase,
       }, { onConflict: "event_id,user_id" });
 
-      // Sync vers user_item_feedback via getOrCreateCatalogItem
-      // → crée l'entrée catalog_items si elle n'existe pas encore
+      // Sync vers user_item_feedback via setFeedback
       if (event.filmTmdbId) {
-        const feedbackMap: Record<FilmRating, string> = {
-          love: "love", like: "like", not_for_me: "not_for_me",
-        };
-        const itemId = await getOrCreateCatalogItem(event.filmTmdbId, {
-          title:       event.filmTitle,
-          poster_path: event.filmPoster,
-          media_type:  "movie",
-        });
-        if (itemId) {
-          await supabase.from("user_item_feedback").upsert({
-            user_id:       user.id,
-            item_id:       itemId,
-            feedback_type: feedbackMap[filmRating],
-          }, { onConflict: "user_id,item_id,feedback_type" });
-        }
+        await setFeedback(
+          event.filmTmdbId,
+          filmRating,
+          {
+            title: event.filmTitle,
+            poster_path: event.filmPoster,
+            media_type: "movie",
+          },
+          { source: "post_soiree", context_type: "group_session" },
+        );
       }
       setDone(true);
       setTimeout(onComplete, 1200);

@@ -22,12 +22,14 @@ export function useOnboardingGate() {
     let cancelled = false;
     setChecking(true);
 
-    supabase
-      .from("profiles")
-      .select("onboarding_completed, onboarding_skipped, onboarding_paused")
-      .eq("id", user.id)
-      .single()
-      .then(({ data }) => {
+    const check = async () => {
+      try {
+        const { data } = await supabase
+          .from("profiles")
+          .select("onboarding_completed, onboarding_skipped, onboarding_paused")
+          .eq("id", user.id)
+          .single();
+
         if (cancelled) return;
         const skipped = Boolean((data as any)?.onboarding_skipped);
         const paused = Boolean((data as any)?.onboarding_paused);
@@ -35,10 +37,12 @@ export function useOnboardingGate() {
         if (data && !completed && !skipped && !paused) {
           navigate("/onboarding", { replace: true });
         }
-      })
-      .finally(() => {
+      } finally {
         if (!cancelled) setChecking(false);
-      });
+      }
+    };
+
+    check();
 
     return () => {
       cancelled = true;
