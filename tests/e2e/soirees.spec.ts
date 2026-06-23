@@ -26,10 +26,9 @@ test.describe('Page Soirées', () => {
     // Pas de redirection vers /auth
     expect(page.url()).toContain('/soirees');
     // Soit une liste, soit l'état vide — jamais un spinner indéfini
-    await page.waitForSelector(
-      '[class*="animate-spin"], button, text=Aucune soirée',
-      { timeout: 12_000 }
-    );
+    await expect(
+      page.locator('[class*="animate-spin"]').or(page.locator("button")).or(page.getByText("Aucune soirée")).first()
+    ).toBeVisible({ timeout: 12_000 });
     // Le spinner éventuel disparaît
     await page.waitForFunction(
       () => document.querySelector('[class*="animate-spin"]') === null,
