@@ -80,14 +80,18 @@ export default function PostSoireeFlow({ event, onClose, onComplete }: Props) {
   // Charge tous les amis acceptés dès le montage
   useEffect(() => {
     if (!user) return;
-    setLoadingFriends(true);
-    supabase
-      .from("friendships" as any)
-      .select("requester_id, addressee_id, status")
-      .or(`requester_id.eq.${user.id},addressee_id.eq.${user.id}`)
-      .eq("status", "accepted")
-      .then(async ({ data: friendships }) => {
-        if (!friendships?.length) { setLoadingFriends(false); return; }
+
+    const loadFriends = async () => {
+      setLoadingFriends(true);
+      try {
+        const { data: friendships } = await supabase
+          .from("friendships" as any)
+          .select("requester_id, addressee_id, status")
+          .or(`requester_id.eq.${user.id},addressee_id.eq.${user.id}`)
+          .eq("status", "accepted");
+
+        if (!friendships?.length) return;
+
         const otherIds = (friendships as any[]).map((f: any) =>
           f.requester_id === user.id ? f.addressee_id : f.requester_id,
         );
@@ -95,7 +99,7 @@ export default function PostSoireeFlow({ event, onClose, onComplete }: Props) {
           .from("profiles" as any)
           .select("id, display_name, avatar_url")
           .in("id", otherIds);
-        const participantIds = new Set(event.participants.map((p) => p.id));
+
         const list: Friend[] = (profiles ?? []).map((p: any) => ({
           id: p.id,
           name: p.display_name || "Ami",
@@ -104,9 +108,12 @@ export default function PostSoireeFlow({ event, onClose, onComplete }: Props) {
         // Participants de la soirée en premier (s'ils ne sont pas déjà dans friends)
         const extras = event.participants.filter((p) => !list.find((f) => f.id === p.id));
         setFriends([...extras.map((p) => ({ id: p.id, name: p.name })), ...list]);
+      } finally {
         setLoadingFriends(false);
-      })
-      .catch(() => setLoadingFriends(false));
+      }
+    };
+
+    loadFriends().catch(() => setLoadingFriends(false));
   }, [user?.id]);
 
   const saveFeedback = async () => {
