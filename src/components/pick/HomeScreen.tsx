@@ -409,6 +409,8 @@ const HomeScreen = ({
   const historyExcludeIdsRef = useRef<number[]>([]);
   const generateTonightPickRef = useRef<typeof generateTonightPick | null>(null);
   const activeVoiceFiltersRef = useRef<VoiceSearchFilters | null>(null);
+  // Clé de génération : incrémentée à chaque home-reset pour invalider les requêtes en cours
+  const generationKeyRef = useRef(0);
 
   useEffect(() => {
     isMountedRef.current = true;
@@ -1125,12 +1127,16 @@ const HomeScreen = ({
 
   useEffect(() => {
     const handler = () => {
+      generationKeyRef.current += 1; // invalide toutes les requêtes en cours
       setTonightPick(null);
       setTonightLoading(false);
       setFlipDetailMovie(null);
       setActiveAmbiance(null);
       setShowFindChoice(false);
       setFindChoiceDuoId(undefined);
+      setHomeBrowseOpen(false);
+      setShowTrainer(false);
+      setShowPostSoiree(false);
     };
     window.addEventListener("home-reset", handler);
     return () => window.removeEventListener("home-reset", handler);
@@ -1196,6 +1202,8 @@ const HomeScreen = ({
   const generateTonightPick = async (excludeList: number[] = rejectedIds, rejectionContext?: RejectionContext, voiceFilters?: VoiceSearchFilters | null, duoOverrides?: DuoOverrides, extraMoodContext?: string) => {
     generateTonightPickRef.current = generateTonightPick;
     // Ouvrir l'overlay immédiatement — avant tout await, dans le même batch que l'appelant
+    const genKey = ++generationKeyRef.current;
+    const isStale = () => generationKeyRef.current !== genKey;
     setTonightLoading(true);
     if (voiceFilters !== undefined) activeVoiceFiltersRef.current = voiceFilters;
     const poolIds = (chatMoviesPool || []).map((m) => m.id).filter(Number.isFinite);
@@ -1618,7 +1626,7 @@ const HomeScreen = ({
             scoreAllWithMovieMatch: true,
             ...(duoOverrides?.user1Name && { duoContext: { user1Name: duoOverrides.user1Name, user2Name: duoOverrides.user2Name ?? null } }),
             onBatchReady: (batchMovies) => {
-              if (!isMountedRef.current || firstMovieShown) return;
+              if (!isMountedRef.current || firstMovieShown || isStale()) return;
               firstMovieShown = true;
               firstMovieShownId = batchMovies[0]?.id ?? null;
               // Afficher les 3 films immédiatement avec le texte LLM (reason) comme teaser
@@ -1653,7 +1661,7 @@ const HomeScreen = ({
             },
             onFirstMovieReady: (firstMovie) => {
               // Filet de sécurité : si onBatchReady n'a pas pu s'exécuter
-              if (!isMountedRef.current || firstMovieShown) return;
+              if (!isMountedRef.current || firstMovieShown || isStale()) return;
               firstMovieShown = true;
               firstMovieShownId = firstMovie.id;
               eagerMoviesGrowing.push(firstMovie as MovieDetail);
@@ -1803,7 +1811,7 @@ const HomeScreen = ({
         }
       }
 
-      if (isMountedRef.current && movies.length > 0) {
+      if (isMountedRef.current && !isStale() && movies.length > 0) {
         setNoResultsInfo(null);
         const displayCount = quickFilters.recommendationCount || RECOMMENDATION_BATCH_SIZE;
         // Ne pas re-filtrer par watchProviders : l'edge function a déjà filtré par plateforme.
@@ -1883,7 +1891,7 @@ const HomeScreen = ({
     } finally {
       clearInterval(msgInterval);
       msgIntervalRef.current = null;
-      if (isMountedRef.current) {
+      if (isMountedRef.current && !isStale()) {
         setTonightLoading(false);
         setTonightLoadingMsg("");
       }
