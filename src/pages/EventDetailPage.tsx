@@ -326,7 +326,7 @@ const EventDetailPage = () => {
         { event: "*", schema: "public", table: "event_participants", filter: `event_id=eq.${id}` },
         () => loadParticipants(id)
       )
-      .subscribe();
+      .subscribe((_, err) => { if (err) console.warn("[event] participants realtime:", err); });
     return () => { supabase.removeChannel(channel); };
   }, [id, user]);
 
@@ -340,7 +340,7 @@ const EventDetailPage = () => {
         { event: "*", schema: "public", table: "event_votes", filter: `event_id=eq.${id}` },
         () => { void loadVoteData(id); }
       )
-      .subscribe();
+      .subscribe((_, err) => { if (err) console.warn("[event] votes realtime:", err); });
     return () => { supabase.removeChannel(channel); };
   }, [id, event?.reveal_mode, loadVoteData]);
 

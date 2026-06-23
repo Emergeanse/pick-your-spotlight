@@ -48,7 +48,7 @@ const NotificationBell = () => {
           setNotifications(prev => [payload.new as Notification, ...prev]);
         }
       )
-      .subscribe();
+      .subscribe((status, err) => { if (err) console.warn("[NotificationBell] realtime:", err); });
 
     return () => { supabase.removeChannel(channel); };
   }, [user]);

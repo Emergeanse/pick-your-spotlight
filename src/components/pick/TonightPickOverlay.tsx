@@ -81,6 +81,26 @@ function mergePosterPools(...pools: string[][]): string[] {
 // Cache module-level : chargé après authentification (proxy TMDB requiert une session)
 const lambdaCache = { paths: [] as string[], loading: false };
 
+// Chemins dont le chargement image a été confirmé (évite les cases grises)
+// Persisté dans localStorage pour survivre entre sessions (max 100 entrées)
+const CONFIRMED_CACHE_KEY = "pick_poster_confirmed_v1";
+const MAX_CONFIRMED = 100;
+function loadConfirmedCache(): Set<string> {
+  try {
+    const raw = localStorage.getItem(CONFIRMED_CACHE_KEY);
+    if (raw) return new Set(JSON.parse(raw) as string[]);
+  } catch {}
+  return new Set();
+}
+function saveConfirmedCache(set: Set<string>) {
+  try {
+    const arr = [...set].slice(-MAX_CONFIRMED);
+    localStorage.setItem(CONFIRMED_CACHE_KEY, JSON.stringify(arr));
+  } catch {}
+}
+const confirmedPaths = loadConfirmedCache();
+const rejectedPaths  = new Set<string>();
+
 /** Précharge le mur d'affiches (appeler depuis HomeScreen dès la connexion). */
 export function preloadPosterWallCache(): Promise<void> {
   return loadLambdaCache();
@@ -113,14 +133,25 @@ async function loadLambdaCache() {
 function preloadPosterImages(paths: string[], size: string = WALL_POSTER_SIZE) {
   const unique = [...new Set(paths)];
   unique.forEach((path) => {
-    for (const s of [size, "w342"]) {
-      const src = getPosterUrl(path, s);
-      if (!src || src.endsWith("/placeholder.svg")) continue;
-      const img = new Image();
-      img.decoding = "async";
-      img.src = src;
-    }
+    if (confirmedPaths.has(path) || rejectedPaths.has(path)) return;
+    const src = getPosterUrl(path, size);
+    if (!src || src.endsWith("/placeholder.svg")) { rejectedPaths.add(path); return; }
+    const img = new Image();
+    img.decoding = "async";
+    img.onload  = () => { confirmedPaths.add(path); saveConfirmedCache(confirmedPaths); };
+    img.onerror = () => rejectedPaths.add(path);
+    img.src = src;
   });
+}
+
+/** Filtre le pool en excluant les chemins connus comme invalides. */
+function filterValidPaths(paths: string[]): string[] {
+  // Si les confirmations sont trop peu nombreuses (pas encore chargé), retourner tout
+  if (confirmedPaths.size < 10) return paths.filter((p) => !rejectedPaths.has(p));
+  // Sinon : priorité aux confirmés, complète avec les non-encore-testés
+  const confirmed = paths.filter((p) => confirmedPaths.has(p));
+  const untested  = paths.filter((p) => !confirmedPaths.has(p) && !rejectedPaths.has(p));
+  return confirmed.length >= 20 ? confirmed : [...confirmed, ...untested];
 }
 
 function fallbackPathFor(path: string, attempt: number): string {
@@ -489,13 +520,14 @@ const TonightPickOverlay = ({
     return () => clearTimeout(wait);
   }, [open, posterWallPaths, sessionWallPaths.length]);
 
-  const shuffledWallPaths = sessionWallPaths.length >= 2 ? sessionWallPaths : posterWallPaths;
+  const rawWallPaths    = sessionWallPaths.length >= 2 ? sessionWallPaths : posterWallPaths;
+  const shuffledWallPaths = useMemo(() => filterValidPaths(rawWallPaths), [rawWallPaths, confirmedPaths.size, rejectedPaths.size]);
 
-  // Précharge toutes les affiches uniques du mur (évite les cases vides au scroll)
+  // Précharge toutes les affiches uniques du mur et alimente confirmedPaths/rejectedPaths
   useEffect(() => {
-    if (!open || shuffledWallPaths.length < 2) return;
-    preloadPosterImages(shuffledWallPaths, WALL_POSTER_SIZE);
-  }, [open, shuffledWallPaths]);
+    if (!open || rawWallPaths.length < 2) return;
+    preloadPosterImages(rawWallPaths, WALL_POSTER_SIZE);
+  }, [open, rawWallPaths]);
 
   // Effet "scan" : un poster aléatoire s'illumine brièvement, comme s'il était identifié
   // Ref toujours à jour sur shuffledWallPaths — évite la closure stale dans setInterval

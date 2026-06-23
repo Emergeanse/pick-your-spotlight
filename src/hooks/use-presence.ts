@@ -16,7 +16,8 @@ export function usePresenceTracker() {
       config: { presence: { key: user.id } },
     });
 
-    channel.subscribe(async (status) => {
+    channel.subscribe(async (status, err) => {
+      if (err) { console.warn("[presence] subscribe error:", err); return; }
       if (status === "SUBSCRIBED") {
         await channel.track({
           user_id: user.id,
@@ -63,7 +64,7 @@ export function useOnlineUsers(enabled: boolean) {
 
     channel
       .on("presence", { event: "sync" }, syncPresence)
-      .subscribe();
+      .subscribe((_, err) => { if (err) console.warn("[presence] online-users error:", err); });
 
     return () => {
       supabase.removeChannel(channel);
