@@ -99,7 +99,11 @@ function saveConfirmedCache(set: Set<string>) {
   } catch {}
 }
 const confirmedPaths = loadConfirmedCache();
-const rejectedPaths  = new Set<string>();
+// Pré-seeder avec les fallbacks hardcodés (chemins connus valides)
+if (confirmedPaths.size === 0) {
+  FALLBACK_POSTER_PATHS.forEach((p) => confirmedPaths.add(p));
+}
+const rejectedPaths = new Set<string>();
 
 /** Précharge le mur d'affiches (appeler depuis HomeScreen dès la connexion). */
 export function preloadPosterWallCache(): Promise<void> {
@@ -270,14 +274,19 @@ function WallPosterCell({
   }
 
   return (
-    <img
-      src={src}
-      alt=""
-      draggable={false}
-      loading="eager"
-      decoding="async"
-      onLoad={() => setLoaded(true)}
-      onError={() => {
+    <div
+      className="w-full rounded-md flex-shrink-0 select-none relative overflow-hidden bg-gradient-to-br from-primary/20 via-violet-950/30 to-black/50"
+      style={cellStyle}
+      aria-hidden
+    >
+      <img
+        src={src}
+        alt=""
+        draggable={false}
+        loading="eager"
+        decoding="async"
+        onLoad={() => setLoaded(true)}
+        onError={() => {
         setLoaded(false);
         if (sizeIndex < WALL_POSTER_SIZES.length - 1) {
           setSizeIndex((i) => i + 1);
@@ -298,9 +307,10 @@ function WallPosterCell({
         }
         setFailed(true);
       }}
-      className="w-full rounded-md object-cover flex-shrink-0 select-none bg-gradient-to-br from-primary/15 to-white/5"
-      style={{ ...cellStyle, opacity: loaded ? 1 : 0 }}
+      className="absolute inset-0 w-full h-full object-cover select-none"
+      style={{ opacity: loaded ? 1 : 0, transition: "opacity 0.3s ease-in" }}
     />
+    </div>
   );
 }
 
