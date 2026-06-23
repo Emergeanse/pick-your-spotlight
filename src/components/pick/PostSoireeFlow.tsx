@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { getPosterUrl } from "@/lib/tmdb";
-import { getOrCreateCatalogItem } from "@/lib/catalog";
+import { setFeedback } from "@/lib/feedback";
 import { toast } from "sonner";
 
 export type SoireeRating = "memorable" | "good" | "meh";
