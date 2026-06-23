@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from "react";
+import type { GenrePreferencesHandle } from "@/components/pick/GenrePreferences";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "@/hooks/use-toast";
 import {
@@ -18,6 +19,20 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/use-auth";
@@ -38,6 +53,43 @@ import profileBackground from "@/assets/profile-background.png";
 import squirrelHappy from "@/assets/Happy.png";
 import squirrelCritique from "@/assets/Critique.png";
 import squirrelExigeant from "@/assets/Exigeant.png";
+
+const DECADE_ORDER = [1900, 1970, 1980, 1990, 2000, 2010, 2020] as const;
+
+const DECADE_SHORT: Record<number, string> = {
+  1900: "avant 70",
+  1970: "70",
+  1980: "80",
+  1990: "90",
+  2000: "2000",
+  2010: "2010",
+  2020: "2020+",
+};
+
+function formatDecadesSummary(decades: number[]): string | null {
+  if (!decades.length) return null;
+  const sorted = DECADE_ORDER.filter((d) => decades.includes(d));
+  if (!sorted.length) return null;
+  if (sorted.length === 1) {
+    const d = sorted[0];
+    if (d === 1900) return "Avant 1970";
+    if (d === 2020) return "Depuis 2020";
+    if (d === 2000 || d === 2010) return `Années ${d}`;
+    return `Années ${DECADE_SHORT[d]}`;
+  }
+  const indices = sorted.map((d) => DECADE_ORDER.indexOf(d));
+  const isContiguous = indices.every((idx, i) => i === 0 || idx === indices[i - 1] + 1);
+  if (isContiguous) {
+    const first = sorted[0];
+    const last = sorted[sorted.length - 1];
+    if (first === 1900) return last === 1970 ? "Avant 1970" : `Avant années ${DECADE_SHORT[last]}`;
+    if (last === 2020) return `Depuis années ${DECADE_SHORT[first]}`;
+    const start = first === 2000 || first === 2010 ? String(first) : DECADE_SHORT[first];
+    const end = last === 2000 || last === 2010 ? String(last) : DECADE_SHORT[last];
+    return `Années ${start}–${end}`;
+  }
+  return `${sorted.length} époques`;
+}
 
 const TROPHY_CATEGORIES = [
   {
@@ -93,6 +145,59 @@ const TROPHY_CATEGORIES = [
     ],
   },
 ];
+
+type TrophyMilestoneMeta = {
+  count: number;
+  label: string;
+  icon: string;
+  categoryKey: string;
+  categoryLabel: string;
+};
+
+const TROPHY_TIER_LEVELS = [
+  { minUnlocked: 0, title: "Curieux", subtitle: "Chaque trophée raconte une histoire" },
+  { minUnlocked: 5, title: "Explorateur", subtitle: "Pick découvre ton profil" },
+  { minUnlocked: 10, title: "Passionné", subtitle: "Ta collection prend forme" },
+  { minUnlocked: 15, title: "Habitué", subtitle: "Tu maîtrises les codes du 7e art" },
+  { minUnlocked: 20, title: "Écureuil cinéphile", subtitle: "Un écureuil qui sait ce qu'il aime" },
+  { minUnlocked: 24, title: "Connaisseur", subtitle: "Plus que quelques trophées" },
+  { minUnlocked: 28, title: "Légende Pick", subtitle: "Collection complète — bravo !" },
+] as const;
+
+function flattenTrophyMilestones(): TrophyMilestoneMeta[] {
+  return TROPHY_CATEGORIES.flatMap((cat) =>
+    cat.milestones.map((m) => ({
+      ...m,
+      categoryKey: cat.key,
+      categoryLabel: cat.label,
+    }))
+  );
+}
+
+function getTrophyTier(unlocked: number): { title: string; subtitle: string } {
+  let tier = TROPHY_TIER_LEVELS[0];
+  for (const t of TROPHY_TIER_LEVELS) {
+    if (unlocked >= t.minUnlocked) tier = t;
+  }
+  return { title: tier.title, subtitle: tier.subtitle };
+}
+
+function getNextTrophyHint(values: Record<string, number>): { milestone: TrophyMilestoneMeta; remaining: number } | null {
+  let best: { milestone: TrophyMilestoneMeta; remaining: number } | null = null;
+  for (const cat of TROPHY_CATEGORIES) {
+    const value = values[cat.key] ?? 0;
+    const next = cat.milestones.find((m) => value < m.count);
+    if (!next) continue;
+    const remaining = next.count - value;
+    const milestone: TrophyMilestoneMeta = {
+      ...next,
+      categoryKey: cat.key,
+      categoryLabel: cat.label,
+    };
+    if (!best || remaining < best.remaining) best = { milestone, remaining };
+  }
+  return best;
+}
 
 function computeDetailedConfidence(data: {
   totalRecos: number; acceptedRecos: number; likedCount: number;
@@ -273,7 +378,12 @@ const Profile = () => {
   const [peopleEvaluated, setPeopleEvaluated] = useState(0);
   const [genresSelected, setGenresSelected] = useState(0);
   const [genresExcluded, setGenresExcluded] = useState(0);
-  const [showGenres, setShowGenres] = useState(false);
+  const [showGenresSheet, setShowGenresSheet] = useState(false);
+  const [genresSheetTab, setGenresSheetTab] = useState<"liked" | "excluded">("liked");
+  const [genresSheetSession, setGenresSheetSession] = useState(0);
+  const [genresDirty, setGenresDirty] = useState(false);
+  const [genresPreviewKey, setGenresPreviewKey] = useState(0);
+  const genrePrefsRef = useRef<GenrePreferencesHandle>(null);
   const [showStats, setShowStats] = useState(false);
   const [showTrophies, setShowTrophies] = useState(false);
   const [seenCount, setSeenCount] = useState(0);
@@ -284,6 +394,10 @@ const Profile = () => {
     loadProfile();
     loadCinema();
   }, [user, isReady]);
+
+  useEffect(() => {
+    if (showGenresSheet) setGenresSheetSession((s) => s + 1);
+  }, [showGenresSheet]);
 
   useEffect(() => {
     if (searchParams.get("openPlatforms") === "1" && platformSectionRef.current) {
@@ -335,6 +449,7 @@ const Profile = () => {
       setPeopleEvaluated(peopleCount || 0);
       setSeenCount(seenCnt || 0);
       setGenresSelected(myPrefs.filter((p) => p.tag.category === "genre" && p.weight > 0).length);
+      setGenresExcluded(myPrefs.filter((p) => p.tag.category === "genre" && p.weight < 0).length);
       if (dnaData.data) {
         const d = dnaData.data as any;
         setDnaTitle(d.personality_title || null);
@@ -377,6 +492,26 @@ const Profile = () => {
       genresSelected,
     });
   }, [engagement, likedMovies.length, watchlistCount, peopleEvaluated, genresSelected]);
+
+  const profileSummaryParts = useMemo(() => {
+    const parts: string[] = [];
+    if (confidence) {
+      const total = confidence.total;
+      const label =
+        total < 20 ? "Apprentissage"
+        : total < 45 ? "En progression"
+        : total < 70 ? "Bien calibré"
+        : total < 90 ? "Très précis"
+        : "Expert";
+      parts.push(label);
+    }
+    const decadesLabel = formatDecadesSummary(selectedDecades);
+    if (decadesLabel) parts.push(decadesLabel);
+    if (selectedPlatforms.length > 0) {
+      parts.push(`${selectedPlatforms.length} plateforme${selectedPlatforms.length > 1 ? "s" : ""}`);
+    }
+    return parts;
+  }, [confidence, selectedDecades, selectedPlatforms.length]);
 
   const togglePlatform = (id: number) => setSelectedPlatforms(prev => prev.includes(id) ? prev.filter(p => p !== id) : [...prev, id]);
 
@@ -431,6 +566,7 @@ const Profile = () => {
           setSinglePreference("duration", durationKey, "explicit"),
         ]);
       } catch (e) { console.warn("preferences mirror failed", e); }
+      await genrePrefsRef.current?.save();
       setProfile((prev: any) => ({
         ...prev,
         preferred_platforms: [...selectedPlatforms],
@@ -441,12 +577,14 @@ const Profile = () => {
         default_max_duration: defaultMaxDuration,
         default_recommendation_count: recommendationCount,
       }));
+      setGenresDirty(false);
+      setGenresPreviewKey((k) => k + 1);
       toast({ title: "Préférences enregistrées" });
     } catch (e) { console.error(e); toast({ title: "Erreur", variant: "destructive" }); }
     finally { setSaving(false); }
   };
 
-  const hasChanges = profile && (
+  const hasProfileFieldChanges = profile && (
     JSON.stringify([...selectedPlatforms].sort()) !== JSON.stringify([...(profile.preferred_platforms || [])].sort()) ||
     JSON.stringify([...selectedDecades].sort((a, b) => a - b)) !== JSON.stringify([...((profile as any)?.preferred_decades || [])].sort((a: number, b: number) => a - b)) ||
     minRating !== ((profile as any)?.min_rating || 0) ||
@@ -455,6 +593,7 @@ const Profile = () => {
     defaultMaxDuration !== ((profile as any)?.default_max_duration ?? null) ||
     recommendationCount !== ((profile as any)?.default_recommendation_count ?? 3)
   );
+  const hasChanges = Boolean(hasProfileFieldChanges || genresDirty);
 
   if (!isReady || profileLoading) return (
     <div className="fixed inset-0 bg-background flex items-center justify-center">
@@ -507,12 +646,25 @@ const Profile = () => {
   return (
     <div className="fixed inset-0 bg-background overflow-y-auto scrollbar-dark">
       <div
-        className="fixed inset-x-0 top-0 h-[80%] bg-cover bg-top bg-no-repeat pointer-events-none"
-        style={{ backgroundImage: `url(${profileBackground})`, maskImage: "linear-gradient(to bottom, black 60%, transparent 100%)", WebkitMaskImage: "linear-gradient(to bottom, black 60%, transparent 100%)", opacity: 0.4 }}
+        className="fixed inset-x-0 top-0 h-[80%] bg-cover bg-top bg-no-repeat pointer-events-none scale-[1.02] blur-[3px]"
+        style={{
+          backgroundImage: `url(${profileBackground})`,
+          maskImage: "linear-gradient(to bottom, black 55%, transparent 100%)",
+          WebkitMaskImage: "linear-gradient(to bottom, black 55%, transparent 100%)",
+          opacity: 0.5,
+        }}
+      />
+      <div
+        className="fixed inset-x-0 top-0 h-[72%] pointer-events-none"
+        style={{
+          background: "linear-gradient(to bottom, hsl(22 35% 6% / 0.72) 0%, hsl(18 30% 8% / 0.45) 45%, transparent 100%)",
+        }}
       />
       <div
         className="fixed inset-0 pointer-events-none"
-        style={{ background: "linear-gradient(to bottom, transparent 0%, hsl(var(--background)/0.3) 60%, hsl(var(--background)/0.9) 85%, hsl(var(--background)) 100%)" }}
+        style={{
+          background: "linear-gradient(to bottom, transparent 0%, hsl(var(--background)/0.35) 55%, hsl(var(--background)/0.92) 85%, hsl(var(--background)) 100%)",
+        }}
       />
       <div className="max-w-lg mx-auto px-5 pt-[calc(1.5rem+env(safe-area-inset-top))] pb-32 space-y-10">
 
@@ -547,7 +699,12 @@ const Profile = () => {
                   <Pencil className="w-3 h-3 text-foreground/40 group-hover:text-foreground/50 transition-colors" />
                 </button>
               )}
-              <p className="text-foreground/45 text-[11px] font-sans mt-0.5">{user.email}</p>
+              {profileSummaryParts.length > 0 && (
+                <p className="text-foreground/65 text-[12px] font-sans mt-0.5 leading-snug">
+                  {profileSummaryParts.join(" · ")}
+                </p>
+              )}
+              <p className="text-foreground/40 text-[11px] font-sans mt-0.5">{user.email}</p>
             </div>
           </motion.div>
 
@@ -614,47 +771,6 @@ const Profile = () => {
                   <span className={`absolute bottom-1.5 inset-x-1 font-sans text-[11px] font-semibold leading-tight text-center ${active ? "text-white" : "text-white/70"}`}>
                     {opt.label}
                   </span>
-                </button>
-              );
-            })}
-          </div>
-        </section>
-
-        {/* ════════════════════════════════
-            2b. DÉCENNIES PRÉFÉRÉES
-        ════════════════════════════════ */}
-        <section className="rounded-2xl bg-card/80 backdrop-blur-sm border border-border/15 p-4">
-          <div className="flex items-center gap-2 mb-1">
-            <span className="text-primary/30 text-sm">📅</span>
-            <h2 className="text-xs font-sans font-semibold text-foreground uppercase tracking-widest">Époques préférées</h2>
-          </div>
-          <p className="text-[11px] text-muted-foreground font-sans mb-3">
-            Aucune sélection = toutes les époques. Peut être surchargé lors d'une recherche.
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {([
-              { label: "Avant 1970", value: 1900 },
-              { label: "Années 70",  value: 1970 },
-              { label: "Années 80",  value: 1980 },
-              { label: "Années 90",  value: 1990 },
-              { label: "Années 2000", value: 2000 },
-              { label: "Années 2010", value: 2010 },
-              { label: "Depuis 2020", value: 2020 },
-            ] as const).map((d) => {
-              const active = selectedDecades.includes(d.value);
-              return (
-                <button
-                  key={d.value}
-                  onClick={() => setSelectedDecades((prev) =>
-                    active ? prev.filter((x) => x !== d.value) : [...prev, d.value]
-                  )}
-                  className={`px-3 py-1.5 rounded-full text-xs font-sans font-medium border transition-all ${
-                    active
-                      ? "bg-primary/15 border-primary/50 text-primary"
-                      : "bg-transparent border-border/20 text-foreground/50 hover:border-border/40 hover:text-foreground/70"
-                  }`}
-                >
-                  {d.label}
                 </button>
               );
             })}
@@ -767,31 +883,75 @@ const Profile = () => {
 
           {/* Genres & Styles */}
           <div className="mb-5">
-            <button onClick={() => setShowGenres((v) => !v)} className="w-full flex items-center justify-between mb-2 group">
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] font-sans font-semibold text-foreground uppercase tracking-widest">Genres & styles</span>
-                {(genresSelected > 0 || genresExcluded > 0) && (
-                  <span className="text-[9px] font-sans px-1.5 py-0.5 rounded-full bg-primary/15 text-primary/70 border border-primary/20">
-                    {genresSelected > 0 && `${genresSelected} aimé${genresSelected > 1 ? "s" : ""}`}
-                    {genresSelected > 0 && genresExcluded > 0 && " · "}
-                    {genresExcluded > 0 && <span className="text-destructive/70">{genresExcluded} exclu{genresExcluded > 1 ? "s" : ""}</span>}
-                  </span>
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[10px] font-sans font-semibold text-foreground uppercase tracking-widest">Genres & styles</span>
+              <button
+                type="button"
+                onClick={() => setShowGenresSheet(true)}
+                className="text-[11px] font-sans font-medium text-primary/70 hover:text-primary transition-colors"
+              >
+                Tout gérer
+              </button>
+            </div>
+            <div className="rounded-2xl bg-card/80 backdrop-blur-sm border border-border/15 px-4 py-3 space-y-2.5">
+              <p className="text-[11px] font-sans text-foreground/50">
+                {genresSelected > 0 && (
+                  <span className="text-primary/70">{genresSelected} aimé{genresSelected > 1 ? "s" : ""}</span>
                 )}
-              </div>
-              <ChevronDown className={`w-3.5 h-3.5 text-foreground/45 transition-transform duration-200 ${showGenres ? "rotate-180" : ""}`} />
-            </button>
-            <div className={showGenres || genresSelected > 0 ? "" : "hidden"}>
-              <div className={`rounded-2xl bg-card/80 backdrop-blur-sm border border-border/15 transition-all ${showGenres ? "p-4" : "px-4 py-3"}`}>
-                <AnimatePresence initial={false}>
-                  {showGenres && (
-                    <motion.p key="desc" initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }}
-                      exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.2 }}
-                      className="text-[10px] text-foreground/40 font-sans overflow-hidden mb-3">
-                      1 clic = tu aimes · 2 clics = tu n'aimes pas · 3 clics = neutre
-                    </motion.p>
-                  )}
-                </AnimatePresence>
-                <GenrePreferences onCountChange={setGenresSelected} onRejectedCountChange={setGenresExcluded} collapsed={!showGenres} />
+                {genresSelected > 0 && genresExcluded > 0 && " · "}
+                {genresExcluded > 0 && (
+                  <span className="text-destructive/70">{genresExcluded} exclu{genresExcluded > 1 ? "s" : ""}</span>
+                )}
+                {genresSelected === 0 && genresExcluded === 0 && "Aucun genre configuré"}
+              </p>
+              <GenrePreferences
+                key={`preview-${genresPreviewKey}-${genresSelected}-${genresExcluded}`}
+                mode="preview"
+                previewLimit={4}
+                readOnly
+                onCountChange={setGenresSelected}
+                onRejectedCountChange={setGenresExcluded}
+              />
+            </div>
+          </div>
+
+          {/* Époques préférées */}
+          <div className="mb-5">
+            <span className="text-[10px] font-sans font-semibold text-foreground uppercase tracking-widest mb-2 block">
+              Époques préférées
+            </span>
+            <div className="rounded-2xl bg-card/80 backdrop-blur-sm border border-border/15 px-4 py-3">
+              <p className="text-[11px] font-sans text-foreground/50 mb-3">
+                Aucune sélection = toutes les époques. Peut être surchargé lors d&apos;une recherche.
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {([
+                  { label: "Avant 1970", value: 1900 },
+                  { label: "Années 70", value: 1970 },
+                  { label: "Années 80", value: 1980 },
+                  { label: "Années 90", value: 1990 },
+                  { label: "Années 2000", value: 2000 },
+                  { label: "Années 2010", value: 2010 },
+                  { label: "Depuis 2020", value: 2020 },
+                ] as const).map((d) => {
+                  const active = selectedDecades.includes(d.value);
+                  return (
+                    <button
+                      key={d.value}
+                      type="button"
+                      onClick={() => setSelectedDecades((prev) =>
+                        active ? prev.filter((x) => x !== d.value) : [...prev, d.value]
+                      )}
+                      className={`px-3 py-1.5 rounded-full text-[11px] font-sans font-medium border transition-all active:scale-[0.97] ${
+                        active
+                          ? "bg-primary/15 border-primary/50 text-primary"
+                          : "bg-card/50 border-border/20 text-foreground/50 hover:border-primary/30 hover:text-foreground/70"
+                      }`}
+                    >
+                      {d.label}
+                    </button>
+                  );
+                })}
               </div>
             </div>
           </div>
@@ -910,53 +1070,140 @@ const Profile = () => {
 
             {/* Trophées */}
             {(() => {
-              const allUnlocked = TROPHY_CATEGORIES.flatMap((cat) => cat.milestones.filter((m) => (trophyValues[cat.key] ?? 0) >= m.count));
-              const totalUnlocked = allUnlocked.length;
-              const totalMilestones = TROPHY_CATEGORIES.reduce((s, c) => s + c.milestones.length, 0);
+              const allMilestones = flattenTrophyMilestones();
+              const totalUnlocked = allMilestones.filter(
+                (m) => (trophyValues[m.categoryKey] ?? 0) >= m.count
+              ).length;
+              const totalMilestones = allMilestones.length;
+              const progressPct = totalMilestones > 0 ? (totalUnlocked / totalMilestones) * 100 : 0;
+              const tier = getTrophyTier(totalUnlocked);
+              const nextHint = getNextTrophyHint(trophyValues);
               return (
-                <>
-                  <button onClick={() => setShowTrophies((v) => !v)} className="w-full flex items-center justify-between group">
-                    <div className="flex items-center gap-2">
-                      <Trophy className="w-3.5 h-3.5 text-primary/30" />
-                      <span className="text-[10px] font-sans font-semibold text-foreground uppercase tracking-widest">Trophées</span>
-                      <span className="text-[10px] font-sans text-primary/40 tabular-nums">{totalUnlocked}/{totalMilestones}</span>
+                <div className="rounded-2xl bg-card/80 backdrop-blur-sm border border-border/15 p-4">
+                  <div className="flex items-start justify-between gap-3 mb-3">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2 mb-1.5">
+                        <Trophy className="w-3.5 h-3.5 text-amber-400/70 shrink-0" />
+                        <span className="text-[10px] font-sans font-semibold text-foreground uppercase tracking-widest">Trophées</span>
+                      </div>
+                      <h3 className="text-base font-serif text-foreground leading-tight">{tier.title}</h3>
+                      <p className="text-[11px] font-sans text-foreground/50 mt-0.5 leading-snug">{tier.subtitle}</p>
                     </div>
-                    <div className="flex items-center gap-1.5">
-                      {!showTrophies && allUnlocked.slice(-5).map((m, i) => <span key={i} className="text-sm">{m.icon}</span>)}
-                      <ChevronDown className={`w-4 h-4 text-foreground/40 transition-transform duration-300 ${showTrophies ? "rotate-180" : ""}`} />
+                    <div className="text-right shrink-0 pt-0.5">
+                      <span className="text-2xl font-serif font-bold text-primary tabular-nums">{totalUnlocked}</span>
+                      <span className="text-[11px] font-sans text-foreground/40 tabular-nums">/{totalMilestones}</span>
                     </div>
+                  </div>
+
+                  <div className="h-1.5 rounded-full bg-foreground/[0.04] overflow-hidden mb-4">
+                    <motion.div
+                      initial={{ width: 0 }}
+                      animate={{ width: `${progressPct}%` }}
+                      transition={{ delay: 0.15, duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+                      className="h-full rounded-full bg-gradient-to-r from-amber-500/40 via-primary/60 to-primary"
+                    />
+                  </div>
+
+                  <TooltipProvider delayDuration={200}>
+                    <div className="grid grid-cols-7 gap-1.5 mb-3">
+                      {allMilestones.map((m) => {
+                        const reached = (trophyValues[m.categoryKey] ?? 0) >= m.count;
+                        return (
+                          <Tooltip key={`${m.categoryKey}-${m.count}`}>
+                            <TooltipTrigger asChild>
+                              <button
+                                type="button"
+                                className={`aspect-square flex items-center justify-center rounded-lg border text-base leading-none transition-all active:scale-95 ${
+                                  reached
+                                    ? "bg-primary/10 border-primary/25 shadow-[0_0_10px_rgba(139,92,246,0.12)]"
+                                    : "bg-card/40 border-border/10 opacity-35 grayscale"
+                                }`}
+                              >
+                                {m.icon}
+                              </button>
+                            </TooltipTrigger>
+                            <TooltipContent side="top" className="max-w-[200px] text-center">
+                              <p className="font-semibold">{reached ? m.label : "À débloquer"}</p>
+                              <p className="text-[10px] opacity-80 mt-0.5">{m.categoryLabel}</p>
+                              {!reached && (
+                                <p className="text-[10px] opacity-70 mt-0.5 tabular-nums">
+                                  {m.count - (trophyValues[m.categoryKey] ?? 0)} restant{m.count - (trophyValues[m.categoryKey] ?? 0) > 1 ? "s" : ""}
+                                </p>
+                              )}
+                            </TooltipContent>
+                          </Tooltip>
+                        );
+                      })}
+                    </div>
+                  </TooltipProvider>
+
+                  {nextHint && (
+                    <p className="text-[11px] font-sans text-foreground/50 text-center leading-snug px-1">
+                      Prochain trophée :{" "}
+                      <span className="text-foreground/70">{nextHint.milestone.icon} {nextHint.milestone.label}</span>
+                      {" "}— encore{" "}
+                      <span className="text-primary/70 font-medium tabular-nums">{nextHint.remaining}</span>
+                      {" "}({nextHint.milestone.categoryLabel.toLowerCase()})
+                    </p>
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={() => setShowTrophies((v) => !v)}
+                    className="w-full flex items-center justify-center gap-1.5 mt-4 pt-3 border-t border-border/10 text-[11px] font-sans text-primary/50 hover:text-primary/70 transition-colors"
+                  >
+                    {showTrophies ? "Masquer le détail" : "Voir par catégorie"}
+                    <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-300 ${showTrophies ? "rotate-180" : ""}`} />
                   </button>
-                  <AnimatePresence>
+
+                  <AnimatePresence initial={false}>
                     {showTrophies && (
-                      <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }}
-                        exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
-                        className="overflow-hidden mt-3">
-                        <div className="space-y-5">
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: "auto" }}
+                        exit={{ opacity: 0, height: 0 }}
+                        transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
+                        className="overflow-hidden"
+                      >
+                        <div className="space-y-5 pt-4">
                           {TROPHY_CATEGORIES.map((cat) => {
                             const value = trophyValues[cat.key] ?? 0;
                             const nextM = cat.milestones.find((m) => value < m.count);
                             const unlockedCount = cat.milestones.filter((m) => value >= m.count).length;
+                            const catProgress = cat.milestones.length > 0 ? (unlockedCount / cat.milestones.length) * 100 : 0;
                             return (
                               <div key={cat.key}>
                                 <div className="flex items-center justify-between mb-2">
-                                  <p className="text-[9px] font-sans text-foreground/40 uppercase tracking-widest">{cat.label}</p>
-                                  <span className="text-[9px] font-sans text-primary/30 tabular-nums">{unlockedCount}/{cat.milestones.length}</span>
+                                  <p className="text-[10px] font-sans font-semibold text-foreground/50 uppercase tracking-widest">{cat.label}</p>
+                                  <span className="text-[10px] font-sans text-primary/50 tabular-nums">{unlockedCount}/{cat.milestones.length}</span>
+                                </div>
+                                <div className="h-1 rounded-full bg-foreground/[0.04] overflow-hidden mb-2.5">
+                                  <div className="h-full rounded-full bg-primary/35 transition-all" style={{ width: `${catProgress}%` }} />
                                 </div>
                                 <div className="grid grid-cols-4 gap-1.5">
                                   {cat.milestones.map((m) => {
                                     const reached = value >= m.count;
                                     return (
-                                      <div key={m.count} className={`flex flex-col items-center gap-1 p-2 rounded-xl border transition-all ${reached ? "bg-primary/[0.06] border-primary/20 shadow-[0_0_12px_rgba(139,92,246,0.08)]" : "bg-card/70 border-border/15"}`}>
-                                        <span className={`text-xl leading-none ${reached ? "" : "grayscale opacity-15"}`}>{m.icon}</span>
-                                        <span className={`text-[8px] font-sans text-center leading-tight mt-0.5 ${reached ? "text-foreground/55" : "text-foreground/12"}`}>{reached ? m.label : "???"}</span>
-                                        <span className={`text-[7px] font-sans tabular-nums ${reached ? "text-primary/45" : "text-foreground/8"}`}>{m.count}</span>
+                                      <div
+                                        key={m.count}
+                                        className={`flex flex-col items-center gap-1 p-2 rounded-xl border transition-all ${
+                                          reached
+                                            ? "bg-primary/[0.06] border-primary/20 shadow-[0_0_12px_rgba(139,92,246,0.08)]"
+                                            : "bg-card/50 border-border/15 opacity-60"
+                                        }`}
+                                      >
+                                        <span className={`text-xl leading-none ${reached ? "" : "grayscale opacity-40"}`}>{m.icon}</span>
+                                        <span className={`text-[8px] font-sans text-center leading-tight mt-0.5 ${reached ? "text-foreground/60" : "text-foreground/25"}`}>
+                                          {reached ? m.label : m.label}
+                                        </span>
+                                        <span className={`text-[7px] font-sans tabular-nums ${reached ? "text-primary/50" : "text-foreground/20"}`}>{m.count}</span>
                                       </div>
                                     );
                                   })}
                                 </div>
                                 {nextM && (
-                                  <p className="text-foreground/40 text-[10px] font-sans mt-1.5 text-center">
-                                    Plus que <span className="text-primary/30 tabular-nums">{nextM.count - value}</span> pour « {nextM.label} »
+                                  <p className="text-foreground/45 text-[10px] font-sans mt-2 text-center">
+                                    Plus que <span className="text-primary/60 font-medium tabular-nums">{nextM.count - value}</span> pour « {nextM.label} »
                                   </p>
                                 )}
                               </div>
@@ -966,7 +1213,7 @@ const Profile = () => {
                       </motion.div>
                     )}
                   </AnimatePresence>
-                </>
+                </div>
               );
             })()}
 
@@ -980,108 +1227,114 @@ const Profile = () => {
           <h2 className="text-sm font-sans font-semibold text-foreground uppercase tracking-widest mb-3">Compte</h2>
           <div className="flex flex-col gap-1 border-t border-border/5 pt-3">
             {isAdmin && (
-              <>
-                <Button variant="ghost" onClick={() => navigate("/admin")} className="justify-start text-primary/50 hover:text-primary text-xs font-sans gap-2 h-10">
-                  <Shield className="w-3.5 h-3.5" /> Administration
-                </Button>
-                <div className="mt-2 p-3 rounded-xl border border-border/20 bg-foreground/[0.02] flex flex-col gap-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-sans font-semibold text-foreground/60">Base de films</span>
-                    <button onClick={fetchDbCount} className="text-xs text-primary/60 hover:text-primary font-sans">
-                      {dbCount !== null ? `${dbCount.toLocaleString("fr-FR")} films` : "Charger le compteur"}
-                    </button>
-                  </div>
-                  {/* Langue */}
-                  <div className="flex flex-col gap-1">
-                    <span className="text-[10px] font-sans text-foreground/40 uppercase tracking-wide">Langue d'origine</span>
-                    <select
-                      value={seedLang}
-                      onChange={e => setSeedLang(e.target.value)}
-                      disabled={seedRunning}
-                      className="w-full text-xs font-sans bg-background border border-border/30 rounded-md px-2 py-1 text-foreground/80 disabled:opacity-50"
-                    >
-                      {SEED_LANGUAGES.map(l => (
-                        <option key={l.code} value={l.code}>{l.label}</option>
-                      ))}
-                    </select>
-                  </div>
-                  {/* Genre */}
-                  <div className="flex flex-col gap-1">
-                    <span className="text-[10px] font-sans text-foreground/40 uppercase tracking-wide">Genre</span>
-                    <select
-                      value={seedGenreId === null ? "" : String(seedGenreId)}
-                      onChange={e => setSeedGenreId(e.target.value === "" ? null : Number(e.target.value))}
-                      disabled={seedRunning}
-                      className="w-full text-xs font-sans bg-background border border-border/30 rounded-md px-2 py-1 text-foreground/80 disabled:opacity-50"
-                    >
-                      {SEED_GENRES.map(g => (
-                        <option key={g.id ?? "all"} value={g.id === null ? "" : String(g.id)}>{g.label}</option>
-                      ))}
-                    </select>
-                  </div>
-                  {/* Page de départ */}
-                  <div className="flex flex-col gap-1">
-                    <span className="text-[10px] font-sans text-foreground/40 uppercase tracking-wide">Pages TMDB (départ)</span>
-                    <select
-                      value={seedPageStart}
-                      onChange={e => setSeedPageStart(Number(e.target.value))}
-                      disabled={seedRunning}
-                      className="w-full text-xs font-sans bg-background border border-border/30 rounded-md px-2 py-1 text-foreground/80 disabled:opacity-50"
-                    >
-                      <option value={1}>Pages 1–6 (les plus populaires)</option>
-                      <option value={7}>Pages 7–12</option>
-                      <option value={13}>Pages 13–18</option>
-                      <option value={19}>Pages 19–24</option>
-                      <option value={25}>Pages 25–30</option>
-                      <option value={31}>Pages 31–36</option>
-                    </select>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      disabled={seedRunning}
-                      onClick={async () => {
-                        setSeedRunning(true);
-                        setSeedLog(["🔍 Test de la clé Gemini en cours…"]);
-                        try {
-                          const { data } = await supabase.functions.invoke("seed-embeddings", { body: { mode: "testGemini" } });
-                          if (data?.availableModels) {
-                            setSeedLog([`✅ Clé OK — modèles : ${(data.availableModels as string[]).join(", ")}`]);
-                          } else if (data?.success === false || data?.geminiStatus) {
-                            setSeedLog([`❌ Gemini inaccessible — ${data?.geminiStatus} : ${data?.geminiError}`]);
-                          } else {
-                            setSeedLog([`⚠️ Edge function non mise à jour — réponse reçue : ${JSON.stringify(data).slice(0, 120)}`]);
-                          }
-                        } catch (e) {
-                          setSeedLog([`❌ Timeout ou erreur réseau : ${String(e).slice(0, 80)}`]);
-                        } finally {
-                          setSeedRunning(false);
-                        }
-                      }}
-                      className="flex-1 text-xs font-sans gap-1 h-8"
-                    >
-                      {seedRunning ? <Loader2 className="w-3 h-3 animate-spin" /> : "🔍 Tester Gemini"}
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      disabled={seedRunning}
-                      onClick={runSeed}
-                      className="flex-1 text-xs font-sans gap-2 h-8"
-                    >
-                      {seedRunning ? <><Loader2 className="w-3 h-3 animate-spin" /> En cours…</> : "▶ Seed"}
-                    </Button>
-                  </div>
-                  {seedLog.length > 0 && (
-                    <div className="mt-1 max-h-40 overflow-y-auto flex flex-col gap-0.5">
-                      {seedLog.map((line, i) => (
-                        <p key={i} className="text-[10px] font-mono text-foreground/50">{line}</p>
-                      ))}
+              <Accordion type="single" collapsible className="mb-2">
+                <AccordionItem value="advanced" className="border-border/10">
+                  <AccordionTrigger className="py-3 text-xs font-sans font-semibold text-foreground/50 uppercase tracking-widest hover:no-underline hover:text-foreground/70">
+                    Avancé
+                  </AccordionTrigger>
+                  <AccordionContent className="pb-2">
+                    <div className="flex flex-col gap-2">
+                      <Button variant="ghost" onClick={() => navigate("/admin")} className="justify-start text-primary/50 hover:text-primary text-xs font-sans gap-2 h-10 px-0">
+                        <Shield className="w-3.5 h-3.5" /> Administration
+                      </Button>
+                      <div className="p-3 rounded-xl border border-border/20 bg-foreground/[0.02] flex flex-col gap-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-sans font-semibold text-foreground/60">Base de films</span>
+                          <button onClick={fetchDbCount} className="text-xs text-primary/60 hover:text-primary font-sans">
+                            {dbCount !== null ? `${dbCount.toLocaleString("fr-FR")} films` : "Charger le compteur"}
+                          </button>
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          <span className="text-[10px] font-sans text-foreground/40 uppercase tracking-wide">Langue d&apos;origine</span>
+                          <select
+                            value={seedLang}
+                            onChange={e => setSeedLang(e.target.value)}
+                            disabled={seedRunning}
+                            className="w-full text-xs font-sans bg-background border border-border/30 rounded-md px-2 py-1 text-foreground/80 disabled:opacity-50"
+                          >
+                            {SEED_LANGUAGES.map(l => (
+                              <option key={l.code} value={l.code}>{l.label}</option>
+                            ))}
+                          </select>
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          <span className="text-[10px] font-sans text-foreground/40 uppercase tracking-wide">Genre</span>
+                          <select
+                            value={seedGenreId === null ? "" : String(seedGenreId)}
+                            onChange={e => setSeedGenreId(e.target.value === "" ? null : Number(e.target.value))}
+                            disabled={seedRunning}
+                            className="w-full text-xs font-sans bg-background border border-border/30 rounded-md px-2 py-1 text-foreground/80 disabled:opacity-50"
+                          >
+                            {SEED_GENRES.map(g => (
+                              <option key={g.id ?? "all"} value={g.id === null ? "" : String(g.id)}>{g.label}</option>
+                            ))}
+                          </select>
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          <span className="text-[10px] font-sans text-foreground/40 uppercase tracking-wide">Pages TMDB (départ)</span>
+                          <select
+                            value={seedPageStart}
+                            onChange={e => setSeedPageStart(Number(e.target.value))}
+                            disabled={seedRunning}
+                            className="w-full text-xs font-sans bg-background border border-border/30 rounded-md px-2 py-1 text-foreground/80 disabled:opacity-50"
+                          >
+                            <option value={1}>Pages 1–6 (les plus populaires)</option>
+                            <option value={7}>Pages 7–12</option>
+                            <option value={13}>Pages 13–18</option>
+                            <option value={19}>Pages 19–24</option>
+                            <option value={25}>Pages 25–30</option>
+                            <option value={31}>Pages 31–36</option>
+                          </select>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            disabled={seedRunning}
+                            onClick={async () => {
+                              setSeedRunning(true);
+                              setSeedLog(["🔍 Test de la clé Gemini en cours…"]);
+                              try {
+                                const { data } = await supabase.functions.invoke("seed-embeddings", { body: { mode: "testGemini" } });
+                                if (data?.availableModels) {
+                                  setSeedLog([`✅ Clé OK — modèles : ${(data.availableModels as string[]).join(", ")}`]);
+                                } else if (data?.success === false || data?.geminiStatus) {
+                                  setSeedLog([`❌ Gemini inaccessible — ${data?.geminiStatus} : ${data?.geminiError}`]);
+                                } else {
+                                  setSeedLog([`⚠️ Edge function non mise à jour — réponse reçue : ${JSON.stringify(data).slice(0, 120)}`]);
+                                }
+                              } catch (e) {
+                                setSeedLog([`❌ Timeout ou erreur réseau : ${String(e).slice(0, 80)}`]);
+                              } finally {
+                                setSeedRunning(false);
+                              }
+                            }}
+                            className="flex-1 text-xs font-sans gap-1 h-8"
+                          >
+                            {seedRunning ? <Loader2 className="w-3 h-3 animate-spin" /> : "🔍 Tester Gemini"}
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            disabled={seedRunning}
+                            onClick={runSeed}
+                            className="flex-1 text-xs font-sans gap-2 h-8"
+                          >
+                            {seedRunning ? <><Loader2 className="w-3 h-3 animate-spin" /> En cours…</> : "▶ Seed"}
+                          </Button>
+                        </div>
+                        {seedLog.length > 0 && (
+                          <div className="mt-1 max-h-40 overflow-y-auto flex flex-col gap-0.5">
+                            {seedLog.map((line, i) => (
+                              <p key={i} className="text-[10px] font-mono text-foreground/50">{line}</p>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  )}
-                </div>
-              </>
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
             )}
             <Button
               variant="ghost"
@@ -1097,6 +1350,36 @@ const Profile = () => {
         </section>
 
       </div>
+
+      <Sheet open={showGenresSheet} onOpenChange={setShowGenresSheet}>
+        <SheetContent side="bottom" className="max-h-[88vh] overflow-y-auto rounded-t-2xl pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
+          <SheetHeader className="text-left mb-4">
+            <SheetTitle className="font-serif text-xl">Genres & styles</SheetTitle>
+            <SheetDescription className="text-xs">
+              1 clic = tu aimes · 2 clics = tu n&apos;aimes pas · 3 clics = neutre
+            </SheetDescription>
+          </SheetHeader>
+          <Tabs value={genresSheetTab} onValueChange={(v) => setGenresSheetTab(v as "liked" | "excluded")}>
+            <TabsList className="w-full grid grid-cols-2 h-9 bg-foreground/5 mb-4">
+              <TabsTrigger value="liked" className="text-xs font-sans data-[state=active]:bg-primary/15 data-[state=active]:text-primary">
+                Aimés{genresSelected > 0 ? ` (${genresSelected})` : ""}
+              </TabsTrigger>
+              <TabsTrigger value="excluded" className="text-xs font-sans data-[state=active]:bg-destructive/10 data-[state=active]:text-destructive">
+                Exclus{genresExcluded > 0 ? ` (${genresExcluded})` : ""}
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+          <GenrePreferences
+            ref={genrePrefsRef}
+            deferSave
+            filter={genresSheetTab}
+            orderKey={showGenresSheet ? `${genresSheetSession}-${genresSheetTab}` : undefined}
+            onCountChange={setGenresSelected}
+            onRejectedCountChange={setGenresExcluded}
+            onDirtyChange={setGenresDirty}
+          />
+        </SheetContent>
+      </Sheet>
 
       <AlertDialog open={resetDialogOpen} onOpenChange={setResetDialogOpen}>
         <AlertDialogContent>
@@ -1140,7 +1423,7 @@ const Profile = () => {
           className="fixed bottom-14 left-0 right-0 z-50 bg-background/80 backdrop-blur-xl border-t border-border/10 px-5 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
           <div className="max-w-lg mx-auto flex justify-end">
             <Button variant="hero" size="lg" onClick={handleSave} disabled={saving} className="rounded-full px-8">
-              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : "Enregistrer"}
+              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : "Enregistrer mes préférences"}
             </Button>
           </div>
         </motion.div>

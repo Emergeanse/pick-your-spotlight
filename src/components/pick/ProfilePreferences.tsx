@@ -40,12 +40,12 @@ const ProfilePreferences = ({
       <motion.section initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="mb-8">
         <div className="flex items-center gap-2 mb-3">
           <Target className="w-3.5 h-3.5 text-primary/60" />
-          <h2 className="text-sm font-sans font-semibold text-foreground/50 uppercase tracking-widest">Niveau de correspondance</h2>
+          <h2 className="text-sm font-sans font-semibold text-foreground/50 uppercase tracking-widest">Exigence des reco</h2>
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild><button className="text-foreground/40"><Info className="w-3 h-3" /></button></TooltipTrigger>
               <TooltipContent side="top" className="max-w-[260px] text-xs">
-                <p>Plus le pourcentage est élevé, plus les recommandations seront proches de vos goûts.</p>
+                <p>Plus c&apos;est élevé, moins Pick te propose de titres — mais plus ils collent à ton profil.</p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
@@ -57,6 +57,7 @@ const ProfilePreferences = ({
             {matchThreshold <= 30 && <span className="text-[10px] font-sans text-primary/70">Très ouvert</span>}
           </div>
           <Slider value={[matchThreshold]} onValueChange={([v]) => onMatchThresholdChange(v)} min={0} max={100} step={5} className="w-full" />
+          <p className="text-[11px] text-foreground/50 mt-3">À quel point Pick doit être exigeant avant de te proposer un titre.</p>
         </div>
       </motion.section>
 
