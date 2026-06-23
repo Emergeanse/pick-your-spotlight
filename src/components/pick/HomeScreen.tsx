@@ -6,10 +6,10 @@ import { clearRevealIntent, type RevealIntent, peekForReveal, consumeForReveal, 
 import { toast } from "sonner";
 import { Sparkles, WandSparkles, Clapperboard, ChevronRight, Flame, Eye, Coffee, Heart, Shuffle, Home, Users, Crown, Star } from "lucide-react";
 
-import { ALL_PLATFORMS, PLATFORM_FAMILIES, PLATFORM_LABEL_MAP, PLATFORM_LOGO_PATH_MAP } from "@/lib/platforms";
+import { formatPlatformNamesForLoading, resolveProviders } from "@/lib/platforms";
 import type { Movie, MovieDetail } from "@/lib/tmdb";
 import type { VoiceSearchFilters } from "./VoiceChat";
-import { getTrendingMovies, getBackdropUrl, getWatchProviders, getMovieDetails } from "@/lib/tmdb";
+import { getTrendingMovies, getBackdropUrl, getMovieDetails } from "@/lib/tmdb";
 import { getLikedMovies } from "@/lib/liked-movies";
 import { trackInteraction, getUserTasteProfile } from "@/lib/interactions";
 import { useAuth } from "@/hooks/use-auth";
@@ -204,7 +204,7 @@ function buildPersonalizedLoadingMessages({
   const g2 = topGenres[1];
   const genreStr = g2 ? `${g1} & ${g2}` : g1;
   const typeStr = mediaType === "tv" ? rnd(["série", "émission"]) : rnd(["film", "long métrage"]);
-  const platformNames = platformIds.map((id) => PLATFORM_LABEL_MAP[id]).filter(Boolean).slice(0, 2).join(" et ");
+  const platformNames = formatPlatformNamesForLoading(platformIds);
   const likedTitle = likedTitles.length > 0 ? likedTitles[Math.floor(Math.random() * likedTitles.length)] : null;
 
   return [
@@ -349,9 +349,16 @@ const HomeScreen = ({
   const [explorationLevel] = useState<number>(5);
   const [totalEvaluated, setTotalEvaluated] = useState(0);
   const [activeAmbiance, setActiveAmbiance] = useState<AmbianceMood | null>(null);
-  const [firstName, setFirstName] = useState<string>("");
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
-  const [interactionCount, setInteractionCount] = useState<number>(0);
+  // Initialisation depuis cache localStorage pour affichage instantané au refresh
+  const [firstName, setFirstName] = useState<string>(() => {
+    try { return JSON.parse(localStorage.getItem("pys_greeting") || "{}").firstName || ""; } catch { return ""; }
+  });
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(() => {
+    try { return JSON.parse(localStorage.getItem("pys_greeting") || "{}").avatarUrl || null; } catch { return null; }
+  });
+  const [interactionCount, setInteractionCount] = useState<number>(() => {
+    try { return JSON.parse(localStorage.getItem("pys_greeting") || "{}").interactionCount || 0; } catch { return 0; }
+  });
   const { isPremium } = usePickPlus();
   const [quickRecos, setQuickRecos] = useState<QuickReco[]>([]);
   const [trendingFallback, setTrendingFallback] = useState<QuickReco[]>([]);
@@ -671,9 +678,13 @@ const HomeScreen = ({
       supabase.from("user_item_feedback").select("*", { count: "exact", head: true }).eq("user_id", user.id),
     ]).then(([{ data }, { count }]) => {
       const name = (data as any)?.display_name || user.email?.split("@")[0] || "";
-      setFirstName(name.split(" ")[0]);
-      setAvatarUrl((data as any)?.avatar_url || null);
-      setInteractionCount(count || 0);
+      const fn = name.split(" ")[0];
+      const av = (data as any)?.avatar_url || null;
+      const ic = count || 0;
+      setFirstName(fn);
+      setAvatarUrl(av);
+      setInteractionCount(ic);
+      try { localStorage.setItem("pys_greeting", JSON.stringify({ firstName: fn, avatarUrl: av, interactionCount: ic })); } catch {}
     });
   }, [user]);
 
@@ -813,48 +824,8 @@ const HomeScreen = ({
   const tonightAllVisited = tonightSeenMovieIds.size >= tonightPool.length && tonightPool.length > 0;
 
 
-  const buildProvidersFromPlatformIds = (platformIds: number[]): { name: string; logo_path: string; provider_id: number }[] => {
-    if (!userPlatformIds?.length) return [];
-    const expandedUserIds = new Set(userPlatformIds.flatMap((id) => PLATFORM_FAMILIES[id] ?? [id]));
-    const matched = platformIds.filter((id) => expandedUserIds.has(id));
-    const seenIds = new Set<number>();
-    const seenLogos = new Set<string>();
-    return matched
-      .filter((id) => {
-        const logo = PLATFORM_LOGO_PATH_MAP[id] ?? "";
-        if (!PLATFORM_LABEL_MAP[id] || seenIds.has(id) || (logo && seenLogos.has(logo))) return false;
-        seenIds.add(id);
-        if (logo) seenLogos.add(logo);
-        return true;
-      })
-      .map((id) => ({ name: PLATFORM_LABEL_MAP[id], logo_path: PLATFORM_LOGO_PATH_MAP[id] ?? "", provider_id: id }));
-  };
-
-  const filterProvidersByUserPlatforms = (providers: { name: string; logo_path: string; provider_id?: number }[]) => {
-    if (!userPlatformIds?.length) return providers;
-    const expandedIds = new Set(userPlatformIds.flatMap((id) => PLATFORM_FAMILIES[id] ?? [id]));
-    const filtered = providers.filter((p) => p.provider_id != null && expandedIds.has(p.provider_id));
-    return filtered.length > 0 ? filtered : providers;
-  };
-
-  const resolveProviders = async (movie: MovieDetail): Promise<{ name: string; logo_path: string; provider_id?: number }[]> => {
-    const embeddingPlatformIds = (movie as any).platform_ids as number[] | undefined;
-    if (Array.isArray(embeddingPlatformIds) && embeddingPlatformIds.length > 0 && userPlatformIds?.length) {
-      const fromEmbedding = buildProvidersFromPlatformIds(embeddingPlatformIds);
-      if (fromEmbedding.length > 0) return fromEmbedding;
-    }
-    const cached = (movie as any).watchProviders as { name: string; logo_path: string; provider_id?: number }[] | undefined;
-    if (cached && Array.isArray(cached)) return filterProvidersByUserPlatforms(cached);
-    const mediaType = movie.first_air_date ? "tv" : "movie";
-    try {
-      return filterProvidersByUserPlatforms(await getWatchProviders(movie.id, mediaType));
-    } catch {
-      return [];
-    }
-  };
-
   const loadProviders = async (movie: MovieDetail) => {
-    setTonightProviders(await resolveProviders(movie));
+    setTonightProviders(await resolveProviders(movie, userPlatformIds));
   };
 
   const setCurrentTonightMovie = async (movie: MovieDetail, index: number, seenIds?: Set<number>) => {
@@ -1980,7 +1951,7 @@ const HomeScreen = ({
       setHomeBrowseSeenIds(new Set([pool[safeIndex]?.id].filter(Boolean) as number[]));
       setHomeBrowseProviders([]);
       setHomeBrowseOpen(true);
-      if (pool[safeIndex]) resolveProviders(pool[safeIndex]).then(setHomeBrowseProviders).catch(() => {});
+      if (pool[safeIndex]) resolveProviders(pool[safeIndex], userPlatformIds).then(setHomeBrowseProviders).catch(() => {});
     } catch {
       setShowFindChoice(true);
     } finally {
@@ -1999,7 +1970,7 @@ const HomeScreen = ({
     const nextMovie = homeBrowsePool[nextIndex];
     if (nextMovie) {
       setHomeBrowseProviders([]);
-      resolveProviders(nextMovie).then(setHomeBrowseProviders).catch(() => {});
+      resolveProviders(nextMovie, userPlatformIds).then(setHomeBrowseProviders).catch(() => {});
     }
   };
 

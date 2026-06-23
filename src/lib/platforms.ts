@@ -1,3 +1,5 @@
+import { getWatchProviders } from "@/lib/tmdb";
+
 export const ALL_PLATFORMS = [
   // Top 5 affichés en hero landing
   { id: 8,    label: "Netflix",       logo: "https://image.tmdb.org/t/p/original/pbpMk2JmcoNnQwx5JGpXngfoWtp.jpg" },
@@ -97,3 +99,81 @@ export const PLATFORM_LOGO_PATH_MAP: Record<number, string> = {
   300:  "/dB8G41Q6tSL5NBisrIeqByfepBc.jpg",
   2601: "/yvui9yFtpWHt0ZrsPelItbuTavI.jpg",
 };
+
+export type WatchProvider = {
+  name: string;
+  logo_path: string;
+  provider_id?: number;
+};
+
+/** Expand user-selected platform IDs to all TMDB alias IDs in the same family. */
+export function expandUserPlatformIds(userPlatformIds: number[]): Set<number> {
+  return new Set(userPlatformIds.flatMap((id) => PLATFORM_FAMILIES[id] ?? [id]));
+}
+
+export function buildProvidersFromPlatformIds(
+  platformIds: number[],
+  userPlatformIds: number[],
+): { name: string; logo_path: string; provider_id: number }[] {
+  if (!userPlatformIds.length) return [];
+  const expandedUserIds = expandUserPlatformIds(userPlatformIds);
+  const matched = platformIds.filter((id) => expandedUserIds.has(id));
+  const seenIds = new Set<number>();
+  const seenLogos = new Set<string>();
+  return matched
+    .filter((id) => {
+      const logo = PLATFORM_LOGO_PATH_MAP[id] ?? "";
+      if (!PLATFORM_LABEL_MAP[id] || seenIds.has(id) || (logo && seenLogos.has(logo))) return false;
+      seenIds.add(id);
+      if (logo) seenLogos.add(logo);
+      return true;
+    })
+    .map((id) => ({
+      name: PLATFORM_LABEL_MAP[id],
+      logo_path: PLATFORM_LOGO_PATH_MAP[id] ?? "",
+      provider_id: id,
+    }));
+}
+
+export function filterProvidersByUserPlatforms(
+  providers: WatchProvider[],
+  userPlatformIds: number[],
+): WatchProvider[] {
+  if (!userPlatformIds.length) return providers;
+  const expandedIds = expandUserPlatformIds(userPlatformIds);
+  const filtered = providers.filter((p) => p.provider_id != null && expandedIds.has(p.provider_id));
+  return filtered.length > 0 ? filtered : providers;
+}
+
+export async function resolveProviders(
+  movie: {
+    id: number;
+    first_air_date?: string | null;
+    platform_ids?: number[];
+    watchProviders?: WatchProvider[];
+  },
+  userPlatformIds: number[],
+): Promise<WatchProvider[]> {
+  const embeddingPlatformIds = movie.platform_ids;
+  if (Array.isArray(embeddingPlatformIds) && embeddingPlatformIds.length > 0 && userPlatformIds.length) {
+    const fromEmbedding = buildProvidersFromPlatformIds(embeddingPlatformIds, userPlatformIds);
+    if (fromEmbedding.length > 0) return fromEmbedding;
+  }
+  const cached = movie.watchProviders;
+  if (cached && Array.isArray(cached)) return filterProvidersByUserPlatforms(cached, userPlatformIds);
+  const mediaType = movie.first_air_date ? "tv" : "movie";
+  try {
+    return filterProvidersByUserPlatforms(await getWatchProviders(movie.id, mediaType), userPlatformIds);
+  } catch {
+    return [];
+  }
+}
+
+/** Up to two platform names for personalized loading copy (e.g. "Netflix et Disney+"). */
+export function formatPlatformNamesForLoading(platformIds: number[], max = 2): string {
+  return platformIds
+    .map((id) => PLATFORM_LABEL_MAP[id])
+    .filter(Boolean)
+    .slice(0, max)
+    .join(" et ");
+}
