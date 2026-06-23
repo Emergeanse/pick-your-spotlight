@@ -128,24 +128,18 @@ export default function PostSoireeFlow({ event, onClose, onComplete }: Props) {
         film_phrase:   filmPhrase,
       }, { onConflict: "event_id,user_id" });
 
-      // Sync vers user_item_feedback via getOrCreateCatalogItem
-      // → crée l'entrée catalog_items si elle n'existe pas encore
+      // Sync vers user_item_feedback via setFeedback
       if (event.filmTmdbId) {
-        const feedbackMap: Record<FilmRating, string> = {
-          love: "love", like: "like", not_for_me: "not_for_me",
-        };
-        const itemId = await getOrCreateCatalogItem(event.filmTmdbId, {
-          title:       event.filmTitle,
-          poster_path: event.filmPoster,
-          media_type:  "movie",
-        });
-        if (itemId) {
-          await supabase.from("user_item_feedback").upsert({
-            user_id:       user.id,
-            item_id:       itemId,
-            feedback_type: feedbackMap[filmRating],
-          }, { onConflict: "user_id,item_id,feedback_type" });
-        }
+        await setFeedback(
+          event.filmTmdbId,
+          filmRating,
+          {
+            title: event.filmTitle,
+            poster_path: event.filmPoster,
+            media_type: "movie",
+          },
+          { source: "post_soiree", context_type: "group_session" },
+        );
       }
       setDone(true);
       setTimeout(onComplete, 1200);
