@@ -22,7 +22,8 @@
 
 - [ ] **0.4** `.env` local avec `VITE_SUPABASE_URL` + `VITE_SUPABASE_PUBLISHABLE_KEY`
 - [ ] `npm run build` passe sans erreur
-- [ ] Navigateurs Playwright installés : `npx playwright install chromium` (une fois par machine)
+- [ ] Navigateurs Playwright installés : `npx playwright install chromium` (une fois par machine, **depuis la racine du projet**)
+- [ ] Diagnostic navigateurs OK : `.\scripts\check-playwright.ps1` → `[READY] E2E prêt : OUI`
 - [ ] **0.2** Edge functions déployées — seulement si le code local a divergé de la prod
 
 > **Alpha** : pas de rotation secret TMDB (**0.1 annulé**). Clé / config actuelle conservée.  
@@ -62,7 +63,54 @@ npm run test:smoke:full
 
 # Script tout-en-un (build + unit + e2e)
 .\scripts\smoke-test.ps1
+
+# Diagnostic Playwright (verrous, revisions, mismatch navigateurs)
+.\scripts\check-playwright.ps1
 ```
+
+### Diagnostic Playwright (`check-playwright.ps1`)
+
+À lancer **depuis la racine du projet** avant les E2E si les tests échouent avec « browser not found », dossiers vides, ou install bloquée.
+
+```powershell
+.\scripts\check-playwright.ps1
+```
+
+Le script vérifie :
+
+| Contrôle | Description |
+|----------|-------------|
+| `__dirlock` | Verrou d'install parallèle dans `%LOCALAPPDATA%\ms-playwright` |
+| Processus | `playwright install` en cours (ne pas lancer deux installs) |
+| Dossiers | `chromium-*` et `chromium_headless_shell-*` : OK ou INCOMPLET |
+| Révisions | Attendu par `node_modules/playwright-core/browsers.json` vs installé |
+| Verdict | `[READY] E2E prêt : OUI/NON` (code sortie 0/1) |
+
+**Installation correcte** — toujours depuis la racine du repo :
+
+```powershell
+cd pick-your-spotlight
+npm ci
+npx playwright install chromium
+```
+
+> Ne pas utiliser un `playwright install` global (CLI npm `-g` ou autre projet) : il peut installer une révision plus récente (ex. **1228**) alors que `@playwright/test` du projet attend **1208**.
+
+#### Mismatch révision 1208 vs 1228
+
+| Symptôme | Cause | Fix |
+|----------|-------|-----|
+| `chromium-1208` absent ou vide, `chromium-1228` présent | Install global / mauvaise version CLI | `npx playwright install chromium` depuis la racine |
+| `__dirlock` présent + install bloquée | Deux `playwright install` en parallèle | Attendre ou tuer le processus, supprimer le verrou si mort |
+| E2E échoue « Executable doesn't exist » | Headless shell ou chromium incomplet | Relancer install projet ; vérifier avec `check-playwright.ps1` |
+
+Workaround temporaire (jonction NTFS vers une révision plus récente) :
+
+```powershell
+.\scripts\check-playwright.ps1 -FixJunction
+```
+
+Risque : incompatibilité binaire si la révision source ne correspond pas au runtime Playwright du projet. Préférer `npx playwright install chromium`.
 
 ### Ce que couvre `test:smoke`
 
@@ -162,7 +210,7 @@ Révéler soirée      │  ✅  │    ✅    │    ⚠️    │   ✅   │
 Biblio              │  —   │    ✅    │    ✅    │   ✅   │
 Liste soirées       │  —   │    ✅    │    ✅    │   ✅   │
 TMDB proxy          │  —   │    —     │    —     │   ✅   │
-Onboarding          │  —   │    —     │    —     │   ✅   │
+Onboarding          │  —   │    ✅    │    ⚠️    │   ✅   │
 Duo / invite ami    │  —   │    —     │    —     │   ✅   │
 ```
 
@@ -174,12 +222,14 @@ Duo / invite ami    │  —   │    —     │    —     │   ✅   │
 
 | Symptôme | Cause probable | Action |
 |----------|----------------|--------|
+| `[READY] E2E prêt : NON` / mismatch 1208 vs 1228 | Install global ou révision incorrecte | `.\scripts\check-playwright.ps1` puis `npx playwright install chromium` (racine projet) |
+| `__dirlock` / install Playwright bloquée | Installs parallèles | Attendre ; `check-playwright.ps1` liste verrous et PIDs |
 | E2E skip « E2E_TEST_EMAIL non défini » | Pas de `.env.test` | Copier `.env.test.example` |
 | Login Supabase échoué (401) | Mauvais mot de passe compte test | Réinitialiser mot de passe |
 | Révéler → flash accueil | Régression 1.14 | Vérifier `TonightPickOverlay` instantCover |
 | Fiche film vide | TMDB / proxy down | Vérifier prod ; en alpha pas de changement secret (**1.16** si beta) |
 | `surprise-personalized` 500 | Functions pas déployées (0.2) | `deploy-edge-functions.ps1` |
-| Navigateurs Playwright absents | Première install | `npx playwright install chromium` |
+| Navigateurs Playwright absents | Première install | `npx playwright install chromium` (depuis racine projet) |
 | Tests `movie-interactions` en échec | Dette résolue (juin 2026) | Inclus dans `npm run test:unit` — 9/9 OK |
 
 ---
@@ -190,7 +240,7 @@ Duo / invite ami    │  —   │    —     │    —     │   ✅   │
 |----|--------------|
 | 0.3 | Exécuter checklist manuelle (automatisé partiellement OK) |
 | 1.9 | CI GitHub — **done** (`.github/workflows/ci.yml`) |
-| 1.10 | E2E onboarding initiatique (films, acteurs, réalisateurs) |
+| 1.10 | E2E onboarding initiatique (smoke 3/3 : bienvenue, genres, gate `/app`) |
 | 1.10b | E2E création soirée complète |
 | 1.6 | Seed compte test (soirée non révélée pour `reveal.spec.ts`) |
 | 1.16 | Secret TMDB avant beta testeurs externes |
