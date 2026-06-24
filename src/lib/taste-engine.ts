@@ -7,7 +7,7 @@ const STABLE_HALF_LIFE = 150; // ~5 months
 const RECENT_HALF_LIFE = 21;  // ~3 weeks
 const AVOIDANCE_HALF_LIFE = 60; // ~2 months
 
-function decayWeight(dateStr: string, halfLifeDays: number): number {
+export function decayWeight(dateStr: string, halfLifeDays: number): number {
   const daysAgo = (Date.now() - new Date(dateStr).getTime()) / (1000 * 60 * 60 * 24);
   return Math.exp(-0.693 * daysAgo / halfLifeDays);
 }
@@ -49,7 +49,7 @@ export function ensureMovieEmbedding(
 }
 
 // ── Helper: weighted average vector ──
-function weightedAverageVector(
+export function weightedAverageVector(
   items: { vec: number[]; weight: number }[]
 ): number[] | null {
   if (items.length === 0) return null;
@@ -70,7 +70,7 @@ function weightedAverageVector(
 }
 
 // ── Parse vector from DB string ──
-function parseVector(vec: any): number[] | null {
+export function parseVector(vec: unknown): number[] | null {
   if (!vec) return null;
   if (Array.isArray(vec)) return vec;
   if (typeof vec === "string") {
@@ -105,7 +105,7 @@ const GENRE_TO_CLUSTERS: Record<string, string[]> = {
   "Histoire":        ["intellectuel", "émotionnel", "épique"],
 };
 
-function inferClusters(genreCounts: Record<string, number>): Record<string, number> {
+export function inferClusters(genreCounts: Record<string, number>): Record<string, number> {
   const clusters: Record<string, number> = {};
   for (const [genre, count] of Object.entries(genreCounts)) {
     const mapped = GENRE_TO_CLUSTERS[genre] || [];
@@ -130,6 +130,11 @@ export interface MultiVectorProfile {
 // Short-lived in-memory cache — avoids repeated 5-query DB round-trips within the same session.
 const _profileCache = new Map<string, { data: MultiVectorProfile; ts: number }>();
 const PROFILE_CACHE_TTL = 90_000; // 90 seconds
+
+/** Vide le cache mémoire — usage tests uniquement */
+export function clearTasteProfileCacheForTests(): void {
+  _profileCache.clear();
+}
 
 /**
  * Computes 3 separate taste vectors:

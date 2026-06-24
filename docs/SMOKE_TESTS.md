@@ -1,7 +1,8 @@
 # Smoke tests Pick — guide équipe
 
 > **Objectif** : valider en ~15–30 min que l'app est utilisable après un déploiement (edge functions, secrets, build).  
-> Lié au backlog : tâche **0.3** · complète **1.9** / **1.10** (CI).
+> Lié au backlog : tâche **0.3** · complète **1.9** / **1.10** (CI).  
+> **Pipeline reco** : [RECOMMENDATION_PIPELINE.md](RECOMMENDATION_PIPELINE.md) · TNR 3 phases dans [BACKLOG.md](BACKLOG.md).
 
 ---
 
@@ -143,12 +144,18 @@ Cocher dans `BACKLOG.md` ou ici après chaque session.
 
 ### 3.2 Reco depuis `/app`
 
+> Détail technique : [RECOMMENDATION_PIPELINE.md](RECOMMENDATION_PIPELINE.md) · console `[PICK-DEBUG]` (F12) si `debug: true`.
+
 | # | Action | Résultat attendu | E2E |
 |---|--------|------------------|-----|
 | 1 | Ouvrir modal « Ce soir » / FAB | Modal choix visible | `pipeline.spec` |
 | 2 | « Laisse-moi te surprendre » | **Overlay noir immédiat** (< 500 ms), carrousel d'affiches visible | `pipeline.spec` |
 | 3 | Attendre fin reco | 1–3 films proposés, affiches TMDB | Manuel (prod) |
 | 4 | Confirmer un film | `ResultScreen`, actions like/dislike | Manuel |
+| 5 | Console `[PICK-DEBUG]` (compte ≥ 2 likes) | Groupe `1️⃣ SQL` : candidats > 0 · `3️⃣ Sélections LLM` : `reason` renseigné si LLM OK | Manuel |
+| 6 | Score affiché | Badge match cohérent (pas 8 % / −4 % aberrants) · texte `whyItMatches` après ~2–5 s | Manuel |
+| 7 | Rejeter / « Autre » | Nouveau batch · `excludeIds` augmente (pas de film déjà rejeté) | Manuel |
+| 8 | Compte < 2 likes | Fallback TMDB (pas d'appel SP bloquant) · message ou reco générique | Manuel |
 
 ### 3.3 Fiche film (TMDB proxy)
 
@@ -245,7 +252,8 @@ Duo / invite ami    │  —   │    —     │    —     │   ✅   │
 | 1.10b | E2E création soirée complète |
 | 1.6 | Seed compte test (soirée non révélée pour `reveal.spec.ts`) |
 | 1.16 | Secret TMDB avant beta testeurs externes |
-| **1.19** | **Tests unitaires `taste-engine.ts` + `recommendation-batch.ts`** — objectif 70 % couverture `src/lib/` (audit juin 2026). Prérequis avant refactor pipeline reco ; complète les 60 TNR actuels. Voir [BACKLOG.md](BACKLOG.md) § Audit technique. |
+| **1.19** | **Tests unitaires `taste-engine.ts` + `recommendation-batch.ts`** — objectif 70 % couverture `src/lib/` (audit juin 2026). Prérequis avant refactor pipeline reco ; complète les 60 TNR actuels. Voir [BACKLOG.md](BACKLOG.md) § [TNR pipeline](BACKLOG.md#tnr-pipeline-reco--feuille-de-route-3-phases) · [RECOMMENDATION_PIPELINE.md](RECOMMENDATION_PIPELINE.md) |
+| **1.23** | Renommer métriques debug (`top50`, `sqlCandidates`, libellés `[PICK-DEBUG]`) — quick win |
 
 ---
 
