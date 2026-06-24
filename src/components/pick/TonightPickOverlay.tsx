@@ -200,7 +200,7 @@ function WallPosterCell({
   if (failed || !src || src.includes("placeholder")) {
     return (
       <div
-        className="w-full rounded-md flex-shrink-0 select-none bg-gradient-to-br from-primary/20 via-violet-950/30 to-black/50 border border-white/[0.04]"
+        className="w-full rounded-md flex-shrink-0 select-none bg-gradient-to-br from-violet-900 via-purple-950 to-zinc-900 border border-white/[0.06]"
         style={cellStyle}
         aria-hidden
       />
@@ -209,7 +209,7 @@ function WallPosterCell({
 
   return (
     <div
-      className="w-full rounded-md flex-shrink-0 select-none relative overflow-hidden bg-gradient-to-br from-primary/20 via-violet-950/30 to-black/50"
+      className={`w-full rounded-md flex-shrink-0 select-none relative overflow-hidden bg-gradient-to-br from-violet-900 via-purple-950 to-zinc-900${loaded ? "" : " animate-pulse"}`}
       style={cellStyle}
       aria-hidden
     >
