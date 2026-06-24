@@ -284,6 +284,36 @@ function buildPersonalizedLoadingMessages({
   ];
 }
 
+type PipelineStageDebug = {
+  id: string;
+  name: string;
+  params: Record<string, unknown>;
+  fallbackTriggered: boolean;
+  fallbackReason?: string | null;
+  inputCount?: number | null;
+  outputCount?: number | null;
+};
+
+function logPipelineStagesTable(stages: PipelineStageDebug[], clientStage?: PipelineStageDebug) {
+  const all = clientStage ? [clientStage, ...stages] : stages;
+  if (all.length === 0) return;
+  console.group("[PICK-DEBUG] 📋 Paramètres par étape");
+  console.table(all.map((s, i) => ({
+    "#": i + 1,
+    "Étape": s.name,
+    "Entrée": s.inputCount ?? "—",
+    "Sortie": s.outputCount ?? "—",
+    "Fallback": s.fallbackTriggered ? "⚠️ oui" : "—",
+    "Raison fallback": s.fallbackReason ?? "—",
+  })));
+  all.forEach((s) => {
+    if (Object.keys(s.params).length > 0) {
+      console.log(`   ${s.id} — params:`, s.params);
+    }
+  });
+  console.groupEnd();
+}
+
 const HomeScreen = ({
   onOpenChat,
   onOpenMoodCapture,
@@ -1200,6 +1230,40 @@ const HomeScreen = ({
           const effectiveMinMatchScore = moodCfg?.minMatchScoreOverride ?? quickFilters.matchThreshold;
           const effectiveMinRating = moodCfg?.minRatingBoost ? (userMinRating ?? 0) + moodCfg.minRatingBoost : userMinRating;
 
+          const clientPipelineStage: PipelineStageDebug = {
+            id: "0-client-request",
+            name: "Paramètres client → surprise-personalized",
+            params: {
+              userTasteVector: userTasteVector ? `${userTasteVector.length} dims` : null,
+              mediaType: effectiveMediaType,
+              topGenres: effectiveTopGenres ?? [],
+              excludedGenres: effectiveExcludedGenres ?? [],
+              maxDuration: effectiveMaxDuration ?? null,
+              minRating: effectiveMinRating ?? null,
+              minMatchScore: effectiveMinMatchScore,
+              explorationLevel: effectiveExplorationLevel,
+              platformIds: userPlatformIds,
+              count: quickFilters.recommendationCount || RECOMMENDATION_BATCH_SIZE,
+              excludeIdsCount: allExcludeIds.length,
+              moodContext: extraMoodContext ?? moodCfg?.moodContext ?? null,
+              moodBoostGenres: moodCfg?.boostGenres ?? null,
+              voiceOverrides: voiceFilters ? {
+                genres: voiceFilters.genres ?? null,
+                decade: voiceFilters.decade ?? null,
+                originalLanguage: voiceFilters.originalLanguage ?? null,
+                mediaType: voiceFilters.mediaType ?? null,
+                maxDuration: voiceFilters.maxDuration ?? null,
+              } : null,
+              duoMode: !!duoOverrides,
+            },
+            fallbackTriggered: !userTasteVector,
+            fallbackReason: !userTasteVector ? "Vecteur NULL — SQL vectoriel sera sauté côté edge" : null,
+            inputCount: null,
+            outputCount: null,
+          };
+
+          logPipelineStagesTable([], clientPipelineStage);
+
           // Log des paramètres EFFECTIFS (après tous les overrides voix/ambiance/duo)
           console.group("[PICK-DEBUG] 📤 Paramètres effectifs envoyés à surprise-personalized");
           console.log("vecteur de goût  :", userTasteVector ? `✅ ${userTasteVector.length} dims` : "❌ NULL — SQL vectoriel sera sauté");
@@ -1272,81 +1336,115 @@ const HomeScreen = ({
           }
           const dbg = data?.debugData;
 
-          console.group("[PICK-DEBUG] ═══ Pipeline de recommandation ═══");
+          // ═══════════════════════════════════════════════
+          // PIPELINE DEBUG — chaque étape : lancement, paramètres, filtre, sortie
+          // Tous les logs sont au TOP LEVEL (toujours visibles dans la console)
+          // Les listes de films sont dans des groupes repliés (▶ pour développer)
+          // ═══════════════════════════════════════════════
 
-          // ── Étape 1 : SQL — toujours affiché même si 0 candidats ──
-          if (dbg?.filters || dbg?.sqlCountDiag?.length || dbg?.sqlCandidates) {
+          // ── Pipeline stages (résumé tableau) ──
+          if (dbg?.pipelineStages?.length) {
+            logPipelineStagesTable(dbg.pipelineStages as PipelineStageDebug[], clientPipelineStage);
+          }
+
+          // ── ÉTAPE 1 : SQL vectoriel 32D ──
+          if (dbg?.filters || dbg?.sqlCandidates) {
             const f = dbg.filters;
             const cascadeLevel: number = dbg.sqlCascadeLevel ?? -1;
-            const cascadeLabels = ["0 — toutes contraintes", "1 — sans lang/année", "2 — sans liked_genres", "3 — sans liked_genres ni note (excluded_genres conservé)", "4 — sans plateforme (excluded_genres conservé)"];
+            const cascadeLabels = [
+              "0 — toutes contraintes",
+              "1 — sans lang/année",
+              "2 — sans liked_genres",
+              "3 — sans liked_genres ni note (excluded_genres conservé)",
+              "4 — sans plateforme (excluded_genres conservé)",
+            ];
             const cascadeLabel = cascadeLevel >= 0 ? cascadeLabels[cascadeLevel] ?? `niveau ${cascadeLevel}` : "inconnu";
             const rpc = dbg.sqlRpcParams;
             const cascadeWarn = rpc ? (rpc.excluded_genres || []).length === 0 : false;
-            const logFn = cascadeWarn ? console.warn.bind(console) : console.log.bind(console);
             const candidateCount = dbg.sqlCandidates?.length ?? 0;
-            // Log standalone (toujours visible, hors groupe)
-            console.log(`%c[PICK-DEBUG] 🔍 SQL vectoriel 32D → ${candidateCount} candidats | cascade niveau ${cascadeLabel} | ${f?.excludeCount ?? 0} IDs exclus`, "font-weight:bold;color:#6366f1");
-            const headerFn = candidateCount === 0 ? console.warn.bind(console) : console.group.bind(console);
-            headerFn(`[PICK-DEBUG] 1️⃣ SQL vectoriel 32D — ${candidateCount} candidats triés par similarité (Sim% = score vecteur) | ${f?.excludeCount ?? 0} exclus`);
-            logFn(`   Cascade SQL : niveau ${cascadeLabel}${cascadeWarn ? " ⚠️ excluded_genres vide !" : ""}`);
+
+            // ── LANCEMENT ÉTAPE 1 ──
+            const step1Log = cascadeWarn ? console.warn.bind(console) : console.log.bind(console);
+            step1Log(
+              `%c[PICK-DEBUG] ▶ ÉTAPE 1 — SQL vectoriel 32D` +
+              `\n   FILTRE  : similarité cosinus 32D | cascade ${cascadeLabel}${cascadeWarn ? " ⚠️ excluded_genres VIDE" : ""}` +
+              `\n   ENTRÉE  : vecteur de goût 32D + ${f?.excludeCount ?? 0} IDs exclus` +
+              `\n   SORTIE  : ${candidateCount} candidats SQL`,
+              "font-weight:bold;color:#6366f1"
+            );
+
+            // ── PARAMÈTRES RPC (toujours visibles) ──
             if (rpc) {
-              console.log(`   Paramètres RPC effectifs :`);
-              console.log(`     note min         : ${rpc.min_rating ?? 0}`);
-              console.log(`     durée max        : ${rpc.max_duration ? `${rpc.max_duration}min` : "illimitée"}`);
-              console.log(`     genres aimés     : [${(rpc.liked_genres || []).join(", ") || "—"}]`);
-              console.log(`     genres exclus    : [${(rpc.excluded_genres || []).join(", ") || (cascadeLevel >= 3 ? "⚠️ AUCUN (désactivé)" : "—")}]`);
-              console.log(`     langues exclues  : [${(rpc.p_excluded_languages || []).join(", ") || "—"}]`);
-              console.log(`     popularité min   : ${rpc.p_min_popularity ?? "—"}`);
-              console.log(`     plateformes      : [${(rpc.p_platform_ids || []).join(", ") || "—"}]`);
-              console.log(`     décennie SQL     : ${rpc.p_min_year != null ? `${rpc.p_min_year}–${rpc.p_max_year ?? rpc.p_min_year + 9}` : "—"}`);
-              console.log(`     exclude_ids      : ${rpc.exclude_ids_count} IDs`);
+              console.log(
+                `[PICK-DEBUG]   PARAMÈTRES SQL RPC :` +
+                `\n     note min         : ${rpc.min_rating ?? 0}` +
+                `\n     durée max        : ${rpc.max_duration ? `${rpc.max_duration}min` : "illimitée"}` +
+                `\n     genres aimés     : [${(rpc.liked_genres || []).join(", ") || "—"}]` +
+                `\n     genres exclus    : [${(rpc.excluded_genres || []).join(", ") || (cascadeLevel >= 3 ? "⚠️ AUCUN (désactivé)" : "—")}]` +
+                `\n     langues exclues  : [${(rpc.p_excluded_languages || []).join(", ") || "—"}]` +
+                `\n     popularité min   : ${rpc.p_min_popularity ?? "—"}` +
+                `\n     plateformes      : [${(rpc.p_platform_ids || []).join(", ") || "—"}]` +
+                `\n     décennie SQL     : ${rpc.p_min_year != null ? `${rpc.p_min_year}–${rpc.p_max_year ?? rpc.p_min_year + 9}` : "—"}` +
+                `\n     exclude_ids      : ${rpc.exclude_ids_count} IDs`
+              );
             }
-            if (dbg.filters?.voiceOverrides) {
-              const vo = dbg.filters.voiceOverrides;
+
+            // ── Overrides vocaux (si présents) ──
+            if (f?.voiceOverrides) {
+              const vo = f.voiceOverrides;
               const hasVoice = vo.genres?.length || vo.decade != null || vo.language || vo.mediaType || vo.maxDuration;
               if (hasVoice) {
-                console.log(`   🎤 Overrides vocaux reçus par le serveur :`);
-                if (vo.genres?.length)   console.log(`     genres       : [${vo.genres.join(", ")}]`);
-                if (vo.decade != null)   console.log(`     décennie     : ${vo.decade}s (${vo.decade}–${vo.decade + 9})`);
-                if (vo.language)         console.log(`     langue orig. : ${vo.language}`);
-                if (vo.mediaType)        console.log(`     type média   : ${vo.mediaType}`);
-                if (vo.maxDuration)      console.log(`     durée max    : ${vo.maxDuration}min`);
+                console.log(
+                  `[PICK-DEBUG]   🎤 OVERRIDES VOCAUX reçus par le serveur :` +
+                  (vo.genres?.length    ? `\n     genres       : [${vo.genres.join(", ")}]` : "") +
+                  (vo.decade != null    ? `\n     décennie     : ${vo.decade}s (${vo.decade}–${vo.decade + 9})` : "") +
+                  (vo.language          ? `\n     langue orig. : ${vo.language}` : "") +
+                  (vo.mediaType         ? `\n     type média   : ${vo.mediaType}` : "") +
+                  (vo.maxDuration       ? `\n     durée max    : ${vo.maxDuration}min` : "")
+                );
               }
             }
-            // COUNT standalone — toujours visible (hors groupe), disponible si SP v20+ déployé
+
+            // ── COUNT SQL par niveau ──
             if (dbg.sqlCountDiag?.length) {
-              console.log("%c[PICK-DEBUG] 📊 COUNT SQL — films en base vs disponibles :", "font-weight:bold;color:#10b981");
+              console.groupCollapsed(`[PICK-DEBUG]   📊 COUNT SQL — films disponibles par niveau de cascade`);
               console.table(dbg.sqlCountDiag.map((d: any) => ({
                 "Niveau": `${d.level} — ${cascadeLabels[d.level] ?? `niveau ${d.level}`}`,
                 "Total en base": d.total_in_db,
                 "Disponibles (après exclusions)": d.available_after_exclusions,
-                "excluded_genres": d.level < 3 ? "✅ actifs" : "⚠️ vérifier snippet",
+                "excluded_genres": d.level < 3 ? "✅ actifs" : "⚠️ vérifier",
               })));
-            }
-            if (dbg.sqlSnippet) {
-              console.group(`[PICK-DEBUG] 🔍 Snippet SQL (copier dans l'éditeur SQL Supabase)`);
-              console.log(dbg.sqlSnippet);
               console.groupEnd();
             }
-            // Liste des candidats — seulement s'il y en a
+
+            // ── Liste des candidats SQL ──
             if (candidateCount > 0) {
+              console.groupCollapsed(`[PICK-DEBUG]   📋 SORTIE SQL — ${candidateCount} candidats (triés par similarité)`);
               console.table(dbg.sqlCandidates.map((c: any, i: number) => ({
                 "#": i + 1,
                 "Titre": c.title,
                 "Année": c.year,
                 "Note /10": c.note ?? "–",
-                "Sim% (vecteur 32D)": c.sim ?? "–",
+                "Sim%": c.sim ?? "–",
                 "Composite": c.composite ?? "–",
                 "Genres": (c.genres || []).join(", "),
                 "Type": c.type,
               })));
+              console.groupEnd();
+            } else {
+              console.warn(`[PICK-DEBUG]   ⚠️ SQL : 0 candidats — vérifier les filtres ci-dessus`);
             }
-            if (candidateCount > 0) console.groupEnd();
 
-            // Détail par niveau de cascade SQL
+            // ── Snippet SQL ──
+            if (dbg.sqlSnippet) {
+              console.groupCollapsed(`[PICK-DEBUG]   🔍 Snippet SQL (copier dans l'éditeur SQL Supabase)`);
+              console.log(dbg.sqlSnippet);
+              console.groupEnd();
+            }
+
+            // ── Détail par niveau ──
             if ((dbg as any)?.sqlLevelDebug?.length) {
-              const cascadeLabels = ["0 — toutes contraintes", "1 — sans lang/année", "2 — sans liked_genres", "3 — sans goût restrictif"];
-              console.group("[PICK-DEBUG] 📈 Détail par niveau de cascade SQL");
+              console.groupCollapsed(`[PICK-DEBUG]   📈 Détail cascade SQL niveau par niveau`);
               (dbg as any).sqlLevelDebug.forEach((lvl: any) => {
                 const label = cascadeLabels[lvl.level] ?? `niveau ${lvl.level}`;
                 console.log(`   Niveau ${label} : +${lvl.newFilms} non-interagis (total: ${lvl.totalNonInteracted}/100)`);
@@ -1357,9 +1455,9 @@ const HomeScreen = ({
               console.groupEnd();
             }
 
-            // Fallback SQL explicite (sans vecteur)
+            // ── Fallback SQL explicite ──
             if ((dbg as any)?.explicitFallbackDebug?.length) {
-              console.group("[PICK-DEBUG] 1️⃣⁺ SQL explicite (sans vecteur) — complément si pool vectoriel insuffisant");
+              console.groupCollapsed(`[PICK-DEBUG]   1️⃣⁺ SQL explicite (sans vecteur) — complément`);
               (dbg as any).explicitFallbackDebug.forEach((lvl: any) => {
                 console.log(`   liked_genres=${lvl.likedGenres ? "oui" : "non"}, note≥${lvl.minRating}: +${lvl.newFilms} films`);
                 if (lvl.films?.length) {
@@ -1370,33 +1468,36 @@ const HomeScreen = ({
             }
           }
 
-          // ── Profil LLM ──
+          // ── PROFIL LLM (toujours visible) ──
           if (dbg?.llmProfile) {
             const p = dbg.llmProfile;
-            console.log(`[PICK-DEBUG] 🧠 Profil utilisateur → LLM`);
-            console.log(`   Paramètres LLM :`);
-            console.log(`     genres préférés  : [${(p.genresPrefers || []).join(", ") || "—"}]`);
-            console.log(`     genres exclus    : [${(p.genresExclus || []).join(", ") || "—"}]`);
-            console.log(`     origines aimées  : [${(p.originesAimees || []).join(", ") || "—"}]`);
-            console.log(`     origines exclues : [${(p.originesExclues || []).join(", ") || "—"}]`);
-            console.log(`     genres fatigue   : [${(p.genresFatigue || []).join(", ") || "—"}]`);
-            console.log(`     clusters favoris : [${(p.clusters || []).join(", ") || "—"}]`);
-            console.log(`     clusters rejetés : [${(p.clustersRejetes || []).join(", ") || "—"}]`);
-            console.log(`     films aimés      : [${(p.filmsAimes || []).join(", ") || "—"}]`);
-            console.log(`     confiance profil : ${p.confianceProfil}/100`);
-            console.log(`     type média       : ${p.mediaType}`);
-            console.log(`     exploration      : ${p.explorationLevel}/10`);
-            console.log(`     score min        : ${p.minMatchScore}%`);
+            console.log(
+              `%c[PICK-DEBUG] ▶ PROFIL UTILISATEUR → LLM` +
+              `\n   genres préférés  : [${(p.genresPrefers || []).join(", ") || "—"}]` +
+              `\n   genres exclus    : [${(p.genresExclus || []).join(", ") || "—"}]` +
+              `\n   clusters favoris : [${(p.clusters || []).join(", ") || "—"}]` +
+              `\n   origines aimées  : [${(p.originesAimees || []).join(", ") || "—"}]` +
+              `\n   genres fatigue   : [${(p.genresFatigue || []).join(", ") || "—"}]` +
+              `\n   confiance profil : ${p.confianceProfil}/100 | exploration : ${p.explorationLevel}/10 | score min : ${p.minMatchScore}%`,
+              "font-weight:bold;color:#a78bfa"
+            );
             if (dbg.systemPrompt) {
-              console.group(`[PICK-DEBUG] 📄 Prompt système complet envoyé au LLM`);
+              console.groupCollapsed(`[PICK-DEBUG]   📄 Prompt système complet envoyé au LLM`);
               console.log(dbg.systemPrompt);
               console.groupEnd();
             }
           }
 
-          // ── Étape 2 : Top 50 triés par score composé ──
+          // ── ÉTAPE 2 : Top N par score composé ──
           if (dbg?.top50?.length) {
-            console.group(`[PICK-DEBUG] 2️⃣ Top ${dbg.top50.length} envoyés au LLM — triés par score composé (sim×100 + note)`);
+            console.log(
+              `%c[PICK-DEBUG] ▶ ÉTAPE 2 — Score composé` +
+              `\n   FILTRE  : tri par sim×100 + note + boost langue +15` +
+              `\n   ENTRÉE  : ${dbg.sqlCandidates?.length ?? "?"} candidats SQL` +
+              `\n   SORTIE  : ${dbg.top50.length} films envoyés au LLM`,
+              "font-weight:bold;color:#6366f1"
+            );
+            console.groupCollapsed(`[PICK-DEBUG]   📋 SORTIE score composé — ${dbg.top50.length} films`);
             console.table(dbg.top50.map((c: any, i: number) => ({
               "#": i + 1,
               "Titre": c.title,
@@ -1409,16 +1510,20 @@ const HomeScreen = ({
             console.groupEnd();
           }
 
-          // ── Étape 2.5 : 30 films avec leur plateforme + filtrés envoyés au LLM ──
+          // ── ÉTAPE 2.5 : Filtre plateforme → LLM ──
           if (dbg?.platformPool?.length) {
-            const platformMs = dbg.platformFilterMs != null ? dbg.platformFilterMs : "?";
-            const llmMs = dbg.llmMs != null ? dbg.llmMs : "?";
+            const platformMs = dbg.platformFilterMs ?? "?";
+            const llmMs = dbg.llmMs ?? "?";
             const matched = dbg.platformPool.filter((r: any) => r.match).length;
             const bypassed = dbg.llmFiltered?.length === dbg.top50?.length;
-            const label = bypassed
-              ? `⚠️ bypass rate limit (${platformMs}ms) — tous les ${dbg.top50?.length} films au LLM`
-              : `filtre plateforme (${platformMs}ms) — ${matched}/${dbg.platformPool.length} retenus | LLM: ${llmMs}ms`;
-            console.group(`[PICK-DEBUG] 2️⃣⁺ Plateformes des 30 films — ${label}`);
+            console.log(
+              `%c[PICK-DEBUG] ▶ ÉTAPE 2.5 — Filtre plateforme${bypassed ? " ⚠️ BYPASS rate limit" : ""}` +
+              `\n   FILTRE  : vérification disponibilité sur tes plateformes (${platformMs}ms)` +
+              `\n   ENTRÉE  : ${dbg.platformPool.length} films candidats` +
+              `\n   SORTIE  : ${bypassed ? `⚠️ bypass — tous les ${dbg.top50?.length} films au LLM` : `${matched} retenus → LLM (${llmMs}ms)`}`,
+              "font-weight:bold;color:#6366f1"
+            );
+            console.groupCollapsed(`[PICK-DEBUG]   📋 SORTIE filtre plateforme — ${dbg.platformPool.length} films vérifiés`);
             console.table(dbg.platformPool.map((r: any, i: number) => ({
               "#": i + 1,
               "Titre": r.title,
@@ -1427,19 +1532,30 @@ const HomeScreen = ({
             })));
             console.groupEnd();
           } else if (dbg?.llmFiltered) {
-            // Fallback si platformPool absent (ancienne version déployée)
-            const platformMs = dbg.platformFilterMs != null ? dbg.platformFilterMs : "?";
-            const llmMs = dbg.llmMs != null ? dbg.llmMs : "?";
-            console.group(`[PICK-DEBUG] 2️⃣⁺ Films envoyés au LLM (${platformMs}ms filtre | LLM: ${llmMs}ms) — ${dbg.llmFiltered.length} films`);
+            const platformMs = dbg.platformFilterMs ?? "?";
+            const llmMs = dbg.llmMs ?? "?";
+            console.log(
+              `%c[PICK-DEBUG] ▶ ÉTAPE 2.5 — Films envoyés au LLM` +
+              `\n   FILTRE  : ${platformMs}ms filtre | LLM: ${llmMs}ms` +
+              `\n   SORTIE  : ${dbg.llmFiltered.length} films`,
+              "font-weight:bold;color:#6366f1"
+            );
+            console.groupCollapsed(`[PICK-DEBUG]   📋 SORTIE — ${dbg.llmFiltered.length} films envoyés au LLM`);
             console.table(dbg.llmFiltered.map((c: any, i: number) => ({
               "#": i + 1, "Titre": c.title, "Note /10": c.note ?? "–", "Sim%": c.sim ?? "–",
             })));
             console.groupEnd();
           }
 
-          // ── Étape 3 : Sélections LLM ──
+          // ── ÉTAPE 3 : Sélections LLM ──
           if (dbg?.llmSelections?.length) {
-            console.group(`[PICK-DEBUG] 3️⃣ Sélections LLM (${dbg.llmSelections.length} films → movie-match va scorer)`);
+            console.log(
+              `%c[PICK-DEBUG] ▶ ÉTAPE 3 — Sélections LLM` +
+              `\n   FILTRE  : Claude score chaque film vs profil utilisateur` +
+              `\n   SORTIE  : ${dbg.llmSelections.length} films sélectionnés → movie-match va scorer`,
+              "font-weight:bold;color:#6366f1"
+            );
+            console.groupCollapsed(`[PICK-DEBUG]   📋 SORTIE LLM — ${dbg.llmSelections.length} films avec scores et raisons`);
             console.table(dbg.llmSelections.map((s: any, i: number) => ({
               "#": i + 1,
               "Titre": s.title,
@@ -1449,24 +1565,28 @@ const HomeScreen = ({
             console.groupEnd();
           }
 
-          // ── Étape 3.5b : Fallback trace (mode discover-fallback) ──
+          // ── Fallback trace ──
           if (dbg?.fallbackTrace?.length) {
-            console.group(`[PICK-DEBUG] 🔀 Films ajoutés en mode fallback — ${dbg.fallbackTrace.length} film(s) (aucun candidat SQL/LLM disponible)`);
+            console.log(`[PICK-DEBUG] ▶ FALLBACK — ${dbg.fallbackTrace.length} film(s) ajoutés (aucun candidat SQL/LLM disponible)`);
+            console.groupCollapsed(`[PICK-DEBUG]   📋 Films fallback`);
             console.table(dbg.fallbackTrace.map((t: any, i: number) => ({
-              "#": i + 1,
-              "Titre": t.title,
-              "ID TMDB": t.id,
-              "Type": t.type,
-              "Source": t.stage,
+              "#": i + 1, "Titre": t.title, "ID TMDB": t.id, "Type": t.type, "Source": t.stage,
             })));
             console.groupEnd();
           }
 
-          // ── Étape 3.5 : Enrichissement TMDB ──
+          // ── ÉTAPE 3.5 : Enrichissement TMDB ──
           if (dbg?.tmdbEnrichment?.length) {
             const failed = dbg.tmdbEnrichment.filter((t: any) => !t.ok);
             const ok = dbg.tmdbEnrichment.filter((t: any) => t.ok);
-            console.group(`[PICK-DEBUG] 3️⃣.5 TMDB enrichissement — ✅ ${ok.length} OK / ❌ ${failed.length} échoués`);
+            console.log(
+              `%c[PICK-DEBUG] ▶ ÉTAPE 3.5 — Enrichissement TMDB` +
+              `\n   FILTRE  : lookup TMDB pour récupérer poster, note, synopsis` +
+              `\n   ENTRÉE  : ${dbg.tmdbEnrichment.length} films sélectionnés` +
+              `\n   SORTIE  : ✅ ${ok.length} OK${failed.length > 0 ? ` / ❌ ${failed.length} échoués → fallback trending` : ""}`,
+              "font-weight:bold;color:#6366f1"
+            );
+            console.groupCollapsed(`[PICK-DEBUG]   📋 SORTIE TMDB — ${dbg.tmdbEnrichment.length} films`);
             console.table(dbg.tmdbEnrichment.map((t: any, i: number) => ({
               "#": i + 1,
               "Titre": t.title,
@@ -1474,16 +1594,20 @@ const HomeScreen = ({
               "Type": t.type,
               "Statut": t.ok ? "✅ OK" : `❌ ${t.reason || "échec"}`,
             })));
-            if (failed.length > 0) {
-              console.warn(`[PICK-DEBUG] ⚠️ ${failed.length} film(s) LLM perdus au TMDB lookup → fallback trending activé`);
-            }
             console.groupEnd();
           }
 
-          // ── Étape 4 : Films finaux présentés ──
+          // ── ÉTAPE 4 : Films finaux ──
           if ((dbg as any)?.finalMoviesList?.length) {
-            console.group(`[PICK-DEBUG] 4️⃣ Films finaux présentés à l'utilisateur (${(dbg as any).finalMoviesList.length})`);
-            console.table((dbg as any).finalMoviesList.map((m: any, i: number) => ({
+            const finals = (dbg as any).finalMoviesList;
+            console.log(
+              `%c[PICK-DEBUG] ▶ ÉTAPE 4 — Films finaux présentés` +
+              `\n   FILTRE  : movie-match re-score chaque film avec Claude` +
+              `\n   SORTIE  : ${finals.length} films présentés à l'utilisateur`,
+              "font-weight:bold;color:#10b981"
+            );
+            console.groupCollapsed(`[PICK-DEBUG]   📋 SORTIE finale — ${finals.length} films`);
+            console.table(finals.map((m: any, i: number) => ({
               "#": i + 1,
               "Titre": m.title,
               "Année": m.year,
@@ -1493,25 +1617,21 @@ const HomeScreen = ({
             console.groupEnd();
           }
 
+          // ── engineMeta + diagnostic pool ──
           console.log("[PICK-DEBUG] engineMeta:", data?.engineMeta);
 
-          // ── Pool SQL / cascade goût : diagnostic ──
           const meta = data?.engineMeta;
           if (meta && meta.sqlCandidatesCount >= 0) {
             const sqlCount = meta.candidatesFound ?? meta.sqlCandidatesCount;
             const llmCount = meta.llmPoolCount ?? dbg?.top50?.length ?? "?";
             if (meta.tasteCascadeTriggered) {
-              console.warn(
-                `[PICK-DEBUG] ⚠️ Cascade goût appliquée (relâchement contraintes, plateforme conservée) — ${sqlCount} candidats SQL → ${llmCount} envoyés au LLM.`,
-              );
+              console.warn(`[PICK-DEBUG] ⚠️ Cascade goût appliquée (relâchement contraintes, plateforme conservée) — ${sqlCount} candidats SQL → ${llmCount} envoyés au LLM.`);
             } else {
-              console.log(
-                `[PICK-DEBUG] ✅ Pool SQL : ${sqlCount} candidats sur tes plateformes → ${llmCount} envoyés au LLM.`,
-              );
+              console.log(`[PICK-DEBUG] ✅ Pool SQL : ${sqlCount} candidats sur tes plateformes → ${llmCount} envoyés au LLM.`);
             }
           }
 
-          // ── Timings par étape ──
+          // ── Timings ──
           const timings = data?.engineMeta?.timings;
           if (timings) {
             const fmt = (ms: number) => ms >= 1000 ? `${(ms / 1000).toFixed(1)}s` : `${ms}ms`;
@@ -1520,16 +1640,15 @@ const HomeScreen = ({
               return "█".repeat(Math.max(1, pct)) + "░".repeat(20 - Math.max(1, pct));
             };
             const tot = timings.total || 1;
-            console.group(`[PICK-DEBUG] ⏱️ Timings pipeline — total ${fmt(tot)}`);
-            console.log(`  SQL (${dbg?.sqlCandidates?.length ?? "?"} candidats)       ${bar(timings.sql, tot)}  ${fmt(timings.sql)}`);
-            console.log(`  Enrichissement langue      ${bar(timings.langEnrich, tot)}  ${fmt(timings.langEnrich)}`);
-            console.log(`  LLM + filtre plateforme   ${bar(timings.select, tot)}  ${fmt(timings.select)}`);
-            console.log(`  TMDB enrichissement batch  ${bar(timings.tmdb, tot)}  ${fmt(timings.tmdb)}`);
-            console.log(`  Fallback                   ${bar(timings.fallback, tot)}  ${fmt(timings.fallback)}`);
-            console.groupEnd();
+            console.log(
+              `[PICK-DEBUG] ⏱️ Timings pipeline — total ${fmt(tot)}` +
+              `\n  SQL (${dbg?.sqlCandidates?.length ?? "?"} candidats)       ${bar(timings.sql, tot)}  ${fmt(timings.sql)}` +
+              `\n  Enrichissement langue      ${bar(timings.langEnrich, tot)}  ${fmt(timings.langEnrich)}` +
+              `\n  LLM + filtre plateforme   ${bar(timings.select, tot)}  ${fmt(timings.select)}` +
+              `\n  TMDB enrichissement batch  ${bar(timings.tmdb, tot)}  ${fmt(timings.tmdb)}` +
+              `\n  Fallback                   ${bar(timings.fallback, tot)}  ${fmt(timings.fallback)}`
+            );
           }
-
-          console.groupEnd();
           const extracted = extractRecommendationMovies(data);
           const desiredCount = quickFilters.recommendationCount || RECOMMENDATION_BATCH_SIZE;
 
@@ -1622,6 +1741,23 @@ const HomeScreen = ({
             "Score movie-match": `${getRecommendationScore(m.recommendationTexts) ?? "–"}%`,
             "Rich texts": (m.recommendationTexts as any)?.fallback ? "⚠️ FALLBACK" : m.recommendationTexts?.headline ? "oui" : "non",
           })));
+          const mmFallbackCount = movies.filter((m: any) => (m.recommendationTexts as any)?.fallback).length;
+          logPipelineStagesTable([{
+            id: "6-movie-match",
+            name: "movie-match (client, séquentiel par film)",
+            params: {
+              preloadMatchTexts: true,
+              preloadProviders: true,
+              desiredCount,
+              duoMode: !!duoOverrides,
+            },
+            fallbackTriggered: mmFallbackCount > 0,
+            fallbackReason: mmFallbackCount > 0
+              ? `${mmFallbackCount} film(s) — Gemini KO, retry 4s (FALLBACK texts)`
+              : null,
+            inputCount: extracted.length,
+            outputCount: movies.length,
+          }]);
           console.groupEnd();
 
           // Safety net: if batch processing filtered everything but edge function returned results,

@@ -135,14 +135,17 @@ function preloadPosterImages(paths: string[], size: string = WALL_POSTER_SIZE) {
   });
 }
 
-/** Filtre le pool en excluant les chemins connus comme invalides. */
+/** Filtre le pool en excluant les chemins connus comme invalides.
+ *  Ne retourne jamais de chemins non-testés : les images non confirmées
+ *  créent des trous visuels dans le mur le temps qu'elles chargent.
+ *  Les FALLBACK_POSTER_PATHS servent de socle toujours disponible. */
 function filterValidPaths(paths: string[]): string[] {
-  // Si les confirmations sont trop peu nombreuses (pas encore chargé), retourner tout
-  if (confirmedPaths.size < 10) return paths.filter((p) => !rejectedPaths.has(p));
-  // Sinon : priorité aux confirmés, complète avec les non-encore-testés
   const confirmed = paths.filter((p) => confirmedPaths.has(p));
-  const untested  = paths.filter((p) => !confirmedPaths.has(p) && !rejectedPaths.has(p));
-  return confirmed.length >= 20 ? confirmed : [...confirmed, ...untested];
+  // Si on a assez de chemins confirmés, on n'utilise que ceux-là
+  if (confirmed.length >= 24) return confirmed;
+  // Sinon on complète avec les fallbacks (toujours chargés en eager)
+  const fallbacks = (FALLBACK_POSTER_PATHS as readonly string[]).filter(p => !rejectedPaths.has(p));
+  return [...new Set([...confirmed, ...fallbacks])];
 }
 
 const WALL_POSTER_SIZES = [WALL_POSTER_SIZE, "w342", "w500"] as const;
