@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
-import { requireAuth, isAdminUser } from "../_shared/auth.ts";
+import { requireAuth } from "../_shared/auth.ts";
 import { tmdbUrl } from "../_shared/tmdb.ts";
 
 const corsHeaders = {
@@ -1395,9 +1395,7 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
     const excludeCandidateIds = candidates
       .map((c: any) => Number(c.tmdb_id))
       .filter(Number.isFinite);
-    const includeDebug = rawDebug === true && auth.user?.id
-      ? await isAdminUser(auth.user.id)
-      : false;
+    const includeDebug = rawDebug === true && !!auth.user?.id;
 
     const responseBody: Record<string, unknown> = {
         movies: finalMovies,

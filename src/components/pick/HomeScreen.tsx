@@ -429,29 +429,40 @@ const HomeScreen = ({
   }, [user]);
 
   // Détection événements passés sans feedback → carte persistante + auto-modal
+  // La demande d'évaluation n'apparaît que le lendemain de la soirée (24h après date+heure du visionnage)
   useEffect(() => {
     if (!user) return;
     const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 3600 * 1000).toISOString().slice(0, 10);
+    const yesterday = new Date(Date.now() - 24 * 3600 * 1000).toISOString().slice(0, 10);
     (async () => {
       const { data: events } = await supabase
         .from("events" as any)
-        .select("id, title, event_date, context, final_pick_title, final_pick_poster, final_pick_tmdb_id")
+        .select("id, title, event_date, event_time, context, final_pick_title, final_pick_poster, final_pick_tmdb_id")
         .eq("status", "done")
         .gte("event_date", sevenDaysAgo)
-        .lte("event_date", new Date().toISOString().slice(0, 10))
+        .lte("event_date", yesterday)
         .or(`organizer_id.eq.${user.id}`)
         .not("final_pick_title", "is", null)
         .order("event_date", { ascending: false })
-        .limit(1);
+        .limit(5);
       if (!events?.length) return;
-      const ev = events[0] as any;
-      const { data: fb } = await supabase
-        .from("event_film_feedback" as any)
-        .select("id")
-        .eq("event_id", ev.id)
-        .eq("user_id", user.id)
-        .maybeSingle();
-      if (fb) return;
+
+      // Trouve le premier événement dont les 24h sont écoulées et sans feedback
+      let ev: any = null;
+      for (const candidate of events as any[]) {
+        if (candidate.event_time) {
+          const watchedAt = new Date(`${candidate.event_date}T${candidate.event_time}`);
+          if (Date.now() < watchedAt.getTime() + 24 * 60 * 60 * 1000) continue;
+        }
+        const { data: fb } = await supabase
+          .from("event_film_feedback" as any)
+          .select("id")
+          .eq("event_id", candidate.id)
+          .eq("user_id", user.id)
+          .maybeSingle();
+        if (!fb) { ev = candidate; break; }
+      }
+      if (!ev) return;
 
       // Récupère les participants confirmés
       const { data: parts } = await supabase
@@ -1244,13 +1255,14 @@ const HomeScreen = ({
             ...(duoOverrides?.user1Id && duoOverrides?.user2Id && {
               duoUserIds: [duoOverrides.user1Id, duoOverrides.user2Id],
             }),
+            debug: true,
           });
           tEdgeEnd = performance.now();
           engineMetaResult = data?.engineMeta ?? null;
           if (data?.excludeCandidateIds?.length) {
             setLastSql50Ids(data.excludeCandidateIds);
           }
-          const dbg = import.meta.env.DEV ? data?.debugData : undefined;
+          const dbg = data?.debugData;
 
           console.group("[PICK-DEBUG] ═══ Pipeline de recommandation ═══");
 
