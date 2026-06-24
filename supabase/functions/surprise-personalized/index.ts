@@ -568,6 +568,8 @@ serve(async (req) => {
               p_excluded_languages: params.p_excluded_languages ?? [],
               p_min_popularity: params.p_min_popularity ?? null,
               p_platform_ids: params.p_platform_ids ?? null,
+              p_min_year: params.p_min_year ?? null,
+              p_max_year: params.p_max_year ?? null,
               exclude_ids_count: expandExcludeIds.length,
             };
             const { data, error } = await sb.rpc("match_movies_for_recommendation", params);

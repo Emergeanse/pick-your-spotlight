@@ -1181,17 +1181,6 @@ const HomeScreen = ({
           const userTasteVector = duoOverrides?.tasteVector ?? (multiProfile?.stableTasteVector || null);
 
           if (tasteProfile?.topGenres?.length) setTonightUserGenres(tasteProfile.topGenres.slice(0, 8));
-          console.group("[PICK-DEBUG] 📤 Paramètres envoyés à surprise-personalized");
-          console.log("userTasteVector :", userTasteVector ? `✅ ${userTasteVector.length} dims` : "❌ NULL — SQL sera sauté");
-          console.log("mediaType       :", quickFilters.mediaType);
-          console.log("platformIds     :", userPlatformIds?.length ? userPlatformIds : "aucune");
-          console.log("topGenres       :", tasteProfile?.topGenres?.slice(0, 8) ?? []);
-          console.log("excludedGenres  :", userExcludedGenres?.length ? userExcludedGenres : "aucun");
-          console.log("maxDuration     :", quickFilters.maxDuration ?? "illimitée");
-          console.log("minMatchScore   :", quickFilters.matchThreshold, "%");
-          console.log("count demandé   :", quickFilters.recommendationCount || RECOMMENDATION_BATCH_SIZE);
-          console.log("excludeIds      :", allExcludeIds.length, "IDs");
-          console.groupEnd();
 
           const moodCfg = activeAmbiance ? MOOD_CONFIGS[activeAmbiance] : null;
 
@@ -1211,15 +1200,34 @@ const HomeScreen = ({
           const effectiveMinMatchScore = moodCfg?.minMatchScoreOverride ?? quickFilters.matchThreshold;
           const effectiveMinRating = moodCfg?.minRatingBoost ? (userMinRating ?? 0) + moodCfg.minRatingBoost : userMinRating;
 
+          // Log des paramètres EFFECTIFS (après tous les overrides voix/ambiance/duo)
+          console.group("[PICK-DEBUG] 📤 Paramètres effectifs envoyés à surprise-personalized");
+          console.log("vecteur de goût  :", userTasteVector ? `✅ ${userTasteVector.length} dims` : "❌ NULL — SQL vectoriel sera sauté");
+          console.log("type média       :", effectiveMediaType);
+          console.log("genres effectifs :", effectiveTopGenres?.length ? effectiveTopGenres : "aucun (profile vide ?)");
+          console.log("genres exclus    :", effectiveExcludedGenres?.length ? effectiveExcludedGenres : "aucun");
+          console.log("durée max        :", effectiveMaxDuration ? `${effectiveMaxDuration}min` : "illimitée");
+          console.log("note min         :", effectiveMinRating ?? "aucune");
+          console.log("score min        :", effectiveMinMatchScore, "%");
+          console.log("plateformes      :", userPlatformIds?.length ? userPlatformIds : "aucune");
+          console.log("count demandé    :", quickFilters.recommendationCount || RECOMMENDATION_BATCH_SIZE);
+          console.log("excludeIds       :", allExcludeIds.length, "IDs");
           if (voiceFilters) {
-            console.log("[PICK-DEBUG] 🎤 Voice overrides appliqués au pipeline :", {
-              genres: voiceFilters.genres,
-              originalLanguage: voiceFilters.originalLanguage,
-              decade: voiceFilters.decade,
-              maxDuration: voiceFilters.maxDuration,
-              mediaType: voiceFilters.mediaType,
-            });
+            console.group("🎤 Overrides vocaux");
+            console.log("  genres         :", voiceFilters.genres?.length ? voiceFilters.genres : "—");
+            console.log("  décennie       :", voiceFilters.decade ? `${voiceFilters.decade}s (${voiceFilters.decade}–${voiceFilters.decade + 9})` : "—");
+            console.log("  langue orig.   :", voiceFilters.originalLanguage ?? "—");
+            console.log("  durée max      :", voiceFilters.maxDuration ? `${voiceFilters.maxDuration}min` : "—");
+            console.log("  type média     :", voiceFilters.mediaType ?? "—");
+            console.groupEnd();
           }
+          if (activeAmbiance) {
+            console.log("🎭 Ambiance      :", activeAmbiance, moodCfg ? `(boostGenres: ${moodCfg.boostGenres?.join(", ") ?? "—"})` : "");
+          }
+          if (duoOverrides) {
+            console.log("👥 Mode duo      : actif (", duoOverrides.user1Id?.slice(0,8), "/", duoOverrides.user2Id?.slice(0,8), ")");
+          }
+          console.groupEnd();
 
           tEdgeStart = performance.now();
           const data = await invokeSurprisePersonalized({
@@ -1290,7 +1298,20 @@ const HomeScreen = ({
               console.log(`     langues exclues  : [${(rpc.p_excluded_languages || []).join(", ") || "—"}]`);
               console.log(`     popularité min   : ${rpc.p_min_popularity ?? "—"}`);
               console.log(`     plateformes      : [${(rpc.p_platform_ids || []).join(", ") || "—"}]`);
+              console.log(`     décennie SQL     : ${rpc.p_min_year != null ? `${rpc.p_min_year}–${rpc.p_max_year ?? rpc.p_min_year + 9}` : "—"}`);
               console.log(`     exclude_ids      : ${rpc.exclude_ids_count} IDs`);
+            }
+            if (dbg.filters?.voiceOverrides) {
+              const vo = dbg.filters.voiceOverrides;
+              const hasVoice = vo.genres?.length || vo.decade != null || vo.language || vo.mediaType || vo.maxDuration;
+              if (hasVoice) {
+                console.log(`   🎤 Overrides vocaux reçus par le serveur :`);
+                if (vo.genres?.length)   console.log(`     genres       : [${vo.genres.join(", ")}]`);
+                if (vo.decade != null)   console.log(`     décennie     : ${vo.decade}s (${vo.decade}–${vo.decade + 9})`);
+                if (vo.language)         console.log(`     langue orig. : ${vo.language}`);
+                if (vo.mediaType)        console.log(`     type média   : ${vo.mediaType}`);
+                if (vo.maxDuration)      console.log(`     durée max    : ${vo.maxDuration}min`);
+              }
             }
             // COUNT standalone — toujours visible (hors groupe), disponible si SP v20+ déployé
             if (dbg.sqlCountDiag?.length) {
