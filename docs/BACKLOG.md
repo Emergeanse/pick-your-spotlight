@@ -38,7 +38,7 @@
 | **2 — Intégration** | Mocks réponses edge (`surprise-personalized`, `movie-match`) · niveau cascade SQL attendu · `reason` non-null sur sélections LLM réussies · invariant exclusions (étendre `recommendation-non-regression`) | Tests Vitest avec fixtures JSON · pas de réseau | Phase 1 |
 | **3 — E2E** | `pipeline.spec.ts` — mocks alignés sur le vrai shape SP (`{ movies, debugData }`) · smoke post-deploy checklist § [SMOKE_TESTS.md](SMOKE_TESTS.md) 3.2 | E2E stable · campagne manuelle documentée | Phase 2 · Playwright + `.env.test` |
 
-**Quick win debug** : **1.23** — renommer `debugData.top20` → `top50`, `sql50` → `sqlCandidates`, corriger libellés `[PICK-DEBUG]` et `platformFallbackTriggered` (voir quirks pipeline).
+**Quick win debug** : **1.23** — ~~renommer `debugData.top20` → `top50`, `sql50` → `sqlCandidates`, corriger libellés `[PICK-DEBUG]` et `platformFallbackTriggered`~~ **`done`** (juin 2026).
 
 ### Lancer les premiers TNR (ordre recommandé)
 
@@ -169,7 +169,7 @@ Inclut : `onboarding_step`, `onboarding_paused`, films (`progress`, `liked_ids`,
 | #   | Audit | ID   | Tâche                                              | Mode          | Statut | Notes                                                                 |
 | --- | ----- | ---- | -------------------------------------------------- | ------------- | ------ | --------------------------------------------------------------------- |
 | 1   | #4    | 1.19 | Tests unitaires `taste-engine.ts` (+ batch)        | Cursor        | `done` | 37 tests · 97 total `test:unit` · [TNR pipeline](#tnr-pipeline-reco--feuille-de-route-3-phases) phase 1 |
-| 1b  | —     | 1.23 | Métriques debug pipeline (`top50`, libellés PICK-DEBUG) | Cursor   | `todo` | Quick win · [RECOMMENDATION_PIPELINE.md](RECOMMENDATION_PIPELINE.md) quirks |
+| 1b  | —     | 1.23 | Métriques debug pipeline (`top50`, libellés PICK-DEBUG) | Cursor   | `done` | Quick win · [RECOMMENDATION_PIPELINE.md](RECOMMENDATION_PIPELINE.md) quirks |
 | 2   | #5    | 2.11 | `aria-label` boutons icon-only                       | Cursor        | `todo` | Complète **2.9** a11y                                                 |
 | 3   | #1    | 2.5  | Hooks `HomeScreen` — **reporté**                     | Cursor        | `todo` | Rationalisation seule · cartographie A/B/C faite · pas de gros diff   |
 | 4   | #6    | 1.20 | `TonightPickContext`                               | Pair humain   | `todo` | PR par étapes · après **1.19** si touch pipeline                      |
@@ -272,7 +272,7 @@ Valider que l'app alpha est utilisable de bout en bout : smoke tests OK, edge fu
 | #2    | **1.17**   | 50+ `console.log` en prod → no-op `main.tsx`                          | S      | Claude ✅ | `done` | 218 appels neutralisés · `87416704`                                   |
 | #3    | **1.18**   | Logique plateformes dupliquée 4× → `platforms.ts`                     | M      | Claude ✅ | `done` | −80 l. HomeScreen · extraction Cursor = redondante                    |
 | #4    | **1.19**   | Tests unitaires `taste-engine.ts`, `recommendation-batch.ts`          | L      | Cursor   | `done` | 37 tests · 97 `test:unit` · [RECOMMENDATION_PIPELINE.md](RECOMMENDATION_PIPELINE.md) |
-| #4b   | **1.23**   | Métriques debug pipeline (noms `top50`/`sqlCandidates`, libellés console) | S  | Cursor   | `todo` | Quick win · quirks [RECOMMENDATION_PIPELINE.md](RECOMMENDATION_PIPELINE.md) |
+| #4b   | **1.23**   | Métriques debug pipeline (noms `top50`/`sqlCandidates`, libellés console) | S  | Cursor   | `done` | Quick win · quirks [RECOMMENDATION_PIPELINE.md](RECOMMENDATION_PIPELINE.md) |
 | #5    | **2.11**   | `aria-label` sur boutons icônes (sans texte visible)                  | M      | Cursor   | `todo` | Priorité Cursor #2 · complète **2.9** a11y                            |
 
 
@@ -382,7 +382,7 @@ npm run dev                              # puis checklist manuelle (SMOKE_TESTS.
 | 1.17  | Neutralisation `console.log` prod (`main.tsx`)             | S      | `done` | Claude ✅ | Audit #2 · 218 appels · `87416704`                                                                      |
 | 1.18  | Centraliser plateformes (`platforms.ts`)                   | M      | `done` | Claude ✅ | Audit #3 · −80 l. HomeScreen · extraction Cursor redondante · `737c0617`                                |
 | 1.19  | Tests unitaires `taste-engine` + `recommendation-batch`    | L      | `done` | Cursor    | 28 + 9 tests · 97 total · juin 2026 |
-| 1.23  | Métriques debug pipeline (`top50`, `sqlCandidates`, libellés) | S   | `todo` | Cursor    | Quick win · quirks pipeline doc |
+| 1.23  | Métriques debug pipeline (`top50`, `sqlCandidates`, libellés) | S   | `done` | Cursor    | Quick win · quirks pipeline doc |
 | 1.20  | `TonightPickContext` (réduire props overlay)               | M      | `todo` | Pair humain | Audit #6 · Cursor #4 · PR par étapes · après **1.19**                                                 |
 | 1.21  | Cache profil `localStorage` (`pys_greeting`)               | S      | `done` | Claude ✅ | Audit #7 · greeting instantané · `737c0617`                                                             |
 | 1.22  | Validation `localStorage` (zod)                            | S      | `done` | Claude ✅ | Audit #10 · déjà protégé — N/A                                                                            |
@@ -517,7 +517,7 @@ npm run dev                              # puis checklist manuelle (SMOKE_TESTS.
 
 ### File Cursor (priorité technique)
 
-1. **1.23** — Métriques debug pipeline (`S`) — quick win libellés `[PICK-DEBUG]`
+1. ~~**1.23** — Métriques debug pipeline (`S`) — quick win libellés `[PICK-DEBUG]`~~ **`done`**
 2. **2.11** — `aria-label` boutons icon-only (`M`)
 3. **2.5** — Hooks HomeScreen — **reporté** · candidats A/B/C cartographiés · petits diffs seulement
 4. **1.20** — `TonightPickContext` — **pair humain** · PR par étapes

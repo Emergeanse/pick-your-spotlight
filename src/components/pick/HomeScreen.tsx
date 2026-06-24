@@ -1275,7 +1275,7 @@ const HomeScreen = ({
           console.group("[PICK-DEBUG] ═══ Pipeline de recommandation ═══");
 
           // ── Étape 1 : SQL — toujours affiché même si 0 candidats ──
-          if (dbg?.filters || dbg?.sqlCountDiag?.length || dbg?.sql50) {
+          if (dbg?.filters || dbg?.sqlCountDiag?.length || dbg?.sqlCandidates) {
             const f = dbg.filters;
             const cascadeLevel: number = dbg.sqlCascadeLevel ?? -1;
             const cascadeLabels = ["0 — toutes contraintes", "1 — sans lang/année", "2 — sans liked_genres", "3 — sans liked_genres ni note (excluded_genres conservé)", "4 — sans plateforme (excluded_genres conservé)"];
@@ -1283,7 +1283,7 @@ const HomeScreen = ({
             const rpc = dbg.sqlRpcParams;
             const cascadeWarn = rpc ? (rpc.excluded_genres || []).length === 0 : false;
             const logFn = cascadeWarn ? console.warn.bind(console) : console.log.bind(console);
-            const candidateCount = dbg.sql50?.length ?? 0;
+            const candidateCount = dbg.sqlCandidates?.length ?? 0;
             // Log standalone (toujours visible, hors groupe)
             console.log(`%c[PICK-DEBUG] 🔍 SQL vectoriel 32D → ${candidateCount} candidats | cascade niveau ${cascadeLabel} | ${f?.excludeCount ?? 0} IDs exclus`, "font-weight:bold;color:#6366f1");
             const headerFn = candidateCount === 0 ? console.warn.bind(console) : console.group.bind(console);
@@ -1330,7 +1330,7 @@ const HomeScreen = ({
             }
             // Liste des candidats — seulement s'il y en a
             if (candidateCount > 0) {
-              console.table(dbg.sql50.map((c: any, i: number) => ({
+              console.table(dbg.sqlCandidates.map((c: any, i: number) => ({
                 "#": i + 1,
                 "Titre": c.title,
                 "Année": c.year,
@@ -1349,7 +1349,7 @@ const HomeScreen = ({
               console.group("[PICK-DEBUG] 📈 Détail par niveau de cascade SQL");
               (dbg as any).sqlLevelDebug.forEach((lvl: any) => {
                 const label = cascadeLabels[lvl.level] ?? `niveau ${lvl.level}`;
-                console.log(`   Niveau ${label} : +${lvl.newFilms} non-interagis (total: ${lvl.totalNonInteracted}/50)`);
+                console.log(`   Niveau ${label} : +${lvl.newFilms} non-interagis (total: ${lvl.totalNonInteracted}/100)`);
                 if (lvl.films?.length) {
                   console.log(`   → ${lvl.films.slice(0, 5).map((f: any) => `"${f.title}" (${f.year}) ⭐${f.note} sim=${f.sim}%`).join(" | ")}`);
                 }
@@ -1394,10 +1394,10 @@ const HomeScreen = ({
             }
           }
 
-          // ── Étape 2 : Top 20 triés par score composé ──
-          if (dbg?.top20?.length) {
-            console.group(`[PICK-DEBUG] 2️⃣ Top ${dbg.top20.length} envoyés au LLM — triés par score composé (sim×100 + note)`);
-            console.table(dbg.top20.map((c: any, i: number) => ({
+          // ── Étape 2 : Top 50 triés par score composé ──
+          if (dbg?.top50?.length) {
+            console.group(`[PICK-DEBUG] 2️⃣ Top ${dbg.top50.length} envoyés au LLM — triés par score composé (sim×100 + note)`);
+            console.table(dbg.top50.map((c: any, i: number) => ({
               "#": i + 1,
               "Titre": c.title,
               "Note /10": c.note ?? "–",
@@ -1414,9 +1414,9 @@ const HomeScreen = ({
             const platformMs = dbg.platformFilterMs != null ? dbg.platformFilterMs : "?";
             const llmMs = dbg.llmMs != null ? dbg.llmMs : "?";
             const matched = dbg.platformPool.filter((r: any) => r.match).length;
-            const bypassed = dbg.llmFiltered?.length === dbg.top20?.length;
+            const bypassed = dbg.llmFiltered?.length === dbg.top50?.length;
             const label = bypassed
-              ? `⚠️ bypass rate limit (${platformMs}ms) — tous les ${dbg.top20?.length} films au LLM`
+              ? `⚠️ bypass rate limit (${platformMs}ms) — tous les ${dbg.top50?.length} films au LLM`
               : `filtre plateforme (${platformMs}ms) — ${matched}/${dbg.platformPool.length} retenus | LLM: ${llmMs}ms`;
             console.group(`[PICK-DEBUG] 2️⃣⁺ Plateformes des 30 films — ${label}`);
             console.table(dbg.platformPool.map((r: any, i: number) => ({
@@ -1495,16 +1495,18 @@ const HomeScreen = ({
 
           console.log("[PICK-DEBUG] engineMeta:", data?.engineMeta);
 
-          // ── Filtre plateforme : diagnostic ──
+          // ── Pool SQL / cascade goût : diagnostic ──
           const meta = data?.engineMeta;
-          if (meta && meta.platformCandidatesCount >= 0) {
-            if (meta.platformFallbackTriggered) {
+          if (meta && meta.sqlCandidatesCount >= 0) {
+            const sqlCount = meta.candidatesFound ?? meta.sqlCandidatesCount;
+            const llmCount = meta.llmPoolCount ?? dbg?.top50?.length ?? "?";
+            if (meta.tasteCascadeTriggered) {
               console.warn(
-                `[PICK-DEBUG] ⚠️ Filtre plateforme initial insuffisant (${meta.platformCandidatesCount} candidats avec tous les filtres) → cascade appliquée, plateforme conservée → ${meta.candidatesFound} candidats finaux sur tes plateformes.`,
+                `[PICK-DEBUG] ⚠️ Cascade goût appliquée (relâchement contraintes, plateforme conservée) — ${sqlCount} candidats SQL → ${llmCount} envoyés au LLM.`,
               );
             } else {
               console.log(
-                `[PICK-DEBUG] ✅ Filtre plateforme actif : ${meta.platformCandidatesCount} candidats SQL sur tes plateformes.`,
+                `[PICK-DEBUG] ✅ Pool SQL : ${sqlCount} candidats sur tes plateformes → ${llmCount} envoyés au LLM.`,
               );
             }
           }
@@ -1519,7 +1521,7 @@ const HomeScreen = ({
             };
             const tot = timings.total || 1;
             console.group(`[PICK-DEBUG] ⏱️ Timings pipeline — total ${fmt(tot)}`);
-            console.log(`  SQL (${dbg?.sql50?.length ?? "?"} candidats)       ${bar(timings.sql, tot)}  ${fmt(timings.sql)}`);
+            console.log(`  SQL (${dbg?.sqlCandidates?.length ?? "?"} candidats)       ${bar(timings.sql, tot)}  ${fmt(timings.sql)}`);
             console.log(`  Enrichissement langue      ${bar(timings.langEnrich, tot)}  ${fmt(timings.langEnrich)}`);
             console.log(`  LLM + filtre plateforme   ${bar(timings.select, tot)}  ${fmt(timings.select)}`);
             console.log(`  TMDB enrichissement batch  ${bar(timings.tmdb, tot)}  ${fmt(timings.tmdb)}`);

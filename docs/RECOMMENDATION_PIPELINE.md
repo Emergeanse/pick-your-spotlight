@@ -63,7 +63,7 @@ flowchart TB
 | # | Étape | Comptes typiques | Critères de sélection | Fichiers clés |
 |---|--------|------------------|----------------------|---------------|
 | **0** | Préparation client | `excludeIds` : 20–200+ | Feedback `user_item_feedback`, rejets session, pool chat, partenaire duo | `HomeScreen.tsx` · `use-recommendation-engine.ts` · [`taste-engine.ts`](../src/lib/taste-engine.ts) |
-| **1** | SQL vectoriel 32D | Pool cible **~100** non-interagis ; debug `sql50` peut lister **tous** les bruts (souvent 100–176) | RPC `match_movies_for_recommendation` · similarité cosinus · **plateforme jamais levée** · cascade niveaux 0→3 (relâchement lang/année/genres/note) | [`surprise-personalized/index.ts`](../supabase/functions/surprise-personalized/index.ts) · migrations RPC |
+| **1** | SQL vectoriel 32D | Pool cible **~100** non-interagis ; debug `sqlCandidates` liste **tous** les bruts (souvent 100–176) | RPC `match_movies_for_recommendation` · similarité cosinus · **plateforme jamais levée** · cascade niveaux 0→3 (relâchement lang/année/genres/note) | [`surprise-personalized/index.ts`](../supabase/functions/surprise-personalized/index.ts) · migrations RPC |
 | **1.4** | SQL explicite (sans vecteur) | Complète jusqu'à 100 si vecteur absent ou pool faible | `match_movies_explicit` · 3 niveaux (goût strict → plateforme seule) | idem SP |
 | **1.7** | Enrichissement langue | Jusqu'à 60 candidats `original_language` null | Appels TMDB + backfill embeddings | idem SP |
 | **2** | Top composite | **50** films (`llmPoolSize`) | `composite = sim×100 + note` (+ boost langue préférée +15) · post-filtres voix genre/décennie | idem SP |
@@ -100,17 +100,17 @@ Activé quand `debug: true` est envoyé à `surprise-personalized` (toujours en 
 | Groupe console | Champ `debugData` | Contenu |
 |----------------|-------------------|---------|
 | `📤 Paramètres envoyés` | — (client) | Vecteur, plateformes, genres, `excludeIds` |
-| `1️⃣ SQL vectoriel 32D` | `sql50`, `sqlCascadeLevel`, `sqlRpcParams`, `sqlCountDiag`, `sqlSnippet` | Candidats SQL triés par Sim% · snippet RPC reproductible |
+| `1️⃣ SQL vectoriel 32D` | `sqlCandidates`, `sqlCascadeLevel`, `sqlRpcParams`, `sqlCountDiag`, `sqlSnippet` | Candidats SQL triés par Sim% · snippet RPC reproductible |
 | `📈 Détail par niveau de cascade` | `sqlLevelDebug` | Films gagnés par niveau 0–3 |
 | `1️⃣⁺ SQL explicite` | `explicitFallbackDebug` | Complément sans vecteur |
 | `🧠 Profil utilisateur → LLM` | `llmProfile`, `systemPrompt` | Contexte LLM complet |
-| `2️⃣ Top N envoyés au LLM` | `top20` ⚠️ | **Jusqu'à 50 films** (clé historique `top20`, voir quirks) |
+| `2️⃣ Top N envoyés au LLM` | `top50` | **Jusqu'à 50 films** (`llmPoolSize=50`) |
 | `2️⃣⁺ Plateformes` | `platformPool`, `llmFiltered` | Filtre plateforme (souvent bypass : plateforme déjà en SQL) |
 | `3️⃣ Sélections LLM` | `llmSelections` | `matchScore` LLM + `reason` |
 | `🔀 Films fallback` | `fallbackTrace` | Mode `discover-fallback` |
 | `3️⃣.5 TMDB enrichissement` | `tmdbEnrichment` | OK / échec par ID |
 | `4️⃣ Films finaux` (edge) | `finalMoviesList` | Sortie SP avant movie-match |
-| `engineMeta` | `engineMeta` | Timings, `platformFallbackTriggered`, mode |
+| `engineMeta` | `engineMeta` | Timings, `tasteCascadeTriggered`, `sqlCandidatesCount`, `llmPoolCount`, mode |
 | `⏱️ Timings pipeline` | `engineMeta.timings` | SQL · lang · LLM · TMDB · fallback |
 | `4️⃣ Résultat final après movie-match` | — (client) | Score MM · rich texts vs `FALLBACK` |
 
@@ -135,12 +135,11 @@ La fusion côté client (`recommendation-batch.ts`) ignore les scores SP &lt; 60
 
 | Quirk | Détail | Impact |
 |-------|--------|--------|
-| **`sql50` ≠ 50** | Contient **tous** les candidats du pool SQL (souvent ~100–176), pas 50 | Console « 176 candidats » vs attente « top 50 » — **métriques debug trompeuses** |
-| **`top20` = top 50** | Clé debug `top20` remplie avec `llmPool` (max 50) ; libellé console « Top 20 » | Renommer en `top50` + libellés console (backlog **1.23**) |
-| **`platformFallbackTriggered` mal nommé** | `true` dès **cascade SQL niveau ≥ 1** (relâchement contraintes goût), **pas** levée du filtre plateforme | Message « cascade appliquée, plateforme conservée » — le flag suggère une désactivation plateforme |
 | **`reason: null`** | Fallback LLM déterministe · retry qualité · parsing JSON partiel | Colonne « Raison » vide dans tables debug ; UI garde parfois le teaser LLM initial |
 | **Trois échelles** | Sim% · LLM · MM non comparables directement | Ne pas trier debug par Sim% en supposant l'ordre final |
 | **`movie-match` FALLBACK** | Gemini KO → objet `{ fallback: true }` | Log client `⚠️ FALLBACK` · retry 4 s · films réserve |
+
+> **Corrigé (1.23)** : clés `sql50`/`top20` renommées `sqlCandidates`/`top50` ; `platformFallbackTriggered` → `tasteCascadeTriggered` ; `platformCandidatesCount` n'est plus écrasé par la taille du pool LLM.
 
 ---
 

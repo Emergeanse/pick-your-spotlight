@@ -464,8 +464,8 @@ serve(async (req) => {
     //   4 — sans plateforme (dernier recours)
 
     let candidates: any[] = [];
-    let platformCandidatesCount = -1;
-    let platformFallbackTriggered = false;
+    let sqlCandidatesCount = -1;
+    let tasteCascadeTriggered = false;
     let finalCascadeLevel = -1;
     let finalRpcParamsSummary: Record<string, any> | null = null;
     const sqlCountDiag: { level: number; total_in_db: number; available_after_exclusions: number; liked_genres?: string; excluded_genres_count?: number; min_rating?: number; platforms?: string; excluded_langs?: string; max_duration?: any; exclude_ids_count?: number }[] = [];
@@ -511,7 +511,7 @@ serve(async (req) => {
       const sb = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
       try {
         for (let level = 0; level < levels.length && countNonInteracted(candidates) < TARGET; level++) {
-          if (level >= 1) platformFallbackTriggered = true;
+          if (level >= 1) tasteCascadeTriggered = true;
 
           // COUNT avant requête : combien de films correspondent aux filtres de ce niveau
           try {
@@ -592,8 +592,8 @@ serve(async (req) => {
           }
         }
 
-        platformCandidatesCount = countNonInteracted(candidates);
-        console.log(`[SP] Pool vecteur: ${candidates.length} candidats, ${platformCandidatesCount} non-interagis | excludeIds: ${normalizedExcludeIds.length}`);
+        sqlCandidatesCount = countNonInteracted(candidates);
+        console.log(`[SP] Pool vecteur: ${candidates.length} candidats, ${sqlCandidatesCount} non-interagis | excludeIds: ${normalizedExcludeIds.length}`);
 
       } catch (e) {
         console.error("SQL vector search failed:", e);
@@ -663,8 +663,8 @@ serve(async (req) => {
         }
       }
 
-      platformCandidatesCount = countNonInteracted(candidates);
-      console.log(`[SP] Pool final (vecteur+explicite): ${candidates.length} candidats, ${platformCandidatesCount} non-interagis`);
+      sqlCandidatesCount = countNonInteracted(candidates);
+      console.log(`[SP] Pool final (vecteur+explicite): ${candidates.length} candidats, ${sqlCandidatesCount} non-interagis`);
     }
 
     let filteredCandidates = candidates;
@@ -855,7 +855,6 @@ serve(async (req) => {
 
       // Plateforme déjà filtrée en SQL — on passe directement au LLM
       tPlatform = Date.now();
-      platformCandidatesCount = topPool.length;
       llmInputPool = topPool;
 
       // ── ÉTAPE 2.2 : LLM — évalue uniquement les films disponibles ──
@@ -1409,8 +1408,9 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
           profileConfidence: confidence.score,
           mode: llmSelections.length > 0 ? "retrieve-rerank" : "discover-fallback",
           candidatesFound: candidates.length,
-          platformCandidatesCount,
-          platformFallbackTriggered,
+          sqlCandidatesCount,
+          llmPoolCount: llmPool.length,
+          tasteCascadeTriggered,
           llmSelected: llmSelections.length,
           llmError: llmDebugError,
           finalCount: finalMovies.length,
@@ -1465,8 +1465,8 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
           sqlCountDiag,
           sqlLevelDebug,
           explicitFallbackDebug,
-          sql50: candidates.map(toDebugRow),
-          top20: llmPool.length > 0 ? llmPool.map(toDebugRow) : candidates.slice(0, llmPoolSize).map(toDebugRow),
+          sqlCandidates: candidates.map(toDebugRow),
+          top50: llmPool.length > 0 ? llmPool.map(toDebugRow) : candidates.slice(0, llmPoolSize).map(toDebugRow),
           llmFiltered: llmInputPool.map(toDebugRow),
           platformFilterMs: tPlatform - t2,
           llmMs: t3 - tPlatform,
