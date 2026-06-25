@@ -1,6 +1,11 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, ArrowRight, Send, Check } from "lucide-react";
+import {
+  X, ArrowRight, Send, Check,
+  Star, Clapperboard, Meh,
+  Heart, ThumbsUp, ThumbsDown,
+  type LucideIcon,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -28,17 +33,46 @@ interface Props {
   onComplete: () => void;
 }
 
-const SOIREE_OPTIONS: { value: SoireeRating; emoji: string; label: string }[] = [
-  { value: "memorable", emoji: "🌟", label: "Mémorable" },
-  { value: "good",      emoji: "👍", label: "Bonne soirée" },
-  { value: "meh",       emoji: "😕", label: "Bof" },
+const SOIREE_OPTIONS: { value: SoireeRating; icon: LucideIcon; label: string }[] = [
+  { value: "memorable", icon: Star,         label: "Mémorable" },
+  { value: "good",      icon: Clapperboard, label: "Bonne soirée" },
+  { value: "meh",       icon: Meh,          label: "Bof" },
 ];
 
-const FILM_OPTIONS: { value: FilmRating; emoji: string; label: string }[] = [
-  { value: "love",        emoji: "❤️", label: "Coup de cœur" },
-  { value: "like",        emoji: "👍", label: "Bien" },
-  { value: "not_for_me",  emoji: "👎", label: "Pas pour moi" },
+const FILM_OPTIONS: { value: FilmRating; icon: LucideIcon; label: string }[] = [
+  { value: "love",       icon: Heart,      label: "Coup de cœur" },
+  { value: "like",       icon: ThumbsUp,   label: "Bien" },
+  { value: "not_for_me", icon: ThumbsDown, label: "Pas pour moi" },
 ];
+
+function OptionIcon({
+  icon: Icon,
+  selected,
+  filled = false,
+}: {
+  icon: LucideIcon;
+  selected: boolean;
+  filled?: boolean;
+}) {
+  return (
+    <div
+      className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-colors duration-300 ${
+        selected
+          ? "bg-primary/15 border border-primary/25"
+          : "bg-foreground/5 border border-border/10"
+      }`}
+      aria-hidden
+    >
+      <Icon
+        className={`w-5 h-5 transition-colors duration-300 ${
+          selected ? "text-primary" : "text-foreground/45"
+        }`}
+        strokeWidth={selected ? 2.25 : 1.75}
+        fill={filled && selected ? "currentColor" : "none"}
+      />
+    </div>
+  );
+}
 
 const PHRASES: Record<FilmRating, string[]> = {
   love: [
@@ -223,23 +257,28 @@ export default function PostSoireeFlow({ event, onClose, onComplete }: Props) {
                 Comment tu retiens cette soirée ?
               </p>
               <div className="flex flex-col gap-3">
-                {SOIREE_OPTIONS.map((opt) => (
-                  <button
-                    key={opt.value}
-                    onClick={() => setSoireeRating(opt.value)}
-                    className={`flex items-center gap-4 p-4 rounded-2xl border transition-all text-left ${
-                      soireeRating === opt.value
-                        ? "border-primary bg-primary/8 ring-1 ring-primary/30"
-                        : "border-border/20 hover:border-border/40"
-                    }`}
-                  >
-                    <span className="text-3xl">{opt.emoji}</span>
-                    <span className="text-base font-sans font-medium">{opt.label}</span>
-                    {soireeRating === opt.value && (
-                      <Check className="w-4 h-4 text-primary ml-auto" />
-                    )}
-                  </button>
-                ))}
+                {SOIREE_OPTIONS.map((opt) => {
+                  const selected = soireeRating === opt.value;
+                  return (
+                    <button
+                      key={opt.value}
+                      onClick={() => setSoireeRating(opt.value)}
+                      aria-label={opt.label}
+                      aria-pressed={selected}
+                      className={`flex items-center gap-4 p-4 rounded-2xl border transition-all text-left ${
+                        selected
+                          ? "border-primary bg-primary/8 ring-1 ring-primary/30"
+                          : "border-border/20 hover:border-border/40"
+                      }`}
+                    >
+                      <OptionIcon icon={opt.icon} selected={selected} filled={opt.value === "memorable"} />
+                      <span className="text-base font-sans font-medium">{opt.label}</span>
+                      {selected && (
+                        <Check className="w-4 h-4 text-primary ml-auto" aria-hidden />
+                      )}
+                    </button>
+                  );
+                })}
               </div>
 
               <Button
@@ -281,23 +320,28 @@ export default function PostSoireeFlow({ event, onClose, onComplete }: Props) {
               {/* Film rating */}
               <p className="text-sm font-sans text-foreground/50 mb-3">Ton ressenti ?</p>
               <div className="flex flex-col gap-2.5 mb-6">
-                {FILM_OPTIONS.map((opt) => (
-                  <button
-                    key={opt.value}
-                    onClick={() => { setFilmRating(opt.value); setFilmPhrase(null); }}
-                    className={`flex items-center gap-4 p-3.5 rounded-2xl border transition-all text-left ${
-                      filmRating === opt.value
-                        ? "border-primary bg-primary/8 ring-1 ring-primary/30"
-                        : "border-border/20 hover:border-border/40"
-                    }`}
-                  >
-                    <span className="text-2xl">{opt.emoji}</span>
-                    <span className="text-sm font-sans font-medium">{opt.label}</span>
-                    {filmRating === opt.value && (
-                      <Check className="w-4 h-4 text-primary ml-auto" />
-                    )}
-                  </button>
-                ))}
+                {FILM_OPTIONS.map((opt) => {
+                  const selected = filmRating === opt.value;
+                  return (
+                    <button
+                      key={opt.value}
+                      onClick={() => { setFilmRating(opt.value); setFilmPhrase(null); }}
+                      aria-label={opt.label}
+                      aria-pressed={selected}
+                      className={`flex items-center gap-4 p-3.5 rounded-2xl border transition-all text-left ${
+                        selected
+                          ? "border-primary bg-primary/8 ring-1 ring-primary/30"
+                          : "border-border/20 hover:border-border/40"
+                      }`}
+                    >
+                      <OptionIcon icon={opt.icon} selected={selected} filled={opt.value === "love"} />
+                      <span className="text-sm font-sans font-medium">{opt.label}</span>
+                      {selected && (
+                        <Check className="w-4 h-4 text-primary ml-auto" aria-hidden />
+                      )}
+                    </button>
+                  );
+                })}
               </div>
 
               {/* Phrase */}

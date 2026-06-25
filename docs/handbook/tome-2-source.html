@@ -1,0 +1,984 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<title>Pick — Engineering Handbook — Tome 2</title>
+<style>
+  @page { size: A4; margin: 18mm 16mm 22mm 16mm; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    font-size: 10pt; line-height: 1.55; color: #1a1a2e; background: #fff;
+  }
+  .cover {
+    page-break-after: always; height: 297mm;
+    background: linear-gradient(145deg, #1a1640 0%, #302b63 50%, #4a4570 100%);
+    color: #fff; display: flex; flex-direction: column; justify-content: center;
+    align-items: center; text-align: center; padding: 40mm 30mm; position: relative;
+  }
+  .cover-logo { font-size: 48pt; margin-bottom: 10mm; }
+  .cover h1 { font-size: 22pt; font-weight: 700; letter-spacing: 0.5px; margin-bottom: 4mm; }
+  .cover .subtitle { font-size: 13pt; font-weight: 300; opacity: 0.9; margin-bottom: 15mm; }
+  .cover .handbook { font-size: 11pt; text-transform: uppercase; letter-spacing: 3px; opacity: 0.7; margin-bottom: 25mm; }
+  .cover-meta { font-size: 9pt; opacity: 0.65; line-height: 1.8; }
+  .cover-meta strong { opacity: 1; }
+  .cover-version { position: absolute; bottom: 20mm; left: 0; right: 0; font-size: 8pt; opacity: 0.5; }
+  h2 { font-size: 16pt; color: #302b63; margin: 8mm 0 4mm; border-bottom: 2px solid #e8e6f5; padding-bottom: 2mm; }
+  h3 { font-size: 11pt; color: #4a4570; margin: 5mm 0 2mm; }
+  h4 { font-size: 10pt; color: #302b63; margin: 4mm 0 2mm; }
+  p { margin-bottom: 3mm; text-align: justify; }
+  ul, ol { margin: 2mm 0 4mm 6mm; }
+  li { margin-bottom: 1.5mm; }
+  section { padding: 0 2mm; }
+  .page-break { page-break-before: always; }
+  .toc { page-break-after: always; }
+  .toc h2 { border: none; }
+  .toc-list { list-style: none; margin: 5mm 0; }
+  .toc-list li { display: flex; justify-content: space-between; padding: 2mm 0; border-bottom: 1px dotted #ccc; font-size: 10pt; }
+  .toc-list .num { color: #302b63; font-weight: 600; min-width: 8mm; }
+  .diagram-wrap { margin: 5mm 0; text-align: center; }
+  .diagram { width: 100%; max-width: 170mm; height: auto; }
+  .diagram-sm { width: 100%; max-width: 170mm; height: auto; }
+  .callout { border-radius: 4px; padding: 3mm 4mm; margin: 4mm 0; font-size: 9pt; line-height: 1.5; }
+  .callout strong { display: block; margin-bottom: 1mm; font-size: 9pt; }
+  .callout-info { background: #e8eaf6; border-left: 3px solid #3f51b5; }
+  .callout-good { background: #e8f5e9; border-left: 3px solid #388e3c; }
+  .callout-arch { background: #fff3e0; border-left: 3px solid #f57c00; }
+  .callout-warn { background: #fff8e1; border-left: 3px solid #ffc107; }
+  table { width: 100%; border-collapse: collapse; margin: 5mm 0; font-size: 9pt; }
+  thead th { background: #302b63; color: #fff; padding: 2.5mm 3mm; text-align: left; font-weight: 600; }
+  tbody td { padding: 2.5mm 3mm; border-bottom: 1px solid #e8e6f5; vertical-align: top; }
+  tbody tr:nth-child(even) { background: #f8f7fc; }
+  .stack-category { font-weight: 600; color: #302b63; }
+  .intro-box { background: linear-gradient(135deg, #f5f4f8, #e8e6f5); border-radius: 6px; padding: 5mm 6mm; margin: 5mm 0; border: 1px solid #d8d4e8; }
+  .intro-box p { font-size: 10pt; }
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 5mm; }
+  .stat-box { text-align: center; background: #302b63; color: #fff; border-radius: 6px; padding: 4mm; }
+  .stat-box .num { font-size: 18pt; font-weight: 700; }
+  .stat-box .label { font-size: 8pt; opacity: 0.8; }
+  .step-block { background: #f8f7fc; border-radius: 4px; padding: 3mm 4mm; margin-bottom: 3mm; border-left: 3px solid #302b63; }
+  .ascii-diagram { font-family: 'Consolas', 'Courier New', monospace; font-size: 8pt; background: #f5f4f8; padding: 4mm; border-radius: 4px; line-height: 1.4; white-space: pre; margin: 4mm 0; }
+</style>
+</head>
+<body>
+
+<div class="cover">
+  <div class="cover-logo">🎯</div>
+  <div class="handbook">Engineering Handbook</div>
+  <h1>Pick — Tome 2</h1>
+  <div class="subtitle">Moteur de recommandation</div>
+  <div class="cover-meta">
+    <strong>Projet</strong> Pick Your Spotlight<br/>
+    <strong>Auteur</strong> Chris — Pick Your Spotlight team<br/>
+    <strong>Date</strong> Juin 2026<br/>
+    <strong>Version</strong> 1.0
+  </div>
+  <div class="cover-version">Document confidentiel — usage interne et partenaires · Suite du Tome 1 (Vision &amp; Architecture)</div>
+</div>
+
+<section class="toc">
+  <h2>Table des matières</h2>
+  <ul class="toc-list">
+    <li><span class="num">1</span> Introduction <span>3</span></li>
+    <li><span class="num">2</span> Parcours « Pick ce soir » <span>5</span></li>
+    <li><span class="num">3</span> Vue d'ensemble du pipeline <span>8</span></li>
+    <li><span class="num">4</span> Les entrées du moteur <span>11</span></li>
+    <li><span class="num">5</span> Étape par étape <span>14</span></li>
+    <li><span class="num">6</span> Filtres successifs <span>19</span></li>
+    <li><span class="num">7</span> Paramètres et overrides <span>22</span></li>
+    <li><span class="num">8</span> Les trois échelles de score <span>25</span></li>
+    <li><span class="num">9</span> Quirks connus <span>28</span></li>
+    <li><span class="num">10</span> Modes spéciaux <span>30</span></li>
+    <li><span class="num">11</span> Performance <span>33</span></li>
+    <li><span class="num">12</span> Debug &amp; observabilité <span>35</span></li>
+    <li><span class="num">13</span> Qualité &amp; TNR <span>38</span></li>
+    <li><span class="num">14</span> Évolutions prévues <span>40</span></li>
+    <li><span class="num">15</span> Glossaire technique produit <span>42</span></li>
+    <li><span class="num">16</span> FAQ moteur <span>44</span></li>
+  </ul>
+  <div class="callout callout-info">
+    <strong>ℹ À propos de ce document</strong>
+    <p>Ce tome complète le <strong>Tome 1 — Vision &amp; Architecture</strong> en documentant le moteur de recommandation de Pick : parcours utilisateur, pipeline runtime, filtres, scores, debug et qualité. Il s'adresse aux développeurs, QA et partenaires techniques — sans extraits de code ni chemins de fichiers.</p>
+  </div>
+</section>
+
+
+<section class="page-break">
+  <h2>1. Introduction</h2>
+  <div class="intro-box">
+    <p>Le <strong>moteur de recommandation</strong> est le cœur technique de Pick. Il transforme un profil de goût cinématographique, enrichi par le contexte du moment, en trois propositions de films — rarement plus — que l'utilisateur peut choisir en quelques secondes. Ce tome documente son fonctionnement produit et technique, en complément du <strong>Tome 1 — Vision &amp; Architecture</strong>.</p>
+  </div>
+
+  <h3>1.1 — Rôle dans l'écosystème Pick</h3>
+  <p>Dans le Tome 1, le moteur de recommandation apparaît comme l'un des huit modules fonctionnels de Pick. En réalité, il est le <em>hub central</em> : l'onboarding l'alimente en signaux, la watchlist et la bibliothèque le nourrissent en retours, les soirées et le mode Duo modifient ses entrées, et les flip cards en sont la vitrine.</p>
+  <p>Sa mission est double : <strong>filtrer</strong> des centaines de milliers de titres pour ne garder qu'un pool pertinent, puis <strong>sélectionner</strong> les meilleurs candidats avec une couche d'intelligence artificielle qui justifie chaque proposition en langage naturel.</p>
+
+  <h3>1.2 — Promesse produit</h3>
+  <p>Pick ne propose pas un catalogue. Pick propose une <strong>décision</strong>. Le moteur garantit :</p>
+  <ul>
+    <li>Trois films adaptés au profil, à l'humeur et aux plateformes disponibles</li>
+    <li>Aucun film déjà vu, disliké ou exclu par l'utilisateur</li>
+    <li>Des justifications personnalisées (« Pourquoi ce film ce soir ? »)</li>
+    <li>Un résultat même en cas de profil incomplet ou de contraintes extrêmes (filet de sécurité)</li>
+  </ul>
+
+  <div class="callout callout-arch">
+    <strong>⚙ Décision d'architecture</strong>
+    <p>Le pipeline est scindé en deux edge functions : une pour la sélection batch (surprise-personalized) et une pour le scoring fin par film (movie-match). Cette séparation permet un affichage immédiat des propositions LLM pendant que les textes riches se chargent en arrière-plan.</p>
+  </div>
+
+  <h3>1.3 — Prérequis d'activation</h3>
+  <p>Le pipeline personnalisé complet ne s'active que si l'utilisateur possède au minimum <strong>deux films likés</strong> et un <strong>vecteur de goût 32 dimensions</strong> calculé. En dessous de ce seuil, un fallback TMDB léger propose un titre générique — suffisant pour l'expérience alpha, insuffisant pour la promesse Pick.</p>
+
+  <div class="two-col" style="margin-top:5mm">
+    <div class="stat-box"><div class="num">3</div><div class="label">films affichés typiquement</div></div>
+    <div class="stat-box"><div class="num">&lt; 15 s</div><div class="label">latence pipeline cible</div></div>
+  </div>
+</section>
+
+<section>
+  <h3>1.4 — Lien avec le Tome 1</h3>
+  <p>Le Tome 1 posait la vision (« trois films, pas trois cents »), les personas (couple, cinéphile, amis) et l'architecture en couches (React → Supabase → Gemini → TMDB). Ce Tome 2 descend dans le détail du module reco : comment le wizard ou l'écran d'accueil déclenche le pipeline, quelles données entrent, quels filtres s'appliquent, et comment interpréter les métriques de debug.</p>
+
+  <h3>1.5 — Public et périmètre</h3>
+  <p>Ce document s'adresse aux développeurs rejoignant l'équipe, aux ingénieurs QA responsables des TNR, et aux partenaires techniques évaluant la robustesse du moteur. Il décrit le comportement produit et les mécanismes internes — sans extraits de code ni références aux fichiers sources.</p>
+
+  <div class="callout callout-good">
+    <strong>✓ Bonnes pratiques</strong>
+    <p>Avant de modifier le pipeline, lire ce tome et la documentation pipeline associée. Toute modification des filtres, seuils ou fallbacks doit être accompagnée d'un test de non-régression. Ne jamais supposer que deux scores affichés sont comparables sans vérifier leur échelle (voir chapitre 8).</p>
+  </div>
+</section>
+
+<section class="page-break">
+  <h2>2. Parcours « Pick ce soir »</h2>
+  <p>Deux points d'entrée principaux alimentent le même moteur : l'<strong>écran d'accueil</strong> (tap « Ce soir ») et le <strong>wizard guidé</strong> (parcours /app). Ce chapitre décrit le parcours le plus fréquent — depuis l'accueil.</p>
+
+  <div class="diagram-wrap">
+<svg viewBox="0 0 720 200" xmlns="http://www.w3.org/2000/svg" class="diagram">
+  <text x="360" y="18" text-anchor="middle" font-size="11" fill="#302b63" font-weight="700">Parcours « Pick ce soir » — écran d'accueil</text>
+  <line x1="105" y1="100" x2="120" y2="100" stroke="#4a4570" stroke-width="1.5"/><rect x="10" y="55" width="95" height="70" rx="6" fill="#302b63" stroke="#4a4570" stroke-width="1.5"/>
+    <text x="57" y="88" text-anchor="middle" font-size="9" fill="#fff" font-weight="600">Tap Ce soir</text>
+    <text x="57" y="105" text-anchor="middle" font-size="8" fill="#ddd">Accueil</text><line x1="225" y1="100" x2="240" y2="100" stroke="#4a4570" stroke-width="1.5"/><rect x="130" y="55" width="95" height="70" rx="6" fill="#e8eaf6" stroke="#4a4570" stroke-width="1.5"/>
+    <text x="177" y="88" text-anchor="middle" font-size="9" fill="#302b63" font-weight="600">Overlay</text>
+    <text x="177" y="105" text-anchor="middle" font-size="8" fill="#5c5780">Chargement</text><line x1="345" y1="100" x2="360" y2="100" stroke="#4a4570" stroke-width="1.5"/><rect x="250" y="55" width="95" height="70" rx="6" fill="#e3f2fd" stroke="#4a4570" stroke-width="1.5"/>
+    <text x="297" y="88" text-anchor="middle" font-size="9" fill="#302b63" font-weight="600">Pipeline</text>
+    <text x="297" y="105" text-anchor="middle" font-size="8" fill="#5c5780">Reco edge</text><line x1="465" y1="100" x2="480" y2="100" stroke="#4a4570" stroke-width="1.5"/><rect x="370" y="55" width="95" height="70" rx="6" fill="#f3e5f5" stroke="#4a4570" stroke-width="1.5"/>
+    <text x="417" y="88" text-anchor="middle" font-size="9" fill="#302b63" font-weight="600">3 films</text>
+    <text x="417" y="105" text-anchor="middle" font-size="8" fill="#5c5780">Flip cards</text><line x1="585" y1="100" x2="600" y2="100" stroke="#4a4570" stroke-width="1.5"/><rect x="490" y="55" width="95" height="70" rx="6" fill="#fff3e0" stroke="#4a4570" stroke-width="1.5"/>
+    <text x="537" y="88" text-anchor="middle" font-size="9" fill="#302b63" font-weight="600">Swipe</text>
+    <text x="537" y="105" text-anchor="middle" font-size="8" fill="#5c5780">Choix</text><rect x="610" y="55" width="95" height="70" rx="6" fill="#302b63" stroke="#4a4570" stroke-width="1.5"/>
+    <text x="657" y="88" text-anchor="middle" font-size="9" fill="#fff" font-weight="600">Film</text>
+    <text x="657" y="105" text-anchor="middle" font-size="8" fill="#ddd">Du soir</text>
+  <text x="360" y="165" text-anchor="middle" font-size="8" fill="#5c5780" font-style="italic">Durée cible : moins de 2 minutes · textes enrichis movie-match en arrière-plan</text>
+</svg></div>
+
+  <h3>2.1 — Déclenchement</h3>
+  <p>L'utilisateur ouvre Pick depuis son canapé et tape le bouton « Ce soir » sur l'écran d'accueil. Si un profil est prêt (≥ 2 likes, vecteur calculé), le client lance immédiatement la génération. Sinon, un message invite à compléter l'onboarding ou un fallback léger s'affiche.</p>
+
+  <h3>2.2 — Overlay de chargement</h3>
+  <p>Pendant le pipeline, un overlay semi-transparent masque l'accueil avec une animation de chargement. L'utilisateur voit que Pick « réfléchit » — pas un écran blanc. Dès que les trois propositions LLM arrivent (typiquement 5 à 12 secondes), les flip cards apparaissent sans attendre la fin du movie-match.</p>
+
+  <h3>2.3 — Flip cards et choix</h3>
+  <p>Chaque flip card présente : affiche TMDB, titre, score de match (%), raison LLM (« Ce thriller psychologique correspond à votre amour récent pour… »). Un swipe horizontal permet de parcourir les trois propositions. Tap sur une card → détail enrichi (synopsis, plateformes, textes movie-match si disponibles).</p>
+
+  <h3>2.4 — Film du soir</h3>
+  <p>L'utilisateur retient un film comme « film du soir ». Il persiste sur l'accueil via l'overlay TonightPick jusqu'au visionnage ou au lendemain. Ce choix alimente le profil (signal positif différé).</p>
+
+  <div class="callout callout-info">
+    <strong>ℹ Note produit</strong>
+    <p>Le wizard /app collecte explicitement type (film/série), humeur, genres et plateformes avant d'invoquer le même pipeline. L'accueil utilise les préférences mémorisées et les overrides voix/ambiance si actifs. Les deux parcours convergent vers la même edge function.</p>
+  </div>
+</section>
+
+<section>
+  <h3>2.5 — Timeline type (accueil)</h3>
+  <table>
+    <thead><tr><th>Instant</th><th>Action</th><th>Perception utilisateur</th></tr></thead>
+    <tbody>
+      <tr><td class="stack-category">T+0 s</td><td>Tap « Ce soir »</td><td>Overlay chargement</td></tr>
+      <tr><td class="stack-category">T+1 s</td><td>Calcul profil + exclusions client</td><td>Animation continue</td></tr>
+      <tr><td class="stack-category">T+3–8 s</td><td>SQL cascade + LLM Gemini</td><td>Toujours en chargement</td></tr>
+      <tr><td class="stack-category">T+8–12 s</td><td>Batch prêt → flip cards</td><td>3 films visibles, raisons LLM</td></tr>
+      <tr><td class="stack-category">T+12–25 s</td><td>movie-match séquentiel (×3)</td><td>Textes riches apparaissent progressivement</td></tr>
+      <tr><td class="stack-category">T+30 s</td><td>Choix utilisateur</td><td>Film du soir enregistré</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout callout-good">
+    <strong>✓ Cas d'usage</strong>
+    <p>Thomas, 22h un vendredi, tape « Ce soir » sans repasser par le wizard. Pick se souvient de ses plateformes (Netflix, Prime), de son humeur récente (détente) et de ses 47 likes. En 9 secondes, trois comédies françaises récentes apparaissent. Il retourne la deuxième flip card, lit la justification movie-match qui arrive 4 secondes plus tard, et valide « Le Sens de la fête ».</p>
+  </div>
+</section>
+
+<section class="page-break">
+  <h2>3. Vue d'ensemble du pipeline</h2>
+  <p>Le pipeline de recommandation est un flux orchestré entre le client React, deux edge functions Supabase et les APIs externes TMDB et Gemini. Il se décompose en trois acteurs distincts.</p>
+
+  <div class="diagram-wrap">
+<svg viewBox="0 0 720 320" xmlns="http://www.w3.org/2000/svg" class="diagram">
+  <defs><marker id="arrP" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#4a4570"/></marker></defs>
+  <text x="360" y="20" text-anchor="middle" font-size="12" fill="#302b63" font-weight="700">Pipeline de recommandation — vue d'ensemble</text>
+  <rect x="20" y="40" width="130" height="240" rx="6" fill="#e8eaf6" stroke="#3f51b5" stroke-width="1.5"/>
+  <text x="85" y="58" text-anchor="middle" font-size="10" fill="#3f51b5" font-weight="700">Client React</text>
+  <rect x="30" y="70" width="110" height="32" rx="4" fill="#fff" stroke="#4a4570"/>
+    <text x="85" y="90" text-anchor="middle" font-size="8" fill="#302b63">Profil goût</text><rect x="30" y="112" width="110" height="32" rx="4" fill="#fff" stroke="#4a4570"/>
+    <text x="85" y="132" text-anchor="middle" font-size="8" fill="#302b63">Exclusions</text><rect x="30" y="154" width="110" height="32" rx="4" fill="#fff" stroke="#4a4570"/>
+    <text x="85" y="174" text-anchor="middle" font-size="8" fill="#302b63">Batch client</text><rect x="30" y="196" width="110" height="32" rx="4" fill="#fff" stroke="#4a4570"/>
+    <text x="85" y="216" text-anchor="middle" font-size="8" fill="#302b63">Affichage UI</text><rect x="30" y="238" width="110" height="32" rx="4" fill="#fff" stroke="#4a4570"/>
+    <text x="85" y="258" text-anchor="middle" font-size="8" fill="#302b63">movie-match</text>
+  <line x1="150" y1="160" x2="175" y2="160" stroke="#4a4570" stroke-width="2" marker-end="url(#arrP)"/>
+  <rect x="180" y="40" width="200" height="240" rx="6" fill="#e8f5e9" stroke="#388e3c" stroke-width="1.5"/>
+  <text x="280" y="58" text-anchor="middle" font-size="10" fill="#388e3c" font-weight="700">surprise-personalized</text>
+  <rect x="190" y="70" width="180" height="22" rx="3" fill="#fff" stroke="#4a4570"/>
+    <text x="280" y="85" text-anchor="middle" font-size="7" fill="#302b63">SQL cascade 0→3</text><rect x="190" y="98" width="180" height="22" rx="3" fill="#fff" stroke="#4a4570"/>
+    <text x="280" y="113" text-anchor="middle" font-size="7" fill="#302b63">SQL explicite</text><rect x="190" y="126" width="180" height="22" rx="3" fill="#fff" stroke="#4a4570"/>
+    <text x="280" y="141" text-anchor="middle" font-size="7" fill="#302b63">Enrich. langue</text><rect x="190" y="154" width="180" height="22" rx="3" fill="#fff" stroke="#4a4570"/>
+    <text x="280" y="169" text-anchor="middle" font-size="7" fill="#302b63">Top 50 composite</text><rect x="190" y="182" width="180" height="22" rx="3" fill="#fff" stroke="#4a4570"/>
+    <text x="280" y="197" text-anchor="middle" font-size="7" fill="#302b63">Gemini LLM</text><rect x="190" y="210" width="180" height="22" rx="3" fill="#fff" stroke="#4a4570"/>
+    <text x="280" y="225" text-anchor="middle" font-size="7" fill="#302b63">TMDB enrich</text><rect x="190" y="238" width="180" height="22" rx="3" fill="#fff" stroke="#4a4570"/>
+    <text x="280" y="253" text-anchor="middle" font-size="7" fill="#302b63">Fallbacks</text>
+  <line x1="380" y1="160" x2="405" y2="160" stroke="#4a4570" stroke-width="2" marker-end="url(#arrP)"/>
+  <rect x="410" y="100" width="130" height="120" rx="6" fill="#e0f7fa" stroke="#00838f" stroke-width="1.5"/>
+  <text x="475" y="118" text-anchor="middle" font-size="10" fill="#00838f" font-weight="700">movie-match</text>
+  <rect x="420" y="130" width="110" height="22" rx="3" fill="#fff" stroke="#4a4570"/>
+    <text x="475" y="145" text-anchor="middle" font-size="7" fill="#302b63">Embedding 32D</text><rect x="420" y="158" width="110" height="22" rx="3" fill="#fff" stroke="#4a4570"/>
+    <text x="475" y="173" text-anchor="middle" font-size="7" fill="#302b63">Gemini textes</text><rect x="420" y="186" width="110" height="22" rx="3" fill="#fff" stroke="#4a4570"/>
+    <text x="475" y="201" text-anchor="middle" font-size="7" fill="#302b63">Score 55–99%</text>
+  <line x1="540" y1="160" x2="565" y2="160" stroke="#4a4570" stroke-width="2" marker-end="url(#arrP)"/>
+  <rect x="570" y="100" width="130" height="120" rx="6" fill="#f3e5f5" stroke="#7b1fa2" stroke-width="1.5"/>
+  <text x="635" y="118" text-anchor="middle" font-size="10" fill="#7b1fa2" font-weight="700">Interface</text>
+  <rect x="580" y="130" width="110" height="22" rx="3" fill="#fff" stroke="#4a4570"/>
+    <text x="635" y="145" text-anchor="middle" font-size="7" fill="#302b63">Flip cards</text><rect x="580" y="158" width="110" height="22" rx="3" fill="#fff" stroke="#4a4570"/>
+    <text x="635" y="173" text-anchor="middle" font-size="7" fill="#302b63">Badge match %</text><rect x="580" y="186" width="110" height="22" rx="3" fill="#fff" stroke="#4a4570"/>
+    <text x="635" y="201" text-anchor="middle" font-size="7" fill="#302b63">Textes riches</text>
+  <text x="360" y="305" text-anchor="middle" font-size="8" fill="#5c5780">Affichage immédiat après LLM · enrichissement movie-match séquentiel en arrière-plan</text>
+</svg></div>
+
+  <h3>3.1 — Couche client</h3>
+  <p>Le client prépare la requête : calcul du profil multi-vecteurs (stable, récent, évitement), agrégation des exclusions (historique, session, duo), résolution des overrides (voix, ambiance, duo). Il invoque surprise-personalized avec le flag debug activé en production sur l'accueil.</p>
+  <p>À la réception, le batch client extrait les films, affiche immédiatement les trois premiers, puis lance movie-match en séquence pour enrichir textes et scores.</p>
+
+  <h3>3.2 — Edge surprise-personalized</h3>
+  <p>Cerveau du pipeline. Enchaîne : recherche vectorielle SQL en cascade, complément SQL explicite si besoin, enrichissement langue TMDB, calcul du top 50 composite, sélection Gemini, enrichissement métadonnées TMDB, et chaîne de fallbacks (discover, trending, nuclear, safety net). Retourne un tableau de films avec scores LLM, raisons et métadonnées debug.</p>
+
+  <h3>3.3 — Edge movie-match</h3>
+  <p>Second passage IA, par film. Compare l'embedding 32D du film au profil utilisateur, génère headline et texte « pourquoi ça match », produit un score de confiance 55–99 %. Appelé séquentiellement côté client pour limiter la charge Gemini.</p>
+
+  <div class="callout callout-arch">
+    <strong>⚙ Décision d'architecture</strong>
+    <p>La plateforme de streaming est filtrée dès la requête SQL et n'est jamais relâchée — même en cascade ou fallback nuclear. C'est une contrainte produit forte : Pick ne recommande que ce que l'utilisateur peut regarder maintenant.</p>
+  </div>
+</section>
+
+<section>
+  <h3>3.4 — Flux de données simplifié</h3>
+  <div class="ascii-diagram">  [Utilisateur]
+       │
+       ▼
+  ┌─────────────┐     JWT + profil + exclusions
+  │   Client    │──────────────────────────────────────┐
+  └─────────────┘                                      │
+       │                                               ▼
+       │                              ┌───────────────────────────┐
+       │                              │  surprise-personalized    │
+       │                              │  SQL → Top50 → Gemini     │
+       │                              │  → TMDB → Fallbacks       │
+       │                              └───────────────────────────┘
+       │                                       │
+       │◄──────── movies[] + debugData ────────┘
+       │
+       ├──► Affichage immédiat (3 flip cards)
+       │
+       └──► movie-match (×3 séquentiel) ──► textes riches + score final</div>
+
+  <h3>3.5 — Sortie attendue</h3>
+  <p>Typiquement <strong>3 films</strong> visibles (configurable jusqu'à 5 via recommendationCount). Chaque film inclut : identifiant TMDB, titre, affiche, type média, score fusionné, raison LLM, et après movie-match : headline, whyItMatches, providers streaming.</p>
+</section>
+
+<section class="page-break">
+  <h2>4. Les entrées du moteur</h2>
+  <p>La qualité des recommandations dépend autant des entrées que de l'algorithme. Le moteur consomme une dizaine de paramètres, parfois contradictoires — d'où une hiérarchie de résolution documentée au chapitre 7.</p>
+
+  <h3>4.1 — Profil et vecteurs de goût</h3>
+  <p>Trois vecteurs 32D complémentaires alimentent la similarité cosinus SQL :</p>
+  <ul>
+    <li><strong>Vecteur stable</strong> — goûts long terme, décroissance 150 jours, construit depuis tout l'historique</li>
+    <li><strong>Vecteur récent</strong> — tendances 30 derniers jours, décroissance 21 jours</li>
+    <li><strong>Vecteur évitement</strong> — skips et dislikes, décroissance 60 jours</li>
+  </ul>
+  <p>Le vecteur envoyé au SQL est une combinaison pondérée du stable et du récent, modulée par le niveau d'exploration.</p>
+
+  <h3>4.2 — Likes et historique</h3>
+  <p>Minimum 2 likes pour activer le pipeline complet. Les likes alimentent les genres préférés (likedGenres) utilisés en SQL niveau 0–2. L'historique complet (vues, skips, dislikes) alimente excludeIds — jamais un film déjà interagi ne doit réapparaître (invariant TNR).</p>
+
+  <h3>4.3 — Plateformes</h3>
+  <p>Liste des provider IDs TMDB (Netflix, Prime, Disney+, etc.) sélectionnés par l'utilisateur. Toujours appliquée en SQL. Si aucune plateforme n'est sélectionnée, le moteur cherche sur l'ensemble du catalogue streaming FR.</p>
+
+  <h3>4.4 — Exclusions</h3>
+  <p>excludeIds agrège : feedback utilisateur, rejets de session en cours, pool chat compagnon, historique partenaire duo, titres déjà proposés ce soir. Côté edge, usedIds reprend excludeIds pour éviter les doublons dans les fallbacks (régression corrigée juin 2026).</p>
+</section>
+
+<section>
+  <h3>4.5 — Voix et ambiance</h3>
+  <p>L'utilisateur peut dicter ou saisir une intention (« un polar des années 80 en VO »). La couche voix extrait : genres vocaux (voiceGenres), langue originale, décennie. Ces paramètres overrident le profil statique avec une priorité élevée (voir chapitre 7).</p>
+  <p>L'<strong>ambiance</strong> (humeur du wizard ou intent soirée) modifie moodContext et moodBoostGenres — des genres boostés ou pénalisés selon l'humeur sélectionnée (léger, intense, émouvant…).</p>
+
+  <h3>4.6 — Mode Duo</h3>
+  <p>Quand duoUserIds est présent, le moteur fusionne les profils des deux partenaires : vecteur combiné, exclusions croisées (films déjà vus par l'un ou l'autre), genres communs priorisés. Le partenaire n'a pas besoin d'être connecté — son profil est lu côté serveur.</p>
+
+  <h3>4.7 — Intent Révéler (soirée)</h3>
+  <p>Les soirées groupées propagent des overrides depuis l'événement : genres imposés, humeur, type média. Le pipeline révéler réutilise le même moteur avec ces contraintes figées au moment de la création de la soirée.</p>
+
+  <table>
+    <thead><tr><th>Entrée</th><th>Source</th><th>Impact principal</th></tr></thead>
+    <tbody>
+      <tr><td class="stack-category">Vecteur 32D</td><td>Profil calculé</td><td>Similarité SQL</td></tr>
+      <tr><td class="stack-category">excludeIds</td><td>Client + serveur</td><td>Films jamais reproposés</td></tr>
+      <tr><td class="stack-category">platformIds</td><td>Préférences utilisateur</td><td>Filtre SQL permanent</td></tr>
+      <tr><td class="stack-category">voiceGenres</td><td>Dictée / saisie</td><td>Post-filtres + cascade SQL</td></tr>
+      <tr><td class="stack-category">moodBoostGenres</td><td>Wizard / soirée</td><td>Boost composite score</td></tr>
+      <tr><td class="stack-category">duoUserIds</td><td>Mode Duo</td><td>Fusion profils + exclusions</td></tr>
+      <tr><td class="stack-category">recommendationCount</td><td>Contexte appel</td><td>Nombre de films demandés (défaut 5, affichage 3)</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout callout-warn">
+    <strong>⚠ Attention debug</strong>
+    <p>Les paramètres effectifs edge (après résolution voix/ambiance/duo) diffèrent parfois des paramètres client bruts. Toujours vérifier le groupe debug « Paramètres edge » et pipelineStages id 0-edge-request.</p>
+  </div>
+</section>
+
+<section class="page-break">
+  <h2>5. Étape par étape</h2>
+  <p>Le pipeline complet comporte une quinzaine d'étapes numérotées, traçables via pipelineStages en mode debug. Ce chapitre les détaille dans l'ordre d'exécution.</p>
+
+  <table>
+    <thead><tr><th>#</th><th>Étape</th><th>Comptes typiques</th><th>Rôle</th></tr></thead>
+    <tbody>
+      <tr><td class="stack-category">0</td><td>Préparation client</td><td>20–200+ excludeIds</td><td>Profil, exclusions, invocation edge</td></tr>
+      <tr><td class="stack-category">1</td><td>SQL vectoriel cascade 0→3</td><td>Pool cible ~100</td><td>Similarité cosinus 32D, relâchement progressif</td></tr>
+      <tr><td class="stack-category">1.4</td><td>SQL explicite</td><td>Complète jusqu'à 100</td><td>Sans vecteur ou pool insuffisant</td></tr>
+      <tr><td class="stack-category">1.7</td><td>Enrichissement langue</td><td>Jusqu'à 60 candidats</td><td>Backfill original_language via TMDB</td></tr>
+      <tr><td class="stack-category">2a–c</td><td>Post-filtres</td><td>Variable</td><td>Langues exclues, genres voix, décennie</td></tr>
+      <tr><td class="stack-category">2</td><td>Top 50 composite</td><td>50 films</td><td>sim×100 + note TMDB + boost langue</td></tr>
+      <tr><td class="stack-category">2.2</td><td>LLM Gemini</td><td>Entrée 50 → sortie count+2</td><td>Sélection + raisons JSON</td></tr>
+      <tr><td class="stack-category">2.5</td><td>Retry qualité</td><td>+N si &lt; 3 ≥ minScore</td><td>Complète depuis pool SQL restant</td></tr>
+      <tr><td class="stack-category">3</td><td>TMDB enrichissement</td><td>1 appel / sélection</td><td>Métadonnées complètes, providers</td></tr>
+      <tr><td class="stack-category">4</td><td>discover-fallback</td><td>0–3 films</td><td>Trending TMDB avec plateformes</td></tr>
+      <tr><td class="stack-category">4b</td><td>trending-fallback</td><td>0–3 films</td><td>Popular / trending élargi</td></tr>
+      <tr><td class="stack-category">4c</td><td>nuclear-fallback</td><td>0–3 films</td><td>Genres et note levés, plateforme conservée</td></tr>
+      <tr><td class="stack-category">5</td><td>Final safety net</td><td>Garantit count films</td><td>Tri origine + filet genre/langue</td></tr>
+      <tr><td class="stack-category">6</td><td>movie-match client</td><td>1 appel / film séquentiel</td><td>Textes riches + score final</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section>
+  <h3>5.1 — Étape 0 : préparation client</h3>
+  <p>Avant tout appel réseau, le client calcule le profil multi-vecteurs, normalise les plateformes, agrège excludeIds depuis feedback Supabase, sessionStorage et partenaire duo. Il envoie recommendationCount (souvent 5 côté edge, 3 affichés), explorationLevel, et debug:true sur l'accueil.</p>
+
+  <h3>5.2 — Étape 1 : cascade SQL vectorielle</h3>
+  <div class="diagram-wrap">
+<svg viewBox="0 0 720 180" xmlns="http://www.w3.org/2000/svg" class="diagram">
+  <text x="360" y="18" text-anchor="middle" font-size="11" fill="#302b63" font-weight="700">Cascade SQL vectorielle — relâchement progressif</text>
+  <line x1="165" y1="90" x2="180" y2="90" stroke="#4a4570" stroke-width="1.5"/><rect x="20" y="45" width="145" height="90" rx="6" fill="#e8f5e9" stroke="#302b63" stroke-width="1.5"/>
+    <text x="92" y="68" text-anchor="middle" font-size="14" fill="#302b63" font-weight="700">Niv. 0</text>
+    <text x="92" y="88" text-anchor="middle" font-size="9" fill="#302b63" font-weight="600">Strict</text>
+    <text x="92" y="108" text-anchor="middle" font-size="7" fill="#5c5780">lang · année · genres · note · plateforme</text><line x1="335" y1="90" x2="350" y2="90" stroke="#4a4570" stroke-width="1.5"/><rect x="190" y="45" width="145" height="90" rx="6" fill="#e3f2fd" stroke="#302b63" stroke-width="1.5"/>
+    <text x="262" y="68" text-anchor="middle" font-size="14" fill="#302b63" font-weight="700">Niv. 1</text>
+    <text x="262" y="88" text-anchor="middle" font-size="9" fill="#302b63" font-weight="600">Sans lang/année</text>
+    <text x="262" y="108" text-anchor="middle" font-size="7" fill="#5c5780">genres · note · plateforme</text><line x1="505" y1="90" x2="520" y2="90" stroke="#4a4570" stroke-width="1.5"/><rect x="360" y="45" width="145" height="90" rx="6" fill="#fff3e0" stroke="#302b63" stroke-width="1.5"/>
+    <text x="432" y="68" text-anchor="middle" font-size="14" fill="#302b63" font-weight="700">Niv. 2</text>
+    <text x="432" y="88" text-anchor="middle" font-size="9" fill="#302b63" font-weight="600">Sans genres profil</text>
+    <text x="432" y="108" text-anchor="middle" font-size="7" fill="#5c5780">voiceGenres · note · plateforme</text><rect x="530" y="45" width="145" height="90" rx="6" fill="#fce4ec" stroke="#302b63" stroke-width="1.5"/>
+    <text x="602" y="68" text-anchor="middle" font-size="14" fill="#302b63" font-weight="700">Niv. 3</text>
+    <text x="602" y="88" text-anchor="middle" font-size="9" fill="#302b63" font-weight="600">Minimal goût</text>
+    <text x="602" y="108" text-anchor="middle" font-size="7" fill="#5c5780">voiceGenres · plateforme seule</text>
+  <text x="360" y="165" text-anchor="middle" font-size="8" fill="#c62828" font-weight="600">La plateforme n'est JAMAIS levée en cascade SQL</text>
+</svg></div>
+  <p>Quatre niveaux de relâchement, du plus strict au plus permissif. Le moteur tente le niveau 0 ; si le pool reste sous ~100 candidats non-interagis, il passe au niveau suivant. Le flag tasteCascadeTriggered indique qu'un relâchement a eu lieu.</p>
+
+  <h3>5.3 — Étape 1.4 : SQL explicite</h3>
+  <p>Si le vecteur est absent ou le pool vectoriel insuffisant, une requête sans similarité complète le pool via match_movies_explicit en trois niveaux (goût strict → plateforme seule).</p>
+
+  <h3>5.4 — Étape 2.2 : sélection Gemini</h3>
+  <p>Le top 50 composite est numéroté et envoyé à Gemini avec le profil utilisateur complet. Le modèle retourne un JSON selections[{rank, matchScore, reason}]. En cas d'échec LLM, un fallback déterministe prend les N premiers du top 50 avec reason:null.</p>
+
+  <div class="callout callout-arch">
+    <strong>⚙ Décision d'architecture</strong>
+    <p>Le LLM reçoit count+2 sélections (ex. 5 si count=3) pour laisser une marge au client qui n'affichera que les 3 meilleurs après fusion et exclusions résiduelles.</p>
+  </div>
+</section>
+
+<section>
+  <h3>5.5 — Fallbacks discover, trending, nuclear</h3>
+  <p>Si SQL + LLM produisent zéro film valide, la chaîne de fallbacks TMDB s'enclenche : discover avec filtres plateforme, puis trending/popular, puis mode nuclear (genres et note minimum levés, plateforme toujours active). Chaque fallback est tracé dans fallbackTrace.</p>
+
+  <h3>5.6 — Safety net et backfill client</h3>
+  <p>Le filet de sécurité edge (étape 5-final-safety) garantit le nombre de films demandés en complétant depuis le pool SQL restant, avec vérification genres/langues exclus. Côté client, ensureRecommendationBatch peut backfiller de 1 à 3 films si le batch initial est incomplet — sans appel TMDB aveugle (correction audit juin 2026).</p>
+
+  <div class="callout callout-warn">
+    <strong>⚠ Attention debug</strong>
+    <p>Un batch de 1 seul film indique généralement des contraintes trop strictes (plateforme rare + genres voix étroits) ou un pool SQL épuisé. Vérifier sqlCascadeLevel, fallbackTrace et le nombre d'excludeIds.</p>
+  </div>
+
+  <h3>5.7 — Constantes serveur clés</h3>
+  <table>
+    <thead><tr><th>Constante</th><th>Valeur</th><th>Signification</th></tr></thead>
+    <tbody>
+      <tr><td class="stack-category">TARGET</td><td>100</td><td>Pool SQL cible</td></tr>
+      <tr><td class="stack-category">llmPoolSize</td><td>50</td><td>Films envoyés au LLM</td></tr>
+      <tr><td class="stack-category">BATCH</td><td>500</td><td>Candidats par round RPC</td></tr>
+      <tr><td class="stack-category">minMatchScore</td><td>~60</td><td>Seuil retry qualité étape 2.5</td></tr>
+      <tr><td class="stack-category">min_rating SQL</td><td>6 (niv. 0–2), 0 (niv. 3)</td><td>Note TMDB minimum</td></tr>
+    </tbody>
+  </table>
+</section>
+
+
+<section class="page-break">
+  <h2>6. Filtres successifs</h2>
+  <p>Le moteur applique une série de filtres en entonnoir : chaque étape réduit le pool candidat. Comprendre l'ordre et les conditions de relâchement est essentiel pour diagnostiquer les recommandations trop génériques ou trop restrictives.</p>
+
+  <div class="diagram-wrap">
+<svg viewBox="0 0 720 140" xmlns="http://www.w3.org/2000/svg" class="diagram-sm">
+  <text x="360" y="16" text-anchor="middle" font-size="10" fill="#302b63" font-weight="700">Chaîne de fallbacks edge (si pool insuffisant)</text>
+  <rect x="15" y="35" width="100" height="45" rx="5" fill="#e8f5e9" stroke="#4a4570" stroke-width="1"/>
+    <text x="65" y="62" text-anchor="middle" font-size="7" fill="#302b63" font-weight="600">SQL vectoriel</text>
+    <line x1="115" y1="57" x2="130" y2="57" stroke="#4a4570"/><rect x="130" y="35" width="100" height="45" rx="5" fill="#e3f2fd" stroke="#4a4570" stroke-width="1"/>
+    <text x="180" y="62" text-anchor="middle" font-size="7" fill="#302b63" font-weight="600">SQL explicite</text>
+    <line x1="230" y1="57" x2="245" y2="57" stroke="#4a4570"/><rect x="245" y="35" width="100" height="45" rx="5" fill="#fff3e0" stroke="#4a4570" stroke-width="1"/>
+    <text x="295" y="62" text-anchor="middle" font-size="7" fill="#302b63" font-weight="600">Discover TMDB</text>
+    <line x1="345" y1="57" x2="360" y2="57" stroke="#4a4570"/><rect x="360" y="35" width="100" height="45" rx="5" fill="#fce4ec" stroke="#4a4570" stroke-width="1"/>
+    <text x="410" y="62" text-anchor="middle" font-size="7" fill="#302b63" font-weight="600">Trending</text>
+    <line x1="460" y1="57" x2="475" y2="57" stroke="#4a4570"/><rect x="475" y="35" width="100" height="45" rx="5" fill="#ffebee" stroke="#4a4570" stroke-width="1"/>
+    <text x="525" y="62" text-anchor="middle" font-size="7" fill="#302b63" font-weight="600">Nuclear</text>
+    <line x1="575" y1="57" x2="590" y2="57" stroke="#4a4570"/><rect x="590" y="35" width="100" height="45" rx="5" fill="#302b63" stroke="#4a4570" stroke-width="1"/>
+    <text x="640" y="62" text-anchor="middle" font-size="7" fill="#fff" font-weight="600">Safety net</text>
+    
+  <text x="360" y="110" text-anchor="middle" font-size="8" fill="#5c5780">Chaque étape ne s'active que si la précédente ne produit pas assez de candidats</text>
+</svg></div>
+
+  <h3>6.1 — Filtres SQL (edge)</h3>
+  <table>
+    <thead><tr><th>Filtre</th><th>Quand appliqué</th><th>Relâché à</th></tr></thead>
+    <tbody>
+      <tr><td class="stack-category">Plateforme</td><td>Toujours (si sélectionnée)</td><td>Jamais</td></tr>
+      <tr><td class="stack-category">Langue originale</td><td>SQL niv. 0 + voix</td><td>Niveau 1+</td></tr>
+      <tr><td class="stack-category">Décennie (min/max year)</td><td>SQL niv. 0 + voiceDecade</td><td>Niveau 1+ (sauf voiceDecade hard)</td></tr>
+      <tr><td class="stack-category">Genres profil (likedGenres)</td><td>SQL niv. 0–1</td><td>Niveau 2 (voiceGenres conservés)</td></tr>
+      <tr><td class="stack-category">Note minimum TMDB</td><td>SQL niv. 0–2 (≥ 6)</td><td>Niveau 3 (min_rating=0)</td></tr>
+      <tr><td class="stack-category">Popularité minimum</td><td>SQL niv. 0–2</td><td>Niveau 3</td></tr>
+      <tr><td class="stack-category">excludeIds</td><td>Toujours</td><td>Jamais</td></tr>
+      <tr><td class="stack-category">Genres exclus profil</td><td>Toujours</td><td>Jamais (safety net final)</td></tr>
+    </tbody>
+  </table>
+
+  <h3>6.2 — Post-filtres (après SQL, avant LLM)</h3>
+  <p>Trois post-filtres affinent le pool avant le top 50 :</p>
+  <ul>
+    <li><strong>2a — Langues exclues</strong> : retire les original_language dans effectiveExcludedLangs</li>
+    <li><strong>2b — Genres voix</strong> : si ≥ 5 candidats restent après filtre voiceGenres, applique le filtre ; sinon conserve le pool (évite le vide)</li>
+    <li><strong>2c — Décennie</strong> : voiceDecade en mode hard (élimination stricte) ou profileDecades en mode soft (boost seulement)</li>
+  </ul>
+</section>
+
+<section>
+  <h3>6.3 — Filtres LLM et TMDB</h3>
+  <p>Gemini sélectionne dans le top 50 en tenant compte du profil textuel — ce n'est pas un filtre binaire mais une re-ranking intelligente. L'enrichissement TMDB valide que chaque ID existe, récupère providers streaming et corrige le media_type (movie vs tv).</p>
+
+  <h3>6.4 — Chaîne de fallbacks</h3>
+  <table>
+    <thead><tr><th>Fallback</th><th>Déclencheur</th><th>Ce qui est relâché</th><th>Ce qui est conservé</th></tr></thead>
+    <tbody>
+      <tr><td class="stack-category">SQL explicite</td><td>Pool vectoriel &lt; TARGET</td><td>Similarité vectorielle</td><td>Plateforme, exclusions</td></tr>
+      <tr><td class="stack-category">LLM déterministe</td><td>Gemini KO / JSON invalide</td><td>Sélection IA</td><td>Top 50 trié composite</td></tr>
+      <tr><td class="stack-category">Retry qualité 2.5</td><td>&lt; 3 films ≥ minMatchScore</td><td>Seuil score LLM</td><td>Pool SQL restant</td></tr>
+      <tr><td class="stack-category">discover-fallback</td><td>0 films post-LLM</td><td>Personnalisation goût</td><td>Plateforme, excludeIds</td></tr>
+      <tr><td class="stack-category">trending-fallback</td><td>discover insuffisant</td><td>Filtres discover</td><td>Plateforme</td></tr>
+      <tr><td class="stack-category">nuclear-fallback</td><td>trending insuffisant</td><td>Genres, note min</td><td>Plateforme uniquement</td></tr>
+      <tr><td class="stack-category">Safety net final</td><td>count &lt; demandé</td><td>Ordre origine</td><td>Genres/langues exclus</td></tr>
+      <tr><td class="stack-category">Backfill client</td><td>Batch &lt; 3 affichés</td><td>—</td><td>Films réserve SP non affichés</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout callout-good">
+    <strong>✓ Bonnes pratiques</strong>
+    <p>Lors d'un diagnostic « recommandations génériques », vérifier tasteCascadeTriggered et le niveau SQL atteint. Un niveau 3 systématique signale un profil contraint ou un pool d'exclusions trop large — pas un bug LLM.</p>
+  </div>
+</section>
+
+<section class="page-break">
+  <h2>7. Paramètres et overrides</h2>
+  <p>De multiples sources alimentent le moteur simultanément. Sans hiérarchie claire, les conflits produiraient des comportements imprévisibles. Pick applique une résolution strictement ordonnée.</p>
+
+  <h3>7.1 — Hiérarchie de priorité</h3>
+  <div class="ascii-diagram">  Priorité décroissante :
+  ┌──────────────────────────────────────┐
+  │  1. DUO — profils fusionnés         │
+  │  2. VOIX — intention explicite       │
+  │  3. AMBIANCE — humeur / soirée       │
+  │  4. PROFIL — goûts statiques         │
+  └──────────────────────────────────────┘</div>
+
+  <p>En mode Duo, les exclusions des deux partenaires s'additionnent et le vecteur fusionné prime. Une commande vocale « je veux un western » overridera les genres profil mais pas les plateformes duo communes. L'ambiance « intense » booste thrillers et dramas même si le profil stable penche comédie.</p>
+
+  <h3>7.2 — Paramètres ajustables clés</h3>
+  <table>
+    <thead><tr><th>Paramètre</th><th>Défaut</th><th>Effet</th></tr></thead>
+    <tbody>
+      <tr><td class="stack-category">recommendationCount</td><td>5 (edge) / 3 (UI)</td><td>Nombre de films produits vs affichés</td></tr>
+      <tr><td class="stack-category">explorationLevel</td><td>0–2</td><td>Poids vecteur récent vs stable</td></tr>
+      <tr><td class="stack-category">llmPoolSize</td><td>50</td><td>Taille du pool pré-LLM</td></tr>
+      <tr><td class="stack-category">minMatchScore</td><td>~60</td><td>Seuil qualité retry 2.5</td></tr>
+      <tr><td class="stack-category">min_rating</td><td>6 → 0</td><td>Note TMDB min par niveau cascade</td></tr>
+      <tr><td class="stack-category">voiceGenreThreshold</td><td>5</td><td>Min candidats avant filtre genre voix</td></tr>
+      <tr><td class="stack-category">preferredLangBoost</td><td>+15</td><td>Bonus langue préférée composite</td></tr>
+      <tr><td class="stack-category">spMinValid (fusion)</td><td>60</td><td>Score SP minimum avant fusion MM</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section>
+  <h3>7.3 — Overrides voix</h3>
+  <p>voiceGenres, voiceOriginalLanguage et voiceDecade sont extraits de la dictée utilisateur. voiceDecade peut être « hard » (filtre éliminatoire post-SQL) ou absent (profil décennies en soft boost). Les genres voix remplacent likedGenres à partir du niveau SQL 2.</p>
+
+  <h3>7.4 — Overrides ambiance et soirée</h3>
+  <p>moodContext décrit l'humeur en texte libre pour le prompt LLM. moodBoostGenres liste les genres à favoriser (ex. « Comédie » en mode détente). En intent Révéler, mediaType, genres et mood sont figés depuis l'événement soirée.</p>
+
+  <div class="callout callout-arch">
+    <strong>⚙ Décision d'architecture</strong>
+    <p>Les overrides ne modifient jamais excludeIds ni platformIds — ce sont des contraintes dures. Seuls les critères de « goût positif » (genres, décennie, langue) sont sujets à la hiérarchie.</p>
+  </div>
+
+  <h3>7.5 — explorationLevel</h3>
+  <p>Trois niveaux modulant le mélange stable/récent : niveau 0 (conservateur, profil stable dominant), niveau 1 (équilibré), niveau 2 (explorateur, vecteur récent fortement pondéré). Impacte le query_vector SQL et le ton du prompt LLM.</p>
+</section>
+
+<section class="page-break">
+  <h2>8. Les trois échelles de score</h2>
+  <p>Pick affiche un pourcentage de match sur chaque flip card. Derrière ce chiffre unique se cachent <strong>trois systèmes de scoring distincts</strong>, non directement comparables. Les confondre est l'erreur de debug la plus fréquente.</p>
+
+  <div class="diagram-wrap">
+<svg viewBox="0 0 720 160" xmlns="http://www.w3.org/2000/svg" class="diagram-sm">
+  <text x="360" y="16" text-anchor="middle" font-size="10" fill="#302b63" font-weight="700">Trois échelles de score — non comparables entre elles</text>
+  
+    <rect x="40" y="35" width="180" height="80" rx="6" fill="#e8eaf6" stroke="#302b63" stroke-width="1.5"/>
+    <text x="130" y="60" text-anchor="middle" font-size="10" fill="#302b63" font-weight="700">Sim%</text>
+    <text x="130" y="78" text-anchor="middle" font-size="9" fill="#5c5780">Plage : 0–100</text>
+    <text x="130" y="98" text-anchor="middle" font-size="8" fill="#5c5780">Tri SQL · debug</text>
+  
+    <rect x="260" y="35" width="180" height="80" rx="6" fill="#e8f5e9" stroke="#302b63" stroke-width="1.5"/>
+    <text x="350" y="60" text-anchor="middle" font-size="10" fill="#302b63" font-weight="700">LLM matchScore</text>
+    <text x="350" y="78" text-anchor="middle" font-size="9" fill="#5c5780">Plage : 60–99</text>
+    <text x="350" y="98" text-anchor="middle" font-size="8" fill="#5c5780">Teaser immédiat</text>
+  
+    <rect x="480" y="35" width="180" height="80" rx="6" fill="#fff3e0" stroke="#302b63" stroke-width="1.5"/>
+    <text x="570" y="60" text-anchor="middle" font-size="10" fill="#302b63" font-weight="700">movie-match</text>
+    <text x="570" y="78" text-anchor="middle" font-size="9" fill="#5c5780">Plage : 55–99</text>
+    <text x="570" y="98" text-anchor="middle" font-size="8" fill="#5c5780">Badge final UI</text>
+  
+  <text x="360" y="140" text-anchor="middle" font-size="8" fill="#302b63">Fusion client : max(SP ≥ 60, MM) — scores SP &lt; 60 % ignorés comme aberrants</text>
+</svg></div>
+
+  <h3>8.1 — Sim% (similarité SQL)</h3>
+  <p>Produit de la similarité cosinus entre le vecteur utilisateur et l'embedding film, multiplié par 100. Plage typique 0–100. Sert au tri du pool SQL et aux tables debug sqlCandidates. Ne tient pas compte de l'humeur du moment ni du contexte LLM.</p>
+
+  <h3>8.2 — Score composite (pré-LLM)</h3>
+  <p>Formule : Sim% + note TMDB (vote_average) + bonus +15 si langue originale préférée. Utilisé pour construire le top 50. Échelle non bornée supérieurement (~0–115). N'apparaît pas directement dans l'UI.</p>
+
+  <h3>8.3 — LLM matchScore</h3>
+  <p>Score assigné par Gemini dans selections[], borné 60–99 par le prompt. Reflète l'adéquation contextuelle (« ce soir, comédie légère »). Affiché immédiatement à onBatchReady avant movie-match.</p>
+
+  <h3>8.4 — movie-match score</h3>
+  <p>Score 55–99 produit par la edge function movie-match, combinant embedding 32D et jugement Gemini. Alimente le badge final et les textes headline / whyItMatches. Seuil plancher profil à 55 côté MM.</p>
+</section>
+
+<section>
+  <h3>8.5 — Règles de fusion client</h3>
+  <p>Le score affiché final résulte de mergeRecommendationScores :</p>
+  <ol>
+    <li>Ignorer tout score SP (LLM) &lt; 60 % — considéré aberrant</li>
+    <li>Si SP valide et MM disponibles : prendre le maximum des deux</li>
+    <li>Sinon : SP valide seul, ou MM seul, ou null</li>
+  </ol>
+
+  <div class="callout callout-warn">
+    <strong>⚠ Attention debug</strong>
+    <p>Ne jamais trier les films finaux par Sim% en supposant refléter l'ordre UI. Un film Sim% 78 peut être classé derrière un Sim% 65 si le LLM l'a favorisé contextuellement. Utiliser llmSelections puis le score fusionné client.</p>
+  </div>
+
+  <h3>8.6 — Pourquoi trois échelles ?</h3>
+  <p>Chaque échelle optimise un objectif différent : Sim% pour la proximité vectorielle brute, composite pour diversifier avec la qualité TMDB, LLM pour le contexte du soir, movie-match pour la personnalisation fine et les textes. Les fusionner en une seule métrique trop tôt dégraderait l'un de ces objectifs.</p>
+
+  <table>
+    <thead><tr><th>Échelle</th><th>Moment</th><th>Visible UI</th><th>Comparable avec</th></tr></thead>
+    <tbody>
+      <tr><td class="stack-category">Sim%</td><td>SQL</td><td>Debug seulement</td><td>Composite (base)</td></tr>
+      <tr><td class="stack-category">Composite</td><td>Pré-LLM</td><td>Non</td><td>Sim% (composante)</td></tr>
+      <tr><td class="stack-category">LLM matchScore</td><td>Post-Gemini</td><td>Teaser immédiat</td><td>MM (après fusion)</td></tr>
+      <tr><td class="stack-category">movie-match</td><td>Post-MM</td><td>Badge final</td><td>LLM (après fusion)</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section class="page-break">
+  <h2>9. Quirks connus</h2>
+  <p>L'audit de juin 2026 a identifié plusieurs comportements non intuitifs du moteur. Ils ne sont pas des bugs mais des conséquences de compromis architecturels — à connaître pour éviter fausses alertes.</p>
+
+  <h3>9.1 — reason: null</h3>
+  <p><strong>Symptôme</strong> : colonne « Raison » vide dans les tables debug, ou justification absente sur une flip card.</p>
+  <p><strong>Causes</strong> : fallback LLM déterministe (Gemini KO), retry qualité étape 2.5, parsing JSON partiel (regex fallback sans champ reason).</p>
+  <p><strong>Impact UI</strong> : l'interface conserve parfois le teaser LLM initial même si reason devient null côté edge. Les textes movie-match (headline, whyItMatches) compensent généralement l'absence.</p>
+  <p><strong>Debug</strong> : vérifier llmSelections, fallbackTriggered dans pipelineStages 2.2, et logs ⚠️ FALLBACK côté client.</p>
+
+  <h3>9.2 — Trois échelles non comparables</h3>
+  <p><strong>Symptôme</strong> : film A Sim% 82 classé derrière film B Sim% 71 dans le résultat final.</p>
+  <p><strong>Cause</strong> : le LLM et movie-match re-rankent selon le contexte, pas la similarité brute.</p>
+  <p><strong>Impact</strong> : confusion lors de l'analyse debug, fausses régressions signalées.</p>
+  <p><strong>Debug</strong> : comparer llmSelections.matchScore et score MM final, pas sqlCandidates.similarity.</p>
+</section>
+
+<section>
+  <h3>9.3 — movie-match FALLBACK</h3>
+  <p><strong>Symptôme</strong> : log client « ⚠️ FALLBACK » pour un film, textes génériques, score MM absent ou par défaut.</p>
+  <p><strong>Cause</strong> : Gemini indisponible ou timeout dans movie-match. Retour objet { fallback: true }.</p>
+  <p><strong>Impact</strong> : retry automatique après 4 secondes ; film de réserve waterfall si échec persistant.</p>
+  <p><strong>Debug</strong> : chronologie [Pick⏱] movie-match · vérifier charge Gemini · un seul FALLBACK occasionnel est normal en pic.</p>
+
+  <h3>9.4 — Autres quirks documentés</h3>
+  <table>
+    <thead><tr><th>Quirk</th><th>Impact</th><th>Tip debug</th></tr></thead>
+    <tbody>
+      <tr><td class="stack-category">tasteCascadeTriggered</td><td>Reco plus générique</td><td>Noter sqlCascadeLevel atteint</td></tr>
+      <tr><td class="stack-category">Batch 1 film</td><td>UX dégradée</td><td>excludeIds count + plateformes rares</td></tr>
+      <tr><td class="stack-category">Plateforme bypass LLM</td><td>Filtre plateforme souvent redondant post-SQL</td><td>platformPool vs llmFiltered</td></tr>
+      <tr><td class="stack-category">usedIds régression 2026-06-03</td><td>Doublons en fallback</td><td>Corrigé — must inclure excludeIds</td></tr>
+      <tr><td class="stack-category">Backfill TMDB aveugle</td><td>Films hors profil</td><td>Corrigé juin 2026 — réserve SP uniquement</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout callout-info">
+    <strong>ℹ Corrections récentes (v1.23)</strong>
+    <p>Renommage debug top20→top50, sql50→sqlCandidates. platformFallbackTriggered remplacé par tasteCascadeTriggered. platformCandidatesCount n'est plus écrasé par la taille du pool LLM.</p>
+  </div>
+</section>
+
+<section class="page-break">
+  <h2>10. Modes spéciaux</h2>
+  <p>Le pipeline s'adapte à des contextes d'appel différents. Le cœur reste identique ; seules les entrées et la sortie diffèrent.</p>
+
+  <h3>10.1 — Fallback &lt; 2 likes</h3>
+  <p>Sans profil minimum, surprise-personalized n'est pas invoquée. Le client appelle getSurpriseRecommendation (TMDB trending/discover léger) pour afficher un titre unique non personnalisé. Message UX encourageant l'onboarding.</p>
+
+  <h3>10.2 — Vecteur null</h3>
+  <p>Profil avec likes mais vecteur non calculé (cache expiré, migration en cours) : SQL vectoriel sauté, SQL explicite puis discover-fallback. Résultats moins pertinents mais non vides.</p>
+
+  <h3>10.3 — Mode Duo</h3>
+  <p>duoUserIds active la fusion de profils : vecteur combiné (moyenne pondérée), excludeIds union des deux historiques, partnerUserId passé au RPC SQL. Genres communs favorisés dans le prompt LLM.</p>
+
+  <h3>10.4 — Intent Révéler (soirée)</h3>
+  <p>runRevealPipeline propage mood, genres et mediaType depuis l'événement. Overlay révélation sans flash accueil. Pas de movie-match client sur la création d'événement (count:3 direct). Synchronisation présence temps réel pour la révélation collective.</p>
+</section>
+
+<section>
+  <h3>10.5 — Wizard vs accueil</h3>
+  <table>
+    <thead><tr><th>Aspect</th><th>Wizard /app</th><th>Accueil « Ce soir »</th></tr></thead>
+    <tbody>
+      <tr><td class="stack-category">Collecte contexte</td><td>Explicite (étapes)</td><td>Mémorisé + voix/ambiance</td></tr>
+      <tr><td class="stack-category">debug: true</td><td>Non par défaut</td><td>Oui (PICK-DEBUG prod)</td></tr>
+      <tr><td class="stack-category">Edge function</td><td>surprise-personalized</td><td>Idem</td></tr>
+      <tr><td class="stack-category">movie-match</td><td>Oui, séquentiel</td><td>Oui, séquentiel</td></tr>
+      <tr><td class="stack-category">UI résultats</td><td>ResultScreen plein écran</td><td>TonightPickOverlay</td></tr>
+    </tbody>
+  </table>
+
+  <h3>10.6 — Création événement soirée</h3>
+  <p>Lors de la création d'une soirée (CreateEventPage), le pipeline produit 3 films sans enrichissement movie-match côté client — les métadonnées SP suffisent pour la prévisualisation organisateur. Le movie-match intervient au moment de la révélation si configuré.</p>
+
+  <div class="callout callout-good">
+    <strong>✓ Bonnes pratiques</strong>
+    <p>Tester chaque mode spécial indépendamment : profil neuf (&lt;2 likes), duo actif, soirée avec intent restrictif, wizard avec genres étroits. Les TNR phase 2 couvrent les fixtures JSON pour SP complet et safety net 1 film.</p>
+  </div>
+</section>
+
+
+<section class="page-break">
+  <h2>11. Performance</h2>
+  <p>La promesse Pick (« moins de 2 minutes ») impose une latence pipeline cible inférieure à 15 secondes pour l'affichage des flip cards. Ce chapitre documente les timings observés, les goulots d'étranglement et la feuille de route optimisation.</p>
+
+  <h3>11.1 — Timings typiques (accueil)</h3>
+  <table>
+    <thead><tr><th>Étape</th><th>Durée typique</th><th>Variable principale</th></tr></thead>
+    <tbody>
+      <tr><td class="stack-category">Profil client</td><td>100–300 ms</td><td>Cache user_taste_vectors</td></tr>
+      <tr><td class="stack-category">SQL cascade</td><td>800 ms – 2 s</td><td>Niveau atteint, excludeIds count</td></tr>
+      <tr><td class="stack-category">Enrichissement langue</td><td>0–3 s</td><td>Candidats lang null</td></tr>
+      <tr><td class="stack-category">Top 50 + post-filtres</td><td>&lt; 100 ms</td><td>Taille pool</td></tr>
+      <tr><td class="stack-category">Gemini LLM</td><td>2–6 s</td><td>Charge API Google</td></tr>
+      <tr><td class="stack-category">TMDB enrich batch</td><td>500 ms – 1.5 s</td><td>Nombre sélections</td></tr>
+      <tr><td class="stack-category">Fallbacks (si déclenchés)</td><td>+1–4 s</td><td>Type fallback</td></tr>
+      <tr><td class="stack-category">movie-match ×3</td><td>6–15 s total</td><td>Séquentiel — 2–5 s/appel</td></tr>
+    </tbody>
+  </table>
+  <p><strong>Total perçu utilisateur</strong> : 5–12 s jusqu'aux flip cards (sans movie-match), 15–25 s jusqu'aux textes riches complets.</p>
+
+  <h3>11.2 — Goulot principal : movie-match séquentiel</h3>
+  <p>Chaque appel movie-match enchaîne embedding lookup, prompt Gemini et formatage réponse. Trois films affichés = trois appels séquentiels (~2–5 s chacun). C'est le poste d'amélioration prioritaire (voir chapitre 14).</p>
+
+  <div class="callout callout-arch">
+    <strong>⚙ Décision d'architecture</strong>
+    <p>L'affichage immédiat post-LLM (onBatchReady) compense la latence movie-match : l'utilisateur voit des propositions en ~10 s pendant que les textes riches se chargent. Ne pas bloquer l'UI sur movie-match.</p>
+  </div>
+</section>
+
+<section>
+  <h3>11.3 — Autres facteurs de latence</h3>
+  <ul>
+    <li><strong>Cascade SQL niveau 3</strong> — plusieurs rounds RPC 500 candidats</li>
+    <li><strong>Enrichissement langue 1.7</strong> — jusqu'à 60 appels TMDB unitaires</li>
+    <li><strong>excludeIds volumineux</strong> — 200+ IDs ralentissent les RPC PostgreSQL</li>
+    <li><strong>Fallback chain</strong> — discover + trending + nuclear en cascade</li>
+  </ul>
+
+  <h3>11.4 — Roadmap optimisation (P2)</h3>
+  <table>
+    <thead><tr><th>Optimisation</th><th>Gain estimé</th><th>Statut</th></tr></thead>
+    <tbody>
+      <tr><td class="stack-category">movie-match parallèle (×3 concurrent)</td><td>−10 s</td><td>Planifié</td></tr>
+      <tr><td class="stack-category">Cache embeddings TMDB</td><td>−1–2 s SQL</td><td>Partiel (movie_embeddings)</td></tr>
+      <tr><td class="stack-category">recentTasteVector in SQL</td><td>Meilleure pertinence sans latence</td><td>Planifié</td></tr>
+      <tr><td class="stack-category">Timeouts UX + retry</td><td>Perception</td><td>Toast erreur fait (1.4)</td></tr>
+      <tr><td class="stack-category">engineMeta → monitoring</td><td>Observabilité prod</td><td>Planifié (2.8)</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout callout-good">
+    <strong>✓ Bonnes pratiques</strong>
+    <p>Utiliser les préfixes [Pick⏱] et engineMeta.timings pour profiler chaque requête. Comparer SQL ms vs LLM ms vs MM ms avant d'optimiser — ne pas paralléliser MM si le goulot est SQL niveau 3.</p>
+  </div>
+</section>
+
+<section class="page-break">
+  <h2>12. Debug &amp; observabilité</h2>
+  <p>Le moteur expose une instrumentation riche activée par debug:true. En production sur l'accueil, les groupes [PICK-DEBUG] structurent la console développeur pour tracer chaque étape sans outil externe.</p>
+
+  <h3>12.1 — Groupes console [PICK-DEBUG]</h3>
+  <table>
+    <thead><tr><th>Groupe</th><th>Contenu</th></tr></thead>
+    <tbody>
+      <tr><td class="stack-category">📋 Paramètres par étape</td><td>pipelineStages — synthèse entrée/sortie/fallback</td></tr>
+      <tr><td class="stack-category">📤 Paramètres envoyés</td><td>Vecteur, plateformes, genres, excludeIds (client)</td></tr>
+      <tr><td class="stack-category">1️⃣ SQL vectoriel 32D</td><td>sqlCandidates, sqlCascadeLevel, sqlRpcParams, snippet RPC</td></tr>
+      <tr><td class="stack-category">📈 Détail par niveau</td><td>sqlLevelDebug — films gagnés par niveau 0–3</td></tr>
+      <tr><td class="stack-category">1️⃣⁺ SQL explicite</td><td>explicitFallbackDebug</td></tr>
+      <tr><td class="stack-category">🧠 Profil → LLM</td><td>llmProfile, systemPrompt complet</td></tr>
+      <tr><td class="stack-category">2️⃣ Top N → LLM</td><td>top50 — jusqu'à 50 films numérotés</td></tr>
+      <tr><td class="stack-category">3️⃣ Sélections LLM</td><td>llmSelections — matchScore + reason</td></tr>
+      <tr><td class="stack-category">🔀 Films fallback</td><td>fallbackTrace — discover/trending/nuclear</td></tr>
+      <tr><td class="stack-category">3️⃣.5 TMDB enrich</td><td>tmdbEnrichment — OK/échec par ID</td></tr>
+      <tr><td class="stack-category">4️⃣ Films finaux edge</td><td>finalMoviesList avant movie-match</td></tr>
+      <tr><td class="stack-category">⏱️ Timings pipeline</td><td>engineMeta.timings par étape</td></tr>
+      <tr><td class="stack-category">4️⃣ Résultat final MM</td><td>Score MM, rich texts vs FALLBACK</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section>
+  <h3>12.2 — pipelineStages (v25+)</h3>
+  <p>Tableau ordonné d'objets { id, name, params, fallbackTriggered, fallbackReason, inputCount, outputCount }. Permet de reconstruire le parcours complet sans lire chaque groupe console.</p>
+
+  <table>
+    <thead><tr><th>id</th><th>Étape tracée</th></tr></thead>
+    <tbody>
+      <tr><td class="stack-category">0-client-request</td><td>Paramètres avant invoke</td></tr>
+      <tr><td class="stack-category">0-edge-request</td><td>Paramètres effectifs (voix/mood/duo résolus)</td></tr>
+      <tr><td class="stack-category">1-sql-vector</td><td>Cascade SQL 0→3</td></tr>
+      <tr><td class="stack-category">1.4-sql-explicit</td><td>Complément explicite</td></tr>
+      <tr><td class="stack-category">1.7-lang-enrich</td><td>Backfill langue TMDB</td></tr>
+      <tr><td class="stack-category">2a–c post-filters</td><td>Langue, genre voix, décennie</td></tr>
+      <tr><td class="stack-category">2-top50-composite</td><td>Top 50 score composé</td></tr>
+      <tr><td class="stack-category">2.2-llm-selection</td><td>Gemini + fallback déterministe</td></tr>
+      <tr><td class="stack-category">2.5-quality-retry</td><td>Complément minMatchScore</td></tr>
+      <tr><td class="stack-category">3-tmdb-enrich</td><td>Lookup TMDB batch</td></tr>
+      <tr><td class="stack-category">4-discover / 4b / 4c</td><td>Chaîne fallbacks TMDB</td></tr>
+      <tr><td class="stack-category">5-final-safety</td><td>Filet sécurité edge</td></tr>
+      <tr><td class="stack-category">6-movie-match</td><td>Appels séquentiels client</td></tr>
+    </tbody>
+  </table>
+
+  <h3>12.3 — engineMeta</h3>
+  <p>Objet retourné avec la réponse SP : tasteCascadeTriggered, sqlCandidatesCount, llmPoolCount, mode (normal/fallback), timings détaillés (sqlMs, langMs, llmMs, tmdbMs, fallbackMs). Alimente l'optimisation continue et le monitoring futur (Sentry, tâche 2.8).</p>
+
+  <div class="callout callout-warn">
+    <strong>⚠ Attention debug</strong>
+    <p>debugData n'est pas exposé en production aux utilisateurs finaux — visible console uniquement. Ne jamais logger systemPrompt ou profil complet côté serveur persistant (RGPD). Le flag debug reste actif sur l'accueil pour l'équipe alpha.</p>
+  </div>
+</section>
+
+<section class="page-break">
+  <h2>13. Qualité &amp; TNR</h2>
+  <p>Le moteur de recommandation est protégé par une suite de tests de non-régression (TNR) en trois phases. L'objectif : toute modification du pipeline doit être vérifiable sans regarder 500 films.</p>
+
+  <h3>13.1 — État juin 2026</h3>
+  <div class="two-col">
+    <div class="stat-box"><div class="num">131</div><div class="label">tests unitaires passants</div></div>
+    <div class="stat-box"><div class="num">70</div><div class="label">tests pipeline dédiés</div></div>
+  </div>
+
+  <table>
+    <thead><tr><th>Suite</th><th>Tests</th><th>Périmètre</th></tr></thead>
+    <tbody>
+      <tr><td class="stack-category">taste-engine</td><td>28</td><td>Vecteurs, decay, profil multi-vecteurs</td></tr>
+      <tr><td class="stack-category">recommendation-pipeline</td><td>23</td><td>Fonctions pures SP extraites (composite, cascade, parse LLM)</td></tr>
+      <tr><td class="stack-category">recommendation-batch</td><td>9</td><td>Extraction payload, fusion scores, normalisation textes</td></tr>
+      <tr><td class="stack-category">recommendation-batch-integration</td><td>8</td><td>Mocks SP/MM, backfill, genres exclus</td></tr>
+      <tr><td class="stack-category">recommendation-non-regression</td><td>15</td><td>Invariants exclusions, usedIds, filet 1→3</td></tr>
+    </tbody>
+  </table>
+
+  <h3>13.2 — Phases TNR pipeline</h3>
+  <table>
+    <thead><tr><th>Phase</th><th>Statut</th><th>Livrables</th></tr></thead>
+    <tbody>
+      <tr><td class="stack-category">Phase 1 — Unitaires</td><td>✅ Done</td><td>taste-engine, batch helpers, fonctions pures SP</td></tr>
+      <tr><td class="stack-category">Phase 2 — Intégration</td><td>✅ Done (25/06)</td><td>Fixtures JSON SP/MM, batch-integration, non-regression étendu</td></tr>
+      <tr><td class="stack-category">Phase 3 — E2E</td><td>⏳ En cours</td><td>pipeline.spec stable, smoke post-deploy, couverture 70 %</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section>
+  <h3>13.3 — Invariants non négociables</h3>
+  <ul>
+    <li><strong>Jamais de film déjà interagi</strong> — excludeIds respecté en sortie edge et client</li>
+    <li><strong>Genres exclus absents</strong> — safety net checkFinalSafety</li>
+    <li><strong>usedIds inclut excludeIds</strong> — régression 2026-06-03 documentée</li>
+    <li><strong>Backfill sans TMDB aveugle</strong> — réserve SP uniquement (correction audit)</li>
+    <li><strong>Plateforme conservée en fallback nuclear</strong> — contrainte produit</li>
+    <li><strong>mergeScore ignore SP &lt; 60</strong> — pas de score aberrant affiché</li>
+  </ul>
+
+  <h3>13.4 — Gaps phase 3</h3>
+  <ul>
+    <li>E2E pipeline avec credentials stables (pas seulement mocks)</li>
+    <li>Checklist manuelle post-deploy § smoke tests 3.2</li>
+    <li>Mesure automatisée couverture 70 % sur logique métier lib/</li>
+    <li>Tests duo bout-en-bout non automatisés</li>
+  </ul>
+
+  <div class="callout callout-good">
+    <strong>✓ Bonnes pratiques</strong>
+    <p>Avant tout refactor HomeScreen ou pipeline : npm run test:unit (131 tests, ~10 s). Ajouter un test pour chaque bug corrigé. Les fixtures sp-response-full.json et sp-response-safety-net-1.json servent de références shape API.</p>
+  </div>
+</section>
+
+<section class="page-break">
+  <h2>14. Évolutions prévues</h2>
+  <p>Le moteur alpha est fonctionnel mais pas optimisé. Cette section recense les améliorations planifiées, classées par impact.</p>
+
+  <h3>14.1 — Performance</h3>
+  <ul>
+    <li><strong>movie-match parallèle</strong> — Promise.all sur 3 films au lieu de séquentiel (−10 s typique)</li>
+    <li><strong>recentTasteVector in SQL</strong> — intégrer le vecteur récent directement dans la RPC pour meilleure pertinence sans latence client</li>
+    <li><strong>Batch TMDB lang enrich</strong> — réduire les appels unitaires étape 1.7</li>
+  </ul>
+
+  <h3>14.2 — Maintenabilité</h3>
+  <ul>
+    <li><strong>HomeScreen refactor (2.5)</strong> — extraction hooks useProfileLoader, useRecommendationEngine, useTonightMovieState — petits diffs, pas de gros bang</li>
+    <li><strong>TonightPickContext (1.20)</strong> — réduire ~30 props overlay, PR par étapes pair humain</li>
+    <li><strong>Split ResultScreen + Overlay (2.10)</strong> — composants &gt;1000 lignes chacun</li>
+  </ul>
+
+  <h3>14.3 — Observabilité &amp; prod</h3>
+  <ul>
+    <li><strong>engineMeta → Sentry/dashboard (2.8)</strong> — timings, cascade level, fallback rate</li>
+    <li><strong>Métriques produit</strong> — time-to-pick, satisfaction post-reco, taux fallback</li>
+    <li><strong>Secret TMDB serveur (1.16)</strong> — avant beta testeurs externes</li>
+  </ul>
+
+  <div class="callout callout-arch">
+    <strong>⚙ Décision d'architecture</strong>
+    <p>Aucun refactor pipeline profond sans tests 1.19 en place — désormais satisfait (131 tests). Les prochains refactors HomeScreen sont débloqués mais doivent rester incrémentaux.</p>
+  </div>
+</section>
+
+<section class="page-break">
+  <h2>15. Glossaire technique produit</h2>
+  <p>Termes spécifiques au moteur de recommandation Pick, complémentaires au glossaire produit du Tome 1.</p>
+
+  <table>
+    <thead><tr><th>Terme</th><th>Définition</th></tr></thead>
+    <tbody>
+      <tr><td class="stack-category">Vecteur stable</td><td>Embedding 32D goûts long terme, decay 150 jours</td></tr>
+      <tr><td class="stack-category">Vecteur récent</td><td>Embedding 32D tendances 30 jours, decay 21 jours</td></tr>
+      <tr><td class="stack-category">Vecteur évitement</td><td>Embedding 32D skips/dislikes, decay 60 jours</td></tr>
+      <tr><td class="stack-category">Cascade goût (SQL)</td><td>4 niveaux 0→3 relâchant progressivement lang, année, genres, note</td></tr>
+      <tr><td class="stack-category">SQL explicite</td><td>Requête sans similarité vectorielle, complément pool</td></tr>
+      <tr><td class="stack-category">Top 50 composite</td><td>Pool pré-LLM trié par sim×100 + note + boost langue</td></tr>
+      <tr><td class="stack-category">Sim%</td><td>Similarité cosinus × 100 — échelle debug SQL</td></tr>
+      <tr><td class="stack-category">matchScore LLM</td><td>Score 60–99 assigné par Gemini à la sélection</td></tr>
+      <tr><td class="stack-category">surprise-personalized</td><td>Edge function pipeline batch principal</td></tr>
+      <tr><td class="stack-category">movie-match</td><td>Edge function scoring fin + textes riches par film</td></tr>
+      <tr><td class="stack-category">Filet sécurité (safety net)</td><td>Mécanisme edge garantissant le count demandé</td></tr>
+      <tr><td class="stack-category">Pool backfill</td><td>Films réserve SP utilisés par le client si batch &lt; 3</td></tr>
+      <tr><td class="stack-category">excludeIds</td><td>Liste TMDB IDs jamais reproposés (historique + session)</td></tr>
+      <tr><td class="stack-category">usedIds</td><td>Set edge incluant excludeIds — anti-doublon fallbacks</td></tr>
+      <tr><td class="stack-category">tasteCascadeTriggered</td><td>Flag : relâchement SQL niveau &gt; 0</td></tr>
+      <tr><td class="stack-category">onBatchReady</td><td>Callback client — affichage immédiat post-LLM</td></tr>
+      <tr><td class="stack-category">pipelineStages</td><td>Tableau debug trace ordonnée des étapes</td></tr>
+      <tr><td class="stack-category">engineMeta</td><td>Métriques timings et counts retournées par SP</td></tr>
+      <tr><td class="stack-category">PICK-DEBUG</td><td>Préfixe groupes console debug pipeline</td></tr>
+      <tr><td class="stack-category">Fallback nuclear</td><td>Dernier recours TMDB — plateforme seule, genres/note levés</td></tr>
+      <tr><td class="stack-category">TNR</td><td>Tests de Non-Régression — 131 tests unitaires juin 2026</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section class="page-break">
+  <h2>16. FAQ moteur</h2>
+
+  <h3>Pourquoi seulement 1 film parfois ?</h3>
+  <p>Contraints trop strictes combinées : plateforme rare (ex. Canal+ seul), genres voix étroits, excludeIds volumineux (utilisateur actif), cascade niveau 3 insuffisante. Le filet sécurité edge et le backfill client tentent d'atteindre 3 — si 1 seul persiste, vérifier debug fallbackTrace et sqlCandidatesCount.</p>
+
+  <h3>Pourquoi une cascade SQL et pas un seul filtre ?</h3>
+  <p>Un filtre unique strict produirait souvent zéro résultat (profils exigeants, plateformes limitées). La cascade préserve la qualité quand possible (niveau 0) et dégrade gracieusement (niveaux 1–3) avant d'en appeler aux fallbacks TMDB. La plateforme reste non négociable à tous les niveaux.</p>
+
+  <h3>Pourquoi reason vide (null) ?</h3>
+  <p>Gemini n'a pas répondu ou le JSON est partiel. Le fallback déterministe sélectionne par score composite sans générer de raison. L'UI peut conserver un teaser antérieur ; movie-match compense via whyItMatches. Vérifier llmSelections et fallbackTriggered.</p>
+
+  <h3>Pourquoi le score affiché diffère du Sim% debug ?</h3>
+  <p>Trois échelles distinctes (chapitre 8). Le badge UI montre max(SP≥60, MM), pas Sim%. C'est voulu — le contexte du soir prime sur la similarité brute.</p>
+
+  <h3>Pourquoi movie-match prend-il autant de temps ?</h3>
+  <p>Appels séquentiels (3× Gemini). Optimisation parallèle planifiée. L'UI n'attend pas — flip cards visibles dès le LLM.</p>
+
+  <h3>Le wizard et l'accueil utilisent-ils le même moteur ?</h3>
+  <p>Oui — même edge function surprise-personalized. Différences : collecte contexte (explicite vs mémorisé), debug activé sur accueil seulement, UI résultats (ResultScreen vs Overlay).</p>
+
+  <h3>Comment tester sans API live ?</h3>
+  <p>npm run test:unit — 131 tests dont 70 pipeline, fixtures JSON, zéro réseau. E2E pipeline.spec.ts mocke les edge functions.</p>
+
+  <div class="callout callout-info">
+    <strong>ℹ Aller plus loin</strong>
+    <p>Documentation pipeline détaillée (diagrammes Mermaid, mapping debug complet) · Backlog TNR phases 1–3 · Smoke tests § 3.2 pour validation manuelle post-deploy.</p>
+  </div>
+</section>
+
+<section class="page-break" style="text-align:center;padding-top:60mm">
+  <div style="font-size:36pt;margin-bottom:10mm">🎯</div>
+  <h2 style="border:none">Fin du Tome 2</h2>
+  <p style="text-align:center;max-width:120mm;margin:5mm auto">Moteur de recommandation</p>
+  <p style="text-align:center;font-size:9pt;color:#5c5780;margin-top:15mm">
+    Pick Your Spotlight — Engineering Handbook<br/>
+    Version 1.0 — Juin 2026<br/><br/>
+    Tome 1 : Vision, Architecture &amp; Principes<br/>
+    Tome 3 (à venir) : Pick Together, Soirées &amp; Social
+  </p>
+</section>
+
+
+</body>
+</html>

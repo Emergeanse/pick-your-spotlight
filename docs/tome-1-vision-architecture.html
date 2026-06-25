@@ -1,0 +1,2397 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pick — Engineering Handbook · Tome 1</title>
+<style>
+/* ─── RESET & BASE ─────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 15px; }
+body {
+  font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
+  background: #ffffff;
+  color: #1a1a2e;
+  line-height: 1.7;
+}
+
+/* ─── COLOUR TOKENS ────────────────────────────────────── */
+:root {
+  --indigo:   #4f46e5;
+  --violet:   #7c3aed;
+  --indigo-lt:#eef2ff;
+  --indigo-md:#c7d2fe;
+  --cover-bg: #0b0720;
+  --cover-accent: #6d28d9;
+  --gray-50:  #f8fafc;
+  --gray-100: #f1f5f9;
+  --gray-200: #e2e8f0;
+  --gray-400: #94a3b8;
+  --gray-600: #475569;
+  --gray-800: #1e293b;
+  --green-bg: #f0fdf4;
+  --green-bd: #16a34a;
+  --blue-bg:  #eff6ff;
+  --blue-bd:  #2563eb;
+  --amber-bg: #fffbeb;
+  --amber-bd: #d97706;
+  --red-bg:   #fff1f2;
+  --red-bd:   #e11d48;
+}
+
+/* ─── PAGE LAYOUT ──────────────────────────────────────── */
+.page {
+  width: 210mm;
+  min-height: 297mm;
+  margin: 0 auto;
+  padding: 20mm 18mm;
+  background: #fff;
+  position: relative;
+}
+@media screen {
+  body { background: #e8e8f0; padding: 2rem 0 4rem; }
+  .page {
+    box-shadow: 0 4px 32px rgba(0,0,0,.18);
+    margin-bottom: 2rem;
+    border-radius: 4px;
+  }
+}
+@media print {
+  body { background: #fff; padding: 0; }
+  .page { margin: 0; padding: 16mm 16mm; box-shadow: none; page-break-after: always; }
+  .no-break { page-break-inside: avoid; }
+}
+
+/* ─── COVER ─────────────────────────────────────────────── */
+.cover {
+  background: var(--cover-bg);
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 24mm 20mm;
+  min-height: 297mm;
+}
+.cover-eyebrow {
+  font-size: .72rem;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,.45);
+}
+.cover-logo {
+  margin: 12mm 0 4mm;
+  font-size: 5.2rem;
+  font-weight: 800;
+  letter-spacing: -.04em;
+  background: linear-gradient(135deg, #a78bfa 0%, #6d28d9 50%, #4f46e5 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1;
+}
+.cover-subtitle {
+  font-size: 1.05rem;
+  font-weight: 400;
+  color: rgba(255,255,255,.65);
+  margin-bottom: 2mm;
+}
+.cover-tome {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #a78bfa;
+  margin-bottom: 6mm;
+}
+.cover-desc {
+  font-size: .85rem;
+  color: rgba(255,255,255,.5);
+  line-height: 1.6;
+  max-width: 140mm;
+  border-left: 3px solid #6d28d9;
+  padding-left: 5mm;
+  margin-top: 8mm;
+}
+.cover-divider {
+  border: none;
+  border-top: 1px solid rgba(255,255,255,.12);
+  margin: 10mm 0;
+}
+.cover-meta {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6mm;
+}
+.cover-meta-item label {
+  display: block;
+  font-size: .68rem;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,.35);
+  margin-bottom: 1mm;
+}
+.cover-meta-item span {
+  font-size: .9rem;
+  font-weight: 600;
+  color: rgba(255,255,255,.8);
+}
+.cover-tag-row {
+  display: flex;
+  gap: 2mm;
+  flex-wrap: wrap;
+  margin-top: 6mm;
+}
+.cover-tag {
+  font-size: .65rem;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  padding: 1.5mm 3.5mm;
+  border-radius: 2px;
+  border: 1px solid rgba(255,255,255,.18);
+  color: rgba(255,255,255,.5);
+}
+.cover-accent-bar {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 5px;
+  background: linear-gradient(90deg, #4f46e5, #7c3aed, #ec4899);
+}
+
+/* ─── TOC ────────────────────────────────────────────────── */
+.toc-header {
+  font-size: .72rem;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  color: var(--indigo);
+  font-weight: 700;
+  margin-bottom: 8mm;
+  padding-bottom: 3mm;
+  border-bottom: 2px solid var(--indigo-md);
+}
+.toc-chapter {
+  display: flex;
+  align-items: baseline;
+  gap: 0;
+  margin-bottom: 4mm;
+}
+.toc-num {
+  font-size: .78rem;
+  font-weight: 700;
+  color: var(--indigo);
+  min-width: 8mm;
+}
+.toc-title {
+  font-size: .9rem;
+  font-weight: 600;
+  color: var(--gray-800);
+  flex: 1;
+}
+.toc-dots {
+  flex: 1;
+  border-bottom: 1px dotted var(--gray-200);
+  margin: 0 3mm 2px;
+}
+.toc-page {
+  font-size: .78rem;
+  color: var(--gray-400);
+  min-width: 8mm;
+  text-align: right;
+}
+.toc-section {
+  display: flex;
+  align-items: baseline;
+  gap: 0;
+  margin: 1.5mm 0 1.5mm 8mm;
+}
+.toc-section .toc-num {
+  font-size: .72rem;
+  font-weight: 400;
+  color: var(--gray-400);
+}
+.toc-section .toc-title {
+  font-size: .78rem;
+  font-weight: 400;
+  color: var(--gray-600);
+}
+.toc-section .toc-page {
+  font-size: .72rem;
+}
+
+/* ─── CHAPTER HEADER ────────────────────────────────────── */
+.chapter-header {
+  margin-bottom: 10mm;
+}
+.chapter-number {
+  font-size: .7rem;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  color: var(--indigo);
+  font-weight: 700;
+  margin-bottom: 2mm;
+}
+.chapter-title {
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: var(--gray-800);
+  letter-spacing: -.02em;
+  line-height: 1.2;
+  margin-bottom: 3mm;
+}
+.chapter-lead {
+  font-size: .95rem;
+  color: var(--gray-600);
+  font-weight: 400;
+  line-height: 1.65;
+  max-width: 155mm;
+  border-left: 3px solid var(--indigo-md);
+  padding-left: 5mm;
+  margin-top: 4mm;
+}
+.chapter-divider {
+  border: none;
+  height: 3px;
+  background: linear-gradient(90deg, var(--indigo) 0%, var(--violet) 60%, transparent 100%);
+  margin: 5mm 0 8mm;
+  border-radius: 2px;
+}
+
+/* ─── SECTION ────────────────────────────────────────────── */
+.section { margin-bottom: 9mm; }
+.section-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--gray-800);
+  margin-bottom: 3mm;
+  display: flex;
+  align-items: center;
+  gap: 2mm;
+}
+.section-title::before {
+  content: '';
+  display: inline-block;
+  width: 3px;
+  height: 1em;
+  background: var(--indigo);
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+.subsection-title {
+  font-size: .9rem;
+  font-weight: 700;
+  color: var(--gray-700, #334155);
+  margin: 5mm 0 2mm;
+}
+p {
+  margin-bottom: 3.5mm;
+  font-size: .92rem;
+  color: var(--gray-800);
+  line-height: 1.75;
+}
+ul, ol {
+  margin: 3mm 0 4mm 5mm;
+}
+li {
+  font-size: .92rem;
+  color: var(--gray-800);
+  line-height: 1.65;
+  margin-bottom: 1.5mm;
+}
+
+/* ─── CALLOUT BOXES ─────────────────────────────────────── */
+.callout {
+  border-left: 4px solid;
+  border-radius: 0 6px 6px 0;
+  padding: 4mm 5mm;
+  margin: 5mm 0;
+  page-break-inside: avoid;
+}
+.callout-title {
+  font-size: .72rem;
+  font-weight: 700;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  margin-bottom: 2mm;
+  display: flex;
+  align-items: center;
+  gap: 2mm;
+}
+.callout p { margin-bottom: 1.5mm; }
+.callout p:last-child { margin-bottom: 0; }
+.callout.decision   { background: var(--blue-bg);  border-color: var(--blue-bd); }
+.callout.decision   .callout-title { color: var(--blue-bd); }
+.callout.practice   { background: var(--green-bg); border-color: var(--green-bd); }
+.callout.practice   .callout-title { color: var(--green-bd); }
+.callout.note       { background: var(--amber-bg); border-color: var(--amber-bd); }
+.callout.note       .callout-title { color: var(--amber-bd); }
+.callout.important  { background: var(--red-bg);   border-color: var(--red-bd); }
+.callout.important  .callout-title { color: var(--red-bd); }
+.callout.vision     { background: var(--indigo-lt); border-color: var(--indigo); }
+.callout.vision     .callout-title { color: var(--indigo); }
+
+/* ─── TABLES ─────────────────────────────────────────────── */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 4mm 0 6mm;
+  font-size: .85rem;
+  page-break-inside: avoid;
+}
+thead tr {
+  background: linear-gradient(90deg, #4f46e5, #7c3aed);
+  color: #fff;
+}
+thead th {
+  padding: 3mm 4mm;
+  font-size: .75rem;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  text-align: left;
+}
+tbody tr:nth-child(even) { background: var(--gray-50); }
+tbody tr:hover { background: var(--indigo-lt); }
+tbody td {
+  padding: 2.5mm 4mm;
+  border-bottom: 1px solid var(--gray-200);
+  color: var(--gray-800);
+  vertical-align: top;
+}
+td code, th code {
+  font-family: 'Fira Code', 'Consolas', monospace;
+  font-size: .8rem;
+  background: var(--indigo-lt);
+  color: var(--indigo);
+  padding: 0.5mm 1.5mm;
+  border-radius: 3px;
+}
+
+/* ─── DIAGRAMS ───────────────────────────────────────────── */
+.diagram-box {
+  background: var(--gray-50);
+  border: 1px solid var(--gray-200);
+  border-radius: 8px;
+  padding: 6mm;
+  margin: 5mm 0;
+  page-break-inside: avoid;
+}
+.diagram-title {
+  font-size: .7rem;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--gray-400);
+  font-weight: 700;
+  margin-bottom: 5mm;
+  text-align: center;
+}
+/* Flow vertical */
+.flow-v {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+}
+.flow-node {
+  background: #fff;
+  border: 1.5px solid var(--indigo-md);
+  border-radius: 6px;
+  padding: 2.5mm 6mm;
+  font-size: .82rem;
+  font-weight: 600;
+  color: var(--gray-800);
+  text-align: center;
+  min-width: 54mm;
+  max-width: 80mm;
+  box-shadow: 0 1px 4px rgba(0,0,0,.07);
+}
+.flow-node.primary {
+  background: linear-gradient(135deg, #4f46e5, #7c3aed);
+  color: #fff;
+  border-color: transparent;
+}
+.flow-node.muted {
+  background: var(--gray-50);
+  border-color: var(--gray-200);
+  color: var(--gray-600);
+}
+.flow-node.danger {
+  background: #fff1f2;
+  border-color: #fecdd3;
+  color: #be123c;
+}
+.flow-node.success {
+  background: var(--green-bg);
+  border-color: #bbf7d0;
+  color: #15803d;
+}
+.flow-arrow {
+  color: var(--gray-400);
+  font-size: .9rem;
+  line-height: 1;
+  margin: 1mm 0;
+  text-align: center;
+}
+.flow-arrow-label {
+  font-size: .7rem;
+  color: var(--gray-400);
+  font-style: italic;
+}
+/* Architecture grid */
+.arch-grid {
+  display: grid;
+  gap: 3mm;
+}
+.arch-layer {
+  display: grid;
+  gap: 3mm;
+  padding: 3mm;
+  border-radius: 6px;
+  border: 1px dashed var(--gray-200);
+  position: relative;
+}
+.arch-layer-label {
+  position: absolute;
+  top: -3mm;
+  left: 4mm;
+  font-size: .65rem;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  background: #fff;
+  padding: 0 2mm;
+  color: var(--gray-400);
+  font-weight: 700;
+}
+.arch-box {
+  background: #fff;
+  border: 1.5px solid var(--indigo-md);
+  border-radius: 5px;
+  padding: 2.5mm 4mm;
+  font-size: .8rem;
+  font-weight: 600;
+  color: var(--gray-800);
+  text-align: center;
+}
+.arch-box.purple { background: #f5f3ff; border-color: #a78bfa; }
+.arch-box.green  { background: #f0fdf4; border-color: #86efac; }
+.arch-box.blue   { background: #eff6ff; border-color: #93c5fd; }
+.arch-box.orange { background: #fff7ed; border-color: #fdba74; }
+
+/* ─── PERSONA CARDS ─────────────────────────────────────── */
+.persona-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4mm;
+  margin: 5mm 0;
+}
+.persona-card {
+  border: 1.5px solid var(--gray-200);
+  border-radius: 8px;
+  padding: 4mm;
+  background: #fff;
+  page-break-inside: avoid;
+}
+.persona-icon {
+  font-size: 1.6rem;
+  margin-bottom: 2mm;
+}
+.persona-name {
+  font-size: .88rem;
+  font-weight: 700;
+  color: var(--gray-800);
+  margin-bottom: 1mm;
+}
+.persona-desc {
+  font-size: .78rem;
+  color: var(--gray-600);
+  line-height: 1.55;
+  margin-bottom: 2mm;
+}
+.persona-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5mm;
+}
+.persona-tag {
+  font-size: .65rem;
+  padding: 0.8mm 2.5mm;
+  border-radius: 3px;
+  background: var(--indigo-lt);
+  color: var(--indigo);
+  font-weight: 600;
+}
+
+/* ─── MODULE CARDS ───────────────────────────────────────── */
+.module-card {
+  border: 1.5px solid var(--gray-200);
+  border-radius: 8px;
+  padding: 5mm;
+  margin: 4mm 0;
+  page-break-inside: avoid;
+  background: #fff;
+}
+.module-header {
+  display: flex;
+  align-items: center;
+  gap: 3mm;
+  margin-bottom: 3mm;
+}
+.module-icon {
+  width: 9mm;
+  height: 9mm;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  background: linear-gradient(135deg, #4f46e5, #7c3aed);
+  color: #fff;
+  flex-shrink: 0;
+}
+.module-name {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--gray-800);
+}
+.module-tagline {
+  font-size: .78rem;
+  color: var(--gray-400);
+  font-style: italic;
+}
+.module-body {
+  font-size: .85rem;
+  color: var(--gray-600);
+  line-height: 1.65;
+  margin-bottom: 3mm;
+}
+.module-props {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2mm;
+}
+.module-prop-key {
+  font-size: .7rem;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--gray-400);
+  margin-bottom: 0.5mm;
+}
+.module-prop-val {
+  font-size: .8rem;
+  color: var(--gray-800);
+}
+
+/* ─── PRINCIPLE CARDS ────────────────────────────────────── */
+.principle-row {
+  display: grid;
+  grid-template-columns: 10mm 1fr;
+  gap: 4mm;
+  align-items: start;
+  padding: 4mm 0;
+  border-bottom: 1px solid var(--gray-100);
+}
+.principle-row:last-child { border-bottom: none; }
+.principle-num {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: var(--indigo-md);
+  line-height: 1;
+  padding-top: 1mm;
+}
+.principle-name {
+  font-size: .95rem;
+  font-weight: 700;
+  color: var(--gray-800);
+  margin-bottom: 1.5mm;
+}
+.principle-desc {
+  font-size: .85rem;
+  color: var(--gray-600);
+  line-height: 1.65;
+}
+
+/* ─── ROADMAP ────────────────────────────────────────────── */
+.roadmap {
+  position: relative;
+  padding-left: 12mm;
+  margin: 5mm 0;
+}
+.roadmap::before {
+  content: '';
+  position: absolute;
+  left: 4mm;
+  top: 3mm;
+  bottom: 3mm;
+  width: 2px;
+  background: linear-gradient(to bottom, var(--indigo), var(--violet), var(--gray-200));
+  border-radius: 2px;
+}
+.roadmap-item {
+  position: relative;
+  margin-bottom: 5mm;
+  page-break-inside: avoid;
+}
+.roadmap-item::before {
+  content: '';
+  position: absolute;
+  left: -9.5mm;
+  top: 2.5mm;
+  width: 5mm;
+  height: 5mm;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 2px var(--indigo);
+  background: var(--indigo);
+}
+.roadmap-item.done::before { background: #16a34a; box-shadow: 0 0 0 2px #16a34a; }
+.roadmap-item.future::before { background: #fff; }
+.roadmap-milestone {
+  font-size: .72rem;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--indigo);
+  font-weight: 700;
+  margin-bottom: 1mm;
+}
+.roadmap-title {
+  font-size: .92rem;
+  font-weight: 700;
+  color: var(--gray-800);
+  margin-bottom: 1mm;
+}
+.roadmap-desc {
+  font-size: .82rem;
+  color: var(--gray-600);
+  line-height: 1.55;
+}
+.roadmap-tag {
+  display: inline-block;
+  font-size: .65rem;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  padding: 0.5mm 2mm;
+  border-radius: 3px;
+  margin-top: 1.5mm;
+}
+.roadmap-tag.done    { background: #dcfce7; color: #15803d; }
+.roadmap-tag.active  { background: #dbeafe; color: #1d4ed8; }
+.roadmap-tag.planned { background: #f1f5f9; color: #64748b; }
+
+/* ─── FOOTER ─────────────────────────────────────────────── */
+.page-footer {
+  position: absolute;
+  bottom: 8mm;
+  left: 18mm;
+  right: 18mm;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: .68rem;
+  color: var(--gray-400);
+  border-top: 1px solid var(--gray-100);
+  padding-top: 2mm;
+}
+.footer-brand { font-weight: 700; color: var(--indigo); }
+
+/* ─── BADGE ──────────────────────────────────────────────── */
+.badge {
+  display: inline-block;
+  font-size: .67rem;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  padding: 0.8mm 2.5mm;
+  border-radius: 3px;
+  vertical-align: middle;
+  margin-left: 2mm;
+}
+.badge.v1   { background: #dbeafe; color: #1e40af; }
+.badge.wip  { background: #fef3c7; color: #92400e; }
+.badge.done { background: #dcfce7; color: #166534; }
+
+/* ─── HIGHLIGHT QUOTE ───────────────────────────────────── */
+.pull-quote {
+  font-size: 1.15rem;
+  font-style: italic;
+  font-weight: 600;
+  color: var(--indigo);
+  border-left: 4px solid var(--indigo);
+  padding: 3mm 6mm;
+  margin: 6mm 0;
+  background: var(--indigo-lt);
+  border-radius: 0 6px 6px 0;
+  line-height: 1.5;
+}
+
+/* ─── HORIZONTAL FLOW ────────────────────────────────────── */
+.flow-h {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  flex-wrap: wrap;
+  margin: 4mm 0;
+}
+.flow-h .flow-node {
+  min-width: unset;
+  flex: 1;
+  font-size: .75rem;
+  padding: 2mm 3mm;
+}
+.flow-h .flow-arrow { margin: 0 2mm; }
+
+/* ─── STAT CARDS ─────────────────────────────────────────── */
+.stat-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 3mm;
+  margin: 4mm 0;
+}
+.stat-card {
+  background: var(--indigo-lt);
+  border-radius: 6px;
+  padding: 3.5mm 4mm;
+  text-align: center;
+}
+.stat-num {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: var(--indigo);
+  line-height: 1;
+  margin-bottom: 1mm;
+}
+.stat-label {
+  font-size: .72rem;
+  color: var(--gray-600);
+  font-weight: 500;
+}
+
+/* ─── TWO-COL ─────────────────────────────────────────────── */
+.two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5mm;
+}
+
+/* ─── PIPELINE DIAGRAM ───────────────────────────────────── */
+.pipeline {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 2mm;
+  align-items: start;
+  margin: 5mm 0;
+}
+.pipeline-step {
+  text-align: center;
+}
+.pipeline-step-box {
+  background: linear-gradient(180deg, #4f46e5, #7c3aed);
+  color: #fff;
+  border-radius: 6px;
+  padding: 3mm 2mm;
+  font-size: .72rem;
+  font-weight: 700;
+  margin-bottom: 1.5mm;
+  min-height: 14mm;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.pipeline-step-detail {
+  font-size: .68rem;
+  color: var(--gray-500, #6b7280);
+  line-height: 1.4;
+}
+.pipeline-connector {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-top: 5mm;
+  color: var(--gray-300, #d1d5db);
+  font-size: .9rem;
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════ COVER ══ -->
+<div class="page cover">
+  <div class="cover-accent-bar"></div>
+  <div>
+    <div class="cover-eyebrow">Engineering Handbook</div>
+    <div class="cover-logo">Pick</div>
+    <div class="cover-tome">Tome 1</div>
+    <div class="cover-subtitle">Vision, Architecture &amp; Principes</div>
+    <div class="cover-desc">
+      Ce document constitue la porte d'entrée officielle du projet Pick.
+      Il décrit pourquoi Pick existe, à qui il s'adresse, comment il est conçu
+      et quels principes gouvernent son développement.
+    </div>
+    <div class="cover-tag-row">
+      <span class="cover-tag">Confidentiel</span>
+      <span class="cover-tag">Internal use only</span>
+      <span class="cover-tag">v1.0 — Juin 2026</span>
+    </div>
+  </div>
+  <div>
+    <hr class="cover-divider">
+    <div class="cover-meta">
+      <div class="cover-meta-item">
+        <label>Projet</label>
+        <span>Pick Your Spotlight</span>
+      </div>
+      <div class="cover-meta-item">
+        <label>Version</label>
+        <span>1.0.0</span>
+      </div>
+      <div class="cover-meta-item">
+        <label>Auteur</label>
+        <span>Christophe Billeux</span>
+      </div>
+      <div class="cover-meta-item">
+        <label>Date</label>
+        <span>Juin 2026</span>
+      </div>
+      <div class="cover-meta-item">
+        <label>Statut</label>
+        <span>Alpha — développement actif</span>
+      </div>
+      <div class="cover-meta-item">
+        <label>Contact</label>
+        <span>cbilleux@gmail.com</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════ TOC ═════ -->
+<div class="page" style="padding-bottom: 22mm;">
+  <div class="toc-header">Sommaire</div>
+
+  <div class="toc-chapter">
+    <span class="toc-num">1</span>
+    <span class="toc-title">Vision</span>
+    <span class="toc-dots"></span>
+    <span class="toc-page">3</span>
+  </div>
+  <div class="toc-section"><span class="toc-num">1.1</span><span class="toc-title">Pourquoi Pick ?</span><span class="toc-dots"></span><span class="toc-page">3</span></div>
+  <div class="toc-section"><span class="toc-num">1.2</span><span class="toc-title">La mission</span><span class="toc-dots"></span><span class="toc-page">3</span></div>
+  <div class="toc-section"><span class="toc-num">1.3</span><span class="toc-title">Les ambitions</span><span class="toc-dots"></span><span class="toc-page">4</span></div>
+
+  <div class="toc-chapter" style="margin-top:3mm">
+    <span class="toc-num">2</span>
+    <span class="toc-title">Le Problème</span>
+    <span class="toc-dots"></span>
+    <span class="toc-page">5</span>
+  </div>
+  <div class="toc-section"><span class="toc-num">2.1</span><span class="toc-title">Le paradoxe du streaming</span><span class="toc-dots"></span><span class="toc-page">5</span></div>
+  <div class="toc-section"><span class="toc-num">2.2</span><span class="toc-title">Les cinq douleurs utilisateur</span><span class="toc-dots"></span><span class="toc-page">6</span></div>
+
+  <div class="toc-chapter" style="margin-top:3mm">
+    <span class="toc-num">3</span>
+    <span class="toc-title">La Solution Pick</span>
+    <span class="toc-dots"></span>
+    <span class="toc-page">7</span>
+  </div>
+  <div class="toc-section"><span class="toc-num">3.1</span><span class="toc-title">Notre réponse</span><span class="toc-dots"></span><span class="toc-page">7</span></div>
+  <div class="toc-section"><span class="toc-num">3.2</span><span class="toc-title">Le pipeline de recommandation</span><span class="toc-dots"></span><span class="toc-page">8</span></div>
+
+  <div class="toc-chapter" style="margin-top:3mm">
+    <span class="toc-num">4</span>
+    <span class="toc-title">Les Utilisateurs</span>
+    <span class="toc-dots"></span>
+    <span class="toc-page">9</span>
+  </div>
+
+  <div class="toc-chapter" style="margin-top:3mm">
+    <span class="toc-num">5</span>
+    <span class="toc-title">Les Modules</span>
+    <span class="toc-dots"></span>
+    <span class="toc-page">11</span>
+  </div>
+  <div class="toc-section"><span class="toc-num">5.1</span><span class="toc-title">Onboarding</span><span class="toc-dots"></span><span class="toc-page">11</span></div>
+  <div class="toc-section"><span class="toc-num">5.2</span><span class="toc-title">Recommendation Engine</span><span class="toc-dots"></span><span class="toc-page">12</span></div>
+  <div class="toc-section"><span class="toc-num">5.3</span><span class="toc-title">Movie Match &amp; Reveal</span><span class="toc-dots"></span><span class="toc-page">13</span></div>
+  <div class="toc-section"><span class="toc-num">5.4</span><span class="toc-title">Mode Duo &amp; Soirées</span><span class="toc-dots"></span><span class="toc-page">14</span></div>
+  <div class="toc-section"><span class="toc-num">5.5</span><span class="toc-title">Watchlist &amp; Bibliothèque</span><span class="toc-dots"></span><span class="toc-page">15</span></div>
+  <div class="toc-section"><span class="toc-num">5.6</span><span class="toc-title">Pick+</span><span class="toc-dots"></span><span class="toc-page">16</span></div>
+
+  <div class="toc-chapter" style="margin-top:3mm">
+    <span class="toc-num">6</span>
+    <span class="toc-title">Principes d'Architecture</span>
+    <span class="toc-dots"></span>
+    <span class="toc-page">17</span>
+  </div>
+
+  <div class="toc-chapter" style="margin-top:3mm">
+    <span class="toc-num">7</span>
+    <span class="toc-title">Architecture Générale</span>
+    <span class="toc-dots"></span>
+    <span class="toc-page">19</span>
+  </div>
+  <div class="toc-section"><span class="toc-num">7.1</span><span class="toc-title">Vue globale du système</span><span class="toc-dots"></span><span class="toc-page">19</span></div>
+  <div class="toc-section"><span class="toc-num">7.2</span><span class="toc-title">Architecture frontend</span><span class="toc-dots"></span><span class="toc-page">20</span></div>
+  <div class="toc-section"><span class="toc-num">7.3</span><span class="toc-title">Architecture backend</span><span class="toc-dots"></span><span class="toc-page">21</span></div>
+  <div class="toc-section"><span class="toc-num">7.4</span><span class="toc-title">Flux de données</span><span class="toc-dots"></span><span class="toc-page">22</span></div>
+
+  <div class="toc-chapter" style="margin-top:3mm">
+    <span class="toc-num">8</span>
+    <span class="toc-title">Stack Technique</span>
+    <span class="toc-dots"></span>
+    <span class="toc-page">23</span>
+  </div>
+
+  <div class="toc-chapter" style="margin-top:3mm">
+    <span class="toc-num">9</span>
+    <span class="toc-title">Choix d'Architecture</span>
+    <span class="toc-dots"></span>
+    <span class="toc-page">25</span>
+  </div>
+
+  <div class="toc-chapter" style="margin-top:3mm">
+    <span class="toc-num">10</span>
+    <span class="toc-title">Roadmap</span>
+    <span class="toc-dots"></span>
+    <span class="toc-page">29</span>
+  </div>
+
+  <div style="margin-top: 12mm; padding: 4mm; background: var(--gray-50); border-radius: 6px; border: 1px solid var(--gray-200);">
+    <div style="font-size:.7rem; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:var(--gray-400); margin-bottom:2mm;">Volumes à venir</div>
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:2mm;">
+      <div style="font-size:.8rem; color:var(--gray-600);">📘 <b>Tome 2</b> — Pipeline de Recommandation</div>
+      <div style="font-size:.8rem; color:var(--gray-600);">📙 <b>Tome 3</b> — Tests &amp; Qualité</div>
+      <div style="font-size:.8rem; color:var(--gray-600);">📗 <b>Tome 4</b> — Données &amp; Supabase</div>
+      <div style="font-size:.8rem; color:var(--gray-600);">📕 <b>Tome 5</b> — Déploiement &amp; Opérations</div>
+    </div>
+  </div>
+
+  <div class="page-footer">
+    <span class="footer-brand">Pick Engineering Handbook</span>
+    <span>Tome 1 — Vision, Architecture &amp; Principes</span>
+    <span>v1.0 · Juin 2026</span>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════ CHAPTER 1 : VISION ══ -->
+<div class="page" style="padding-bottom: 22mm;">
+  <div class="chapter-header">
+    <div class="chapter-number">Chapitre 1</div>
+    <div class="chapter-title">Vision</div>
+    <div class="chapter-divider"></div>
+    <div class="chapter-lead">
+      Pick est né d'une conviction simple : choisir un film ne devrait pas
+      être une source de frustration. Ce chapitre explique pourquoi ce problème
+      existe, pourquoi Pick y répond différemment, et ce que nous voulons bâtir.
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">1.1 — Pourquoi Pick ?</div>
+    <p>
+      En 2026, un foyer français abonné à Netflix, Prime Video et Disney+ a accès à
+      plus de <strong>80 000 titres</strong>. En théorie, ce niveau d'abondance devrait
+      rendre le choix trivial. En pratique, c'est l'inverse qui se produit.
+    </p>
+    <p>
+      La psychologie a documenté ce phénomène sous le nom de <em>choice overload</em>
+      (surcharge de choix) : plus les options sont nombreuses, plus la décision est
+      difficile, plus la satisfaction post-décision est faible. Ce phénomène est amplifié
+      par des interfaces de streaming conçues pour maximiser l'engagement plutôt que
+      la pertinence individuelle.
+    </p>
+    <div class="pull-quote">
+      "Les utilisateurs passent parfois plus de temps à chercher un film qu'à le regarder."
+    </div>
+    <p>
+      Les algorithmes des grandes plateformes optimisent pour la popularité agrégée.
+      Ils ne savent pas que vous avez adoré <em>Le Chant du loup</em> mais détesté
+      le dernier blockbuster Marvel. Ils ignorent que ce soir vous êtes avec votre
+      conjoint·e qui préfère les comédies dramatiques. Ils ne tiennent pas compte
+      que vous avez déjà regardé les 80&nbsp;% des films qu'ils vous suggèrent.
+    </p>
+    <p>
+      Pick est né pour combler cet écart entre la richesse des catalogues et la
+      pauvreté des expériences de découverte.
+    </p>
+  </div>
+
+  <div class="section">
+    <div class="section-title">1.2 — La Mission</div>
+
+    <div class="callout vision">
+      <div class="callout-title">Mission</div>
+      <p style="font-size:.95rem; font-weight:600; color:#3730a3;">
+        Offrir à chaque utilisateur un assistant cinéma personnel, capable de recommander
+        le bon film au bon moment — en tenant compte de ses goûts profonds, de son
+        contexte immédiat et de ses compagnons de visionnage.
+      </p>
+    </div>
+
+    <p>
+      Pick n'est pas une nouvelle base de données de films. Il n'est pas non plus
+      une plateforme de streaming. Pick est une couche d'intelligence posée par-dessus
+      les plateformes existantes : il sait ce que vous aimez, comprend votre ambiance
+      du moment, et produit une recommandation précise et argumentée.
+    </p>
+    <p>
+      La valeur de Pick réside dans trois capacités distinctes que les plateformes
+      actuelles ne proposent pas ensemble :
+    </p>
+    <ul>
+      <li><strong>La personnalisation profonde</strong> — construite sur l'historique réel des interactions, pas sur des genres génériques.</li>
+      <li><strong>Le contexte immédiat</strong> — prise en compte de l'ambiance du soir, des compagnons, des contraintes de durée.</li>
+      <li><strong>La transparence</strong> — chaque recommandation est accompagnée d'une explication argumentée.</li>
+    </ul>
+  </div>
+
+  <div class="section">
+    <div class="section-title">1.3 — Les Ambitions</div>
+    <div class="stat-row">
+      <div class="stat-card">
+        <div class="stat-num">5s</div>
+        <div class="stat-label">Temps cible pour obtenir une recommandation</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num">95%</div>
+        <div class="stat-label">Satisfaction cible (film déjà sur vos plateformes)</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num">0</div>
+        <div class="stat-label">Films déjà vus dans les suggestions</div>
+      </div>
+    </div>
+    <p>
+      À court terme, Pick vise à devenir l'outil de référence pour les cinéphiles
+      francophones qui veulent maximiser la qualité de leurs soirées cinéma sans
+      en minimiser la spontanéité.
+    </p>
+    <p>
+      À moyen terme, le projet ouvre vers la dimension sociale : recommandations
+      pour deux personnes aux goûts différents, planification de soirées groupe,
+      historique partagé entre proches.
+    </p>
+  </div>
+
+  <div class="page-footer">
+    <span class="footer-brand">Pick</span>
+    <span>Chapitre 1 — Vision</span>
+    <span>3</span>
+  </div>
+</div>
+
+<!-- ══════════════════════════════ CHAPTER 2 : LE PROBLÈME ══ -->
+<div class="page" style="padding-bottom: 22mm;">
+  <div class="chapter-header">
+    <div class="chapter-number">Chapitre 2</div>
+    <div class="chapter-title">Le Problème</div>
+    <div class="chapter-divider"></div>
+    <div class="chapter-lead">
+      Comprendre pourquoi le choix d'un film est devenu difficile est la première
+      étape pour concevoir une solution juste. Ce chapitre documente les forces
+      en jeu et les douleurs réelles des utilisateurs.
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">2.1 — Le Paradoxe du Streaming</div>
+    <p>
+      Le secteur du streaming a connu une croissance explosive entre 2015 et 2026.
+      En France, un foyer dispose en moyenne de 2,8 abonnements actifs. Cette
+      multiplicité des plateformes, combinée à des catalogues en constante expansion,
+      a créé une situation paradoxale : l'abondance génère de la frustration.
+    </p>
+
+    <div class="two-col">
+      <div>
+        <div class="diagram-box">
+          <div class="diagram-title">Flux type sans Pick</div>
+          <div class="flow-v">
+            <div class="flow-node">Netflix · Disney+ · Prime · Canal+…</div>
+            <div class="flow-arrow">↓</div>
+            <div class="flow-node muted">80 000 titres disponibles</div>
+            <div class="flow-arrow">↓</div>
+            <div class="flow-node danger">45 min de recherche</div>
+            <div class="flow-arrow">↓</div>
+            <div class="flow-node danger">Aucune décision</div>
+            <div class="flow-arrow">↓</div>
+            <div class="flow-node danger">Frustration · Fatigue</div>
+            <div class="flow-arrow">↓</div>
+            <div class="flow-node muted">Re-visionnage d'un classique</div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="callout note">
+          <div class="callout-title">Données de marché</div>
+          <p>Selon plusieurs études UX menées entre 2022 et 2025, la durée moyenne de sélection d'un film sur une plateforme de streaming dépasse <strong>23 minutes</strong>.</p>
+          <p style="margin-top:2mm">Dans 31&nbsp;% des cas, la session se termine sans visionnage. Ce phénomène est désigné sous le terme <em>choice paralysis</em>.</p>
+        </div>
+        <div class="callout note" style="margin-top:3mm">
+          <div class="callout-title">Le paradoxe de l'algorithme</div>
+          <p>Les algorithmes des plateformes optimisent pour le <em>watch time</em> global, pas pour la satisfaction individuelle. Un film populaire sera toujours favorisé sur un film rare, même si ce dernier correspond mieux au profil de l'utilisateur.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">2.2 — Les Cinq Douleurs Utilisateur</div>
+    <p>Ces cinq problèmes ont été identifiés lors de la phase d'exploration du projet :</p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Douleur</th>
+          <th>Manifestation</th>
+          <th>Réponse Pick</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>1</strong></td>
+          <td>Trop de plateformes</td>
+          <td>L'utilisateur ne sait plus où chercher</td>
+          <td>Agrégation cross-plateforme</td>
+        </tr>
+        <tr>
+          <td><strong>2</strong></td>
+          <td>Recommandations génériques</td>
+          <td>Les suggestions ne correspondent pas au goût réel</td>
+          <td>Taste engine multi-vecteur</td>
+        </tr>
+        <tr>
+          <td><strong>3</strong></td>
+          <td>Films déjà vus</td>
+          <td>Les plateformes reproposent les mêmes titres</td>
+          <td>Exclusion stricte de l'historique</td>
+        </tr>
+        <tr>
+          <td><strong>4</strong></td>
+          <td>Choix à plusieurs</td>
+          <td>Impossible de trouver un film qui plaise à tous</td>
+          <td>Mode Duo &amp; Groupe</td>
+        </tr>
+        <tr>
+          <td><strong>5</strong></td>
+          <td>Contexte ignoré</td>
+          <td>L'algorithme ne sait pas que c'est vendredi soir</td>
+          <td>Ambiances &amp; Voice Chat</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="callout practice">
+      <div class="callout-title">Bonne pratique — User Research</div>
+      <p>Chaque nouvelle fonctionnalité de Pick est évaluée à l'aune de ces cinq douleurs. Si une proposition n'adresse aucune d'entre elles, elle est différée.</p>
+    </div>
+  </div>
+
+  <div class="page-footer">
+    <span class="footer-brand">Pick</span>
+    <span>Chapitre 2 — Le Problème</span>
+    <span>5</span>
+  </div>
+</div>
+
+<!-- ══════════════════════════════ CHAPTER 3 : LA SOLUTION ══ -->
+<div class="page" style="padding-bottom: 22mm;">
+  <div class="chapter-header">
+    <div class="chapter-number">Chapitre 3</div>
+    <div class="chapter-title">La Solution Pick</div>
+    <div class="chapter-divider"></div>
+    <div class="chapter-lead">
+      Pick répond aux douleurs identifiées par une approche en deux temps :
+      construire une connaissance profonde de l'utilisateur, puis la mobiliser
+      au moment exact où il en a besoin.
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">3.1 — Notre Réponse</div>
+    <p>
+      Là où les plateformes de streaming recommandent ce qui est <em>populaire</em>,
+      Pick recommande ce qui est <em>juste pour vous, maintenant</em>. Cette
+      différence fondamentale repose sur deux piliers techniques :
+    </p>
+
+    <div class="two-col" style="margin: 4mm 0;">
+      <div class="callout vision" style="margin:0">
+        <div class="callout-title">Pilier 1 — Mémoire</div>
+        <p>Le Taste Engine construit un profil vectoriel de chaque utilisateur à partir de toutes ses interactions : films vus, notés, skippés, ajoutés à la watchlist. Ce profil évolue en permanence.</p>
+      </div>
+      <div class="callout vision" style="margin:0">
+        <div class="callout-title">Pilier 2 — Intelligence</div>
+        <p>Claude AI (Anthropic) analyse le profil utilisateur, le contexte de la soirée (ambiance, durée, compagnons) et les métadonnées TMDB pour produire une sélection argumentée et pertinente.</p>
+      </div>
+    </div>
+
+    <div class="diagram-box" style="margin-top: 5mm;">
+      <div class="diagram-title">Flux utilisateur avec Pick</div>
+      <div class="flow-v">
+        <div class="flow-node primary">Utilisateur ouvre Pick</div>
+        <div class="flow-arrow">↓</div>
+        <div class="flow-node">Onboarding — profil &amp; plateformes</div>
+        <div class="flow-arrow">↓ <span class="flow-arrow-label">goûts, ambiance, contexte</span></div>
+        <div class="flow-node">Taste Engine — profil vectoriel 32D</div>
+        <div class="flow-arrow">↓ <span class="flow-arrow-label">SQL + similarité cosinus</span></div>
+        <div class="flow-node">Pool SQL — 50 candidats filtrés</div>
+        <div class="flow-arrow">↓ <span class="flow-arrow-label">scoring + raisonnement</span></div>
+        <div class="flow-node">Claude AI — sélection &amp; argumentation</div>
+        <div class="flow-arrow">↓ <span class="flow-arrow-label">enrichissement TMDB</span></div>
+        <div class="flow-node primary">Movie Match — film du soir 🎬</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">3.2 — Le Pipeline de Recommandation</div>
+    <p>
+      Le cœur de Pick est un pipeline en cinq étapes enchaînées, chacune
+      raffinant le pool de candidats. Ce pipeline est décrit en détail dans
+      le <strong>Tome 2 — Pipeline de Recommandation</strong>.
+    </p>
+
+    <table>
+      <thead>
+        <tr><th>Étape</th><th>Nom</th><th>Rôle</th><th>Output</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>1</strong></td><td>SQL vectoriel</td><td>Filtrage par similarité cosinus 32D + cascade</td><td>50 candidats</td></tr>
+        <tr><td><strong>2</strong></td><td>Score composé</td><td>Tri par sim × 100 + note + boost langue</td><td>Top N triés</td></tr>
+        <tr><td><strong>3</strong></td><td>Filtre plateforme</td><td>Vérification disponibilité sur les plateformes user</td><td>Films accessibles</td></tr>
+        <tr><td><strong>4</strong></td><td>LLM Claude</td><td>Scoring argumenté film par film vs profil</td><td>3–5 sélections</td></tr>
+        <tr><td><strong>5</strong></td><td>Movie Match</td><td>Enrichissement TMDB + score final + reveal</td><td>Film du soir</td></tr>
+      </tbody>
+    </table>
+
+    <div class="callout decision">
+      <div class="callout-title">Décision d'architecture — Cascade SQL</div>
+      <p>Le pipeline SQL intègre une <strong>cascade à 5 niveaux</strong> : si le niveau 0 (contraintes complètes) ne produit pas assez de candidats, les contraintes sont progressivement relâchées (genres, notes, plateformes) jusqu'à atteindre un pool suffisant. Cette approche garantit qu'une recommandation est toujours produite, même pour un utilisateur aux goûts très spécifiques.</p>
+    </div>
+  </div>
+
+  <div class="page-footer">
+    <span class="footer-brand">Pick</span>
+    <span>Chapitre 3 — La Solution</span>
+    <span>7</span>
+  </div>
+</div>
+
+<!-- ══════════════════════════ CHAPTER 4 : LES PERSONAS ══════ -->
+<div class="page" style="padding-bottom: 22mm;">
+  <div class="chapter-header">
+    <div class="chapter-number">Chapitre 4</div>
+    <div class="chapter-title">Les Utilisateurs</div>
+    <div class="chapter-divider"></div>
+    <div class="chapter-lead">
+      Pick cible plusieurs profils d'utilisateurs distincts. Les comprendre
+      permet de prendre des décisions de conception éclairées et de prioriser
+      les fonctionnalités correctement.
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Personas principaux</div>
+
+    <div class="persona-grid">
+      <div class="persona-card">
+        <div class="persona-icon">🎬</div>
+        <div class="persona-name">Le Cinéphile Solitaire</div>
+        <div class="persona-desc">
+          30–45 ans, grand consommateur de cinéma d'auteur et de films étrangers.
+          Il connaît ses goûts précisément et est frustré par les suggestions
+          mainstream. Il veut découvrir des œuvres rares qui lui correspondent.
+        </div>
+        <div style="font-size:.75rem; color:var(--gray-600); margin-bottom:2mm;">
+          <strong>Douleurs :</strong> recommandations trop populaires, films déjà vus,
+          impossibilité de filtrer par décennie ou pays d'origine.
+        </div>
+        <div class="persona-tags">
+          <span class="persona-tag">Solo</span>
+          <span class="persona-tag">Cinéma d'auteur</span>
+          <span class="persona-tag">Films rares</span>
+          <span class="persona-tag">Utilise Pick+</span>
+        </div>
+      </div>
+
+      <div class="persona-card">
+        <div class="persona-icon">❤️</div>
+        <div class="persona-name">Le Couple</div>
+        <div class="persona-desc">
+          Deux personnes aux goûts différents qui cherchent un film qui convienne
+          aux deux. La soirée est planifiée d'avance. L'enjeu est de trouver
+          un terrain commun sans compromis frustrant.
+        </div>
+        <div style="font-size:.75rem; color:var(--gray-600); margin-bottom:2mm;">
+          <strong>Douleurs :</strong> négociation longue, résultats décevants,
+          sentiment que l'un des deux sacrifie ses préférences.
+        </div>
+        <div class="persona-tags">
+          <span class="persona-tag">Mode Duo</span>
+          <span class="persona-tag">Soirées</span>
+          <span class="persona-tag">Consensus</span>
+        </div>
+      </div>
+
+      <div class="persona-card">
+        <div class="persona-icon">🍕</div>
+        <div class="persona-name">Les Amis</div>
+        <div class="persona-desc">
+          Groupe de 3 à 6 personnes qui organisent une soirée cinéma. Ils ont
+          des goûts variés et ont besoin d'une suggestion qui fasse consensus.
+          La logistique de la soirée (heure, lieu) s'intègre naturellement.
+        </div>
+        <div style="font-size:.75rem; color:var(--gray-600); margin-bottom:2mm;">
+          <strong>Douleurs :</strong> impossibilité de connaître les plateformes
+          de chacun, goûts disparates, pas de vision commune.
+        </div>
+        <div class="persona-tags">
+          <span class="persona-tag">Mode Groupe</span>
+          <span class="persona-tag">Soirées</span>
+          <span class="persona-tag">Social</span>
+        </div>
+      </div>
+
+      <div class="persona-card">
+        <div class="persona-icon">👨‍👩‍👧</div>
+        <div class="persona-name">La Famille</div>
+        <div class="persona-desc">
+          Parents avec enfants cherchant un film adapté à tous les âges.
+          Les contraintes sont fortes : contenu approprié, durée raisonnable,
+          disponible sans abonnement supplémentaire.
+        </div>
+        <div style="font-size:.75rem; color:var(--gray-600); margin-bottom:2mm;">
+          <strong>Douleurs :</strong> filtres d'âge peu fiables, films d'animation
+          suggérés en boucle, manque de diversité dans les suggestions familiales.
+        </div>
+        <div class="persona-tags">
+          <span class="persona-tag">Filtres âge</span>
+          <span class="persona-tag">Durée courte</span>
+          <span class="persona-tag">Plateformes</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section" style="margin-top:5mm;">
+    <div class="section-title">Répartition fonctionnelle</div>
+    <table>
+      <thead>
+        <tr>
+          <th>Persona</th>
+          <th>Mode principal</th>
+          <th>Fonctionnalités clés</th>
+          <th>Priorité v1</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Cinéphile solitaire</td>
+          <td>Solo</td>
+          <td>Taste Engine, filtres avancés, Pick+</td>
+          <td><span class="badge done">Livré</span></td>
+        </tr>
+        <tr>
+          <td>Couple</td>
+          <td>Duo</td>
+          <td>Mode Duo, profil croisé, Soirées</td>
+          <td><span class="badge done">Livré</span></td>
+        </tr>
+        <tr>
+          <td>Amis</td>
+          <td>Groupe</td>
+          <td>Mode Groupe, plateformes communes</td>
+          <td><span class="badge wip">Bêta</span></td>
+        </tr>
+        <tr>
+          <td>Famille</td>
+          <td>Groupe</td>
+          <td>Filtres contenu, durée, profils enfants</td>
+          <td><span class="badge v1">Roadmap</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="page-footer">
+    <span class="footer-brand">Pick</span>
+    <span>Chapitre 4 — Les Utilisateurs</span>
+    <span>9</span>
+  </div>
+</div>
+
+<!-- ══════════════════════════ CHAPTER 5 : LES MODULES ══════ -->
+<div class="page" style="padding-bottom: 22mm;">
+  <div class="chapter-header">
+    <div class="chapter-number">Chapitre 5</div>
+    <div class="chapter-title">Les Modules</div>
+    <div class="chapter-divider"></div>
+    <div class="chapter-lead">
+      Pick est découpé en modules fonctionnels indépendants. Chaque module
+      a un objectif unique, une interface bien définie, et peut évoluer
+      sans impacter les autres.
+    </div>
+  </div>
+
+  <div class="module-card">
+    <div class="module-header">
+      <div class="module-icon">👤</div>
+      <div>
+        <div class="module-name">Onboarding <span class="badge done">v1</span></div>
+        <div class="module-tagline">Construire la confiance dès la première minute</div>
+      </div>
+    </div>
+    <div class="module-body">
+      L'onboarding est la fondation du Taste Engine. Son objectif est de collecter
+      suffisamment d'informations sur l'utilisateur pour produire une première
+      recommandation pertinente, sans créer de friction. Il se déroule en
+      plusieurs étapes progressives : sélection du type de contenu préféré,
+      sélection de films "podium" (3 films aimés), configuration des plateformes
+      disponibles, et définition des préférences de genres et d'époques.
+    </div>
+    <div class="module-props">
+      <div>
+        <div class="module-prop-key">Route</div>
+        <div class="module-prop-val"><code>/onboarding</code></div>
+      </div>
+      <div>
+        <div class="module-prop-key">Données produites</div>
+        <div class="module-prop-val">Profil utilisateur, vecteur de goût initial</div>
+      </div>
+      <div>
+        <div class="module-prop-key">Composants clés</div>
+        <div class="module-prop-val">OnboardingStep, PlatformSelector, PodiumPicker</div>
+      </div>
+      <div>
+        <div class="module-prop-key">Table Supabase</div>
+        <div class="module-prop-val"><code>profiles</code>, <code>interactions</code></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="module-card">
+    <div class="module-header">
+      <div class="module-icon">🧠</div>
+      <div>
+        <div class="module-name">Recommendation Engine <span class="badge done">v1</span></div>
+        <div class="module-tagline">Le cœur intelligent de Pick</div>
+      </div>
+    </div>
+    <div class="module-body">
+      Le moteur de recommandation est le module central de Pick. Il orchestre
+      l'ensemble du pipeline : construction du vecteur de goût, requête SQL
+      vectorielle, scoring composé, filtrage par plateforme, appel LLM Claude,
+      enrichissement TMDB. Il expose une seule interface pour le frontend :
+      l'edge function <code>surprise-personalized</code>.
+    </div>
+    <div class="module-props">
+      <div>
+        <div class="module-prop-key">Edge function</div>
+        <div class="module-prop-val"><code>surprise-personalized</code></div>
+      </div>
+      <div>
+        <div class="module-prop-key">Algorithme central</div>
+        <div class="module-prop-val">Similarité cosinus sur embeddings 32D</div>
+      </div>
+      <div>
+        <div class="module-prop-key">IA utilisée</div>
+        <div class="module-prop-val">Claude (Anthropic) via API</div>
+      </div>
+      <div>
+        <div class="module-prop-key">Table principale</div>
+        <div class="module-prop-val"><code>movie_embeddings</code>, <code>user_taste_vectors</code></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="page-footer">
+    <span class="footer-brand">Pick</span>
+    <span>Chapitre 5 — Les Modules</span>
+    <span>11</span>
+  </div>
+</div>
+
+<!-- ══════════════════════════ PAGE 2 MODULES ══════════════ -->
+<div class="page" style="padding-bottom: 22mm;">
+
+  <div class="module-card">
+    <div class="module-header">
+      <div class="module-icon">🎯</div>
+      <div>
+        <div class="module-name">Movie Match <span class="badge done">v1</span></div>
+        <div class="module-tagline">Le juge final — scorer avec précision</div>
+      </div>
+    </div>
+    <div class="module-body">
+      Movie Match est l'étape finale de scoring. Pour chaque film sélectionné
+      par le LLM, une deuxième passe Claude analyse en profondeur la compatibilité
+      film/profil utilisateur : similitude des genres, cohérence des clusters
+      émotionnels, historique des interactions, contexte de la soirée. Il produit
+      un score de correspondance en pourcentage accompagné d'une raison courte,
+      destinée à être affichée à l'utilisateur lors du reveal.
+    </div>
+    <div class="module-props">
+      <div>
+        <div class="module-prop-key">Edge function</div>
+        <div class="module-prop-val"><code>movie-match</code></div>
+      </div>
+      <div>
+        <div class="module-prop-key">Données d'entrée</div>
+        <div class="module-prop-val">Film + profil vectoriel + embeddings</div>
+      </div>
+      <div>
+        <div class="module-prop-key">Output</div>
+        <div class="module-prop-val">Score % + raison textuelle</div>
+      </div>
+      <div>
+        <div class="module-prop-key">Utilisé par</div>
+        <div class="module-prop-val">ResultScreen, reveal animation</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="module-card">
+    <div class="module-header">
+      <div class="module-icon">🎭</div>
+      <div>
+        <div class="module-name">Mode Duo &amp; Soirées <span class="badge done">v1</span></div>
+        <div class="module-tagline">Recommander pour deux — ou pour toute une soirée</div>
+      </div>
+    </div>
+    <div class="module-body">
+      Le Mode Duo permet de croiser les profils de deux utilisateurs pour produire
+      une recommandation satisfaisante pour les deux. La fusion des profils utilise
+      une moyenne pondérée des vecteurs de goût, avec un biais vers les goûts
+      communs et une pénalité sur les dégoûts de l'un ou l'autre. Le module
+      Soirées étend ce concept à la planification : créer un événement, inviter
+      des participants, choisir un film collectivement, puis évaluer la soirée
+      au lendemain.
+    </div>
+    <div class="module-props">
+      <div>
+        <div class="module-prop-key">Edge function</div>
+        <div class="module-prop-val"><code>group-recommend</code></div>
+      </div>
+      <div>
+        <div class="module-prop-key">Tables</div>
+        <div class="module-prop-val"><code>duo_profiles</code>, <code>events</code>, <code>event_film_feedback</code></div>
+      </div>
+      <div>
+        <div class="module-prop-key">Présence temps réel</div>
+        <div class="module-prop-val">Supabase Realtime Presence</div>
+      </div>
+      <div>
+        <div class="module-prop-key">Route</div>
+        <div class="module-prop-val"><code>/app/soirees</code>, <code>/app/duo</code></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="module-card">
+    <div class="module-header">
+      <div class="module-icon">📚</div>
+      <div>
+        <div class="module-name">Watchlist &amp; Bibliothèque <span class="badge done">v1</span></div>
+        <div class="module-tagline">La mémoire long terme de l'utilisateur</div>
+      </div>
+    </div>
+    <div class="module-body">
+      La Watchlist permet de sauvegarder des films pour plus tard. La Bibliothèque
+      archive tous les films vus et les notations. Ces deux modules alimentent
+      en permanence le Taste Engine : chaque interaction (ajout, visionnage, note)
+      met à jour le profil vectoriel de l'utilisateur. La Bibliothèque offre
+      également une vue analytique des goûts : genres dominants, décennies
+      préférées, directeurs récurrents.
+    </div>
+    <div class="module-props">
+      <div>
+        <div class="module-prop-key">Tables</div>
+        <div class="module-prop-val"><code>watchlist_items</code>, <code>interactions</code></div>
+      </div>
+      <div>
+        <div class="module-prop-key">Mise à jour vecteur</div>
+        <div class="module-prop-val">Trigger Supabase asynchrone</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="module-card">
+    <div class="module-header">
+      <div class="module-icon">⭐</div>
+      <div>
+        <div class="module-name">Pick+ <span class="badge wip">Bêta</span></div>
+        <div class="module-tagline">L'abonnement premium pour les cinéphiles exigeants</div>
+      </div>
+    </div>
+    <div class="module-body">
+      Pick+ est le tier premium de l'application. Il débloque des capacités
+      avancées : nombre illimité de recommandations par jour, accès au
+      Companion Chat (assistant cinéma conversationnel), statistiques
+      détaillées du profil, et personnalisation poussée des filtres.
+      Son modèle économique repose sur un abonnement mensuel géré via
+      les mécanismes d'abonnement de Supabase et Stripe.
+    </div>
+    <div class="module-props">
+      <div>
+        <div class="module-prop-key">Hook</div>
+        <div class="module-prop-val"><code>use-pick-plus</code></div>
+      </div>
+      <div>
+        <div class="module-prop-key">Edge function</div>
+        <div class="module-prop-val"><code>companion-chat</code>, <code>pick-tts</code></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="page-footer">
+    <span class="footer-brand">Pick</span>
+    <span>Chapitre 5 — Les Modules (suite)</span>
+    <span>13</span>
+  </div>
+</div>
+
+<!-- ══════════════════════ CHAPTER 6 : LES PRINCIPES ════════ -->
+<div class="page" style="padding-bottom: 22mm;">
+  <div class="chapter-header">
+    <div class="chapter-number">Chapitre 6</div>
+    <div class="chapter-title">Principes d'Architecture</div>
+    <div class="chapter-divider"></div>
+    <div class="chapter-lead">
+      Les décisions techniques de Pick sont gouvernées par un ensemble de
+      principes stables. Ils servent de boussole quand les choix sont ambigus
+      et de référence lors des revues de code.
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="principle-row">
+      <div class="principle-num">01</div>
+      <div>
+        <div class="principle-name">Simplicité intentionnelle</div>
+        <div class="principle-desc">
+          Chaque fonctionnalité doit avoir un objectif unique et clairement défini.
+          Une interface complexe est un bug, pas une richesse. Le code doit être
+          lisible par un développeur qui découvre le projet le jour même. Les
+          abstractions ne sont introduites que quand trois occurrences identiques
+          justifient de les extraire.
+        </div>
+      </div>
+    </div>
+
+    <div class="principle-row">
+      <div class="principle-num">02</div>
+      <div>
+        <div class="principle-name">L'IA comme assistance, jamais comme décision</div>
+        <div class="principle-desc">
+          Claude AI est un outil de scoring et d'argumentation, pas un arbitre.
+          Il produit des recommandations et des explications ; c'est l'utilisateur
+          qui décide. Cette distinction est fondamentale : elle préserve l'agentivité
+          de l'utilisateur et évite une relation de dépendance aux algorithmes.
+        </div>
+      </div>
+    </div>
+
+    <div class="principle-row">
+      <div class="principle-num">03</div>
+      <div>
+        <div class="principle-name">Confidentialité by design</div>
+        <div class="principle-desc">
+          Les données personnelles (historique, préférences, profil vectoriel)
+          sont stockées exclusivement dans la base Supabase de l'utilisateur.
+          Elles ne sont jamais partagées avec des tiers, vendues ou utilisées
+          pour entraîner des modèles. Les vecteurs de goût sont des représentations
+          mathématiques, non des données personnelles nominatives.
+        </div>
+      </div>
+    </div>
+
+    <div class="principle-row">
+      <div class="principle-num">04</div>
+      <div>
+        <div class="principle-name">Testabilité systématique</div>
+        <div class="principle-desc">
+          Toute nouvelle fonctionnalité est accompagnée de tests automatisés.
+          Les tests unitaires (Vitest) couvrent la logique métier et les hooks.
+          Les tests E2E (Playwright) couvrent les parcours utilisateurs critiques :
+          onboarding, première recommandation, mode duo, soirée. Le pipeline CI
+          bloque tout merge en cas de régression.
+        </div>
+      </div>
+    </div>
+
+    <div class="principle-row">
+      <div class="principle-num">05</div>
+      <div>
+        <div class="principle-name">Performance perçue avant performance mesurée</div>
+        <div class="principle-desc">
+          Un utilisateur qui voit quelque chose se passer est plus patient qu'un
+          utilisateur face à un écran vide. Pick privilégie les patterns de
+          chargement optimiste : affichage immédiat des états intermédiaires,
+          animations de transition, messages contextuels pendant les appels
+          LLM qui durent plusieurs secondes.
+        </div>
+      </div>
+    </div>
+
+    <div class="principle-row">
+      <div class="principle-num">06</div>
+      <div>
+        <div class="principle-name">Pipeline de recommandation stable</div>
+        <div class="principle-desc">
+          Le pipeline de recommandation est la valeur centrale du produit.
+          Toute modification de ce pipeline requiert une validation explicite,
+          des tests de non-régression et une comparaison avant/après sur un
+          échantillon de profils réels. Il n'est pas modifié lors de refactorisations
+          générales de la codebase.
+        </div>
+      </div>
+    </div>
+
+    <div class="principle-row">
+      <div class="principle-num">07</div>
+      <div>
+        <div class="principle-name">Marché français en premier</div>
+        <div class="principle-desc">
+          Toutes les API externes (TMDB, Claude) sont configurées pour produire
+          des résultats en français et adaptés au marché français : langue
+          <code>fr-FR</code>, région <code>FR</code>, plateformes françaises.
+          Les genres, labels et métadonnées sont en français dans toute la chaîne,
+          du SQL aux prompts LLM.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout practice" style="margin-top:5mm">
+    <div class="callout-title">Bonne pratique — Revue de principe</div>
+    <p>Lors de chaque Pull Request, le reviewer vérifie que les changements respectent ces sept principes. Si un principe est délibérément contourné, la PR doit documenter la raison dans sa description.</p>
+  </div>
+
+  <div class="page-footer">
+    <span class="footer-brand">Pick</span>
+    <span>Chapitre 6 — Principes d'Architecture</span>
+    <span>17</span>
+  </div>
+</div>
+
+<!-- ══════════════════════ CHAPTER 7 : ARCHITECTURE ════════ -->
+<div class="page" style="padding-bottom: 22mm;">
+  <div class="chapter-header">
+    <div class="chapter-number">Chapitre 7</div>
+    <div class="chapter-title">Architecture Générale</div>
+    <div class="chapter-divider"></div>
+    <div class="chapter-lead">
+      Pick est une application web mobile-first construite sur une architecture
+      Jamstack enrichie par des fonctions serverless. Ce chapitre documente
+      la structure globale du système, ses couches et ses interactions.
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">7.1 — Vue Globale du Système</div>
+
+    <div class="diagram-box">
+      <div class="diagram-title">Architecture — vue d'ensemble</div>
+      <div style="display:grid; grid-template-columns:1fr; gap:3mm;">
+
+        <!-- Couche utilisateur -->
+        <div class="arch-layer" style="grid-template-columns: repeat(4,1fr); background:#f5f3ff; border-color:#a78bfa;">
+          <div class="arch-layer-label">Utilisateur</div>
+          <div class="arch-box purple">Chrome Android</div>
+          <div class="arch-box purple">Safari iOS</div>
+          <div class="arch-box purple">Chrome Desktop</div>
+          <div class="arch-box purple">PWA</div>
+        </div>
+
+        <div style="text-align:center; color:#94a3b8; font-size:.9rem;">↕ HTTPS</div>
+
+        <!-- Couche frontend -->
+        <div class="arch-layer" style="grid-template-columns: repeat(4,1fr); background:#eff6ff; border-color:#93c5fd;">
+          <div class="arch-layer-label">Frontend — Vite + React 18</div>
+          <div class="arch-box blue">Router v6</div>
+          <div class="arch-box blue">HomeScreen</div>
+          <div class="arch-box blue">React Query</div>
+          <div class="arch-box blue">Framer Motion</div>
+        </div>
+
+        <div style="text-align:center; color:#94a3b8; font-size:.9rem;">↕ Supabase JS SDK</div>
+
+        <!-- Couche BaaS -->
+        <div class="arch-layer" style="grid-template-columns: repeat(3,1fr); background:#f0fdf4; border-color:#86efac;">
+          <div class="arch-layer-label">Supabase BaaS</div>
+          <div class="arch-box green">Auth (JWT)</div>
+          <div class="arch-box green">PostgreSQL</div>
+          <div class="arch-box green">Realtime</div>
+        </div>
+
+        <div style="text-align:center; color:#94a3b8; font-size:.9rem;">↕ Deno runtime</div>
+
+        <!-- Couche edge -->
+        <div class="arch-layer" style="grid-template-columns: repeat(4,1fr); background:#fff7ed; border-color:#fdba74;">
+          <div class="arch-layer-label">Edge Functions (Deno)</div>
+          <div class="arch-box orange">surprise-personalized</div>
+          <div class="arch-box orange">movie-match</div>
+          <div class="arch-box orange">group-recommend</div>
+          <div class="arch-box orange">companion-chat</div>
+        </div>
+
+        <div style="text-align:center; color:#94a3b8; font-size:.9rem;">↕ REST / API Key</div>
+
+        <!-- Couche API externes -->
+        <div class="arch-layer" style="grid-template-columns: repeat(3,1fr); background:#faf5ff; border-color:#d8b4fe;">
+          <div class="arch-layer-label">APIs Externes</div>
+          <div class="arch-box" style="border-color:#d8b4fe; background:#faf5ff;">TMDB — Films &amp; Métadonnées</div>
+          <div class="arch-box" style="border-color:#d8b4fe; background:#faf5ff;">Claude AI — Scoring LLM</div>
+          <div class="arch-box" style="border-color:#d8b4fe; background:#faf5ff;">ElevenLabs — TTS</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="page-footer">
+    <span class="footer-brand">Pick</span>
+    <span>Chapitre 7 — Architecture Générale</span>
+    <span>19</span>
+  </div>
+</div>
+
+<!-- ══════════════════════ PAGE 2 ARCHITECTURE ═══════════════ -->
+<div class="page" style="padding-bottom: 22mm;">
+
+  <div class="section">
+    <div class="section-title">7.2 — Architecture Frontend</div>
+    <p>
+      Le frontend est une Single Page Application (SPA) construite avec React 18
+      et TypeScript. Il est organisé autour de trois couches fonctionnelles :
+    </p>
+
+    <div class="diagram-box">
+      <div class="diagram-title">Architecture Frontend — flux de données</div>
+      <div style="display:grid; grid-template-columns:1fr 2px 1fr; gap:0; align-items:start;">
+        <div class="flow-v">
+          <div class="flow-node primary" style="width:100%">Utilisateur</div>
+          <div class="flow-arrow">↓ interaction</div>
+          <div class="flow-node" style="width:100%">Page / Route<br><small style="font-weight:400;font-size:.7rem">src/pages/</small></div>
+          <div class="flow-arrow">↓</div>
+          <div class="flow-node" style="width:100%">Composants métier<br><small style="font-weight:400;font-size:.7rem">src/components/pick/</small></div>
+          <div class="flow-arrow">↓</div>
+          <div class="flow-node" style="width:100%">Custom Hooks<br><small style="font-weight:400;font-size:.7rem">src/hooks/</small></div>
+          <div class="flow-arrow">↓</div>
+          <div class="flow-node" style="width:100%">Bibliothèques métier<br><small style="font-weight:400;font-size:.7rem">src/lib/</small></div>
+          <div class="flow-arrow">↓</div>
+          <div class="flow-node primary" style="width:100%">Supabase / Edge Functions</div>
+        </div>
+        <div style="background:var(--gray-200); height:100%; min-height:60mm;"></div>
+        <div style="padding-left:5mm; padding-top:3mm;">
+          <div class="callout vision" style="margin-bottom:3mm;">
+            <div class="callout-title">Pages clés</div>
+            <p style="font-size:.78rem;"><code>Index.tsx</code> — wizard de recommandation<br>
+            <code>Profile.tsx</code> — préférences<br>
+            <code>Library.tsx</code> — historique<br>
+            <code>PickTogether.tsx</code> — session duo</p>
+          </div>
+          <div class="callout vision">
+            <div class="callout-title">Hooks critiques</div>
+            <p style="font-size:.78rem;"><code>use-auth</code> — session JWT<br>
+            <code>use-pick-plus</code> — abonnement<br>
+            <code>use-presence</code> — présence RT<br>
+            <code>use-movie-interactions</code> — feedback</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout decision">
+      <div class="callout-title">Décision d'architecture — Alias @/</div>
+      <p>Tous les imports utilisent l'alias <code>@/</code> mappé sur <code>src/</code>. Cette convention évite les chemins relatifs profonds (<code>../../../../lib/tmdb</code>) et facilite les refactorisations. Elle est configurée dans <code>vite.config.ts</code> et <code>tsconfig.json</code>.</p>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">7.3 — Architecture Backend (Edge Functions)</div>
+    <p>
+      Le backend de Pick est <strong>entièrement serverless</strong>. Il n'y a pas
+      de serveur applicatif permanent. La logique métier complexe est portée par
+      des Edge Functions Supabase (runtime Deno), déclenchées à la demande par
+      le frontend.
+    </p>
+
+    <table>
+      <thead>
+        <tr><th>Fonction</th><th>Rôle</th><th>IA utilisée</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>surprise-personalized</code></td>
+          <td>Orchestrateur principal du pipeline de recommandation</td>
+          <td>Claude (scoring final)</td>
+        </tr>
+        <tr>
+          <td><code>movie-match</code></td>
+          <td>Score de correspondance film/profil + explication</td>
+          <td>Claude (analyse)</td>
+        </tr>
+        <tr>
+          <td><code>generate-embedding</code></td>
+          <td>Génère les embeddings 32D d'un film et les met en cache</td>
+          <td>—</td>
+        </tr>
+        <tr>
+          <td><code>group-recommend</code></td>
+          <td>Recommandation pour sessions collaboratives (duo/groupe)</td>
+          <td>Claude</td>
+        </tr>
+        <tr>
+          <td><code>pick-chat</code></td>
+          <td>Interface conversationnelle pour capturer l'ambiance</td>
+          <td>Claude</td>
+        </tr>
+        <tr>
+          <td><code>companion-chat</code></td>
+          <td>Assistant cinéma Pick+ — conversationnel étendu</td>
+          <td>Claude</td>
+        </tr>
+        <tr>
+          <td><code>pick-tts</code></td>
+          <td>Synthèse vocale des réponses de l'assistant</td>
+          <td>ElevenLabs</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="page-footer">
+    <span class="footer-brand">Pick</span>
+    <span>Chapitre 7 — Architecture Générale (suite)</span>
+    <span>21</span>
+  </div>
+</div>
+
+<!-- ══════════════════════════ PAGE 3 ARCHITECTURE ═══════════ -->
+<div class="page" style="padding-bottom: 22mm;">
+
+  <div class="section">
+    <div class="section-title">7.4 — Flux de Données Complet</div>
+    <p>
+      Le schéma suivant illustre le cycle de vie complet d'une demande de
+      recommandation, depuis le geste de l'utilisateur jusqu'à l'affichage
+      du film sur son écran.
+    </p>
+
+    <div class="diagram-box">
+      <div class="diagram-title">Flux complet — demande de recommandation</div>
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6mm;">
+        <div>
+          <div style="font-size:.72rem; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:var(--indigo); margin-bottom:3mm;">Phase Client</div>
+          <div class="flow-v">
+            <div class="flow-node">1. Tap "Surprise-moi"</div>
+            <div class="flow-arrow">↓</div>
+            <div class="flow-node">2. Lecture du vecteur de goût<br><small style="font-weight:400">table user_taste_vectors</small></div>
+            <div class="flow-arrow">↓</div>
+            <div class="flow-node">3. Calcul des overrides<br><small style="font-weight:400">voix / ambiance / duo</small></div>
+            <div class="flow-arrow">↓</div>
+            <div class="flow-node">4. Appel surprise-personalized<br><small style="font-weight:400">avec debug: true</small></div>
+          </div>
+        </div>
+        <div>
+          <div style="font-size:.72rem; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:var(--indigo); margin-bottom:3mm;">Phase Serveur</div>
+          <div class="flow-v">
+            <div class="flow-node">5. Auth JWT + lecture profil</div>
+            <div class="flow-arrow">↓</div>
+            <div class="flow-node">6. match_movies_for_recommendation<br><small style="font-weight:400">RPC PostgreSQL — cascade 0→4</small></div>
+            <div class="flow-arrow">↓</div>
+            <div class="flow-node">7. Score composé + filtre plateforme</div>
+            <div class="flow-arrow">↓</div>
+            <div class="flow-node">8. Claude AI — sélection + scores</div>
+            <div class="flow-arrow">↓</div>
+            <div class="flow-node">9. Enrichissement TMDB batch</div>
+            <div class="flow-arrow">↓</div>
+            <div class="flow-node primary">10. Réponse JSON → Reveal</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout note">
+      <div class="callout-title">Note — Durée du pipeline</div>
+      <p>Sur une connexion mobile standard (4G), le pipeline complet prend entre <strong>3 et 8 secondes</strong>. Cette durée est principalement due à l'appel LLM Claude (2–4 s) et à l'enrichissement TMDB batch (1–2 s). L'interface affiche des messages contextuels animés pendant toute la durée de l'appel pour maintenir l'engagement.</p>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">7.5 — Modèle de Données Principal</div>
+    <table>
+      <thead>
+        <tr><th>Table</th><th>Rôle</th><th>Relations clés</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>profiles</code></td><td>Profil utilisateur — préférences, plateformes, goûts</td><td>→ auth.users</td></tr>
+        <tr><td><code>interactions</code></td><td>Toutes les interactions film (vu, noté, skipé, watchlist)</td><td>→ profiles</td></tr>
+        <tr><td><code>movie_embeddings</code></td><td>Vecteurs 32D mis en cache par TMDB ID</td><td>—</td></tr>
+        <tr><td><code>user_taste_vectors</code></td><td>Vecteurs de goût calculés (stable / récent / évitement)</td><td>→ profiles</td></tr>
+        <tr><td><code>duo_profiles</code></td><td>Paires d'utilisateurs en mode Duo</td><td>→ profiles × 2</td></tr>
+        <tr><td><code>events</code></td><td>Soirées planifiées avec film sélectionné</td><td>→ profiles</td></tr>
+        <tr><td><code>event_film_feedback</code></td><td>Évaluation post-soirée (film + ambiance)</td><td>→ events</td></tr>
+        <tr><td><code>watchlist_items</code></td><td>Films à regarder plus tard</td><td>→ profiles</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="page-footer">
+    <span class="footer-brand">Pick</span>
+    <span>Chapitre 7 — Architecture Générale (suite)</span>
+    <span>22</span>
+  </div>
+</div>
+
+<!-- ══════════════════════════ CHAPTER 8 : STACK ════════════ -->
+<div class="page" style="padding-bottom: 22mm;">
+  <div class="chapter-header">
+    <div class="chapter-number">Chapitre 8</div>
+    <div class="chapter-title">Stack Technique</div>
+    <div class="chapter-divider"></div>
+    <div class="chapter-lead">
+      La stack technique de Pick a été choisie pour sa cohérence, sa maturité
+      et son adéquation aux contraintes du projet : équipe réduite, time-to-market
+      court, maintenance long terme.
+    </div>
+  </div>
+
+  <div class="section">
+    <table>
+      <thead>
+        <tr><th>Couche</th><th>Technologie</th><th>Version</th><th>Rôle</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>UI Framework</strong></td>
+          <td>React</td>
+          <td>18.3</td>
+          <td>Rendu déclaratif, composants réutilisables</td>
+        </tr>
+        <tr>
+          <td><strong>Langage</strong></td>
+          <td>TypeScript</td>
+          <td>5.x</td>
+          <td>Typage statique sur toute la codebase</td>
+        </tr>
+        <tr>
+          <td><strong>Build</strong></td>
+          <td>Vite</td>
+          <td>5.x</td>
+          <td>Bundler ultra-rapide, HMR instantané</td>
+        </tr>
+        <tr>
+          <td><strong>Routage</strong></td>
+          <td>React Router</td>
+          <td>v6</td>
+          <td>Navigation SPA avec routes protégées</td>
+        </tr>
+        <tr>
+          <td><strong>Style</strong></td>
+          <td>Tailwind CSS</td>
+          <td>3.x</td>
+          <td>Utility-first, design system cohérent</td>
+        </tr>
+        <tr>
+          <td><strong>Composants UI</strong></td>
+          <td>shadcn/ui</td>
+          <td>—</td>
+          <td>Primitives accessibles, non-opinionated</td>
+        </tr>
+        <tr>
+          <td><strong>Animations</strong></td>
+          <td>Framer Motion</td>
+          <td>11.x</td>
+          <td>Transitions fluides, reveal cards</td>
+        </tr>
+        <tr>
+          <td><strong>State serveur</strong></td>
+          <td>React Query</td>
+          <td>v5</td>
+          <td>Cache, invalidation, optimistic updates</td>
+        </tr>
+        <tr>
+          <td><strong>3D</strong></td>
+          <td>@react-three/fiber</td>
+          <td>—</td>
+          <td>Scènes 3D WebGL (arrière-plans)</td>
+        </tr>
+        <tr>
+          <td><strong>Backend / Auth</strong></td>
+          <td>Supabase</td>
+          <td>2.x</td>
+          <td>PostgreSQL + Auth JWT + Realtime + Storage</td>
+        </tr>
+        <tr>
+          <td><strong>Base de données</strong></td>
+          <td>PostgreSQL</td>
+          <td>15</td>
+          <td>Données relationnelles + pgvector (embeddings)</td>
+        </tr>
+        <tr>
+          <td><strong>Edge Functions</strong></td>
+          <td>Deno</td>
+          <td>1.x</td>
+          <td>Runtime serverless des fonctions Supabase</td>
+        </tr>
+        <tr>
+          <td><strong>Données films</strong></td>
+          <td>TMDB API</td>
+          <td>v3</td>
+          <td>Métadonnées, affiches, disponibilités (fr-FR)</td>
+        </tr>
+        <tr>
+          <td><strong>IA — LLM</strong></td>
+          <td>Claude (Anthropic)</td>
+          <td>Sonnet 4.6</td>
+          <td>Scoring, argumentation, chat</td>
+        </tr>
+        <tr>
+          <td><strong>IA — TTS</strong></td>
+          <td>ElevenLabs</td>
+          <td>—</td>
+          <td>Synthèse vocale de l'assistant</td>
+        </tr>
+        <tr>
+          <td><strong>Tests unitaires</strong></td>
+          <td>Vitest</td>
+          <td>2.x</td>
+          <td>Tests rapides colocalisés avec le code</td>
+        </tr>
+        <tr>
+          <td><strong>Tests E2E</strong></td>
+          <td>Playwright</td>
+          <td>1.x</td>
+          <td>Scénarios complets navigateur</td>
+        </tr>
+        <tr>
+          <td><strong>CI/CD</strong></td>
+          <td>GitHub Actions</td>
+          <td>—</td>
+          <td>Lint, tests, build sur chaque PR</td>
+        </tr>
+        <tr>
+          <td><strong>Hébergement</strong></td>
+          <td>Lovable.dev / Netlify</td>
+          <td>—</td>
+          <td>Déploiement continu du frontend</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="page-footer">
+    <span class="footer-brand">Pick</span>
+    <span>Chapitre 8 — Stack Technique</span>
+    <span>23</span>
+  </div>
+</div>
+
+<!-- ══════════════════════════ CHAPTER 9 : CHOIX ════════════ -->
+<div class="page" style="padding-bottom: 22mm;">
+  <div class="chapter-header">
+    <div class="chapter-number">Chapitre 9</div>
+    <div class="chapter-title">Choix d'Architecture</div>
+    <div class="chapter-divider"></div>
+    <div class="chapter-lead">
+      Chaque technologie dans la stack a été choisie délibérément. Ce chapitre
+      documente les raisons de ces choix, les alternatives considérées et les
+      compromis acceptés.
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="callout decision">
+      <div class="callout-title">Décision — React 18 + TypeScript</div>
+      <p><strong>Pourquoi :</strong> React est l'écosystème frontend le plus mature en 2026 pour les applications data-intensive avec des besoins d'animation. React 18 introduit les <em>Concurrent Features</em> (Suspense, transitions) qui améliorent la fluidité perçue lors des appels LLM longs. TypeScript est non-négociable pour un projet qui a vocation à grandir : il détecte les bugs de type au moment du développement plutôt qu'en production.</p>
+      <p style="margin-top:2mm"><strong>Alternative considérée :</strong> Vue 3 — écarté pour sa moindre maturité des outils de test et sa bibliothèque de composants moins riche en composants prêts à l'emploi.</p>
+    </div>
+
+    <div class="callout decision">
+      <div class="callout-title">Décision — Supabase comme BaaS</div>
+      <p><strong>Pourquoi :</strong> Supabase fournit en un seul service : PostgreSQL (avec pgvector pour les embeddings), authentification JWT, stockage de fichiers, fonctions serverless Deno et présence temps réel. Cette consolidation est critique pour une équipe réduite : elle évite d'assembler et de maintenir une infrastructure distribuée. L'extension pgvector est fondamentale pour le Taste Engine (calcul de similarité cosinus nativement en SQL).</p>
+      <p style="margin-top:2mm"><strong>Alternative considérée :</strong> Firebase — écarté pour l'absence de SQL relationnel et de support pgvector natif.</p>
+    </div>
+
+    <div class="callout decision">
+      <div class="callout-title">Décision — Claude AI (Anthropic)</div>
+      <p><strong>Pourquoi :</strong> Claude excelle dans deux tâches critiques pour Pick : le raisonnement structuré sur des profils utilisateurs complexes, et la génération de texte explicatif en français naturel. Son architecture permet des prompts système longs qui définissent précisément le comportement attendu. Le modèle Sonnet 4.6 offre le meilleur équilibre latence/qualité pour des appels en temps réel (&lt; 4 s).</p>
+      <p style="margin-top:2mm"><strong>Alternative considérée :</strong> GPT-4o — similaire en qualité, mais Claude a montré une meilleure cohérence sur les tâches de scoring structuré avec JSON output strict.</p>
+    </div>
+
+    <div class="callout decision">
+      <div class="callout-title">Décision — Vite comme bundler</div>
+      <p><strong>Pourquoi :</strong> Vite offre un démarrage quasi instantané grâce à l'utilisation des modules ES natifs en développement. Le HMR (Hot Module Replacement) est suffisamment rapide pour ne jamais interrompre le flux de développement, même sur une codebase de taille moyenne. Les builds de production sont optimisés via Rollup.</p>
+      <p style="margin-top:2mm"><strong>Alternative considérée :</strong> webpack — écarté pour sa lenteur en mode dev et sa configuration verbeuse.</p>
+    </div>
+
+    <div class="callout decision">
+      <div class="callout-title">Décision — Vitest + Playwright</div>
+      <p><strong>Pourquoi :</strong> Vitest est nativement intégré à Vite : configuration partagée, même resolver de modules, démarrage rapide. Il est idéal pour les tests unitaires et les hooks React (avec jsdom). Playwright est le seul framework E2E capable de tester de manière fiable les animations Framer Motion et les composants Three.js sur les vrais navigateurs.</p>
+      <p style="margin-top:2mm"><strong>Alternative considérée :</strong> Jest + Cypress — écarté pour la lourdeur de configuration de Jest avec Vite et les limitations de Cypress sur les animations CSS/WebGL.</p>
+    </div>
+
+    <div class="callout decision">
+      <div class="callout-title">Décision — TMDB comme source de données films</div>
+      <p><strong>Pourquoi :</strong> TMDB (The Movie Database) est l'API la plus complète et la plus maintenable pour les métadonnées de films et séries. Elle supporte nativement <code>language=fr-FR</code> et <code>watch_region=FR</code>, ce qui permet d'obtenir des titres en français, des synopses localisés et les disponibilités réelles sur les plateformes françaises. L'API est gratuite jusqu'à un volume élevé de requêtes.</p>
+      <p style="margin-top:2mm"><strong>Alternative considérée :</strong> IMDb API — payante et moins bien documentée. JustWatch API — non officielle et instable.</p>
+    </div>
+
+    <div class="callout decision">
+      <div class="callout-title">Décision — Edge Functions Deno (serverless)</div>
+      <p><strong>Pourquoi :</strong> Les Edge Functions Supabase tournent sur Deno, qui offre une sécurité par défaut (pas d'accès filesystem sans permission explicite), un support natif de TypeScript sans compilation, et des imports HTTP directs depuis des CDNs (deno.land). Le modèle serverless est parfait pour le pipeline de recommandation : les fonctions sont dormantes entre les appels et ne coûtent rien au repos. La latence de cold start est acceptable (&lt; 500 ms) pour des appels qui durent de toute façon 3–8 secondes.</p>
+    </div>
+  </div>
+
+  <div class="page-footer">
+    <span class="footer-brand">Pick</span>
+    <span>Chapitre 9 — Choix d'Architecture</span>
+    <span>25</span>
+  </div>
+</div>
+
+<!-- ══════════════════════════ CHAPTER 10 : ROADMAP ═════════ -->
+<div class="page" style="padding-bottom: 22mm;">
+  <div class="chapter-header">
+    <div class="chapter-number">Chapitre 10</div>
+    <div class="chapter-title">Roadmap</div>
+    <div class="chapter-divider"></div>
+    <div class="chapter-lead">
+      La roadmap de Pick est organisée en jalons successifs, chacun apportant
+      une valeur utilisateur tangible. Elle est revue tous les deux mois.
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">2026 — Feuille de route</div>
+
+    <div class="roadmap">
+
+      <div class="roadmap-item done">
+        <div class="roadmap-milestone">Jalon 1 — T1 2026</div>
+        <div class="roadmap-title">Alpha privée</div>
+        <div class="roadmap-desc">
+          Onboarding complet, moteur de recommandation solo, mode Solo,
+          watchlist, bibliothèque. Déployé pour un groupe fermé de testeurs.
+          Pipeline de recommandation stabilisé.
+        </div>
+        <span class="roadmap-tag done">Livré</span>
+      </div>
+
+      <div class="roadmap-item done">
+        <div class="roadmap-milestone">Jalon 2 — T2 2026</div>
+        <div class="roadmap-title">Mode Duo &amp; Soirées</div>
+        <div class="roadmap-desc">
+          Création de duos, fusion des profils, recommandation croisée.
+          Planification de soirées, invitation, évaluation post-soirée.
+          Voice Chat pour la capture d'ambiance.
+        </div>
+        <span class="roadmap-tag done">Livré</span>
+      </div>
+
+      <div class="roadmap-item">
+        <div class="roadmap-milestone">Jalon 3 — T2/T3 2026</div>
+        <div class="roadmap-title">Bêta fermée + Pick+</div>
+        <div class="roadmap-desc">
+          Ouverture à 200 utilisateurs sur invitation. Lancement de Pick+
+          (abonnement premium) avec Companion Chat, statistiques avancées
+          et recommandations illimitées. Correction des régressions identifiées
+          en alpha.
+        </div>
+        <span class="roadmap-tag active">En cours</span>
+      </div>
+
+      <div class="roadmap-item future">
+        <div class="roadmap-milestone">Jalon 4 — T3 2026</div>
+        <div class="roadmap-title">Bêta publique</div>
+        <div class="roadmap-desc">
+          Ouverture publique sans invitation. Intégration complète des plateformes
+          de streaming françaises. Optimisation des performances du pipeline
+          (objectif &lt; 3 s). Campagne de communication.
+        </div>
+        <span class="roadmap-tag planned">Planifié</span>
+      </div>
+
+      <div class="roadmap-item future">
+        <div class="roadmap-milestone">Jalon 5 — T4 2026</div>
+        <div class="roadmap-title">Version 1.0</div>
+        <div class="roadmap-desc">
+          Stabilisation complète, documentation technique finalisée (5 tomes),
+          couverture de tests &gt; 80 %, onboarding simplifié. Pick est
+          officiellement en production.
+        </div>
+        <span class="roadmap-tag planned">Planifié</span>
+      </div>
+
+      <div class="roadmap-item future">
+        <div class="roadmap-milestone">Jalon 6 — 2027</div>
+        <div class="roadmap-title">Mode Groupe &amp; Familial</div>
+        <div class="roadmap-desc">
+          Extension du Mode Duo vers des groupes de 3 à 6 personnes.
+          Profils enfants avec filtres de contenu. Sessions de vote collectif.
+        </div>
+        <span class="roadmap-tag planned">Planifié</span>
+      </div>
+
+      <div class="roadmap-item future">
+        <div class="roadmap-milestone">Horizon 2027+</div>
+        <div class="roadmap-title">Assistant Cinéma Conversationnel</div>
+        <div class="roadmap-desc">
+          Interface 100 % voice-first. L'utilisateur décrit sa soirée en langage
+          naturel et Pick compose une recommandation sans qu'il touche l'écran.
+          Intégration avec les assistants vocaux (Siri, Google Assistant).
+        </div>
+        <span class="roadmap-tag planned">Vision long terme</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout vision" style="margin-top:5mm">
+    <div class="callout-title">Principe de roadmap</div>
+    <p>La roadmap est révisée tous les deux mois. Les jalons marqués <em>planifié</em> sont des engagements d'orientation, pas des dates contractuelles. La priorité absolue reste la stabilité et la qualité des fonctionnalités livrées, avant l'ajout de nouvelles capacités.</p>
+  </div>
+
+  <div class="page-footer">
+    <span class="footer-brand">Pick</span>
+    <span>Chapitre 10 — Roadmap</span>
+    <span>29</span>
+  </div>
+</div>
+
+<!-- ══════════════════════════ BACK COVER ═══════════════════ -->
+<div class="page cover" style="justify-content:center; align-items:center; text-align:center;">
+  <div class="cover-accent-bar"></div>
+  <div>
+    <div style="font-size:3rem; font-weight:800; letter-spacing:-.04em; background:linear-gradient(135deg,#a78bfa,#6d28d9,#4f46e5); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; margin-bottom:4mm;">Pick</div>
+    <div style="font-size:.8rem; color:rgba(255,255,255,.4); letter-spacing:.18em; text-transform:uppercase; margin-bottom:8mm;">Engineering Handbook</div>
+    <div style="font-size:.95rem; color:rgba(255,255,255,.6); line-height:1.7; max-width:100mm; margin:0 auto;">
+      Ce document est le premier volume d'une série de cinq.
+      Il pose les fondations conceptuelles et architecturales
+      sur lesquelles reposent tous les volumes suivants.
+    </div>
+    <div style="margin-top:10mm; display:grid; grid-template-columns:1fr 1fr; gap:3mm; max-width:120mm; margin-left:auto; margin-right:auto; margin-top:10mm;">
+      <div style="background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.08); border-radius:6px; padding:3mm 4mm; text-align:left;">
+        <div style="font-size:.65rem; letter-spacing:.14em; text-transform:uppercase; color:rgba(255,255,255,.3); margin-bottom:1mm;">Tome 2</div>
+        <div style="font-size:.8rem; color:rgba(255,255,255,.6); font-weight:600;">Pipeline de Recommandation</div>
+      </div>
+      <div style="background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.08); border-radius:6px; padding:3mm 4mm; text-align:left;">
+        <div style="font-size:.65rem; letter-spacing:.14em; text-transform:uppercase; color:rgba(255,255,255,.3); margin-bottom:1mm;">Tome 3</div>
+        <div style="font-size:.8rem; color:rgba(255,255,255,.6); font-weight:600;">Tests &amp; Qualité</div>
+      </div>
+      <div style="background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.08); border-radius:6px; padding:3mm 4mm; text-align:left;">
+        <div style="font-size:.65rem; letter-spacing:.14em; text-transform:uppercase; color:rgba(255,255,255,.3); margin-bottom:1mm;">Tome 4</div>
+        <div style="font-size:.8rem; color:rgba(255,255,255,.6); font-weight:600;">Données &amp; Supabase</div>
+      </div>
+      <div style="background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.08); border-radius:6px; padding:3mm 4mm; text-align:left;">
+        <div style="font-size:.65rem; letter-spacing:.14em; text-transform:uppercase; color:rgba(255,255,255,.3); margin-bottom:1mm;">Tome 5</div>
+        <div style="font-size:.8rem; color:rgba(255,255,255,.6); font-weight:600;">Déploiement &amp; Opérations</div>
+      </div>
+    </div>
+    <div style="margin-top:14mm; font-size:.72rem; color:rgba(255,255,255,.2);">
+      Pick Engineering Handbook · Tome 1 · v1.0 · Juin 2026<br>
+      Confidentiel — Usage interne
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
