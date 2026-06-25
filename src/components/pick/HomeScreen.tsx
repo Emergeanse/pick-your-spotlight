@@ -1154,11 +1154,7 @@ const HomeScreen = ({
     let tEdgeStart = t0Pick;
     let tEdgeEnd = t0Pick;
     let tBatchStart = t0Pick;
-    console.log("[PICK-DEBUG] ═══ generateTonightPick ═══");
-    console.log("[PICK-DEBUG] historyExcludeIds (depuis feedback):", historyExcludeIdsRef.current.length, "IDs", historyExcludeIdsRef.current.slice(0, 20));
-    console.log("[PICK-DEBUG] rejectedIds (session):", excludeList.length, "IDs", excludeList);
-    console.log("[PICK-DEBUG] poolIds (chat pool):", poolIds.length, "IDs");
-    console.log("[PICK-DEBUG] TOTAL allExcludeIds envoyés à l'edge function:", allExcludeIds.length);
+    console.log(`[PICK-DEBUG] 🚀 ════ DÉBUT PIPELINE ════ | ${allExcludeIds.length} IDs exclus (session: ${excludeList.length} | historique: ${historyExcludeIdsRef.current.length} | pool: ${poolIds.length})`);
 
     setTonightProviders([]);
     setLoadingLog([]);
@@ -1265,7 +1261,7 @@ const HomeScreen = ({
           logPipelineStagesTable([], clientPipelineStage);
 
           // Log des paramètres EFFECTIFS (après tous les overrides voix/ambiance/duo)
-          console.group("[PICK-DEBUG] 📤 Paramètres effectifs envoyés à surprise-personalized");
+          console.groupCollapsed("[PICK-DEBUG] 📤 Paramètres effectifs envoyés à surprise-personalized");
           console.log("vecteur de goût  :", userTasteVector ? `✅ ${userTasteVector.length} dims` : "❌ NULL — SQL vectoriel sera sauté");
           console.log("type média       :", effectiveMediaType);
           console.log("genres effectifs :", effectiveTopGenres?.length ? effectiveTopGenres : "aucun (profile vide ?)");
@@ -1293,6 +1289,7 @@ const HomeScreen = ({
           }
           console.groupEnd();
 
+          console.log(`[PICK-DEBUG] 📡 ÉTAPE 0 — Requête → surprise-personalized | type: ${effectiveMediaType} | plateformes: [${userPlatformIds?.join(", ") ?? "—"}] | minScore: ${effectiveMinMatchScore}% | vecteur: ${userTasteVector ? `✅ ${userTasteVector.length}D` : "❌ NULL"}`);
           tEdgeStart = performance.now();
           const data = await invokeSurprisePersonalized({
             likedMovies: [],
@@ -1335,17 +1332,8 @@ const HomeScreen = ({
             setLastSql50Ids(data.excludeCandidateIds);
           }
           const dbg = data?.debugData;
-
-          // ═══════════════════════════════════════════════
-          // PIPELINE DEBUG — chaque étape : lancement, paramètres, filtre, sortie
-          // Tous les logs sont au TOP LEVEL (toujours visibles dans la console)
-          // Les listes de films sont dans des groupes repliés (▶ pour développer)
-          // ═══════════════════════════════════════════════
-
-          // ── Pipeline stages (résumé tableau) ──
-          if (dbg?.pipelineStages?.length) {
-            logPipelineStagesTable(dbg.pipelineStages as PipelineStageDebug[], clientPipelineStage);
-          }
+          const edgeMs = Math.round(tEdgeEnd - tEdgeStart);
+          console.log(`[PICK-DEBUG] 📥 Réponse reçue (${edgeMs}ms) — SQL: ${dbg?.sqlCandidates?.length ?? 0} candidats | top: ${dbg?.top50?.length ?? "?"}→LLM | LLM sélectionne: ${dbg?.llmSelections?.length ?? "?"}`);
 
           // ── ÉTAPE 1 : SQL vectoriel 32D ──
           if (dbg?.filters || dbg?.sqlCandidates) {
@@ -1363,12 +1351,8 @@ const HomeScreen = ({
             const cascadeWarn = rpc ? (rpc.excluded_genres || []).length === 0 : false;
             const candidateCount = dbg.sqlCandidates?.length ?? 0;
 
-            // Contexte dans le header du group = toujours visible même replié
-            const step1Header = `[PICK-DEBUG] ▶ ÉTAPE 1 — SQL vectoriel 32D` +
-              ` | cascade: ${cascadeLabel}${cascadeWarn ? " ⚠️ excluded_genres VIDE" : ""}` +
-              ` | entrée: ${f?.excludeCount ?? 0} IDs exclus` +
-              ` | SORTIE: ${candidateCount} candidats`;
-            console.groupCollapsed(step1Header);
+            console.log(`[PICK-DEBUG] 1️⃣  ÉTAPE 1 — SQL 32D → ${candidateCount} candidats | cascade: ${cascadeLabel}${cascadeWarn ? " ⚠️ excluded_genres VIDE" : ""} | ${f?.excludeCount ?? 0} IDs exclus`);
+            console.groupCollapsed(`  ↳ Détail ÉTAPE 1 (${candidateCount} candidats SQL)`);
             if (cascadeWarn) console.warn(`  ⚠️ excluded_genres VIDE — cascade niveau ${cascadeLevel}`);
 
             if (rpc) {
@@ -1460,11 +1444,8 @@ const HomeScreen = ({
           // ── PROFIL LLM ──
           if (dbg?.llmProfile) {
             const p = dbg.llmProfile;
-            console.groupCollapsed(
-              `[PICK-DEBUG] ▶ PROFIL → LLM` +
-              ` | confiance: ${p.confianceProfil}/100 | exploration: ${p.explorationLevel}/10 | score min: ${p.minMatchScore}%` +
-              ` | genres: [${(p.genresPrefers || []).slice(0, 3).join(", ") || "—"}]`
-            );
+            console.log(`[PICK-DEBUG] 🧠  PROFIL → LLM | confiance: ${p.confianceProfil}/100 | exploration: ${p.explorationLevel}/10 | score min: ${p.minMatchScore}% | genres: [${(p.genresPrefers || []).slice(0, 3).join(", ") || "—"}]`);
+            console.groupCollapsed(`  ↳ Détail profil LLM`);
             console.log(`  genres préférés : [${(p.genresPrefers || []).join(", ") || "—"}]`);
             console.log(`  genres exclus   : [${(p.genresExclus || []).join(", ") || "—"}]`);
             console.log(`  clusters        : [${(p.clusters || []).join(", ") || "—"}]`);
@@ -1480,12 +1461,8 @@ const HomeScreen = ({
 
           // ── ÉTAPE 2 : Top N par score composé ──
           if (dbg?.top50?.length) {
-            console.groupCollapsed(
-              `[PICK-DEBUG] ▶ ÉTAPE 2 — Score composé` +
-              ` | filtre: sim×100 + note + boost langue +15` +
-              ` | entrée: ${dbg.sqlCandidates?.length ?? "?"} candidats` +
-              ` | SORTIE: ${dbg.top50.length} films → LLM`
-            );
+            console.log(`[PICK-DEBUG] 2️⃣  ÉTAPE 2 — Score composé → ${dbg.top50.length} films → LLM (depuis ${dbg.sqlCandidates?.length ?? "?"} candidats SQL)`);
+            console.groupCollapsed(`  ↳ Détail ÉTAPE 2 (top ${dbg.top50.length} par score composé)`);
             console.table(dbg.top50.map((c: any, i: number) => ({
               "#": i + 1,
               "Titre": c.title,
@@ -1504,11 +1481,8 @@ const HomeScreen = ({
             const llmMs = dbg.llmMs ?? "?";
             const matched = dbg.platformPool.filter((r: any) => r.match).length;
             const bypassed = dbg.llmFiltered?.length === dbg.top50?.length;
-            console.groupCollapsed(
-              `[PICK-DEBUG] ▶ ÉTAPE 2.5 — Filtre plateforme${bypassed ? " ⚠️ BYPASS" : ""}` +
-              ` | ${platformMs}ms filtre, ${llmMs}ms LLM` +
-              ` | SORTIE: ${bypassed ? `⚠️ bypass → ${dbg.top50?.length} films` : `${matched} retenus → LLM`}`
-            );
+            console.log(`[PICK-DEBUG] 2️⃣⁺ ÉTAPE 2.5 — Filtre plateforme${bypassed ? " ⚠️ BYPASS" : ""} → ${bypassed ? `⚠️ bypass ${dbg.top50?.length} films` : `${matched} retenus`} → LLM | ${platformMs}ms`);
+            console.groupCollapsed(`  ↳ Détail ÉTAPE 2.5 (filtre plateforme)`);
             console.table(dbg.platformPool.map((r: any, i: number) => ({
               "#": i + 1,
               "Titre": r.title,
@@ -1519,11 +1493,8 @@ const HomeScreen = ({
           } else if (dbg?.llmFiltered) {
             const platformMs = dbg.platformFilterMs ?? "?";
             const llmMs = dbg.llmMs ?? "?";
-            console.groupCollapsed(
-              `[PICK-DEBUG] ▶ ÉTAPE 2.5 — Films → LLM` +
-              ` | ${platformMs}ms filtre | ${llmMs}ms LLM` +
-              ` | SORTIE: ${dbg.llmFiltered.length} films`
-            );
+            console.log(`[PICK-DEBUG] 2️⃣⁺ ÉTAPE 2.5 — Films → LLM → ${dbg.llmFiltered.length} films | ${platformMs}ms filtre | ${llmMs}ms LLM`);
+            console.groupCollapsed(`  ↳ Détail ÉTAPE 2.5 (${dbg.llmFiltered.length} films → LLM)`);
             console.table(dbg.llmFiltered.map((c: any, i: number) => ({
               "#": i + 1, "Titre": c.title, "Note /10": c.note ?? "–", "Sim%": c.sim ?? "–",
             })));
@@ -1532,11 +1503,8 @@ const HomeScreen = ({
 
           // ── ÉTAPE 3 : Sélections LLM ──
           if (dbg?.llmSelections?.length) {
-            console.groupCollapsed(
-              `[PICK-DEBUG] ▶ ÉTAPE 3 — Sélections LLM (Claude)` +
-              ` | filtre: scoring film vs profil` +
-              ` | SORTIE: ${dbg.llmSelections.length} films → movie-match`
-            );
+            console.log(`[PICK-DEBUG] 3️⃣  ÉTAPE 3 — LLM sélectionne → ${dbg.llmSelections.length} films → movie-match`);
+            console.groupCollapsed(`  ↳ Détail ÉTAPE 3 (${dbg.llmSelections.length} sélections LLM)`);
             console.table(dbg.llmSelections.map((s: any, i: number) => ({
               "#": i + 1,
               "Titre": s.title,
@@ -1560,11 +1528,8 @@ const HomeScreen = ({
           if (dbg?.tmdbEnrichment?.length) {
             const failed = dbg.tmdbEnrichment.filter((t: any) => !t.ok);
             const ok = dbg.tmdbEnrichment.filter((t: any) => t.ok);
-            console.groupCollapsed(
-              `[PICK-DEBUG] ▶ ÉTAPE 3.5 — Enrichissement TMDB` +
-              ` | entrée: ${dbg.tmdbEnrichment.length} films` +
-              ` | SORTIE: ✅ ${ok.length} OK${failed.length > 0 ? ` / ❌ ${failed.length} échoués → fallback` : ""}`
-            );
+            console.log(`[PICK-DEBUG] 3️⃣⁺ ÉTAPE 3.5 — TMDB enrichissement → ✅ ${ok.length}/${dbg.tmdbEnrichment.length} OK${failed.length > 0 ? ` | ❌ ${failed.length} échoués → fallback` : ""}`);
+            console.groupCollapsed(`  ↳ Détail ÉTAPE 3.5 (TMDB, ${dbg.tmdbEnrichment.length} films)`);
             console.table(dbg.tmdbEnrichment.map((t: any, i: number) => ({
               "#": i + 1,
               "Titre": t.title,
@@ -1578,11 +1543,8 @@ const HomeScreen = ({
           // ── ÉTAPE 4 : Films finaux ──
           if ((dbg as any)?.finalMoviesList?.length) {
             const finals = (dbg as any).finalMoviesList;
-            console.groupCollapsed(
-              `[PICK-DEBUG] ▶ ÉTAPE 4 — Films finaux présentés` +
-              ` | movie-match re-score Claude` +
-              ` | SORTIE: ${finals.length} films`
-            );
+            console.log(`[PICK-DEBUG] 4️⃣  ÉTAPE 4 — Films finaux edge → ${finals.length} films`);
+            console.groupCollapsed(`  ↳ Détail ÉTAPE 4 (${finals.length} films finaux edge)`);
             console.table(finals.map((m: any, i: number) => ({
               "#": i + 1,
               "Titre": m.title,
@@ -1727,30 +1689,15 @@ const HomeScreen = ({
             },
           });
 
-          console.group("[PICK-DEBUG] 4️⃣ Résultat final après movie-match");
+          const mmFallbackCount = movies.filter((m: any) => (m.recommendationTexts as any)?.fallback).length;
+          console.log(`[PICK-DEBUG] 5️⃣  ÉTAPE 5 — movie-match → ${movies.length} film(s) enrichis${mmFallbackCount > 0 ? ` | ⚠️ ${mmFallbackCount} fallback(s)` : " | ✅ tous riches"}`);
+          console.groupCollapsed(`  ↳ Détail ÉTAPE 5 (résultat final movie-match)`);
           console.table(movies.map((m: any, i: number) => ({
             "#": i + 1,
             "Titre": m.title,
             "Score movie-match": `${getRecommendationScore(m.recommendationTexts) ?? "–"}%`,
             "Rich texts": (m.recommendationTexts as any)?.fallback ? "⚠️ FALLBACK" : m.recommendationTexts?.headline ? "oui" : "non",
           })));
-          const mmFallbackCount = movies.filter((m: any) => (m.recommendationTexts as any)?.fallback).length;
-          logPipelineStagesTable([{
-            id: "6-movie-match",
-            name: "movie-match (client, séquentiel par film)",
-            params: {
-              preloadMatchTexts: true,
-              preloadProviders: true,
-              desiredCount,
-              duoMode: !!duoOverrides,
-            },
-            fallbackTriggered: mmFallbackCount > 0,
-            fallbackReason: mmFallbackCount > 0
-              ? `${mmFallbackCount} film(s) — Gemini KO, retry 4s (FALLBACK texts)`
-              : null,
-            inputCount: extracted.length,
-            outputCount: movies.length,
-          }]);
           console.groupEnd();
 
           // Safety net: if batch processing filtered everything but edge function returned results,
@@ -1760,6 +1707,7 @@ const HomeScreen = ({
             console.log("[PICK-DEBUG] ⚠️ Safety net activé — films filtrés, fallback sur extracted brut");
             movies = extracted.slice(0, desiredCount) as MovieDetail[];
           }
+          console.log(`[PICK-DEBUG] 🏁 ════ FIN PIPELINE ════ | ${movies.length} film(s) présenté(s)`);
 
           // Override with actual movie-match scores now that they're available
           const actualScoreMap: Record<number, RecommendationMatch> = {};
@@ -1897,11 +1845,7 @@ const HomeScreen = ({
         const batch = tDisplay - tBatchStart;
         const bar = (ms: number) => { const p = Math.round((ms / total) * 20); return "█".repeat(Math.max(1, p)) + "░".repeat(20 - Math.max(1, p)); };
         const label = firstMovieShown ? "batch complet (1er film affiché plus tôt)" : "clic → premier film affiché";
-        console.group(`[PICK-DEBUG] ⏱️ BOUT EN BOUT — ${label} : ${fmt(total)}`);
-        console.log(`  Préparation (profil, liked)  ${bar(preEdge)}  ${fmt(preEdge)}`);
-        console.log(`  Edge function                ${bar(edge)}  ${fmt(edge)}`);
-        console.log(`  Movie-match + batch          ${bar(batch)}  ${fmt(batch)}`);
-        console.groupEnd();
+        console.log(`[PICK-DEBUG] ⏱️ BOUT EN BOUT — ${label} : ${fmt(total)} | prép: ${fmt(preEdge)} | edge: ${fmt(edge)} | batch: ${fmt(batch)}`);
 
         if (firstMovieShown) {
           // onBatchReady a posé les films dans le bon ordre.
