@@ -138,7 +138,7 @@ const HomeScreenChoiceModal = ({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-          className="fixed inset-0 z-50 overflow-y-auto flex justify-center scrollbar-hide"
+          className="fixed inset-0 z-50 overflow-y-auto scrollbar-hide"
           onClick={onClose}
         >
           <div className="fixed inset-0 bg-background/75 backdrop-blur-2xl pointer-events-none" />
@@ -146,12 +146,15 @@ const HomeScreenChoiceModal = ({
           <div className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] max-w-[640px] aspect-square pointer-events-none" style={{ background: "radial-gradient(circle, hsl(var(--primary) / 0.22) 0%, hsl(var(--primary) / 0.08) 35%, transparent 65%)", filter: "blur(40px)" }} />
           <div className="fixed inset-0 pointer-events-none opacity-[0.025] mix-blend-overlay" style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E\")" }} />
 
+          {/* Wrapper min-h-full : centre quand le contenu est court,
+              scroll naturellement sur mobile quand le contenu dépasse l'écran */}
+          <div className="flex items-center justify-center min-h-full py-6 px-5">
           <motion.div
             initial={{ y: 24, opacity: 0, scale: 0.97 }}
             animate={{ y: 0, opacity: 1, scale: 1 }}
             exit={{ y: 24, opacity: 0, scale: 0.97 }}
             transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-            className="relative w-full max-w-md mx-5 my-auto px-6 pt-8 pb-[calc(2rem+env(safe-area-inset-bottom))] flex flex-col gap-4"
+            className="relative w-full max-w-md px-6 pt-8 pb-[calc(2rem+env(safe-area-inset-bottom))] flex flex-col gap-4"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Glass surface */}
@@ -493,6 +496,7 @@ const HomeScreenChoiceModal = ({
             </motion.button>
 
           </motion.div>
+          </div>{/* fin wrapper min-h-full */}
         </motion.div>
       )}
     </AnimatePresence>
