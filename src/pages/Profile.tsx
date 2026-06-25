@@ -348,6 +348,7 @@ const Profile = () => {
   const [profile, setProfile] = useState<any>(null);
   const [selectedPlatforms, setSelectedPlatforms] = useState<number[]>([]);
   const [selectedDecades, setSelectedDecades] = useState<number[]>([]);
+  const [excludedDecades, setExcludedDecades] = useState<number[]>([]);
   const [minRating, setMinRating] = useState<number>(0);
   const [matchThreshold, setMatchThreshold] = useState<number>(80);
   const [defaultMediaType, setDefaultMediaType] = useState<"both" | "movie" | "tv">("both");
@@ -419,6 +420,7 @@ const Profile = () => {
       setProfile(data);
       setSelectedPlatforms(data?.preferred_platforms || []);
       setSelectedDecades((data as any)?.preferred_decades || []);
+      setExcludedDecades((data as any)?.excluded_decades || []);
       setMinRating((data as any)?.min_rating || 5);
       setMatchThreshold((data as any)?.match_threshold ?? 80);
       setDefaultMediaType(((data as any)?.default_media_type as any) || "both");
@@ -548,6 +550,7 @@ const Profile = () => {
         preferred_platforms: selectedPlatforms,
         excluded_platforms: [],
         preferred_decades: selectedDecades,
+        excluded_decades: excludedDecades,
         min_rating: minRating,
         match_threshold: matchThreshold,
         default_media_type: defaultMediaType,
@@ -571,6 +574,7 @@ const Profile = () => {
         ...prev,
         preferred_platforms: [...selectedPlatforms],
         preferred_decades: [...selectedDecades],
+        excluded_decades: [...excludedDecades],
         min_rating: minRating,
         match_threshold: matchThreshold,
         default_media_type: defaultMediaType,
@@ -587,6 +591,7 @@ const Profile = () => {
   const hasProfileFieldChanges = profile && (
     JSON.stringify([...selectedPlatforms].sort()) !== JSON.stringify([...(profile.preferred_platforms || [])].sort()) ||
     JSON.stringify([...selectedDecades].sort((a, b) => a - b)) !== JSON.stringify([...((profile as any)?.preferred_decades || [])].sort((a: number, b: number) => a - b)) ||
+    JSON.stringify([...excludedDecades].sort((a, b) => a - b)) !== JSON.stringify([...((profile as any)?.excluded_decades || [])].sort((a: number, b: number) => a - b)) ||
     minRating !== ((profile as any)?.min_rating || 0) ||
     matchThreshold !== ((profile as any)?.match_threshold ?? 80) ||
     defaultMediaType !== ((profile as any)?.default_media_type || "both") ||
@@ -915,14 +920,14 @@ const Profile = () => {
             </div>
           </div>
 
-          {/* Époques préférées */}
+          {/* Époques */}
           <div className="mb-5">
             <span className="text-[10px] font-sans font-semibold text-foreground uppercase tracking-widest mb-2 block">
-              Époques préférées
+              Époques
             </span>
             <div className="rounded-2xl bg-card/80 backdrop-blur-sm border border-border/15 px-4 py-3">
               <p className="text-[11px] font-sans text-foreground/50 mb-3">
-                Aucune sélection = toutes les époques. Peut être surchargé lors d&apos;une recherche.
+                1 clic = préférée ✓ &nbsp;·&nbsp; 2 clics = exclue ✕ &nbsp;·&nbsp; 3 clics = neutre
               </p>
               <div className="flex flex-wrap gap-2">
                 {([
@@ -934,20 +939,32 @@ const Profile = () => {
                   { label: "Années 2010", value: 2010 },
                   { label: "Depuis 2020", value: 2020 },
                 ] as const).map((d) => {
-                  const active = selectedDecades.includes(d.value);
+                  const preferred = selectedDecades.includes(d.value);
+                  const excluded = excludedDecades.includes(d.value);
+                  const state = preferred ? "preferred" : excluded ? "excluded" : "neutral";
                   return (
                     <button
                       key={d.value}
                       type="button"
-                      onClick={() => setSelectedDecades((prev) =>
-                        active ? prev.filter((x) => x !== d.value) : [...prev, d.value]
-                      )}
+                      onClick={() => {
+                        if (state === "neutral") {
+                          setSelectedDecades((p) => [...p, d.value]);
+                        } else if (state === "preferred") {
+                          setSelectedDecades((p) => p.filter((x) => x !== d.value));
+                          setExcludedDecades((p) => [...p, d.value]);
+                        } else {
+                          setExcludedDecades((p) => p.filter((x) => x !== d.value));
+                        }
+                      }}
                       className={`px-3 py-1.5 rounded-full text-[11px] font-sans font-medium border transition-all active:scale-[0.97] ${
-                        active
+                        state === "preferred"
                           ? "bg-primary/15 border-primary/50 text-primary"
+                          : state === "excluded"
+                          ? "bg-red-500/10 border-red-500/40 text-red-400"
                           : "bg-card/50 border-border/20 text-foreground/50 hover:border-primary/30 hover:text-foreground/70"
                       }`}
                     >
+                      {state === "preferred" ? "✓ " : state === "excluded" ? "✕ " : ""}
                       {d.label}
                     </button>
                   );

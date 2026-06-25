@@ -194,16 +194,20 @@ serve(async (req) => {
 
     // Préférence décennie : lecture profil (utilisée si voiceDecade absent)
     let profileDecades: number[] = [];
+    let profileExcludedDecades: number[] = [];
     if (userId && SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) {
       try {
         const sbAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
         const { data: profileRow } = await sbAdmin
           .from("profiles")
-          .select("preferred_decades")
+          .select("preferred_decades, excluded_decades")
           .eq("id", userId)
           .maybeSingle();
         if (Array.isArray((profileRow as any)?.preferred_decades)) {
           profileDecades = (profileRow as any).preferred_decades.filter((d: any) => typeof d === "number");
+        }
+        if (Array.isArray((profileRow as any)?.excluded_decades)) {
+          profileExcludedDecades = (profileRow as any).excluded_decades.filter((d: any) => typeof d === "number");
         }
       } catch (e) {
         console.warn("[SP] preferred_decades fetch failed:", e);
@@ -486,6 +490,23 @@ serve(async (req) => {
     // Debug par étape
     const sqlLevelDebug: { level: number; newFilms: number; totalNonInteracted: number; films: { title: string; year: string; sim: number; note: number }[] }[] = [];
     const explicitFallbackDebug: { likedGenres: boolean; minRating: number; newFilms: number; films: { title: string; year: string; note: number }[] }[] = [];
+    let explicitFallbackTriggered = false;
+    let langEnrichAttempted = 0;
+    let langEnrichSuccess = 0;
+    let originFilterInputCount = 0;
+    let originFilterOutputCount = 0;
+    let voiceGenresFilterApplied = false;
+    let voiceGenresFilterInput = 0;
+    let voiceGenresFilterOutput = 0;
+    let decadeFilterType: "voiceDecade" | "profileDecades" | "none" = "none";
+    let decadeFilterApplied = false;
+    let decadeFilterInput = 0;
+    let decadeFilterOutput = 0;
+    let llmDeterministicFallback = false;
+    let llmModelCascade = false;
+    let qualityRetryTriggered = false;
+    let qualityRetryAdded = 0;
+    let safetyNetFiltered = 0;
 
     // ── ÉTAPE 1 : Cascade vectorielle ──
     console.log(`[SP] 🎯 Vecteur 32D actif — liked_genres SQL: [${likedGenresForSQL.join(", ")}]`);
@@ -607,6 +628,7 @@ serve(async (req) => {
     // Tri par note + popularité — plateforme TOUJOURS obligatoire, jamais levée.
     // 3 niveaux progressifs : goût strict → goût relâché → plateforme seule.
     if (SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY && countNonInteracted(candidates) < EXPLICIT_TARGET) {
+      explicitFallbackTriggered = true;
       console.log(`[SP] SQL explicite (sans vecteur) — pool actuel: ${countNonInteracted(candidates)}/${EXPLICIT_TARGET}`);
       const sbEx = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
       const baseMinRating = minRating > 0 ? minRating : 6;
@@ -712,6 +734,7 @@ serve(async (req) => {
         .filter((c: any) => !c.original_language)
         .slice(0, 60);
       if (nullLangCandidates.length > 0) {
+        langEnrichAttempted = nullLangCandidates.length;
         console.log(`[SP] Enrichissement langue TMDB: ${nullLangCandidates.length} candidats sans original_language`);
         const enriched = await Promise.all(
           nullLangCandidates.map(async (c: any) => {
@@ -742,6 +765,7 @@ serve(async (req) => {
         const enrichedMap = new Map(enriched.map((c: any) => [c.tmdb_id, c]));
         filteredCandidates = filteredCandidates.map((c: any) => enrichedMap.get(c.tmdb_id) ?? c);
         const enrichedCount = enriched.filter((c: any) => c.original_language).length;
+        langEnrichSuccess = enrichedCount;
         console.log(`[SP] Enrichissement: ${enrichedCount}/${nullLangCandidates.length} langues récupérées`);
       }
     }
@@ -791,9 +815,11 @@ serve(async (req) => {
         return score;
       };
 
+      originFilterInputCount = filteredCandidates.length;
       const originEligible = excludedLangsBoost.size > 0
         ? filteredCandidates.filter((c: any) => !excludedLangsBoost.has(c.original_language || ""))
         : filteredCandidates;
+      originFilterOutputCount = originEligible.length;
       if (excludedLangsBoost.size > 0) {
         const removed = filteredCandidates.length - originEligible.length;
         console.log(`[SP] Filtre origine: ${originEligible.length}/${filteredCandidates.length} films gardés (${removed} retirés — langues exclues: [${[...excludedLangsBoost].join(",")}])`);
@@ -803,10 +829,13 @@ serve(async (req) => {
       // Sans ce filtre, le fallback explicite injecte des films hors-genre qui dominent par similarité vectorielle.
       let voiceEligible = originEligible;
       if (voiceGenres && voiceGenres.length > 0) {
+        voiceGenresFilterInput = originEligible.length;
         const voiceMatching = originEligible.filter((c: any) =>
           voiceGenres.some((g: string) => (c.genres || []).includes(g))
         );
+        voiceGenresFilterOutput = voiceMatching.length;
         if (voiceMatching.length >= 5) {
+          voiceGenresFilterApplied = true;
           console.log(`[SP] Post-filtre voiceGenres [${voiceGenres.join(",")}]: ${voiceMatching.length}/${originEligible.length} films retenus`);
           voiceEligible = voiceMatching;
         } else {
@@ -816,11 +845,15 @@ serve(async (req) => {
 
       // Post-filtre voiceDecade : priorité absolue (demande explicite)
       if (voiceDecade !== null) {
+        decadeFilterType = "voiceDecade";
+        decadeFilterInput = voiceEligible.length;
         const decadeMatching = voiceEligible.filter((c: any) => {
           const year = parseInt(c.year || "0");
           return year >= voiceDecade && year <= voiceDecade + 9;
         });
+        decadeFilterOutput = decadeMatching.length;
         if (decadeMatching.length >= 5) {
+          decadeFilterApplied = true;
           console.log(`[SP] Post-filtre voiceDecade [${voiceDecade}s]: ${decadeMatching.length}/${voiceEligible.length} films retenus`);
           voiceEligible = decadeMatching;
         } else {
@@ -828,18 +861,33 @@ serve(async (req) => {
         }
       } else if (profileDecades.length > 0) {
         // Post-filtre profil décennies : préférence soft (pas de voiceDecade)
+        decadeFilterType = "profileDecades";
+        decadeFilterInput = voiceEligible.length;
         const decadeMatching = voiceEligible.filter((c: any) => {
           const year = parseInt(c.year || "0");
           if (!year) return true; // si pas d'année connue, on garde
           return profileDecades.some((d: number) => year >= d && year <= d + 9);
         });
+        decadeFilterOutput = decadeMatching.length;
         const threshold = Math.min(8, Math.ceil(requestedCount * 1.5));
         if (decadeMatching.length >= threshold) {
+          decadeFilterApplied = true;
           console.log(`[SP] Post-filtre profileDecades [${profileDecades.join(",")}]: ${decadeMatching.length}/${voiceEligible.length} films retenus`);
           voiceEligible = decadeMatching;
         } else {
           console.log(`[SP] Post-filtre profileDecades: ${decadeMatching.length} films seulement — pool complet conservé`);
         }
+      }
+
+      // Post-filtre décennies exclues (hard filter — s'applique toujours, voiceDecade non concerné)
+      if (profileExcludedDecades.length > 0) {
+        const beforeExclude = voiceEligible.length;
+        voiceEligible = voiceEligible.filter((c: any) => {
+          const year = parseInt(c.year || "0");
+          if (!year) return true; // si pas d'année, on conserve
+          return !profileExcludedDecades.some((d: number) => year >= d && year <= d + 9);
+        });
+        console.log(`[SP] Post-filtre excludedDecades [${profileExcludedDecades.join(",")}]: ${voiceEligible.length}/${beforeExclude} films conservés`);
       }
 
       const topPool = [...voiceEligible]
@@ -967,6 +1015,7 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
           let response = await callSpModel("gemini-2.5-flash");
           if (response.status === 429 || response.status === 503) {
             console.warn(`[SP] gemini-2.5-flash ${response.status} — cascade vers gemini-2.0-flash`);
+            llmModelCascade = true;
             response = await callSpModel("gemini-2.0-flash");
           }
 
@@ -1034,6 +1083,7 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
 
         // Fallback : si le LLM échoue, prendre le top du pool filtré plateforme directement
         if (llmSelections.length === 0) {
+          llmDeterministicFallback = true;
           console.log(`[SP] LLM returned 0 — fallback déterministe sur pool plateforme`);
           llmSelections = llmInputPool
             .slice(0, targetCount)
@@ -1048,6 +1098,7 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
         const qualifyThreshold = minMatchScore; // seuil de l'utilisateur (défaut 60)
         const qualifyingCount = llmSelections.filter((s: any) => (s.matchScore ?? 0) >= qualifyThreshold).length;
         if (qualifyingCount < 3) {
+          qualityRetryTriggered = true;
           const evaluatedIds = new Set(llmSelections.map((s: any) => Number(s.tmdb_id)));
           const remainingCandidates = originEligible
             .filter((c: any) => !evaluatedIds.has(Number(c.tmdb_id)))
@@ -1062,6 +1113,7 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
               matchScore: Math.round(62 + ((compositeScore(c) - scoreMin2) / scoreRange2) * 15),
               reason: null,
             }));
+            qualityRetryAdded = extraSelections.length;
             console.log(`[SP] Retry qualité: ${qualifyingCount}/${llmSelections.length} films ≥ ${qualifyThreshold}% → +${extraSelections.length} candidats supplémentaires du pool SQL`);
             llmSelections = [...llmSelections, ...extraSelections];
           } else {
@@ -1343,6 +1395,7 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
       return genreOk && langOk;
     });
     const filteredCount = movies.length - safeMovies.length;
+    safetyNetFiltered = filteredCount;
     if (filteredCount > 0) console.log(`[SP] Filet sécurité: ${filteredCount} film(s) éliminé(s) (genre/langue exclus)`);
 
     // Garde au maximum le nombre souhaité par l'utilisateur
@@ -1398,6 +1451,286 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
       .filter(Number.isFinite);
     const includeDebug = rawDebug === true && !!auth.user?.id;
 
+    const cascadeLevelLabels = [
+      "0 — toutes contraintes (lang+année+genres+note+plateforme)",
+      "1 — sans lang/année",
+      "2 — sans liked_genres profil (voiceGenres conservés)",
+      "3 — sans goût restrictif (min_rating=0, voiceGenres conservés)",
+    ];
+    const sqlVectorSkipped = !userTasteVector;
+    const tmdbOkCount = tmdbDiag.filter((d) => d.ok).length;
+    const tmdbFailCount = tmdbDiag.filter((d) => !d.ok).length;
+    const discoverFallbackCount = fallbackTrace.filter((f) => f.stage === "discover").length;
+    const trendingFallbackCount = fallbackTrace.filter((f) => f.stage === "trending").length;
+    const nuclearFallbackCount = fallbackTrace.filter((f) => f.stage.startsWith("nuclear")).length;
+
+    const pipelineStages: {
+      id: string;
+      name: string;
+      params: Record<string, unknown>;
+      fallbackTriggered: boolean;
+      fallbackReason?: string | null;
+      inputCount?: number | null;
+      outputCount?: number | null;
+    }[] = [
+      {
+        id: "0-edge-request",
+        name: "Paramètres effectifs (edge)",
+        params: {
+          mediaType,
+          effectiveSearchType,
+          minRating,
+          minMatchScore,
+          explorationLevel,
+          requestedCount,
+          maxDuration: effectiveMaxDuration ?? null,
+          platformIds: platformIds ?? [],
+          expandedPlatformCount: expandedPlatformIds?.length ?? 0,
+          excludeIdsCount: normalizedExcludeIds.length,
+          voiceOverrides: {
+            genres: voiceGenres,
+            language: voiceOriginalLanguage,
+            mediaType: voiceMediaType,
+            decade: voiceDecade,
+            maxDuration: voiceMaxDuration,
+          },
+          moodContext,
+          moodBoostGenres,
+          profileDecades,
+          likedGenresSQL: effectiveLikedGenresSQL ?? likedGenresForSQL,
+          effectiveExcludedGenres,
+          duoUserIds: duoUserIds.length === 2 ? duoUserIds : null,
+          preferredOriginLangs: [...preferredLangsBoost],
+          excludedOriginLangs: [...excludedLangsBoost],
+        },
+        fallbackTriggered: false,
+        inputCount: null,
+        outputCount: null,
+      },
+      {
+        id: "1-sql-vector",
+        name: "SQL vectoriel 32D (cascade 0→3)",
+        params: {
+          target: TARGET,
+          vectorPresent: !!userTasteVector,
+          cascadeLevel: finalCascadeLevel,
+          cascadeLabel: finalCascadeLevel >= 0 ? cascadeLevelLabels[finalCascadeLevel] ?? `niveau ${finalCascadeLevel}` : null,
+          finalRpcParams: finalRpcParamsSummary,
+        },
+        fallbackTriggered: tasteCascadeTriggered || sqlVectorSkipped,
+        fallbackReason: sqlVectorSkipped
+          ? "Pas de vecteur 32D — SQL vectoriel sauté"
+          : tasteCascadeTriggered
+            ? `Pool < ${TARGET} — cascade niveau ${finalCascadeLevel} (${cascadeLevelLabels[finalCascadeLevel] ?? "?"})`
+            : null,
+        inputCount: null,
+        outputCount: sqlCandidatesCount >= 0 ? sqlCandidatesCount : candidates.length,
+      },
+      {
+        id: "1.4-sql-explicit",
+        name: "SQL explicite (sans vecteur)",
+        params: {
+          triggerThreshold: EXPLICIT_TARGET,
+          levels: ["A: liked_genres+note", "B: liked_genres note assouplie", "C: plateforme seule"],
+          explicitLikedGenres: voiceGenres ?? likedGenresForSQL,
+        },
+        fallbackTriggered: explicitFallbackTriggered,
+        fallbackReason: explicitFallbackTriggered
+          ? `Pool vectoriel < ${EXPLICIT_TARGET} — complément match_movies_explicit`
+          : null,
+        inputCount: explicitFallbackTriggered ? (sqlCandidatesCount >= 0 ? sqlCandidatesCount : null) : null,
+        outputCount: countNonInteracted(candidates),
+      },
+      {
+        id: "1.7-lang-enrich",
+        name: "Enrichissement langue TMDB",
+        params: {
+          excludedLangs: [...excludedLangsBoost],
+          maxCandidates: 60,
+        },
+        fallbackTriggered: langEnrichAttempted > 0,
+        fallbackReason: langEnrichAttempted > 0
+          ? `${langEnrichAttempted} candidats sans original_language — backfill TMDB`
+          : null,
+        inputCount: langEnrichAttempted || null,
+        outputCount: langEnrichSuccess || null,
+      },
+      {
+        id: "2a-post-filter-origin",
+        name: "Post-filtre origines (langues exclues)",
+        params: {
+          excludedLangs: [...excludedLangsBoost],
+          preferredLangs: [...preferredLangsBoost],
+        },
+        fallbackTriggered: excludedLangsBoost.size > 0 && originFilterOutputCount < originFilterInputCount,
+        fallbackReason: excludedLangsBoost.size > 0
+          ? `${originFilterInputCount - originFilterOutputCount} films retirés (langues exclues)`
+          : null,
+        inputCount: originFilterInputCount || filteredCandidates.length,
+        outputCount: originFilterOutputCount || filteredCandidates.length,
+      },
+      {
+        id: "2b-post-filter-voiceGenres",
+        name: "Post-filtre voiceGenres",
+        params: {
+          voiceGenres: voiceGenres ?? [],
+          minPoolToApply: 5,
+        },
+        fallbackTriggered: !!(voiceGenres?.length && !voiceGenresFilterApplied),
+        fallbackReason: voiceGenres?.length && !voiceGenresFilterApplied
+          ? `Seulement ${voiceGenresFilterOutput} films — pool complet conservé (seuil ≥5)`
+          : voiceGenresFilterApplied
+            ? `Filtre appliqué [${voiceGenres!.join(", ")}]`
+            : null,
+        inputCount: voiceGenres?.length ? voiceGenresFilterInput : null,
+        outputCount: voiceGenres?.length ? (voiceGenresFilterApplied ? voiceGenresFilterOutput : voiceGenresFilterInput) : null,
+      },
+      {
+        id: "2c-post-filter-decade",
+        name: decadeFilterType === "voiceDecade" ? "Post-filtre voiceDecade (hard)" : decadeFilterType === "profileDecades" ? "Post-filtre profileDecades (soft)" : "Post-filtre décennie",
+        params: {
+          type: decadeFilterType,
+          voiceDecade,
+          profileDecades,
+          minPoolVoice: 5,
+          minPoolProfile: Math.min(8, Math.ceil(requestedCount * 1.5)),
+        },
+        fallbackTriggered: decadeFilterType !== "none" && !decadeFilterApplied,
+        fallbackReason: decadeFilterType === "voiceDecade" && !decadeFilterApplied
+          ? `Seulement ${decadeFilterOutput} films ${voiceDecade}s — pool complet conservé (seuil ≥5)`
+          : decadeFilterType === "profileDecades" && !decadeFilterApplied
+            ? `Seulement ${decadeFilterOutput} films dans [${profileDecades.join(",")}] — pool complet conservé`
+            : decadeFilterApplied
+              ? `Filtre décennie appliqué (${decadeFilterType})`
+              : null,
+        inputCount: decadeFilterType !== "none" ? decadeFilterInput : null,
+        outputCount: decadeFilterType !== "none" ? (decadeFilterApplied ? decadeFilterOutput : decadeFilterInput) : null,
+      },
+      {
+        id: "2-top50-composite",
+        name: `Top ${llmPoolSize} score composé (sim×100 + note + boost langue +15)`,
+        params: {
+          llmPoolSize,
+          compositeFormula: "sim×100 + vote_average (+15 si langue préférée)",
+        },
+        fallbackTriggered: false,
+        inputCount: voiceGenresFilterApplied ? voiceGenresFilterOutput : (decadeFilterApplied ? decadeFilterOutput : originFilterOutputCount || filteredCandidates.length),
+        outputCount: llmPool.length,
+      },
+      {
+        id: "2.2-llm-selection",
+        name: "LLM Gemini — sélection films",
+        params: {
+          model: llmModelCascade ? "gemini-2.0-flash (cascade)" : "gemini-2.5-flash",
+          targetCount: Math.min(requestedCount + 2, llmInputPool.length),
+          moodContext,
+          moodBoostGenres,
+          minMatchScore,
+          llmError: llmDebugError,
+        },
+        fallbackTriggered: llmDeterministicFallback || !!llmDebugError || llmModelCascade,
+        fallbackReason: llmDeterministicFallback
+          ? "LLM KO ou 0 sélection — fallback déterministe top composite (reason=null)"
+          : llmModelCascade
+            ? "429/503 sur gemini-2.5-flash — cascade gemini-2.0-flash"
+            : llmDebugError
+              ? llmDebugError
+              : null,
+        inputCount: llmInputPool.length,
+        outputCount: llmSelections.length,
+      },
+      {
+        id: "2.5-quality-retry",
+        name: "Retry qualité (< 3 films ≥ minMatchScore)",
+        params: {
+          qualifyThreshold: minMatchScore,
+          minQualifying: 3,
+        },
+        fallbackTriggered: qualityRetryTriggered,
+        fallbackReason: qualityRetryTriggered
+          ? `+${qualityRetryAdded} candidats ajoutés depuis pool SQL (reason=null)`
+          : null,
+        inputCount: qualityRetryTriggered ? llmSelections.length - qualityRetryAdded : null,
+        outputCount: llmSelections.length,
+      },
+      {
+        id: "3-tmdb-enrich",
+        name: "TMDB enrichissement batch",
+        params: {
+          typeRetry: "movie↔tv si null",
+        },
+        fallbackTriggered: tmdbFailCount > 0,
+        fallbackReason: tmdbFailCount > 0
+          ? `${tmdbFailCount} lookup(s) échoué(s) — peut déclencher discover-fallback`
+          : null,
+        inputCount: llmSelections.length,
+        outputCount: tmdbOkCount,
+      },
+      {
+        id: "4-discover-fallback",
+        name: "Discover TMDB (with_watch_providers)",
+        params: {
+          withGenres: voiceGenres ?? [...effectiveLikedGenreIds],
+          voiceDecade,
+          platformIds: platformIds ?? [],
+        },
+        fallbackTriggered: discoverFallbackCount > 0,
+        fallbackReason: discoverFallbackCount > 0
+          ? `${discoverFallbackCount} film(s) via /discover`
+          : movies.length < requestedCount && llmSelections.length === 0
+            ? "SQL+LLM vides — discover tenté"
+            : null,
+        inputCount: movies.length - discoverFallbackCount - trendingFallbackCount - nuclearFallbackCount,
+        outputCount: movies.length,
+      },
+      {
+        id: "4b-trending-fallback",
+        name: "Trending/popular TMDB",
+        params: {
+          skippedIfPlatforms: !!(platformIds?.length),
+          urls: ["trending/week", "popular", "top_rated"],
+        },
+        fallbackTriggered: trendingFallbackCount > 0,
+        fallbackReason: trendingFallbackCount > 0
+          ? `${trendingFallbackCount} film(s) via trending/popular`
+          : platformIds?.length
+            ? "Ignoré — plateformes sélectionnées (pas de filtre watch_providers sur trending)"
+            : null,
+        inputCount: null,
+        outputCount: trendingFallbackCount || null,
+      },
+      {
+        id: "4c-nuclear-fallback",
+        name: "Fallback nucléaire (genre/note levés, plateforme conservée)",
+        params: {
+          llmFilteredAll,
+          platformIds: platformIds ?? [],
+        },
+        fallbackTriggered: nuclearFallbackCount > 0 || llmFilteredAll,
+        fallbackReason: nuclearFallbackCount > 0
+          ? `${nuclearFallbackCount} film(s) — filtres genre/note assouplis`
+          : llmFilteredAll
+            ? "0 film après cascade — fallback nucléaire activé"
+            : null,
+        inputCount: 0,
+        outputCount: nuclearFallbackCount || (llmFilteredAll ? movies.length : null),
+      },
+      {
+        id: "5-final-safety",
+        name: "Tri origine + filet sécurité genre/langue",
+        params: {
+          effectiveExcludedGenres,
+          excludedLangs: effectiveExcludedLangsArr,
+        },
+        fallbackTriggered: safetyNetFiltered > 0,
+        fallbackReason: safetyNetFiltered > 0
+          ? `${safetyNetFiltered} film(s) éliminé(s) post-fallback`
+          : null,
+        inputCount: movies.length,
+        outputCount: finalMovies.length,
+      },
+    ];
+
     const responseBody: Record<string, unknown> = {
         movies: finalMovies,
         movie: finalMovies[0]?.movie || null,
@@ -1430,12 +1763,21 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
 
     if (includeDebug) {
       responseBody.debugData = {
+          pipelineStages,
           filters: {
             excludeCount: normalizedExcludeIds.length,
             minRating,
             maxDuration: effectiveMaxDuration ?? null,
             likedGenres: effectiveLikedGenresSQL ?? likedGenresForSQL,
             effectiveExcludedGenres,
+            explorationLevel,
+            mediaType,
+            minMatchScore,
+            requestedCount,
+            platformIds: platformIds ?? [],
+            moodContext,
+            moodBoostGenres,
+            profileDecades,
             voiceOverrides: {
               genres: voiceGenres,
               language: voiceOriginalLanguage,
