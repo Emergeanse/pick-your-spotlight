@@ -11,6 +11,12 @@
  */
 
 import { describe, it, expect } from "vitest";
+import {
+  buildUsedIds,
+  filterByUsedIds,
+  checkFinalSafety,
+  normalizeExcludeIds,
+} from "@/lib/recommendation-pipeline";
 
 // ─── IDs utilisés dans les tests (films connus interagis) ────────────────────
 const INCEPTION  = 27205;
@@ -28,15 +34,7 @@ const extractTmdbIdsFromFeedbackRows = (rows: any[]): number[] =>
     .map((row: any) => row?.catalog_items?.tmdb_id)
     .filter((id: any): id is number => typeof id === "number" && id > 0);
 
-// ─── Copie de la logique usedIds (edge function surprise-personalized) ────────
-// Régression du 2026-06-03 : usedIds avait été vidé → films likés passaient.
-const buildUsedIds = (normalizedExcludeIds: number[]): Set<number> =>
-  new Set<number>(normalizedExcludeIds);
-
-const filterByUsedIds = (
-  selections: Array<{ tmdbId: number; title: string }>,
-  usedIds: Set<number>
-) => selections.filter((s) => !usedIds.has(s.tmdbId));
+// ─── usedIds / exclusions — recommendation-pipeline.ts (extrait SP) ────────────
 
 // ─── 1. Extraction des IDs exclus depuis les lignes de feedback ──────────────
 describe("Couche 1 — extraction des IDs exclus depuis user_item_feedback", () => {
@@ -140,6 +138,77 @@ describe("Couche 2 — usedIds bloque les films interagis (edge function)", () =
 
     const result = filterByUsedIds(allInteracted, usedIds);
     expect(result).toHaveLength(0);
+  });
+});
+
+// ─── Filet sécurité + backfill (logique edge surprise-personalized) ───────────
+const buildFinalMovies = (
+  movies: Array<{ movie: { id: number; title: string; genres?: { name: string }[]; original_language?: string }; confidence: number }>,
+  pool: Array<{ tmdb_id: number; title: string; genres?: string[]; vote_average?: number; similarity?: number }>,
+  requestedCount: number,
+  excludedGenres: string[],
+  excludedLangs: string[],
+  excludedIds: number[],
+) => {
+  const excludedSet = new Set(excludedIds);
+  const safe = movies.filter((m) => checkFinalSafety(m.movie, excludedGenres, excludedLangs).ok);
+  const used = new Set(safe.map((m) => m.movie.id));
+  const backfill = pool
+    .filter((c) => !excludedSet.has(c.tmdb_id) && !used.has(c.tmdb_id))
+    .slice(0, Math.max(0, requestedCount - safe.length))
+    .map((c) => ({
+      movie: {
+        id: c.tmdb_id,
+        title: c.title,
+        genres: (c.genres || []).map((name) => ({ name })),
+        original_language: "en",
+      },
+      confidence: 70,
+    }))
+    .filter((m) => checkFinalSafety(m.movie, excludedGenres, excludedLangs).ok);
+  return [...safe, ...backfill].slice(0, requestedCount);
+};
+
+describe("Couche 2b — filet sécurité + backfill pool", () => {
+  it("normalizeExcludeIds fusionne toutes les sources d'exclusion", () => {
+    const ids = normalizeExcludeIds([INCEPTION], [MATRIX], [STAR_WARS], [AVENGERS]);
+    expect(ids).toContain(INCEPTION);
+    expect(ids).toContain(MATRIX);
+    expect(ids).toContain(STAR_WARS);
+    expect(ids).toContain(AVENGERS);
+    expect(ids).toHaveLength(4);
+  });
+
+  it("invariant — genres exclus absents du résultat final", () => {
+    const excludedGenres = ["Horreur", "Animation"];
+    const candidates = [
+      { movie: { id: 1, title: "OK", genres: [{ name: "Drame" }], original_language: "fr" }, confidence: 90 },
+      { movie: { id: 2, title: "Horreur", genres: [{ name: "Horreur" }], original_language: "en" }, confidence: 85 },
+      { movie: { id: 3, title: "Anim", genres: [{ name: "Animation" }], original_language: "en" }, confidence: 80 },
+    ];
+    const safeOnly = candidates.filter((m) => checkFinalSafety(m.movie, excludedGenres, []).ok);
+    expect(safeOnly).toHaveLength(1);
+    expect(safeOnly[0].movie.id).toBe(1);
+    safeOnly.forEach((m) => {
+      const genreNames = (m.movie.genres || []).map((g) => g.name);
+      excludedGenres.forEach((g) => expect(genreNames).not.toContain(g));
+    });
+  });
+
+  it("complète à 3 films depuis le pool quand le filet sécurité n'en laisse qu'1", () => {
+    const movies = [
+      { movie: { id: 1, title: "OK", genres: [{ name: "Drame" }], original_language: "fr" }, confidence: 90 },
+      { movie: { id: 2, title: "Horreur", genres: [{ name: "Horreur" }], original_language: "en" }, confidence: 85 },
+      { movie: { id: 3, title: "Anim", genres: [{ name: "Animation" }], original_language: "en" }, confidence: 80 },
+    ];
+    const pool = [
+      { tmdb_id: 10, title: "Pool A", genres: ["Drame"], vote_average: 8, similarity: 0.8 },
+      { tmdb_id: 11, title: "Pool B", genres: ["Thriller"], vote_average: 7.5, similarity: 0.75 },
+      { tmdb_id: 12, title: "Pool C", genres: ["Comédie"], vote_average: 7, similarity: 0.7 },
+    ];
+    const final = buildFinalMovies(movies, pool, 3, ["Horreur", "Animation"], [], []);
+    expect(final).toHaveLength(3);
+    expect(final.map((m) => m.movie.id)).toEqual([1, 10, 11]);
   });
 });
 

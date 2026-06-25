@@ -1,0 +1,49 @@
+{
+  "movies": [
+    {
+      "movie": {
+        "id": 101,
+        "title": "Film Drame OK",
+        "vote_average": 8.0,
+        "original_language": "fr",
+        "genres": [{ "name": "Drame" }]
+      },
+      "confidence": 90,
+      "recommendationTexts": {
+        "matchScore": 90,
+        "whyItMatches": "Seul survivant du filet sécurité."
+      }
+    },
+    {
+      "movie": {
+        "id": 102,
+        "title": "Film Horreur Rejeté",
+        "vote_average": 7.5,
+        "original_language": "en",
+        "genres": [{ "name": "Horreur" }]
+      },
+      "confidence": 85,
+      "recommendationTexts": {
+        "matchScore": 85,
+        "whyItMatches": "Ne devrait pas passer le filet."
+      }
+    },
+    {
+      "movie": {
+        "id": 103,
+        "title": "Film Animation Rejeté",
+        "vote_average": 8.2,
+        "original_language": "en",
+        "genres": [{ "name": "Animation" }]
+      },
+      "confidence": 80,
+      "recommendationTexts": {
+        "matchScore": 80
+      }
+    }
+  ],
+  "engineMeta": {
+    "mode": "retrieve-rerank",
+    "finalCount": 3
+  }
+}

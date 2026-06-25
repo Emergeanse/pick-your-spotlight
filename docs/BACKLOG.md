@@ -1,7 +1,7 @@
 # Backlog Pick — suivi équipe
 
 > **Référence unique** pour prioriser, assigner et suivre l'avancement alpha → beta.  
-> Dernière mise à jour : **24 juin 2026** (session Claude Code terminée · file Cursor recalibrée)
+> Dernière mise à jour : **25 juin 2026** (TNR pipeline phase 2 · session Cursor)
 
 ---
 
@@ -14,7 +14,7 @@
 
 | Couche            | Outil                                | Fichiers                                                              | État local (24/06)                         |
 | ----------------- | ------------------------------------ | --------------------------------------------------------------------- | ------------------------------------------ |
-| **TNR unitaires** | Vitest                               | `event-reveal`, `recommendation-non-regression`, `movie-interactions`, `tonight-poster-wall`, `onboarding-initiation` | **60/60 OK**                               |
+| **TNR unitaires** | Vitest                               | `event-reveal`, `recommendation-non-regression`, `recommendation-pipeline`, `recommendation-batch-integration`, `movie-interactions`, `tonight-poster-wall`, `onboarding-initiation` | **131/131 OK** (25/06)                     |
 | **Smoke rapide**  | build + Vitest + Playwright (`auth`) | `npm run test:smoke`                                                  | build + unit OK · E2E si Chromium installé |
 | **Smoke complet** | + 5 specs E2E                        | `npm run test:smoke:full`                                             | requiert `.env.test` + Playwright          |
 | **CI GitHub**     | Actions sur `main` + PR              | `.github/workflows/ci.yml`                                            | unit + tsc sur PR · E2E sur push `main` · lockfile sync `f46ea156` |
@@ -24,7 +24,7 @@
 
 **Non automatisé** : onboarding complet (films/acteurs/réalisateurs), duo/invite, TMDB proxy prod, création soirée bout-en-bout.
 
-**Gap audit (→ 1.19)** : ~~pas encore de tests unitaires sur `taste-engine.ts` ni `recommendation-batch.ts`~~ ✅ **37 tests** (`taste-engine` 28 · `recommendation-batch` 9) · objectif **70 % couverture `src/lib/`** avant refactor pipeline reco.
+**Gap audit (→ 1.19)** : ~~pas encore de tests unitaires sur `taste-engine.ts` ni `recommendation-batch.ts`~~ ✅ **70 tests pipeline** (`taste-engine` 28 · `recommendation-batch` 9 · `recommendation-pipeline` 23 · `recommendation-batch-integration` 8 · `recommendation-non-regression` 15) · **131 total `test:unit`** · objectif **70 % couverture `src/lib/`** avant refactor pipeline reco.
 
 **Documentation pipeline** : **[RECOMMENDATION_PIPELINE.md](RECOMMENDATION_PIPELINE.md)** — diagramme, étapes, mapping `[PICK-DEBUG]`, quirks (✅ juin 2026).
 
@@ -37,6 +37,19 @@
 | **1 — Unitaires** | `taste-engine.ts` (**1.19**) · helpers `recommendation-batch.ts` (`extractRecommendationMovies`, `normalizeRecommendationTexts`, fusion scores) · fonctions pures SP si extractibles (`compositeScore`, parsing LLM) | `taste-engine.test.ts` · `recommendation-batch.test.ts` · objectif 70 % `src/lib/` | Aucune — **priorité Cursor #1** |
 | **2 — Intégration** | Mocks réponses edge (`surprise-personalized`, `movie-match`) · niveau cascade SQL attendu · `reason` non-null sur sélections LLM réussies · invariant exclusions (étendre `recommendation-non-regression`) | Tests Vitest avec fixtures JSON · pas de réseau | Phase 1 |
 | **3 — E2E** | `pipeline.spec.ts` — mocks alignés sur le vrai shape SP (`{ movies, debugData }`) · smoke post-deploy checklist § [SMOKE_TESTS.md](SMOKE_TESTS.md) 3.2 | E2E stable · campagne manuelle documentée | Phase 2 · Playwright + `.env.test` |
+
+**État phase 2 (25/06/2026) — `done` ✅**
+
+| Livrable | Fichier(s) | Tests |
+| -------- | ---------- | ----- |
+| Fixtures JSON SP / MM | `src/test/fixtures/sp-response-full.json`, `sp-response-safety-net-1.json`, `mm-response.json` | consommées par intégration |
+| Fonctions pures SP extraites | `src/lib/recommendation-pipeline.ts` | `recommendation-pipeline.test.ts` (23) |
+| `ensureRecommendationBatch` mocké | `recommendation-batch-integration.test.ts` | fusion scores · `scoreAllWithMovieMatch` · pas de backfill TMDB aveugle · genres exclus |
+| Invariants exclusions étendus | `recommendation-non-regression.test.ts` | +`normalizeExcludeIds` · genres exclus jamais en sortie · filet + backfill 1→3 |
+| Régression `usedIds` 2026-06-03 | `recommendation-pipeline.test.ts` + non-regression | documentée |
+| Quick win E2E mock shape | `tests/e2e/pipeline.spec.ts` | `MOCK_SP_RESPONSE` aligné `{ movies[], engineMeta }` |
+
+**Reste phase 3** : E2E pipeline stable avec credentials · checklist manuelle post-deploy § SMOKE_TESTS 3.2 · couverture 70 % `src/lib/` (mesure non automatisée).
 
 **Quick win debug** : **1.23** — ~~renommer `debugData.top20` → `top50`, `sql50` → `sqlCandidates`, corriger libellés `[PICK-DEBUG]` et `platformFallbackTriggered`~~ **`done`** (juin 2026).
 
@@ -168,7 +181,7 @@ Inclut : `onboarding_step`, `onboarding_paused`, films (`progress`, `liked_ids`,
 
 | #   | Audit | ID   | Tâche                                              | Mode          | Statut | Notes                                                                 |
 | --- | ----- | ---- | -------------------------------------------------- | ------------- | ------ | --------------------------------------------------------------------- |
-| 1   | #4    | 1.19 | Tests unitaires `taste-engine.ts` (+ batch)        | Cursor        | `done` | 37 tests · 97 total `test:unit` · [TNR pipeline](#tnr-pipeline-reco--feuille-de-route-3-phases) phase 1 |
+| 1   | #4    | 1.19 | Tests unitaires `taste-engine.ts` (+ batch)        | Cursor        | `done` | 70 tests pipeline · 131 total `test:unit` · [TNR pipeline](#tnr-pipeline-reco--feuille-de-route-3-phases) phases 1–2 |
 | 1b  | —     | 1.23 | Métriques debug pipeline (`top50`, libellés PICK-DEBUG) | Cursor   | `done` | Quick win · [RECOMMENDATION_PIPELINE.md](RECOMMENDATION_PIPELINE.md) quirks |
 | 2   | #5    | 2.11 | `aria-label` boutons icon-only                       | Cursor        | `todo` | Complète **2.9** a11y                                                 |
 | 3   | #1    | 2.5  | Hooks `HomeScreen` — **reporté**                     | Cursor        | `todo` | Rationalisation seule · cartographie A/B/C faite · pas de gros diff   |
@@ -237,7 +250,7 @@ Valider que l'app alpha est utilisable de bout en bout : smoke tests OK, edge fu
 | --- | ---- | -------------------------------------------------- | ------ | -------- | ------ | -------------------------------------------------- |
 | 1   | 1.17 | Logger / neutralisation `console.log` prod         | S      | Claude ✅ | `done` | `main.tsx` no-op prod · 218 appels · `87416704`    |
 | 2   | 1.18 | Centraliser logique plateformes (`platforms.ts`)   | M      | Claude ✅ | `done` | Source unique · −80 l. HomeScreen · `737c0617`     |
-| 3   | 1.19 | Tests unitaires `taste-engine` (+ batch)           | L      | Cursor   | `done` | 28 + 9 tests · `test:unit` = 97 · juin 2026 |
+| 3   | 1.19 | Tests unitaires `taste-engine` (+ batch)           | L      | Cursor   | `done` | 28+9+23+8+15 tests pipeline · 131 `test:unit` · juin 2026 |
 | 4   | 2.11 | `aria-label` boutons icon-only                     | M      | Cursor   | `todo` | File Cursor #2                                     |
 | 5   | 2.5  | Hooks `HomeScreen` (~2700 l.)                      | L      | Cursor   | `todo` | **Reporté** · candidats A/B/C · petits diffs seulement |
 
@@ -271,7 +284,7 @@ Valider que l'app alpha est utilisable de bout en bout : smoke tests OK, edge fu
 | #1    | **2.5**    | `HomeScreen.tsx` (~2700 l.) → hooks A/B/C (voir cartographie)         | L      | Cursor   | `todo` | **Reporté** · pas de gros refactor · rationalisation seule            |
 | #2    | **1.17**   | 50+ `console.log` en prod → no-op `main.tsx`                          | S      | Claude ✅ | `done` | 218 appels neutralisés · `87416704`                                   |
 | #3    | **1.18**   | Logique plateformes dupliquée 4× → `platforms.ts`                     | M      | Claude ✅ | `done` | −80 l. HomeScreen · extraction Cursor = redondante                    |
-| #4    | **1.19**   | Tests unitaires `taste-engine.ts`, `recommendation-batch.ts`          | L      | Cursor   | `done` | 37 tests · 97 `test:unit` · [RECOMMENDATION_PIPELINE.md](RECOMMENDATION_PIPELINE.md) |
+| #4    | **1.19**   | Tests unitaires `taste-engine.ts`, `recommendation-batch.ts`          | L      | Cursor   | `done` | 70 tests pipeline · 131 `test:unit` · [RECOMMENDATION_PIPELINE.md](RECOMMENDATION_PIPELINE.md) |
 | #4b   | **1.23**   | Métriques debug pipeline (noms `top50`/`sqlCandidates`, libellés console) | S  | Cursor   | `done` | Quick win · quirks [RECOMMENDATION_PIPELINE.md](RECOMMENDATION_PIPELINE.md) |
 | #5    | **2.11**   | `aria-label` sur boutons icônes (sans texte visible)                  | M      | Cursor   | `todo` | Priorité Cursor #2 · complète **2.9** a11y                            |
 
@@ -334,7 +347,7 @@ cd pick-your-spotlight
 npm ci
 npx playwright install chromium          # une fois par machine
 
-npm run test:unit                        # TNR rapides (60 tests)
+npm run test:unit                        # TNR rapides (131 tests)
 npm run test:smoke                       # build + unit + auth E2E public
 # npm run test:smoke:full                # + pipeline, reveal, cinema, soirees (nécessite .env.test)
 
@@ -381,7 +394,7 @@ npm run dev                              # puis checklist manuelle (SMOKE_TESTS.
 | ----- | ---------------------------------------------------------- | ------ | ------ | --------- | ------------------------------------------------------------------------------------------------------- |
 | 1.17  | Neutralisation `console.log` prod (`main.tsx`)             | S      | `done` | Claude ✅ | Audit #2 · 218 appels · `87416704`                                                                      |
 | 1.18  | Centraliser plateformes (`platforms.ts`)                   | M      | `done` | Claude ✅ | Audit #3 · −80 l. HomeScreen · extraction Cursor redondante · `737c0617`                                |
-| 1.19  | Tests unitaires `taste-engine` + `recommendation-batch`    | L      | `done` | Cursor    | 28 + 9 tests · 97 total · juin 2026 |
+| 1.19  | Tests unitaires `taste-engine` + `recommendation-batch`    | L      | `done` | Cursor    | 70 tests pipeline · 131 total · phases 1–2 TNR · juin 2026 |
 | 1.23  | Métriques debug pipeline (`top50`, `sqlCandidates`, libellés) | S   | `done` | Cursor    | Quick win · quirks pipeline doc |
 | 1.20  | `TonightPickContext` (réduire props overlay)               | M      | `todo` | Pair humain | Audit #6 · Cursor #4 · PR par étapes · après **1.19**                                                 |
 | 1.21  | Cache profil `localStorage` (`pys_greeting`)               | S      | `done` | Claude ✅ | Audit #7 · greeting instantané · `737c0617`                                                             |
@@ -411,7 +424,9 @@ npm run dev                              # puis checklist manuelle (SMOKE_TESTS.
 | `event-reveal.test.ts`                  | 11    | ✅                           | Oui (`test:smoke`)                 |
 | `tonight-poster-wall.test.ts`           | 13    | ✅                           | Non (via `test:unit`)              |
 | `onboarding-initiation.test.ts`         | 15    | ✅                           | Non (via `test:unit`)              |
-| `recommendation-non-regression.test.ts` | 12    | ✅                           | Non (via `test:unit`)              |
+| `recommendation-non-regression.test.ts` | 15    | ✅                           | Non (via `test:unit`)              |
+| `recommendation-pipeline.test.ts`       | 23    | ✅                           | Non (via `test:unit`)              |
+| `recommendation-batch-integration.test.ts` | 8  | ✅                           | Non (via `test:unit`)              |
 | `movie-interactions.test.tsx`           | 9     | ✅                           | Non (via `test:unit`)              |
 | `taste-engine.test.ts`                  | 28    | ✅                           | Non (via `test:unit`)              |
 | `recommendation-batch.test.ts`          | 9     | ✅                           | Non (via `test:unit`)              |
@@ -483,6 +498,7 @@ npm run dev                              # puis checklist manuelle (SMOKE_TESTS.
 
 | Date       | Qui    | Changement                                                                                                                                              |
 | ---------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-06-25 | Cursor | TNR pipeline **phase 2** : `recommendation-pipeline.ts` · fixtures JSON · `recommendation-batch-integration` · non-regression étendu · mock E2E SP shape · **131** tests `test:unit` |
 | 2026-06-24 | Cursor | `RECOMMENDATION_PIPELINE.md` · TNR pipeline 3 phases · **1.24** `done` · **1.23** métriques debug |
 | 2026-06-24 | Cursor | Recap session Claude (#2 #3 #7 #8 #10 `done`) · file Cursor recalibrée (#4 → #5 → #1 reporté → #6 pair → #9) · colonne **Mode** · candidats hooks A/B/C · note « pas de gros refactor HomeScreen » |
 | 2026-06-24 | —      | TNR : 60 tests unit OK · CI lockfile `f46ea156` · E2E `soirees` fix `3295ae55` · commits locaux à fusionner si diverge (lockfile, soirees, backlog `3268db9b` + travail Claude `87416704`–`e73e3e8e`) |
@@ -503,7 +519,7 @@ npm run dev                              # puis checklist manuelle (SMOKE_TESTS.
 
 ### Immédiat — clôturer Sprint A
 
-1. **TNR unit** — `npm run test:unit` (60 tests, ~10 s)
+1. **TNR unit** — `npm run test:unit` (131 tests, ~10 s)
 2. **Smoke auto** — `npx playwright install chromium` puis `npm run test:smoke`
 3. **0.3 manuel** — checklist §3 ([SMOKE_TESTS.md](SMOKE_TESTS.md)), dont onboarding initiatique
 4. **0.2** — Déployer edge functions + migrations onboarding si prod ≠ repo

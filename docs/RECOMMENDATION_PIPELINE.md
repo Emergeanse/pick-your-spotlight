@@ -99,6 +99,7 @@ Activé quand `debug: true` est envoyé à `surprise-personalized` (toujours en 
 
 | Groupe console | Champ `debugData` | Contenu |
 |----------------|-------------------|---------|
+| `📋 Paramètres par étape` | `pipelineStages` | Table synthétique : chaque étape (client→edge→movie-match) avec params, comptes entrée/sortie, fallback oui/non + raison |
 | `📤 Paramètres envoyés` | — (client) | Vecteur, plateformes, genres, `excludeIds` |
 | `1️⃣ SQL vectoriel 32D` | `sqlCandidates`, `sqlCascadeLevel`, `sqlRpcParams`, `sqlCountDiag`, `sqlSnippet` | Candidats SQL triés par Sim% · snippet RPC reproductible |
 | `📈 Détail par niveau de cascade` | `sqlLevelDebug` | Films gagnés par niveau 0–3 |
@@ -115,6 +116,32 @@ Activé quand `debug: true` est envoyé à `surprise-personalized` (toujours en 
 | `4️⃣ Résultat final après movie-match` | — (client) | Score MM · rich texts vs `FALLBACK` |
 
 Préfixe perf client : `[Pick⏱]` (surprise-personalized, movie-match eager/lazy).
+
+### `debugData.pipelineStages` (v25+)
+
+Tableau ordonné d'objets `{ id, name, params, fallbackTriggered, fallbackReason?, inputCount?, outputCount? }` :
+
+| id | Étape |
+|----|--------|
+| `0-client-request` | Paramètres client (HomeScreen, avant invoke) |
+| `0-edge-request` | Paramètres effectifs edge (voice/mood/duo résolus) — inclut `profileDecades`, `moodContext`, `moodBoostGenres` |
+| `1-sql-vector` | Cascade SQL 32D niveaux 0→3 |
+| `1.4-sql-explicit` | Complément `match_movies_explicit` |
+| `1.7-lang-enrich` | Backfill `original_language` TMDB |
+| `2a-post-filter-origin` | Filtre langues exclues |
+| `2b-post-filter-voiceGenres` | Post-filtre genre vocal (seuil ≥5) |
+| `2c-post-filter-decade` | `voiceDecade` (hard) ou `profileDecades` (soft) |
+| `2-top50-composite` | Top 50 score composé |
+| `2.2-llm-selection` | Gemini + fallback déterministe |
+| `2.5-quality-retry` | Complément si &lt; 3 films ≥ minMatchScore |
+| `3-tmdb-enrich` | Lookup TMDB batch |
+| `4-discover-fallback` | Discover TMDB |
+| `4b-trending-fallback` | Trending/popular |
+| `4c-nuclear-fallback` | Genre/note levés, plateforme conservée |
+| `5-final-safety` | Tri origine + filet genre/langue |
+| `6-movie-match` | Client — appels séquentiels movie-match |
+
+`debugData.filters` inclut aussi explicitement : `profileDecades`, `moodContext`, `moodBoostGenres`, `explorationLevel`, `requestedCount`, `platformIds`.
 
 ---
 

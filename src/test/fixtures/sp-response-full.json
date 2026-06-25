@@ -1,0 +1,82 @@
+{
+  "movies": [
+    {
+      "movie": {
+        "id": 680,
+        "title": "Pulp Fiction",
+        "overview": "L'odyssée sanglante et burlesque de petits malfrats.",
+        "poster_path": "/d5iIlF5vW1FPzuaXefENZDYA35.jpg",
+        "vote_average": 8.5,
+        "release_date": "1994-09-10",
+        "original_language": "en",
+        "genres": [{ "id": 53, "name": "Thriller" }, { "id": 80, "name": "Crime" }]
+      },
+      "reason": "Thriller culte aligné avec ton goût pour le dark/intense.",
+      "confidence": 88,
+      "recommendationTexts": {
+        "matchScore": 88,
+        "score": 88,
+        "whyItMatches": "Thriller culte aligné avec ton goût pour le dark/intense.",
+        "headline": "Un classique indémodable"
+      }
+    },
+    {
+      "movie": {
+        "id": 155,
+        "title": "The Dark Knight",
+        "overview": "Batman affronte le Joker.",
+        "poster_path": "/qJ2tW6WMUDux911r6m7haRef0WH.jpg",
+        "vote_average": 8.5,
+        "release_date": "2008-07-16",
+        "original_language": "en",
+        "genres": [{ "id": 18, "name": "Drame" }, { "id": 28, "name": "Action" }]
+      },
+      "reason": "Super-héros sombre, tension maximale.",
+      "confidence": 85,
+      "recommendationTexts": {
+        "matchScore": 85,
+        "score": 85,
+        "whyItMatches": "Super-héros sombre, tension maximale."
+      }
+    },
+    {
+      "movie": {
+        "id": 424,
+        "title": "Le Parrain",
+        "overview": "La saga de la famille Corleone.",
+        "poster_path": "/3bhkrj58Vtu7enYsRolD1fZdja1.jpg",
+        "vote_average": 8.7,
+        "release_date": "1972-03-14",
+        "original_language": "en",
+        "genres": [{ "id": 18, "name": "Drame" }, { "id": 80, "name": "Crime" }]
+      },
+      "reason": "Chef-d'œuvre du cinéma classique.",
+      "confidence": 82,
+      "recommendationTexts": {
+        "matchScore": 82,
+        "score": 82,
+        "whyItMatches": "Chef-d'œuvre du cinéma classique."
+      }
+    }
+  ],
+  "movie": {
+    "id": 680,
+    "title": "Pulp Fiction"
+  },
+  "reason": "Thriller culte aligné avec ton goût pour le dark/intense.",
+  "confidence": 88,
+  "engineMeta": {
+    "mode": "retrieve-rerank",
+    "candidatesFound": 142,
+    "sqlCandidatesCount": 98,
+    "llmPoolCount": 50,
+    "tasteCascadeTriggered": false,
+    "llmSelected": 3,
+    "finalCount": 3
+  },
+  "debugData": {
+    "sqlCascadeLevel": 0,
+    "top50": [],
+    "sqlCandidates": []
+  }
+}

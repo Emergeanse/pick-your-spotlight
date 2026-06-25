@@ -1,0 +1,13 @@
+{
+  "matchScore": 92,
+  "score": 92,
+  "confidence": 92,
+  "headline": "Un thriller qui te ressemble",
+  "whyItMatches": "Ton profil adore les thrillers sombres et les récits non-linéaires.",
+  "detailedExplanation": "Pulp Fiction combine tension, humour noir et personnages mémorables.",
+  "emotionalJourney": "Surprise → tension → satisfaction.",
+  "perfectFor": "Une soirée où tu veux être captivé du début à la fin.",
+  "funFact": "Le film a relancé la carrière de John Travolta.",
+  "tone": "enthousiaste",
+  "_timings": { "embed": 45, "gemini": 320 }
+}

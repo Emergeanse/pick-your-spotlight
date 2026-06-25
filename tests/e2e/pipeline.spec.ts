@@ -23,6 +23,29 @@ const MOCK_MOVIE = {
   vote_average: 8.0,
   release_date: '2025-06-01',
   genre_ids: [28, 18],
+  genres: [{ id: 28, name: 'Action' }, { id: 18, name: 'Drame' }],
+  original_language: 'en',
+};
+
+/** Shape aligné surprise-personalized (movies[] + engineMeta). */
+const MOCK_SP_RESPONSE = {
+  movies: [
+    {
+      movie: MOCK_MOVIE,
+      reason: 'Correspond à tes goûts TNR',
+      confidence: 92,
+      recommendationTexts: {
+        matchScore: 92,
+        score: 92,
+        whyItMatches: 'Correspond à tes goûts TNR',
+        headline: 'Un film parfait pour toi',
+      },
+    },
+  ],
+  movie: MOCK_MOVIE,
+  reason: 'Correspond à tes goûts TNR',
+  confidence: 92,
+  engineMeta: { mode: 'retrieve-rerank', finalCount: 1 },
 };
 
 async function mockAllEdgeFunctions(page: import('@playwright/test').Page) {
@@ -32,7 +55,7 @@ async function mockAllEdgeFunctions(page: import('@playwright/test').Page) {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify([MOCK_MOVIE]),
+        body: JSON.stringify(MOCK_SP_RESPONSE),
       });
     } else if (url.includes('movie-match')) {
       await route.fulfill({
@@ -187,7 +210,7 @@ test.describe('Pipeline de recommandation', () => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify([MOCK_MOVIE]),
+        body: JSON.stringify(MOCK_SP_RESPONSE),
       });
     });
 

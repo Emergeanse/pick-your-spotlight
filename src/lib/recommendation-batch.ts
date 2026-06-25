@@ -448,12 +448,27 @@ export async function ensureRecommendationBatch(
   // Hard filter: remove excluded movies, those below the minimum rating,
   // and those whose genres overlap with the user's excluded genres —
   // even if the edge function returned them.
+  const dropTrace: { id: number; title: string; reason: string }[] = [];
   const batch = dedupeMovies(initialMovies).filter((movie) => {
-    if (excludeSet.has(movie.id)) return false;
-    if (minRating > 0 && (movie.vote_average ?? 0) > 0 && (movie.vote_average ?? 0) < minRating) return false;
-    if (excludedGenreSet.size > 0 && movie.genres?.some((g) => excludedGenreSet.has(g.name.toLowerCase()))) return false;
+    if (excludeSet.has(movie.id)) {
+      dropTrace.push({ id: movie.id, title: movie.title || "?", reason: "excludeIds" });
+      return false;
+    }
+    if (minRating > 0 && (movie.vote_average ?? 0) > 0 && (movie.vote_average ?? 0) < minRating) {
+      dropTrace.push({ id: movie.id, title: movie.title || "?", reason: `note < ${minRating}` });
+      return false;
+    }
+    if (excludedGenreSet.size > 0 && movie.genres?.some((g) => excludedGenreSet.has(g.name.toLowerCase()))) {
+      dropTrace.push({ id: movie.id, title: movie.title || "?", reason: "genre exclu" });
+      return false;
+    }
     return true;
   });
+  if (dropTrace.length > 0) {
+    console.log(
+      `[Pick] ensureRecommendationBatch: ${dropTrace.length} film(s) retiré(s) — ${dropTrace.map((d) => `"${d.title}" (${d.reason})`).join(", ")}`,
+    );
+  }
   const usedIds = new Set<number>([...excludeSet, ...batch.map((movie) => movie.id)]);
 
   // En mode scoreAllWithMovieMatch (pipeline HomeScreen), on ne complète PAS avec des films
@@ -515,6 +530,16 @@ export async function ensureRecommendationBatch(
     // Complète avec les films sans score si besoin — évite finalCount < size
     const combined = [...withScores, ...withoutScores];
     finalBatch = combined.slice(0, size);
+    if (finalBatch.length < size && batch.length > finalBatch.length) {
+      const present = new Set(finalBatch.map((m) => m.id));
+      const extras = batch.filter((m) => !present.has(m.id));
+      finalBatch = [...finalBatch, ...extras].slice(0, size);
+      if (finalBatch.length > combined.slice(0, size).length) {
+        console.log(
+          `[Pick] ensureRecommendationBatch: complété ${finalBatch.length}/${size} depuis candidats edge (scores movie-match absents)`,
+        );
+      }
+    }
     if (options.preloadProviders) {
       finalBatch = await enrichRecommendationBatchWithProviders(finalBatch);
     }

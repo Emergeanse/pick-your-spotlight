@@ -3,11 +3,33 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { requireAuth } from "../_shared/auth.ts";
 import { tmdbUrl } from "../_shared/tmdb.ts";
 
-const corsHeaders = {
+    const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
+
+/** Aligné src/lib/recommendation-pipeline.ts — thème ce soir prime sur exclusions profil. */
+function resolveEffectiveExclusions(
+  excludedGenres: string[] | null | undefined,
+  voiceGenres?: string[] | null,
+  moodBoostGenres?: string[] | null,
+): { effectiveExcludedGenres: string[]; removedFromExclusions: string[] } {
+  const base = excludedGenres ?? [];
+  const themeGenres = [
+    ...new Set([
+      ...(voiceGenres ?? []).filter((g): g is string => typeof g === "string" && g.length > 0),
+      ...(moodBoostGenres ?? []).filter((g): g is string => typeof g === "string" && g.length > 0),
+    ]),
+  ];
+  if (themeGenres.length === 0) {
+    return { effectiveExcludedGenres: [...base], removedFromExclusions: [] };
+  }
+  const themeSet = new Set(themeGenres);
+  const removedFromExclusions = base.filter((g) => themeSet.has(g));
+  const effectiveExcludedGenres = base.filter((g) => !themeSet.has(g));
+  return { effectiveExcludedGenres, removedFromExclusions };
+}
 
 async function getMovieDetails(id: number, type: "movie" | "tv" = "movie"): Promise<any> {
   try {
@@ -303,13 +325,18 @@ serve(async (req) => {
     const hardExcludedFormats = ["Reality", "Soap", "Talk", "News", "Téléfilm", "Horreur", "Animation", "Kids", "Familial", "Famille"];
     const autoExcluded = hardExcludedFormats.filter((g) => !likedWithTv.includes(g));
     // Genres en fatigue (>= 3 occurrences) exclus en SQL — diversification forcée
-    const effectiveExcludedGenres = [...new Set([
+    const rawEffectiveExcludedGenres = [...new Set([
       ...(excludedGenres || []),
       ...autoExcluded,
       ...fatiguedGenres,
       // "Familial" et "Famille" sont le même genre TMDB (ID 10751) — noms variants en base
       ...((excludedGenres || []).includes("Famille") ? ["Familial"] : []),
     ])];
+    const { effectiveExcludedGenres, removedFromExclusions: themeRemovedFromExclusions } =
+      resolveEffectiveExclusions(rawEffectiveExcludedGenres, voiceGenres, moodBoostGenres);
+    for (const g of themeRemovedFromExclusions) {
+      console.log(`[SP] 🎯 Thème ce soir : ${g} retiré des exclusions`);
+    }
 
     const excludedGenreIds = new Set(effectiveExcludedGenres.map((g: string) => genreNameToId[g]).filter(Boolean));
     const likedGenreIds = new Set((topGenres as string[]).map((g) => genreNameToId[g]).filter(Boolean));
@@ -507,6 +534,8 @@ serve(async (req) => {
     let qualityRetryTriggered = false;
     let qualityRetryAdded = 0;
     let safetyNetFiltered = 0;
+    const safetyDropTrace: { id: number; title: string; reason: string }[] = [];
+    let poolBackfillAdded = 0;
 
     // ── ÉTAPE 1 : Cascade vectorielle ──
     console.log(`[SP] 🎯 Vecteur 32D actif — liked_genres SQL: [${likedGenresForSQL.join(", ")}]`);
@@ -1101,7 +1130,7 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
           qualityRetryTriggered = true;
           const evaluatedIds = new Set(llmSelections.map((s: any) => Number(s.tmdb_id)));
           const remainingCandidates = originEligible
-            .filter((c: any) => !evaluatedIds.has(Number(c.tmdb_id)))
+            .filter((c: any) => !excludedSet.has(Number(c.tmdb_id)) && !evaluatedIds.has(Number(c.tmdb_id)))
             .sort((a: any, b: any) => compositeScore(b) - compositeScore(a))
             .slice(0, targetCount);
           if (remainingCandidates.length > 0) {
@@ -1129,8 +1158,39 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
     console.log(`[SP⏱] Plateforme: ${tPlatform - t2}ms | LLM: ${t3 - tPlatform}ms → ${llmSelections.length} films sélectionnés`);
 
     // ── ÉTAPE 3 : TMDB — enrichissement en batch ──
-    // Trier par score LLM décroissant : on enrichit les meilleurs en premier
-    llmSelections.sort((a: any, b: any) => (b.matchScore || 0) - (a.matchScore || 0));
+    // Dédupliquer + retirer les films déjà interagis avant TMDB (évite 10 lookups → 1 film)
+    const seenSelectionIds = new Set<number>();
+    const preTmdbDropTrace: { id: number; title: string; reason: string }[] = [];
+    llmSelections = llmSelections
+      .sort((a: any, b: any) => (b.matchScore || 0) - (a.matchScore || 0))
+      .filter((s: any) => {
+        const id = Number(s.tmdb_id);
+        if (!Number.isFinite(id)) {
+          preTmdbDropTrace.push({ id: 0, title: "?", reason: "tmdb_id invalide" });
+          return false;
+        }
+        if (seenSelectionIds.has(id)) {
+          preTmdbDropTrace.push({
+            id,
+            title: candidates.find((c: any) => Number(c.tmdb_id) === id)?.title || "?",
+            reason: "doublon LLM",
+          });
+          return false;
+        }
+        if (excludedSet.has(id)) {
+          preTmdbDropTrace.push({
+            id,
+            title: candidates.find((c: any) => Number(c.tmdb_id) === id)?.title || "?",
+            reason: "déjà interagi (exclude_ids)",
+          });
+          return false;
+        }
+        seenSelectionIds.add(id);
+        return true;
+      });
+    if (preTmdbDropTrace.length > 0) {
+      console.log(`[SP] Pré-TMDB: ${preTmdbDropTrace.length} sélection(s) retirée(s): ${preTmdbDropTrace.map((d) => `${d.title}(${d.reason})`).join(", ")}`);
+    }
 
     const movies: any[] = [];
     // usedIds bloque les films déjà interagis même si la cascade SQL a désactivé
@@ -1173,7 +1233,7 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
               title: candidate?.title || "?",
               type: itemType,
               ok: false,
-              reason: "duplicate id",
+              reason: excludedSet.has(detail.id) ? "déjà interagi" : "doublon sélection",
             });
             return null;
           }
@@ -1386,20 +1446,103 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
 
     // ── Filet de sécurité final : retire les films dont un genre ou la langue est exclu ──
     // Nécessaire car les fallbacks discover/trending ne passent pas par les filtres SQL
-    const safeMovies = movies.filter((m: any) => {
-      const movie = m.movie || m;
+    const checkFinalSafety = (entry: any): { ok: boolean; reason?: string } => {
+      const movie = entry.movie || entry;
       const genres: string[] = (movie.genres || []).map((g: any) => g.name || g).filter(Boolean);
       const lang: string = movie.original_language || "";
-      const genreOk = effectiveExcludedGenres.length === 0 || !genres.some((g) => effectiveExcludedGenres.includes(g));
-      const langOk  = effectiveExcludedLangsArr.length === 0 || !effectiveExcludedLangsArr.includes(lang);
-      return genreOk && langOk;
-    });
+      const badGenre = effectiveExcludedGenres.find((g) => genres.includes(g));
+      if (badGenre) return { ok: false, reason: `genre exclu: ${badGenre}` };
+      if (effectiveExcludedLangsArr.length > 0 && effectiveExcludedLangsArr.includes(lang)) {
+        return { ok: false, reason: `langue exclue: ${lang}` };
+      }
+      return { ok: true };
+    };
+
+    const safeMovies: any[] = [];
+    for (const m of movies) {
+      const check = checkFinalSafety(m);
+      if (check.ok) {
+        safeMovies.push(m);
+      } else {
+        safetyDropTrace.push({
+          id: m.movie?.id ?? 0,
+          title: m.movie?.title || "?",
+          reason: check.reason || "filet sécurité",
+        });
+      }
+    }
     const filteredCount = movies.length - safeMovies.length;
     safetyNetFiltered = filteredCount;
-    if (filteredCount > 0) console.log(`[SP] Filet sécurité: ${filteredCount} film(s) éliminé(s) (genre/langue exclus)`);
+    if (filteredCount > 0) {
+      console.log(
+        `[SP] Filet sécurité: ${filteredCount} film(s) éliminé(s) — ${safetyDropTrace.map((d) => `"${d.title}" (${d.reason})`).join(", ")}`,
+      );
+    }
+
+    // Compléter jusqu'à requestedCount depuis le pool SQL/LLM si le filet sécurité ou usedIds a trop réduit
+    let finalCandidates = [...safeMovies];
+    const finalUsedIds = new Set<number>(finalCandidates.map((m) => m.movie?.id).filter(Number.isFinite));
+    const poolCompositeScore = (c: any) => (c.similarity ?? 0) * 100 + (c.vote_average ?? 0);
+
+    const buildMovieEntry = (detail: any, resolvedType: "movie" | "tv", cand: any, sel?: { matchScore?: number; reason?: string | null }) => {
+      if (resolvedType === "tv") {
+        if (!detail.title && detail.name) detail.title = detail.name;
+        if (!detail.original_title && detail.original_name) detail.original_title = detail.original_name;
+        if (!detail.release_date && detail.first_air_date) detail.release_date = detail.first_air_date;
+      }
+      const matchScore = sel?.matchScore ?? Math.round(65 + poolCompositeScore(cand) / 10);
+      return {
+        movie: { ...detail, platform_ids: cand?.platform_ids ?? [] },
+        reason: sel?.reason || "Ce film correspond à tes goûts.",
+        confidence: matchScore,
+        recommendationTexts: {
+          matchScore,
+          score: matchScore,
+          whyItMatches: sel?.reason || null,
+        },
+      };
+    };
+
+    if (finalCandidates.length < requestedCount && llmPool.length > 0) {
+      const poolBackfill = [...llmPool]
+        .filter((c: any) => {
+          const id = Number(c.tmdb_id);
+          return Number.isFinite(id) && !excludedSet.has(id) && !finalUsedIds.has(id);
+        })
+        .sort((a: any, b: any) => poolCompositeScore(b) - poolCompositeScore(a));
+
+      for (const cand of poolBackfill) {
+        if (finalCandidates.length >= requestedCount) break;
+        const id = Number(cand.tmdb_id);
+        const itemType: "movie" | "tv" = cand.media_type === "tv" ? "tv" : cand.media_type === "movie" ? "movie" : searchType;
+        let detail = await getMovieDetails(id, itemType);
+        let resolvedType = itemType;
+        if (!detail) {
+          const fallbackType: "movie" | "tv" = itemType === "movie" ? "tv" : "movie";
+          detail = await getMovieDetails(id, fallbackType);
+          if (detail) resolvedType = fallbackType;
+        }
+        if (!detail || finalUsedIds.has(detail.id)) continue;
+        const entry = buildMovieEntry(detail, resolvedType, cand);
+        const check = checkFinalSafety(entry);
+        if (!check.ok) {
+          safetyDropTrace.push({ id: detail.id, title: detail.title || cand.title || "?", reason: check.reason || "filet sécurité" });
+          continue;
+        }
+        finalUsedIds.add(detail.id);
+        finalCandidates.push(entry);
+        poolBackfillAdded++;
+        console.log(`[SP] Pool backfill: +"${detail.title || cand.title}" (id=${detail.id})`);
+      }
+      if (poolBackfillAdded > 0) {
+        console.log(`[SP] Pool backfill: +${poolBackfillAdded} film(s) → ${finalCandidates.length}/${requestedCount}`);
+      }
+    }
 
     // Garde au maximum le nombre souhaité par l'utilisateur
-    const finalMovies = (safeMovies.length >= Math.min(requestedCount, 1) ? safeMovies : movies).slice(0, requestedCount);
+    const finalMovies = (
+      finalCandidates.length >= Math.min(requestedCount, 1) ? finalCandidates : movies
+    ).slice(0, requestedCount);
 
     const tFinal = Date.now();
     console.log(
@@ -1722,10 +1865,12 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
           effectiveExcludedGenres,
           excludedLangs: effectiveExcludedLangsArr,
         },
-        fallbackTriggered: safetyNetFiltered > 0,
+        fallbackTriggered: safetyNetFiltered > 0 || poolBackfillAdded > 0,
         fallbackReason: safetyNetFiltered > 0
           ? `${safetyNetFiltered} film(s) éliminé(s) post-fallback`
-          : null,
+          : poolBackfillAdded > 0
+            ? `+${poolBackfillAdded} film(s) depuis pool SQL (complément filet sécurité)`
+            : null,
         inputCount: movies.length,
         outputCount: finalMovies.length,
       },
@@ -1826,6 +1971,9 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
             matchScore: m.confidence ?? m.recommendationTexts?.matchScore ?? null,
             reason: m.reason || null,
           })),
+          preTmdbDropTrace,
+          safetyDropTrace,
+          poolBackfillAdded,
       };
     }
 

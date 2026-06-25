@@ -24,6 +24,7 @@ import {
   RECOMMENDATION_BATCH_SIZE,
   type RecommendationMovieDetail,
 } from "@/lib/recommendation-batch";
+import { resolveEffectiveExclusions } from "@/lib/recommendation-pipeline";
 import { getEngagementData, getProgressionMessage, type EngagementData } from "@/lib/engagement";
 import { listFeedbackByType } from "@/lib/feedback";
 import { getMyPreferences } from "@/lib/preferences";
@@ -1218,7 +1219,15 @@ const HomeScreen = ({
               : moodCfg?.boostGenres
                 ? [...new Set([...(moodCfg.boostGenres), ...(tasteProfile?.topGenres || [])])]
                 : tasteProfile?.topGenres;
-          const effectiveExcludedGenres = duoOverrides ? duoOverrides.excludedGenres : userExcludedGenres;
+          const baseExcludedGenres = duoOverrides ? duoOverrides.excludedGenres : userExcludedGenres;
+          const { effectiveExcludedGenres, removedFromExclusions } = resolveEffectiveExclusions(
+            baseExcludedGenres,
+            voiceFilters?.genres,
+            moodCfg?.boostGenres,
+          );
+          for (const g of removedFromExclusions) {
+            console.log(`[PICK-DEBUG] 🎯 Thème ce soir : ${g} retiré des exclusions`);
+          }
           const effectiveAvoidanceVector = duoOverrides?.avoidanceVector ?? (multiProfile?.avoidanceVector || null);
           const effectiveExplorationLevel = moodCfg?.explorationOverride ?? explorationLevel;
           const effectiveMaxDuration = voiceFilters?.maxDuration ?? moodCfg?.maxDurationOverride ?? quickFilters.maxDuration;
