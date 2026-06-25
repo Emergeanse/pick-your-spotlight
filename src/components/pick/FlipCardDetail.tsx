@@ -7,6 +7,7 @@ import { getPersonPhotoUrl, fetchPersonDetail } from "@/lib/people-preferences";
 import FeedbackBadge from "@/components/pick/FeedbackBadge";
 import { useMovieInteraction } from "@/hooks/use-movie-interactions";
 import MovieActionBar from "@/components/pick/MovieActionBar";
+import AppOverlayPortal from "@/components/pick/AppOverlayPortal";
 
 type MatchData = {
   matchScore?: number;
@@ -144,9 +145,7 @@ const FlipCardDetail = ({
     return recommendationTextsByMovieId?.[currentItem.id] ?? recommendationTexts ?? null;
   }, [currentType, currentItem?.id, recommendationTexts, recommendationTextsByMovieId]);
 
-  if (!isOpen || !currentItem) return null;
-
-  const isTV = !!currentItem.first_air_date;
+  const isTV = !!currentItem?.first_air_date;
   const director = isTV
     ? (detail?.created_by?.[0] ?? detail?.credits?.crew?.find((c: any) => c.job === "Executive Producer"))
     : detail?.credits?.crew?.find((c: any) => c.job === "Director");
@@ -157,16 +156,17 @@ const FlipCardDetail = ({
     [];
 
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <motion.div
-          key={`${currentType}-${currentItem?.id}`}
-          initial={{ y: "100%", opacity: 0.6 }}
-          animate={{ y: 0, opacity: 1 }}
-          exit={{ y: "100%", opacity: 0.6 }}
-          transition={{ type: "spring", damping: 30, stiffness: 320 }}
-          className="fixed inset-0 z-[110] flex flex-col bg-background"
-        >
+    <AppOverlayPortal>
+      <AnimatePresence>
+        {isOpen && currentItem && (
+          <motion.div
+            key={`${currentType}-${currentItem.id}`}
+            initial={{ y: "100%", opacity: 0.6 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: "100%", opacity: 0.6 }}
+            transition={{ type: "spring", damping: 30, stiffness: 320 }}
+            className="absolute inset-0 flex flex-col bg-background"
+          >
           {/* Sticky top bar */}
           <div className="sticky top-0 z-10 flex items-center justify-between bg-background/95 backdrop-blur-md border-b border-border/15 px-4 pt-[calc(0.75rem+env(safe-area-inset-top))] pb-3">
             <button
@@ -212,9 +212,10 @@ const FlipCardDetail = ({
               />
             )}
           </div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </AppOverlayPortal>
   );
 };
 
