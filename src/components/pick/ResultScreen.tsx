@@ -54,6 +54,7 @@ import { RecommendationMovieCardHeader } from "./RecommendationMovieCard";
 import { useMovieInteractions, useMovieInteraction } from "@/hooks/use-movie-interactions";
 import { inferCatalogMediaType } from "@/lib/catalog";
 import { programFilmForEvent } from "@/lib/event-program";
+import { bottomTabBarClearance } from "@/lib/app-chrome";
 
 const IMG_BASE = "https://image.tmdb.org/t/p";
 const CONFIDENCE_THRESHOLD = 30;
@@ -1063,7 +1064,8 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: revealStage === "settled" ? 1 : 0, y: revealStage === "settled" ? 0 : 24 }}
             transition={{ delay: 0.2, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-            className="fixed left-0 right-0 bottom-0 z-[55] border-t border-border/20 bg-background/92 px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] backdrop-blur-xl shadow-[0_-18px_40px_hsl(var(--background)/0.32)]"
+            className="fixed left-0 right-0 z-10 border-t border-border/20 bg-background/92 px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] backdrop-blur-xl shadow-[0_-18px_40px_hsl(var(--background)/0.32)]"
+            style={{ bottom: bottomTabBarClearance }}
           >
             <div className="mx-auto max-w-md">
               {/* Ligne navigation suggestions — toujours visible quand plusieurs suggestions */}

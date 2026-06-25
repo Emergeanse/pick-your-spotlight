@@ -28,7 +28,7 @@ import { useRecommendationEngine } from "./index/use-recommendation-engine";
 import { useOverlayOrchestrator } from "./index/use-overlay-orchestrator";
 import { useExternalBridges } from "./index/use-external-bridges";
 import { getRevealEvent, clearRevealEvent } from "@/lib/event-reveal";
-import { setAppChromeTabBarHidden } from "@/lib/app-chrome";
+import AppOverlayPortal from "@/components/pick/AppOverlayPortal";
 
 const Index = () => {
   usePresenceTracker();
@@ -84,11 +84,6 @@ const Index = () => {
     } else if (state.step === "home") {
       setRevealEventId(null);
     }
-  }, [state.step]);
-
-  useEffect(() => {
-    setAppChromeTabBarHidden("result-screen", state.step === "result");
-    return () => setAppChromeTabBarHidden("result-screen", false);
   }, [state.step]);
 
   // ─── Composition handlers (need both engine + overlay context) ───
@@ -197,6 +192,7 @@ const Index = () => {
         )}
 
         {state.step === "result" && state.results.length > 0 && (
+          <AppOverlayPortal>
           <motion.div
             key="result"
             initial={{ opacity: 0 }}
@@ -262,6 +258,7 @@ const Index = () => {
               revealEventId={revealEventId}
             />
           </motion.div>
+          </AppOverlayPortal>
         )}
       </AnimatePresence>
 

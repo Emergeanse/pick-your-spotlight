@@ -10,6 +10,7 @@ import {
   pickUnusedPosterPath,
 } from "@/lib/tonight-poster-wall";
 import { useMovieInteraction } from "@/hooks/use-movie-interactions";
+import AppOverlayPortal from "./AppOverlayPortal";
 import MovieActionBar from "./MovieActionBar";
 import FeedbackBadge from "./FeedbackBadge";
 
@@ -629,6 +630,7 @@ const TonightPickOverlay = ({
   const wallBrightness = 0.58 + wallProgress * 0.48;
 
   return (
+    <AppOverlayPortal>
     <AnimatePresence>
       {open && (
         <motion.div
@@ -636,7 +638,7 @@ const TonightPickOverlay = ({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: instantCover ? 0 : 0.4 }}
-          className="fixed inset-0 z-[60] flex flex-col bg-black"
+          className="absolute inset-0 flex flex-col bg-black"
         >
           {/* Stage 1 : lumières violettes pulsantes pendant que surprise-personalized tourne */}
           <AnimatePresence>
@@ -918,7 +920,7 @@ const TonightPickOverlay = ({
           </div>
 
           {/* Bottom-anchored info block */}
-          <div className="relative z-10 mt-auto px-7 pb-[calc(1.5rem+env(safe-area-inset-bottom))] overflow-y-auto scrollbar-hide max-h-[65vh]">
+          <div className="relative z-10 mt-auto px-7 pb-[calc(1.5rem+60px+env(safe-area-inset-bottom))] overflow-y-auto scrollbar-hide max-h-[65vh]">
             {/* Chips: year, genre, first streaming platform */}
             <div className="flex gap-2 mb-4 flex-wrap">
               {year && (
@@ -1036,6 +1038,7 @@ const TonightPickOverlay = ({
         </motion.div>
       )}
     </AnimatePresence>
+    </AppOverlayPortal>
   );
 };
 

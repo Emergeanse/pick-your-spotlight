@@ -1,24 +1,12 @@
-type TabBarListener = (hidden: boolean) => void;
+/** Mount point id for fullscreen overlays rendered below the tab bar (z-50 vs z-51). */
+export const APP_OVERLAY_PORTAL_ID = "app-overlay-portal";
 
-const hideReasons = new Set<string>();
-const tabBarListeners = new Set<TabBarListener>();
+/** Visible height of BottomTabBar excluding safe-area (FAB extends above but bar row is 60px). */
+export const BOTTOM_TAB_BAR_HEIGHT_PX = 60;
 
-function emitTabBarHidden() {
-  const hidden = hideReasons.size > 0;
-  tabBarListeners.forEach((listener) => listener(hidden));
-}
+/** CSS length: reserve space above the fixed tab bar for overlay CTAs. */
+export const bottomTabBarClearance = `calc(${BOTTOM_TAB_BAR_HEIGHT_PX}px + env(safe-area-inset-bottom))`;
 
-/** Masque la BottomTabBar tant qu'au moins une raison fullscreen est active. */
-export function setAppChromeTabBarHidden(reason: string, hidden: boolean) {
-  if (hidden) hideReasons.add(reason);
-  else hideReasons.delete(reason);
-  emitTabBarHidden();
-}
-
-export function subscribeAppChromeTabBar(listener: TabBarListener): () => void {
-  tabBarListeners.add(listener);
-  listener(hideReasons.size > 0);
-  return () => {
-    tabBarListeners.delete(listener);
-  };
+export function getAppOverlayPortalElement(): HTMLElement {
+  return document.getElementById(APP_OVERLAY_PORTAL_ID) ?? document.body;
 }

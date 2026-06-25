@@ -10,6 +10,7 @@ import {
 } from "@/lib/tmdb";
 import { buildStreamingLinks } from "@/lib/streaming-links";
 import { useMovieInteraction } from "@/hooks/use-movie-interactions";
+import AppOverlayPortal from "./AppOverlayPortal";
 import MovieActionBar from "./MovieActionBar";
 import FeedbackBadge from "./FeedbackBadge";
 
@@ -85,6 +86,7 @@ const SoireeFilmOverlay = ({
     : null;
 
   return (
+    <AppOverlayPortal>
     <AnimatePresence>
       {open && movie && (
         <motion.div
@@ -93,7 +95,7 @@ const SoireeFilmOverlay = ({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.25 }}
-          className="fixed inset-0 z-[100] flex flex-col bg-background overflow-hidden"
+          className="absolute inset-0 flex flex-col bg-background overflow-hidden"
         >
           {bgImage && (
             <motion.div
@@ -155,7 +157,7 @@ const SoireeFilmOverlay = ({
               )}
             </div>
 
-            <div className="relative z-10 mt-auto px-7 pb-[calc(2rem+env(safe-area-inset-bottom))] overflow-y-auto scrollbar-hide max-h-[55vh]">
+            <div className="relative z-10 mt-auto px-7 pb-[calc(2rem+60px+env(safe-area-inset-bottom))] overflow-y-auto scrollbar-hide max-h-[55vh]">
               <div className="flex gap-2 mb-4 flex-wrap">
                 {year && (
                   <span className="px-2.5 py-1.5 bg-white/10 backdrop-blur-xl border border-white/10 rounded-lg text-[9px] text-foreground uppercase tracking-widest font-bold font-sans">
@@ -254,8 +256,9 @@ const SoireeFilmOverlay = ({
         </motion.div>
       )}
     </AnimatePresence>
+    </AppOverlayPortal>
   );
 };
 
 export default SoireeFilmOverlay;
-
+
