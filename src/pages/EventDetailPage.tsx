@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
 import { setRevealEvent, queueForReveal } from "@/lib/event-reveal";
+import { setAppChromeTabBarHidden } from "@/lib/app-chrome";
 import PostSoireeFlow, { type PostSoireeEvent } from "@/components/pick/PostSoireeFlow";
 import FlipCardDetail from "@/components/pick/FlipCardDetail";
 import SoireeFilmOverlay from "@/components/pick/SoireeFilmOverlay";
@@ -185,6 +186,12 @@ const EventDetailPage = () => {
     const timer = setInterval(update, 1000);
     return () => clearInterval(timer);
   }, [event]);
+
+  useEffect(() => {
+    const hideTabBar = !!(filmFicheMovie && !filmDetailOpen);
+    setAppChromeTabBarHidden("soiree-film-overlay", hideTabBar);
+    return () => setAppChromeTabBarHidden("soiree-film-overlay", false);
+  }, [filmFicheMovie, filmDetailOpen]);
 
   useEffect(() => {
     autoRevealTriggeredRef.current = false;

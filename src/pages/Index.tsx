@@ -28,6 +28,7 @@ import { useRecommendationEngine } from "./index/use-recommendation-engine";
 import { useOverlayOrchestrator } from "./index/use-overlay-orchestrator";
 import { useExternalBridges } from "./index/use-external-bridges";
 import { getRevealEvent, clearRevealEvent } from "@/lib/event-reveal";
+import { setAppChromeTabBarHidden } from "@/lib/app-chrome";
 
 const Index = () => {
   usePresenceTracker();
@@ -83,6 +84,11 @@ const Index = () => {
     } else if (state.step === "home") {
       setRevealEventId(null);
     }
+  }, [state.step]);
+
+  useEffect(() => {
+    setAppChromeTabBarHidden("result-screen", state.step === "result");
+    return () => setAppChromeTabBarHidden("result-screen", false);
   }, [state.step]);
 
   // ─── Composition handlers (need both engine + overlay context) ───

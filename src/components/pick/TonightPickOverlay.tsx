@@ -774,7 +774,7 @@ const TonightPickOverlay = ({
                 scale: { duration: 2.5, ease: [0.22, 1, 0.36, 1] },
                 filter: { duration: 0.9, delay: 0.8, ease: "easeOut" },
               }}
-              className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+              className="absolute inset-0 bg-cover bg-center bg-no-repeat pointer-events-none"
               style={{
                 backgroundImage: `url(${getBackdropUrl(movie.backdrop_path) || getPosterUrl(movie.poster_path, "w780")})`,
               }}

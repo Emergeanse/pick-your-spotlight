@@ -823,8 +823,8 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
             style={{ backgroundImage: `url(${bgImage})` }}
           />
         )}
-        <div className="absolute inset-0 poster-gradient" />
-        <div className="absolute inset-0 bg-gradient-to-r from-background/90 via-background/60 to-transparent" />
+        <div className="absolute inset-0 poster-gradient pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-r from-background/90 via-background/60 to-transparent pointer-events-none" />
         {/* Cinematic vignette */}
         <div
           className="absolute inset-0 pointer-events-none"
@@ -882,7 +882,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
           initial={{ opacity: 0 }}
           animate={{ opacity: revealStage === "anticipation" ? 0 : 1 }}
           transition={{ duration: 0.7, ease: "easeOut" }}
-          className="relative z-10 min-h-full px-5 pt-[calc(1rem+env(safe-area-inset-top))] pb-[calc(8rem+env(safe-area-inset-bottom))] md:px-8 lg:px-12"
+          className="relative z-10 min-h-full px-5 pt-[calc(1rem+env(safe-area-inset-top))] pb-[calc(11rem+env(safe-area-inset-bottom))] md:px-8 lg:px-12"
         >
           <BrandHeader />
 
@@ -1074,7 +1074,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: revealStage === "settled" ? 1 : 0, y: revealStage === "settled" ? 0 : 24 }}
             transition={{ delay: 0.2, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-            className="fixed left-0 right-0 bottom-[calc(3.5rem+env(safe-area-inset-bottom))] z-50 border-t border-border/20 bg-background/84 px-4 pt-3 pb-4 backdrop-blur-xl shadow-[0_-18px_40px_hsl(var(--background)/0.32)]"
+            className="fixed left-0 right-0 bottom-0 z-[55] border-t border-border/20 bg-background/92 px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] backdrop-blur-xl shadow-[0_-18px_40px_hsl(var(--background)/0.32)]"
           >
             <div className="mx-auto max-w-md">
               {/* Ligne navigation suggestions — toujours visible quand plusieurs suggestions */}

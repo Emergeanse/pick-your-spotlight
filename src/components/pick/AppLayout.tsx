@@ -1,9 +1,11 @@
+import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import BottomTabBar from "@/components/pick/BottomTabBar";
 import BrandHeader from "@/components/pick/BrandHeader";
 import OnboardingResumeBanner from "@/components/onboarding/OnboardingResumeBanner";
 import { useOnboardingGate } from "@/hooks/use-onboarding-gate";
+import { subscribeAppChromeTabBar } from "@/lib/app-chrome";
 
 /**
  * Mobile-first layout. On md+ we frame the app as a centered phone-shaped
@@ -13,6 +15,9 @@ import { useOnboardingGate } from "@/hooks/use-onboarding-gate";
 const AppLayout = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
   const { checking } = useOnboardingGate();
+  const [hideBottomTabBar, setHideBottomTabBar] = useState(false);
+
+  useEffect(() => subscribeAppChromeTabBar(setHideBottomTabBar), []);
   // Ces pages gèrent leur propre header — pas besoin du BrandHeader global
   const PAGES_WITH_OWN_HEADER = ["/app", "/app/profile", "/app/adn"];
   const PREFIXES_WITH_OWN_HEADER = ["/app/soiree", "/app/soirees"];
@@ -37,7 +42,7 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
         )}
         <OnboardingResumeBanner />
         {children}
-        <BottomTabBar />
+        {!hideBottomTabBar && <BottomTabBar />}
       </div>
     </div>
   );

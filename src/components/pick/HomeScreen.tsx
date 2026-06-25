@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate, useLocation } from "react-router-dom";
 import { consumePendingDuoPick } from "@/lib/duo-pending";
 import { clearRevealIntent, type RevealIntent, peekForReveal, consumeForReveal, queueForReveal, _pipelineFns } from "@/lib/event-reveal";
+import { setAppChromeTabBarHidden } from "@/lib/app-chrome";
 import { toast } from "sonner";
 import { Sparkles, WandSparkles, Clapperboard, ChevronRight, Flame, Eye, Coffee, Heart, Shuffle, Home, Users, Crown, Star } from "lucide-react";
 
@@ -2202,6 +2203,12 @@ const HomeScreen = ({
   };
 
   const hideHomeDuringReveal = tonightLoading && !tonightPick;
+
+  useEffect(() => {
+    const hideTabBar = !!(tonightLoading || tonightPick || homeBrowseOpen || showFindChoice);
+    setAppChromeTabBarHidden("tonight-pick", hideTabBar);
+    return () => setAppChromeTabBarHidden("tonight-pick", false);
+  }, [tonightLoading, tonightPick, homeBrowseOpen, showFindChoice]);
 
   return (
     <div className="relative w-full h-full overflow-x-hidden">
