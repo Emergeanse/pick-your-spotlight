@@ -53,6 +53,7 @@ import FeedbackBadge from "./FeedbackBadge";
 import { RecommendationMovieCardHeader } from "./RecommendationMovieCard";
 import { useMovieInteractions, useMovieInteraction } from "@/hooks/use-movie-interactions";
 import { inferCatalogMediaType } from "@/lib/catalog";
+import { programFilmForEvent } from "@/lib/event-program";
 
 const IMG_BASE = "https://image.tmdb.org/t/p";
 const CONFIDENCE_THRESHOLD = 30;
@@ -526,19 +527,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
       if (!revealEventId || programmingEvent) return;
       setProgrammingEvent(true);
       try {
-        const { data: ci } = await supabase
-          .from("catalog_items").select("id").eq("tmdb_id", movie.id).maybeSingle();
-        const { error } = await (supabase as any)
-          .from("events")
-          .update({
-            final_pick_id: (ci as any)?.id ?? null,
-            final_pick_title: getDisplayTitle(movie),
-            final_pick_poster: movie.poster_path ?? null,
-            final_pick_tmdb_id: movie.id,
-            status: "done",
-          })
-          .eq("id", revealEventId);
-        if (error) throw error;
+        await programFilmForEvent(revealEventId, movie);
         toast.success("Film programmé pour la soirée !", { description: getDisplayTitle(movie) });
         navigate(`/app/soirees/${revealEventId}`);
       } catch (e: any) {

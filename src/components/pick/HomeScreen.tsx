@@ -2,7 +2,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate, useLocation } from "react-router-dom";
 import { consumePendingDuoPick } from "@/lib/duo-pending";
-import { clearRevealIntent, type RevealIntent, peekForReveal, consumeForReveal, queueForReveal, _pipelineFns } from "@/lib/event-reveal";
+import { clearRevealIntent, type RevealIntent, peekForReveal, consumeForReveal, queueForReveal, _pipelineFns, getRevealEvent, clearRevealEvent } from "@/lib/event-reveal";
+import { programFilmForEvent } from "@/lib/event-program";
 import { setAppChromeTabBarHidden } from "@/lib/app-chrome";
 import { toast } from "sonner";
 import { Sparkles, WandSparkles, Clapperboard, ChevronRight, Flame, Eye, Coffee, Heart, Shuffle, Home, Users, Crown, Star } from "lucide-react";
@@ -10,7 +11,7 @@ import { Sparkles, WandSparkles, Clapperboard, ChevronRight, Flame, Eye, Coffee,
 import { formatPlatformNamesForLoading, resolveProviders } from "@/lib/platforms";
 import type { Movie, MovieDetail } from "@/lib/tmdb";
 import type { VoiceSearchFilters } from "./VoiceChat";
-import { getTrendingMovies, getBackdropUrl, getMovieDetails } from "@/lib/tmdb";
+import { getTrendingMovies, getBackdropUrl, getMovieDetails, getDisplayTitle } from "@/lib/tmdb";
 import { getLikedMovies } from "@/lib/liked-movies";
 import { trackInteraction, getUserTasteProfile } from "@/lib/interactions";
 import { useAuth } from "@/hooks/use-auth";
@@ -346,6 +347,8 @@ const HomeScreen = ({
   const [currentBgIndex, setCurrentBgIndex] = useState(0);
 
   const [revealPendingIntent, setRevealPendingIntent] = useState<RevealIntent | null>(null);
+  const [revealEventId, setRevealEventId] = useState<string | null>(() => getRevealEvent()?.eventId ?? null);
+  const [programmingEvent, setProgrammingEvent] = useState(false);
   const [tonightPick, setTonightPick] = useState<MovieDetail | null>(null);
   // Initialisation synchrone : si on arrive depuis EventDetailPage avec revealPending=true
   // ET qu'un intent est queué, l'overlay s'ouvre dès le premier rendu → zéro flash.
@@ -602,6 +605,9 @@ const HomeScreen = ({
     if (revealTriggeredRef.current) { console.log("[REVEAL] ⛔ déjà déclenché, abandon"); return; }
     revealTriggeredRef.current = true;
     clearRevealIntent();
+
+    const reveal = getRevealEvent();
+    if (reveal?.eventId) setRevealEventId(reveal.eventId);
 
     const { context, genres, mood, participantIds, mediaType } = intent;
     console.log("[REVEAL] 🏃 runRevealPipeline — context:", context, "| genres:", genres, "| mood:", mood, "| mediaType:", mediaType, "| participantIds:", participantIds);
@@ -2124,6 +2130,24 @@ const HomeScreen = ({
     onSurprise(moviesToPass, tonightPickIndex, tonightSeenMovieIds);
   };
 
+  const handleProgramForEvent = async () => {
+    if (!revealEventId || !tonightPick || programmingEvent) return;
+    setProgrammingEvent(true);
+    try {
+      await programFilmForEvent(revealEventId, tonightPick);
+      toast.success("Film programmé pour la soirée !", { description: getDisplayTitle(tonightPick) });
+      clearRevealEvent();
+      setRevealEventId(null);
+      setTonightPick(null);
+      setTonightLoading(false);
+      navigate(`/app/soirees/${revealEventId}`);
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : "Impossible de programmer le film";
+      toast.error(message);
+      setProgrammingEvent(false);
+    }
+  };
+
   const handleRejectAndRefresh = async (movie: MovieDetail, reason: RejectionContext["reason"]) => {
     const nextRejected = [...rejectedIds, movie.id];
     const rejContext: RejectionContext = {
@@ -2645,12 +2669,14 @@ const HomeScreen = ({
         onPrev={() => void handleNavigateTonightPick("prev")}
         onNext={() => void handleNavigateTonightPick("next")}
         onOpenDetail={handleOpenMovieDetail}
-        onConfirm={handleWatchNow}
+        onConfirm={revealEventId ? () => void handleProgramForEvent() : handleWatchNow}
         onInteraction={(type) => void handleMovieAction(type)}
         onMoreSuggestions={() => void handleMoreSuggestions()}
         expectedCount={quickFilters.recommendationCount}
         loadingLog={loadingLog}
         userGenres={tonightUserGenres}
+        revealEventId={revealEventId}
+        confirmLoading={programmingEvent}
         userName={
           (user?.user_metadata?.full_name as string | undefined) ||
           (user?.user_metadata?.name as string | undefined) ||

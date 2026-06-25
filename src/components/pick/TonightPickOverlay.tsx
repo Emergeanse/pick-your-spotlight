@@ -285,6 +285,8 @@ interface TonightPickOverlayProps {
   userName?: string;
   loadingLog?: string[];
   userGenres?: string[];
+  revealEventId?: string | null;
+  confirmLoading?: boolean;
 }
 
 const TonightPickOverlay = ({
@@ -310,6 +312,8 @@ const TonightPickOverlay = ({
   userName,
   loadingLog,
   userGenres = [],
+  revealEventId,
+  confirmLoading = false,
 }: TonightPickOverlayProps) => {
   const interaction = useMovieInteraction(movie?.id);
   const displayCount = expectedCount ?? tonightPool.length;
@@ -971,11 +975,16 @@ const TonightPickOverlay = ({
 
             {/* Primary CTA: white pill — premium contrast */}
             <motion.button
-              whileTap={{ scale: 0.97 }}
+              whileTap={{ scale: confirmLoading ? 1 : 0.97 }}
               onClick={onConfirm}
-              className="w-full py-[18px] bg-foreground text-background rounded-3xl font-sans font-bold text-[13px] tracking-[0.18em] uppercase mb-5 shadow-[0_18px_50px_-12px_rgba(255,255,255,0.25)]"
+              disabled={confirmLoading}
+              className="w-full py-[18px] bg-foreground text-background rounded-3xl font-sans font-bold text-[13px] tracking-[0.18em] uppercase mb-5 shadow-[0_18px_50px_-12px_rgba(255,255,255,0.25)] disabled:opacity-60"
             >
-              On regarde ?
+              {confirmLoading
+                ? "Programmation…"
+                : revealEventId
+                  ? "On le programme ?"
+                  : "On regarde ?"}
             </motion.button>
 
             {/* Progress segments — uniquement si plusieurs propositions */}
