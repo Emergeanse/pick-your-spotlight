@@ -1363,63 +1363,53 @@ const HomeScreen = ({
             const cascadeWarn = rpc ? (rpc.excluded_genres || []).length === 0 : false;
             const candidateCount = dbg.sqlCandidates?.length ?? 0;
 
-            // ── LANCEMENT ÉTAPE 1 ──
-            const step1Log = cascadeWarn ? console.warn.bind(console) : console.log.bind(console);
-            step1Log(
-              `%c[PICK-DEBUG] ▶ ÉTAPE 1 — SQL vectoriel 32D` +
-              `\n   FILTRE  : similarité cosinus 32D | cascade ${cascadeLabel}${cascadeWarn ? " ⚠️ excluded_genres VIDE" : ""}` +
-              `\n   ENTRÉE  : vecteur de goût 32D + ${f?.excludeCount ?? 0} IDs exclus` +
-              `\n   SORTIE  : ${candidateCount} candidats SQL`,
-              "font-weight:bold;color:#6366f1"
-            );
+            // Contexte dans le header du group = toujours visible même replié
+            const step1Header = `[PICK-DEBUG] ▶ ÉTAPE 1 — SQL vectoriel 32D` +
+              ` | cascade: ${cascadeLabel}${cascadeWarn ? " ⚠️ excluded_genres VIDE" : ""}` +
+              ` | entrée: ${f?.excludeCount ?? 0} IDs exclus` +
+              ` | SORTIE: ${candidateCount} candidats`;
+            console.groupCollapsed(step1Header);
+            if (cascadeWarn) console.warn(`  ⚠️ excluded_genres VIDE — cascade niveau ${cascadeLevel}`);
 
-            // ── PARAMÈTRES RPC (toujours visibles) ──
             if (rpc) {
               console.log(
-                `[PICK-DEBUG]   PARAMÈTRES SQL RPC :` +
-                `\n     note min         : ${rpc.min_rating ?? 0}` +
-                `\n     durée max        : ${rpc.max_duration ? `${rpc.max_duration}min` : "illimitée"}` +
-                `\n     genres aimés     : [${(rpc.liked_genres || []).join(", ") || "—"}]` +
-                `\n     genres exclus    : [${(rpc.excluded_genres || []).join(", ") || (cascadeLevel >= 3 ? "⚠️ AUCUN (désactivé)" : "—")}]` +
-                `\n     langues exclues  : [${(rpc.p_excluded_languages || []).join(", ") || "—"}]` +
-                `\n     popularité min   : ${rpc.p_min_popularity ?? "—"}` +
-                `\n     plateformes      : [${(rpc.p_platform_ids || []).join(", ") || "—"}]` +
-                `\n     décennie SQL     : ${rpc.p_min_year != null ? `${rpc.p_min_year}–${rpc.p_max_year ?? rpc.p_min_year + 9}` : "—"}` +
-                `\n     exclude_ids      : ${rpc.exclude_ids_count} IDs`
+                `  note min: ${rpc.min_rating ?? 0}` +
+                ` | durée max: ${rpc.max_duration ? `${rpc.max_duration}min` : "∞"}` +
+                ` | genres aimés: [${(rpc.liked_genres || []).join(", ") || "—"}]` +
+                ` | genres exclus: [${(rpc.excluded_genres || []).join(", ") || (cascadeLevel >= 3 ? "⚠️ AUCUN" : "—")}]` +
+                ` | plateformes: [${(rpc.p_platform_ids || []).join(", ") || "—"}]` +
+                ` | exclude_ids: ${rpc.exclude_ids_count}`
               );
             }
 
-            // ── Overrides vocaux (si présents) ──
             if (f?.voiceOverrides) {
               const vo = f.voiceOverrides;
               const hasVoice = vo.genres?.length || vo.decade != null || vo.language || vo.mediaType || vo.maxDuration;
               if (hasVoice) {
                 console.log(
-                  `[PICK-DEBUG]   🎤 OVERRIDES VOCAUX reçus par le serveur :` +
-                  (vo.genres?.length    ? `\n     genres       : [${vo.genres.join(", ")}]` : "") +
-                  (vo.decade != null    ? `\n     décennie     : ${vo.decade}s (${vo.decade}–${vo.decade + 9})` : "") +
-                  (vo.language          ? `\n     langue orig. : ${vo.language}` : "") +
-                  (vo.mediaType         ? `\n     type média   : ${vo.mediaType}` : "") +
-                  (vo.maxDuration       ? `\n     durée max    : ${vo.maxDuration}min` : "")
+                  `  🎤 voix:` +
+                  (vo.genres?.length ? ` genres=[${vo.genres.join(", ")}]` : "") +
+                  (vo.decade != null  ? ` décennie=${vo.decade}s` : "") +
+                  (vo.language        ? ` langue=${vo.language}` : "") +
+                  (vo.mediaType       ? ` type=${vo.mediaType}` : "") +
+                  (vo.maxDuration     ? ` durée≤${vo.maxDuration}min` : "")
                 );
               }
             }
 
-            // ── COUNT SQL par niveau ──
             if (dbg.sqlCountDiag?.length) {
-              console.groupCollapsed(`[PICK-DEBUG]   📊 COUNT SQL — films disponibles par niveau de cascade`);
+              console.groupCollapsed(`  📊 COUNT SQL par niveau de cascade`);
               console.table(dbg.sqlCountDiag.map((d: any) => ({
                 "Niveau": `${d.level} — ${cascadeLabels[d.level] ?? `niveau ${d.level}`}`,
                 "Total en base": d.total_in_db,
-                "Disponibles (après exclusions)": d.available_after_exclusions,
-                "excluded_genres": d.level < 3 ? "✅ actifs" : "⚠️ vérifier",
+                "Disponibles": d.available_after_exclusions,
+                "excluded_genres": d.level < 3 ? "✅" : "⚠️",
               })));
               console.groupEnd();
             }
 
-            // ── Liste des candidats SQL ──
             if (candidateCount > 0) {
-              console.groupCollapsed(`[PICK-DEBUG]   📋 SORTIE SQL — ${candidateCount} candidats (triés par similarité)`);
+              console.groupCollapsed(`  📋 ${candidateCount} candidats SQL (triés par similarité)`);
               console.table(dbg.sqlCandidates.map((c: any, i: number) => ({
                 "#": i + 1,
                 "Titre": c.title,
@@ -1432,78 +1422,76 @@ const HomeScreen = ({
               })));
               console.groupEnd();
             } else {
-              console.warn(`[PICK-DEBUG]   ⚠️ SQL : 0 candidats — vérifier les filtres ci-dessus`);
+              console.warn(`  ⚠️ SQL : 0 candidats — vérifier les filtres`);
             }
 
-            // ── Snippet SQL ──
             if (dbg.sqlSnippet) {
-              console.groupCollapsed(`[PICK-DEBUG]   🔍 Snippet SQL (copier dans l'éditeur SQL Supabase)`);
+              console.groupCollapsed(`  🔍 Snippet SQL`);
               console.log(dbg.sqlSnippet);
               console.groupEnd();
             }
 
-            // ── Détail par niveau ──
             if ((dbg as any)?.sqlLevelDebug?.length) {
-              console.groupCollapsed(`[PICK-DEBUG]   📈 Détail cascade SQL niveau par niveau`);
+              console.groupCollapsed(`  📈 Détail cascade niveau par niveau`);
               (dbg as any).sqlLevelDebug.forEach((lvl: any) => {
                 const label = cascadeLabels[lvl.level] ?? `niveau ${lvl.level}`;
-                console.log(`   Niveau ${label} : +${lvl.newFilms} non-interagis (total: ${lvl.totalNonInteracted}/100)`);
+                console.log(`  Niveau ${label} : +${lvl.newFilms} non-interagis (total: ${lvl.totalNonInteracted}/100)`);
                 if (lvl.films?.length) {
-                  console.log(`   → ${lvl.films.slice(0, 5).map((f: any) => `"${f.title}" (${f.year}) ⭐${f.note} sim=${f.sim}%`).join(" | ")}`);
+                  console.log(`  → ${lvl.films.slice(0, 5).map((f: any) => `"${f.title}" (${f.year}) ⭐${f.note} sim=${f.sim}%`).join(" | ")}`);
                 }
               });
               console.groupEnd();
             }
 
-            // ── Fallback SQL explicite ──
             if ((dbg as any)?.explicitFallbackDebug?.length) {
-              console.groupCollapsed(`[PICK-DEBUG]   1️⃣⁺ SQL explicite (sans vecteur) — complément`);
+              console.groupCollapsed(`  1️⃣⁺ SQL explicite (sans vecteur) — complément`);
               (dbg as any).explicitFallbackDebug.forEach((lvl: any) => {
-                console.log(`   liked_genres=${lvl.likedGenres ? "oui" : "non"}, note≥${lvl.minRating}: +${lvl.newFilms} films`);
+                console.log(`  liked_genres=${lvl.likedGenres ? "oui" : "non"}, note≥${lvl.minRating}: +${lvl.newFilms} films`);
                 if (lvl.films?.length) {
-                  console.log(`   → ${lvl.films.slice(0, 5).map((f: any) => `"${f.title}" (${f.year}) ⭐${f.note}`).join(" | ")}`);
+                  console.log(`  → ${lvl.films.slice(0, 5).map((f: any) => `"${f.title}" (${f.year}) ⭐${f.note}`).join(" | ")}`);
                 }
               });
               console.groupEnd();
             }
+
+            console.groupEnd(); // ÉTAPE 1
           }
 
-          // ── PROFIL LLM (toujours visible) ──
+          // ── PROFIL LLM ──
           if (dbg?.llmProfile) {
             const p = dbg.llmProfile;
-            console.log(
-              `%c[PICK-DEBUG] ▶ PROFIL UTILISATEUR → LLM` +
-              `\n   genres préférés  : [${(p.genresPrefers || []).join(", ") || "—"}]` +
-              `\n   genres exclus    : [${(p.genresExclus || []).join(", ") || "—"}]` +
-              `\n   clusters favoris : [${(p.clusters || []).join(", ") || "—"}]` +
-              `\n   origines aimées  : [${(p.originesAimees || []).join(", ") || "—"}]` +
-              `\n   genres fatigue   : [${(p.genresFatigue || []).join(", ") || "—"}]` +
-              `\n   confiance profil : ${p.confianceProfil}/100 | exploration : ${p.explorationLevel}/10 | score min : ${p.minMatchScore}%`,
-              "font-weight:bold;color:#a78bfa"
+            console.groupCollapsed(
+              `[PICK-DEBUG] ▶ PROFIL → LLM` +
+              ` | confiance: ${p.confianceProfil}/100 | exploration: ${p.explorationLevel}/10 | score min: ${p.minMatchScore}%` +
+              ` | genres: [${(p.genresPrefers || []).slice(0, 3).join(", ") || "—"}]`
             );
+            console.log(`  genres préférés : [${(p.genresPrefers || []).join(", ") || "—"}]`);
+            console.log(`  genres exclus   : [${(p.genresExclus || []).join(", ") || "—"}]`);
+            console.log(`  clusters        : [${(p.clusters || []).join(", ") || "—"}]`);
+            console.log(`  origines aimées : [${(p.originesAimees || []).join(", ") || "—"}]`);
+            console.log(`  fatigue genres  : [${(p.genresFatigue || []).join(", ") || "—"}]`);
             if (dbg.systemPrompt) {
-              console.groupCollapsed(`[PICK-DEBUG]   📄 Prompt système complet envoyé au LLM`);
+              console.groupCollapsed(`  📄 Prompt système LLM`);
               console.log(dbg.systemPrompt);
               console.groupEnd();
             }
+            console.groupEnd();
           }
 
           // ── ÉTAPE 2 : Top N par score composé ──
           if (dbg?.top50?.length) {
-            console.log(
-              `%c[PICK-DEBUG] ▶ ÉTAPE 2 — Score composé` +
-              `\n   FILTRE  : tri par sim×100 + note + boost langue +15` +
-              `\n   ENTRÉE  : ${dbg.sqlCandidates?.length ?? "?"} candidats SQL` +
-              `\n   SORTIE  : ${dbg.top50.length} films envoyés au LLM`,
-              "font-weight:bold;color:#6366f1"
+            console.groupCollapsed(
+              `[PICK-DEBUG] ▶ ÉTAPE 2 — Score composé` +
+              ` | filtre: sim×100 + note + boost langue +15` +
+              ` | entrée: ${dbg.sqlCandidates?.length ?? "?"} candidats` +
+              ` | SORTIE: ${dbg.top50.length} films → LLM`
             );
-            console.groupCollapsed(`[PICK-DEBUG]   📋 SORTIE score composé — ${dbg.top50.length} films`);
             console.table(dbg.top50.map((c: any, i: number) => ({
               "#": i + 1,
               "Titre": c.title,
               "Note /10": c.note ?? "–",
               "Sim%": c.sim ?? "–",
-              "Composite (sim×100+note)": c.composite ?? "–",
+              "Composite": c.composite ?? "–",
               "Genres": (c.genres || []).join(", "),
               "Type": c.type,
             })));
@@ -1516,31 +1504,26 @@ const HomeScreen = ({
             const llmMs = dbg.llmMs ?? "?";
             const matched = dbg.platformPool.filter((r: any) => r.match).length;
             const bypassed = dbg.llmFiltered?.length === dbg.top50?.length;
-            console.log(
-              `%c[PICK-DEBUG] ▶ ÉTAPE 2.5 — Filtre plateforme${bypassed ? " ⚠️ BYPASS rate limit" : ""}` +
-              `\n   FILTRE  : vérification disponibilité sur tes plateformes (${platformMs}ms)` +
-              `\n   ENTRÉE  : ${dbg.platformPool.length} films candidats` +
-              `\n   SORTIE  : ${bypassed ? `⚠️ bypass — tous les ${dbg.top50?.length} films au LLM` : `${matched} retenus → LLM (${llmMs}ms)`}`,
-              "font-weight:bold;color:#6366f1"
+            console.groupCollapsed(
+              `[PICK-DEBUG] ▶ ÉTAPE 2.5 — Filtre plateforme${bypassed ? " ⚠️ BYPASS" : ""}` +
+              ` | ${platformMs}ms filtre, ${llmMs}ms LLM` +
+              ` | SORTIE: ${bypassed ? `⚠️ bypass → ${dbg.top50?.length} films` : `${matched} retenus → LLM`}`
             );
-            console.groupCollapsed(`[PICK-DEBUG]   📋 SORTIE filtre plateforme — ${dbg.platformPool.length} films vérifiés`);
             console.table(dbg.platformPool.map((r: any, i: number) => ({
               "#": i + 1,
               "Titre": r.title,
-              "✅ Match": r.match ? "✅ oui" : "❌ non",
-              "Plateformes dispo": r.platforms.length ? r.platforms.join(", ") : "—",
+              "✅ Match": r.match ? "✅" : "❌",
+              "Plateformes": r.platforms.length ? r.platforms.join(", ") : "—",
             })));
             console.groupEnd();
           } else if (dbg?.llmFiltered) {
             const platformMs = dbg.platformFilterMs ?? "?";
             const llmMs = dbg.llmMs ?? "?";
-            console.log(
-              `%c[PICK-DEBUG] ▶ ÉTAPE 2.5 — Films envoyés au LLM` +
-              `\n   FILTRE  : ${platformMs}ms filtre | LLM: ${llmMs}ms` +
-              `\n   SORTIE  : ${dbg.llmFiltered.length} films`,
-              "font-weight:bold;color:#6366f1"
+            console.groupCollapsed(
+              `[PICK-DEBUG] ▶ ÉTAPE 2.5 — Films → LLM` +
+              ` | ${platformMs}ms filtre | ${llmMs}ms LLM` +
+              ` | SORTIE: ${dbg.llmFiltered.length} films`
             );
-            console.groupCollapsed(`[PICK-DEBUG]   📋 SORTIE — ${dbg.llmFiltered.length} films envoyés au LLM`);
             console.table(dbg.llmFiltered.map((c: any, i: number) => ({
               "#": i + 1, "Titre": c.title, "Note /10": c.note ?? "–", "Sim%": c.sim ?? "–",
             })));
@@ -1549,13 +1532,11 @@ const HomeScreen = ({
 
           // ── ÉTAPE 3 : Sélections LLM ──
           if (dbg?.llmSelections?.length) {
-            console.log(
-              `%c[PICK-DEBUG] ▶ ÉTAPE 3 — Sélections LLM` +
-              `\n   FILTRE  : Claude score chaque film vs profil utilisateur` +
-              `\n   SORTIE  : ${dbg.llmSelections.length} films sélectionnés → movie-match va scorer`,
-              "font-weight:bold;color:#6366f1"
+            console.groupCollapsed(
+              `[PICK-DEBUG] ▶ ÉTAPE 3 — Sélections LLM (Claude)` +
+              ` | filtre: scoring film vs profil` +
+              ` | SORTIE: ${dbg.llmSelections.length} films → movie-match`
             );
-            console.groupCollapsed(`[PICK-DEBUG]   📋 SORTIE LLM — ${dbg.llmSelections.length} films avec scores et raisons`);
             console.table(dbg.llmSelections.map((s: any, i: number) => ({
               "#": i + 1,
               "Titre": s.title,
@@ -1579,14 +1560,11 @@ const HomeScreen = ({
           if (dbg?.tmdbEnrichment?.length) {
             const failed = dbg.tmdbEnrichment.filter((t: any) => !t.ok);
             const ok = dbg.tmdbEnrichment.filter((t: any) => t.ok);
-            console.log(
-              `%c[PICK-DEBUG] ▶ ÉTAPE 3.5 — Enrichissement TMDB` +
-              `\n   FILTRE  : lookup TMDB pour récupérer poster, note, synopsis` +
-              `\n   ENTRÉE  : ${dbg.tmdbEnrichment.length} films sélectionnés` +
-              `\n   SORTIE  : ✅ ${ok.length} OK${failed.length > 0 ? ` / ❌ ${failed.length} échoués → fallback trending` : ""}`,
-              "font-weight:bold;color:#6366f1"
+            console.groupCollapsed(
+              `[PICK-DEBUG] ▶ ÉTAPE 3.5 — Enrichissement TMDB` +
+              ` | entrée: ${dbg.tmdbEnrichment.length} films` +
+              ` | SORTIE: ✅ ${ok.length} OK${failed.length > 0 ? ` / ❌ ${failed.length} échoués → fallback` : ""}`
             );
-            console.groupCollapsed(`[PICK-DEBUG]   📋 SORTIE TMDB — ${dbg.tmdbEnrichment.length} films`);
             console.table(dbg.tmdbEnrichment.map((t: any, i: number) => ({
               "#": i + 1,
               "Titre": t.title,
@@ -1600,13 +1578,11 @@ const HomeScreen = ({
           // ── ÉTAPE 4 : Films finaux ──
           if ((dbg as any)?.finalMoviesList?.length) {
             const finals = (dbg as any).finalMoviesList;
-            console.log(
-              `%c[PICK-DEBUG] ▶ ÉTAPE 4 — Films finaux présentés` +
-              `\n   FILTRE  : movie-match re-score chaque film avec Claude` +
-              `\n   SORTIE  : ${finals.length} films présentés à l'utilisateur`,
-              "font-weight:bold;color:#10b981"
+            console.groupCollapsed(
+              `[PICK-DEBUG] ▶ ÉTAPE 4 — Films finaux présentés` +
+              ` | movie-match re-score Claude` +
+              ` | SORTIE: ${finals.length} films`
             );
-            console.groupCollapsed(`[PICK-DEBUG]   📋 SORTIE finale — ${finals.length} films`);
             console.table(finals.map((m: any, i: number) => ({
               "#": i + 1,
               "Titre": m.title,
@@ -1651,6 +1627,22 @@ const HomeScreen = ({
           }
           const extracted = extractRecommendationMovies(data);
           const desiredCount = quickFilters.recommendationCount || RECOMMENDATION_BATCH_SIZE;
+          if (extracted.length < desiredCount) {
+            console.warn(
+              `[PICK-DEBUG] ⚠️ Edge a renvoyé ${extracted.length}/${desiredCount} film(s) — ` +
+                `filet sécurité ou exclusions (voir preTmdbDropTrace / safetyDropTrace / poolBackfillAdded)`,
+            );
+            const dbgDrops = data?.debugData as any;
+            if (dbgDrops?.preTmdbDropTrace?.length) {
+              console.table(dbgDrops.preTmdbDropTrace);
+            }
+            if (dbgDrops?.safetyDropTrace?.length) {
+              console.table(dbgDrops.safetyDropTrace);
+            }
+            if (dbgDrops?.poolBackfillAdded) {
+              console.log(`[PICK-DEBUG] Pool backfill edge: +${dbgDrops.poolBackfillAdded} film(s)`);
+            }
+          }
 
           // Fallback AI confidence scores — shown immediately while movie-match scores load
           const matchMap: Record<number, RecommendationMatch> = {};
@@ -1681,14 +1673,15 @@ const HomeScreen = ({
               if (!isMountedRef.current || firstMovieShown || isStale()) return;
               firstMovieShown = true;
               firstMovieShownId = batchMovies[0]?.id ?? null;
-              // Afficher les 3 films immédiatement avec le texte LLM (reason) comme teaser
-              setTonightPick(batchMovies[0] as MovieDetail);
+              const visibleBatch = batchMovies.slice(0, desiredCount);
+              // Afficher les films immédiatement avec le texte LLM (reason) comme teaser
+              setTonightPick(visibleBatch[0] as MovieDetail);
               setTonightPickIndex(0);
               // Marquer seulement le film 1 comme vu — les autres s'ajouteront à la navigation
-              setTonightSeenMovieIds(new Set([batchMovies[0].id]));
-              setChatMoviesPool(batchMovies as MovieDetail[]);
+              setTonightSeenMovieIds(new Set([visibleBatch[0].id]));
+              setChatMoviesPool(visibleBatch as MovieDetail[]);
               // Charger les plateformes immédiatement pour le film 1
-              void loadProviders(batchMovies[0] as MovieDetail);
+              void loadProviders(visibleBatch[0] as MovieDetail);
             },
             onMovieEnriched: (enrichedMovie) => {
               if (!isMountedRef.current) return;
@@ -1912,8 +1905,15 @@ const HomeScreen = ({
 
         if (firstMovieShown) {
           // onBatchReady a posé les films dans le bon ordre.
-          // onMovieEnriched les a enrichis un à un, sans changer les positions.
-          // Ne rien faire ici : tout appel à setChatMoviesPool risque de réordonner.
+          // Si le batch final est plus grand (backfill edge / movie-match), compléter le pool.
+          const displayMovies = movies.slice(0, displayCount);
+          if (displayMovies.length > 0) {
+            setChatMoviesPool((prev) => {
+              if (prev.length >= displayMovies.length) return prev;
+              const byId = new Map(prev.map((m) => [m.id, m]));
+              return displayMovies.map((m) => byId.get(m.id) ?? m);
+            });
+          }
         } else {
           // Chemin normal (onBatchReady n'a pas pu s'exécuter)
           setChatMoviesPool(poolMovies);
