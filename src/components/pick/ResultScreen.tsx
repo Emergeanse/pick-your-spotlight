@@ -798,7 +798,10 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
     const director = credits?.director ? { name: credits.director } : undefined;
 
     return (
-      <div ref={ref} className="relative h-full w-full overflow-y-auto overscroll-y-contain touch-pan-y bg-background">
+      <div
+        ref={ref}
+        className={`relative h-full w-full overflow-y-auto overscroll-y-contain touch-pan-y bg-background${movieDetailOpen ? " opacity-0 pointer-events-none" : ""}`}
+      >
         {bgImage && (
           <motion.div
             key={`bg-${movie.id}`}

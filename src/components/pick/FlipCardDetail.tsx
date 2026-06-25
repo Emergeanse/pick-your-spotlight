@@ -165,7 +165,7 @@ const FlipCardDetail = ({
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: "100%", opacity: 0.6 }}
             transition={{ type: "spring", damping: 30, stiffness: 320 }}
-            className="absolute inset-0 flex flex-col bg-background"
+            className="absolute inset-0 z-[55] flex flex-col bg-background"
           >
           {/* Sticky top bar */}
           <div className="sticky top-0 z-10 flex items-center justify-between bg-background/95 backdrop-blur-md border-b border-border/15 px-4 pt-[calc(0.75rem+env(safe-area-inset-top))] pb-3">
