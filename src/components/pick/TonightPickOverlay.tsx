@@ -64,6 +64,17 @@ const rejectedPaths = new Set<string>();
 // URLs dont le chargement image est terminé — WallPosterCell peut démarrer à loaded=true
 const loadedImageUrls = new Set<string>();
 
+// Pré-remplir loadedImageUrls depuis confirmedPaths (persisté localStorage)
+// → WallPosterCell démarrera avec loaded=true pour les affiches déjà vues
+// (si l'image n'est plus en cache navigateur, onError prendra le relais)
+if (typeof window !== "undefined") {
+  confirmedPaths.forEach(path => {
+    loadedImageUrls.add(`https://image.tmdb.org/t/p/${WALL_POSTER_SIZE}${path}`);
+    // Tailles alternatives aussi (w342, w500) pour ne pas rater les variantes
+    loadedImageUrls.add(`https://image.tmdb.org/t/p/w342${path}`);
+  });
+}
+
 // Chargement immédiat des 36 affiches de secours dans le cache navigateur.
 // S'exécute dès l'import du module (avant auth, avant toute interaction)
 // → les images sont prêtes avant que l'utilisateur ouvre l'overlay.
