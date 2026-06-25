@@ -13,7 +13,8 @@ import { inferCatalogMediaType } from "@/lib/catalog";
 
 interface MovieActionBarProps {
   movie: MovieDetail;
-  size?: "sm" | "md";
+  /** xs = fiche complète / barre fixe compacte (~50 % de md) */
+  size?: "xs" | "sm" | "md";
   className?: string;
   onInteraction?: (type: string) => void;
   initialFeedback?: FeedbackLabel | null;
@@ -335,8 +336,11 @@ const MovieActionBar = ({
     }
   };
 
-  const iconSize = size === "sm" ? "w-4 h-4" : "w-5 h-5";
-  const btnSize = size === "sm" ? "w-9 h-9" : "w-10 h-10";
+  const iconSize =
+    size === "xs" ? "w-3.5 h-3.5" : size === "sm" ? "w-4 h-4" : "w-5 h-5";
+  const btnSize =
+    size === "xs" ? "w-7 h-7" : size === "sm" ? "w-9 h-9" : "w-10 h-10";
+  const rowGap = size === "xs" ? "gap-1.5" : "gap-2";
 
   const inactiveClass = "bg-transparent border-white/25 text-white/50 hover:text-white/80 hover:border-white/40";
 
@@ -356,7 +360,7 @@ const MovieActionBar = ({
     "bg-rose-600 border-rose-300/70 text-white ring-1 ring-white/10 shadow-[0_0_24px_rgba(225,29,72,0.45)]";
 
   return (
-    <div className={`flex items-center justify-center gap-2 ${className}`}>
+    <div className={`flex items-center justify-center ${rowGap} ${className}`}>
       <button
         type="button"
         disabled={loading}

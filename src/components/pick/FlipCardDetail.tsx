@@ -342,9 +342,9 @@ const MovieDetailContent = ({
         </div>
       </div>
 
-      {/* Action bar */}
-      <div className="mx-5 mb-4 rounded-2xl bg-white/5 backdrop-blur-xl border border-white/[0.06] p-1.5">
-        <MovieActionBar movie={detail || item} />
+      {/* Action bar — compact (~50 % footprint) */}
+      <div className="mx-5 mb-3 rounded-xl bg-white/5 backdrop-blur-xl border border-white/[0.06] px-1 py-0.5">
+        <MovieActionBar movie={detail || item} size="xs" />
       </div>
 
       {streamingLinks.length > 0 && (

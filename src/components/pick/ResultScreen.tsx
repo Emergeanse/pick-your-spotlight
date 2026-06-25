@@ -54,7 +54,7 @@ import { RecommendationMovieCardHeader } from "./RecommendationMovieCard";
 import { useMovieInteractions, useMovieInteraction } from "@/hooks/use-movie-interactions";
 import { inferCatalogMediaType } from "@/lib/catalog";
 import { programFilmForEvent } from "@/lib/event-program";
-import { bottomTabBarClearance } from "@/lib/app-chrome";
+import { bottomTabBarClearance, resultScreenScrollPaddingBottom } from "@/lib/app-chrome";
 
 const IMG_BASE = "https://image.tmdb.org/t/p";
 const CONFIDENCE_THRESHOLD = 30;
@@ -875,7 +875,8 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
           initial={{ opacity: 0 }}
           animate={{ opacity: revealStage === "anticipation" ? 0 : 1 }}
           transition={{ duration: 0.7, ease: "easeOut" }}
-          className="relative z-10 min-h-full px-5 pt-[calc(1rem+env(safe-area-inset-top))] pb-[calc(11rem+env(safe-area-inset-bottom))] md:px-8 lg:px-12"
+          className="relative z-10 min-h-full px-5 pt-[calc(1rem+env(safe-area-inset-top))] md:px-8 lg:px-12"
+          style={{ paddingBottom: resultScreenScrollPaddingBottom }}
         >
           <BrandHeader />
 
@@ -1067,32 +1068,32 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: revealStage === "settled" ? 1 : 0, y: revealStage === "settled" ? 0 : 24 }}
             transition={{ delay: 0.2, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-            className="fixed left-0 right-0 z-10 border-t border-border/20 bg-background/92 px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] backdrop-blur-xl shadow-[0_-18px_40px_hsl(var(--background)/0.32)]"
+            className="fixed left-0 right-0 z-10 border-t border-border/20 bg-background/92 px-3 pt-1.5 pb-[calc(0.375rem+env(safe-area-inset-bottom))] backdrop-blur-xl shadow-[0_-12px_28px_hsl(var(--background)/0.28)]"
             style={{ bottom: bottomTabBarClearance }}
           >
             <div className="mx-auto max-w-md">
               {/* Ligne navigation suggestions — toujours visible quand plusieurs suggestions */}
               {totalCount > 1 && (onPrevious || onNext) && (
-                <div className="mb-2.5 flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-1">
+                <div className="mb-1 flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-0.5">
                     <button
                       onClick={onPrevious}
                       disabled={currentIndex === 0}
-                      className="rounded-full bg-foreground/5 p-1.5 text-foreground/40 transition-all hover:bg-foreground/10 disabled:opacity-20 disabled:cursor-not-allowed"
+                      className="rounded-full bg-foreground/5 p-1 text-foreground/40 transition-all hover:bg-foreground/10 disabled:opacity-20 disabled:cursor-not-allowed"
                       aria-label="Proposition précédente"
                     >
-                      <ChevronLeft className="h-3.5 w-3.5" />
+                      <ChevronLeft className="h-3 w-3" />
                     </button>
-                    <span className="min-w-[72px] text-center text-[11px] uppercase tracking-[0.18em] font-sans text-foreground/40">
+                    <span className="min-w-[64px] text-center text-[10px] uppercase tracking-[0.16em] font-sans text-foreground/40">
                       Suggestion {currentIndex + 1}/{displayedTotal}
                     </span>
                     <button
                       onClick={onNext}
                       disabled={currentIndex >= totalCount - 1}
-                      className="rounded-full bg-foreground/5 p-1.5 text-foreground/40 transition-all hover:bg-foreground/10 disabled:opacity-20 disabled:cursor-not-allowed"
+                      className="rounded-full bg-foreground/5 p-1 text-foreground/40 transition-all hover:bg-foreground/10 disabled:opacity-20 disabled:cursor-not-allowed"
                       aria-label="Proposition suivante"
                     >
-                      <ChevronRight className="h-3.5 w-3.5" />
+                      <ChevronRight className="h-3 w-3" />
                     </button>
                   </div>
 
@@ -1100,7 +1101,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
                     data-tour="autre-suggestion"
                     onClick={() => onShowAnother()}
                     disabled={refining || !allVisited}
-                    className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border text-[12px] font-sans font-medium transition-all ${
+                    className={`flex items-center gap-1 px-2.5 py-1 rounded-full border text-[11px] font-sans font-medium transition-all ${
                       allVisited
                         ? "border-primary/50 text-primary/80 bg-primary/5 hover:bg-primary/10 hover:border-primary/70 hover:text-primary shadow-[0_0_12px_hsl(var(--primary)/0.12)]"
                         : "border-foreground/10 text-foreground/45 cursor-not-allowed"
@@ -1112,13 +1113,13 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
                 </div>
               )}
 
-              <div className="mb-3 flex items-center justify-between gap-3">
+              <div className="mb-1.5 flex items-center justify-between gap-2">
                 <button
                   onClick={onRestart}
-                  className="rounded-full bg-foreground/5 p-2 text-foreground/45 transition-all hover:bg-foreground/10"
+                  className="rounded-full bg-foreground/5 p-1.5 text-foreground/45 transition-all hover:bg-foreground/10"
                   aria-label="Revenir"
                 >
-                  <ChevronLeft className="h-5 w-5" />
+                  <ChevronLeft className="h-4 w-4" />
                 </button>
 
                 <div className="flex items-center gap-2">
@@ -1134,10 +1135,10 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
 
                 <button
                   onClick={() => setShowOptions(true)}
-                  className="rounded-full bg-foreground/5 p-2 text-foreground/45 transition-all hover:bg-foreground/10"
+                  className="rounded-full bg-foreground/5 p-1.5 text-foreground/45 transition-all hover:bg-foreground/10"
                   aria-label="Options"
                 >
-                  <Dices className="h-5 w-5" />
+                  <Dices className="h-4 w-4" />
                 </button>
               </div>
 
@@ -1145,17 +1146,18 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
                 <button
                   onClick={() => void programmerPourLaSoiree()}
                   disabled={programmingEvent}
-                  className="w-full mb-3 flex items-center justify-center gap-2 py-3 rounded-2xl bg-gradient-to-r from-primary to-accent text-primary-foreground text-[13.5px] font-sans font-semibold disabled:opacity-60 active:scale-[0.98] transition-transform"
+                  className="w-full mb-1.5 flex items-center justify-center gap-1.5 py-2 rounded-xl bg-gradient-to-r from-primary to-accent text-primary-foreground text-[12px] font-sans font-semibold disabled:opacity-60 active:scale-[0.98] transition-transform"
                 >
                   {programmingEvent
-                    ? <Loader2 className="w-4 h-4 animate-spin" />
-                    : <CalendarCheck className="w-4 h-4" />}
+                    ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    : <CalendarCheck className="w-3.5 h-3.5" />}
                   {programmingEvent ? "Programmation…" : "Programmer pour la soirée"}
                 </button>
               )}
 
               <MovieActionBar
                 movie={movie}
+                size="xs"
                 sessionId={sessionId}
                 contextType={sessionId ? "solo_session" : "browse"}
                 onInteraction={(type) => {
