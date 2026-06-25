@@ -134,7 +134,7 @@ test.describe('Bouton Révéler — TNR régression', () => {
     await page.waitForURL(/\/app$/, { timeout: 10_000 });
 
     // Overlay plein écran (TonightPickOverlay — fond noir z-50)
-    const overlay = page.locator('.fixed.inset-0.z-50.bg-black').first();
+    const overlay = page.locator('.fixed.inset-0.z-\\[60\\].bg-black').first();
     await expect(overlay).toBeVisible({ timeout: 2_000 });
     expect(Date.now() - t0).toBeLessThan(1_500);
 

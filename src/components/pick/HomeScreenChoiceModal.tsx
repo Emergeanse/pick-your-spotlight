@@ -138,7 +138,7 @@ const HomeScreenChoiceModal = ({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-          className="fixed inset-0 z-50 overflow-y-auto scrollbar-hide"
+          className="fixed inset-0 z-[60] overflow-y-auto scrollbar-hide"
           onClick={onClose}
         >
           <div className="fixed inset-0 bg-background/75 backdrop-blur-2xl pointer-events-none" />
@@ -148,7 +148,7 @@ const HomeScreenChoiceModal = ({
 
           {/* Wrapper min-h-full : centre quand le contenu est court,
               scroll naturellement sur mobile quand le contenu dépasse l'écran */}
-          <div className="flex items-center justify-center min-h-full py-6 px-5">
+          <div className="flex items-center justify-center min-h-full py-6 px-5 pb-[calc(5.5rem+env(safe-area-inset-bottom))]">
           <motion.div
             initial={{ y: 24, opacity: 0, scale: 0.97 }}
             animate={{ y: 0, opacity: 1, scale: 1 }}

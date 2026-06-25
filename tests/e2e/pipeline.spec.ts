@@ -151,7 +151,7 @@ test.describe('Pipeline de recommandation', () => {
 
     await surprendreBtn.click();
 
-    await expect(page.locator('.fixed.inset-0.z-50.bg-black').first()).toBeVisible({ timeout: 2_000 });
+    await expect(page.locator('.fixed.inset-0.z-\\[60\\].bg-black').first()).toBeVisible({ timeout: 2_000 });
 
     const wallCols = page.locator('.pick-wall-col');
     await expect(wallCols).toHaveCount(4, { timeout: 3_000 });

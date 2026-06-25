@@ -632,7 +632,7 @@ const TonightPickOverlay = ({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: instantCover ? 0 : 0.4 }}
-          className="fixed inset-0 z-[55] flex flex-col bg-black"
+          className="fixed inset-0 z-[60] flex flex-col bg-black"
         >
           {/* Stage 1 : lumières violettes pulsantes pendant que surprise-personalized tourne */}
           <AnimatePresence>
@@ -698,7 +698,7 @@ const TonightPickOverlay = ({
 
                 {/* Lumière principale — monte en puissance depuis le bas */}
                 <motion.div
-                  className="absolute"
+                  className="absolute pointer-events-none"
                   style={{
                     width: "160%", height: "65%",
                     bottom: "-15%", left: "-30%",
@@ -709,7 +709,7 @@ const TonightPickOverlay = ({
                 />
                 {/* Halo secondaire — légèrement décalé à gauche, rythme différent */}
                 <motion.div
-                  className="absolute"
+                  className="absolute pointer-events-none"
                   style={{
                     width: "100%", height: "55%",
                     bottom: "0%", left: "-20%",
@@ -720,7 +720,7 @@ const TonightPickOverlay = ({
                 />
                 {/* Accent chaud — côté droit, très léger */}
                 <motion.div
-                  className="absolute"
+                  className="absolute pointer-events-none"
                   style={{
                     width: "80%", height: "45%",
                     bottom: "5%", right: "-20%",
@@ -781,8 +781,8 @@ const TonightPickOverlay = ({
             />
           )}
           {/* Cinematic gradient — bottom-heavy for legibility */}
-          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/85 to-transparent" />
-          <div className="absolute inset-0 bg-gradient-to-b from-background/50 via-transparent to-transparent h-32" />
+          <div className="absolute inset-0 pointer-events-none bg-gradient-to-t from-background via-background/85 to-transparent" />
+          <div className="absolute inset-0 pointer-events-none bg-gradient-to-b from-background/50 via-transparent to-transparent h-32" />
 
           {/* Top bar: back + match ring */}
           <div className="relative z-10 flex justify-between items-center px-6 pt-[calc(1rem+env(safe-area-inset-top))]">
@@ -863,7 +863,7 @@ const TonightPickOverlay = ({
               scale: { duration: 1.1, ease: [0.22, 1, 0.36, 1] },
               opacity: { duration: 0.9, ease: "easeOut" },
             }}
-            className="flex-1 flex flex-col min-h-0"
+            className="relative z-10 flex-1 flex flex-col min-h-0"
           >
 
           {/* Poster + flèches de navigation de chaque côté */}
@@ -914,7 +914,7 @@ const TonightPickOverlay = ({
           </div>
 
           {/* Bottom-anchored info block */}
-          <div className="relative z-10 mt-auto px-7 pb-[calc(5rem+env(safe-area-inset-bottom))] overflow-y-auto scrollbar-hide max-h-[65vh]">
+          <div className="relative z-10 mt-auto px-7 pb-[calc(1.5rem+env(safe-area-inset-bottom))] overflow-y-auto scrollbar-hide max-h-[65vh]">
             {/* Chips: year, genre, first streaming platform */}
             <div className="flex gap-2 mb-4 flex-wrap">
               {year && (
