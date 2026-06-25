@@ -2619,7 +2619,8 @@ const HomeScreen = ({
       </div>
 
       <TonightPickOverlay
-        open={homeBrowseOpen && !tonightLoading && !tonightPick && !flipDetailMovie}
+        open={homeBrowseOpen && !tonightLoading && !tonightPick}
+        detailOpen={!!flipDetailMovie}
         movie={homeBrowsePool[homeBrowseIndex] ?? null}
         tonightPool={homeBrowsePool}
         tonightPickIndex={homeBrowseIndex}
@@ -2647,7 +2648,8 @@ const HomeScreen = ({
       />
 
       <TonightPickOverlay
-        open={(tonightLoading || !!tonightPick) && !flipDetailMovie}
+        open={tonightLoading || !!tonightPick}
+        detailOpen={!!flipDetailMovie}
         movie={tonightPick}
         tonightPool={tonightPool}
         tonightPickIndex={tonightPickIndex}

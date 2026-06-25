@@ -265,6 +265,8 @@ function WallPosterCell({
 
 interface TonightPickOverlayProps {
   open: boolean;
+  /** Fiche détail ouverte par-dessus — masquer visuellement sans démonter (évite flash accueil). */
+  detailOpen?: boolean;
   movie: MovieDetail | null;
   tonightPool: MovieDetail[];
   tonightPickIndex: number;
@@ -292,6 +294,7 @@ interface TonightPickOverlayProps {
 
 const TonightPickOverlay = ({
   open,
+  detailOpen = false,
   movie,
   tonightPool,
   tonightPickIndex,
@@ -638,7 +641,7 @@ const TonightPickOverlay = ({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: instantCover ? 0 : 0.4 }}
-          className="absolute inset-0 flex flex-col bg-black"
+          className={`absolute inset-0 flex flex-col bg-black${detailOpen ? " opacity-0 pointer-events-none" : ""}`}
         >
           {/* Stage 1 : lumières violettes pulsantes pendant que surprise-personalized tourne */}
           <AnimatePresence>
