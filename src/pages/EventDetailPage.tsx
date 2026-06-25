@@ -10,6 +10,12 @@ import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
 import { setRevealEvent, queueForReveal } from "@/lib/event-reveal";
 import PostSoireeFlow, { type PostSoireeEvent } from "@/components/pick/PostSoireeFlow";
+import FlipCardDetail from "@/components/pick/FlipCardDetail";
+import SoireeFilmOverlay from "@/components/pick/SoireeFilmOverlay";
+import { getMovieDetailsWithCredits, getWatchProviders, type MovieDetail } from "@/lib/tmdb";
+import { getUserTasteProfile } from "@/lib/interactions";
+import { getLikedMovies } from "@/lib/liked-movies";
+import { computeUserTasteVector, ensureMovieEmbedding } from "@/lib/taste-engine";
 
 // ─────────────────────────────────────────
 // Types
@@ -155,6 +161,13 @@ const EventDetailPage = () => {
   const [revealingWinner, setRevealingWinner] = useState(false);
   const [hasFeedback, setHasFeedback] = useState(false);
   const [showPostSoiree, setShowPostSoiree] = useState(false);
+  const [filmFicheMovie, setFilmFicheMovie] = useState<MovieDetail | null>(null);
+  const [filmDetailOpen, setFilmDetailOpen] = useState(false);
+  const [loadingFilmFiche, setLoadingFilmFiche] = useState(false);
+  const [filmMatchData, setFilmMatchData] = useState<Record<string, unknown> | null>(null);
+  const [filmMatchLoading, setFilmMatchLoading] = useState(false);
+  const [filmFicheProviders, setFilmFicheProviders] = useState<{ name: string; logo_path: string; provider_id?: number }[]>([]);
+  const [cardProviders, setCardProviders] = useState<{ name: string; logo_path: string; provider_id?: number }[]>([]);
   const autoRevealTriggeredRef = useRef(false);
   const isOrganizer = !!user && event?.organizer_id === user.id;
   const inviteLink = event ? `${window.location.origin}/invite/${event.invite_link_token}` : "";
@@ -176,6 +189,17 @@ const EventDetailPage = () => {
   useEffect(() => {
     autoRevealTriggeredRef.current = false;
   }, [id]);
+
+  useEffect(() => {
+    if (!event?.final_pick_tmdb_id || event.status !== "done") {
+      setCardProviders([]);
+      return;
+    }
+    const mediaType = event.media_type === "tv" ? "tv" : "movie";
+    getWatchProviders(event.final_pick_tmdb_id, mediaType)
+      .then(setCardProviders)
+      .catch(() => setCardProviders([]));
+  }, [event?.id, event?.status, event?.final_pick_tmdb_id, event?.media_type]);
 
   // Vérifie si le feedback post-soirée a déjà été donné
   useEffect(() => {
@@ -549,6 +573,126 @@ const EventDetailPage = () => {
     } else {
       await copyLink();
     }
+  };
+
+  const fetchFilmMatchData = useCallback(async (movie: MovieDetail) => {
+    if (!user || !event) return null;
+    setFilmMatchLoading(true);
+    try {
+      ensureMovieEmbedding(
+        movie.id,
+        movie.title || movie.name || "",
+        movie.overview || "",
+        (movie.genres || []).map((g) => g.name),
+      );
+
+      const eventContextMap: Record<string, string> = {
+        duo: "couple",
+        famille: "family",
+        amis: "friends",
+        solo: "alone",
+      };
+
+      const [tasteProfile, userTasteVector, likedMovies, cinematicProfile, vectorData] = await Promise.all([
+        getUserTasteProfile(),
+        computeUserTasteVector(user.id),
+        getLikedMovies().catch(() => []),
+        supabase
+          .from("cinematic_profiles" as any)
+          .select("personality_title, narrative, taste_traits")
+          .eq("user_id", user.id)
+          .maybeSingle()
+          .then((r) => r.data),
+        supabase
+          .from("user_taste_vectors" as any)
+          .select("avoidance_vector, recent_taste_vector")
+          .eq("user_id", user.id)
+          .maybeSingle()
+          .then((r) => r.data),
+      ]);
+
+      const enrichedProfile = tasteProfile
+        ? {
+            ...tasteProfile,
+            recentTasteVector: (vectorData as any)?.recent_taste_vector || null,
+            avoidanceVector: (vectorData as any)?.avoidance_vector || null,
+          }
+        : null;
+
+      const { data, error } = await supabase.functions.invoke("movie-match", {
+        body: {
+          movie,
+          userCriteria: {
+            mood: event.mood ?? null,
+            context: event.context ? eventContextMap[event.context] ?? null : null,
+            time: null,
+          },
+          tasteProfile: enrichedProfile,
+          userTasteVector,
+          likedMovieTitles: (likedMovies || []).map((m: { title: string }) => m.title),
+          searchTags: event.genre_tags ?? [],
+          cinematicProfile,
+          peoplePreferences: tasteProfile?.peoplePreferences || null,
+          userName: user.user_metadata?.display_name || user.email?.split("@")[0] || null,
+        },
+      });
+
+      if (error) {
+        console.error("[event] movie-match error:", error);
+        return null;
+      }
+
+      return (data as Record<string, unknown>) ?? null;
+    } catch (error) {
+      console.error("[event] fetchFilmMatchData failed:", error);
+      return null;
+    } finally {
+      setFilmMatchLoading(false);
+    }
+  }, [user, event]);
+
+  const openFinalPickFiche = async () => {
+    if (!event?.final_pick_tmdb_id || !event.final_pick_title || loadingFilmFiche) return;
+    const mediaType = event.media_type === "tv" ? "tv" : "movie";
+    setLoadingFilmFiche(true);
+    setFilmMatchData(null);
+    setFilmFicheProviders(cardProviders);
+    setFilmDetailOpen(false);
+    try {
+      const detail = await getMovieDetailsWithCredits(event.final_pick_tmdb_id, mediaType);
+      setFilmFicheMovie(detail);
+      const [providers, matchData] = await Promise.all([
+        getWatchProviders(event.final_pick_tmdb_id, mediaType).catch(() => []),
+        fetchFilmMatchData(detail),
+      ]);
+      setFilmFicheProviders(providers);
+      setFilmMatchData(matchData);
+    } catch {
+      const fallback: MovieDetail = {
+        id: event.final_pick_tmdb_id,
+        title: event.final_pick_title,
+        poster_path: event.final_pick_poster,
+        overview: "",
+        backdrop_path: null,
+        vote_average: 0,
+        genre_ids: [],
+        runtime: 0,
+        episode_run_time: [],
+        genres: [],
+        ...(mediaType === "tv" ? { first_air_date: "2000-01-01" } : { release_date: "2000-01-01" }),
+      };
+      setFilmFicheMovie(fallback);
+      setFilmDetailOpen(false);
+    } finally {
+      setLoadingFilmFiche(false);
+    }
+  };
+
+  const closeFilmFiche = () => {
+    setFilmFicheMovie(null);
+    setFilmDetailOpen(false);
+    setFilmMatchData(null);
+    setFilmFicheProviders([]);
   };
 
   // ── Rendu ────────────────────────────────────────────────
@@ -964,10 +1108,17 @@ const EventDetailPage = () => {
 
         {/* ── Film révélé (visible par tous) ── */}
         {event.status === "done" && event.final_pick_title && (
-          <div className="rounded-2xl overflow-hidden border border-primary/25">
+          <button
+            type="button"
+            onClick={() => void openFinalPickFiche()}
+            disabled={!event.final_pick_tmdb_id || loadingFilmFiche}
+            className="w-full rounded-2xl overflow-hidden border border-primary/25 text-left transition-opacity hover:opacity-95 active:opacity-90 disabled:opacity-70"
+            aria-label={`Voir le pick de la soirée : ${event.final_pick_title}`}
+          >
             <div className="flex items-center gap-3 px-4 py-2.5 bg-primary/[0.08]">
               <span className="text-base">🎩</span>
               <p className="text-[11px] font-sans font-semibold tracking-[0.15em] uppercase text-primary/80">Le pick de la soirée</p>
+              {loadingFilmFiche && <Loader2 className="w-3.5 h-3.5 animate-spin text-primary/60 ml-auto" />}
             </div>
             <div className="flex gap-3 p-3 bg-white/[0.02]">
               {event.final_pick_poster ? (
@@ -981,12 +1132,27 @@ const EventDetailPage = () => {
                   <Film className="w-5 h-5 text-foreground/40" />
                 </div>
               )}
-              <div className="flex-1 flex flex-col justify-center gap-1">
+              <div className="flex-1 flex flex-col justify-center gap-1 min-w-0">
                 <p className="font-serif text-[16px] text-foreground leading-tight">{event.final_pick_title}</p>
-                <p className="text-[11px] font-sans text-foreground/40">Choisi par l'organisateur</p>
+                {cardProviders.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mt-0.5">
+                    {cardProviders.slice(0, 4).map((p) => p.logo_path && (
+                      <img
+                        key={p.provider_id ?? p.name}
+                        src={`https://image.tmdb.org/t/p/w45${p.logo_path}`}
+                        alt={p.name}
+                        title={p.name}
+                        className="h-4 w-auto rounded object-contain"
+                      />
+                    ))}
+                  </div>
+                )}
+                <p className="text-[11px] font-sans text-foreground/40">
+                  {event.final_pick_tmdb_id ? "Appuie pour voir la fiche" : "Choisi par l'organisateur"}
+                </p>
               </div>
             </div>
-          </div>
+          </button>
         )}
 
         {/* ── Badge post-soirée ── */}
@@ -1117,6 +1283,30 @@ const EventDetailPage = () => {
       </AnimatePresence>
 
       {/* ── Post-soirée flow ── */}
+      {filmFicheMovie && (
+        <>
+          <SoireeFilmOverlay
+            open={!filmDetailOpen}
+            movie={filmFicheMovie}
+            eventTitle={event.title}
+            matchData={filmMatchData}
+            matchLoading={filmMatchLoading}
+            providers={filmFicheProviders}
+            onClose={closeFilmFiche}
+            onOpenDetail={() => setFilmDetailOpen(true)}
+          />
+          <FlipCardDetail
+            item={filmFicheMovie}
+            type="movie"
+            isOpen={filmDetailOpen}
+            onClose={() => setFilmDetailOpen(false)}
+            recommendationTexts={filmMatchData}
+            isEnriching={filmMatchLoading}
+            watchProviders={filmFicheProviders}
+          />
+        </>
+      )}
+
       {showPostSoiree && event && (
         <PostSoireeFlow
           event={{

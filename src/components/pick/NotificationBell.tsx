@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Bell } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
@@ -6,85 +6,98 @@ import { useAuth } from "@/hooks/use-auth";
 import { useNavigate } from "react-router-dom";
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
-
-interface Notification {
-  id: string;
-  type: string;
-  title: string;
-  body: string | null;
-  data: any;
-  read: boolean;
-  created_at: string;
-}
+import {
+  countUnreadNotifications,
+  isPersistedNotificationId,
+  mergeFriendRequestNotifications,
+  type NotificationItem,
+  type PendingFriendRequest,
+} from "@/lib/friend-notifications";
+import { getNotificationIcon, getNotificationRoute } from "@/lib/notification-navigation";
 
 const NotificationBell = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [open, setOpen] = useState(false);
-  const unreadCount = notifications.filter(n => !n.read).length;
+  const unreadCount = countUnreadNotifications(notifications);
 
-  useEffect(() => {
+  const loadNotifications = useCallback(async () => {
     if (!user) return;
 
-    const load = async () => {
-      const { data } = await supabase
+    const [{ data: rows }, { data: pendingFriendships }] = await Promise.all([
+      supabase
         .from("notifications")
         .select("*")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false })
-        .limit(20);
-      if (data) setNotifications(data as Notification[]);
-    };
-    load();
+        .limit(20),
+      supabase
+        .from("friendships" as any)
+        .select("id, requester_id, created_at")
+        .eq("addressee_id", user.id)
+        .eq("status", "pending"),
+    ]);
 
-    // Realtime subscription
+    const pendingReceived: PendingFriendRequest[] = [];
+    if (pendingFriendships?.length) {
+      const requesterIds = (pendingFriendships as any[]).map((f) => f.requester_id);
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("id, display_name")
+        .in("id", requesterIds);
+      const nameById = new Map((profiles || []).map((p) => [p.id, p.display_name]));
+
+      for (const f of pendingFriendships as any[]) {
+        pendingReceived.push({
+          friendshipId: f.id,
+          requesterName: nameById.get(f.requester_id) || "Quelqu'un",
+          createdAt: f.created_at,
+        });
+      }
+    }
+
+    setNotifications(
+      mergeFriendRequestNotifications((rows || []) as NotificationItem[], pendingReceived),
+    );
+  }, [user]);
+
+  useEffect(() => {
+    if (!user) return;
+
+    loadNotifications();
+
     const channel = supabase
       .channel("user-notifications")
       .on(
         "postgres_changes",
-        { event: "INSERT", schema: "public", table: "notifications", filter: `user_id=eq.${user.id}` },
-        (payload) => {
-          setNotifications(prev => [payload.new as Notification, ...prev]);
-        }
+        { event: "*", schema: "public", table: "notifications", filter: `user_id=eq.${user.id}` },
+        () => { loadNotifications(); },
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "friendships", filter: `addressee_id=eq.${user.id}` },
+        () => { loadNotifications(); },
       )
       .subscribe((status, err) => { if (err) console.warn("[NotificationBell] realtime:", err); });
 
     return () => { supabase.removeChannel(channel); };
-  }, [user]);
+  }, [user, loadNotifications]);
 
   const markAllRead = async () => {
     if (!user || unreadCount === 0) return;
-    const unreadIds = notifications.filter(n => !n.read).map(n => n.id);
-    await supabase.from("notifications").update({ read: true } as any).in("id", unreadIds);
-    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+    const unreadIds = notifications
+      .filter((n) => !n.read && isPersistedNotificationId(n.id))
+      .map((n) => n.id);
+    if (unreadIds.length > 0) {
+      await supabase.from("notifications").update({ read: true } as any).in("id", unreadIds);
+    }
+    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
   };
 
-  const handleNotificationClick = (notif: Notification) => {
-    if (notif.type === "friend_request" || notif.type === "friend_accepted") {
-      navigate("/app/friends");
-    } else if (notif.type === "duo_accepted") {
-      navigate("/app/duo");
-    } else if (notif.type === "session_invite") {
-      navigate("/app/pick-together-group");
-    } else if (notif.type === "event_invite" || notif.type === "event_confirmed") {
-      const eventId = notif.data?.event_id;
-      if (eventId) navigate(`/app/soirees/${eventId}`);
-      else navigate("/app/soirees");
-    }
+  const handleNotificationClick = (notif: NotificationItem) => {
+    navigate(getNotificationRoute(notif.type, notif.data));
     setOpen(false);
-  };
-
-  const getIcon = (type: string) => {
-    switch (type) {
-      case "friend_request":  return "👋";
-      case "friend_accepted": return "🤝";
-      case "duo_accepted":    return "💑";
-      case "session_invite":  return "🎬";
-      case "event_invite":    return "🎉";
-      case "event_confirmed": return "✅";
-      default: return "🔔";
-    }
   };
 
   if (!user) return null;
@@ -94,6 +107,7 @@ const NotificationBell = () => {
       <button
         onClick={() => { setOpen(!open); if (!open) markAllRead(); }}
         className="relative p-2 rounded-full hover:bg-foreground/5 transition-colors"
+        aria-label="Notifications"
       >
         <Bell className="w-5 h-5 text-foreground/60" />
         {unreadCount > 0 && (
@@ -141,7 +155,7 @@ const NotificationBell = () => {
                       className={`w-full text-left p-3 hover:bg-foreground/[0.03] transition-colors ${!notif.read ? "bg-primary/[0.03]" : ""}`}
                     >
                       <div className="flex gap-2.5">
-                        <span className="text-base mt-0.5">{getIcon(notif.type)}</span>
+                        <span className="text-base mt-0.5">{getNotificationIcon(notif.type)}</span>
                         <div className="flex-1 min-w-0">
                           <p className={`text-[13px] font-sans leading-snug ${!notif.read ? "font-semibold text-foreground" : "text-foreground/80"}`}>
                             {notif.title}

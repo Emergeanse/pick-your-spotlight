@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Loader2, Film, User, Clapperboard, ChevronLeft, Sparkles } from "lucide-react";
-import { getPosterUrl, getDisplayTitle, getMovieDetailsWithCredits, type Movie } from "@/lib/tmdb";
+import { getPosterUrl, getDisplayTitle, getMovieDetailsWithCredits, getWatchProviders, type Movie } from "@/lib/tmdb";
+import { buildStreamingLinks, type StreamingLink } from "@/lib/streaming-links";
 import { getPersonPhotoUrl, fetchPersonDetail } from "@/lib/people-preferences";
 import FeedbackBadge from "@/components/pick/FeedbackBadge";
 import { useMovieInteraction } from "@/hooks/use-movie-interactions";
@@ -34,12 +35,15 @@ interface FlipCardDetailProps {
   recommendationTexts?: MatchData | null;
   recommendationTextsByMovieId?: Record<number, MatchData | undefined>;
   isEnriching?: boolean;
+  watchProviders?: { name: string; logo_path: string; provider_id?: number }[];
 }
 
 type NavEntry = {
   item: any;
   type: "movie" | "person";
 };
+
+const IMG_BASE = "https://image.tmdb.org/t/p";
 
 const FlipCardDetail = ({
   item,
@@ -50,12 +54,14 @@ const FlipCardDetail = ({
   recommendationTexts,
   recommendationTextsByMovieId,
   isEnriching,
+  watchProviders,
 }: FlipCardDetailProps) => {
   const [navStack, setNavStack] = useState<NavEntry[]>([]);
   const [currentItem, setCurrentItem] = useState<any>(null);
   const [currentType, setCurrentType] = useState<"movie" | "person">(type);
   const [detail, setDetail] = useState<any>(null);
   const [loading, setLoading] = useState(false);
+  const [streamingLinks, setStreamingLinks] = useState<StreamingLink[]>([]);
 
   useEffect(() => {
     if (isOpen && item) {
@@ -88,6 +94,29 @@ const FlipCardDetail = ({
         .finally(() => setLoading(false));
     }
   }, [isOpen, currentItem?.id, currentType]);
+
+  useEffect(() => {
+    if (!isOpen || currentType !== "movie" || !currentItem?.id) {
+      setStreamingLinks([]);
+      return;
+    }
+
+    const mediaType = currentItem.first_air_date ? "tv" : "movie";
+    const title = getDisplayTitle(currentItem);
+    const usePrefetched =
+      watchProviders &&
+      watchProviders.length > 0 &&
+      currentItem.id === item?.id;
+
+    if (usePrefetched) {
+      setStreamingLinks(buildStreamingLinks(watchProviders, title));
+      return;
+    }
+
+    getWatchProviders(currentItem.id, mediaType)
+      .then((p) => setStreamingLinks(buildStreamingLinks(p, title)))
+      .catch(() => setStreamingLinks([]));
+  }, [isOpen, currentType, currentItem, item?.id, watchProviders]);
 
   const navigateTo = useCallback(
     (newItem: any, newType: "movie" | "person") => {
@@ -170,6 +199,7 @@ const FlipCardDetail = ({
                 isTV={isTV}
                 recommendationText={currentRecommendationText}
                 isEnriching={isEnriching}
+                streamingLinks={streamingLinks}
                 onPersonClick={(person) => navigateTo(person, "person")}
                 onPosterClick={navStack.length === 0 ? onPosterClick : undefined}
               />
@@ -196,6 +226,7 @@ const MovieDetailContent = ({
   isTV,
   recommendationText,
   isEnriching,
+  streamingLinks = [],
   onPersonClick,
   onPosterClick,
 }: {
@@ -206,6 +237,7 @@ const MovieDetailContent = ({
   isTV?: boolean;
   recommendationText?: MatchData | null;
   isEnriching?: boolean;
+  streamingLinks?: StreamingLink[];
   onPersonClick: (person: any) => void;
   onPosterClick?: () => void;
 }) => {
@@ -313,6 +345,34 @@ const MovieDetailContent = ({
       <div className="mx-5 mb-4 rounded-2xl bg-white/5 backdrop-blur-xl border border-white/[0.06] p-1.5">
         <MovieActionBar movie={detail || item} />
       </div>
+
+      {streamingLinks.length > 0 && (
+        <div className="mx-5 mb-5">
+          <p className="text-[10px] uppercase tracking-widest text-foreground/45 font-sans font-semibold mb-2">
+            Où regarder
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {streamingLinks.map((link) => (
+              <a
+                key={link.providerId}
+                href={link.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                title={link.name}
+                className="opacity-80 hover:opacity-100 transition-opacity"
+              >
+                {link.logo_path && (
+                  <img
+                    src={`${IMG_BASE}/original${link.logo_path}`}
+                    alt={link.name}
+                    className="h-10 w-10 object-cover rounded-xl"
+                  />
+                )}
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Divider */}
       <div className="border-t border-border/10 mx-5 mb-5" />

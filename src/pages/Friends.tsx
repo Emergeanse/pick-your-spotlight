@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
-import { sendNotification } from "@/lib/notifications";
 import { QRCodeSVG } from "qrcode.react";
 
 const Friends = () => {
@@ -77,20 +76,16 @@ const Friends = () => {
       }
       const { data: existing } = await (supabase.from("friendships" as any).select("id") as any).or(`and(requester_id.eq.${user.id},addressee_id.eq.${found.id}),and(requester_id.eq.${found.id},addressee_id.eq.${user.id})`);
       if (existing && (existing as any[]).length > 0) { toast.info("Déjà amis ou demande en cours"); setAddingFriend(false); return; }
-      await supabase.from("friendships" as any).insert({ requester_id: user.id, addressee_id: found.id, status: "pending" } as any);
-      const { data: myProf } = await supabase.from("profiles").select("display_name").eq("id", user.id).single();
-      await sendNotification(found.id, "friend_request", `${myProf?.display_name || "Quelqu'un"} veut être ton ami !`, "Accepte sa demande pour regarder des films ensemble.");
+      const { error: insertError } = await supabase.from("friendships" as any).insert({ requester_id: user.id, addressee_id: found.id, status: "pending" } as any);
+      if (insertError) throw insertError;
       toast.success(`Demande envoyée à ${found.display_name || "ton ami"} !`);
       setAddCode(""); setAddEmail(""); setShowAddModal(false); loadFriends();
     } catch { toast.error("Erreur lors de l'ajout"); } finally { setAddingFriend(false); }
   };
 
-  const handleAcceptFriend = async (friendshipId: string, friendId: string) => {
-    await supabase.from("friendships" as any).update({ status: "accepted" } as any).eq("id", friendshipId);
-    if (user) {
-      const { data: myProf } = await supabase.from("profiles").select("display_name").eq("id", user.id).single();
-      await sendNotification(friendId, "friend_accepted", `${myProf?.display_name || "Quelqu'un"} a accepté ta demande !`, "Vous pouvez maintenant regarder des films ensemble.");
-    }
+  const handleAcceptFriend = async (friendshipId: string) => {
+    const { error } = await supabase.from("friendships" as any).update({ status: "accepted" } as any).eq("id", friendshipId);
+    if (error) { toast.error("Erreur lors de l'acceptation"); return; }
     toast.success("Ami accepté !"); loadFriends();
   };
 
@@ -181,7 +176,7 @@ const Friends = () => {
                     </div>
                   </div>
                   <div className="flex gap-2">
-                    <Button size="sm" onClick={() => handleAcceptFriend(f.friendshipId, f.id)} className="rounded-lg h-8 px-3 text-[11px]">Accepter</Button>
+                    <Button size="sm" onClick={() => handleAcceptFriend(f.friendshipId)} className="rounded-lg h-8 px-3 text-[11px]">Accepter</Button>
                     <button onClick={() => handleDeclineFriend(f.friendshipId)} className="w-9 h-9 flex items-center justify-center rounded-lg text-foreground/40 hover:text-destructive hover:bg-destructive/10 transition-colors active:scale-[0.97]"><X className="w-3.5 h-3.5" /></button>
                   </div>
                 </div>
