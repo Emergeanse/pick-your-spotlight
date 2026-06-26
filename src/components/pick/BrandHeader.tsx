@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 import { ArrowLeft, Users, Search, Star, Crown } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { ReactNode } from "react";
-import pickLogo from "@/assets/Pick-logo.png";
+import pickLogo from "@/assets/pick-logo.png";
 import NotificationBell from "./NotificationBell";
 
 interface BrandHeaderProps {
