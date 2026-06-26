@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { ArrowLeft, Users, Search } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { ReactNode } from "react";
+import pickLogo from "@/assets/pick-logo.png";
 import NotificationBell from "./NotificationBell";
 
 interface BrandHeaderProps {
@@ -26,16 +27,14 @@ const BrandHeader = ({ showBack, onBack, extraActions }: BrandHeaderProps) => {
           className="flex items-center gap-2 text-foreground/60 hover:text-foreground transition-colors cursor-pointer group"
         >
           <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
-          <span className="font-serif text-xl md:text-2xl tracking-wide">Pick</span>
+          <img src={pickLogo} alt="Pick" className="h-9 md:h-11 w-auto object-contain" />
         </button>
       ) : (
         <button
           onClick={() => navigate("/app/profile")}
           className="active:scale-[0.98] transition-transform"
         >
-          <span className="font-serif text-2xl md:text-3xl tracking-wide text-foreground leading-none">
-            Pick
-          </span>
+          <img src={pickLogo} alt="Pick" className="h-10 md:h-12 w-auto object-contain" />
         </button>
       )}
 
