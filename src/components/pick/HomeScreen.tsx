@@ -2234,6 +2234,10 @@ const HomeScreen = ({
         extraActions={
           <QuickFilters filters={quickFilters} onFiltersChange={setQuickFilters} profileDefaults={profileDefaults} />
         }
+        avatarUrl={avatarUrl}
+        firstName={firstName}
+        isPremium={isPremium}
+        interactionCount={interactionCount}
       />
 
       <div
@@ -2255,30 +2259,6 @@ const HomeScreen = ({
         <p className="text-foreground/55 text-[13px] font-sans">
           {firstName ? `Bonsoir ${firstName} 👋` : "Bonsoir 👋"}
         </p>
-        <div className="flex items-center gap-2 mt-1.5">
-          {/* Avatar */}
-          <div className="w-7 h-7 rounded-full overflow-hidden ring-1 ring-white/15 bg-primary/20 flex items-center justify-center shrink-0">
-            {avatarUrl
-              ? <img src={avatarUrl} alt={firstName} className="w-full h-full object-cover" />
-              : <span className="text-[10px] font-bold text-primary leading-none">{(firstName || "?").charAt(0).toUpperCase()}</span>
-            }
-          </div>
-          {/* Badge Pick+ */}
-          {isPremium && (
-            <span className="inline-flex items-center gap-0.5 px-1.5 py-[2px] rounded-md bg-primary text-primary-foreground text-[9px] font-bold leading-none">
-              <Crown className="h-2 w-2" strokeWidth={3} />
-              Pick+
-            </span>
-          )}
-          {/* Compteur films */}
-          {interactionCount > 0 && (
-            <span className="flex items-center gap-1 text-[11px] text-foreground/50">
-              <Star className="h-2.5 w-2.5 fill-amber-400 text-amber-400" />
-              <span className="tabular-nums">{interactionCount}</span>
-              <span>films</span>
-            </span>
-          )}
-        </div>
       </motion.div>
 
       <div className="relative z-10 h-full overflow-y-auto overscroll-y-contain touch-[pan-y_pinch-zoom] scrollbar-hide pb-[calc(6rem+env(safe-area-inset-bottom))]">

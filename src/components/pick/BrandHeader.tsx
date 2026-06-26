@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { ArrowLeft, Users, Search } from "lucide-react";
+import { ArrowLeft, Users, Search, Star, Crown } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { ReactNode } from "react";
 import pickLogo from "@/assets/pick-logo.png";
@@ -9,10 +9,38 @@ interface BrandHeaderProps {
   showBack?: boolean;
   onBack?: () => void;
   extraActions?: ReactNode;
+  avatarUrl?: string | null;
+  firstName?: string;
+  isPremium?: boolean;
+  interactionCount?: number;
 }
 
-const BrandHeader = ({ showBack, onBack, extraActions }: BrandHeaderProps) => {
+const BrandHeader = ({ showBack, onBack, extraActions, avatarUrl, firstName, isPremium, interactionCount }: BrandHeaderProps) => {
   const navigate = useNavigate();
+
+  const userInfo = (
+    <div className="flex items-center gap-1.5 ml-2">
+      <div className="w-6 h-6 rounded-full overflow-hidden ring-1 ring-white/15 bg-primary/20 flex items-center justify-center shrink-0">
+        {avatarUrl
+          ? <img src={avatarUrl} alt={firstName} className="w-full h-full object-cover" />
+          : <span className="text-[9px] font-bold text-primary leading-none">{(firstName || "?").charAt(0).toUpperCase()}</span>
+        }
+      </div>
+      {isPremium && (
+        <span className="inline-flex items-center gap-0.5 px-1.5 py-[2px] rounded-md bg-primary text-primary-foreground text-[9px] font-bold leading-none">
+          <Crown className="h-2 w-2" strokeWidth={3} />
+          Pick+
+        </span>
+      )}
+      {interactionCount != null && interactionCount > 0 && (
+        <span className="flex items-center gap-1 text-[11px] text-foreground/50">
+          <Star className="h-2.5 w-2.5 fill-amber-400 text-amber-400" />
+          <span className="tabular-nums">{interactionCount}</span>
+          <span>films</span>
+        </span>
+      )}
+    </div>
+  );
 
   return (
     <motion.div
@@ -30,12 +58,15 @@ const BrandHeader = ({ showBack, onBack, extraActions }: BrandHeaderProps) => {
           <img src={pickLogo} alt="Pick" className="h-9 md:h-11 w-auto object-contain" />
         </button>
       ) : (
-        <button
-          onClick={() => navigate("/app/profile")}
-          className="active:scale-[0.98] transition-transform"
-        >
-          <img src={pickLogo} alt="Pick" className="h-10 md:h-12 w-auto object-contain" />
-        </button>
+        <div className="flex items-center">
+          <button
+            onClick={() => navigate("/app/profile")}
+            className="active:scale-[0.98] transition-transform"
+          >
+            <img src={pickLogo} alt="Pick" className="h-10 md:h-12 w-auto object-contain" />
+          </button>
+          {userInfo}
+        </div>
       )}
 
       <div className="flex items-center gap-1">
