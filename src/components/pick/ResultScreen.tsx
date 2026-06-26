@@ -1020,7 +1020,7 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
             <StreamingSection streamingLinks={streamingLinks} />
 
             {cast.length > 0 && (
-              <div className="mb-4">
+              <div className="mb-6">
                 <p className="text-[10px] uppercase tracking-widest text-foreground/45 font-sans font-semibold mb-2">
                   Casting
                 </p>
@@ -1036,31 +1036,6 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
               </div>
             )}
 
-            <motion.div
-              initial={{ opacity: 0, y: 14 }}
-              animate={{ opacity: revealStage === "settled" ? 1 : 0, y: revealStage === "settled" ? 0 : 14 }}
-              transition={{ delay: 0.1, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-              className="mt-7"
-            >
-              {trailerUrl ? (
-                <a
-                  href={trailerUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="group relative inline-flex w-full sm:w-auto items-center justify-center gap-2.5 px-7 py-4 rounded-3xl bg-primary text-primary-foreground font-sans font-semibold text-[14px] tracking-wide shadow-[0_22px_60px_-14px_hsl(var(--primary)/0.7)] hover:shadow-[0_22px_70px_-10px_hsl(var(--primary)/0.85)] transition-shadow"
-                >
-                  <motion.span
-                    aria-hidden
-                    animate={{ opacity: [0.35, 0.65, 0.35] }}
-                    transition={{ duration: 2.6, repeat: Infinity, ease: "easeInOut" }}
-                    className="absolute -inset-1 rounded-3xl bg-primary/40 blur-xl -z-10"
-                  />
-                  <Play className="w-4 h-4 fill-current" />
-                  On lance la séance ?
-                </a>
-              ) : null}
-            </motion.div>
-
           </div>
 
           {/* ── Barre fixe — navigation + boutons d'action ── */}
@@ -1068,10 +1043,28 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: revealStage === "settled" ? 1 : 0, y: revealStage === "settled" ? 0 : 24 }}
             transition={{ delay: 0.2, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-            className="fixed left-0 right-0 z-10 border-t border-border/20 bg-background/92 px-3 pt-1.5 pb-[calc(0.375rem+env(safe-area-inset-bottom))] backdrop-blur-xl shadow-[0_-12px_28px_hsl(var(--background)/0.28)]"
+            className="fixed left-0 right-0 z-10 border-t border-border/20 bg-background/92 px-3 pt-2 pb-[calc(0.375rem+env(safe-area-inset-bottom))] backdrop-blur-xl shadow-[0_-12px_28px_hsl(var(--background)/0.28)]"
             style={{ bottom: bottomTabBarClearance }}
           >
             <div className="mx-auto max-w-md">
+              {trailerUrl && (
+                <a
+                  href={trailerUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group relative mb-2 flex w-full items-center justify-center gap-2.5 rounded-3xl bg-primary px-5 py-3.5 text-[14px] font-sans font-semibold tracking-wide text-primary-foreground shadow-[0_22px_60px_-14px_hsl(var(--primary)/0.7)] transition-shadow hover:shadow-[0_22px_70px_-10px_hsl(var(--primary)/0.85)]"
+                >
+                  <motion.span
+                    aria-hidden
+                    animate={{ opacity: [0.35, 0.65, 0.35] }}
+                    transition={{ duration: 2.6, repeat: Infinity, ease: "easeInOut" }}
+                    className="absolute -inset-1 -z-10 rounded-3xl bg-primary/40 blur-xl"
+                  />
+                  <Play className="h-4 w-4 fill-current" />
+                  On lance la séance ?
+                </a>
+              )}
+
               {/* Ligne navigation suggestions — toujours visible quand plusieurs suggestions */}
               {totalCount > 1 && (onPrevious || onNext) && (
                 <div className="mb-1 flex items-center justify-between gap-2">

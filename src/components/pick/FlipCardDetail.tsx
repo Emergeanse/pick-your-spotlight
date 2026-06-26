@@ -8,6 +8,7 @@ import FeedbackBadge from "@/components/pick/FeedbackBadge";
 import { useMovieInteraction } from "@/hooks/use-movie-interactions";
 import MovieActionBar from "@/components/pick/MovieActionBar";
 import AppOverlayPortal from "@/components/pick/AppOverlayPortal";
+import { overlayDetailScrollPaddingBottom } from "@/lib/app-chrome";
 
 type MatchData = {
   matchScore?: number;
@@ -185,7 +186,10 @@ const FlipCardDetail = ({
             </button>
           </div>
 
-          <div className="flex-1 overflow-y-auto overscroll-contain scrollbar-dark pb-[calc(2rem+env(safe-area-inset-bottom))]">
+          <div
+            className="flex-1 overflow-y-auto overscroll-contain scrollbar-dark"
+            style={{ paddingBottom: overlayDetailScrollPaddingBottom }}
+          >
             {loading ? (
               <div className="flex items-center justify-center py-32">
                 <Loader2 className="h-7 w-7 animate-spin text-primary/40" />
