@@ -55,7 +55,7 @@ const BrandHeader = ({ showBack, onBack, extraActions, avatarUrl, firstName, isP
           className="flex items-center gap-2 text-foreground/60 hover:text-foreground transition-colors cursor-pointer group"
         >
           <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
-          <img src={pickLogo} alt="Pick" className="h-9 md:h-11 w-auto object-contain" />
+          <img src={pickLogo} alt="Pick" className="h-11 md:h-[52px] w-auto object-contain" />
         </button>
       ) : (
         <div className="flex items-center">
@@ -63,7 +63,7 @@ const BrandHeader = ({ showBack, onBack, extraActions, avatarUrl, firstName, isP
             onClick={() => navigate("/app/profile")}
             className="active:scale-[0.98] transition-transform"
           >
-            <img src={pickLogo} alt="Pick" className="h-10 md:h-12 w-auto object-contain" />
+            <img src={pickLogo} alt="Pick" className="h-12 md:h-[58px] w-auto object-contain" />
           </button>
           {userInfo}
         </div>
