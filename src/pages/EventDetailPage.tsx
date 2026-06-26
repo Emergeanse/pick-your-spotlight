@@ -12,10 +12,16 @@ import { setRevealEvent, queueForReveal } from "@/lib/event-reveal";
 import PostSoireeFlow, { type PostSoireeEvent } from "@/components/pick/PostSoireeFlow";
 import FlipCardDetail from "@/components/pick/FlipCardDetail";
 import SoireeFilmOverlay from "@/components/pick/SoireeFilmOverlay";
-import { getMovieDetailsWithCredits, getWatchProviders, getDisplayTitle, searchMovies, type MovieDetail } from "@/lib/tmdb";
+import { getMovieDetailsWithCredits, getWatchProviders, getDisplayTitle, type MovieDetail } from "@/lib/tmdb";
 import { getUserTasteProfile } from "@/lib/interactions";
 import { getLikedMovies } from "@/lib/liked-movies";
 import { computeUserTasteVector, ensureMovieEmbedding } from "@/lib/taste-engine";
+import {
+  detectPickMediaType,
+  loadFinalPickDetail,
+  pickMediaTypesToTry,
+  titlesMatch,
+} from "@/lib/event-final-pick";
 
 // ─────────────────────────────────────────
 // Types
@@ -39,6 +45,7 @@ type EventData = {
   final_pick_title: string | null;
   final_pick_poster: string | null;
   final_pick_tmdb_id: number | null;
+  final_pick_media_type: string | null;
 };
 
 type Participant = {
@@ -191,15 +198,34 @@ const EventDetailPage = () => {
   }, [id]);
 
   useEffect(() => {
-    if (!event?.final_pick_tmdb_id || event.status !== "done") {
+    if (!event?.final_pick_tmdb_id || !event.final_pick_title || event.status !== "done") {
       setCardProviders([]);
       return;
     }
-    const mediaType = event.media_type === "tv" ? "tv" : "movie";
-    getWatchProviders(event.final_pick_tmdb_id, mediaType)
-      .then(setCardProviders)
-      .catch(() => setCardProviders([]));
-  }, [event?.id, event?.status, event?.final_pick_tmdb_id, event?.media_type]);
+    let cancelled = false;
+    const types = pickMediaTypesToTry(event);
+    (async () => {
+      for (const mt of types) {
+        try {
+          const detail = await getMovieDetailsWithCredits(event.final_pick_tmdb_id!, mt);
+          if (titlesMatch(event.final_pick_title!, getDisplayTitle(detail))) {
+            const providers = await getWatchProviders(event.final_pick_tmdb_id!, mt);
+            if (!cancelled) setCardProviders(providers);
+            return;
+          }
+        } catch {
+          /* try next */
+        }
+      }
+      try {
+        const providers = await getWatchProviders(event.final_pick_tmdb_id!, types[0]);
+        if (!cancelled) setCardProviders(providers);
+      } catch {
+        if (!cancelled) setCardProviders([]);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [event?.id, event?.status, event?.final_pick_tmdb_id, event?.final_pick_title, event?.final_pick_media_type, event?.media_type]);
 
   // Vérifie si le feedback post-soirée a déjà été donné
   useEffect(() => {
@@ -252,7 +278,7 @@ const EventDetailPage = () => {
 
     const { data: ev, error } = await supabase
       .from("events" as any)
-      .select("id, title, event_date, event_time, location, is_remote, context, reveal_mode, status, organizer_id, invite_link_token, mood, genre_tags, media_type, final_pick_id, final_pick_title, final_pick_poster, final_pick_tmdb_id")
+      .select("id, title, event_date, event_time, location, is_remote, context, reveal_mode, status, organizer_id, invite_link_token, mood, genre_tags, media_type, final_pick_id, final_pick_title, final_pick_poster, final_pick_tmdb_id, final_pick_media_type")
       .eq("id", id)
       .maybeSingle();
 
@@ -540,6 +566,11 @@ const EventDetailPage = () => {
 
     setRevealingWinner(true);
     try {
+      const pickMediaType =
+        winner.tmdb_id && winner.movie_title
+          ? await detectPickMediaType(winner.tmdb_id, winner.movie_title)
+          : "movie";
+
       const { error } = await supabase
         .from("events" as any)
         .update({
@@ -547,6 +578,7 @@ const EventDetailPage = () => {
           final_pick_title: winner.movie_title,
           final_pick_poster: winner.poster_path,
           final_pick_tmdb_id: winner.tmdb_id,
+          final_pick_media_type: pickMediaType,
           status: "done",
         })
         .eq("id", event.id);
@@ -651,59 +683,29 @@ const EventDetailPage = () => {
     }
   }, [user, event]);
 
-  const buildFallbackMovieDetail = (ev: EventData, tmdbId = 0): MovieDetail => {
-    const mediaType = ev.media_type === "tv" ? "tv" : "movie";
-    return {
-      id: tmdbId,
-      title: ev.final_pick_title!,
-      poster_path: ev.final_pick_poster,
-      overview: "",
-      backdrop_path: null,
-      vote_average: 0,
-      genre_ids: [],
-      runtime: 0,
-      episode_run_time: [],
-      genres: [],
-      ...(mediaType === "tv" ? { first_air_date: "2000-01-01" } : { release_date: "2000-01-01" }),
-    };
-  };
-
-  const resolveFinalPickTmdbId = async (title: string, mediaType: "movie" | "tv"): Promise<number | null> => {
-    const results = await searchMovies(title);
-    if (!results.length) return null;
-    const normalized = title.trim().toLowerCase();
-    const exact = results.find((r) => getDisplayTitle(r).trim().toLowerCase() === normalized);
-    if (exact) return exact.id;
-    const typed = results.find((r) => r.media_type === mediaType);
-    return typed?.id ?? results[0].id;
-  };
-
   const openFinalPickFiche = async () => {
     if (!event?.final_pick_title || loadingFilmFiche) return;
-    const mediaType = event.media_type === "tv" ? "tv" : "movie";
     setLoadingFilmFiche(true);
     setFilmMatchData(null);
     setFilmFicheProviders(cardProviders);
     setFilmDetailOpen(false);
     try {
-      let tmdbId = event.final_pick_tmdb_id;
-      if (!tmdbId) {
-        tmdbId = await resolveFinalPickTmdbId(event.final_pick_title, mediaType);
+      const { movie, mediaType, titleMismatch } = await loadFinalPickDetail(event);
+      if (titleMismatch) {
+        toast.warning("La fiche TMDB ne correspond pas au titre affiché — affichage des infos de la soirée.");
       }
-      if (!tmdbId) {
-        setFilmFicheMovie(buildFallbackMovieDetail(event));
-        return;
+      setFilmFicheMovie(movie);
+
+      if (movie.id > 0) {
+        const [providers, matchData] = await Promise.all([
+          getWatchProviders(movie.id, mediaType).catch(() => []),
+          fetchFilmMatchData(movie),
+        ]);
+        setFilmFicheProviders(providers);
+        setFilmMatchData(matchData);
       }
-      const detail = await getMovieDetailsWithCredits(tmdbId, mediaType);
-      setFilmFicheMovie(detail);
-      const [providers, matchData] = await Promise.all([
-        getWatchProviders(tmdbId, mediaType).catch(() => []),
-        fetchFilmMatchData(detail),
-      ]);
-      setFilmFicheProviders(providers);
-      setFilmMatchData(matchData);
     } catch {
-      setFilmFicheMovie(buildFallbackMovieDetail(event, event.final_pick_tmdb_id ?? 0));
+      toast.error("Impossible de charger la fiche du film");
     } finally {
       setLoadingFilmFiche(false);
     }

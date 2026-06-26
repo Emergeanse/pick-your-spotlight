@@ -2,8 +2,9 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import type { MovieDetail } from "@/lib/tmdb";
 
 const mockMaybeSingle = vi.fn();
-const mockEq = vi.fn(() => ({ maybeSingle: mockMaybeSingle }));
-const mockSelect = vi.fn(() => ({ eq: mockEq }));
+const mockEqMedia = vi.fn(() => ({ maybeSingle: mockMaybeSingle }));
+const mockEqTmdb = vi.fn(() => ({ eq: mockEqMedia }));
+const mockSelect = vi.fn(() => ({ eq: mockEqTmdb }));
 const mockUpdateEq = vi.fn();
 const mockUpdate = vi.fn(() => ({ eq: mockUpdateEq }));
 
@@ -25,6 +26,10 @@ vi.mock("@/lib/tmdb", () => ({
   getDisplayTitle: (movie: MovieDetail) => movie.title ?? movie.name ?? "Sans titre",
 }));
 
+vi.mock("@/lib/event-final-pick", () => ({
+  resolvePickMediaType: () => "movie",
+}));
+
 import { programFilmForEvent } from "@/lib/event-program";
 
 const MOVIE: MovieDetail = {
@@ -44,12 +49,14 @@ describe("programFilmForEvent", () => {
     await programFilmForEvent("event-123", MOVIE);
 
     expect(mockSelect).toHaveBeenCalledWith("id");
-    expect(mockEq).toHaveBeenCalledWith("tmdb_id", 38);
+    expect(mockEqTmdb).toHaveBeenCalledWith("tmdb_id", 38);
+    expect(mockEqMedia).toHaveBeenCalledWith("media_type", "movie");
     expect(mockUpdate).toHaveBeenCalledWith({
       final_pick_id: "catalog-uuid",
       final_pick_title: "Eternal Sunshine",
       final_pick_poster: "/poster.jpg",
       final_pick_tmdb_id: 38,
+      final_pick_media_type: "movie",
       status: "done",
     });
     expect(mockUpdateEq).toHaveBeenCalledWith("id", "event-123");
