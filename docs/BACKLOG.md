@@ -1,7 +1,7 @@
 # Backlog Pick — suivi équipe
 
 > **Référence unique** pour prioriser, assigner et suivre l'avancement alpha → beta.  
-> Dernière mise à jour : **26 juin 2026** (TNR soirée pick · event-final-pick)
+> Dernière mise à jour : **26 juin 2026** (TNR soirée pick généralisé · event-final-pick)
 
 ---
 
@@ -14,7 +14,7 @@
 
 | Couche            | Outil                                | Fichiers                                                              | État local (24/06)                         |
 | ----------------- | ------------------------------------ | --------------------------------------------------------------------- | ------------------------------------------ |
-| **TNR unitaires** | Vitest                               | `event-reveal`, `event-final-pick`, `event-program`, `recommendation-non-regression`, `recommendation-pipeline`, `recommendation-batch-integration`, `movie-interactions`, `tonight-poster-wall`, `onboarding-initiation` | **168/168 OK** (26/06)                     |
+| **TNR unitaires** | Vitest                               | `event-reveal`, `event-final-pick`, `event-program`, `recommendation-non-regression`, `recommendation-pipeline`, `recommendation-batch-integration`, `movie-interactions`, `tonight-poster-wall`, `onboarding-initiation` | **179/179 OK** (26/06)                     |
 | **Smoke rapide**  | build + Vitest + Playwright (`auth`) | `npm run test:smoke`                                                  | build + unit OK · E2E si Chromium installé |
 | **Smoke complet** | + 5 specs E2E                        | `npm run test:smoke:full`                                             | requiert `.env.test` + Playwright          |
 | **CI GitHub**     | Actions sur `main` + PR              | `.github/workflows/ci.yml`                                            | unit + tsc sur PR · E2E sur push `main` · lockfile sync `f46ea156` |
@@ -48,7 +48,7 @@
 | Invariants exclusions étendus | `recommendation-non-regression.test.ts` | +`normalizeExcludeIds` · genres exclus jamais en sortie · filet + backfill 1→3 |
 | Régression `usedIds` 2026-06-03 | `recommendation-pipeline.test.ts` + non-regression | documentée |
 | Quick win E2E mock shape | `tests/e2e/pipeline.spec.ts` | `MOCK_SP_RESPONSE` aligné `{ movies[], engineMeta }` |
-| **TNR soirée pick (Farscape TV vs film)** | `event-final-pick.test.ts`, `event-program.test.ts` | `pickMediaTypesToTry` · `resolvePickMediaType` · `loadFinalPickDetail` (id partagé TMDB) · `final_pick_media_type` persisté à la révélation · régression `media_type` soirée ≠ type pick |
+| **TNR soirée pick (cas variés)** | `event-final-pick.test.ts`, `fixtures/event-final-pick-tnr.ts`, `event-program.test.ts` | `describe.each` 12 cas `loadFinalPickDetail` (Farscape, Stargate, Breaking Bad, Indiana Jones, Fleuve tranquille, id partagé, legacy, title mismatch, recherche titre) · 4 `detectPickMediaType` · 4 `resolveFinalPickTmdbId` · échantillon seedé (5/10) · `final_pick_media_type` persisté à la révélation |
 
 **Reste phase 3** : E2E pipeline stable avec credentials · checklist manuelle post-deploy § SMOKE_TESTS 3.2 · couverture 70 % `src/lib/` (mesure non automatisée).
 
