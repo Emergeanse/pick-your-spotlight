@@ -3,9 +3,9 @@
 // deux parents) plutôt que sous chaque parent séparément.
 
 const TRUNK_TAIL = 'christophe-olivier-billeux';
-// Pequegnot Billeux ouvre la lignée 100% avérée (13 générations) ; au-delà,
-// Jean Perrin Billeux n'est qu'une hypothèse fondatrice, non comptée dans les 13.
-const TRUNK_HEAD = 'pequegnot-billieux';
+// Jean Perrin Billeux (père) ouvre la lignée directe ; Pequegnot (François ou
+// Jean-Perrin) est la génération suivante, puis Pierre Billeux, etc.
+const TRUNK_HEAD = 'jean-perrin-billeux-pere';
 
 function unionsFor(personId) {
   const p = PEOPLE[personId];
@@ -136,7 +136,7 @@ function renderTree(rootId, mountId, trunkSet) {
 
 const trunkSet = computeTrunk(TRUNK_TAIL);
 renderTrunkChain(TRUNK_TAIL, TRUNK_HEAD, 'trunk-chain');
-renderTree('pequegnot-billieux', 'tree-main', trunkSet);
+renderTree('jean-perrin-billeux-pere', 'tree-main', trunkSet);
 renderTree('dominique-joseph-billieux-ehrenfeld', 'tree-ehrenfeld', new Set());
 
 // Occurrences isolées : couples/individus, ou petites branches, sans lien de
@@ -153,7 +153,6 @@ function isolatedTree(rootId) {
 
 document.getElementById('tree-isolated').innerHTML = `
   <div class="famtree-group-wrap">
-    ${isolatedTree('jean-perrin-billeux-pere')}
     ${isolatedTree('andre-billieux-1598')}
     ${isolatedTree('jean-pierre-billieux')}
     ${isolatedGroup(nodeHtml('henri-billieux-1677', 'claudine-bregnard'))}

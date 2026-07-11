@@ -184,28 +184,7 @@ const CHAPTERS = [
     map: 'img/carte-retour.png',
     years: '1900 – 2026',
     place: 'Bordj Menaïel, Chaumont, Tours — 1900–2026',
-    illustration: `<svg viewBox="0 0 900 400" xmlns="http://www.w3.org/2000/svg">
-      <defs><linearGradient id="sky4" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%" stop-color="#6b4a3a"/><stop offset="45%" stop-color="#c9895a"/><stop offset="100%" stop-color="#e9c07a"/>
-      </linearGradient></defs>
-      <rect width="900" height="400" fill="url(#sky4)"/>
-      <circle cx="200" cy="110" r="28" fill="#f2d19a"/>
-      <path d="M0,260 Q225,220 450,250 T900,235 L900,400 L0,400 Z" fill="#4a3324"/>
-      <path d="M0,300 Q225,270 450,296 T900,282 L900,400 L0,400 Z" fill="#6b4a30"/>
-      <ellipse cx="470" cy="280" rx="46" ry="30" fill="#3a2818"/>
-      <ellipse cx="540" cy="290" rx="34" ry="22" fill="#3a2818"/>
-      <ellipse cx="400" cy="292" rx="30" ry="20" fill="#3a2818"/>
-      <rect x="600" y="266" width="46" height="36" fill="#241a12"/>
-      <polygon points="596,266 623,240 650,266" fill="#241a12"/>
-      <rect x="614" y="278" width="14" height="24" fill="#12100c"/>
-      <rect x="700" y="278" width="30" height="24" fill="#2e2118"/>
-      <polygon points="697,278 715,258 733,278" fill="#2e2118"/>
-      <path d="M120,340 C160,320 180,300 210,310" fill="none" stroke="#3a2818" stroke-width="4"/>
-      <path d="M170,312 C185,300 200,292 210,296" fill="none" stroke="#5a7a4a" stroke-width="3"/>
-      <path d="M175,320 C190,312 200,300 205,298" fill="none" stroke="#5a7a4a" stroke-width="3"/>
-      <ellipse cx="200" cy="292" rx="7" ry="4" fill="#6f8f56"/>
-      <ellipse cx="208" cy="297" rx="6" ry="4" fill="#6f8f56"/>
-    </svg>`,
+    illustration: `<img src="img/illustration-retour.png" alt="De Bordj Menaïel à Chaumont, le chemin du retour">`,
     narrative: [
       "Et pourtant les noms reviennent.",
       "<a class=\"person-link\" href=\"personne.html#hubert-georges-billeux\">Hubert Georges</a> — né à Mouzaïa, mort à Chaumont, en Haute-Marne, le vingt mars mille neuf cent soixante-dix-neuf. Il y eut trois femmes dans sa vie. Il les aima comme on aime trois pays qu'on ne possède jamais tout à fait. La boucle se referme sans qu'on l'ait voulu — comme se referment toujours les histoires de famille, qui ne sont jamais que des cercles qu'on croit être des lignes droites.",
@@ -213,7 +192,7 @@ const CHAPTERS = [
       "Après la mort de <a class=\"person-link\" href=\"personne.html#georges-billeux\">Georges</a> à Alger, la descendance poursuit vers l'est. <a class=\"person-link\" href=\"personne.html#charles-marc-billeux\">Charles Marc Billeux</a> naît à Bordj Menaïel, sur la côte de Boumerdès — cinquante kilomètres à l'est d'Alger, pays d'orangers et de collines. Il y vit jusqu'à ses seize ans. Son père est réparateur de machines agricoles sur une exploitation : de la charrue du vigneron <a class=\"person-link\" href=\"personne.html#louis-billieux\">Louis</a> au moteur diesel, la main reste la même, seule la machine change.",
       "À seize ans, <a class=\"person-link\" href=\"personne.html#charles-marc-billeux\">Charles</a> part pour la France. Tours devient sa ville. <a class=\"person-link\" href=\"personne.html#chantal-captien\">Chantal Captien</a> devient son épouse.",
       "<a class=\"person-link\" href=\"personne.html#charles-marc-billeux\">Charles Marc</a> écrivit un jour, seul devant son ordinateur, une lettre pour ne pas oublier — mon arrière-grand-père, mon arrière-arrière-grand-père — comme on écrit sur les tombes pour que les pierres se souviennent à notre place.",
-      "Et il y a toi, <a class=\"person-link\" href=\"personne.html#christophe-olivier-billeux\">Christophe Olivier</a>, qui reprends le fil là où il l'a laissé. Tu remontes le courant du Doubs jusqu'à Alle. Tu remontes jusqu'à <a class=\"person-link\" href=\"personne.html#jean-francois-billieux\">Jean-François</a> et <a class=\"person-link\" href=\"personne.html#marguerite-bregnard\">Marguerite</a> dont on ne sait presque rien sinon qu'ils ont existé — et que de leur existence, à travers treize générations, la mer traversée deux fois, les églises de Zommange et de Guébling, les vignes de Bouillonville, les collines d'Alger, Bordj Menaïel, les rues de Tours — de tout cela, tu es la suite. Tu es ce que les morts ont rêvé sans le savoir en donnant un nom à un enfant."
+      "Et il y a toi, <a class=\"person-link\" href=\"personne.html#christophe-olivier-billeux\">Christophe Olivier</a>, qui reprends le fil là où il l'a laissé. Tu remontes le courant du Doubs jusqu'à Alle. Tu remontes jusqu'à <a class=\"person-link\" href=\"personne.html#jean-francois-billieux\">Jean-François</a> et <a class=\"person-link\" href=\"personne.html#marguerite-bregnard\">Marguerite</a> dont on ne sait presque rien sinon qu'ils ont existé — et que de leur existence, à travers quatorze générations, la mer traversée deux fois, les églises de Zommange et de Guébling, les vignes de Bouillonville, les collines d'Alger, Bordj Menaïel, les rues de Tours — de tout cela, tu es la suite. Tu es ce que les morts ont rêvé sans le savoir en donnant un nom à un enfant."
     ],
     cards: [
       {
@@ -249,31 +228,32 @@ const CHAPTERS = [
 ];
 
 // Épilogue — clôt le récit après le dernier chapitre. "generations" liste la lignée
-// directe, 100% avérée, telle que présentée dans la chronique (13 générations,
-// de Pequegnot Billeux à Christophe Olivier Billeux).
+// directe, 100% avérée, telle que présentée dans la chronique (14 générations,
+// de Jean Perrin Billeux père à Christophe Olivier Billeux).
 const EPILOGUE = {
   title: 'VI · Ce qui reste',
   narrative: [
     "Il n'y a pas d'amour heureux — disait le poète, et il avait raison, car l'amour des morts est celui qu'on ne peut pas leur rendre, seulement le deviner dans les registres qu'ils ne reliront jamais.",
     "Il n'y a peut-être pas non plus de généalogie tout à fait achevée. Seulement des noms qui appellent d'autres noms. Des actes qu'un curé écrivit en latin. Des certificats de non-opposition scellés à Alle. Des bateaux partis de Marseille. Des cultivateurs morts à Alger. Des réparateurs de machines à Bordj Menaïel. Des lettres qu'un homme s'écrit à lui-même pour ne pas oublier.",
     "<a class=\"person-link\" href=\"personne.html#pequegnot-billieux\">Pequegnot</a>. <a class=\"person-link\" href=\"personne.html#pierre-bileux\">Pierre</a>. <a class=\"person-link\" href=\"personne.html#nicolas-billieux-aine\">Nicolas</a> et <a class=\"person-link\" href=\"personne.html#anne-gevaudin\">Anne</a>. <a class=\"person-link\" href=\"personne.html#jean-francois-billieux\">Jean-François</a> et <a class=\"person-link\" href=\"personne.html#marguerite-bregnard\">Marguerite</a>. <a class=\"person-link\" href=\"personne.html#nicolas-billieux\">Nicolas</a> et <a class=\"person-link\" href=\"personne.html#suzanne-rossel\">Suzanne</a>. <a class=\"person-link\" href=\"personne.html#germain-billieux\">Germain</a>. <a class=\"person-link\" href=\"personne.html#hubert-billieux-1772\">Hubert</a> et <a class=\"person-link\" href=\"personne.html#rose-cesar\">Rose</a>. <a class=\"person-link\" href=\"personne.html#louis-billieux\">Louis</a> et <a class=\"person-link\" href=\"personne.html#marie-michel\">Marie</a>. <a class=\"person-link\" href=\"personne.html#hubert-billieux-1838\">Hubert</a> et <a class=\"person-link\" href=\"personne.html#elisabeth-sutterer\">Elisabeth</a>. <a class=\"person-link\" href=\"personne.html#georges-billeux\">Georges</a> et <a class=\"person-link\" href=\"personne.html#celeste-parisot\">Céleste</a>. <a class=\"person-link\" href=\"personne.html#hubert-georges-billeux\">Hubert Georges</a>. <a class=\"person-link\" href=\"personne.html#charles-marc-billeux\">Charles</a> et <a class=\"person-link\" href=\"personne.html#chantal-captien\">Chantal</a>. <a class=\"person-link\" href=\"personne.html#christophe-olivier-billeux\">Christophe Olivier</a>.",
-    "Treize générations. Trois pays. Une mer traversée deux fois.",
+    "Quatorze générations. Trois pays. Une mer traversée deux fois.",
     "Il y eut Alle. Il y eut la France. Il y eut l'Algérie. Il y eut le retour — non pas un retour au village d'origine, jamais Alle retrouvée, seulement une autre France, une autre rive, une autre manière de dire je suis de quelque part quand on ne l'est plus tout à fait nulle part."
   ],
   closing: "Rien ne subsiste que ce qui fut écrit — et ce que tu écris encore.",
   generations: [
-    { n: 1, html: '<a class="person-link" href="personne.html#pequegnot-billieux">Pequegnot Billieux</a>, père de <a class="person-link" href="personne.html#pierre-bileux">Pierre</a> — sans doute <a class="person-link" href="personne.html#francois-billieux-1598">François</a> ou <a class="person-link" href="personne.html#jean-perrin-billieux-1598">Jean Perrin</a> <em>fils</em>, fils de <a class="person-link" href="personne.html#jean-perrin-billeux-pere">Jean Perrin</a> <em>père</em>', note: '16XX, Alle' },
-    { n: 2, html: '<a class="person-link" href="personne.html#pierre-bileux">Pierre Billeux</a> × <a class="person-link" href="personne.html#clemence-magnin">Clémence Magnin</a>', note: '1626' },
-    { n: 3, html: '<a class="person-link" href="personne.html#nicolas-billieux-aine">Nicolas Billieux</a> × <a class="person-link" href="personne.html#anne-gevaudin">Anne Gevaudin</a>', note: '1669' },
-    { n: 4, html: '<a class="person-link" href="personne.html#jean-francois-billieux">Jean-François Billieux</a> × <a class="person-link" href="personne.html#marguerite-bregnard">Marguerite Bregnard</a>', note: 'm. 1693' },
-    { n: 5, html: '<a class="person-link" href="personne.html#nicolas-billieux">Nicolas Billieux</a> × <a class="person-link" href="personne.html#suzanne-rossel">Suzanne Rossel</a>', note: '° 1703, m. 1724' },
-    { n: 6, html: '<a class="person-link" href="personne.html#germain-billieux">Germain Billieux</a>', note: '° 1728' },
-    { n: 7, html: '<a class="person-link" href="personne.html#hubert-billieux-1772">Hubert Billieux</a> × <a class="person-link" href="personne.html#rose-cesar">Rose César</a>', note: '1772–1850' },
-    { n: 8, html: '<a class="person-link" href="personne.html#louis-billieux">Louis Billieux</a> × <a class="person-link" href="personne.html#marie-michel">Marie Michel</a>', note: '1797–1857' },
-    { n: 9, html: '<a class="person-link" href="personne.html#hubert-billieux-1838">Hubert Billieux</a> × <a class="person-link" href="personne.html#elisabeth-sutterer">Elisabeth Sutterer</a>', note: '1838–1898' },
-    { n: 10, html: '<a class="person-link" href="personne.html#georges-billeux">Georges Billeux</a> × <a class="person-link" href="personne.html#celeste-parisot">Céleste Parisot</a>', note: '1874–1937' },
-    { n: 11, html: '<a class="person-link" href="personne.html#hubert-georges-billeux">Hubert Georges Billeux</a>', note: '1900–1979' },
-    { n: 12, html: '<a class="person-link" href="personne.html#charles-marc-billeux">Charles Marc Billeux</a> × <a class="person-link" href="personne.html#chantal-captien">Chantal Captien</a>', note: 'Bordj Menaïel → Tours' },
-    { n: 13, html: '<a class="person-link" href="personne.html#christophe-olivier-billeux">Christophe Olivier Billeux</a>', note: '' }
+    { n: 1, html: '<a class="person-link" href="personne.html#jean-perrin-billeux-pere">Jean Perrin Billeux</a> <em>(père)</em>', note: '~1550, Alle' },
+    { n: 2, html: '<a class="person-link" href="personne.html#pequegnot-billieux">Pequegnot (François ou Jean-Perrin)</a>, père de <a class="person-link" href="personne.html#pierre-bileux">Pierre</a>', note: '16XX, Alle' },
+    { n: 3, html: '<a class="person-link" href="personne.html#pierre-bileux">Pierre Billeux</a> × <a class="person-link" href="personne.html#clemence-magnin">Clémence Magnin</a>', note: '1626' },
+    { n: 4, html: '<a class="person-link" href="personne.html#nicolas-billieux-aine">Nicolas Billieux</a> × <a class="person-link" href="personne.html#anne-gevaudin">Anne Gevaudin</a>', note: '1669' },
+    { n: 5, html: '<a class="person-link" href="personne.html#jean-francois-billieux">Jean-François Billieux</a> × <a class="person-link" href="personne.html#marguerite-bregnard">Marguerite Bregnard</a>', note: 'm. 1693' },
+    { n: 6, html: '<a class="person-link" href="personne.html#nicolas-billieux">Nicolas Billieux</a> × <a class="person-link" href="personne.html#suzanne-rossel">Suzanne Rossel</a>', note: '° 1703, m. 1724' },
+    { n: 7, html: '<a class="person-link" href="personne.html#germain-billieux">Germain Billieux</a>', note: '° 1728' },
+    { n: 8, html: '<a class="person-link" href="personne.html#hubert-billieux-1772">Hubert Billieux</a> × <a class="person-link" href="personne.html#rose-cesar">Rose César</a>', note: '1772–1850' },
+    { n: 9, html: '<a class="person-link" href="personne.html#louis-billieux">Louis Billieux</a> × <a class="person-link" href="personne.html#marie-michel">Marie Michel</a>', note: '1797–1857' },
+    { n: 10, html: '<a class="person-link" href="personne.html#hubert-billieux-1838">Hubert Billieux</a> × <a class="person-link" href="personne.html#elisabeth-sutterer">Elisabeth Sutterer</a>', note: '1838–1898' },
+    { n: 11, html: '<a class="person-link" href="personne.html#georges-billeux">Georges Billeux</a> × <a class="person-link" href="personne.html#celeste-parisot">Céleste Parisot</a>', note: '1874–1937' },
+    { n: 12, html: '<a class="person-link" href="personne.html#hubert-georges-billeux">Hubert Georges Billeux</a>', note: '1900–1979' },
+    { n: 13, html: '<a class="person-link" href="personne.html#charles-marc-billeux">Charles Marc Billeux</a> × <a class="person-link" href="personne.html#chantal-captien">Chantal Captien</a>', note: 'Bordj Menaïel → Tours' },
+    { n: 14, html: '<a class="person-link" href="personne.html#christophe-olivier-billeux">Christophe Olivier Billeux</a>', note: '' }
   ]
 };

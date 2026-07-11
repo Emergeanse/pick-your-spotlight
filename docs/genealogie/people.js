@@ -63,7 +63,7 @@ const PEOPLE = {
     bio: "Père de Clémence Magnin. Témoins au mariage de sa fille en 1626 : Jean Perrin Baboz, Frédéric Baboz, Pequegnot Billieux (le père du marié) et Albert Rossez, avec Jean Perrin Rossez également cité."
   },
   'pequegnot-billieux': {
-    name: 'Pequegnot Billieux',
+    name: 'Pequegnot (François ou Jean-Perrin)',
     dates: "Alle — avant 1626",
     chapterId: 'alle',
     parents: ['jean-perrin-billeux-pere'],
@@ -796,12 +796,11 @@ const PEOPLE = {
     spouses: ['christophe-billeux-1849']
   },
 
-  // --- Actes anciens d'Alle (1598-1753), non rattachés à ce jour — mais dans la
-  // bonne fenêtre chronologique pour, un jour, prolonger la lignée au-delà de
-  // Jean-François Billieux (né avant 1703).
+  // --- Frères de Pequegnot (1597-1598) et actes d'Alle non rattachés à ce jour —
   'francois-billieux-1598': {
     name: 'François Billieux',
     dates: 'mariage le 21 juillet 1598, Alle',
+    chapterId: 'alle',
     parents: ['jean-perrin-billeux-pere'],
     spouses: ['nn-viatte'],
     bio: "Épouse à Alle, le 21 juillet 1598, une veuve désignée « NN Viatte » (prénom non renseigné dans l'acte), veuve de Jean Perrin Babot. Témoins : Jean Perrin Billieux et André Billieux. Jean Perrin, marié l'année précédente et témoin à ce mariage, est vraisemblablement son frère. François est l'un des deux candidats sérieux (avec Jean Perrin) pour être le « Pequegnot Billieux » père de Pierre Billeux en 1626 : leurs mariages respectifs, en 1597 et 1598, tombent 27 et 28 ans avant celui de Pierre — un écart cohérent avec une filiation père-fils dans les deux cas."
@@ -815,14 +814,16 @@ const PEOPLE = {
   'jean-perrin-billieux-1598': {
     name: 'Jean Perrin Billieux',
     dates: 'mariage le 23 novembre 1597, Alle',
+    chapterId: 'alle',
     parents: ['jean-perrin-billeux-pere'],
     spouses: ['francoise-guillot'],
     bio: "Épouse Françoise Guillot dit Pin le 23 novembre 1597 à Alle, fils de feu Jean Perrin Billeux (le père) — une filiation citée noir sur blanc dans l'acte. L'année suivante, en 1598, il est témoin au mariage de François Billieux et NN Viatte — vraisemblablement son frère, actes consécutifs dans le même registre (ArCJ Bob 14 item 2, actes 13 et 15). Il est l'un des deux candidats sérieux (avec François) pour être le « Pequegnot Billieux » père de Pierre Billeux en 1626 : son mariage tombe 29 ans avant celui de Pierre, un écart cohérent avec une filiation père-fils."
   },
   'jean-perrin-billeux-pere': {
-    name: 'Jean Perrin Billeux',
+    name: 'Jean Perrin Billeux (père)',
     dates: "né vers 1550, Alle — décédé avant 1597",
-    children: ['jean-perrin-billieux-1598', 'francois-billieux-1598'],
+    chapterId: 'alle',
+    children: ['pequegnot-billieux', 'jean-perrin-billieux-1598', 'francois-billieux-1598'],
     bio: "Naissance vers 1550 estimée par calcul (pour avoir un fils en âge de se marier en 1597, en comptant environ 25-30 ans par génération) — aucun acte ne donne sa date de naissance. Père de Jean Perrin Billieux, marié en 1597, déjà décédé à cette date — l'acte le dit explicitement. Il est très probablement aussi le père de François Billieux, marié l'année suivante (1598) : les deux hommes se marient à un an d'écart dans le même village, et Jean Perrin est témoin au mariage de François — l'indice classique d'une fratrie. Aucun acte ne cite directement le père de François, mais la coïncidence est forte. L'un de ces deux frères est vraisemblablement le « Pequegnot Billeux » père de Pierre Billeux (1626, voir sa fiche) — les deux mariages, en 1597 et 1598, tombent à 27 et 28 ans de celui de Pierre, un écart père-fils tout à fait cohérent des deux côtés. Si c'est le cas, Jean Perrin Billeux serait le grand-père de Pierre — Perrin, forme ancienne de Pierre, allant dans ce sens."
   },
   'francoise-guillot': {

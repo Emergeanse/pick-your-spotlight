@@ -68,7 +68,7 @@ function renderEpilogue() {
       ${EPILOGUE.narrative.map(p => `<p>${p}</p>`).join('')}
     </div>
     <p class="epilogue-closing">${EPILOGUE.closing}</p>
-    <h3 class="epilogue-annexe-title">Annexe · Les treize générations</h3>
+    <h3 class="epilogue-annexe-title">Annexe · Les quatorze générations</h3>
     <table class="epilogue-annexe">
       <thead><tr><th>#</th><th>Personne</th><th>Repère</th></tr></thead>
       <tbody>
