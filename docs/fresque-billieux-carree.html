@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Il y eut Alle... l'Algérie... — quatre feuillets</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --ink:       #3b2f22;
+  --ink-soft:  #5a4a37;
+  --gold:      #a9822f;
+}
+
+html { font-size: 16px; }
+body {
+  font-family: Georgia, 'Iowan Old Style', 'Palatino Linotype', serif;
+  display: flex;
+  justify-content: center;
+  padding: 0;
+}
+
+.canvas {
+  width: 2200px;
+  height: 2200px;
+  background: radial-gradient(ellipse at 50% 15%, #241b12 0%, #17110b 70%);
+  position: relative;
+  padding: 40px;
+}
+
+.banner {
+  height: 130px;
+  text-align: center;
+  color: #f2e8d3;
+}
+.kicker {
+  font-size: 0.85rem;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--gold);
+  font-weight: 700;
+  margin-top: 6px;
+}
+.title {
+  font-size: 2.6rem;
+  font-style: italic;
+  margin-top: 8px;
+  color: #f2e8d3;
+}
+.subtitle {
+  font-size: 0.95rem;
+  color: #cbb98f;
+  font-style: italic;
+  margin-top: 4px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 28px;
+  height: 1970px;
+  width: 2120px;
+}
+
+.cell { display: flex; align-items: center; justify-content: center; }
+
+.feuille {
+  width: 100%;
+  height: 100%;
+  background:
+    radial-gradient(ellipse 380px 260px at 12% 10%, rgba(140,100,55,.20), transparent 60%),
+    radial-gradient(ellipse 340px 240px at 88% 18%, rgba(140,100,55,.16), transparent 60%),
+    radial-gradient(ellipse 360px 260px at 70% 60%, rgba(120,85,45,.20), transparent 60%),
+    radial-gradient(ellipse 340px 240px at 10% 82%, rgba(120,85,45,.18), transparent 60%),
+    radial-gradient(ellipse 380px 260px at 92% 94%, rgba(100,70,35,.22), transparent 60%),
+    linear-gradient(180deg, #f4ead0 0%, #ecdcb6 45%, #f1e3c2 100%);
+  box-shadow: inset 0 0 70px rgba(90,60,25,.26), 0 14px 40px rgba(0,0,0,.5);
+  padding: 34px 38px 30px;
+  display: flex;
+  flex-direction: column;
+  clip-path: polygon(
+    0% 0%, 2% 5%, 0.3% 10%, 2.2% 15%, 0.2% 20%, 2% 25%, 0.3% 30%, 2.1% 35%,
+    0.2% 40%, 2% 45%, 0.3% 50%, 2.2% 55%, 0.2% 60%, 2% 65%, 0.3% 70%,
+    2.1% 75%, 0.2% 80%, 2% 85%, 0.3% 90%, 2.2% 95%, 0% 100%,
+    100% 100%, 98% 95%, 99.7% 90%, 97.8% 85%, 99.8% 80%, 97.9% 75%,
+    99.7% 70%, 98% 65%, 99.8% 60%, 97.8% 55%, 99.7% 50%, 98% 45%,
+    99.8% 40%, 97.9% 35%, 99.7% 30%, 98% 25%, 99.8% 20%, 97.8% 15%,
+    99.7% 10%, 98% 5%, 100% 0%
+  );
+}
+.f1 { transform: rotate(-0.6deg); }
+.f2 { transform: rotate(0.5deg); }
+.f3 { transform: rotate(0.4deg); }
+.f4 { transform: rotate(-0.5deg); }
+
+.station-years {
+  display: inline-block;
+  font-size: 0.68rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #fff;
+  background: var(--ink);
+  padding: 4px 14px;
+  border-radius: 2px;
+  align-self: center;
+}
+.station-place {
+  font-size: 1.25rem;
+  font-style: italic;
+  color: var(--ink);
+  text-align: center;
+  margin: 8px 0 14px;
+}
+.landscape { border: 1px solid #b9a06a; overflow: hidden; margin-bottom: 14px; flex-shrink: 0; height: 190px; }
+.landscape svg { display: block; width: 100%; height: 100%; }
+
+.station-text {
+  font-size: 0.85rem;
+  line-height: 1.52;
+  color: var(--ink);
+  text-align: justify;
+}
+.station-text p { margin-bottom: 0.7em; }
+.station-text p::first-letter {
+  font-size: 2.2rem;
+  float: left;
+  line-height: 0.75;
+  padding: 4px 6px 0 0;
+  font-style: italic;
+  color: var(--gold);
+}
+</style>
+</head>
+<body>
+<div class="canvas">
+
+  <div class="banner">
+    <div class="kicker">Chronique d'une lignée</div>
+    <div class="title">Il y eut Alle... l'Algérie...</div>
+    <div class="subtitle">Treize générations, deux pays, une mer traversée deux fois — 1598–2026</div>
+  </div>
+
+  <div class="grid">
+
+    <div class="cell">
+      <div class="feuille f1">
+        <span class="station-years">1598 – 1728</span>
+        <div class="station-place">Alle, Ajoie, Jura — 1598–1728</div>
+        <div class="landscape">
+          <svg viewBox="0 0 900 340" preserveAspectRatio="xMidYMax slice" xmlns="http://www.w3.org/2000/svg">
+            <defs><linearGradient id="sky1" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#2b3a55"/><stop offset="55%" stop-color="#8a7391"/><stop offset="100%" stop-color="#eab873"/>
+            </linearGradient></defs>
+            <rect width="900" height="340" fill="url(#sky1)"/>
+            <circle cx="740" cy="80" r="26" fill="#f6dca0"/>
+            <path d="M0,196 L105,144 L210,180 L316,124 L422,170 L528,134 L634,188 L740,142 L846,180 L900,160 L900,340 L0,340 Z" fill="#5c5570"/>
+            <path d="M0,232 L132,188 L264,224 L396,180 L528,216 L660,174 L792,210 L900,192 L900,340 L0,340 Z" fill="#453f57"/>
+            <path d="M0,270 L158,240 L344,260 L528,238 L714,266 L900,246 L900,340 L0,340 Z" fill="#2f2a3d"/>
+            <path d="M0,306 Q225,286 450,308 T900,296 L900,340 L0,340 Z" fill="#20344a"/>
+            <rect x="326" y="230" width="26" height="20" fill="#1c1826"/>
+            <polygon points="323,230 339,210 355,230" fill="#1c1826"/>
+            <rect x="368" y="238" width="20" height="14" fill="#1c1826"/>
+            <polygon points="365,238 378,222 391,238" fill="#1c1826"/>
+            <rect x="410" y="200" width="18" height="52" fill="#161320"/>
+            <polygon points="407,200 419,170 431,200" fill="#161320"/>
+          </svg>
+        </div>
+        <div class="station-text">
+          <p>Personne ne se souvient du premier Billieux. Et pourtant il y eut un homme, vers mille cinq cent cinquante, Jean Perrin Billeux, qui vivait à Alle, village de trois ou quatre cents âmes. De l'un de ses deux fils, dit-on surnommé Pequegnot, naquit Pierre, qui épousa Clémence Magnin en 1626. En 1634 la guerre franchit les collines et Alle brûla ; leur fils Nicolas épousa Anne Gevaudin en 1669.</p>
+          <p>Jean-François épousa Marguerite Bregnard en 1693. De ces deux-là naquit Nicolas, le cinq juillet mille sept cent trois, qui épousa à son tour Suzanne Rossel le trente mai mille sept cent vingt-quatre, devant témoin un certain Thomas qui portait le même nom que lui.</p>
+          <p>Alle grondait déjà sourdement : le prince-évêque de Bâle avait réformé l'administration de son évêché, et les paysans d'Ajoie réclamaient le rôle de 1517. C'est dans ce village en colère que naquit Germain, en mille sept cent vingt-huit, quatre années à peine avant les Troubles de 1730 — un enfant venu au monde sous le signe du refus, sans le savoir encore, comme tous les enfants.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="cell">
+      <div class="feuille f2">
+        <span class="station-years">1728 – 1856</span>
+        <div class="station-place">Zommange, Guébling, Bouillonville — la Lorraine</div>
+        <div class="landscape">
+          <svg viewBox="0 0 900 340" preserveAspectRatio="xMidYMax slice" xmlns="http://www.w3.org/2000/svg">
+            <defs><linearGradient id="sky2" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#7fa7c9"/><stop offset="60%" stop-color="#cfe0c4"/><stop offset="100%" stop-color="#e8d79a"/>
+            </linearGradient></defs>
+            <rect width="900" height="340" fill="url(#sky2)"/>
+            <ellipse cx="150" cy="70" rx="55" ry="18" fill="#f5f2e8" opacity="0.8"/>
+            <ellipse cx="700" cy="90" rx="64" ry="20" fill="#f5f2e8" opacity="0.7"/>
+            <path d="M0,212 Q225,178 450,204 T900,190 L900,340 L0,340 Z" fill="#8fae62"/>
+            <path d="M0,256 Q225,230 450,252 T900,240 L900,340 L0,340 Z" fill="#dcbb5a"/>
+            <rect x="560" y="216" width="24" height="38" fill="#7a6a52"/>
+            <polygon points="557,216 573,194 589,216" fill="#7a6a52"/>
+            <rect x="568" y="198" width="8" height="14" fill="#7a6a52"/>
+            <rect x="620" y="228" width="18" height="26" fill="#8a7a5e"/>
+            <polygon points="617,228 630,212 643,228" fill="#8a7a5e"/>
+          </svg>
+        </div>
+        <div class="station-text">
+          <p>Germain apprit le métier de tailleur — manœuvrier, disait-on, bien au-dessous du laboureur qui possède charrue et terres. Et puis Germain partit : trois cents kilomètres à pied, par la Franche-Comté et l'Alsace, avec pour tout bagage un nom, une aiguille, et un certificat de non-opposition scellé par le curé d'Alle.</p>
+          <p>Zommange. Élisabeth Claudin, dixième jour de février mille sept cent soixante-six. Une fille, Barbe. Un fils qui ne vécut pas ; Élisabeth le suivit dans la mort. Sept mois plus tard, Germain épousa Marie Anne Françoise Colchienne, à Guébling. Thérèse. Hubert. Louis. Un autre Hubert — les prénoms reviennent comme les saisons.</p>
+          <p>La famille glissa : Bouillonville, village troglodyte attesté dès l'an 875 ; Ménil-la-Tour ; Prauthoy, en Haute-Marne. Toujours vers l'ouest — jusqu'au jour où la terre se déroba, et qu'il fallut chercher plus loin, de l'autre côté de la mer.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="cell">
+      <div class="feuille f3">
+        <span class="station-years">1856 – 1937</span>
+        <div class="station-place">De Marseille à Alger, par Oued el Alleug</div>
+        <div class="landscape">
+          <svg viewBox="0 0 900 340" preserveAspectRatio="xMidYMax slice" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="sky3" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#3a4a6b"/><stop offset="45%" stop-color="#c97b4a"/><stop offset="100%" stop-color="#f2c26b"/></linearGradient>
+              <linearGradient id="sea3" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#2b4a5a"/><stop offset="100%" stop-color="#16303c"/></linearGradient>
+            </defs>
+            <rect width="900" height="340" fill="url(#sky3)"/>
+            <circle cx="720" cy="100" r="30" fill="#f6d99a" opacity="0.9"/>
+            <rect x="0" y="196" width="900" height="144" fill="url(#sea3)"/>
+            <path d="M0,200 Q225,190 450,200 T900,196" fill="none" stroke="#5a7a86" stroke-width="2" opacity="0.6"/>
+            <path d="M420,224 L452,224 L443,242 L410,242 Z" fill="#241a12"/>
+            <rect x="431" y="172" width="3" height="52" fill="#241a12"/>
+            <polygon points="434,176 434,202 464,190" fill="#5a3a26"/>
+            <polygon points="431,176 431,205 404,193" fill="#5a3a26"/>
+          </svg>
+        </div>
+        <div class="station-text">
+          <p>Ils partirent par Marseille : Louis, cinquante-huit ans, vigneron toute sa vie, et son fils Hubert, dix-huit ans, ouvrier du ciment. Louis mourut à Blida l'année suivante — la terre nouvelle exigeait déjà son tribut. Mouzaïaville, encore un carré de marécages dix ans plus tôt, comptait déjà cinq cent soixante-dix-huit âmes ; les années de la quinine avaient décimé les colons avant qu'on ne dompte la fièvre.</p>
+          <p>Hubert épousa Élisabeth Sutterer ; leur fils Georges naquit en 1874 à Oued el Alleug, au pied de l'Atlas tellien. Cultivateur, il épousa Céleste Parisot à Mouzaïa en 1899. De leurs enfants, Fernand naquit en 1909 à Oued-Amizour, loin vers l'est, en Kabylie. Georges mourut à Alger le premier janvier 1937, loin des terres où il était né et s'était marié.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="cell">
+      <div class="feuille f4">
+        <span class="station-years">1900 – 2026</span>
+        <div class="station-place">Bordj Menaïel, Chaumont, Tours — 1900–2026</div>
+        <div class="landscape">
+          <svg viewBox="0 0 900 340" preserveAspectRatio="xMidYMax slice" xmlns="http://www.w3.org/2000/svg">
+            <defs><linearGradient id="sky4" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#6b4a3a"/><stop offset="45%" stop-color="#c9895a"/><stop offset="100%" stop-color="#e9c07a"/>
+            </linearGradient></defs>
+            <rect width="900" height="340" fill="url(#sky4)"/>
+            <circle cx="200" cy="94" r="24" fill="#f2d19a"/>
+            <path d="M0,220 Q225,186 450,212 T900,200 L900,340 L0,340 Z" fill="#4a3324"/>
+            <path d="M0,256 Q225,230 450,252 T900,240 L900,340 L0,340 Z" fill="#6b4a30"/>
+            <rect x="600" y="226" width="40" height="30" fill="#241a12"/>
+            <polygon points="596,226 620,204 644,226" fill="#241a12"/>
+            <rect x="700" y="238" width="26" height="20" fill="#2e2118"/>
+            <polygon points="697,238 713,222 729,238" fill="#2e2118"/>
+          </svg>
+        </div>
+        <div class="station-text">
+          <p>Et pourtant les noms reviennent. Hubert Georges — né à Mouzaïa, mort à Chaumont, en Haute-Marne. Il y eut trois femmes dans sa vie ; il les aima comme on aime trois pays qu'on ne possède jamais tout à fait. La boucle se referme sans qu'on l'ait voulu.</p>
+          <p>Après la mort de Georges à Alger, la descendance poursuit vers l'est : Charles Marc Billeux naît à Bordj Menaïel, où son père répare les machines agricoles d'une exploitation. À seize ans, Charles part pour la France ; Tours devient sa ville, Chantal Captien son épouse.</p>
+          <p>Charles Marc écrivit un jour une lettre pour ne pas oublier — mon arrière-grand-père, mon arrière-arrière-grand-père. Et il y a toi, Christophe Olivier, qui reprends le fil là où il l'a laissé — treize générations, la mer traversée deux fois, de tout cela, tu es la suite.</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+</body>
+</html>
