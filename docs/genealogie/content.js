@@ -91,7 +91,38 @@ const CHAPTERS = [
     map: 'img/carte-traversee.png',
     years: '1856',
     place: 'De Marseille à Mouzaïaville — 1856',
-    illustration: `<img src="img/illustration-traversee.svg" alt="Traversée maritime de Marseille à Mouzaïaville, 1856 — gravure historique" width="900" height="400">`,
+    illustration: `<svg viewBox="0 0 900 400" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="sky3" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#2b3a55"/>
+          <stop offset="38%" stop-color="#3a4a6b"/>
+          <stop offset="58%" stop-color="#c97b4a"/>
+          <stop offset="78%" stop-color="#e8a869"/>
+          <stop offset="100%" stop-color="#f2c26b"/>
+        </linearGradient>
+        <linearGradient id="sea3" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#2b4a5a"/>
+          <stop offset="100%" stop-color="#16303c"/>
+        </linearGradient>
+      </defs>
+      <rect width="900" height="400" fill="url(#sky3)"/>
+      <circle cx="720" cy="118" r="36" fill="#f6d99a"/>
+      <path d="M0,198 L28,182 L52,196 L78,174 L104,192 L130,168 L156,188 L182,162 L208,184 L234,170 L260,188 L286,176 L0,176 Z" fill="#1d2a3a" opacity="0.72"/>
+      <path d="M900,192 L872,168 L846,186 L820,162 L794,180 L768,156 L742,178 L716,150 L690,172 L664,158 L638,176 L612,164 L586,180 L560,168 L534,182 L508,170 L482,186 L456,174 L430,188 L404,176 L378,190 L352,178 L326,192 L900,192 Z" fill="#2a1a12" opacity="0.58"/>
+      <rect x="0" y="192" width="900" height="208" fill="url(#sea3)"/>
+      <g fill="none" stroke="#5a7a86" stroke-width="0.8" opacity="0.4">
+        <path d="M0,218 Q112,208 225,218 T450,216 T675,220 T900,214"/>
+        <path d="M0,268 Q112,258 225,268 T450,266 T675,270 T900,264"/>
+        <path d="M0,318 Q112,308 225,318 T450,316 T675,320 T900,314"/>
+      </g>
+      <g transform="translate(430, 228)">
+        <path d="M-38,18 Q0,28 38,18 L32,32 Q0,38 -32,32 Z" fill="#3b2f22"/>
+        <line x1="0" y1="-62" x2="0" y2="18" stroke="#3b2f22" stroke-width="2"/>
+        <path d="M-34,-38 L-34,-8 L34,-8 L34,-38 Z" fill="#f2e2c0" opacity="0.85"/>
+        <path d="M-22,-48 L-22,-18 L-8,-22 L-8,-46 Z" fill="#f2e2c0" opacity="0.7"/>
+        <path d="M22,-48 L22,-18 L8,-22 L8,-46 Z" fill="#f2e2c0" opacity="0.7"/>
+      </g>
+    </svg>`,
     narrative: [
       "Ils partirent par Marseille.",
       "<a class=\"person-link\" href=\"personne.html#louis-billieux\">Louis</a>, cinquante-huit ans, vigneron toute sa vie. <a class=\"person-link\" href=\"personne.html#hubert-billieux-1838\">Hubert</a>, dix-huit ans, ouvrier du ciment. Et avec eux leurs filles, leurs enfants, tout un monde qu'on charge sur un bateau comme on charge une vie entière dans une malle trop petite.",
@@ -127,29 +158,7 @@ const CHAPTERS = [
     id: 'algerie-est',
     years: '1874 – 1937',
     place: 'Oued el Alleug, Mouzaïa, Alger — 1874–1937',
-    illustration: `<svg viewBox="0 0 900 400" xmlns="http://www.w3.org/2000/svg">
-      <defs><linearGradient id="sky5" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%" stop-color="#e8c691"/><stop offset="45%" stop-color="#e6a869"/><stop offset="100%" stop-color="#c97a52"/>
-      </linearGradient></defs>
-      <rect width="900" height="400" fill="url(#sky5)"/>
-      <circle cx="180" cy="90" r="32" fill="#fbe6b8"/>
-      <path d="M0,190 L90,110 L170,170 L260,90 L350,160 L440,100 L530,175 L620,120 L710,165 L900,140 L900,400 L0,400 Z" fill="#8c5c46"/>
-      <path d="M0,230 L120,180 L240,220 L360,170 L480,215 L600,175 L720,220 L900,200 L900,400 L0,400 Z" fill="#a9714f"/>
-      <path d="M0,280 Q225,250 450,275 T900,262 L900,400 L0,400 Z" fill="#d3a869"/>
-      <path d="M0,330 Q225,310 450,328 T900,318 L900,400 L0,400 Z" fill="#e6c58c"/>
-      <rect x="80" y="300" width="3" height="34" fill="#5c3a26"/>
-      <ellipse cx="81" cy="296" rx="16" ry="20" fill="#6b7a3c"/>
-      <rect x="130" y="308" width="3" height="26" fill="#5c3a26"/>
-      <ellipse cx="131" cy="304" rx="13" ry="16" fill="#6b7a3c"/>
-      <rect x="640" y="270" width="60" height="46" fill="#f2e3c4"/>
-      <polygon points="634,270 670,236 706,270" fill="#b5573c"/>
-      <rect x="660" y="288" width="16" height="28" fill="#8c5c46"/>
-      <rect x="760" y="290" width="30" height="26" fill="#e9d6ae"/>
-      <ellipse cx="775" cy="288" rx="16" ry="10" fill="#e9d6ae"/>
-      <rect x="772" y="266" width="6" height="24" fill="#e9d6ae"/>
-      <path d="M300,318 L330,318 L318,338 L288,338 Z" fill="#5c3a26"/>
-      <path d="M300,318 Q310,300 330,300" fill="none" stroke="#5c3a26" stroke-width="4"/>
-    </svg>`,
+    illustration: `<img src="img/illustration-algerie-est.png" alt="Oued el Alleug, plaine au pied de l'Atlas tellien">`,
     narrative: [
       "<a class=\"person-link\" href=\"personne.html#hubert-billieux-1838\">Hubert</a>, fils de <a class=\"person-link\" href=\"personne.html#louis-billieux\">Louis</a>, épousa <a class=\"person-link\" href=\"personne.html#elisabeth-sutterer\">Élisabeth Sutterer</a>. Leur fils <a class=\"person-link\" href=\"personne.html#georges-billeux\">Georges</a> naquit le vingt-sept juillet mille huit cent soixante-quatorze, à Oued el Alleug — non pas à Mouzaïa, mais au pied de l'Atlas tellien, dans cette plaine où les vignes et les blés côtoient les figuiers et où l'on se lève tôt parce que la terre décide de presque tout.",
       "<a class=\"person-link\" href=\"personne.html#georges-billeux\">Georges</a> devint cultivateur. Le même mot, transmis de <a class=\"person-link\" href=\"personne.html#louis-billieux\">Louis</a> à <a class=\"person-link\" href=\"personne.html#germain-billieux\">Germain</a> peut-être, de Germain à tous ceux qui vinrent après — mot de paysan, mot de colon, mot de celui qui met les mains dans la terre et ne demande rien d'autre au ciel.",
@@ -248,12 +257,12 @@ const EPILOGUE = {
     "Il n'y a pas d'amour heureux — disait le poète, et il avait raison, car l'amour des morts est celui qu'on ne peut pas leur rendre, seulement le deviner dans les registres qu'ils ne reliront jamais.",
     "Il n'y a peut-être pas non plus de généalogie tout à fait achevée. Seulement des noms qui appellent d'autres noms. Des actes qu'un curé écrivit en latin. Des certificats de non-opposition scellés à Alle. Des bateaux partis de Marseille. Des cultivateurs morts à Alger. Des réparateurs de machines à Bordj Menaïel. Des lettres qu'un homme s'écrit à lui-même pour ne pas oublier.",
     "<a class=\"person-link\" href=\"personne.html#pequegnot-billieux\">Pequegnot</a>. <a class=\"person-link\" href=\"personne.html#pierre-bileux\">Pierre</a>. <a class=\"person-link\" href=\"personne.html#nicolas-billieux-aine\">Nicolas</a> et <a class=\"person-link\" href=\"personne.html#anne-gevaudin\">Anne</a>. <a class=\"person-link\" href=\"personne.html#jean-francois-billieux\">Jean-François</a> et <a class=\"person-link\" href=\"personne.html#marguerite-bregnard\">Marguerite</a>. <a class=\"person-link\" href=\"personne.html#nicolas-billieux\">Nicolas</a> et <a class=\"person-link\" href=\"personne.html#suzanne-rossel\">Suzanne</a>. <a class=\"person-link\" href=\"personne.html#germain-billieux\">Germain</a>. <a class=\"person-link\" href=\"personne.html#hubert-billieux-1772\">Hubert</a> et <a class=\"person-link\" href=\"personne.html#rose-cesar\">Rose</a>. <a class=\"person-link\" href=\"personne.html#louis-billieux\">Louis</a> et <a class=\"person-link\" href=\"personne.html#marie-michel\">Marie</a>. <a class=\"person-link\" href=\"personne.html#hubert-billieux-1838\">Hubert</a> et <a class=\"person-link\" href=\"personne.html#elisabeth-sutterer\">Elisabeth</a>. <a class=\"person-link\" href=\"personne.html#georges-billeux\">Georges</a> et <a class=\"person-link\" href=\"personne.html#celeste-parisot\">Céleste</a>. <a class=\"person-link\" href=\"personne.html#hubert-georges-billeux\">Hubert Georges</a>. <a class=\"person-link\" href=\"personne.html#charles-marc-billeux\">Charles</a> et <a class=\"person-link\" href=\"personne.html#chantal-captien\">Chantal</a>. <a class=\"person-link\" href=\"personne.html#christophe-olivier-billeux\">Christophe Olivier</a>.",
-    "Treize générations. Deux pays. Une mer traversée deux fois.",
-    "Il y eut Alle. Il y eut l'Algérie. Il y eut le retour — non pas un retour au village d'origine, jamais Alle retrouvée, seulement une autre France, une autre rive, une autre manière de dire je suis de quelque part quand on ne l'est plus tout à fait nulle part."
+    "Treize générations. Trois pays. Une mer traversée deux fois.",
+    "Il y eut Alle. Il y eut la France. Il y eut l'Algérie. Il y eut le retour — non pas un retour au village d'origine, jamais Alle retrouvée, seulement une autre France, une autre rive, une autre manière de dire je suis de quelque part quand on ne l'est plus tout à fait nulle part."
   ],
   closing: "Rien ne subsiste que ce qui fut écrit — et ce que tu écris encore.",
   generations: [
-    { n: 1, html: '<a class="person-link" href="personne.html#pequegnot-billieux">Pequegnot Billieux</a>', note: '1626, Alle' },
+    { n: 1, html: '<a class="person-link" href="personne.html#pequegnot-billieux">Pequegnot Billieux</a>, père de <a class="person-link" href="personne.html#pierre-bileux">Pierre</a> — sans doute <a class="person-link" href="personne.html#francois-billieux-1598">François</a> ou <a class="person-link" href="personne.html#jean-perrin-billieux-1598">Jean Perrin</a> <em>fils</em>, fils de <a class="person-link" href="personne.html#jean-perrin-billeux-pere">Jean Perrin</a> <em>père</em>', note: '16XX, Alle' },
     { n: 2, html: '<a class="person-link" href="personne.html#pierre-bileux">Pierre Billeux</a> × <a class="person-link" href="personne.html#clemence-magnin">Clémence Magnin</a>', note: '1626' },
     { n: 3, html: '<a class="person-link" href="personne.html#nicolas-billieux-aine">Nicolas Billieux</a> × <a class="person-link" href="personne.html#anne-gevaudin">Anne Gevaudin</a>', note: '1669' },
     { n: 4, html: '<a class="person-link" href="personne.html#jean-francois-billieux">Jean-François Billieux</a> × <a class="person-link" href="personne.html#marguerite-bregnard">Marguerite Bregnard</a>', note: 'm. 1693' },

@@ -185,14 +185,29 @@ body {
   top: 0;
   z-index: 10;
   display: flex;
-  justify-content: center;
-  gap: 4px;
-  flex-wrap: wrap;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
   background: var(--paper);
   border-bottom: 1px solid var(--rule);
-  padding: 10px 16px;
+  padding: 10px 16px 12px;
 }
-.nav a {
+.nav__chapters {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  width: 100%;
+}
+.nav__secondary {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  padding-top: 6px;
+  border-top: 1px solid var(--rule);
+}
+.nav__chapters a,
+.nav > a {
   font-family: -apple-system, 'Segoe UI', sans-serif;
   font-size: 0.78rem;
   letter-spacing: 0.04em;
@@ -207,13 +222,31 @@ body {
   gap: 6px;
   transition: background 0.15s;
 }
-.nav a:hover { background: var(--rule); }
-.nav a span { color: var(--ink-soft); font-size: 0.72rem; }
+.nav__chapters a:hover,
+.nav > a:hover { background: var(--rule); }
+.nav__chapters a span { color: var(--ink-soft); font-size: 0.72rem; }
+.nav__tree {
+  font-family: var(--header-serif);
+  font-size: 0.95rem;
+  font-style: italic;
+  letter-spacing: 0.05em;
+  text-decoration: none;
+  color: var(--gold);
+  background: var(--paper-card);
+  border: 1px solid var(--gold);
+  border-radius: 24px;
+  padding: 8px 28px;
+  transition: background 0.15s, color 0.15s;
+}
+.nav__tree:hover {
+  background: var(--gold);
+  color: var(--paper);
+}
 
 /* ── CHAPTERS ── */
 .chapters { max-width: 860px; margin: 0 auto; padding: 40px 20px 100px; }
 
-.chapter { scroll-margin-top: 70px; position: relative; }
+.chapter { scroll-margin-top: 100px; position: relative; }
 
 /* ── WATERMARK (paysage discret en filigrane, par chapitre/époque) ── */
 .chapter-watermark {
@@ -555,6 +588,11 @@ body {
     margin: 0 0.55em 0.12em;
   }
   .site-header__rule { margin: 18px auto 16px; }
+  .nav { padding: 8px 10px 10px; gap: 6px; }
+  .nav__chapters a,
+  .nav > a { font-size: 0.72rem; padding: 5px 10px; }
+  .nav__tree { font-size: 0.88rem; padding: 7px 20px; }
+  .chapter { scroll-margin-top: 110px; }
   .chapter-place { font-size: 1.2rem; }
   .chapter-narrative p { font-size: 1rem; }
   .person-card { padding: 30px 22px; }

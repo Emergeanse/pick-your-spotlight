@@ -6,9 +6,16 @@ const CARD_LABELS = {
 
 function renderNav() {
   const nav = document.getElementById('nav');
-  nav.innerHTML = CHAPTERS.map(ch =>
-    `<a href="#${ch.id}">${ch.years.split(' – ')[0]}<span>${ch.place.split(',')[0]}</span></a>`
-  ).join('') + `<a href="arbre.html">Arbre<span>synthétique</span></a>`;
+  nav.innerHTML = `
+    <div class="nav__chapters">
+      ${CHAPTERS.map(ch =>
+        `<a href="#${ch.id}">${ch.years.split(' – ')[0]}<span>${ch.place.split(',')[0]}</span></a>`
+      ).join('')}
+    </div>
+    <div class="nav__secondary">
+      <a class="nav__tree" href="arbre.html">Arbre synthétique</a>
+    </div>
+  `;
 }
 
 function renderCard(card) {
