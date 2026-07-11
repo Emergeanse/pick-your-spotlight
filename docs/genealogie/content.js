@@ -8,27 +8,7 @@ const CHAPTERS = [
     map: 'img/carte-alle.png',
     years: '1598 – 1728',
     place: 'Alle, Ajoie, Jura — 1598–1728',
-    illustration: `<svg viewBox="0 0 900 400" xmlns="http://www.w3.org/2000/svg">
-      <defs><linearGradient id="sky1" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%" stop-color="#2b3a55"/><stop offset="55%" stop-color="#8a7391"/><stop offset="100%" stop-color="#eab873"/>
-      </linearGradient></defs>
-      <rect width="900" height="400" fill="url(#sky1)"/>
-      <circle cx="740" cy="95" r="30" fill="#f6dca0"/>
-      <path d="M0,232 L105,170 L210,212 L316,148 L422,200 L528,158 L634,222 L740,168 L846,212 L900,190 L900,400 L0,400 Z" fill="#5c5570"/>
-      <path d="M0,274 L132,222 L264,264 L396,212 L528,254 L660,206 L792,248 L900,226 L900,400 L0,400 Z" fill="#453f57"/>
-      <path d="M0,318 L158,284 L344,306 L528,280 L714,312 L900,290 L900,400 L0,400 Z" fill="#2f2a3d"/>
-      <path d="M0,360 Q225,336 450,363 T900,350 L900,400 L0,400 Z" fill="#20344a"/>
-      <path d="M0,373 Q225,350 450,373 T900,362" fill="none" stroke="#3a557a" stroke-width="2" opacity="0.6"/>
-      <rect x="326" y="272" width="30" height="24" fill="#1c1826"/>
-      <polygon points="323,272 341,250 359,272" fill="#1c1826"/>
-      <rect x="376" y="280" width="24" height="18" fill="#1c1826"/>
-      <polygon points="373,280 388,262 403,280" fill="#1c1826"/>
-      <rect x="416" y="286" width="22" height="16" fill="#1c1826"/>
-      <polygon points="413,286 427,270 441,286" fill="#1c1826"/>
-      <rect x="462" y="238" width="20" height="62" fill="#161320"/>
-      <polygon points="459,238 472,204 485,238" fill="#161320"/>
-      <rect x="470" y="212" width="5" height="14" fill="#161320"/>
-    </svg>`,
+    illustration: `<img src="img/illustration-alle.png" alt="Alle, Ajoie, Jura, de nuit">`,
     narrative: [
       "Personne ne se souvient du premier Billieux. On ne se souvient jamais du premier de rien — seulement du dernier, celui qui porte encore le nom quand on ferme le registre. Et pourtant il y eut un homme, vers mille cinq cent cinquante, dans un siècle qu'on nommera plus tard celui des guerres de Religion, sans qu'il l'ait su jamais. <a class=\"person-link\" href=\"personne.html#jean-perrin-billeux-pere\">Jean Perrin Billeux</a> — Perrin comme on perce la nuit, Billeux comme on blesse le silence d'une syllabe qu'on ne comprend plus. Il vivait à Alle, village de trois ou quatre cents âmes où les prénoms tenaient dans deux mains et où l'on inventait des sobriquets pour ne pas confondre le cousin du voisin avec le voisin du cousin.",
       "De lui il ne reste qu'un nom recopié deux fois : le sien, et celui de son fils. On lui connaît deux fils : <a class=\"person-link\" href=\"personne.html#jean-perrin-billieux-1598\">l'un marié en 1597</a> porte son nom entier ; l'autre, <a class=\"person-link\" href=\"personne.html#francois-billieux-1598\">François</a>, témoigne au mariage de son frère l'année suivante — comme on témoigne devant les vivants de ce que les morts ne diront jamais tout à fait : qu'ils étaient de la même maison, du même sang, du même mot.",
@@ -78,27 +58,7 @@ const CHAPTERS = [
     map: 'img/carte-lorraine.png',
     years: '1728 – 1856',
     place: 'Zommange, Guébling, Bouillonville — 1728–1856',
-    illustration: `<svg viewBox="0 0 900 400" xmlns="http://www.w3.org/2000/svg">
-      <defs><linearGradient id="sky2" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%" stop-color="#7fa7c9"/><stop offset="60%" stop-color="#cfe0c4"/><stop offset="100%" stop-color="#e8d79a"/>
-      </linearGradient></defs>
-      <rect width="900" height="400" fill="url(#sky2)"/>
-      <ellipse cx="150" cy="90" rx="60" ry="20" fill="#f5f2e8" opacity="0.8"/>
-      <ellipse cx="210" cy="80" rx="50" ry="18" fill="#f5f2e8" opacity="0.7"/>
-      <ellipse cx="700" cy="110" rx="70" ry="22" fill="#f5f2e8" opacity="0.7"/>
-      <path d="M0,250 Q225,210 450,240 T900,225 L900,400 L0,400 Z" fill="#8fae62"/>
-      <path d="M0,300 Q225,270 450,296 T900,282 L900,400 L0,400 Z" fill="#dcbb5a"/>
-      <path d="M40,300 L60,296 L64,300 L64,320 L40,320 Z" fill="#c9a13f"/>
-      <path d="M100,296 L120,292 L124,296 L124,318 L100,318 Z" fill="#c9a13f"/>
-      <path d="M160,300 L180,296 L184,300 L184,320 L160,320 Z" fill="#c9a13f"/>
-      <path d="M300,296 Q450,286 600,296" fill="none" stroke="#a9895a" stroke-width="10" opacity="0.5"/>
-      <rect x="560" y="256" width="26" height="42" fill="#7a6a52"/>
-      <polygon points="557,256 573,232 589,256" fill="#7a6a52"/>
-      <rect x="568" y="236" width="10" height="16" fill="#7a6a52"/>
-      <rect x="572" y="222" width="2" height="16" fill="#7a6a52"/>
-      <rect x="620" y="270" width="20" height="28" fill="#8a7a5e"/>
-      <polygon points="617,270 630,252 643,270" fill="#8a7a5e"/>
-    </svg>`,
+    illustration: `<img src="img/illustration-lorraine.png" alt="Zommange, campagne lorraine">`,
     narrative: [
       "<a class=\"person-link\" href=\"personne.html#germain-billieux\">Germain</a> apprit le métier de tailleur — manœuvrier, disait-on, bien au-dessous du laboureur qui possède charrue et terres. Coudre les habits des autres quand on n'a ni les dix hectares ni l'espoir d'en posséder un jour : un métier qui ne retient pas les hommes. On le pratique où qu'on soit, du moment qu'il y a des épaules à vêtir.",
       "Et puis <a class=\"person-link\" href=\"personne.html#germain-billieux\">Germain</a> partit.",
@@ -131,29 +91,7 @@ const CHAPTERS = [
     map: 'img/carte-traversee.png',
     years: '1856',
     place: 'De Marseille à Mouzaïaville — 1856',
-    illustration: `<svg viewBox="0 0 900 400" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <linearGradient id="sky3" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#3a4a6b"/><stop offset="45%" stop-color="#c97b4a"/><stop offset="100%" stop-color="#f2c26b"/></linearGradient>
-        <linearGradient id="sea3" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#2b4a5a"/><stop offset="100%" stop-color="#16303c"/></linearGradient>
-      </defs>
-      <rect width="900" height="400" fill="url(#sky3)"/>
-      <circle cx="720" cy="120" r="34" fill="#f6d99a" opacity="0.9"/>
-      <rect x="0" y="230" width="900" height="170" fill="url(#sea3)"/>
-      <path d="M0,235 Q225,225 450,235 T900,230" fill="none" stroke="#5a7a86" stroke-width="2" opacity="0.6"/>
-      <path d="M0,255 Q225,245 450,255 T900,250" fill="none" stroke="#5a7a86" stroke-width="2" opacity="0.4"/>
-      <path d="M0,275 Q225,265 450,275 T900,270" fill="none" stroke="#5a7a86" stroke-width="2" opacity="0.3"/>
-      <path d="M0,210 L60,180 L130,215 L190,175 L250,215 L900,215 L900,232 L0,232 Z" fill="#1d2a3a" opacity="0.55"/>
-      <path d="M900,205 L840,185 L780,210 L720,178 L660,210 L0,210 L0,230 L900,230 Z" fill="#2a1a12" opacity="0.5"/>
-      <ellipse cx="640" cy="205" rx="8" ry="14" fill="#2a1a12" opacity="0.6"/>
-      <ellipse cx="660" cy="200" rx="8" ry="16" fill="#2a1a12" opacity="0.6"/>
-      <ellipse cx="680" cy="206" rx="8" ry="13" fill="#2a1a12" opacity="0.6"/>
-      <path d="M420,260 L455,260 L445,280 L410,280 Z" fill="#241a12"/>
-      <rect x="432" y="200" width="3" height="62" fill="#241a12"/>
-      <polygon points="435,205 435,235 470,222" fill="#5a3a26"/>
-      <polygon points="432,205 432,238 402,225" fill="#5a3a26"/>
-      <path d="M500,265 Q510,258 520,265" fill="none" stroke="#f2e2c0" stroke-width="2"/>
-      <path d="M520,270 Q530,262 540,270" fill="none" stroke="#f2e2c0" stroke-width="2"/>
-    </svg>`,
+    illustration: `<img src="img/illustration-traversee.svg" alt="Traversée maritime de Marseille à Mouzaïaville, 1856 — gravure historique" width="900" height="400">`,
     narrative: [
       "Ils partirent par Marseille.",
       "<a class=\"person-link\" href=\"personne.html#louis-billieux\">Louis</a>, cinquante-huit ans, vigneron toute sa vie. <a class=\"person-link\" href=\"personne.html#hubert-billieux-1838\">Hubert</a>, dix-huit ans, ouvrier du ciment. Et avec eux leurs filles, leurs enfants, tout un monde qu'on charge sur un bateau comme on charge une vie entière dans une malle trop petite.",
