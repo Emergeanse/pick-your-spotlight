@@ -5,10 +5,10 @@
 const CHAPTERS = [
   {
     id: 'alle',
-    map: 'img/carte-alle.png',
+    map: 'carte-alle.png',
     years: '1598 – 1728',
     place: 'Alle, Ajoie, Jura — 1598–1728',
-    illustration: `<img src="img/illustration-alle.png" alt="Alle, Ajoie, Jura, de nuit">`,
+    illustration: `<img src="illustration-alle.png" alt="Alle, Ajoie, Jura, de nuit">`,
     narrative: [
       "Personne ne se souvient du premier Billieux. On ne se souvient jamais du premier de rien — seulement du dernier, celui qui porte encore le nom quand on ferme le registre. Et pourtant il y eut un homme, vers mille cinq cent cinquante, dans un siècle qu'on nommera plus tard celui des guerres de Religion, sans qu'il l'ait su jamais. <a class=\"person-link\" href=\"personne.html#jean-perrin-billeux-pere\">Jean Perrin Billeux</a> — Perrin comme on perce la nuit, Billeux comme on blesse le silence d'une syllabe qu'on ne comprend plus. Il vivait à Alle, village de trois ou quatre cents âmes où les prénoms tenaient dans deux mains et où l'on inventait des sobriquets pour ne pas confondre le cousin du voisin avec le voisin du cousin.",
       "De lui il ne reste qu'un nom recopié deux fois : le sien, et celui de son fils. On lui connaît deux fils : <a class=\"person-link\" href=\"personne.html#jean-perrin-billieux-1598\">l'un marié en 1597</a> porte son nom entier ; l'autre, <a class=\"person-link\" href=\"personne.html#francois-billieux-1598\">François</a>, témoigne au mariage de son frère l'année suivante — comme on témoigne devant les vivants de ce que les morts ne diront jamais tout à fait : qu'ils étaient de la même maison, du même sang, du même mot.",
@@ -55,10 +55,10 @@ const CHAPTERS = [
   },
   {
     id: 'lorraine',
-    map: 'img/carte-lorraine.png',
+    map: 'carte-lorraine.png',
     years: '1728 – 1856',
     place: 'Zommange, Guébling, Bouillonville — 1728–1856',
-    illustration: `<img src="img/illustration-lorraine.png" alt="Zommange, campagne lorraine">`,
+    illustration: `<img src="illustration-lorraine.png" alt="Zommange, campagne lorraine">`,
     narrative: [
       "<a class=\"person-link\" href=\"personne.html#germain-billieux\">Germain</a> apprit le métier de tailleur — manœuvrier, disait-on, bien au-dessous du laboureur qui possède charrue et terres. Coudre les habits des autres quand on n'a ni les dix hectares ni l'espoir d'en posséder un jour : un métier qui ne retient pas les hommes. On le pratique où qu'on soit, du moment qu'il y a des épaules à vêtir.",
       "Et puis <a class=\"person-link\" href=\"personne.html#germain-billieux\">Germain</a> partit.",
@@ -88,17 +88,16 @@ const CHAPTERS = [
   },
   {
     id: 'traversee',
-    map: 'img/carte-traversee.png',
+    map: 'carte-traversee.png',
     years: '1856',
     place: 'De Marseille à Mouzaïaville — 1856',
-    illustration: `<svg viewBox="0 0 900 400" xmlns="http://www.w3.org/2000/svg">
+    illustration: `<svg viewBox="0 0 900 400" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Traversée maritime de Marseille à Mouzaïaville, 1856">
       <defs>
         <linearGradient id="sky3" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stop-color="#2b3a55"/>
-          <stop offset="38%" stop-color="#3a4a6b"/>
-          <stop offset="58%" stop-color="#c97b4a"/>
-          <stop offset="78%" stop-color="#e8a869"/>
-          <stop offset="100%" stop-color="#f2c26b"/>
+          <stop offset="42%" stop-color="#3d4f6b"/>
+          <stop offset="68%" stop-color="#c97b4a"/>
+          <stop offset="100%" stop-color="#e8a869"/>
         </linearGradient>
         <linearGradient id="sea3" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stop-color="#2b4a5a"/>
@@ -106,21 +105,17 @@ const CHAPTERS = [
         </linearGradient>
       </defs>
       <rect width="900" height="400" fill="url(#sky3)"/>
-      <circle cx="720" cy="118" r="36" fill="#f6d99a"/>
-      <path d="M0,198 L28,182 L52,196 L78,174 L104,192 L130,168 L156,188 L182,162 L208,184 L234,170 L260,188 L286,176 L0,176 Z" fill="#1d2a3a" opacity="0.72"/>
-      <path d="M900,192 L872,168 L846,186 L820,162 L794,180 L768,156 L742,178 L716,150 L690,172 L664,158 L638,176 L612,164 L586,180 L560,168 L534,182 L508,170 L482,186 L456,174 L430,188 L404,176 L378,190 L352,178 L326,192 L900,192 Z" fill="#2a1a12" opacity="0.58"/>
-      <rect x="0" y="192" width="900" height="208" fill="url(#sea3)"/>
-      <g fill="none" stroke="#5a7a86" stroke-width="0.8" opacity="0.4">
-        <path d="M0,218 Q112,208 225,218 T450,216 T675,220 T900,214"/>
-        <path d="M0,268 Q112,258 225,268 T450,266 T675,270 T900,264"/>
-        <path d="M0,318 Q112,308 225,318 T450,316 T675,320 T900,314"/>
-      </g>
-      <g transform="translate(430, 228)">
-        <path d="M-38,18 Q0,28 38,18 L32,32 Q0,38 -32,32 Z" fill="#3b2f22"/>
-        <line x1="0" y1="-62" x2="0" y2="18" stroke="#3b2f22" stroke-width="2"/>
-        <path d="M-34,-38 L-34,-8 L34,-8 L34,-38 Z" fill="#f2e2c0" opacity="0.85"/>
-        <path d="M-22,-48 L-22,-18 L-8,-22 L-8,-46 Z" fill="#f2e2c0" opacity="0.7"/>
-        <path d="M22,-48 L22,-18 L8,-22 L8,-46 Z" fill="#f2e2c0" opacity="0.7"/>
+      <circle cx="700" cy="112" r="30" fill="#f2d19a"/>
+      <polygon points="0,400 0,178 70,128 140,168 210,108 280,172 0,172" fill="#3b2f22"/>
+      <polygon points="900,400 900,170 830,108 760,158 690,92 620,165 900,165" fill="#4a3324"/>
+      <rect x="0" y="182" width="900" height="218" fill="url(#sea3)"/>
+      <rect x="0" y="180" width="900" height="3" fill="#e8a869" opacity="0.3"/>
+      <path d="M0,218 Q225,206 450,218 T900,212" fill="none" stroke="#4a6678" stroke-width="1.5" opacity="0.35"/>
+      <path d="M0,258 Q225,246 450,258 T900,252" fill="none" stroke="#4a6678" stroke-width="1" opacity="0.22"/>
+      <g transform="translate(440, 242)">
+        <path d="M-24,14 Q0,22 24,14 L20,26 Q0,30 -20,26 Z" fill="#3b2f22"/>
+        <line x1="0" y1="-48" x2="0" y2="14" stroke="#3b2f22" stroke-width="2.5"/>
+        <polygon points="0,-48 30,-6 0,-6" fill="#f2e2c0"/>
       </g>
     </svg>`,
     narrative: [
@@ -158,7 +153,7 @@ const CHAPTERS = [
     id: 'algerie-est',
     years: '1874 – 1937',
     place: 'Oued el Alleug, Mouzaïa, Alger — 1874–1937',
-    illustration: `<img src="img/illustration-algerie-est.png" alt="Oued el Alleug, plaine au pied de l'Atlas tellien">`,
+    illustration: `<img src="illustration-algerie-est.png" alt="Oued el Alleug, plaine au pied de l'Atlas tellien">`,
     narrative: [
       "<a class=\"person-link\" href=\"personne.html#hubert-billieux-1838\">Hubert</a>, fils de <a class=\"person-link\" href=\"personne.html#louis-billieux\">Louis</a>, épousa <a class=\"person-link\" href=\"personne.html#elisabeth-sutterer\">Élisabeth Sutterer</a>. Leur fils <a class=\"person-link\" href=\"personne.html#georges-billeux\">Georges</a> naquit le vingt-sept juillet mille huit cent soixante-quatorze, à Oued el Alleug — non pas à Mouzaïa, mais au pied de l'Atlas tellien, dans cette plaine où les vignes et les blés côtoient les figuiers et où l'on se lève tôt parce que la terre décide de presque tout.",
       "<a class=\"person-link\" href=\"personne.html#georges-billeux\">Georges</a> devint cultivateur. Le même mot, transmis de <a class=\"person-link\" href=\"personne.html#louis-billieux\">Louis</a> à <a class=\"person-link\" href=\"personne.html#germain-billieux\">Germain</a> peut-être, de Germain à tous ceux qui vinrent après — mot de paysan, mot de colon, mot de celui qui met les mains dans la terre et ne demande rien d'autre au ciel.",
@@ -181,10 +176,10 @@ const CHAPTERS = [
   },
   {
     id: 'retour',
-    map: 'img/carte-retour.png',
+    map: 'carte-retour.png',
     years: '1900 – 2026',
     place: 'Bordj Menaïel, Chaumont, Tours — 1900–2026',
-    illustration: `<img src="img/illustration-retour.png" alt="De Bordj Menaïel à Chaumont, le chemin du retour">`,
+    illustration: `<img src="illustration-retour.png" alt="De Bordj Menaïel à Chaumont, le chemin du retour">`,
     narrative: [
       "Et pourtant les noms reviennent.",
       "<a class=\"person-link\" href=\"personne.html#hubert-georges-billeux\">Hubert Georges</a> — né à Mouzaïa, mort à Chaumont, en Haute-Marne, le vingt mars mille neuf cent soixante-dix-neuf. Il y eut trois femmes dans sa vie. Il les aima comme on aime trois pays qu'on ne possède jamais tout à fait. La boucle se referme sans qu'on l'ait voulu — comme se referment toujours les histoires de famille, qui ne sont jamais que des cercles qu'on croit être des lignes droites.",
