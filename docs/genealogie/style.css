@@ -1,0 +1,711 @@
+* , *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --paper: #f5ecd9;
+  --paper-card: #fbf5e8;
+  --ink: #3b2f22;
+  --ink-soft: #5a4a37;
+  --gold: #8f6a1f;
+  --rule: #d9c69a;
+  --hist: #6b3a2e;
+  --hist-bg: #f4e2da;
+  --lieu: #2f5a4a;
+  --lieu-bg: #dcece3;
+  --anec: #4a3d7a;
+  --anec-bg: #e6e1f5;
+  --retour: #8a4a12;
+  --retour-bg: #f2e0c8;
+  --algerie-est: #a5471f;
+  --algerie-est-bg: #f3ddce;
+}
+
+html { scroll-behavior: smooth; }
+body {
+  font-family: Georgia, 'Iowan Old Style', 'Palatino Linotype', serif;
+  background: var(--paper);
+  color: var(--ink);
+  line-height: 1.7;
+  overflow-x: hidden;
+}
+
+/* ── HEADER ── */
+.site-header {
+  text-align: center;
+  padding: 64px 24px 40px;
+  background: radial-gradient(ellipse at 50% 0%, #241b12 0%, #17110b 75%);
+  color: #f2e8d3;
+}
+.kicker {
+  font-family: -apple-system, 'Segoe UI', sans-serif;
+  font-size: 0.75rem;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: #c9a227;
+  font-weight: 700;
+}
+.site-title {
+  font-size: clamp(2rem, 5vw, 3.2rem);
+  font-style: italic;
+  margin: 14px 0 10px;
+}
+.site-subtitle {
+  font-size: 1.05rem;
+  font-style: italic;
+  color: #cbb98f;
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+/* ── NAV ── */
+.nav {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  flex-wrap: wrap;
+  background: var(--paper);
+  border-bottom: 1px solid var(--rule);
+  padding: 10px 16px;
+}
+.nav a {
+  font-family: -apple-system, 'Segoe UI', sans-serif;
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  text-decoration: none;
+  color: var(--ink);
+  background: var(--paper-card);
+  border: 1px solid var(--rule);
+  border-radius: 20px;
+  padding: 6px 14px;
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  transition: background 0.15s;
+}
+.nav a:hover { background: var(--rule); }
+.nav a span { color: var(--ink-soft); font-size: 0.72rem; }
+
+/* ── CHAPTERS ── */
+.chapters { max-width: 860px; margin: 0 auto; padding: 40px 20px 100px; }
+
+.chapter { scroll-margin-top: 70px; position: relative; }
+
+/* ── WATERMARK (paysage discret en filigrane, par chapitre/époque) ── */
+.chapter-watermark {
+  position: sticky;
+  top: 0;
+  height: 0;
+  overflow: visible;
+  z-index: -1;
+}
+.chapter-watermark svg {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100vw;
+  height: 100vh;
+  opacity: 0.13;
+  filter: grayscale(1);
+  pointer-events: none;
+  mask-image: radial-gradient(ellipse 65% 60% at 50% 50%, black 40%, transparent 82%);
+  -webkit-mask-image: radial-gradient(ellipse 65% 60% at 50% 50%, black 40%, transparent 82%);
+}
+.chapter-watermark--fixed {
+  position: absolute;
+  inset: 0;
+  height: auto;
+  z-index: -1;
+  overflow: hidden;
+}
+.chapter-watermark--fixed svg {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0.13;
+  filter: grayscale(1);
+  mask-image: radial-gradient(ellipse 75% 70% at 50% 50%, black 35%, transparent 86%);
+  -webkit-mask-image: radial-gradient(ellipse 75% 70% at 50% 50%, black 35%, transparent 86%);
+}
+
+.chapter-illustration {
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  overflow: hidden;
+  box-shadow: 0 6px 24px rgba(0,0,0,.15);
+}
+.chapter-illustration svg { display: block; width: 100%; height: auto; }
+
+.chapter-head {
+  text-align: center;
+  margin: 22px 0 26px;
+}
+.chapter-years {
+  display: inline-block;
+  font-family: -apple-system, 'Segoe UI', sans-serif;
+  font-size: 0.7rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #fff;
+  background: var(--ink);
+  padding: 5px 16px;
+  border-radius: 2px;
+}
+.chapter-place {
+  font-size: 1.5rem;
+  font-weight: 400;
+  font-style: italic;
+  margin-top: 10px;
+}
+
+.chapter-narrative p {
+  margin-bottom: 1.1em;
+  text-align: justify;
+  font-size: 1.05rem;
+}
+.chapter-narrative p:first-child::first-letter {
+  font-size: 3rem;
+  float: left;
+  line-height: 0.75;
+  padding: 6px 8px 0 0;
+  font-style: italic;
+  color: var(--gold);
+}
+
+/* ── CARDS ── */
+.chapter-cards { margin-top: 32px; }
+.chapter-cards h3 {
+  font-family: -apple-system, 'Segoe UI', sans-serif;
+  font-size: 0.72rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  margin-bottom: 12px;
+}
+
+.card {
+  background: var(--paper-card);
+  border: 1px solid var(--rule);
+  border-left: 4px solid var(--rule);
+  border-radius: 6px;
+  padding: 12px 16px;
+  margin-bottom: 10px;
+}
+.card summary {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  list-style: none;
+}
+.card summary::-webkit-details-marker { display: none; }
+.card summary::before {
+  content: '+';
+  font-family: -apple-system, sans-serif;
+  font-size: 1rem;
+  color: var(--ink-soft);
+  width: 16px;
+  flex-shrink: 0;
+}
+.card[open] summary::before { content: '–'; }
+.card-tag {
+  font-family: -apple-system, 'Segoe UI', sans-serif;
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 3px 9px;
+  border-radius: 10px;
+  white-space: nowrap;
+}
+.card--histoire .card-tag { background: var(--hist-bg); color: var(--hist); }
+.card--lieu .card-tag { background: var(--lieu-bg); color: var(--lieu); }
+.card--anecdote .card-tag { background: var(--anec-bg); color: var(--anec); }
+.card-title { font-style: italic; font-size: 1rem; }
+.card p { margin-top: 10px; font-size: 0.95rem; text-align: justify; }
+.card-source {
+  display: inline-block;
+  margin-top: 8px;
+  font-family: -apple-system, 'Segoe UI', sans-serif;
+  font-size: 0.78rem;
+  color: var(--gold);
+  text-decoration: none;
+}
+.card-source:hover { text-decoration: underline; }
+
+/* ── CONNECTOR ── */
+.connector { display: flex; justify-content: center; padding: 36px 0; }
+.connector span {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--gold);
+  box-shadow: -20px 0 0 -2px var(--rule), 20px 0 0 -2px var(--rule);
+}
+
+/* ── FOOTER ── */
+.site-footer {
+  text-align: center;
+  padding: 40px 20px 60px;
+  border-top: 1px solid var(--rule);
+}
+.epigraph {
+  font-style: italic;
+  color: var(--ink-soft);
+  max-width: 560px;
+  margin: 0 auto 18px;
+}
+.credit {
+  font-family: -apple-system, 'Segoe UI', sans-serif;
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+.epigraph--small { font-size: 0.85rem; margin-top: 18px; margin-bottom: 0; }
+
+/* ── EPILOGUE ── */
+.epilogue {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 56px 24px 24px;
+  border-top: 1px solid var(--rule);
+}
+.epilogue-title {
+  text-align: center;
+  font-size: 1.6rem;
+  font-weight: 400;
+  font-style: italic;
+  margin-bottom: 28px;
+}
+.epilogue-narrative p {
+  margin-bottom: 1.1em;
+  text-align: justify;
+  font-size: 1.05rem;
+}
+.epilogue-closing {
+  text-align: center;
+  font-style: italic;
+  font-size: 1.15rem;
+  color: var(--gold);
+  margin: 32px 0 44px;
+}
+.epilogue-annexe-title {
+  text-align: center;
+  font-family: -apple-system, 'Segoe UI', sans-serif;
+  font-size: 0.72rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  margin-bottom: 16px;
+}
+.epilogue-annexe {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.92rem;
+  margin-bottom: 12px;
+}
+.epilogue-annexe th {
+  font-family: -apple-system, 'Segoe UI', sans-serif;
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  text-align: left;
+  padding: 6px 10px;
+  border-bottom: 2px solid var(--rule);
+}
+.epilogue-annexe td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--rule);
+}
+.epilogue-annexe-n {
+  font-family: -apple-system, 'Segoe UI', sans-serif;
+  color: var(--gold);
+  width: 28px;
+}
+.epilogue-annexe-note {
+  font-style: italic;
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+
+/* ── PERSON LINKS (in narrative / cards) ── */
+.person-link {
+  color: var(--ink);
+  text-decoration: none;
+  border-bottom: 1px solid var(--gold);
+  transition: background 0.15s;
+}
+.person-link:hover { background: var(--rule); }
+
+/* ── PERSON PAGE ── */
+.site-header--small { padding: 34px 24px; }
+.site-title-link {
+  font-size: clamp(1.6rem, 4vw, 2.2rem);
+  font-style: italic;
+  color: #f2e8d3;
+  text-decoration: none;
+}
+.site-title-link:hover { text-decoration: underline; }
+
+.person-main { max-width: 640px; margin: 0 auto; padding: 48px 20px 100px; position: relative; }
+
+.person-card {
+  background: var(--paper-card);
+  border: 1px solid var(--rule);
+  border-radius: 12px;
+  padding: 40px 36px;
+  text-align: center;
+  box-shadow: 0 6px 24px rgba(0,0,0,.1);
+}
+.person-avatar {
+  width: 64px; height: 64px;
+  border-radius: 50%;
+  background: var(--ink);
+  color: #f2e8d3;
+  font-family: -apple-system, 'Segoe UI', sans-serif;
+  font-size: 1.1rem;
+  font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 18px;
+}
+.person-name { font-size: 1.8rem; font-style: italic; font-weight: 400; }
+.person-dates {
+  font-family: -apple-system, 'Segoe UI', sans-serif;
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+  margin-top: 6px;
+}
+.person-relations {
+  text-align: left;
+  margin: 28px 0;
+  border-top: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule);
+  padding: 16px 0;
+}
+.relation-row { display: flex; gap: 10px; padding: 6px 0; font-size: 0.92rem; }
+.relation-label {
+  font-family: -apple-system, 'Segoe UI', sans-serif;
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--gold);
+  min-width: 100px;
+  flex-shrink: 0;
+  padding-top: 2px;
+}
+.person-bio { text-align: justify; margin-bottom: 28px; }
+.person-back {
+  font-family: -apple-system, 'Segoe UI', sans-serif;
+  font-size: 0.85rem;
+  color: var(--gold);
+  text-decoration: none;
+}
+.person-back:hover { text-decoration: underline; }
+.person-missing { color: var(--ink-soft); font-style: italic; }
+
+@media (max-width: 600px) {
+  .site-header { padding: 44px 16px 28px; }
+  .chapter-place { font-size: 1.2rem; }
+  .chapter-narrative p { font-size: 1rem; }
+  .person-card { padding: 30px 22px; }
+}
+
+/* ── ARBRE SYNTHÉTIQUE ── */
+.nav a[href="index.html"] {
+  font-family: -apple-system, 'Segoe UI', sans-serif;
+  font-size: 0.8rem;
+  text-decoration: none;
+  color: var(--ink);
+}
+
+.tree-main { max-width: 1100px; margin: 0 auto; padding: 40px 20px 100px; }
+.tree-page-title { font-size: 1.7rem; font-style: italic; text-align: center; margin-bottom: 10px; }
+.tree-page-intro {
+  text-align: center;
+  color: var(--ink-soft);
+  max-width: 640px;
+  margin: 0 auto 48px;
+  font-size: 0.95rem;
+}
+
+.tree-block { margin-bottom: 56px; }
+.tree-block-title {
+  font-size: 1.1rem;
+  font-style: italic;
+  margin-bottom: 18px;
+  text-align: center;
+}
+.tree-unlinked {
+  font-family: -apple-system, 'Segoe UI', sans-serif;
+  font-style: normal;
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.famtree-scroll {
+  overflow-x: auto;
+  padding: 10px 0 20px;
+}
+
+/* Organigramme en CSS pur : chaque <ul> imbriqué dessine ses propres branches */
+.famtree, .famtree ul {
+  display: table;
+  margin: 0 auto;
+  padding-top: 20px;
+  position: relative;
+}
+.famtree li {
+  display: table-cell;
+  list-style: none;
+  padding: 20px 10px 0 10px;
+  vertical-align: top;
+  position: relative;
+}
+.famtree li::before,
+.famtree li::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 50%;
+  border-top: 1px solid var(--rule);
+  width: 50%;
+  height: 20px;
+}
+.famtree li::after { right: auto; left: 50%; border-left: 1px solid var(--rule); }
+.famtree li:only-child::after, .famtree li:only-child::before { display: none; }
+.famtree li:only-child { padding-top: 0; }
+.famtree li:first-child::before, .famtree li:last-child::after { border: 0 none; }
+.famtree li:last-child::before { border-right: 1px solid var(--rule); border-radius: 0 6px 0 0; }
+.famtree li:first-child::after { border-radius: 6px 0 0 0; }
+.famtree ul::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  border-left: 1px solid var(--rule);
+  width: 0;
+  height: 20px;
+}
+.famtree--flat { display: flex; gap: 24px; justify-content: center; padding-top: 0; }
+.famtree--flat li { display: block; padding: 0; }
+.famtree--flat li::before, .famtree--flat li::after { display: none; }
+
+.famtree .node {
+  display: inline-block;
+  background: var(--paper-card);
+  border: 1px solid var(--rule);
+  border-left: 4px solid var(--rule);
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-family: -apple-system, 'Segoe UI', sans-serif;
+  font-size: 0.78rem;
+  white-space: nowrap;
+  box-shadow: 0 2px 6px rgba(59,47,34,.06);
+  transition: transform .12s, box-shadow .12s;
+}
+.famtree .node:hover { transform: translateY(-2px); box-shadow: 0 6px 14px rgba(59,47,34,.14); }
+.famtree .node-sep { color: var(--gold); margin: 0 3px; }
+.famtree .node-dates {
+  display: block;
+  margin-top: 2px;
+  font-size: 0.66rem;
+  letter-spacing: .03em;
+  color: var(--ink-soft);
+}
+.famtree .person-link { border-bottom: none; font-weight: 500; }
+.famtree .person-link:hover { background: none; text-decoration: underline; }
+
+/* Couleurs par époque (assorties aux chapitres du récit) */
+.famtree .node--era-alle { border-left-color: var(--anec); }
+.famtree .node--era-alle .node-dates { color: var(--anec); }
+.famtree .node--era-lorraine { border-left-color: var(--lieu); }
+.famtree .node--era-lorraine .node-dates { color: var(--lieu); }
+.famtree .node--era-traversee { border-left-color: var(--hist); }
+.famtree .node--era-traversee .node-dates { color: var(--hist); }
+.famtree .node--era-retour { border-left-color: var(--retour); }
+.famtree .node--era-retour .node-dates { color: var(--retour); }
+.famtree .node--era-algerie-est { border-left-color: var(--algerie-est); }
+.famtree .node--era-algerie-est .node-dates { color: var(--algerie-est); }
+
+/* Lignée directe mise en valeur */
+.famtree .node--trunk {
+  border-width: 2px;
+  border-left-width: 6px;
+  background: var(--paper);
+  font-size: 0.84rem;
+  padding: 9px 15px;
+}
+.famtree .node--trunk .person-link { font-weight: 700; }
+
+/* Résultat de recherche */
+.famtree .node--match {
+  outline: 3px solid var(--gold);
+  outline-offset: 2px;
+}
+
+/* Légende */
+.tree-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 22px;
+  justify-content: center;
+  align-items: center;
+  margin: 0 auto 36px;
+  font-family: -apple-system, 'Segoe UI', sans-serif;
+  font-size: 0.78rem;
+  color: var(--ink-soft);
+}
+.tree-legend-item { display: flex; align-items: center; gap: 7px; }
+.tree-legend-swatch { width: 14px; height: 14px; border-radius: 4px; flex-shrink: 0; }
+.tree-legend-swatch--alle { background: var(--anec); }
+.tree-legend-swatch--lorraine { background: var(--lieu); }
+.tree-legend-swatch--traversee { background: var(--hist); }
+.tree-legend-swatch--algerie-est { background: var(--algerie-est); }
+.tree-legend-swatch--retour { background: var(--retour); }
+.tree-legend-swatch--trunk { background: transparent; border: 2px solid var(--ink); }
+
+/* Recherche */
+.tree-search-wrap { display: flex; justify-content: center; margin-bottom: 40px; }
+.tree-search {
+  width: 100%;
+  max-width: 320px;
+  height: 38px;
+  padding: 0 14px;
+  border: 1px solid var(--rule);
+  border-radius: 20px;
+  background: var(--paper-card);
+  font-family: -apple-system, 'Segoe UI', sans-serif;
+  font-size: 0.88rem;
+  color: var(--ink);
+}
+.tree-search:focus { outline: none; border-color: var(--gold); }
+.tree-search::placeholder { color: var(--ink-soft); }
+
+/* Groupe de petites branches isolées, côte à côte */
+.famtree-group-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 28px;
+  justify-content: center;
+  align-items: flex-start;
+}
+.famtree-mini {
+  padding: 14px 14px 6px;
+  border: 1px dashed var(--rule);
+  border-radius: 10px;
+}
+.famtree-mini .famtree { padding-top: 0; margin: 0; }
+.famtree-mini--hypothesis { background: var(--paper-card); }
+
+/* Section III : arbre global synthétique — connexions potentielles */
+.tree-block--synth .famtree-scroll > .famtree {
+  border: 1px dashed var(--rule);
+  border-radius: 10px;
+  padding: 16px 14px 6px;
+  background: var(--paper-card);
+}
+.tree-subblock-title {
+  font-family: -apple-system, 'Segoe UI', sans-serif;
+  font-size: 0.75rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  text-align: center;
+  margin: 30px 0 12px;
+}
+.tree-subblock-title:first-of-type { margin-top: 8px; }
+
+.tree-block-intro {
+  text-align: center;
+  color: var(--ink-soft);
+  max-width: 640px;
+  margin: 0 auto 24px;
+  font-size: 0.9rem;
+}
+
+/* Section I : la lignée 100% avérée, en chaîne verticale */
+.trunk-chain {
+  max-width: 480px;
+  margin: 0 auto;
+  position: relative;
+  padding-left: 4px;
+}
+.trunk-chain::before {
+  content: '';
+  position: absolute;
+  left: 17px;
+  top: 8px;
+  bottom: 8px;
+  width: 1px;
+  background: var(--rule);
+}
+.trunk-node {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  position: relative;
+  padding: 9px 0;
+}
+.trunk-node-n {
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--ink);
+  color: #f2e8d3;
+  font-family: -apple-system, 'Segoe UI', sans-serif;
+  font-size: 0.8rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  z-index: 1;
+}
+.trunk-node-card {
+  flex: 1;
+  background: var(--paper-card);
+  border: 1px solid var(--rule);
+  border-left: 4px solid var(--rule);
+  border-radius: 6px;
+  padding: 9px 14px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+}
+.trunk-node-label { font-weight: 500; }
+.trunk-node-label .person-link { font-weight: 700; }
+.trunk-node-dates {
+  font-family: -apple-system, 'Segoe UI', sans-serif;
+  font-size: 0.72rem;
+  color: var(--ink-soft);
+  margin-left: auto;
+}
+
+/* ── CARTE DE CHAPITRE ── */
+.chapter-map {
+  margin: 32px 0;
+  text-align: center;
+  background: var(--paper-card);
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+  padding: 14px 14px 12px;
+  box-shadow: 0 4px 16px rgba(59,47,34,.08);
+}
+.chapter-map img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 4px;
+}
+.chapter-map figcaption {
+  margin-top: 10px;
+  font-family: -apple-system, 'Segoe UI', sans-serif;
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}

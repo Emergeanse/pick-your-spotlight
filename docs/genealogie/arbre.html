@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Arbre synthétique — Chronique de la famille Billieux</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="site-header site-header--small">
+  <div class="kicker">Chronique d'une lignée</div>
+  <a class="site-title-link" href="index.html">Il y eut Alle... l'Algérie...</a>
+</header>
+
+<nav class="nav">
+  <a href="index.html">← Le récit</a>
+</nav>
+
+<main class="tree-main">
+  <h1 class="tree-page-title">Arbre synthétique</h1>
+  <p class="tree-page-intro">Toutes les personnes documentées à ce jour (116 fiches), organisées en trois temps : la lignée 100% avérée, les branches collectées autour d'elle, puis un arbre global incluant les connexions potentielles encore non prouvées. Cliquez un nom pour ouvrir sa fiche.</p>
+
+  <div class="tree-search-wrap">
+    <input type="search" id="tree-search" class="tree-search" placeholder="Rechercher un nom dans l'arbre…">
+  </div>
+
+  <div class="tree-legend">
+    <span class="tree-legend-item"><span class="tree-legend-swatch tree-legend-swatch--trunk"></span>Ta lignée directe</span>
+    <span class="tree-legend-item"><span class="tree-legend-swatch tree-legend-swatch--alle"></span>Alle, 1598–1728</span>
+    <span class="tree-legend-item"><span class="tree-legend-swatch tree-legend-swatch--lorraine"></span>Lorraine, 1728–1856</span>
+    <span class="tree-legend-item"><span class="tree-legend-swatch tree-legend-swatch--traversee"></span>Traversée, 1856</span>
+    <span class="tree-legend-item"><span class="tree-legend-swatch tree-legend-swatch--algerie-est"></span>Algérie-Est, 1874–1937</span>
+    <span class="tree-legend-item"><span class="tree-legend-swatch tree-legend-swatch--retour"></span>Retour, 1900–2026</span>
+  </div>
+
+  <section class="tree-block tree-block--proven">
+    <h2 class="tree-block-title">I · La partie 100% avérée <span class="tree-unlinked">— treize générations</span></h2>
+    <p class="tree-block-intro">La colonne vertébrale de la famille : treize générations reliées d'acte en acte, de Pequegnot Billeux (Alle, 1626) à Christophe Olivier Billeux — chaque lien cité noir sur blanc dans un registre, ou recoupé avec un niveau de certitude élevé.</p>
+    <div class="trunk-chain" id="trunk-chain"></div>
+  </section>
+
+  <section class="tree-block">
+    <h2 class="tree-block-title">II · Les branches <span class="tree-unlinked">— tout ce que l'on a collecté</span></h2>
+    <p class="tree-block-intro">Autour du tronc (toujours en gras ci-dessous), les frères, sœurs, conjoints et branches collatérales rassemblés au fil des actes — la matière brute de la généalogie, au-delà de la seule ligne directe.</p>
+    <div class="famtree-scroll" id="tree-main"></div>
+  </section>
+
+  <section class="tree-block tree-block--synth">
+    <h2 class="tree-block-title">III · Arbre global synthétique <span class="tree-unlinked">— connexions potentielles</span></h2>
+    <p class="tree-block-intro">Ci-dessous, les occurrences isolées du patronyme Billieux — mêmes lieux, parfois mêmes fenêtres chronologiques — dont le lien de filiation avec la lignée directe n'est pas encore prouvé par un acte. Des accointances possibles, à bordure pointillée, en attente d'un document qui les rattache un jour au tronc.</p>
+    <h3 class="tree-subblock-title">Famille noble « de Billieux d'Ehrenfeld », Porrentruy</h3>
+    <div class="famtree-scroll" id="tree-ehrenfeld"></div>
+    <h3 class="tree-subblock-title">Autres occurrences isolées</h3>
+    <div class="famtree-scroll" id="tree-isolated"></div>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <p class="credit">Chronique de la famille Billieux · Christophe Olivier Billeux · 2026</p>
+</footer>
+
+<script src="people.js"></script>
+<script src="arbre.js"></script>
+</body>
+</html>
