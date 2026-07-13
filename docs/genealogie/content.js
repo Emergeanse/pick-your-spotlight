@@ -91,33 +91,7 @@ const CHAPTERS = [
     map: 'carte-traversee.png',
     years: '1856',
     place: 'De Marseille à Mouzaïaville — 1856',
-    illustration: `<svg viewBox="0 0 900 400" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Traversée maritime de Marseille à Mouzaïaville, 1856">
-      <defs>
-        <linearGradient id="sky3" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stop-color="#2b3a55"/>
-          <stop offset="42%" stop-color="#3d4f6b"/>
-          <stop offset="68%" stop-color="#c97b4a"/>
-          <stop offset="100%" stop-color="#e8a869"/>
-        </linearGradient>
-        <linearGradient id="sea3" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stop-color="#2b4a5a"/>
-          <stop offset="100%" stop-color="#16303c"/>
-        </linearGradient>
-      </defs>
-      <rect width="900" height="400" fill="url(#sky3)"/>
-      <circle cx="700" cy="112" r="30" fill="#f2d19a"/>
-      <polygon points="0,400 0,178 70,128 140,168 210,108 280,172 0,172" fill="#3b2f22"/>
-      <polygon points="900,400 900,170 830,108 760,158 690,92 620,165 900,165" fill="#4a3324"/>
-      <rect x="0" y="182" width="900" height="218" fill="url(#sea3)"/>
-      <rect x="0" y="180" width="900" height="3" fill="#e8a869" opacity="0.3"/>
-      <path d="M0,218 Q225,206 450,218 T900,212" fill="none" stroke="#4a6678" stroke-width="1.5" opacity="0.35"/>
-      <path d="M0,258 Q225,246 450,258 T900,252" fill="none" stroke="#4a6678" stroke-width="1" opacity="0.22"/>
-      <g transform="translate(440, 242)">
-        <path d="M-24,14 Q0,22 24,14 L20,26 Q0,30 -20,26 Z" fill="#3b2f22"/>
-        <line x1="0" y1="-48" x2="0" y2="14" stroke="#3b2f22" stroke-width="2.5"/>
-        <polygon points="0,-48 30,-6 0,-6" fill="#f2e2c0"/>
-      </g>
-    </svg>`,
+    illustration: `<img src="illustration-traversee.png" alt="Traversée maritime de Marseille à Mouzaïaville, 1856">`,
     narrative: [
       "Ils partirent par Marseille.",
       "<a class=\"person-link\" href=\"personne.html#louis-billieux\">Louis</a>, cinquante-huit ans, vigneron toute sa vie. <a class=\"person-link\" href=\"personne.html#hubert-billieux-1838\">Hubert</a>, dix-huit ans, ouvrier du ciment. Et avec eux leurs filles, leurs enfants, tout un monde qu'on charge sur un bateau comme on charge une vie entière dans une malle trop petite.",
