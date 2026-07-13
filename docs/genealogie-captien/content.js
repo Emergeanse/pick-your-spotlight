@@ -64,14 +64,7 @@ const CHAPTERS = [
     id: 'mondorf',
     years: '1718 – 1820',
     place: 'Mondorf-les-Bains — Luxembourg',
-    illustration: `
-      <svg viewBox="0 0 900 400" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Rivière et pont stylisés, Luxembourg">
-        <rect width="900" height="400" fill="#1a1410"/>
-        <path d="M0,255 C220,210 310,240 420,210 C530,178 650,190 900,160 L900,400 L0,400 Z" fill="#3b2f22"/>
-        <path d="M0,170 C180,210 260,240 360,260 C520,290 650,280 900,250" fill="none" stroke="#2f6f6a" stroke-width="10" opacity="0.55"/>
-        <path d="M290,212 Q450,150 610,190" fill="none" stroke="#ede4cf" stroke-width="4" opacity="0.4"/>
-        <circle cx="450" cy="150" r="10" fill="#ede4cf" opacity="0.6"/>
-      </svg>`,
+    illustration: `<img src="illustration-mondorf.png" alt="Mondorf-les-Bains, village luxembourgeois et sa source">`,
     narrative: [
       `La lignée CAPTIEN se fixe alors à Mondorf-les-Bains, au Luxembourg. Et elle y reste. Un siècle, et davantage — quatre générations qui naissent, se marient, meurent au même endroit, sur les mêmes registres, sous la même cloche.`,
       `<a class="person-link" href="personne.html#christian-captien-1718">Christian CAPTIEN</a>, né le 19 janvier 1718 — fils de ce Nicolas et de cette Angélique dont on vient de parler — épouse <a class="person-link" href="personne.html#lucie-thomas">Lucie THOMAS</a> le 22 juin 1743. Il a vingt-cinq ans. Lucie mourra la première, le 22 janvier 1772 ; lui la suivra le 2 février 1788, à soixante-dix ans passés, un bel âge pour l'époque, un âge qu'on n'atteignait pas sans un peu de chance et beaucoup d'obstination.`,
