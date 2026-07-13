@@ -6,15 +6,7 @@ const CHAPTERS = [
     id: 'laudrefang',
     years: 'avant 1583 – 1693',
     place: 'Laudrefang — premières traces',
-    illustration: `
-      <svg viewBox="0 0 900 400" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Carte stylisée, Europe et Moselle">
-        <rect width="900" height="400" fill="#1a1410"/>
-        <path d="M0,260 C170,220 250,240 350,210 C440,185 540,200 640,170 C740,140 820,160 900,130 L900,400 L0,400 Z" fill="#3b2f22"/>
-        <path d="M0,310 C180,275 310,300 410,268 C520,234 640,250 750,220 C820,200 860,210 900,196 L900,400 L0,400 Z" fill="#2b2218"/>
-        <circle cx="565" cy="180" r="9" fill="#2f6f6a"/>
-        <path d="M565,180 L610,150" stroke="#2f6f6a" stroke-width="3" stroke-linecap="round" opacity="0.85"/>
-        <text x="620" y="154" fill="#ede4cf" font-size="16" font-family="Georgia" opacity="0.82">Laudrefang</text>
-      </svg>`,
+    illustration: `<img src="illustration-laudrefang.png" alt="Laudrefang, village mosellan aux origines de la lignée">`,
     narrative: [
       `Bon. Alors voilà, on va y aller… doucement… parce que là-bas, dans les registres, y a rien qui presse. Rien qui crie. Juste des noms qui reviennent, tenaces… comme des mauvaises herbes qu'on n'arrache pas, qu'on laisse repousser, parce qu'au fond on les aime bien, ces mauvaises herbes-là, c'est nous.`,
       `Avant 1583… tenez-vous bien… voilà <a class="person-link" href="personne.html#georges-schneider-1583">Georges SCHNEIDER</a>. On sait presque rien de lui. Pas de métier noté, pas de maison décrite, rien. Juste qu'il a existé, qu'il s'est marié vers 1600 avec une certaine <a class="person-link" href="personne.html#christine-nn-schneider">Christine</a>… dont même le nom de jeune fille s'est perdu en route, quelque part entre deux siècles, dans la poussière d'un curé qui écrivait vite, qui écrivait mal, qui écrivait pour lui et pas pour nous. NN, qu'on note. Nomen nescio. On ne sait pas le nom. Ça, c'est tout ce qui reste d'elle… trois lettres et un vide.`,
@@ -198,6 +190,7 @@ const CHAPTERS = [
       `Car il y eut cinq enfants. <a class="person-link" href="personne.html#chantal-captien-1946">Chantal</a>, l'aînée, née le 12 avril 1946 à Amboise. Jean Marie, né en 1952, mort à neuf ans, le 11 août 1962, à Manom — encore un enfant qui s'en va trop tôt, comme il y en a eu tant avant lui dans cette famille, comme s'il fallait, à chaque génération, en payer le prix. <a class="person-link" href="personne.html#michel-captien-1955">Michel</a>, né le 16 novembre 1955 à Manom. Jean Claude, né en 1960 à Tours, mort à vingt-trois ans, le 13 juin 1983, à Montlouis-sur-Loire. Et Dominique, né en 1962 à Tours, le petit dernier.`,
       `Michel, lui, ira vers les cuisines. Cuisinier de métier — chef de brigade, plus tard maître d'hôtel, ou quelque chose d'approchant, les intitulés exacts se perdent un peu d'une maison à l'autre — toute une carrière passée entre le feu des fourneaux et le silence feutré des salles à manger, dans cette tradition très française des grandes maisons où l'on gravit les échelons à force de service, de saisons, de plats envoyés à l'heure. Deux mariages : Patricia Arivé en 1975, dont naît Delphine ; puis, bien plus tard, en 2018, Evelyne Courtin. Une fille encore, Floriane, en 1998. Une vie de brigade, justement — celle du travail en équipe, debout, tôt le matin et tard le soir, qu'on ne raconte jamais assez dans les livres, et qu'on raconte ici.`,
       `Et puis il y a cette histoire, qu'on tient de la mémoire familiale plus que des registres : un jour des années 1960, François Armand gagne au quinté. Un vrai coup, un gros coup. Et avec cet argent — avec Anne, dont on ne sait par ailleurs presque rien, sinon qu'elle apparaît une fois dans les sources, contredisant peut-être le mariage avec Odile, ou lui succédant, allez savoir — il ouvre à Saint-Avold un établissement sur trois étages. Bar au rez-de-chaussée, PMU au premier, bowling tout en haut. Trois étages pour boire, parier, et jouer aux quilles, le tout dans le même bâtiment, comme un résumé complet de ce qu'un homme peut faire de la chance quand elle lui tombe enfin dessus. Le fils, plus tard, tiendra sa propre cuisine — la chance d'un côté, le métier de l'autre, et entre les deux, toute une famille qui apprend à nourrir les autres.`,
+      `Avant Tours — avant Monts, avant Luynes — il y eut Bar-le-Duc. Meuse. La sidérurgie. Là, d'après le témoignage familial, <a class="person-link" href="personne.html#charles-marc-billeux">Charles Marc Billeux</a> et <a class="person-link" href="personne.html#chantal-captien-1946">Chantal</a> se sont rencontrés — deux trajectoires qui se croisent entre l'Est lorraine et une Touraine que Chantal connaissait déjà de naissance, puisqu'elle était née à Amboise le 12 avril 1946. Bar-le-Duc à Tours, c'est environ trois cent cinquante kilomètres à vol d'oiseau ; la route en compte le double. Mais d'abord l'acier, les usines, le métier — et puis, plus tard, le retour vers le val de Loire, comme si la naissance à Amboise avait laissé un fil invisible qu'on finissait par retrouver.`,
       `Chantal, elle, montera vers Tours. Aide-comptable aux Établissements MEUNIER — un emploi discret, de ceux qu'on ne raconte pas dans les livres d'histoire, mais qui font tourner, tous les jours, sans bruit, le monde ordinaire. Mariée une première fois à Claude Louis Pinazo en 1963, à dix-sept ans à peine — une mise en ménage à Basse-Yutz avant même le mariage officiel —, puis à Charles Marc Billeux en 1976. Trois enfants de ces deux unions : Philippe Charles, Thierry Georges, Christophe Olivier.`,
       `Chantal meurt le 25 octobre 2013, à Luynes, d'une tumeur au cerveau. Elle avait soixante-sept ans. Crémation le 30 octobre ; ses cendres reposent au jardin du souvenir de Monts, cette même commune de Touraine où elle avait vécu tant d'années avec Charles Marc. C'est là, avec elle, que se referme cette chronique — provisoirement, comme se referment toujours les chroniques de famille, qui ne sont jamais tout à fait terminées, seulement interrompues, en attendant qu'on les reprenne.`
     ],
@@ -209,8 +202,8 @@ const CHAPTERS = [
       },
       {
         type: 'lieu',
-        title: 'Manom → Saint-Avold → Tours',
-        text: `La Moselle reste l'aimant d'origine, celui qu'on ne quitte qu'à contrecœur ; la Touraine devient la terre de la génération suivante, celle de Chantal et de ses enfants. Une géographie intime faite de gares, de routes, d'adresses qui changent — et d'un nom de famille qui, lui, continue de voyager avec ceux qui le portent.`
+        title: 'Manom → Saint-Avold → Bar-le-Duc → Tours',
+        text: `La Moselle reste l'aimant d'origine, celui qu'on ne quitte qu'à contrecœur ; Bar-le-Duc (Meuse, sidérurgie) marque la rencontre de Charles Marc et Chantal — témoignage familial — avant que la Touraine ne devienne la terre de la génération suivante. Une géographie intime faite de gares, de routes, d'adresses qui changent — et d'un nom de famille qui, lui, continue de voyager avec ceux qui le portent.`
       },
       {
         type: 'anecdote',
@@ -226,6 +219,11 @@ const CHAPTERS = [
         type: 'anecdote',
         title: 'Michel, de la brigade à la salle',
         text: `<a class="person-link" href="personne.html#michel-captien-1955">Michel CAPTIEN</a>, le frère de Chantal, a fait toute sa carrière dans la restauration — cuisinier, chef de brigade, puis maître d'hôtel (les intitulés précis restent à confirmer auprès de la famille). Une vie de métier exigeant, debout du matin au soir, dans cette hiérarchie très codifiée héritée d'Escoffier — la brigade de cuisine, où chacun tient son poste comme un soldat tient sa ligne. Une autre façon, après le rail et le comptoir des générations précédentes, de nourrir les siens.`
+      },
+      {
+        type: 'anecdote',
+        title: 'Rencontre à Bar-le-Duc',
+        text: `Témoignage familial : <a class="person-link" href="personne.html#charles-marc-billeux">Charles Marc Billeux</a> et <a class="person-link" href="personne.html#chantal-captien-1946">Chantal Captien</a> se rencontrent à Bar-le-Duc (Meuse), dans la sidérurgie — avant Monts, avant le Tours définitif. Chantal est née à Amboise : ce lien tourangeau explique peut-être pourquoi le couple s'installe plus tard en Indre-et-Loire, à quelque trois cent cinquante kilomètres de là. On ne sait pas l'usine, ni l'année exacte ; on note seulement que la rencontre se fait à mi-chemin entre la Moselle qu'elle quitte peu à peu et la Touraine où elle reviendra.`
       },
       {
         type: 'anecdote',
@@ -368,10 +366,11 @@ const GEOGRAPHIC_NARRATIVE = {
       roman: 'VI',
       title: 'De la Moselle à la Touraine',
       years: '1922 – 2013',
-      place: 'Manom · Saint-Avold · Paris · Fréteval · Vendôme · Amboise · Tours · Joué-lès-Tours · Monts · Luynes',
+      place: 'Manom · Saint-Avold · Bar-le-Duc · Paris · Fréteval · Vendôme · Amboise · Tours · Joué-lès-Tours · Monts · Luynes',
       narrative: [
-        `La dernière migration. La plus lointaine de toute la lignée — près de cinq cents kilomètres à vol d'oiseau depuis Manom ou Saint-Avold, six cents par la route — et la plus décisive : quitter la Moselle pour la Touraine, le charbon pour la Loire, les rails lorrains pour les bureaux tourangeaux.`,
+        `La dernière migration. La plus lointaine de toute la lignée — près de cinq cents kilomètres à vol d'oiseau depuis Manom ou Saint-Avold, six cents par la route — et la plus décisive : quitter la Moselle pour la Touraine, le charbon pour la Loire, les rails lorrains pour les bureaux tourangeaux. Mais entre les deux, une étape : Bar-le-Duc.`,
         `<a class="person-link" href="personne.html#francois-armand-captien-1922">François Armand CAPTIEN</a> naît à Manom en 1922 ; il épouse <a class="person-link" href="personne.html#odile-alexandrine-pierre">Odile Alexandrine PIERRE</a>, tapissière, en 1945 — l'année d'après la guerre, quand tout le monde refait des enfants pour compenser ceux qu'on a perdus. Le couple divorcera en 1964, après dix-neuf ans et cinq enfants. Saint-Avold, Manom, les gares — la géographie du travail SNCF et du café.`,
+        `Bar-le-Duc, Meuse. La sidérurgie. Témoignage familial : c'est là que <a class="person-link" href="personne.html#charles-marc-billeux">Charles Marc Billeux</a> et <a class="person-link" href="personne.html#chantal-captien-1946">Chantal</a> se rencontrent — une escale entre l'Est lorraine et la Touraine, à mi-chemin de la Moselle qu'elle quitte et d'Amboise où elle est née. Bar-le-Duc à Tours : environ trois cent cinquante kilomètres à vol d'oiseau. L'acier d'abord ; le val de Loire ensuite.`,
         `<a class="person-link" href="personne.html#chantal-captien-1946">Chantal</a>, l'aînée, naît le 12 avril 1946 à Amboise — déjà un pied en Touraine, pendant que le père est encore ancré en Moselle. Aide-comptable aux Établissements MEUNIER à Tours, elle montera vers le val de Loire : Monts, Luynes, ces communes paisibles où l'on vit de l'ombre des châteaux et du bruit des usines légères. Mariée à Charles Marc Billeux en 1976 ; trois fils — Philippe, Thierry, Christophe Olivier.`,
         `La Moselle reste l'aimant d'origine — Manom où l'on enterre encore François Armand, Thionville où naît Philippe — mais la Touraine devient la terre d'adoption. <a class="person-link" href="personne.html#emilie-captien-1919">Émilie</a>, tante de Chantal, trace un autre chemin : longtemps parisienne, banquière, maison de campagne à Fréteval dans la vallée du Loir, puis chalet à Vendôme — avant de finir ses jours à Joué-lès-Tours en 2009. La famille se disperse, lentement, le long de la Loire et de ses affluents. Chantal meurt le 25 octobre 2013 à Luynes ; ses cendres reposent au jardin du souvenir de Monts. C'est là que se referme ce récit géographique — provisoirement, comme toujours — entre la Moselle qu'on a quittée et la Touraine qu'on a choisie.`
       ],

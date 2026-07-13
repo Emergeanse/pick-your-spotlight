@@ -153,8 +153,6 @@ body {
   max-width: 600px;
   margin: 0 auto;
 }
-.site-subtitle-note { display: inline-block; margin-top: 8px; font-style: normal; opacity: 0.95; }
-
 /* ── NAV ── */
 .nav {
   position: sticky;
@@ -323,7 +321,6 @@ body {
 .tree-page-title { font-size: 1.7rem; font-style: italic; text-align: center; margin-bottom: 10px; }
 .tree-page-intro { text-align: center; color: var(--ink-soft); max-width: 760px; margin: 0 auto 36px; font-size: 0.95rem; }
 .tree-strong { font-weight: 700; color: var(--ink); }
-.tree-note { opacity: 0.95; }
 .tree-block { margin-bottom: 56px; }
 .tree-block-title { font-size: 1.1rem; font-style: italic; margin-bottom: 18px; text-align: center; }
 .tree-unlinked { font-family: -apple-system, 'Segoe UI', sans-serif; font-style: normal; font-size: 0.68rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-soft); }
@@ -363,7 +360,6 @@ body {
 .geo-title { font-size: 1.8rem; font-weight: 400; font-style: italic; margin-bottom: 8px; }
 .geo-subtitle { font-family: -apple-system, 'Segoe UI', sans-serif; font-size: 0.78rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-soft); margin-bottom: 24px; }
 .geo-intro-narrative p { text-align: justify; margin-bottom: 1em; font-size: 1.05rem; }
-.geo-style-note { font-size: 0.82rem; font-style: italic; color: var(--ink-soft); margin-top: 20px; }
 .geo-toc { display: flex; flex-wrap: wrap; gap: 8px 14px; justify-content: center; margin-bottom: 48px; padding-bottom: 28px; border-bottom: 1px solid var(--rule); }
 .geo-toc a { font-family: -apple-system, 'Segoe UI', sans-serif; font-size: 0.78rem; color: var(--accent); text-decoration: none; padding: 5px 12px; border: 1px solid var(--accent-dim); border-radius: 20px; transition: background 0.15s; }
 .geo-toc a:hover { background: var(--lieu-bg); }

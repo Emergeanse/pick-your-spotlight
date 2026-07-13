@@ -585,8 +585,8 @@ const PEOPLE = {
     parents: ['francois-armand-captien-1922', 'odile-alexandrine-pierre'],
     spouses: ['claude-louis-pinazo', 'charles-marc-billeux'],
     children: ['philippe-charles-pinazo-billeux', 'thierry-georges-billeux', 'christophe-olivier-billeux'],
-    bio: "Fille de François Armand Captien et d’Odile Alexandrine Pierre. Aide comptable à Tours (Établissements MEUNIER). Mariée en premières noces à Claude Louis Pinazo (1963), puis à Charles Marc Billeux (1976). Crémation le 30 octobre 2013 ; cendres au Jardin du souvenir de Monts. Source : MyHeritage.",
-    source: 'MyHeritage'
+    bio: "Fille de François Armand Captien et d’Odile Alexandrine Pierre. Née à Amboise — un premier pied en Touraine, qu'elle retrouvera plus tard. Aide comptable à Tours (Établissements MEUNIER). Rencontre Charles Marc Billeux à Bar-le-Duc (Meuse), dans la sidérurgie — témoignage familial — avant l'installation du couple en Touraine (Monts, Luynes…), peut-être parce qu'Amboise n'était qu'à quelques kilomètres de là. Mariée en premières noces à Claude Louis Pinazo (1963), puis à Charles Marc Billeux (1976). Crémation le 30 octobre 2013 ; cendres au Jardin du souvenir de Monts. Sources : MyHeritage ; témoignage familial.",
+    source: 'MyHeritage ; témoignage familial'
   },
   'jean-marie-captien-1952': {
     name: 'Jean Marie CAPTIEN',
@@ -681,8 +681,8 @@ const PEOPLE = {
     chapterId: 'captien',
     spouses: ['chantal-captien-1946'],
     children: ['thierry-georges-billeux', 'christophe-olivier-billeux'],
-    bio: "Compagnon puis époux de Chantal Captien. Mise en ménage à Basse-Yutz en 1963 (Chantal, 17 ans). Mariage le 4 décembre 1976 à Monts. Source : MyHeritage.",
-    source: 'MyHeritage'
+    bio: "Compagnon puis époux de Chantal Captien. Mise en ménage à Basse-Yutz en 1963 (Chantal, 17 ans). Les deux se rencontrent à Bar-le-Duc (Meuse), dans la sidérurgie — témoignage familial — avant de s'installer en Touraine ; mariage le 4 décembre 1976 à Monts. Source : MyHeritage ; témoignage familial.",
+    source: 'MyHeritage ; témoignage familial'
   },
   'philippe-charles-pinazo-billeux': {
     name: 'Philippe Charles PINAZO BILLEUX',

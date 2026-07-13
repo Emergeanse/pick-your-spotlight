@@ -43,7 +43,6 @@ function renderGeographicNarrative() {
       <div class="geo-intro-narrative">
         ${geo.intro.map(p => `<p>${p}</p>`).join('')}
       </div>
-      <p class="geo-style-note">Texte inspiré du rythme et de l'oralité célinienne — sans prétendre à l'auteur.</p>
     </header>
     <nav class="geo-toc" aria-label="Sommaire des périodes">
       ${geo.periods.map(p =>
