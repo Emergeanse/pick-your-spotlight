@@ -495,8 +495,8 @@ const PEOPLE = {
     chapterId: 'captien',
     parents: ['francois-captien-1885', 'catherine-hippert'],
     spouses: ['jean-leon-parmentier'],
-    bio: "Grand-tante maternelle. Née le 1 janvier 1919 à Manom (Moselle). Mariée à Jean Léon PARMENTIER le 23 février 1946 à Manom. Décédée le 28 octobre 2009 à Joué-lès-Tours ; inhumée à Esvres. Source : MyHeritage.",
-    source: 'MyHeritage'
+    bio: "Grand-tante maternelle. Née le 1er janvier 1919 à Manom (Moselle). Mariée à Jean Léon PARMENTIER le 23 février 1946 à Manom — lui décédé le 30 octobre 1971 à Rambouillet (Yvelines). Longtemps parisienne, banquière de profession ; maison de campagne à Fréteval (Loir-et-Cher, vallée du Loir), puis de longues années dans un chalet à Vendôme (Loir-et-Cher), entourée de ses chiens. Le dimanche midi, de temps en temps, elle cuisinait le rosbif. Décédée le 28 octobre 2009 à Joué-lès-Tours ; inhumée à Esvres. Sources : MyHeritage ; témoignage familial (mode de vie, à compléter).",
+    source: 'MyHeritage ; témoignage familial'
   },
 
   // === Branche collatérale : sœur (décès en bas âge) ===

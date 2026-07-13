@@ -43,17 +43,7 @@ const CHAPTERS = [
     id: 'bambiderstroff',
     years: '1684 – 1727',
     place: 'Bambiderstroff — Jean (Haman) & Marie Jungers',
-    illustration: `
-      <svg viewBox="0 0 900 400" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Village stylisé, Bambiderstroff">
-        <rect width="900" height="400" fill="#1a1410"/>
-        <path d="M0,280 Q250,230 450,260 T900,245 L900,400 L0,400 Z" fill="#3b2f22"/>
-        <g fill="#3b2f22">
-          <rect x="560" y="215" width="70" height="70"/><polygon points="555,215 595,182 635,215"/>
-          <rect x="662" y="230" width="54" height="55"/><polygon points="658,230 689,202 720,230"/>
-          <rect x="120" y="235" width="58" height="60"/><polygon points="116,235 149,208 182,235"/>
-        </g>
-        <path d="M450,110 C450,92 432,86 426,98 C418,116 442,124 450,108" fill="none" stroke="#2f6f6a" stroke-width="6" stroke-linecap="round" opacity="0.9"/>
-      </svg>`,
+    illustration: `<img src="illustration-bambiderstroff.png" alt="Bambiderstroff, village mosellan au lever du soleil">`,
     narrative: [
       `Une génération, ça sert parfois juste à faire le pont. À relier deux rives qui, sans elle, resteraient chacune de leur côté, à jamais séparées. Ici, c'est ce qui se passe… entre la souche SCHNEIDER et ce qui va devenir la lignée CAPTIEN. Un pont d'une seule génération, pas plus, et qui tient bon quand même.`,
       `<a class="person-link" href="personne.html#jean-schneider-1667">Jean (Haman) SCHNEIDER</a>, laboureur — né en 1667, on ne sait pas où au juste, mais mort le 13 décembre 1727 à Bambiderstroff, ça au moins c'est sûr — épouse <a class="person-link" href="personne.html#marie-jungers">Marie JUNGERS</a> le 28 novembre 1684. Il a dix-sept ans. Dix-sept ans, et déjà marié, déjà à labourer sa terre, déjà à construire une famille qui ne saura jamais qu'elle construisait, justement, une famille qui traverserait trois siècles pour arriver jusqu'à nous.`,
@@ -236,6 +226,11 @@ const CHAPTERS = [
         type: 'anecdote',
         title: 'Michel, de la brigade à la salle',
         text: `<a class="person-link" href="personne.html#michel-captien-1955">Michel CAPTIEN</a>, le frère de Chantal, a fait toute sa carrière dans la restauration — cuisinier, chef de brigade, puis maître d'hôtel (les intitulés précis restent à confirmer auprès de la famille). Une vie de métier exigeant, debout du matin au soir, dans cette hiérarchie très codifiée héritée d'Escoffier — la brigade de cuisine, où chacun tient son poste comme un soldat tient sa ligne. Une autre façon, après le rail et le comptoir des générations précédentes, de nourrir les siens.`
+      },
+      {
+        type: 'anecdote',
+        title: 'Émilie, la tante parisienne aux chiens',
+        text: `<a class="person-link" href="personne.html#emilie-captien-1919">Émilie CAPTIEN</a>, sœur de François Armand, née à Manom en 1919 — l'année où la paix revient enfin —, vit longtemps à Paris. Banquière. Une vie de bureau et de chiffres qu'on imagine mal depuis nos registres muets. Puis une maison de campagne à Fréteval — pas « Fredvald », comme le disait peut-être la famille en racontant, mais Fréteval, commune du Loir-et-Cher, dans la vallée du Loir, entre Vendôme et Châteaudun, là où l'on va respirer le week-end quand Paris étouffe. Plus tard, un chalet à Vendôme : de longues années, entourée de ses chiens, dans ce pays qu'elle aura choisi bien avant que la nièce Chantal n'y installe toute sa lignée. Et le dimanche midi, de temps en temps — pas tous les dimanches, « de temps en temps », c'est la mémoire qui insiste là-dessus —, elle cuisinait le rosbif. Quatre-vingt-dix ans, et la mort à Joué-lès-Tours, en 2009. Source : témoignage familial ; orthographe du lieu vérifiée (Fréteval, 41160).`
       }
     ]
   }
@@ -373,12 +368,12 @@ const GEOGRAPHIC_NARRATIVE = {
       roman: 'VI',
       title: 'De la Moselle à la Touraine',
       years: '1922 – 2013',
-      place: 'Manom · Saint-Avold · Amboise · Tours · Monts · Luynes',
+      place: 'Manom · Saint-Avold · Paris · Fréteval · Vendôme · Amboise · Tours · Joué-lès-Tours · Monts · Luynes',
       narrative: [
         `La dernière migration. La plus lointaine de toute la lignée — près de cinq cents kilomètres à vol d'oiseau depuis Manom ou Saint-Avold, six cents par la route — et la plus décisive : quitter la Moselle pour la Touraine, le charbon pour la Loire, les rails lorrains pour les bureaux tourangeaux.`,
         `<a class="person-link" href="personne.html#francois-armand-captien-1922">François Armand CAPTIEN</a> naît à Manom en 1922 ; il épouse <a class="person-link" href="personne.html#odile-alexandrine-pierre">Odile Alexandrine PIERRE</a>, tapissière, en 1945 — l'année d'après la guerre, quand tout le monde refait des enfants pour compenser ceux qu'on a perdus. Le couple divorcera en 1964, après dix-neuf ans et cinq enfants. Saint-Avold, Manom, les gares — la géographie du travail SNCF et du café.`,
         `<a class="person-link" href="personne.html#chantal-captien-1946">Chantal</a>, l'aînée, naît le 12 avril 1946 à Amboise — déjà un pied en Touraine, pendant que le père est encore ancré en Moselle. Aide-comptable aux Établissements MEUNIER à Tours, elle montera vers le val de Loire : Monts, Luynes, ces communes paisibles où l'on vit de l'ombre des châteaux et du bruit des usines légères. Mariée à Charles Marc Billeux en 1976 ; trois fils — Philippe, Thierry, Christophe Olivier.`,
-        `La Moselle reste l'aimant d'origine — Manom où l'on enterre encore François Armand, Thionville où naît Philippe — mais la Touraine devient la terre d'adoption. <a class="person-link" href="personne.html#emilie-captien-1919">Émilie</a>, tante de Chantal, finira même ses jours à Joué-lès-Tours en 2009 : la famille se disperse, lentement, le long de la Loire. Chantal meurt le 25 octobre 2013 à Luynes ; ses cendres reposent au jardin du souvenir de Monts. C'est là que se referme ce récit géographique — provisoirement, comme toujours — entre la Moselle qu'on a quittée et la Touraine qu'on a choisie.`
+        `La Moselle reste l'aimant d'origine — Manom où l'on enterre encore François Armand, Thionville où naît Philippe — mais la Touraine devient la terre d'adoption. <a class="person-link" href="personne.html#emilie-captien-1919">Émilie</a>, tante de Chantal, trace un autre chemin : longtemps parisienne, banquière, maison de campagne à Fréteval dans la vallée du Loir, puis chalet à Vendôme — avant de finir ses jours à Joué-lès-Tours en 2009. La famille se disperse, lentement, le long de la Loire et de ses affluents. Chantal meurt le 25 octobre 2013 à Luynes ; ses cendres reposent au jardin du souvenir de Monts. C'est là que se referme ce récit géographique — provisoirement, comme toujours — entre la Moselle qu'on a quittée et la Touraine qu'on a choisie.`
       ],
       context: [
         { label: 'Grande Histoire', text: `1945–1975 : trente Glorieuses, baby-boom, exode rural et migrations internes. Les Mosellans partent vers l'Île-de-France, la Touraine, le Sud — suivre l'emploi, fuir les mines en déclin, recomposer une famille après la guerre.` },
