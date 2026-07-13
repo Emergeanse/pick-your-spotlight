@@ -603,7 +603,7 @@ const PEOPLE = {
     parents: ['francois-armand-captien-1922', 'odile-alexandrine-pierre'],
     spouses: ['patricia-arive', 'evelyne-courtin'],
     children: ['delphine-captien-1976', 'floriane-captien-1998'],
-    bio: "Frère de Chantal Captien. Serveur, puis chef de rang. Mariage (1) avec Patricia Arivé le 14 juin 1975 à Tours ; divorce le 10 mai 1981. Mariage (2) avec Evelyne Courtin le 31 mars 2018 à Gohory. Source : MyHeritage.",
+    bio: "Frère de Chantal Captien. Cuisinier de métier — chef de brigade, puis maître d'hôtel (intitulé exact des postes à confirmer) — toute une carrière faite en cuisine et en salle, dans la tradition des grandes maisons. Mariage (1) avec Patricia Arivé le 14 juin 1975 à Tours ; divorce le 10 mai 1981. Mariage (2) avec Evelyne Courtin le 31 mars 2018 à Gohory. Source : MyHeritage · souvenir familial.",
     source: 'MyHeritage'
   },
   'patricia-arive': {

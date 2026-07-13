@@ -15,6 +15,7 @@ function renderNav() {
       ).join('')}
     </div>
     <div class="nav__secondary">
+      <a class="nav__tree" href="geographie.html">Récit géographique</a>
       <a class="nav__tree" href="arbre.html">Arbre synthétique</a>
     </div>
   `;

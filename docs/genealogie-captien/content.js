@@ -205,8 +205,9 @@ const CHAPTERS = [
     narrative: [
       `Au XXe siècle, la chronique se rapproche de nous. On entend mieux les pas, presque le souffle. <a class="person-link" href="personne.html#francois-armand-captien-1922">François Armand CAPTIEN</a>, né le 10 décembre 1922 à Manom, sera aiguilleur à la SNCF — encore les rails, décidément, ça se transmet aussi bien qu'un nom — avant de devenir cafetier, ce qui est une autre manière, au fond, d'aiguiller les gens : vers un comptoir, un verre, une conversation.`,
       `Il épouse <a class="person-link" href="personne.html#odile-alexandrine-pierre">Odile Alexandrine PIERRE</a> le 22 novembre 1945 à Manom — l'année d'après la guerre, l'année où tout le monde se remariait, se reconstruisait, refaisait des enfants comme pour compenser tous ceux qu'on avait perdus. Odile est tapissière. Elle recouvre les fauteuils, retend les tissus, répare ce qui s'affaisse — un métier de patience, à l'image, sans doute, de sa vie avec François Armand, qui ne fut pas de tout repos : le couple divorcera le 20 octobre 1964, après dix-neuf ans de mariage et cinq enfants.`,
-      `Car il y eut cinq enfants. <a class="person-link" href="personne.html#chantal-captien-1946">Chantal</a>, l'aînée, née le 12 avril 1946 à Amboise. Jean Marie, né en 1952, mort à neuf ans, le 11 août 1962, à Manom — encore un enfant qui s'en va trop tôt, comme il y en a eu tant avant lui dans cette famille, comme s'il fallait, à chaque génération, en payer le prix. Michel, né en 1955. Jean Claude, né en 1960 à Tours, mort à vingt-trois ans, le 13 juin 1983, à Montlouis-sur-Loire. Et Dominique, né en 1962 à Tours, le petit dernier.`,
-      `Et puis il y a cette histoire, qu'on tient de la mémoire familiale plus que des registres : un jour des années 1960, François Armand gagne au quinté. Un vrai coup, un gros coup. Et avec cet argent — avec Anne, dont on ne sait par ailleurs presque rien, sinon qu'elle apparaît une fois dans les sources, contredisant peut-être le mariage avec Odile, ou lui succédant, allez savoir — il ouvre à Saint-Avold un établissement sur trois étages. Bar au rez-de-chaussée, PMU au premier, bowling tout en haut. Trois étages pour boire, parier, et jouer aux quilles, le tout dans le même bâtiment, comme un résumé complet de ce qu'un homme peut faire de la chance quand elle lui tombe enfin dessus.`,
+      `Car il y eut cinq enfants. <a class="person-link" href="personne.html#chantal-captien-1946">Chantal</a>, l'aînée, née le 12 avril 1946 à Amboise. Jean Marie, né en 1952, mort à neuf ans, le 11 août 1962, à Manom — encore un enfant qui s'en va trop tôt, comme il y en a eu tant avant lui dans cette famille, comme s'il fallait, à chaque génération, en payer le prix. <a class="person-link" href="personne.html#michel-captien-1955">Michel</a>, né le 16 novembre 1955 à Manom. Jean Claude, né en 1960 à Tours, mort à vingt-trois ans, le 13 juin 1983, à Montlouis-sur-Loire. Et Dominique, né en 1962 à Tours, le petit dernier.`,
+      `Michel, lui, ira vers les cuisines. Cuisinier de métier — chef de brigade, plus tard maître d'hôtel, ou quelque chose d'approchant, les intitulés exacts se perdent un peu d'une maison à l'autre — toute une carrière passée entre le feu des fourneaux et le silence feutré des salles à manger, dans cette tradition très française des grandes maisons où l'on gravit les échelons à force de service, de saisons, de plats envoyés à l'heure. Deux mariages : Patricia Arivé en 1975, dont naît Delphine ; puis, bien plus tard, en 2018, Evelyne Courtin. Une fille encore, Floriane, en 1998. Une vie de brigade, justement — celle du travail en équipe, debout, tôt le matin et tard le soir, qu'on ne raconte jamais assez dans les livres, et qu'on raconte ici.`,
+      `Et puis il y a cette histoire, qu'on tient de la mémoire familiale plus que des registres : un jour des années 1960, François Armand gagne au quinté. Un vrai coup, un gros coup. Et avec cet argent — avec Anne, dont on ne sait par ailleurs presque rien, sinon qu'elle apparaît une fois dans les sources, contredisant peut-être le mariage avec Odile, ou lui succédant, allez savoir — il ouvre à Saint-Avold un établissement sur trois étages. Bar au rez-de-chaussée, PMU au premier, bowling tout en haut. Trois étages pour boire, parier, et jouer aux quilles, le tout dans le même bâtiment, comme un résumé complet de ce qu'un homme peut faire de la chance quand elle lui tombe enfin dessus. Le fils, plus tard, tiendra sa propre cuisine — la chance d'un côté, le métier de l'autre, et entre les deux, toute une famille qui apprend à nourrir les autres.`,
       `Chantal, elle, montera vers Tours. Aide-comptable aux Établissements MEUNIER — un emploi discret, de ceux qu'on ne raconte pas dans les livres d'histoire, mais qui font tourner, tous les jours, sans bruit, le monde ordinaire. Mariée une première fois à Claude Louis Pinazo en 1963, à dix-sept ans à peine — une mise en ménage à Basse-Yutz avant même le mariage officiel —, puis à Charles Marc Billeux en 1976. Trois enfants de ces deux unions : Philippe Charles, Thierry Georges, Christophe Olivier.`,
       `Chantal meurt le 25 octobre 2013, à Luynes, d'une tumeur au cerveau. Elle avait soixante-sept ans. Crémation le 30 octobre ; ses cendres reposent au jardin du souvenir de Monts, cette même commune de Touraine où elle avait vécu tant d'années avec Charles Marc. C'est là, avec elle, que se referme cette chronique — provisoirement, comme se referment toujours les chroniques de famille, qui ne sont jamais tout à fait terminées, seulement interrompues, en attendant qu'on les reprenne.`
     ],
@@ -230,6 +231,11 @@ const CHAPTERS = [
         type: 'anecdote',
         title: 'Anne Knobloch, la mention qui ne colle pas',
         text: `Une mention isolée, dans la source consultée, évoque un mariage de François Armand CAPTIEN avec une certaine Anne KNOBLOCH, à Saint-Avold. Le souci, c'est qu'elle semble entrer en contradiction avec le mariage bien documenté de 1945 avec Odile Alexandrine Pierre. Erreur de saisie ? Union parallèle ou postérieure au divorce de 1964 ? On ne tranche pas, on la garde comme hypothèse ouverte — une de ces zones d'ombre que la généalogie ne referme pas toujours, et qu'il faut savoir laisser telles quelles plutôt que d'inventer une réponse qu'on n'a pas.`
+      },
+      {
+        type: 'anecdote',
+        title: 'Michel, de la brigade à la salle',
+        text: `<a class="person-link" href="personne.html#michel-captien-1955">Michel CAPTIEN</a>, le frère de Chantal, a fait toute sa carrière dans la restauration — cuisinier, chef de brigade, puis maître d'hôtel (les intitulés précis restent à confirmer auprès de la famille). Une vie de métier exigeant, debout du matin au soir, dans cette hiérarchie très codifiée héritée d'Escoffier — la brigade de cuisine, où chacun tient son poste comme un soldat tient sa ligne. Une autre façon, après le rail et le comptoir des générations précédentes, de nourrir les siens.`
       }
     ]
   }
@@ -239,7 +245,7 @@ const EPILOGUE = {
   title: 'Ce qui reste',
   narrative: [
     `Voilà. On arrive au bout — au bout provisoire, puisqu'il n'y a jamais vraiment de bout, en généalogie, juste des points où on s'arrête pour reprendre son souffle.`,
-    `Treize générations, du premier <a class="person-link" href="personne.html#georges-schneider-1583">Georges SCHNEIDER</a>, quelque part avant 1583, jusqu'à <a class="person-link" href="personne.html#chantal-captien-1946">Chantal CAPTIEN</a>, en 2013. Quatre siècles et demi. Des maçons, des laboureurs, un serrurier devenu cheminot puis cafetier, une tapissière, une aide-comptable. Des noms qui glissent — Schneider, Captien, Kapgen — comme glissent toutes les orthographes qu'un curé pressé jette sur un registre.`,
+    `Treize générations, du premier <a class="person-link" href="personne.html#georges-schneider-1583">Georges SCHNEIDER</a>, quelque part avant 1583, jusqu'à <a class="person-link" href="personne.html#chantal-captien-1946">Chantal CAPTIEN</a>, en 2013. Quatre siècles et demi. Des maçons, des laboureurs, un serrurier devenu cheminot puis cafetier, une tapissière, une aide-comptable, un cuisinier devenu chef de brigade puis maître d'hôtel. Des noms qui glissent — Schneider, Captien, Kapgen — comme glissent toutes les orthographes qu'un curé pressé jette sur un registre.`,
     `Et puis les enfants. Tellement d'enfants morts en chemin, à un mois, à trois ans, à neuf ans, à vingt et un ans — Barbe, Élisabeth, Jacques, Catherine, Jean, Marthe Élise, Marguerite Adèle, Adèle, Jean Marie, Jean Claude. Dix noms, au moins, qu'on pourrait aligner comme une litanie, et qui n'ont eu droit, chacun, qu'à une ligne dans un registre. On ne les oublie pas ici — même sans savoir presque rien d'eux, on les nomme, parce que c'est tout ce qu'on peut encore faire pour eux.`,
     `Il y a eu Verdun aussi, et le Fort de Vaux, et un homme qui en est revenu pour continuer, obstinément, à faire des enfants et à réparer des serrures. Il y a eu un quinté gagné un jour de hasard, et un bar-PMU-bowling sur trois étages dont on a oublié le nom. Il y a eu une mention bizarre, Anne Knobloch, qu'on n'a jamais su expliquer. Et il y a eu Chantal, qui a porté tout ça — sans le savoir, comme on porte les choses, sans en avoir conscience — jusqu'à Tours, jusqu'à ses propres enfants, jusqu'à ce site qu'on écrit là, maintenant, pour elle et à cause d'elle.`,
     `Rien ne s'arrête vraiment. Ça continue, sous d'autres noms, dans d'autres villes. On note ce qu'on sait, on laisse en blanc ce qu'on ignore, et on referme le registre — en attendant la prochaine fois qu'on l'ouvrira.`
@@ -249,19 +255,136 @@ const EPILOGUE = {
   table: {
     headers: ['Génération', 'Personne', 'Repères'],
     rows: [
-      ['G0', '<a class="person-link" href="personne.html#chantal-captien-1946">Chantal CAPTIEN</a> (1946–2013)', 'Amboise · Tours · lignée maternelle'],
-      ['G1', '<a class="person-link" href="personne.html#francois-armand-captien-1922">François Armand CAPTIEN</a> (1922–1997)', 'Manom · Saint-Avold · SNCF puis cafetier'],
-      ['G2', '<a class="person-link" href="personne.html#francois-captien-1885">François CAPTIEN</a> (1885–1969)', 'Verdun (Fort de Vaux), 1916 · chemin de fer'],
-      ['G3', '<a class="person-link" href="personne.html#nicolas-captien-1849">Nicolas CAPTIEN</a> (1849–1918)', 'Manom · maçon'],
-      ['G4', '<a class="person-link" href="personne.html#paul-captien-1821">Paul CAPTIEN</a> (1821–1889)', 'Mondorff/Manom · maçon'],
-      ['G5', '<a class="person-link" href="personne.html#elisabeth-captien-1790">Élisabeth CAPTIEN</a> (1790–1862)', 'Mondorf-les-Bains → Manom'],
-      ['G6', '<a class="person-link" href="personne.html#francois-captien-1748">François CAPTIEN</a> (1748–1820)', 'Mondorf-les-Bains · maçon'],
-      ['G7', '<a class="person-link" href="personne.html#christian-captien-1718">Christian CAPTIEN</a> (1718–1788)', 'Mondorf-les-Bains · Luxembourg'],
-      ['G8', '<a class="person-link" href="personne.html#nicolas-captien-1695">Nicolas CAPTIEN</a> (≈1695–?)', 'Union avec <a class="person-link" href="personne.html#angelique-schneider-1695">Angélique SCHNEIDER</a>'],
-      ['G9', '<a class="person-link" href="personne.html#angelique-schneider-1695">Angélique SCHNEIDER</a> (1695–?)', 'Bambiderstroff · charnière vers CAPTIEN'],
-      ['G10', '<a class="person-link" href="personne.html#jean-schneider-1667">Jean (Haman) SCHNEIDER</a> (1667–1727)', 'Bambiderstroff · laboureur'],
-      ['G11', '<a class="person-link" href="personne.html#valentin-schneider-1603">Valentin SCHNEIDER</a> (≈1603–1693)', 'Laudrefang'],
-      ['G12', '<a class="person-link" href="personne.html#georges-schneider-1583">Georges SCHNEIDER</a> (avant 1583–?)', 'Racine (pré-1583)']
+      ['1', '<a class="person-link" href="personne.html#georges-schneider-1583">Georges SCHNEIDER</a> (avant 1583–?)', 'Racine (pré-1583)'],
+      ['2', '<a class="person-link" href="personne.html#valentin-schneider-1603">Valentin SCHNEIDER</a> (≈1603–1693)', 'Laudrefang'],
+      ['3', '<a class="person-link" href="personne.html#jean-schneider-1667">Jean (Haman) SCHNEIDER</a> (1667–1727)', 'Bambiderstroff · laboureur'],
+      ['4', '<a class="person-link" href="personne.html#angelique-schneider-1695">Angélique SCHNEIDER</a> (1695–?)', 'Bambiderstroff · charnière vers CAPTIEN'],
+      ['5', '<a class="person-link" href="personne.html#nicolas-captien-1695">Nicolas CAPTIEN</a> (≈1695–?)', 'Union avec Angélique SCHNEIDER'],
+      ['6', '<a class="person-link" href="personne.html#christian-captien-1718">Christian CAPTIEN</a> (1718–1788)', 'Mondorf-les-Bains · Luxembourg'],
+      ['7', '<a class="person-link" href="personne.html#francois-captien-1748">François CAPTIEN</a> (1748–1820)', 'Mondorf-les-Bains · maçon'],
+      ['8', '<a class="person-link" href="personne.html#elisabeth-captien-1790">Élisabeth CAPTIEN</a> (1790–1862)', 'Mondorf-les-Bains → Manom'],
+      ['9', '<a class="person-link" href="personne.html#paul-captien-1821">Paul CAPTIEN</a> (1821–1889)', 'Mondorff/Manom · maçon'],
+      ['10', '<a class="person-link" href="personne.html#nicolas-captien-1849">Nicolas CAPTIEN</a> (1849–1918)', 'Manom · maçon'],
+      ['11', '<a class="person-link" href="personne.html#francois-captien-1885">François CAPTIEN</a> (1885–1969)', 'Verdun (Fort de Vaux), 1916 · chemin de fer'],
+      ['12', '<a class="person-link" href="personne.html#francois-armand-captien-1922">François Armand CAPTIEN</a> (1922–1997)', 'Manom · Saint-Avold · SNCF puis cafetier'],
+      ['13', '<a class="person-link" href="personne.html#chantal-captien-1946">Chantal CAPTIEN</a> (1946–2013)', 'Amboise · Tours · lignée maternelle']
     ]
   }
+};
+
+// Récit géographique — six périodes, de Laudrefang à la Touraine.
+// Texte inspiré du rythme célinien (oral, syncopé) — sans prétendre à l'auteur.
+const GEOGRAPHIC_NARRATIVE = {
+  title: 'Récit géographique',
+  subtitle: 'De Laudrefang à Tours — frontières, guerres, déplacements',
+  intro: [
+    `Alors voilà… une autre manière de raconter la même famille. Pas par les prénoms seuls, ni par les dates de baptême — par les lieux. Par la terre qu'on foule, qu'on laboure, qu'on quitte un jour sans toujours savoir pourquoi, ni pour combien de temps.`,
+    `Quatre siècles et demi… et une carte qui ne cesse de se redessiner autour de nous. Lorraine, Luxembourg, Moselle, Touraine — des noms d'administration, de guerre, de paix retrouvée. Nous, on vivait là où l'on pouvait. On construisait, on enfantait, on enterrait. Et parfois on partait — dix kilomètres, cent, cinq cents — parce que la frontière avait bougé encore une fois, ou parce qu'un métier, un mariage, un quinté vous emmenait ailleurs.`,
+    `Ce récit suit six périodes. Six façons d'habiter l'Europe, petite et grande à la fois.`
+  ],
+  periods: [
+    {
+      id: 'laudrefang',
+      roman: 'I',
+      title: 'Laudrefang et le pays de Nied',
+      years: 'avant 1600 – ~1693',
+      place: 'Moselle · pays de Bouzonville · couloir franco-germanique',
+      narrative: [
+        `Laudrefang… vous la cherchez sur une carte d'aujourd'hui, elle est là, discrète, dans le canton de Bouzonville, à une poignée de kilomètres de la Sarre. Mais à l'époque de <a class="person-link" href="personne.html#georges-schneider-1583">Georges SCHNEIDER</a> — avant 1583, on ne sait même pas quand exactement — c'était le bout du monde connu, le pays de Nied, cette plaine lorraine où l'on parle allemand le dimanche et français le lundi, selon qui commande.`,
+        `L'Europe, autour, c'est la fin des guerres de Religion — on sort à peine du massacre — et déjà la promesse de la Trentenaire, celle qui va durer trente ans et vider les villages comme on vide un tonneau. Les frontières ? Le duché de Lorraine vacille ; les Trois-Évêchés — Metz, Toul, Verdun — sont un morceau de France planté en plein cœur germanique. Et nous, laboureurs sans terre propre, on regarde passer les armées sans comprendre toujours de quel côté elles viennent.`,
+        `<a class="person-link" href="personne.html#valentin-schneider-1603">Valentin SCHNEIDER</a>, né vers 1603, y passera toute sa vie — quatre-vingt-dix ans, tenez-vous bien, du même village à l'autre extrémité, sans avoir bougé. C'est une géographie immobile, celle des paysans du XVIIe siècle : on naît où l'on meurt, à moins qu'une guerre, une famine, un mariage lointain ne vous pousse ailleurs. Valentin, lui, tient bon. Il meurt le 27 août 1693 à Laudrefang même, comme si le monde entier avait tourné autour de lui sans qu'il ait jamais eu besoin d'en sortir.`,
+        `Pas de château, pas de blason — juste ce couloir entre deux mondes, et des registres paroissiaux obligatoires depuis Villers-Cotterêts (1539) qui commencent enfin à nous laisser une trace. Avant, c'était le néant. Après, c'est un nom. C'est déjà énorme.`
+      ],
+      context: [
+        { label: 'Grande Histoire', text: `1618–1648 : la guerre de Trente Ans ravage la Lorraine. Pillages, famines, épidémies. Les villages du pays de Nied subissent le passage des armées suédoises, impériales, françaises. La démographie s'effondre ; la reprise ne commence qu'au tournant du siècle suivant.` },
+        { label: 'Frontière', text: `Laudrefang se situe dans une zone tampon permanente : duché de Lorraine, influence française (Trois-Évêchés), proximité du Saint-Empire. Les habitants vivent avec des frontières mouvantes qu'ils ne choisissent pas — et dont ils ne voient parfois que les conséquences : impôts, langue des actes, curé d'une nationalité ou d'une autre.` }
+      ]
+    },
+    {
+      id: 'bambiderstroff',
+      roman: 'II',
+      title: 'Bambiderstroff — paroisse et frontière',
+      years: '1684 – 1727',
+      place: 'Canton de Boulay · Moselle · Luxembourg voisin',
+      narrative: [
+        `On se déplace. Pas loin — une vingtaine de kilomètres à vol d'oiseau, une journée de charrette — mais assez pour changer de paroisse, de curé, de registre. Bambiderstroff, village du canton de Boulay, accueille <a class="person-link" href="personne.html#jean-schneider-1667">Jean (Haman) SCHNEIDER</a>, laboureur, qui s'y marie le 28 novembre 1684 avec <a class="person-link" href="personne.html#marie-jungers">Marie JUNGERS</a>. Il a dix-sept ans. La terre, ici, c'est la frontière : le Luxembourg est à portée de cloche, la Sarre aussi, et les familles se marient entre voisins parce qu'on n'a ni le temps ni l'argent d'aller plus loin.`,
+        `C'est l'Europe de la reprise, après un siècle et demi de guerres. Louis XIV règne ; la Lorraine est française depuis 1766 seulement — mais avant cela, elle a déjà connu l'occupation, la restitution, le duc exilé. Pour Jean et Marie, tout ça c'est du bruit lointain. Eux, ils labourent. Marie meurt le 7 septembre 1720 ; Jean la suit sept ans plus tard, le 13 décembre 1727. Même village, même cimetière, même terre.`,
+        `Et de ce couple naît <a class="person-link" href="personne.html#angelique-schneider-1695">Angélique</a>, le 29 avril 1695 — la charnière. Elle épousera <a class="person-link" href="personne.html#nicolas-captien-1695">Nicolas CAPTIEN</a>, né la même année, quelque part qu'on n'a pas encore localisé. Avec cette union, un autre nom entre dans la lignée, et la géographie va basculer : plus vers l'est, vers le Luxembourg, vers Mondorf-les-Bains, où la famille CAPTIEN s'installera pour un siècle entier.`,
+        `Bambiderstroff, c'est le dernier village mosellan de la souche SCHNEIDER. Après Angélique, ce sera Mondorf. La frontière qu'on franchit, ce n'est pas celle des cartes — c'est celle d'un mariage, d'un acte, d'un prêtre qui inscrit deux noms côte à côte.`
+      ],
+      context: [
+        { label: 'Grande Histoire', text: `Fin du XVIIe – début du XVIIIe : reprise démographique en Lorraine après les guerres franco-allemandes et la peste. Les mariages precoces (seize, dix-sept ans) reconstituent les familles ; les unions se font dans un rayon de quelques paroisses.` },
+        { label: 'Frontière', text: `Bambiderstroff se trouve à la lisière du Luxembourg et de la Sarre — zone où les déplacements quotidiens ignorent les frontières politiques. Les laboureurs vont au marché de Boulay, parfois au-delà ; la langue, les coutumes et les alliances familiales créent un espace transfrontalier bien avant l'Europe des nations.` }
+      ]
+    },
+    {
+      id: 'mondorf',
+      roman: 'III',
+      title: 'Mondorf-les-Bains — le Luxembourg d\'Ancien Régime',
+      years: '1718 – 1820',
+      place: 'Canton de Remich · Grevenmacher · Grand-Duché naissant',
+      narrative: [
+        `Mondorf-les-Bains. Aujourd'hui station thermale, casinos, eaux minérales — à l'époque de <a class="person-link" href="personne.html#christian-captien-1718">Christian CAPTIEN</a>, né le 19 janvier 1718, c'était un village agricole du canton de Remich, dans le Grevenmacher luxembourgeois. Quatre générations CAPTIEN y naîtront, s'y marieront, y mourront — <a class="person-link" href="personne.html#francois-captien-1748">François</a> (1748–1820), maçon, y achèvera sa vie le 16 janvier 1820, sans jamais avoir quitté le canton.`,
+        `L'Europe, pendant ce siècle-là, change de peau trois fois. Ancien Régime… Révolution… Empire… Restauration. Le Luxembourg passe de l'Autriche des Habsbourg à la France révolutionnaire (1795), puis à l'Empire napoléonien, et redevient grand-duché en 1815 — indépendant en apparence, lié en réalité aux Pays-Bas puis, après 1830, à sa propre destinée. Pour Christian, François, <a class="person-link" href="personne.html#elisabeth-captien-1790">Élisabeth</a> (1790), tout ça se traduit par des registres qui changent de langue — latin, français, allemand — et par des curés qui inscrivent les naissances comme si rien n'avait bougé.`,
+        `Le métier de maçon apparaît : François CAPTIEN en est un, comme le seront plus tard Paul et Nicolas à Manom. Bâtir des murs, des toits, des fours — c'est une géographie de la pierre, du mortier, de la main. On ne voyage pas ; on construit ce qui tient debout autour de soi. Mondorf, c'est cent ans de stabilité rare dans une Europe en mouvement perpétuel.`,
+        `Et puis <a class="person-link" href="personne.html#elisabeth-captien-1790">Élisabeth</a>, née le 23 janvier 1790 à Mondorf, finira ses jours le 28 décembre 1862 à Manom — en Moselle, en France. La frontière qu'elle franchit, c'est celle d'une vie entière : du Luxembourg à la France, du village thermal au village de brique mosellan. On ne sait pas exactement quand ni pourquoi. On sait seulement qu'elle est morte là-bas, et que son fils <a class="person-link" href="personne.html#paul-captien-1821">Paul</a>, né à Mondorff en 1821, portera la suite en Moselle.`
+      ],
+      context: [
+        { label: 'Grande Histoire', text: `1748–1820 : Révolution française, guerres napoléoniennes, Congrès de Vienne (1815). Le Luxembourg est annexé à la France (1795–1814), puis devient grand-duché sous la maison de Nassau-Weilbourg. Les registres paroissiaux continuent — seule mémoire des familles ordinaires.` },
+        { label: 'Frontière', text: `Mondorf-les-Bains se situe à quelques kilomètres de la frontière franco-luxembourgeoise actuelle. Le passage d'Élisabeth vers Manom (~1820–1862) marque le retour de la lignée en territoire français — Moselle, pays de Thionville — dans une région qui, après 1871, redeviendra allemande.` }
+      ]
+    },
+    {
+      id: 'manom-mondorff',
+      roman: 'IV',
+      title: 'Mondorff et Manom — maçons en Moselle',
+      years: '1821 – 1918',
+      place: 'Manom · Mondorff · Thionville · frontière luxembourgeoise',
+      narrative: [
+        `Manom. Mondorff. Deux orthographes pour un même paysage — Mondorf côté luxembourgeois, Mondorff avec deux f côté français. Les CAPTIEN s'en moquent : ils vivent à la lisière, entre deux administrations, deux langues d'actes, deux curés parfois. <a class="person-link" href="personne.html#paul-captien-1821">Paul</a>, né le 1er février 1821 à Mondorff, s'installe à Manom, maçon comme son grand-père François avant lui. Quatrième génération de la truelle — on bâtit ce qui résiste, pierre après pierre.`,
+        `Le XIXe siècle, c'est celui des transformations : chemins de fer (Metz–Thionville, 1850), sidérurgie lorraine, mines de fer. Manom, village de brique et de grès, se rapproche de Thionville, de l'industrie, du monde ouvrier naissant. Et puis 1871 : la guerre franco-prussienne, la défaite, l'annexion. La Moselle devient allemande — Reichsland Elsaß-Lothringen. Les noms restent français dans les foyers ; les actes officiels passent en allemand. On apprend à vivre avec deux identités administratives, comme on avait appris à vivre avec deux paroisses.`,
+        `<a class="person-link" href="personne.html#nicolas-captien-1849">Nicolas</a>, né le 5 juillet 1849 à Manom, maçon lui aussi, épouse Catherine LENARD en 1879. Six enfants — dont <a class="person-link" href="personne.html#francois-captien-1885">François</a>, né en 1885, qui quittera la truelle pour les rails et les serrures. Nicolas meurt le 1er janvier 1918, jour de l'an, dans une Moselle occupée par l'Allemagne depuis quarante-sept ans, à quelques mois de l'armistice qu'il ne verra pas.`,
+        `Quatre enfants sur sept de Paul mourront en bas âge — Élisabeth, Jacques, Catherine, Jean. La géographie du deuil, ici, c'est le même cimetière, le même village, les mêmes tombes qui s'accumulent trop vite. Manom tient bon malgré tout : c'est l'ancrage, le lieu d'où on ne part pas — ou pas encore.`
+      ],
+      context: [
+        { label: 'Grande Histoire', text: `1870–1871 : guerre franco-prussienne, annexion de l'Alsace-Moselle. 1914–1918 : Première Guerre mondiale ; la Moselle est allemande ; Verdun (1916) est à une cinquantaine de kilomètres. Nicolas CAPTIEN meurt en 1918, avant l'armistice du 11 novembre.` },
+        { label: 'Frontière', text: `Manom et Mondorff/Mondorf forment un espace transfrontalier quotidien : même dialecte, mêmes marchés, familles qui se marient des deux côtés. Après 1871, la frontière politique durcit ; les déplacements restent possibles, mais les identités administratives se bifurquent.` }
+      ]
+    },
+    {
+      id: 'verdun-saint-avold',
+      roman: 'V',
+      title: 'Verdun, Saint-Avold — guerre et reconstruction',
+      years: '1885 – 1969',
+      place: 'Manom · Verdun · Saint-Avold · Fort de Vaux',
+      narrative: [
+        `<a class="person-link" href="personne.html#francois-captien-1885">François CAPTIEN</a>, né le 13 juillet 1885 à Manom, dessine un triangle de vie qui dit tout de la Moselle du XXe siècle : village d'origine, front de guerre, ville de reconstruction. Serrurier, puis cheminot — les rails, encore, comme fil conducteur — il épouse Catherine HIPPERT en 1912, avant que le monde ne bascule.`,
+        `1916. Verdun. Le Fort de Vaux. Il a trente et un ans. On ne sait pas exactement ce qu'il y a vécu — les archives familiales ne disent que le nom du fort — mais on sait ce que fut Verdun : dix mois de feu, plus de trois cent mille morts, une terre retournée comme un champ de betteraves. Il en revient. C'est déjà une géographie du survivant : le même Manom, mais plus jamais le même homme.`,
+        `Après la guerre, la Moselle redevient française (1918–1940), puis allemande (1940–1944), puis française encore. Deux guerres mondiales en vingt-cinq ans. <a class="person-link" href="personne.html#marguerite-adele-captien-1924">Marguerite Adèle</a> et <a class="person-link" href="personne.html#adele-captien-1925">Adèle</a> meurent toutes deux en 1945, à Manom — la même année que la libération. Coïncidence ou écho tardif de l'Histoire ? On ne sait pas. On note.`,
+        `Son fils <a class="person-link" href="personne.html#francois-armand-captien-1922">François Armand</a>, né en 1922 à Manom, aiguilleur SNCF puis cafetier, s'installe à Saint-Avold — ville charbonnière, gare, ateliers. Et là, un jour des années 1960, le quinté. Un bar au rez-de-chaussée, PMU au premier, bowling tout en haut — trois étages pour boire, parier, jouer aux quilles. Saint-Avold devient le lieu de la chance retrouvée, après tant de malchance collective. François père meurt le 21 mars 1969 à Manom, dans le village où il était né quatre-vingt-quatre ans plus tôt.`
+      ],
+      context: [
+        { label: 'Grande Histoire', text: `1914–1918 : Première Guerre mondiale ; bataille de Verdun (1916), Fort de Vaux. 1939–1945 : Seconde Guerre mondiale ; annexation de facto, déportations, libération 1944–1945. Reconstruction et baby-boom dans les années 1950–1960.` },
+        { label: 'Frontière', text: `Saint-Avold, sous-préfecture mosellane, carrefour ferroviaire et minier — ville de passage entre Lorraine et Sarre. Le bar-PMU-bowling des années 1960 incarne une géographie du loisir et de la reconstruction, loin des tranchées de Verdun.` }
+      ]
+    },
+    {
+      id: 'tours',
+      roman: 'VI',
+      title: 'De la Moselle à la Touraine',
+      years: '1922 – 2013',
+      place: 'Manom · Saint-Avold · Amboise · Tours · Monts · Luynes',
+      narrative: [
+        `La dernière migration. La plus lointaine de toute la lignée — près de cinq cents kilomètres à vol d'oiseau depuis Manom ou Saint-Avold, six cents par la route — et la plus décisive : quitter la Moselle pour la Touraine, le charbon pour la Loire, les rails lorrains pour les bureaux tourangeaux.`,
+        `<a class="person-link" href="personne.html#francois-armand-captien-1922">François Armand CAPTIEN</a> naît à Manom en 1922 ; il épouse <a class="person-link" href="personne.html#odile-alexandrine-pierre">Odile Alexandrine PIERRE</a>, tapissière, en 1945 — l'année d'après la guerre, quand tout le monde refait des enfants pour compenser ceux qu'on a perdus. Le couple divorcera en 1964, après dix-neuf ans et cinq enfants. Saint-Avold, Manom, les gares — la géographie du travail SNCF et du café.`,
+        `<a class="person-link" href="personne.html#chantal-captien-1946">Chantal</a>, l'aînée, naît le 12 avril 1946 à Amboise — déjà un pied en Touraine, pendant que le père est encore ancré en Moselle. Aide-comptable aux Établissements MEUNIER à Tours, elle montera vers le val de Loire : Monts, Luynes, ces communes paisibles où l'on vit de l'ombre des châteaux et du bruit des usines légères. Mariée à Charles Marc Billeux en 1976 ; trois fils — Philippe, Thierry, Christophe Olivier.`,
+        `La Moselle reste l'aimant d'origine — Manom où l'on enterre encore François Armand, Thionville où naît Philippe — mais la Touraine devient la terre d'adoption. <a class="person-link" href="personne.html#emilie-captien-1919">Émilie</a>, tante de Chantal, finira même ses jours à Joué-lès-Tours en 2009 : la famille se disperse, lentement, le long de la Loire. Chantal meurt le 25 octobre 2013 à Luynes ; ses cendres reposent au jardin du souvenir de Monts. C'est là que se referme ce récit géographique — provisoirement, comme toujours — entre la Moselle qu'on a quittée et la Touraine qu'on a choisie.`
+      ],
+      context: [
+        { label: 'Grande Histoire', text: `1945–1975 : trente Glorieuses, baby-boom, exode rural et migrations internes. Les Mosellans partent vers l'Île-de-France, la Touraine, le Sud — suivre l'emploi, fuir les mines en déclin, recomposer une famille après la guerre.` },
+        { label: 'Frontière', text: `Amboise, Tours, Monts, Luynes : axe de la Loire, Indre-et-Loire. Géographie tourangelle — châteaux, vignes, industries légères — opposée à la Lorraine charbonnière et sidérurgique. Chantal incarne ce passage Est→Ouest, Moselle→Touraine, sans renier l'origine.` }
+      ]
+    }
+  ],
+  closing: 'Les lieux changent… les prénoms restent. Entre les deux, on recoud l\'histoire — carte après carte, frontière après frontière.'
 };

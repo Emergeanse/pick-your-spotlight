@@ -357,6 +357,36 @@ body {
 .tree-search:focus { outline: none; border-color: var(--accent); }
 .tree-search::placeholder { color: var(--ink-soft); }
 
+/* ── GEOGRAPHIC NARRATIVE ── */
+.geo-main { max-width: 860px; margin: 0 auto; padding: 40px 24px 80px; }
+.geo-intro { text-align: center; margin-bottom: 40px; }
+.geo-title { font-size: 1.8rem; font-weight: 400; font-style: italic; margin-bottom: 8px; }
+.geo-subtitle { font-family: -apple-system, 'Segoe UI', sans-serif; font-size: 0.78rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-soft); margin-bottom: 24px; }
+.geo-intro-narrative p { text-align: justify; margin-bottom: 1em; font-size: 1.05rem; }
+.geo-style-note { font-size: 0.82rem; font-style: italic; color: var(--ink-soft); margin-top: 20px; }
+.geo-toc { display: flex; flex-wrap: wrap; gap: 8px 14px; justify-content: center; margin-bottom: 48px; padding-bottom: 28px; border-bottom: 1px solid var(--rule); }
+.geo-toc a { font-family: -apple-system, 'Segoe UI', sans-serif; font-size: 0.78rem; color: var(--accent); text-decoration: none; padding: 5px 12px; border: 1px solid var(--accent-dim); border-radius: 20px; transition: background 0.15s; }
+.geo-toc a:hover { background: var(--lieu-bg); }
+.geo-toc-roman { font-weight: 700; margin-right: 4px; }
+.geo-period { position: relative; scroll-margin-top: 100px; margin-bottom: 12px; }
+.geo-period-watermark { position: absolute; inset: 0; opacity: 0.04; pointer-events: none; overflow: hidden; border-radius: 12px; }
+.geo-period-watermark svg { width: 100%; height: 100%; object-fit: cover; }
+.geo-period-head { text-align: center; margin-bottom: 24px; position: relative; }
+.geo-period-roman { font-family: -apple-system, 'Segoe UI', sans-serif; font-size: 0.72rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--accent); display: block; margin-bottom: 6px; }
+.geo-period-title { font-size: 1.45rem; font-weight: 400; font-style: italic; margin-bottom: 6px; }
+.geo-period-years { font-family: -apple-system, 'Segoe UI', sans-serif; font-size: 0.75rem; letter-spacing: 0.1em; color: var(--ink-soft); display: block; margin-bottom: 4px; }
+.geo-period-place { font-size: 0.88rem; color: var(--ink-soft); font-style: italic; }
+.geo-period-body { display: grid; gap: 24px; }
+@media (min-width: 720px) {
+  .geo-period-body { grid-template-columns: 1fr 280px; align-items: start; }
+}
+.geo-period-narrative p { text-align: justify; margin-bottom: 1.1em; font-size: 1.05rem; }
+.geo-period-context { background: var(--paper-card); border: 1px solid var(--rule); border-radius: 10px; padding: 18px 16px; }
+.geo-context-item + .geo-context-item { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--rule); }
+.geo-context-label { font-family: -apple-system, 'Segoe UI', sans-serif; font-size: 0.68rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--hist); display: block; margin-bottom: 6px; }
+.geo-context-item p { font-size: 0.9rem; text-align: justify; color: var(--ink-soft); }
+.geo-closing { text-align: center; font-style: italic; color: var(--ink-soft); margin-top: 48px; padding-top: 28px; border-top: 1px solid var(--rule); font-size: 1rem; }
+
 @media (max-width: 600px) {
   .site-header { padding: 40px 14px 32px; }
   .site-header__inner { padding: 24px 18px 28px; outline-offset: 4px; }
