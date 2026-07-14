@@ -149,6 +149,85 @@ const PEOPLE = {
     source: 'MyHeritage'
   },
 
+  // === Manom — foyer de la lignée CAPTIEN (1821–1969) ===
+  'lieu-manom': {
+    type: 'lieu',
+    name: 'Manom',
+    dates: 'canton de Thionville, Moselle — foyer de la lignée CAPTIEN (1821–1969)',
+    chapterId: 'manom-mondorff',
+    bio: "Village mosellan du canton de Thionville, à la frontière du Luxembourg. Foyer principal de la lignée CAPTIEN, de l'installation de Paul (vers 1821–1845) à la mort de François (1969) — quatre générations de maçons puis de cheminots, à travers l'annexion allemande de 1871 à 1918.",
+    source: 'Wikipédia · Mairie de Manom · Base Mérimée (POP, ministère de la Culture) · Archives départementales de la Moselle · Revue française de Généalogie · actes MyHeritage',
+    recherche: `
+<h2>Fiche archives — Manom</h2>
+<p class="recherche-objectif">Contexte historique, démographique et archivistique de Manom (Moselle), foyer de la lignée CAPTIEN de l'installation de Paul (vers 1821–1845) jusqu'à la mort de François en 1969 — pour orienter la consultation de l'état civil et situer le village dans sa propre histoire.</p>
+
+<div class="recherche-section">
+  <h3>Contexte historique</h3>
+  <ul class="recherche-list">
+    <li><strong>Statut :</strong> commune du canton de Thionville, Moselle — village agricole puis, à partir du XXe siècle, industriel et périurbain</li>
+    <li><strong>Toponymie :</strong> attestée dès 1050 sous les formes <span class="recherche-variants">Monhof, Munhof</span>, puis Monheim, Munheim, Manhem, Manhovven — fixée en <strong>Manom</strong> à l'époque révolutionnaire (1793) ; renommée <strong>Monhoffen</strong> sous l'annexion allemande (1871–1918), reprend le nom français au retour à la France en 1918</li>
+    <li><strong>Souveraineté médiévale et moderne :</strong> le ban de Manom dépend du duché de Luxembourg jusqu'au milieu du XVIIe siècle — les sources consultées divergent entre 1648 (traité de Westphalie) et 1659 (traité des Pyrénées) pour le rattachement à la France ; partagé sous l'Ancien Régime entre les seigneuries de Meilbourg et de La Grange, cette dernière devenue indépendante dès 1467</li>
+    <li><strong>Écarts et lieux-dits :</strong> le ban regroupe le village et ses écarts — le domaine de La Grange (château reconstruit en 1701 par la famille Gomé des Hazards), Maison-Rouge (de l'allemand <em>Rothaus</em>), Rosenberg, Sainte-Marie</li>
+    <li><strong>Économie ancienne :</strong> village agricole ; une brasserie s'y installe en 1728 (fermée en 1930) — activité artisanale bien antérieure au tournant industriel du XXe siècle (usine Scholtès, ~300 salariés en 1932)</li>
+  </ul>
+</div>
+
+<div class="recherche-section">
+  <h3>Population — ce qu'on sait et ce qu'on ignore</h3>
+  <ul class="recherche-list">
+    <li><strong>1793 :</strong> 581 habitants</li>
+    <li><strong>1871 :</strong> 1 051 habitants (année de l'annexion allemande)</li>
+    <li><strong>1900 :</strong> 1 118 habitants</li>
+    <li><strong>1962 :</strong> 2 062 habitants</li>
+    <li><strong>années 1980 :</strong> hausse d'environ 30 %, liée aux constructions pour le chantier de la centrale nucléaire de Cattenom</li>
+    <li><strong>1990 :</strong> 2 624 habitants · <strong>2023 :</strong> 3 137 habitants</li>
+  </ul>
+  <p class="recherche-unknown">⚠ Aucun chiffre précis retrouvé pour 1821 (arrivée de Paul CAPTIEN), 1845 (son mariage) ou 1889 (sa mort) : entre 1793 et 1871, la population de Manom suit vraisemblablement la même reprise démographique lente que le reste de la Moselle rurale, mais sans repère chiffré propre à la commune pour ces décennies précises.</p>
+</div>
+
+<div class="recherche-section">
+  <h3>État civil et registres</h3>
+  <ul class="recherche-list">
+    <li><strong>Archives départementales de la Moselle</strong> (<a href="https://www.archives57.com" target="_blank" rel="noopener">archives57.com</a>) — état civil numérisé en ligne de la Révolution jusqu'à 1871, classé par tranches alphabétiques de communes (Manom inclus) ; consultation feuillet par feuillet, sans indexation par année</li>
+    <li><strong>Événements CAPTIEN a priori couverts par cette tranche (avant 1871) :</strong> mariage de <a class="person-link" href="personne.html#paul-captien-1821">Paul CAPTIEN</a> × <a class="person-link" href="personne.html#marie-ligne">Marie LIGNE</a> (21.01.1845), naissance de <a class="person-link" href="personne.html#nicolas-captien-1849">Nicolas</a> (05.07.1849) et des autres enfants du couple (1846–1868)</li>
+    <li><strong>Après 1871 :</strong> à partir de mai 2024, les Archives de la Moselle ont commencé à mettre en ligne des tranches postérieures à 1871 (jusque vers 1892 selon les échos disponibles) — couverture en extension, à revérifier avant toute recherche</li>
+    <li><strong>Zone grise à couvrir en priorité :</strong> mort de Paul CAPTIEN (15.07.1889), mariage de Nicolas × Catherine LENARD (04.02.1879), naissance de François (13.07.1885), mort de Nicolas (01.01.1918) — probablement hors ligne à ce stade, à consulter sur place ou en microfilm</li>
+    <li><strong>Annexion allemande (1871–1918) :</strong> les actes de cette période relèvent de l'administration du <em>Standesamt</em> (état civil allemand) plutôt que du régime français classique — registres potentiellement en allemand ou en écriture gothique ; à anticiper pour le mariage de Nicolas (1879), la naissance de François (1885) et la mort de Nicolas (1918)</li>
+    <li><strong>Après 1918 :</strong> retour au régime français ; actes de moins de 100 ans en principe non communicables en ligne — mairie de Manom ou Archives départementales sur demande pour la mort de François (21.03.1969)</li>
+  </ul>
+</div>
+
+<div class="recherche-section">
+  <h3>1871–1918 : l'annexion allemande</h3>
+  <p>Comme tout le pays thionvillois, Manom est annexée à l'Empire allemand de 1871 à 1918 (Reichsland Elsaß-Lothringen) — le village est alors administrativement rebaptisé <strong>Monhoffen</strong>. C'est sous ce régime que naît <a class="person-link" href="personne.html#francois-captien-1885">François CAPTIEN</a> (1885) et que meurt son père <a class="person-link" href="personne.html#nicolas-captien-1849">Nicolas</a>, le 1er janvier 1918, quelques mois avant l'armistice et le retour de la Moselle à la France. Le nom français Manom n'est repris officiellement qu'en 1918.</p>
+</div>
+
+<div class="recherche-section">
+  <h3>Repères familiaux à Manom</h3>
+  <ul class="recherche-list">
+    <li><strong>1821–1845</strong> — arrivée de <a class="person-link" href="personne.html#paul-captien-1821">Paul CAPTIEN</a>, né à Mondorff, qui s'installe à Manom et y épouse <a class="person-link" href="personne.html#marie-ligne">Marie LIGNE</a> le 21 janvier 1845</li>
+    <li><strong>1849–1918</strong> — <a class="person-link" href="personne.html#nicolas-captien-1849">Nicolas CAPTIEN</a>, né et mort à Manom, maçon comme son père</li>
+    <li><strong>1885–1969</strong> — <a class="person-link" href="personne.html#francois-captien-1885">François CAPTIEN</a>, né et mort à Manom, serrurier puis cheminot, revenu de Verdun en 1916</li>
+    <li><strong>1922</strong> — naissance à Manom de <a class="person-link" href="personne.html#francois-armand-captien-1922">François Armand CAPTIEN</a>, dernière génération mosellane avant le départ vers la Touraine</li>
+    <li><strong>1945</strong> — décès à Manom, la même année, de Marguerite Adèle et Adèle CAPTIEN</li>
+  </ul>
+</div>
+
+<div class="recherche-section">
+  <h3>Sources et liens</h3>
+  <ul class="recherche-list">
+    <li><a href="https://fr.wikipedia.org/wiki/Manom" target="_blank" rel="noopener">Wikipédia — Manom</a></li>
+    <li><a href="https://mairiedemanom.fr/histoire-de-la-commune-1" target="_blank" rel="noopener">Mairie de Manom — Histoire de la commune</a></li>
+    <li><a href="https://pop.culture.gouv.fr/notice/merimee/IA00062721" target="_blank" rel="noopener">Base Mérimée (POP, ministère de la Culture) — présentation de la commune de Manom</a></li>
+    <li><a href="https://www.archives57.com" target="_blank" rel="noopener">Archives départementales de la Moselle — archives57.com</a></li>
+    <li><a href="https://www.rfgenealogie.com/infos/moselle-etat-civil-complet" target="_blank" rel="noopener">Revue française de Généalogie — état civil complet de la Moselle en ligne</a></li>
+    <li><a href="https://www.rfgenealogie.com/infos/la-moselle-met-en-ligne-l-etat-civil-ancien-des-communes-de-a-a-ba" target="_blank" rel="noopener">Revue française de Généalogie — mise en ligne progressive des actes postérieurs à 1871</a></li>
+    <li>MyHeritage — dates de naissance/mariage/décès de la famille CAPTIEN (à recouper systématiquement sur actes)</li>
+  </ul>
+</div>
+`
+  },
+
   // === Ascendance (documentée) — François CAPTIEN (1885–1969) ===
   'francois-captien-1885': {
     name: 'François CAPTIEN',
@@ -262,6 +341,58 @@ const PEOPLE = {
 </div>
 
 <div class="recherche-section">
+  <h3>Familles relevées — dépouillement des registres (1678–1693)</h3>
+  <p>La paroisse de Mondorff est attestée avant 1800 ; les premiers registres conservés commencent en 1678. Elle comprend alors notamment Mondorff, Altwies et Elvange (Elvingen).</p>
+  <p><strong>Familles très présentes</strong> — ces patronymes apparaissent à de nombreuses reprises dans les baptêmes :</p>
+  <table class="recherche-table">
+    <thead><tr><th>Patronyme</th><th>Observations</th></tr></thead>
+    <tbody>
+      <tr><td>Weber</td><td>L'une des familles les plus fréquentes ; plusieurs Nicolas, Jean, Marie…</td></tr>
+      <tr><td>Calmus</td><td>Très nombreuses occurrences à partir de la fin des années 1680.</td></tr>
+      <tr><td>Wagner</td><td>Famille bien implantée ; plusieurs parrains et parents.</td></tr>
+      <tr><td>Brandenburg</td><td>Présente dès les premiers registres.</td></tr>
+      <tr><td>Müller</td><td>Nombreuses occurrences.</td></tr>
+      <tr><td>Buchs / Bucher</td><td>Plusieurs baptêmes.</td></tr>
+      <tr><td>Hollen</td><td>Famille récurrente.</td></tr>
+      <tr><td>Berger</td><td>Présente dans les années 1690.</td></tr>
+      <tr><td>Krebs / Kreps</td><td>Quelques occurrences.</td></tr>
+      <tr><td>Langer</td><td>Présente dans plusieurs actes.</td></tr>
+      <tr><td>Schmit / Schmitz</td><td>Assez fréquente.</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="recherche-section">
+  <h3>Familles particulièrement intéressantes pour la branche KAPGEN</h3>
+  <p><strong>SCHNEIDER ★★★★★</strong> — famille prioritaire. Occurrences relevées : <a class="person-link" href="personne.html#pierre-schneider-mondorff-1718">Petrus Schneider</a>, parrain à Mondorff (1718) ; <a class="person-link" href="personne.html#angelique-schneider-1695">Angelica Schneider</a>, épouse de Nicolas Kapgen, citée au mariage de leur fils Christian (1743). Cette famille est très probablement implantée de longue date à Mondorff.</p>
+  <p><strong>THOMES ★★★★★</strong> — famille directement liée aux Kapgen. Occurrences : Adam Thomes, Lucia Thomes, Petrus Thomes. <a class="person-link" href="personne.html#lucie-thomas">Lucie Thomes</a> épouse Christian Kapgen en 1743.</p>
+  <p><strong>BRICHER ★★★★</strong> — famille désormais attestée avant le mariage de 1743. Occurrences : Maria Bricher, mère (1692) ; Maria Bricher, marraine (1692) ; Franciscus Bricher, témoin au mariage de Christian Kapgen (1743). Cette continuité rend vraisemblable l'appartenance à une même famille.</p>
+  <p><strong>SCHARFF</strong> — famille présente à Mondorff. Occurrences relevées : Angela Scharff, Gregorius Scharff. À surveiller pour d'éventuelles alliances avec les Schneider.</p>
+</div>
+
+<div class="recherche-section">
+  <h3>Absence du patronyme KAPGEN avant 1693</h3>
+  <p>À ce stade du dépouillement : <a class="person-link" href="personne.html#christian-captien-1718">Christian Kapgen</a> est attesté avec certitude en 1743, fils de <a class="person-link" href="personne.html#nicolas-captien-1695">Nicolas Kapgen</a> et <a class="person-link" href="personne.html#angelique-schneider-1695">Angelica Schneider</a>. En revanche, aucune occurrence certaine du patronyme Kapgen (ni Capgen, Kaptgen, Kapptgen) n'a été retrouvée dans les baptêmes de Mondorff entre 1678 et 1693.</p>
+  <p class="recherche-unknown">⚠ Cette absence constitue un indice intéressant : Nicolas Kapgen pourrait être originaire d'une autre paroisse et s'être installé à Mondorff avant son mariage, ou bien être né avant le début du registre (1678). Cette hypothèse reste à confirmer.</p>
+</div>
+
+<div class="recherche-section">
+  <h3>Localités associées à la paroisse</h3>
+  <p>Les actes mentionnent régulièrement : Mondorff, Altwies, Elvingen (Elvange), et Dondorfferhoff (lecture encore à confirmer) — probablement un Hof (domaine agricole, ferme ou lieu-dit) dépendant de la paroisse de Mondorff plutôt qu'un village indépendant.</p>
+</div>
+
+<div class="recherche-section">
+  <h3>Récapitulatif des liens établis et des familles gravitantes</h3>
+  <ul class="recherche-list">
+    <li><a class="person-link" href="personne.html#nicolas-captien-1695">Nicolas Kapgen</a> × <a class="person-link" href="personne.html#angelique-schneider-1695">Angelica Schneider</a> → <a class="person-link" href="personne.html#christian-captien-1718">Christian Kapgen</a> (mariage 1743 avec <a class="person-link" href="personne.html#lucie-thomas">Lucia Thomes</a>)</li>
+    <li><strong>Famille Schneider :</strong> Angelica, Petrus</li>
+    <li><strong>Famille Thomes :</strong> Adam, Lucia, Petrus</li>
+    <li><strong>Famille Bricher :</strong> Maria, Franciscus</li>
+    <li><strong>Famille Scharff :</strong> Angela, Gregorius</li>
+  </ul>
+</div>
+
+<div class="recherche-section">
   <h3>Lien avec la lignée KAPGEN / CAPTIEN</h3>
   <ul class="recherche-list">
     <li><strong>1718</strong> — baptême de <a class="person-link" href="personne.html#christian-captien-1718">Christian KAPGEN</a>, 19 janvier, Mondorf (MyHeritage, acte à confirmer sur KB-01/KB-02)</li>
@@ -294,6 +425,7 @@ const PEOPLE = {
     <li><a href="https://www.anlux.lu" target="_blank" rel="noopener">Archives nationales du Luxembourg (ANLux)</a> — série A-XIII (feux, capitation)</li>
     <li>Acte paroissial Mondorff 22.06.1743 — mariage Christianus Kapgen × Lucia Thömes (consulté, site)</li>
     <li>MyHeritage — dates de naissance/décès (à recouper systématiquement sur actes)</li>
+    <li><strong>Piste complémentaire :</strong> ouvrage de reconstitution des familles de Mondorf (1670–1923), couvrant Mondorf, Altwies et Ellingen, réalisé par Prosper Kayser, J.-P. Molitor et Claire Bichler — à consulter pour recouper systématiquement les familles Schneider, Thomes, Bricher et Scharff relevées ci-dessus.</li>
   </ul>
 </div>
 `

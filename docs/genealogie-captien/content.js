@@ -104,6 +104,11 @@ const CHAPTERS = [
         type: 'anecdote',
         title: 'Des métiers qui laissent des traces',
         text: `« Maçon », ça revient d'une génération à l'autre — Christian, François, plus tard Paul et Nicolas porteront tous ce même métier. Ce n'est pas rien, un métier qui se transmet ainsi, presque malgré soi : ça dit une manière de bâtir, de réparer, de tenir debout ce qui menace de tomber. Une famille de maçons… ça construit des maisons, et sans le savoir, ça construit aussi sa propre histoire, pierre après pierre.`
+      },
+      {
+        type: 'anecdote',
+        title: `Hypothèses sur l'origine de Nicolas Kapgen`,
+        text: `Les recherches menées dans les registres paroissiaux de <a class="person-link" href="personne.html#lieu-mondorff">Mondorff</a> n'ont révélé aucune occurrence du patronyme Kapgen dans les baptêmes entre 1678 et 1699, puis entre 1725 et 1727 — ni comme père, ni comme parrain, ni comme témoin. <a class="person-link" href="personne.html#nicolas-captien-1695">Nicolas Kapgen</a> n'était donc probablement pas originaire de Mondorff, mais s'y est installé à l'âge adulte.<br><br>Kapgen est un patronyme ancien de l'aire luxembourgeoise et francique mosellane, aujourd'hui concentré dans le sud-est du Luxembourg et la Moselle voisine. Les spécialistes de l'onomastique luxembourgeoise le rattachent le plus souvent à l'allemand <em>Kappe</em> (« bonnet ») et au suffixe diminutif régional <em>-gen</em> — un fabricant ou porteur de bonnets, donc, plutôt qu'une filiation avec « capitaine », hypothèse peu retenue par les études linguistiques.<br><br>Compte tenu des nombreux déplacements de population dans la région (guerre de Trente Ans, guerres de Louis XIV, guerre de Succession d'Espagne), l'hypothèse la plus vraisemblable est que Nicolas Kapgen est né dans une paroisse voisine — Remich, Schengen, Burmerange, Ellingen (Elvange), Altwies ou Sierck, par exemple — avant de s'établir à Mondorff, probablement à l'occasion de son mariage avec <a class="person-link" href="personne.html#angelique-schneider-1695">Angélique Schneider</a>.<br><br><strong>État des recherches :</strong> aucun Kapgen retrouvé dans les baptêmes de Mondorff (1678–1699 et 1725–1727) ; famille Schneider bien implantée sur place ; familles Thomes et Bricher également présentes, liées au réseau familial de Nicolas et de son fils <a class="person-link" href="personne.html#christian-captien-1718">Christian</a>. Hypothèse privilégiée : Nicolas Kapgen est le fondateur de la branche Kapgen de Mondorff, arrivé d'une paroisse voisine avant son mariage.<br><br><strong>Prochaine étape :</strong> retrouver l'acte de mariage de Nicolas × Angélique, seul document susceptible de préciser son village d'origine et le nom de ses parents — et de débloquer l'ascendance de cette branche.`
       }
     ]
   },
@@ -114,7 +119,7 @@ const CHAPTERS = [
     place: 'Manom / Mondorff — maçons en Moselle annexée',
     illustration: `<img src="illustration-manom-mondorff.png" alt="Manom, village mosellan au bord de la Moselle">`,
     narrative: [
-      `Manom. <a class="person-link" href="personne.html#lieu-mondorff">Mondorff</a>. Deux orthographes pour un même paysage — Mondorf côté luxembourgeois, Mondorff avec deux f côté français. Les CAPTIEN s'en moquent : ils vivent à la lisière, entre deux administrations, deux langues d'actes, deux curés parfois.`,
+      `<a class="person-link" href="personne.html#lieu-manom">Manom</a>. <a class="person-link" href="personne.html#lieu-mondorff">Mondorff</a>. Deux orthographes pour un même paysage — Mondorf côté luxembourgeois, Mondorff avec deux f côté français. Les CAPTIEN s'en moquent : ils vivent à la lisière, entre deux administrations, deux langues d'actes, deux curés parfois.`,
       `<a class="person-link" href="personne.html#elisabeth-captien-1790">Élisabeth CAPTIEN</a>, née le 23 janvier 1790 à <a class="person-link" href="personne.html#lieu-mondorff">Mondorf-les-Bains</a>, meurt le 28 décembre 1862 à Manom. Entre les deux dates, toute une vie qu'on devine plus qu'on ne la connaît — le père de ses enfants reste inconnu, disparu des sources sans laisser de nom. Une fille, Barbe, morte à cinq ans en 1820. Et un fils, <a class="person-link" href="personne.html#paul-captien-1821">Paul</a>, né le 1er février 1821 à <a class="person-link" href="personne.html#lieu-mondorff">Mondorff</a>, qui lui survivra, qui portera la suite.`,
       `<a class="person-link" href="personne.html#paul-captien-1821">Paul</a> s'installe à Manom, maçon comme son grand-père François avant lui — quatrième génération de la truelle, on bâtit ce qui résiste, pierre après pierre. Il épouse <a class="person-link" href="personne.html#marie-ligne">Marie LIGNE</a> le 21 janvier 1845. Le XIXe siècle, c'est celui des transformations : chemins de fer (Metz–Thionville, 1850), sidérurgie lorraine, mines de fer. Manom, village de brique et de grès, se rapproche de Thionville, de l'industrie, du monde ouvrier naissant.`,
       `Et puis 1871 : la guerre franco-prussienne, la défaite, l'annexion. La Moselle devient allemande — Reichsland Elsaß-Lothringen. Les noms restent français dans les foyers ; les actes officiels passent en allemand. On apprend à vivre avec deux identités administratives, comme on avait appris à vivre avec deux paroisses. Quatre enfants sur sept de Paul mourront en bas âge — Élisabeth, Jacques, Catherine, Jean. La géographie du deuil, ici, c'est le même cimetière, le même village, les mêmes tombes qui s'accumulent trop vite.`,
@@ -171,11 +176,8 @@ const CHAPTERS = [
   },
   {
     id: 'tours',
-    maps: ['carte-touraine.png', 'carte-paris.png'],
-    mapCaptions: [
-      'Touraine — Amboise, Tours, Luynes, Monts (1922–2013)',
-      'Paris · Île-de-France — branche Émilie (1919–2009)'
-    ],
+    map: 'carte-touraine.png',
+    mapCaption: 'Moselle → Paris → Touraine — Thionville, Tours, Monts (1940–1970)',
     years: '1922 – 2013',
     place: 'De la Moselle à la Touraine',
     illustration: `<img src="illustration-tours.png" alt="Château de la Touraine, au bout du chemin">`,
@@ -196,8 +198,8 @@ const CHAPTERS = [
       },
       {
         type: 'lieu',
-        title: 'Amboise · Thionville · Tours · Monts · Luynes',
-        text: `La Moselle reste l'aimant d'origine — c'est à Thionville, à deux pas de Manom, que Charles Marc et Chantal se rencontrent ; la Touraine devient ensuite la terre d'adoption — Amboise, Tours, Monts, Luynes, axe de la Loire opposé à la Lorraine charbonnière. Géographie tourangelle — châteaux, vignes, industries légères — sans renier l'origine mosellane.`
+        title: 'Amboise · Thionville · Tours · Monts',
+        text: `La Moselle reste l'aimant d'origine — c'est à Thionville, à deux pas de Manom, que Charles Marc et Chantal se rencontrent ; la Touraine devient ensuite la terre d'adoption — Amboise, Tours, Monts, axe de la Loire opposé à la Lorraine charbonnière. Géographie tourangelle — châteaux, vignes, industries légères — sans renier l'origine mosellane.`
       },
       {
         type: 'anecdote',
