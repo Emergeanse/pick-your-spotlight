@@ -484,7 +484,7 @@ const PEOPLE = {
       'jean-claude-captien-1960',
       'dominique-captien-1962'
     ],
-    bio: "Grand-père maternel. Aiguilleur à la SNCF puis cafetier. Marié à Odile Alexandrine Pierre le 22 novembre 1945 à Manom ; divorce le 20 octobre 1964. Une mention de mariage avec Anne Knobloch (à Saint-Avold) apparaît aussi dans la source : à ce stade, ce point est traité comme une union possible (à confirmer). Source : MyHeritage.",
+    bio: "Grand-père maternel. Aiguilleur à la SNCF puis cafetier. Marié à Odile Alexandrine Pierre le 22 novembre 1945 à Manom ; divorce le 20 octobre 1964. Reste légalement marié à Odile jusqu'à cette date, tout en vivant déjà avec Anne Knobloch à Saint-Avold — séparation de fait avant le divorce officiel. Les cinq enfants (Chantal, Jean Marie, Michel, Jean Claude, Dominique) sont tous nés du mariage avec Odile. Source : MyHeritage · souvenir familial.",
     source: 'MyHeritage'
   },
 
@@ -570,10 +570,10 @@ const PEOPLE = {
   },
   'anne-knobloch': {
     name: 'Anne KNOBLOCH',
-    dates: 'Saint-Avold (Moselle) — union mentionnée (incertaine)',
+    dates: 'Saint-Avold (Moselle)',
     chapterId: 'captien',
     spouses: ['francois-armand-captien-1922'],
-    bio: "Une mention « mariage avec Anne Knobloch (Captien), Saint-Avold » apparaît dans MyHeritage, mais elle semble contradictoire avec le mariage de 1945 avec Odile Alexandrine Pierre. En l’absence de précisions, cette union est conservée comme hypothèse/événement incertain. Source : MyHeritage.",
+    bio: "Compagne de François Armand Captien à Saint-Avold, avant même le divorce officiel de celui-ci d'avec Odile Alexandrine Pierre en 1964 — d'où la mention « mariage » relevée dans la source, qui décrit en réalité une vie commune plutôt qu'une union légale distincte. Anne avait elle-même quatre enfants (d'une union antérieure, non documentée ici). Source : MyHeritage · souvenir familial.",
     source: 'MyHeritage'
   },
 
