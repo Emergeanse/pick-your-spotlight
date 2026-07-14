@@ -188,15 +188,16 @@ const PEOPLE = {
     source: 'MyHeritage'
   },
 
-  // === Luxembourg (Mondorf-les-Bains) — génération au-dessus d’Élisabeth (1790) ===
+  // === Bambiderstroff / Mondorf — souche KAPGEN → CAPTIEN ===
+  // Actes à intégrer (quand disponibles) : mariage Nicolas × Angélique ; baptême Christian 1718.
   'nicolas-captien-1695': {
-    name: 'Nicolas CAPTIEN',
-    dates: 'vers 1695 — décédé (date inconnue)',
+    name: 'Nicolas KAPGEN (Captien)',
+    dates: 'vers 1690–1695 — décédé (date inconnue)',
     chapterId: 'bambiderstroff',
     spouses: ['angelique-schneider-1695'],
     children: ['christian-captien-1718'],
-    bio: "Ancêtre direct (génération 9 au-dessus de Christian CAPTIEN, 1718). Né vers 1695 (lieu non renseigné dans la source). Union avec Angélique SCHNEIDER (née en 1695 à Bambiderstroff). Décédé (date inconnue). Source : MyHeritage.",
-    source: 'MyHeritage'
+    bio: "Ancêtre direct (génération 9 au-dessus de Christian, 1718). Né vers 1690–1695 (lieu non renseigné) — la naissance de son fils Christian le 19 janvier 1718 à Mondorf implique un père d'environ 23–28 ans à cette date. Union avec Angélique SCHNEIDER (née le 29 avril 1695 à Bambiderstroff). Patronyme d'époque : KAPGEN — graphie que le curé aurait inscrite au mariage et sur l'acte de baptême de Christian ; Captien est la forme latine/modernisée adoptée ensuite par la descendance. Variantes à rechercher dans les archives (KAPGEN prioritaire) : Kapgen, Kapgien, Kaptien, Captien, Captié… — actes (mariage, baptême de Christian) à confirmer. Décédé (date inconnue). Source : MyHeritage (filiation) ; orthographe Kapgen : tradition familiale.",
+    source: 'MyHeritage · tradition familiale (Kapgen)'
   },
   'angelique-schneider-1695': {
     name: 'Angélique SCHNEIDER (CAPTIEN)',
@@ -205,7 +206,7 @@ const PEOPLE = {
     parents: ['jean-schneider-1667', 'marie-jungers'],
     spouses: ['nicolas-captien-1695'],
     children: ['christian-captien-1718'],
-    bio: "Ancêtre directe. Née le 29 avril 1695 à Bambiderstroff (Moselle). Fille de Jean (Haman) SCHNEIDER (1667–1727), laboureur à Bambiderstroff, et de Marie JUNGERS († 1720). Union avec Nicolas CAPTIEN (vers 1695). Mère de Christian CAPTIEN (1718). Source : MyHeritage.",
+    bio: "Ancêtre directe. Née le 29 avril 1695 à Bambiderstroff (Moselle). Fille de Jean (Haman) SCHNEIDER (1667–1727), laboureur à Bambiderstroff, et de Marie JUNGERS († 1720). Union avec Nicolas KAPGEN (Captien) (vers 1690–1695) — sur l'acte de mariage, le patronyme du marié est vraisemblablement Kapgen. Mère de Christian (1718). Source : MyHeritage.",
     source: 'MyHeritage'
   },
   'georges-schneider-1583': {
@@ -273,13 +274,13 @@ const PEOPLE = {
     source: 'MyHeritage'
   },
   'christian-captien-1718': {
-    name: 'Christian CAPTIEN',
+    name: 'Christian KAPGEN (Captien)',
     dates: '19 janvier 1718, Mondorf-les-Bains (Luxembourg) — 2 février 1788, Mondorf-les-Bains (Luxembourg)',
     chapterId: 'mondorf',
     parents: ['nicolas-captien-1695', 'angelique-schneider-1695'],
     spouses: ['lucie-thomas'],
     children: ['francois-captien-1748'],
-    bio: "Ancêtre direct (génération 8 au-dessus de François CAPTIEN, 1748). Né le 19 janvier 1718 à Mondorf-les-Bains (Luxembourg). Décédé le 2 février 1788 à Mondorf-les-Bains (Luxembourg). Marié le 22 juin 1743 à Mondorf-les-Bains à Lucie THOMAS. Source : MyHeritage.",
+    bio: "Ancêtre direct (génération 8 au-dessus de François CAPTIEN, 1748). Né le 19 janvier 1718 à Mondorf-les-Bains (Luxembourg) — à son baptême, le registre paroissial porte vraisemblablement Kapgen ; la lignée stabilise ensuite Captien. Décédé le 2 février 1788 à Mondorf-les-Bains (Luxembourg). Marié le 22 juin 1743 à Mondorf-les-Bains à Lucie THOMAS. Source : MyHeritage.",
     source: 'MyHeritage'
   },
   'lucie-thomas': {
@@ -288,7 +289,7 @@ const PEOPLE = {
     chapterId: 'mondorf',
     spouses: ['christian-captien-1718'],
     children: ['francois-captien-1748'],
-    bio: "Épouse de Christian CAPTIEN (1718–1788). Mariée le 22 juin 1743 à Mondorf-les-Bains (Luxembourg). Décédée le 22 janvier 1772 à Mondorf-les-Bains (Luxembourg). Source : MyHeritage.",
+    bio: "Épouse de Christian KAPGEN (Captien) (1718–1788). Mariée le 22 juin 1743 à Mondorf-les-Bains (Luxembourg). Décédée le 22 janvier 1772 à Mondorf-les-Bains (Luxembourg). Source : MyHeritage.",
     source: 'MyHeritage'
   },
   'francois-captien-1748': {
