@@ -102,16 +102,7 @@ const CHAPTERS = [
     id: 'manom-mondorff',
     years: '1821 – 1918',
     place: 'Manom / Mondorff — maçons en Moselle annexée',
-    illustration: `
-      <svg viewBox="0 0 900 400" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Chantier stylisé, pierre et maçonnerie">
-        <rect width="900" height="400" fill="#1a1410"/>
-        <path d="M0,265 Q210,230 450,252 T900,238 L900,400 L0,400 Z" fill="#3b2f22"/>
-        <g fill="none" stroke="#ede4cf" opacity="0.5" stroke-width="3">
-          <path d="M140,270 H300"/><path d="M160,246 H320"/><path d="M180,222 H340"/>
-        </g>
-        <rect x="610" y="210" width="190" height="110" fill="none" stroke="#2f6f6a" stroke-width="5" opacity="0.65"/>
-        <path d="M610,210 L705,160 L800,210" fill="none" stroke="#2f6f6a" stroke-width="5" opacity="0.65"/>
-      </svg>`,
+    illustration: `<img src="illustration-manom-mondorff.png" alt="Manom, village mosellan au bord de la Moselle">`,
     narrative: [
       `Manom. Mondorff. Deux orthographes pour un même paysage — Mondorf côté luxembourgeois, Mondorff avec deux f côté français. Les CAPTIEN s'en moquent : ils vivent à la lisière, entre deux administrations, deux langues d'actes, deux curés parfois.`,
       `<a class="person-link" href="personne.html#elisabeth-captien-1790">Élisabeth CAPTIEN</a>, née le 23 janvier 1790 à Mondorf-les-Bains, meurt le 28 décembre 1862 à Manom. Entre les deux dates, toute une vie qu'on devine plus qu'on ne la connaît — le père de ses enfants reste inconnu, disparu des sources sans laisser de nom. Une fille, Barbe, morte à cinq ans en 1820. Et un fils, <a class="person-link" href="personne.html#paul-captien-1821">Paul</a>, né le 1er février 1821 à Mondorff, qui lui survivra, qui portera la suite.`,
