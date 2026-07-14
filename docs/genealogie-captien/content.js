@@ -167,15 +167,7 @@ const CHAPTERS = [
     id: 'tours',
     years: '1922 – 2013',
     place: 'De la Moselle à la Touraine',
-    illustration: `
-      <svg viewBox="0 0 900 400" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Route et enseigne stylisées, Saint-Avold et Touraine">
-        <rect width="900" height="400" fill="#1a1410"/>
-        <path d="M0,255 Q225,215 450,242 T900,230 L900,400 L0,400 Z" fill="#3b2f22"/>
-        <path d="M0,300 Q225,275 450,296 T900,285 L900,400 L0,400 Z" fill="#2b2218"/>
-        <path d="M480,400 L560,210" stroke="#ede4cf" stroke-width="6" opacity="0.35"/>
-        <rect x="580" y="210" width="180" height="90" fill="none" stroke="#2f6f6a" stroke-width="6" opacity="0.7"/>
-        <text x="598" y="265" fill="#ede4cf" font-size="16" font-family="Georgia" opacity="0.78">PMU · Bar · Bowling</text>
-      </svg>`,
+    illustration: `<img src="illustration-tours.png" alt="Château de la Touraine, au bout du chemin">`,
     narrative: [
       `La dernière migration. La plus lointaine de toute la lignée — près de cinq cents kilomètres à vol d'oiseau depuis Manom ou Saint-Avold, six cents par la route — et la plus décisive : quitter la Moselle pour la Touraine, le charbon pour la Loire, les rails lorrains pour les bureaux tourangeaux. Mais entre les deux, une étape : Bar-le-Duc.`,
       `Au XXe siècle, la chronique se rapproche de nous. On entend mieux les pas, presque le souffle. <a class="person-link" href="personne.html#francois-armand-captien-1922">François Armand CAPTIEN</a>, né le 10 décembre 1922 à Manom, aiguilleur à la SNCF puis cafetier — encore les rails, décidément, ça se transmet aussi bien qu'un nom. Il épouse <a class="person-link" href="personne.html#odile-alexandrine-pierre">Odile Alexandrine PIERRE</a>, tapissière, le 22 novembre 1945 à Manom — l'année d'après la guerre, quand tout le monde refait des enfants pour compenser ceux qu'on a perdus. Le couple divorcera en 1964, après dix-neuf ans et cinq enfants. Saint-Avold, Manom, les gares — la géographie du travail SNCF et, plus tard, du café.`,
