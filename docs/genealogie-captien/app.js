@@ -32,6 +32,18 @@ function renderCard(card) {
     </details>`;
 }
 
+function renderChapterMaps(ch) {
+  const maps = ch.maps || (ch.map ? [ch.map] : []);
+  if (!maps.length) return '';
+  const defaultCaption = `${ch.place}, ${ch.years}`;
+  const captions = ch.mapCaptions || maps.map(() => ch.mapCaption || defaultCaption);
+  return maps.map((src, i) => `
+          <figure class="chapter-map">
+            <img src="${src}" alt="Carte — ${captions[i]}" loading="lazy">
+            <figcaption>${captions[i]}</figcaption>
+          </figure>`).join('');
+}
+
 function renderChapter(ch, index) {
   return `
     <section class="chapter" id="${ch.id}">
@@ -45,10 +57,15 @@ function renderChapter(ch, index) {
         <div class="chapter-narrative">
           ${ch.narrative.map(p => `<p>${p}</p>`).join('')}
         </div>
+        ${renderChapterMaps(ch)}
         ${ch.cards && ch.cards.length ? `
           <div class="chapter-cards">
             <h3>Pour aller plus loin</h3>
             ${ch.cards.map(renderCard).join('')}
+          </div>` : ''}
+        ${ch.archiveFiche ? `
+          <div class="chapter-archive person-recherche" id="${ch.id}-archives">
+            ${ch.archiveFiche}
           </div>` : ''}
       </div>
     </section>

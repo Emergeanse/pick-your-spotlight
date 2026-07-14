@@ -1,0 +1,197 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 560" role="img" aria-label="Carte — VERDUN · SAINT-AVOLD — Guerre et reconstruction">
+
+  
+  <defs>
+    <linearGradient id="paper-carteverdunsaintavoldsvg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f5ecd9"/>
+      <stop offset="45%" stop-color="#f0e6d0"/>
+      <stop offset="100%" stop-color="#e8dcc4"/>
+    </linearGradient>
+    <radialGradient id="vignette-carteverdunsaintavoldsvg" cx="50%" cy="50%" r="70%">
+      <stop offset="60%" stop-color="#000" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#8a7355" stop-opacity="0.12"/>
+    </radialGradient>
+    <filter id="grain-carteverdunsaintavoldsvg" x="-5%" y="-5%" width="110%" height="110%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.045" numOctaves="5" stitchTiles="stitch" result="n"/>
+      <feColorMatrix type="saturate" values="0"/>
+      <feComponentTransfer>
+        <feFuncA type="linear" slope="0.07"/>
+      </feComponentTransfer>
+      <feBlend in="SourceGraphic" in2="n" mode="multiply" result="g"/>
+      <feTurbulence type="fractalNoise" baseFrequency="0.015" numOctaves="3" result="stain"/>
+      <feColorMatrix in="stain" type="matrix" values="0 0 0 0 0.55  0 0 0 0 0.45  0 0 0 0 0.35  0 0 0 0.04 0"/>
+      <feBlend in="g" in2="stain" mode="multiply"/>
+    </filter>
+    <filter id="river-blur-carteverdunsaintavoldsvg">
+      <feGaussianBlur stdDeviation="1.2"/>
+    </filter>
+    <marker id="arrow-carteverdunsaintavoldsvg" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 Z" fill="#5a4a37"/>
+    </marker>
+    <marker id="mig-arrow-carteverdunsaintavoldsvg" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 Z" fill="#4a3d7a"/>
+    </marker>
+  </defs>
+  <rect width="960" height="560" fill="url(#paper-carteverdunsaintavoldsvg)" filter="url(#grain-carteverdunsaintavoldsvg)"/>
+  <rect width="960" height="560" fill="url(#vignette-carteverdunsaintavoldsvg)"/>
+
+  <rect x="14" y="14" width="932" height="532" fill="none" stroke="#3b2f22" stroke-width="1.2"/>
+  <rect x="20" y="20" width="920" height="520" fill="none" stroke="#5a4a37" stroke-width="0.5" opacity="0.45"/>
+  <g stroke="#5a4a37" stroke-width="0.9" fill="none" opacity="0.55">
+    <path d="M20,20 C14,14 10,14 8,20"/>
+    <path d="M20,20 C14,26 10,26 8,20"/>
+    <path d="M940,20 C946,14 950,14 952,20"/>
+    <path d="M940,20 C946,26 950,26 952,20"/>
+    <path d="M20,540 C14,546 10,546 8,540"/>
+    <path d="M20,540 C14,534 10,534 8,540"/>
+    <path d="M940,540 C946,546 950,546 952,540"/>
+    <path d="M940,540 C946,534 950,534 952,540"/>
+    <path d="M20,20 Q28,12 36,20 Q28,28 20,20"/>
+    <path d="M924,20 Q932,12 940,20 Q932,28 924,20"/>
+    <path d="M20,540 Q28,532 36,540 Q28,548 20,540"/>
+    <path d="M924,540 Q932,532 940,540 Q932,548 924,540"/>
+  </g>
+
+  <g>
+    <circle cx="58" cy="54" r="26" fill="#f5f0e8" stroke="#4a3d7a" stroke-width="2.5"/>
+    <text x="58" y="62" text-anchor="middle" font-family="Georgia, 'Palatino Linotype', serif" font-size="22" font-weight="700" fill="#4a3d7a">5</text>
+    <path d="M88,36 L720,36 Q732,36 738,48 L748,68 Q754,78 744,78 L88,78 Q76,78 76,66 L76,48 Q76,36 88,36 Z" fill="#4a3d7a"/>
+    <path d="M738,48 L748,68 L754,58 L744,42 Z" fill="#3a2f62" opacity="0.5"/>
+    <path d="M748,68 L760,62 L754,78 L744,78 Z" fill="#3a2f62"/>
+    <text x="100" y="64" font-family="Georgia, 'Palatino Linotype', serif" font-size="16" font-weight="600" fill="#f5f0e8" letter-spacing="0.02em">VERDUN · SAINT-AVOLD — Guerre et reconstruction (1885 – 1969)</text>
+  </g>
+
+  
+  <g>
+    <rect x="28" y="98" width="210" height="96" fill="none" stroke="#5a4a37" stroke-width="0.9" rx="4"/>
+    <path d="M28,98 Q22,94 30,90" fill="none" stroke="#5a4a37" stroke-width="0.7" opacity="0.6"/>
+    <path d="M238,98 Q244,94 236,90" fill="none" stroke="#5a4a37" stroke-width="0.7" opacity="0.6"/>
+    <path d="M28,194 Q22,198 30,202" fill="none" stroke="#5a4a37" stroke-width="0.7" opacity="0.6"/>
+    <path d="M238,194 Q244,198 236,202" fill="none" stroke="#5a4a37" stroke-width="0.7" opacity="0.6"/>
+    <circle cx="34" cy="104" r="2" fill="none" stroke="#5a4a37" stroke-width="0.5" opacity="0.4"/>
+    <circle cx="232" cy="104" r="2" fill="none" stroke="#5a4a37" stroke-width="0.5" opacity="0.4"/>
+    <circle cx="34" cy="188" r="2" fill="none" stroke="#5a4a37" stroke-width="0.5" opacity="0.4"/>
+    <circle cx="232" cy="188" r="2" fill="none" stroke="#5a4a37" stroke-width="0.5" opacity="0.4"/>
+  </g>
+  <text x="42" y="124" font-family="Georgia, serif" font-size="11" font-style="italic" fill="#3b2f22">
+    <tspan x="42" dy="0">François CAPTIEN 13 juil. 1885 ·</tspan><tspan x="42" dy="17">Fort de Vaux 1916 ·</tspan><tspan x="42" dy="17">François Armand → St-Avold ·</tspan><tspan x="42" dy="17">Brasserie de la Moselle</tspan>
+  </text>
+  
+  <g>
+    <rect x="28" y="204" width="210" height="52" fill="none" stroke="#5a4a37" stroke-width="0.9" rx="4"/>
+    <path d="M28,204 Q22,200 30,196" fill="none" stroke="#5a4a37" stroke-width="0.7" opacity="0.6"/>
+    <path d="M238,204 Q244,200 236,196" fill="none" stroke="#5a4a37" stroke-width="0.7" opacity="0.6"/>
+    <path d="M28,256 Q22,260 30,264" fill="none" stroke="#5a4a37" stroke-width="0.7" opacity="0.6"/>
+    <path d="M238,256 Q244,260 236,264" fill="none" stroke="#5a4a37" stroke-width="0.7" opacity="0.6"/>
+    <circle cx="34" cy="210" r="2" fill="none" stroke="#5a4a37" stroke-width="0.5" opacity="0.4"/>
+    <circle cx="232" cy="210" r="2" fill="none" stroke="#5a4a37" stroke-width="0.5" opacity="0.4"/>
+    <circle cx="34" cy="250" r="2" fill="none" stroke="#5a4a37" stroke-width="0.5" opacity="0.4"/>
+    <circle cx="232" cy="250" r="2" fill="none" stroke="#5a4a37" stroke-width="0.5" opacity="0.4"/>
+  </g>
+  <text x="42" y="222" font-family="Georgia, serif" font-size="11" font-weight="600" fill="#3b2f22" letter-spacing="0.08em">MOSELLE EST</text>
+  <text x="42" y="238" font-family="Georgia, serif" font-size="10" font-style="italic" fill="#5a4a37">Triangle Manom · Verdun · Saint-Avold</text>
+
+  <g transform="translate(878, 58)">
+    <circle r="28" fill="none" stroke="#5a4a37" stroke-width="0.8"/>
+    <g stroke="#5a4a37" stroke-width="0.7">
+      <line x1="0" y1="-22" x2="0" y2="22"/>
+      <line x1="-22" y1="0" x2="22" y2="0"/>
+      <line x1="-15" y1="-15" x2="15" y2="15"/>
+      <line x1="15" y1="-15" x2="-15" y2="15"/>
+    </g>
+    <polygon points="0,-18 -4,-6 4,-6" fill="#3b2f22"/>
+    <text x="0" y="-30" text-anchor="middle" font-family="Georgia, serif" font-size="10" font-weight="600" fill="#3b2f22">N</text>
+    <text x="28" y="5" text-anchor="middle" font-family="Georgia, serif" font-size="9" fill="#5a4a37">E</text>
+    <text x="0" y="36" text-anchor="middle" font-family="Georgia, serif" font-size="9" fill="#5a4a37">S</text>
+    <text x="-28" y="5" text-anchor="middle" font-family="Georgia, serif" font-size="9" fill="#5a4a37">O</text>
+  </g>
+<text x="430" y="225" font-family="Georgia, serif" font-size="26" font-weight="600" fill="#5a4a37" opacity="0.22" letter-spacing="0.25em">LORRAINE</text>
+<ellipse cx="400" cy="380" rx="70" ry="16" fill="#c4b896" opacity="0.35"/><ellipse cx="600" cy="360" rx="65" ry="15" fill="#c4b896" opacity="0.35"/>
+
+  <path d="M220,370 Q380,350 540,330 Q680,315 780,300" fill="none" stroke="#a8c8d8" stroke-width="14" opacity="0.45" filter="url(#river-blur-carteverdunsaintavoldsvg)"/>
+  <path d="M220,370 Q380,350 540,330 Q680,315 780,300" fill="none" stroke="#6a9aaa" stroke-width="2.5" opacity="0.6"/>
+  <path d="M220,370 Q380,350 540,330 Q680,315 780,300" fill="none" stroke="#4a7a8a" stroke-width="0.8" opacity="0.5" stroke-dasharray="4 6"/>
+  <text x="600" y="318" font-family="Georgia, serif" font-size="11" font-style="italic" fill="#6a9aaa">Moselle</text>
+
+  <path d="M520,300 Q420,340 310,375" fill="none" stroke="#8a7355" stroke-width="1.2" opacity="0.45" stroke-dasharray="3 4"/>
+  <path d="M520,300 Q620,290 690,285" fill="none" stroke="#8a7355" stroke-width="1.2" opacity="0.45" stroke-dasharray="3 4"/>
+
+  <g transform="translate(680,400) scale(1)">
+    <ellipse cx="0" cy="-6" rx="9" ry="11" fill="#7a8a6a" opacity="0.4"/>
+    <ellipse cx="-5" cy="-2" rx="7" ry="8" fill="#7a8a6a" opacity="0.3"/>
+    <ellipse cx="5" cy="-2" rx="7" ry="8" fill="#7a8a6a" opacity="0.3"/>
+    <rect x="-2" y="2" width="4" height="10" fill="#6a5a4a" opacity="0.45"/>
+  </g>
+  <g transform="translate(700,395) scale(0.85)">
+    <ellipse cx="0" cy="-6" rx="9" ry="11" fill="#7a8a6a" opacity="0.4"/>
+    <ellipse cx="-5" cy="-2" rx="7" ry="8" fill="#7a8a6a" opacity="0.3"/>
+    <ellipse cx="5" cy="-2" rx="7" ry="8" fill="#7a8a6a" opacity="0.3"/>
+    <rect x="-2" y="2" width="4" height="10" fill="#6a5a4a" opacity="0.45"/>
+  </g>
+  <g transform="translate(720,402) scale(1)">
+    <ellipse cx="0" cy="-6" rx="9" ry="11" fill="#7a8a6a" opacity="0.4"/>
+    <ellipse cx="-5" cy="-2" rx="7" ry="8" fill="#7a8a6a" opacity="0.3"/>
+    <ellipse cx="5" cy="-2" rx="7" ry="8" fill="#7a8a6a" opacity="0.3"/>
+    <rect x="-2" y="2" width="4" height="10" fill="#6a5a4a" opacity="0.45"/>
+  </g>
+  <g transform="translate(340,430) scale(1)">
+    <ellipse cx="0" cy="-6" rx="9" ry="11" fill="#7a8a6a" opacity="0.4"/>
+    <ellipse cx="-5" cy="-2" rx="7" ry="8" fill="#7a8a6a" opacity="0.3"/>
+    <ellipse cx="5" cy="-2" rx="7" ry="8" fill="#7a8a6a" opacity="0.3"/>
+    <rect x="-2" y="2" width="4" height="10" fill="#6a5a4a" opacity="0.45"/>
+  </g>
+  <g transform="translate(360,425) scale(0.9)">
+    <ellipse cx="0" cy="-6" rx="9" ry="11" fill="#7a8a6a" opacity="0.4"/>
+    <ellipse cx="-5" cy="-2" rx="7" ry="8" fill="#7a8a6a" opacity="0.3"/>
+    <ellipse cx="5" cy="-2" rx="7" ry="8" fill="#7a8a6a" opacity="0.3"/>
+    <rect x="-2" y="2" width="4" height="10" fill="#6a5a4a" opacity="0.45"/>
+  </g>
+  <g transform="translate(780,300) scale(1)">
+    <ellipse cx="0" cy="-6" rx="9" ry="11" fill="#7a8a6a" opacity="0.4"/>
+    <ellipse cx="-5" cy="-2" rx="7" ry="8" fill="#7a8a6a" opacity="0.3"/>
+    <ellipse cx="5" cy="-2" rx="7" ry="8" fill="#7a8a6a" opacity="0.3"/>
+    <rect x="-2" y="2" width="4" height="10" fill="#6a5a4a" opacity="0.45"/>
+  </g>
+  <g transform="translate(800,295) scale(0.8)">
+    <ellipse cx="0" cy="-6" rx="9" ry="11" fill="#7a8a6a" opacity="0.4"/>
+    <ellipse cx="-5" cy="-2" rx="7" ry="8" fill="#7a8a6a" opacity="0.3"/>
+    <ellipse cx="5" cy="-2" rx="7" ry="8" fill="#7a8a6a" opacity="0.3"/>
+    <rect x="-2" y="2" width="4" height="10" fill="#6a5a4a" opacity="0.45"/>
+  </g>
+
+  <g transform="translate(270,370)" stroke="#3b2f22" stroke-width="0.7" fill="none" opacity="0.55">
+    <rect x="0" y="12" width="40" height="24"/>
+    <rect x="8" y="0" width="8" height="12"/>
+    <rect x="24" y="0" width="8" height="12"/>
+    <path d="M4,36 L36,36"/>
+  </g>
+<text x="290" y="410" text-anchor="middle" font-family="Georgia, serif" font-size="8" font-style="italic" fill="#5a4a37">(Fort de Vaux · 1916)</text>
+
+  <g>
+    <circle cx="530" cy="295" r="3.5" fill="#3b2f22"/>
+    <text x="540" y="299" text-anchor="start" font-family="Georgia, serif" font-size="12" fill="#3b2f22">MANOM</text>
+    
+  </g>
+    <g>
+      <polygon points="310,371 313.45617728347975,380.24298007307533 323.31479122813215,380.6737620787507 315.5922123158155,386.8170199269247 318.22899353209465,396.3262379212493 310,390.88 301.77100646790535,396.3262379212493 304.4077876841845,386.8170199269247 296.68520877186785,380.6737620787507 306.54382271652025,380.24298007307533" fill="#4a3d7a" stroke="#3b2f22" stroke-width="0.6"/>
+      <text x="310" y="413" text-anchor="middle" font-family="Georgia, serif" font-size="14" font-weight="700" fill="#3b2f22" letter-spacing="0.08em">VERDUN</text>
+      <text x="310" y="427" text-anchor="middle" font-family="Georgia, serif" font-size="9" font-style="italic" fill="#5a4a37">Fort de Vaux · 1916</text>
+    </g>
+    <g>
+      <polygon points="700,271 703.4561772834797,280.24298007307533 713.3147912281321,280.6737620787507 705.5922123158155,286.8170199269247 708.2289935320946,296.3262379212493 700,290.88 691.7710064679054,296.3262379212493 694.4077876841845,286.8170199269247 686.6852087718678,280.6737620787507 696.5438227165203,280.24298007307533" fill="#4a3d7a" stroke="#3b2f22" stroke-width="0.6"/>
+      <text x="700" y="265" text-anchor="middle" font-family="Georgia, serif" font-size="14" font-weight="700" fill="#3b2f22" letter-spacing="0.08em">SAINT-AVOLD</text>
+      <text x="700" y="311" text-anchor="middle" font-family="Georgia, serif" font-size="9" font-style="italic" fill="#5a4a37">Brasserie de la Moselle</text>
+    </g>
+  <g>
+    <circle cx="430" cy="325" r="3.5" fill="#3b2f22"/>
+    <text x="440" y="329" text-anchor="start" font-family="Georgia, serif" font-size="10" fill="#3b2f22">Thionville</text>
+    
+  </g>
+
+  <path d="M530,295 Q425,300 320,375"
+    fill="none" stroke="#4a3d7a" stroke-width="2" stroke-dasharray="6 4" marker-end="url(#mig-arrow-carteverdunsaintavoldsvg)" opacity="0.75"/>
+  <text x="385" y="290" font-family="Georgia, serif" font-size="10" font-style="italic" fill="#4a3d7a">François — survivant</text>
+  <text x="395" y="304" font-family="Georgia, serif" font-size="9" fill="#5a4a37">~50 km</text>
+<text x="480" y="538" text-anchor="middle" font-family="Georgia, serif" font-size="9" font-style="italic" fill="#5a4a37">Deux guerres mondiales — frontière change de langue trois fois</text>
+</svg>

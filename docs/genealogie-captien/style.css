@@ -278,6 +278,36 @@ body {
 .card p { margin-top: 10px; font-size: 0.95rem; text-align: justify; }
 .card-source { display: inline-block; margin-top: 8px; font-family: -apple-system, 'Segoe UI', sans-serif; font-size: 0.78rem; color: var(--accent); }
 
+/* ── CHAPTER ARCHIVE FICHE ── */
+.chapter-archive { scroll-margin-top: 100px; margin-top: 40px; padding-top: 28px; border-top: 2px solid var(--rule); }
+.chapter-archive h2 { font-size: 1.25rem; }
+.chapter-archive a { color: var(--accent); }
+
+/* ── CARTE DE CHAPITRE ── */
+.chapter-map {
+  margin: 32px 0;
+  text-align: center;
+  background: var(--paper-card);
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+  padding: 14px 14px 12px;
+  box-shadow: 0 4px 16px rgba(47, 111, 106, 0.08);
+}
+.chapter-map img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 4px;
+}
+.chapter-map figcaption {
+  margin-top: 10px;
+  font-family: -apple-system, 'Segoe UI', sans-serif;
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
 /* ── CONNECTOR ── */
 .connector { display: flex; justify-content: center; padding: 36px 0; }
 .connector span { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); box-shadow: -20px 0 0 -2px var(--rule), 20px 0 0 -2px var(--rule); }
@@ -326,6 +356,28 @@ body {
 .relation-row { display: flex; gap: 10px; padding: 6px 0; font-size: 0.92rem; }
 .relation-label { font-family: -apple-system, 'Segoe UI', sans-serif; font-size: 0.68rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); min-width: 100px; flex-shrink: 0; padding-top: 2px; }
 .person-bio { text-align: justify; margin-bottom: 18px; }
+.person-recherche { text-align: left; margin: 28px 0 24px; border-top: 1px solid var(--rule); padding-top: 24px; font-size: 0.92rem; }
+.person-recherche h2 { font-size: 1.15rem; font-style: italic; font-weight: 400; text-align: center; margin-bottom: 6px; }
+.person-recherche .recherche-objectif { text-align: center; color: var(--ink-soft); font-size: 0.88rem; margin-bottom: 22px; }
+.recherche-section { margin-bottom: 20px; }
+.recherche-section h3 { font-family: -apple-system, 'Segoe UI', sans-serif; font-size: 0.68rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); margin-bottom: 8px; }
+.recherche-section p { margin-bottom: 0.6em; text-align: justify; }
+.recherche-list { margin: 0; padding-left: 1.2em; }
+.recherche-list li { margin-bottom: 0.35em; }
+.recherche-act { margin-bottom: 10px; padding: 8px 0 8px 12px; border-left: 3px solid var(--rule); }
+.recherche-act--p0 { border-left-color: var(--accent); }
+.recherche-act--found { border-left-color: #2d6a4f; }
+.recherche-status { font-family: -apple-system, 'Segoe UI', sans-serif; font-size: 0.62rem; letter-spacing: 0.06em; text-transform: uppercase; color: #2d6a4f; margin-right: 6px; }
+.recherche-acte-img { display: block; max-width: 100%; margin: 10px 0; border: 1px solid var(--rule); border-radius: 4px; }
+.recherche-act strong { display: block; font-style: italic; font-weight: 500; margin-bottom: 2px; }
+.recherche-act span { font-family: -apple-system, 'Segoe UI', sans-serif; font-size: 0.78rem; color: var(--ink-soft); }
+.recherche-priority { font-family: -apple-system, 'Segoe UI', sans-serif; font-size: 0.62rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--accent); margin-right: 6px; }
+.recherche-unknown li { color: var(--ink-soft); }
+.recherche-variants { font-family: 'Cormorant Garamond', Georgia, serif; font-style: italic; }
+.recherche-email { margin-top: 8px; }
+.recherche-email summary { cursor: pointer; font-family: -apple-system, 'Segoe UI', sans-serif; font-size: 0.82rem; color: var(--accent); margin-bottom: 6px; }
+.recherche-email pre { font-family: -apple-system, 'Segoe UI', sans-serif; font-size: 0.75rem; white-space: pre-wrap; background: var(--rule); padding: 12px 14px; border-radius: 4px; margin-top: 6px; line-height: 1.45; }
+.person-recherche a { color: var(--accent); }
 .person-back { font-family: -apple-system, 'Segoe UI', sans-serif; font-size: 0.85rem; color: var(--accent); text-decoration: none; }
 .person-back:hover { text-decoration: underline; }
 

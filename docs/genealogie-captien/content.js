@@ -1,5 +1,6 @@
 // Contenu du site — récit unifié chronologie + géographie (CAPTIEN / Kapgen).
-// Pour ajouter un chapitre, compléter CHAPTERS ; `app.js` se charge du rendu.
+// Pour ajouter un chapitre ou une carte (anecdote / histoire / lieu / carte SVG),
+// compléter CHAPTERS ; `app.js` se charge du rendu.
 
 const SITE_INTRO = {
   narrative: [
@@ -12,6 +13,7 @@ const SITE_INTRO = {
 const CHAPTERS = [
   {
     id: 'laudrefang',
+    map: 'carte-laudrefang.svg',
     years: 'avant 1583 – 1693',
     place: 'Laudrefang — pays de Nied, couloir franco-germanique',
     illustration: `<img src="illustration-laudrefang.png" alt="Laudrefang, village mosellan aux origines de la lignée">`,
@@ -42,12 +44,13 @@ const CHAPTERS = [
   },
   {
     id: 'bambiderstroff',
+    map: 'carte-bambiderstroff.svg',
     years: '1684 – 1727',
     place: 'Bambiderstroff — paroisse et frontière luxembourgeoise',
     illustration: `<img src="illustration-bambiderstroff.png" alt="Bambiderstroff, village mosellan au lever du soleil">`,
     narrative: [
       `Une génération, ça sert parfois juste à faire le pont. À relier deux rives qui, sans elle, resteraient chacune de leur côté, à jamais séparées. Ici, c'est ce qui se passe… entre la souche SCHNEIDER et ce qui va devenir la lignée CAPTIEN. Un pont d'une seule génération, pas plus, et qui tient bon quand même.`,
-      `On se déplace. Pas loin — une vingtaine de kilomètres à vol d'oiseau, une journée de charrette — mais assez pour changer de paroisse, de curé, de registre. Bambiderstroff, village du canton de Boulay, accueille <a class="person-link" href="personne.html#jean-schneider-1667">Jean (Haman) SCHNEIDER</a>, laboureur — né en 1667, on ne sait pas où au juste, mais mort le 13 décembre 1727 à Bambiderstroff, ça au moins c'est sûr — qui s'y marie le 28 novembre 1684 avec <a class="person-link" href="personne.html#marie-jungers">Marie JUNGERS</a>. Il a dix-sept ans. La terre, ici, c'est la frontière : le Luxembourg est à portée de cloche, la Sarre aussi, et les familles se marient entre voisins parce qu'on n'a ni le temps ni l'argent d'aller plus loin. (Étrangeté de l'histoire, tiens : Bambiderstroff n'est qu'à quelques kilomètres de Bidestroff, cet autre village mosellan où vivait, à la même époque, la lignée BILLIEUX. Deux familles qui se croisent sans le savoir, dans le même coin de Moselle, sans qu'un seul acte ne les rapproche encore. Il faudra attendre presque deux cent cinquante ans et cinq générations de plus, pour que Charles Marc BILLEUX et Chantal CAPTIEN se rencontrent enfin — du côté de Bar-le-Duc, dans les années 1960. Chantal, elle, quitte la Moselle ; Charles Marc, lui, revient d'Algérie — deux trajectoires inverses qui se croisent au même endroit, avant de repartir ensemble vers la Touraine. La géographie, parfois, prend son temps pour boucler ses propres boucles.)`,
+      `On se déplace. Pas loin — une vingtaine de kilomètres à vol d'oiseau, une journée de charrette — mais assez pour changer de paroisse, de curé, de registre. Bambiderstroff, village du canton de Boulay, accueille <a class="person-link" href="personne.html#jean-schneider-1667">Jean (Haman) SCHNEIDER</a>, laboureur — né en 1667, on ne sait pas où au juste, mais mort le 13 décembre 1727 à Bambiderstroff, ça au moins c'est sûr — qui s'y marie le 28 novembre 1684 avec <a class="person-link" href="personne.html#marie-jungers">Marie JUNGERS</a>. Il a dix-sept ans. La terre, ici, c'est la frontière : le Luxembourg est à portée de cloche, la Sarre aussi, et les familles se marient entre voisins parce qu'on n'a ni le temps ni l'argent d'aller plus loin. (Étrangeté de l'histoire, tiens : Bambiderstroff n'est qu'à quelques kilomètres de Bidestroff, cet autre village mosellan où vivait, à la même époque, la lignée BILLIEUX. Deux familles qui se croisent sans le savoir, dans le même coin de Moselle, sans qu'un seul acte ne les rapproche encore. Il faudra attendre presque deux cent cinquante ans et cinq générations de plus, pour que Charles Marc BILLEUX et Chantal CAPTIEN se rencontrent enfin — à Thionville, dans les années 1960, à quelques kilomètres à peine de Manom. Chantal est de Moselle ; Charles Marc, lui, revient d'Algérie — deux trajectoires bien différentes qui se croisent au même endroit, avant de repartir ensemble vers la Touraine. La géographie, parfois, prend son temps pour boucler ses propres boucles.)`,
       `C'est l'Europe de la reprise, après un siècle et demi de guerres. Pour Jean et Marie, tout ça c'est du bruit lointain. Eux, ils labourent. Marie s'éteindra le 7 septembre 1720 à Bambiderstroff. Sept ans avant son mari. C'est comme ça, dans ces vies-là… on ne sait jamais qui partira le premier, on fait des enfants sans savoir qui restera pour les élever.`,
       `Et de ce couple naît <a class="person-link" href="personne.html#angelique-schneider-1695">Angélique</a>, le 29 avril 1695 — la charnière. Elle épousera <a class="person-link" href="personne.html#nicolas-captien-1695">Nicolas KAPGEN</a> (Captien), né vers 1690–1695 (lieu inconnu) — la naissance de leur fils Christian en janvier 1718 à Mondorf fixe cette fourchette : un père d'environ vingt-trois à vingt-huit ans. Sur l'acte de mariage, le curé n'écrira pas « Captien » : il inscrira Kapgen — graphie d'époque, plus germanique, celle que la tradition familiale a conservée. Bambiderstroff, c'est le dernier village mosellan de la souche SCHNEIDER. Après Angélique, ce sera Mondorf. La frontière qu'on franchit, ce n'est pas celle des cartes — c'est celle d'un mariage, d'un acte, d'un prêtre qui inscrit deux noms côte à côte.`
     ],
@@ -70,19 +73,20 @@ const CHAPTERS = [
       {
         type: 'anecdote',
         title: 'Kapgen sur le registre',
-        text: `Quand Angélique SCHNEIDER épouse Nicolas, le curé de Bambiderstroff — ou celui de Mondorf, selon le lieu du mariage — inscrit Kapgen, pas Captien. C'est la graphie germanique du patronyme à cette époque ; Captien ne viendra qu'ensuite, latinisé puis modernisé par la descendance. Les actes de mariage et de baptême de Christian (1718) sont la priorité pour confirmer cette écriture dans les registres.`
+        text: `Quand le curé inscrit la lignée, il écrit Kapgen, pas Captien — graphie germanique confirmée sur l'acte de mariage de Christian le 22 juin 1743 à Mondorff (Nicolai Kapgen, christianus Kapgen). Captien ne viendra qu'ensuite, latinisé puis modernisé par la descendance. Le baptême de Christian (1718) reste à consulter pour la même graphie sur le registre de naissance.`
       }
     ]
   },
   {
     id: 'mondorf',
+    map: 'carte-mondorf.svg',
     years: '1718 – 1820',
     place: 'Mondorf-les-Bains — Luxembourg d\'Ancien Régime',
     illustration: `<img src="illustration-mondorf.png" alt="Mondorf-les-Bains, village luxembourgeois et sa source">`,
     narrative: [
       `Mondorf-les-Bains. Aujourd'hui station thermale, casinos, eaux minérales — à l'époque de <a class="person-link" href="personne.html#christian-captien-1718">Christian KAPGEN</a> (Captien), né le 19 janvier 1718, c'était un village agricole du canton de Remich, dans le Grevenmacher luxembourgeois. Sur son acte de baptême, le curé a sans doute écrit Kapgen ; c'est ensuite que la lignée CAPTIEN s'y fixe — et y reste. Un siècle, et davantage — quatre générations qui naissent, se marient, meurent au même endroit, sur les mêmes registres, sous la même cloche.`,
       `L'Europe, pendant ce siècle-là, change de peau trois fois. Ancien Régime… Révolution… Empire… Restauration. Le Luxembourg passe de l'Autriche des Habsbourg à la France révolutionnaire (1795), puis à l'Empire napoléonien, et redevient grand-duché en 1815. Pour Christian, <a class="person-link" href="personne.html#francois-captien-1748">François</a>, <a class="person-link" href="personne.html#elisabeth-captien-1790">Élisabeth</a>, tout ça se traduit par des registres qui changent de langue — latin, français, allemand — et par des curés qui inscrivent les naissances comme si rien n'avait bougé.`,
-      `Christian épouse <a class="person-link" href="personne.html#lucie-thomas">Lucie THOMAS</a> le 22 juin 1743. Lucie mourra la première, le 22 janvier 1772 ; lui la suivra le 2 février 1788, à soixante-dix ans passés. Leur fils François, né le jour de Noël 1748, devient maçon — bâtir des murs, des toits, des fours, c'est une géographie de la pierre, du mortier, de la main. On ne voyage pas ; on construit ce qui tient debout autour de soi. Il épouse <a class="person-link" href="personne.html#jeanne-wagner">Jeanne WAGNER</a> le 17 septembre 1785 et donnera quatre enfants, dont Élisabeth (1790).`,
+      `Christian épouse <a class="person-link" href="personne.html#lucie-thomas">Lucie THÖMES</a> le 22 juin 1743 — acte paroissial de Mondorff consulté : le curé Ph: Simon inscrit Kapgen, fils légitime de Nicolai Kapgen et d'Angelicæ Schneider, tous deux de Mondorff ; Lucie, fille légitime des défunts <a class="person-link" href="personne.html#henric-adam-thomes">Henric Adam Thömes</a> et <a class="person-link" href="personne.html#eva-klein">Eva Klein</a>, originaire de Dondorfferhoff. Marié et mariée signent par croix — scribendi ignari. Témoins : Peter Thomes d'Ellingen et Franciscus Bricher de Dondorfferhoff. Lucie mourra la première, le 22 janvier 1772 ; lui la suivra le 2 février 1788, à soixante-dix ans passés. Leur fils François, né le jour de Noël 1748, devient maçon — bâtir des murs, des toits, des fours, c'est une géographie de la pierre, du mortier, de la main. On ne voyage pas ; on construit ce qui tient debout autour de soi. Il épouse <a class="person-link" href="personne.html#jeanne-wagner">Jeanne WAGNER</a> le 17 septembre 1785 et donnera quatre enfants, dont Élisabeth (1790).`,
       `Jacques, le premier, mourra en 1811, à vingt-cinq ans à peine. François s'éteint le 16 janvier 1820 à Mondorf-les-Bains, sans jamais avoir quitté le canton. Cent ans de stabilité rare dans une Europe en mouvement perpétuel. Et puis <a class="person-link" href="personne.html#elisabeth-captien-1790">Élisabeth</a>, née à Mondorf, finira ses jours le 28 décembre 1862 à Manom — en Moselle, en France. La frontière qu'elle franchit, c'est celle d'une vie entière : du Luxembourg à la France, du village thermal au village de brique mosellan. On ne sait pas exactement quand ni pourquoi. On sait seulement qu'elle est morte là-bas, et que son fils <a class="person-link" href="personne.html#paul-captien-1821">Paul</a>, né à Mondorff en 1821, portera la suite en Moselle.`
     ],
     cards: [
@@ -101,10 +105,110 @@ const CHAPTERS = [
         title: 'Des métiers qui laissent des traces',
         text: `« Maçon », ça revient d'une génération à l'autre — Christian, François, plus tard Paul et Nicolas porteront tous ce même métier. Ce n'est pas rien, un métier qui se transmet ainsi, presque malgré soi : ça dit une manière de bâtir, de réparer, de tenir debout ce qui menace de tomber. Une famille de maçons… ça construit des maisons, et sans le savoir, ça construit aussi sa propre histoire, pierre après pierre.`
       }
-    ]
+    ],
+    archiveFiche: `
+<h2>Fiche archives — Mondorff / Mondorf</h2>
+<p class="recherche-objectif">Contexte démographique et paroissial de Mondorff (~1700–1720), lieu d'ancrage de la lignée KAPGEN/CAPTIEN — pour orienter la consultation des registres et des dénombrements.</p>
+
+<div class="recherche-section">
+  <h3>Contexte historique (~1700–1720)</h3>
+  <ul class="recherche-list">
+    <li><strong>Statut :</strong> village paroissial rural du canton de Remich, décanat de Remich, Luxembourg d'Ancien Régime (Provinces-Unies puis Autriche des Habsbourg)</li>
+    <li><strong>Toponymie :</strong> Momendorf, Mondorff, Mondorf, Mondorf-les-Bains — graphie <span class="recherche-variants">Mondorff</span> sur les actes paroissiaux consultés (latin du registre)</li>
+    <li><strong>Périmètre paroissial :</strong> paroisse incluant le bourg de Mondorf et les hameaux voisins — notamment <strong>Altwies</strong> et <strong>Ellange</strong> (Ellingen sur l'acte de 1743)</li>
+    <li><strong>Époque Kapgen :</strong> en 1718, date du baptême de <a class="person-link" href="personne.html#christian-captien-1718">Christian KAPGEN</a>, la paroisse de Mondorff est <strong>unifiée</strong> — le partage territorial de 1769 (traité) n'a pas encore scindé la paroisse entre Luxembourg et France</li>
+    <li><strong>Économie :</strong> agriculture, vigne, artisanat rural ; les sources thermales ne deviendront une attraction qu'au XIXe siècle</li>
+  </ul>
+</div>
+
+<div class="recherche-section">
+  <h3>Population — ce qu'on sait et ce qu'on ignore</h3>
+  <p><strong>Aucun chiffre exact</strong> de population pour Mondorff seul à la date ~1700–1720 n'a été trouvé dans les sources consultées. Il faut raisonner par ordre de grandeur et par proxies.</p>
+  <ul class="recherche-list">
+    <li><strong>Ordre de grandeur (1700–1720) :</strong> village paroissial rural — <strong>centaines d'habitants, pas de milliers</strong> — en reprise démographique après les guerres et raids du XVIIe siècle</li>
+    <li><strong>1701 — capitation (feux) :</strong> dénombrement fiscal aux Archives nationales du Luxembourg, série <strong>A-XIII</strong> — unité « feu » (foyer fiscal), pas tête par tête ; permet d'estimer l'ordre de grandeur des foyers du canton ou de la paroisse, pas une population exacte</li>
+    <li><strong>1766 — recensement :</strong> dénombrement du décanat de Remich consultable via <a href="https://www.familysearch.org" target="_blank" rel="noopener">FamilySearch</a> — repère intermédiaire, postérieur à l'époque Kapgen mais utile pour calibrer la croissance</li>
+    <li><strong>1796 — partie luxembourgeoise :</strong> environ <strong>414 habitants</strong> (commune de Mondorf-les-Bains côté grand-duché) — chiffre postérieur, à ne pas projeter sur 1718 sans prudence</li>
+    <li><strong>1821 :</strong> environ <strong>1 217 habitants</strong> pour l'ensemble paroissial ; le Mondorff français (Moselle) compte environ <strong>140 habitants</strong> — repères tardifs, après le partage de 1769 et la croissance du XIXe siècle</li>
+    <li><strong>luxroots — baptêmes 1678–1797 :</strong> environ <strong>3 605 baptêmes</strong> indexés pour la paroisse de Mondorf sur la période — volume paroissial global (Mondorf + hameaux), pas population instantanée ; utile pour mesurer l'activité démographique sur un siècle et demi</li>
+  </ul>
+  <p class="recherche-unknown">⚠ On n'invente pas de chiffre pour 1718 : les proxies ci-dessus servent uniquement à situer l'ordre de grandeur.</p>
+</div>
+
+<div class="recherche-section">
+  <h3>Paroisse et registres</h3>
+  <ul class="recherche-list">
+    <li><strong>Matricula — Mondorf KB-01</strong> · baptêmes, mariages, sépultures <strong>1678–1737</strong> · <a href="https://data.matricula-online.eu/fr/LU/luxemburg/mondorf/" target="_blank" rel="noopener">data.matricula-online.eu/fr/LU/luxemburg/mondorf/</a></li>
+    <li><strong>Matricula — Mondorf KB-02</strong> · baptêmes (Taufen) <strong>1700–1725</strong> — registre prioritaire pour le baptême de Christian (19.01.1718)</li>
+    <li><strong>Diözesanarchiv Luxembourg</strong> · archives.diocesaines@cathol.lu · reproductions certifiées si besoin</li>
+    <li><strong>FamilySearch</strong> · <a href="https://www.familysearch.org/en/search/collection/5000012" target="_blank" rel="noopener">Luxembourg, Church and Civil Registration, 1601–1923</a></li>
+    <li><strong>luxroots</strong> · <a href="https://www.luxroots.org" target="_blank" rel="noopener">luxroots.org</a> — transcriptions et index paroissiaux (baptêmes, mariages, décès)</li>
+    <li><strong>Curé connu :</strong> Ph: Simon, <em>pastor in mondorff</em> — officiant du mariage de Christian KAPGEN × Lucie THÖMES, 22 juin 1743 (acte consulté)</li>
+    <li><strong>Graphies patronymiques à chercher :</strong> Kapgen, Kapgien, Kaptien, Captien — confirmées Kapgen sur l'acte de 1743</li>
+  </ul>
+</div>
+
+<div class="recherche-section">
+  <h3>Dénombrements — repères chronologiques</h3>
+  <ul class="recherche-list">
+    <li><strong>1701</strong> — capitation, feux · ANLux série <strong>A-XIII</strong> · ordre de grandeur fiscal (foyers), pas recensement nominal complet</li>
+    <li><strong>1766</strong> — recensement · décanat de Remich · FamilySearch · repère démographique intermédiaire</li>
+    <li><strong>1796</strong> — ~414 hab. (partie luxembourgeoise) · repère post-partition</li>
+    <li><strong>1821</strong> — ~1 217 hab. (ensemble paroissial) ; ~140 hab. (Mondorff français) · repères tardifs, croissance XIXe</li>
+  </ul>
+</div>
+
+<div class="recherche-section">
+  <h3>Guerres du XVIIe et reprise démographique</h3>
+  <ul class="recherche-list">
+    <li><strong>1611</strong> — Ellange : seulement <strong>4 feux</strong> recensés — indice de dépopulation locale</li>
+    <li><strong>1656</strong> — passage des armées, devastation du pays de Remich</li>
+    <li><strong>1678</strong> — raid franco-suedois ; pillages dans la région</li>
+    <li><strong>1684</strong> — évacuation de populations devant les troupes françaises</li>
+    <li><strong>Conséquence :</strong> effondrement puis reprise lente — au tournant du XVIIIe siècle, les mariages precoces et l'immigration de familles voisines (Moselle, Sarre) repeuplent les paroisses frontalières ; c'est dans ce contexte que la lignée SCHNEIDER/KAPGEN arrive à Mondorff</li>
+  </ul>
+</div>
+
+<div class="recherche-section">
+  <h3>Lien avec la lignée KAPGEN / CAPTIEN</h3>
+  <ul class="recherche-list">
+    <li><strong>1718</strong> — baptême de <a class="person-link" href="personne.html#christian-captien-1718">Christian KAPGEN</a>, 19 janvier, Mondorf (MyHeritage, acte à confirmer sur KB-01/KB-02)</li>
+    <li><strong>~1690–1695</strong> — <a class="person-link" href="personne.html#nicolas-captien-1695">Nicolas KAPGEN</a> × <a class="person-link" href="personne.html#angelique-schneider-1695">Angélique SCHNEIDER</a> — union confirmée indirectement par l'acte de mariage du fils (1743) ; mariage propre et baptême de Christian restent à trouver dans les registres de Mondorff</li>
+    <li><strong>1743</strong> — mariage Christian × Lucie THÖMES, 22 juin — acte paroissial consulté (Ph: Simon) ; filiation Nicolas × Angélique confirmée</li>
+    <li><strong>1748–1820</strong> — quatre générations CAPTIEN à Mondorf : François (1748), Élisabeth (1790)… jusqu'au départ d'Élisabeth vers Manom (~1862) et la naissance de Paul à Mondorff (1821, côté français)</li>
+  </ul>
+  <p>Fiches personnes liées : <a class="person-link" href="personne.html#christian-captien-1718">Christian KAPGEN (1718)</a> · <a class="person-link" href="personne.html#nicolas-captien-1695">Nicolas KAPGEN (~1695)</a></p>
+</div>
+
+<div class="recherche-section">
+  <h3>Ordre de consultation des archives</h3>
+  <ol class="recherche-list">
+    <li><strong>Matricula KB-02</strong> → baptême Christian KAPGEN, 19.01.1718 (priorité P0)</li>
+    <li><strong>Matricula KB-01</strong> → mariages 1717–1735 (Heiraten) — mariage propre Nicolas × Angélique ; recoupement KB-02 si lacune</li>
+    <li><strong>luxroots</strong> → index baptêmes/mariages Mondorf — repérage rapide avant consultation image</li>
+    <li><strong>FamilySearch</strong> → même période, collection Luxembourg Church Records</li>
+    <li><strong>ANLux A-XIII</strong> → feux de capitation 1701 — contexte démographique fiscal</li>
+    <li><strong>Recensement 1766</strong> (décanat Remich, FamilySearch) — repère démographique intermédiaire</li>
+    <li>✓ Acte mariage Christian × Lucie THÖMES, 22.06.1743 Mondorff — consulté (filiation confirmée)</li>
+  </ol>
+</div>
+
+<div class="recherche-section">
+  <h3>Sources et liens</h3>
+  <ul class="recherche-list">
+    <li><a href="https://data.matricula-online.eu/fr/LU/luxemburg/mondorf/" target="_blank" rel="noopener">Matricula Online — Mondorf (KB-01, KB-02)</a></li>
+    <li><a href="https://www.familysearch.org/en/search/collection/5000012" target="_blank" rel="noopener">FamilySearch — Luxembourg Church and Civil Registration</a></li>
+    <li><a href="https://www.luxroots.org" target="_blank" rel="noopener">luxroots.org</a> — index paroissial Mondorf</li>
+    <li><a href="https://www.anlux.lu" target="_blank" rel="noopener">Archives nationales du Luxembourg (ANLux)</a> — série A-XIII (feux, capitation)</li>
+    <li>Acte paroissial Mondorff 22.06.1743 — mariage Christianus Kapgen × Lucia Thömes (consulté, site)</li>
+    <li>MyHeritage — dates de naissance/décès (à recouper systématiquement sur actes)</li>
+  </ul>
+</div>
+`
   },
   {
     id: 'manom-mondorff',
+    map: 'carte-manom.svg',
     years: '1821 – 1918',
     place: 'Manom / Mondorff — maçons en Moselle annexée',
     illustration: `<img src="illustration-manom-mondorff.png" alt="Manom, village mosellan au bord de la Moselle">`,
@@ -135,6 +239,7 @@ const CHAPTERS = [
   },
   {
     id: 'verdun-saint-avold',
+    map: 'carte-verdun-saint-avold.svg',
     years: '1885 – 1969',
     place: 'Verdun, Saint-Avold — guerre et reconstruction',
     illustration: `<img src="illustration-verdun-saint-avold.png" alt="Le Fort de Vaux, Verdun, après la bataille de 1916">`,
@@ -165,15 +270,20 @@ const CHAPTERS = [
   },
   {
     id: 'tours',
+    maps: ['carte-touraine.svg', 'carte-paris.svg'],
+    mapCaptions: [
+      'Touraine — Amboise, Tours, Luynes, Monts (1922–2013)',
+      'Paris · Île-de-France — branche Émilie (1919–2009)'
+    ],
     years: '1922 – 2013',
     place: 'De la Moselle à la Touraine',
     illustration: `<img src="illustration-tours.png" alt="Château de la Touraine, au bout du chemin">`,
     narrative: [
-      `La dernière migration. La plus lointaine de toute la lignée — près de cinq cents kilomètres à vol d'oiseau depuis Manom ou Saint-Avold, six cents par la route — et la plus décisive : quitter la Moselle pour la Touraine, le charbon pour la Loire, les rails lorrains pour les bureaux tourangeaux. Mais entre les deux, une étape : Bar-le-Duc.`,
+      `La dernière migration. La plus lointaine de toute la lignée — près de cinq cents kilomètres à vol d'oiseau depuis Manom ou Saint-Avold, six cents par la route — et la plus décisive : quitter la Moselle pour la Touraine, le charbon pour la Loire, les rails lorrains pour les bureaux tourangeaux. Mais avant de partir, une rencontre, tout près de Manom : Thionville.`,
       `Au XXe siècle, la chronique se rapproche de nous. On entend mieux les pas, presque le souffle. <a class="person-link" href="personne.html#francois-armand-captien-1922">François Armand CAPTIEN</a>, né le 10 décembre 1922 à Manom, aiguilleur à la SNCF puis cafetier — encore les rails, décidément, ça se transmet aussi bien qu'un nom. Il épouse <a class="person-link" href="personne.html#odile-alexandrine-pierre">Odile Alexandrine PIERRE</a>, tapissière, le 22 novembre 1945 à Manom — l'année d'après la guerre, quand tout le monde refait des enfants pour compenser ceux qu'on a perdus. Le couple divorcera en 1964, après dix-neuf ans et cinq enfants. Saint-Avold, Manom, les gares — la géographie du travail SNCF et, plus tard, du café.`,
       `Car il y eut cinq enfants. <a class="person-link" href="personne.html#chantal-captien-1946">Chantal</a>, l'aînée, née le 12 avril 1946 à Amboise — déjà un pied en Touraine, pendant que le père est encore ancré en Moselle. Jean Marie, mort à neuf ans en 1962. <a class="person-link" href="personne.html#michel-captien-1955">Michel</a>, né en 1955 à Manom, fera toute sa carrière dans la restauration — cuisinier, chef de brigade, puis maître d'hôtel, debout du matin au soir dans cette hiérarchie très codifiée héritée d'Escoffier.`,
       `Un jour de 1963, ou dans les mois qui suivent, François Armand gagne au quinté — un vrai coup, de ceux qui changent une vie. Il reste alors marié, sur le papier, à Odile — le divorce n'arrivera qu'en 1964 — mais il vit déjà, dans les faits, avec <a class="person-link" href="personne.html#anne-knobloch">Anne KNOBLOCH</a>, qui a elle-même quatre enfants d'une union antérieure. Avec cet argent tombé du quinté, il ouvre à Saint-Avold la Brasserie de la Moselle, un établissement sur trois étages : bar au rez-de-chaussée, PMU au premier, bowling tout en haut. Trois étages pour boire, parier, jouer aux quilles — une géographie du loisir et de la reconstruction, loin des tranchées de Verdun. Le nom, au moins, on le connaît maintenant : la Moselle, encore et toujours, jusque dans l'enseigne.`,
-      `Bar-le-Duc, Meuse. La sidérurgie. Témoignage familial : c'est là que <a class="person-link" href="personne.html#charles-marc-billeux">Charles Marc Billeux</a> et Chantal se rencontrent — une escale entre l'Est lorraine et la Touraine, à mi-chemin de la Moselle qu'elle quitte et d'Amboise où elle est née. L'acier d'abord ; le val de Loire ensuite. Chantal montera vers Tours, aide-comptable aux Établissements MEUNIER — un emploi discret, de ceux qu'on ne raconte pas dans les livres d'histoire. Mariée à Charles Marc en 1976 ; trois fils : Philippe Charles, Thierry Georges, Christophe Olivier.`,
+      `Thionville, Moselle, à quelques kilomètres de Manom. Témoignage familial : c'est là que <a class="person-link" href="personne.html#charles-marc-billeux">Charles Marc Billeux</a> et Chantal se rencontrent. Les deux premiers fils de Chantal, Philippe Charles (1965) et Thierry Georges (1969), y naîtront d'ailleurs, avant que la famille ne descende définitivement vers la Touraine. Chantal montera vers Tours, aide-comptable aux Établissements MEUNIER — un emploi discret, de ceux qu'on ne raconte pas dans les livres d'histoire. Mariée à Charles Marc en 1976 ; trois fils en tout : Philippe Charles, Thierry Georges, Christophe Olivier.`,
       `<a class="person-link" href="personne.html#emilie-captien-1919">Émilie</a>, tante de Chantal, trace un autre chemin le long de la Loire : longtemps parisienne, banquière, maison de campagne à Fréteval (Loir-et-Cher), puis chalet à Vendôme — de longues années entourée de ses chiens, avant de finir ses jours à Joué-lès-Tours en 2009. La famille se disperse, lentement, le long de la Loire et de ses affluents, bien avant que Chantal n'y installe toute sa lignée.`,
       `Chantal meurt le 25 octobre 2013, à Luynes, d'une tumeur au cerveau. Ses cendres reposent au jardin du souvenir de Monts. C'est là, entre la Moselle qu'on a quittée et la Touraine qu'on a choisie, que se referme ce récit — provisoirement, comme se referment toujours les chroniques de famille, qui ne sont jamais tout à fait terminées, seulement interrompues, en attendant qu'on les reprenne.`
     ],
@@ -185,13 +295,18 @@ const CHAPTERS = [
       },
       {
         type: 'lieu',
-        title: 'Amboise · Bar-le-Duc · Tours · Monts · Luynes',
-        text: `La Moselle reste l'aimant d'origine ; Bar-le-Duc (Meuse, sidérurgie) marque la rencontre de Charles Marc et Chantal ; la Touraine devient la terre d'adoption — Amboise, Tours, Monts, Luynes, axe de la Loire opposé à la Lorraine charbonnière. Géographie tourangelle — châteaux, vignes, industries légères — sans renier l'origine mosellane.`
+        title: 'Amboise · Thionville · Tours · Monts · Luynes',
+        text: `La Moselle reste l'aimant d'origine — c'est à Thionville, à deux pas de Manom, que Charles Marc et Chantal se rencontrent ; la Touraine devient ensuite la terre d'adoption — Amboise, Tours, Monts, Luynes, axe de la Loire opposé à la Lorraine charbonnière. Géographie tourangelle — châteaux, vignes, industries légères — sans renier l'origine mosellane.`
       },
       {
         type: 'anecdote',
         title: 'Le quinté et la Brasserie de la Moselle',
         text: `En 1963, ou dans les mois qui suivent : François Armand CAPTIEN gagne un quinté, un vrai, de ceux qui changent une vie. Avec cet argent tombé du ciel, il ouvre à Saint-Avold la Brasserie de la Moselle, un établissement sur trois niveaux — bar, PMU, bowling. Le nom du fleuve mosellan jusque sur l'enseigne, comme un dernier clin d'œil au pays d'origine, à quelques dizaines de kilomètres de là.`
+      },
+      {
+        type: 'anecdote',
+        title: 'Michel : « après ça, ça devient sérieux »',
+        text: `<a class="person-link" href="personne.html#michel-captien-1955">Michel</a> raconte lui-même ses débuts, avec ce sens du détail qui ne trompe pas : « Non, pas tout de suite : d'abord la boucherie, ça ne m'intéressait pas. Alors apprentissage au Terminus, à Saint-Avold, avec l'école d'apprentissage en plus du travail — mais malheureusement j'ai mis une beigne au prof, donc viré, et du coup le patron du Terminus m'a viré aussi. Apprentissage au Mirador, à Saint-Avold, puis Amboise au Duc de Choiseul, puis le buffet de la gare de Tours quand mes parents ont déménagé à Joué-lès-Tours. Et après ça, ça devient sérieux. » Une carrière qui commence par un coup de poing et finit chef de brigade — il fallait bien ça pour tenir debout dans les cuisines.`
       }
     ]
   }

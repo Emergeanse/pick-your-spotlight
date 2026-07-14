@@ -189,15 +189,172 @@ const PEOPLE = {
   },
 
   // === Bambiderstroff / Mondorf — souche KAPGEN → CAPTIEN ===
-  // Actes à intégrer (quand disponibles) : mariage Nicolas × Angélique ; baptême Christian 1718.
+  // Actes à intégrer (quand disponibles) : baptême Christian 1718 ; mariage propre Nicolas × Angélique.
+  // Acte consulté : mariage Christian × Lucie THÖMES 22.06.1743 Mondorff (filiation Nicolas × Angélique confirmée indirectement).
   'nicolas-captien-1695': {
     name: 'Nicolas KAPGEN (Captien)',
     dates: 'vers 1690–1695 — décédé (date inconnue)',
     chapterId: 'bambiderstroff',
     spouses: ['angelique-schneider-1695'],
     children: ['christian-captien-1718'],
-    bio: "Ancêtre direct (génération 9 au-dessus de Christian, 1718). Né vers 1690–1695 (lieu non renseigné) — la naissance de son fils Christian le 19 janvier 1718 à Mondorf implique un père d'environ 23–28 ans à cette date. Union avec Angélique SCHNEIDER (née le 29 avril 1695 à Bambiderstroff). Patronyme d'époque : KAPGEN — graphie que le curé aurait inscrite au mariage et sur l'acte de baptême de Christian ; Captien est la forme latine/modernisée adoptée ensuite par la descendance. Variantes à rechercher dans les archives (KAPGEN prioritaire) : Kapgen, Kapgien, Kaptien, Captien, Captié… — actes (mariage, baptême de Christian) à confirmer. Décédé (date inconnue). Source : MyHeritage (filiation) ; orthographe Kapgen : tradition familiale.",
-    source: 'MyHeritage · tradition familiale (Kapgen)'
+    bio: "Ancêtre direct (génération 9 au-dessus de Christian, 1718). Né vers 1690–1695 (lieu non renseigné) — la naissance de son fils Christian le 19 janvier 1718 à Mondorf implique un père d'environ 23–28 ans à cette date. Union avec Angélique SCHNEIDER (née le 29 avril 1695 à Bambiderstroff) — confirmée indirectement par l'acte de mariage de Christian le 22 juin 1743 à Mondorff, qui le nomme explicitement comme père (Nicolai Kapgen) aux côtés d'Angelicæ Schneider. Patronyme d'époque : KAPGEN — graphie confirmée sur l'acte de mariage de Christian (1743) ; Captien est la forme latine/modernisée adoptée ensuite par la descendance. Variantes à rechercher dans les archives : Kapgen, Kapgien, Kaptien, Captien, Captié… — acte de mariage propre (Nicolas × Angélique) et baptême de Christian restent à trouver. Parents de Nicolas : inconnus (non nommés sur l'acte de 1743). Décédé (date inconnue). Source : MyHeritage (filiation) ; acte paroissial Mondorff 22.06.1743 (filiation fils) ; tradition familiale (Kapgen).",
+    source: 'MyHeritage · acte paroissial Mondorff 22.06.1743 · tradition familiale (Kapgen)',
+    recherche: `
+<h2>Fiche de recherche</h2>
+<p class="recherche-objectif">Identifier et prouver Nicolas KAPGEN, époux d'Angélique SCHNEIDER, père de Christian (1718). Filiation confirmée indirectement par l'acte de mariage de Christian (22.06.1743 Mondorff) ; parents de Nicolas et mariage propre Nicolas × Angélique restent à trouver.</p>
+
+<div class="recherche-section">
+  <h3>Contexte paroissial — Mondorff</h3>
+  <p>Démographie, registres paroissiaux (Matricula KB-01/KB-02), dénombrements et guerres du XVIIe — voir la <a href="index.html#mondorf-archives">fiche archives Mondorff</a> (chapitre Mondorf).</p>
+</div>
+
+<div class="recherche-section">
+  <h3>Personne recherchée</h3>
+  <ul class="recherche-list">
+    <li><strong>Prénom :</strong> Nicolas (Nicolaus · Nickel · Nickels)</li>
+    <li><strong>Patronyme prioritaire :</strong> <span class="recherche-variants">KAPGEN</span></li>
+    <li><strong>Variantes :</strong> Kapgen, Kapgien, Kaptien, Captien, Captié</li>
+    <li><strong>Naissance estimée :</strong> vers 1690–1695 (fourchette déduite, non actée)</li>
+    <li><strong>Lieu de naissance :</strong> inconnu — Moselle nord-est (canton Boulay / Faulquemont) ou Luxembourg voisin (canton Remich)</li>
+    <li><strong>Décès :</strong> date et lieu inconnus</li>
+    <li><strong>Source filiation :</strong> MyHeritage · <strong>acte mariage fils 22.06.1743 Mondorff</strong> (Nicolai Kapgen nommé père) · graphie Kapgen confirmée sur cet acte</li>
+  </ul>
+</div>
+
+<div class="recherche-section">
+  <h3>Contexte familial</h3>
+  <ul class="recherche-list">
+    <li><strong>Épouse :</strong> <a class="person-link" href="personne.html#angelique-schneider-1695">Angélique SCHNEIDER</a> — née le 29 avril 1695 à Bambiderstroff (MyHeritage, baptême à confirmer)</li>
+    <li><strong>Fils :</strong> <a class="person-link" href="personne.html#christian-captien-1718">Christian KAPGEN (Captien)</a> — 19 janvier 1718, Mondorf-les-Bains (MyHeritage, baptême à confirmer)</li>
+    <li><strong>Mariage Nicolas × Angélique :</strong> date et lieu inconnus — <strong>union confirmée indirectement</strong> par l'acte de mariage de Christian (22 juin 1743, Mondorff) qui nomme Nicolai Kapgen et Angelicæ Schneider comme parents du marié</li>
+    <li><strong>Beaux-parents :</strong> <a class="person-link" href="personne.html#jean-schneider-1667">Jean (Haman) SCHNEIDER</a> (1667 – † 13 déc. 1727, Bambiderstroff) × <a class="person-link" href="personne.html#marie-jungers">Marie JUNGERS</a> (m. 28 nov. 1684 — † 7 sept. 1720, Bambiderstroff)</li>
+    <li><strong>Parents de Nicolas :</strong> inconnus — non nommés sur l'acte de mariage de Christian (1743)</li>
+  </ul>
+  <p>Bambiderstroff = dernier village mosellan de la souche SCHNEIDER ; après Angélique, la lignée KAPGEN/CAPTIEN se fixe à Mondorf.</p>
+</div>
+
+<div class="recherche-section">
+  <h3>Fenêtres chronologiques</h3>
+  <ul class="recherche-list">
+    <li><strong>Baptême Nicolas :</strong> 1690–1697 — père de 23–28 ans au baptême de Christian (1718)</li>
+    <li><strong>Mariage Nicolas × Angélique :</strong> 1705–1718 — Angélique née 1695 ; Christian né janv. 1718</li>
+    <li><strong>Baptême Christian :</strong> 19 janvier 1718 (MyHeritage) — borne haute du mariage</li>
+    <li><strong>Baptême Angélique :</strong> 29 avril 1695 (MyHeritage) — ancrage côté SCHNEIDER</li>
+  </ul>
+</div>
+
+<div class="recherche-section">
+  <h3>Registres et sources</h3>
+  <ul class="recherche-list">
+    <li><strong>AD57 — Bambiderstroff</strong> · cote <strong>9NUM/47ED/GG2</strong> (BMS 1657–1779) · <a href="https://archives57.com" target="_blank" rel="noopener">archives57.com</a> · archives@moselle.fr</li>
+    <li><strong>Matricula — Mondorf</strong> · <strong>KB-01</strong> (BMS 1678–1737) · <strong>KB-02</strong> (Taufen 1700–1725) · <a href="https://data.matricula-online.eu/fr/LU/luxemburg/mondorf/" target="_blank" rel="noopener">data.matricula-online.eu</a> · archives.diocesaines@cathol.lu</li>
+    <li><strong>FamilySearch</strong> · <a href="https://www.familysearch.org/en/search/collection/5000012" target="_blank" rel="noopener">Luxembourg, Church and Civil Registration, 1601–1923</a></li>
+    <li><strong>Paroisses voisines (baptême Nicolas) :</strong> Bambiderstroff, Mondorf, Bidestroff, Bistroff, Freistroff, Boulay, Faulquemont, Teting-sur-Nied, Folschweiler, Dalheim (LU), Remich (LU), Altwies (LU)</li>
+  </ul>
+</div>
+
+<div class="recherche-section">
+  <h3>Actes prioritaires</h3>
+  <div class="recherche-act recherche-act--found">
+    <span class="recherche-status">Confirmé (indirect)</span><strong>Filiation Nicolas × Angélique — père de Christian</strong>
+    <span>22 juin 1743 · Mondorff · acte mariage fils consulté — Nicolai Kapgen et Angelicæ Schneider nommés parents du marié ; graphie Kapgen confirmée. <strong>L'acte ne nomme pas les parents de Nicolas lui-même.</strong></span>
+  </div>
+  <div class="recherche-act recherche-act--p0">
+    <span class="recherche-priority">P0</span><strong>Baptême Christian KAPGEN</strong>
+    <span>19 janv. 1718 · Mondorf · Matricula KB-01 — nom exact du père, filiation, graphie Kapgen</span>
+  </div>
+  <div class="recherche-act recherche-act--p0">
+    <span class="recherche-priority">P0</span><strong>Mariage Nicolas KAPGEN × Angélique SCHNEIDER</strong>
+    <span>1705–1717 (estimé) · Bambiderstroff 9NUM/47ED/GG2 ou Mondorf KB-01 (Heiraten 1717–1735) — acte propre à trouver (union confirmée indirectement par acte fils 1743)</span>
+  </div>
+  <div class="recherche-act">
+    <span class="recherche-priority">P1</span><strong>Baptême Angélique SCHNEIDER</strong>
+    <span>29 avr. 1695 · Bambiderstroff 9NUM/47ED/GG2 — confirmer filiation Jean × Marie</span>
+  </div>
+  <div class="recherche-act">
+    <span class="recherche-priority">P1</span><strong>Mariage Jean SCHNEIDER × Marie JUNGERS</strong>
+    <span>28 nov. 1684 · Bambiderstroff 9NUM/47ED/GG2 — confirmer lignée maternelle</span>
+  </div>
+  <div class="recherche-act">
+    <span class="recherche-priority">P1</span><strong>Baptême Nicolas KAPGEN</strong>
+    <span>1690–1697 · paroisses Moselle nord-est et Luxembourg voisin — parents, lieu d'origine</span>
+  </div>
+  <div class="recherche-act">
+    <span class="recherche-priority">P2</span><strong>Sépultures</strong>
+    <span>Nicolas (date ?) · Marie JUNGERS (7 sept. 1720) · Jean SCHNEIDER (13 déc. 1727) — contexte familial</span>
+  </div>
+</div>
+
+<div class="recherche-section">
+  <h3>Critères d'identification</h3>
+  <p>Un acte correspond au bon Nicolas si <strong>au moins 3</strong> critères concordent : patronyme Kapgen (confirmé sur acte fils 1743) · épouse Angélique SCHNEIDER (confirmée sur acte fils 1743) · fils Christian baptisé janvier 1718 à Mondorf · chronologie cohérente (né ≈1690–1695, marié ≈1708–1717, père en 1718) · géographie Moselle nord-est ou Mondorf/Remich.</p>
+</div>
+
+<div class="recherche-section">
+  <h3>Inconnus</h3>
+  <ul class="recherche-list recherche-unknown">
+    <li>Lieu et date exacts de naissance/baptême de Nicolas</li>
+    <li>Date et lieu du mariage propre Nicolas × Angélique (union confirmée indirectement par l'acte de 1743)</li>
+    <li>Parents, métier et domicile de Nicolas avant mariage</li>
+    <li>Date et lieu de décès de Nicolas et d'Angélique</li>
+  </ul>
+</div>
+
+<div class="recherche-section">
+  <h3>Ordre de travail recommandé</h3>
+  <ol class="recherche-list">
+    <li>Matricula Mondorf KB-01 → baptême Christian 19.01.1718</li>
+    <li>Même registre KB-01 → mariages 1717–1735 (+ KB-02 si besoin) — mariage propre Nicolas × Angélique</li>
+    <li>AD57 Bambiderstroff 9NUM/47ED/GG2 → baptême Angélique 29.04.1695 + mariages 1705–1717</li>
+    <li>Balayage paroissial → baptême Nicolas 1690–1697 (parents)</li>
+    <li>✓ Recoupement filiation Christian — acte mariage 22.06.1743 Mondorff consulté (Nicolai Kapgen × Angelicæ Schneider confirmés comme parents)</li>
+  </ol>
+</div>
+
+<div class="recherche-section">
+  <h3>Modèles email</h3>
+  <details class="recherche-email">
+    <summary>AD57 — Bambiderstroff (9NUM/47ED/GG2)</summary>
+    <pre>Objet : Recherche actes paroissiaux — Bambiderstroff (9NUM/47ED/GG2) — KAPGEN/SCHNEIDER ~1695–1720
+
+Madame, Monsieur,
+
+Je recherche les actes paroissiaux suivants dans les registres de Bambiderstroff
+(cote 9NUM/47ED/GG2, baptêmes/mariages/sépultures 1657–1779) :
+
+1. Baptême d'Angélique SCHNEIDER, 29 avril 1695 — fille de Jean SCHNEIDER
+   (ou Jean Haman/Hans) et Marie JUNGERS
+2. Mariage de Nicolas KAPGEN (variantes : Kapgen, Kaptien, Captien)
+   et Angélique SCHNEIDER — période estimée 1705–1717
+3. Mariage de Jean SCHNEIDER et Marie JUNGERS, 28 novembre 1684 (contrôle)
+
+Pourriez-vous m'indiquer si ces actes sont consultables en ligne sur archives57.com
+ou m'adresser des copies/extraits le cas échéant ?
+
+Je vous remercie par avance.
+[Votre nom — adresse]</pre>
+  </details>
+  <details class="recherche-email">
+    <summary>Diözesanarchiv Luxembourg — Mondorf KB-01</summary>
+    <pre>Objet : Extrait registre paroissial Mondorf KB-01 — baptême 19.01.1718 KAPGEN
+
+Madame, Monsieur,
+
+Je recherche dans les registres paroissiaux de Mondorf (Matricula KB-01, 1678–1737) :
+
+1. Baptême de Christian KAPGEN (ou Kapgen/Kaptien), 19 janvier 1718 —
+   fils de Nicolas KAPGEN et Angélique SCHNEIDER
+2. Mariage de Nicolas KAPGEN et Angélique SCHNEIDER, période 1705–1717
+   (registre KB-01, section Heiraten 1717–1735)
+
+Les registres sont-ils intégralement en ligne sur Matricula,
+ou puis-je commander un extrait certifié via votre formulaire de reproduction ?
+
+Cordialement,
+[Votre nom — adresse]</pre>
+  </details>
+</div>
+`
   },
   'angelique-schneider-1695': {
     name: 'Angélique SCHNEIDER (CAPTIEN)',
@@ -206,8 +363,8 @@ const PEOPLE = {
     parents: ['jean-schneider-1667', 'marie-jungers'],
     spouses: ['nicolas-captien-1695'],
     children: ['christian-captien-1718'],
-    bio: "Ancêtre directe. Née le 29 avril 1695 à Bambiderstroff (Moselle). Fille de Jean (Haman) SCHNEIDER (1667–1727), laboureur à Bambiderstroff, et de Marie JUNGERS († 1720). Union avec Nicolas KAPGEN (Captien) (vers 1690–1695) — sur l'acte de mariage, le patronyme du marié est vraisemblablement Kapgen. Mère de Christian (1718). Source : MyHeritage.",
-    source: 'MyHeritage'
+    bio: "Ancêtre directe. Née le 29 avril 1695 à Bambiderstroff (Moselle). Fille de Jean (Haman) SCHNEIDER (1667–1727), laboureur à Bambiderstroff, et de Marie JUNGERS († 1720). Union avec Nicolas KAPGEN (Captien) (vers 1690–1695) — confirmée indirectement par l'acte de mariage de leur fils Christian le 22 juin 1743 à Mondorff, qui la nomme explicitement comme mère (Angelicæ Schneider). Sur l'acte, le patronyme du marié est Kapgen. Mère de Christian (1718). Source : MyHeritage ; acte paroissial Mondorff 22.06.1743.",
+    source: 'MyHeritage · acte paroissial Mondorff 22.06.1743',
   },
   'georges-schneider-1583': {
     name: 'Georges SCHNEIDER',
@@ -216,7 +373,171 @@ const PEOPLE = {
     spouses: ['christine-nn-schneider'],
     children: ['valentin-schneider-1603', 'quirin-virich-schneider-1615'],
     bio: "Ancêtre direct (génération 12 au-dessus de Valentin SCHNEIDER, vers 1603). Né avant 1583. Marié vers 1600 à Christine (nom de jeune fille inconnu). Père de Valentin SCHNEIDER (vers 1603, Laudrefang) et de Quirin Virich SCHNEIDER (vers 1615). Source : MyHeritage.",
-    source: 'MyHeritage'
+    source: 'MyHeritage',
+    recherche: `
+<h2>Fiche de recherche</h2>
+<p class="recherche-objectif">Documenter Georges SCHNEIDER et Christine (NN) par actes paroissiaux à Laudrefang ; remonter au-delà de Georges si les registres le permettent.</p>
+
+<div class="recherche-section">
+  <h3>Personne recherchée</h3>
+  <ul class="recherche-list">
+    <li><strong>Prénom :</strong> Georges (Georg · Jörg · Jürgen)</li>
+    <li><strong>Patronyme prioritaire :</strong> <span class="recherche-variants">SCHNEIDER</span></li>
+    <li><strong>Variantes :</strong> Schneider, Schneyder, Schneiders, Schneiter</li>
+    <li><strong>Naissance estimée :</strong> avant 1583 (fourchette déduite, non actée)</li>
+    <li><strong>Lieu de naissance :</strong> inconnu — pays de Nied, canton Bouzonville / Faulquemont (Moselle)</li>
+    <li><strong>Mariage :</strong> vers 1600 avec <a class="person-link" href="personne.html#christine-nn-schneider">Christine (NN)</a> — date et lieu à confirmer</li>
+    <li><strong>Décès :</strong> date et lieu inconnus</li>
+    <li><strong>Source filiation :</strong> MyHeritage (à confirmer)</li>
+  </ul>
+</div>
+
+<div class="recherche-section">
+  <h3>Contexte familial</h3>
+  <ul class="recherche-list">
+    <li><strong>Épouse :</strong> <a class="person-link" href="personne.html#christine-nn-schneider">Christine (NN) SCHNEIDER</a> — nom de jeune fille inconnu (MyHeritage, mariage vers 1600 à confirmer)</li>
+    <li><strong>Fils :</strong> <a class="person-link" href="personne.html#valentin-schneider-1603">Valentin SCHNEIDER</a> — vers 1603, Laudrefang (MyHeritage, baptême à confirmer) · † 27 août 1693, Laudrefang (MyHeritage, sépulture à confirmer)</li>
+    <li><strong>Fils :</strong> <a class="person-link" href="personne.html#quirin-virich-schneider-1615">Quirin Virich SCHNEIDER</a> — vers 1615 (MyHeritage, baptême à confirmer)</li>
+    <li><strong>Petit-fils (lignée directe) :</strong> <a class="person-link" href="personne.html#jean-schneider-1667">Jean (Haman) SCHNEIDER</a> — 1667 – † 13 déc. 1727, Bambiderstroff (MyHeritage, actes à confirmer)</li>
+    <li><strong>Arrière-petite-fille (lignée directe) :</strong> <a class="person-link" href="personne.html#angelique-schneider-1695">Angélique SCHNEIDER</a> — 29 avril 1695, Bambiderstroff (MyHeritage, baptême à confirmer)</li>
+    <li><strong>Parents de Georges :</strong> inconnus</li>
+  </ul>
+  <p>Laudrefang = village d'origine de la souche SCHNEIDER ; la lignée se déplace vers Bambiderstroff avec Jean (Haman), puis vers Mondorf via Angélique × Nicolas KAPGEN.</p>
+</div>
+
+<div class="recherche-section">
+  <h3>Fenêtres chronologiques</h3>
+  <ul class="recherche-list">
+    <li><strong>Baptême Georges :</strong> avant 1583 — père d'environ 20–25 ans à la naissance de Valentin (≈1603)</li>
+    <li><strong>Mariage Georges × Christine :</strong> 1595–1605 — Valentin ≈1603, Quirin Virich ≈1615</li>
+    <li><strong>Baptême Valentin :</strong> 1600–1608 (MyHeritage : vers 1603) — ancrage principal de la filiation</li>
+    <li><strong>Baptême Quirin Virich :</strong> 1610–1620 (MyHeritage : vers 1615) — contrôle fratrie</li>
+    <li><strong>Baptême Jean (Haman) :</strong> ≈1667 — filiation Valentin × conjointe inconnue (MyHeritage)</li>
+    <li><strong>Sépulture Valentin :</strong> 27 août 1693 (MyHeritage) — contexte familial tardif</li>
+  </ul>
+</div>
+
+<div class="recherche-section">
+  <h3>Registres et sources</h3>
+  <ul class="recherche-list">
+    <li><strong>AD57 — Laudrefang</strong> · registres paroissiaux (cote à identifier sur <a href="https://archives57.com" target="_blank" rel="noopener">archives57.com</a>) · archives@moselle.fr · Laudrefang relevait peut-être de la paroisse mère de <strong>Tritteling</strong> — vérifier les deux communes</li>
+    <li><strong>AD57 — Bambiderstroff</strong> · cote <strong>9NUM/47ED/GG2</strong> (BMS 1657–1779) — pour la descendance Jean / Angélique</li>
+    <li><strong>Catalogue microfilms AD57</strong> · 4oG1124/1 (registres paroissiaux antérieurs à 1792, Moselle) — disponible en salle de lecture Saint-Julien-lès-Metz</li>
+    <li><strong>FamilySearch</strong> · <a href="https://www.familysearch.org/en/search/catalog/results?place=Laudrefang" target="_blank" rel="noopener">Catalogue — Laudrefang (Moselle)</a> · microfilms paroissiaux Moselle / Lorraine</li>
+    <li><strong>Paroisses voisines (baptême Georges, parents) :</strong> Laudrefang, Tritteling, Bouzonville, Faulquemont, Creutzwald, Stiring-Wendel, Morsbach, Gros-Réderching, Diffembach-lès-Hellimer, Bambiderstroff</li>
+  </ul>
+  <p>Laudrefang était en duché de Lorraine (annexion française 1766) : les registres antérieurs au XVIIe peuvent être lacunaires, en latin ou en allemand, et parfois centralisés au niveau paroissial (Tritteling).</p>
+</div>
+
+<div class="recherche-section">
+  <h3>Actes prioritaires</h3>
+  <div class="recherche-act recherche-act--p0">
+    <span class="recherche-priority">P0</span><strong>Baptême Valentin SCHNEIDER</strong>
+    <span>≈1603 · Laudrefang (ou Tritteling) — filiation Georges × Christine, graphie patronyme</span>
+  </div>
+  <div class="recherche-act recherche-act--p0">
+    <span class="recherche-priority">P0</span><strong>Mariage Georges SCHNEIDER × Christine (NN)</strong>
+    <span>1595–1605 (estimé) · Laudrefang / Tritteling — parents des époux, domicile, témoins</span>
+  </div>
+  <div class="recherche-act">
+    <span class="recherche-priority">P1</span><strong>Baptême Quirin Virich SCHNEIDER</strong>
+    <span>≈1615 · Laudrefang — confirmer même filiation Georges × Christine</span>
+  </div>
+  <div class="recherche-act">
+    <span class="recherche-priority">P1</span><strong>Baptême Jean (Haman) SCHNEIDER</strong>
+    <span>≈1667 · Laudrefang ou Bambiderstroff — filiation Valentin × conjointe inconnue</span>
+  </div>
+  <div class="recherche-act">
+    <span class="recherche-priority">P1</span><strong>Sépulture Valentin SCHNEIDER</strong>
+    <span>27 août 1693 · Laudrefang — âge, veuvage, héritiers éventuels</span>
+  </div>
+  <div class="recherche-act">
+    <span class="recherche-priority">P2</span><strong>Baptême Georges SCHNEIDER</strong>
+    <span>avant 1583 · paroisses du pays de Nied — parents, remontée au-delà de Georges</span>
+  </div>
+  <div class="recherche-act">
+    <span class="recherche-priority">P2</span><strong>Sépultures Georges / Christine</strong>
+    <span>dates inconnues · Laudrefang — contexte familial</span>
+  </div>
+</div>
+
+<div class="recherche-section">
+  <h3>Critères d'identification</h3>
+  <p>Un acte correspond au bon Georges si <strong>au moins 3</strong> critères concordent : patronyme Schneider (ou variante) · épouse Christine · fils Valentin (≈1603, Laudrefang) et/ou Quirin Virich (≈1615) · chronologie cohérente (né avant 1583, marié ≈1600, père de Valentin ≈1603) · géographie pays de Nied / canton Bouzonville.</p>
+</div>
+
+<div class="recherche-section">
+  <h3>Inconnus</h3>
+  <ul class="recherche-list recherche-unknown">
+    <li>Date et lieu exacts de naissance/baptême de Georges</li>
+    <li>Date et lieu du mariage Georges × Christine ; nom de jeune fille de Christine</li>
+    <li>Parents, métier et domicile de Georges et Christine</li>
+    <li>Date et lieu de décès de Georges et Christine</li>
+    <li>Identité de la conjointe de Valentin (placeholder « Xx SCHNEIDER »)</li>
+    <li>Filiation Valentin → Jean (Haman) — entièrement MyHeritage, non vérifiée sur acte</li>
+    <li>Cote exacte des registres paroissiaux Laudrefang aux AD57</li>
+  </ul>
+</div>
+
+<div class="recherche-section">
+  <h3>Ordre de travail recommandé</h3>
+  <ol class="recherche-list">
+    <li>archives57.com → repérer cote Laudrefang et/ou Tritteling (BMS XVIe–XVIIe)</li>
+    <li>Baptême Valentin ≈1603 → filiation Georges × Christine (P0)</li>
+    <li>Mariage Georges × Christine 1595–1605 (P0)</li>
+    <li>Baptême Quirin Virich ≈1615 → contrôle fratrie (P1)</li>
+    <li>Baptême Jean (Haman) ≈1667 + sépulture Valentin 27.08.1693 (P1)</li>
+    <li>AD57 Bambiderstroff 9NUM/47ED/GG2 → descendance Jean / Angélique (recoupement)</li>
+    <li>Balayage paroissial → baptême Georges avant 1583, parents (P2)</li>
+  </ol>
+</div>
+
+<div class="recherche-section">
+  <h3>Modèles email</h3>
+  <details class="recherche-email">
+    <summary>AD57 — Laudrefang / Tritteling (registres paroissiaux)</summary>
+    <pre>Objet : Recherche actes paroissiaux — Laudrefang / Tritteling — SCHNEIDER ~1580–1620
+
+Madame, Monsieur,
+
+Je recherche les actes paroissiaux suivants pour la commune de Laudrefang
+(57385, canton de Bouzonville), ou le cas échéant la paroisse mère de Tritteling,
+pour la période fin XVIe — début XVIIe siècle :
+
+1. Baptême de Valentin SCHNEIDER (variantes : Schneyder, Schneiders),
+   vers 1603 — fils de Georges SCHNEIDER et Christine
+2. Mariage de Georges SCHNEIDER et Christine — période estimée 1595–1605
+3. Baptême de Quirin Virich SCHNEIDER, vers 1615 — fils des mêmes parents
+4. Baptême de Georges SCHNEIDER, avant 1583 — remontée généalogique
+
+Pourriez-vous m'indiquer la cote des registres concernés (Laudrefang ou Tritteling),
+s'ils sont consultables en ligne sur archives57.com, ou m'adresser des copies/extraits ?
+
+Je vous remercie par avance.
+[Votre nom — adresse]</pre>
+  </details>
+  <details class="recherche-email">
+    <summary>AD57 — Bambiderstroff (9NUM/47ED/GG2) — descendance</summary>
+    <pre>Objet : Recherche actes paroissiaux — Bambiderstroff (9NUM/47ED/GG2) — SCHNEIDER ~1667–1695
+
+Madame, Monsieur,
+
+Je recherche dans les registres de Bambiderstroff (cote 9NUM/47ED/GG2,
+baptêmes/mariages/sépultures 1657–1779) les actes suivants pour recouper
+la descendance de la souche SCHNEIDER de Laudrefang :
+
+1. Baptême de Jean SCHNEIDER (ou Jean Haman/Hans), vers 1667 —
+   fils de Valentin SCHNEIDER
+2. Mariage de Jean SCHNEIDER et Marie JUNGERS, 28 novembre 1684 (contrôle)
+3. Baptême d'Angélique SCHNEIDER, 29 avril 1695 — fille de Jean et Marie JUNGERS
+
+Les actes sont-ils intégralement consultables en ligne sur archives57.com ?
+
+Cordialement,
+[Votre nom — adresse]</pre>
+  </details>
+</div>
+`
   },
   'christine-nn-schneider': {
     name: 'Christine (NN) SCHNEIDER',
@@ -280,17 +601,195 @@ const PEOPLE = {
     parents: ['nicolas-captien-1695', 'angelique-schneider-1695'],
     spouses: ['lucie-thomas'],
     children: ['francois-captien-1748'],
-    bio: "Ancêtre direct (génération 8 au-dessus de François CAPTIEN, 1748). Né le 19 janvier 1718 à Mondorf-les-Bains (Luxembourg) — à son baptême, le registre paroissial porte vraisemblablement Kapgen ; la lignée stabilise ensuite Captien. Décédé le 2 février 1788 à Mondorf-les-Bains (Luxembourg). Marié le 22 juin 1743 à Mondorf-les-Bains à Lucie THOMAS. Source : MyHeritage.",
-    source: 'MyHeritage'
+    bio: "Ancêtre direct (génération 8 au-dessus de François CAPTIEN, 1748). Né le 19 janvier 1718 à Mondorf-les-Bains (Luxembourg) — graphie Kapgen confirmée sur l'acte de mariage du 22 juin 1743 ; la lignée stabilise ensuite Captien. Filiation confirmée par le même acte : fils légitime de Nicolai Kapgen et d'Angelicæ Schneider, de Mondorff. Décédé le 2 février 1788 à Mondorf-les-Bains (Luxembourg). Marié le 22 juin 1743 à Mondorff à Lucie THÖMES (acte paroissial consulté). Source : MyHeritage ; acte paroissial Mondorff 22.06.1743.",
+    source: 'MyHeritage · acte paroissial Mondorff 22.06.1743',
+    recherche: `
+<h2>Fiche de recherche</h2>
+<p class="recherche-objectif">Confirmer le baptême du 19 janvier 1718 à Mondorf ; filiation Nicolas × Angélique confirmée par l'acte de mariage de 1743 ; graphie Kapgen ancrée sur cet acte.</p>
+
+<div class="recherche-section">
+  <h3>Contexte paroissial — Mondorff</h3>
+  <p>Population (~1700–1720), paroisse unifiée, registres Matricula, dénombrements et reprise démographique après les guerres du XVIIe — voir la <a href="index.html#mondorf-archives">fiche archives Mondorff</a> (chapitre Mondorf).</p>
+</div>
+
+<div class="recherche-section">
+  <h3>Personne recherchée</h3>
+  <ul class="recherche-list">
+    <li><strong>Prénom :</strong> Christian (Christianus · Christophorus · Christoffel)</li>
+    <li><strong>Patronyme prioritaire :</strong> <span class="recherche-variants">KAPGEN</span> — confirmé sur l'acte de mariage 1743</li>
+    <li><strong>Variantes :</strong> Kapgen, Kapgien, Kaptien, Captien, Captié</li>
+    <li><strong>Naissance / baptême :</strong> 19 janvier 1718, Mondorf-les-Bains (MyHeritage, à confirmer)</li>
+    <li><strong>Décès :</strong> 2 février 1788, Mondorf-les-Bains (MyHeritage, sépulture à confirmer)</li>
+    <li><strong>Source filiation :</strong> <strong>acte mariage 22.06.1743 Mondorff</strong> (Nicolai Kapgen × Angelicæ Schneider) · MyHeritage</li>
+  </ul>
+</div>
+
+<div class="recherche-section">
+  <h3>Contexte familial</h3>
+  <ul class="recherche-list">
+    <li><strong>Père :</strong> <a class="person-link" href="personne.html#nicolas-captien-1695">Nicolas KAPGEN (Captien)</a> — confirmé sur l'acte de mariage 1743 (Nicolai Kapgen, de Mondorff)</li>
+    <li><strong>Mère :</strong> <a class="person-link" href="personne.html#angelique-schneider-1695">Angélique SCHNEIDER</a> — confirmée sur l'acte de mariage 1743 (Angelicæ Schneider) · née le 29 avril 1695 à Bambiderstroff (MyHeritage, baptême à confirmer)</li>
+    <li><strong>Épouse :</strong> <a class="person-link" href="personne.html#lucie-thomas">Lucie THÖMES</a> — mariage le 22 juin 1743 à Mondorff (<strong>acte consulté</strong>) · † 22 janvier 1772, Mondorf-les-Bains (MyHeritage, à confirmer)</li>
+    <li><strong>Fils :</strong> <a class="person-link" href="personne.html#francois-captien-1748">François CAPTIEN</a> — 25 décembre 1748, Mondorf-les-Bains (MyHeritage, baptême à confirmer)</li>
+    <li><strong>Beaux-parents (côté SCHNEIDER) :</strong> <a class="person-link" href="personne.html#jean-schneider-1667">Jean (Haman) SCHNEIDER</a> × <a class="person-link" href="personne.html#marie-jungers">Marie JUNGERS</a></li>
+    <li><strong>Beaux-parents (côté THÖMES) :</strong> <a class="person-link" href="personne.html#henric-adam-thomes">Henric Adam THÖMES</a> († avant 1743) × <a class="person-link" href="personne.html#eva-klein">Eva KLEIN</a> († avant 1743) — de Dondorfferhoff</li>
+  </ul>
+  <p>Mondorff = lieu d'ancrage de la lignée KAPGEN/CAPTIEN ; l'acte de mariage de 1743 est le premier acte paroissial consulté pour cette branche.</p>
+</div>
+
+<div class="recherche-section">
+  <h3>Acte consulté — mariage 22 juin 1743</h3>
+  <img class="recherche-acte-img" src="acte-mariage-christian-kapgen-1743.png" alt="Acte paroissial — mariage Christianus Kapgen × Lucia Thömes, 22 juin 1743, Mondorff">
+  <details class="recherche-email">
+    <summary>Transcription (latin du registre)</summary>
+    <pre>vigesima secunda Junii 1743 post sacrum servatis servandis matrimonium inierunt
+christianus Kapgen, filius legitimus Nicolai Kapgen et angelicæ schneider,
+ex mondorff, et lucia thomes, filia legitima henrici adami thomes et evæ klein,
+conjugum defunctorum, ex dondorfferhoff.
+
+Sponsus et sponsa subsignaverunt scribendi ignari.
+Testes fuerunt peter thomes ex ellingen et franciscus bricher ex dondorfferhoff
+— scribendi ignari.
+
+Signa : Christiani Kapgen Sponsi · Luciæ Thomes Sponsæ · Petri Thomes Testis ·
+Francisci Bricher Testis.
+
+Officiant : Ph: Simon pastor in mondorff.</pre>
+  </details>
+</div>
+
+<div class="recherche-section">
+  <h3>Fenêtres chronologiques</h3>
+  <ul class="recherche-list">
+    <li><strong>Baptême Christian :</strong> 19 janvier 1718 (MyHeritage) — acte P0</li>
+    <li><strong>Mariage Christian × Lucie :</strong> 22 juin 1743 — <strong>confirmé</strong> (acte consulté) · Christian âgé de 25 ans</li>
+    <li><strong>Baptême François :</strong> 25 décembre 1748 (MyHeritage) — contrôle filiation</li>
+    <li><strong>Sépulture Lucie :</strong> 22 janvier 1772 (MyHeritage) — contexte conjugal</li>
+    <li><strong>Sépulture Christian :</strong> 2 février 1788 (MyHeritage) — âge ≈ 70 ans</li>
+  </ul>
+</div>
+
+<div class="recherche-section">
+  <h3>Registres et sources</h3>
+  <ul class="recherche-list">
+    <li><strong>Matricula — Mondorf</strong> · <strong>KB-01</strong> (BMS 1678–1737) · <strong>KB-02</strong> (Taufen 1700–1725) · <a href="https://data.matricula-online.eu/fr/LU/luxemburg/mondorf/" target="_blank" rel="noopener">data.matricula-online.eu</a> · archives.diocesaines@cathol.lu</li>
+    <li><strong>FamilySearch</strong> · <a href="https://www.familysearch.org/en/search/collection/5000012" target="_blank" rel="noopener">Luxembourg, Church and Civil Registration, 1601–1923</a></li>
+    <li><strong>luxroots</strong> · <a href="https://www.luxroots.org" target="_blank" rel="noopener">luxroots.org</a> — transcriptions paroissiales et civiles Luxembourg (baptêmes avant 1800, mariages, décès)</li>
+    <li><strong>Paroisses voisines (contrôle) :</strong> Remich, Altwies, Dalheim, Bous, Schengen — en cas d'absence à Mondorf</li>
+  </ul>
+</div>
+
+<div class="recherche-section">
+  <h3>Actes prioritaires</h3>
+  <div class="recherche-act recherche-act--found">
+    <span class="recherche-status">Confirmé</span><strong>Mariage Christian KAPGEN × Lucie THÖMES</strong>
+    <span>22 juin 1743 · Mondorff · acte paroissial consulté — filiation Nicolas × Angélique, graphie Kapgen, parents de Lucie, témoins</span>
+  </div>
+  <div class="recherche-act recherche-act--p0">
+    <span class="recherche-priority">P0</span><strong>Baptême Christian KAPGEN</strong>
+    <span>19 janv. 1718 · Mondorf · Matricula KB-01 / KB-02 — filiation Nicolas × Angélique, graphie Kapgen sur l'acte</span>
+  </div>
+  <div class="recherche-act">
+    <span class="recherche-priority">P1</span><strong>Sépulture Christian KAPGEN</strong>
+    <span>2 févr. 1788 · Mondorf — âge, veuf (Lucie † 1772), mention des enfants</span>
+  </div>
+  <div class="recherche-act">
+    <span class="recherche-priority">P1</span><strong>Baptême François CAPTIEN (KAPGEN ?)</strong>
+    <span>25 déc. 1748 · Mondorf — fils de Christian et Lucie THÖMES, graphie patronyme</span>
+  </div>
+  <div class="recherche-act">
+    <span class="recherche-priority">P2</span><strong>Sépulture Lucie THÖMES</strong>
+    <span>22 janv. 1772 · Mondorf — épouse de Christian, contexte familial</span>
+  </div>
+</div>
+
+<div class="recherche-section">
+  <h3>Critères d'identification</h3>
+  <p>Un acte correspond au bon Christian si <strong>au moins 3</strong> critères concordent : patronyme Kapgen (confirmé 1743) · parents Nicolas KAPGEN et Angélique SCHNEIDER (confirmés 1743) · date 19 janvier 1718 · lieu Mondorf-les-Bains · mariage 1743 avec Lucie THÖMES (confirmé) · fils François baptisé 1748 · chronologie cohérente (né 1718, marié 1743, décédé 1788).</p>
+</div>
+
+<div class="recherche-section">
+  <h3>Inconnus</h3>
+  <ul class="recherche-list recherche-unknown">
+    <li>Baptême du 19 janvier 1718 (filiation déjà confirmée par le mariage 1743)</li>
+    <li>Métier et domicile de Christian</li>
+    <li>Autres enfants éventuels (seul François est renseigné dans la base)</li>
+    <li>Cote Matricula exacte pour sépultures 1772 / 1788</li>
+    <li>Date et lieu du mariage propre Nicolas × Angélique (union confirmée indirectement)</li>
+    <li>Parents de Nicolas (non nommés sur l'acte de 1743)</li>
+  </ul>
+</div>
+
+<div class="recherche-section">
+  <h3>Ordre de travail recommandé</h3>
+  <ol class="recherche-list">
+    <li>✓ Acte mariage Christian × Lucie THÖMES 22.06.1743 Mondorff — consulté</li>
+    <li>Matricula Mondorf KB-01 / KB-02 → baptême Christian 19.01.1718</li>
+    <li>luxroots + FamilySearch → même baptême (transcription / image)</li>
+    <li>Même source → baptême François 25.12.1748 (contrôle filiation)</li>
+    <li>Matricula Mondorf → sépultures Lucie 22.01.1772 et Christian 02.02.1788</li>
+    <li>Recoupement avec fiche <a class="person-link" href="personne.html#nicolas-captien-1695">Nicolas KAPGEN</a> (mariage propre Nicolas × Angélique, parents de Nicolas)</li>
+  </ol>
+</div>
+
+<div class="recherche-section">
+  <h3>Modèles email</h3>
+  <details class="recherche-email">
+    <summary>Diözesanarchiv Luxembourg — Mondorf (baptême, sépulture)</summary>
+    <pre>Objet : Extrait registres paroissiaux Mondorf — KAPGEN/THÖMES 1718–1788
+
+Madame, Monsieur,
+
+Je recherche dans les registres paroissiaux de Mondorf-les-Bains :
+
+1. Baptême de Christian KAPGEN (variantes : Kapgen, Kaptien, Captien),
+   19 janvier 1718 — fils de Nicolas KAPGEN et Angélique SCHNEIDER
+   (registres Matricula KB-01 / KB-02)
+   — la filiation est déjà confirmée par le mariage du 22 juin 1743
+
+2. Baptême de François, fils de Christian KAPGEN et Lucie THÖMES,
+   25 décembre 1748
+
+3. Sépulture de Lucie THÖMES, épouse de Christian KAPGEN, 22 janvier 1772
+
+4. Sépulture de Christian KAPGEN, 2 février 1788
+
+Les registres sont-ils intégralement consultables sur Matricula,
+ou puis-je commander des extraits certifiés via votre formulaire de reproduction ?
+
+Cordialement,
+[Votre nom — adresse]</pre>
+  </details>
+</div>
+`
+  },
+  'henric-adam-thomes': {
+    name: 'Henric Adam THÖMES',
+    dates: 'décédé avant le 22 juin 1743 — ex Dondorfferhoff',
+    chapterId: 'mondorf',
+    spouses: ['eva-klein'],
+    children: ['lucie-thomas'],
+    bio: "Père de Lucie THÖMES (CAPTIEN). Nommé sur l'acte de mariage de sa fille le 22 juin 1743 à Mondorff (Henrici Adami Thömes) ; décédé avant cette date (conjugum defunctorum). Originaire de Dondorfferhoff. Source : acte paroissial Mondorff 22.06.1743.",
+    source: 'acte paroissial Mondorff 22.06.1743'
+  },
+  'eva-klein': {
+    name: 'Eva KLEIN (THÖMES)',
+    dates: 'décédée avant le 22 juin 1743 — ex Dondorfferhoff',
+    chapterId: 'mondorf',
+    spouses: ['henric-adam-thomes'],
+    children: ['lucie-thomas'],
+    bio: "Mère de Lucie THÖMES (CAPTIEN). Nommée Evæ Klein sur l'acte de mariage de sa fille le 22 juin 1743 à Mondorff ; décédée avant cette date (conjugum defunctorum). Originaire de Dondorfferhoff. Source : acte paroissial Mondorff 22.06.1743.",
+    source: 'acte paroissial Mondorff 22.06.1743'
   },
   'lucie-thomas': {
-    name: 'Lucie THOMAS (CAPTIEN)',
-    dates: 'mariage le 22 juin 1743, Mondorf-les-Bains (Luxembourg) — décédée le 22 janvier 1772, Mondorf-les-Bains (Luxembourg)',
+    name: 'Lucie THÖMES (CAPTIEN)',
+    dates: 'originaire de Dondorfferhoff — mariage le 22 juin 1743, Mondorff (Luxembourg) — décédée le 22 janvier 1772, Mondorf-les-Bains (Luxembourg)',
     chapterId: 'mondorf',
+    parents: ['henric-adam-thomes', 'eva-klein'],
     spouses: ['christian-captien-1718'],
     children: ['francois-captien-1748'],
-    bio: "Épouse de Christian KAPGEN (Captien) (1718–1788). Mariée le 22 juin 1743 à Mondorf-les-Bains (Luxembourg). Décédée le 22 janvier 1772 à Mondorf-les-Bains (Luxembourg). Source : MyHeritage.",
-    source: 'MyHeritage'
+    bio: "Épouse de Christian KAPGEN (Captien) (1718–1788). Fille légitime des défunts Henric Adam THÖMES et Eva Klein, de Dondorfferhoff — confirmé par l'acte de mariage du 22 juin 1743 à Mondorff. Témoins : Peter Thomes d'Ellingen et Franciscus Bricher de Dondorfferhoff (illettrés, signent par marque). Décédée le 22 janvier 1772 à Mondorf-les-Bains (Luxembourg). Source : MyHeritage ; acte paroissial Mondorff 22.06.1743.",
+    source: 'MyHeritage · acte paroissial Mondorff 22.06.1743'
   },
   'francois-captien-1748': {
     name: 'François CAPTIEN',
@@ -604,7 +1103,7 @@ const PEOPLE = {
     parents: ['francois-armand-captien-1922', 'odile-alexandrine-pierre'],
     spouses: ['patricia-arive', 'evelyne-courtin'],
     children: ['delphine-captien-1976', 'floriane-captien-1998'],
-    bio: "Frère de Chantal Captien. Cuisinier de métier — chef de brigade, puis maître d'hôtel (intitulé exact des postes à confirmer) — toute une carrière faite en cuisine et en salle, dans la tradition des grandes maisons. Mariage (1) avec Patricia Arivé le 14 juin 1975 à Tours ; divorce le 10 mai 1981. Mariage (2) avec Evelyne Courtin le 31 mars 2018 à Gohory. Source : MyHeritage · souvenir familial.",
+    bio: "Frère de Chantal Captien. Cuisinier de métier — chef de brigade, puis maître d'hôtel (intitulé exact des postes à confirmer) — toute une carrière faite en cuisine et en salle, dans la tradition des grandes maisons. Mariage (1) avec Patricia Arivé le 14 juin 1975 à Tours ; divorce le 10 mai 1981. Mariage (2) avec Evelyne Courtin le 31 mars 2018 à Gohory. Témoignage de Michel sur ses débuts : « Non, pas tout de suite : d'abord la boucherie, ça ne m'intéressait pas. Alors apprentissage au Terminus, à Saint-Avold, avec l'école d'apprentissage en plus du travail — mais malheureusement j'ai mis une beigne au prof, donc viré, et du coup le patron du Terminus m'a viré aussi. Apprentissage au Mirador, à Saint-Avold, puis Amboise au Duc de Choiseul, puis le buffet de la gare de Tours quand mes parents ont déménagé à Joué-lès-Tours. Et après ça, ça devient sérieux. » Source : MyHeritage · souvenir familial.",
     source: 'MyHeritage'
   },
   'patricia-arive': {
@@ -682,7 +1181,7 @@ const PEOPLE = {
     chapterId: 'captien',
     spouses: ['chantal-captien-1946'],
     children: ['thierry-georges-billeux', 'christophe-olivier-billeux'],
-    bio: "Compagnon puis époux de Chantal Captien. Mise en ménage à Basse-Yutz en 1963 (Chantal, 17 ans). Les deux se rencontrent à Bar-le-Duc (Meuse), dans la sidérurgie — témoignage familial — avant de s'installer en Touraine ; mariage le 4 décembre 1976 à Monts. Source : MyHeritage ; témoignage familial.",
+    bio: "Compagnon puis époux de Chantal Captien. Mise en ménage à Basse-Yutz en 1963 (Chantal, 17 ans). Les deux se rencontrent à Thionville (Moselle) — témoignage familial — avant de s'installer en Touraine ; mariage le 4 décembre 1976 à Monts. Source : MyHeritage ; témoignage familial.",
     source: 'MyHeritage ; témoignage familial'
   },
   'philippe-charles-pinazo-billeux': {

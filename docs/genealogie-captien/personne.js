@@ -35,6 +35,7 @@ function renderPerson(id) {
         ${renderRelationRow('Enfants', p.children)}
       </div>
       ${p.bio ? `<p class="person-bio">${p.bio}</p>` : ''}
+      ${p.recherche ? `<div class="person-recherche">${p.recherche}</div>` : ''}
       ${p.chapterId ? `<a class="person-back" href="index.html#${p.chapterId}">← Retour au récit, au chapitre correspondant</a>` : `<a class="person-back" href="index.html">← Retour au récit</a>`}
     </div>
   `;
