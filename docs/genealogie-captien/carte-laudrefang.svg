@@ -3,38 +3,27 @@
 
   
   <defs>
-    <linearGradient id="paper-cartelaudrefangsvg" x1="0%" y1="0%" x2="100%" y2="100%">
+    <linearGradient id="paper-cartelaudrefang" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#f5ecd9"/>
       <stop offset="45%" stop-color="#f0e6d0"/>
       <stop offset="100%" stop-color="#e8dcc4"/>
     </linearGradient>
-    <radialGradient id="vignette-cartelaudrefangsvg" cx="50%" cy="50%" r="70%">
+    <radialGradient id="vignette-cartelaudrefang" cx="50%" cy="50%" r="70%">
       <stop offset="60%" stop-color="#000" stop-opacity="0"/>
       <stop offset="100%" stop-color="#8a7355" stop-opacity="0.12"/>
     </radialGradient>
-    <filter id="grain-cartelaudrefangsvg" x="-5%" y="-5%" width="110%" height="110%">
-      <feTurbulence type="fractalNoise" baseFrequency="0.045" numOctaves="5" stitchTiles="stitch" result="n"/>
-      <feColorMatrix type="saturate" values="0"/>
-      <feComponentTransfer>
-        <feFuncA type="linear" slope="0.07"/>
-      </feComponentTransfer>
-      <feBlend in="SourceGraphic" in2="n" mode="multiply" result="g"/>
-      <feTurbulence type="fractalNoise" baseFrequency="0.015" numOctaves="3" result="stain"/>
-      <feColorMatrix in="stain" type="matrix" values="0 0 0 0 0.55  0 0 0 0 0.45  0 0 0 0 0.35  0 0 0 0.04 0"/>
-      <feBlend in="g" in2="stain" mode="multiply"/>
-    </filter>
-    <filter id="river-blur-cartelaudrefangsvg">
+    <filter id="river-blur-cartelaudrefang">
       <feGaussianBlur stdDeviation="1.2"/>
     </filter>
-    <marker id="arrow-cartelaudrefangsvg" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+    <marker id="arrow-cartelaudrefang" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
       <path d="M0,0 L10,5 L0,10 Z" fill="#5a4a37"/>
     </marker>
-    <marker id="mig-arrow-cartelaudrefangsvg" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+    <marker id="mig-arrow-cartelaudrefang" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
       <path d="M0,0 L10,5 L0,10 Z" fill="#4a3d7a"/>
     </marker>
   </defs>
-  <rect width="960" height="560" fill="url(#paper-cartelaudrefangsvg)" filter="url(#grain-cartelaudrefangsvg)"/>
-  <rect width="960" height="560" fill="url(#vignette-cartelaudrefangsvg)"/>
+  <rect width="960" height="560" fill="url(#paper-cartelaudrefang)"/>
+  <rect width="960" height="560" fill="url(#vignette-cartelaudrefang)"/>
 
   <rect x="14" y="14" width="932" height="532" fill="none" stroke="#3b2f22" stroke-width="1.2"/>
   <rect x="20" y="20" width="920" height="520" fill="none" stroke="#5a4a37" stroke-width="0.5" opacity="0.45"/>
@@ -109,11 +98,11 @@
 <text x="480" y="250" font-family="Georgia, serif" font-size="26" font-weight="600" fill="#5a4a37" opacity="0.22" letter-spacing="0.25em">MOSELLE NORD-EST</text>
 <ellipse cx="560" cy="380" rx="80" ry="22" fill="#c4b896" opacity="0.35"/><ellipse cx="420" cy="360" rx="60" ry="16" fill="#c4b896" opacity="0.35"/><ellipse cx="700" cy="350" rx="70" ry="18" fill="#c4b896" opacity="0.35"/>
 
-  <path d="M260,420 Q420,400 580,380 Q720,360 820,340" fill="none" stroke="#a8c8d8" stroke-width="14" opacity="0.45" filter="url(#river-blur-cartelaudrefangsvg)"/>
+  <path d="M260,420 Q420,400 580,380 Q720,360 820,340" fill="none" stroke="#a8c8d8" stroke-width="14" opacity="0.45" filter="url(#river-blur-cartelaudrefang)"/>
   <path d="M260,420 Q420,400 580,380 Q720,360 820,340" fill="none" stroke="#6a9aaa" stroke-width="2.5" opacity="0.6"/>
   <path d="M260,420 Q420,400 580,380 Q720,360 820,340" fill="none" stroke="#4a7a8a" stroke-width="0.8" opacity="0.5" stroke-dasharray="4 6"/>
   <text x="740" y="332" font-family="Georgia, serif" font-size="11" font-style="italic" fill="#6a9aaa">Sarre</text>
-  <path d="M220,460 Q380,440 540,420" fill="none" stroke="#a8c8d8" stroke-width="14" opacity="0.45" filter="url(#river-blur-cartelaudrefangsvg)"/>
+  <path d="M220,460 Q380,440 540,420" fill="none" stroke="#a8c8d8" stroke-width="14" opacity="0.45" filter="url(#river-blur-cartelaudrefang)"/>
   <path d="M220,460 Q380,440 540,420" fill="none" stroke="#6a9aaa" stroke-width="2.5" opacity="0.6"/>
   <path d="M220,460 Q380,440 540,420" fill="none" stroke="#4a7a8a" stroke-width="0.8" opacity="0.5" stroke-dasharray="4 6"/>
   <text x="300" y="468" font-family="Georgia, serif" font-size="11" font-style="italic" fill="#6a9aaa">Nied</text>

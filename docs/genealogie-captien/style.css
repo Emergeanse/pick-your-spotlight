@@ -350,6 +350,9 @@ body {
 .person-main { max-width: 640px; margin: 0 auto; padding: 48px 20px 100px; position: relative; }
 .person-card { background: var(--paper-card); border: 1px solid var(--rule); border-radius: 12px; padding: 40px 36px; text-align: center; box-shadow: 0 6px 24px rgba(0,0,0,.1); }
 .person-avatar { width: 64px; height: 64px; border-radius: 50%; background: var(--ink); color: #f2e8d3; font-family: -apple-system, 'Segoe UI', sans-serif; font-size: 1.1rem; font-weight: 700; display: flex; align-items: center; justify-content: center; margin: 0 auto 18px; }
+.person-avatar--lieu { background: var(--lieu); font-size: 1.4rem; font-weight: 400; }
+.person-type-badge { display: inline-block; font-family: -apple-system, 'Segoe UI', sans-serif; font-size: 0.62rem; letter-spacing: 0.08em; text-transform: uppercase; padding: 3px 10px; border-radius: 999px; margin-top: 8px; }
+.person-type-badge--lieu { background: var(--lieu-bg); color: var(--lieu); }
 .person-name { font-size: 1.8rem; font-style: italic; font-weight: 400; }
 .person-dates { font-family: -apple-system, 'Segoe UI', sans-serif; font-size: 0.85rem; color: var(--ink-soft); margin-top: 6px; }
 .person-relations { text-align: left; margin: 28px 0; border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); padding: 16px 0; }
@@ -377,6 +380,9 @@ body {
 .recherche-email { margin-top: 8px; }
 .recherche-email summary { cursor: pointer; font-family: -apple-system, 'Segoe UI', sans-serif; font-size: 0.82rem; color: var(--accent); margin-bottom: 6px; }
 .recherche-email pre { font-family: -apple-system, 'Segoe UI', sans-serif; font-size: 0.75rem; white-space: pre-wrap; background: var(--rule); padding: 12px 14px; border-radius: 4px; margin-top: 6px; line-height: 1.45; }
+.recherche-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; margin-top: 8px; }
+.recherche-table th, .recherche-table td { text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--rule); }
+.recherche-table th { font-family: -apple-system, 'Segoe UI', sans-serif; font-size: 0.65rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-soft); }
 .person-recherche a { color: var(--accent); }
 .person-back { font-family: -apple-system, 'Segoe UI', sans-serif; font-size: 0.85rem; color: var(--accent); text-decoration: none; }
 .person-back:hover { text-decoration: underline; }

@@ -3,38 +3,27 @@
 
   
   <defs>
-    <linearGradient id="paper-cartemondorfsvg" x1="0%" y1="0%" x2="100%" y2="100%">
+    <linearGradient id="paper-cartemondorf" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#f5ecd9"/>
       <stop offset="45%" stop-color="#f0e6d0"/>
       <stop offset="100%" stop-color="#e8dcc4"/>
     </linearGradient>
-    <radialGradient id="vignette-cartemondorfsvg" cx="50%" cy="50%" r="70%">
+    <radialGradient id="vignette-cartemondorf" cx="50%" cy="50%" r="70%">
       <stop offset="60%" stop-color="#000" stop-opacity="0"/>
       <stop offset="100%" stop-color="#8a7355" stop-opacity="0.12"/>
     </radialGradient>
-    <filter id="grain-cartemondorfsvg" x="-5%" y="-5%" width="110%" height="110%">
-      <feTurbulence type="fractalNoise" baseFrequency="0.045" numOctaves="5" stitchTiles="stitch" result="n"/>
-      <feColorMatrix type="saturate" values="0"/>
-      <feComponentTransfer>
-        <feFuncA type="linear" slope="0.07"/>
-      </feComponentTransfer>
-      <feBlend in="SourceGraphic" in2="n" mode="multiply" result="g"/>
-      <feTurbulence type="fractalNoise" baseFrequency="0.015" numOctaves="3" result="stain"/>
-      <feColorMatrix in="stain" type="matrix" values="0 0 0 0 0.55  0 0 0 0 0.45  0 0 0 0 0.35  0 0 0 0.04 0"/>
-      <feBlend in="g" in2="stain" mode="multiply"/>
-    </filter>
-    <filter id="river-blur-cartemondorfsvg">
+    <filter id="river-blur-cartemondorf">
       <feGaussianBlur stdDeviation="1.2"/>
     </filter>
-    <marker id="arrow-cartemondorfsvg" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+    <marker id="arrow-cartemondorf" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
       <path d="M0,0 L10,5 L0,10 Z" fill="#5a4a37"/>
     </marker>
-    <marker id="mig-arrow-cartemondorfsvg" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+    <marker id="mig-arrow-cartemondorf" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
       <path d="M0,0 L10,5 L0,10 Z" fill="#4a3d7a"/>
     </marker>
   </defs>
-  <rect width="960" height="560" fill="url(#paper-cartemondorfsvg)" filter="url(#grain-cartemondorfsvg)"/>
-  <rect width="960" height="560" fill="url(#vignette-cartemondorfsvg)"/>
+  <rect width="960" height="560" fill="url(#paper-cartemondorf)"/>
+  <rect width="960" height="560" fill="url(#vignette-cartemondorf)"/>
 
   <rect x="14" y="14" width="932" height="532" fill="none" stroke="#3b2f22" stroke-width="1.2"/>
   <rect x="20" y="20" width="920" height="520" fill="none" stroke="#5a4a37" stroke-width="0.5" opacity="0.45"/>
@@ -109,7 +98,7 @@
 <text x="440" y="230" font-family="Georgia, serif" font-size="26" font-weight="600" fill="#5a4a37" opacity="0.22" letter-spacing="0.25em">CANTON DE REMICH</text>
 <ellipse cx="480" cy="360" rx="75" ry="18" fill="#c4b896" opacity="0.35"/><ellipse cx="620" cy="340" rx="50" ry="14" fill="#c4b896" opacity="0.35"/>
 
-  <path d="M200,380 Q360,360 520,340 Q660,320 780,300" fill="none" stroke="#a8c8d8" stroke-width="14" opacity="0.45" filter="url(#river-blur-cartemondorfsvg)"/>
+  <path d="M200,380 Q360,360 520,340 Q660,320 780,300" fill="none" stroke="#a8c8d8" stroke-width="14" opacity="0.45" filter="url(#river-blur-cartemondorf)"/>
   <path d="M200,380 Q360,360 520,340 Q660,320 780,300" fill="none" stroke="#6a9aaa" stroke-width="2.5" opacity="0.6"/>
   <path d="M200,380 Q360,360 520,340 Q660,320 780,300" fill="none" stroke="#4a7a8a" stroke-width="0.8" opacity="0.5" stroke-dasharray="4 6"/>
   <text x="580" y="325" font-family="Georgia, serif" font-size="11" font-style="italic" fill="#6a9aaa">Moselle</text>
@@ -194,7 +183,7 @@
   </g>
 
   <path d="M310,345 Q410,282.5 510,290"
-    fill="none" stroke="#4a3d7a" stroke-width="2" stroke-dasharray="6 4" marker-end="url(#mig-arrow-cartemondorfsvg)" opacity="0.75"/>
+    fill="none" stroke="#4a3d7a" stroke-width="2" stroke-dasharray="6 4" marker-end="url(#mig-arrow-cartemondorf)" opacity="0.75"/>
   <text x="370" y="272.5" font-family="Georgia, serif" font-size="10" font-style="italic" fill="#4a3d7a">Angélique × Nicolas Kapgen</text>
   <text x="380" y="286.5" font-family="Georgia, serif" font-size="9" fill="#5a4a37">~25 km</text>
 <text x="480" y="538" text-anchor="middle" font-family="Georgia, serif" font-size="9" font-style="italic" fill="#5a4a37">Quatre générations CAPTIEN — registres latin / français / allemand</text>

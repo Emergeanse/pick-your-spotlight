@@ -63,10 +63,6 @@ function renderChapter(ch, index) {
             <h3>Pour aller plus loin</h3>
             ${ch.cards.map(renderCard).join('')}
           </div>` : ''}
-        ${ch.archiveFiche ? `
-          <div class="chapter-archive person-recherche" id="${ch.id}-archives">
-            ${ch.archiveFiche}
-          </div>` : ''}
       </div>
     </section>
     ${index < CHAPTERS.length - 1 ? '<div class="connector"><span></span></div>' : ''}

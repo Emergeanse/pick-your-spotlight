@@ -191,6 +191,113 @@ const PEOPLE = {
   // === Bambiderstroff / Mondorf — souche KAPGEN → CAPTIEN ===
   // Actes à intégrer (quand disponibles) : baptême Christian 1718 ; mariage propre Nicolas × Angélique.
   // Acte consulté : mariage Christian × Lucie THÖMES 22.06.1743 Mondorff (filiation Nicolas × Angélique confirmée indirectement).
+  'lieu-mondorff': {
+    type: 'lieu',
+    name: 'Mondorff / Mondorf-les-Bains',
+    dates: 'canton de Remich, Luxembourg d\'Ancien Régime — époque Kapgen/CAPTIEN (~1700–1820)',
+    chapterId: 'mondorf',
+    bio: 'Village paroissial rural du canton de Remich (Luxembourg d\'Ancien Régime), lieu d\'ancrage de la lignée KAPGEN/CAPTIEN à partir de ~1718. Graphie Mondorff sur les actes paroissiaux consultés ; aujourd\'hui Mondorf-les-Bains (station thermale, grand-duché de Luxembourg).',
+    source: 'Matricula · FamilySearch · luxroots · ANLux · actes paroissiaux consultés',
+    recherche: `
+<h2>Fiche archives — Mondorff / Mondorf</h2>
+<p class="recherche-objectif">Contexte démographique et paroissial de Mondorff (~1700–1720), lieu d'ancrage de la lignée KAPGEN/CAPTIEN — pour orienter la consultation des registres et des dénombrements.</p>
+
+<div class="recherche-section">
+  <h3>Contexte historique (~1700–1720)</h3>
+  <ul class="recherche-list">
+    <li><strong>Statut :</strong> village paroissial rural du canton de Remich, décanat de Remich, Luxembourg d'Ancien Régime (Provinces-Unies puis Autriche des Habsbourg)</li>
+    <li><strong>Toponymie :</strong> Momendorf, Mondorff, Mondorf, Mondorf-les-Bains — graphie <span class="recherche-variants">Mondorff</span> sur les actes paroissiaux consultés (latin du registre)</li>
+    <li><strong>Périmètre paroissial :</strong> paroisse incluant le bourg de Mondorf et les hameaux voisins — notamment <strong>Altwies</strong> et <strong>Ellange</strong> (Ellingen sur l'acte de 1743)</li>
+    <li><strong>Époque Kapgen :</strong> en 1718, date du baptême de <a class="person-link" href="personne.html#christian-captien-1718">Christian KAPGEN</a>, la paroisse de Mondorff est <strong>unifiée</strong> — le partage territorial de 1769 (traité) n'a pas encore scindé la paroisse entre Luxembourg et France</li>
+    <li><strong>Économie :</strong> agriculture, vigne, artisanat rural ; les sources thermales ne deviendront une attraction qu'au XIXe siècle</li>
+  </ul>
+</div>
+
+<div class="recherche-section">
+  <h3>Population — ce qu'on sait et ce qu'on ignore</h3>
+  <p><strong>Aucun chiffre exact</strong> de population pour Mondorff seul à la date ~1700–1720 n'a été trouvé dans les sources consultées. Il faut raisonner par ordre de grandeur et par proxies.</p>
+  <ul class="recherche-list">
+    <li><strong>Ordre de grandeur (1700–1720) :</strong> village paroissial rural — <strong>centaines d'habitants, pas de milliers</strong> — en reprise démographique après les guerres et raids du XVIIe siècle</li>
+    <li><strong>1701 — capitation (feux) :</strong> dénombrement fiscal aux Archives nationales du Luxembourg, série <strong>A-XIII</strong> — unité « feu » (foyer fiscal), pas tête par tête ; permet d'estimer l'ordre de grandeur des foyers du canton ou de la paroisse, pas une population exacte</li>
+    <li><strong>1766 — recensement :</strong> dénombrement du décanat de Remich consultable via <a href="https://www.familysearch.org" target="_blank" rel="noopener">FamilySearch</a> — repère intermédiaire, postérieur à l'époque Kapgen mais utile pour calibrer la croissance</li>
+    <li><strong>1796 — partie luxembourgeoise :</strong> environ <strong>414 habitants</strong> (commune de Mondorf-les-Bains côté grand-duché) — chiffre postérieur, à ne pas projeter sur 1718 sans prudence</li>
+    <li><strong>1821 :</strong> environ <strong>1 217 habitants</strong> pour l'ensemble paroissial ; le Mondorff français (Moselle) compte environ <strong>140 habitants</strong> — repères tardifs, après le partage de 1769 et la croissance du XIXe siècle</li>
+    <li><strong>luxroots — baptêmes 1678–1797 :</strong> environ <strong>3 605 baptêmes</strong> indexés pour la paroisse de Mondorf sur la période — volume paroissial global (Mondorf + hameaux), pas population instantanée ; utile pour mesurer l'activité démographique sur un siècle et demi</li>
+  </ul>
+  <p class="recherche-unknown">⚠ On n'invente pas de chiffre pour 1718 : les proxies ci-dessus servent uniquement à situer l'ordre de grandeur.</p>
+</div>
+
+<div class="recherche-section">
+  <h3>Paroisse et registres</h3>
+  <ul class="recherche-list">
+    <li><strong>Matricula — Mondorf KB-01</strong> · baptêmes, mariages, sépultures <strong>1678–1737</strong> · <a href="https://data.matricula-online.eu/fr/LU/luxemburg/mondorf/" target="_blank" rel="noopener">data.matricula-online.eu/fr/LU/luxemburg/mondorf/</a></li>
+    <li><strong>Matricula — Mondorf KB-02</strong> · baptêmes (Taufen) <strong>1700–1725</strong> — registre prioritaire pour le baptême de Christian (19.01.1718)</li>
+    <li><strong>Diözesanarchiv Luxembourg</strong> · archives.diocesaines@cathol.lu · reproductions certifiées si besoin</li>
+    <li><strong>FamilySearch</strong> · <a href="https://www.familysearch.org/en/search/collection/5000012" target="_blank" rel="noopener">Luxembourg, Church and Civil Registration, 1601–1923</a></li>
+    <li><strong>luxroots</strong> · <a href="https://www.luxroots.org" target="_blank" rel="noopener">luxroots.org</a> — transcriptions et index paroissiaux (baptêmes, mariages, décès)</li>
+    <li><strong>Curé connu :</strong> Ph: Simon, <em>pastor in mondorff</em> — officiant du mariage de Christian KAPGEN × Lucie THÖMES, 22 juin 1743 (acte consulté)</li>
+    <li><strong>Graphies patronymiques à chercher :</strong> Kapgen, Kapgien, Kaptien, Captien — confirmées Kapgen sur l'acte de 1743</li>
+  </ul>
+</div>
+
+<div class="recherche-section">
+  <h3>Dénombrements — repères chronologiques</h3>
+  <ul class="recherche-list">
+    <li><strong>1701</strong> — capitation, feux · ANLux série <strong>A-XIII</strong> · ordre de grandeur fiscal (foyers), pas recensement nominal complet</li>
+    <li><strong>1766</strong> — recensement · décanat de Remich · FamilySearch · repère démographique intermédiaire</li>
+    <li><strong>1796</strong> — ~414 hab. (partie luxembourgeoise) · repère post-partition</li>
+    <li><strong>1821</strong> — ~1 217 hab. (ensemble paroissial) ; ~140 hab. (Mondorff français) · repères tardifs, croissance XIXe</li>
+  </ul>
+</div>
+
+<div class="recherche-section">
+  <h3>Guerres du XVIIe et reprise démographique</h3>
+  <ul class="recherche-list">
+    <li><strong>1611</strong> — Ellange : seulement <strong>4 feux</strong> recensés — indice de dépopulation locale</li>
+    <li><strong>1656</strong> — passage des armées, devastation du pays de Remich</li>
+    <li><strong>1678</strong> — raid franco-suedois ; pillages dans la région</li>
+    <li><strong>1684</strong> — évacuation de populations devant les troupes françaises</li>
+    <li><strong>Conséquence :</strong> effondrement puis reprise lente — au tournant du XVIIIe siècle, les mariages precoces et l'immigration de familles voisines (Moselle, Sarre) repeuplent les paroisses frontalières ; c'est dans ce contexte que la lignée SCHNEIDER/KAPGEN arrive à Mondorff</li>
+  </ul>
+</div>
+
+<div class="recherche-section">
+  <h3>Lien avec la lignée KAPGEN / CAPTIEN</h3>
+  <ul class="recherche-list">
+    <li><strong>1718</strong> — baptême de <a class="person-link" href="personne.html#christian-captien-1718">Christian KAPGEN</a>, 19 janvier, Mondorf (MyHeritage, acte à confirmer sur KB-01/KB-02)</li>
+    <li><strong>~1690–1695</strong> — <a class="person-link" href="personne.html#nicolas-captien-1695">Nicolas KAPGEN</a> × <a class="person-link" href="personne.html#angelique-schneider-1695">Angélique SCHNEIDER</a> — union confirmée indirectement par l'acte de mariage du fils (1743) ; mariage propre et baptême de Christian restent à trouver dans les registres de Mondorff</li>
+    <li><strong>1743</strong> — mariage Christian × Lucie THÖMES, 22 juin — acte paroissial consulté (Ph: Simon) ; filiation Nicolas × Angélique confirmée</li>
+    <li><strong>1748–1820</strong> — quatre générations CAPTIEN à Mondorf : François (1748), Élisabeth (1790)… jusqu'au départ d'Élisabeth vers Manom (~1862) et la naissance de Paul à Mondorff (1821, côté français)</li>
+  </ul>
+  <p>Fiches personnes liées : <a class="person-link" href="personne.html#christian-captien-1718">Christian KAPGEN (1718)</a> · <a class="person-link" href="personne.html#nicolas-captien-1695">Nicolas KAPGEN (~1695)</a></p>
+</div>
+
+<div class="recherche-section">
+  <h3>Ordre de consultation des archives</h3>
+  <ol class="recherche-list">
+    <li><strong>Matricula KB-02</strong> → baptême Christian KAPGEN, 19.01.1718 (priorité P0)</li>
+    <li><strong>Matricula KB-01</strong> → mariages 1717–1735 (Heiraten) — mariage propre Nicolas × Angélique ; recoupement KB-02 si lacune</li>
+    <li><strong>luxroots</strong> → index baptêmes/mariages Mondorf — repérage rapide avant consultation image</li>
+    <li><strong>FamilySearch</strong> → même période, collection Luxembourg Church Records</li>
+    <li><strong>ANLux A-XIII</strong> → feux de capitation 1701 — contexte démographique fiscal</li>
+    <li><strong>Recensement 1766</strong> (décanat Remich, FamilySearch) — repère démographique intermédiaire</li>
+    <li>✓ Acte mariage Christian × Lucie THÖMES, 22.06.1743 Mondorff — consulté (filiation confirmée)</li>
+  </ol>
+</div>
+
+<div class="recherche-section">
+  <h3>Sources et liens</h3>
+  <ul class="recherche-list">
+    <li><a href="https://data.matricula-online.eu/fr/LU/luxemburg/mondorf/" target="_blank" rel="noopener">Matricula Online — Mondorf (KB-01, KB-02)</a></li>
+    <li><a href="https://www.familysearch.org/en/search/collection/5000012" target="_blank" rel="noopener">FamilySearch — Luxembourg Church and Civil Registration</a></li>
+    <li><a href="https://www.luxroots.org" target="_blank" rel="noopener">luxroots.org</a> — index paroissial Mondorf</li>
+    <li><a href="https://www.anlux.lu" target="_blank" rel="noopener">Archives nationales du Luxembourg (ANLux)</a> — série A-XIII (feux, capitation)</li>
+    <li>Acte paroissial Mondorff 22.06.1743 — mariage Christianus Kapgen × Lucia Thömes (consulté, site)</li>
+    <li>MyHeritage — dates de naissance/décès (à recouper systématiquement sur actes)</li>
+  </ul>
+</div>
+`
+  },
   'nicolas-captien-1695': {
     name: 'Nicolas KAPGEN (Captien)',
     dates: 'vers 1690–1695 — décédé (date inconnue)',
@@ -205,7 +312,7 @@ const PEOPLE = {
 
 <div class="recherche-section">
   <h3>Contexte paroissial — Mondorff</h3>
-  <p>Démographie, registres paroissiaux (Matricula KB-01/KB-02), dénombrements et guerres du XVIIe — voir la <a href="index.html#mondorf-archives">fiche archives Mondorff</a> (chapitre Mondorf).</p>
+  <p>Démographie, registres paroissiaux (Matricula KB-01/KB-02), dénombrements et guerres du XVIIe — voir la <a class="person-link" href="personne.html#lieu-mondorff">fiche archives Mondorff</a>.</p>
 </div>
 
 <div class="recherche-section">
@@ -363,8 +470,92 @@ Cordialement,
     parents: ['jean-schneider-1667', 'marie-jungers'],
     spouses: ['nicolas-captien-1695'],
     children: ['christian-captien-1718'],
-    bio: "Ancêtre directe. Née le 29 avril 1695 à Bambiderstroff (Moselle). Fille de Jean (Haman) SCHNEIDER (1667–1727), laboureur à Bambiderstroff, et de Marie JUNGERS († 1720). Union avec Nicolas KAPGEN (Captien) (vers 1690–1695) — confirmée indirectement par l'acte de mariage de leur fils Christian le 22 juin 1743 à Mondorff, qui la nomme explicitement comme mère (Angelicæ Schneider). Sur l'acte, le patronyme du marié est Kapgen. Mère de Christian (1718). Source : MyHeritage ; acte paroissial Mondorff 22.06.1743.",
+    bio: "Ancêtre directe. Née le 29 avril 1695 à Bambiderstroff (Moselle). Fille de Jean (Haman) SCHNEIDER (1667–1727), laboureur à Bambiderstroff, et de Marie JUNGERS († 1720). Union avec Nicolas KAPGEN (Captien) (vers 1690–1695) — confirmée indirectement par l'acte de mariage de leur fils Christian le 22 juin 1743 à Mondorff, qui la nomme explicitement comme mère (Angelicæ Schneider). Sur l'acte, le patronyme du marié est Kapgen. Mère de Christian (1718). Un certain Petrus SCHNEIDER, attesté parrain à Mondorff en 1718, pourrait être un parent proche (père, frère, oncle) — hypothèse ouverte, voir sa fiche. Source : MyHeritage ; acte paroissial Mondorff 22.06.1743.",
     source: 'MyHeritage · acte paroissial Mondorff 22.06.1743',
+  },
+  'pierre-schneider-mondorff-1718': {
+    name: 'Petrus SCHNEIDER (Pierre)',
+    dates: 'attesté le 19 novembre 1718, Mondorff (parrain)',
+    chapterId: 'mondorf',
+    bio: "Retrouvé dans les registres paroissiaux de Mondorff comme parrain (patrinus) au baptême d'une fille de Martin [nom à confirmer] et Maria Anna, domiciliés à Mondorff, le 19 novembre 1718. La formule latine de l'acte : « Suscipientes fuerunt Petrus Schneider et Maria ... ex Mondorff » (« Les parrains furent Pierre Schneider et Marie ..., de Mondorff »). Aucun lien de filiation n'est démontré à ce stade, mais la concordance du patronyme, du lieu (Mondorff) et de la période (1718, la même année que le baptême de Christian KAPGEN, fils d'Angélique SCHNEIDER) en fait un individu prioritaire à suivre pour la branche SCHNEIDER de Mondorff. Source : registre paroissial de Mondorff, 19.11.1718.",
+    source: 'Registre paroissial de Mondorff, 19.11.1718',
+    recherche: `
+<h2>Fiche de recherche</h2>
+<p class="recherche-objectif">Établir le lien de parenté éventuel entre Petrus (Pierre) SCHNEIDER, parrain attesté à Mondorff en 1718, et <a class="person-link" href="personne.html#angelique-schneider-1695">Angélique SCHNEIDER</a> (également de Mondorff/Bambiderstroff, épouse de Nicolas KAPGEN). Aucun lien démontré à ce stade — priorité de recherche pour le dossier « Famille SCHNEIDER de Mondorff ».</p>
+
+<div class="recherche-section">
+  <h3>Identité</h3>
+  <ul class="recherche-list">
+    <li><strong>Nom :</strong> Schneider</li>
+    <li><strong>Prénom :</strong> Petrus (Pierre)</li>
+    <li><strong>Sexe :</strong> masculin</li>
+    <li><strong>Période attestée :</strong> 19 novembre 1718 (date du baptême où il apparaît comme parrain)</li>
+    <li><strong>Lieu :</strong> Mondorff (aujourd'hui Mondorf-les-Bains, Luxembourg)</li>
+    <li><strong>Fonction dans l'acte :</strong> Parrain (patrinus)</li>
+  </ul>
+</div>
+
+<div class="recherche-section">
+  <h3>Acte concerné</h3>
+  <p>Baptême d'une fille de Martin [nom à confirmer] et Maria Anna, domiciliés à Mondorff.</p>
+  <p>Formule latine (approximative) :</p>
+  <pre>Suscipientes fuerunt Petrus Schneider et Maria ... ex Mondorff.</pre>
+  <p>Traduction : « Les parrains furent Pierre Schneider et Marie ..., de Mondorff. »</p>
+</div>
+
+<div class="recherche-section">
+  <h3>Ce que l'on peut déduire</h3>
+  <p>À cette époque, le choix des parrains est rarement laissé au hasard. Pierre Schneider est vraisemblablement :</p>
+  <ul class="recherche-list">
+    <li>un membre reconnu de la communauté ;</li>
+    <li>un adulte établi à Mondorff ;</li>
+    <li>possiblement parent des parents de l'enfant.</li>
+  </ul>
+</div>
+
+<div class="recherche-section">
+  <h3>Intérêt pour la famille KAPGEN</h3>
+  <p>Il devient particulièrement intéressant car nous savons qu'en 1743, <a class="person-link" href="personne.html#angelique-schneider-1695">Angélique SCHNEIDER</a>, épouse de <a class="person-link" href="personne.html#nicolas-captien-1695">Nicolas KAPGEN</a>, est également de Mondorff. Il existe donc une possibilité qu'il soit :</p>
+  <ul class="recherche-list">
+    <li>le père d'Angélique Schneider ;</li>
+    <li>son frère (si la différence d'âge est faible) ;</li>
+    <li>un oncle ;</li>
+    <li>un cousin proche.</li>
+  </ul>
+  <p>À ce stade, aucun lien de parenté n'est démontré, mais la concordance du patronyme, du lieu et de la période en fait un individu prioritaire à suivre.</p>
+</div>
+
+<div class="recherche-section">
+  <h3>Niveau de confiance</h3>
+  <ul class="recherche-list">
+    <li><strong>Existence de Pierre Schneider à Mondorff :</strong> ★★★★★ (certain)</li>
+    <li><strong>Lecture du nom :</strong> ★★★★★</li>
+    <li><strong>Parenté avec Angélique Schneider :</strong> ★☆☆☆☆ (hypothèse à vérifier)</li>
+  </ul>
+</div>
+
+<div class="recherche-section">
+  <h3>Dossier « Famille SCHNEIDER de Mondorff »</h3>
+  <p>Chaque occurrence connue du patronyme SCHNEIDER à Mondorff, à recouper au fur et à mesure :</p>
+  <table class="recherche-table">
+    <thead><tr><th>Date</th><th>Personne</th><th>Rôle</th><th>Acte</th><th>Observations</th></tr></thead>
+    <tbody>
+      <tr><td>1718</td><td>Petrus Schneider</td><td>Parrain</td><td>Baptême</td><td>Première occurrence</td></tr>
+      <tr><td>1743</td><td>Angelica Schneider</td><td>Mère du marié</td><td>Mariage de Christian Kapgen</td><td>Épouse de Nicolas Kapgen</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="recherche-section">
+  <h3>Ordre de travail recommandé</h3>
+  <ol class="recherche-list">
+    <li>Retrouver l'acte de baptême complet du 19 novembre 1718 (Mondorff) pour identifier les parents de l'enfant et confirmer la lecture du nom de la marraine</li>
+    <li>Chercher un acte de mariage ou de décès pour Pierre Schneider à Mondorff, alentours 1690–1750</li>
+    <li>Rechercher un acte de baptême d'Angélique Schneider à Mondorff (en complément de celui déjà connu à Bambiderstroff) qui nommerait ses parents</li>
+    <li>Comparer les âges estimés (Pierre adulte établi en 1718 ; Angélique née 1695) pour évaluer la plausibilité d'un lien père-fille plutôt que fratrie</li>
+  </ol>
+</div>
+`
   },
   'georges-schneider-1583': {
     name: 'Georges SCHNEIDER',
@@ -609,7 +800,7 @@ Cordialement,
 
 <div class="recherche-section">
   <h3>Contexte paroissial — Mondorff</h3>
-  <p>Population (~1700–1720), paroisse unifiée, registres Matricula, dénombrements et reprise démographique après les guerres du XVIIe — voir la <a href="index.html#mondorf-archives">fiche archives Mondorff</a> (chapitre Mondorf).</p>
+  <p>Population (~1700–1720), paroisse unifiée, registres Matricula, dénombrements et reprise démographique après les guerres du XVIIe — voir la <a class="person-link" href="personne.html#lieu-mondorff">fiche archives Mondorff</a>.</p>
 </div>
 
 <div class="recherche-section">
