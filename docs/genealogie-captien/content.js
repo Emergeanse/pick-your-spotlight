@@ -132,14 +132,7 @@ const CHAPTERS = [
     id: 'verdun-saint-avold',
     years: '1885 – 1969',
     place: 'Verdun, Saint-Avold — guerre et reconstruction',
-    illustration: `
-      <svg viewBox="0 0 900 400" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Verdun stylisé, fort et horizon">
-        <rect width="900" height="400" fill="#1a1410"/>
-        <path d="M0,260 Q240,215 450,245 T900,232 L900,400 L0,400 Z" fill="#3b2f22"/>
-        <path d="M180,235 H350 L335,285 H195 Z" fill="none" stroke="#ede4cf" stroke-width="4" opacity="0.45"/>
-        <path d="M210,250 H320" stroke="#2f6f6a" stroke-width="5" opacity="0.55"/>
-        <circle cx="740" cy="135" r="32" fill="none" stroke="#2f6f6a" stroke-width="6" opacity="0.7"/>
-      </svg>`,
+    illustration: `<img src="illustration-verdun-saint-avold.png" alt="Le Fort de Vaux, Verdun, après la bataille de 1916">`,
     narrative: [
       `<a class="person-link" href="personne.html#francois-captien-1885">François CAPTIEN</a>, né le 13 juillet 1885 à Manom, dessine un triangle de vie qui dit tout de la Moselle du XXe siècle : village d'origine, front de guerre, ville de reconstruction. Serrurier, puis cheminot — les rails, encore, comme fil conducteur — il épouse Catherine HIPPERT en 1912, avant que le monde ne bascule.`,
       `1916. Verdun. Le Fort de Vaux. Il a trente et un ans. On ne sait pas exactement ce qu'il y a vécu — les archives familiales ne disent que le nom du fort — mais on sait ce que fut Verdun : dix mois de feu, plus de trois cent mille morts, une terre retournée comme un champ de betteraves. Il en revient. C'est déjà une géographie du survivant : le même Manom, mais plus jamais le même homme.`,
