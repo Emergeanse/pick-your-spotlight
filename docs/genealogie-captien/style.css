@@ -204,6 +204,19 @@ body {
 
 /* ── CHAPTERS ── */
 .chapters { max-width: 860px; margin: 0 auto; padding: 40px 20px 100px; }
+.site-intro {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 36px 24px 0;
+  text-align: justify;
+  border-bottom: 1px solid var(--rule);
+}
+.site-intro p {
+  margin-bottom: 1.1em;
+  font-size: 1.05rem;
+  color: var(--ink-soft);
+}
+.site-intro p:last-child { margin-bottom: 0; padding-bottom: 32px; }
 .chapter { scroll-margin-top: 100px; position: relative; }
 .chapter-watermark { position: sticky; top: 0; height: 0; overflow: visible; z-index: -1; }
 .chapter-watermark svg {

@@ -15,7 +15,6 @@ function renderNav() {
       ).join('')}
     </div>
     <div class="nav__secondary">
-      <a class="nav__tree" href="geographie.html">Récit géographique</a>
       <a class="nav__tree" href="arbre.html">Arbre synthétique</a>
     </div>
   `;
@@ -105,8 +104,15 @@ function renderEpilogue() {
   `;
 }
 
+function renderIntro() {
+  const mount = document.getElementById('intro');
+  if (!mount || typeof SITE_INTRO === 'undefined') return;
+  mount.innerHTML = SITE_INTRO.narrative.map(p => `<p>${p}</p>`).join('');
+}
+
 function render() {
   renderNav();
+  renderIntro();
   document.getElementById('chapters').innerHTML =
     CHAPTERS.map((ch, i) => renderChapter(ch, i)).join('');
   renderEpilogue();
