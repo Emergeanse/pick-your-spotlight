@@ -5,6 +5,7 @@ import { Calendar, Clock, MapPin, Wifi, Film, Users, Loader2, Check, ArrowRight 
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
+import pickLogo from "@/assets/pick-logo.png";
 
 type EventData = {
   id: string;
@@ -149,7 +150,9 @@ const InvitePage = () => {
         className="w-full max-w-sm py-8"
       >
         {/* Logo */}
-        <p className="font-serif text-2xl text-foreground mb-8 text-center tracking-wide">Pick</p>
+        <div className="flex justify-center mb-8">
+          <img src={pickLogo} alt="Pick" className="h-12 w-auto object-contain" />
+        </div>
 
         <AnimatePresence mode="wait">
 

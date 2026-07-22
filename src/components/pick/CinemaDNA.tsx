@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { getUserTasteProfile } from "@/lib/interactions";
 import { getLikedMovies } from "@/lib/liked-movies";
 import { getPosterUrl } from "@/lib/tmdb";
-import pickLogo from "@/assets/pick-logo.png";
+import pickLogoLunettes from "@/assets/pick-logo-lunettes.png";
 import CinemaAvatar from "@/components/pick/CinemaAvatar";
 
 // ── Types ──
@@ -226,7 +226,7 @@ const CinemaDNA = ({ userId, teaser, onOpenFull }: CinemaDNAProps) => {
         className="flex flex-col items-center justify-center text-center px-6 py-16"
       >
         <div className="w-20 h-20 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/20 flex items-center justify-center mb-6">
-          <img src={pickLogo} alt="Pick" className="w-10 h-10 object-contain" />
+          <img src={pickLogoLunettes} alt="Pick" className="w-10 h-10 object-contain" />
         </div>
         <h3 className="font-serif text-2xl mb-3 text-foreground">Ton ADN Cinéma</h3>
 

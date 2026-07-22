@@ -211,7 +211,7 @@ const Onboarding = () => {
               transition={{ delay: 0.15, type: "spring", stiffness: 200 }}
               className="mb-6"
             >
-              <img src={pickLogo} alt="Pick" className="w-20 h-20 object-contain" />
+              <img src={pickLogo} alt="Pick" className="h-24 w-auto object-contain" />
             </motion.div>
             <motion.h1
               initial={{ opacity: 0, y: 16 }}
@@ -270,7 +270,7 @@ const Onboarding = () => {
           >
             <div className="flex-1 flex flex-col items-center justify-start px-5 py-4 pb-2">
             <div className="flex items-center gap-3 mb-2 mt-2 max-w-lg w-full">
-              <img src={pickLogo} alt="Pick" className="w-10 h-10 object-contain shrink-0" />
+              <img src={pickLogo} alt="Pick" className="h-10 w-auto object-contain shrink-0" />
               <h1 className="text-2xl md:text-3xl font-serif">Tes genres</h1>
             </div>
             <p className="text-muted-foreground text-sm font-sans mb-2 text-center max-w-lg">

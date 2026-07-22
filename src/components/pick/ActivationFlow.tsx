@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Brain, Sparkles, MessageCircle, Bookmark, Heart, ArrowRight, Check, Dna, PartyPopper } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
-import pickLogo from "@/assets/pick-logo.png";
 import pickWave from "@/assets/pick-squirrel-wave.png";
 
 type MissionId = "train_20" | "first_reco" | "talk_to_pick" | "watchlist_3" | "like_5";

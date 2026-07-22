@@ -1,8 +1,6 @@
 import { motion } from "framer-motion";
 import { ArrowRight, Brain, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import pickLogo from "@/assets/pick-logo.png";
-
 interface ActivationOverlayProps {
   onStartTraining: () => void;
   onSkip: () => void;

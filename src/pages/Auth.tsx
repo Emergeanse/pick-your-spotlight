@@ -7,6 +7,7 @@ import { Mail, Lock, User, ArrowLeft, Loader2, Eye, EyeOff } from "lucide-react"
 import { useNavigate, Navigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
+import pickLogo from "@/assets/pick-logo.png";
 
 type AuthMode = "login" | "signup" | "forgot" | "reset";
 
@@ -139,7 +140,7 @@ const Auth = () => {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-sm"
+        className="w-full max-w-sm relative"
       >
         {/* Bouton retour */}
         <button
@@ -147,11 +148,16 @@ const Auth = () => {
             if (mode === "forgot" || mode === "reset") { setMode("login"); setForgotSent(false); }
             else navigate("/");
           }}
-          className="flex items-center gap-2 text-foreground/50 hover:text-foreground text-sm font-sans mb-8 transition-colors"
+          className="flex items-center gap-2 text-foreground/50 hover:text-foreground text-sm font-sans mb-6 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
           {mode === "forgot" || mode === "reset" ? "Retour à la connexion" : "Retour"}
         </button>
+
+        {/* Logo */}
+        <div className="flex justify-center mb-8">
+          <img src={pickLogo} alt="Pick" className="h-14 w-auto object-contain" />
+        </div>
 
         {/* ── Mode RESET (nouveau mot de passe) ── */}
         <AnimatePresence mode="wait">

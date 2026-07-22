@@ -191,9 +191,8 @@ const Landing = () => {
       })}} />
       <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border/8">
         <div className="max-w-6xl mx-auto flex items-center justify-between px-5 h-14">
-          <div className="flex items-center gap-2.5">
-            <img src={pickLogo} alt="Pick" className="w-5 h-5 object-contain invert brightness-200" />
-            <span className="font-serif text-xl tracking-wide">Pick</span>
+          <div className="flex items-center">
+            <img src={pickLogo} alt="Pick" className="h-10 w-auto object-contain" />
           </div>
           <div className="flex items-center gap-3">
             <Button variant="ghost" size="sm" className="text-foreground/50 hover:text-foreground font-sans text-sm" onClick={() => navigate("/auth")}>Connexion</Button>
@@ -583,11 +582,8 @@ const Landing = () => {
       {/* ─── FOOTER ─── */}
       <footer className="border-t border-border/8 py-10 px-5">
         <div className="max-w-5xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
-          <div className="flex items-center gap-2">
-            <img src={pickLogo} alt="Pick" className="w-5 h-5 object-contain invert brightness-200" />
-            <span className="font-serif text-lg">Pick</span>
-            <span className="text-foreground/15 text-xs font-sans">·</span>
-            <span className="text-foreground/45 text-xs font-sans">Ton expert cinéma</span>
+          <div className="flex items-center">
+            <img src={pickLogo} alt="Pick" className="h-9 w-auto object-contain" />
           </div>
           <div className="flex items-center gap-6 text-foreground/45 text-xs font-sans">
             <span className="hover:text-foreground/50 transition-colors cursor-default">À propos</span>
