@@ -35,6 +35,13 @@ serve(async (req) => {
     }
 
     const res = await fetch(tmdbUrl(path, safeParams));
+    if (res.status === 404) {
+      // Ressource TMDB inexistante — renvoyer 200 + null pour que le client ne crash pas.
+      return new Response(JSON.stringify({ data: null, notFound: true }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
     if (!res.ok) {
       return new Response(JSON.stringify({ error: `TMDB Error: ${res.status}` }), {
         status: res.status,
