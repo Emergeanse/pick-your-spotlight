@@ -17,7 +17,15 @@ export async function fetchFromTMDB(
     },
   });
 
-  if (error) throw new Error(`TMDB proxy: ${error.message}`);
-  if (data?.error) throw new Error(data.error);
+  if (error) {
+    // TMDB 404 = ressource absente : on renvoie null au lieu de crasher l'UI.
+    const msg = error.message || "";
+    if (/404/.test(msg)) return null;
+    throw new Error(`TMDB proxy: ${msg}`);
+  }
+  if (data?.error) {
+    if (/404/.test(data.error)) return null;
+    throw new Error(data.error);
+  }
   return data;
 }
