@@ -175,7 +175,7 @@ function flattenTrophyMilestones(): TrophyMilestoneMeta[] {
 }
 
 function getTrophyTier(unlocked: number): { title: string; subtitle: string } {
-  let tier = TROPHY_TIER_LEVELS[0];
+  let tier: (typeof TROPHY_TIER_LEVELS)[number] = TROPHY_TIER_LEVELS[0];
   for (const t of TROPHY_TIER_LEVELS) {
     if (unlocked >= t.minUnlocked) tier = t;
   }
