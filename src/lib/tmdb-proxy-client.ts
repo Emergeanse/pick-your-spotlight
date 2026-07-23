@@ -23,6 +23,7 @@ export async function fetchFromTMDB(
     if (/404/.test(msg)) return null;
     throw new Error(`TMDB proxy: ${msg}`);
   }
+  if (data?.notFound) return null;
   if (data?.error) {
     if (/404/.test(data.error)) return null;
     throw new Error(data.error);
