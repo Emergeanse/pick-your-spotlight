@@ -26,6 +26,37 @@ interface RegisteredUser {
   streak_count: number;
 }
 
+const CredentialRow = ({ label, value, secret = false }: { label: string; value: string; secret?: boolean }) => {
+  const [shown, setShown] = useState(!secret);
+  return (
+    <div className="flex items-center gap-2 bg-background/50 rounded-lg px-3 py-2 border border-border/40">
+      <div className="flex-1 min-w-0">
+        <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</div>
+        <div className="text-sm font-mono truncate select-all">
+          {shown ? value : "•".repeat(Math.min(value.length, 12))}
+        </div>
+      </div>
+      {secret && (
+        <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={() => setShown(s => !s)} title={shown ? "Masquer" : "Afficher"}>
+          {shown ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+        </Button>
+      )}
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-7 w-7 shrink-0"
+        onClick={() => {
+          navigator.clipboard.writeText(value);
+          toast.success(`${label} copié`);
+        }}
+        title="Copier"
+      >
+        <Copy className="w-3.5 h-3.5" />
+      </Button>
+    </div>
+  );
+};
+
 const Admin = () => {
   const navigate = useNavigate();
   const { user, isReady } = useAuth();
