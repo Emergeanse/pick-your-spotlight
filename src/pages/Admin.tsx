@@ -369,14 +369,36 @@ const Admin = () => {
                   animate={{ opacity: 1, scale: 1 }}
                   className="space-y-4 max-w-md"
                 >
-                  <div className="bg-card rounded-2xl p-5 border border-border/30 text-center">
-                    <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-3">
-                      <UserPlus className="w-7 h-7 text-primary" />
+                  <div className="bg-card rounded-2xl p-5 border border-border/30">
+                    <div className="text-center">
+                      <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-3">
+                        <UserPlus className="w-7 h-7 text-primary" />
+                      </div>
+                      <h2 className="text-lg font-serif mb-1">{createdAccount.name}</h2>
+                      <p className="text-xs text-muted-foreground mb-4">
+                        Compte éphémère prêt. Il sera supprimé à la déconnexion.
+                      </p>
                     </div>
-                    <h2 className="text-lg font-serif mb-1">{createdAccount.name}</h2>
-                    <p className="text-xs text-muted-foreground mb-4">
-                      Compte éphémère prêt. Il sera supprimé à la déconnexion.
-                    </p>
+
+                    <div className="space-y-2 mb-4">
+                      <CredentialRow label="Email" value={createdAccount.email} />
+                      <CredentialRow label="Mot de passe" value={createdAccount.password} secret />
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full text-xs"
+                        onClick={() => {
+                          navigator.clipboard.writeText(
+                            `Email: ${createdAccount.email}\nMot de passe: ${createdAccount.password}`
+                          );
+                          toast.success("Identifiants copiés");
+                        }}
+                      >
+                        <Copy className="w-3.5 h-3.5" />
+                        Copier email + mot de passe
+                      </Button>
+                    </div>
+
                     <Button
                       variant="hero"
                       size="xl"
@@ -387,6 +409,7 @@ const Admin = () => {
                       Se connecter en tant que {createdAccount.name}
                     </Button>
                   </div>
+
                   <Button
                     variant="ghost"
                     className="w-full text-muted-foreground text-xs"
