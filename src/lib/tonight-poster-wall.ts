@@ -25,7 +25,7 @@ export function extractPosterPaths(results: unknown): string[] {
 }
 
 /** Fusionne fallbacks + TMDB sans doublons — le mur reste rempli même si le proxy échoue. */
-export function mergePosterPools(...pools: string[][]): string[] {
+export function mergePosterPools(...pools: readonly (readonly string[])[]): string[] {
   const seen = new Set<string>();
   const merged: string[] = [];
   for (const pool of pools) {
