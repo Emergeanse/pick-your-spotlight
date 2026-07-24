@@ -513,10 +513,10 @@ export type Database = {
           event_date: string
           event_time: string | null
           final_pick_id: string | null
+          final_pick_media_type: string | null
           final_pick_poster: string | null
           final_pick_title: string | null
           final_pick_tmdb_id: number | null
-          final_pick_media_type: string | null
           genre_tags: string[] | null
           id: string
           invite_link_token: string
@@ -536,10 +536,10 @@ export type Database = {
           event_date: string
           event_time?: string | null
           final_pick_id?: string | null
+          final_pick_media_type?: string | null
           final_pick_poster?: string | null
           final_pick_title?: string | null
           final_pick_tmdb_id?: number | null
-          final_pick_media_type?: string | null
           genre_tags?: string[] | null
           id?: string
           invite_link_token?: string
@@ -559,10 +559,10 @@ export type Database = {
           event_date?: string
           event_time?: string | null
           final_pick_id?: string | null
+          final_pick_media_type?: string | null
           final_pick_poster?: string | null
           final_pick_title?: string | null
           final_pick_tmdb_id?: number | null
-          final_pick_media_type?: string | null
           genre_tags?: string[] | null
           id?: string
           invite_link_token?: string
@@ -886,6 +886,7 @@ export type Database = {
           default_media_type: string
           default_recommendation_count: number
           display_name: string | null
+          excluded_decades: number[] | null
           excluded_genres: string[] | null
           excluded_platforms: number[] | null
           favorite_genres: string[] | null
@@ -934,6 +935,7 @@ export type Database = {
           default_media_type?: string
           default_recommendation_count?: number
           display_name?: string | null
+          excluded_decades?: number[] | null
           excluded_genres?: string[] | null
           excluded_platforms?: number[] | null
           favorite_genres?: string[] | null
@@ -982,6 +984,7 @@ export type Database = {
           default_media_type?: string
           default_recommendation_count?: number
           display_name?: string | null
+          excluded_decades?: number[] | null
           excluded_genres?: string[] | null
           excluded_platforms?: number[] | null
           favorite_genres?: string[] | null

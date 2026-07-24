@@ -26,7 +26,7 @@ vi.mock("@/lib/tmdb", () => ({
   getDisplayTitle: (movie: MovieDetail) => movie.title ?? movie.name ?? "Sans titre",
 }));
 
-const mockResolvePickMediaType = vi.fn(() => "movie" as const);
+const mockResolvePickMediaType = vi.fn<(...args: unknown[]) => "movie" | "tv">(() => "movie");
 
 vi.mock("@/lib/event-final-pick", () => ({
   resolvePickMediaType: (...args: unknown[]) => mockResolvePickMediaType(...args),
