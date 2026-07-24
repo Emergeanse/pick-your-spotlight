@@ -369,6 +369,8 @@ const MovieActionBar = ({
           thumbsUp ? likeFilledClass : inactiveClass
         }`}
         title="J'aime"
+        aria-label="J'aime"
+        aria-pressed={thumbsUp}
       >
         <ThumbsUp className={`${iconSize} ${thumbsUp ? "fill-current" : ""}`} />
       </button>
@@ -381,6 +383,8 @@ const MovieActionBar = ({
           loved ? loveFilledClass : inactiveClass
         }`}
         title="Coup de cœur"
+        aria-label="Coup de cœur"
+        aria-pressed={loved}
       >
         <Heart className={`${iconSize} ${loved ? "fill-current" : ""}`} />
       </button>
@@ -393,6 +397,8 @@ const MovieActionBar = ({
           bookmarked ? watchlistFilledClass : inactiveClass
         }`}
         title="À voir"
+        aria-label="Ajouter à ma liste À voir"
+        aria-pressed={bookmarked}
       >
         <Bookmark className={`${iconSize} ${bookmarked ? "fill-current" : ""}`} />
       </button>
@@ -405,6 +411,8 @@ const MovieActionBar = ({
           seenActive ? seenFilledClass : inactiveClass
         }`}
         title="Déjà vu"
+        aria-label="Déjà vu"
+        aria-pressed={seenActive}
       >
         <Eye className={iconSize} />
       </button>
@@ -417,6 +425,8 @@ const MovieActionBar = ({
           activeFeedback === "not_for_me" ? notForMeFilledClass : inactiveClass
         }`}
         title="Pas pour moi"
+        aria-label="Pas pour moi"
+        aria-pressed={activeFeedback === "not_for_me"}
       >
         <ThumbsDown className={iconSize} />
       </button>

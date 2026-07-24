@@ -23,23 +23,20 @@ import {
 } from "@/lib/onboarding-people";
 
 describe("parcours initiatique — constantes & étapes", () => {
-  it("définit 8 étapes dans le bon ordre", () => {
+  it("définit 5 étapes dans le bon ordre", () => {
     expect(ONBOARDING_STEPS).toEqual([
       "welcome",
       "genres",
-      "platforms",
       "films",
-      "actors",
-      "directors",
-      "modes",
-      "soirees",
+      "platforms",
+      "search",
     ]);
   });
 
   it("conserve les préréglages reco onboarding", () => {
-    expect(ONBOARDING_MIN_RATING).toBe(6);
-    expect(ONBOARDING_MATCH_THRESHOLD).toBe(60);
-    expect(ONBOARDING_FILM_TARGET).toBe(10);
+    expect(ONBOARDING_MIN_RATING).toBe(7);
+    expect(ONBOARDING_MATCH_THRESHOLD).toBe(70);
+    expect(ONBOARDING_FILM_TARGET).toBe(6);
     expect(ONBOARDING_PEOPLE_TARGET).toBe(5);
     expect(ONBOARDING_FILM_PAGE_SIZE).toBeGreaterThan(0);
     expect(ONBOARDING_PEOPLE_PAGE_SIZE).toBeGreaterThan(0);

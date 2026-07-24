@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Mic, X, Loader2, Sparkles, RotateCcw } from "lucide-react";
+import { Mic, X, Loader2, Sparkles, RotateCcw, Keyboard, Send } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useScribe, CommitStrategy } from "@elevenlabs/react";
 import { useAuth } from "@/hooks/use-auth";
@@ -31,6 +31,11 @@ const MoodVoiceSheet = ({ onClose, onSearchIntent, autoStart }: MoodVoiceSheetPr
   const [userTasteContext, setUserTasteContext] = useState<any>(null);
   const pendingVoiceRef = useRef<string | null>(null);
   const recordingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Alternative à la voix : décrire son mood par écrit.
+  const [inputMode, setInputMode] = useState<"voice" | "text">("voice");
+  const [textInput, setTextInput] = useState("");
+  const textInputRef = useRef<HTMLInputElement>(null);
 
   // Load taste context for pick-chat
   useEffect(() => {
@@ -170,7 +175,8 @@ const MoodVoiceSheet = ({ onClose, onSearchIntent, autoStart }: MoodVoiceSheetPr
       await navigator.mediaDevices.getUserMedia({ audio: true });
       const { data, error } = await supabase.functions.invoke("scribe-token");
       if (error || !data?.token) {
-        setMicError("Erreur de connexion vocale. Réessaie !");
+        setMicError("Erreur de connexion vocale — tu peux écrire à la place.");
+        setInputMode("text");
         return;
       }
       await scribe.connect({
@@ -179,9 +185,28 @@ const MoodVoiceSheet = ({ onClose, onSearchIntent, autoStart }: MoodVoiceSheetPr
       });
       setPhase("recording");
     } catch {
-      setMicError("Impossible d'accéder au micro. Vérifie les permissions.");
+      setMicError("Impossible d'accéder au micro — tu peux écrire à la place.");
+      setInputMode("text");
     }
   };
+
+  // Écrit ou parlé, le texte final passe par le même traitement (pick-chat en mode "processing").
+  const submitText = (text: string) => {
+    const trimmed = text.trim();
+    if (!trimmed) return;
+    setMicError(null);
+    setTranscript(trimmed);
+    setPartialText("");
+    setTextInput("");
+    pendingVoiceRef.current = trimmed;
+    setPhase("processing");
+  };
+
+  useEffect(() => {
+    if (inputMode === "text" && (phase === "ready" || phase === "clarification")) {
+      textInputRef.current?.focus();
+    }
+  }, [inputMode, phase]);
 
   const displayText = transcript || partialText;
 
@@ -301,20 +326,61 @@ const MoodVoiceSheet = ({ onClose, onSearchIntent, autoStart }: MoodVoiceSheetPr
           )}
         </AnimatePresence>
 
-        {/* Mic / state button */}
-        <div className="flex justify-center mt-2">
-          {(phase === "ready" || phase === "clarification") && (
-            <motion.button
-              whileTap={{ scale: 0.93 }}
-              onClick={startRecording}
-              className="flex items-center gap-2.5 px-6 py-3.5 rounded-full bg-primary text-primary-foreground font-sans font-medium text-sm shadow-[0_0_32px_hsl(var(--primary)/0.55)]"
-            >
-              {phase === "clarification" ? (
-                <><RotateCcw className="w-4 h-4" /> Répondre</>
-              ) : (
-                <><Mic className="w-5 h-5" /> Parler</>
-              )}
-            </motion.button>
+        {/* Mic / texte / state */}
+        <div className="flex flex-col items-center gap-3 mt-2">
+          {(phase === "ready" || phase === "clarification") && inputMode === "voice" && (
+            <>
+              <motion.button
+                whileTap={{ scale: 0.93 }}
+                onClick={startRecording}
+                className="flex items-center gap-2.5 px-6 py-3.5 rounded-full bg-primary text-primary-foreground font-sans font-medium text-sm shadow-[0_0_32px_hsl(var(--primary)/0.55)]"
+              >
+                {phase === "clarification" ? (
+                  <><RotateCcw className="w-4 h-4" /> Répondre</>
+                ) : (
+                  <><Mic className="w-5 h-5" /> Parler</>
+                )}
+              </motion.button>
+              <button
+                type="button"
+                onClick={() => setInputMode("text")}
+                className="flex items-center gap-1.5 text-foreground/45 hover:text-foreground/65 text-xs font-sans transition-colors"
+              >
+                <Keyboard className="w-3.5 h-3.5" /> Écrire plutôt
+              </button>
+            </>
+          )}
+
+          {(phase === "ready" || phase === "clarification") && inputMode === "text" && (
+            <>
+              <div className="flex items-center gap-2 w-full">
+                <input
+                  ref={textInputRef}
+                  type="text"
+                  value={textInput}
+                  onChange={(e) => setTextInput(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter") submitText(textInput); }}
+                  placeholder="Décris ce que tu as envie de voir…"
+                  className="flex-1 bg-secondary/50 border border-border/20 rounded-full px-4 py-2.5 text-sm font-sans text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary/30 focus:ring-1 focus:ring-primary/20 transition-all"
+                />
+                <button
+                  type="button"
+                  onClick={() => submitText(textInput)}
+                  disabled={!textInput.trim()}
+                  className="shrink-0 w-11 h-11 rounded-full bg-primary text-primary-foreground flex items-center justify-center disabled:opacity-30 transition-opacity"
+                  aria-label="Envoyer"
+                >
+                  <Send className="w-4 h-4" />
+                </button>
+              </div>
+              <button
+                type="button"
+                onClick={() => setInputMode("voice")}
+                className="flex items-center gap-1.5 text-foreground/45 hover:text-foreground/65 text-xs font-sans transition-colors"
+              >
+                <Mic className="w-3.5 h-3.5" /> Parler plutôt
+              </button>
+            </>
           )}
 
           {phase === "recording" && (

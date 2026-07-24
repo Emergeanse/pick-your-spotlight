@@ -1,32 +1,48 @@
 import { supabase } from "@/integrations/supabase/client";
 import { DEFAULT_ONBOARDING_PLATFORM_IDS, ensureOnboardingPlatforms } from "@/lib/onboarding-platforms";
-import { ONBOARDING_FILM_TARGET } from "@/lib/onboarding-films";
+import { ONBOARDING_FILM_LIKED_MAX } from "@/lib/onboarding-films";
 import { ONBOARDING_PEOPLE_TARGET } from "@/lib/onboarding-people";
 import type { PersonType } from "@/lib/people-preferences";
+
+const AUTO_SURPRISE_SESSION_KEY = "pick_onboarding_auto_surprise_v1";
+
+/**
+ * File d'attente sessionStorage — même technique que event-reveal.ts (queueForReveal/consumeForReveal),
+ * nécessaire pour survivre au double-montage React de HomeScreen ("Mount 1 démonté, Mount 2 vivant").
+ * Un état React (useState/location.state) serait lu comme "vrai" par les deux montages ; sessionStorage
+ * est lu ET supprimé de façon atomique, donc un seul montage déclenchera réellement la recherche.
+ */
+export function queueOnboardingAutoSurprise(): void {
+  try { sessionStorage.setItem(AUTO_SURPRISE_SESSION_KEY, "1"); } catch {}
+}
+
+export function consumeOnboardingAutoSurprise(): boolean {
+  try {
+    if (!sessionStorage.getItem(AUTO_SURPRISE_SESSION_KEY)) return false;
+    sessionStorage.removeItem(AUTO_SURPRISE_SESSION_KEY);
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 export type OnboardingStep =
   | "welcome"
   | "genres"
-  | "platforms"
   | "films"
-  | "actors"
-  | "directors"
-  | "modes"
-  | "soirees";
+  | "platforms"
+  | "search";
 
 export const ONBOARDING_STEPS: OnboardingStep[] = [
   "welcome",
   "genres",
-  "platforms",
   "films",
-  "actors",
-  "directors",
-  "modes",
-  "soirees",
+  "platforms",
+  "search",
 ];
 
-export const ONBOARDING_MIN_RATING = 6;
-export const ONBOARDING_MATCH_THRESHOLD = 60;
+export const ONBOARDING_MIN_RATING = 7;
+export const ONBOARDING_MATCH_THRESHOLD = 70;
 
 export type OnboardingProgressData = {
   step: OnboardingStep;
@@ -73,7 +89,7 @@ export async function loadOnboardingProgress(): Promise<OnboardingProgressData |
     excludedGenres: ((data as any).excluded_genres as string[]) ?? [],
     platformIds,
     paused: Boolean((data as any).onboarding_paused),
-    filmsProgress: Math.min(ONBOARDING_FILM_TARGET, Math.max(0, Number((data as any).onboarding_films_progress) || 0)),
+    filmsProgress: Math.min(ONBOARDING_FILM_LIKED_MAX, Math.max(0, Number((data as any).onboarding_films_progress) || 0)),
     filmsLikedIds: normalizeOnboardingFilmsLikedIds((data as any).onboarding_films_liked_ids),
     filmsProposedIds: normalizeOnboardingFilmsProposedIds((data as any).onboarding_films_proposed_ids),
     actorsSelectedIds: normalizeOnboardingPeopleSelectedIds((data as any).onboarding_actors_selected_ids),
@@ -105,7 +121,7 @@ function normalizeOnboardingFilmsLikedIds(raw: unknown): number[] {
   if (!Array.isArray(raw)) return [];
   return [...new Set(raw.map((id) => Number(id)).filter((id) => Number.isFinite(id) && id > 0))].slice(
     0,
-    ONBOARDING_FILM_TARGET,
+    ONBOARDING_FILM_LIKED_MAX,
   );
 }
 
@@ -200,11 +216,10 @@ export async function completeOnboarding(
   await supabase.from("profiles").update({
     onboarding_completed: true,
     onboarding_paused: false,
-    onboarding_step: "soirees",
+    onboarding_step: "search",
     favorite_genres: genres,
     excluded_genres: excluded,
     preferred_platforms: platforms,
-    birth_year: null,
     media_preference: "both",
     min_rating: ONBOARDING_MIN_RATING,
     match_threshold: ONBOARDING_MATCH_THRESHOLD,

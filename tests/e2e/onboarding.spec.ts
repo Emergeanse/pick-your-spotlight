@@ -19,18 +19,23 @@ test.describe("Parcours initiatique — smoke", () => {
     await expect(page.getByRole("heading", { name: /Bienvenue sur Pick/i })).toBeVisible({
       timeout: 12_000,
     });
-    await expect(page.getByText(/2 minutes/i)).toBeVisible({ timeout: 8_000 });
+    await expect(page.getByText(/minute/i)).toBeVisible({ timeout: 8_000 });
   });
 
-  test("étape genres — exemples Comédie / Horreur et CTA Continuer", async ({ page }) => {
+  test("étape genres — exemples Comédie / Horreur, seuil à 4 sélections et CTA Continuer", async ({ page }) => {
     await page.goto("/onboarding");
     await page.waitForLoadState("networkidle");
     await page.getByRole("button", { name: /C'est parti/i }).click();
-    await expect(page.getByText(/Initiation · 2\/8 · Genres/i)).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByText(/Initiation · 2\/5 · Genres/i)).toBeVisible({ timeout: 10_000 });
     await expect(page.getByRole("button", { name: "Comédie" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Horreur" })).toBeVisible();
-    await page.getByRole("button", { name: "Thriller" }).click();
     const continueBtn = page.getByRole("button", { name: /Continuer/i });
+    // Comédie/Horreur ne sont que des exemples visuels — pas de vraie sélection tant qu'on n'a pas touché aux chips.
+    await expect(continueBtn).toBeDisabled();
+    await page.getByRole("button", { name: "Fantastique" }).click();
+    await page.getByRole("button", { name: "Thriller" }).click();
+    await page.getByRole("button", { name: "Action" }).click();
+    await page.getByRole("button", { name: "Aventure" }).click();
     await expect(continueBtn).toBeEnabled({ timeout: 5_000 });
   });
 

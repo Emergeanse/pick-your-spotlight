@@ -671,13 +671,13 @@ const WatchlistPage = ({ tabs: allowedTabs, title, defaultTab }: WatchlistPagePr
                 >
                   <span className={active ? cfg.color : ""}>{cfg.icon}</span>
                   <span>{cfg.label}</span>
-                  {count > 0 && (
-                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium tabular-nums ${
-                      active ? "bg-primary/15 text-primary/80" : "bg-foreground/5 text-foreground/50"
-                    }`}>
-                      {count}
-                    </span>
-                  )}
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium tabular-nums ${
+                    count === 0
+                      ? "text-foreground/30"
+                      : active ? "bg-primary/15 text-primary/80" : "bg-foreground/5 text-foreground/50"
+                  }`}>
+                    {count}
+                  </span>
                 </button>
               );
             })}

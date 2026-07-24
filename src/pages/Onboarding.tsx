@@ -5,12 +5,10 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import pickLogo from "@/assets/pick-logo.png";
 import OnboardingFilmTrainer from "@/components/onboarding/OnboardingFilmTrainer";
-import OnboardingModesGuide from "@/components/onboarding/OnboardingModesGuide";
-import OnboardingSoireesGuide from "@/components/onboarding/OnboardingSoireesGuide";
 import OnboardingPlatformStep from "@/components/onboarding/OnboardingPlatformStep";
-import OnboardingPeopleStep from "@/components/onboarding/OnboardingPeopleStep";
 import OnboardingChrome from "@/components/onboarding/OnboardingChrome";
 import OnboardingStickyFooter from "@/components/onboarding/OnboardingStickyFooter";
+import OnboardingValidateButton from "@/components/onboarding/OnboardingValidateButton";
 import { DEFAULT_ONBOARDING_PLATFORM_IDS } from "@/lib/onboarding-platforms";
 import {
   ONBOARDING_MIN_RATING,
@@ -18,17 +16,15 @@ import {
   loadOnboardingProgress,
   saveOnboardingProgress,
   completeOnboarding,
+  queueOnboardingAutoSurprise,
   type OnboardingStep,
 } from "@/lib/onboarding-progress";
 
 const PREVIOUS_STEP: Partial<Record<OnboardingStep, OnboardingStep>> = {
   genres: "welcome",
-  platforms: "genres",
-  films: "platforms",
-  actors: "films",
-  directors: "actors",
-  modes: "directors",
-  soirees: "modes",
+  films: "genres",
+  platforms: "films",
+  search: "platforms",
 };
 
 const ONBOARDING_GENRES = [
@@ -40,18 +36,29 @@ const ONBOARDING_GENRES = [
 const DEMO_LIKED_GENRE = "Comédie";
 const DEMO_EXCLUDED_GENRE = "Horreur";
 
+/** Nombre de genres (aimés + exclus confondus) à partir duquel on débloque la suite. */
+const GENRES_REWARD_TARGET = 4;
+
 type GenreChoice = "none" | "liked" | "excluded";
 
 function hasGenreSelection(map: Map<string, GenreChoice>): boolean {
   return [...map.values()].some((v) => v === "liked" || v === "excluded");
 }
 
-function withGenreDemosIfEmpty(map: Map<string, GenreChoice>): Map<string, GenreChoice> {
-  if (hasGenreSelection(map)) return map;
-  const next = new Map(map);
-  next.set(DEMO_LIKED_GENRE, "liked");
-  next.set(DEMO_EXCLUDED_GENRE, "excluded");
-  return next;
+/**
+ * État affiché d'un chip — purement visuel tant qu'aucun choix réel n'existe.
+ * Les deux genres démo (Comédie/Horreur) s'affichent aimé/exclu à titre d'exemple
+ * SANS jamais entrer dans genreChoices : ils ne comptent ni dans likedGenres/excludedGenres,
+ * ni dans le seuil de récompense, ni dans ce qui est envoyé à completeOnboarding.
+ */
+function displayGenreState(genre: string, choices: Map<string, GenreChoice>): GenreChoice {
+  const real = choices.get(genre) ?? "none";
+  if (real !== "none") return real;
+  if (!hasGenreSelection(choices)) {
+    if (genre === DEMO_LIKED_GENRE) return "liked";
+    if (genre === DEMO_EXCLUDED_GENRE) return "excluded";
+  }
+  return "none";
 }
 
 const Onboarding = () => {
@@ -61,10 +68,6 @@ const Onboarding = () => {
   const [filmsProgress, setFilmsProgress] = useState(0);
   const [filmsLikedIds, setFilmsLikedIds] = useState<number[]>([]);
   const [filmsProposedIds, setFilmsProposedIds] = useState<number[]>([]);
-  const [actorsSelectedIds, setActorsSelectedIds] = useState<number[]>([]);
-  const [actorsProposedIds, setActorsProposedIds] = useState<number[]>([]);
-  const [directorsSelectedIds, setDirectorsSelectedIds] = useState<number[]>([]);
-  const [directorsProposedIds, setDirectorsProposedIds] = useState<number[]>([]);
   const [loading, setLoading] = useState(true);
   const [pausing, setPausing] = useState(false);
   const [finishing, setFinishing] = useState(false);
@@ -76,6 +79,7 @@ const Onboarding = () => {
   const excludedGenres = [...genreChoices.entries()]
     .filter(([, v]) => v === "excluded")
     .map(([g]) => g);
+  const genresDone = likedGenres.length + excludedGenres.length >= GENRES_REWARD_TARGET;
 
   useEffect(() => {
     let cancelled = false;
@@ -85,15 +89,11 @@ const Onboarding = () => {
         const map = new Map<string, GenreChoice>();
         progress.likedGenres.forEach((g) => map.set(g, "liked"));
         progress.excludedGenres.forEach((g) => map.set(g, "excluded"));
-        setGenreChoices(withGenreDemosIfEmpty(map));
+        setGenreChoices(map);
         setPlatformIds(progress.platformIds);
         setFilmsProgress(progress.filmsProgress);
         setFilmsLikedIds(progress.filmsLikedIds);
         setFilmsProposedIds(progress.filmsProposedIds);
-        setActorsSelectedIds(progress.actorsSelectedIds);
-        setActorsProposedIds(progress.actorsProposedIds);
-        setDirectorsSelectedIds(progress.directorsSelectedIds);
-        setDirectorsProposedIds(progress.directorsProposedIds);
         setStep(progress.step);
         if (progress.paused) {
           await saveOnboardingProgress(progress.step, {
@@ -109,11 +109,6 @@ const Onboarding = () => {
   }, []);
 
   useEffect(() => { window.scrollTo(0, 0); }, [step]);
-
-  useEffect(() => {
-    if (loading || step !== "genres") return;
-    setGenreChoices((prev) => withGenreDemosIfEmpty(prev));
-  }, [step, loading]);
 
   const cycleGenre = (g: string) => {
     setGenreChoices((prev) => {
@@ -154,19 +149,20 @@ const Onboarding = () => {
 
   const handlePlatformsContinue = async (ids: number[]) => {
     setPlatformIds(ids);
-    await saveOnboardingProgress("films", {
+    await saveOnboardingProgress("search", {
       likedGenres,
       excludedGenres,
       platformIds: ids,
       paused: false,
     });
-    setStep("films");
+    setStep("search");
   };
 
   const handleFinish = async () => {
     setFinishing(true);
     try {
       await completeOnboarding(likedGenres, excludedGenres, platformIds);
+      queueOnboardingAutoSurprise();
       navigate("/app", { replace: true });
     } catch (e) {
       console.error(e);
@@ -227,8 +223,8 @@ const Onboarding = () => {
               transition={{ delay: 0.45 }}
               className="text-foreground/50 text-sm font-sans text-center max-w-sm mb-2 leading-relaxed"
             >
-              Environ <strong className="text-foreground/70 font-medium">2 minutes</strong> pour calibrer
-              tes recommandations — genres, plateformes, films et quelques visages du 7e art.
+              Une <strong className="text-foreground/70 font-medium">minute</strong> pour calibrer
+              tes recommandations — genres, films, et tes plateformes.
             </motion.p>
             <motion.p
               initial={{ opacity: 0 }}
@@ -282,11 +278,11 @@ const Onboarding = () => {
             <p className="text-[11px] font-sans text-foreground/50 text-center max-w-lg mb-4 leading-relaxed">
               <span className="text-primary/75">{DEMO_LIKED_GENRE}</span> et{" "}
               <span className="text-destructive/75">{DEMO_EXCLUDED_GENRE}</span> sont des exemples — adapte-les
-              ou choisis d&apos;autres genres (minimum 2 aimés).
+              ou choisis d&apos;autres genres (au moins {GENRES_REWARD_TARGET} au total, aimés ou exclus).
             </p>
             <div className="flex flex-wrap gap-2 justify-center max-w-lg mb-4">
               {ONBOARDING_GENRES.map((genre) => {
-                const state = genreChoices.get(genre) ?? "none";
+                const state = displayGenreState(genre, genreChoices);
                 return (
                   <motion.button
                     key={genre}
@@ -319,6 +315,22 @@ const Onboarding = () => {
                 )}
               </p>
             )}
+            <AnimatePresence>
+              {genresDone && (
+                <motion.p
+                  initial={{ opacity: 0, y: -4, height: 0 }}
+                  animate={{ opacity: 1, y: 0, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ type: "spring", stiffness: 300, damping: 22 }}
+                  className="flex items-center gap-1.5 text-emerald-500 text-xs font-sans font-medium mb-4"
+                >
+                  <span className="w-4 h-4 rounded-full bg-emerald-500 text-white flex items-center justify-center shrink-0">
+                    <Check className="w-2.5 h-2.5" strokeWidth={3} />
+                  </span>
+                  C&apos;est bon, tu peux continuer !
+                </motion.p>
+              )}
+            </AnimatePresence>
             <div className="w-full max-w-lg mb-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="rounded-xl border border-border/30 bg-card/60 px-4 py-3 flex items-start gap-3">
                 <Star className="w-4 h-4 text-yellow-500 shrink-0 mt-0.5" />
@@ -337,31 +349,11 @@ const Onboarding = () => {
             </div>
             </div>
             <OnboardingStickyFooter>
-              <Button
-                variant="hero"
-                size="xl"
-                className="w-full"
-                onClick={() => void goToStep("platforms")}
-                disabled={likedGenres.length < 2}
-              >
-                Continuer <ArrowRight className="w-4 h-4" />
-              </Button>
+              <OnboardingValidateButton
+                onValidate={() => goToStep("films")}
+                disabled={!genresDone}
+              />
             </OnboardingStickyFooter>
-          </motion.div>
-        )}
-
-        {step === "platforms" && (
-          <motion.div
-            key="platforms"
-            initial={{ opacity: 0, x: 40 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -40 }}
-            className="min-h-full"
-          >
-            <OnboardingPlatformStep
-              initialPlatformIds={platformIds}
-              onContinue={(ids) => void handlePlatformsContinue(ids)}
-            />
           </motion.div>
         )}
 
@@ -381,73 +373,60 @@ const Onboarding = () => {
               onFilmsProgressChange={setFilmsProgress}
               onFilmsLikedIdsChange={setFilmsLikedIds}
               onFilmsProposedIdsChange={setFilmsProposedIds}
-              onComplete={() => void goToStep("actors")}
+              onComplete={() => void goToStep("platforms")}
             />
           </motion.div>
         )}
 
-        {step === "actors" && (
+        {step === "platforms" && (
           <motion.div
-            key="actors"
+            key="platforms"
             initial={{ opacity: 0, x: 40 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -40 }}
             className="min-h-full"
           >
-            <OnboardingPeopleStep
-              personType="actor"
-              initialSelectedIds={actorsSelectedIds}
-              initialProposedIds={actorsProposedIds}
-              onSelectedIdsChange={setActorsSelectedIds}
-              onProposedIdsChange={setActorsProposedIds}
-              onComplete={() => void goToStep("directors")}
+            <OnboardingPlatformStep
+              initialPlatformIds={platformIds}
+              onContinue={(ids) => void handlePlatformsContinue(ids)}
             />
           </motion.div>
         )}
 
-        {step === "directors" && (
+        {step === "search" && (
           <motion.div
-            key="directors"
+            key="search"
             initial={{ opacity: 0, x: 40 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -40 }}
-            className="min-h-full"
+            transition={{ duration: 0.3 }}
+            className="flex flex-col items-center justify-center min-h-full px-6 text-center"
           >
-            <OnboardingPeopleStep
-              personType="director"
-              initialSelectedIds={directorsSelectedIds}
-              initialProposedIds={directorsProposedIds}
-              onSelectedIdsChange={setDirectorsSelectedIds}
-              onProposedIdsChange={setDirectorsProposedIds}
-              onComplete={() => void goToStep("modes")}
-            />
-          </motion.div>
-        )}
-
-        {step === "modes" && (
-          <motion.div
-            key="modes"
-            initial={{ opacity: 0, x: 40 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -40 }}
-            className="min-h-full"
-          >
-            <OnboardingModesGuide onContinue={() => void goToStep("soirees")} />
-          </motion.div>
-        )}
-
-        {step === "soirees" && (
-          <motion.div
-            key="soirees"
-            initial={{ opacity: 0, x: 40 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -40 }}
-            className="min-h-full"
-          >
-            <OnboardingSoireesGuide
-              onFinish={() => void handleFinish()}
-              finishing={finishing}
-            />
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ delay: 0.1, type: "spring", stiffness: 200 }}
+              className="mb-6"
+            >
+              <Sparkles className="w-12 h-12 text-primary" />
+            </motion.div>
+            <h1 className="text-2xl md:text-3xl font-serif mb-3">C&apos;est prêt !</h1>
+            <p className="text-foreground/60 text-sm font-sans max-w-sm mb-2 leading-relaxed">
+              On a tout ce qu&apos;il faut pour te proposer un premier film, rien que pour toi.
+            </p>
+            <p className="text-[11px] font-sans text-foreground/40 mb-8">
+              {likedGenres.length} genre{likedGenres.length > 1 ? "s" : ""} ·{" "}
+              {filmsLikedIds.length} film{filmsLikedIds.length > 1 ? "s" : ""} ·{" "}
+              {platformIds.length} plateforme{platformIds.length > 1 ? "s" : ""}
+            </p>
+            <div className="w-full max-w-xs">
+              <OnboardingValidateButton
+                onValidate={handleFinish}
+                loading={finishing}
+                loadingLabel="Un instant…"
+                label="Lancer ma recherche"
+              />
+            </div>
           </motion.div>
         )}
       </AnimatePresence>

@@ -1,7 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
-import { ArrowRight, Check } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Check } from "lucide-react";
 import { ALL_PLATFORMS } from "@/lib/platforms";
 import {
   DEFAULT_ONBOARDING_PLATFORM_IDS,
@@ -10,6 +9,7 @@ import {
 } from "@/lib/onboarding-platforms";
 import OnboardingStepLayout from "@/components/onboarding/OnboardingStepLayout";
 import OnboardingStickyFooter from "@/components/onboarding/OnboardingStickyFooter";
+import OnboardingValidateButton from "@/components/onboarding/OnboardingValidateButton";
 
 interface OnboardingPlatformStepProps {
   initialPlatformIds?: number[];
@@ -130,9 +130,7 @@ export default function OnboardingPlatformStep({
       </p>
       </OnboardingStepLayout>
       <OnboardingStickyFooter>
-        <Button variant="hero" size="xl" className="w-full" onClick={() => onContinue(ensureOnboardingPlatforms(selected))}>
-          Continuer <ArrowRight className="w-4 h-4" />
-        </Button>
+        <OnboardingValidateButton onValidate={() => onContinue(ensureOnboardingPlatforms(selected))} />
       </OnboardingStickyFooter>
     </div>
   );

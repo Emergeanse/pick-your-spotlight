@@ -2,9 +2,11 @@ import { fetchFromTMDB } from "@/lib/tmdb-proxy-client";
 import { hasMoviePoster, type Movie } from "@/lib/tmdb";
 import { pickRandomOnboarding, shuffleOnboarding } from "@/lib/onboarding-random";
 
-export const ONBOARDING_FILM_TARGET = 10;
-/** Titres chargés par page au scroll. */
-export const ONBOARDING_FILM_PAGE_SIZE = 8;
+export const ONBOARDING_FILM_TARGET = 6;
+/** Plafond de films likés conservés en base — au-delà, on arrête d'enregistrer mais l'écran reste utilisable. */
+export const ONBOARDING_FILM_LIKED_MAX = 30;
+/** Titres chargés par page au scroll — assez pour remplir l'écran de plusieurs lignes d'un coup. */
+export const ONBOARDING_FILM_PAGE_SIZE = 12;
 /** @deprecated Utiliser ONBOARDING_FILM_PAGE_SIZE */
 export const ONBOARDING_FILM_DISPLAY = ONBOARDING_FILM_PAGE_SIZE;
 export const CURATED_FR_TMDB_IDS = [

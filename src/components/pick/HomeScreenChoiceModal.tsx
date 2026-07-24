@@ -188,6 +188,11 @@ const HomeScreenChoiceModal = ({
                     className={`relative flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-[12px] font-sans font-medium transition-all overflow-hidden ${disabled ? "text-foreground/40 cursor-not-allowed" : mode === m ? "text-foreground border border-primary/40" : "text-foreground/45 hover:text-foreground/70"}`}
                   >
                     {mode === m && !disabled && <div className="absolute inset-0 rounded-xl" style={{ background: TAB_GRADIENT }} />}
+                    {disabled && (
+                      <span className="absolute top-0.5 right-0.5 px-1 py-px rounded-full bg-foreground/10 text-foreground/45 text-[7px] font-sans font-semibold uppercase tracking-wide leading-none">
+                        Bientôt
+                      </span>
+                    )}
                     <Icon className="relative w-3.5 h-3.5" />
                     <span className="relative">{label}</span>
                   </button>

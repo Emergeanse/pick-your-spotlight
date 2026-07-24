@@ -1,3 +1,5 @@
+import { useEffect, useRef, useState } from "react";
+import { motion } from "framer-motion";
 import { ChevronLeft } from "lucide-react";
 import { ONBOARDING_STEPS, type OnboardingStep } from "@/lib/onboarding-progress";
 import { ONBOARDING_FILM_TARGET } from "@/lib/onboarding-films";
@@ -5,12 +7,9 @@ import { ONBOARDING_FILM_TARGET } from "@/lib/onboarding-films";
 const STEP_LABELS: Record<OnboardingStep, string> = {
   welcome: "Bienvenue",
   genres: "Genres",
-  platforms: "Plateformes",
   films: "Films",
-  actors: "Acteurs",
-  directors: "Réalisateurs",
-  modes: "Solo & Duo",
-  soirees: "Soirées",
+  platforms: "Plateformes",
+  search: "Recherche",
 };
 
 interface OnboardingChromeProps {
@@ -32,6 +31,18 @@ export default function OnboardingChrome({
   const totalSteps = ONBOARDING_STEPS.length;
   const stepLabel = STEP_LABELS[step];
 
+  const prevStepIndexRef = useRef(stepIndex);
+  const [bounceIndex, setBounceIndex] = useState<number | null>(null);
+  useEffect(() => {
+    if (stepIndex > prevStepIndexRef.current) {
+      setBounceIndex(stepIndex - 1);
+      const t = window.setTimeout(() => setBounceIndex(null), 450);
+      prevStepIndexRef.current = stepIndex;
+      return () => window.clearTimeout(t);
+    }
+    prevStepIndexRef.current = stepIndex;
+  }, [stepIndex]);
+
   return (
     <div className="w-full max-w-xl mx-auto px-5 pt-[env(safe-area-inset-top)] pb-2">
       <div className="flex items-center gap-2 mb-2">
@@ -51,8 +62,8 @@ export default function OnboardingChrome({
           <p className="text-[10px] font-sans uppercase tracking-widest text-foreground/40 truncate">
             Initiation · {stepIndex}/{totalSteps} · {stepLabel}
             {step === "films" && (
-              <span className="text-primary/70">
-                {" "}· {Math.min(filmsProgress, ONBOARDING_FILM_TARGET)}/{ONBOARDING_FILM_TARGET}
+              <span className={filmsProgress >= ONBOARDING_FILM_TARGET ? "text-emerald-500" : "text-primary/70"}>
+                {" "}· {filmsProgress}/{ONBOARDING_FILM_TARGET}
               </span>
             )}
           </p>
@@ -68,9 +79,11 @@ export default function OnboardingChrome({
       </div>
       <div className="flex items-center gap-1.5">
         {ONBOARDING_STEPS.map((s, i) => (
-          <div
+          <motion.div
             key={s}
-            className={`h-1 flex-1 rounded-full transition-colors ${
+            animate={i === bounceIndex ? { scaleY: [1, 1.8, 1] } : { scaleY: 1 }}
+            transition={{ duration: 0.42, ease: "easeOut" }}
+            className={`h-1 flex-1 rounded-full origin-center transition-colors ${
               i < stepIndex ? "bg-primary" : "bg-foreground/10"
             }`}
           />

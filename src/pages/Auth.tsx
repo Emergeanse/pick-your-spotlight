@@ -106,12 +106,20 @@ const Auth = () => {
           },
         });
         if (error) throw error;
-        // Marque le compte comme light/skipped en DB si applicable
-        if (skipOnboarding && signUpData.user) {
-          await supabase.from("profiles").update({
-            onboarding_skipped: true,
-            account_type: "light",
-          } as any).eq("id", signUpData.user.id);
+        // Le trigger handle_new_user() ne copie que l'id — on reporte ici l'année de
+        // naissance et le statut light/skipped depuis les métadonnées de signUp.
+        if (signUpData.user) {
+          const profileUpdates: Record<string, unknown> = {};
+          if (skipOnboarding) {
+            profileUpdates.onboarding_skipped = true;
+            profileUpdates.account_type = "light";
+          }
+          if (birthYear) {
+            profileUpdates.birth_year = parseInt(birthYear);
+          }
+          if (Object.keys(profileUpdates).length > 0) {
+            await supabase.from("profiles").update(profileUpdates as any).eq("id", signUpData.user.id);
+          }
         }
         toast.success("Vérifie ta boîte mail pour confirmer ton compte !");
 

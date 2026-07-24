@@ -203,7 +203,8 @@ test.describe('Pipeline de recommandation', () => {
     let excludeIdsFound = false;
 
     await page.route('**/functions/v1/surprise-personalized**', async (route) => {
-      const body = await route.request().postDataJSON().catch(() => null);
+      let body: any = null;
+      try { body = route.request().postDataJSON(); } catch { /* pas de JSON — laissé à null */ }
       if (body && (body.p_exclude_ids || body.excludeIds || body.exclude_ids)) {
         excludeIdsFound = true;
       }

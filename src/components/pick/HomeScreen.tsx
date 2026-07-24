@@ -28,7 +28,8 @@ import {
 import { resolveEffectiveExclusions } from "@/lib/recommendation-pipeline";
 import { getEngagementData, getProgressionMessage, type EngagementData } from "@/lib/engagement";
 import { listFeedbackByType } from "@/lib/feedback";
-import { getMyPreferences } from "@/lib/preferences";
+import { getMyPreferences, sanitizeGenreLabels } from "@/lib/preferences";
+import { consumeOnboardingAutoSurprise } from "@/lib/onboarding-progress";
 
 import BrandHeader from "./BrandHeader";
 import QuickFilters, { type QuickFilterState, type ProfileDefaults } from "./QuickFilters";
@@ -346,6 +347,7 @@ const HomeScreen = ({
   const [currentBgIndex, setCurrentBgIndex] = useState(0);
 
   const [revealPendingIntent, setRevealPendingIntent] = useState<RevealIntent | null>(null);
+  const [autoSurprisePending, setAutoSurprisePending] = useState(false);
   const [revealEventId, setRevealEventId] = useState<string | null>(() => getRevealEvent()?.eventId ?? null);
   const [programmingEvent, setProgrammingEvent] = useState(false);
   const [tonightPick, setTonightPick] = useState<MovieDetail | null>(null);
@@ -1005,9 +1007,9 @@ const HomeScreen = ({
         if ((data as any)?.excluded_platforms) {
           setUserExcludedPlatformIds((data as any).excluded_platforms);
         }
-        if (data?.favorite_genres) setUserGenres(data.favorite_genres);
+        if (data?.favorite_genres) setUserGenres(sanitizeGenreLabels(data.favorite_genres));
         if ((data as any)?.excluded_genres) {
-          setUserExcludedGenres((data as any).excluded_genres);
+          setUserExcludedGenres(sanitizeGenreLabels((data as any).excluded_genres));
         }
 
         // Merge rejected genres from the preferences system (weight < 0)
@@ -1041,6 +1043,14 @@ const HomeScreen = ({
         console.log("[REVEAL] ✅ Profil chargé — platformIds:", (data as any)?.preferred_platforms ?? [], "| intent en attente:", !!pendingReveal);
         if (pendingReveal) {
           setRevealPendingIntent(pendingReveal);
+        }
+        // Sortie d'onboarding — le profil (genres/plateformes/note min) est maintenant chargé
+        // dans le state, donc la recherche automatique verra les bonnes valeurs et non celles
+        // du tout premier render. consumeOnboardingAutoSurprise() est atomique (sessionStorage) :
+        // un seul montage gagnera, même en cas de double-montage React.
+        if (consumeOnboardingAutoSurprise()) {
+          console.log("[REVEAL] 🎬 Auto-surprise post-onboarding — profil prêt, déclenchement.");
+          setAutoSurprisePending(true);
         }
       });
 
@@ -1632,13 +1642,15 @@ const HomeScreen = ({
           });
           setMovieMatchData((prev) => ({ ...prev, ...matchMap }));
 
-          // Tout le filtrage est fait dans le SQL — en mode retrieve-rerank le client
-          // score uniquement les candidats LLM sans re-filtrer par l'historique.
+          // Le filtrage historique/genres est fait dans le SQL — en mode retrieve-rerank le client
+          // score les candidats LLM sans re-filtrer par l'historique. La note minimale, elle, est
+          // relâchée côté SQL quand le pool est trop maigre (cascade de repêchage) : on la
+          // réapplique donc ici comme filet de sécurité (ensureRecommendationBatch, minRating).
           tBatchStart = performance.now();
           movies = await ensureRecommendationBatch(extracted, {
             excludeIds: [],
             platformIds: userPlatformIds,
-            minRating: 0,
+            minRating: effectiveMinRating,
             excludedGenres: [],
             mediaType: undefined,
             size: desiredCount,
@@ -2027,6 +2039,18 @@ const HomeScreen = ({
   // appelle les fonctions de Mount 2 (composant vivant) et non de Mount 1 (démonté)
   _pipelineFns.handleAutoPick = handleAutoPick;
   _pipelineFns.generateTonightPick = generateTonightPick as unknown as (excludeList?: number[], ctx?: unknown, filters?: unknown, overrides?: unknown, mood?: string) => void;
+
+  // Sortie de l'onboarding — lance la même recherche solo que le bouton "Surprise-moi",
+  // en une seule fois, pour un premier résultat immédiat. Le déclenchement effectif est
+  // armé plus haut (setAutoSurprisePending) une fois le profil chargé — pas ici au montage —
+  // pour que la closure de handleAutoPick voie déjà les vrais genres/plateformes/note min
+  // et non les valeurs par défaut du tout premier render. On passe par le ref (comme le
+  // pipeline reveal) pour être certain d'appeler la version la plus fraîche de la fonction.
+  useEffect(() => {
+    if (!autoSurprisePending) return;
+    setAutoSurprisePending(false);
+    void handleAutoPickRef.current?.();
+  }, [autoSurprisePending]);
 
   const handleCloseTonightPick = () => setTonightPick(null);
 
