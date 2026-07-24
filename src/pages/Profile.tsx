@@ -4,8 +4,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "@/hooks/use-toast";
 import {
   Check, ChevronDown, ChevronRight, LogOut, Loader2, Info, Camera, Pencil, Shield,
-  ArrowLeft, Sparkles, Brain, Film, Tv, Trophy, Eye, Heart, Bookmark, TrendingUp, Users, RotateCcw,
+  ArrowLeft, Sparkles, Brain, Film, Tv, Eye, Heart, Bookmark, TrendingUp, Users, RotateCcw,
 } from "lucide-react";
+import { TrophySection } from "@/components/pick/TrophySection";
 import { Slider } from "@/components/ui/slider";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
@@ -29,6 +30,7 @@ import {
   Sheet,
   SheetContent,
   SheetDescription,
+  SheetFooter,
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
@@ -89,114 +91,6 @@ function formatDecadesSummary(decades: number[]): string | null {
     return `Années ${start}–${end}`;
   }
   return `${sorted.length} époques`;
-}
-
-const TROPHY_CATEGORIES = [
-  {
-    key: "recos",
-    label: "Recommandations reçues",
-    milestones: [
-      { count: 1,    label: "Premier pick",     icon: "🎬" },
-      { count: 10,   label: "Habitué",           icon: "🎞️" },
-      { count: 50,   label: "Explorateur",       icon: "🎟️" },
-      { count: 100,  label: "Connaisseur",       icon: "📽️" },
-      { count: 250,  label: "Cinéphile",         icon: "🎦" },
-      { count: 500,  label: "Critique d'art",    icon: "🏆" },
-      { count: 1000, label: "Maître absolu",     icon: "👑" },
-    ],
-  },
-  {
-    key: "liked",
-    label: "Films & séries likés",
-    milestones: [
-      { count: 3,   label: "Coup de cœur",      icon: "🍿" },
-      { count: 10,  label: "Passionné",          icon: "🎟️" },
-      { count: 25,  label: "Critique",           icon: "🎭" },
-      { count: 50,  label: "Collectionneur",     icon: "📽️" },
-      { count: 100, label: "Oracle du goût",     icon: "🌟" },
-      { count: 200, label: "Légende",            icon: "🏆" },
-      { count: 500, label: "Panthéon",           icon: "👑" },
-    ],
-  },
-  {
-    key: "people",
-    label: "Acteurs & réalisateurs",
-    milestones: [
-      { count: 1,   label: "Premier favori",    icon: "🎭" },
-      { count: 5,   label: "Fan",               icon: "🎬" },
-      { count: 15,  label: "Fin connaisseur",   icon: "🎥" },
-      { count: 30,  label: "Expert casting",    icon: "🎞️" },
-      { count: 50,  label: "Talent scouter",    icon: "🌟" },
-      { count: 100, label: "Maître des talents", icon: "🏆" },
-      { count: 200, label: "Légende du 7e art", icon: "👑" },
-    ],
-  },
-  {
-    key: "seen",
-    label: "Films lancés via Pick",
-    milestones: [
-      { count: 1,   label: "1er visionnage",    icon: "📺" },
-      { count: 5,   label: "Soirée ciné",       icon: "🎞️" },
-      { count: 15,  label: "Ciné-club",         icon: "🍿" },
-      { count: 30,  label: "Cinémathèque",      icon: "🎦" },
-      { count: 75,  label: "Vidéothèque",       icon: "📼" },
-      { count: 150, label: "Archives Pick",     icon: "🏛️" },
-      { count: 300, label: "Grand écran",       icon: "👑" },
-    ],
-  },
-];
-
-type TrophyMilestoneMeta = {
-  count: number;
-  label: string;
-  icon: string;
-  categoryKey: string;
-  categoryLabel: string;
-};
-
-const TROPHY_TIER_LEVELS = [
-  { minUnlocked: 0, title: "Curieux", subtitle: "Chaque trophée raconte une histoire" },
-  { minUnlocked: 5, title: "Explorateur", subtitle: "Pick découvre ton profil" },
-  { minUnlocked: 10, title: "Passionné", subtitle: "Ta collection prend forme" },
-  { minUnlocked: 15, title: "Habitué", subtitle: "Tu maîtrises les codes du 7e art" },
-  { minUnlocked: 20, title: "Écureuil cinéphile", subtitle: "Un écureuil qui sait ce qu'il aime" },
-  { minUnlocked: 24, title: "Connaisseur", subtitle: "Plus que quelques trophées" },
-  { minUnlocked: 28, title: "Légende Pick", subtitle: "Collection complète — bravo !" },
-] as const;
-
-function flattenTrophyMilestones(): TrophyMilestoneMeta[] {
-  return TROPHY_CATEGORIES.flatMap((cat) =>
-    cat.milestones.map((m) => ({
-      ...m,
-      categoryKey: cat.key,
-      categoryLabel: cat.label,
-    }))
-  );
-}
-
-function getTrophyTier(unlocked: number): { title: string; subtitle: string } {
-  let tier = TROPHY_TIER_LEVELS[0];
-  for (const t of TROPHY_TIER_LEVELS) {
-    if (unlocked >= t.minUnlocked) tier = t;
-  }
-  return { title: tier.title, subtitle: tier.subtitle };
-}
-
-function getNextTrophyHint(values: Record<string, number>): { milestone: TrophyMilestoneMeta; remaining: number } | null {
-  let best: { milestone: TrophyMilestoneMeta; remaining: number } | null = null;
-  for (const cat of TROPHY_CATEGORIES) {
-    const value = values[cat.key] ?? 0;
-    const next = cat.milestones.find((m) => value < m.count);
-    if (!next) continue;
-    const remaining = next.count - value;
-    const milestone: TrophyMilestoneMeta = {
-      ...next,
-      categoryKey: cat.key,
-      categoryLabel: cat.label,
-    };
-    if (!best || remaining < best.remaining) best = { milestone, remaining };
-  }
-  return best;
 }
 
 function computeDetailedConfidence(data: {
@@ -386,7 +280,6 @@ const Profile = () => {
   const [genresPreviewKey, setGenresPreviewKey] = useState(0);
   const genrePrefsRef = useRef<GenrePreferencesHandle>(null);
   const [showStats, setShowStats] = useState(false);
-  const [showTrophies, setShowTrophies] = useState(false);
   const [seenCount, setSeenCount] = useState(0);
 
   useEffect(() => {
@@ -540,6 +433,22 @@ const Profile = () => {
       toast({ title: "Photo de profil mise à jour" });
     } catch (err) { console.error(err); toast({ title: "Erreur lors de l'upload", variant: "destructive" }); }
     finally { setUploadingAvatar(false); }
+  };
+
+  const handleSaveGenres = async (closeSheet = true) => {
+    setSaving(true);
+    try {
+      await genrePrefsRef.current?.save();
+      setGenresDirty(false);
+      setGenresPreviewKey((k) => k + 1);
+      toast({ title: "Genres enregistrés" });
+      if (closeSheet) setShowGenresSheet(false);
+    } catch (e) {
+      console.error(e);
+      toast({ title: "Erreur", variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleSave = async () => {
@@ -1086,153 +995,7 @@ const Profile = () => {
             </div>
 
             {/* Trophées */}
-            {(() => {
-              const allMilestones = flattenTrophyMilestones();
-              const totalUnlocked = allMilestones.filter(
-                (m) => (trophyValues[m.categoryKey] ?? 0) >= m.count
-              ).length;
-              const totalMilestones = allMilestones.length;
-              const progressPct = totalMilestones > 0 ? (totalUnlocked / totalMilestones) * 100 : 0;
-              const tier = getTrophyTier(totalUnlocked);
-              const nextHint = getNextTrophyHint(trophyValues);
-              return (
-                <div className="rounded-2xl bg-card/80 backdrop-blur-sm border border-border/15 p-4">
-                  <div className="flex items-start justify-between gap-3 mb-3">
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2 mb-1.5">
-                        <Trophy className="w-3.5 h-3.5 text-amber-400/70 shrink-0" />
-                        <span className="text-[10px] font-sans font-semibold text-foreground uppercase tracking-widest">Trophées</span>
-                      </div>
-                      <h3 className="text-base font-serif text-foreground leading-tight">{tier.title}</h3>
-                      <p className="text-[11px] font-sans text-foreground/50 mt-0.5 leading-snug">{tier.subtitle}</p>
-                    </div>
-                    <div className="text-right shrink-0 pt-0.5">
-                      <span className="text-2xl font-serif font-bold text-primary tabular-nums">{totalUnlocked}</span>
-                      <span className="text-[11px] font-sans text-foreground/40 tabular-nums">/{totalMilestones}</span>
-                    </div>
-                  </div>
-
-                  <div className="h-1.5 rounded-full bg-foreground/[0.04] overflow-hidden mb-4">
-                    <motion.div
-                      initial={{ width: 0 }}
-                      animate={{ width: `${progressPct}%` }}
-                      transition={{ delay: 0.15, duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-                      className="h-full rounded-full bg-gradient-to-r from-amber-500/40 via-primary/60 to-primary"
-                    />
-                  </div>
-
-                  <TooltipProvider delayDuration={200}>
-                    <div className="grid grid-cols-7 gap-1.5 mb-3">
-                      {allMilestones.map((m) => {
-                        const reached = (trophyValues[m.categoryKey] ?? 0) >= m.count;
-                        return (
-                          <Tooltip key={`${m.categoryKey}-${m.count}`}>
-                            <TooltipTrigger asChild>
-                              <button
-                                type="button"
-                                className={`aspect-square flex items-center justify-center rounded-lg border text-base leading-none transition-all active:scale-95 ${
-                                  reached
-                                    ? "bg-primary/10 border-primary/25 shadow-[0_0_10px_rgba(139,92,246,0.12)]"
-                                    : "bg-card/40 border-border/10 opacity-35 grayscale"
-                                }`}
-                              >
-                                {m.icon}
-                              </button>
-                            </TooltipTrigger>
-                            <TooltipContent side="top" className="max-w-[200px] text-center">
-                              <p className="font-semibold">{reached ? m.label : "À débloquer"}</p>
-                              <p className="text-[10px] opacity-80 mt-0.5">{m.categoryLabel}</p>
-                              {!reached && (
-                                <p className="text-[10px] opacity-70 mt-0.5 tabular-nums">
-                                  {m.count - (trophyValues[m.categoryKey] ?? 0)} restant{m.count - (trophyValues[m.categoryKey] ?? 0) > 1 ? "s" : ""}
-                                </p>
-                              )}
-                            </TooltipContent>
-                          </Tooltip>
-                        );
-                      })}
-                    </div>
-                  </TooltipProvider>
-
-                  {nextHint && (
-                    <p className="text-[11px] font-sans text-foreground/50 text-center leading-snug px-1">
-                      Prochain trophée :{" "}
-                      <span className="text-foreground/70">{nextHint.milestone.icon} {nextHint.milestone.label}</span>
-                      {" "}— encore{" "}
-                      <span className="text-primary/70 font-medium tabular-nums">{nextHint.remaining}</span>
-                      {" "}({nextHint.milestone.categoryLabel.toLowerCase()})
-                    </p>
-                  )}
-
-                  <button
-                    type="button"
-                    onClick={() => setShowTrophies((v) => !v)}
-                    className="w-full flex items-center justify-center gap-1.5 mt-4 pt-3 border-t border-border/10 text-[11px] font-sans text-primary/50 hover:text-primary/70 transition-colors"
-                  >
-                    {showTrophies ? "Masquer le détail" : "Voir par catégorie"}
-                    <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-300 ${showTrophies ? "rotate-180" : ""}`} />
-                  </button>
-
-                  <AnimatePresence initial={false}>
-                    {showTrophies && (
-                      <motion.div
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: "auto" }}
-                        exit={{ opacity: 0, height: 0 }}
-                        transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
-                        className="overflow-hidden"
-                      >
-                        <div className="space-y-5 pt-4">
-                          {TROPHY_CATEGORIES.map((cat) => {
-                            const value = trophyValues[cat.key] ?? 0;
-                            const nextM = cat.milestones.find((m) => value < m.count);
-                            const unlockedCount = cat.milestones.filter((m) => value >= m.count).length;
-                            const catProgress = cat.milestones.length > 0 ? (unlockedCount / cat.milestones.length) * 100 : 0;
-                            return (
-                              <div key={cat.key}>
-                                <div className="flex items-center justify-between mb-2">
-                                  <p className="text-[10px] font-sans font-semibold text-foreground/50 uppercase tracking-widest">{cat.label}</p>
-                                  <span className="text-[10px] font-sans text-primary/50 tabular-nums">{unlockedCount}/{cat.milestones.length}</span>
-                                </div>
-                                <div className="h-1 rounded-full bg-foreground/[0.04] overflow-hidden mb-2.5">
-                                  <div className="h-full rounded-full bg-primary/35 transition-all" style={{ width: `${catProgress}%` }} />
-                                </div>
-                                <div className="grid grid-cols-4 gap-1.5">
-                                  {cat.milestones.map((m) => {
-                                    const reached = value >= m.count;
-                                    return (
-                                      <div
-                                        key={m.count}
-                                        className={`flex flex-col items-center gap-1 p-2 rounded-xl border transition-all ${
-                                          reached
-                                            ? "bg-primary/[0.06] border-primary/20 shadow-[0_0_12px_rgba(139,92,246,0.08)]"
-                                            : "bg-card/50 border-border/15 opacity-60"
-                                        }`}
-                                      >
-                                        <span className={`text-xl leading-none ${reached ? "" : "grayscale opacity-40"}`}>{m.icon}</span>
-                                        <span className={`text-[8px] font-sans text-center leading-tight mt-0.5 ${reached ? "text-foreground/60" : "text-foreground/25"}`}>
-                                          {reached ? m.label : m.label}
-                                        </span>
-                                        <span className={`text-[7px] font-sans tabular-nums ${reached ? "text-primary/50" : "text-foreground/20"}`}>{m.count}</span>
-                                      </div>
-                                    );
-                                  })}
-                                </div>
-                                {nextM && (
-                                  <p className="text-foreground/45 text-[10px] font-sans mt-2 text-center">
-                                    Plus que <span className="text-primary/60 font-medium tabular-nums">{nextM.count - value}</span> pour « {nextM.label} »
-                                  </p>
-                                )}
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-              );
-            })()}
+            <TrophySection values={trophyValues} />
 
           </section>
         )}
@@ -1368,33 +1131,57 @@ const Profile = () => {
 
       </div>
 
-      <Sheet open={showGenresSheet} onOpenChange={setShowGenresSheet}>
-        <SheetContent side="bottom" className="max-h-[88vh] overflow-y-auto rounded-t-2xl pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
-          <SheetHeader className="text-left mb-4">
-            <SheetTitle className="font-serif text-xl">Genres & styles</SheetTitle>
-            <SheetDescription className="text-xs">
-              1 clic = tu aimes · 2 clics = tu n&apos;aimes pas · 3 clics = neutre
-            </SheetDescription>
-          </SheetHeader>
-          <Tabs value={genresSheetTab} onValueChange={(v) => setGenresSheetTab(v as "liked" | "excluded")}>
-            <TabsList className="w-full grid grid-cols-2 h-9 bg-foreground/5 mb-4">
-              <TabsTrigger value="liked" className="text-xs font-sans data-[state=active]:bg-primary/15 data-[state=active]:text-primary">
-                Aimés{genresSelected > 0 ? ` (${genresSelected})` : ""}
-              </TabsTrigger>
-              <TabsTrigger value="excluded" className="text-xs font-sans data-[state=active]:bg-destructive/10 data-[state=active]:text-destructive">
-                Exclus{genresExcluded > 0 ? ` (${genresExcluded})` : ""}
-              </TabsTrigger>
-            </TabsList>
-          </Tabs>
-          <GenrePreferences
-            ref={genrePrefsRef}
-            deferSave
-            filter={genresSheetTab}
-            orderKey={showGenresSheet ? `${genresSheetSession}-${genresSheetTab}` : undefined}
-            onCountChange={setGenresSelected}
-            onRejectedCountChange={setGenresExcluded}
-            onDirtyChange={setGenresDirty}
-          />
+      <Sheet
+        open={showGenresSheet}
+        onOpenChange={(open) => {
+          setShowGenresSheet(open);
+          // Sheet unmounts GenrePreferences — discard local dirty flag if closed without save.
+          if (!open) setGenresDirty(false);
+        }}
+      >
+        <SheetContent
+          side="bottom"
+          className="max-h-[88vh] flex flex-col gap-0 rounded-t-2xl p-0 pb-[env(safe-area-inset-bottom)]"
+        >
+          <div className="flex-1 overflow-y-auto px-6 pt-6 pb-4">
+            <SheetHeader className="text-left mb-4 pr-8">
+              <SheetTitle className="font-serif text-xl">Genres & styles</SheetTitle>
+              <SheetDescription className="text-xs">
+                1 clic = tu aimes · 2 clics = tu n&apos;aimes pas · 3 clics = neutre
+              </SheetDescription>
+            </SheetHeader>
+            <Tabs value={genresSheetTab} onValueChange={(v) => setGenresSheetTab(v as "liked" | "excluded")}>
+              <TabsList className="w-full grid grid-cols-2 h-9 bg-foreground/5 mb-4">
+                <TabsTrigger value="liked" className="text-xs font-sans data-[state=active]:bg-primary/15 data-[state=active]:text-primary">
+                  Aimés{genresSelected > 0 ? ` (${genresSelected})` : ""}
+                </TabsTrigger>
+                <TabsTrigger value="excluded" className="text-xs font-sans data-[state=active]:bg-destructive/10 data-[state=active]:text-destructive">
+                  Exclus{genresExcluded > 0 ? ` (${genresExcluded})` : ""}
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
+            <GenrePreferences
+              ref={genrePrefsRef}
+              deferSave
+              hideSaveHint
+              filter={genresSheetTab}
+              orderKey={showGenresSheet ? `${genresSheetSession}-${genresSheetTab}` : undefined}
+              onCountChange={setGenresSelected}
+              onRejectedCountChange={setGenresExcluded}
+              onDirtyChange={setGenresDirty}
+            />
+          </div>
+          <SheetFooter className="shrink-0 flex-row border-t border-border/10 bg-background/95 backdrop-blur-xl px-6 py-3 sm:justify-stretch">
+            <Button
+              variant="hero"
+              size="lg"
+              disabled={saving || !genresDirty}
+              onClick={() => void handleSaveGenres(true)}
+              className="w-full rounded-full"
+            >
+              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : "Enregistrer"}
+            </Button>
+          </SheetFooter>
         </SheetContent>
       </Sheet>
 

@@ -80,6 +80,10 @@ interface GenrePreferencesProps {
 
   deferSave?: boolean;
 
+  /** Hide the “save with bottom page button” hint (e.g. when the parent sheet has its own CTA). */
+
+  hideSaveHint?: boolean;
+
   collapsed?: boolean;
 
   /** Preview: read-only chips for summary row. Full: interactive grid (default). */
@@ -113,6 +117,8 @@ const GenrePreferences = forwardRef<GenrePreferencesHandle, GenrePreferencesProp
   onDirtyChange,
 
   deferSave = false,
+
+  hideSaveHint = false,
 
   collapsed = false,
 
@@ -774,7 +780,7 @@ const GenrePreferences = forwardRef<GenrePreferencesHandle, GenrePreferencesProp
 
 
 
-      {deferSave && mode === "full" && (
+      {deferSave && mode === "full" && !hideSaveHint && (
 
         <p className="text-[10px] font-sans text-foreground/45">
 

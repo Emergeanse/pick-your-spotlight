@@ -1,5 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
-import { getPreferencesSnapshot } from "@/lib/preferences";
+import { getPreferencesSnapshot, sanitizeGenreLabels } from "@/lib/preferences";
 
 export type ActionType =
   | "liked"
@@ -368,18 +368,18 @@ export async function getUserTasteProfile() {
 
   // Genres explicites : union de "Mon Cinéma" (user_preferences) + profil/onboarding (profiles.favorite_genres)
   // Fallback sur l'historique d'interactions si aucune préférence explicite n'est définie
-  const explicitLikedGenres = [
+  const explicitLikedGenres = sanitizeGenreLabels([
     ...new Set([
       ...prefs.genres.liked,
       ...((profileData as any)?.favorite_genres || []),
     ]),
-  ];
-  const explicitExcludedGenres = [
+  ]);
+  const explicitExcludedGenres = sanitizeGenreLabels([
     ...new Set([
       ...prefs.genres.excluded,
       ...((profileData as any)?.excluded_genres || []),
     ]),
-  ];
+  ]);
 
   const topGenres =
     explicitLikedGenres.length > 0

@@ -16,12 +16,60 @@ export interface UserPreference {
   source: string;
 }
 
+/** Composite TV labels that duplicate Science-Fiction + Fantastique — hide from UI. */
+const HIDDEN_COMPOSITE_GENRE_LABELS = new Set([
+  "Sci-Fi & Fantastique",
+  "Science-Fiction & Fantastique",
+  "Sci-Fi & Fantasy",
+]);
+
+const HIDDEN_COMPOSITE_GENRE_KEYS = new Set([
+  "sci-fi-fantastique",
+  "science-fiction-fantastique",
+  "sci-fi-fantasy",
+  "science-fiction-and-fantastique",
+  "scifi-fantastique",
+]);
+
+function normalizeGenreToken(value: string): string {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[&+]/g, "and")
+    .replace(/[^a-z0-9]+/g, "")
+    .trim();
+}
+
+function isHiddenCompositeGenre(tag: PreferenceTag): boolean {
+  if (HIDDEN_COMPOSITE_GENRE_LABELS.has(tag.label)) return true;
+  if (HIDDEN_COMPOSITE_GENRE_KEYS.has(tag.key)) return true;
+  const labelNorm = normalizeGenreToken(tag.label);
+  const keyNorm = normalizeGenreToken(tag.key);
+  for (const hidden of HIDDEN_COMPOSITE_GENRE_LABELS) {
+    if (normalizeGenreToken(hidden) === labelNorm) return true;
+  }
+  for (const hidden of HIDDEN_COMPOSITE_GENRE_KEYS) {
+    if (normalizeGenreToken(hidden) === keyNorm) return true;
+  }
+  // Catch residual composites pairing sci-fi + fantastique/fantasy in one tag.
+  const isSciComposite =
+    (labelNorm.includes("scifi") || labelNorm.includes("sciencefiction")) &&
+    (labelNorm.includes("fantastique") || labelNorm.includes("fantasy"));
+  return isSciComposite;
+}
+
+function isSelectableGenreTag(tag: PreferenceTag): boolean {
+  if (tag.category !== "genre") return true;
+  return !isHiddenCompositeGenre(tag);
+}
+
 /** List all known preference tags, optionally filtered by category. */
 export async function listPreferenceTags(category?: PreferenceCategory): Promise<PreferenceTag[]> {
   let q = supabase.from("preference_tags").select("*");
   if (category) q = q.eq("category", category);
   const { data } = await q;
-  return (data ?? []) as PreferenceTag[];
+  return ((data ?? []) as PreferenceTag[]).filter(isSelectableGenreTag);
 }
 
 /** Get current user's preferences (joined with tag info). */
@@ -35,7 +83,7 @@ export async function getMyPreferences(): Promise<UserPreference[]> {
     .eq("user_id", userId);
 
   return (data ?? [])
-    .filter((r: any) => r.tag)
+    .filter((r: any) => r.tag && isSelectableGenreTag(r.tag as PreferenceTag))
     .map((r: any) => ({ tag: r.tag, weight: Number(r.weight), source: r.source }));
 }
 
@@ -46,6 +94,17 @@ export interface PreferencesSnapshot {
   mediaType: "movie" | "tv" | "both";
   maxDuration: number | null;
   minRating: number;
+}
+
+/** Drop composite SF/Fantasy labels from profile genre arrays. */
+export function sanitizeGenreLabels(labels: string[] | null | undefined): string[] {
+  return (labels ?? []).filter((g) => !isHiddenCompositeGenre({
+    id: "",
+    category: "genre",
+    key: "",
+    label: g,
+    metadata: {},
+  }));
 }
 
 export async function getPreferencesSnapshot(): Promise<PreferencesSnapshot> {
