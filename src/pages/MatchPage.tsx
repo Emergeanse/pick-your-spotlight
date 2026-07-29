@@ -9,7 +9,7 @@ import { getLikedMovies } from "@/lib/liked-movies";
 import { computeMultiVectorProfile } from "@/lib/taste-engine";
 import type { RecommendationMatchData } from "@/lib/recommendation-batch";
 import HazelnutScore from "@/components/pick/HazelnutScore";
-import matchBackground from "@/assets/match-background.png";
+import matchBackground from "@/assets/match-background.webp";
 import MovieActionBar from "@/components/pick/MovieActionBar";
 import FlipCardDetail from "@/components/pick/FlipCardDetail";
 

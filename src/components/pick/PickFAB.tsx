@@ -2,7 +2,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useCompanion } from "@/contexts/CompanionContext";
 import { useLocation } from "react-router-dom";
 import { getDisplayTitle } from "@/lib/tmdb";
-import squirrelImg from "@/assets/pick-squirrel.png";
+import squirrelImg from "@/assets/pick-squirrel.webp";
 
 const HIDDEN_ROUTES = ["/onboarding", "/auth", "/"];
 

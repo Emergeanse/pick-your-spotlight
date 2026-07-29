@@ -5,7 +5,7 @@ import { Calendar, Clock, MapPin, Wifi, Film, Users, Loader2, Check, ArrowRight 
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
-import pickLogo from "@/assets/pick-logo.png";
+import pickLogo from "@/assets/pick-logo.webp";
 
 type EventData = {
   id: string;

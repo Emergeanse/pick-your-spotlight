@@ -9,9 +9,9 @@ import { fetchMyDuos, loadAcceptedFriends, type DuoProfile, type DuoFriendCandid
 import { getLikedMovies } from "@/lib/liked-movies";
 import { listFeedbackByType } from "@/lib/feedback";
 import { getMyPreferences } from "@/lib/preferences";
-import squirrelHappy from "@/assets/Happy.png";
-import squirrelCritique from "@/assets/Critique.png";
-import squirrelExigeant from "@/assets/Exigeant.png";
+import squirrelHappy from "@/assets/happy.webp";
+import squirrelCritique from "@/assets/critique.webp";
+import squirrelExigeant from "@/assets/exigeant.webp";
 
 const TMDB_IMG = "https://image.tmdb.org/t/p/";
 const poster = (path: string | null, size = "w342") =>

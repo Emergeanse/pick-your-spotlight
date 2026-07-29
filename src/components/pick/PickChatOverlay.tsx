@@ -13,7 +13,7 @@ import { usePickPlus } from "@/hooks/use-pick-plus";
 import PickPlusPaywall from "@/components/pick/PickPlusPaywall";
 import FeedbackBadge from "@/components/pick/FeedbackBadge";
 import { useMovieInteraction } from "@/hooks/use-movie-interactions";
-import squirrelImg from "@/assets/pick-squirrel.png";
+import squirrelImg from "@/assets/pick-squirrel.webp";
 
 interface ChatMsg {
   role: "user" | "assistant";

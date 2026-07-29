@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Brain } from "lucide-react";
-import pickWave from "@/assets/pick-squirrel-wave.png";
+import pickWave from "@/assets/pick-squirrel-wave.webp";
 
 const TOUR_KEY = "pick_tour_completed";
 

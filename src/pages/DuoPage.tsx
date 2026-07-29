@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { toast } from "sonner";
-import duoBg from "@/assets/duo-background.png";
+import duoBg from "@/assets/duo-background.webp";
 import { useLocation, useNavigate } from "react-router-dom";
 import { setPendingDuoPick } from "@/lib/duo-pending";
 import { motion, AnimatePresence } from "framer-motion";

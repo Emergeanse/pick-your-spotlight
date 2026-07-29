@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
-import pickWave from "@/assets/pick-squirrel-wave.png";
+import pickWave from "@/assets/pick-squirrel-wave.webp";
 
 interface TourStep {
   selector: string; // data-tour attribute value OR CSS selector

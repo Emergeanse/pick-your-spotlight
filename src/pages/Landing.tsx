@@ -7,9 +7,9 @@ import {
   Volume2, Zap, Crown, Check,
   BookmarkPlus, Dna, Star, Eye, ArrowRight, Play, Users
 } from "lucide-react";
-import pickWave from "@/assets/pick-squirrel-wave.png";
-import pickDefault from "@/assets/pick-squirrel.png";
-import pickLogo from "@/assets/pick-logo.png";
+import pickWave from "@/assets/pick-squirrel-wave.webp";
+import pickDefault from "@/assets/pick-squirrel.webp";
+import pickLogo from "@/assets/pick-logo.webp";
 import { ALL_PLATFORMS } from "@/lib/platforms";
 
 const POSTER_URLS = [

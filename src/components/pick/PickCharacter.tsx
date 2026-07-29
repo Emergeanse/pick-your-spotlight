@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Volume2, Loader2 } from "lucide-react";
-import pickDefault from "@/assets/pick-squirrel.png";
-import pickWave from "@/assets/pick-squirrel-wave.png";
-import pickThink from "@/assets/pick-squirrel-think.png";
+import pickDefault from "@/assets/pick-squirrel.webp";
+import pickWave from "@/assets/pick-squirrel-wave.webp";
+import pickThink from "@/assets/pick-squirrel-think.webp";
 import { getDayPeriod } from "@/lib/time-context";
 
 export type PickMood = "default" | "wave" | "think";

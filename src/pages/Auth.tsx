@@ -7,7 +7,7 @@ import { Mail, Lock, User, ArrowLeft, Loader2, Eye, EyeOff } from "lucide-react"
 import { useNavigate, Navigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
-import pickLogo from "@/assets/pick-logo.png";
+import pickLogo from "@/assets/pick-logo.webp";
 
 type AuthMode = "login" | "signup" | "forgot" | "reset";
 

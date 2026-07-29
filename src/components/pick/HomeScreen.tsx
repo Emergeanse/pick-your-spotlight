@@ -40,8 +40,7 @@ import TonightPickOverlay, { preloadPosterWallCache } from "./TonightPickOverlay
 import FlipCardDetail from "./FlipCardDetail";
 import PostSoireeFlow, { type PostSoireeEvent } from "./PostSoireeFlow";
 import { type AmbianceMood } from "./HomeAmbianceSection";
-import homeBackground from "@/assets/home-background.png";
-import loadingBackground from "@/assets/loading-background.png";
+import homeBackground from "@/assets/home-background.webp";
 
 interface HomeScreenProps {
   onStart: () => void;

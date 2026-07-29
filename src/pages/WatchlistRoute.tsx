@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import WatchlistPage from "@/components/pick/WatchlistPage";
-import watchlistBackground from "@/assets/watchlist-background.png";
+import watchlistBackground from "@/assets/watchlist-background.webp";
 import type { MovieDetail } from "@/lib/tmdb";
 
 const WatchlistRoute = () => {

@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { getUserTasteProfile } from "@/lib/interactions";
 import { getLikedMovies } from "@/lib/liked-movies";
 import { getPosterUrl } from "@/lib/tmdb";
-import pickLogoLunettes from "@/assets/pick-logo-lunettes.png";
+import pickLogoLunettes from "@/assets/pick-logo-lunettes.webp";
 import CinemaAvatar from "@/components/pick/CinemaAvatar";
 
 // ── Types ──

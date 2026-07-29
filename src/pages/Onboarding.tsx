@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, Loader2, Star, Sparkles, Ban, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import pickLogo from "@/assets/pick-logo.png";
+import pickLogo from "@/assets/pick-logo.webp";
 import OnboardingFilmTrainer from "@/components/onboarding/OnboardingFilmTrainer";
 import OnboardingPlatformStep from "@/components/onboarding/OnboardingPlatformStep";
 import OnboardingChrome from "@/components/onboarding/OnboardingChrome";

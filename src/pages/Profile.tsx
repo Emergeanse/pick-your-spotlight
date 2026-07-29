@@ -51,10 +51,10 @@ import TasteTrainer from "@/components/pick/TasteTrainer";
 import GenrePreferences from "@/components/pick/GenrePreferences";
 import CinemaAvatar from "@/components/pick/CinemaAvatar";
 import { RadarChart, PolarGrid, PolarAngleAxis, Radar, ResponsiveContainer } from "recharts";
-import profileBackground from "@/assets/profile-background.png";
-import squirrelHappy from "@/assets/Happy.png";
-import squirrelCritique from "@/assets/Critique.png";
-import squirrelExigeant from "@/assets/Exigeant.png";
+import profileBackground from "@/assets/profile-background.webp";
+import squirrelHappy from "@/assets/happy.webp";
+import squirrelCritique from "@/assets/critique.webp";
+import squirrelExigeant from "@/assets/exigeant.webp";
 
 const DECADE_ORDER = [1900, 1970, 1980, 1990, 2000, 2010, 2020] as const;
 

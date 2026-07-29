@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -7,31 +8,35 @@ import { useAuth } from "@/hooks/use-auth";
 
 import AppLayout from "@/components/pick/AppLayout";
 import ErrorBoundary from "@/components/ErrorBoundary";
-import Landing from "./pages/Landing.tsx";
-import Index from "./pages/Index.tsx";
-import Auth from "./pages/Auth.tsx";
-import Onboarding from "./pages/Onboarding.tsx";
-import Profile from "./pages/Profile.tsx";
-import CinemaDNAPage from "./pages/CinemaDNAPage.tsx";
-import MyCinema from "./pages/MyCinema.tsx";
-import Glossary from "./pages/Glossary.tsx";
-import PickPlusPage from "./pages/PickPlus.tsx";
-import NotFound from "./pages/NotFound.tsx";
-import WatchlistPageRoute from "./pages/WatchlistRoute.tsx";
-import Friends from "./pages/Friends.tsx";
-import PickTogether from "./pages/PickTogether.tsx";
-import JoinSession from "./pages/JoinSession.tsx";
-import JoinDuo from "./pages/JoinDuo.tsx";
-import DuoPage from "./pages/DuoPage.tsx";
-import SoireesPage from "./pages/SoireesPage.tsx";
-import Admin from "./pages/Admin.tsx";
-import PlanSession from "./pages/PlanSession.tsx";
-import History from "./pages/History.tsx";
-import InvitePage from "./pages/InvitePage.tsx";
-import CreateEventPage from "./pages/CreateEventPage.tsx";
-import EventDetailPage from "./pages/EventDetailPage.tsx";
-import MatchPage from "./pages/MatchPage.tsx";
-import TrustPage from "./pages/Trust.tsx";
+
+// Les pages sont chargées à la demande : chaque route devient un chunk séparé.
+// Sans ça, ouvrir l'accueil télécharge aussi Admin, Profile, les graphiques
+// Recharts et toutes les autres pages — soit un bundle initial de 2,3 Mo.
+const Landing = lazy(() => import("./pages/Landing.tsx"));
+const Index = lazy(() => import("./pages/Index.tsx"));
+const Auth = lazy(() => import("./pages/Auth.tsx"));
+const Onboarding = lazy(() => import("./pages/Onboarding.tsx"));
+const Profile = lazy(() => import("./pages/Profile.tsx"));
+const CinemaDNAPage = lazy(() => import("./pages/CinemaDNAPage.tsx"));
+const MyCinema = lazy(() => import("./pages/MyCinema.tsx"));
+const Glossary = lazy(() => import("./pages/Glossary.tsx"));
+const PickPlusPage = lazy(() => import("./pages/PickPlus.tsx"));
+const NotFound = lazy(() => import("./pages/NotFound.tsx"));
+const WatchlistPageRoute = lazy(() => import("./pages/WatchlistRoute.tsx"));
+const Friends = lazy(() => import("./pages/Friends.tsx"));
+const PickTogether = lazy(() => import("./pages/PickTogether.tsx"));
+const JoinSession = lazy(() => import("./pages/JoinSession.tsx"));
+const JoinDuo = lazy(() => import("./pages/JoinDuo.tsx"));
+const DuoPage = lazy(() => import("./pages/DuoPage.tsx"));
+const SoireesPage = lazy(() => import("./pages/SoireesPage.tsx"));
+const Admin = lazy(() => import("./pages/Admin.tsx"));
+const PlanSession = lazy(() => import("./pages/PlanSession.tsx"));
+const History = lazy(() => import("./pages/History.tsx"));
+const InvitePage = lazy(() => import("./pages/InvitePage.tsx"));
+const CreateEventPage = lazy(() => import("./pages/CreateEventPage.tsx"));
+const EventDetailPage = lazy(() => import("./pages/EventDetailPage.tsx"));
+const MatchPage = lazy(() => import("./pages/MatchPage.tsx"));
+const TrustPage = lazy(() => import("./pages/Trust.tsx"));
 
 const queryClient = new QueryClient();
 
@@ -74,6 +79,7 @@ const App = () => (
         <Sonner />
         <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
           <ErrorBoundary>
+          <Suspense fallback={<AuthLoadingScreen />}>
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/app" element={<ProtectedRoute><AppLayout><Index /></AppLayout></ProtectedRoute>} />
@@ -104,6 +110,7 @@ const App = () => (
             <Route path="/trust" element={<TrustPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
+          </Suspense>
           </ErrorBoundary>
         </BrowserRouter>
       </>

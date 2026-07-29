@@ -4,7 +4,7 @@ import { CalendarDays, Heart, Home, Users, UsersRound, User, Plus, Loader2, Chev
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
-import soireesBackground from "@/assets/soirees-background.png";
+import soireesBackground from "@/assets/soirees-background.webp";
 
 type ParticipantSummary = {
   total: number;
