@@ -26,15 +26,6 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetFooter,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/use-auth";
@@ -273,11 +264,8 @@ const Profile = () => {
   const [peopleEvaluated, setPeopleEvaluated] = useState(0);
   const [genresSelected, setGenresSelected] = useState(0);
   const [genresExcluded, setGenresExcluded] = useState(0);
-  const [showGenresSheet, setShowGenresSheet] = useState(false);
-  const [genresSheetTab, setGenresSheetTab] = useState<"liked" | "excluded">("liked");
-  const [genresSheetSession, setGenresSheetSession] = useState(0);
+  const [showGenres, setShowGenres] = useState(false);
   const [genresDirty, setGenresDirty] = useState(false);
-  const [genresPreviewKey, setGenresPreviewKey] = useState(0);
   const genrePrefsRef = useRef<GenrePreferencesHandle>(null);
   const [showStats, setShowStats] = useState(false);
   const [seenCount, setSeenCount] = useState(0);
@@ -288,10 +276,6 @@ const Profile = () => {
     loadProfile();
     loadCinema();
   }, [user, isReady]);
-
-  useEffect(() => {
-    if (showGenresSheet) setGenresSheetSession((s) => s + 1);
-  }, [showGenresSheet]);
 
   useEffect(() => {
     if (searchParams.get("openPlatforms") === "1" && platformSectionRef.current) {
@@ -435,21 +419,6 @@ const Profile = () => {
     finally { setUploadingAvatar(false); }
   };
 
-  const handleSaveGenres = async (closeSheet = true) => {
-    setSaving(true);
-    try {
-      await genrePrefsRef.current?.save();
-      setGenresDirty(false);
-      setGenresPreviewKey((k) => k + 1);
-      toast({ title: "Genres enregistrés" });
-      if (closeSheet) setShowGenresSheet(false);
-    } catch (e) {
-      console.error(e);
-      toast({ title: "Erreur", variant: "destructive" });
-    } finally {
-      setSaving(false);
-    }
-  };
 
   const handleSave = async () => {
     if (!user) return;
@@ -491,7 +460,6 @@ const Profile = () => {
         default_recommendation_count: recommendationCount,
       }));
       setGenresDirty(false);
-      setGenresPreviewKey((k) => k + 1);
       toast({ title: "Préférences enregistrées" });
     } catch (e) { console.error(e); toast({ title: "Erreur", variant: "destructive" }); }
     finally { setSaving(false); }
@@ -795,18 +763,21 @@ const Profile = () => {
             <h2 className="text-xs font-sans font-semibold text-foreground uppercase tracking-widest">Mes préférences</h2>
           </div>
 
-          {/* Genres & Styles */}
+          {/* Genres & Styles — même schéma que les Époques : liste dépliable,
+              modifications enregistrées par le bouton en bas de la page. */}
           <div className="mb-5">
-            <div className="flex items-center justify-between mb-2">
+            <button
+              type="button"
+              onClick={() => setShowGenres((v) => !v)}
+              aria-expanded={showGenres}
+              className="w-full flex items-center justify-between mb-2 group"
+            >
               <span className="text-[10px] font-sans font-semibold text-foreground uppercase tracking-widest">Genres & styles</span>
-              <button
-                type="button"
-                onClick={() => setShowGenresSheet(true)}
-                className="text-[11px] font-sans font-medium text-primary/70 hover:text-primary transition-colors"
-              >
-                Tout gérer
-              </button>
-            </div>
+              <span className="flex items-center gap-1 text-[11px] font-sans font-medium text-primary/70 group-hover:text-primary transition-colors">
+                {showGenres ? "Réduire" : "Tout gérer"}
+                <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${showGenres ? "rotate-180" : ""}`} />
+              </span>
+            </button>
             <div className="rounded-2xl bg-card/80 backdrop-blur-sm border border-border/15 px-4 py-3 space-y-2.5">
               <p className="text-[11px] font-sans text-foreground/50">
                 {genresSelected > 0 && (
@@ -818,13 +789,20 @@ const Profile = () => {
                 )}
                 {genresSelected === 0 && genresExcluded === 0 && "Aucun genre configuré"}
               </p>
+              {showGenres && (
+                <p className="text-[11px] font-sans text-foreground/50">
+                  1 clic = tu aimes ✓ &nbsp;·&nbsp; 2 clics = tu n&apos;aimes pas ✕ &nbsp;·&nbsp; 3 clics = neutre
+                </p>
+              )}
               <GenrePreferences
-                key={`preview-${genresPreviewKey}-${genresSelected}-${genresExcluded}`}
-                mode="preview"
-                previewLimit={4}
-                readOnly
+                ref={genrePrefsRef}
+                mode="full"
+                deferSave
+                hideSaveHint
+                collapsed={!showGenres}
                 onCountChange={setGenresSelected}
                 onRejectedCountChange={setGenresExcluded}
+                onDirtyChange={setGenresDirty}
               />
             </div>
           </div>
@@ -1130,60 +1108,6 @@ const Profile = () => {
         </section>
 
       </div>
-
-      <Sheet
-        open={showGenresSheet}
-        onOpenChange={(open) => {
-          setShowGenresSheet(open);
-          // Sheet unmounts GenrePreferences — discard local dirty flag if closed without save.
-          if (!open) setGenresDirty(false);
-        }}
-      >
-        <SheetContent
-          side="bottom"
-          className="max-h-[88vh] flex flex-col gap-0 rounded-t-2xl p-0 pb-[env(safe-area-inset-bottom)]"
-        >
-          <div className="flex-1 overflow-y-auto px-6 pt-6 pb-4">
-            <SheetHeader className="text-left mb-4 pr-8">
-              <SheetTitle className="font-serif text-xl">Genres & styles</SheetTitle>
-              <SheetDescription className="text-xs">
-                1 clic = tu aimes · 2 clics = tu n&apos;aimes pas · 3 clics = neutre
-              </SheetDescription>
-            </SheetHeader>
-            <Tabs value={genresSheetTab} onValueChange={(v) => setGenresSheetTab(v as "liked" | "excluded")}>
-              <TabsList className="w-full grid grid-cols-2 h-9 bg-foreground/5 mb-4">
-                <TabsTrigger value="liked" className="text-xs font-sans data-[state=active]:bg-primary/15 data-[state=active]:text-primary">
-                  Aimés{genresSelected > 0 ? ` (${genresSelected})` : ""}
-                </TabsTrigger>
-                <TabsTrigger value="excluded" className="text-xs font-sans data-[state=active]:bg-destructive/10 data-[state=active]:text-destructive">
-                  Exclus{genresExcluded > 0 ? ` (${genresExcluded})` : ""}
-                </TabsTrigger>
-              </TabsList>
-            </Tabs>
-            <GenrePreferences
-              ref={genrePrefsRef}
-              deferSave
-              hideSaveHint
-              filter={genresSheetTab}
-              orderKey={showGenresSheet ? `${genresSheetSession}-${genresSheetTab}` : undefined}
-              onCountChange={setGenresSelected}
-              onRejectedCountChange={setGenresExcluded}
-              onDirtyChange={setGenresDirty}
-            />
-          </div>
-          <SheetFooter className="shrink-0 flex-row border-t border-border/10 bg-background/95 backdrop-blur-xl px-6 py-3 sm:justify-stretch">
-            <Button
-              variant="hero"
-              size="lg"
-              disabled={saving || !genresDirty}
-              onClick={() => void handleSaveGenres(true)}
-              className="w-full rounded-full"
-            >
-              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : "Enregistrer"}
-            </Button>
-          </SheetFooter>
-        </SheetContent>
-      </Sheet>
 
       <AlertDialog open={resetDialogOpen} onOpenChange={setResetDialogOpen}>
         <AlertDialogContent>
