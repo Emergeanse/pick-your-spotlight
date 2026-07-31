@@ -11,12 +11,24 @@
  */
 import { supabase } from "@/integrations/supabase/client";
 
+export interface GroupGuest {
+  name: string;
+  ageRange: string | null;
+  genres: string[];
+}
+
 export interface GroupTasteProfile {
   eventId: string;
   context: string | null;
   memberCount: number;
   guestCount: number;
+  participantCount: number;
   contributingVectorCount: number;
+  /** Tranche du plus jeune participant — contraint le contenu de la soirée. */
+  youngestAgeRange: string | null;
+  /** Certification française maximale acceptable. `null` = aucune limite. */
+  maxCertification: string | null;
+  guests: GroupGuest[];
   userTasteVector: number[] | null;
   recentTasteVector: number[] | null;
   avoidanceVector: number[] | null;
@@ -75,7 +87,8 @@ export async function fetchGroupTasteProfile(eventId: string): Promise<GroupTast
     console.log(
       `[GROUP] profil fusionné — ${profile.memberCount} membre(s) dont ${profile.contributingVectorCount} avec vecteur, ` +
         `${profile.guestCount} invité(s) | ${profile.tasteProfileOverrides?.excludeIds?.length ?? 0} exclusions | ` +
-        `note mini ${profile.constraints?.minRating}`,
+        `note mini ${profile.constraints?.minRating} | âge ${profile.youngestAgeRange ?? "non déclaré"}` +
+        (profile.maxCertification ? ` → certif max ${profile.maxCertification}` : ""),
     );
     return profile;
   } catch (e) {
@@ -86,11 +99,15 @@ export async function fetchGroupTasteProfile(eventId: string): Promise<GroupTast
 
 /**
  * Un profil de groupe n'a d'intérêt que s'il agrège plusieurs personnes.
- * À un seul membre, le pipeline solo habituel est déjà le bon outil — et il
- * dispose de signaux que la fusion ne transporte pas (historique de session).
+ * À un seul participant, le pipeline solo habituel est déjà le bon outil — et
+ * il dispose de signaux que la fusion ne transporte pas (historique de
+ * session). Un invité sans compte compte comme un participant : ses genres et
+ * son âge changent la recommandation.
  */
 export function isUsableGroupProfile(profile: GroupTasteProfile | null): profile is GroupTasteProfile {
-  return !!profile && profile.memberCount > 1;
+  if (!profile) return false;
+  const total = profile.participantCount ?? profile.memberCount + (profile.guestCount ?? 0);
+  return total > 1;
 }
 
 /** Adapte le profil fusionné au format d'overrides du pipeline. */

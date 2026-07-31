@@ -16,6 +16,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { requireAuth } from "../_shared/auth.ts";
 import { blendGroupProfile, VECTOR_DIM, type MemberSignals } from "../_shared/group-blend.ts";
+import { MAX_CERTIFICATION, strictestAgeRange } from "../_shared/age.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -75,7 +76,7 @@ serve(async (req) => {
 
     const { data: participantRows } = await admin
       .from("event_participants")
-      .select("user_id, guest_name, status")
+      .select("user_id, guest_name, guest_age_range, guest_genres, status")
       .eq("event_id", eventId);
 
     const participants = participantRows ?? [];
@@ -97,9 +98,16 @@ serve(async (req) => {
       ]),
     ];
 
-    const guestNames = participants
+    // Invités sans compte : pas de vecteur de goût, mais leurs genres déclarés
+    // et surtout leur âge comptent — c'est souvent là que se trouvent les
+    // enfants d'une soirée famille.
+    const guests = participants
       .filter((p: any) => !p.user_id && p.guest_name && p.status !== "declined")
-      .map((p: any) => p.guest_name as string);
+      .map((p: any) => ({
+        name: p.guest_name as string,
+        ageRange: (p.guest_age_range as string | null) ?? null,
+        genres: (p.guest_genres as string[] | null) ?? [],
+      }));
 
     // ── 3. Chargement en lot (service role : la RLS ne s'applique pas) ────
     const [vectorsRes, profilesRes, feedbackRes, prefsRes] = await Promise.all([
@@ -109,7 +117,7 @@ serve(async (req) => {
         .in("user_id", memberIds),
       admin
         .from("profiles")
-        .select("id, preferred_platforms, excluded_genres, favorite_genres, min_rating")
+        .select("id, preferred_platforms, excluded_genres, favorite_genres, min_rating, age_range")
         .in("id", memberIds),
       admin
         .from("user_item_feedback")
@@ -199,22 +207,53 @@ serve(async (req) => {
       };
     });
 
+    // Les invités entrent dans la fusion avec leurs seuls genres déclarés :
+    // pas de vecteur, pas d'historique, mais une voix qui compte pour le choix.
+    const guestSignals: MemberSignals[] = guests.map((g, i) => ({
+      userId: `guest:${i}`,
+      stableVector: null,
+      recentVector: null,
+      avoidanceVector: null,
+      topClusters: [],
+      rejectedClusters: [],
+      confidence: 50,
+      likedGenres: g.genres ?? [],
+      excludedGenres: [],
+      platforms: [],
+      minRating: 0,
+      seenTmdbIds: [],
+    }));
+
     // ── 5. Fusion ─────────────────────────────────────────────────────────
-    const blended = blendGroupProfile(members);
+    const blended = blendGroupProfile([...members, ...guestSignals]);
+
+    // ── 5b. Contrainte d'âge : le plus jeune impose sa limite ─────────────
+    const declaredAges = [
+      ...memberIds.map((uid) => (profileById.get(uid) as any)?.age_range ?? null),
+      ...guests.map((g) => g.ageRange),
+    ];
+    const youngestAgeRange = strictestAgeRange(declaredAges);
+    const maxCertification = youngestAgeRange ? MAX_CERTIFICATION[youngestAgeRange] : null;
 
     console.log(
-      `[GROUP] event=${eventId} context=${event.context} membres=${blended.memberCount} ` +
-        `(vecteurs=${blended.contributingVectorCount}) invités=${guestNames.length} ` +
+      `[GROUP] event=${eventId} context=${event.context} membres=${memberIds.length} ` +
+        `(vecteurs=${blended.contributingVectorCount}) invités=${guests.length} ` +
         `| exclusions=${blended.excludeIds.length} minRating=${blended.minRating} ` +
-        `| plateformes=[${blended.sharedPlatforms.join(",")}]`,
+        `| plateformes=[${blended.sharedPlatforms.join(",")}] ` +
+        `| âge=${youngestAgeRange ?? "non déclaré"} → certif max ${maxCertification ?? "aucune"}`,
     );
 
     return json({
       eventId,
       context: event.context,
-      memberCount: blended.memberCount,
-      guestCount: guestNames.length,
+      memberCount: memberIds.length,
+      guestCount: guests.length,
+      participantCount: memberIds.length + guests.length,
       contributingVectorCount: blended.contributingVectorCount,
+      // Le plus jeune participant contraint le contenu de toute la soirée.
+      youngestAgeRange,
+      maxCertification,
+      guests: guests.map((g) => ({ name: g.name, ageRange: g.ageRange, genres: g.genres })),
       // Prêts à passer tels quels à surprise-personalized
       userTasteVector: blended.stableTasteVector,
       recentTasteVector: blended.recentTasteVector,

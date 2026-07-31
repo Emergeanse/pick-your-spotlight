@@ -6,6 +6,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
 import pickLogo from "@/assets/pick-logo.webp";
+import { AGE_RANGES, AGE_RANGE_SHORT, type AgeRange } from "@/lib/age-ranges";
+
+// Sélection volontairement courte : l'invité répond en deux tapes, pas en
+// remplissant un profil. Les libellés reprennent ceux de preference_tags.
+const GUEST_GENRES = [
+  "Comédie", "Action", "Animation", "Drame", "Science-Fiction",
+  "Thriller", "Romance", "Aventure", "Documentaire", "Horreur",
+] as const;
 
 type EventData = {
   id: string;
@@ -40,6 +48,8 @@ const InvitePage = () => {
   const [step, setStep] = useState<"landing" | "guest-form" | "joined">("landing");
   const [guestName, setGuestName] = useState("");
   const [guestEmail, setGuestEmail] = useState("");
+  const [guestAgeRange, setGuestAgeRange] = useState<AgeRange | null>(null);
+  const [guestGenres, setGuestGenres] = useState<string[]>([]);
   const [joining, setJoining] = useState(false);
   const [alreadyJoined, setAlreadyJoined] = useState(false);
 
@@ -98,11 +108,26 @@ const InvitePage = () => {
     if (!guestName.trim() || !event || !token) return;
     setJoining(true);
     try {
-      const { error } = await supabase.rpc("join_event_as_guest" as any, {
+      const base = {
         _token: token,
         _guest_name: guestName.trim(),
         _guest_email: guestEmail.trim() || null,
+      };
+
+      // La signature à 5 arguments n'existe qu'une fois la migration
+      // 20260731100000 appliquée. Tant qu'elle ne l'est pas, on retombe sur
+      // l'ancienne : mieux vaut un invité sans indices qu'un invité bloqué.
+      let { error } = await supabase.rpc("join_event_as_guest" as any, {
+        ...base,
+        _age_range: guestAgeRange,
+        _genres: guestGenres.length > 0 ? guestGenres : null,
       });
+
+      if (error && /function|does not exist|schema cache|argument/i.test(error.message)) {
+        console.warn("[INVITE] indices invité non pris en charge par la base — repli sans indices");
+        ({ error } = await supabase.rpc("join_event_as_guest" as any, base));
+      }
+
       if (error && !error.message.includes("duplicate")) throw error;
       setStep("joined");
     } catch (e: any) {
@@ -196,7 +221,7 @@ const InvitePage = () => {
           {step === "guest-form" && (
             <motion.div key="guest-form" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
               <h2 className="font-serif text-2xl text-foreground mb-2">Rejoindre en invité</h2>
-              <p className="text-foreground/50 text-sm font-sans mb-6">Ton prénom suffit. Ton email est optionnel.</p>
+              <p className="text-foreground/50 text-sm font-sans mb-6">Ton prénom suffit. Le reste aide Pick à choisir un film qui te va aussi.</p>
               <div className="space-y-3">
                 <input
                   type="text"
@@ -214,6 +239,58 @@ const InvitePage = () => {
                   onChange={e => setGuestEmail(e.target.value)}
                   className="w-full bg-card border border-border/30 rounded-xl px-4 py-3 text-sm font-sans text-foreground placeholder:text-muted-foreground/50 outline-none focus:border-primary/50 transition-colors"
                 />
+
+                {/* Tranche d'âge — c'est le plus jeune de la soirée qui fixe la limite
+                    de contenu, donc l'information compte même pour un seul invité. */}
+                <div className="pt-1">
+                  <p className="text-[10px] font-sans font-semibold tracking-[0.18em] uppercase text-foreground/40 mb-2">
+                    Ton âge <span className="text-foreground/25 normal-case tracking-normal font-normal">· facultatif</span>
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {AGE_RANGES.map((r) => (
+                      <button
+                        key={r}
+                        type="button"
+                        onClick={() => setGuestAgeRange(guestAgeRange === r ? null : r)}
+                        className={`px-3 py-1.5 rounded-full text-[11px] font-sans font-medium border transition-all ${
+                          guestAgeRange === r
+                            ? "bg-primary/15 border-primary text-primary"
+                            : "bg-card/50 border-border/20 text-foreground/50 hover:border-primary/30"
+                        }`}
+                      >
+                        {AGE_RANGE_SHORT[r]}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Genres aimés — repris tels quels dans la fusion du groupe,
+                    mais jamais enregistrés comme goût durable. */}
+                <div>
+                  <p className="text-[10px] font-sans font-semibold tracking-[0.18em] uppercase text-foreground/40 mb-2">
+                    Tu aimes <span className="text-foreground/25 normal-case tracking-normal font-normal">· facultatif</span>
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {GUEST_GENRES.map((g) => {
+                      const on = guestGenres.includes(g);
+                      return (
+                        <button
+                          key={g}
+                          type="button"
+                          onClick={() => setGuestGenres(prev => on ? prev.filter(x => x !== g) : [...prev, g])}
+                          className={`px-3 py-1.5 rounded-full text-[11px] font-sans font-medium border transition-all ${
+                            on
+                              ? "bg-primary/15 border-primary text-primary"
+                              : "bg-card/50 border-border/20 text-foreground/50 hover:border-primary/30"
+                          }`}
+                        >
+                          {g}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
                 <button
                   onClick={joinAsGuest}
                   disabled={!guestName.trim() || joining}
