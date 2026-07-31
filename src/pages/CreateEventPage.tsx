@@ -10,6 +10,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { computeMultiVectorProfile } from "@/lib/taste-engine";
 import { getUserTasteProfile } from "@/lib/interactions";
 import { fetchMyDuos, loadAcceptedFriends, type DuoProfile, type DuoFriendCandidate } from "@/lib/duo-profiles";
+import { fetchGroupTasteProfile, isUsableGroupProfile, applyGroupToRequestBody } from "@/lib/group-taste";
 import { toast } from "sonner";
 
 // ─────────────────────────────────────────
@@ -197,27 +198,39 @@ const CreateEventPage = () => {
   const generateRecommendations = async (eid: string) => {
     if (!user) return;
     try {
-      const [multiProfile, tasteProfile] = await Promise.all([
+      // Le profil du groupe est demandé en parallèle : à plusieurs il remplace
+      // les vecteurs de l'organisateur, seul il n'est pas exploitable et on
+      // garde le profil solo (fusion neutre à un membre, mais sans l'historique
+      // de session que le pipeline solo apporte).
+      const [multiProfile, tasteProfile, groupProfile] = await Promise.all([
         computeMultiVectorProfile(user.id),
         getUserTasteProfile(),
+        fetchGroupTasteProfile(eid),
       ]);
 
       const moodContext = mood.trim()
         ? `L'utilisateur décrit l'ambiance : "${mood}".`
         : undefined;
 
-      const { data } = await supabase.functions.invoke("surprise-personalized", {
-        body: {
-          userTasteVector: multiProfile?.stableTasteVector ?? null,
-          recentTasteVector: multiProfile?.recentTasteVector ?? null,
-          avoidanceVector: multiProfile?.avoidanceVector ?? null,
-          tasteProfile,
-          mediaType,
-          count: 3,
-          minMatchScore: 65,
-          ...(moodContext && { moodContext }),
-        },
-      });
+      let body: Record<string, any> = {
+        userTasteVector: multiProfile?.stableTasteVector ?? null,
+        recentTasteVector: multiProfile?.recentTasteVector ?? null,
+        avoidanceVector: multiProfile?.avoidanceVector ?? null,
+        tasteProfile,
+        mediaType,
+        count: 3,
+        minMatchScore: 65,
+        ...(moodContext && { moodContext }),
+      };
+
+      if (isUsableGroupProfile(groupProfile)) {
+        body = applyGroupToRequestBody(body, groupProfile);
+        console.log(
+          `[GROUP] recos initiales calculées pour ${groupProfile.memberCount} participant(s) — contexte ${context}`,
+        );
+      }
+
+      const { data } = await supabase.functions.invoke("surprise-personalized", { body });
 
       const movies: any[] = data?.movies ?? [];
       if (!movies.length) return;

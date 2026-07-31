@@ -20,6 +20,8 @@ export type RevealIntent = {
   participantIds: string[];
   /** Type de contenu choisi à la création de la soirée */
   mediaType?: "movie" | "tv" | "both";
+  /** Soirée d'origine — sert à demander le profil de goût fusionné du groupe */
+  eventId?: string;
 };
 
 let _intent: RevealIntent | null = null;

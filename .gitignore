@@ -36,3 +36,6 @@ test-results/
 
 # Navigateurs Playwright installés localement
 .playwright-browsers/
+
+# Verrou Deno généré par les vérifications locales des edge functions
+deno.lock

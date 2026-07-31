@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate, useLocation } from "react-router-dom";
 import { consumePendingDuoPick } from "@/lib/duo-pending";
 import { clearRevealIntent, type RevealIntent, peekForReveal, consumeForReveal, queueForReveal, _pipelineFns, getRevealEvent, clearRevealEvent } from "@/lib/event-reveal";
+import { fetchGroupTasteProfile, isUsableGroupProfile, toGroupOverrides } from "@/lib/group-taste";
 import { programFilmForEvent } from "@/lib/event-program";
 import { toast } from "sonner";
 import { Sparkles, WandSparkles, Clapperboard, ChevronRight, Flame, Eye, Coffee, Heart, Shuffle, Home, Users, Crown, Star } from "lucide-react";
@@ -633,8 +634,34 @@ const HomeScreen = ({
       return;
     }
 
-    let duoId: string | undefined;
     const ids = (participantIds ?? []).filter(Boolean);
+
+    // ── Soirée famille / entre amis ──
+    // Le profil du groupe est fusionné côté serveur : la RLS interdit de lire
+    // les vecteurs de goût des autres participants depuis le navigateur, et on
+    // ne veut pas l'ouvrir. En cas d'indisponibilité, on retombe sur le profil
+    // de l'organisateur — une soirée dégradée reste préférable à aucun film.
+    if ((context === "famille" || context === "amis") && intent.eventId) {
+      const groupProfile = await fetchGroupTasteProfile(intent.eventId);
+      if (isUsableGroupProfile(groupProfile)) {
+        const overrides = toGroupOverrides(groupProfile);
+        console.log(
+          `[REVEAL] → groupe ${context} : ${groupProfile.memberCount} participant(s), ` +
+            `${groupProfile.contributingVectorCount} avec profil de goût, ` +
+            `${overrides.partnerExcludeIds.length} film(s) exclus`,
+        );
+        currentDuoOverridesRef.current = overrides;
+        void (generateTonightPickRef.current ?? _pipelineFns.generateTonightPick)?.(
+          [], undefined, genreFilter, overrides, mood || undefined,
+        );
+        return;
+      }
+      console.warn(
+        `[REVEAL] profil de groupe indisponible pour la soirée ${intent.eventId} — repli sur le profil de l'organisateur`,
+      );
+    }
+
+    let duoId: string | undefined;
     try {
       if (ids.length >= 2) {
         const [id1, id2] = ids;

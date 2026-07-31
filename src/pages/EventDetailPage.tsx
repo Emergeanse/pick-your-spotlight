@@ -495,6 +495,7 @@ const EventDetailPage = () => {
       mood:           event.mood ?? "",
       participantIds,
       mediaType:      (event.media_type as "movie" | "tv" | "both" | null) ?? "both",
+      eventId:        event.id,
     };
 
     setRevealEvent({ eventId: event.id, eventTitle: event.title });
