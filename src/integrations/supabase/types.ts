@@ -365,7 +365,9 @@ export type Database = {
         Row: {
           created_at: string | null
           event_id: string
+          guest_age_range: string | null
           guest_email: string | null
+          guest_genres: string[]
           guest_name: string | null
           guest_token: string | null
           id: string
@@ -375,7 +377,9 @@ export type Database = {
         Insert: {
           created_at?: string | null
           event_id: string
+          guest_age_range?: string | null
           guest_email?: string | null
+          guest_genres?: string[]
           guest_name?: string | null
           guest_token?: string | null
           id?: string
@@ -385,7 +389,9 @@ export type Database = {
         Update: {
           created_at?: string | null
           event_id?: string
+          guest_age_range?: string | null
           guest_email?: string | null
+          guest_genres?: string[]
           guest_name?: string | null
           guest_token?: string | null
           id?: string
@@ -877,6 +883,7 @@ export type Database = {
           account_type: string | null
           activation_completed: boolean
           activation_step: string
+          age_range: string | null
           avatar_url: string | null
           best_streak: number
           bio: string | null
@@ -926,6 +933,7 @@ export type Database = {
           account_type?: string | null
           activation_completed?: boolean
           activation_step?: string
+          age_range?: string | null
           avatar_url?: string | null
           best_streak?: number
           bio?: string | null
@@ -975,6 +983,7 @@ export type Database = {
           account_type?: string | null
           activation_completed?: boolean
           activation_step?: string
+          age_range?: string | null
           avatar_url?: string | null
           best_streak?: number
           bio?: string | null
@@ -1669,7 +1678,13 @@ export type Database = {
         Returns: boolean
       }
       join_event_as_guest: {
-        Args: { _guest_email?: string; _guest_name: string; _token: string }
+        Args: {
+          _age_range?: string
+          _genres?: string[]
+          _guest_email?: string
+          _guest_name: string
+          _token: string
+        }
         Returns: string
       }
       join_event_as_user: { Args: { _token: string }; Returns: string }
