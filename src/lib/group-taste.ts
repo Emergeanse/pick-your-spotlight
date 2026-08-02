@@ -28,6 +28,9 @@ export interface GroupTasteProfile {
   youngestAgeRange: string | null;
   /** Certification française maximale acceptable. `null` = aucune limite. */
   maxCertification: string | null;
+  /** Plafond 0-4 exploitable par le filtre. `null` = aucune contrainte. */
+  maxCertificationLevel: number | null;
+  maxCertificationLabel: string | null;
   guests: GroupGuest[];
   userTasteVector: number[] | null;
   recentTasteVector: number[] | null;

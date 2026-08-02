@@ -17,6 +17,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { requireAuth } from "../_shared/auth.ts";
 import { blendGroupProfile, VECTOR_DIM, type MemberSignals } from "../_shared/group-blend.ts";
 import { MAX_CERTIFICATION, strictestAgeRange } from "../_shared/age.ts";
+import { maxLevelForAgeRange, CERT_LEVEL_LABELS } from "../_shared/certification.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -234,6 +235,9 @@ serve(async (req) => {
     ];
     const youngestAgeRange = strictestAgeRange(declaredAges);
     const maxCertification = youngestAgeRange ? MAX_CERTIFICATION[youngestAgeRange] : null;
+    // Plafond exploitable directement par le filtre : voir movie_embeddings
+    // .certification_level, alimenté par backfill-certification.
+    const maxCertificationLevel = maxLevelForAgeRange(youngestAgeRange);
 
     console.log(
       `[GROUP] event=${eventId} context=${event.context} membres=${memberIds.length} ` +
@@ -253,6 +257,9 @@ serve(async (req) => {
       // Le plus jeune participant contraint le contenu de toute la soirée.
       youngestAgeRange,
       maxCertification,
+      maxCertificationLevel,
+      maxCertificationLabel:
+        maxCertificationLevel != null ? CERT_LEVEL_LABELS[maxCertificationLevel] : null,
       guests: guests.map((g) => ({ name: g.name, ageRange: g.ageRange, genres: g.genres })),
       // Prêts à passer tels quels à surprise-personalized
       userTasteVector: blended.stableTasteVector,

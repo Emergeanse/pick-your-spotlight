@@ -134,16 +134,28 @@ RÈGLES :
     "low_cognitive_load": 0.0-1.0,
     "surprise_tolerance": 0.0-1.0
   },
-  "safety_tags": ["violence_forte", "sexe_explicite", "drogue", ...ou vide],
-  "suitability_tags": ["solo", "couple", "amis", "famille", "enfants", ...],
+  "safety_tags": ["violence_forte", "drogue", ...ou vide],
+  "suitability_tags": ["famille", "enfants", ...],
   "cluster_labels": ["thriller_psychologique", "slow_burn", ...]
 }
 - vector: exactement 32 floats entre 0.0 et 1.0
 - tags: 3-6 micro-genres descriptifs
 - semantic_axes: 21 axes continus (0-1)
-- safety_tags: tags de contenu sensible (vide si aucun)
-- suitability_tags: contextes de visionnage adaptés
-- cluster_labels: 2-5 micro-catégories précises`;
+- cluster_labels: 2-5 micro-catégories précises
+
+VOCABULAIRE IMPOSÉ — n'invente aucune autre valeur, n'accorde pas, ne traduis
+pas, n'ajoute ni accent ni espace. Toute valeur hors de ces deux listes est
+rejetée.
+
+safety_tags — uniquement parmi :
+  violence_legere, violence_moderee, violence_forte, gore, horreur,
+  sexe_suggere, sexe_explicite, nudite, langage_grossier, drogue, alcool,
+  themes_adultes, suicide, violence_psychologique
+  (tableau vide si le titre ne contient rien de sensible)
+
+suitability_tags — uniquement parmi :
+  solo, couple, amis, famille, enfants, adolescents, adultes
+  (plusieurs valeurs possibles ; « enfants » implique « famille »)`;
 
     const userPrompt = `Film : "${title}"
 Genres : ${(genres || []).join(", ")}
