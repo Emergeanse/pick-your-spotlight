@@ -750,6 +750,11 @@ export type Database = {
       }
       movie_embeddings: {
         Row: {
+          certification_checked_at: string | null
+          certification_fr: string | null
+          certification_level: number | null
+          certification_source: string | null
+          certification_us: string | null
           cluster_labels: string[]
           created_at: string
           embedding: string
@@ -772,6 +777,11 @@ export type Database = {
           year: number | null
         }
         Insert: {
+          certification_checked_at?: string | null
+          certification_fr?: string | null
+          certification_level?: number | null
+          certification_source?: string | null
+          certification_us?: string | null
           cluster_labels?: string[]
           created_at?: string
           embedding: string
@@ -794,6 +804,11 @@ export type Database = {
           year?: number | null
         }
         Update: {
+          certification_checked_at?: string | null
+          certification_fr?: string | null
+          certification_level?: number | null
+          certification_source?: string | null
+          certification_us?: string | null
           cluster_labels?: string[]
           created_at?: string
           embedding?: string
