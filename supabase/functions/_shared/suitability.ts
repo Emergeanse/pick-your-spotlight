@@ -53,7 +53,9 @@ const EXACT: Record<string, Suitability[]> = {
   // « tous publics » et « tous âges » désignent un titre sans restriction,
   // donc regardable en famille — sans pour autant viser les enfants.
   "tous publics": ["famille"],
+  "tout public": ["famille"],
   "tous ages": ["famille"],
+  "tout age": ["famille"],
   "enfants": ["famille", "enfants"],
   "enfant": ["famille", "enfants"],
   "kids": ["famille", "enfants"],

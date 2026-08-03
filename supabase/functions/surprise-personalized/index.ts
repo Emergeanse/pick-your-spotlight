@@ -93,6 +93,9 @@ serve(async (req) => {
       userTasteVector,
       platformIds,
       excludeIds,
+      // Plafond de certification du groupe : celui du plus jeune participant.
+      // Absent ou nul = aucune contrainte, comportement inchangé.
+      maxCertificationLevel: rawMaxCertLevel,
       excludedPlatformIds,
       excludedGenres,
       minRating: rawMinRating,
@@ -127,6 +130,16 @@ serve(async (req) => {
 
     const requestedCount = Math.max(1, Math.min(typeof rawCount === "number" ? rawCount : 3, 20));
     const minRating = typeof rawMinRating === "number" ? Math.min(rawMinRating, 8) : 0;
+    // Plafond d'âge : entier 0-4, sinon aucune contrainte. Passé tel quel aux
+    // deux fonctions SQL, qui filtrent en amont du tri par similarité.
+    const maxCertificationLevel: number | null =
+      typeof rawMaxCertLevel === "number" && Number.isInteger(rawMaxCertLevel)
+        && rawMaxCertLevel >= 0 && rawMaxCertLevel <= 4
+        ? rawMaxCertLevel
+        : null;
+    if (maxCertificationLevel !== null) {
+      console.log(`[SP] 🔞 Contrainte d'âge active — certification max niveau ${maxCertificationLevel}`);
+    }
     const explorationLevel =
       typeof rawExplorationLevel === "number" ? Math.max(0, Math.min(10, rawExplorationLevel)) : 5;
     const mediaType: "movie" | "tv" | "both" =
@@ -578,6 +591,7 @@ serve(async (req) => {
               exclude_ids: normalizedExcludeIds,
               p_user_id: userId ?? null,
               p_user_id2: partnerUserId,
+              p_max_certification_level: maxCertificationLevel,
             });
             if (countData?.[0]) {
               const total = Number((countData as any[])[0].total_in_db);
@@ -606,7 +620,12 @@ serve(async (req) => {
 
           while (countNonInteracted(candidates) < TARGET && round < MAX_ROUNDS_PER_LEVEL) {
             const expandExcludeIds = [...normalizedExcludeIds, ...seenIds];
-            const params = levels[level]({ match_count: BATCH, exclude_ids: expandExcludeIds });
+            // La contrainte d'âge s'ajoute à tous les niveaux de la cascade :
+            // relâcher les filtres de goût ne doit jamais relâcher celui-ci.
+            const params = {
+              ...levels[level]({ match_count: BATCH, exclude_ids: expandExcludeIds }),
+              p_max_certification_level: maxCertificationLevel,
+            };
             finalCascadeLevel = level;
             finalRpcParamsSummary = {
               level,

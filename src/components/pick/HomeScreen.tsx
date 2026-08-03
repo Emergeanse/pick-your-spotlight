@@ -1180,7 +1180,9 @@ const HomeScreen = ({
     return data;
   };
 
-  type DuoOverrides = { topGenres: string[]; excludedGenres: string[]; tasteVector: number[] | null; avoidanceVector: number[] | null; topClusters: string[]; rejectedClusters: string[]; partnerExcludeIds: number[]; user1Name: string | null; user2Name: string | null; user1Id?: string; user2Id?: string };
+  // Sert aussi bien au Duo qu'aux soirées de groupe : même point d'injection,
+  // le pipeline n'a pas besoin de les distinguer.
+  type DuoOverrides = { topGenres: string[]; excludedGenres: string[]; tasteVector: number[] | null; avoidanceVector: number[] | null; topClusters: string[]; rejectedClusters: string[]; partnerExcludeIds: number[]; user1Name: string | null; user2Name: string | null; user1Id?: string; user2Id?: string; maxCertificationLevel?: number | null };
   const generateTonightPick = async (excludeList: number[] = rejectedIds, rejectionContext?: RejectionContext, voiceFilters?: VoiceSearchFilters | null, duoOverrides?: DuoOverrides, extraMoodContext?: string) => {
     generateTonightPickRef.current = generateTonightPick;
     // Ouvrir l'overlay immédiatement — avant tout await, dans le même batch que l'appelant
@@ -1374,6 +1376,12 @@ const HomeScreen = ({
             // Duo : fetch server-side des interactions des deux users (plus fiable que le client browser)
             ...(duoOverrides?.user1Id && duoOverrides?.user2Id && {
               duoUserIds: [duoOverrides.user1Id, duoOverrides.user2Id],
+            }),
+            // Soirée de groupe : plafond d'âge du plus jeune participant. Le
+            // filtre est appliqué par la requête SQL, en amont du tri par
+            // similarité — un titre au-dessus n'est jamais candidat.
+            ...(duoOverrides?.maxCertificationLevel != null && {
+              maxCertificationLevel: duoOverrides.maxCertificationLevel,
             }),
             debug: true,
           });

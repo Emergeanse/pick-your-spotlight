@@ -62,6 +62,8 @@ export interface GroupOverrides {
   user2Name: string | null;
   user1Id?: string;
   user2Id?: string;
+  /** Plafond d'âge du groupe, transmis tel quel au moteur. */
+  maxCertificationLevel?: number | null;
 }
 
 /**
@@ -126,6 +128,7 @@ export function toGroupOverrides(profile: GroupTasteProfile): GroupOverrides {
     // Champs d'affichage propres au Duo : un groupe n'a pas deux noms à montrer.
     user1Name: null,
     user2Name: null,
+    maxCertificationLevel: profile.maxCertificationLevel ?? null,
   };
 }
 
@@ -142,6 +145,9 @@ export function applyGroupToRequestBody<T extends Record<string, any>>(
 
   return {
     ...body,
+    // Filtré en amont par la requête SQL des candidats : un titre au-dessus du
+    // plafond n'est jamais remonté, plutôt qu'écarté après coup.
+    maxCertificationLevel: profile.maxCertificationLevel ?? null,
     userTasteVector: profile.userTasteVector ?? body.userTasteVector ?? null,
     recentTasteVector: profile.recentTasteVector ?? body.recentTasteVector ?? null,
     avoidanceVector: profile.avoidanceVector ?? body.avoidanceVector ?? null,

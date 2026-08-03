@@ -104,6 +104,9 @@ describe("longue traîne", () => {
     expect(normalizeSuitabilityTag("jeunesse")).toEqual(["famille", "enfants"]);
     expect(normalizeSuitabilityTag("tous publics")).toEqual(["famille"]);
     expect(normalizeSuitabilityTag("tous_âges")).toEqual(["famille"]);
+    // Variantes au singulier, relevées sur le passage complet du catalogue.
+    expect(normalizeSuitabilityTag("tout public")).toEqual(["famille"]);
+    expect(normalizeSuitabilityTag("tout_âge")).toEqual(["famille"]);
   });
 
   it("« famille (avertissement pour jeunes enfants) » reste famille", () => {
