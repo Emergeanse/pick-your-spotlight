@@ -18,6 +18,7 @@ import { requireAuth } from "../_shared/auth.ts";
 import { blendGroupProfile, VECTOR_DIM, type MemberSignals } from "../_shared/group-blend.ts";
 import { MAX_CERTIFICATION, strictestAgeRange } from "../_shared/age.ts";
 import { maxLevelForAgeRange, CERT_LEVEL_LABELS } from "../_shared/certification.ts";
+import { computeMemberVectors, type MemberVectors } from "../_shared/member-vectors.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -111,10 +112,16 @@ serve(async (req) => {
       }));
 
     // ── 3. Chargement en lot (service role : la RLS ne s'applique pas) ────
-    const [vectorsRes, profilesRes, feedbackRes, prefsRes] = await Promise.all([
+    //
+    // `user_taste_vectors` n'est qu'un cache que rien n'alimente : le vrai
+    // calcul se fait à la volée depuis liked_movies / watchlist /
+    // user_interactions, comme le fait computeMultiVectorProfile côté client.
+    // On lit quand même la table pour les clusters et la confiance, qui n'ont
+    // pas d'équivalent recalculable ici.
+    const [vectorsRes, profilesRes, feedbackRes, prefsRes, likedRes, watchlistRes, interactionsRes] = await Promise.all([
       admin
         .from("user_taste_vectors")
-        .select("user_id, taste_vector, recent_taste_vector, avoidance_vector, top_clusters, rejected_clusters, stable_confidence")
+        .select("user_id, top_clusters, rejected_clusters, stable_confidence")
         .in("user_id", memberIds),
       admin
         .from("profiles")
@@ -130,12 +137,56 @@ serve(async (req) => {
         .select("user_id, tag_id, weight")
         .in("user_id", memberIds)
         .limit(3000),
+      admin
+        .from("liked_movies")
+        .select("user_id, tmdb_id, liked_at")
+        .in("user_id", memberIds)
+        .limit(4000),
+      admin
+        .from("watchlist")
+        .select("user_id, tmdb_id, added_at")
+        .in("user_id", memberIds)
+        .limit(2000),
+      admin
+        .from("user_interactions")
+        .select("user_id, tmdb_id, action_type, created_at")
+        .in("user_id", memberIds)
+        .order("created_at", { ascending: false })
+        .limit(4000),
     ]);
 
     const vectors = vectorsRes.data ?? [];
     const profiles = profilesRes.data ?? [];
     const feedbackRows = (feedbackRes.data ?? []) as any[];
     const prefsRows = (prefsRes.data ?? []) as any[];
+    const likedRows = (likedRes.data ?? []) as any[];
+    const watchlistRows = (watchlistRes.data ?? []) as any[];
+    const interactionRows = (interactionsRes.data ?? []) as any[];
+
+    // Embeddings de tous les titres qui portent un signal, tous membres
+    // confondus : une seule requête plutôt qu'une par participant.
+    const signalTmdbIds = [
+      ...new Set([
+        ...likedRows.map((r) => r.tmdb_id),
+        ...watchlistRows.map((r) => r.tmdb_id),
+        ...interactionRows.map((r) => r.tmdb_id),
+      ].filter((id) => Number.isFinite(id))),
+    ];
+    const embeddingByTmdb = new Map<number, number[]>();
+    if (signalTmdbIds.length > 0) {
+      // Découpé en tranches : une clause IN de plusieurs milliers d'entrées
+      // dépasse les limites de PostgREST.
+      for (let i = 0; i < signalTmdbIds.length; i += 500) {
+        const { data: embs } = await admin
+          .from("movie_embeddings")
+          .select("tmdb_id, embedding")
+          .in("tmdb_id", signalTmdbIds.slice(i, i + 500));
+        for (const e of embs ?? []) {
+          const v = parseVector((e as any).embedding);
+          if (v && v.length === VECTOR_DIM) embeddingByTmdb.set((e as any).tmdb_id, v);
+        }
+      }
+    }
 
     // item_id → tmdb_id, pour convertir le feedback en exclusions
     const itemIds = [...new Set(feedbackRows.map((f) => f.item_id).filter(Boolean))];
@@ -171,9 +222,23 @@ serve(async (req) => {
     const vectorById = byId(vectors as any[], "user_id");
     const profileById = byId(profiles as any[], "id");
 
+    const vectorsByMember = new Map<string, MemberVectors>();
+    for (const uid of memberIds) {
+      vectorsByMember.set(
+        uid,
+        computeMemberVectors(
+          likedRows.filter((r) => r.user_id === uid),
+          watchlistRows.filter((r) => r.user_id === uid),
+          interactionRows.filter((r) => r.user_id === uid),
+          embeddingByTmdb,
+        ),
+      );
+    }
+
     const members: MemberSignals[] = memberIds.map((uid) => {
       const v: any = vectorById.get(uid) ?? {};
       const p: any = profileById.get(uid) ?? {};
+      const mv = vectorsByMember.get(uid)!;
 
       const seen = new Set<number>();
       for (const f of feedbackRows) {
@@ -194,9 +259,10 @@ serve(async (req) => {
 
       return {
         userId: uid,
-        stableVector: parseVector(v.taste_vector),
-        recentVector: parseVector(v.recent_taste_vector),
-        avoidanceVector: parseVector(v.avoidance_vector),
+        // Recalculés à la volée : voir _shared/member-vectors.ts
+        stableVector: mv.stable,
+        recentVector: mv.recent,
+        avoidanceVector: mv.avoidance,
         topClusters: v.top_clusters ?? [],
         rejectedClusters: v.rejected_clusters ?? [],
         confidence: Number(v.stable_confidence) || 50,
