@@ -89,11 +89,21 @@ describe("longue traîne", () => {
   });
 
   it("ce qui n'est pas un contexte de visionnage est écarté", () => {
-    // Mieux vaut ne rien écrire que de deviner.
+    // Mieux vaut ne rien écrire que de deviner. Liste relevée sur le passage
+    // à blanc du catalogue : ce sont des goûts, pas des contextes.
     ["cinephile", "cinéphiles", "littérature", "premieres_seances", "fans_de_super_héros",
-     "lgbtq+", "filles", "amateur d'horreur"].forEach((v) =>
+     "lgbtq+", "filles", "amateur d'horreur", "contemplative", "arthouse",
+     "horror fans", "horror_fans", "amateurs de SF", "historian", "historique",
+     "amusement", "fan de comédie"].forEach((v) =>
       expect(normalizeSuitabilityTag(v)).toEqual([]),
     );
+  });
+
+  it("« jeunesse » et « tous publics » sont rattrapés", () => {
+    // Remontés par le passage à blanc : ce sont bien des contextes.
+    expect(normalizeSuitabilityTag("jeunesse")).toEqual(["famille", "enfants"]);
+    expect(normalizeSuitabilityTag("tous publics")).toEqual(["famille"]);
+    expect(normalizeSuitabilityTag("tous_âges")).toEqual(["famille"]);
   });
 
   it("« famille (avertissement pour jeunes enfants) » reste famille", () => {
