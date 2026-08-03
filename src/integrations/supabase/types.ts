@@ -769,6 +769,7 @@ export type Database = {
           safety_tags: string[]
           semantic_axes: Json
           suitability_tags: string[]
+          suitability_tags_raw: string[] | null
           taste_tags: string[]
           title: string
           tmdb_id: number
@@ -796,6 +797,7 @@ export type Database = {
           safety_tags?: string[]
           semantic_axes?: Json
           suitability_tags?: string[]
+          suitability_tags_raw?: string[] | null
           taste_tags?: string[]
           title: string
           tmdb_id: number
@@ -823,6 +825,7 @@ export type Database = {
           safety_tags?: string[]
           semantic_axes?: Json
           suitability_tags?: string[]
+          suitability_tags_raw?: string[] | null
           taste_tags?: string[]
           title?: string
           tmdb_id?: number
