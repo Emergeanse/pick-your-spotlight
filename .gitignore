@@ -39,3 +39,6 @@ test-results/
 
 # Verrou Deno généré par les vérifications locales des edge functions
 deno.lock
+
+# Scripts de pilotage ponctuels des backfills
+.backfill-*.mjs
