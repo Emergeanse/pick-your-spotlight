@@ -1670,6 +1670,20 @@ export type Database = {
           year: number
         }[]
       }
+      get_or_create_catalog_item: {
+        Args: {
+          p_media_type?: string
+          p_overview?: string
+          p_popularity?: number
+          p_poster_path?: string
+          p_runtime?: number
+          p_title?: string
+          p_tmdb_id: number
+          p_vote_average?: number
+          p_year?: number
+        }
+        Returns: string
+      }
       get_pending_duo_by_invite_code: {
         Args: { _code: string }
         Returns: {
