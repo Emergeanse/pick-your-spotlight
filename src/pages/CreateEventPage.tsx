@@ -22,8 +22,8 @@ type MediaType   = "movie" | "tv" | "both";
 
 const CONTEXT_CONFIG: Record<EventContext, { label: string; Icon: React.ComponentType<any>; color: string; emoji: string; disabled?: boolean }> = {
   duo:     { label: "Duo",          Icon: Heart, color: "text-primary",     emoji: "💑" },
-  famille: { label: "Famille",      Icon: Home,  color: "text-accent",      emoji: "🏠", disabled: true },
-  amis:    { label: "Entre amis",   Icon: Users, color: "text-emerald-400", emoji: "🎉", disabled: true },
+  famille: { label: "Famille",      Icon: Home,  color: "text-accent",      emoji: "🏠" },
+  amis:    { label: "Entre amis",   Icon: Users, color: "text-emerald-400", emoji: "🎉" },
   solo:    { label: "Solo",         Icon: Users, color: "text-orange-400",  emoji: "🎬" },
 };
 
@@ -62,6 +62,8 @@ const CreateEventPage = () => {
   const preRemote   = searchParams.get("remote") === "true";
   const preDuoId    = searchParams.get("duoId") ?? null;
   const preGenres   = searchParams.get("genres")?.split(",").filter(Boolean) ?? [];
+  // Participants déjà choisis dans la modale d'accueil avant de planifier.
+  const preParticipants = searchParams.get("participants")?.split(",").filter(Boolean) ?? [];
 
   // Si on arrive depuis le modal (context + date pré-remplis), sauter l'étape 0
   const [step, setStep] = useState(preContext && preDate ? 1 : 0);
@@ -80,7 +82,7 @@ const CreateEventPage = () => {
   const [duosLoaded, setDuosLoaded] = useState(false);
   const [selectedDuoId, setSelectedDuoId] = useState<string | null>(preDuoId);
   const [groupFriends, setGroupFriends]   = useState<DuoFriendCandidate[]>([]);
-  const [selectedParticipants, setSelectedParticipants] = useState<string[]>([]);
+  const [selectedParticipants, setSelectedParticipants] = useState<string[]>(preParticipants);
 
   // Chargement duos / amis selon le contexte
   useEffect(() => {

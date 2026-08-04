@@ -122,19 +122,21 @@ const EventPage = () => {
             <ChevronRight className="w-4 h-4 text-foreground/45 shrink-0" />
           </motion.button>
 
-          {/* Groupe — à venir */}
-          <div className="w-full flex items-center gap-4 p-4 rounded-2xl bg-white/[0.02] border border-white/[0.04] opacity-50">
-            <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center shrink-0">
+          {/* Groupe — famille ou entre amis */}
+          <motion.button
+            whileTap={{ scale: 0.97 }}
+            onClick={() => navigate("/app/soiree/nouvelle?context=amis")}
+            className="w-full flex items-center gap-4 p-4 rounded-2xl bg-white/[0.04] border border-white/[0.07] text-left"
+          >
+            <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center shrink-0">
               <span className="text-lg">👥</span>
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-sans font-semibold text-foreground">Soirée en groupe</p>
-              <p className="text-xs text-foreground/45 mt-0.5">Bientôt disponible</p>
+              <p className="text-xs text-foreground/45 mt-0.5">En famille ou entre amis, Pick combine vos goûts</p>
             </div>
-            <span className="text-[10px] font-sans text-foreground/45 border border-white/10 rounded-full px-2 py-0.5 shrink-0">
-              Bientôt
-            </span>
-          </div>
+            <ChevronRight className="w-4 h-4 text-foreground/45 shrink-0" />
+          </motion.button>
         </div>
 
       </div>

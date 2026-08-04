@@ -712,7 +712,9 @@ export default function DuoPage() {
                 onClick={() => {
                   if (activeTab === "amis") navigate("/app/friends");
                   else if (activeTab === "duos") setCreating(true);
-                  else toast.info("Les groupes arrivent bientôt !");
+                  // Les groupes enregistrés n'existent pas encore, mais une
+                  // soirée à plusieurs se lance depuis l'accueil.
+                  else navigate("/app");
                 }}
                 className="w-9 h-9 rounded-full bg-primary/15 border border-primary/25 flex items-center justify-center hover:bg-primary/25 transition-colors"
               >
@@ -833,10 +835,22 @@ export default function DuoPage() {
                     <Users className="w-7 h-7 text-foreground/40" />
                   </div>
                   <div className="space-y-1.5">
-                    <p className="font-sans font-medium text-foreground/60">Groupes — bientôt</p>
-                    <p className="font-sans text-foreground/50 text-sm max-w-[220px]">Crée des groupes de 3 personnes ou plus pour vos soirées ciné collectives.</p>
+                    <p className="font-sans font-medium text-foreground/60">Groupes enregistrés — bientôt</p>
+                    <p className="font-sans text-foreground/50 text-sm max-w-[240px]">
+                      Pouvoir garder un groupe d&apos;amis sous la main arrive bientôt.
+                    </p>
+                    <p className="font-sans text-foreground/40 text-xs max-w-[240px] pt-1">
+                      En attendant, les soirées à plusieurs fonctionnent déjà : choisis
+                      « Famille » ou « Entre amis » depuis l&apos;accueil.
+                    </p>
                   </div>
-                  <span className="px-3 py-1 rounded-full border border-white/10 text-[11px] font-sans text-foreground/45">Bientôt disponible</span>
+                  <button
+                    type="button"
+                    onClick={() => navigate("/app")}
+                    className="px-4 py-2 rounded-xl bg-primary/15 border border-primary/25 text-primary text-[12px] font-sans font-semibold"
+                  >
+                    Lancer une soirée à plusieurs →
+                  </button>
                 </motion.div>
               )}
 

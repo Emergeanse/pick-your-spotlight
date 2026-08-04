@@ -51,13 +51,13 @@ export default function OnboardingModesGuide({ onContinue }: OnboardingModesGuid
             <Heart className="w-4 h-4 text-violet-400" />
             <span className="text-[10px] font-sans font-semibold text-violet-400">Soirée Duo</span>
           </div>
-          <div className="flex flex-col items-center gap-1.5 py-3 rounded-xl border border-white/8 bg-foreground/5 opacity-40">
-            <Home className="w-4 h-4 text-foreground/40" />
-            <span className="text-[10px] font-sans text-foreground/40">Famille</span>
+          <div className="flex flex-col items-center gap-1.5 py-3 rounded-xl border border-rose-400/40 bg-rose-400/10">
+            <Home className="w-4 h-4 text-rose-400" />
+            <span className="text-[10px] font-sans font-semibold text-rose-400">Famille</span>
           </div>
-          <div className="flex flex-col items-center gap-1.5 py-3 rounded-xl border border-white/8 bg-foreground/5 opacity-40">
-            <Users className="w-4 h-4 text-foreground/40" />
-            <span className="text-[10px] font-sans text-foreground/40">Entre amis</span>
+          <div className="flex flex-col items-center gap-1.5 py-3 rounded-xl border border-emerald-400/40 bg-emerald-400/10">
+            <Users className="w-4 h-4 text-emerald-400" />
+            <span className="text-[10px] font-sans font-semibold text-emerald-400">Entre amis</span>
           </div>
         </div>
 
