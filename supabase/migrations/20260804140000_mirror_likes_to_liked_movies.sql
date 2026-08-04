@@ -174,6 +174,11 @@ COMMENT ON FUNCTION public.backfill_liked_movies_from_interactions() IS
 
 -- ── Reprise globale, à exécuter manuellement quand la qualité est validée ──
 --
+-- Le filtre EXISTS sur auth.users n'est pas décoratif : user_interactions.user_id
+-- n'a AUCUNE clé étrangère, alors que liked_movies en a une. Les interactions des
+-- comptes supprimés — comptes de test éphémères notamment — survivent donc à leur
+-- compte, et la reprise échoue sur elles en 23503 sans ce filtre.
+--
 -- INSERT INTO public.liked_movies (user_id, tmdb_id, title, genres, liked_at)
 -- SELECT DISTINCT ON (ui.user_id, ui.tmdb_id)
 --        ui.user_id, ui.tmdb_id,
@@ -185,5 +190,6 @@ COMMENT ON FUNCTION public.backfill_liked_movies_from_interactions() IS
 --   LEFT JOIN public.catalog_items   ci ON ci.tmdb_id = ui.tmdb_id
 --  WHERE ui.action_type = 'liked'
 --    AND COALESCE(NULLIF(ui.context->>'title',''), me.title, ci.title) IS NOT NULL
+--    AND EXISTS (SELECT 1 FROM auth.users u WHERE u.id = ui.user_id)
 --  ORDER BY ui.user_id, ui.tmdb_id, ui.created_at ASC
 -- ON CONFLICT (user_id, tmdb_id) DO NOTHING;
