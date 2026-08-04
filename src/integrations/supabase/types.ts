@@ -914,6 +914,7 @@ export type Database = {
           excluded_decades: number[] | null
           excluded_genres: string[] | null
           excluded_platforms: number[] | null
+          exploration_level: number
           favorite_genres: string[] | null
           first_use_date: string | null
           friend_code: string
@@ -964,6 +965,7 @@ export type Database = {
           excluded_decades?: number[] | null
           excluded_genres?: string[] | null
           excluded_platforms?: number[] | null
+          exploration_level?: number
           favorite_genres?: string[] | null
           first_use_date?: string | null
           friend_code?: string
@@ -1014,6 +1016,7 @@ export type Database = {
           excluded_decades?: number[] | null
           excluded_genres?: string[] | null
           excluded_platforms?: number[] | null
+          exploration_level?: number
           favorite_genres?: string[] | null
           first_use_date?: string | null
           friend_code?: string
@@ -1590,6 +1593,13 @@ export type Database = {
       auth_uid_is_event_member: {
         Args: { p_event_id: string }
         Returns: boolean
+      }
+      backfill_liked_movies_from_interactions: {
+        Args: never
+        Returns: {
+          inseres: number
+          sans_titre: number
+        }[]
       }
       claim_pending_duo: { Args: { _invite_code: string }; Returns: string }
       count_movie_candidates: {
