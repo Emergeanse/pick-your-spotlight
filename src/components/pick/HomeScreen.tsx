@@ -1182,7 +1182,7 @@ const HomeScreen = ({
 
   // Sert aussi bien au Duo qu'aux soirées de groupe : même point d'injection,
   // le pipeline n'a pas besoin de les distinguer.
-  type DuoOverrides = { topGenres: string[]; excludedGenres: string[]; tasteVector: number[] | null; avoidanceVector: number[] | null; topClusters: string[]; rejectedClusters: string[]; partnerExcludeIds: number[]; user1Name: string | null; user2Name: string | null; user1Id?: string; user2Id?: string; maxCertificationLevel?: number | null };
+  type DuoOverrides = { topGenres: string[]; excludedGenres: string[]; tasteVector: number[] | null; avoidanceVector: number[] | null; topClusters: string[]; rejectedClusters: string[]; partnerExcludeIds: number[]; user1Name: string | null; user2Name: string | null; user1Id?: string; user2Id?: string; maxCertificationLevel?: number | null; groupSize?: number; groupKind?: "famille" | "amis" | null; youngestAgeRange?: string | null };
   const generateTonightPick = async (excludeList: number[] = rejectedIds, rejectionContext?: RejectionContext, voiceFilters?: VoiceSearchFilters | null, duoOverrides?: DuoOverrides, extraMoodContext?: string) => {
     generateTonightPickRef.current = generateTonightPick;
     // Ouvrir l'overlay immédiatement — avant tout await, dans le même batch que l'appelant
@@ -1692,6 +1692,7 @@ const HomeScreen = ({
             preloadProviders: true,
             scoreAllWithMovieMatch: true,
             ...(duoOverrides?.user1Name && { duoContext: { user1Name: duoOverrides.user1Name, user2Name: duoOverrides.user2Name ?? null } }),
+            ...(duoOverrides?.groupSize && duoOverrides.groupSize > 1 && { groupContext: { size: duoOverrides.groupSize, kind: duoOverrides.groupKind ?? null, youngestAgeRange: duoOverrides.youngestAgeRange ?? null } }),
             onBatchReady: (batchMovies) => {
               if (!isMountedRef.current || firstMovieShown || isStale()) return;
               firstMovieShown = true;
@@ -1797,6 +1798,7 @@ const HomeScreen = ({
             preloadProviders: true,
             minMatchScore: quickFilters.matchThreshold,
             ...(duoOverrides?.user1Name && { duoContext: { user1Name: duoOverrides.user1Name, user2Name: duoOverrides.user2Name ?? null } }),
+            ...(duoOverrides?.groupSize && duoOverrides.groupSize > 1 && { groupContext: { size: duoOverrides.groupSize, kind: duoOverrides.groupKind ?? null, youngestAgeRange: duoOverrides.youngestAgeRange ?? null } }),
           });
           const scoreMapB: Record<number, RecommendationMatch> = {};
           (movies as any[]).forEach((m: any) => {
@@ -1825,6 +1827,7 @@ const HomeScreen = ({
           preloadProviders: true,
           minMatchScore: quickFilters.matchThreshold,
           ...(duoOverrides?.user1Name && { duoContext: { user1Name: duoOverrides.user1Name, user2Name: duoOverrides.user2Name ?? null } }),
+            ...(duoOverrides?.groupSize && duoOverrides.groupSize > 1 && { groupContext: { size: duoOverrides.groupSize, kind: duoOverrides.groupKind ?? null, youngestAgeRange: duoOverrides.youngestAgeRange ?? null } }),
         });
         const scoreMapC: Record<number, RecommendationMatch> = {};
         (movies as any[]).forEach((m: any) => {

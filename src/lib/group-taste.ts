@@ -64,6 +64,10 @@ export interface GroupOverrides {
   user2Id?: string;
   /** Plafond d'âge du groupe, transmis tel quel au moteur. */
   maxCertificationLevel?: number | null;
+  /** Nombre de personnes devant l'écran — sert à s'adresser au groupe. */
+  groupSize?: number;
+  groupKind?: "famille" | "amis" | null;
+  youngestAgeRange?: string | null;
 }
 
 /**
@@ -196,6 +200,9 @@ export function toGroupOverrides(profile: GroupTasteProfile): GroupOverrides {
     user1Name: null,
     user2Name: null,
     maxCertificationLevel: profile.maxCertificationLevel ?? null,
+    groupSize: profile.participantCount ?? profile.memberCount,
+    groupKind: profile.context === "famille" || profile.context === "amis" ? profile.context : null,
+    youngestAgeRange: profile.youngestAgeRange ?? null,
   };
 }
 

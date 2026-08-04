@@ -39,7 +39,7 @@ serve(async (req) => {
     const auth = await requireAuth(req, corsHeaders);
     if (auth.response) return auth.response;
     const mmT0 = Date.now();
-    const { movie, userCriteria, tasteProfile, userTasteVector, likedMovieTitles, searchTags, cinematicProfile, peoplePreferences, userName, duoContext, minMatchScore: rawMinMatchScore } = await req.json();
+    const { movie, userCriteria, tasteProfile, userTasteVector, likedMovieTitles, searchTags, cinematicProfile, peoplePreferences, userName, duoContext, groupContext, minMatchScore: rawMinMatchScore } = await req.json();
     // Le seuil SQL (matchThreshold profil) ne doit pas forcer le LLM à gonfler les scores.
     // On cap à 55 pour laisser le LLM scorer honnêtement entre 55 et 99%.
     const minMatchScore = typeof rawMinMatchScore === "number" ? Math.max(0, Math.min(55, rawMinMatchScore)) : 55;
@@ -221,7 +221,27 @@ RÈGLES :
 - Score calibré : Match parfait → 85-99.`
       : `Tu es Pick, un ami cinéphile passionné qui calcule un match score MULTI-VECTEUR. On te donne un film, le profil de goûts multi-dimensionnel d'un utilisateur, et sa session actuelle.
 
-TON : Tu parles comme un pote cinéphile — chaleureux, direct, jamais robotique. TOUJOURS POSITIF ET ENTHOUSIASTE.${duoContext?.user1Name && duoContext?.user2Name ? `\nTu t'adresses à un DUO : ${duoContext.user1Name} et ${duoContext.user2Name} regardent ensemble. Utilise "vous", "vous deux", ou leurs prénoms naturellement. Parle-leur comme à deux amis qui partagent un moment. Ex: "Vous allez adorer", "Pour ${duoContext.user1Name} et ${duoContext.user2Name}, ce film...", "Parfait pour votre soirée".` : userName ? `\nL'utilisateur s'appelle ${userName}. Utilise son prénom naturellement dans 1 ou 2 champs (headline ou whyItMatches ou detailedExplanation), comme un vrai ami qui lui parle directement.` : ""}
+TON : Tu parles comme un pote cinéphile — chaleureux, direct, jamais robotique. TOUJOURS POSITIF ET ENTHOUSIASTE.${
+  // Le groupe prime sur le duo, qui prime sur le solo : s'adresser à une
+  // seule personne alors que plusieurs regardent ensemble sonne faux.
+  groupContext?.size > 1
+    ? `\nTu t'adresses à un GROUPE de ${groupContext.size} personnes qui regardent ENSEMBLE${groupContext.kind === "famille" ? " — une soirée en famille" : groupContext.kind === "amis" ? " — une soirée entre amis" : ""}.
+- Emploie « vous » et « votre soirée ». JAMAIS « tu », JAMAIS « toi », JAMAIS « pour toi ».
+- N'utilise AUCUN prénom : tu ne t'adresses pas à une personne en particulier.
+- Mets en avant ce qui RASSEMBLE : ce que chacun y trouvera, pourquoi ça marche pour tout le monde.
+- Ex : « Vous allez tous y trouver votre compte », « Parfait pour votre soirée à ${groupContext.size} », « De quoi mettre tout le monde d'accord ».${
+  groupContext.youngestAgeRange === "enfant"
+    ? `\n- Il y a un ENFANT parmi vous : dis en quoi le film convient à toute la famille, sans jamais le formuler comme une restriction.`
+    : groupContext.youngestAgeRange === "pre_ado" || groupContext.youngestAgeRange === "ado"
+      ? `\n- Le plus jeune est un adolescent : reste sur un registre qui parle à tous les âges présents.`
+      : ""
+}`
+    : duoContext?.user1Name && duoContext?.user2Name
+      ? `\nTu t'adresses à un DUO : ${duoContext.user1Name} et ${duoContext.user2Name} regardent ensemble. Utilise "vous", "vous deux", ou leurs prénoms naturellement. Parle-leur comme à deux amis qui partagent un moment. Ex: "Vous allez adorer", "Pour ${duoContext.user1Name} et ${duoContext.user2Name}, ce film...", "Parfait pour votre soirée".`
+      : userName
+        ? `\nL'utilisateur s'appelle ${userName}. Utilise son prénom naturellement dans 1 ou 2 champs (headline ou whyItMatches ou detailedExplanation), comme un vrai ami qui lui parle directement.`
+        : ""
+}
 - "headline" → accroche naturelle et enthousiaste, comme un ami dirait
 - "whyItMatches" → 1 phrase courte POSITIVE, style pote, qui met en avant ce qui va plaire
 - "detailedExplanation" → 3-5 phrases EXCLUSIVEMENT POSITIVES. Valorise les qualités du film par rapport au profil de l'utilisateur (ses genres préférés, ses goûts, son humeur). Ne mentionne JAMAIS les points faibles, réserves ou aspects négatifs. Fais le lien entre ce que l'utilisateur aime et ce que le film offre.

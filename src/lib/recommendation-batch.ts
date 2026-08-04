@@ -112,6 +112,8 @@ type RecommendationBatchOptions = {
   onMovieEnriched?: (movie: RecommendationMovieDetail) => void;
   // Contexte duo : noms des deux utilisateurs pour personnaliser le texte movie-match
   duoContext?: { user1Name: string | null; user2Name: string | null };
+  // Contexte groupe : s'adresser à plusieurs personnes plutôt qu'à une seule
+  groupContext?: { size: number; kind: "famille" | "amis" | null; youngestAgeRange: string | null };
 };
 
 const extractInlineRecommendationTexts = (entry: any): RecommendationMatchData | null => {
@@ -215,6 +217,7 @@ async function buildMatchContext(options: RecommendationBatchOptions) {
     cinematicProfile,
     peoplePreferences: tasteProfile?.peoplePreferences || null,
     duoContext: options.duoContext ?? null,
+    groupContext: options.groupContext ?? null,
   };
 }
 
@@ -236,6 +239,7 @@ async function fetchRecommendationTextsForMovie(
         peoplePreferences: context.peoplePreferences,
         userName: context.userName,
         duoContext: (context as any).duoContext ?? null,
+        groupContext: (context as any).groupContext ?? null,
         minMatchScore: options.minMatchScore ?? 60,
       },
     });
