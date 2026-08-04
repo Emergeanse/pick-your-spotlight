@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { getAutoPickSubtitle } from "@/lib/time-context";
 import { useAuth } from "@/hooks/use-auth";
-import { fetchMyDuos, type DuoProfile } from "@/lib/duo-profiles";
+import { fetchMyDuos, loadAcceptedFriends, type DuoProfile, type DuoFriendCandidate } from "@/lib/duo-profiles";
 import type { AmbianceMood } from "./HomeAmbianceSection";
 
 const AMBIANCES: { id: AmbianceMood; label: string; Icon: React.ComponentType<any> }[] = [
@@ -33,7 +33,15 @@ interface HomeScreenChoiceModalProps {
   open: boolean;
   mediaType: "both" | "movie" | "tv";
   onClose: () => void;
-  onAutoPick: (duoId?: string, opts?: { genres?: string[] }) => void;
+  onAutoPick: (
+    duoId?: string,
+    opts?: {
+      genres?: string[];
+      /** Séance de groupe improvisée : profils à fusionner et nature du groupe. */
+      groupParticipantIds?: string[];
+      groupContext?: "famille" | "amis";
+    },
+  ) => void;
   onOpenChat: () => void;
   onOpenMoodCapture: () => void;
   initialDuoId?: string;
@@ -50,6 +58,9 @@ const HomeScreenChoiceModal = ({
   const navigate = useNavigate();
   const { user } = useAuth();
   const [duos, setDuos] = useState<DuoProfile[]>([]);
+  const [friends, setFriends] = useState<DuoFriendCandidate[]>([]);
+  const [friendsLoaded, setFriendsLoaded] = useState(false);
+  const [selectedFriendIds, setSelectedFriendIds] = useState<string[]>([]);
   const [mode, setMode] = useState<ModalMode>("solo");
   const [selectedDuoId, setSelectedDuoId] = useState<string | null>(null);
   const [duoListOpen, setDuoListOpen] = useState(false);
@@ -78,6 +89,7 @@ const HomeScreenChoiceModal = ({
       setSelectedGenres([]);
       setThemeExpanded(false);
       setOrientMode(null);
+      setSelectedFriendIds([]);
       return;
     }
     if (initialContext === "duo" || initialDuoId) {
@@ -87,6 +99,13 @@ const HomeScreenChoiceModal = ({
       setMode("groupe");
     } else {
       setMode("solo");
+    }
+    // Les amis ne sont chargés qu'une fois la modale ouverte, et une seule fois.
+    if (user && !friendsLoaded) {
+      loadAcceptedFriends(user.id)
+        .then(setFriends)
+        .catch(() => setFriends([]))
+        .finally(() => setFriendsLoaded(true));
     }
     if (user) fetchMyDuos(user.id).then(d => {
       setDuos(d);
@@ -179,7 +198,7 @@ const HomeScreenChoiceModal = ({
                 {([
                   { m: "solo" as ModalMode,   Icon: User,  label: "Solo",   disabled: false },
                   { m: "duo" as ModalMode,    Icon: Heart, label: "Duo",    disabled: false },
-                  { m: "groupe" as ModalMode, Icon: Users, label: "Groupe", disabled: true  },
+                  { m: "groupe" as ModalMode, Icon: Users, label: "Groupe", disabled: false },
                 ]).map(({ m, Icon, label, disabled }) => (
                   <button
                     key={m}
@@ -236,18 +255,60 @@ const HomeScreenChoiceModal = ({
                 )}
               </AnimatePresence>
 
-              {/* Groupe placeholder */}
+              {/* Groupe : choix des participants parmi les amis acceptés */}
               {mode === "groupe" && (
-                <motion.div initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-white/[0.025] border border-white/[0.06]">
-                  <div className="w-8 h-8 rounded-xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center shrink-0">
-                    <Users className="w-3.5 h-3.5 text-foreground/50" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[12.5px] font-sans font-medium text-foreground/70">
-                      {initialContext === "famille" ? "Soirée Famille" : "Soirée entre amis"}
-                    </p>
-                    <p className="text-[11px] text-foreground/40 mt-0.5">Groupes bientôt disponibles</p>
-                  </div>
+                <motion.div initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col gap-2">
+                  {!friendsLoaded ? (
+                    <div className="flex items-center justify-center py-4">
+                      <span className="w-4 h-4 rounded-full border border-primary/30 border-t-primary animate-spin" aria-hidden="true" />
+                    </div>
+                  ) : friends.length === 0 ? (
+                    <div className="flex flex-col items-center gap-2.5 py-4 px-4 rounded-2xl bg-white/[0.025] border border-white/[0.06] text-center">
+                      <p className="text-[12.5px] font-sans text-foreground/60">
+                        Personne dans tes amis pour l&apos;instant.
+                      </p>
+                      <p className="text-[11px] text-foreground/40">
+                        Tu peux quand même lancer la recherche — Pick partira de ton seul profil.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => { onClose(); navigate("/app/friends"); }}
+                        className="px-4 py-2 rounded-xl bg-primary/20 border border-primary/30 text-primary text-[12px] font-sans font-semibold"
+                      >
+                        Ajouter des amis →
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="flex flex-wrap gap-1.5">
+                        {friends.map((f) => {
+                          const on = selectedFriendIds.includes(f.id);
+                          return (
+                            <button
+                              key={f.id}
+                              type="button"
+                              onClick={() => setSelectedFriendIds((prev) =>
+                                on ? prev.filter((x) => x !== f.id) : [...prev, f.id],
+                              )}
+                              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11.5px] font-sans font-medium border transition-all ${
+                                on
+                                  ? "bg-primary/15 border-primary text-primary"
+                                  : "bg-card/50 border-border/20 text-foreground/55 hover:border-primary/30"
+                              }`}
+                            >
+                              {on && <Check className="w-3 h-3" />}
+                              {f.displayName || "Ami"}
+                            </button>
+                          );
+                        })}
+                      </div>
+                      <p className="text-[11px] font-sans text-foreground/40">
+                        {selectedFriendIds.length === 0
+                          ? "Personne de sélectionné — Pick partira de ton seul profil."
+                          : `${selectedFriendIds.length + 1} profils combinés. Les genres exclus par l'un sont écartés pour tous.`}
+                      </p>
+                    </>
+                  )}
                 </motion.div>
               )}
             </div>
@@ -467,9 +528,16 @@ const HomeScreenChoiceModal = ({
                   if (ou === "a-distance") params.set("remote", "true");
                   if (ou === "ensemble" && ouDescription.trim()) params.set("location", ouDescription.trim());
                   if (selectedGenres.length > 0) params.set("genres", selectedGenres.join(","));
+                  if (isGroupe && selectedFriendIds.length > 0) params.set("participants", selectedFriendIds.join(","));
                   navigate(`/app/soiree/nouvelle?${params.toString()}`);
                 } else {
-                  onAutoPick(selectedDuoId ?? undefined, { genres: selectedGenres.length > 0 ? selectedGenres : undefined });
+                  onAutoPick(selectedDuoId ?? undefined, {
+                    genres: selectedGenres.length > 0 ? selectedGenres : undefined,
+                    ...(isGroupe && selectedFriendIds.length > 0 && {
+                      groupParticipantIds: selectedFriendIds,
+                      groupContext: initialContext === "famille" ? "famille" : "amis",
+                    }),
+                  });
                 }
               }}
               disabled={mode === "duo" && !selectedDuoId}

@@ -103,6 +103,73 @@ export async function fetchGroupTasteProfile(eventId: string): Promise<GroupTast
 }
 
 /**
+ * Profil fusionné pour une séance de groupe improvisée, sans soirée planifiée.
+ *
+ * `group-taste-profile` exige un `eventId` : c'est ce qui lui permet de
+ * vérifier que l'appelant fait bien partie du groupe avant de lire les profils
+ * des autres. Sans ce garde-fou, n'importe qui pourrait demander la fusion de
+ * n'importe quels utilisateurs.
+ *
+ * Pour une séance lancée dans l'instant, on crée donc une soirée technique le
+ * temps de l'appel, puis on la supprime. Elle naît avec le statut `done`, que
+ * les deux listages de soirées écartent déjà — si une suppression échouait,
+ * elle n'apparaîtrait nulle part.
+ */
+export async function fetchAdHocGroupProfile(
+  participantIds: string[],
+  context: "famille" | "amis",
+): Promise<GroupTasteProfile | null> {
+  const ids = [...new Set((participantIds ?? []).filter(Boolean))];
+  if (ids.length === 0) return null;
+
+  let eventId: string | null = null;
+  try {
+    const { data: user } = await supabase.auth.getUser();
+    const organizerId = user?.user?.id;
+    if (!organizerId) return null;
+
+    const { data: event, error: createError } = await supabase
+      .from("events")
+      .insert({
+        organizer_id: organizerId,
+        title: "Séance improvisée",
+        event_date: new Date().toISOString().slice(0, 10),
+        context,
+        status: "done",
+        media_type: "both",
+      } as any)
+      .select("id")
+      .single();
+
+    if (createError || !event) {
+      console.warn("[GROUP] séance technique non créée :", createError?.message);
+      return null;
+    }
+    eventId = (event as any).id;
+
+    const others = ids.filter((id) => id !== organizerId);
+    if (others.length > 0) {
+      await supabase.from("event_participants" as any).insert(
+        others.map((id) => ({ event_id: eventId, user_id: id, status: "confirmed" })),
+      );
+    }
+
+    return await fetchGroupTasteProfile(eventId!);
+  } catch (e) {
+    console.warn("[GROUP] profil improvisé indisponible :", e);
+    return null;
+  } finally {
+    // La soirée technique n'a plus de raison d'exister une fois le profil lu.
+    if (eventId) {
+      await supabase.from("events").delete().eq("id", eventId).then(
+        undefined,
+        (e) => console.warn("[GROUP] séance technique non supprimée :", e),
+      );
+    }
+  }
+}
+
+/**
  * Un profil de groupe n'a d'intérêt que s'il agrège plusieurs personnes.
  * À un seul participant, le pipeline solo habituel est déjà le bon outil — et
  * il dispose de signaux que la fusion ne transporte pas (historique de

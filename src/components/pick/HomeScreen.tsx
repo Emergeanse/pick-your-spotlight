@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate, useLocation } from "react-router-dom";
 import { consumePendingDuoPick } from "@/lib/duo-pending";
 import { clearRevealIntent, type RevealIntent, peekForReveal, consumeForReveal, queueForReveal, _pipelineFns, getRevealEvent, clearRevealEvent } from "@/lib/event-reveal";
-import { fetchGroupTasteProfile, isUsableGroupProfile, toGroupOverrides } from "@/lib/group-taste";
+import { fetchGroupTasteProfile, fetchAdHocGroupProfile, isUsableGroupProfile, toGroupOverrides } from "@/lib/group-taste";
 import { programFilmForEvent } from "@/lib/event-program";
 import { toast } from "sonner";
 import { Sparkles, WandSparkles, Clapperboard, ChevronRight, Flame, Eye, Coffee, Heart, Shuffle, Home, Users, Crown, Star } from "lucide-react";
@@ -1982,7 +1982,16 @@ const HomeScreen = ({
     }
   };
 
-  const handleAutoPick = async (duoId?: string, opts?: { genres?: string[]; moodContext?: string; mediaType?: "movie" | "tv" }) => {
+  const handleAutoPick = async (
+    duoId?: string,
+    opts?: {
+      genres?: string[];
+      moodContext?: string;
+      mediaType?: "movie" | "tv";
+      groupParticipantIds?: string[];
+      groupContext?: "famille" | "amis";
+    },
+  ) => {
     console.log("[REVEAL] 🎭 handleAutoPick — duoId:", duoId, "| opts:", opts);
     // Ouvrir l'overlay en premier — dans le même batch React que setShowFindChoice(false)
     // → pas de frame où le fond est visible entre la fermeture du modal et l'ouverture de l'overlay
@@ -2004,6 +2013,28 @@ const HomeScreen = ({
             decade: null,
           }
         : null;
+
+    // ── Séance de groupe improvisée ──
+    // Le profil fusionné est calculé côté serveur, via une soirée technique
+    // créée puis supprimée le temps de l'appel (voir fetchAdHocGroupProfile).
+    if (opts?.groupParticipantIds?.length && opts.groupContext) {
+      const participants = [...new Set([user?.id, ...opts.groupParticipantIds].filter(Boolean) as string[])];
+      const groupProfile = await fetchAdHocGroupProfile(participants, opts.groupContext);
+      if (isUsableGroupProfile(groupProfile)) {
+        const overrides = toGroupOverrides(groupProfile);
+        console.log(
+          `[GROUP] séance ${opts.groupContext} — ${groupProfile.memberCount} profils, ` +
+            `${groupProfile.contributingVectorCount} avec vecteur` +
+            (groupProfile.maxCertificationLevel != null
+              ? ` | plafond d'âge ${groupProfile.maxCertificationLevel}`
+              : ""),
+        );
+        currentDuoOverridesRef.current = overrides;
+        void generateTonightPick([], undefined, genreFilter, overrides, opts.moodContext);
+        return;
+      }
+      console.warn("[GROUP] profil de groupe indisponible — repli sur le profil solo");
+    }
 
     if (duoId) {
       try {
