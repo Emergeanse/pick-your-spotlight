@@ -97,33 +97,33 @@ export async function getOrCreateCatalogItem(tmdbId: number, meta?: CatalogMeta)
   }
 
   const payload = {
-    tmdb_id: tmdbId,
-    media_type: mediaType,
-    title: meta.title,
-    poster_path: meta.poster_path ?? null,
-    year: meta.year ?? null,
-    overview: meta.overview ?? null,
-    vote_average: meta.vote_average ?? null,
-    popularity: meta.popularity ?? null,
-    runtime: meta.runtime ?? null,
+    p_tmdb_id: tmdbId,
+    p_media_type: mediaType,
+    p_title: meta.title,
+    p_poster_path: meta.poster_path ?? null,
+    p_year: meta.year ?? null,
+    p_overview: meta.overview ?? null,
+    p_vote_average: meta.vote_average ?? null,
+    p_popularity: meta.popularity ?? null,
+    p_runtime: meta.runtime ?? null,
   };
 
   catalogLog("getOrCreateCatalogItem:create attempt", payload);
 
-  const { data: created, error: createError } = await supabase
-    .from("catalog_items")
-    .insert(payload as any)
-    .select("id")
-    .single();
+  const { data: created, error: createError } = await supabase.rpc(
+    "get_or_create_catalog_item" as any,
+    payload as any,
+  );
 
-  if (!createError && created?.id) {
+  if (!createError && created) {
     catalogLog("getOrCreateCatalogItem created", {
       tmdbId,
       mediaType,
-      itemId: created.id,
+      itemId: created,
     });
-    return created.id;
+    return created as unknown as string;
   }
+
 
   catalogError("getOrCreateCatalogItem create failed, trying fallback read", {
     tmdbId,
