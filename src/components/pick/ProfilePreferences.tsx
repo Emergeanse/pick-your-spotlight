@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Film, Tv, Clapperboard, Clock, Target, Info } from "lucide-react";
+import { Film, Tv, Clapperboard, Clock, Target, Info, Compass } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
@@ -20,6 +20,9 @@ const DURATION_OPTIONS = [
 interface ProfilePreferencesProps {
   matchThreshold: number;
   onMatchThresholdChange: (v: number) => void;
+  /** 0 = pile dans mes goûts, 10 = surprends-moi. N'affecte jamais la note. */
+  explorationLevel: number;
+  onExplorationLevelChange: (v: number) => void;
   mediaType: "both" | "movie" | "tv";
   onMediaTypeChange: (v: "both" | "movie" | "tv") => void;
   maxDuration: number | null;
@@ -29,6 +32,8 @@ interface ProfilePreferencesProps {
 const ProfilePreferences = ({
   matchThreshold,
   onMatchThresholdChange,
+  explorationLevel,
+  onExplorationLevelChange,
   mediaType,
   onMediaTypeChange,
   maxDuration,
@@ -58,6 +63,56 @@ const ProfilePreferences = ({
           </div>
           <Slider value={[matchThreshold]} onValueChange={([v]) => onMatchThresholdChange(v)} min={0} max={100} step={5} className="w-full" />
           <p className="text-[11px] text-foreground/50 mt-3">À quel point Pick doit être exigeant avant de te proposer un titre.</p>
+        </div>
+      </motion.section>
+
+      {/* ─── Profondeur de découverte ─── */}
+      {/* Distinct de l'exigence ci-dessus : celle-ci porte sur la QUALITÉ,
+          celui-ci sur la DISTANCE à tes goûts. La note minimale reste un
+          plancher quelle que soit la profondeur choisie. */}
+      <motion.section initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.075 }} className="mb-8">
+        <div className="flex items-center gap-2 mb-3">
+          <Compass className="w-3.5 h-3.5 text-primary/60" />
+          <h2 className="text-sm font-sans font-semibold text-foreground/50 uppercase tracking-widest">Envie de découverte</h2>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild><button className="text-foreground/40"><Info className="w-3 h-3" /></button></TooltipTrigger>
+              <TooltipContent side="top" className="max-w-[260px] text-xs">
+                <p>Ce réglage ne baisse jamais la qualité : les films restent aussi bien notés, ils s&apos;éloignent simplement de tes habitudes.</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
+        <div className="bg-card rounded-xl p-4">
+          <div className="flex items-center justify-between mb-3">
+            <span className="font-sans text-sm font-medium">
+              {explorationLevel <= 2
+                ? "Pile dans mes goûts"
+                : explorationLevel <= 5
+                  ? "Un peu à côté"
+                  : explorationLevel <= 8
+                    ? "Fais-moi voyager"
+                    : "Surprends-moi"}
+            </span>
+            <span className="text-[10px] font-sans text-foreground/40">{explorationLevel}/10</span>
+          </div>
+          <Slider
+            value={[explorationLevel]}
+            onValueChange={([v]) => onExplorationLevelChange(v)}
+            min={0}
+            max={10}
+            step={1}
+            className="w-full"
+          />
+          <p className="text-[11px] text-foreground/50 mt-3">
+            {explorationLevel <= 2
+              ? "Pick reste au cœur de ce que tu aimes."
+              : explorationLevel <= 5
+                ? "Pick s'autorise le voisinage de tes goûts."
+                : explorationLevel <= 8
+                  ? "Pick va chercher des genres que tu explores peu."
+                  : "Pick part loin de tes habitudes — sans jamais descendre en qualité."}
+          </p>
         </div>
       </motion.section>
 

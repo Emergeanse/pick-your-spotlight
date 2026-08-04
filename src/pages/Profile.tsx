@@ -236,6 +236,7 @@ const Profile = () => {
   const [excludedDecades, setExcludedDecades] = useState<number[]>([]);
   const [minRating, setMinRating] = useState<number>(0);
   const [matchThreshold, setMatchThreshold] = useState<number>(80);
+  const [explorationLevel, setExplorationLevel] = useState<number>(5);
   const [defaultMediaType, setDefaultMediaType] = useState<"both" | "movie" | "tv">("both");
   const [defaultMaxDuration, setDefaultMaxDuration] = useState<number | null>(null);
   const [recommendationCount, setRecommendationCount] = useState<number>(3);
@@ -300,6 +301,7 @@ const Profile = () => {
       setExcludedDecades((data as any)?.excluded_decades || []);
       setMinRating((data as any)?.min_rating || 5);
       setMatchThreshold((data as any)?.match_threshold ?? 80);
+      setExplorationLevel((data as any)?.exploration_level ?? 5);
       setDefaultMediaType(((data as any)?.default_media_type as any) || "both");
       setDefaultMaxDuration((data as any)?.default_max_duration ?? null);
       setDisplayName(data?.display_name || user.email?.split("@")[0] || "");
@@ -431,6 +433,7 @@ const Profile = () => {
         excluded_decades: excludedDecades,
         min_rating: minRating,
         match_threshold: matchThreshold,
+        exploration_level: explorationLevel,
         default_media_type: defaultMediaType,
         default_max_duration: defaultMaxDuration,
         default_recommendation_count: recommendationCount,
@@ -455,6 +458,7 @@ const Profile = () => {
         excluded_decades: [...excludedDecades],
         min_rating: minRating,
         match_threshold: matchThreshold,
+        exploration_level: explorationLevel,
         default_media_type: defaultMediaType,
         default_max_duration: defaultMaxDuration,
         default_recommendation_count: recommendationCount,
@@ -471,6 +475,7 @@ const Profile = () => {
     JSON.stringify([...excludedDecades].sort((a, b) => a - b)) !== JSON.stringify([...((profile as any)?.excluded_decades || [])].sort((a: number, b: number) => a - b)) ||
     minRating !== ((profile as any)?.min_rating || 0) ||
     matchThreshold !== ((profile as any)?.match_threshold ?? 80) ||
+    explorationLevel !== ((profile as any)?.exploration_level ?? 5) ||
     defaultMediaType !== ((profile as any)?.default_media_type || "both") ||
     defaultMaxDuration !== ((profile as any)?.default_max_duration ?? null) ||
     recommendationCount !== ((profile as any)?.default_recommendation_count ?? 3)
@@ -864,6 +869,8 @@ const Profile = () => {
           <ProfilePreferences
             matchThreshold={matchThreshold}
             onMatchThresholdChange={setMatchThreshold}
+            explorationLevel={explorationLevel}
+            onExplorationLevelChange={setExplorationLevel}
             mediaType={defaultMediaType}
             onMediaTypeChange={setDefaultMediaType}
             maxDuration={defaultMaxDuration}

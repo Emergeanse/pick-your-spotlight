@@ -382,7 +382,9 @@ const HomeScreen = ({
   const [historyExcludeIds, setHistoryExcludeIds] = useState<number[]>([]);
   const [showTrainer, setShowTrainer] = useState(false);
   const [showFindChoice, setShowFindChoice] = useState(false);
-  const [explorationLevel] = useState<number>(5);
+  // Chargé depuis le profil (voir chargement plus bas). 5 = valeur historique,
+  // pour que rien ne change tant que l'utilisateur n'a pas touché au curseur.
+  const [explorationLevel, setExplorationLevel] = useState<number>(5);
   const [totalEvaluated, setTotalEvaluated] = useState(0);
   const [activeAmbiance, setActiveAmbiance] = useState<AmbianceMood | null>(null);
   // Initialisation depuis cache localStorage pour affichage instantané au refresh
@@ -1021,10 +1023,12 @@ const HomeScreen = ({
   useEffect(() => {
     if (!user) return;
 
-    supabase
+    // Cast : exploration_level n'existe dans les types générés qu'une fois la
+    // migration 20260805100000 appliquée et les types régénérés par Lovable.
+    (supabase as any)
       .from("profiles")
       .select(
-        "preferred_platforms, excluded_platforms, favorite_genres, excluded_genres, min_rating, default_media_type, default_max_duration, match_threshold, default_recommendation_count",
+        "preferred_platforms, excluded_platforms, favorite_genres, excluded_genres, min_rating, default_media_type, default_max_duration, match_threshold, default_recommendation_count, exploration_level",
       )
       .eq("id", user.id)
       .single()
@@ -1058,6 +1062,9 @@ const HomeScreen = ({
           minRating: (data as any)?.min_rating ?? 0,
           recommendationCount: Math.min((data as any)?.default_recommendation_count ?? 3, 3),
         };
+        // Profondeur de découverte : de 0 (pile dans mes goûts) à 10
+        // (surprends-moi). Ne touche jamais la note minimale.
+        setExplorationLevel((data as any)?.exploration_level ?? 5);
 
         setProfileDefaults(defaults);
         setQuickFilters(defaults);

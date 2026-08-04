@@ -142,6 +142,26 @@ serve(async (req) => {
     }
     const explorationLevel =
       typeof rawExplorationLevel === "number" ? Math.max(0, Math.min(10, rawExplorationLevel)) : 5;
+
+    // ── Profondeur de découverte ──
+    // Les candidats SQL arrivent triés par proximité au vecteur de goût. Plutôt
+    // que de toujours servir les plus proches, on saute les N premiers : on
+    // s'éloigne du cœur du profil SANS toucher au plancher de note, qui reste
+    // un WHERE appliqué avant le tri.
+    //
+    // Mesuré sur un profil réel, note minimale 7 :
+    //   rangs 1-50    → similarité 96,1 %, note moyenne 7,91
+    //   rangs 250-350 → similarité 93,7 %, note moyenne 7,59
+    //   rangs 600-700 → similarité 92,2 %, note moyenne 7,51
+    // La qualité tient, les genres s'élargissent (western et histoire
+    // apparaissent, absents des cent premiers).
+    //
+    // Progression quadratique : les niveaux bas restent serrés sur le profil,
+    // seuls les niveaux hauts s'éloignent vraiment.
+    const discoveryOffset = Math.round(Math.pow(explorationLevel / 10, 2) * 500);
+    if (discoveryOffset > 0) {
+      console.log(`[SP] 🧭 Découverte niveau ${explorationLevel} — on saute les ${discoveryOffset} candidats les plus proches`);
+    }
     const mediaType: "movie" | "tv" | "both" =
       rawMediaType === "tv" ? "tv" : rawMediaType === "movie" ? "movie" : "both";
     const minMatchScore = typeof rawMinMatchScore === "number" ? Math.max(0, Math.min(100, rawMinMatchScore)) : 60;
@@ -622,8 +642,14 @@ serve(async (req) => {
             const expandExcludeIds = [...normalizedExcludeIds, ...seenIds];
             // La contrainte d'âge s'ajoute à tous les niveaux de la cascade :
             // relâcher les filtres de goût ne doit jamais relâcher celui-ci.
+            //
+            // On demande de quoi couvrir le saut de découverte en plus du lot :
+            // la fonction SQL ne prend pas d'OFFSET, on tranche donc côté
+            // serveur. Le pool remonte au plus 1 000 lignes (limite PostgREST),
+            // d'où le plafonnement.
+            const fetchCount = Math.min(BATCH + discoveryOffset, 1000);
             const params = {
-              ...levels[level]({ match_count: BATCH, exclude_ids: expandExcludeIds }),
+              ...levels[level]({ match_count: fetchCount, exclude_ids: expandExcludeIds }),
               p_max_certification_level: maxCertificationLevel,
             };
             finalCascadeLevel = level;
@@ -644,13 +670,25 @@ serve(async (req) => {
             const { data, error } = await sb.rpc("match_movies_for_recommendation", params);
             if (error) { console.error(`[SP] SQL error level=${level} round=${round}:`, error); break; }
             if (!data || (data as any[]).length === 0) break;
+
+            // On écarte les plus proches pour aller chercher plus loin. Si le
+            // pool est trop court pour ce saut, on garde ce qu'on a : mieux
+            // vaut un film proche du profil que pas de film du tout.
+            const pool = data as any[];
+            const deeper = discoveryOffset > 0 && pool.length > discoveryOffset
+              ? pool.slice(discoveryOffset)
+              : pool;
+            if (discoveryOffset > 0 && deeper === pool && pool.length > 0) {
+              console.log(`[SP] 🧭 Pool trop court (${pool.length} ≤ ${discoveryOffset}) — découverte ignorée pour ce niveau`);
+            }
+
             const before = countNonInteracted(candidates);
-            addBatch(data as any[]);
+            addBatch(deeper);
             const gained = countNonInteracted(candidates) - before;
-            console.log(`[SP] Level=${level} Round=${round}: +${(data as any[]).length} bruts, +${gained} non-interagis → total non-interagis: ${countNonInteracted(candidates)}/${TARGET}`);
+            console.log(`[SP] Level=${level} Round=${round}: +${deeper.length} retenus sur ${pool.length} remontés, +${gained} non-interagis → total non-interagis: ${countNonInteracted(candidates)}/${TARGET}`);
             sqlLevelDebug.push({
               level, newFilms: gained, totalNonInteracted: countNonInteracted(candidates),
-              films: (data as any[]).slice(0, 10).map((c: any) => ({
+              films: deeper.slice(0, 10).map((c: any) => ({
                 title: c.title || "?", year: c.year || "?",
                 sim: c.similarity != null ? Math.round(c.similarity * 1000) / 10 : 0,
                 note: c.vote_average > 0 ? Math.round(c.vote_average * 10) / 10 : 0,
