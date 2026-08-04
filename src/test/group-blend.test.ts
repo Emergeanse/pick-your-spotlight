@@ -122,6 +122,28 @@ describe("blendGroupProfile", () => {
     expect(out.stableTasteVector!.every((n) => Math.abs(n - 0.4) < 1e-9)).toBe(true);
   });
 
+  it("un genre aimé par l'un et exclu par l'autre : l'exclusion l'emporte", () => {
+    // Cas réel observé sur une soirée à quatre : Marie aime l'Animation,
+    // JeanLou l'exclut. Le genre ressortait dans les deux listes et le moteur
+    // recevait une consigne contradictoire.
+    const out = blendGroupProfile([
+      member({ likedGenres: ["Comédie", "Animation"] }),
+      member({ likedGenres: ["Crime"], excludedGenres: ["Animation"] }),
+    ]);
+    expect(out.excludedGenres).toContain("Animation");
+    expect(out.likedGenres).not.toContain("Animation");
+  });
+
+  it("le retrait d'un genre exclu ne vide pas la liste des autres", () => {
+    const out = blendGroupProfile([
+      member({ likedGenres: ["Animation"] }),
+      member({ likedGenres: ["Crime"], excludedGenres: ["Animation"] }),
+    ]);
+    // Le premier membre n'a plus rien d'aimé : sa liste vide est ignorée
+    // plutôt que d'annuler l'intersection.
+    expect(out.likedGenres).toEqual(["Crime"]);
+  });
+
   it("un genre exclu par un seul membre exclut pour tout le groupe", () => {
     const out = blendGroupProfile([
       member({ excludedGenres: ["Horreur"] }),

@@ -104,8 +104,19 @@ export function blendGroupProfile(members: MemberSignals[]): BlendedGroupProfile
   const recent = averageVectors(list.map((m) => m.recentVector));
   const avoidance = averageVectors(list.map((m) => m.avoidanceVector));
 
-  const liked = intersectWithUnionFallback(list.map((m) => m.likedGenres));
   const platforms = intersectWithUnionFallback(list.map((m) => m.platforms));
+
+  // Un genre aimé par l'un et exclu par l'autre : l'exclusion l'emporte.
+  // Sans cet arbitrage le genre ressortait dans les deux listes, et le moteur
+  // recevait une consigne contradictoire — à la fois « cherche de l'animation »
+  // et « écarte l'animation ». En soirée, le refus d'un participant pèse plus
+  // lourd que l'envie d'un autre : personne ne doit subir un genre qu'il a
+  // explicitement rejeté.
+  const excludedGenres = unionAll(list.map((m) => m.excludedGenres));
+  const excludedSet = new Set(excludedGenres);
+  const liked = intersectWithUnionFallback(
+    list.map((m) => (m.likedGenres ?? []).filter((g) => !excludedSet.has(g))),
+  );
 
   // La confiance du groupe est celle du membre le moins bien profilé : on ne
   // peut pas être plus sûr du groupe que de son maillon le plus faible.
@@ -125,7 +136,7 @@ export function blendGroupProfile(members: MemberSignals[]): BlendedGroupProfile
     rejectedClusters: unionAll(list.map((m) => m.rejectedClusters)),
     confidence,
     likedGenres: liked.values,
-    excludedGenres: unionAll(list.map((m) => m.excludedGenres)),
+    excludedGenres,
     sharedPlatforms: platforms.values,
     minRating,
     excludeIds: unionAll(list.map((m) => m.seenTmdbIds)),
