@@ -6,6 +6,11 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+// Un prénom d'invité, saisi depuis un appel non authentifié.
+const MAX_GUEST_NAME_LENGTH = 40;
+// Plafond généreux pour une soirée réelle, mais qui borne l'insertion en boucle.
+const MAX_SESSION_MEMBERS = 30;
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -51,6 +56,14 @@ Deno.serve(async (req) => {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
+      // Un prénom, pas un roman : sans plafond, ce champ accepte n'importe quelle
+      // charge utile depuis un appel non authentifié.
+      if (name.length > MAX_GUEST_NAME_LENGTH) {
+        return new Response(JSON.stringify({ error: "Prénom trop long" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
 
       const found = await findSession();
       if (!found) {
@@ -60,12 +73,35 @@ Deno.serve(async (req) => {
         });
       }
 
-      // Insert guest member (user_id = null)
-      await admin.from("group_session_members").insert({
-        session_id: found.session.id,
-        user_id: null,
-        guest_name: name,
-      });
+      // Le chemin authentifié plus bas vérifie les doublons ; celui-ci ne le
+      // faisait pas. Un invité pouvait donc s'ajouter en boucle avec le seul code.
+      const { data: existingGuest } = await admin
+        .from("group_session_members")
+        .select("id")
+        .eq("session_id", found.session.id)
+        .is("user_id", null)
+        .eq("guest_name", name)
+        .maybeSingle();
+
+      if (!existingGuest) {
+        const { count } = await admin
+          .from("group_session_members")
+          .select("id", { count: "exact", head: true })
+          .eq("session_id", found.session.id);
+
+        if ((count ?? 0) >= MAX_SESSION_MEMBERS) {
+          return new Response(JSON.stringify({ error: "Cette soirée est complète" }), {
+            status: 409,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
+        await admin.from("group_session_members").insert({
+          session_id: found.session.id,
+          user_id: null,
+          guest_name: name,
+        });
+      }
 
       return new Response(
         JSON.stringify({
@@ -125,7 +161,17 @@ Deno.serve(async (req) => {
     const { session } = found;
 
 
-    // Auto-add friendship
+    // Rejoindre une soirée propose une amitié — elle ne la scelle pas.
+    //
+    // Cette insertion se faisait auparavant directement en `accepted`. Or la
+    // politique RLS « Users can view accepted friends profiles » ouvre en lecture
+    // la ligne entière de `profiles`, année de naissance comprise. Un simple code
+    // d'invitation, que l'organisateur diffuse largement par nature, donnait donc
+    // accès à ses données personnelles sans que personne n'ait rien accepté.
+    //
+    // En `pending`, la demande atterrit dans le parcours existant de Friends.tsx :
+    // l'organisateur la voit, l'accepte ou la refuse. Le lien social reste
+    // proposé, le consentement redevient nécessaire.
     if (session.creator_id !== userId) {
       const { data: existing } = await admin
         .from("friendships")
@@ -138,7 +184,7 @@ Deno.serve(async (req) => {
         await admin.from("friendships").insert({
           requester_id: userId,
           addressee_id: session.creator_id,
-          status: "accepted",
+          status: "pending",
         });
       }
     }
