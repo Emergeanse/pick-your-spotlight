@@ -1,5 +1,5 @@
 import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useRef, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,6 +11,7 @@ import pickWave from "@/assets/pick-squirrel-wave.webp";
 import pickDefault from "@/assets/pick-squirrel.webp";
 import pickLogo from "@/assets/pick-logo.webp";
 import { ALL_PLATFORMS } from "@/lib/platforms";
+import TmdbAttribution from "@/components/pick/TmdbAttribution";
 
 const POSTER_URLS = [
   // Match DEMO_MOVIES: Shawshank, Inception, Interstellar, Dark Knight
@@ -587,10 +588,13 @@ const Landing = () => {
           </div>
           <div className="flex items-center gap-6 text-foreground/45 text-xs font-sans">
             <span className="hover:text-foreground/50 transition-colors cursor-default">À propos</span>
-            <span className="hover:text-foreground/50 transition-colors cursor-default">Confidentialité</span>
+            <Link to="/trust" className="hover:text-foreground/70 transition-colors">Confidentialité</Link>
             <span className="hover:text-foreground/50 transition-colors cursor-default">Conditions</span>
           </div>
           <p className="text-foreground/12 text-[10px] font-sans">© {new Date().getFullYear()} Pick. Tous droits réservés.</p>
+        </div>
+        <div className="max-w-5xl mx-auto mt-8 pt-6 border-t border-border/5">
+          <TmdbAttribution />
         </div>
       </footer>
     </div>

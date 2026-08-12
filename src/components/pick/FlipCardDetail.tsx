@@ -8,6 +8,7 @@ import FeedbackBadge from "@/components/pick/FeedbackBadge";
 import { useMovieInteraction } from "@/hooks/use-movie-interactions";
 import MovieActionBar from "@/components/pick/MovieActionBar";
 import AppOverlayPortal from "@/components/pick/AppOverlayPortal";
+import TmdbAttribution from "@/components/pick/TmdbAttribution";
 import { overlayDetailScrollPaddingBottom } from "@/lib/app-chrome";
 
 type MatchData = {
@@ -517,6 +518,11 @@ const MovieDetailContent = ({
           </div>
         </div>
       )}
+
+      {/* Attribution TMDB — la fiche entière provient de leur API. */}
+      <div className="px-5 pt-2">
+        <TmdbAttribution compact />
+      </div>
     </div>
   );
 };

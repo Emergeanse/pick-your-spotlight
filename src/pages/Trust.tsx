@@ -8,6 +8,7 @@
 import { motion } from "framer-motion";
 import { ArrowLeft, ShieldCheck, Lock, Database, Server, Users, Cookie, Mail, FileText } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import TmdbAttribution from "@/components/pick/TmdbAttribution";
 
 const SECTIONS: Array<{
   icon: typeof ShieldCheck;
@@ -127,6 +128,16 @@ const TrustPage = () => {
           <p className="text-[11px] font-sans text-foreground/40 leading-relaxed">
             Cette page n'est pas une certification. Elle est mise à jour par l'équipe Pick au fil des évolutions de l'application.
           </p>
+        </motion.div>
+
+        {/* Attribution TMDB — exigée par les conditions d'utilisation de leur API. */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.45 }}
+          className="mt-8 pt-6 border-t border-border/10"
+        >
+          <TmdbAttribution />
         </motion.div>
       </div>
     </div>
