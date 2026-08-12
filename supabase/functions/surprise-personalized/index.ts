@@ -413,8 +413,8 @@ serve(async (req) => {
       "cinema-africain": [],
       "cinema-amerique-du-sud": ["es", "pt"],
     };
-    let userExcludedOriginLangs = new Set<string>();
-    let userPreferredOriginLangs = new Set<string>();
+    const userExcludedOriginLangs = new Set<string>();
+    const userPreferredOriginLangs = new Set<string>();
     if (userId && SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) {
       try {
         const sbPrefs = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
@@ -1537,7 +1537,7 @@ Réponds UNIQUEMENT avec ce JSON valide (sans markdown, sans backticks) :
     }
 
     // Compléter jusqu'à requestedCount depuis le pool SQL/LLM si le filet sécurité ou usedIds a trop réduit
-    let finalCandidates = [...safeMovies];
+    const finalCandidates = [...safeMovies];
     const finalUsedIds = new Set<number>(finalCandidates.map((m) => m.movie?.id).filter(Number.isFinite));
     const poolCompositeScore = (c: any) => (c.similarity ?? 0) * 100 + (c.vote_average ?? 0);
 

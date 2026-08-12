@@ -279,7 +279,7 @@ async function hydrateMissingPosters(
       if (!it?.tmdb_id) return it;
       const mt = it.media_type || (it.first_air_date ? "tv" : "movie");
       const key = `${it.tmdb_id}:${mt}`;
-      let updated = { ...it };
+      const updated = { ...it };
       if (!it.poster_path && resolved.has(key)) {
         const p = resolved.get(key);
         if (p) { updated.poster_path = p; changed = true; }

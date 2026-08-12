@@ -98,7 +98,6 @@ const RevealAnimation = ({ active, message, dynamicAnecdotes }: RevealAnimationP
       setAnecdoteIndex(prev => (prev + 1) % pool.length);
     }, 5000);
     return () => clearInterval(interval);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showAnecdote, active, dynamicLocked]);
 
   if (!active) return null;

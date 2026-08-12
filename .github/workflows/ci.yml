@@ -50,9 +50,13 @@ jobs:
       - name: Vérification des types TypeScript
         run: npx tsc --noEmit
 
+      # Le script `lint` porte un cliquet : `--max-warnings 1114`, le nombre exact
+      # d'avertissements au 12 août 2026 (essentiellement des `any` à typer).
+      # Conséquence : la dette ne peut plus grossir — tout nouveau `any` fait
+      # échouer la CI. Quand on en résorbe, on abaisse le plafond d'autant.
+      # Ce nombre ne doit jamais être remonté.
       - name: ESLint
         run: npm run lint
-        continue-on-error: true  # Ne bloque pas le CI, juste informatif pour l'instant
 
   # ── Job 3 : Tests E2E Playwright ─────────────────────────────────────────
   # S'exécute uniquement sur push main (pas sur les PRs pour éviter de consommer

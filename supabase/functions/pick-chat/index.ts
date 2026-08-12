@@ -412,7 +412,7 @@ ANNÉE EN COURS : ${currentYear}${timeInstruction}`;
 
     // Non-streaming mode (discovery) — handle tool calls with retry
     const MAX_RETRIES = 3;
-    let retryMessages = [...messages];
+    const retryMessages = [...messages];
     let lastAiData = await response.json();
 
     for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {

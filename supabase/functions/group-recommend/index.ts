@@ -112,7 +112,7 @@ serve(async (req) => {
 
     // Resolve item_id -> tmdb_id for exclusions
     const itemIds = [...new Set(feedbackRows.map((f) => f.item_id).filter(Boolean))];
-    let itemMap = new Map<string, { tmdb_id: number; media_type: string }>();
+    const itemMap = new Map<string, { tmdb_id: number; media_type: string }>();
     if (itemIds.length > 0) {
       const { data: items } = await supabase
         .from("catalog_items")
@@ -131,7 +131,7 @@ serve(async (req) => {
 
     // Resolve tag_id -> label/category
     const tagIds = [...new Set(prefsRows.map((p) => p.tag_id).filter(Boolean))];
-    let tagMap = new Map<string, { label: string; category: string }>();
+    const tagMap = new Map<string, { label: string; category: string }>();
     if (tagIds.length > 0) {
       const { data: tags } = await supabase
         .from("preference_tags")
