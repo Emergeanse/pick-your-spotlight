@@ -37,6 +37,8 @@ const CreateEventPage = lazy(() => import("./pages/CreateEventPage.tsx"));
 const EventDetailPage = lazy(() => import("./pages/EventDetailPage.tsx"));
 const MatchPage = lazy(() => import("./pages/MatchPage.tsx"));
 const TrustPage = lazy(() => import("./pages/Trust.tsx"));
+const PrivacyPage = lazy(() => import("./pages/Privacy.tsx"));
+const TermsPage = lazy(() => import("./pages/Terms.tsx"));
 
 const queryClient = new QueryClient();
 
@@ -108,6 +110,8 @@ const App = () => (
             <Route path="/glossary" element={<ProtectedRoute><AppLayout><Glossary /></AppLayout></ProtectedRoute>} />
             <Route path="/profile" element={<Navigate to="/app/profile" replace />} />
             <Route path="/trust" element={<TrustPage />} />
+            <Route path="/confidentialite" element={<PrivacyPage />} />
+            <Route path="/conditions" element={<TermsPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
           </Suspense>

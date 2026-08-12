@@ -27,7 +27,8 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Input } from "@/components/ui/input";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams, Link } from "react-router-dom";
+import MyDataSection from "@/components/pick/MyDataSection";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdmin } from "@/hooks/use-admin";
@@ -1108,6 +1109,18 @@ const Profile = () => {
             >
               <RotateCcw className="w-3.5 h-3.5" /> Réinitialiser mon parcours initiatique
             </Button>
+            <MyDataSection />
+            <div className="flex flex-wrap gap-x-4 gap-y-1 px-3 pt-1">
+              <Link to="/confidentialite" className="text-[11px] font-sans text-foreground/30 hover:text-foreground/60 transition-colors">
+                Confidentialité
+              </Link>
+              <Link to="/conditions" className="text-[11px] font-sans text-foreground/30 hover:text-foreground/60 transition-colors">
+                Conditions d'utilisation
+              </Link>
+              <Link to="/trust" className="text-[11px] font-sans text-foreground/30 hover:text-foreground/60 transition-colors">
+                Confiance
+              </Link>
+            </div>
             <Button variant="ghost" onClick={async () => { await signOut(); navigate("/"); }} className="justify-start text-foreground/45 hover:text-foreground text-xs font-sans gap-2 h-10">
               <LogOut className="w-3.5 h-3.5" /> Déconnexion
             </Button>

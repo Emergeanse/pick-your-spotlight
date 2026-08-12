@@ -587,9 +587,9 @@ const Landing = () => {
             <img src={pickLogo} alt="Pick" className="h-9 w-auto object-contain" />
           </div>
           <div className="flex items-center gap-6 text-foreground/45 text-xs font-sans">
-            <span className="hover:text-foreground/50 transition-colors cursor-default">À propos</span>
-            <Link to="/trust" className="hover:text-foreground/70 transition-colors">Confidentialité</Link>
-            <span className="hover:text-foreground/50 transition-colors cursor-default">Conditions</span>
+            <Link to="/trust" className="hover:text-foreground/70 transition-colors">Confiance</Link>
+            <Link to="/confidentialite" className="hover:text-foreground/70 transition-colors">Confidentialité</Link>
+            <Link to="/conditions" className="hover:text-foreground/70 transition-colors">Conditions</Link>
           </div>
           <p className="text-foreground/12 text-[10px] font-sans">© {new Date().getFullYear()} Pick. Tous droits réservés.</p>
         </div>

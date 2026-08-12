@@ -37,7 +37,7 @@ const SECTIONS: Array<{
     icon: Users,
     title: "Sous-traitants & intégrations",
     body:
-      "Pick utilise TMDB pour les métadonnées de films, Lovable Cloud pour le backend, Lovable AI pour les recommandations conversationnelles, et ElevenLabs pour la synthèse vocale de Pick. Aucune donnée personnelle n'est revendue.",
+      "Pick utilise TMDB pour les métadonnées de films, Lovable Cloud pour le backend, les modèles Gemini de Google pour les recommandations et les échanges conversationnels, et ElevenLabs pour la transcription de ta voix comme pour la synthèse vocale de Pick. Le détail de ce que chacun reçoit figure dans la politique de confidentialité. Aucune donnée personnelle n'est revendue.",
   },
   {
     icon: Cookie,
@@ -49,7 +49,7 @@ const SECTIONS: Array<{
     icon: FileText,
     title: "Conservation & suppression",
     body:
-      "Tu peux à tout moment consulter et mettre à jour tes préférences depuis ton profil. Pour demander la suppression de ton compte et des données associées, contacte l'équipe Pick via les paramètres de l'application.",
+      "Tu peux à tout moment consulter et mettre à jour tes préférences depuis ton profil. Tu peux aussi, depuis ce même profil, exporter l'intégralité de tes données dans un fichier, ou supprimer définitivement ton compte — sans avoir à le demander à qui que ce soit.",
   },
   {
     icon: Mail,
