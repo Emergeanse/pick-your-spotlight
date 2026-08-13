@@ -8,9 +8,9 @@
 --
 -- Ce qui change : les compteurs vivent désormais dans une table que le client
 -- peut lire mais jamais écrire. Seules les fonctions serveur, via le rôle
--- service_role, peuvent les incrémenter — et l'incrément et la vérification du
--- plafond se font dans la même instruction, donc deux appels simultanés ne
--- peuvent pas passer tous les deux.
+-- service_role, peuvent les incrémenter — et la ligne du jour est verrouillée
+-- le temps de la vérification, donc deux appels simultanés se suivent au lieu
+-- de franchir le plafond ensemble.
 
 -- ── Plafonds par plan ───────────────────────────────────────────────────────
 -- Table plutôt que constantes : ajuster un seuil ne demande ni migration ni
