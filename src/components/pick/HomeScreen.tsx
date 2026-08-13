@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate, useLocation } from "react-router-dom";
 import { consumePendingDuoPick } from "@/lib/duo-pending";
 import { readQuotaRefusal, isTransientRateLimit } from "@/lib/quota-errors";
+import { fetchVisibleProfile } from "@/lib/visible-profiles";
 import { clearRevealIntent, type RevealIntent, peekForReveal, consumeForReveal, queueForReveal, _pipelineFns, getRevealEvent, clearRevealEvent } from "@/lib/event-reveal";
 import { fetchGroupTasteProfile, fetchAdHocGroupProfile, isUsableGroupProfile, toGroupOverrides } from "@/lib/group-taste";
 import { programFilmForEvent } from "@/lib/event-program";
@@ -821,9 +822,8 @@ const HomeScreen = ({
       const partner = eps?.[0];
       let partnerName = "?";
       if (partner?.user_id) {
-        const { data: prof } = await supabase
-          .from("profiles").select("display_name").eq("id", partner.user_id).maybeSingle();
-        partnerName = (prof as any)?.display_name || partner.guest_name || "Invité";
+        const prof = await fetchVisibleProfile(partner.user_id);
+        partnerName = prof?.display_name || partner.guest_name || "Invité";
       } else if (partner?.guest_name) {
         partnerName = partner.guest_name;
       }
@@ -2072,12 +2072,12 @@ const HomeScreen = ({
               return tmdb;
             }).filter(Number.isFinite) as number[];
           };
-          const [[ids1, ids2], { data: vec1 }, { data: vec2 }, { data: prof1 }, { data: prof2 }] = await Promise.all([
+          const [[ids1, ids2], { data: vec1 }, { data: vec2 }, prof1, prof2] = await Promise.all([
             Promise.all([fetchInteractedIds(duo.user1_id), fetchInteractedIds(duo.user2_id)]),
             supabase.from("user_taste_vectors").select("top_clusters, rejected_clusters").eq("user_id", duo.user1_id).maybeSingle(),
             supabase.from("user_taste_vectors").select("top_clusters, rejected_clusters").eq("user_id", duo.user2_id).maybeSingle(),
-            supabase.from("profiles").select("excluded_genres").eq("id", duo.user1_id).maybeSingle(),
-            supabase.from("profiles").select("excluded_genres").eq("id", duo.user2_id).maybeSingle(),
+            fetchVisibleProfile(duo.user1_id),
+            fetchVisibleProfile(duo.user2_id),
           ]);
           console.log(`[DUO] IDs interagis: user1=${ids1.length} | user2=${ids2.length} | union=${new Set([...ids1, ...ids2]).size}`);
           const tv = duo.taste_vector ? JSON.parse(duo.taste_vector) : null;

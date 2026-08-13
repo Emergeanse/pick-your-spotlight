@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, Pencil, Check, X, Plus, Trophy, Heart, Users, Sparkles, Film, CalendarDays } from "lucide-react";
 import { RadarChart, PolarGrid, PolarAngleAxis, Radar, ResponsiveContainer } from "recharts";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchVisibleProfile } from "@/lib/visible-profiles";
 import { useAuth } from "@/hooks/use-auth";
 import { fetchMyDuos, loadAcceptedFriends, type DuoProfile, type DuoFriendCandidate } from "@/lib/duo-profiles";
 import { getLikedMovies } from "@/lib/liked-movies";
@@ -194,12 +195,16 @@ const CinemaDNAPage = () => {
     setLoading(true);
     try {
       // ── Profil & ADN (commun own + friend) ───────────────────────────────
+      // Son propre profil se lit en entier ; celui d'un autre passe par la
+      // fonction dédiée, qui ne rend que les colonnes partageables.
       const [profileRes, dnaRes] = await Promise.all([
-        supabase.from("profiles").select("*").eq("id", tid).single(),
+        isOwn
+          ? supabase.from("profiles").select("*").eq("id", tid).single().then((r) => r.data)
+          : fetchVisibleProfile(tid),
         supabase.from("cinematic_profiles" as any).select("personality_title,dna_archetype").eq("user_id", tid).maybeSingle(),
       ]);
 
-      const p = profileRes.data as any;
+      const p = profileRes as any;
       setProfile(p);
       setDisplayName(p?.display_name || (isOwn ? user.email?.split("@")[0] : "") || "");
       setAvatarUrl(p?.avatar_url || null);

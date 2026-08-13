@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { computeMultiVectorProfile } from "@/lib/taste-engine";
+import { fetchVisibleProfile, fetchVisibleProfiles } from "@/lib/visible-profiles";
 
 // duo_taste_profiles n'est pas encore dans les types générés — alias non-typé
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -143,9 +144,11 @@ export async function createDuoWithFriend(
     supabase.from("user_taste_vectors").select("taste_vector, avoidance_vector, top_clusters, rejected_clusters").eq("user_id", user1Id).maybeSingle(),
     supabase.from("user_taste_vectors").select("taste_vector, avoidance_vector, top_clusters, rejected_clusters").eq("user_id", user2Id).maybeSingle(),
   ]);
-  const [{ data: prof1 }, { data: prof2 }] = await Promise.all([
-    supabase.from("profiles").select("favorite_genres, excluded_genres").eq("id", user1Id).maybeSingle(),
-    supabase.from("profiles").select("favorite_genres, excluded_genres").eq("id", user2Id).maybeSingle(),
+  // Les goûts d'un partenaire de duo passent par la fonction dédiée :
+  // `profiles` n'est plus lisible que par son propriétaire.
+  const [prof1, prof2] = await Promise.all([
+    fetchVisibleProfile(user1Id),
+    fetchVisibleProfile(user2Id),
   ]);
 
   const tv1 = parseVector(vec1?.taste_vector ?? null);
@@ -235,9 +238,9 @@ export async function acceptDuo(
   ]);
 
   // 3. Récupérer les profils (genres likés, genres exclus)
-  const [{ data: prof1 }, { data: prof2 }] = await Promise.all([
-    supabase.from("profiles").select("favorite_genres, excluded_genres").eq("id", duo.user1_id).maybeSingle(),
-    supabase.from("profiles").select("favorite_genres, excluded_genres").eq("id", user2Id).maybeSingle(),
+  const [prof1, prof2] = await Promise.all([
+    fetchVisibleProfile(duo.user1_id),
+    fetchVisibleProfile(user2Id),
   ]);
 
   // 4. Calculer les vecteurs mergés
@@ -324,12 +327,9 @@ export async function fetchMyDuos(userId: string): Promise<DuoProfile[]> {
   const userIds = [...new Set(duos.flatMap(d => [d.user1_id, d.user2_id].filter(Boolean) as string[]))];
   if (userIds.length === 0) return duos;
 
-  const { data: profiles } = await supabase
-    .from("profiles")
-    .select("id, avatar_url")
-    .in("id", userIds);
+  const profiles = await fetchVisibleProfiles(userIds);
 
-  const avatarMap = new Map((profiles ?? []).map((p: any) => [p.id, p.avatar_url as string | null]));
+  const avatarMap = new Map(profiles.map((p) => [p.id, p.avatar_url]));
 
   return duos.map(d => ({
     ...d,
@@ -380,12 +380,9 @@ export async function loadAcceptedFriends(userId: string): Promise<DuoFriendCand
     f.requester_id === userId ? f.addressee_id : f.requester_id
   );
 
-  const { data: profiles } = await supabase
-    .from("profiles")
-    .select("id, display_name, avatar_url")
-    .in("id", otherIds);
+  const profiles = await fetchVisibleProfiles(otherIds);
 
-  return (profiles ?? []).map((p: any) => ({
+  return profiles.map((p: any) => ({
     id: p.id,
     displayName: (p as any).display_name ?? "Ami",
     avatarUrl: (p as any).avatar_url ?? null,

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { Bell } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchVisibleProfiles } from "@/lib/visible-profiles";
 import { useAuth } from "@/hooks/use-auth";
 import { useNavigate } from "react-router-dom";
 import { formatDistanceToNow } from "date-fns";
@@ -42,11 +43,8 @@ const NotificationBell = () => {
     const pendingReceived: PendingFriendRequest[] = [];
     if (pendingFriendships?.length) {
       const requesterIds = (pendingFriendships as any[]).map((f) => f.requester_id);
-      const { data: profiles } = await supabase
-        .from("profiles")
-        .select("id, display_name")
-        .in("id", requesterIds);
-      const nameById = new Map((profiles || []).map((p) => [p.id, p.display_name]));
+      const profiles = await fetchVisibleProfiles(requesterIds);
+      const nameById = new Map(profiles.map((p) => [p.id, p.display_name]));
 
       for (const f of pendingFriendships as any[]) {
         pendingReceived.push({

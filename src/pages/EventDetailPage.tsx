@@ -6,6 +6,7 @@ import {
   Loader2, Users, Sparkles, Film, Crown, Trash2, AlertTriangle, LogOut, Clock, Vote, Star, ChevronRight,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchVisibleProfile } from "@/lib/visible-profiles";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
 import { setRevealEvent, queueForReveal } from "@/lib/event-reveal";
@@ -305,12 +306,8 @@ const EventDetailPage = () => {
     const enriched: Participant[] = await Promise.all(
       (eps as unknown as Participant[]).map(async (ep) => {
         if (ep.user_id) {
-          const { data: p } = await supabase
-            .from("profiles")
-            .select("display_name")
-            .eq("id", ep.user_id)
-            .maybeSingle();
-          let name: string = (p as any)?.display_name;
+          const p = await fetchVisibleProfile(ep.user_id);
+          let name: string = p?.display_name ?? "";
           if (!name) {
             // Fallback : cherche le nom dans le profil duo
             const { data: duo } = await (supabase as any)
@@ -350,14 +347,10 @@ const EventDetailPage = () => {
           ? (duo as any).user2_id
           : (duo as any).user1_id;
         if (partnerId && !enriched.find(p => p.user_id === partnerId)) {
-          const { data: pProfile } = await supabase
-            .from("profiles")
-            .select("display_name")
-            .eq("id", partnerId)
-            .maybeSingle();
+          const pProfile = await fetchVisibleProfile(partnerId);
           setDuoPartner({
             id: partnerId,
-            name: (pProfile as any)?.display_name ?? "Ton duo",
+            name: pProfile?.display_name ?? "Ton duo",
           });
         } else {
           setDuoPartner(null);

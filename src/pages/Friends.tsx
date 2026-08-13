@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { ArrowLeft, Check, Copy, Loader2, Mail, QrCode, Share2, UserPlus, Users, X, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { fetchVisibleProfile, fetchVisibleProfileMap } from "@/lib/visible-profiles";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { QRCodeSVG } from "qrcode.react";
@@ -40,8 +41,7 @@ const Friends = () => {
     const { data: friendships } = await supabase.from("friendships" as any).select("id, requester_id, addressee_id, status").or(`requester_id.eq.${user.id},addressee_id.eq.${user.id}`);
     if (friendships && friendships.length > 0) {
       const otherIds = (friendships as any[]).map((f: any) => f.requester_id === user.id ? f.addressee_id : f.requester_id);
-      const { data: otherProfiles } = await supabase.from("profiles").select("id, display_name, friend_code, avatar_url").in("id", otherIds);
-      const profileMap = new Map((otherProfiles || []).map((p: any) => [p.id, p]));
+      const profileMap = await fetchVisibleProfileMap(otherIds);
       setFriends((friendships as any[]).map((f: any) => {
         const otherId = f.requester_id === user.id ? f.addressee_id : f.requester_id;
         const op = profileMap.get(otherId);
@@ -95,13 +95,13 @@ const Friends = () => {
   const handleViewFriendProfile = async (friend: any) => {
     setSelectedFriend(friend); setLoadingFriendProfile(true); setFriendProfile(null);
     try {
-      const [{ data: prof }, { data: cin }] = await Promise.all([
-        supabase.from("profiles").select("display_name, avatar_url, friend_code, favorite_genres").eq("id", friend.id).single(),
+      const [prof, { data: cin }] = await Promise.all([
+        fetchVisibleProfile(friend.id),
         supabase.from("cinematic_profiles").select("personality_title, dna_archetype, global_level, taste_traits, narrative").eq("user_id", friend.id).single(),
       ]);
       setFriendProfile({
-        displayName: (prof as any)?.display_name || friend.displayName, avatarUrl: (prof as any)?.avatar_url,
-        friendCode: (prof as any)?.friend_code || friend.friendCode, favoriteGenres: (prof as any)?.favorite_genres || [],
+        displayName: prof?.display_name || friend.displayName, avatarUrl: prof?.avatar_url,
+        friendCode: prof?.friend_code || friend.friendCode, favoriteGenres: prof?.favorite_genres || [],
         cinematicProfile: cin ? { personalityTitle: (cin as any).personality_title, dnaArchetype: (cin as any).dna_archetype, globalLevel: (cin as any).global_level, tasteTraits: (cin as any).taste_traits || [], narrative: (cin as any).narrative } : null,
       });
     } catch { setFriendProfile(null); } finally { setLoadingFriendProfile(false); }
