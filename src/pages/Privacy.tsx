@@ -22,6 +22,7 @@ const SECTIONS: LegalSection[] = [
         "Ton usage : films aimés, watchlist, envies, titres vus ou passés, historique des recommandations, scores calculés par film et profil de goût.",
         "Ta vie sociale sur Pick : amitiés, duos, soirées organisées ou rejointes, votes, avis, notifications, recommandations partagées.",
         "Ta voix, si tu t'en sers : l'enregistrement est transmis pour être transcrit en texte. Pick ne le conserve pas.",
+        "Les incidents techniques : quand quelque chose casse dans l'application, le message d'erreur, la page concernée et ton navigateur sont enregistrés pour qu'on puisse corriger. Ces traces sont purgées au bout de 90 jours et ne sont lisibles que par l'équipe Pick.",
       ],
       "L'année de naissance sert à écarter les contenus inadaptés à l'âge, notamment lors des soirées avec des mineurs.",
     ],

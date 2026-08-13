@@ -60,6 +60,8 @@ export const USER_DATA_TABLES: UserDataTable[] = [
   { table: "group_sessions", columns: ["creator_id"], label: "Sessions de groupe créées" },
 
   // — Compte —
+  { table: "usage_counters", columns: ["user_id"], label: "Consommation quotidienne" },
+  { table: "error_events", columns: ["user_id"], label: "Erreurs techniques rencontrées" },
   { table: "subscriptions", columns: ["user_id"], label: "Abonnement" },
   { table: "user_roles", columns: ["user_id"], label: "Rôles" },
   { table: "profiles", columns: ["id"], label: "Profil du compte" },

@@ -7,6 +7,7 @@ import { useNavigate } from "react-router-dom";
 import { useAdmin } from "@/hooks/use-admin";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
+import ErrorLogPanel from "@/components/pick/ErrorLogPanel";
 import { toast } from "sonner";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -456,6 +457,10 @@ const Admin = () => {
               )}
             </TabsContent>
           </Tabs>
+
+          <div className="mt-6">
+            <ErrorLogPanel />
+          </div>
         </motion.div>
       </div>
     </div>

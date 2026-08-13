@@ -34,6 +34,8 @@ const USER_DATA_MAP: Record<string, string[]> = {
   group_session_members: ["user_id"],
   events: ["organizer_id"],
   group_sessions: ["creator_id"],
+  usage_counters: ["user_id"],
+  error_events: ["user_id"],
   subscriptions: ["user_id"],
   user_roles: ["user_id"],
   profiles: ["id"],

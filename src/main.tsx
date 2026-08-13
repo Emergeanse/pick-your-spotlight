@@ -1,6 +1,7 @@
 import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
+import { installGlobalErrorReporting } from "@/lib/error-log";
 
 // En production, les logs du pipeline de recommandation sont coupés : ils ne
 // doivent rien exposer aux utilisateurs. Pour les rallumer et suivre tout le
@@ -42,5 +43,9 @@ if (import.meta.env.PROD) {
     console.table = noop;
   }
 }
+
+// Branché avant le rendu : une erreur survenue au premier affichage compte
+// autant que les suivantes, et c'est souvent la plus révélatrice.
+installGlobalErrorReporting();
 
 createRoot(document.getElementById("root")!).render(<App />);

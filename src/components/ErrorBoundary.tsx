@@ -1,4 +1,5 @@
 import { Component, type ErrorInfo, type ReactNode } from "react";
+import { reportError } from "@/lib/error-log";
 
 interface Props {
   children: ReactNode;
@@ -18,6 +19,12 @@ class ErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: Error, info: ErrorInfo) {
     console.error("ErrorBoundary caught:", error, info.componentStack);
+    // C'est l'erreur la plus grave qui soit côté navigateur : elle a fait
+    // tomber l'écran. Elle ne doit surtout pas rester dans la seule console.
+    void reportError(error, {
+      origine: "frontière React",
+      composants: info.componentStack?.slice(0, 1000) ?? null,
+    });
   }
 
   render() {
