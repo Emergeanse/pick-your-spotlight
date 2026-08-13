@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate, useLocation } from "react-router-dom";
 import { consumePendingDuoPick } from "@/lib/duo-pending";
+import { readQuotaRefusal, isTransientRateLimit } from "@/lib/quota-errors";
 import { clearRevealIntent, type RevealIntent, peekForReveal, consumeForReveal, queueForReveal, _pipelineFns, getRevealEvent, clearRevealEvent } from "@/lib/event-reveal";
 import { fetchGroupTasteProfile, fetchAdHocGroupProfile, isUsableGroupProfile, toGroupOverrides } from "@/lib/group-taste";
 import { programFilmForEvent } from "@/lib/event-program";
@@ -1174,9 +1175,11 @@ const HomeScreen = ({
     const { data, error } = await supabase.functions.invoke("surprise-personalized", { body });
 
     if (error) {
-      const errMsg = typeof error === "object" && error?.message ? error.message : String(error);
+      // Quota du jour épuisé : réessayer ne servirait à rien avant demain.
+      const refusal = await readQuotaRefusal(error);
+      if (refusal) throw new Error(refusal.message);
 
-      if (retries > 0 && (errMsg.includes("429") || errMsg.includes("Trop de requêtes"))) {
+      if (retries > 0 && isTransientRateLimit(error, refusal)) {
         await new Promise((r) => setTimeout(r, 2000 + Math.random() * 1000));
         return invokeSurprisePersonalized(body, retries - 1);
       }
@@ -1974,12 +1977,17 @@ const HomeScreen = ({
       console.error(e);
       if (isMountedRef.current && !isStale()) {
         const errMsg = e instanceof Error ? e.message : String(e);
-        const isRateLimit = errMsg.includes("429") || errMsg.includes("Trop de requêtes");
+        // Le refus de quota remonte déjà avec son propre message, qui dit
+        // combien il en reste et quand ça repart : on l'affiche tel quel.
+        const isQuota = errMsg.includes("limite de") && errMsg.includes("aujourd'hui");
+        const isRateLimit = !isQuota && (errMsg.includes("429") || errMsg.includes("Trop de requêtes"));
         toast.error(
-          isRateLimit
-            ? "Trop de requêtes — réessaie dans quelques secondes."
-            : "Impossible de charger des recommandations. Vérifie ta connexion et réessaie.",
-          { duration: 6000 }
+          isQuota
+            ? errMsg
+            : isRateLimit
+              ? "Trop de requêtes — réessaie dans quelques secondes."
+              : "Impossible de charger des recommandations. Vérifie ta connexion et réessaie.",
+          { duration: 8000 }
         );
       }
     } finally {

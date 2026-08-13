@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { consumeQuota, quotaExceededResponse } from "../_shared/quota.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -38,6 +39,11 @@ serve(async (req) => {
     }
 
     const userId = user.id;
+
+    // Avant tout appel facturé : consommer le jeton une fois la dépense
+    // engagée ne protégerait de rien.
+    const quota = await consumeQuota(userId, "chat");
+    if (!quota.allowed) return quotaExceededResponse("chat", quota, corsHeaders);
 
     // Gather all user data in parallel
     const [likedRes, interactionsRes, profileRes, groupMembersRes, existingProfileRes] = await Promise.all([

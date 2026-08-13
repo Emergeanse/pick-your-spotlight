@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { requireAuth } from "../_shared/auth.ts";
+import { consumeQuota, quotaExceededResponse } from "../_shared/quota.ts";
 import { tmdbUrl } from "../_shared/tmdb.ts";
 
 const corsHeaders = {
@@ -34,6 +35,11 @@ serve(async (req) => {
   try {
     const auth = await requireAuth(req, corsHeaders);
     if (auth.response) return auth.response;
+
+    // Avant tout appel facture : consommer le jeton une fois la depense
+    // engagee ne protegerait de rien.
+    const quota = await consumeQuota(auth.user!.id, "chat");
+    if (!quota.allowed) return quotaExceededResponse("chat", quota, corsHeaders);
     const { messages, userTasteContext } = await req.json();
     const GOOGLE_AI_KEY = Deno.env.get("GOOGLE_AI_KEY");
     if (!GOOGLE_AI_KEY) throw new Error("GOOGLE_AI_KEY is not configured");

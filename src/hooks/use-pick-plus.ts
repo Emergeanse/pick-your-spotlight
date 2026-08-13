@@ -1,14 +1,23 @@
 /**
- * usePickPlus — freemium gating hook for Pick+.
- * 
- * Free limits:
- * - 3 recommendations per day
- * - 1 companion question per film
- * - 1 discovery conversation per day (chat locked after reco received)
- * - No full chatbot access (Pick+ only)
- * 
- * Pick+ (plan !== 'free') → unlimited everything + full chatbot.
- * Trial: 7 days granted after completing activation flow.
+ * usePickPlus — affichage du palier et de la consommation.
+ *
+ * ⚠️ Ce hook ne protège rien. Il informe.
+ *
+ * Le plafonnement réel est appliqué côté serveur : chaque fonction coûteuse
+ * consomme un jeton via `consume_quota` avant d'appeler un modèle, dans une
+ * table que le navigateur ne peut pas écrire. Un utilisateur qui contournerait
+ * ce hook se verrait simplement refuser par le serveur, avec un 429.
+ *
+ * C'était l'inverse avant : les compteurs vivaient dans `daily_usage`, que le
+ * client pouvait remettre à zéro lui-même. La limite était décorative et rien
+ * ne bornait le coût des appels d'IA.
+ *
+ * Les chiffres affichés viennent désormais de `get_my_quotas()`, qui lit la
+ * même table que le serveur. Ce que voit l'utilisateur est donc ce qui
+ * s'applique vraiment.
+ *
+ * Position alpha : tous les comptes sont sur le palier Pick+, offert. Les deux
+ * paliers existent et fonctionnent — voir la migration des quotas pour basculer.
  */
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -18,8 +27,20 @@ const FREE_RECO_LIMIT = 3;
 const FREE_COMPANION_LIMIT = 1;
 const FREE_DISCOVERY_CHAT_LIMIT = 1;
 
+/** Une ligne de `get_my_quotas()` — la consommation telle que le serveur la voit. */
+export interface QuotaRow {
+  kind: "recommendation" | "chat" | "voice";
+  used: number;
+  quota: number | null;
+  plan: string;
+}
+
 export interface PickPlusState {
   plan: "free" | "pick_plus";
+  /** Consommation réelle du jour, tous types confondus. Vide si non chargée. */
+  serverQuotas: QuotaRow[];
+  /** Recharge les compteurs depuis le serveur — après un refus 429, par exemple. */
+  refreshQuotas: () => Promise<void>;
   isPremium: boolean;
   loading: boolean;
   trialDaysLeft: number;
@@ -53,11 +74,18 @@ export function usePickPlus(): PickPlusState {
   const [discoveryConvoUsed, setDiscoveryConvoUsed] = useState(0);
   const [discoveryConvoLocked, setDiscoveryConvoLocked] = useState(false);
   const [companionUsage, setCompanionUsage] = useState<Record<string, number>>({});
+  const [serverQuotas, setServerQuotas] = useState<QuotaRow[]>([]);
   const [shouldShowPaywall, setShouldShowPaywall] = useState(false);
   const [paywallTrigger, setPaywallTrigger] = useState("general");
 
-  // TEMPORARY: All users are premium until Pick+ launch
-  const isPremium = true;
+  // Le palier vient de l'abonnement réel. Pendant l'alpha, chaque compte est
+  // sur `pick_plus` (offert), donc personne n'est dégradé — mais la bascule ne
+  // demande plus de toucher au code.
+  //
+  // Par défaut à `true` tant que le chargement n'a pas répondu : afficher un
+  // paywall pendant une fraction de seconde, puis le retirer, serait pire que
+  // de ne rien afficher.
+  const isPremium = loading || plan === "pick_plus";
 
   const trialDaysLeft = subStatus === "trial" && periodEnd
     ? Math.max(0, Math.ceil((new Date(periodEnd).getTime() - Date.now()) / (1000 * 3600 * 24)))
@@ -74,9 +102,11 @@ export function usePickPlus(): PickPlusState {
     try {
       const today = new Date().toISOString().split("T")[0];
 
-      const [subRes, usageRes] = await Promise.all([
+      const [subRes, usageRes, quotaRes] = await Promise.all([
         supabase.from("subscriptions" as any).select("plan, status, current_period_end").eq("user_id", user.id).maybeSingle(),
         supabase.from("daily_usage" as any).select("recommendation_count, companion_questions, chat_count").eq("user_id", user.id).eq("usage_date", today).maybeSingle(),
+        // Les compteurs qui font foi, ceux que le serveur applique réellement.
+        (supabase as any).rpc("get_my_quotas"),
       ]);
 
       if (subRes.data) {
@@ -87,10 +117,16 @@ export function usePickPlus(): PickPlusState {
       }
 
       if (usageRes.data) {
-        setRecoUsed((usageRes.data as any).recommendation_count || 0);
-        setDiscoveryConvoUsed((usageRes.data as any).chat_count || 0);
+        // Uniquement le suivi par film, que le serveur n'a pas à connaître.
         setCompanionUsage((usageRes.data as any).companion_questions || {});
       }
+
+      const quotas: QuotaRow[] = Array.isArray(quotaRes?.data) ? quotaRes.data : [];
+      setServerQuotas(quotas);
+      const reco = quotas.find((q) => q.kind === "recommendation");
+      const chat = quotas.find((q) => q.kind === "chat");
+      if (reco) setRecoUsed(reco.used ?? 0);
+      if (chat) setDiscoveryConvoUsed(chat.used ?? 0);
     } catch (e) {
       console.error("usePickPlus load error:", e);
     } finally {
@@ -98,10 +134,22 @@ export function usePickPlus(): PickPlusState {
     }
   };
 
-  const recoLimit = isPremium ? Infinity : FREE_RECO_LIMIT;
-  const recoRemaining = isPremium ? Infinity : Math.max(0, FREE_RECO_LIMIT - recoUsed);
-  const canRecommend = isPremium || recoUsed < FREE_RECO_LIMIT;
-  const canDiscoveryChat = isPremium || (discoveryConvoUsed < FREE_DISCOVERY_CHAT_LIMIT && !discoveryConvoLocked);
+  // Les plafonds viennent du serveur. Même Pick+ en a un : un palier sans
+  // limite laisserait le risque de coût entier, ce qui est précisément ce que
+  // les quotas corrigent. On retombe sur les constantes tant que la réponse
+  // n'est pas arrivée.
+  const quotaFor = (kind: QuotaRow["kind"], secours: number): number => {
+    const row = serverQuotas.find((q) => q.kind === kind);
+    if (!row) return isPremium ? Infinity : secours;
+    return row.quota ?? Infinity;
+  };
+
+  const recoLimit = quotaFor("recommendation", FREE_RECO_LIMIT);
+  const recoRemaining = Math.max(0, recoLimit - recoUsed);
+  const canRecommend = recoUsed < recoLimit;
+
+  const chatLimit = quotaFor("chat", FREE_DISCOVERY_CHAT_LIMIT);
+  const canDiscoveryChat = discoveryConvoUsed < chatLimit && (isPremium || !discoveryConvoLocked);
 
   const recordRecommendation = useCallback(async (): Promise<boolean> => {
     if (!user) return false;
@@ -166,6 +214,8 @@ export function usePickPlus(): PickPlusState {
 
   return {
     plan,
+    serverQuotas,
+    refreshQuotas: loadData,
     isPremium,
     loading,
     trialDaysLeft,

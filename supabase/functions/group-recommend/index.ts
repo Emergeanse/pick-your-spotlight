@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { requireAuth } from "../_shared/auth.ts";
+import { consumeQuota, quotaExceededResponse } from "../_shared/quota.ts";
 import { tmdbUrl } from "../_shared/tmdb.ts";
 
 const corsHeaders = {
@@ -56,6 +57,11 @@ serve(async (req) => {
   try {
     const auth = await requireAuth(req, corsHeaders);
     if (auth.response) return auth.response;
+
+    // Avant tout appel facture : consommer le jeton une fois la depense
+    // engagee ne protegerait de rien.
+    const quota = await consumeQuota(auth.user!.id, "recommendation");
+    if (!quota.allowed) return quotaExceededResponse("recommendation", quota, corsHeaders);
     const body = await req.json();
     const {
       memberIds = [],

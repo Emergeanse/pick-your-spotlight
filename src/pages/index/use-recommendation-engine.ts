@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import type { User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import { readQuotaRefusal, isTransientRateLimit } from "@/lib/quota-errors";
 import type { MovieDetail } from "@/lib/tmdb";
 import { getDisplayTitle } from "@/lib/tmdb";
 import type { RecommendationMovieDetail } from "@/lib/recommendation-batch";
@@ -38,8 +39,12 @@ type Options = {
 async function invokeSurprisePersonalized(body: any, retries = 2): Promise<any> {
   const { data, error } = await supabase.functions.invoke("surprise-personalized", { body });
   if (error) {
-    const errMsg = typeof error === "object" && error?.message ? error.message : String(error);
-    if (retries > 0 && (errMsg.includes("429") || errMsg.includes("Trop de requêtes"))) {
+    // Quota du jour épuisé : inutile de réessayer, ça ne repartira pas avant
+    // demain. On remonte le message du serveur tel quel, il est explicite.
+    const refusal = await readQuotaRefusal(error);
+    if (refusal) throw new Error(refusal.message);
+
+    if (retries > 0 && isTransientRateLimit(error, refusal)) {
       await new Promise((r) => setTimeout(r, 2000 + Math.random() * 1000));
       return invokeSurprisePersonalized(body, retries - 1);
     }
