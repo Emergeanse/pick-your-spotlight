@@ -868,6 +868,24 @@ export type Database = {
         }
         Relationships: []
       }
+      plan_quotas: {
+        Row: {
+          daily_limit: number | null
+          kind: string
+          plan: string
+        }
+        Insert: {
+          daily_limit?: number | null
+          kind: string
+          plan: string
+        }
+        Update: {
+          daily_limit?: number | null
+          kind?: string
+          plan?: string
+        }
+        Relationships: []
+      }
       preference_tags: {
         Row: {
           category: string
@@ -1270,6 +1288,30 @@ export type Database = {
         }
         Relationships: []
       }
+      usage_counters: {
+        Row: {
+          count: number
+          kind: string
+          updated_at: string
+          usage_date: string
+          user_id: string
+        }
+        Insert: {
+          count?: number
+          kind: string
+          updated_at?: string
+          usage_date?: string
+          user_id: string
+        }
+        Update: {
+          count?: number
+          kind?: string
+          updated_at?: string
+          usage_date?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_interactions: {
         Row: {
           action_type: string
@@ -1602,6 +1644,15 @@ export type Database = {
         }[]
       }
       claim_pending_duo: { Args: { _invite_code: string }; Returns: string }
+      consume_quota: {
+        Args: { p_amount?: number; p_kind: string; p_user_id: string }
+        Returns: {
+          allowed: boolean
+          plan: string
+          quota: number
+          used: number
+        }[]
+      }
       count_movie_candidates: {
         Args: {
           exclude_ids?: number[]
@@ -1661,6 +1712,15 @@ export type Database = {
           media_type: string
           tmdb_id: number
           year: number
+        }[]
+      }
+      get_my_quotas: {
+        Args: never
+        Returns: {
+          kind: string
+          plan: string
+          quota: number
+          used: number
         }[]
       }
       get_or_create_catalog_item: {
