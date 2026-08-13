@@ -34,7 +34,32 @@ serve(async (req) => {
       }
     }
 
-    const res = await fetch(tmdbUrl(path, safeParams));
+    // TMDB coupe parfois la connexion (ECONNRESET) : on retente avec backoff.
+    const url = tmdbUrl(path, safeParams);
+    let res: Response | null = null;
+    let lastErr: unknown = null;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        res = await fetch(url, { signal: AbortSignal.timeout(8000) });
+        if (res.status >= 500 && attempt < 2) {
+          lastErr = new Error(`TMDB ${res.status}`);
+          await new Promise((r) => setTimeout(r, 300 * (attempt + 1)));
+          continue;
+        }
+        lastErr = null;
+        break;
+      } catch (err) {
+        lastErr = err;
+        res = null;
+        await new Promise((r) => setTimeout(r, 300 * (attempt + 1)));
+      }
+    }
+    if (!res) {
+      return new Response(
+        JSON.stringify({ error: `TMDB indisponible: ${lastErr instanceof Error ? lastErr.message : "réseau"}` }),
+        { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
     if (res.status === 404) {
       // Ressource TMDB inexistante — renvoyer 200 + null pour que le client ne crash pas.
       return new Response(JSON.stringify({ data: null, notFound: true }), {
