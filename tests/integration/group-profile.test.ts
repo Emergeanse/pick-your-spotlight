@@ -34,9 +34,41 @@ beforeAll(async () => {
   sb = session.client;
   organisateur = session.userId;
 
-  const { data } = await sb.from("profiles").select("id").in("id", [MARIE, JEANLOU]);
-  comptesPresents = (data ?? []).length === 2;
+  comptesPresents = await comptesDemoPresents();
 });
+
+/**
+ * Détecter la présence des comptes de démonstration.
+ *
+ * On lisait auparavant `profiles` directement. Depuis la minimisation du
+ * 13 août, un compte ordinaire ne peut plus lire le profil d'un tiers — la
+ * lecture renvoyait donc toujours zéro ligne, et TOUS les tests à plusieurs
+ * comptes s'ignoraient en silence. Un test qui se met à s'ignorer sans le dire
+ * est pire qu'un test qui échoue.
+ *
+ * On passe désormais par le chemin réel : une soirée éphémère rend ses
+ * participants visibles au titre du lien « croisé ». Cette détection prouve donc
+ * à la fois que les comptes existent et que la nouvelle règle de visibilité
+ * fonctionne.
+ */
+async function comptesDemoPresents(): Promise<boolean> {
+  let eventId: string | null = null;
+  try {
+    const ev = await createEvent(sb!, organisateur, "amis");
+    eventId = ev.id;
+    await addMembers(sb!, ev.id, [MARIE, JEANLOU]);
+
+    const { data } = await (sb as unknown as {
+      rpc: (fn: string, args: { p_ids: string[] }) => Promise<{ data: { id: string }[] | null }>;
+    }).rpc("get_visible_profiles", { p_ids: [MARIE, JEANLOU] });
+
+    return (data ?? []).length === 2;
+  } catch {
+    return false;
+  } finally {
+    if (eventId && sb) await deleteEvent(sb, eventId);
+  }
+}
 
 afterEach(async () => {
   while (aNettoyer.length > 0) {
