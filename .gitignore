@@ -42,3 +42,4 @@ deno.lock
 
 # Scripts de pilotage ponctuels des backfills
 .backfill-*.mjs
+bun.lockb

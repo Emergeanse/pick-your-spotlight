@@ -16,6 +16,8 @@ Run a single test file: `npx vitest run src/path/to/file.test.ts`
 
 This project uses `bun.lock` alongside `package-lock.json`. Use `npm` for installs.
 
+`bun.lockb` (obsolete binary format, superseded by the text `bun.lock`) was removed on 2026-08-14 and is gitignored. The two remaining lockfiles are kept on purpose: local tooling and CI use npm, and it is unclear which package manager Lovable's build uses. Deleting `bun.lock` without knowing that could break the deployed build — settle the question before consolidating further.
+
 ## Architecture
 
 **Stack**: Vite + React 18 + TypeScript + Tailwind CSS + shadcn/ui + React Query + React Router v6 + Framer Motion + Supabase + Three.js (via `@react-three/fiber`)

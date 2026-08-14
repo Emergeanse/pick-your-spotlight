@@ -6,21 +6,41 @@ import { ArrowLeft, Crown, Check, X as XIcon, Sparkles, Zap, Brain, Bell, Wifi, 
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { usePickPlus } from "@/hooks/use-pick-plus";
+import { PLAN_LIMITS } from "@/lib/plan-limits";
 
+/**
+ * Ce tableau ne liste que ce qui existe réellement.
+ *
+ * En sont retirés « Mode hors-ligne », « Profils multiples » et « Alertes
+ * plateforme » : aucun code ne les implémente, nulle part. Annoncer une
+ * fonctionnalité qu'on ne livre pas est une promesse qu'on ne peut pas tenir.
+ *
+ * Les mentions « illimité » ont disparu aussi : depuis les quotas serveur du
+ * 13 août, Pick+ a un plafond lui aussi — généreux, mais réel.
+ */
 const FEATURES = [
   { label: "Recommandation du soir", free: true, plus: true },
-  { label: "Parle à Pick (1 reco/jour)", free: true, plus: true },
-  { label: "ADN Cinéma de base", free: true, plus: true },
-  { label: "Watchlist", free: true, plus: true },
+  { label: "ADN Cinéma", free: true, plus: true },
+  { label: "Watchlist et films aimés", free: true, plus: true },
   { label: "Liens vers les plateformes", free: true, plus: true },
-  { label: "Companion Mode (1 question/film)", free: true, plus: true },
+  { label: "Soirées et duos", free: true, plus: true },
+  {
+    label: `Recommandations par jour — ${PLAN_LIMITS.free.recommendation} contre ${PLAN_LIMITS.pickPlus.recommendation}`,
+    free: true,
+    plus: true,
+  },
+  {
+    label: `Conversations par jour — ${PLAN_LIMITS.free.chat} contre ${PLAN_LIMITS.pickPlus.chat}`,
+    free: true,
+    plus: true,
+  },
+  {
+    label: `Commandes vocales par jour — ${PLAN_LIMITS.free.voice} contre ${PLAN_LIMITS.pickPlus.voice}`,
+    free: true,
+    plus: true,
+  },
   { label: "Chatbot complet — tout demander", free: false, plus: true },
-  { label: "Recommandations illimitées", free: false, plus: true },
-  { label: "Companion Mode illimité", free: false, plus: true },
-  { label: "ADN Cinéma avancé", free: false, plus: true },
-  { label: "Alertes plateforme", free: false, plus: true },
-  { label: "Mode hors-ligne", free: false, plus: true },
-  { label: "Profils multiples", free: false, plus: true },
+  { label: "Companion Mode sur chaque film", free: false, plus: true },
 ];
 
 const PickPlusPage = () => {

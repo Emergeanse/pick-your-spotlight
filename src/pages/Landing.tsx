@@ -12,6 +12,7 @@ import pickDefault from "@/assets/pick-squirrel.webp";
 import pickLogo from "@/assets/pick-logo.webp";
 import { ALL_PLATFORMS } from "@/lib/platforms";
 import TmdbAttribution from "@/components/pick/TmdbAttribution";
+import { PLAN_LIMITS } from "@/lib/plan-limits";
 
 const POSTER_URLS = [
   // Match DEMO_MOVIES: Shawshank, Inception, Interstellar, Dark Knight
@@ -549,7 +550,7 @@ const Landing = () => {
               <p className="text-foreground/50 text-sm font-sans mb-1">Pour toujours</p>
               <p className="text-3xl font-serif text-foreground mb-5">0€</p>
               <div className="space-y-3">
-                {["3 recommandations / jour", "Parle à Pick (1/jour)", "ADN Cinéma de base", "Watchlist & films aimés", "Liens plateformes", "Mode Compagnon (1 question/film)"].map((f) => (
+                {[`${PLAN_LIMITS.free.recommendation} recommandations / jour`, `${PLAN_LIMITS.free.chat} conversations / jour`, "ADN Cinéma", "Watchlist & films aimés", "Liens plateformes", "Mode Compagnon (1 question/film)"].map((f) => (
                   <div key={f} className="flex items-center gap-2.5"><Check className="w-4 h-4 text-primary/50 shrink-0" /><span className="text-foreground/50 text-sm font-sans">{f}</span></div>
                 ))}
               </div>
@@ -563,7 +564,9 @@ const Landing = () => {
               <p className="text-foreground/50 text-sm font-sans mb-1">L'expérience complète</p>
               <div className="flex items-baseline gap-1 mb-5"><p className="text-3xl font-serif text-foreground">3,99€</p><span className="text-foreground/50 text-sm font-sans">/mois</span></div>
               <div className="space-y-3">
-                {["Tout le plan Gratuit", "Recommandations illimitées", "Chatbot complet", "Mode Compagnon illimité", "ADN Cinéma avancé", "Pick Ensemble", "Profils multiples"].map((f) => (
+                {/* Uniquement ce qui existe : « Profils multiples » n'est implémenté
+                    nulle part, et « illimité » est faux depuis les quotas serveur. */}
+                {["Tout le plan Gratuit", `${PLAN_LIMITS.pickPlus.recommendation} recommandations / jour`, "Chatbot complet", "Mode Compagnon sur chaque film", `${PLAN_LIMITS.pickPlus.chat} conversations / jour`, "Soirées et duos"].map((f) => (
                   <div key={f} className="flex items-center gap-2.5"><Check className="w-4 h-4 text-gold shrink-0" /><span className="text-foreground/60 text-sm font-sans">{f}</span></div>
                 ))}
               </div>

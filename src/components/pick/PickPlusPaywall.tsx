@@ -3,8 +3,9 @@
  * Shows when a free user hits a limit.
  */
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Sparkles, Zap, Brain, Bell, Wifi, Users, Crown, Check, MessageCircle } from "lucide-react";
+import { X, Sparkles, Zap, Brain, Crown, Check, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { PLAN_LIMITS } from "@/lib/plan-limits";
 
 interface PickPlusPaywallProps {
   open: boolean;
@@ -12,14 +13,24 @@ interface PickPlusPaywallProps {
   trigger?: "reco_limit" | "companion_limit" | "dna_advanced" | "chat_limit" | "general";
 }
 
+/**
+ * Uniquement ce qui existe. « Alertes plateforme », « Mode hors-ligne » et
+ * « Profils multiples » en sont retirés : rien ne les implémente. Les mentions
+ * « illimité » également — Pick+ a un plafond réel depuis les quotas serveur.
+ */
 const BENEFITS = [
   { icon: MessageCircle, label: "Chatbot complet Pick", desc: "Pose toutes tes questions ciné — acteurs, anecdotes, comparaisons…" },
-  { icon: Zap, label: "Recommandations illimitées", desc: "Plus de limite de 3 par jour" },
-  { icon: Brain, label: "Companion Mode complet", desc: "Questions illimitées + analyses approfondies" },
-  { icon: Sparkles, label: "ADN Cinéma avancé", desc: "Évolution, comparaisons et rapport mensuel" },
-  { icon: Bell, label: "Alertes plateforme", desc: "Sois notifié quand un contenu arrive sur tes plateformes" },
-  { icon: Wifi, label: "Mode hors-ligne", desc: "Consulte ta Watchlist sans connexion" },
-  { icon: Users, label: "Profils multiples", desc: "Un profil par personne dans le foyer" },
+  {
+    icon: Zap,
+    label: "Bien plus de recommandations",
+    desc: `${PLAN_LIMITS.pickPlus.recommendation} par jour au lieu de ${PLAN_LIMITS.free.recommendation}`,
+  },
+  { icon: Brain, label: "Companion Mode sur chaque film", desc: "Pose autant de questions que tu veux sur un film" },
+  {
+    icon: Sparkles,
+    label: "Conversations et voix élargies",
+    desc: `${PLAN_LIMITS.pickPlus.chat} conversations et ${PLAN_LIMITS.pickPlus.voice} commandes vocales par jour`,
+  },
 ];
 
 const TRIGGER_MESSAGES: Record<string, string> = {
