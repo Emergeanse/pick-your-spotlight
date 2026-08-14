@@ -63,10 +63,13 @@ export async function consumeQuota(
   };
 }
 
+// Ces libellés s'insèrent dans « ta limite de … ». Ils doivent donc tous
+// commencer par une consonne : « de usages » se lisait mal, et l'élision ne se
+// devine pas depuis un gabarit de phrase.
 const LIBELLES: Record<QuotaKind, string> = {
   recommendation: "recommandations",
   chat: "conversations",
-  voice: "usages de la voix",
+  voice: "commandes vocales",
 };
 
 /**
