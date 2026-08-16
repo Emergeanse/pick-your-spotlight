@@ -46,18 +46,21 @@ serve(async (req) => {
     if (!quota.allowed) return quotaExceededResponse("chat", quota, corsHeaders);
 
     // Gather all user data in parallel
-    const [likedRes, interactionsRes, profileRes, groupMembersRes, existingProfileRes] = await Promise.all([
+    const [likedRes, interactionsRes, profileRes, soireeParticipationsRes, existingProfileRes] = await Promise.all([
       supabase.from("liked_movies").select("title, genres, liked_at, rating").eq("user_id", userId).order("liked_at", { ascending: false }).limit(100),
       supabase.from("user_interactions").select("action_type, context, created_at").eq("user_id", userId).order("created_at", { ascending: false }).limit(500),
       supabase.from("profiles").select("favorite_genres").eq("id", userId).single(),
-      supabase.from("group_session_members").select("session_id").eq("user_id", userId),
+      // Lisait `group_session_members` (Pick Together, système retiré le
+      // 16 août). Le signal « cette personne regarde en groupe » vient
+      // désormais des soirées, seul système de groupe encore vivant.
+      supabase.from("event_participants").select("event_id").eq("user_id", userId),
       supabase.from("cinematic_profiles").select("personality_title, dna_archetype, taste_signatures, specializations, distinctions, global_level, social_reputation, narrative, taste_traits, updated_at").eq("user_id", userId).maybeSingle(),
     ]);
 
     const likedMovies = likedRes.data || [];
     const interactions = interactionsRes.data || [];
     const favoriteGenres = profileRes.data?.favorite_genres || [];
-    const groupSessionCount = groupMembersRes.data?.length || 0;
+    const groupSessionCount = soireeParticipationsRes.data?.length || 0;
     const existingProfile = existingProfileRes.data;
 
     const MIN_LIKED_FOR_DNA = 15;

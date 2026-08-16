@@ -8,9 +8,9 @@ export function getNotificationRoute(
   if (type === "duo_accepted") {
     return "/app/duo";
   }
-  if (type === "session_invite") {
-    return "/app/pick-together-group";
-  }
+  // `session_invite` visait les sessions Pick Together, système retiré le
+  // 16 août au profit des soirées. D'anciennes notifications peuvent encore
+  // porter ce type : les renvoyer vers l'accueil plutôt que vers une page morte.
   if (
     type === "event_invite" ||
     type === "event_confirmed" ||

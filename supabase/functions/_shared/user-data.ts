@@ -55,9 +55,7 @@ export const USER_DATA_TABLES: UserDataTable[] = [
   // — Soirées et sessions de groupe —
   { table: "event_film_feedback", columns: ["user_id"], label: "Avis donnés lors de soirées" },
   { table: "event_participants", columns: ["user_id"], label: "Participations à des soirées" },
-  { table: "group_session_members", columns: ["user_id"], label: "Participations à des sessions de groupe" },
   { table: "events", columns: ["organizer_id"], label: "Soirées organisées" },
-  { table: "group_sessions", columns: ["creator_id"], label: "Sessions de groupe créées" },
 
   // — Compte —
   { table: "usage_counters", columns: ["user_id"], label: "Consommation quotidienne" },
@@ -73,4 +71,4 @@ export const USER_DATA_TABLES: UserDataTable[] = [
  * annoncé comme complet ne peut pas en garder une moitié. Signalé ici pour que
  * le choix reste visible.
  */
-export const CASCADES_TO_OTHERS = ["events", "group_sessions"];
+export const CASCADES_TO_OTHERS = ["events"];

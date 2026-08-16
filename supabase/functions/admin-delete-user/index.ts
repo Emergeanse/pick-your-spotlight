@@ -54,7 +54,6 @@ Deno.serve(async (req) => {
       adminClient.from("user_taste_vectors").delete().eq("user_id", userId),
       adminClient.from("subscriptions").delete().eq("user_id", userId),
       adminClient.from("friendships").delete().or(`requester_id.eq.${userId},addressee_id.eq.${userId}`),
-      adminClient.from("group_session_members").delete().eq("user_id", userId),
       adminClient.from("user_roles").delete().eq("user_id", userId),
     ]);
 

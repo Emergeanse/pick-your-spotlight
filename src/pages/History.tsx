@@ -19,17 +19,6 @@ interface RecoSession {
   filters_snapshot: any;
 }
 
-interface GroupSession {
-  id: string;
-  name: string;
-  title: string | null;
-  status: string;
-  scheduled_for: string | null;
-  created_at: string;
-  decision_mode: string;
-  selected_catalog_item_id: string | null;
-}
-
 interface CatalogLite { id: string; title: string; poster_path: string | null }
 
 const formatDate = (iso: string) => {
@@ -55,7 +44,6 @@ const HistoryPage = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [recos, setRecos] = useState<RecoSession[]>([]);
-  const [groups, setGroups] = useState<GroupSession[]>([]);
   const [catalogMap, setCatalogMap] = useState<Record<string, CatalogLite>>({});
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<"all" | "solo" | "group" | "planned">("all");
@@ -66,27 +54,19 @@ const HistoryPage = () => {
     (async () => {
       setLoading(true);
       try {
-        const [recoRes, groupRes] = await Promise.all([
+        const [recoRes] = await Promise.all([
           supabase
             .from("recommendation_sessions")
             .select("id, created_at, status, audience_type, decision_mode, scheduled_for, source, prompt_text, selected_catalog_item_id, group_session_id, filters_snapshot")
             .order("created_at", { ascending: false })
             .limit(100),
-          supabase
-            .from("group_sessions")
-            .select("id, name, title, status, scheduled_for, created_at, decision_mode, selected_catalog_item_id")
-            .order("created_at", { ascending: false })
-            .limit(50),
         ]);
         if (cancelled) return;
         const recoList = (recoRes.data ?? []) as any as RecoSession[];
-        const groupList = (groupRes.data ?? []) as any as GroupSession[];
         setRecos(recoList);
-        setGroups(groupList);
 
         const itemIds = new Set<string>();
         recoList.forEach(r => r.selected_catalog_item_id && itemIds.add(r.selected_catalog_item_id));
-        groupList.forEach(g => g.selected_catalog_item_id && itemIds.add(g.selected_catalog_item_id));
         if (itemIds.size > 0) {
           const { data: cats } = await supabase
             .from("catalog_items")
@@ -111,7 +91,7 @@ const HistoryPage = () => {
     return r.audience_type === tab;
   });
 
-  const totalCount = recos.length + groups.length;
+  const totalCount = recos.length;
 
   return (
     <div className="min-h-[100dvh] bg-background text-foreground pb-[calc(5rem+env(safe-area-inset-bottom))]">
@@ -160,60 +140,6 @@ const HistoryPage = () => {
               Lancer ma première séance
             </button>
           </div>
-        )}
-
-        {/* Group sessions */}
-        {!loading && tab !== "solo" && groups.length > 0 && (
-          <section className="mb-6">
-            <h2 className="text-xs uppercase tracking-wider text-foreground/40 mb-2 flex items-center gap-1.5">
-              <Users className="w-3 h-3" /> Soirées en groupe
-            </h2>
-            <div className="space-y-2">
-              {groups.map(g => {
-                const cat = g.selected_catalog_item_id ? catalogMap[g.selected_catalog_item_id] : null;
-                const isFuture = g.scheduled_for && new Date(g.scheduled_for) > new Date();
-                return (
-                  <button
-                    key={g.id}
-                    onClick={() => navigate(`/app/pick-together?session=${g.id}`)}
-                    className="w-full text-left p-3 rounded-xl border border-border/30 bg-card/40 hover:bg-card/70 transition-colors flex gap-3"
-                  >
-                    {cat?.poster_path ? (
-                      <img
-                        src={`https://image.tmdb.org/t/p/w92${cat.poster_path}`}
-                        alt=""
-                        className="w-12 h-16 object-cover rounded-md shrink-0"
-                      />
-                    ) : (
-                      <div className="w-12 h-16 rounded-md bg-muted/30 flex items-center justify-center shrink-0">
-                        <Users className="w-5 h-5 text-foreground/45" />
-                      </div>
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between gap-2">
-                        <div className="font-medium text-sm truncate">{g.title || g.name}</div>
-                        <StatusBadge status={g.status} />
-                      </div>
-                      {cat && <div className="text-xs text-foreground/60 truncate">🎬 {cat.title}</div>}
-                      <div className="text-[11px] text-foreground/40 mt-1 flex items-center gap-2">
-                        {g.scheduled_for ? (
-                          <>
-                            <Calendar className="w-3 h-3" />
-                            {formatDate(g.scheduled_for)}
-                            {isFuture && <span className="text-primary">à venir</span>}
-                          </>
-                        ) : (
-                          <>
-                            <Clock className="w-3 h-3" /> {formatDate(g.created_at)}
-                          </>
-                        )}
-                      </div>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          </section>
         )}
 
         {/* Solo / reco sessions */}

@@ -46,8 +46,7 @@ Deno.serve(async (req) => {
     await adminClient.from("user_taste_vectors").delete().eq("user_id", userId);
     await adminClient.from("subscriptions").delete().eq("user_id", userId);
     await adminClient.from("friendships").delete().or(`requester_id.eq.${userId},addressee_id.eq.${userId}`);
-    await adminClient.from("group_session_members").delete().eq("user_id", userId);
-    await adminClient.from("user_roles").delete().eq("user_id", userId);
+    await    await adminClient.from("user_roles").delete().eq("user_id", userId);
     await adminClient.from("profiles").delete().eq("id", userId);
 
     // Delete the auth user

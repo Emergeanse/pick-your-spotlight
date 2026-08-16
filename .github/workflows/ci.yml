@@ -50,8 +50,8 @@ jobs:
       - name: Vérification des types TypeScript
         run: npx tsc --noEmit
 
-      # Le script `lint` porte un cliquet : `--max-warnings 1110`, le nombre exact
-      # d'avertissements au 14 août 2026 (essentiellement des `any` à typer).
+      # Le script `lint` porte un cliquet : `--max-warnings 1091`, le nombre exact
+      # d'avertissements au 16 août 2026 (essentiellement des `any` à typer).
       # Conséquence : la dette ne peut plus grossir — tout nouveau `any` fait
       # échouer la CI. Quand on en résorbe, on abaisse le plafond d'autant.
       # Ce nombre ne doit jamais être remonté.

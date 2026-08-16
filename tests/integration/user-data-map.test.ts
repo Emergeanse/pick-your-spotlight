@@ -31,9 +31,7 @@ const USER_DATA_MAP: Record<string, string[]> = {
   duo_taste_profiles: ["user1_id", "user2_id"],
   event_film_feedback: ["user_id"],
   event_participants: ["user_id"],
-  group_session_members: ["user_id"],
   events: ["organizer_id"],
-  group_sessions: ["creator_id"],
   usage_counters: ["user_id"],
   error_events: ["user_id"],
   subscriptions: ["user_id"],
@@ -83,13 +81,14 @@ run("cartographie des données utilisateur", () => {
   it("couvre au moins les tables que l'ancienne suppression traitait", () => {
     // admin-delete-user en couvrait douze. Toute régression sous ce seuil
     // signifierait qu'on a perdu du terrain plutôt que d'en gagner.
+    // `group_session_members` figurait dans cette liste : la table est partie
+    // avec le système Pick Together, retiré le 16 août.
     const ancienne = [
       "liked_movies", "watchlist", "user_interactions", "daily_usage",
       "notifications", "cinematic_profiles", "user_taste_vectors",
-      "subscriptions", "friendships", "group_session_members",
-      "user_roles", "profiles",
+      "subscriptions", "friendships", "user_roles", "profiles",
     ];
     for (const t of ancienne) expect(Object.keys(USER_DATA_MAP)).toContain(t);
-    expect(entries.length).toBeGreaterThanOrEqual(24);
+    expect(entries.length).toBeGreaterThanOrEqual(23);
   });
 });

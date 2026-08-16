@@ -24,13 +24,10 @@ const PickPlusPage = lazy(() => import("./pages/PickPlus.tsx"));
 const NotFound = lazy(() => import("./pages/NotFound.tsx"));
 const WatchlistPageRoute = lazy(() => import("./pages/WatchlistRoute.tsx"));
 const Friends = lazy(() => import("./pages/Friends.tsx"));
-const PickTogether = lazy(() => import("./pages/PickTogether.tsx"));
-const JoinSession = lazy(() => import("./pages/JoinSession.tsx"));
 const JoinDuo = lazy(() => import("./pages/JoinDuo.tsx"));
 const DuoPage = lazy(() => import("./pages/DuoPage.tsx"));
 const SoireesPage = lazy(() => import("./pages/SoireesPage.tsx"));
 const Admin = lazy(() => import("./pages/Admin.tsx"));
-const PlanSession = lazy(() => import("./pages/PlanSession.tsx"));
 const History = lazy(() => import("./pages/History.tsx"));
 const InvitePage = lazy(() => import("./pages/InvitePage.tsx"));
 const CreateEventPage = lazy(() => import("./pages/CreateEventPage.tsx"));
@@ -92,12 +89,8 @@ const App = () => (
             <Route path="/app/my-cinema" element={<ProtectedRoute><AppLayout><MyCinema /></AppLayout></ProtectedRoute>} />
             <Route path="/app/watchlist" element={<ProtectedRoute><AppLayout><WatchlistPageRoute /></AppLayout></ProtectedRoute>} />
             <Route path="/app/friends" element={<ProtectedRoute><AppLayout><Friends /></AppLayout></ProtectedRoute>} />
-            <Route path="/app/pick-together" element={<Navigate to="/app" replace />} />
-            <Route path="/app/pick-together-group" element={<ProtectedRoute><AppLayout><PickTogether /></AppLayout></ProtectedRoute>} />
             <Route path="/app/pick-plus" element={<ProtectedRoute><AppLayout><PickPlusPage /></AppLayout></ProtectedRoute>} />
-            <Route path="/app/plan" element={<ProtectedRoute><AppLayout><PlanSession /></AppLayout></ProtectedRoute>} />
             <Route path="/app/history" element={<ProtectedRoute><AppLayout><History /></AppLayout></ProtectedRoute>} />
-            <Route path="/join" element={<JoinSession />} />
             <Route path="/join-duo/:code" element={<JoinDuo />} />
             <Route path="/invite/:token" element={<InvitePage />} />
             <Route path="/app/duo" element={<ProtectedRoute><AppLayout><DuoPage /></AppLayout></ProtectedRoute>} />

@@ -30,9 +30,6 @@ verify_jwt = false
 [functions.group-recommend]
 verify_jwt = false
 
-[functions.join-session]
-verify_jwt = false
-
 [functions.admin-create-user]
 verify_jwt = false
 

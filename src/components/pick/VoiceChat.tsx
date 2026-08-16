@@ -657,11 +657,13 @@ const VoiceChat = ({ onClose, onMovieSuggested, onSearchIntent, initialMessages,
                   className="mt-6 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 font-sans font-semibold px-8 h-12 gap-2 text-base neon-glow transition-all active:scale-[0.97]"
                   onClick={() => {
                     onClose();
-                    navigate("/app/pick-together");
+                    // Menait à Pick Together, système retiré le 16 août. Le
+                    // choix à plusieurs se fait désormais par les soirées.
+                    navigate("/app/soirees");
                   }}
                 >
                   <Users className="w-5 h-5" />
-                  Lancer Pick Ensemble
+                  Organiser une soirée
                 </Button>
               </motion.div>
 
