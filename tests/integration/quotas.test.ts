@@ -86,15 +86,15 @@ run("quotas appliqués côté serveur", () => {
     expect(data ?? []).toHaveLength(0);
   }, 20000);
 
-  it("publie les plafonds des deux paliers", async () => {
+  it("publie les plafonds de chaque palier", async () => {
     if (!migrationAppliquee) return;
     const { data, error } = await sb.from("plan_quotas").select("plan, kind, daily_limit");
     expect(error).toBeNull();
 
     const plans = [...new Set((data ?? []).map((r: any) => r.plan))].sort();
-    expect(plans).toEqual(["free", "pick_plus"]);
+    expect(plans).toEqual(["free", "pick_plus", "staff"]);
 
-    // Le palier gratuit doit rester strictement plus serré, sinon la
+    // Le palier gratuit doit rester strictement plus serré que Pick+, sinon la
     // distinction ne veut rien dire.
     for (const kind of ["recommendation", "chat", "voice"]) {
       const gratuit = (data ?? []).find((r: any) => r.plan === "free" && r.kind === kind);
@@ -103,5 +103,24 @@ run("quotas appliqués côté serveur", () => {
       expect(plus, `palier Pick+ manquant pour ${kind}`).toBeTruthy();
       expect(gratuit!.daily_limit).toBeLessThan(plus!.daily_limit);
     }
+
+    // Le palier « staff » est le seul sans plafond. Si un autre s'y mettait,
+    // c'est qu'une limite aurait sauté par accident.
+    for (const row of data ?? []) {
+      if (row.plan === "staff") expect(row.daily_limit).toBeNull();
+      else expect(row.daily_limit, `${row.plan}/${row.kind} sans plafond`).not.toBeNull();
+    }
+  }, 20000);
+
+  it("laisse au palier gratuit de quoi se tromper", async () => {
+    if (!migrationAppliquee) return;
+    const { data } = await sb
+      .from("plan_quotas")
+      .select("daily_limit")
+      .eq("plan", "free")
+      .eq("kind", "recommendation")
+      .maybeSingle();
+    // Trois essais par jour ne laissaient pas la place à une erreur d'humeur.
+    expect(data?.daily_limit).toBe(9);
   }, 20000);
 });

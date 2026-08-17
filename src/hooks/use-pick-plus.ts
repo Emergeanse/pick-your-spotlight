@@ -22,8 +22,11 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { PLAN_LIMITS } from "@/lib/plan-limits";
 
-const FREE_RECO_LIMIT = 3;
+// Valeurs de repli, le temps que `get_my_quotas()` réponde. Elles suivent
+// `plan-limits.ts` pour qu'un même chiffre ne vive pas à deux endroits.
+const FREE_RECO_LIMIT = PLAN_LIMITS.free.recommendation;
 const FREE_COMPANION_LIMIT = 1;
 const FREE_DISCOVERY_CHAT_LIMIT = 1;
 

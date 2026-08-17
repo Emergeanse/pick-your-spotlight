@@ -16,7 +16,9 @@
 
 export const PLAN_LIMITS = {
   free: {
-    recommendation: 3,
+    // Passé de 3 à 9 le 17 août, à la demande de Chris : trois essais par jour
+    // ne laissaient pas la place de se tromper.
+    recommendation: 9,
     chat: 5,
     voice: 5,
   },
