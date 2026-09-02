@@ -20,11 +20,15 @@ export const PLAN_LIMITS = {
     // ne laissaient pas la place de se tromper.
     recommendation: 9,
     chat: 5,
+    // La loupe a son propre compteur depuis le 2 septembre : elle épuisait
+    // les 5 conversations, et avec elles le compagnon et le chat Pick.
+    search: 10,
     voice: 5,
   },
   pickPlus: {
     recommendation: 40,
     chat: 100,
+    search: 60,
     voice: 60,
   },
 } as const;

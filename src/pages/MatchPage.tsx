@@ -8,6 +8,7 @@ import { getUserTasteProfile } from "@/lib/interactions";
 import { getLikedMovies } from "@/lib/liked-movies";
 import { computeMultiVectorProfile } from "@/lib/taste-engine";
 import type { RecommendationMatchData } from "@/lib/recommendation-batch";
+import { readQuotaRefusal, isTransientRateLimit } from "@/lib/quota-errors";
 import HazelnutScore from "@/components/pick/HazelnutScore";
 import matchBackground from "@/assets/match-background.webp";
 import MovieActionBar from "@/components/pick/MovieActionBar";
@@ -77,7 +78,18 @@ export default function MatchPage() {
 
       setState("result");
     } catch (e) {
-      setErrorMsg("Une erreur est survenue. Réessaie.");
+      // Un refus de quota arrive avec son propre message, qui dit combien il en
+      // reste et quand ça repart. Le remplacer par « une erreur est survenue »
+      // laissait l'utilisateur devant un mur, sans savoir que réessayer ne
+      // servirait à rien avant demain.
+      const refus = await readQuotaRefusal(e);
+      setErrorMsg(
+        refus
+          ? refus.message
+          : isTransientRateLimit(e, refus)
+            ? "Trop de requêtes — réessaie dans quelques secondes."
+            : "Une erreur est survenue. Réessaie."
+      );
       setState("error");
     }
   }, [excludedIds, user]);

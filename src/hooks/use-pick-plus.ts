@@ -32,7 +32,7 @@ const FREE_DISCOVERY_CHAT_LIMIT = 1;
 
 /** Une ligne de `get_my_quotas()` — la consommation telle que le serveur la voit. */
 export interface QuotaRow {
-  kind: "recommendation" | "chat" | "voice";
+  kind: "recommendation" | "chat" | "search" | "voice";
   used: number;
   quota: number | null;
   plan: string;

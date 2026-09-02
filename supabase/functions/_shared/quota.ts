@@ -11,7 +11,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
 /** Familles d'usage facturées. Doit rester aligné sur la table `plan_quotas`. */
-export type QuotaKind = "recommendation" | "chat" | "voice";
+export type QuotaKind = "recommendation" | "chat" | "search" | "voice";
 
 export interface QuotaVerdict {
   allowed: boolean;
@@ -69,6 +69,7 @@ export async function consumeQuota(
 const LIBELLES: Record<QuotaKind, string> = {
   recommendation: "recommandations",
   chat: "conversations",
+  search: "recherches de films",
   voice: "commandes vocales",
 };
 

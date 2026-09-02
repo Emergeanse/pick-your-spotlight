@@ -42,7 +42,7 @@ run("quotas appliqués côté serveur", () => {
     expect(Array.isArray(data)).toBe(true);
 
     const kinds = (data ?? []).map((r: any) => r.kind).sort();
-    expect(kinds).toEqual(["chat", "recommendation", "voice"]);
+    expect(kinds).toEqual(["chat", "recommendation", "search", "voice"]);
 
     for (const row of data ?? []) {
       expect(typeof row.used).toBe("number");
@@ -96,7 +96,7 @@ run("quotas appliqués côté serveur", () => {
 
     // Le palier gratuit doit rester strictement plus serré que Pick+, sinon la
     // distinction ne veut rien dire.
-    for (const kind of ["recommendation", "chat", "voice"]) {
+    for (const kind of ["recommendation", "chat", "search", "voice"]) {
       const gratuit = (data ?? []).find((r: any) => r.plan === "free" && r.kind === kind);
       const plus = (data ?? []).find((r: any) => r.plan === "pick_plus" && r.kind === kind);
       expect(gratuit, `palier gratuit manquant pour ${kind}`).toBeTruthy();
@@ -122,5 +122,20 @@ run("quotas appliqués côté serveur", () => {
       .maybeSingle();
     // Trois essais par jour ne laissaient pas la place à une erreur d'humeur.
     expect(data?.daily_limit).toBe(9);
+  }, 20000);
+
+  it("donne à la loupe son propre compteur, distinct des conversations", async () => {
+    if (!migrationAppliquee) return;
+    // Cinq recherches à la loupe verrouillaient le compagnon de film et le chat
+    // Pick pour la journée : les quatre puisaient dans le même quota « chat ».
+    const { data } = await sb
+      .from("plan_quotas")
+      .select("kind, daily_limit")
+      .eq("plan", "free")
+      .in("kind", ["chat", "search"]);
+    const recherche = (data ?? []).find((r: any) => r.kind === "search");
+    const conversation = (data ?? []).find((r: any) => r.kind === "chat");
+    expect(recherche, "le quota de recherche n'existe pas").toBeTruthy();
+    expect(recherche!.daily_limit).toBeGreaterThan(conversation!.daily_limit);
   }, 20000);
 });

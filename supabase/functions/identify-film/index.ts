@@ -45,8 +45,13 @@ serve(async (req) => {
 
     // Avant tout appel facture : consommer le jeton une fois la depense
     // engagee ne protegerait de rien.
-    const quota = await consumeQuota(auth.user!.id, "chat");
-    if (!quota.allowed) return quotaExceededResponse("chat", quota, corsHeaders);
+    //
+    // Famille "search" et non "chat" : identifier un film est le geste de
+    // decouverte de base. Il partageait les 5 conversations quotidiennes du
+    // palier gratuit avec le compagnon et le chat Pick, si bien que cinq
+    // recherches verrouillaient tout le reste de la journee.
+    const quota = await consumeQuota(auth.user!.id, "search");
+    if (!quota.allowed) return quotaExceededResponse("search", quota, corsHeaders);
 
     const { query, imageBase64, imageMimeType, excludeTmdbIds = [] } = await req.json();
 
