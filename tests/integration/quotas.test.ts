@@ -133,8 +133,10 @@ run("quotas appliqués côté serveur", () => {
       .select("kind, daily_limit")
       .eq("plan", "free")
       .in("kind", ["chat", "search"]);
-    const recherche = (data ?? []).find((r: any) => r.kind === "search");
-    const conversation = (data ?? []).find((r: any) => r.kind === "chat");
+    type Palier = { kind: string; daily_limit: number };
+    const paliers: Palier[] = data ?? [];
+    const recherche = paliers.find((r) => r.kind === "search");
+    const conversation = paliers.find((r) => r.kind === "chat");
     expect(recherche, "le quota de recherche n'existe pas").toBeTruthy();
     expect(recherche!.daily_limit).toBeGreaterThan(conversation!.daily_limit);
   }, 20000);
