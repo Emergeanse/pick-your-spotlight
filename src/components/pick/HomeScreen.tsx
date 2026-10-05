@@ -8,7 +8,7 @@ import { clearRevealIntent, type RevealIntent, peekForReveal, consumeForReveal, 
 import { fetchGroupTasteProfile, fetchAdHocGroupProfile, isUsableGroupProfile, toGroupOverrides } from "@/lib/group-taste";
 import { programFilmForEvent } from "@/lib/event-program";
 import { toast } from "sonner";
-import { Sparkles, WandSparkles, Clapperboard, ChevronRight, Flame, Eye, Coffee, Heart, Shuffle, Home, Users, Crown, Star } from "lucide-react";
+import { Sparkles, WandSparkles, Clapperboard, ChevronRight, Flame, Eye, Coffee, Heart, Shuffle, Crown, Star } from "lucide-react";
 
 import { formatPlatformNamesForLoading, resolveProviders } from "@/lib/platforms";
 import type { Movie, MovieDetail } from "@/lib/tmdb";
@@ -47,6 +47,10 @@ import { fetchVisibleProfiles } from "@/lib/visible-profiles";
 import { type AmbianceMood } from "./HomeAmbianceSection";
 import homeBackground from "@/assets/home-background.webp";
 import creerSoireeBouton from "@/assets/creer-soiree-bouton.webp";
+import groupeSurprise from "@/assets/groupe-surprise.webp";
+import groupeDuo from "@/assets/groupe-duo.webp";
+import groupeFamille from "@/assets/groupe-famille.webp";
+import groupeAmis from "@/assets/groupe-amis.webp";
 
 interface HomeScreenProps {
   onStart: () => void;
@@ -2434,9 +2438,7 @@ const HomeScreen = ({
               onClick={() => { setFindChoiceContext("surprise"); setActiveWidget("surprise"); setTimeout(() => setShowFindChoice(true), 150); }}
               className={`flex-1 min-w-0 flex flex-col items-center gap-2 py-3.5 px-2 rounded-2xl backdrop-blur-md transition-all ${activeWidget === "surprise" ? "border border-amber-400/60 bg-amber-400/15 shadow-[0_0_18px_rgba(251,191,36,0.3)]" : "border border-white/12 bg-[hsl(240_18%_7%/0.82)]"}`}
             >
-              <span className="w-8 h-8 rounded-xl bg-amber-500/15 flex items-center justify-center shrink-0">
-                <WandSparkles className="w-3.5 h-3.5 text-amber-400" strokeWidth={1.8} />
-              </span>
+              <img src={groupeSurprise} alt="" aria-hidden="true" draggable={false} className="w-11 h-11 shrink-0 pointer-events-none select-none" />
               <p className={`font-sans text-[10.5px] font-semibold leading-tight text-center ${activeWidget === "surprise" ? "text-amber-400" : "text-foreground"}`}>Surprise<br/>solo</p>
             </motion.button>
 
@@ -2448,9 +2450,7 @@ const HomeScreen = ({
               onClick={() => { setFindChoiceContext("duo"); setActiveWidget("duo"); setTimeout(() => setShowFindChoice(true), 150); }}
               className={`flex-1 min-w-0 flex flex-col items-center gap-2 py-3.5 px-2 rounded-2xl backdrop-blur-md transition-all ${activeWidget === "duo" ? "border border-violet-400/60 bg-violet-400/15 shadow-[0_0_18px_rgba(167,139,250,0.35)]" : "border border-white/12 bg-[hsl(240_18%_7%/0.82)]"}`}
             >
-              <span className="w-8 h-8 rounded-xl bg-violet-500/15 flex items-center justify-center shrink-0">
-                <Heart className="w-3.5 h-3.5 text-violet-400" strokeWidth={1.8} />
-              </span>
+              <img src={groupeDuo} alt="" aria-hidden="true" draggable={false} className="w-11 h-11 shrink-0 pointer-events-none select-none" />
               <p className={`font-sans text-[10.5px] font-semibold leading-tight text-center ${activeWidget === "duo" ? "text-violet-400" : "text-foreground"}`}>Soirée<br/>Duo</p>
             </motion.button>
 
@@ -2462,9 +2462,7 @@ const HomeScreen = ({
               onClick={() => { setFindChoiceContext("famille"); setActiveWidget("famille"); setTimeout(() => setShowFindChoice(true), 150); }}
               className={`flex-1 min-w-0 flex flex-col items-center gap-2 py-3.5 px-2 rounded-2xl backdrop-blur-md transition-all ${activeWidget === "famille" ? "border border-rose-400/60 bg-rose-400/15 shadow-[0_0_18px_rgba(251,113,133,0.3)]" : "border border-white/12 bg-[hsl(240_18%_7%/0.82)]"}`}
             >
-              <span className="w-8 h-8 rounded-xl bg-rose-500/15 flex items-center justify-center shrink-0">
-                <Home className="w-3.5 h-3.5 text-rose-400" strokeWidth={1.8} />
-              </span>
+              <img src={groupeFamille} alt="" aria-hidden="true" draggable={false} className="w-11 h-11 shrink-0 pointer-events-none select-none" />
               <p className={`font-sans text-[10.5px] font-semibold leading-tight text-center ${activeWidget === "famille" ? "text-rose-400" : "text-foreground"}`}>Film en<br/>famille</p>
             </motion.button>
 
@@ -2476,9 +2474,7 @@ const HomeScreen = ({
               onClick={() => { setFindChoiceContext("amis"); setActiveWidget("amis"); setTimeout(() => setShowFindChoice(true), 150); }}
               className={`flex-1 min-w-0 flex flex-col items-center gap-2 py-3.5 px-2 rounded-2xl backdrop-blur-md transition-all ${activeWidget === "amis" ? "border border-emerald-400/60 bg-emerald-400/15 shadow-[0_0_18px_rgba(52,211,153,0.3)]" : "border border-white/12 bg-[hsl(240_18%_7%/0.82)]"}`}
             >
-              <span className="w-8 h-8 rounded-xl bg-emerald-500/15 flex items-center justify-center shrink-0">
-                <Users className="w-3.5 h-3.5 text-emerald-400" strokeWidth={1.8} />
-              </span>
+              <img src={groupeAmis} alt="" aria-hidden="true" draggable={false} className="w-11 h-11 shrink-0 pointer-events-none select-none" />
               <p className={`font-sans text-[10.5px] font-semibold leading-tight text-center ${activeWidget === "amis" ? "text-emerald-400" : "text-foreground"}`}>Entre<br/>amis</p>
             </motion.button>
           </div>
