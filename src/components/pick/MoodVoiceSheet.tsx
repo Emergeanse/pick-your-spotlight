@@ -81,6 +81,8 @@ const MoodVoiceSheet = ({ onClose, onSearchIntent, autoStart }: MoodVoiceSheetPr
         recordingTimerRef.current = null;
       }
     };
+  // Minuterie liée à la phase ; `scribe` change d'identité à chaque rendu.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase]);
 
   const scribe = useScribe({
@@ -164,6 +166,8 @@ const MoodVoiceSheet = ({ onClose, onSearchIntent, autoStart }: MoodVoiceSheetPr
         setPhase("ready");
         setMicError("Erreur réseau. Réessaie !");
       });
+  // Machine à états : un appel par entrée dans la phase, avec les valeurs du moment.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase]);
 
   // Bug 1 fix : utilise { token } comme VoiceChat, pas { signedUrl }

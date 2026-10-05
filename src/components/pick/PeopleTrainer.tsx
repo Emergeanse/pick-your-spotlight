@@ -118,6 +118,8 @@ const PeopleTrainer = ({ onBack, filterDepartment }: PeopleTrainerProps) => {
     return () => {
       cancelled = true;
     };
+  // Clé sur l'identifiant : l'objet `user` est remplacé à chaque rafraîchissement du jeton sans changer de compte.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filterDepartment, user?.id]);
 
   useEffect(() => {

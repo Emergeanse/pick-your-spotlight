@@ -226,6 +226,8 @@ const EventDetailPage = () => {
       }
     })();
     return () => { cancelled = true; };
+  // Clé sur les champs utiles de la soirée, pas sur l'objet entier, rechargé en temps réel.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [event?.id, event?.status, event?.final_pick_tmdb_id, event?.final_pick_title, event?.final_pick_media_type, event?.media_type]);
 
   // Vérifie si le feedback post-soirée a déjà été donné
@@ -238,6 +240,8 @@ const EventDetailPage = () => {
       .eq("user_id", user.id)
       .maybeSingle()
       .then(({ data }) => setHasFeedback(!!data));
+  // Clé sur les champs utiles de la soirée, pas sur l'objet entier, rechargé en temps réel.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, event?.id, event?.status]);
 
   const loadVoteData = useCallback(async (eventId: string) => {
@@ -272,6 +276,8 @@ const EventDetailPage = () => {
   useEffect(() => {
     if (!id) return;
     loadEvent();
+  // Le chargeur est redéfini à chaque rendu ; il ne lit que ce qui figure dans les dépendances.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, user]);
 
   const loadEvent = async () => {
@@ -371,6 +377,8 @@ const EventDetailPage = () => {
       )
       .subscribe((_, err) => { if (err) console.warn("[event] participants realtime:", err); });
     return () => { supabase.removeChannel(channel); };
+  // Le chargeur est redéfini à chaque rendu ; il ne lit que ce qui figure dans les dépendances.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, user]);
 
   // Realtime votes (mode vote)

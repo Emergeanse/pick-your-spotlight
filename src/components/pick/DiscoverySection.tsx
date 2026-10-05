@@ -141,6 +141,8 @@ const DiscoverySection = ({
   useEffect(() => {
     getTrendingMovies(10, platformIds, favoriteGenres, filterOpts).then(setTrending).catch(console.error);
     getHiddenGems(10, platformIds, favoriteGenres, filterOpts).then(setGems).catch(console.error);
+  // Clé de contenu : le parent passe un tableau neuf à chaque rendu, on compare son contenu.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [platformIds.join(","), favoriteGenres.join(","), minRating, excludedGenres.join(",")]);
 
   const handleSelect = async (movie: Movie) => {

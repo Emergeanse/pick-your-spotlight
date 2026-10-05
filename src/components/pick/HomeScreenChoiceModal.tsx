@@ -114,6 +114,8 @@ const HomeScreenChoiceModal = ({
         setSelectedDuoId(d[0].id);
       }
     });
+  // `friendsLoaded` sert de garde : en dépendance, il relancerait l'ouverture et réinitialiserait le mode.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, user, initialDuoId, initialContext]);
 
   const isDuo = mode === "duo" && !!selectedDuoId;

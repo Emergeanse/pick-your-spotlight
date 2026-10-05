@@ -35,13 +35,13 @@ const PersonActionBar = ({
     .filter(Boolean)
     .slice(0, 3) as string[];
 
-  const requireAuth = () => {
+  const requireAuth = useCallback(() => {
     if (!user) {
       toast.info("Connecte-toi pour enrichir ton profil !");
       return false;
     }
     return true;
-  };
+  }, [user]);
 
   const handlePreference = useCallback(
     async (pref: PreferenceValue) => {
@@ -84,7 +84,7 @@ const PersonActionBar = ({
         setLoading(false);
       }
     },
-    [preference, person, personType, knownForTitles],
+    [preference, person, personType, knownForTitles, onInteraction, requireAuth],
   );
 
   const sizeClasses = {

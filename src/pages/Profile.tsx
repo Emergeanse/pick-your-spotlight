@@ -277,6 +277,8 @@ const Profile = () => {
     if (!user) { navigate("/auth"); return; }
     loadProfile();
     loadCinema();
+  // Le chargeur est redéfini à chaque rendu ; il ne lit que ce qui figure dans les dépendances.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, isReady]);
 
   useEffect(() => {

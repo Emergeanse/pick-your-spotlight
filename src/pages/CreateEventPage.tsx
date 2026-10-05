@@ -101,6 +101,8 @@ const CreateEventPage = () => {
     } else if (context === "famille" || context === "amis") {
       loadAcceptedFriends(user.id).then(setGroupFriends);
     }
+  // Ne se relance qu'au changement de contexte : la présélection ne vaut qu'au premier chargement.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [context, user]);
 
   // Step 2 — Le film

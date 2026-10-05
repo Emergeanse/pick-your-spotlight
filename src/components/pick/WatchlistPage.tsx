@@ -352,6 +352,8 @@ const WatchlistPage = ({ tabs: allowedTabs, title, defaultTab }: WatchlistPagePr
       }, 900);
       return () => clearTimeout(t);
     }
+  // Chargement initial, une seule fois.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadData = async () => {
@@ -454,7 +456,7 @@ const WatchlistPage = ({ tabs: allowedTabs, title, defaultTab }: WatchlistPagePr
     const genres = new Set<string>();
     allItems.forEach((item: any) => (item.genres || []).forEach((g: string) => genres.add(g)));
     return Array.from(genres).sort();
-  }, [watchlistItems, likedItems, seenItems, dislikedItems]);
+  }, [watchlistItems, likedItems, lovedItems, seenItems, dislikedItems]);
 
   const filteredItems = useMemo(() => {
     return currentItems.filter((item: any) => {

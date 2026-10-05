@@ -43,6 +43,7 @@ import HomeScreenChoiceModal, { type LaunchContext } from "./HomeScreenChoiceMod
 import TonightPickOverlay, { preloadPosterWallCache } from "./TonightPickOverlay";
 import FlipCardDetail from "./FlipCardDetail";
 import PostSoireeFlow, { type PostSoireeEvent } from "./PostSoireeFlow";
+import { fetchVisibleProfiles } from "@/lib/visible-profiles";
 import { type AmbianceMood } from "./HomeAmbianceSection";
 import homeBackground from "@/assets/home-background.webp";
 
@@ -528,6 +529,8 @@ const HomeScreen = ({
       setPendingFeedbackEvent(postEv);
       setShowPostSoiree(true);
     })().catch(console.error);
+  // Clé sur l'identifiant : l'objet `user` est remplacé à chaque rafraîchissement du jeton sans changer de compte.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
 
   // Recommandations reçues d'amis → injectées en tête des quickRecos
@@ -545,11 +548,11 @@ const HomeScreen = ({
 
       // Récupère les noms des expéditeurs
       const senderIds = [...new Set((recos as any[]).map((r: any) => r.sender_id))];
-      const { data: profiles } = await supabase
-        .from("profiles" as any)
-        .select("id, display_name")
-        .in("id", senderIds);
-      const nameById = Object.fromEntries((profiles ?? []).map((p: any) => [p.id, p.display_name ?? "Un ami"]));
+      // Les profils tiers ne se lisent plus que par `get_visible_profiles` :
+      // un `from("profiles")` sur l'expéditeur revenait vide, et chaque
+      // recommandation s'affichait « Un ami ».
+      const profiles = await fetchVisibleProfiles(senderIds);
+      const nameById = Object.fromEntries(profiles.map((p) => [p.id, p.display_name ?? "Un ami"]));
 
       const friendRecos: QuickReco[] = (recos as any[]).map((r: any) => ({
         id:            r.tmdb_id,
@@ -568,6 +571,8 @@ const HomeScreen = ({
       const ids = (recos as any[]).map((r: any) => r.id);
       await supabase.from("shared_recommendations" as any).update({ seen: true } as any).in("id", ids);
     })().catch(console.error);
+  // Clé sur l'identifiant : l'objet `user` est remplacé à chaque rafraîchissement du jeton sans changer de compte.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
 
   // Bridge depuis DuoPage — variable module-level, zéro dépendance React Router state
@@ -931,6 +936,8 @@ const HomeScreen = ({
     setChatMoviesPool(poolChat);
     void setCurrentTonightMovie(poolChat[startIdx] ?? poolChat[0], startIdx < poolChat.length ? startIdx : 0, seenIds);
     onChatSuggestedConsumed?.();
+  // Consomme les suggestions du chat une seule fois ; les filtres sont lus à ce moment-là.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chatSuggestedMovies, chatSuggestedSeenMovieIds, chatSuggestedStartIndex, onChatSuggestedConsumed]);
 
   useEffect(() => {

@@ -124,7 +124,7 @@ const MovieActionBar = ({
       runtime: movie.runtime ?? undefined,
       session_id: sessionId ?? undefined,
     }),
-    [movie.id, movie.title, movie.name, movie.runtime, movie.genres, sessionId],
+    [movie.title, movie.name, movie.runtime, movie.genres, sessionId],
   );
 
   const persistFeedback = useCallback(

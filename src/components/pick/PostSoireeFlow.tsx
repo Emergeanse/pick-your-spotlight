@@ -12,6 +12,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { getPosterUrl } from "@/lib/tmdb";
 import { setFeedback } from "@/lib/feedback";
 import { toast } from "sonner";
+import { fetchVisibleProfiles } from "@/lib/visible-profiles";
 
 export type SoireeRating = "memorable" | "good" | "meh";
 export type FilmRating   = "love" | "like" | "not_for_me";
@@ -129,12 +130,11 @@ export default function PostSoireeFlow({ event, onClose, onComplete }: Props) {
         const otherIds = (friendships as any[]).map((f: any) =>
           f.requester_id === user.id ? f.addressee_id : f.requester_id,
         );
-        const { data: profiles } = await supabase
-          .from("profiles" as any)
-          .select("id, display_name, avatar_url")
-          .in("id", otherIds);
+        // Via `get_visible_profiles` : un `from("profiles")` sur des tiers
+        // revient vide depuis la minimisation, et la liste restait vide.
+        const profiles = await fetchVisibleProfiles(otherIds);
 
-        const list: Friend[] = (profiles ?? []).map((p: any) => ({
+        const list: Friend[] = profiles.map((p) => ({
           id: p.id,
           name: p.display_name || "Ami",
           avatarUrl: p.avatar_url,
@@ -148,6 +148,8 @@ export default function PostSoireeFlow({ event, onClose, onComplete }: Props) {
     };
 
     loadFriends().catch(() => setLoadingFriends(false));
+  // Clé sur l'identifiant : l'objet `user` est remplacé à chaque rafraîchissement du jeton sans changer de compte.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
 
   const saveFeedback = async () => {

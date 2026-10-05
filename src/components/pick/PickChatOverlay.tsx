@@ -129,6 +129,8 @@ export default function PickChatOverlay() {
         setIsListening(false);
       }
     }
+  // `scribe` change d'identité à chaque rendu : on ne réagit qu'à l'ouverture et à la fermeture.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOverlayOpen]);
 
   // Focus input after mic stops so user can send
@@ -136,6 +138,8 @@ export default function PickChatOverlay() {
     if (!isListening && input.trim()) {
       inputRef.current?.focus();
     }
+  // Ne réagit qu'à l'arrêt du micro, pas à chaque frappe.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isListening]);
 
   const toggleMic = useCallback(async () => {
@@ -292,7 +296,7 @@ export default function PickChatOverlay() {
       setIsStreaming(false);
       setStreamingContent("");
     }
-  }, [isStreaming, currentMessages, mode, activeMovie, title, addMessage]);
+  }, [isStreaming, currentMessages, mode, activeMovie, title, addMessage, pickPlus, userPrefs, user]);
 
   // Keep ref in sync for voice auto-send
   useEffect(() => {

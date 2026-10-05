@@ -87,6 +87,8 @@ const InvitePage = () => {
     if (!isReady || !user || !event || alreadyJoined) return;
     const fromAuth = searchParams.get("joined") === "1";
     if (fromAuth) joinAsAuthUser();
+  // `joinAsAuthUser` est redéfini à chaque rendu ; `searchParams` n'est lu qu'à l'arrivée sur la page.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isReady, user, event, alreadyJoined]);
 
   const joinAsAuthUser = async () => {

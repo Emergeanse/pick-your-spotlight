@@ -510,6 +510,8 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
       const next = new Set(visitedMovieIds);
       next.add(movie.id);
       setVisitedMovieIds(next);
+    // `setVisitedMovieIds` est recréé à chaque rendu ; l'effet s'arrête de lui-même une fois le film marqué.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [movie.id, visitedMovieIds]);
 
     const batchKeyRef = useRef<string>("");
@@ -556,6 +558,8 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
         context: userCriteria?.context,
         time: userCriteria?.time,
       });
+    // Une trace « ouvert » par film, pas une par changement de critère.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [movie.id]);
 
     useEffect(() => {
@@ -582,6 +586,8 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
       getMovieCredits(movie.id, mediaType)
         .then(setCredits)
         .catch(() => setCredits(null));
+    // Rechargé sur l'identifiant seulement : l'objet peut être recréé sans changer de fiche.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [movie.id, mediaType, title]);
 
     const fetchMatchDataForMovie = useCallback(
@@ -765,6 +771,8 @@ const ResultScreen = forwardRef<HTMLDivElement, ResultScreenProps>(
       return () => {
         cancelled = true;
       };
+    // Rechargé sur l'identifiant seulement : l'objet peut être recréé sans changer de fiche.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [movie.id, fetchMatchDataForMovie, prefetchedMatchData, sessionId, title, user]);
 
     const handleRejectWithReason = async (reasonId: string) => {

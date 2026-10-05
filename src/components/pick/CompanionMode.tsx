@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, Send, Shield, ShieldAlert, ShieldOff, Clock, Sparkles, User, Clapperboard, Music, Eye, Star, ChevronDown, MessageCircle, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -89,7 +89,7 @@ export default function CompanionMode({ movie, onClose, pickPlus }: CompanionMod
 
   const isTv = !!movie.first_air_date;
   const QUICK_ACTIONS = getQuickActions(isTv);
-  const PROACTIVE_SUGGESTIONS = getProactiveSuggestions(isTv);
+  const PROACTIVE_SUGGESTIONS = useMemo(() => getProactiveSuggestions(isTv), [isTv]);
 
   const title = getDisplayTitle(movie);
   const year = getYear(movie);
@@ -121,7 +121,7 @@ export default function CompanionMode({ movie, onClose, pickPlus }: CompanionMod
       clearTimeout(initialDelay);
       if (proactiveTimerRef.current) clearInterval(proactiveTimerRef.current);
     };
-  }, [isStreaming]);
+  }, [isStreaming, PROACTIVE_SUGGESTIONS]);
 
   const scrollToBottom = () => {
     if (scrollRef.current) {

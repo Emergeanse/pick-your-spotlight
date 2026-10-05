@@ -87,6 +87,8 @@ export default function OnboardingFilmTrainer({
 
   const initialProposed = useMemo(
     () => [...new Set([...initialFilmsProposedIds, ...initialFilmsLikedIds])],
+    // Clé de contenu : le parent passe un tableau neuf à chaque rendu, on compare son contenu.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [initialFilmsLikedIds.join(","), initialFilmsProposedIds.join(",")],
   );
 
@@ -118,6 +120,8 @@ export default function OnboardingFilmTrainer({
       );
       return page.filter(hasMoviePoster);
     },
+    // Clé de contenu : le parent passe un tableau neuf à chaque rendu, on compare son contenu.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [genresKey, excludedKey],
   );
 

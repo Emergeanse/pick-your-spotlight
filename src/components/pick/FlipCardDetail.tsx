@@ -78,6 +78,8 @@ const FlipCardDetail = ({
       setCurrentItem(null);
       setNavStack([]);
     }
+  // Rechargé sur l'identifiant seulement : l'objet peut être recréé sans changer de fiche.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, item?.id, type]);
 
   useEffect(() => {
@@ -86,16 +88,22 @@ const FlipCardDetail = ({
     setLoading(true);
     setDetail(null);
 
+    // En naviguant vite d'une fiche à l'autre, une réponse lente pouvait
+    // arriver après la suivante et afficher la fiche précédente.
+    let cancelled = false;
+    const apply = (d: typeof detail) => { if (!cancelled) setDetail(d); };
+    const done = () => { if (!cancelled) setLoading(false); };
+
     if (currentType === "movie") {
       const isTV = !!currentItem.first_air_date;
-      getMovieDetailsWithCredits(currentItem.id, isTV ? "tv" : "movie")
-        .then((d) => setDetail(d))
-        .finally(() => setLoading(false));
+      getMovieDetailsWithCredits(currentItem.id, isTV ? "tv" : "movie").then(apply).finally(done);
     } else {
-      fetchPersonDetail(currentItem.id)
-        .then((d) => setDetail(d))
-        .finally(() => setLoading(false));
+      fetchPersonDetail(currentItem.id).then(apply).finally(done);
     }
+    return () => { cancelled = true; };
+    // Rechargée sur l'identifiant seulement : l'objet `currentItem` peut être
+    // recréé sans changer de fiche.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, currentItem?.id, currentType]);
 
   useEffect(() => {

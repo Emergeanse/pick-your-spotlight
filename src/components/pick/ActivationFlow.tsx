@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Brain, Sparkles, MessageCircle, Bookmark, Heart, ArrowRight, Check, Dna, PartyPopper } from "lucide-react";
@@ -41,55 +41,12 @@ const ActivationFlow = ({ onStartMission, onComplete }: ActivationFlowProps) => 
   const [showReward, setShowReward] = useState(false);
   const [loaded, setLoaded] = useState(false);
 
-  // Load current step from DB + compute real progress
-  const loadProgress = useCallback(async () => {
-    if (!user) return;
+  // Le parent passe une fonction recréée à chaque rendu : la mettre dans les
+  // dépendances rechargerait la progression à chaque rendu de l'accueil.
+  const onCompleteRef = useRef(onComplete);
+  onCompleteRef.current = onComplete;
 
-    const [profileRes, interactionsRes, watchlistRes, likedRes] = await Promise.all([
-      supabase.from("profiles").select("activation_step, activation_completed").eq("id", user.id).single(),
-      supabase.from("user_interactions").select("id").eq("user_id", user.id).in("action_type", ["liked", "unsure", "skipped"]),
-      supabase.from("watchlist").select("id").eq("user_id", user.id),
-      supabase.from("liked_movies").select("id").eq("user_id", user.id),
-    ]);
-
-    if (profileRes.data?.activation_completed) {
-      onComplete();
-      return;
-    }
-
-    const step = (profileRes.data as any)?.activation_step as MissionId || "train_20";
-
-    // Check daily_usage for reco count & chat count
-    const today = new Date().toISOString().split("T")[0];
-    const usageRes = await supabase.from("daily_usage" as any)
-      .select("recommendation_count, chat_count")
-      .eq("user_id", user.id).maybeSingle();
-
-    const totalRecos = (usageRes.data as any)?.recommendation_count || 0;
-    // Also check total_recommendations in profiles for historical count
-    const profileFullRes = await supabase.from("profiles").select("total_recommendations").eq("id", user.id).single();
-    const historicalRecos = (profileFullRes.data as any)?.total_recommendations || 0;
-
-    const newProgress: Record<MissionId, number> = {
-      train_20: interactionsRes.data?.length || 0,
-      first_reco: Math.max(totalRecos, historicalRecos),
-      talk_to_pick: (usageRes.data as any)?.chat_count || 0,
-      watchlist_3: watchlistRes.data?.length || 0,
-      like_5: likedRes.data?.length || 0,
-    };
-
-    setProgress(newProgress);
-    setCurrentStep(step);
-    setLoaded(true);
-
-    // Auto-advance if current mission is already completed
-    const currentMission = MISSIONS.find(m => m.id === step);
-    if (currentMission && newProgress[step] >= currentMission.threshold) {
-      await advanceStep(step, newProgress);
-    }
-  }, [user]);
-
-  const advanceStep = async (fromStep: MissionId, currentProgress: Record<MissionId, number>) => {
+  const advanceStep = useCallback(async (fromStep: MissionId, currentProgress: Record<MissionId, number>) => {
     if (!user) return;
     const idx = MISSIONS.findIndex(m => m.id === fromStep);
     
@@ -126,7 +83,55 @@ const ActivationFlow = ({ onStartMission, onComplete }: ActivationFlowProps) => 
     setCurrentStep(nextStep);
     setShowMissionCard(true);
     await supabase.from("profiles").update({ activation_step: nextStep } as any).eq("id", user.id);
-  };
+  }, [user]);
+
+  // Load current step from DB + compute real progress
+  const loadProgress = useCallback(async () => {
+    if (!user) return;
+
+    const [profileRes, interactionsRes, watchlistRes, likedRes] = await Promise.all([
+      supabase.from("profiles").select("activation_step, activation_completed").eq("id", user.id).single(),
+      supabase.from("user_interactions").select("id").eq("user_id", user.id).in("action_type", ["liked", "unsure", "skipped"]),
+      supabase.from("watchlist").select("id").eq("user_id", user.id),
+      supabase.from("liked_movies").select("id").eq("user_id", user.id),
+    ]);
+
+    if (profileRes.data?.activation_completed) {
+      onCompleteRef.current();
+      return;
+    }
+
+    const step = (profileRes.data as any)?.activation_step as MissionId || "train_20";
+
+    // Check daily_usage for reco count & chat count
+    const today = new Date().toISOString().split("T")[0];
+    const usageRes = await supabase.from("daily_usage" as any)
+      .select("recommendation_count, chat_count")
+      .eq("user_id", user.id).maybeSingle();
+
+    const totalRecos = (usageRes.data as any)?.recommendation_count || 0;
+    // Also check total_recommendations in profiles for historical count
+    const profileFullRes = await supabase.from("profiles").select("total_recommendations").eq("id", user.id).single();
+    const historicalRecos = (profileFullRes.data as any)?.total_recommendations || 0;
+
+    const newProgress: Record<MissionId, number> = {
+      train_20: interactionsRes.data?.length || 0,
+      first_reco: Math.max(totalRecos, historicalRecos),
+      talk_to_pick: (usageRes.data as any)?.chat_count || 0,
+      watchlist_3: watchlistRes.data?.length || 0,
+      like_5: likedRes.data?.length || 0,
+    };
+
+    setProgress(newProgress);
+    setCurrentStep(step);
+    setLoaded(true);
+
+    // Auto-advance if current mission is already completed
+    const currentMission = MISSIONS.find(m => m.id === step);
+    if (currentMission && newProgress[step] >= currentMission.threshold) {
+      await advanceStep(step, newProgress);
+    }
+  }, [user, advanceStep]);
 
   useEffect(() => { loadProgress(); }, [loadProgress]);
 

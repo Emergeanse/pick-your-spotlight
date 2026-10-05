@@ -242,6 +242,8 @@ const GenrePreferences = forwardRef<GenrePreferencesHandle, GenrePreferencesProp
 
     load();
 
+  // Un chargement par mode ; les rappels du parent ne doivent pas le relancer.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [deferSave]);
 
 

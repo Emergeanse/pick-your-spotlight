@@ -206,9 +206,10 @@ function WallPosterCell({
   }, [seedPath]);
 
   useEffect(() => {
-    cellPathsRef.current.set(cellId, activePath);
+    const cellPaths = cellPathsRef.current;
+    cellPaths.set(cellId, activePath);
     return () => {
-      cellPathsRef.current.delete(cellId);
+      cellPaths.delete(cellId);
     };
   }, [cellId, activePath, cellPathsRef]);
 
@@ -487,6 +488,8 @@ const TonightPickOverlay = ({
   }, [open, posterWallPaths, sessionWallPaths.length]);
 
   const rawWallPaths    = sessionWallPaths.length >= 2 ? sessionWallPaths : posterWallPaths;
+  // Les deux ensembles vivent hors de React : leur taille sert de signal de changement.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const shuffledWallPaths = useMemo(() => filterValidPaths(rawWallPaths), [rawWallPaths, confirmedPaths.size, rejectedPaths.size]);
 
   // Précharge toutes les affiches uniques du mur et alimente confirmedPaths/rejectedPaths
@@ -580,6 +583,8 @@ const TonightPickOverlay = ({
         opacity: 0.18 + r() * 0.22,
       };
     });
+  // Clé de contenu : le parent passe un tableau neuf à chaque rendu, on compare son contenu.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userGenres.join(",")]);
 
   const wallColumns = useMemo(

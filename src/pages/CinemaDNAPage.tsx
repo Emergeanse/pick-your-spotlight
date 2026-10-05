@@ -186,6 +186,8 @@ const CinemaDNAPage = () => {
   useEffect(() => {
     if (!user) return;
     load();
+  // Le chargeur est redéfini à chaque rendu ; il ne lit que ce qui figure dans les dépendances.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, searchParams]);
 
   const load = async () => {

@@ -62,6 +62,8 @@ export function useMovieInteractions(
   fallbackMediaType: CatalogMediaType = "movie"
 ): Record<string, MovieInteractionState> {
   const { user } = useAuth();
+  // Clé de contenu : les appelants passent un tableau neuf à chaque rendu.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const lookups = useMemo(() => normalizeInput(input, fallbackMediaType), [JSON.stringify(input), fallbackMediaType]);
   const key = useMemo(() => Array.from(new Set(lookups.map((lookup) => catalogLookupKey(lookup.tmdbId, lookup.mediaType)))).sort().join(","), [lookups]);
   const uniqueLookups = useMemo(() => key ? key.split(",").map((entry) => {
@@ -99,6 +101,8 @@ export function useMovieInteractions(
     } catch {
       // Keep the cached state visible instead of flashing a neutral card.
     }
+  // Clé sur l'identifiant : l'objet `user` est remplacé à chaque rafraîchissement du jeton sans changer de compte.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [uniqueLookups, user?.id]);
 
   useEffect(() => {
@@ -123,6 +127,8 @@ export function useMovieInteractions(
       window.removeEventListener("pick-feedback-changed", onChange);
       window.removeEventListener("pick-watchlist-added", refresh);
     };
+  // Clé sur l'identifiant : l'objet `user` est remplacé à chaque rafraîchissement du jeton sans changer de compte.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [uniqueLookups, user?.id, refresh]);
 
   return map;

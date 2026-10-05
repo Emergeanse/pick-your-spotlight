@@ -277,7 +277,7 @@ const VoiceChat = ({ onClose, onMovieSuggested, onSearchIntent, initialMessages,
       console.error("Chat error:", e);
       setPhase("idle");
     }
-  }, [onMovieSuggested, initialMessages, conversationHistory, userTasteContext]);
+  }, [onMovieSuggested, onSearchIntent, initialMessages, conversationHistory, userTasteContext, user]);
 
   const handleSend = useCallback(async (text: string) => {
     if (!text.trim()) return;
@@ -377,7 +377,7 @@ const VoiceChat = ({ onClose, onMovieSuggested, onSearchIntent, initialMessages,
       setMicError("Erreur micro. Tape ton message ci-dessous 👇");
       inputRef.current?.focus();
     }
-  }, [scribe, scribeToken]);
+  }, [scribe]);
 
   // Auto-start listening when opened with initial messages (from "Affiner" button)
   useEffect(() => {

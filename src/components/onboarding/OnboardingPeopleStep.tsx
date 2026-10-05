@@ -50,6 +50,8 @@ export default function OnboardingPeopleStep({
 
   const initialProposed = useMemo(
     () => [...new Set([...initialProposedIds, ...initialSelectedIds])],
+    // Clé de contenu : le parent passe un tableau neuf à chaque rendu, on compare son contenu.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [initialProposedIds.join(","), initialSelectedIds.join(",")],
   );
 

@@ -65,6 +65,8 @@ const FlipCardBack = ({ item, type }: FlipCardBackProps) => {
     return () => {
       cancelled = true;
     };
+  // Rechargé sur l'identifiant seulement : l'objet peut être recréé sans changer de fiche.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [item?.id, type]);
 
   if (type === "movie" || type === "tv") {

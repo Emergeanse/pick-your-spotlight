@@ -184,6 +184,8 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
     advancedMovieIdsRef.current = new Set();
     queuedIds.current = new Set();
     loadMovies(1, selectedCategory!);
+  // Ne repart de zéro qu'au changement de catégorie ; `loadMovies` change à chaque film évalué.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedCategory, interactionsLoaded]);
 
   useEffect(() => {
@@ -227,6 +229,8 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
       setPage(nextPage);
       loadMovies(nextPage);
     }
+  // `loadMovies` change à chaque film évalué : en dépendance, il provoquerait des chargements en double.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentIndex, movies.length, loading, page, isMediaCategory]);
 
   const currentMovie = movies[currentIndex];
@@ -276,6 +280,8 @@ const TasteTrainer = ({ onClose, isActivation = false, onActivationComplete }: T
     return () => {
       cancelled = true;
     };
+  // Rechargé sur l'identifiant seulement : l'objet peut être recréé sans changer de fiche.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentMovie?.id, isSeries, isMediaCategory]);
 
   const advanceAfterTrainingInteraction = useCallback(

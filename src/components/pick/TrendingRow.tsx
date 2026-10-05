@@ -39,6 +39,8 @@ const MovieCard = ({
         if (providers.length > 0) setProvider(providers[0]);
       })
       .catch(() => {});
+  // Rechargé sur l'identifiant seulement : l'objet peut être recréé sans changer de fiche.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [movie.id]);
 
   const handleLongPress = () => {
@@ -125,6 +127,8 @@ const TrendingRow = ({ title, fetchFn, onMovieClick }: TrendingRowProps) => {
     fetchFn()
       .then(setMovies)
       .catch(() => {});
+  // Chargé une fois : le parent recrée `fetchFn` à chaque rendu.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const scroll = (dir: "left" | "right") => {

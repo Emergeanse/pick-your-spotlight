@@ -94,6 +94,8 @@ const CinemaDNA = ({ userId, teaser, onOpenFull }: CinemaDNAProps) => {
   useEffect(() => {
     loadProfile();
     loadLikedPosters();
+  // Le chargeur est redéfini à chaque rendu ; il ne lit que ce qui figure dans les dépendances.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
 
   const loadProfile = async () => {
