@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { CalendarDays, Heart, Home, Users, UsersRound, User, Plus, Loader2, ChevronRight, Check, Clock, Eye, Timer, Film } from "lucide-react";
+import { CalendarDays, Heart, Home, Users, UsersRound, User, Loader2, ChevronRight, Check, Clock, Eye, Timer, Film } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import soireesBackground from "@/assets/soirees-background.webp";
+import creerSoiree from "@/assets/creer-soiree.webp";
 
 type ParticipantSummary = {
   total: number;
@@ -264,9 +265,18 @@ const SoireesPage = () => {
           </div>
           <button
             onClick={() => navigate("/app/soiree/nouvelle")}
-            className="mt-2 w-10 h-10 rounded-2xl bg-primary/15 border border-primary/25 flex items-center justify-center"
+            className="relative mt-1 w-12 h-12 rounded-full flex items-center justify-center active:scale-[0.96] transition-transform"
+            aria-label="Créer une nouvelle soirée ciné"
           >
-            <Plus className="w-5 h-5 text-primary" />
+            {/* Même ticket que le bouton central de la barre d'onglets : le
+                halo déborde pour que le disque seul fasse les 48 px du bouton. */}
+            <img
+              src={creerSoiree}
+              alt=""
+              aria-hidden="true"
+              draggable={false}
+              className="absolute w-16 h-16 max-w-none pointer-events-none select-none"
+            />
           </button>
         </div>
       </div>
