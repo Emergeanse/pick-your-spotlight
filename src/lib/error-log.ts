@@ -14,6 +14,8 @@
  *     erreur qui se relance en boucle dans un rendu React.
  */
 import { supabase } from "@/integrations/supabase/client";
+import type { Json } from "@/integrations/supabase/types";
+
 
 const MAX_MESSAGE = 2000;
 const MAX_STACK = 8000;
