@@ -67,7 +67,7 @@ async function mockEdgeFunctions(page: Page, captured: any[]) {
 }
 
 async function launchSurprise(page: Page) {
-  await page.locator("button").filter({ hasText: /organiser une soir.e/i }).first().click();
+  await page.getByRole("button", { name: /^créer une soirée ciné$/i }).click();
   await page.waitForTimeout(400);
   await page.getByRole("button", { name: /laisse.moi te surprendre/i }).click();
 }
@@ -113,7 +113,7 @@ test.describe("Matrice genres × requête — TNR", () => {
     await page.goto("/app");
     await page.waitForLoadState("networkidle");
 
-    await page.locator("button").filter({ hasText: /organiser une soir.e/i }).first().click();
+    await page.getByRole("button", { name: /^créer une soirée ciné$/i }).click();
     await page.waitForTimeout(400);
     await page.getByRole("button", { name: "Thème" }).click();
     await page.waitForTimeout(300);

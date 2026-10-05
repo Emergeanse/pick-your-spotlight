@@ -46,6 +46,7 @@ import PostSoireeFlow, { type PostSoireeEvent } from "./PostSoireeFlow";
 import { fetchVisibleProfiles } from "@/lib/visible-profiles";
 import { type AmbianceMood } from "./HomeAmbianceSection";
 import homeBackground from "@/assets/home-background.webp";
+import creerSoireeBouton from "@/assets/creer-soiree-bouton.webp";
 
 interface HomeScreenProps {
   onStart: () => void;
@@ -2406,9 +2407,21 @@ const HomeScreen = ({
             transition={{ delay: 0.30, duration: 0.45 }}
             whileTap={{ scale: 0.97 }}
             onClick={() => { setFindChoiceContext("solo"); setShowFindChoice(true); }}
-            className="mt-4 w-full py-3.5 rounded-2xl bg-gradient-to-r from-primary to-accent text-primary-foreground font-sans font-semibold text-[14px] tracking-wide shadow-[0_12px_40px_-10px_hsl(var(--primary)/0.55)]"
+            className="mt-3 block w-full rounded-full"
+            aria-label="Créer une soirée ciné"
           >
-            Organiser une soirée ciné !
+            {/* Le texte est dessiné dans l'image : seul l'aria-label le donne
+                aux lecteurs d'écran. Le halo de l'image remplace l'ancienne
+                ombre portée. */}
+            <img
+              src={creerSoireeBouton}
+              alt=""
+              aria-hidden="true"
+              draggable={false}
+              width={1100}
+              height={219}
+              className="block w-full h-auto pointer-events-none select-none"
+            />
           </motion.button>
 
           {/* 4 widgets côte à côte */}
