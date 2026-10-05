@@ -37,7 +37,7 @@ export default function OnboardingSoireesGuide({ onFinish, finishing }: Onboardi
       <h1 className="text-2xl md:text-3xl font-serif mb-2">Retrouve tes soirées</h1>
       <p className="text-sm text-muted-foreground font-sans mb-5 leading-relaxed">
         Chaque session Solo ou Duo peut devenir une <strong className="text-foreground/75">soirée</strong> enregistrée.
-        Tu les retrouves dans l&apos;onglet <strong className="text-primary">Soirées</strong>.
+        Tu les retrouves dans l&apos;onglet <strong className="text-primary">Mes soirées</strong>.
       </p>
 
       <motion.div
@@ -48,7 +48,7 @@ export default function OnboardingSoireesGuide({ onFinish, finishing }: Onboardi
         <div className="flex items-stretch justify-around h-14 px-2 border-b border-border/20 bg-background/40">
           {[
             { Icon: Home, label: "Accueil", active: false },
-            { Icon: CalendarDays, label: "Soirées", active: true },
+            { Icon: CalendarDays, label: "Mes soirées", active: true },
             { Icon: Library, label: "Biblio", active: false },
             { Icon: User, label: "Profil", active: false },
           ].map(({ Icon, label, active }) => (
@@ -109,7 +109,7 @@ export default function OnboardingSoireesGuide({ onFinish, finishing }: Onboardi
       <div className="rounded-xl border border-border/25 bg-card/40 px-4 py-3 mb-6 flex gap-3">
         <CalendarDays className="w-4 h-4 text-primary shrink-0 mt-0.5" />
         <p className="text-xs font-sans text-foreground/55 leading-relaxed">
-          Tu peux aussi créer une soirée depuis l&apos;onglet Soirées via le bouton <strong className="text-foreground/75">+</strong> en haut à droite.
+          Tu peux aussi en créer une avec le bouton <strong className="text-foreground/75">Nouvelle soirée</strong>, au centre de la barre d&apos;onglets.
         </p>
       </div>
 

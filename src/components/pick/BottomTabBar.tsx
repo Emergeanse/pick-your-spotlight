@@ -9,7 +9,7 @@ type TabDef = { id: TabId; label: string; icon: React.ComponentType<any>; path: 
 
 const tabs: TabDef[] = [
   { id: "home",    label: "Accueil",       icon: Home,        path: "/app" },
-  { id: "soirees", label: "Soirées",       icon: CalendarDays, path: "/app/soirees" },
+  { id: "soirees", label: "Mes soirées",   icon: CalendarDays, path: "/app/soirees" },
   { id: "cinema",  label: "Biblio",        icon: Library,     path: "/app/my-cinema" },
   { id: "profile", label: "Profil",        icon: User,        path: "/app/profile" },
 ];
@@ -60,7 +60,7 @@ const BottomTabBar = () => {
               aria-hidden="true"
               className="pointer-events-none absolute bottom-1 left-1/2 -translate-x-1/2 text-[10px] font-sans tracking-tight text-foreground/40 font-medium whitespace-nowrap"
             >
-              Soirée ciné
+              Nouvelle soirée
             </span>
           </div>
 
