@@ -58,7 +58,7 @@ const BottomTabBar = () => {
             </motion.button>
             <span
               aria-hidden="true"
-              className="pointer-events-none absolute bottom-1 left-1/2 -translate-x-1/2 text-[10px] font-sans tracking-tight text-foreground/40 font-medium whitespace-nowrap"
+              className="pointer-events-none absolute bottom-1 left-1/2 -translate-x-1/2 text-[10px] font-sans tracking-tight text-violet-200 font-semibold whitespace-nowrap [text-shadow:0_0_8px_rgb(168_85_247/0.9),0_0_16px_rgb(168_85_247/0.5)]"
             >
               Nouvelle soirée
             </span>
