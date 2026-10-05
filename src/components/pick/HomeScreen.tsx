@@ -28,7 +28,8 @@ import {
   RECOMMENDATION_BATCH_SIZE,
   type RecommendationMovieDetail,
 } from "@/lib/recommendation-batch";
-import { resolveEffectiveExclusions } from "@/lib/recommendation-pipeline";
+import { resolveEffectiveExclusions, diagnoseNoResults } from "@/lib/recommendation-pipeline";
+import { isOffline, OFFLINE_MESSAGE } from "@/lib/connectivity";
 import { getEngagementData, getProgressionMessage, type EngagementData } from "@/lib/engagement";
 import { listFeedbackByType } from "@/lib/feedback";
 import { getMyPreferences, sanitizeGenreLabels } from "@/lib/preferences";
@@ -1195,6 +1196,16 @@ const HomeScreen = ({
   type DuoOverrides = { topGenres: string[]; excludedGenres: string[]; tasteVector: number[] | null; avoidanceVector: number[] | null; topClusters: string[]; rejectedClusters: string[]; partnerExcludeIds: number[]; user1Name: string | null; user2Name: string | null; user1Id?: string; user2Id?: string; maxCertificationLevel?: number | null; groupSize?: number; groupKind?: "famille" | "amis" | null; youngestAgeRange?: string | null };
   const generateTonightPick = async (excludeList: number[] = rejectedIds, rejectionContext?: RejectionContext, voiceFilters?: VoiceSearchFilters | null, duoOverrides?: DuoOverrides, extraMoodContext?: string) => {
     generateTonightPickRef.current = generateTonightPick;
+
+    // Sans réseau, rien de ce qui suit ne peut aboutir : ni la lecture du
+    // profil, ni l'appel au moteur. On s'arrête ici plutôt que d'ouvrir un
+    // écran de chargement qui finira par accuser les filtres de l'utilisateur.
+    if (isOffline()) {
+      setTonightLoading(false);
+      toast.error(OFFLINE_MESSAGE, { duration: 6000 });
+      return;
+    }
+
     // Ouvrir l'overlay immédiatement — avant tout await, dans le même batch que l'appelant
     const genKey = ++generationKeyRef.current;
     const isStale = () => generationKeyRef.current !== genKey;
@@ -1862,22 +1873,18 @@ const HomeScreen = ({
         const rating = userMinRating;
 
         if (movies.length === 0) {
-          // Aucun film trouvé malgré tous les fallbacks — message explicite
-          let message = "Impossible de trouver des films pour le moment.";
-          let suggestThreshold: number | undefined;
-          let suggestRating: boolean | undefined;
-          if (threshold > 70 && rating > 6) {
-            message = `Seuil à ${threshold}% et note min ${rating}/10 combinés — aucun film ne correspond. Essaie de baisser l'un des deux.`;
-            suggestThreshold = 60;
-            suggestRating = true;
-          } else if (threshold > 70) {
-            message = `Aucun film trouvé à ${threshold}% de correspondance. Essaie de baisser le seuil.`;
-            suggestThreshold = 60;
-          } else if (rating > 6) {
-            message = `Aucun film trouvé avec une note min de ${rating}/10. Essaie d'enlever ou de baisser ce filtre.`;
-            suggestRating = true;
-          }
-          setNoResultsInfo({ message, suggestThreshold, suggestRating });
+          // Aucun film trouvé malgré tous les fallbacks — message explicite.
+          // La connexion est relue ici : elle a pu tomber en cours de route,
+          // et le pipeline rend alors exactement le même vide que des filtres
+          // trop stricts.
+          setNoResultsInfo(
+            diagnoseNoResults({
+              horsLigne: isOffline(),
+              seuil: threshold,
+              noteMin: rating,
+              messageHorsLigne: OFFLINE_MESSAGE,
+            }),
+          );
           return;
         }
 

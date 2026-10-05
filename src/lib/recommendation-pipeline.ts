@@ -293,3 +293,49 @@ export function filterByUsedIds<T extends { tmdbId: number }>(
 ): T[] {
   return selections.filter((s) => !usedIds.has(s.tmdbId));
 }
+
+export type NoResultsDiagnosis = {
+  message: string;
+  suggestThreshold?: number;
+  suggestRating?: boolean;
+};
+
+/**
+ * Pourquoi le pipeline n'a rien rendu.
+ *
+ * L'ordre compte : **hors ligne d'abord**. Sans réseau, toutes les requêtes
+ * reviennent vides et le pipeline aboutit au même état que des filtres trop
+ * stricts — sauf que dire « baisse ton seuil » envoie alors l'utilisateur
+ * tripoter des réglages qui n'y sont pour rien, et le message se répète à
+ * chaque essai. Ne jamais accuser les filtres quand on n'a pas pu demander.
+ */
+export function diagnoseNoResults(etat: {
+  horsLigne: boolean;
+  seuil: number;
+  noteMin: number;
+  messageHorsLigne: string;
+}): NoResultsDiagnosis {
+  if (etat.horsLigne) return { message: etat.messageHorsLigne };
+
+  const { seuil, noteMin } = etat;
+  if (seuil > 70 && noteMin > 6) {
+    return {
+      message: `Seuil à ${seuil}% et note min ${noteMin}/10 combinés — aucun film ne correspond. Essaie de baisser l'un des deux.`,
+      suggestThreshold: 60,
+      suggestRating: true,
+    };
+  }
+  if (seuil > 70) {
+    return {
+      message: `Aucun film trouvé à ${seuil}% de correspondance. Essaie de baisser le seuil.`,
+      suggestThreshold: 60,
+    };
+  }
+  if (noteMin > 6) {
+    return {
+      message: `Aucun film trouvé avec une note min de ${noteMin}/10. Essaie d'enlever ou de baisser ce filtre.`,
+      suggestRating: true,
+    };
+  }
+  return { message: "Impossible de trouver des films pour le moment." };
+}
