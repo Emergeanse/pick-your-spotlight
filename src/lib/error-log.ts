@@ -14,6 +14,7 @@
  *     erreur qui se relance en boucle dans un rendu React.
  */
 import { supabase } from "@/integrations/supabase/client";
+import type { Json } from "@/integrations/supabase/types";
 
 const MAX_MESSAGE = 2000;
 const MAX_STACK = 8000;
@@ -78,7 +79,7 @@ export async function reportError(error: unknown, context: ErrorContext = {}): P
       stack,
       route: tronque(typeof location !== "undefined" ? location.pathname + location.search : null, 500),
       user_agent: tronque(typeof navigator !== "undefined" ? navigator.userAgent : null, 500),
-      context: context as Record<string, unknown>,
+      context: context as unknown as Json,
     });
 
     envoyees += 1;

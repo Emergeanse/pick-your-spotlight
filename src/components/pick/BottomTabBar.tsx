@@ -42,9 +42,15 @@ const BottomTabBar = () => {
                 }
               }}
               className="absolute -top-5 w-14 h-14 rounded-full bg-gradient-to-b from-primary to-accent shadow-[0_8px_30px_-6px_hsl(var(--primary)/0.7)] flex items-center justify-center active:scale-[0.96] transition-transform"
-              aria-label="Créer une soirée"
+              aria-label="Créer une nouvelle soirée ciné"
             >
               <Plus className="w-6 h-6 text-primary-foreground" strokeWidth={2.2} />
+              <span
+                className="absolute top-full left-1/2 -translate-x-1/2 mt-1 text-[10px] font-sans tracking-tight text-primary font-semibold whitespace-nowrap pointer-events-none"
+                aria-hidden="true"
+              >
+                Soirée ciné
+              </span>
             </motion.button>
           </div>
 

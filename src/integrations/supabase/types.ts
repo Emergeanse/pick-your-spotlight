@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.1"
+    PostgrestVersion: "14.5"
   }
   public: {
     Tables: {
@@ -323,6 +323,42 @@ export type Database = {
         }
         Relationships: []
       }
+      error_events: {
+        Row: {
+          context: Json
+          created_at: string
+          id: string
+          message: string
+          route: string | null
+          source: string
+          stack: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          context?: Json
+          created_at?: string
+          id?: string
+          message: string
+          route?: string | null
+          source?: string
+          stack?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          context?: Json
+          created_at?: string
+          id?: string
+          message?: string
+          route?: string | null
+          source?: string
+          stack?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       event_film_feedback: {
         Row: {
           created_at: string | null
@@ -620,98 +656,6 @@ export type Database = {
           id?: string
           requester_id?: string
           status?: string
-        }
-        Relationships: []
-      }
-      group_session_members: {
-        Row: {
-          guest_age_range: string | null
-          guest_name: string | null
-          guest_preferences_json: Json
-          guest_profile_text: string | null
-          id: string
-          joined_at: string
-          session_id: string
-          user_id: string | null
-        }
-        Insert: {
-          guest_age_range?: string | null
-          guest_name?: string | null
-          guest_preferences_json?: Json
-          guest_profile_text?: string | null
-          id?: string
-          joined_at?: string
-          session_id: string
-          user_id?: string | null
-        }
-        Update: {
-          guest_age_range?: string | null
-          guest_name?: string | null
-          guest_preferences_json?: Json
-          guest_profile_text?: string | null
-          id?: string
-          joined_at?: string
-          session_id?: string
-          user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "group_session_members_session_id_fkey"
-            columns: ["session_id"]
-            isOneToOne: false
-            referencedRelation: "group_sessions"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      group_sessions: {
-        Row: {
-          context: string | null
-          context_json: Json
-          created_at: string
-          creator_id: string
-          decision_mode: string
-          id: string
-          invite_code: string | null
-          mood: string | null
-          name: string
-          scheduled_for: string | null
-          selected_catalog_item_id: string | null
-          status: string
-          time_available: string | null
-          title: string | null
-        }
-        Insert: {
-          context?: string | null
-          context_json?: Json
-          created_at?: string
-          creator_id: string
-          decision_mode?: string
-          id?: string
-          invite_code?: string | null
-          mood?: string | null
-          name?: string
-          scheduled_for?: string | null
-          selected_catalog_item_id?: string | null
-          status?: string
-          time_available?: string | null
-          title?: string | null
-        }
-        Update: {
-          context?: string | null
-          context_json?: Json
-          created_at?: string
-          creator_id?: string
-          decision_mode?: string
-          id?: string
-          invite_code?: string | null
-          mood?: string | null
-          name?: string
-          scheduled_for?: string | null
-          selected_catalog_item_id?: string | null
-          status?: string
-          time_available?: string | null
-          title?: string | null
         }
         Relationships: []
       }
@@ -1751,15 +1695,25 @@ export type Database = {
           user1_id: string
         }[]
       }
+      get_visible_profiles: {
+        Args: { p_ids: string[] }
+        Returns: {
+          avatar_url: string
+          bio: string
+          display_name: string
+          excluded_genres: string[]
+          favorite_genres: string[]
+          friend_code: string
+          id: string
+          podium_film_ids: number[]
+          relation: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
-        Returns: boolean
-      }
-      is_session_member: {
-        Args: { _session_id: string; _user_id: string }
         Returns: boolean
       }
       join_event_as_guest: {
@@ -1851,6 +1805,7 @@ export type Database = {
           year: string
         }[]
       }
+      purge_old_error_events: { Args: { p_days?: number }; Returns: number }
       recompute_user_movie_score: {
         Args: { p_movie_id: number; p_user_id: string }
         Returns: undefined
@@ -1881,12 +1836,12 @@ export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1910,11 +1865,11 @@ export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1935,11 +1890,11 @@ export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1960,11 +1915,11 @@ export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1977,11 +1932,11 @@ export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
+    : never) = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
