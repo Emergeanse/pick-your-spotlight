@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Download, X } from "lucide-react";
+import { Download, Share, SquarePlus, X } from "lucide-react";
 import { useInstallPrompt } from "@/hooks/use-install-prompt";
 
 /**
@@ -8,10 +8,11 @@ import { useInstallPrompt } from "@/hooks/use-install-prompt";
  * Posée au-dessus de la barre d'onglets plutôt qu'en haut : le bandeau de
  * reprise d'initiation occupe déjà le haut, et les deux peuvent se croiser.
  * Elle n'apparaît que si le navigateur sait installer l'application — voir
- * `useInstallPrompt`.
+ * `useInstallPrompt`. Sur iPhone, où aucune page ne peut ouvrir la fenêtre
+ * d'installation, le bouton laisse la place au geste à faire dans Safari.
  */
 export default function InstallBanner() {
-  const { proposable, installer, remettre } = useInstallPrompt();
+  const { proposable, mode, installer, remettre } = useInstallPrompt();
 
   if (!proposable) return null;
 
@@ -26,18 +27,33 @@ export default function InstallBanner() {
         <div className="flex items-center gap-3 rounded-2xl border border-primary/25 bg-background/95 backdrop-blur-xl px-4 py-3 shadow-lg">
           <div className="flex-1 min-w-0">
             <p className="text-xs font-sans font-semibold text-foreground">Installer Pick</p>
-            <p className="text-[10px] font-sans text-foreground/50">
-              Sur ton écran d&apos;accueil, comme une vraie application.
-            </p>
+            {mode === "ios" ? (
+              <p className="text-[10px] font-sans text-foreground/50 leading-relaxed">
+                Touche{" "}
+                <Share className="inline w-3 h-3 -mt-0.5 text-primary" aria-label="Partager" />{" "}
+                dans Safari, puis{" "}
+                <span className="whitespace-nowrap">
+                  <SquarePlus className="inline w-3 h-3 -mt-0.5 text-primary" aria-hidden="true" />{" "}
+                  « Sur l&apos;écran d&apos;accueil »
+                </span>
+                .
+              </p>
+            ) : (
+              <p className="text-[10px] font-sans text-foreground/50">
+                Sur ton écran d&apos;accueil, comme une vraie application.
+              </p>
+            )}
           </div>
-          <button
-            type="button"
-            onClick={() => void installer()}
-            className="shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary text-primary-foreground text-[11px] font-sans font-semibold"
-          >
-            <Download className="w-3.5 h-3.5" aria-hidden="true" />
-            Installer
-          </button>
+          {mode === "navigateur" && (
+            <button
+              type="button"
+              onClick={() => void installer()}
+              className="shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary text-primary-foreground text-[11px] font-sans font-semibold"
+            >
+              <Download className="w-3.5 h-3.5" aria-hidden="true" />
+              Installer
+            </button>
+          )}
           <button
             type="button"
             onClick={remettre}

@@ -8,6 +8,10 @@ import { useCallback, useEffect, useState } from "react";
  * `beforeinstallprompt` n'arrive jamais sinon, et la bannière ne s'affiche pas.
  * Rien à masquer à la main sur un navigateur qui ne sait pas installer.
  *
+ * Safari iOS est l'exception : il sait installer (Partager → Sur l'écran
+ * d'accueil) mais n'envoie jamais `beforeinstallprompt` et ne laisse aucune
+ * page ouvrir cette fenêtre. On ne peut qu'expliquer le geste à faire.
+ *
  * La logique de décision est sortie du hook (`shouldOfferInstall`, `readSnooze`)
  * pour être testable sans navigateur.
  */
@@ -67,6 +71,35 @@ export function isStandalone(): boolean {
   }
 }
 
+/**
+ * Vraie pour Safari sur iPhone ou iPad — le seul navigateur iOS où l'on puisse
+ * montrer le chemin « Partager → Sur l'écran d'accueil » sans se tromper.
+ *
+ * - L'iPad se fait passer pour un Mac depuis iPadOS 13 ; seul l'écran tactile
+ *   le trahit (un vrai Mac annonce 0 point de contact).
+ * - Chrome, Firefox, Edge, Opera et l'appli Google sur iOS gardent le jeton
+ *   « Safari » mais rangent le bouton Partager ailleurs : on les écarte plutôt
+ *   que de décrire un bouton qu'ils n'ont pas au même endroit.
+ * - Les navigateurs intégrés (Instagram, Facebook…) n'ont pas le jeton
+ *   « Safari/ » et ne savent pas installer du tout.
+ */
+export function isIosSafari(userAgent: string, maxTouchPoints: number): boolean {
+  const ios =
+    /iPhone|iPad|iPod/.test(userAgent) ||
+    (/Macintosh/.test(userAgent) && maxTouchPoints > 1);
+  if (!ios) return false;
+  if (!/Safari\//.test(userAgent)) return false;
+  return !/CriOS|FxiOS|EdgiOS|OPiOS|OPT\/|GSA\//.test(userAgent);
+}
+
+function detecterIosSafari(): boolean {
+  try {
+    return isIosSafari(navigator.userAgent, navigator.maxTouchPoints ?? 0);
+  } catch {
+    return false;
+  }
+}
+
 function lireRefus(): number | null {
   try {
     return readSnooze(localStorage.getItem(INSTALL_SNOOZE_KEY));
@@ -95,6 +128,11 @@ function oublierRefus(): void {
 export interface InstallPrompt {
   /** Vraie quand la bannière a lieu d'être affichée. */
   proposable: boolean;
+  /**
+   * « navigateur » : un bouton ouvre la vraie fenêtre d'installation.
+   * « ios » : aucune fenêtre possible, la bannière explique le geste.
+   */
+  mode: "navigateur" | "ios";
   /** Ouvre la vraie fenêtre d'installation du navigateur. */
   installer: () => Promise<void>;
   /** « Plus tard » : range l'invitation pour un mois. */
@@ -103,6 +141,9 @@ export interface InstallPrompt {
 
 export function useInstallPrompt(): InstallPrompt {
   const [evenement, setEvenement] = useState<BeforeInstallPromptEvent | null>(null);
+  const [iosSafari] = useState(detecterIosSafari);
+  // Sur iOS aucun événement ne disparaît au refus : il faut s'en souvenir ici.
+  const [rangee, setRangee] = useState(false);
 
   useEffect(() => {
     const capturer = (e: Event) => {
@@ -139,15 +180,17 @@ export function useInstallPrompt(): InstallPrompt {
   const remettre = useCallback(() => {
     noterRefus();
     setEvenement(null);
+    setRangee(true);
   }, []);
 
   const proposable =
-    evenement !== null &&
+    !rangee &&
+    (evenement !== null || iosSafari) &&
     shouldOfferInstall({
       dejaInstallee: isStandalone(),
       refuseeLe: lireRefus(),
       maintenant: Date.now(),
     });
 
-  return { proposable, installer, remettre };
+  return { proposable, mode: evenement !== null ? "navigateur" : "ios", installer, remettre };
 }

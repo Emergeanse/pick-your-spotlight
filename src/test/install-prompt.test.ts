@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   readSnooze,
+  isIosSafari,
   shouldOfferInstall,
   INSTALL_SNOOZE_MS,
 } from "@/hooks/use-install-prompt";
@@ -75,5 +76,47 @@ describe("faut-il proposer l'installation", () => {
     expect(
       shouldOfferInstall({ dejaInstallee: true, refuseeLe: hier, maintenant: MAINTENANT }),
     ).toBe(false);
+  });
+});
+
+describe("reconnaître Safari sur iPhone et iPad", () => {
+  // Safari iOS n'envoie jamais l'événement d'installation : on montre le geste
+  // à la main, donc seulement là où ce geste existe tel qu'on le décrit.
+  const IPHONE_SAFARI =
+    "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1";
+  const IPAD_DEGUISE_EN_MAC =
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Safari/605.1.15";
+  const CHROME_IPHONE =
+    "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/129.0.6668.69 Mobile/15E148 Safari/604.1";
+  const APPLI_GOOGLE =
+    "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) GSA/335.0.668384077 Mobile/15E148 Safari/604.1";
+  const INSTAGRAM =
+    "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 Instagram 350.0.0.0";
+  const CHROME_ANDROID =
+    "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Mobile Safari/537.36";
+
+  it("reconnaît Safari sur iPhone", () => {
+    expect(isIosSafari(IPHONE_SAFARI, 5)).toBe(true);
+  });
+
+  it("démasque l'iPad qui se fait passer pour un Mac", () => {
+    expect(isIosSafari(IPAD_DEGUISE_EN_MAC, 5)).toBe(true);
+  });
+
+  it("laisse tranquille un vrai Mac", () => {
+    expect(isIosSafari(IPAD_DEGUISE_EN_MAC, 0)).toBe(false);
+  });
+
+  it("écarte les autres navigateurs iOS, qui rangent Partager ailleurs", () => {
+    expect(isIosSafari(CHROME_IPHONE, 5)).toBe(false);
+    expect(isIosSafari(APPLI_GOOGLE, 5)).toBe(false);
+  });
+
+  it("écarte les navigateurs intégrés, qui ne savent pas installer", () => {
+    expect(isIosSafari(INSTAGRAM, 5)).toBe(false);
+  });
+
+  it("ne confond pas Android avec iOS", () => {
+    expect(isIosSafari(CHROME_ANDROID, 5)).toBe(false);
   });
 });
