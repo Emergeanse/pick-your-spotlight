@@ -78,7 +78,8 @@ export async function reportError(error: unknown, context: ErrorContext = {}): P
       stack,
       route: tronque(typeof location !== "undefined" ? location.pathname + location.search : null, 500),
       user_agent: tronque(typeof navigator !== "undefined" ? navigator.userAgent : null, 500),
-      context: context as Record<string, unknown>,
+      context: context as unknown as Json,
+
     });
 
     envoyees += 1;
