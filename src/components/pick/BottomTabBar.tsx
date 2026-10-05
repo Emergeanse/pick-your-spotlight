@@ -1,6 +1,7 @@
-import { Home, Library, User, CalendarDays, Plus } from "lucide-react";
+import { Home, Library, User, CalendarDays } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
+import creerSoiree from "@/assets/creer-soiree.webp";
 
 export type TabId = "home" | "soirees" | "cinema" | "profile";
 
@@ -41,10 +42,19 @@ const BottomTabBar = () => {
                   navigate("/app?openFindChoice=1");
                 }
               }}
-              className="absolute -top-5 w-14 h-14 rounded-full bg-gradient-to-b from-primary to-accent shadow-[0_8px_30px_-6px_hsl(var(--primary)/0.7)] flex items-center justify-center active:scale-[0.96] transition-transform"
+              className="absolute -top-5 w-14 h-14 rounded-full flex items-center justify-center active:scale-[0.96] transition-transform"
               aria-label="Créer une nouvelle soirée ciné"
             >
-              <Plus className="w-6 h-6 text-primary-foreground" strokeWidth={2.2} />
+              {/* Le disque occupe les trois quarts de l'image, le reste est son
+                  halo : l'image déborde du bouton pour que le disque, lui,
+                  garde les 56 px de l'ancien « + ». */}
+              <img
+                src={creerSoiree}
+                alt=""
+                aria-hidden="true"
+                draggable={false}
+                className="absolute w-[76px] h-[76px] max-w-none pointer-events-none select-none"
+              />
             </motion.button>
             <span
               aria-hidden="true"

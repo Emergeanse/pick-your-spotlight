@@ -20,8 +20,9 @@ export default function InstallBanner() {
     <motion.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      // 60 px de barre d'onglets, plus l'encoche du bas, plus une respiration.
-      className="fixed md:absolute left-0 right-0 bottom-0 z-[52] px-4 pb-[calc(60px+env(safe-area-inset-bottom)+0.75rem)] pointer-events-none"
+      // 60 px de barre d'onglets, plus les 28 px dont le bouton central et son
+      // halo dépassent au-dessus, plus l'encoche du bas, plus une respiration.
+      className="fixed md:absolute left-0 right-0 bottom-0 z-[52] px-4 pb-[calc(88px+env(safe-area-inset-bottom)+0.5rem)] pointer-events-none"
     >
       <div className="mx-auto max-w-lg md:max-w-[420px] pointer-events-auto">
         <div className="flex items-center gap-3 rounded-2xl border border-primary/25 bg-background/95 backdrop-blur-xl px-4 py-3 shadow-lg">
