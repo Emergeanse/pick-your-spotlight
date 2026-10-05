@@ -2428,7 +2428,8 @@ const HomeScreen = ({
             />
           </motion.button>
 
-          {/* 4 widgets côte à côte */}
+          {/* 4 widgets côte à côte — la carte choisie est toujours violette : une
+              couleur par carte faisait clinquant à côté des illustrations. */}
           <div className="flex gap-2 mt-4 overflow-x-auto scrollbar-hide pb-1 -mx-1 px-1">
             {/* Surprise solo */}
             <motion.button
@@ -2436,13 +2437,13 @@ const HomeScreen = ({
               transition={{ delay: 0.38, duration: 0.4 }}
               whileTap={{ scale: 0.93 }}
               onClick={() => { setFindChoiceContext("surprise"); setActiveWidget("surprise"); setTimeout(() => setShowFindChoice(true), 150); }}
-              className={`flex-1 min-w-0 flex flex-col items-center gap-2 py-3.5 px-2 rounded-2xl backdrop-blur-md transition-all ${activeWidget === "surprise" ? "border border-amber-400/60 bg-amber-400/15 shadow-[0_0_18px_rgba(251,191,36,0.3)]" : "border border-white/12 bg-[hsl(240_18%_7%/0.82)]"}`}
+              className={`flex-1 min-w-0 flex flex-col items-center gap-2 py-3.5 px-2 rounded-2xl backdrop-blur-md transition-all ${activeWidget === "surprise" ? "border border-violet-400/60 bg-violet-400/15 shadow-[0_0_18px_rgba(167,139,250,0.35)]" : "border border-white/12 bg-[hsl(240_18%_7%/0.82)]"}`}
             >
               <img src={groupeSurprise} alt="" aria-hidden="true" draggable={false} className="w-11 h-11 shrink-0 pointer-events-none select-none" />
-              <p className={`font-sans text-[10.5px] font-semibold leading-tight text-center ${activeWidget === "surprise" ? "text-amber-400" : "text-foreground"}`}>Surprise<br/>solo</p>
+              <p className={`font-sans text-[10.5px] font-semibold leading-tight text-center ${activeWidget === "surprise" ? "text-violet-400" : "text-foreground"}`}>Surprise<br/>solo</p>
             </motion.button>
 
-            {/* Soirée Duo — violet */}
+            {/* Soirée Duo */}
             <motion.button
               initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.44, duration: 0.4 }}
@@ -2454,28 +2455,28 @@ const HomeScreen = ({
               <p className={`font-sans text-[10.5px] font-semibold leading-tight text-center ${activeWidget === "duo" ? "text-violet-400" : "text-foreground"}`}>Soirée<br/>Duo</p>
             </motion.button>
 
-            {/* Film en famille — rose */}
+            {/* Film en famille */}
             <motion.button
               initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.50, duration: 0.4 }}
               whileTap={{ scale: 0.93 }}
               onClick={() => { setFindChoiceContext("famille"); setActiveWidget("famille"); setTimeout(() => setShowFindChoice(true), 150); }}
-              className={`flex-1 min-w-0 flex flex-col items-center gap-2 py-3.5 px-2 rounded-2xl backdrop-blur-md transition-all ${activeWidget === "famille" ? "border border-rose-400/60 bg-rose-400/15 shadow-[0_0_18px_rgba(251,113,133,0.3)]" : "border border-white/12 bg-[hsl(240_18%_7%/0.82)]"}`}
+              className={`flex-1 min-w-0 flex flex-col items-center gap-2 py-3.5 px-2 rounded-2xl backdrop-blur-md transition-all ${activeWidget === "famille" ? "border border-violet-400/60 bg-violet-400/15 shadow-[0_0_18px_rgba(167,139,250,0.35)]" : "border border-white/12 bg-[hsl(240_18%_7%/0.82)]"}`}
             >
               <img src={groupeFamille} alt="" aria-hidden="true" draggable={false} className="w-11 h-11 shrink-0 pointer-events-none select-none" />
-              <p className={`font-sans text-[10.5px] font-semibold leading-tight text-center ${activeWidget === "famille" ? "text-rose-400" : "text-foreground"}`}>Film en<br/>famille</p>
+              <p className={`font-sans text-[10.5px] font-semibold leading-tight text-center ${activeWidget === "famille" ? "text-violet-400" : "text-foreground"}`}>Film en<br/>famille</p>
             </motion.button>
 
-            {/* Entre amis — émeraude */}
+            {/* Entre amis */}
             <motion.button
               initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.56, duration: 0.4 }}
               whileTap={{ scale: 0.93 }}
               onClick={() => { setFindChoiceContext("amis"); setActiveWidget("amis"); setTimeout(() => setShowFindChoice(true), 150); }}
-              className={`flex-1 min-w-0 flex flex-col items-center gap-2 py-3.5 px-2 rounded-2xl backdrop-blur-md transition-all ${activeWidget === "amis" ? "border border-emerald-400/60 bg-emerald-400/15 shadow-[0_0_18px_rgba(52,211,153,0.3)]" : "border border-white/12 bg-[hsl(240_18%_7%/0.82)]"}`}
+              className={`flex-1 min-w-0 flex flex-col items-center gap-2 py-3.5 px-2 rounded-2xl backdrop-blur-md transition-all ${activeWidget === "amis" ? "border border-violet-400/60 bg-violet-400/15 shadow-[0_0_18px_rgba(167,139,250,0.35)]" : "border border-white/12 bg-[hsl(240_18%_7%/0.82)]"}`}
             >
               <img src={groupeAmis} alt="" aria-hidden="true" draggable={false} className="w-11 h-11 shrink-0 pointer-events-none select-none" />
-              <p className={`font-sans text-[10.5px] font-semibold leading-tight text-center ${activeWidget === "amis" ? "text-emerald-400" : "text-foreground"}`}>Entre<br/>amis</p>
+              <p className={`font-sans text-[10.5px] font-semibold leading-tight text-center ${activeWidget === "amis" ? "text-violet-400" : "text-foreground"}`}>Entre<br/>amis</p>
             </motion.button>
           </div>
         </section>
