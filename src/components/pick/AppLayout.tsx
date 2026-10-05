@@ -3,6 +3,7 @@ import { Loader2 } from "lucide-react";
 import BottomTabBar from "@/components/pick/BottomTabBar";
 import BrandHeader from "@/components/pick/BrandHeader";
 import OnboardingResumeBanner from "@/components/onboarding/OnboardingResumeBanner";
+import InstallBanner from "@/components/pick/InstallBanner";
 import { useOnboardingGate } from "@/hooks/use-onboarding-gate";
 import { APP_OVERLAY_PORTAL_ID } from "@/lib/app-chrome";
 
@@ -44,6 +45,7 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
           className="fixed inset-0 md:absolute md:inset-0 z-[50] pointer-events-none [&>*]:pointer-events-auto"
         />
         <BottomTabBar />
+        <InstallBanner />
       </div>
     </div>
   );

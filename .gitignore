@@ -43,3 +43,6 @@ deno.lock
 # Scripts de pilotage ponctuels des backfills
 .backfill-*.mjs
 bun.lockb
+
+# Service worker genere par vite-plugin-pwa en mode dev
+dev-dist

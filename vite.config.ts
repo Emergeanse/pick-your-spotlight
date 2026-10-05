@@ -2,6 +2,7 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
+import { VitePWA } from "vite-plugin-pwa";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
@@ -12,7 +13,80 @@ export default defineConfig(({ mode }) => ({
       overlay: false,
     },
   },
-  plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
+  plugins: [
+    react(),
+    mode === "development" && componentTagger(),
+    VitePWA({
+      // Le manifeste est écrit à la main dans `public/manifest.json` et déjà lié
+      // depuis `index.html` : le plugin ne doit surtout pas en générer un second,
+      // sinon Chrome en voit deux et n'en applique aucun de façon fiable.
+      manifest: false,
+      injectRegister: "auto",
+
+      // La version déployée fait autorité. Lovable publie sans qu'on puisse
+      // prévenir qui que ce soit : si le service worker attendait la fermeture
+      // de tous les onglets pour s'activer, un correctif pourrait rester
+      // invisible des jours durant. Ici la nouvelle version prend la main au
+      // rechargement suivant.
+      registerType: "autoUpdate",
+
+      // Le service worker est volontairement absent du serveur de dev : il
+      // garderait en cache des modules que le HMR vient de remplacer.
+      devOptions: { enabled: false },
+
+      workbox: {
+        // Pré-chargé : la coquille de l'application — code, styles, icônes.
+        // Soit ~2,6 Mo bruts, environ 750 Ko sur le réseau une fois compressés,
+        // téléchargés en arrière-plan après l'affichage de la page.
+        // Volontairement exclus : les fonds d'écran `.webp` des pages, 1,9 Mo à
+        // eux seuls, qui ne servent qu'à la page qu'on ouvre. Ils sont mis en
+        // cache au fil des visites par la règle `fonds-pick` plus bas.
+        globPatterns: ["**/*.{js,css,html,ico,svg}", "manifest.json", "icons/**/*.png", "logos/**/*.png"],
+
+        // Le plus gros morceau de l'accueil dépasse la limite par défaut de 2 Mio
+        // de peu aujourd'hui ; la marge évite qu'un découpage de HomeScreen le
+        // fasse silencieusement sortir du pré-chargement demain.
+        maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
+
+        // Application à page unique : toute navigation inconnue est servie par
+        // `index.html`, c'est le routeur qui tranche ensuite.
+        navigateFallback: "index.html",
+        // Sauf ces chemins, qui ne sont pas des écrans : le fichier de
+        // vérification Google (chemin 2 vers le Play Store) doit rester un vrai
+        // 404 tant qu'il n'existe pas, et non la page d'accueil déguisée.
+        navigateFallbackDenylist: [/^\/\.well-known\//, /^\/robots\.txt$/],
+
+        cleanupOutdatedCaches: true,
+
+        runtimeCaching: [
+          {
+            // Les affiches de films. Elles ne changent jamais pour une URL
+            // donnée : on sert le cache d'abord, sans même demander au réseau.
+            urlPattern: /^https:\/\/image\.tmdb\.org\/t\/p\//,
+            handler: "CacheFirst",
+            options: {
+              cacheName: "affiches-tmdb",
+              expiration: { maxEntries: 250, maxAgeSeconds: 30 * 24 * 60 * 60 },
+              // Les <img> partent sans CORS : la réponse est opaque, de statut 0.
+              // Sans ce `0`, aucune affiche ne serait jamais gardée.
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
+          {
+            // Les fonds d'écran des pages, écartés du pré-chargement : gardés
+            // dès la première visite de la page concernée.
+            urlPattern: /\/assets\/.*\.webp$/,
+            handler: "CacheFirst",
+            options: {
+              cacheName: "fonds-pick",
+              expiration: { maxEntries: 20, maxAgeSeconds: 60 * 24 * 60 * 60 },
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
+        ],
+      },
+    }),
+  ].filter(Boolean),
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
