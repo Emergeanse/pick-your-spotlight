@@ -21,13 +21,16 @@ export default defineConfig(({ mode }) => ({
       // depuis `index.html` : le plugin ne doit surtout pas en générer un second,
       // sinon Chrome en voit deux et n'en applique aucun de façon fiable.
       manifest: false,
-      injectRegister: "auto",
+      // L'enregistrement est fait à la main dans `src/lib/pwa-update.ts` : le
+      // script injecté se contentait d'enregistrer, sans jamais recharger la
+      // page ni revérifier au retour au premier plan.
+      injectRegister: false,
 
       // La version déployée fait autorité. Lovable publie sans qu'on puisse
       // prévenir qui que ce soit : si le service worker attendait la fermeture
       // de tous les onglets pour s'activer, un correctif pourrait rester
-      // invisible des jours durant. Ici la nouvelle version prend la main au
-      // rechargement suivant.
+      // invisible des jours durant. Ici la nouvelle version prend la main dès
+      // qu'elle est téléchargée, et la page se recharge sur elle.
       registerType: "autoUpdate",
 
       // Le service worker est volontairement absent du serveur de dev : il
@@ -57,6 +60,12 @@ export default defineConfig(({ mode }) => ({
         navigateFallbackDenylist: [/^\/\.well-known\//, /^\/robots\.txt$/],
 
         cleanupOutdatedCaches: true,
+
+        // Écrits en toutes lettres : avec `injectRegister: false`, le plugin
+        // n'ajoute plus `clientsClaim`, et le nouveau worker s'activait sans
+        // jamais prendre la main sur la page ouverte — donc sans la recharger.
+        skipWaiting: true,
+        clientsClaim: true,
 
         runtimeCaching: [
           {
