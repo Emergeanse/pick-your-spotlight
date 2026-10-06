@@ -2356,7 +2356,11 @@ const HomeScreen = ({
 
   return (
     <div className="relative w-full h-full overflow-x-hidden">
-      <div className={hideHomeDuringReveal ? "invisible" : undefined}>
+      {/* Pleine hauteur obligatoire : sans elle, la zone de défilement plus bas
+          (h-full) s'étire à la taille de son contenu et ne défile plus — et comme
+          elle ne transmet pas le défilement (overscroll-contain), l'accueil
+          entier restait figé dès que le contenu dépassait l'écran. */}
+      <div className={`h-full ${hideHomeDuringReveal ? "invisible" : ""}`}>
       <BrandHeader
         extraActions={
           <QuickFilters filters={quickFilters} onFiltersChange={setQuickFilters} profileDefaults={profileDefaults} />
