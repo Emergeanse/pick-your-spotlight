@@ -4,6 +4,8 @@ import { CalendarDays, Heart, Home, Users, UsersRound, User, Loader2, ChevronRig
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { fetchVisibleProfiles } from "@/lib/visible-profiles";
+import { formatAvecQui } from "@/lib/avec-qui";
 import soireesBackground from "@/assets/soirees-background.webp";
 import creerSoiree from "@/assets/creer-soiree.webp";
 import creerSoireeActif from "@/assets/creer-soiree-actif.webp";
@@ -24,6 +26,8 @@ type EventRow = {
   invite_link_token: string;
   organizer_id: string;
   participants: ParticipantSummary;
+  /** Prénoms des autres personnes de la soirée (organisateur compris, moi exclu). */
+  avecQui: string[];
   myStatus?: "confirmed" | "invited" | "declined";
   final_pick_title: string | null;
   final_pick_poster: string | null;
@@ -105,8 +109,31 @@ const SoireesPage = () => {
     // Participants de toutes ces soirées
     const { data: epRows } = await supabase
       .from("event_participants" as any)
-      .select("event_id, status, user_id")
+      .select("event_id, status, user_id, guest_name")
       .in("event_id", ids);
+
+    // Prénoms : l'organisateur et les participants avec un compte, moi exclu ;
+    // les invités sans compte par le prénom qu'ils ont donné.
+    type Soiree = { id: string; organizer_id: string };
+    type Participation = { event_id: string; status: string; user_id: string | null; guest_name: string | null };
+    const soirees = allEvents as Soiree[];
+    const participations = (epRows ?? []) as unknown as Participation[];
+    const idsComptes = new Set<string>();
+    soirees.forEach((e) => { if (e.organizer_id !== user.id) idsComptes.add(e.organizer_id); });
+    participations.forEach((ep) => { if (ep.user_id && ep.user_id !== user.id) idsComptes.add(ep.user_id); });
+    const profils = await fetchVisibleProfiles([...idsComptes]);
+    const prenomDe = new Map(profils.map((p) => [p.id, p.display_name?.trim() || null]));
+    const avecQuiParSoiree: Record<string, string[]> = {};
+    soirees.forEach((e) => {
+      const noms: string[] = [];
+      if (e.organizer_id !== user.id) noms.push(prenomDe.get(e.organizer_id) ?? "Un ami");
+      participations.forEach((ep) => {
+        if (ep.event_id !== e.id || ep.status === "declined") return;
+        if (ep.user_id === user.id || ep.user_id === e.organizer_id) return;
+        noms.push(ep.user_id ? (prenomDe.get(ep.user_id) ?? "Un ami") : (ep.guest_name?.trim() || "Un invité"));
+      });
+      avecQuiParSoiree[e.id] = noms;
+    });
 
     // Groupe par event_id
     const byEvent: Record<string, ParticipantSummary> = {};
@@ -123,6 +150,7 @@ const SoireesPage = () => {
       allEvents.map((e: any) => ({
         ...e,
         participants: byEvent[e.id] ?? { total: 0, confirmed: 0 },
+        avecQui: avecQuiParSoiree[e.id] ?? [],
         myStatus: myStatusByEvent[e.id],
         final_pick_title: e.final_pick_title ?? null,
         final_pick_poster: e.final_pick_poster ?? null,
@@ -191,6 +219,11 @@ const SoireesPage = () => {
             )}
           </div>
           <p className="text-[11px] text-foreground/45 mt-0.5 capitalize">{formatDate(evt.event_date, evt.event_time)}</p>
+          {evt.avecQui.length > 0 && (
+            <p className="text-[12px] font-sans text-pick-text-secondary mt-0.5 truncate">
+              avec <span className="font-semibold text-foreground/85">{formatAvecQui(evt.avecQui)}</span>
+            </p>
+          )}
 
           {/* Film révélé */}
           {hasFilm && (
