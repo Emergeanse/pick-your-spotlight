@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { SlidersHorizontal, Film, Tv, Clapperboard, Clock, RotateCcw, Target, Star, Hash } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
+import AppOverlayPortal from "./AppOverlayPortal";
+import { bottomTabBarClearance } from "@/lib/app-chrome";
 
 export interface QuickFilterState {
   mediaType: "both" | "movie" | "tv";
@@ -81,6 +83,10 @@ const QuickFilters = ({ filters, onFiltersChange, profileDefaults }: QuickFilter
         )}
       </button>
 
+      {/* Rendu dans le calque des panneaux de l'application, et non sous le
+          bouton : l'en-tête qui contient ce bouton passe sous la barre d'onglets,
+          qui recouvrait alors le bas du menu (« Note minimale » inaccessible). */}
+      <AppOverlayPortal>
       <AnimatePresence>
         {open && (
           <>
@@ -89,7 +95,7 @@ const QuickFilters = ({ filters, onFiltersChange, profileDefaults }: QuickFilter
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className={`fixed inset-0 z-40 ${isMobile ? "bg-black/40" : ""}`}
+              className={`fixed inset-0 ${isMobile ? "bg-black/40" : ""}`}
               onClick={() => setOpen(false)}
             />
 
@@ -101,7 +107,7 @@ const QuickFilters = ({ filters, onFiltersChange, profileDefaults }: QuickFilter
               transition={{ duration: 0.25, ease: [0.32, 0.72, 0, 1] }}
               className={
                 isMobile
-                  ? "fixed inset-x-0 bottom-0 z-50 rounded-t-3xl bg-card border-t border-border/20 shadow-2xl overflow-hidden max-h-[88vh] flex flex-col"
+                  ? "fixed inset-x-0 bottom-0 rounded-t-3xl bg-card border-t border-border/20 shadow-2xl overflow-hidden max-h-[88vh] flex flex-col"
                   : "absolute right-0 top-full mt-2 z-50 w-80 rounded-2xl bg-card border border-border/20 shadow-xl overflow-hidden max-h-[70vh] overflow-y-auto"
               }
             >
@@ -112,7 +118,12 @@ const QuickFilters = ({ filters, onFiltersChange, profileDefaults }: QuickFilter
                 </div>
               )}
 
-              <div className={`${isMobile ? "overflow-y-auto flex-1 pb-[env(safe-area-inset-bottom)]" : ""}`}>
+              {/* La barre d'onglets reste visible par-dessus le menu : on réserve sa
+                  hauteur sous le contenu pour que le dernier réglage reste atteignable. */}
+              <div
+                className={isMobile ? "overflow-y-auto flex-1" : ""}
+                style={isMobile ? { paddingBottom: bottomTabBarClearance } : undefined}
+              >
               <div className="p-3.5 border-b border-border/10 flex items-center justify-between">
                 <h3 className="font-sans font-semibold text-sm text-foreground">Filtres rapides</h3>
                 <div className="flex items-center gap-2">
@@ -257,6 +268,7 @@ const QuickFilters = ({ filters, onFiltersChange, profileDefaults }: QuickFilter
           </>
         )}
       </AnimatePresence>
+      </AppOverlayPortal>
     </div>
   );
 };
