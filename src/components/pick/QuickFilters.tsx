@@ -1,8 +1,11 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { SlidersHorizontal, Film, Tv, Clapperboard, Clock, RotateCcw, Target, Star, Hash } from "lucide-react";
+import { Film, Tv, Clapperboard, Clock, RotateCcw, Target, Star, Hash } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import AppOverlayPortal from "./AppOverlayPortal";
+import IconeCharte from "./IconeCharte";
+import filtresRepos from "@/assets/icones/filtres-repos.webp";
+import filtresActif from "@/assets/icones/filtres-actif.webp";
 import { bottomTabBarClearance } from "@/lib/app-chrome";
 
 export interface QuickFilterState {
@@ -71,9 +74,10 @@ const QuickFilters = ({ filters, onFiltersChange, profileDefaults }: QuickFilter
     <div className="relative">
       <button
         onClick={() => setOpen(!open)}
-        className="relative p-2 rounded-full hover:bg-foreground/5 transition-colors"
+        className="group relative p-2 rounded-full"
+        aria-label="Filtres rapides"
       >
-        <SlidersHorizontal className="w-5 h-5 text-foreground/60" />
+        <IconeCharte repos={filtresRepos} actif={filtresActif} className="w-[24px] h-[24px]" active={open} />
         {hasActiveFilters && (
           <motion.span
             initial={{ scale: 0 }}
