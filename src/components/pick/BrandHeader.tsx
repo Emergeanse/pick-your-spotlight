@@ -1,11 +1,13 @@
 import { motion } from "framer-motion";
-import { ArrowLeft, Users, Search } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { ReactNode } from "react";
 import pickLogo from "@/assets/pick-logo.webp";
 import NotificationBell from "./NotificationBell";
 import IconeCharte from "./IconeCharte";
+import rechercheRepos from "@/assets/icones/recherche-repos.webp";
 import rechercheActif from "@/assets/icones/recherche-actif.webp";
+import amisRepos from "@/assets/icones/amis-repos.webp";
 import amisActif from "@/assets/icones/amis-actif.webp";
 
 interface BrandHeaderProps {
@@ -53,14 +55,14 @@ const BrandHeader = ({ showBack, onBack, extraActions }: BrandHeaderProps) => {
           className="group relative w-11 h-11 flex items-center justify-center rounded-full transition-transform active:scale-[0.96]"
           aria-label="Rechercher un film"
         >
-          <IconeCharte icon={Search} image={rechercheActif} iconClassName="w-[18px] h-[18px] text-foreground/40" imageClassName="w-[24px] h-[24px]" />
+          <IconeCharte repos={rechercheRepos} actif={rechercheActif} className="w-[24px] h-[24px]" />
         </button>
         <button
           onClick={() => navigate("/app/duo")}
           className="group relative w-11 h-11 flex items-center justify-center rounded-full transition-transform active:scale-[0.96]"
           aria-label="Mes amis & Duo"
         >
-          <IconeCharte icon={Users} image={amisActif} iconClassName="w-[18px] h-[18px] text-foreground/40" imageClassName="w-[26px] h-[26px]" />
+          <IconeCharte repos={amisRepos} actif={amisActif} className="w-[26px] h-[26px]" />
         </button>
         <NotificationBell />
       </div>

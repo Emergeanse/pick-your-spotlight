@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
-import { Bell } from "lucide-react";
 import IconeCharte from "./IconeCharte";
+import notificationsRepos from "@/assets/icones/notifications-repos.webp";
 import notificationsActif from "@/assets/icones/notifications-actif.webp";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
@@ -109,7 +109,7 @@ const NotificationBell = () => {
         className="group relative p-2 rounded-full"
         aria-label="Notifications"
       >
-        <IconeCharte icon={Bell} image={notificationsActif} iconClassName="w-5 h-5 text-foreground/60" imageClassName="w-[26px] h-[26px]" active={open} />
+        <IconeCharte repos={notificationsRepos} actif={notificationsActif} className="w-[26px] h-[26px]" active={open} />
         {unreadCount > 0 && (
           <motion.span
             initial={{ scale: 0 }}
