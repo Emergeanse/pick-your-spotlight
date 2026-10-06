@@ -2367,6 +2367,15 @@ const HomeScreen = ({
         style={{ backgroundImage: `url(${homeBackground})`, backgroundPosition: "50% 0%", backgroundSize: "cover" }}
       />
 
+      {/* Vignettage : l'écureuil reste dans la lumière, les affiches de cinéma
+          autour (Le Parrain, Casablanca…) s'éteignent vers les bords. Elles font
+          partie de la même image que lui : impossible de les atténuer seules.
+          Le fond doit se ressentir, pas se lire. */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{ background: "radial-gradient(ellipse 40% 27% at 52% 25%, transparent 45%, hsl(var(--background) / 0.88) 100%)" }}
+      />
+
       {/* Dégradé : image visible en haut, fond opaque en bas */}
       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background/55 to-background" />
 
