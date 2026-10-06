@@ -1,4 +1,8 @@
 import { useState, useEffect, useRef } from "react";
+import groupeDuo from "@/assets/groupe-duo.webp";
+import groupeFamille from "@/assets/groupe-famille.webp";
+import groupeAmis from "@/assets/groupe-amis.webp";
+import groupeSurprise from "@/assets/groupe-surprise.webp";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -27,7 +31,16 @@ const CONTEXT_CONFIG: Record<EventContext, { label: string; Icon: React.Componen
   solo:    { label: "Solo",         Icon: Users, color: "text-orange-400",  emoji: "🎬" },
 };
 
-const TAB_ACTIVE = "linear-gradient(135deg, hsl(var(--primary) / 0.40) 0%, hsl(var(--primary) / 0.15) 100%)";
+// Design system Pick : sélection = fond violet léger, bordure active, halo discret.
+const TAB_ACTIVE = "hsl(var(--primary) / 0.15)";
+
+// Mêmes illustrations que les cartes de l'accueil.
+const CONTEXT_ILLUSTRATION: Record<EventContext, string> = {
+  duo: groupeDuo,
+  famille: groupeFamille,
+  amis: groupeAmis,
+  solo: groupeSurprise,
+};
 
 // ─────────────────────────────────────────
 // Helpers
@@ -298,7 +311,7 @@ const CreateEventPage = () => {
           <ArrowLeft className="w-5 h-5 text-foreground/60" />
         </button>
         <div className="flex-1">
-          <p className="text-[10px] font-sans font-semibold tracking-[0.18em] uppercase text-primary/70">
+          <p className="text-[11px] font-sans font-semibold tracking-[0.14em] uppercase text-pick-purple-light">
             Nouvelle soirée
           </p>
           <h1 className="font-serif text-[20px] text-foreground leading-tight">{STEPS[step]}</h1>
@@ -306,7 +319,7 @@ const CreateEventPage = () => {
         {/* Indicateur de progression */}
         <div className="flex gap-1.5">
           {STEPS.map((_, i) => (
-            <div key={i} className={`h-1.5 rounded-full transition-all ${i === step ? "w-5 bg-primary" : i < step ? "w-1.5 bg-primary/40" : "w-1.5 bg-white/15"}`} />
+            <div key={i} className={`h-1.5 rounded-full transition-all ${i === step ? "w-5 bg-primary" : i < step ? "w-1.5 bg-primary/40" : "w-1.5 bg-foreground/15"}`} />
           ))}
         </div>
       </div>
@@ -321,20 +334,19 @@ const CreateEventPage = () => {
 
               {/* Contexte */}
               <div className="flex flex-col gap-2">
-                <label className="text-[10px] font-sans font-semibold tracking-[0.18em] uppercase text-foreground/40">Pour qui ?</label>
+                <label className="text-[11px] font-sans font-semibold tracking-[0.14em] uppercase text-pick-text-secondary">Pour qui ?</label>
                 <div className="flex gap-2">
                   {(Object.entries(CONTEXT_CONFIG) as [EventContext, typeof CONTEXT_CONFIG["duo"]][]).map(([key, cfg]) => (
                     <button
                       key={key}
                       onClick={() => !cfg.disabled && setContext(key)}
                       disabled={cfg.disabled}
-                      className={`relative flex-1 flex flex-col items-center gap-1.5 py-3 rounded-2xl text-[11.5px] font-sans font-semibold transition-all overflow-hidden border ${cfg.disabled ? "border-white/[0.05] text-foreground/40 opacity-50 cursor-not-allowed" : context === key ? "border-primary/50 text-foreground" : "border-white/[0.08] text-foreground/50"}`}
+                      className={`relative flex-1 min-w-0 flex flex-col items-center gap-1.5 py-3 px-1 rounded-pick-lg text-[12px] font-sans font-semibold transition-all duration-180 ease-pick overflow-hidden border ${cfg.disabled ? "border-pick-border text-foreground/40 opacity-35 cursor-not-allowed" : context === key ? "border-pick-border-active text-pick-purple-light bg-primary/15 shadow-pick-active" : "border-pick-border bg-pick-surface/90 text-foreground [@media(hover:hover)]:hover:border-pick-border-hover [@media(hover:hover)]:hover:bg-pick-surface-hover"}`}
                     >
-                      {context === key && !cfg.disabled && <div className="absolute inset-0 rounded-2xl" style={{ background: TAB_ACTIVE }} />}
-                      <span className="relative text-lg">{cfg.emoji}</span>
+                      <img src={CONTEXT_ILLUSTRATION[key]} alt="" aria-hidden="true" draggable={false} className="relative w-9 h-9 pointer-events-none select-none" />
                       <span className="relative">{cfg.label}</span>
                       {cfg.disabled && (
-                        <span className="absolute top-1.5 right-1.5 text-[8px] font-sans font-bold tracking-wide uppercase px-1.5 py-0.5 rounded-full bg-foreground/10 text-foreground/50 leading-none">
+                        <span className="absolute top-1.5 right-1.5 text-[11px] font-sans font-bold tracking-wide px-1.5 py-0.5 rounded-full bg-foreground/10 text-foreground/50 leading-none">
                           Bientôt
                         </span>
                       )}
@@ -346,17 +358,17 @@ const CreateEventPage = () => {
               {/* Sélection du duo */}
               {context === "duo" && (
                 <div className="flex flex-col gap-2">
-                  <label className="text-[10px] font-sans font-semibold tracking-[0.18em] uppercase text-foreground/40">Avec qui ?</label>
+                  <label className="text-[11px] font-sans font-semibold tracking-[0.14em] uppercase text-pick-text-secondary">Avec qui ?</label>
                   {!duosLoaded ? (
                     <div className="flex items-center justify-center py-4">
                       <Loader2 className="w-5 h-5 animate-spin text-foreground/45" />
                     </div>
                   ) : duos.length === 0 ? (
-                    <div className="flex flex-col items-center gap-3 py-5 rounded-2xl border border-white/[0.08] bg-white/[0.02]">
+                    <div className="flex flex-col items-center gap-3 py-5 rounded-pick-lg border border-pick-border bg-pick-surface/90">
                       <p className="text-sm text-foreground/40 font-sans">Aucun duo actif pour l'instant.</p>
                       <button
                         onClick={() => navigate("/app/duo")}
-                        className="px-4 py-2 rounded-xl bg-primary/20 border border-primary/30 text-primary text-[12.5px] font-sans font-semibold"
+                        className="px-4 py-2 rounded-full bg-primary/15 border border-pick-border-active text-pick-purple-light text-[13px] font-sans font-semibold"
                       >
                         Créer un duo →
                       </button>
@@ -370,10 +382,10 @@ const CreateEventPage = () => {
                           <button
                             key={duo.id}
                             onClick={() => setSelectedDuoId(duo.id)}
-                            className={`relative flex items-center gap-3 p-3.5 rounded-2xl border text-left transition-all overflow-hidden ${isSelected ? "border-primary/50" : "border-white/[0.08]"}`}
+                            className={`relative flex items-center gap-3 p-3.5 rounded-pick-lg border text-left transition-all duration-180 ease-pick overflow-hidden ${isSelected ? "border-pick-border-active shadow-pick-active" : "border-pick-border bg-pick-surface/90"}`}
                           >
-                            {isSelected && <div className="absolute inset-0 rounded-2xl" style={{ background: TAB_ACTIVE }} />}
-                            <span className="relative text-xl">💑</span>
+                            {isSelected && <div className="absolute inset-0 rounded-pick-lg" style={{ background: TAB_ACTIVE }} />}
+                            <img src={groupeDuo} alt="" aria-hidden="true" draggable={false} className="relative w-8 h-8 shrink-0 pointer-events-none select-none" />
                             <div className="relative flex-1 min-w-0">
                               <p className="font-sans font-semibold text-[13px] text-foreground">{duo.duo_name}</p>
                               <p className="font-sans text-[11px] text-foreground/50">avec {partnerName ?? "…"}</p>
@@ -387,7 +399,7 @@ const CreateEventPage = () => {
                       })}
                       <button
                         onClick={() => navigate("/app/duo")}
-                        className="text-[11.5px] font-sans text-primary/50 text-center py-1.5 hover:text-primary/70 transition-colors"
+                        className="text-[12px] font-sans font-medium text-pick-purple-light/80 text-center py-1.5 [@media(hover:hover)]:hover:text-pick-purple-light transition-colors"
                       >
                         + Créer un nouveau duo
                       </button>
@@ -399,7 +411,7 @@ const CreateEventPage = () => {
               {/* Sélection des participants groupe */}
               {(context === "famille" || context === "amis") && (
                 <div className="flex flex-col gap-2">
-                  <label className="text-[10px] font-sans font-semibold tracking-[0.18em] uppercase text-foreground/40">Qui invite-t-on ?</label>
+                  <label className="text-[11px] font-sans font-semibold tracking-[0.14em] uppercase text-pick-text-secondary">Qui invite-t-on ?</label>
                   {groupFriends.length === 0 ? (
                     <p className="text-sm text-foreground/40 font-sans py-2">Aucun ami pour l'instant — commence par en ajouter.</p>
                   ) : (
@@ -412,9 +424,9 @@ const CreateEventPage = () => {
                             onClick={() => setSelectedParticipants(prev =>
                               isSelected ? prev.filter(id => id !== friend.id) : [...prev, friend.id]
                             )}
-                            className={`relative flex items-center gap-3 p-3.5 rounded-2xl border text-left transition-all overflow-hidden ${isSelected ? "border-primary/50" : "border-white/[0.08]"}`}
+                            className={`relative flex items-center gap-3 p-3.5 rounded-pick-lg border text-left transition-all duration-180 ease-pick overflow-hidden ${isSelected ? "border-pick-border-active shadow-pick-active" : "border-pick-border bg-pick-surface/90"}`}
                           >
-                            {isSelected && <div className="absolute inset-0 rounded-2xl" style={{ background: TAB_ACTIVE }} />}
+                            {isSelected && <div className="absolute inset-0 rounded-pick-lg" style={{ background: TAB_ACTIVE }} />}
                             <div className="relative w-8 h-8 rounded-full bg-primary/20 border border-primary/20 flex items-center justify-center shrink-0">
                               <span className="text-[13px] font-semibold text-primary">{friend.displayName[0].toUpperCase()}</span>
                             </div>
@@ -430,57 +442,57 @@ const CreateEventPage = () => {
 
               {/* Titre */}
               <div className="flex flex-col gap-2">
-                <label className="text-[10px] font-sans font-semibold tracking-[0.18em] uppercase text-foreground/40">Titre</label>
+                <label className="text-[11px] font-sans font-semibold tracking-[0.14em] uppercase text-pick-text-secondary">Titre</label>
                 <input
                   type="text"
                   value={title}
                   onChange={e => { setTitle(e.target.value); setTitleEdited(true); }}
                   onBlur={() => { if (!title.trim()) { setTitleEdited(false); setTitle(autoTitle(context, date)); } }}
                   placeholder="Soirée ciné"
-                  className="bg-card border border-border/30 rounded-xl px-4 py-3 text-sm font-sans text-foreground placeholder:text-muted-foreground/40 outline-none focus:border-primary/50 transition-colors"
+                  className="bg-pick-surface/90 border border-pick-border rounded-pick-md px-4 py-3 text-[14px] font-sans text-foreground placeholder:text-pick-text-muted outline-none focus:border-pick-border-active transition-colors"
                 />
               </div>
 
               {/* Date + Heure */}
               <div className="flex gap-3">
                 <div className="flex flex-col gap-2 flex-1">
-                  <label className="text-[10px] font-sans font-semibold tracking-[0.18em] uppercase text-foreground/40">Date *</label>
+                  <label className="text-[11px] font-sans font-semibold tracking-[0.14em] uppercase text-pick-text-secondary">Date *</label>
                   <input
                     type="date"
                     value={date}
                     onChange={e => setDate(e.target.value)}
                     min={new Date().toISOString().split("T")[0]}
-                    className="bg-card border border-border/30 rounded-xl px-4 py-3 text-sm font-sans text-foreground outline-none focus:border-primary/50 transition-colors [color-scheme:dark]"
+                    className="bg-pick-surface/90 border border-pick-border rounded-pick-md px-4 py-3 text-[14px] font-sans text-foreground outline-none focus:border-pick-border-active transition-colors duration-180 ease-pick [color-scheme:dark]"
                   />
                 </div>
                 <div className="flex flex-col gap-2 w-28">
-                  <label className="text-[10px] font-sans font-semibold tracking-[0.18em] uppercase text-foreground/40">Heure</label>
+                  <label className="text-[11px] font-sans font-semibold tracking-[0.14em] uppercase text-pick-text-secondary">Heure</label>
                   <input
                     type="time"
                     value={time}
                     onChange={e => setTime(e.target.value)}
-                    className="bg-card border border-border/30 rounded-xl px-4 py-3 text-sm font-sans text-foreground outline-none focus:border-primary/50 transition-colors [color-scheme:dark]"
+                    className="bg-pick-surface/90 border border-pick-border rounded-pick-md px-4 py-3 text-[14px] font-sans text-foreground outline-none focus:border-pick-border-active transition-colors duration-180 ease-pick [color-scheme:dark]"
                   />
                 </div>
               </div>
 
               {/* Lieu / À distance */}
               <div className="flex flex-col gap-2">
-                <label className="text-[10px] font-sans font-semibold tracking-[0.18em] uppercase text-foreground/40">Où ?</label>
-                <div className="flex gap-2 p-1 rounded-2xl bg-white/[0.04] border border-white/[0.08]">
+                <label className="text-[11px] font-sans font-semibold tracking-[0.14em] uppercase text-pick-text-secondary">Où ?</label>
+                <div className="flex gap-2 p-1 rounded-pick-lg bg-pick-surface/90 border border-pick-border">
                   <button
                     onClick={() => setIsRemote(false)}
-                    className={`relative flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-[12px] font-sans font-medium transition-all overflow-hidden ${!isRemote ? "text-foreground border border-primary/40" : "text-foreground/45"}`}
+                    className={`relative flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-pick-md text-[13px] font-sans font-medium transition-all duration-180 ease-pick overflow-hidden ${!isRemote ? "text-pick-purple-light font-semibold border border-pick-border-active" : "text-pick-text-muted"}`}
                   >
-                    {!isRemote && <div className="absolute inset-0 rounded-xl" style={{ background: TAB_ACTIVE }} />}
+                    {!isRemote && <div className="absolute inset-0 rounded-pick-md" style={{ background: TAB_ACTIVE }} />}
                     <MapPin className="relative w-3.5 h-3.5" />
                     <span className="relative">En présentiel</span>
                   </button>
                   <button
                     onClick={() => setIsRemote(true)}
-                    className={`relative flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-[12px] font-sans font-medium transition-all overflow-hidden ${isRemote ? "text-foreground border border-primary/40" : "text-foreground/45"}`}
+                    className={`relative flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-pick-md text-[13px] font-sans font-medium transition-all duration-180 ease-pick overflow-hidden ${isRemote ? "text-pick-purple-light font-semibold border border-pick-border-active" : "text-pick-text-muted"}`}
                   >
-                    {isRemote && <div className="absolute inset-0 rounded-xl" style={{ background: TAB_ACTIVE }} />}
+                    {isRemote && <div className="absolute inset-0 rounded-pick-md" style={{ background: TAB_ACTIVE }} />}
                     <Wifi className="relative w-3.5 h-3.5" />
                     <span className="relative">À distance</span>
                   </button>
@@ -494,7 +506,7 @@ const CreateEventPage = () => {
                       value={location}
                       onChange={e => setLocation(e.target.value)}
                       placeholder="Chez nous, home cinéma, salon…"
-                      className="bg-card border border-border/30 rounded-xl px-4 py-3 text-sm font-sans text-foreground placeholder:text-muted-foreground/40 outline-none focus:border-primary/50 transition-colors"
+                      className="bg-pick-surface/90 border border-pick-border rounded-pick-md px-4 py-3 text-[14px] font-sans text-foreground placeholder:text-pick-text-muted outline-none focus:border-pick-border-active transition-colors"
                     />
                   )}
                 </AnimatePresence>
@@ -508,7 +520,7 @@ const CreateEventPage = () => {
 
               {/* Mode surprise / vote */}
               <div className="flex flex-col gap-2">
-                <label className="text-[10px] font-sans font-semibold tracking-[0.18em] uppercase text-foreground/40">Mode</label>
+                <label className="text-[11px] font-sans font-semibold tracking-[0.14em] uppercase text-pick-text-secondary">Mode</label>
                 <div className="flex gap-3">
                   {([
                     { id: "surprise" as RevealMode, label: "Révélation avant",      desc: "Tu lances le film quand tu veux, avant la soirée",     emoji: "🎩" },
@@ -517,7 +529,7 @@ const CreateEventPage = () => {
                     <button
                       key={opt.id}
                       onClick={() => setRevealMode(opt.id)}
-                      className={`relative flex-1 flex flex-col gap-2 p-4 rounded-2xl border text-left transition-all overflow-hidden ${revealMode === opt.id ? "border-primary/50 text-foreground" : "border-white/[0.08] text-foreground/50"}`}
+                      className={`relative flex-1 flex flex-col gap-2 p-4 rounded-pick-lg border text-left transition-all duration-180 ease-pick overflow-hidden ${revealMode === opt.id ? "border-pick-border-active text-foreground shadow-pick-active" : "border-pick-border bg-pick-surface/90 text-pick-text-secondary"}`}
                     >
                       {revealMode === opt.id && <div className="absolute inset-0" style={{ background: TAB_ACTIVE }} />}
                       <span className="relative text-2xl">{opt.emoji}</span>
@@ -532,8 +544,8 @@ const CreateEventPage = () => {
 
               {/* Type de média */}
               <div className="flex flex-col gap-2">
-                <label className="text-[10px] font-sans font-semibold tracking-[0.18em] uppercase text-foreground/40">Type de contenu</label>
-                <div className="flex gap-1 p-1 rounded-2xl bg-white/[0.04] border border-white/[0.08]">
+                <label className="text-[11px] font-sans font-semibold tracking-[0.14em] uppercase text-pick-text-secondary">Type de contenu</label>
+                <div className="flex gap-1 p-1 rounded-pick-lg bg-pick-surface/90 border border-pick-border">
                   {([
                     { id: "movie" as MediaType, label: "Film",   Icon: Film },
                     { id: "tv"    as MediaType, label: "Série",  Icon: Tv },
@@ -542,9 +554,9 @@ const CreateEventPage = () => {
                     <button
                       key={id}
                       onClick={() => setMediaType(id)}
-                      className={`relative flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-[12px] font-sans font-medium transition-all overflow-hidden ${mediaType === id ? "text-foreground border border-primary/40" : "text-foreground/45"}`}
+                      className={`relative flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-pick-md text-[13px] font-sans font-medium transition-all duration-180 ease-pick overflow-hidden ${mediaType === id ? "text-pick-purple-light font-semibold border border-pick-border-active" : "text-pick-text-muted"}`}
                     >
-                      {mediaType === id && <div className="absolute inset-0 rounded-xl" style={{ background: TAB_ACTIVE }} />}
+                      {mediaType === id && <div className="absolute inset-0 rounded-pick-md" style={{ background: TAB_ACTIVE }} />}
                       <Icon className="relative w-3.5 h-3.5" />
                       <span className="relative">{label}</span>
                     </button>
@@ -554,7 +566,7 @@ const CreateEventPage = () => {
 
               {/* Mood libre */}
               <div className="flex flex-col gap-2">
-                <label className="text-[10px] font-sans font-semibold tracking-[0.18em] uppercase text-foreground/40">
+                <label className="text-[11px] font-sans font-semibold tracking-[0.14em] uppercase text-pick-text-secondary">
                   Ambiance <span className="normal-case font-normal text-foreground/45">(optionnel)</span>
                 </label>
                 <textarea
@@ -562,7 +574,7 @@ const CreateEventPage = () => {
                   onChange={e => setMood(e.target.value)}
                   placeholder="Un film d'action plutôt drôle, quelque chose de court, ambiance feel-good…"
                   rows={3}
-                  className="bg-card border border-border/30 rounded-xl px-4 py-3 text-sm font-sans text-foreground placeholder:text-muted-foreground/40 outline-none focus:border-primary/50 transition-colors resize-none"
+                  className="bg-pick-surface/90 border border-pick-border rounded-pick-md px-4 py-3 text-[14px] font-sans text-foreground placeholder:text-pick-text-muted outline-none focus:border-pick-border-active transition-colors resize-none"
                 />
               </div>
             </motion.div>
@@ -597,21 +609,21 @@ const CreateEventPage = () => {
 
                   {/* Lien d'invitation */}
                   <div className="flex flex-col gap-2">
-                    <p className="text-[10px] font-sans font-semibold tracking-[0.18em] uppercase text-foreground/40">Lien d'invitation</p>
-                    <div className="flex items-center gap-2 bg-card border border-border/30 rounded-xl px-4 py-3">
+                    <p className="text-[11px] font-sans font-semibold tracking-[0.14em] uppercase text-pick-text-secondary">Lien d'invitation</p>
+                    <div className="flex items-center gap-2 bg-pick-surface/90 border border-pick-border rounded-pick-md px-4 py-3">
                       <p className="flex-1 text-[12px] font-sans text-foreground/60 truncate">{inviteLink}</p>
                     </div>
                     <div className="flex gap-2">
                       <button
                         onClick={copyLink}
-                        className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border text-sm font-sans font-medium transition-all ${copied ? "border-primary/40 bg-primary/10 text-primary" : "border-white/[0.10] bg-white/[0.04] text-foreground/80"}`}
+                        className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-full border text-[14px] font-sans font-medium transition-all duration-180 ease-pick ${copied ? "border-pick-border-active bg-primary/10 text-pick-purple-light" : "border-pick-border-hover bg-pick-surface/90 text-foreground"}`}
                       >
                         {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
                         {copied ? "Copié !" : "Copier"}
                       </button>
                       <button
                         onClick={shareLink}
-                        className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-gradient-to-r from-primary to-accent text-primary-foreground text-sm font-sans font-semibold"
+                        className="flex-1 flex items-center justify-center gap-2 py-3 rounded-full bg-gradient-to-r from-primary to-accent text-primary-foreground text-[14px] font-sans font-semibold shadow-pick-active"
                       >
                         <Share2 className="w-4 h-4" />
                         Partager
@@ -620,13 +632,13 @@ const CreateEventPage = () => {
                   </div>
 
                   {/* Infos sur le mode */}
-                  <div className="rounded-2xl bg-white/[0.03] border border-white/[0.06] px-4 py-3.5 flex items-start gap-3">
+                  <div className="rounded-pick-lg bg-pick-surface/90 border border-pick-border px-4 py-3.5 flex items-start gap-3">
                     <span className="text-xl shrink-0 mt-0.5">{revealMode === "timed" ? "⏰" : "🎩"}</span>
                     <div>
                       <p className="text-[12.5px] font-sans font-semibold text-foreground/80">
                         {revealMode === "timed" ? "Surprise sur le moment" : "Révélation avant"}
                       </p>
-                      <p className="text-[11.5px] text-foreground/45 font-sans mt-0.5 leading-snug">
+                      <p className="text-[12px] text-pick-text-secondary font-sans mt-0.5 leading-snug">
                         {revealMode === "timed"
                           ? "Le film sera révélé automatiquement à l'heure de la soirée."
                           : "Tu pourras lancer la révélation quand tu le souhaites depuis la fiche soirée."}
@@ -637,7 +649,7 @@ const CreateEventPage = () => {
                   {/* CTA vers la gestion */}
                   <button
                     onClick={() => navigate("/app/soirees")}
-                    className="w-full flex items-center justify-between px-4 py-3.5 rounded-2xl bg-white/[0.04] border border-white/[0.07] text-left"
+                    className="w-full flex items-center justify-between px-4 py-3.5 rounded-pick-lg bg-pick-surface/90 border border-pick-border text-left"
                   >
                     <div>
                       <p className="text-[13px] font-sans font-semibold text-foreground">Gérer la soirée</p>
@@ -659,7 +671,7 @@ const CreateEventPage = () => {
           <button
             onClick={() => setStep(1)}
             disabled={!step1Valid}
-            className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-primary to-accent text-primary-foreground font-sans font-semibold text-sm flex items-center justify-center gap-2 disabled:opacity-40 transition-opacity"
+            className="w-full py-3.5 rounded-full bg-gradient-to-r from-primary to-accent text-primary-foreground font-sans font-semibold text-[15px] flex items-center justify-center gap-2 shadow-pick-cta active:scale-[0.97] transition-transform duration-120 ease-pick disabled:shadow-none disabled:opacity-40 transition-opacity"
           >
             Continuer <ArrowRight className="w-4 h-4" />
           </button>
@@ -668,7 +680,7 @@ const CreateEventPage = () => {
           <button
             onClick={createEvent}
             disabled={creating}
-            className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-primary to-accent text-primary-foreground font-sans font-semibold text-sm flex items-center justify-center gap-2"
+            className="w-full py-3.5 rounded-full bg-gradient-to-r from-primary to-accent text-primary-foreground font-sans font-semibold text-[15px] flex items-center justify-center gap-2 shadow-pick-cta active:scale-[0.97] transition-transform duration-120 ease-pick disabled:shadow-none"
           >
             {creating ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Sparkles className="w-4 h-4" /> Créer la soirée</>}
           </button>
