@@ -193,12 +193,14 @@ violet ou or), désactivé, hors ligne (comportement propre, jamais de page cass
 
 ## 16. Écarts connus (au 6 octobre 2026)
 
-À résorber progressivement, composant par composant :
+À résorber progressivement, composant par composant. **Fait :** l'accueil
+(`HomeScreen`, 6 octobre) — base de carte `CARTE_PICK`, jetons partout, plus de
+texte sous 11 px hors barre d'onglets.
 
-- `violet-400`, `violet-500`, `pink-500`… écrits en dur : une cinquantaine
-  d'occurrences, dont les états de survol récents de l'accueil.
+- `violet-400`, `violet-500`, `pink-500`… écrits en dur : une trentaine
+  d'occurrences hors accueil.
 - Rayons : `--radius` vaut 24 px (`rounded-lg` shadcn) et sept tailles coexistent.
 - Textes sous 11 px : libellés de la barre d'onglets (8,5–10 px, fluides pour tenir à
-  360 px) et badge « Early Picker » (9 px). Passer la navigation à 12 px demande de
-  revoir la place des libellés, qui se touchaient déjà à 360 px.
-- Onglet actif : halo **et** trait ; le système préfère le trait seul.
+  360 px). Passer la navigation à 12 px demande de revoir la place des libellés, qui
+  se touchaient déjà à 360 px : décision en attente (libellés plus courts ou sur deux
+  lignes).
