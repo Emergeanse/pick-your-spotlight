@@ -58,7 +58,7 @@ const BottomTabBar = () => {
             </motion.button>
             <span
               aria-hidden="true"
-              className="pointer-events-none absolute bottom-1 left-1/2 -translate-x-1/2 text-[10px] font-sans tracking-tight text-violet-200 font-semibold whitespace-nowrap [text-shadow:0_0_8px_rgb(168_85_247/0.9),0_0_16px_rgb(168_85_247/0.5)]"
+              className="pointer-events-none absolute bottom-1 left-1/2 -translate-x-1/2 text-[clamp(8.5px,2.6vw,10px)] font-sans tracking-tight text-violet-200 font-semibold whitespace-nowrap [text-shadow:0_0_8px_rgb(168_85_247/0.9),0_0_16px_rgb(168_85_247/0.5)]"
             >
               Nouvelle soirée
             </span>
@@ -128,7 +128,7 @@ function TabButton({ tab, isActive, navigate, location }: {
           strokeWidth={isActive ? 2.2 : 1.7}
         />
       </motion.div>
-      <span className={`mt-1 text-[10px] font-sans tracking-tight transition-colors duration-200 ${isActive ? "text-primary font-semibold" : "text-foreground/40 font-medium"}`}>
+      <span className={`mt-1 text-[clamp(8.5px,2.6vw,10px)] font-sans tracking-tight transition-colors duration-200 ${isActive ? "text-primary font-semibold" : "text-foreground/40 font-medium"}`}>
         {tab.label}
       </span>
     </button>
