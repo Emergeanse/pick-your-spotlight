@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { X } from "lucide-react";
 import IconeCharte from "./IconeCharte";
 import notificationsRepos from "@/assets/icones/notifications-repos.webp";
 import notificationsActif from "@/assets/icones/notifications-actif.webp";
@@ -6,7 +7,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchVisibleProfiles } from "@/lib/visible-profiles";
 import { useAuth } from "@/hooks/use-auth";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
 import {
@@ -22,6 +23,7 @@ import { notificationsStore, useNotificationsStore } from "@/lib/notifications-s
 const NotificationBell = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { pathname } = useLocation();
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [open, setOpen] = useState(false);
   const unreadCount = countUnreadNotifications(notifications);
@@ -103,13 +105,29 @@ const NotificationBell = () => {
   };
 
   // « Tout voir » depuis l'accueil : ouvre le panneau comme un appui sur la cloche.
+  // Le compteur de demandes vit hors du composant : à chaque retour sur
+  // l'accueil, la cloche est recréée et le retrouvait déjà positif — elle
+  // rouvrait alors le panneau toute seule. On ne réagit qu'aux demandes faites
+  // après la création de cette cloche.
+  const demandeTraitee = useRef(notificationsStore.lire().demandesOuverture);
   useEffect(() => {
-    if (demandesOuverture === 0) return;
+    if (demandesOuverture === demandeTraitee.current) return;
+    demandeTraitee.current = demandesOuverture;
     setOpen(true);
     markAllRead();
   // Réagit aux seules demandes d'ouverture, pas aux changements de liste.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [demandesOuverture]);
+
+  // Le panneau ne survit pas à un changement de page (onglets du bas compris,
+  // qui sont au-dessus de la zone de fermeture), ni à la touche Échap.
+  useEffect(() => { setOpen(false); }, [pathname]);
+  useEffect(() => {
+    if (!open) return;
+    const surTouche = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false); };
+    window.addEventListener("keydown", surTouche);
+    return () => window.removeEventListener("keydown", surTouche);
+  }, [open]);
 
   const handleNotificationClick = (notif: NotificationItem) => {
     navigate(getNotificationRoute(notif.type, notif.data));
@@ -154,8 +172,16 @@ const NotificationBell = () => {
               transition={{ duration: 0.2 }}
               className="absolute right-0 top-full mt-2 z-50 w-80 max-h-96 overflow-y-auto rounded-2xl bg-card border border-border/20 shadow-xl"
             >
-              <div className="p-3 border-b border-border/10">
+              <div className="p-3 border-b border-border/10 flex items-center justify-between">
                 <h3 className="font-sans font-semibold text-sm text-foreground">Notifications</h3>
+                <button
+                  type="button"
+                  onClick={() => setOpen(false)}
+                  aria-label="Fermer les notifications"
+                  className="p-1 -m-1 rounded-full text-pick-text-muted"
+                >
+                  <X className="w-4 h-4" />
+                </button>
               </div>
 
               {notifications.length === 0 ? (
