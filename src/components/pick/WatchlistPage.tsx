@@ -13,6 +13,7 @@ import { useMovieInteractions } from "@/hooks/use-movie-interactions";
 import { listFeedbackByType, clearFeedbackType, type FeedbackType, type MovieInteractionState } from "@/lib/feedback";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/use-auth";
 
 
 interface WatchlistPageProps {
@@ -330,6 +331,10 @@ const WatchlistPage = ({ tabs: allowedTabs, title, defaultTab }: WatchlistPagePr
   const [seenItems, setSeenItems] = useState<any[]>([]);
   const [dislikedItems, setDislikedItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  // Vrai quand la bibliothèque n'a pas pu se charger alors que le compte a des
+  // films : on l'affiche, plutôt que des compteurs à zéro qui mentent.
+  const [chargementRate, setChargementRate] = useState(false);
+  const { user: authUser, isReady: authReady } = useAuth();
   const [mediaFilter, setMediaFilter] = useState<MediaFilter>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [genreFilter, setGenreFilter] = useState<string[]>([]);
@@ -340,8 +345,17 @@ const WatchlistPage = ({ tabs: allowedTabs, title, defaultTab }: WatchlistPagePr
   const [resetting, setResetting] = useState(false);
   const [showSwipeHint, setShowSwipeHint] = useState(false);
 
+  // Chargement dès que la session est prête — et pas avant : les lectures
+  // renvoient une liste vide (et non une erreur) quand personne n'est connecté,
+  // ce qui affichait « 0 » partout juste après une reconnexion.
   useEffect(() => {
+    if (!authReady || !authUser?.id) return;
     loadData();
+  // Rechargé si le compte change, pas à chaque rendu.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authReady, authUser?.id]);
+
+  useEffect(() => {
     if (!localStorage.getItem("pick_swipe_hint_seen")) {
       const t = setTimeout(() => {
         setShowSwipeHint(true);
@@ -352,14 +366,32 @@ const WatchlistPage = ({ tabs: allowedTabs, title, defaultTab }: WatchlistPagePr
       }, 900);
       return () => clearTimeout(t);
     }
-  // Chargement initial, une seule fois.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const loadData = async () => {
-    setLoading(true);
+  /**
+   * Une bibliothèque entièrement vide est suspecte : les lectures avalent leurs
+   * erreurs et rendent [] (réseau, session en cours de renouvellement). On
+   * demande alors au serveur combien de retours le compte a vraiment ; s'il en a,
+   * c'est un raté de chargement — on réessaie, puis on le dit.
+   */
+  const verifierBibliothequeVide = async (userId: string, tentative: number) => {
+    const { count, error } = await supabase
+      .from("user_item_feedback")
+      .select("item_id", { count: "exact", head: true })
+      .eq("user_id", userId);
+    if (!error && count === 0) return; // Vraiment vide : rien à signaler.
+    if (tentative < 3) {
+      window.setTimeout(() => loadData(tentative + 1), 1500 * tentative);
+    } else {
+      setChargementRate(true);
+    }
+  };
+
+  const loadData = async (tentative = 1) => {
+    if (tentative === 1) setLoading(true);
+    setChargementRate(false);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = authUser;
       const needs = (tab: ActiveTab) => visibleTabs.includes(tab);
       const primaryTab = defaultTab ?? visibleTabs[0];
 
@@ -427,6 +459,9 @@ const WatchlistPage = ({ tabs: allowedTabs, title, defaultTab }: WatchlistPagePr
       setSeenItems(seenList);
       setDislikedItems(dislikedList);
 
+      const total = (watchlist as unknown[]).length + likedList.length + lovedList.length + seenList.length + dislikedList.length;
+      if (total === 0 && user) await verifierBibliothequeVide(user.id, tentative);
+
       hydrateMissingPosters([
         { items: watchlist as any[], setter: setWatchlistItems },
         { items: likedList,          setter: setLikedItems },
@@ -435,8 +470,12 @@ const WatchlistPage = ({ tabs: allowedTabs, title, defaultTab }: WatchlistPagePr
         { items: dislikedList,       setter: setDislikedItems },
       ]);
     } catch {
-      setWatchlistItems([]); setLikedItems([]); setLovedItems([]); setSeenItems([]); setDislikedItems([]);
       setLoading(false);
+      if (tentative < 3) {
+        window.setTimeout(() => loadData(tentative + 1), 1500 * tentative);
+      } else {
+        setChargementRate(true);
+      }
     }
   };
 
@@ -701,6 +740,20 @@ const WatchlistPage = ({ tabs: allowedTabs, title, defaultTab }: WatchlistPagePr
             >
               {bubbleMessage}
             </motion.p>
+          )}
+
+          {chargementRate && (
+            <div role="alert" className="flex items-center gap-3 p-3 rounded-pick-md border border-pick-border bg-pick-surface/90">
+              <p className="flex-1 text-[12px] font-sans text-pick-text-secondary leading-snug">
+                Ta bibliothèque n'a pas pu se charger. Tes films sont toujours là.
+              </p>
+              <button
+                onClick={() => loadData()}
+                className="shrink-0 px-3 py-1.5 rounded-full border border-pick-border-hover text-[12px] font-sans font-semibold text-pick-purple-light"
+              >
+                Réessayer
+              </button>
+            </div>
           )}
         </motion.div>
       </div>
