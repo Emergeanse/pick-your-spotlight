@@ -6,6 +6,7 @@ import OnboardingResumeBanner from "@/components/onboarding/OnboardingResumeBann
 import InstallBanner from "@/components/pick/InstallBanner";
 import OfflineBanner from "@/components/pick/OfflineBanner";
 import ConseilAmiSheet from "@/components/pick/ConseilAmiSheet";
+import PrenomRequis from "@/components/pick/PrenomRequis";
 import { useOnboardingGate } from "@/hooks/use-onboarding-gate";
 import { APP_OVERLAY_PORTAL_ID } from "@/lib/app-chrome";
 
@@ -57,6 +58,7 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
         <InstallBanner />
         <OfflineBanner />
         <ConseilAmiSheet />
+        <PrenomRequis />
       </div>
     </div>
   );
