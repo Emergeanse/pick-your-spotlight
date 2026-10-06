@@ -2380,7 +2380,9 @@ const HomeScreen = ({
       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background/55 to-background" />
 
       {/* Identité sous la BrandHeader, en colonne sous le logo : avatar, salut,
-          compteur, puis statut.
+          compteur, puis statut. Alignée sur le « P », qui commence à 13 % de
+          l’image du logo : 12 + 8 px sur téléphone, 24 + 10 px en grand écran,
+          où l’en-tête élargit sa marge et passe le logo de 62 à 75 px.
           Posée sous le logo (62 px + marge haute) et non plus à sa hauteur, où
           le salut passait derrière lui. */}
       <motion.button
@@ -2389,8 +2391,7 @@ const HomeScreen = ({
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.22, duration: 0.4 }}
         onClick={() => navigate("/app/profile")}
-        className="absolute left-5 z-20 flex flex-col items-start gap-1.5 text-left active:scale-[0.98] transition-transform"
-        style={{ top: "calc(0.75rem + 62px + 0.25rem + env(safe-area-inset-top))" }}
+        className="absolute left-5 md:left-[34px] top-[calc(0.75rem+62px+0.25rem+env(safe-area-inset-top))] md:top-[calc(1.5rem+75px+0.25rem)] z-20 flex flex-col items-start gap-1.5 text-left active:scale-[0.98] transition-transform"
         aria-label="Mon profil"
       >
         <span className="w-8 h-8 rounded-full overflow-hidden ring-1 ring-white/15 bg-primary/20 flex items-center justify-center shrink-0">
@@ -2400,9 +2401,8 @@ const HomeScreen = ({
           }
         </span>
         <span className="flex flex-col items-start gap-1 min-w-0">
-          <span className="text-foreground/75 text-[13px] font-sans leading-tight">
-            Bonsoir
-            {firstName && <span className="block max-w-[7.5rem] truncate">{firstName} 👋</span>}
+          <span className="text-foreground/75 text-[13px] font-sans leading-tight max-w-[11rem] truncate">
+            {firstName ? `Bonsoir ${firstName} 👋` : "Bonsoir 👋"}
           </span>
           {interactionCount > 0 && (
             <span className="flex items-center gap-1 text-[11px] font-sans text-foreground/50 leading-none">
