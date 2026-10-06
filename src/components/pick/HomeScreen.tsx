@@ -2379,7 +2379,8 @@ const HomeScreen = ({
       {/* Dégradé : image visible en haut, fond opaque en bas */}
       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background/55 to-background" />
 
-      {/* Identité sous la BrandHeader : avatar, salut, compteur, puis statut.
+      {/* Identité sous la BrandHeader, en colonne sous le logo : avatar, salut,
+          compteur, puis statut.
           Posée sous le logo (62 px + marge haute) et non plus à sa hauteur, où
           le salut passait derrière lui. */}
       <motion.button
@@ -2388,7 +2389,7 @@ const HomeScreen = ({
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.22, duration: 0.4 }}
         onClick={() => navigate("/app/profile")}
-        className="absolute left-4 z-20 flex items-center gap-2.5 text-left active:scale-[0.98] transition-transform"
+        className="absolute left-5 z-20 flex flex-col items-start gap-1.5 text-left active:scale-[0.98] transition-transform"
         style={{ top: "calc(0.75rem + 62px + 0.25rem + env(safe-area-inset-top))" }}
         aria-label="Mon profil"
       >
@@ -2398,9 +2399,10 @@ const HomeScreen = ({
             : <span className="text-[11px] font-bold text-primary leading-none">{(firstName || "?").charAt(0).toUpperCase()}</span>
           }
         </span>
-        <span className="flex flex-col gap-1 min-w-0">
-          <span className="text-foreground/75 text-[13px] font-sans leading-tight truncate">
-            {firstName ? `Bonsoir ${firstName} 👋` : "Bonsoir 👋"}
+        <span className="flex flex-col items-start gap-1 min-w-0">
+          <span className="text-foreground/75 text-[13px] font-sans leading-tight">
+            Bonsoir
+            {firstName && <span className="block max-w-[7.5rem] truncate">{firstName} 👋</span>}
           </span>
           {interactionCount > 0 && (
             <span className="flex items-center gap-1 text-[11px] font-sans text-foreground/50 leading-none">
@@ -2413,7 +2415,7 @@ const HomeScreen = ({
               le badge dit le statut réel, celui des premiers utilisateurs. À
               revoir le jour où Pick+ deviendra payant. */}
           {isPremium && (
-            <span className="self-start inline-flex items-center gap-0.5 px-1.5 py-[2px] rounded-md bg-primary text-primary-foreground text-[9px] font-bold leading-none">
+            <span className="inline-flex items-center gap-0.5 px-1.5 py-[2px] rounded-md bg-primary text-primary-foreground text-[9px] font-bold leading-none">
               <Sparkles className="h-2 w-2" strokeWidth={3} aria-hidden="true" />
               Early Picker
             </span>
