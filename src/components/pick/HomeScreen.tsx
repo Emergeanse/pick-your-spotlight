@@ -2384,7 +2384,25 @@ const HomeScreen = ({
       {/* Dégradé : image visible en haut, fond opaque en bas */}
       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background/55 to-background" />
 
-      {/* Identité sous la BrandHeader, en colonne sous le logo : avatar, salut,
+      {/* Avatar à droite, sous la cloche et centré sur elle (33 px du bord droit
+          sur téléphone, 45 px en grand écran — mesuré), pour alléger la colonne
+          de gauche. Mène au profil. */}
+      <motion.button
+        type="button"
+        initial={{ opacity: 0, y: -4 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.22, duration: 0.4 }}
+        onClick={() => navigate("/app/profile")}
+        className="absolute right-[13px] md:right-[25px] top-[calc(75px+env(safe-area-inset-top))] md:top-[94px] z-20 w-10 h-10 rounded-full overflow-hidden ring-1 ring-pick-border-hover bg-primary/20 flex items-center justify-center active:scale-[0.97] transition-transform duration-120 ease-pick"
+        aria-label="Mon profil (avatar)"
+      >
+        {avatarUrl
+          ? <img src={avatarUrl} alt="" className="w-full h-full object-cover" />
+          : <span className="text-[14px] font-bold text-primary leading-none">{(firstName || "?").charAt(0).toUpperCase()}</span>
+        }
+      </motion.button>
+
+      {/* Identité sous la BrandHeader, en colonne sous le logo : salut,
           compteur, puis statut. Alignée sur le « P », qui commence à 13 % de
           l’image du logo : 12 + 8 px sur téléphone, 24 + 10 px en grand écran,
           où l’en-tête élargit sa marge et passe le logo de 62 à 75 px.
@@ -2399,12 +2417,6 @@ const HomeScreen = ({
         className="absolute left-5 md:left-[34px] top-[calc(0.75rem+62px+0.25rem+env(safe-area-inset-top))] md:top-[calc(1.5rem+75px+0.25rem)] z-20 flex flex-col items-start gap-1.5 text-left active:scale-[0.98] transition-transform"
         aria-label="Mon profil"
       >
-        <span className="w-8 h-8 rounded-full overflow-hidden ring-1 ring-white/15 bg-primary/20 flex items-center justify-center shrink-0">
-          {avatarUrl
-            ? <img src={avatarUrl} alt="" className="w-full h-full object-cover" />
-            : <span className="text-[11px] font-bold text-primary leading-none">{(firstName || "?").charAt(0).toUpperCase()}</span>
-          }
-        </span>
         <span className="flex flex-col items-start gap-1 min-w-0">
           <span className="text-foreground/75 text-[13px] font-sans leading-tight max-w-[11rem] truncate">
             {firstName ? `Bonsoir ${firstName} 👋` : "Bonsoir 👋"}
