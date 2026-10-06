@@ -35,6 +35,9 @@ export function brokeredPreviewStorage() {
     new Promise((resolve) => {
       const requestId = newId();
       let done = false;
+      // Déclarée avant `finish`, qui l'annule, et affectée plus bas : un `const`
+      // ici obligerait à réordonner ce fichier généré par Lovable.
+      // eslint-disable-next-line prefer-const
       let timer: ReturnType<typeof setTimeout>;
       const finish = (r: { ok: boolean; value?: string | null } | null) => {
         if (done) return;
