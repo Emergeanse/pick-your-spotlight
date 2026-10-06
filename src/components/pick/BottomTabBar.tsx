@@ -3,16 +3,22 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import creerSoiree from "@/assets/creer-soiree.webp";
 import creerSoireeActif from "@/assets/creer-soiree-actif.webp";
+import accueilActif from "@/assets/icones/accueil-actif.webp";
+import soireesActif from "@/assets/icones/soirees-actif.webp";
+import biblioActif from "@/assets/icones/biblio-actif.webp";
+import profilActif from "@/assets/icones/profil-actif.webp";
 
 export type TabId = "home" | "soirees" | "cinema" | "profile";
 
-type TabDef = { id: TabId; label: string; icon: React.ComponentType<any>; path: string };
+// `icon` : le trait fin, au repos. `activeIcon` : l'illustration en verre violet de la
+// charte Pick, quand l'onglet est sélectionné ou survolé.
+type TabDef = { id: TabId; label: string; icon: React.ComponentType<any>; activeIcon: string; path: string };
 
 const tabs: TabDef[] = [
-  { id: "home",    label: "Accueil",       icon: Home,        path: "/app" },
-  { id: "soirees", label: "Mes soirées",   icon: CalendarDays, path: "/app/soirees" },
-  { id: "cinema",  label: "Biblio",        icon: Library,     path: "/app/my-cinema" },
-  { id: "profile", label: "Profil",        icon: User,        path: "/app/profile" },
+  { id: "home",    label: "Accueil",       icon: Home,         activeIcon: accueilActif, path: "/app" },
+  { id: "soirees", label: "Mes soirées",   icon: CalendarDays, activeIcon: soireesActif, path: "/app/soirees" },
+  { id: "cinema",  label: "Biblio",        icon: Library,      activeIcon: biblioActif,  path: "/app/my-cinema" },
+  { id: "profile", label: "Profil",        icon: User,         activeIcon: profilActif,  path: "/app/profile" },
 ];
 
 const BottomTabBar = () => {
@@ -144,9 +150,18 @@ function TabButton({ tab, isActive, navigate, location }: {
         transition={{ type: "spring", stiffness: 380, damping: 24 }}
         className="relative flex items-center justify-center h-[26px]"
       >
+        {/* Trait fin au repos ; illustration de la charte quand l'onglet est actif
+            ou survolé à la souris. Les deux sont superposés et se croisent en fondu. */}
         <Icon
-          className={`w-[20px] h-[20px] transition-colors duration-200 ${isActive ? "text-primary" : "text-foreground/50 [@media(hover:hover)]:group-hover:text-primary/80"}`}
-          strokeWidth={isActive ? 2.2 : 1.7}
+          className={`w-[20px] h-[20px] text-foreground/50 transition-opacity duration-200 ${isActive ? "opacity-0" : "opacity-100 [@media(hover:hover)]:group-hover:opacity-0"}`}
+          strokeWidth={1.7}
+        />
+        <img
+          src={tab.activeIcon}
+          alt=""
+          aria-hidden="true"
+          draggable={false}
+          className={`absolute w-[26px] h-[26px] max-w-none pointer-events-none select-none transition-opacity duration-200 ${isActive ? "opacity-100" : "opacity-0 [@media(hover:hover)]:group-hover:opacity-100"}`}
         />
       </motion.div>
       <span className={`mt-1 text-[clamp(8.5px,2.6vw,10px)] font-sans tracking-tight transition-colors duration-200 ${isActive ? "text-primary font-semibold" : "text-foreground/40 font-medium [@media(hover:hover)]:group-hover:text-primary/80"}`}>

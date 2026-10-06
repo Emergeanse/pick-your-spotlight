@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Bell } from "lucide-react";
+import IconeCharte from "./IconeCharte";
+import notificationsActif from "@/assets/icones/notifications-actif.webp";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchVisibleProfiles } from "@/lib/visible-profiles";
@@ -104,10 +106,10 @@ const NotificationBell = () => {
     <div className="relative">
       <button
         onClick={() => { setOpen(!open); if (!open) markAllRead(); }}
-        className="relative p-2 rounded-full hover:bg-foreground/5 transition-colors"
+        className="group relative p-2 rounded-full"
         aria-label="Notifications"
       >
-        <Bell className="w-5 h-5 text-foreground/60" />
+        <IconeCharte icon={Bell} image={notificationsActif} iconClassName="w-5 h-5 text-foreground/60" imageClassName="w-[26px] h-[26px]" active={open} />
         {unreadCount > 0 && (
           <motion.span
             initial={{ scale: 0 }}
