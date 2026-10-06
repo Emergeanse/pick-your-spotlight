@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import soireesBackground from "@/assets/soirees-background.webp";
 import creerSoiree from "@/assets/creer-soiree.webp";
+import creerSoireeActif from "@/assets/creer-soiree-actif.webp";
 
 type ParticipantSummary = {
   total: number;
@@ -265,7 +266,7 @@ const SoireesPage = () => {
           </div>
           <button
             onClick={() => navigate("/app/soiree/nouvelle")}
-            className="relative mt-1 w-12 h-12 rounded-full flex items-center justify-center active:scale-[0.96] transition-transform"
+            className="group relative mt-1 w-12 h-12 rounded-full flex items-center justify-center active:scale-[0.96] transition-transform"
             aria-label="Créer une nouvelle soirée ciné"
           >
             {/* Même ticket que le bouton central de la barre d'onglets : le
@@ -276,6 +277,13 @@ const SoireesPage = () => {
               aria-hidden="true"
               draggable={false}
               className="absolute w-16 h-16 max-w-none pointer-events-none select-none"
+            />
+            <img
+              src={creerSoireeActif}
+              alt=""
+              aria-hidden="true"
+              draggable={false}
+              className="absolute w-16 h-16 max-w-none pointer-events-none select-none opacity-0 group-active:opacity-100 group-focus-visible:opacity-100 [@media(hover:hover)]:group-hover:opacity-100 transition-opacity duration-200"
             />
           </button>
         </div>

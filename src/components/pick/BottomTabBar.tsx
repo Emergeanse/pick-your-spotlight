@@ -2,6 +2,7 @@ import { Home, Library, User, CalendarDays } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import creerSoiree from "@/assets/creer-soiree.webp";
+import creerSoireeActif from "@/assets/creer-soiree-actif.webp";
 
 export type TabId = "home" | "soirees" | "cinema" | "profile";
 
@@ -42,18 +43,27 @@ const BottomTabBar = () => {
                   navigate("/app?openFindChoice=1");
                 }
               }}
-              className="absolute -top-5 w-14 h-14 rounded-full flex items-center justify-center active:scale-[0.96] transition-transform"
+              className="group absolute -top-5 w-14 h-14 rounded-full flex items-center justify-center active:scale-[0.96] transition-transform"
               aria-label="Créer une nouvelle soirée ciné"
             >
               {/* Le disque occupe les trois quarts de l'image, le reste est son
                   halo : l'image déborde du bouton pour que le disque, lui,
-                  garde les 56 px de l'ancien « + ». */}
+                  garde les 56 px de l'ancien « + ». Version calme au repos, version
+                  lumineuse au survol (souris seulement : sur écran tactile le survol
+                  resterait collé après l'appui) et pendant l'appui. */}
               <img
                 src={creerSoiree}
                 alt=""
                 aria-hidden="true"
                 draggable={false}
                 className="absolute w-[76px] h-[76px] max-w-none pointer-events-none select-none"
+              />
+              <img
+                src={creerSoireeActif}
+                alt=""
+                aria-hidden="true"
+                draggable={false}
+                className="absolute w-[76px] h-[76px] max-w-none pointer-events-none select-none opacity-0 group-active:opacity-100 group-focus-visible:opacity-100 [@media(hover:hover)]:group-hover:opacity-100 transition-opacity duration-200"
               />
             </motion.button>
             <span

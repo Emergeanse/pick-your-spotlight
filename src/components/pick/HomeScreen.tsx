@@ -47,6 +47,7 @@ import { fetchVisibleProfiles } from "@/lib/visible-profiles";
 import { type AmbianceMood } from "./HomeAmbianceSection";
 import homeBackground from "@/assets/home-background.webp";
 import creerSoireeBouton from "@/assets/creer-soiree-bouton.webp";
+import creerSoireeBoutonActif from "@/assets/creer-soiree-bouton-actif.webp";
 import groupeSurprise from "@/assets/groupe-surprise.webp";
 import groupeDuo from "@/assets/groupe-duo.webp";
 import groupeFamille from "@/assets/groupe-famille.webp";
@@ -2447,7 +2448,7 @@ const HomeScreen = ({
             transition={{ delay: 0.30, duration: 0.45 }}
             whileTap={{ scale: 0.97 }}
             onClick={() => { setFindChoiceContext("solo"); setShowFindChoice(true); }}
-            className="mt-3 block w-full rounded-full"
+            className="group relative mt-3 block w-full rounded-full"
             aria-label="Créer une soirée ciné"
           >
             {/* Le texte est dessiné dans l'image : seul l'aria-label le donne
@@ -2461,6 +2462,16 @@ const HomeScreen = ({
               width={1100}
               height={252}
               className="block w-full h-auto pointer-events-none select-none"
+            />
+            {/* Version lumineuse au survol (souris) et pendant l'appui. */}
+            <img
+              src={creerSoireeBoutonActif}
+              alt=""
+              aria-hidden="true"
+              draggable={false}
+              width={1100}
+              height={252}
+              className="absolute inset-0 w-full h-auto pointer-events-none select-none opacity-0 group-active:opacity-100 group-focus-visible:opacity-100 [@media(hover:hover)]:group-hover:opacity-100 transition-opacity duration-200"
             />
           </motion.button>
 
