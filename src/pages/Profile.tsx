@@ -43,7 +43,9 @@ import CinemaDNA from "@/components/pick/CinemaDNA";
 import TasteTrainer from "@/components/pick/TasteTrainer";
 import GenrePreferences from "@/components/pick/GenrePreferences";
 import CinemaAvatar from "@/components/pick/CinemaAvatar";
-import { RadarChart, PolarGrid, PolarAngleAxis, Radar, ResponsiveContainer } from "recharts";
+import AdnCinema from "@/components/pick/AdnCinema";
+import { calculerAdn, universFavoris, type Adn } from "@/lib/adn";
+import { computeMultiVectorProfile } from "@/lib/taste-engine";
 import profileBackground from "@/assets/profile-background.webp";
 import squirrelHappy from "@/assets/happy.webp";
 import squirrelCritique from "@/assets/critique.webp";
@@ -262,6 +264,10 @@ const Profile = () => {
   const [dnaLevel, setDnaLevel] = useState<string | null>(null);
   const [dnaArchetype, setDnaArchetype] = useState<string | null>(null);
   const [genreStats, setGenreStats] = useState<{ genre: string; count: number }[]>([]);
+  // ADN cinéma : même carte que la page ADN (six traits + univers favoris).
+  const [adn, setAdn] = useState<Adn | null>(null);
+  const [adnRecent, setAdnRecent] = useState<Adn | null>(null);
+  const [narrative, setNarrative] = useState<string | null>(null);
   const [movieVsSeries, setMovieVsSeries] = useState({ movies: 0, series: 0 });
   const [showConfidenceDetail, setShowConfidenceDetail] = useState(false);
   const [peopleEvaluated, setPeopleEvaluated] = useState(0);
@@ -322,7 +328,7 @@ const Profile = () => {
       const [engData, likedData, dnaData, { count: wlCount }, { count: peopleCount }, myPrefs, { count: seenCnt }] = await Promise.all([
         getEngagementData(user.id),
         getLikedMovies().catch(() => []),
-        supabase.from("cinematic_profiles" as any).select("personality_title, dna_archetype, global_level").eq("user_id", user.id).maybeSingle(),
+        supabase.from("cinematic_profiles" as any).select("personality_title, dna_archetype, global_level, narrative").eq("user_id", user.id).maybeSingle(),
         supabase.from("watchlist").select("id", { count: "exact", head: true }).eq("user_id", user.id),
         supabase.from("user_people_preferences" as any).select("id", { count: "exact", head: true }).eq("user_id", user.id),
         getMyPreferences().catch(() => []),
@@ -340,6 +346,7 @@ const Profile = () => {
         setDnaTitle(d.personality_title || null);
         setDnaLevel(d.global_level || null);
         setDnaArchetype(d.dna_archetype || null);
+        setNarrative(d.narrative || null);
       }
       const genreCounts: Record<string, number> = {};
       let movies = 0, series = 0;
@@ -353,17 +360,20 @@ const Profile = () => {
     finally { setCinemaLoading(false); }
   };
 
-  const radarData = useMemo(() => {
-    if (genreStats.length === 0) return [];
-    const top = genreStats.slice(0, 8);
-    const max = top[0]?.count || 1;
-    return top.map(gs => ({
-      genre: gs.genre.length > 10 ? gs.genre.slice(0, 9) + "…" : gs.genre,
-      fullGenre: gs.genre,
-      value: Math.round((gs.count / max) * 100),
-      count: gs.count,
-    }));
-  }, [genreStats]);
+  const univers = useMemo(() => universFavoris(genreStats), [genreStats]);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    let actif = true;
+    computeMultiVectorProfile(user.id)
+      .then((profil) => {
+        if (!actif) return;
+        setAdn(calculerAdn(profil?.stableTasteVector));
+        setAdnRecent(calculerAdn(profil?.recentTasteVector));
+      })
+      .catch(() => {});
+    return () => { actif = false; };
+  }, [user?.id]);
 
   const confidence = useMemo(() => {
     if (!engagement) return null;
@@ -739,25 +749,8 @@ const Profile = () => {
                 </div>
               )}
 
-              {/* Radar genres */}
-              {radarData.length >= 3 && (
-                <div>
-                  <p className="text-[10px] font-sans font-semibold text-foreground uppercase tracking-widest mb-2">Empreinte cinématographique</p>
-                  <div className="rounded-2xl bg-card/80 backdrop-blur-sm border border-border/15 p-2 pt-4">
-                    <ResponsiveContainer width="100%" height={230}>
-                      <RadarChart data={radarData} cx="50%" cy="50%" outerRadius="72%">
-                        <PolarGrid stroke="hsl(var(--foreground) / 0.06)" strokeDasharray="3 3" />
-                        <PolarAngleAxis dataKey="genre"
-                          tick={{ fill: "hsl(var(--foreground) / 0.4)", fontSize: 10, fontFamily: "var(--font-sans)" }}
-                          tickLine={false} />
-                        <Radar name="Genres" dataKey="value"
-                          stroke="hsl(var(--primary) / 0.7)" fill="hsl(var(--primary) / 0.15)"
-                          strokeWidth={2} dot={{ r: 3, fill: "hsl(var(--primary))", strokeWidth: 0 }} />
-                      </RadarChart>
-                    </ResponsiveContainer>
-                  </div>
-                </div>
-              )}
+              {/* ADN cinéma — remplace le radar de genres (« Drame 100 % ») */}
+              <AdnCinema adn={adn} adnRecent={adnRecent} narrative={narrative} genres={univers} />
 
             </div>
           )}

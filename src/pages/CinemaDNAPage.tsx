@@ -1,8 +1,10 @@
 import { useState, useEffect, useMemo } from "react";
+import AdnCinema from "@/components/pick/AdnCinema";
+import { calculerAdn, universFavoris, type Adn } from "@/lib/adn";
+import { computeMultiVectorProfile } from "@/lib/taste-engine";
 import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, Pencil, Check, X, Plus, Trophy, Heart, Users, Sparkles, Film, CalendarDays } from "lucide-react";
-import { RadarChart, PolarGrid, PolarAngleAxis, Radar, ResponsiveContainer } from "recharts";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchVisibleProfile } from "@/lib/visible-profiles";
 import { useAuth } from "@/hooks/use-auth";
@@ -165,8 +167,11 @@ const CinemaDNAPage = () => {
   const [dnaTitle, setDnaTitle] = useState<string | null>(null);
   const [dnaArchetype, setDnaArchetype] = useState<string | null>(null);
 
-  // Radar
+  // ADN cinéma : six traits (vecteurs de goût) et univers favoris (genres)
   const [genreStats, setGenreStats] = useState<{ genre: string; count: number }[]>([]);
+  const [adn, setAdn] = useState<Adn | null>(null);
+  const [adnRecent, setAdnRecent] = useState<Adn | null>(null);
+  const [narrative, setNarrative] = useState<string | null>(null);
 
   // Films adorés / podium
   const [lovedFilms, setLovedFilms] = useState<any[]>([]);
@@ -203,7 +208,7 @@ const CinemaDNAPage = () => {
         isOwn
           ? supabase.from("profiles").select("*").eq("id", tid).single().then((r) => r.data)
           : fetchVisibleProfile(tid),
-        supabase.from("cinematic_profiles" as any).select("personality_title,dna_archetype").eq("user_id", tid).maybeSingle(),
+        supabase.from("cinematic_profiles" as any).select("personality_title,dna_archetype,narrative").eq("user_id", tid).maybeSingle(),
       ]);
 
       const p = profileRes as any;
@@ -218,6 +223,7 @@ const CinemaDNAPage = () => {
       if (dnaRes.data) {
         setDnaTitle((dnaRes.data as any).personality_title || null);
         setDnaArchetype((dnaRes.data as any).dna_archetype || null);
+        setNarrative((dnaRes.data as { narrative?: string | null }).narrative || null);
       }
 
       if (isOwn) {
@@ -324,15 +330,21 @@ const CinemaDNAPage = () => {
     finally { setLoading(false); }
   };
 
-  const radarData = useMemo(() => {
-    if (genreStats.length < 3) return [];
-    const top = genreStats.slice(0, 7);
-    const max = top[0]?.count || 1;
-    return top.map(gs => ({
-      genre: gs.genre.length > 11 ? gs.genre.slice(0, 10) + "…" : gs.genre,
-      value: Math.round((gs.count / max) * 100),
-    }));
-  }, [genreStats]);
+  const univers = useMemo(() => universFavoris(genreStats), [genreStats]);
+
+  // Traits calculés sur ses propres vecteurs : ceux d'un autre ne sont pas lisibles.
+  useEffect(() => {
+    if (!isOwnProfile || !user?.id) return;
+    let actif = true;
+    computeMultiVectorProfile(user.id)
+      .then((profil) => {
+        if (!actif) return;
+        setAdn(calculerAdn(profil?.stableTasteVector));
+        setAdnRecent(calculerAdn(profil?.recentTasteVector));
+      })
+      .catch(() => {});
+    return () => { actif = false; };
+  }, [isOwnProfile, user?.id]);
 
   const podiumFilms = useMemo(() => {
     return podiumIds.map(id =>
@@ -530,51 +542,14 @@ const CinemaDNAPage = () => {
         </motion.div>
         )}
 
-        {/* ══ 2. EMPREINTE CINÉMATOGRAPHIQUE (RADAR) ══ */}
-        {radarData.length >= 3 && (
-          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }}
-            className="rounded-3xl border border-white/[0.06] overflow-hidden"
-            style={{ background: "hsl(var(--card)/0.6)" }}>
-            <div className="px-4 pt-4 pb-2 flex items-center gap-2">
-              <Sparkles className="w-3.5 h-3.5 text-primary/50" />
-              <p className="text-[10px] font-sans font-semibold tracking-[0.18em] uppercase text-foreground/40">Empreinte cinématographique</p>
-            </div>
-
-            <ResponsiveContainer width="100%" height={240}>
-              <RadarChart data={radarData} cx="50%" cy="50%" outerRadius="70%">
-                <PolarGrid stroke="hsl(var(--foreground)/0.06)" strokeDasharray="3 3" />
-                <PolarAngleAxis dataKey="genre"
-                  tick={{ fill: "hsl(var(--foreground)/0.45)", fontSize: 10, fontFamily: "var(--font-sans)" }}
-                  tickLine={false} />
-                <Radar name="Goûts" dataKey="value"
-                  stroke="hsl(var(--primary)/0.8)"
-                  fill="hsl(var(--primary)/0.18)"
-                  strokeWidth={2}
-                  dot={{ r: 3.5, fill: "hsl(var(--primary))", strokeWidth: 0 }} />
-              </RadarChart>
-            </ResponsiveContainer>
-
-            {/* Barres genres top 4 */}
-            <div className="px-4 pb-4 flex flex-col gap-1.5">
-              {genreStats.slice(0, 4).map((gs, i) => {
-                const max = genreStats[0].count;
-                const pct = Math.round((gs.count / max) * 100);
-                return (
-                  <div key={gs.genre} className="flex items-center gap-2">
-                    <p className="text-[10px] font-sans text-foreground/50 w-28 truncate shrink-0">{gs.genre}</p>
-                    <div className="flex-1 h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
-                      <motion.div initial={{ width: 0 }} animate={{ width: `${pct}%` }}
-                        transition={{ delay: 0.3 + i * 0.06, duration: 0.6, ease: "easeOut" }}
-                        className="h-full rounded-full"
-                        style={{ background: `hsl(var(--primary)/${0.9 - i * 0.15})` }} />
-                    </div>
-                    <p className="text-[10px] font-sans text-foreground/45 w-8 text-right shrink-0">{pct}%</p>
-                  </div>
-                );
-              })}
-            </div>
-          </motion.div>
-        )}
+        {/* ══ 2. ADN CINÉMA ══ */}
+        <AdnCinema
+          adn={adn}
+          adnRecent={adnRecent}
+          narrative={narrative}
+          genres={univers}
+          titre={isOwnProfile ? "Ton ADN cinéma" : "Son ADN cinéma"}
+        />
 
         {!loading && (
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.14 }}>
