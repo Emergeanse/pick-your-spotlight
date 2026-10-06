@@ -2360,10 +2360,6 @@ const HomeScreen = ({
         extraActions={
           <QuickFilters filters={quickFilters} onFiltersChange={setQuickFilters} profileDefaults={profileDefaults} />
         }
-        avatarUrl={avatarUrl}
-        firstName={firstName}
-        isPremium={isPremium}
-        interactionCount={interactionCount}
       />
 
       <div
@@ -2374,18 +2370,47 @@ const HomeScreen = ({
       {/* Dégradé : image visible en haut, fond opaque en bas */}
       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background/55 to-background" />
 
-      {/* Greeting flottant juste sous la BrandHeader */}
-      <motion.div
+      {/* Identité sous la BrandHeader : avatar, salut, puis compteur et Pick+.
+          Posée sous le logo (62 px + marge haute) et non plus à sa hauteur, où
+          le salut passait derrière lui. */}
+      <motion.button
+        type="button"
         initial={{ opacity: 0, y: -4 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.22, duration: 0.4 }}
-        className="absolute left-5 z-20"
-        style={{ top: "calc(3.4rem + env(safe-area-inset-top))" }}
+        onClick={() => navigate("/app/profile")}
+        className="absolute left-4 z-20 flex items-center gap-2.5 text-left active:scale-[0.98] transition-transform"
+        style={{ top: "calc(0.75rem + 62px + 0.25rem + env(safe-area-inset-top))" }}
+        aria-label="Mon profil"
       >
-        <p className="text-foreground/55 text-[13px] font-sans">
-          {firstName ? `Bonsoir ${firstName} 👋` : "Bonsoir 👋"}
-        </p>
-      </motion.div>
+        <span className="w-8 h-8 rounded-full overflow-hidden ring-1 ring-white/15 bg-primary/20 flex items-center justify-center shrink-0">
+          {avatarUrl
+            ? <img src={avatarUrl} alt="" className="w-full h-full object-cover" />
+            : <span className="text-[11px] font-bold text-primary leading-none">{(firstName || "?").charAt(0).toUpperCase()}</span>
+          }
+        </span>
+        <span className="flex flex-col gap-1 min-w-0">
+          <span className="text-foreground/75 text-[13px] font-sans leading-tight truncate">
+            {firstName ? `Bonsoir ${firstName} 👋` : "Bonsoir 👋"}
+          </span>
+          {(interactionCount > 0 || isPremium) && (
+            <span className="flex items-center gap-1.5 text-[11px] font-sans text-foreground/50 leading-none">
+              {interactionCount > 0 && (
+                <span className="flex items-center gap-1">
+                  <Star className="h-2.5 w-2.5 fill-amber-400 text-amber-400" aria-hidden="true" />
+                  <span className="tabular-nums">{interactionCount}</span> films
+                </span>
+              )}
+              {isPremium && (
+                <span className="inline-flex items-center gap-0.5 px-1.5 py-[2px] rounded-md bg-primary text-primary-foreground text-[9px] font-bold leading-none">
+                  <Crown className="h-2 w-2" strokeWidth={3} aria-hidden="true" />
+                  Pick+
+                </span>
+              )}
+            </span>
+          )}
+        </span>
+      </motion.button>
 
       <div className="relative z-10 h-full overflow-y-auto overscroll-y-contain touch-[pan-y_pinch-zoom] scrollbar-hide pb-[calc(6rem+env(safe-area-inset-bottom))]">
         {/* ─── Hero ─── */}
