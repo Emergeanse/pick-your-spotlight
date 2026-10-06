@@ -32,7 +32,7 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
 
   return (
     <div className="md:fixed md:inset-0 md:flex md:items-center md:justify-center md:bg-background">
-      <div className="md:relative md:transform-gpu md:w-[420px] md:h-[min(900px,calc(100dvh-2rem))] md:rounded-[2.25rem] md:overflow-hidden md:border md:border-border/20 md:shadow-[0_30px_80px_-20px_rgba(0,0,0,0.6)] md:bg-background">
+      <div className="md:relative md:transform-gpu md:w-[420px] md:h-[min(900px,calc(100dvh-2rem))] md:rounded-[2.25rem] md:overflow-hidden md:border md:border-violet-500/30 md:shadow-[0_30px_80px_-20px_rgba(0,0,0,0.6),0_0_5px_rgba(139,92,246,0.08)] md:bg-background">
         {showHeader && (
           <div className="sticky top-0 z-30">
             <BrandHeader />
@@ -44,6 +44,13 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
         <div
           id={APP_OVERLAY_PORTAL_ID}
           className="fixed inset-0 md:absolute md:inset-0 z-[50] pointer-events-none [&>*]:pointer-events-auto"
+        />
+        {/* Lueur d'ambiance en haut de l'écran, presque subliminale : avec le liseré
+            de la barre d'onglets, elle enveloppe l'application sans dessiner de
+            bordure. Rien sur les côtés, collés au bord physique du téléphone. */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none fixed md:absolute inset-x-0 top-0 h-28 z-[45] bg-[radial-gradient(ellipse_70%_100%_at_50%_0%,rgba(139,92,246,0.13),transparent_70%)]"
         />
         <BottomTabBar />
         <InstallBanner />

@@ -27,7 +27,9 @@ const BottomTabBar = () => {
     <nav className="fixed md:absolute bottom-0 left-0 right-0 z-[51] pb-[env(safe-area-inset-bottom)] md:pb-0">
       <div className="pointer-events-none absolute -top-10 inset-x-0 h-10 bg-gradient-to-t from-background via-background/70 to-transparent" />
 
-      <div className="relative border-t border-white/[0.05] bg-[linear-gradient(180deg,hsl(240_18%_5%/0.85),hsl(240_22%_3%/0.96))] backdrop-blur-2xl md:rounded-b-[2.25rem] shadow-[0_-20px_60px_-20px_rgba(0,0,0,0.7),inset_0_1px_0_rgba(255,255,255,0.04)]">
+      {/* Liseré violet discret et halo vers le haut : la barre ferme l'univers
+          Pick en bas, comme la lueur du haut (AppLayout) l'ouvre. */}
+      <div className="relative border-t border-violet-500/25 bg-[linear-gradient(180deg,hsl(240_18%_5%/0.85),hsl(240_22%_3%/0.96))] backdrop-blur-2xl md:rounded-b-[2.25rem] shadow-[0_-20px_60px_-20px_rgba(0,0,0,0.7),0_-6px_22px_-10px_rgba(139,92,246,0.35),inset_0_1px_0_rgba(255,255,255,0.04)]">
         <div className="flex items-stretch justify-around h-[60px] max-w-lg mx-auto px-2">
           {/* Left 2 tabs */}
           {tabs.slice(0, 2).map((tab) => <TabButton key={tab.id} tab={tab} isActive={currentTab === tab.id} navigate={navigate} location={location} />)}
