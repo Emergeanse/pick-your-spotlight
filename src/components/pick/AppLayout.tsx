@@ -32,7 +32,7 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
 
   return (
     <div className="md:fixed md:inset-0 md:flex md:items-center md:justify-center md:bg-background">
-      <div className="md:relative md:transform-gpu md:w-[420px] md:h-[min(900px,calc(100dvh-2rem))] md:rounded-[2.25rem] md:overflow-hidden md:border md:border-violet-500/30 md:shadow-[0_30px_80px_-20px_rgba(0,0,0,0.6),0_0_5px_rgba(139,92,246,0.08)] md:bg-background">
+      <div className="md:relative md:transform-gpu md:w-[420px] md:h-[min(900px,calc(100dvh-2rem))] md:rounded-[2.25rem] md:overflow-hidden md:border md:border-violet-500/[0.18] md:border-t-violet-500/10 md:border-b-violet-500/[0.32] md:shadow-[0_30px_80px_-20px_rgba(0,0,0,0.6),0_6px_14px_-6px_rgba(139,92,246,0.10)] md:bg-background">
         {showHeader && (
           <div className="sticky top-0 z-30">
             <BrandHeader />
@@ -50,7 +50,7 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
             bordure. Rien sur les côtés, collés au bord physique du téléphone. */}
         <div
           aria-hidden="true"
-          className="pointer-events-none fixed md:absolute inset-x-0 top-0 h-28 z-[45] bg-[radial-gradient(ellipse_70%_100%_at_50%_0%,rgba(139,92,246,0.13),transparent_70%)]"
+          className="pointer-events-none fixed md:absolute inset-x-0 top-0 h-28 z-[45] bg-[radial-gradient(ellipse_70%_100%_at_50%_0%,rgba(139,92,246,0.09),transparent_70%)]"
         />
         <BottomTabBar />
         <InstallBanner />
