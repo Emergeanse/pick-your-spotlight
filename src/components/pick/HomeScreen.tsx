@@ -8,7 +8,7 @@ import { clearRevealIntent, type RevealIntent, peekForReveal, consumeForReveal, 
 import { fetchGroupTasteProfile, fetchAdHocGroupProfile, isUsableGroupProfile, toGroupOverrides } from "@/lib/group-taste";
 import { programFilmForEvent } from "@/lib/event-program";
 import { toast } from "sonner";
-import { Sparkles, WandSparkles, Clapperboard, ChevronRight, Flame, Eye, Coffee, Heart, Shuffle, Crown, Star } from "lucide-react";
+import { Sparkles, WandSparkles, Clapperboard, ChevronRight, Flame, Eye, Coffee, Heart, Shuffle, Star } from "lucide-react";
 
 import { formatPlatformNamesForLoading, resolveProviders } from "@/lib/platforms";
 import type { Movie, MovieDetail } from "@/lib/tmdb";
@@ -2370,7 +2370,7 @@ const HomeScreen = ({
       {/* Dégradé : image visible en haut, fond opaque en bas */}
       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background/55 to-background" />
 
-      {/* Identité sous la BrandHeader : avatar, salut, puis compteur et Pick+.
+      {/* Identité sous la BrandHeader : avatar, salut, compteur, puis statut.
           Posée sous le logo (62 px + marge haute) et non plus à sa hauteur, où
           le salut passait derrière lui. */}
       <motion.button
@@ -2399,10 +2399,14 @@ const HomeScreen = ({
               <span className="tabular-nums">{interactionCount}</span> films
             </span>
           )}
+          {/* Pendant l'accès anticipé, tout le monde a Pick+ sans payer. Afficher
+              « Pick+ » promettrait de garder ce qu'on retirera peut-être un jour :
+              le badge dit le statut réel, celui des premiers utilisateurs. À
+              revoir le jour où Pick+ deviendra payant. */}
           {isPremium && (
             <span className="self-start inline-flex items-center gap-0.5 px-1.5 py-[2px] rounded-md bg-primary text-primary-foreground text-[9px] font-bold leading-none">
-              <Crown className="h-2 w-2" strokeWidth={3} aria-hidden="true" />
-              Pick+
+              <Sparkles className="h-2 w-2" strokeWidth={3} aria-hidden="true" />
+              Early Picker
             </span>
           )}
         </span>
