@@ -31,7 +31,7 @@ export function pushPrisEnCharge(): boolean {
 }
 
 /** Convertit la clé VAPID (base64 url) dans le format attendu par `pushManager.subscribe`. */
-export function cleEnOctets(base64Url: string): Uint8Array {
+export function cleEnOctets(base64Url: string): Uint8Array<ArrayBuffer> {
   const rembourrage = "=".repeat((4 - (base64Url.length % 4)) % 4);
   const base64 = (base64Url + rembourrage).replace(/-/g, "+").replace(/_/g, "/");
   const brut = atob(base64);
