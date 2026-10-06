@@ -44,10 +44,25 @@ const Friends = () => {
     if (friendships && friendships.length > 0) {
       const otherIds = (friendships as any[]).map((f: any) => f.requester_id === user.id ? f.addressee_id : f.requester_id);
       const profileMap = await fetchVisibleProfileMap(otherIds);
+      // Un ami sans prénom dans son profil s'affichait « Ami », alors que ses Duos
+      // gardent une copie du prénom donné à leur création : on la reprend.
+      const sansNom = otherIds.filter((id) => !profileMap.get(id)?.display_name?.trim());
+      const nomParDuo = new Map<string, string>();
+      if (sansNom.length > 0) {
+        type LigneDuo = { user1_id: string; user2_id: string | null; user1_display_name: string | null; user2_display_name: string | null };
+        const { data: duos } = await supabase
+          .from("duo_taste_profiles" as never)
+          .select("user1_id, user2_id, user1_display_name, user2_display_name")
+          .or(`user1_id.eq.${user.id},user2_id.eq.${user.id}`);
+        for (const d of (duos ?? []) as LigneDuo[]) {
+          if (d.user1_id === user.id && d.user2_id && d.user2_display_name) nomParDuo.set(d.user2_id, d.user2_display_name);
+          if (d.user2_id === user.id && d.user1_display_name) nomParDuo.set(d.user1_id, d.user1_display_name);
+        }
+      }
       setFriends((friendships as any[]).map((f: any) => {
         const otherId = f.requester_id === user.id ? f.addressee_id : f.requester_id;
         const op = profileMap.get(otherId);
-        return { id: otherId, friendshipId: f.id, displayName: op?.display_name || "Ami", friendCode: op?.friend_code || "", avatarUrl: op?.avatar_url, status: f.status, isRequester: f.requester_id === user.id };
+        return { id: otherId, friendshipId: f.id, displayName: op?.display_name?.trim() || nomParDuo.get(otherId) || "Ami", friendCode: op?.friend_code || "", avatarUrl: op?.avatar_url, status: f.status, isRequester: f.requester_id === user.id };
       }));
     } else { setFriends([]); }
     setFriendsLoading(false);
