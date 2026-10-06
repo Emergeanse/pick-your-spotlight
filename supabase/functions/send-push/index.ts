@@ -89,7 +89,11 @@ Deno.serve(async (req) => {
       await webpush.sendNotification(
         { endpoint: abo.endpoint, keys: { p256dh: abo.p256dh, auth: abo.auth } },
         contenu,
-        { TTL: 60 * 60, urgency: "normal" },
+        // « high » : sinon Android retarde la livraison tant que le téléphone
+        // est en veille, et la notification n'arrivait qu'à l'ouverture de Pick.
+        // Justifié : on n'envoie que des messages qui concernent la personne
+        // (invitation, conseil d'un ami, film choisi), jamais de relance.
+        { TTL: 60 * 60, urgency: "high" },
       );
       envoyees++;
       await admin.from("push_subscriptions").update({ last_used_at: new Date().toISOString() }).eq("id", abo.id);
