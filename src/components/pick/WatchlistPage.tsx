@@ -14,7 +14,7 @@ import { listFeedbackByType, clearFeedbackType, type FeedbackType, type MovieInt
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
-import { useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { ecarterConseil, listerConseilsRecus, type ConseilRecu } from "@/lib/conseils";
 
 
@@ -346,6 +346,7 @@ const WatchlistPage = ({ tabs: allowedTabs, title, defaultTab }: WatchlistPagePr
   // Films conseillés par des amis : affichés dans « À voir » jusqu'à ce qu'on les écarte.
   const [conseils, setConseils] = useState<ConseilRecu[]>([]);
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
   const { user: authUser, isReady: authReady } = useAuth();
   const [mediaFilter, setMediaFilter] = useState<MediaFilter>("all");
   const [searchQuery, setSearchQuery] = useState("");
@@ -1000,7 +1001,11 @@ const WatchlistPage = ({ tabs: allowedTabs, title, defaultTab }: WatchlistPagePr
               item={item}
               index={i}
               tab={activeTab}
-              onSelect={() => handleOpenDetail(item)}
+              // Un film conseillé par un ami s'ouvre sur l'écran où Pick dit s'il va
+              // plaire, et pourquoi — comme depuis la notification.
+              onSelect={() => item.conseilId
+                ? navigate(`/app/match?film=${item.tmdb_id}&media=${item.media_type === "tv" ? "tv" : "movie"}`)
+                : handleOpenDetail(item)}
               onRemove={() => handleRemove(item)}
               interaction={interactions[item.tmdb_id]}
             />

@@ -8,12 +8,13 @@ export function getNotificationRoute(
   if (type === "duo_accepted") {
     return "/app/duo";
   }
-  // Un ami conseille un film : « À voir », fiche du film ouverte.
+  // Un ami conseille un film : l'écran de la recherche, qui dit si le film va
+  // plaire et pourquoi (adhésion). Sans film précisé, « À voir » de la Biblio.
   if (type === "film_recommended") {
     const tmdbId = data?.tmdb_id;
     if (!tmdbId) return "/app/my-cinema?onglet=watchlist";
     const media = data?.media_type === "tv" ? "tv" : "movie";
-    return `/app/my-cinema?onglet=watchlist&film=${tmdbId}&media=${media}`;
+    return `/app/match?film=${tmdbId}&media=${media}`;
   }
   // `session_invite` visait les sessions Pick Together, système retiré le
   // 16 août au profit des soirées. D'anciennes notifications peuvent encore

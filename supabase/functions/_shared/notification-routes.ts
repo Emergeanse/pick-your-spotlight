@@ -16,7 +16,7 @@ export function routePourNotification(
     const tmdbId = data?.tmdb_id;
     if (!tmdbId) return "/app/my-cinema?onglet=watchlist";
     const media = data?.media_type === "tv" ? "tv" : "movie";
-    return `/app/my-cinema?onglet=watchlist&film=${tmdbId}&media=${media}`;
+    return `/app/match?film=${tmdbId}&media=${media}`;
   }
   if (type === "event_invite" || type === "event_confirmed" || type === "event_film_chosen") {
     const eventId = data?.event_id;

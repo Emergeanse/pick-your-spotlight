@@ -58,11 +58,11 @@ describe("ouverture du panneau depuis n'importe quelle fiche", () => {
 });
 
 describe("notification « Léa te conseille Parasite »", () => {
-  it("ouvre la fiche du film dans « À voir »", () => {
+  it("ouvre l'écran où Pick dit si le film va plaire, et pourquoi", () => {
     expect(getNotificationRoute("film_recommended", { tmdb_id: 496243, media_type: "movie" }))
-      .toBe("/app/my-cinema?onglet=watchlist&film=496243&media=movie");
+      .toBe("/app/match?film=496243&media=movie");
     expect(getNotificationRoute("film_recommended", { tmdb_id: 1399, media_type: "tv" }))
-      .toBe("/app/my-cinema?onglet=watchlist&film=1399&media=tv");
+      .toBe("/app/match?film=1399&media=tv");
   });
 
   it("sans film précisé, ouvre au moins « À voir »", () => {

@@ -1,12 +1,11 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Mic, MicOff, Camera, Search, X, RefreshCw, ArrowLeft, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
-import { getBackdropUrl, getPosterUrl, getDisplayTitle, getWatchProviders } from "@/lib/tmdb";
-import { getUserTasteProfile } from "@/lib/interactions";
-import { getLikedMovies } from "@/lib/liked-movies";
-import { computeMultiVectorProfile } from "@/lib/taste-engine";
+import { getBackdropUrl, getPosterUrl, getDisplayTitle, getWatchProviders, getMovieDetails } from "@/lib/tmdb";
+import { evaluerAdhesion } from "@/lib/adhesion";
 import type { RecommendationMatchData } from "@/lib/recommendation-batch";
 import { readQuotaRefusal, isTransientRateLimit } from "@/lib/quota-errors";
 import HazelnutScore from "@/components/pick/HazelnutScore";
@@ -26,12 +25,15 @@ export default function MatchPage() {
   const [errorMsg, setErrorMsg] = useState("");
   const [excludedIds, setExcludedIds] = useState<number[]>([]);
   const [detailOpen, setDetailOpen] = useState(false);
+  // Film ouvert directement (conseil d'un ami) : pas une recherche à corriger.
+  const [filmDirect, setFilmDirect] = useState(false);
 
   const recognitionRef = useRef<any>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // ── Identification via edge function ──
   const identify = useCallback(async (opts: { query?: string; imageBase64?: string; imageMimeType?: string }) => {
+    setFilmDirect(false);
     setState("identifying");
     setErrorMsg("");
     try {
@@ -53,27 +55,10 @@ export default function MatchPage() {
       const mediaType = filmDetail.first_air_date ? "tv" : "movie";
       getWatchProviders(filmDetail.id, mediaType).then(setProviders).catch(() => {});
 
-      // Évaluer l'adhésion avec movie-match
+      // Évaluer l'adhésion avec movie-match (non bloquant)
       if (user) {
-        try {
-          const [tasteProfile, liked, multiProfile] = await Promise.all([
-            getUserTasteProfile(),
-            getLikedMovies(),
-            computeMultiVectorProfile(user.id),
-          ]);
-          const { data: mmData } = await supabase.functions.invoke("movie-match", {
-            body: {
-              movie: filmDetail,
-              tasteProfile,
-              userTasteVector: multiProfile?.stableTasteVector ?? null,
-              likedMovieTitles: liked.slice(0, 15).map((m: any) => m.title).filter(Boolean),
-              minMatchScore: 0,
-            },
-          });
-          if (mmData) setMatchData(mmData as RecommendationMatchData);
-        } catch {
-          // adhesion non bloquante
-        }
+        const mmData = await evaluerAdhesion(user.id, filmDetail);
+        if (mmData) setMatchData(mmData);
       }
 
       setState("result");
@@ -93,6 +78,36 @@ export default function MatchPage() {
       setState("error");
     }
   }, [excludedIds, user]);
+
+  // ── Arrivée sur un film précis : /app/match?film=496243&media=movie ──
+  // Depuis une notification « Léa te conseille… » ou un film conseillé de la
+  // Biblio : même écran que la recherche — Pick dit si le film va plaire, et pourquoi.
+  const [searchParams, setSearchParams] = useSearchParams();
+  useEffect(() => {
+    const filmId = Number(searchParams.get("film"));
+    if (!(filmId > 0) || !user) return;
+    const media = searchParams.get("media") === "tv" ? "tv" : "movie";
+    setSearchParams({}, { replace: true });
+    setFilmDirect(true);
+    (async () => {
+      setState("identifying");
+      setErrorMsg("");
+      setMatchData(null);
+      try {
+        const filmDetail = await getMovieDetails(filmId, media);
+        setMovie(filmDetail);
+        getWatchProviders(filmDetail.id, media).then(setProviders).catch(() => {});
+        const mmData = await evaluerAdhesion(user.id, filmDetail);
+        if (mmData) setMatchData(mmData);
+        setState("result");
+      } catch {
+        setErrorMsg("Impossible d'ouvrir ce film pour le moment. Réessaie.");
+        setState("error");
+      }
+    })();
+  // Réagit aux seuls paramètres d'arrivée (et à la session prête).
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams, user?.id]);
 
   // ── Recherche texte / description ──
   const handleTextSearch = () => {
@@ -275,14 +290,16 @@ export default function MatchPage() {
                 <MovieActionBar movie={movie} />
               </div>
 
-              {/* Pas ce film */}
-              <button
-                onClick={retryExcluding}
-                className="w-full py-4 rounded-2xl border border-white/10 bg-white/5 text-foreground/60 text-sm font-sans flex items-center justify-center gap-2 mb-2"
-              >
-                <RefreshCw className="w-4 h-4" />
-                Pas ce film, réessaie
-              </button>
+              {/* Pas ce film — seulement après une recherche, pour la corriger */}
+              {!filmDirect && (
+                <button
+                  onClick={retryExcluding}
+                  className="w-full py-4 rounded-2xl border border-white/10 bg-white/5 text-foreground/60 text-sm font-sans flex items-center justify-center gap-2 mb-2"
+                >
+                  <RefreshCw className="w-4 h-4" />
+                  Pas ce film, réessaie
+                </button>
+              )}
               <div className="h-6" />
             </div>
           </motion.div>
