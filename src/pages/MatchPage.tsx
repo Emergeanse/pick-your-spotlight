@@ -8,7 +8,7 @@ import { getBackdropUrl, getPosterUrl, getDisplayTitle, getWatchProviders, getMo
 import { evaluerAdhesion } from "@/lib/adhesion";
 import type { RecommendationMatchData } from "@/lib/recommendation-batch";
 import { readQuotaRefusal, isTransientRateLimit } from "@/lib/quota-errors";
-import HazelnutScore from "@/components/pick/HazelnutScore";
+import AdhesionBadge from "@/components/pick/AdhesionBadge";
 import matchBackground from "@/assets/match-background.webp";
 import MovieActionBar from "@/components/pick/MovieActionBar";
 import FlipCardDetail from "@/components/pick/FlipCardDetail";
@@ -222,7 +222,7 @@ export default function MatchPage() {
               >
                 <ArrowLeft className="w-5 h-5" />
               </button>
-              <HazelnutScore score={adhesionScore} size={56} />
+              <AdhesionBadge score={adhesionScore} size={96} />
             </div>
 
             {/* Poster */}

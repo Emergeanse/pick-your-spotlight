@@ -1,5 +1,6 @@
 ﻿import { useState, useEffect, useRef, useMemo, type MutableRefObject } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import AdhesionBadge from "./AdhesionBadge";
 import { ChevronLeft, ChevronRight, Dices, Loader2, Info } from "lucide-react";
 import { getBackdropUrl, getDisplayTitle, getPosterUrl, getMovieDetailsWithCredits, normalizePosterPath, type MovieDetail } from "@/lib/tmdb";
 import {
@@ -603,33 +604,6 @@ const TonightPickOverlay = ({
     : undefined;
   const primaryGenre = movie?.genres?.[0]?.name;
 
-  // Crystal ball match indicator
-  const crystalStyle = (() => {
-    const s = adhesionScore ?? 0;
-    const scale = 0.55 + (s / 100) * 1.05; // 0.55 → 1.6
-
-    if (s >= 90) return {
-      filter: "drop-shadow(0 0 14px rgba(139,92,246,1)) drop-shadow(0 0 5px rgba(192,132,252,0.9)) saturate(1.5) brightness(1.25)",
-      opacity: 1, scale, textColor: "text-white", rings: 3,
-    };
-    if (s >= 80) return {
-      filter: "drop-shadow(0 0 9px rgba(139,92,246,0.8)) drop-shadow(0 0 3px rgba(167,139,250,0.7)) saturate(1.25) brightness(1.12)",
-      opacity: 0.97, scale, textColor: "text-white", rings: 2,
-    };
-    if (s >= 70) return {
-      filter: "drop-shadow(0 0 5px rgba(139,92,246,0.45)) saturate(1.1) brightness(1.0)",
-      opacity: 0.85, scale, textColor: "text-white", rings: 0,
-    };
-    if (s >= 55) return {
-      filter: "grayscale(45%) brightness(0.8) saturate(0.7)",
-      opacity: 0.55, scale, textColor: "text-white/80", rings: 0,
-    };
-    const pct = Math.max(0, s) / 55;
-    return {
-      filter: `grayscale(${Math.round(88 - pct * 35)}%) brightness(${0.38 + pct * 0.42})`,
-      opacity: 0.15 + pct * 0.3, scale, textColor: "text-white/50", rings: 0,
-    };
-  })();
 
   const instantCover = tonightLoading && !movie;
   const wallProgress = Math.min(loadingElapsed / 8, 1);
@@ -808,59 +782,7 @@ const TonightPickOverlay = ({
               <ChevronLeft className="w-5 h-5" />
             </button>
 
-            {movie && adhesionScore != null && (
-              <div className="relative flex items-center justify-center" style={{ width: 56, height: 56 }}>
-
-                {/* Expanding violet glow rings at ≥80% */}
-                {crystalStyle.rings >= 1 && (
-                  <motion.div
-                    animate={{ scale: [1, 2.4], opacity: [0.6, 0] }}
-                    transition={{ duration: 1.9, repeat: Infinity, ease: "easeOut" }}
-                    className="absolute inset-0 rounded-full pointer-events-none"
-                    style={{ background: "radial-gradient(circle, rgba(139,92,246,0.6) 0%, transparent 70%)" }}
-                  />
-                )}
-                {crystalStyle.rings >= 2 && (
-                  <motion.div
-                    animate={{ scale: [1, 1.9], opacity: [0.5, 0] }}
-                    transition={{ duration: 1.9, repeat: Infinity, delay: 0.65, ease: "easeOut" }}
-                    className="absolute inset-0 rounded-full pointer-events-none"
-                    style={{ background: "radial-gradient(circle, rgba(167,139,250,0.55) 0%, transparent 70%)" }}
-                  />
-                )}
-                {crystalStyle.rings >= 3 && (
-                  <motion.div
-                    animate={{ scale: [1, 3.0], opacity: [0.4, 0] }}
-                    transition={{ duration: 2.4, repeat: Infinity, delay: 1.2, ease: "easeOut" }}
-                    className="absolute inset-0 rounded-full pointer-events-none"
-                    style={{ background: "radial-gradient(circle, rgba(192,132,252,0.4) 0%, transparent 70%)" }}
-                  />
-                )}
-
-                {/* Crystal ball */}
-                <motion.span
-                  initial={{ opacity: 0, scale: 0.4 }}
-                  animate={{ opacity: crystalStyle.opacity, scale: crystalStyle.scale }}
-                  transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
-                  className="absolute text-[46px] select-none leading-none"
-                  style={{ filter: crystalStyle.filter }}
-                >
-                  🔮
-                </motion.span>
-
-                {/* Score text */}
-                <motion.span
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.5, duration: 0.5 }}
-                  className={`relative z-10 text-[13px] font-black font-sans select-none tracking-tight ${crystalStyle.textColor}`}
-                  style={{ textShadow: "0 1px 6px rgba(0,0,0,0.95), 0 0 14px rgba(0,0,0,0.75)" }}
-                  aria-label={`Adhésion ${adhesionScore}%`}
-                >
-                  {adhesionScore}%
-                </motion.span>
-              </div>
-            )}
+            {movie && adhesionScore != null && <AdhesionBadge score={adhesionScore} size={96} />}
           </div>
 
           {/* Stage 2-3 : wrapper apparition — flou + scale pendant que movie-match tourne */}
