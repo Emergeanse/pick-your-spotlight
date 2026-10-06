@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { envoyerConseil } from "@/lib/conseils";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   X, ArrowRight, Send, Check,
@@ -191,14 +192,16 @@ export default function PostSoireeFlow({ event, onClose, onComplete }: Props) {
     if (!user || !event.filmTmdbId) return;
     setRecommended((prev) => new Set(prev).add(friendId));
     try {
-      await supabase.from("shared_recommendations" as any).insert({
-        sender_id:   user.id,
-        receiver_id: friendId,
-        tmdb_id:     event.filmTmdbId,
-        title:       event.filmTitle,
-        poster_path: event.filmPoster,
-        message:     `${user.user_metadata?.full_name ?? "Quelqu'un"} pense que tu aimerais ce film`,
-      });
+      // Même chemin que « Conseiller à un ami » depuis une fiche : le serveur
+      // vérifie l'amitié et prévient l'ami avec le vrai prénom de l'expéditeur.
+      // L'ancien message lisait user_metadata.full_name, presque toujours vide :
+      // il disait « Quelqu'un pense que tu aimerais ce film ».
+      await envoyerConseil(user.id, {
+        tmdbId: event.filmTmdbId,
+        titre: event.filmTitle,
+        posterPath: event.filmPoster ?? null,
+        mediaType: "movie",
+      }, [friendId]);
     } catch (e) {
       console.error("recommendation send error", e);
     }

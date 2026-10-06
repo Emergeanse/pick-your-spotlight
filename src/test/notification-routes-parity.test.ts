@@ -12,9 +12,9 @@ import { construirePush, routePourNotification } from "../../supabase/functions/
 const TYPES = [
   "friend_request", "friend_accepted", "duo_accepted",
   "event_invite", "event_confirmed", "event_film_chosen",
-  "session_invite", "type_inconnu",
+  "session_invite", "film_recommended", "type_inconnu",
 ];
-const DONNEES = [null, {}, { event_id: "evt-42" }, { duo_id: "duo-7" }];
+const DONNEES = [null, {}, { event_id: "evt-42" }, { duo_id: "duo-7" }, { tmdb_id: 496243, media_type: "movie" }, { tmdb_id: 1399, media_type: "tv" }];
 
 describe("même page ouverte depuis le téléphone et depuis la cloche", () => {
   for (const type of TYPES) {

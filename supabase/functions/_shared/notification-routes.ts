@@ -12,6 +12,12 @@ export function routePourNotification(
 ): string {
   if (type === "friend_request" || type === "friend_accepted") return "/app/friends";
   if (type === "duo_accepted") return "/app/duo";
+  if (type === "film_recommended") {
+    const tmdbId = data?.tmdb_id;
+    if (!tmdbId) return "/app/my-cinema?onglet=watchlist";
+    const media = data?.media_type === "tv" ? "tv" : "movie";
+    return `/app/my-cinema?onglet=watchlist&film=${tmdbId}&media=${media}`;
+  }
   if (type === "event_invite" || type === "event_confirmed" || type === "event_film_chosen") {
     const eventId = data?.event_id;
     if (eventId) return `/app/soirees/${eventId}`;

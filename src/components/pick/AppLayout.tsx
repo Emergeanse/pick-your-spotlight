@@ -5,6 +5,7 @@ import BrandHeader from "@/components/pick/BrandHeader";
 import OnboardingResumeBanner from "@/components/onboarding/OnboardingResumeBanner";
 import InstallBanner from "@/components/pick/InstallBanner";
 import OfflineBanner from "@/components/pick/OfflineBanner";
+import ConseilAmiSheet from "@/components/pick/ConseilAmiSheet";
 import { useOnboardingGate } from "@/hooks/use-onboarding-gate";
 import { APP_OVERLAY_PORTAL_ID } from "@/lib/app-chrome";
 
@@ -55,6 +56,7 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
         <BottomTabBar />
         <InstallBanner />
         <OfflineBanner />
+        <ConseilAmiSheet />
       </div>
     </div>
   );

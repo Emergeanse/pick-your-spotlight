@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { recordAcceptedRecommendation } from "@/lib/engagement";
-import { Bookmark, Heart, Eye, ThumbsDown, ThumbsUp } from "lucide-react";
+import { Bookmark, Heart, Eye, ThumbsDown, ThumbsUp, Send } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
 import type { InteractionContext } from "@/lib/interactions";
@@ -9,6 +9,7 @@ import type { MovieDetail } from "@/lib/tmdb";
 import { ensureMovieEmbedding } from "@/lib/taste-engine";
 import { useMovieInteraction } from "@/hooks/use-movie-interactions";
 import { inferCatalogMediaType } from "@/lib/catalog";
+import { conseilStore, conseilDejaPropose, noterConseilPropose } from "@/lib/conseils";
 
 
 interface MovieActionBarProps {
@@ -114,6 +115,32 @@ const MovieActionBar = ({
     }),
     [mediaType, movie.name, movie.poster_path, movie.title],
   );
+
+  const ouvrirConseil = useCallback(() => {
+    conseilStore.ouvrir({
+      tmdbId: movie.id,
+      titre: movie.title || movie.name || "Sans titre",
+      posterPath: movie.poster_path || null,
+      mediaType: mediaType === "tv" ? "tv" : "movie",
+    });
+  }, [movie.id, movie.title, movie.name, movie.poster_path, mediaType]);
+
+  /**
+   * Après un « j'aime » ou un coup de cœur : proposer, une seule fois par
+   * film, de le conseiller à un ami. Remplace le toast de confirmation, pour ne
+   * pas en empiler deux.
+   */
+  const confirmerAvecConseil = useCallback((texte: string) => {
+    if (conseilDejaPropose(movie.id)) {
+      toast.success(texte);
+      return;
+    }
+    noterConseilPropose(movie.id);
+    toast.success(`${texte} Tu l'as aimé ? Conseille-le à un ami.`, {
+      action: { label: "Conseiller", onClick: ouvrirConseil },
+      duration: 6000,
+    });
+  }, [movie.id, ouvrirConseil]);
 
   const isCurrentMovie = useCallback((movieId: number) => currentMovieIdRef.current === movieId, []);
 
@@ -297,7 +324,7 @@ const MovieActionBar = ({
           movie.overview || "",
           (movie.genres || []).map((g) => g.name),
         );
-        toast.success("👍 Noté !");
+        confirmerAvecConseil("👍 Noté !");
       }
       onInteraction?.("like");
     } catch (error) {
@@ -325,7 +352,7 @@ const MovieActionBar = ({
           movie.overview || "",
           (movie.genres || []).map((g) => g.name),
         );
-        toast.success("❤️ Coup de cœur !");
+        confirmerAvecConseil("❤️ Coup de cœur !");
       }
       onInteraction?.("love");
     } catch (error) {
@@ -429,6 +456,16 @@ const MovieActionBar = ({
         aria-pressed={activeFeedback === "not_for_me"}
       >
         <ThumbsDown className={iconSize} />
+      </button>
+
+      <button
+        type="button"
+        onClick={() => { if (requireAuth()) ouvrirConseil(); }}
+        className={`${btnSize} rounded-full border transition-all flex items-center justify-center ${inactiveClass}`}
+        title="Conseiller à un ami"
+        aria-label="Conseiller à un ami"
+      >
+        <Send className={iconSize} />
       </button>
     </div>
   );

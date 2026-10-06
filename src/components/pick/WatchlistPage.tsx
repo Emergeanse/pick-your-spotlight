@@ -14,6 +14,8 @@ import { listFeedbackByType, clearFeedbackType, type FeedbackType, type MovieInt
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { useSearchParams } from "react-router-dom";
+import { ecarterConseil, listerConseilsRecus, type ConseilRecu } from "@/lib/conseils";
 
 
 interface WatchlistPageProps {
@@ -221,9 +223,16 @@ const SwipeableCard = ({
               </div>
             )}
 
-            <p className={`text-[10.5px] font-sans italic line-clamp-1 ${isDisliked ? "text-foreground/35" : "text-primary/55"}`}>
-              {comment}
-            </p>
+            {item.conseillePar ? (
+              <p className="text-[12px] font-sans text-pick-purple-light line-clamp-2 leading-snug">
+                💌 Conseillé par <span className="font-semibold">{item.conseillePar}</span>
+                {item.conseilMessage && <span className="text-pick-text-secondary italic"> — « {item.conseilMessage} »</span>}
+              </p>
+            ) : (
+              <p className={`text-[11px] font-sans italic line-clamp-1 ${isDisliked ? "text-foreground/35" : "text-primary/55"}`}>
+                {comment}
+              </p>
+            )}
           </div>
         </button>
 
@@ -334,6 +343,9 @@ const WatchlistPage = ({ tabs: allowedTabs, title, defaultTab }: WatchlistPagePr
   // Vrai quand la bibliothèque n'a pas pu se charger alors que le compte a des
   // films : on l'affiche, plutôt que des compteurs à zéro qui mentent.
   const [chargementRate, setChargementRate] = useState(false);
+  // Films conseillés par des amis : affichés dans « À voir » jusqu'à ce qu'on les écarte.
+  const [conseils, setConseils] = useState<ConseilRecu[]>([]);
+  const [searchParams, setSearchParams] = useSearchParams();
   const { user: authUser, isReady: authReady } = useAuth();
   const [mediaFilter, setMediaFilter] = useState<MediaFilter>("all");
   const [searchQuery, setSearchQuery] = useState("");
@@ -459,6 +471,10 @@ const WatchlistPage = ({ tabs: allowedTabs, title, defaultTab }: WatchlistPagePr
       setSeenItems(seenList);
       setDislikedItems(dislikedList);
 
+      if (needs("watchlist") && user) {
+        listerConseilsRecus(user.id).then(setConseils).catch(() => setConseils([]));
+      }
+
       const total = (watchlist as unknown[]).length + likedList.length + lovedList.length + seenList.length + dislikedList.length;
       if (total === 0 && user) await verifierBibliothequeVide(user.id, tentative);
 
@@ -479,8 +495,31 @@ const WatchlistPage = ({ tabs: allowedTabs, title, defaultTab }: WatchlistPagePr
     }
   };
 
+  const aVoir = useMemo(() => {
+    const parFilm = new Map(conseils.map((c) => [c.tmdbId, c]));
+    const annote = watchlistItems.map((item) => {
+      const c = parFilm.get(item.tmdb_id);
+      return c ? { ...item, conseillePar: c.conseillePar, conseilMessage: c.message, conseilId: c.id } : item;
+    });
+    const dejaListes = new Set(watchlistItems.map((i) => i.tmdb_id));
+    const conseilsSeuls = conseils
+      .filter((c) => !dejaListes.has(c.tmdbId))
+      .map((c) => ({
+        id: `conseil-${c.id}`,
+        tmdb_id: c.tmdbId,
+        title: c.titre,
+        poster_path: c.posterPath,
+        media_type: c.mediaType,
+        conseillePar: c.conseillePar,
+        conseilMessage: c.message,
+        conseilId: c.id,
+      }));
+    // Les conseils récents d'abord : c'est ce qu'un ami vient d'envoyer.
+    return [...conseilsSeuls, ...annote];
+  }, [watchlistItems, conseils]);
+
   const itemsByTab: Record<ActiveTab, any[]> = {
-    watchlist: watchlistItems,
+    watchlist: aVoir,
     liked: likedItems,
     loved: lovedItems,
     seen: seenItems,
@@ -561,8 +600,17 @@ const WatchlistPage = ({ tabs: allowedTabs, title, defaultTab }: WatchlistPagePr
     } catch { toast.error("Erreur"); }
   };
 
-  const handleRemove = (item: any) => {
+  const handleRemove = async (item: any) => {
     const tmdbId = item.tmdb_id;
+    if (activeTab === "watchlist" && item.conseilId) {
+      try {
+        await ecarterConseil(item.conseilId);
+        setConseils((prev) => prev.filter((c) => c.id !== item.conseilId));
+      } catch { toast.error("Erreur"); return; }
+      // Conseil seul : rien d'autre à retirer. Sinon, le film était aussi dans
+      // la liste « À voir » de l'utilisateur.
+      if (String(item.id).startsWith("conseil-")) { toast.success("Conseil retiré"); return; }
+    }
     if (activeTab === "watchlist") handleRemoveWatchlist(tmdbId);
     else if (activeTab === "liked") handleRemoveLiked(tmdbId);
     else if (activeTab === "loved") handleRemoveLoved(tmdbId);
@@ -604,6 +652,19 @@ const WatchlistPage = ({ tabs: allowedTabs, title, defaultTab }: WatchlistPagePr
       setShowResetConfirm(false);
     }
   };
+
+  // Arrivée depuis une notification « Léa te conseille… » :
+  // /app/my-cinema?onglet=watchlist&film=496243&media=movie
+  useEffect(() => {
+    const onglet = searchParams.get("onglet") as ActiveTab | null;
+    const film = Number(searchParams.get("film"));
+    if (!onglet && !film) return;
+    if (onglet && visibleTabs.includes(onglet)) setActiveTab(onglet);
+    if (film > 0) handleOpenDetail({ tmdb_id: film, media_type: searchParams.get("media") === "tv" ? "tv" : "movie" });
+    setSearchParams({}, { replace: true });
+  // Ne réagit qu'aux paramètres d'arrivée.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
 
   const handleOpenDetail = async (item: any) => {
     setDetailLoading(true);
