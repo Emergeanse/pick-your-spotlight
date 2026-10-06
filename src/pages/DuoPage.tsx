@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
+import FlecheRonde from "@/components/pick/FlecheRonde";
 import { toast } from "sonner";
 import duoBg from "@/assets/duo-background.webp";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -6,7 +7,7 @@ import { setPendingDuoPick } from "@/lib/duo-pending";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Users, Plus, Copy, Check, Trash2, Pencil, ChevronRight,
-  Loader2, Share2, ArrowLeft, Clock, RefreshCw, Sparkles
+  Loader2, Share2, Clock, RefreshCw, Sparkles
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
@@ -220,9 +221,7 @@ const DuoDetail = ({ duo: initialDuo, currentUserId, onBack, onRename, onDelete 
     <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} className="w-full">
       {/* Header */}
       <div className="flex items-center gap-3 mb-6">
-        <button aria-label="Retour" onClick={onBack} className="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-foreground/8 transition-colors text-foreground/50">
-          <ArrowLeft className="w-5 h-5" />
-        </button>
+        <FlecheRonde direction="gauche" onClick={onBack} label="Retour à mes duos" tailleClasse="w-10 h-10" />
         <div className="flex-1 min-w-0">
           {editing ? (
             <input
@@ -458,9 +457,7 @@ const CreateFlow = ({ userId, displayName, onCreated, onCancel }: {
     return (
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="w-full flex flex-col gap-5">
         <div className="flex items-center gap-3">
-          <button aria-label="Retour" onClick={() => setStep("choose")} className="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-foreground/8 transition-colors text-foreground/40">
-            <ArrowLeft className="w-4 h-4" />
-          </button>
+          <FlecheRonde direction="gauche" onClick={() => setStep("choose")} label="Retour" tailleClasse="w-10 h-10" />
           <div>
             <h3 className="font-serif text-xl text-foreground">Nom du duo</h3>
             {selectedFriend && (
@@ -491,9 +488,7 @@ const CreateFlow = ({ userId, displayName, onCreated, onCancel }: {
   return (
     <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="w-full flex flex-col gap-4">
       <div className="flex items-center gap-3">
-        <button onClick={onCancel} className="p-2 rounded-xl hover:bg-foreground/8 transition-colors text-foreground/40">
-          <ArrowLeft className="w-4 h-4" />
-        </button>
+        <FlecheRonde direction="gauche" onClick={onCancel} label="Annuler la création du duo" tailleClasse="w-10 h-10" />
         <div>
           <h3 className="font-serif text-xl text-foreground">Nouveau duo</h3>
           <p className="text-foreground/40 font-sans text-xs mt-0.5">Avec qui ?</p>
@@ -631,7 +626,7 @@ export default function DuoPage() {
       <div className="relative min-h-screen">
         <div className="absolute inset-0 bg-cover bg-center bg-no-repeat" style={{ backgroundImage: `url(${duoBg})` }} />
         <div className="absolute inset-0 bg-gradient-to-b from-background/55 via-background/75 to-background/97" />
-        <div className="relative z-10 pb-28 px-4 pt-[calc(4.5rem+env(safe-area-inset-top))] max-w-lg mx-auto animate-pulse">
+        <div className="relative z-10 pb-28 px-4 pt-[calc(4.5rem+env(safe-area-inset-top))] md:pt-32 max-w-lg mx-auto animate-pulse">
           {/* Header */}
           <div className="flex items-center justify-between mb-6">
             <div className="flex flex-col gap-1.5">
@@ -670,7 +665,7 @@ export default function DuoPage() {
       <div className="absolute inset-0 bg-gradient-to-b from-background/55 via-background/75 to-background/97" />
 
       {/* Contenu */}
-      <div className="relative z-10 pb-28 px-4 pt-[calc(4.5rem+env(safe-area-inset-top))] max-w-lg mx-auto w-full">
+      <div className="relative z-10 pb-28 px-4 pt-[calc(4.5rem+env(safe-area-inset-top))] md:pt-32 max-w-lg mx-auto w-full">
       <AnimatePresence mode="wait">
         {/* ── Vue détail ── */}
         {selectedDuo && (
