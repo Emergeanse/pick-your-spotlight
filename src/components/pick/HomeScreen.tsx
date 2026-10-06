@@ -49,6 +49,7 @@ import homeBackground from "@/assets/home-background.webp";
 import creerSoireeBouton from "@/assets/creer-soiree-bouton.webp";
 import creerSoireeBoutonActif from "@/assets/creer-soiree-bouton-actif.webp";
 import groupeSurprise from "@/assets/groupe-surprise.webp";
+import DerniereNotification from "./DerniereNotification";
 import groupeDuo from "@/assets/groupe-duo.webp";
 import groupeFamille from "@/assets/groupe-famille.webp";
 import groupeAmis from "@/assets/groupe-amis.webp";
@@ -2589,6 +2590,9 @@ const HomeScreen = ({
             <span className="text-[12px] font-sans font-semibold text-pick-purple-light shrink-0">Évaluer →</span>
           </motion.button>
         )}
+
+        {/* ─── Dernière notification (vraie) ─── */}
+        <DerniereNotification className={CARTE_PICK} />
 
         {/* ─── 3 films qui pourraient te plaire ─── */}
         <motion.div

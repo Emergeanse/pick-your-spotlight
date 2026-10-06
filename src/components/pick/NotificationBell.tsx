@@ -17,6 +17,7 @@ import {
   type PendingFriendRequest,
 } from "@/lib/friend-notifications";
 import { getNotificationIcon, getNotificationRoute } from "@/lib/notification-navigation";
+import { notificationsStore, useNotificationsStore } from "@/lib/notifications-store";
 
 const NotificationBell = () => {
   const { user } = useAuth();
@@ -24,6 +25,12 @@ const NotificationBell = () => {
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [open, setOpen] = useState(false);
   const unreadCount = countUnreadNotifications(notifications);
+  const { demandesOuverture } = useNotificationsStore();
+
+  // Partage la liste avec la carte « dernière notification » de l'accueil.
+  useEffect(() => {
+    notificationsStore.definirNotifications(notifications);
+  }, [notifications]);
 
   const loadNotifications = useCallback(async () => {
     if (!user) return;
@@ -94,6 +101,15 @@ const NotificationBell = () => {
     }
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
   };
+
+  // « Tout voir » depuis l'accueil : ouvre le panneau comme un appui sur la cloche.
+  useEffect(() => {
+    if (demandesOuverture === 0) return;
+    setOpen(true);
+    markAllRead();
+  // Réagit aux seules demandes d'ouverture, pas aux changements de liste.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [demandesOuverture]);
 
   const handleNotificationClick = (notif: NotificationItem) => {
     navigate(getNotificationRoute(notif.type, notif.data));
