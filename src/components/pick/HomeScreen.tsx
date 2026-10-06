@@ -2448,7 +2448,7 @@ const HomeScreen = ({
               aria-hidden="true"
               draggable={false}
               width={1100}
-              height={243}
+              height={252}
               className="block w-full h-auto pointer-events-none select-none"
             />
           </motion.button>
