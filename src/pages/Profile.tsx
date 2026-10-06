@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from "react";
+import { ReglageNotificationsTelephone } from "@/components/pick/NotificationsTelephone";
 import type { GenrePreferencesHandle } from "@/components/pick/GenrePreferences";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "@/hooks/use-toast";
@@ -1111,6 +1112,7 @@ const Profile = () => {
             >
               <RotateCcw className="w-3.5 h-3.5" /> Réinitialiser mon parcours initiatique
             </Button>
+            <ReglageNotificationsTelephone />
             <MyDataSection />
             <div className="flex flex-wrap gap-x-4 gap-y-1 px-3 pt-1">
               <Link to="/confidentialite" className="text-[11px] font-sans text-foreground/30 hover:text-foreground/60 transition-colors">

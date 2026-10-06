@@ -50,6 +50,7 @@ import creerSoireeBouton from "@/assets/creer-soiree-bouton.webp";
 import creerSoireeBoutonActif from "@/assets/creer-soiree-bouton-actif.webp";
 import groupeSurprise from "@/assets/groupe-surprise.webp";
 import DerniereNotification from "./DerniereNotification";
+import { PropositionNotificationsTelephone } from "./NotificationsTelephone";
 import groupeDuo from "@/assets/groupe-duo.webp";
 import groupeFamille from "@/assets/groupe-famille.webp";
 import groupeAmis from "@/assets/groupe-amis.webp";
@@ -2593,6 +2594,7 @@ const HomeScreen = ({
 
         {/* ─── Dernière notification (vraie) ─── */}
         <DerniereNotification className={CARTE_PICK} />
+        <PropositionNotificationsTelephone className={CARTE_PICK} />
 
         {/* ─── 3 films qui pourraient te plaire ─── */}
         <motion.div

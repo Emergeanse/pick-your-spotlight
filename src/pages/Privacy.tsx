@@ -21,6 +21,7 @@ const SECTIONS: LegalSection[] = [
         "Tes préférences : genres aimés et exclus, plateformes de streaming, décennies, note minimale, durée maximale, type de contenu.",
         "Ton usage : films aimés, watchlist, envies, titres vus ou passés, historique des recommandations, scores calculés par film et profil de goût.",
         "Ta vie sociale sur Pick : amitiés, duos, soirées organisées ou rejointes, votes, avis, notifications, recommandations partagées.",
+        "Tes téléphones autorisés, si tu actives les notifications : l'adresse technique fournie par le navigateur pour joindre l'appareil, et le modèle de navigateur. Couper les notifications depuis ton profil l'efface.",
         "Ta voix, si tu t'en sers : l'enregistrement est transmis pour être transcrit en texte. Pick ne le conserve pas.",
         "Les incidents techniques : quand quelque chose casse dans l'application, le message d'erreur, la page concernée et ton navigateur sont enregistrés pour qu'on puisse corriger. Ces traces sont purgées au bout de 90 jours et ne sont lisibles que par l'équipe Pick.",
       ],
@@ -37,12 +38,13 @@ const SECTIONS: LegalSection[] = [
   {
     title: "Qui reçoit quoi",
     body: [
-      "Pick s'appuie sur quatre prestataires. Ils ne reçoivent pas les mêmes choses, et la différence compte.",
+      "Pick s'appuie sur quatre prestataires, et sur les services de notification de ton navigateur si tu les actives. Ils ne reçoivent pas les mêmes choses, et la différence compte.",
       [
         "Lovable Cloud (Supabase) — héberge l'application, la base de données et les fonctions serveur. Reçoit donc l'ensemble des données ci-dessus.",
         "Google (modèles Gemini) — reçoit tes genres préférés, tes affinités de goût, les titres des films que tu as aimés, ton indice de confiance de profil et tes exclusions. Ne reçoit ni ton adresse e-mail, ni ton nom, ni aucun identifiant de compte : le modèle ne sait pas qui tu es.",
         "ElevenLabs — reçoit l'enregistrement audio quand tu parles à Pick, et le texte que Pick doit lire à voix haute.",
         "TMDB — fournit les fiches de films. Ne reçoit que des identifiants de films, jamais de donnée personnelle.",
+        "Le service de notification de ton navigateur (Google pour Chrome, Apple pour Safari, Mozilla pour Firefox) — seulement si tu actives les notifications sur ton téléphone. Il achemine le titre et le texte de chaque notification, chiffrés de bout en bout : il ne peut pas les lire. Tu peux les couper à tout moment depuis ton profil.",
       ],
       "Ces prestataires appliquent leurs propres conditions et politiques de confidentialité.",
     ],
@@ -97,7 +99,7 @@ const PrivacyPage = () => (
   <LegalPage
     title="Confidentialité"
     intro="Ce que Pick sait de toi, qui d'autre le voit, et comment tout reprendre ou tout effacer. Écrit pour être lu, pas pour être signé sans lire."
-    updatedAt="12 août 2026"
+    updatedAt="6 octobre 2026"
     sections={SECTIONS}
   />
 );

@@ -26,6 +26,7 @@ const USER_DATA_MAP: Record<string, string[]> = {
   recommendation_events: ["user_id"],
   recommendation_sessions: ["user_id"],
   notifications: ["user_id"],
+  push_subscriptions: ["user_id"],
   shared_recommendations: ["sender_id", "receiver_id"],
   friendships: ["requester_id", "addressee_id"],
   duo_taste_profiles: ["user1_id", "user2_id"],

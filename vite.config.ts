@@ -67,6 +67,9 @@ export default defineConfig(({ mode }) => ({
         skipWaiting: true,
         clientsClaim: true,
 
+        // Notifications sur le téléphone : réception et appui (public/push-sw.js).
+        importScripts: ["push-sw.js"],
+
         runtimeCaching: [
           {
             // Les affiches de films. Elles ne changent jamais pour une URL
