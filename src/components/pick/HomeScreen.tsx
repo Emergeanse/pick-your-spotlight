@@ -2373,7 +2373,7 @@ const HomeScreen = ({
           Le fond doit se ressentir, pas se lire. */}
       <div
         className="absolute inset-0 pointer-events-none"
-        style={{ background: "radial-gradient(ellipse 40% 27% at 52% 25%, transparent 45%, hsl(var(--background) / 0.88) 100%)" }}
+        style={{ background: "radial-gradient(ellipse 62% 42% at 52% 25%, transparent 45%, hsl(var(--background) / 0.6) 100%)" }}
       />
 
       {/* Dégradé : image visible en haut, fond opaque en bas */}
