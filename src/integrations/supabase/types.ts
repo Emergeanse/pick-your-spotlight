@@ -785,6 +785,7 @@ export type Database = {
           created_at: string
           data: Json | null
           id: string
+          pushed_at: string | null
           read: boolean
           title: string
           type: string
@@ -795,6 +796,7 @@ export type Database = {
           created_at?: string
           data?: Json | null
           id?: string
+          pushed_at?: string | null
           read?: boolean
           title: string
           type: string
@@ -805,6 +807,7 @@ export type Database = {
           created_at?: string
           data?: Json | null
           id?: string
+          pushed_at?: string | null
           read?: boolean
           title?: string
           type?: string
@@ -1013,6 +1016,39 @@ export type Database = {
         }
         Relationships: []
       }
+      push_subscriptions: {
+        Row: {
+          auth: string
+          created_at: string
+          endpoint: string
+          id: string
+          last_used_at: string | null
+          p256dh: string
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          auth: string
+          created_at?: string
+          endpoint: string
+          id?: string
+          last_used_at?: string | null
+          p256dh: string
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          auth?: string
+          created_at?: string
+          endpoint?: string
+          id?: string
+          last_used_at?: string | null
+          p256dh?: string
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       recommendation_events: {
         Row: {
           accepted: boolean | null
@@ -1160,7 +1196,9 @@ export type Database = {
       shared_recommendations: {
         Row: {
           created_at: string | null
+          dismissed: boolean
           id: string
+          media_type: string
           message: string | null
           poster_path: string | null
           receiver_id: string
@@ -1171,7 +1209,9 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
+          dismissed?: boolean
           id?: string
+          media_type?: string
           message?: string | null
           poster_path?: string | null
           receiver_id: string
@@ -1182,7 +1222,9 @@ export type Database = {
         }
         Update: {
           created_at?: string | null
+          dismissed?: boolean
           id?: string
+          media_type?: string
           message?: string | null
           poster_path?: string | null
           receiver_id?: string
