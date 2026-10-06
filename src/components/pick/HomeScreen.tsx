@@ -2393,20 +2393,16 @@ const HomeScreen = ({
           <span className="text-foreground/75 text-[13px] font-sans leading-tight truncate">
             {firstName ? `Bonsoir ${firstName} 👋` : "Bonsoir 👋"}
           </span>
-          {(interactionCount > 0 || isPremium) && (
-            <span className="flex items-center gap-1.5 text-[11px] font-sans text-foreground/50 leading-none">
-              {interactionCount > 0 && (
-                <span className="flex items-center gap-1">
-                  <Star className="h-2.5 w-2.5 fill-amber-400 text-amber-400" aria-hidden="true" />
-                  <span className="tabular-nums">{interactionCount}</span> films
-                </span>
-              )}
-              {isPremium && (
-                <span className="inline-flex items-center gap-0.5 px-1.5 py-[2px] rounded-md bg-primary text-primary-foreground text-[9px] font-bold leading-none">
-                  <Crown className="h-2 w-2" strokeWidth={3} aria-hidden="true" />
-                  Pick+
-                </span>
-              )}
+          {interactionCount > 0 && (
+            <span className="flex items-center gap-1 text-[11px] font-sans text-foreground/50 leading-none">
+              <Star className="h-2.5 w-2.5 fill-amber-400 text-amber-400" aria-hidden="true" />
+              <span className="tabular-nums">{interactionCount}</span> films
+            </span>
+          )}
+          {isPremium && (
+            <span className="self-start inline-flex items-center gap-0.5 px-1.5 py-[2px] rounded-md bg-primary text-primary-foreground text-[9px] font-bold leading-none">
+              <Crown className="h-2 w-2" strokeWidth={3} aria-hidden="true" />
+              Pick+
             </span>
           )}
         </span>
