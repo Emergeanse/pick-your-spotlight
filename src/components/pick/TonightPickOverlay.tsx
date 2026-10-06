@@ -1,7 +1,8 @@
 ﻿import { useState, useEffect, useRef, useMemo, type MutableRefObject } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import AdhesionBadge from "./AdhesionBadge";
-import { ChevronLeft, ChevronRight, Dices, Loader2, Info } from "lucide-react";
+import { Dices, Loader2, Info } from "lucide-react";
+import FlecheRonde from "./FlecheRonde";
 import { getBackdropUrl, getDisplayTitle, getPosterUrl, getMovieDetailsWithCredits, normalizePosterPath, type MovieDetail } from "@/lib/tmdb";
 import {
   FALLBACK_POSTER_PATHS,
@@ -774,13 +775,7 @@ const TonightPickOverlay = ({
 
           {/* Top bar: back + match ring */}
           <div className="relative z-10 flex justify-between items-center px-6 pt-[calc(1rem+env(safe-area-inset-top))]">
-            <button
-              onClick={onClose}
-              aria-label="Retour"
-              className="w-11 h-11 rounded-full bg-black/40 backdrop-blur-xl border border-white/10 flex items-center justify-center text-foreground hover:bg-black/60 transition-colors"
-            >
-              <ChevronLeft className="w-5 h-5" />
-            </button>
+            <FlecheRonde direction="gauche" onClick={onClose} label="Retour" />
 
             {movie && adhesionScore != null && <AdhesionBadge score={adhesionScore} size={96} />}
           </div>
@@ -804,14 +799,7 @@ const TonightPickOverlay = ({
 
           {/* Poster + flèches de navigation de chaque côté */}
           <div className="relative z-10 flex items-center justify-center gap-4 mt-4">
-            <button
-              onClick={onPrev}
-              disabled={!canGoPrev}
-              aria-label="Proposition précédente"
-              className="w-10 h-10 rounded-full bg-black/40 backdrop-blur-xl border border-white/10 flex items-center justify-center text-foreground transition-all disabled:opacity-20 hover:bg-black/60"
-            >
-              <ChevronLeft className="w-5 h-5" />
-            </button>
+            <FlecheRonde direction="gauche" onClick={onPrev} disabled={!canGoPrev} label="Proposition précédente" tailleClasse="w-10 h-10" />
 
             {movie.poster_path && (
               <button
@@ -839,14 +827,7 @@ const TonightPickOverlay = ({
               </button>
             )}
 
-            <button
-              onClick={onNext}
-              disabled={!canGoNext}
-              aria-label="Proposition suivante"
-              className="w-10 h-10 rounded-full bg-black/40 backdrop-blur-xl border border-white/10 flex items-center justify-center text-foreground transition-all disabled:opacity-20 hover:bg-black/60"
-            >
-              <ChevronRight className="w-5 h-5" />
-            </button>
+            <FlecheRonde direction="droite" onClick={onNext} disabled={!canGoNext} label="Proposition suivante" tailleClasse="w-10 h-10" />
           </div>
 
           {/* Bottom-anchored info block */}

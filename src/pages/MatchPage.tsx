@@ -9,6 +9,7 @@ import { evaluerAdhesion } from "@/lib/adhesion";
 import type { RecommendationMatchData } from "@/lib/recommendation-batch";
 import { readQuotaRefusal, isTransientRateLimit } from "@/lib/quota-errors";
 import AdhesionBadge from "@/components/pick/AdhesionBadge";
+import FlecheRonde from "@/components/pick/FlecheRonde";
 import matchBackground from "@/assets/match-background.webp";
 import MovieActionBar from "@/components/pick/MovieActionBar";
 import FlipCardDetail from "@/components/pick/FlipCardDetail";
@@ -216,12 +217,7 @@ export default function MatchPage() {
 
             {/* Top bar */}
             <div className="relative z-10 flex items-center justify-between px-5 pt-[calc(1rem+env(safe-area-inset-top))]">
-              <button
-                onClick={reset}
-                className="w-10 h-10 rounded-full bg-black/40 backdrop-blur-xl border border-white/10 flex items-center justify-center text-foreground"
-              >
-                <ArrowLeft className="w-5 h-5" />
-              </button>
+              <FlecheRonde direction="gauche" onClick={reset} label="Retour" />
               <AdhesionBadge score={adhesionScore} size={96} />
             </div>
 
