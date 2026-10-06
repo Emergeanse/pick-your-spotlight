@@ -50,6 +50,18 @@
     --sidebar-foreground: 0 0% 100%;
     --sidebar-primary: 265 90% 62%;
     --sidebar-primary-foreground: 0 0% 100%;
+
+    /* Design system Pick v1.0 (docs/DESIGN_SYSTEM.md). Les couleurs de marque
+       existantes (--primary #8B5CF6, --accent #A855F7) restent la référence ;
+       celles-ci complètent la palette pour ne plus écrire de violets en dur. */
+    --pick-surface: 251 26% 8%;          /* #12101B — carte */
+    --pick-surface-hover: 259 31% 10%;   /* #171222 — carte survolée */
+    --pick-purple-light: 255 92% 76%;    /* #A78BFA — texte actif */
+    --pick-magenta: 292 84% 61%;         /* #D946EF */
+    --pick-pink: 330 81% 60%;            /* #EC4899 */
+    --pick-gold: 39 75% 64%;             /* #E8B85C — or chaleureux */
+    --pick-text-secondary: 259 9% 67%;   /* #A8A3B3 */
+    --pick-text-muted: 264 7% 45%;       /* #716B7A */
     --sidebar-accent: 260 15% 11%;
     --sidebar-accent-foreground: 0 0% 100%;
     --sidebar-border: 260 15% 18%;

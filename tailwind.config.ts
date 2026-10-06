@@ -58,6 +58,20 @@ export default {
           DEFAULT: "hsl(var(--gold))",
           foreground: "hsl(var(--gold-foreground))",
         },
+        // Design system Pick v1.0 — docs/DESIGN_SYSTEM.md
+        pick: {
+          surface: "hsl(var(--pick-surface))",
+          "surface-hover": "hsl(var(--pick-surface-hover))",
+          "purple-light": "hsl(var(--pick-purple-light))",
+          magenta: "hsl(var(--pick-magenta))",
+          pink: "hsl(var(--pick-pink))",
+          gold: "hsl(var(--pick-gold))",
+          "text-secondary": "hsl(var(--pick-text-secondary))",
+          "text-muted": "hsl(var(--pick-text-muted))",
+          border: "rgb(139 92 246 / 0.18)",
+          "border-hover": "rgb(139 92 246 / 0.38)",
+          "border-active": "rgb(168 85 247 / 0.70)",
+        },
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",
@@ -70,9 +84,29 @@ export default {
         },
       },
       borderRadius: {
+        // Échelle Pick : 8 / 12 / 16 / 20 px, et rounded-full pour les pilules.
+        "pick-sm": "8px",
+        "pick-md": "12px",
+        "pick-lg": "16px",
+        "pick-xl": "20px",
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+      },
+      transitionTimingFunction: {
+        pick: "cubic-bezier(.2,.8,.2,1)",
+      },
+      transitionDuration: {
+        // Clic 120 ms, survol 180 ms, ouverture 260 ms.
+        120: "120ms",
+        180: "180ms",
+        260: "260ms",
+      },
+      boxShadow: {
+        "pick-card": "0 8px 24px rgba(0,0,0,.30)",
+        "pick-hover": "0 8px 28px rgba(0,0,0,.35), 0 0 12px rgba(139,92,246,.10)",
+        "pick-active": "0 0 16px rgba(168,85,247,.22)",
+        "pick-cta": "0 0 18px rgba(168,85,247,.32), 0 0 32px rgba(217,70,239,.12)",
       },
       keyframes: {
         "accordion-down": {

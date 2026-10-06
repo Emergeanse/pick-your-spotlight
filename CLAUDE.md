@@ -70,6 +70,10 @@ All functions in `supabase/functions/` are Deno-based and use `https://deno.land
 - **ElevenLabs**: Used for TTS via `@elevenlabs/react` and the `pick-tts` edge function.
 - **Supabase**: Project configured via `.env` (`VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`).
 
+### Design system
+
+Every UI change follows `docs/DESIGN_SYSTEM.md` (Pick v1.0): palette via the `pick-*` Tailwind tokens (never hard-coded `violet-400` / hex purples), radii `rounded-pick-{sm,md,lg,xl}`, shadows `shadow-pick-*`, motion `duration-{120,180,260}` + `ease-pick`, no text under 11 px. Hover states use `[@media(hover:hover)]:` so they never stick on touch screens. Functional icons are image pairs (`-repos` / `-actif`, same crop) rendered with `IconeCharte`. Apply it progressively to existing components; don't add effects that don't help the user understand something.
+
 ### Testing
 
 Tests use Vitest + jsdom + `@testing-library/react`. Setup file is at `src/test/setup.ts`. Test files follow `*.test.ts` / `*.spec.ts` convention inside `src/`.
