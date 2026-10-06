@@ -137,6 +137,13 @@ const MOOD_CONFIGS: Record<AmbianceMood, MoodConfig> = {
 type QuickReco = { id: number; title: string; poster_path: string | null; vote_average?: number; media_type?: string; detail?: MovieDetail; matchData?: RecommendationMatch; recommendedBy?: string };
 const QUICK_RECO_KEY = "pick_last_reco_v2";
 
+/**
+ * Base commune des cartes de l'accueil (docs/DESIGN_SYSTEM.md, § Cartes) :
+ * surface, bordure, rayon et ombre identiques, survol plus clair à la souris.
+ */
+const CARTE_PICK =
+  "bg-pick-surface/90 border border-pick-border rounded-pick-lg shadow-pick-card backdrop-blur-md transition-colors duration-180 ease-pick [@media(hover:hover)]:hover:bg-pick-surface-hover [@media(hover:hover)]:hover:border-pick-border-hover";
+
 const extractTmdbIdsFromFeedbackRows = (rows: any[]): number[] =>
   rows.map((row) => row?.catalog_items?.tmdb_id).filter((id): id is number => typeof id === "number" && id > 0);
 
@@ -411,12 +418,10 @@ const HomeScreen = ({
   const [quickRecos, setQuickRecos] = useState<QuickReco[]>([]);
   const [trendingFallback, setTrendingFallback] = useState<QuickReco[]>([]);
   const [loadingMovieId, setLoadingMovieId] = useState<number | null>(null);
-  const [showShareNotif, setShowShareNotif] = useState(false);
   const [nextEvent, setNextEvent] = useState<{
     id: string; title: string; event_date: string; event_time: string | null;
     context: string | null; partnerInitial: string; partnerName: string;
   } | null>(null);
-  const [shareNotifDismissed, setShareNotifDismissed] = useState(false);
   const [activeWidget, setActiveWidget] = useState<"duo" | "famille" | "amis" | "surprise">("surprise");
   const [findChoiceContext, setFindChoiceContext] = useState<LaunchContext>("solo");
 
@@ -857,13 +862,6 @@ const HomeScreen = ({
       setHomeBrowseOpen(false);
     }
   }, [tonightLoading, tonightPick]);
-
-  // Apparition de la notif partagée après 2.5s
-  useEffect(() => {
-    if (shareNotifDismissed) return;
-    const t = setTimeout(() => setShowShareNotif(true), 2500);
-    return () => clearTimeout(t);
-  }, [shareNotifDismissed]);
 
   // Charge les dernières recos depuis le cache localStorage
   useEffect(() => {
@@ -2420,8 +2418,8 @@ const HomeScreen = ({
               le badge dit le statut réel, celui des premiers utilisateurs. À
               revoir le jour où Pick+ deviendra payant. */}
           {isPremium && (
-            <span className="inline-flex items-center gap-0.5 px-1.5 py-[2px] rounded-md bg-primary text-primary-foreground text-[9px] font-bold leading-none">
-              <Sparkles className="h-2 w-2" strokeWidth={3} aria-hidden="true" />
+            <span className="inline-flex items-center gap-1 px-2 py-[3px] rounded-pick-sm bg-primary text-primary-foreground text-[11px] font-bold leading-none">
+              <Sparkles className="h-2.5 w-2.5" strokeWidth={3} aria-hidden="true" />
               Early Picker
             </span>
           )}
@@ -2489,10 +2487,10 @@ const HomeScreen = ({
               transition={{ delay: 0.38, duration: 0.4 }}
               whileTap={{ scale: 0.93 }}
               onClick={() => { setFindChoiceContext("surprise"); setActiveWidget("surprise"); setTimeout(() => setShowFindChoice(true), 150); }}
-              className={`flex-1 min-w-0 flex flex-col items-center gap-1.5 py-2.5 px-2 rounded-2xl backdrop-blur-md transition-all ${activeWidget === "surprise" ? "border border-violet-400/60 bg-violet-400/15 shadow-[0_0_18px_rgba(167,139,250,0.35)]" : "border border-white/12 bg-[hsl(240_18%_7%/0.82)] [@media(hover:hover)]:hover:border-violet-400/60 [@media(hover:hover)]:hover:bg-violet-400/15 [@media(hover:hover)]:hover:shadow-[0_0_18px_rgba(167,139,250,0.35)]"}`}
+              className={`flex-1 min-w-0 flex flex-col items-center gap-2 py-3 px-2 rounded-pick-lg backdrop-blur-md transition-all duration-180 ease-pick ${activeWidget === "surprise" ? "border border-pick-border-active bg-primary/15 shadow-pick-active" : "border border-pick-border bg-pick-surface/90 [@media(hover:hover)]:hover:border-pick-border-hover [@media(hover:hover)]:hover:bg-pick-surface-hover [@media(hover:hover)]:hover:shadow-pick-hover"}`}
             >
               <img src={groupeSurprise} alt="" aria-hidden="true" draggable={false} className="w-10 h-10 shrink-0 pointer-events-none select-none" />
-              <p className={`font-sans text-[10.5px] font-semibold leading-tight text-center ${activeWidget === "surprise" ? "text-violet-400" : "text-foreground"}`}>Surprise<br/>solo</p>
+              <p className={`font-sans text-[12px] font-semibold leading-tight text-center ${activeWidget === "surprise" ? "text-pick-purple-light" : "text-foreground"}`}>Surprise<br/>solo</p>
             </motion.button>
 
             {/* Soirée Duo */}
@@ -2501,10 +2499,10 @@ const HomeScreen = ({
               transition={{ delay: 0.44, duration: 0.4 }}
               whileTap={{ scale: 0.93 }}
               onClick={() => { setFindChoiceContext("duo"); setActiveWidget("duo"); setTimeout(() => setShowFindChoice(true), 150); }}
-              className={`flex-1 min-w-0 flex flex-col items-center gap-1.5 py-2.5 px-2 rounded-2xl backdrop-blur-md transition-all ${activeWidget === "duo" ? "border border-violet-400/60 bg-violet-400/15 shadow-[0_0_18px_rgba(167,139,250,0.35)]" : "border border-white/12 bg-[hsl(240_18%_7%/0.82)] [@media(hover:hover)]:hover:border-violet-400/60 [@media(hover:hover)]:hover:bg-violet-400/15 [@media(hover:hover)]:hover:shadow-[0_0_18px_rgba(167,139,250,0.35)]"}`}
+              className={`flex-1 min-w-0 flex flex-col items-center gap-2 py-3 px-2 rounded-pick-lg backdrop-blur-md transition-all duration-180 ease-pick ${activeWidget === "duo" ? "border border-pick-border-active bg-primary/15 shadow-pick-active" : "border border-pick-border bg-pick-surface/90 [@media(hover:hover)]:hover:border-pick-border-hover [@media(hover:hover)]:hover:bg-pick-surface-hover [@media(hover:hover)]:hover:shadow-pick-hover"}`}
             >
               <img src={groupeDuo} alt="" aria-hidden="true" draggable={false} className="w-10 h-10 shrink-0 pointer-events-none select-none" />
-              <p className={`font-sans text-[10.5px] font-semibold leading-tight text-center ${activeWidget === "duo" ? "text-violet-400" : "text-foreground"}`}>Soirée<br/>Duo</p>
+              <p className={`font-sans text-[12px] font-semibold leading-tight text-center ${activeWidget === "duo" ? "text-pick-purple-light" : "text-foreground"}`}>Soirée<br/>Duo</p>
             </motion.button>
 
             {/* Film en famille */}
@@ -2513,10 +2511,10 @@ const HomeScreen = ({
               transition={{ delay: 0.50, duration: 0.4 }}
               whileTap={{ scale: 0.93 }}
               onClick={() => { setFindChoiceContext("famille"); setActiveWidget("famille"); setTimeout(() => setShowFindChoice(true), 150); }}
-              className={`flex-1 min-w-0 flex flex-col items-center gap-1.5 py-2.5 px-2 rounded-2xl backdrop-blur-md transition-all ${activeWidget === "famille" ? "border border-violet-400/60 bg-violet-400/15 shadow-[0_0_18px_rgba(167,139,250,0.35)]" : "border border-white/12 bg-[hsl(240_18%_7%/0.82)] [@media(hover:hover)]:hover:border-violet-400/60 [@media(hover:hover)]:hover:bg-violet-400/15 [@media(hover:hover)]:hover:shadow-[0_0_18px_rgba(167,139,250,0.35)]"}`}
+              className={`flex-1 min-w-0 flex flex-col items-center gap-2 py-3 px-2 rounded-pick-lg backdrop-blur-md transition-all duration-180 ease-pick ${activeWidget === "famille" ? "border border-pick-border-active bg-primary/15 shadow-pick-active" : "border border-pick-border bg-pick-surface/90 [@media(hover:hover)]:hover:border-pick-border-hover [@media(hover:hover)]:hover:bg-pick-surface-hover [@media(hover:hover)]:hover:shadow-pick-hover"}`}
             >
               <img src={groupeFamille} alt="" aria-hidden="true" draggable={false} className="w-10 h-10 shrink-0 pointer-events-none select-none" />
-              <p className={`font-sans text-[10.5px] font-semibold leading-tight text-center ${activeWidget === "famille" ? "text-violet-400" : "text-foreground"}`}>Film en<br/>famille</p>
+              <p className={`font-sans text-[12px] font-semibold leading-tight text-center ${activeWidget === "famille" ? "text-pick-purple-light" : "text-foreground"}`}>Film en<br/>famille</p>
             </motion.button>
 
             {/* Entre amis */}
@@ -2525,10 +2523,10 @@ const HomeScreen = ({
               transition={{ delay: 0.56, duration: 0.4 }}
               whileTap={{ scale: 0.93 }}
               onClick={() => { setFindChoiceContext("amis"); setActiveWidget("amis"); setTimeout(() => setShowFindChoice(true), 150); }}
-              className={`flex-1 min-w-0 flex flex-col items-center gap-1.5 py-2.5 px-2 rounded-2xl backdrop-blur-md transition-all ${activeWidget === "amis" ? "border border-violet-400/60 bg-violet-400/15 shadow-[0_0_18px_rgba(167,139,250,0.35)]" : "border border-white/12 bg-[hsl(240_18%_7%/0.82)] [@media(hover:hover)]:hover:border-violet-400/60 [@media(hover:hover)]:hover:bg-violet-400/15 [@media(hover:hover)]:hover:shadow-[0_0_18px_rgba(167,139,250,0.35)]"}`}
+              className={`flex-1 min-w-0 flex flex-col items-center gap-2 py-3 px-2 rounded-pick-lg backdrop-blur-md transition-all duration-180 ease-pick ${activeWidget === "amis" ? "border border-pick-border-active bg-primary/15 shadow-pick-active" : "border border-pick-border bg-pick-surface/90 [@media(hover:hover)]:hover:border-pick-border-hover [@media(hover:hover)]:hover:bg-pick-surface-hover [@media(hover:hover)]:hover:shadow-pick-hover"}`}
             >
               <img src={groupeAmis} alt="" aria-hidden="true" draggable={false} className="w-10 h-10 shrink-0 pointer-events-none select-none" />
-              <p className={`font-sans text-[10.5px] font-semibold leading-tight text-center ${activeWidget === "amis" ? "text-violet-400" : "text-foreground"}`}>Entre<br/>amis</p>
+              <p className={`font-sans text-[12px] font-semibold leading-tight text-center ${activeWidget === "amis" ? "text-pick-purple-light" : "text-foreground"}`}>Entre<br/>amis</p>
             </motion.button>
           </div>
         </section>
@@ -2542,11 +2540,11 @@ const HomeScreen = ({
             transition={{ delay: 0.54, duration: 0.5 }}
             whileTap={{ scale: 0.985 }}
             onClick={() => navigate(`/app/soirees/${nextEvent.id}`)}
-            className="mx-5 mt-3 w-[calc(100%-2.5rem)] flex items-center gap-3 px-3.5 py-2.5 rounded-2xl border border-primary/20 bg-primary/[0.06] text-left"
+            className={`mx-5 mt-3 w-[calc(100%-2.5rem)] flex items-center gap-3 p-3 text-left ${CARTE_PICK}`}
           >
             {/* Avatars empilés : partenaire (derrière) + utilisateur (devant) */}
             <div className="relative flex-shrink-0 w-11 h-8">
-              <div className="absolute left-0 top-0 w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-pink-400 border-2 border-[hsl(240_22%_6%)] flex items-center justify-center">
+              <div className="absolute left-0 top-0 w-8 h-8 rounded-full bg-gradient-to-br from-primary to-pick-pink border-2 border-[hsl(240_22%_6%)] flex items-center justify-center">
                 <span className="text-[11px] font-bold text-white leading-none">{nextEvent.partnerInitial}</span>
               </div>
               <div className="absolute left-4 top-0 w-8 h-8 rounded-full overflow-hidden border-2 border-[hsl(240_22%_6%)] bg-primary/20 flex items-center justify-center">
@@ -2560,14 +2558,14 @@ const HomeScreen = ({
               </div>
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-[10px] font-sans font-semibold tracking-[0.12em] uppercase text-primary/70 leading-none">Prochaine soirée</p>
-              <p className="mt-0.5 font-serif text-foreground text-[13px] leading-tight truncate">{nextEvent.title}</p>
-              <p className="text-foreground/40 text-[10px] font-sans capitalize">
+              <p className="text-[11px] font-sans font-semibold tracking-[0.12em] uppercase text-pick-purple-light leading-none">Prochaine soirée</p>
+              <p className="mt-1 font-sans font-semibold text-foreground text-[14px] leading-tight truncate">{nextEvent.title}</p>
+              <p className="mt-0.5 text-pick-text-secondary text-[12px] font-sans capitalize">
                 {new Date(nextEvent.event_date + "T12:00:00").toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })}
                 {nextEvent.event_time ? ` · ${nextEvent.event_time.slice(0, 5)}` : ""}
               </p>
             </div>
-            <ChevronRight className="w-3.5 h-3.5 text-foreground/45 flex-shrink-0" />
+            <ChevronRight className="w-4 h-4 text-pick-text-muted flex-shrink-0" />
           </motion.button>
         )}
 
@@ -2577,18 +2575,18 @@ const HomeScreen = ({
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             onClick={() => setShowPostSoiree(true)}
-            className="mx-5 mt-3 w-[calc(100%-2.5rem)] flex items-center gap-3 p-3 rounded-2xl bg-primary/[0.07] border border-primary/20 hover:bg-primary/[0.11] transition-all text-left"
+            className={`mx-5 mt-3 w-[calc(100%-2.5rem)] flex items-center gap-3 p-3 text-left ${CARTE_PICK}`}
           >
             <span className="text-xl shrink-0">🌟</span>
             <div className="flex-1 min-w-0">
-              <p className="text-[12.5px] font-sans font-semibold text-foreground leading-tight">
+              <p className="text-[14px] font-sans font-semibold text-foreground leading-tight">
                 Comment s'est passée la soirée ?
               </p>
-              <p className="text-[10.5px] font-sans text-foreground/45 mt-0.5 truncate">
+              <p className="text-[12px] font-sans text-pick-text-secondary mt-0.5 truncate">
                 {pendingFeedbackEvent.filmTitle} · En attente de ton avis
               </p>
             </div>
-            <span className="text-[11px] font-sans font-semibold text-primary shrink-0">Évaluer →</span>
+            <span className="text-[12px] font-sans font-semibold text-pick-purple-light shrink-0">Évaluer →</span>
           </motion.button>
         )}
 
@@ -2600,13 +2598,13 @@ const HomeScreen = ({
           className="mt-4 pb-3"
         >
           <div className="px-5 flex items-center justify-between mb-3">
-            <p className="text-[12px] font-serif text-foreground/80">
+            <h2 className="text-[16px] font-sans font-bold text-foreground">
               3 films qui pourraient te plaire
-            </p>
+            </h2>
             {quickRecos.length > 0 && (
               <button
                 onClick={() => setShowFindChoice(true)}
-                className="text-[10px] font-sans text-primary/70 hover:text-primary transition-colors"
+                className="text-[12px] font-sans font-medium text-pick-purple-light/80 [@media(hover:hover)]:hover:text-pick-purple-light transition-colors duration-180 ease-pick"
               >
                 Actualiser
               </button>
@@ -2623,9 +2621,9 @@ const HomeScreen = ({
                   const list = quickRecos.length > 0 ? quickRecos.slice(0, 3) : trendingFallback.slice(0, 3);
                   await openHomeBrowseAt(list, i);
                 }}
-                className="w-[80px] shrink-0 text-left relative"
+                className="group w-[80px] shrink-0 text-left relative"
               >
-                <div className="w-full aspect-[2/3] rounded-xl overflow-hidden bg-white/[0.04] border border-white/[0.07]">
+                <div className="w-full aspect-[2/3] rounded-[10px] overflow-hidden bg-pick-surface border border-pick-border shadow-pick-card transition-transform duration-180 ease-pick [@media(hover:hover)]:group-hover:scale-[1.025]">
                   {item?.poster_path ? (
                     <img
                       src={`https://image.tmdb.org/t/p/w185${item.poster_path}`}
@@ -2639,12 +2637,12 @@ const HomeScreen = ({
                   )}
                   {item?.recommendedBy && (
                     <div className="absolute top-1.5 left-1.5 right-1.5 flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-black/70 backdrop-blur-sm">
-                      <span className="text-[8px] leading-none">💌</span>
-                      <span className="text-[8px] font-sans text-white/80 truncate leading-tight">{item.recommendedBy}</span>
+                      <span className="text-[11px] leading-none">💌</span>
+                      <span className="text-[11px] font-sans text-white/85 truncate leading-tight">{item.recommendedBy}</span>
                     </div>
                   )}
                   {loadingMovieId === item?.id && (
-                    <div className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-xl">
+                    <div className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-[10px]">
                       <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                     </div>
                   )}
@@ -2662,44 +2660,6 @@ const HomeScreen = ({
           excludedGenres={userExcludedGenres}
         />
 
-        {/* ─── Notification "Partagé avec vous" — dans le flow scrollable ─── */}
-        <AnimatePresence>
-          {showShareNotif && !shareNotifDismissed && !tonightLoading && !tonightPick && !showFindChoice && (
-            <motion.div
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 8 }}
-              transition={{ type: "spring", stiffness: 340, damping: 30 }}
-              className="mx-5 mt-3"
-            >
-              <div
-                className="flex items-center gap-3 px-3.5 py-2.5 rounded-2xl border border-primary/20 bg-primary/[0.06] backdrop-blur-md"
-                onClick={() => { setShowShareNotif(false); setShowFindChoice(true); }}
-                role="button"
-                tabIndex={0}
-              >
-                <div className="flex-shrink-0 w-9 h-9 rounded-full bg-gradient-to-br from-rose-400 via-pink-500 to-violet-500 border-2 border-[hsl(240_18%_6%)] flex items-center justify-center shadow-[0_0_14px_hsl(330_70%_60%/0.45)]">
-                  <span className="text-[15px] leading-none">🌸</span>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-[12px] font-sans font-semibold text-foreground leading-tight">
-                    Partagé <span className="text-foreground/50 font-normal">avec vous</span>
-                  </p>
-                  <p className="text-[10.5px] font-sans text-foreground/50 leading-tight mt-0.5 truncate">
-                    <span className="text-foreground/75 font-medium">Sophie</span> pense que tu aimerais ce film
-                  </p>
-                </div>
-                <button
-                  onClick={(e) => { e.stopPropagation(); setShowShareNotif(false); setShowFindChoice(true); }}
-                  className="flex-shrink-0 flex items-center gap-1 px-3 py-1.5 rounded-xl border border-primary/25 bg-primary/10 text-primary text-[12px] font-sans font-semibold"
-                >
-                  Voir
-                  <ChevronRight className="w-3 h-3" />
-                </button>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
       </div>
 
       <HomeScreenChoiceModal

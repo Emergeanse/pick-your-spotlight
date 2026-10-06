@@ -80,7 +80,7 @@ const BottomTabBar = () => {
             </motion.button>
             <span
               aria-hidden="true"
-              className="pointer-events-none absolute bottom-1 left-1/2 -translate-x-1/2 text-[clamp(8.5px,2.6vw,10px)] font-sans tracking-tight text-violet-200 font-semibold whitespace-nowrap [text-shadow:0_0_8px_rgb(168_85_247/0.9),0_0_16px_rgb(168_85_247/0.5)]"
+              className="pointer-events-none absolute bottom-1 left-1/2 -translate-x-1/2 text-[clamp(8.5px,2.6vw,10px)] font-sans tracking-tight text-foreground/90 font-semibold whitespace-nowrap [text-shadow:0_0_8px_hsl(var(--accent)/0.9),0_0_16px_hsl(var(--accent)/0.5)]"
             >
               Nouvelle soirée
             </span>
@@ -125,22 +125,8 @@ function TabButton({ tab, isActive, navigate, location }: {
       className="group relative flex flex-col items-center justify-center flex-1 pt-1.5 pb-1 transition-colors"
       style={{ WebkitTapHighlightColor: "transparent" }}
     >
-      {/* Survol à la souris : un avant-goût de l'onglet actif, halo et violet un
-          peu moins intenses pour ne pas le confondre avec l'onglet sélectionné.
-          Pas sur écran tactile, où le survol resterait collé après l'appui. */}
-      {!isActive && (
-        <span
-          aria-hidden="true"
-          className="absolute top-0 w-12 h-9 rounded-full bg-primary/10 blur-xl opacity-0 transition-opacity duration-200 [@media(hover:hover)]:group-hover:opacity-100"
-        />
-      )}
-      {isActive && (
-        <motion.span
-          layoutId="tab-halo"
-          className="absolute top-0 w-12 h-9 rounded-full bg-primary/15 blur-xl"
-          transition={{ type: "spring", stiffness: 320, damping: 28 }}
-        />
-      )}
+      {/* Onglet actif : le seul trait de 2 px au-dessus, sans halo (design system
+          § Navigation). L'icône active suffit à le signaler. */}
       {isActive && (
         <motion.span
           layoutId="tab-indicator"
@@ -155,7 +141,7 @@ function TabButton({ tab, isActive, navigate, location }: {
       >
         <IconeCharte repos={tab.icon} actif={tab.activeIcon} className="w-[26px] h-[26px]" active={isActive} />
       </motion.div>
-      <span className={`mt-1 text-[clamp(8.5px,2.6vw,10px)] font-sans tracking-tight transition-colors duration-200 ${isActive ? "text-primary font-semibold" : "text-foreground/40 font-medium [@media(hover:hover)]:group-hover:text-primary/80"}`}>
+      <span className={`mt-1 text-[clamp(8.5px,2.6vw,10px)] font-sans tracking-tight transition-colors duration-180 ease-pick ${isActive ? "text-pick-purple-light font-semibold" : "text-pick-text-muted font-medium [@media(hover:hover)]:group-hover:text-pick-purple-light/80"}`}>
         {tab.label}
       </span>
     </button>
