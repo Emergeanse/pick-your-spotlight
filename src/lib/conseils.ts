@@ -52,20 +52,29 @@ export async function envoyerConseil(
     message: mot,
   }));
   if (lignes.length === 0) return 0;
-  const { data, error } = await supabase.from("shared_recommendations" as never).insert(lignes as never).select("id");
+  let { data, error } = await supabase.from("shared_recommendations" as never).insert(lignes as never).select("id");
+  // Base pas encore migrée (colonne media_type absente) : on envoie sans elle
+  // plutôt que d'échouer. À retirer une fois la migration du 6 octobre passée.
+  if (error && /media_type/.test(error.message)) {
+    const sansType = lignes.map(({ media_type: _ignore, ...reste }) => reste);
+    ({ data, error } = await supabase.from("shared_recommendations" as never).insert(sansType as never).select("id"));
+  }
   if (error) throw error;
   return (data as unknown[] | null)?.length ?? 0;
 }
 
 /** Conseils reçus, non écartés, du plus récent au plus ancien. */
 export async function listerConseilsRecus(userId: string): Promise<ConseilRecu[]> {
-  const { data, error } = await supabase
-    .from("shared_recommendations" as never)
-    .select("id, tmdb_id, title, poster_path, media_type, message, sender_id, created_at")
-    .eq("receiver_id", userId)
-    .eq("dismissed", false)
-    .order("created_at", { ascending: false })
-    .limit(100);
+  const lire = (migree: boolean) => {
+    const q = supabase
+      .from("shared_recommendations" as never)
+      .select(migree ? "id, tmdb_id, title, poster_path, media_type, message, sender_id, created_at" : "id, tmdb_id, title, poster_path, message, sender_id, created_at")
+      .eq("receiver_id", userId);
+    return (migree ? q.eq("dismissed", false) : q).order("created_at", { ascending: false }).limit(100);
+  };
+  let { data, error } = await lire(true);
+  // Même repli tant que la migration du 6 octobre n'est pas passée.
+  if (error && /media_type|dismissed/.test(error.message)) ({ data, error } = await lire(false));
   if (error) throw error;
   const lignes = (data ?? []) as Array<{
     id: string; tmdb_id: number; title: string; poster_path: string | null;
