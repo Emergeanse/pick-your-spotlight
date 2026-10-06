@@ -113,9 +113,18 @@ function TabButton({ tab, isActive, navigate, location }: {
           navigate(tab.path);
         }
       }}
-      className="relative flex flex-col items-center justify-center flex-1 pt-1.5 pb-1 transition-colors"
+      className="group relative flex flex-col items-center justify-center flex-1 pt-1.5 pb-1 transition-colors"
       style={{ WebkitTapHighlightColor: "transparent" }}
     >
+      {/* Survol à la souris : un avant-goût de l'onglet actif, halo et violet un
+          peu moins intenses pour ne pas le confondre avec l'onglet sélectionné.
+          Pas sur écran tactile, où le survol resterait collé après l'appui. */}
+      {!isActive && (
+        <span
+          aria-hidden="true"
+          className="absolute top-0 w-12 h-9 rounded-full bg-primary/10 blur-xl opacity-0 transition-opacity duration-200 [@media(hover:hover)]:group-hover:opacity-100"
+        />
+      )}
       {isActive && (
         <motion.span
           layoutId="tab-halo"
@@ -136,11 +145,11 @@ function TabButton({ tab, isActive, navigate, location }: {
         className="relative flex items-center justify-center h-[26px]"
       >
         <Icon
-          className={`w-[20px] h-[20px] transition-colors duration-200 ${isActive ? "text-primary" : "text-foreground/50"}`}
+          className={`w-[20px] h-[20px] transition-colors duration-200 ${isActive ? "text-primary" : "text-foreground/50 [@media(hover:hover)]:group-hover:text-primary/80"}`}
           strokeWidth={isActive ? 2.2 : 1.7}
         />
       </motion.div>
-      <span className={`mt-1 text-[clamp(8.5px,2.6vw,10px)] font-sans tracking-tight transition-colors duration-200 ${isActive ? "text-primary font-semibold" : "text-foreground/40 font-medium"}`}>
+      <span className={`mt-1 text-[clamp(8.5px,2.6vw,10px)] font-sans tracking-tight transition-colors duration-200 ${isActive ? "text-primary font-semibold" : "text-foreground/40 font-medium [@media(hover:hover)]:group-hover:text-primary/80"}`}>
         {tab.label}
       </span>
     </button>
