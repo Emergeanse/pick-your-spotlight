@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from "react";
+import { usePickPlus } from "@/hooks/use-pick-plus";
 import { avatarAffiche } from "@/lib/avatars";
 import ChoixAvatar from "@/components/pick/ChoixAvatar";
 import { ReglageNotificationsTelephone } from "@/components/pick/NotificationsTelephone";
@@ -447,6 +448,7 @@ const Profile = () => {
   };
 
   const [choixAvatarOuvert, setChoixAvatarOuvert] = useState(false);
+  const { isPremium } = usePickPlus();
   const choisirAvatar = async (url: string) => {
     if (!user) return;
     const avant = avatarUrl;
@@ -672,6 +674,13 @@ const Profile = () => {
                   <h1 className="text-2xl font-serif text-white font-bold">{nameDisplay}</h1>
                   <Pencil className="w-3 h-3 text-foreground/40 group-hover:text-foreground/50 transition-colors" />
                 </button>
+              )}
+              {/* Accès anticipé : tout le monde a Pick+ ; le badge dit ce statut. */}
+              {isPremium && (
+                <span className="mt-1 inline-flex items-center gap-1 px-2 py-[3px] rounded-pick-sm bg-primary text-primary-foreground text-[11px] font-bold leading-none">
+                  <Sparkles className="h-2.5 w-2.5" strokeWidth={3} aria-hidden="true" />
+                  Early Picker
+                </span>
               )}
               {profileSummaryParts.length > 0 && (
                 <p className="text-foreground/65 text-[12px] font-sans mt-0.5 leading-snug">

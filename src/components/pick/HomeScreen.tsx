@@ -2487,12 +2487,12 @@ const HomeScreen = ({
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.26, duration: 0.4 }}
         onClick={() => navigate("/app/adn")}
-        className="group absolute right-4 md:right-7 top-[calc(74px+env(safe-area-inset-top))] md:top-[78px] [@media(min-height:860px)]:top-[calc(84px+env(safe-area-inset-top))] [@media(min-height:860px)]:md:top-[86px] z-20 flex items-center gap-1.5 pl-1.5 pr-1.5 py-1.5 rounded-pick-md border border-pick-border bg-pick-surface/30 backdrop-blur-md text-left transition-colors duration-180 ease-pick [@media(hover:hover)]:hover:border-pick-border-hover active:scale-[0.98]"
+        className="group absolute right-4 md:right-7 top-[calc(80px+env(safe-area-inset-top))] md:top-[84px] [@media(min-height:860px)]:top-[calc(90px+env(safe-area-inset-top))] [@media(min-height:860px)]:md:top-[92px] z-20 max-w-[168px] flex items-center gap-1 pl-1 pr-1 py-1 rounded-pick-md border border-pick-border bg-pick-surface/30 backdrop-blur-md text-left transition-colors duration-180 ease-pick [@media(hover:hover)]:hover:border-pick-border-hover active:scale-[0.98]"
         aria-label="Mon ADN cinéma"
       >
-        <IconeCharte repos={adnRepos} actif={adnActif} className="w-6 h-6 shrink-0" />
+        <IconeCharte repos={adnRepos} actif={adnActif} className="w-5 h-5 shrink-0" />
         <span className="flex flex-col leading-tight">
-          <span className="text-[12px] font-sans font-semibold text-foreground/90">ADN cinéma</span>
+          <span className="text-[12px] font-sans font-semibold text-foreground/85">ADN cinéma</span>
           {interactionCount > 0 && (
             <span className="text-[11px] font-sans text-pick-text-muted tabular-nums">
               {interactionCount.toLocaleString("fr-FR")} choix analysés
@@ -2514,25 +2514,11 @@ const HomeScreen = ({
         aria-label="Mon profil"
       >
         <span className="flex flex-col items-start gap-1 min-w-0">
-          <span className="text-foreground/75 text-[13px] font-sans leading-tight max-w-[11rem] truncate">
+          <span className="text-foreground/80 text-[14px] font-sans leading-tight max-w-[11rem] truncate">
             {firstName ? `Bonsoir ${firstName} 👋` : "Bonsoir 👋"}
           </span>
-          {interactionCount > 0 && (
-            <span className="flex items-center gap-1 text-[11px] font-sans text-foreground/50 leading-none">
-              <Star className="h-2.5 w-2.5 fill-amber-400 text-amber-400" aria-hidden="true" />
-              <span className="tabular-nums">{interactionCount}</span> films
-            </span>
-          )}
-          {/* Pendant l'accès anticipé, tout le monde a Pick+ sans payer. Afficher
-              « Pick+ » promettrait de garder ce qu'on retirera peut-être un jour :
-              le badge dit le statut réel, celui des premiers utilisateurs. À
-              revoir le jour où Pick+ deviendra payant. */}
-          {isPremium && (
-            <span className="inline-flex items-center gap-1 px-2 py-[3px] rounded-pick-sm bg-primary text-primary-foreground text-[11px] font-bold leading-none">
-              <Sparkles className="h-2.5 w-2.5" strokeWidth={3} aria-hidden="true" />
-              Early Picker
-            </span>
-          )}
+          {/* Le nombre de films est dans la carte ADN, le statut Early Picker
+              dans le profil : le haut de l'accueil reste léger. */}
         </span>
       </motion.button>
 
@@ -2547,7 +2533,7 @@ const HomeScreen = ({
             {/* La recherche instantanée d'abord : c'est le geste le plus fréquent.
                 Organiser une soirée pour plus tard a son propre bouton. */}
             <h1 className="mt-1.5 font-serif text-foreground text-[clamp(28px,7.8vw,35px)] [@media(max-height:800px)]:text-[28px] leading-[1.02] tracking-tight [text-shadow:0_2px_18px_rgba(0,0,0,0.55)]">
-              LE film parfait,<br />
+              Le film parfait,<br />
               <span className="text-primary" style={{ textShadow: "0 0 18px hsl(var(--primary)/0.5)" }}>
                 ce soir.
               </span>
@@ -2566,7 +2552,7 @@ const HomeScreen = ({
               transition={{ delay: 0.38, duration: 0.4 }}
               whileTap={{ scale: 0.93 }}
               onClick={() => { setFindChoiceContext("surprise"); setActiveWidget("surprise"); setTimeout(() => setShowFindChoice(true), 150); }}
-              className={`flex-1 min-w-0 flex flex-row items-center justify-center gap-1.5 h-11 px-1.5 rounded-pick-md backdrop-blur-md transition-all duration-180 ease-pick ${activeWidget === "surprise" ? "border border-pick-border-active bg-primary/15 shadow-pick-active" : "border border-pick-border bg-pick-surface/25 [@media(hover:hover)]:hover:border-pick-border-hover [@media(hover:hover)]:hover:bg-pick-surface-hover [@media(hover:hover)]:hover:shadow-pick-hover"}`}
+              className={`flex-1 min-w-0 flex flex-row items-center justify-center gap-1.5 h-11 px-1.5 rounded-pick-md backdrop-blur-md transition-all duration-180 ease-pick ${activeWidget === "surprise" ? "border border-pick-purple-light/45 bg-primary/[0.12]" : "border border-pick-border bg-pick-surface/25 [@media(hover:hover)]:hover:border-pick-border-hover [@media(hover:hover)]:hover:bg-pick-surface-hover "}`}
             >
               <img src={groupeSurprise} alt="" aria-hidden="true" draggable={false} className="w-6 h-6 shrink-0 pointer-events-none select-none" />
               <p className={`font-sans text-[12px] font-semibold leading-none whitespace-nowrap ${activeWidget === "surprise" ? "text-pick-purple-light" : "text-foreground"}`}>Solo</p>
@@ -2578,7 +2564,7 @@ const HomeScreen = ({
               transition={{ delay: 0.44, duration: 0.4 }}
               whileTap={{ scale: 0.93 }}
               onClick={() => { setFindChoiceContext("duo"); setActiveWidget("duo"); setTimeout(() => setShowFindChoice(true), 150); }}
-              className={`flex-1 min-w-0 flex flex-row items-center justify-center gap-1.5 h-11 px-1.5 rounded-pick-md backdrop-blur-md transition-all duration-180 ease-pick ${activeWidget === "duo" ? "border border-pick-border-active bg-primary/15 shadow-pick-active" : "border border-pick-border bg-pick-surface/25 [@media(hover:hover)]:hover:border-pick-border-hover [@media(hover:hover)]:hover:bg-pick-surface-hover [@media(hover:hover)]:hover:shadow-pick-hover"}`}
+              className={`flex-1 min-w-0 flex flex-row items-center justify-center gap-1.5 h-11 px-1.5 rounded-pick-md backdrop-blur-md transition-all duration-180 ease-pick ${activeWidget === "duo" ? "border border-pick-purple-light/45 bg-primary/[0.12]" : "border border-pick-border bg-pick-surface/25 [@media(hover:hover)]:hover:border-pick-border-hover [@media(hover:hover)]:hover:bg-pick-surface-hover "}`}
             >
               <img src={groupeDuo} alt="" aria-hidden="true" draggable={false} className="w-6 h-6 shrink-0 pointer-events-none select-none" />
               <p className={`font-sans text-[12px] font-semibold leading-none whitespace-nowrap ${activeWidget === "duo" ? "text-pick-purple-light" : "text-foreground"}`}>Duo</p>
@@ -2590,7 +2576,7 @@ const HomeScreen = ({
               transition={{ delay: 0.50, duration: 0.4 }}
               whileTap={{ scale: 0.93 }}
               onClick={() => { setFindChoiceContext("famille"); setActiveWidget("famille"); setTimeout(() => setShowFindChoice(true), 150); }}
-              className={`flex-1 min-w-0 flex flex-row items-center justify-center gap-1.5 h-11 px-1.5 rounded-pick-md backdrop-blur-md transition-all duration-180 ease-pick ${activeWidget === "famille" ? "border border-pick-border-active bg-primary/15 shadow-pick-active" : "border border-pick-border bg-pick-surface/25 [@media(hover:hover)]:hover:border-pick-border-hover [@media(hover:hover)]:hover:bg-pick-surface-hover [@media(hover:hover)]:hover:shadow-pick-hover"}`}
+              className={`flex-1 min-w-0 flex flex-row items-center justify-center gap-1.5 h-11 px-1.5 rounded-pick-md backdrop-blur-md transition-all duration-180 ease-pick ${activeWidget === "famille" ? "border border-pick-purple-light/45 bg-primary/[0.12]" : "border border-pick-border bg-pick-surface/25 [@media(hover:hover)]:hover:border-pick-border-hover [@media(hover:hover)]:hover:bg-pick-surface-hover "}`}
             >
               <img src={groupeFamille} alt="" aria-hidden="true" draggable={false} className="w-6 h-6 shrink-0 pointer-events-none select-none" />
               <p className={`font-sans text-[12px] font-semibold leading-none whitespace-nowrap ${activeWidget === "famille" ? "text-pick-purple-light" : "text-foreground"}`}>Famille</p>
@@ -2602,7 +2588,7 @@ const HomeScreen = ({
               transition={{ delay: 0.56, duration: 0.4 }}
               whileTap={{ scale: 0.93 }}
               onClick={() => { setFindChoiceContext("amis"); setActiveWidget("amis"); setTimeout(() => setShowFindChoice(true), 150); }}
-              className={`flex-1 min-w-0 flex flex-row items-center justify-center gap-1.5 h-11 px-1.5 rounded-pick-md backdrop-blur-md transition-all duration-180 ease-pick ${activeWidget === "amis" ? "border border-pick-border-active bg-primary/15 shadow-pick-active" : "border border-pick-border bg-pick-surface/25 [@media(hover:hover)]:hover:border-pick-border-hover [@media(hover:hover)]:hover:bg-pick-surface-hover [@media(hover:hover)]:hover:shadow-pick-hover"}`}
+              className={`flex-1 min-w-0 flex flex-row items-center justify-center gap-1.5 h-11 px-1.5 rounded-pick-md backdrop-blur-md transition-all duration-180 ease-pick ${activeWidget === "amis" ? "border border-pick-purple-light/45 bg-primary/[0.12]" : "border border-pick-border bg-pick-surface/25 [@media(hover:hover)]:hover:border-pick-border-hover [@media(hover:hover)]:hover:bg-pick-surface-hover "}`}
             >
               <img src={groupeAmis} alt="" aria-hidden="true" draggable={false} className="w-6 h-6 shrink-0 pointer-events-none select-none" />
               <p className={`font-sans text-[12px] font-semibold leading-none whitespace-nowrap ${activeWidget === "amis" ? "text-pick-purple-light" : "text-foreground"}`}>Amis</p>
@@ -2630,7 +2616,7 @@ const HomeScreen = ({
               draggable={false}
               width={1100}
               height={252}
-              className="block w-full h-auto pointer-events-none select-none"
+              className="block w-full h-auto pointer-events-none select-none [filter:brightness(0.92)_saturate(0.9)]"
             />
             {/* Version lumineuse au survol (souris) et pendant l'appui. */}
             <img
@@ -2674,7 +2660,7 @@ const HomeScreen = ({
             transition={{ delay: 0.54, duration: 0.5 }}
             whileTap={{ scale: 0.985 }}
             onClick={() => navigate(`/app/soirees/${nextEvent.id}`)}
-            className={`mx-5 mt-2.5 [@media(min-height:860px)]:mt-5 w-[calc(100%-2.5rem)] block px-3.5 py-2.5 text-left ${CARTE_PICK}`}
+            className={`mx-5 mt-2.5 [@media(min-height:860px)]:mt-5 w-[calc(100%-2.5rem)] block px-3.5 py-3 text-left ${CARTE_PICK}`}
           >
             <span className="flex items-center gap-2">
               <CalendarDays className="w-[18px] h-[18px] text-pick-purple-light shrink-0" strokeWidth={1.8} aria-hidden="true" />
@@ -2691,7 +2677,7 @@ const HomeScreen = ({
                 )}
               </span>
               <span className="flex-1 min-w-0">
-                <span className="block text-[12px] font-sans leading-tight truncate">
+                <span className="block text-[13px] font-sans leading-tight truncate">
                   <span className="font-semibold text-foreground">{nextEvent.title.split(" · ")[0]}</span>
                   <span className="text-pick-text-secondary">
                     {" · "}{new Date(nextEvent.event_date + "T12:00:00").toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "long" })}
@@ -2701,11 +2687,11 @@ const HomeScreen = ({
                 <span className="mt-2 flex items-center gap-3">
                   {nextEvent.affiniteDuo != null ? (
                     <span className="flex-1 min-w-0">
-                      <span className="flex items-center gap-1.5 text-[12px] font-sans text-foreground/85 leading-none whitespace-nowrap">
+                      <span className="flex items-center gap-1.5 text-[14px] font-sans text-foreground/90 leading-none whitespace-nowrap">
                         <Heart className="w-3.5 h-3.5 fill-pick-purple-light text-pick-purple-light shrink-0" aria-hidden="true" />
                         Affinité <span className="font-semibold tabular-nums">{nextEvent.affiniteDuo}&nbsp;%</span>
                       </span>
-                      <span className="mt-1.5 block h-1.5 rounded-full bg-foreground/10 overflow-hidden">
+                      <span className="mt-2 block h-1.5 rounded-full bg-foreground/10 overflow-hidden">
                         <span className="block h-full rounded-full bg-gradient-to-r from-primary to-pick-magenta" style={{ width: `${Math.min(100, nextEvent.affiniteDuo)}%` }} />
                       </span>
                     </span>
@@ -2717,7 +2703,7 @@ const HomeScreen = ({
                   <span className="w-px self-stretch bg-pick-border shrink-0" aria-hidden="true" />
                   <span className="flex items-center gap-1.5 shrink-0 max-w-[42%]">
                     <Clock className="w-4 h-4 text-pick-purple-light shrink-0" strokeWidth={1.8} aria-hidden="true" />
-                    <span className="text-[11px] font-sans leading-tight text-pick-text-secondary min-w-0">
+                    <span className="text-[12px] font-sans leading-tight text-pick-text-secondary min-w-0">
                       {surprise
                         ? <>Film révélé<br /><span className="font-semibold text-foreground">{delai}</span></>
                         : <>Film choisi<br /><span className="block font-semibold text-foreground truncate">{nextEvent.filmTitre}</span></>}

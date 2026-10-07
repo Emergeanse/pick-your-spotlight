@@ -76,7 +76,7 @@ const BottomTabBar = () => {
             </motion.button>
             <span
               aria-hidden="true"
-              className="pointer-events-none absolute bottom-1 left-1/2 -translate-x-1/2 text-[clamp(8.5px,2.6vw,10px)] font-sans tracking-tight text-foreground/90 font-semibold whitespace-nowrap [text-shadow:0_0_8px_hsl(var(--accent)/0.9),0_0_16px_hsl(var(--accent)/0.5)]"
+              className="pointer-events-none absolute bottom-1 left-1/2 -translate-x-1/2 text-[clamp(10px,2.8vw,11px)] font-sans tracking-tight text-foreground/90 font-semibold whitespace-nowrap [text-shadow:0_0_8px_hsl(var(--accent)/0.9),0_0_16px_hsl(var(--accent)/0.5)]"
             >
               Crée une soirée
             </span>
@@ -137,7 +137,7 @@ function TabButton({ tab, isActive, navigate, location }: {
       >
         <IconeCharte repos={tab.icon} actif={tab.activeIcon} className="w-[26px] h-[26px]" active={isActive} />
       </motion.div>
-      <span className={`mt-1 text-[clamp(8.5px,2.6vw,10px)] font-sans tracking-tight transition-colors duration-180 ease-pick ${isActive ? "text-pick-purple-light font-semibold" : "text-pick-text-muted font-medium [@media(hover:hover)]:group-hover:text-pick-purple-light/80"}`}>
+      <span className={`mt-1 text-[clamp(10px,2.8vw,11px)] font-sans tracking-tight transition-colors duration-180 ease-pick ${isActive ? "text-pick-purple-light font-semibold" : "text-pick-text-secondary font-medium [@media(hover:hover)]:group-hover:text-pick-purple-light/80"}`}>
         {tab.label}
       </span>
     </button>
