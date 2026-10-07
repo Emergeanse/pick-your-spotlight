@@ -708,11 +708,17 @@ const Profile = () => {
                               transition={{ delay: 0.4 + i * 0.08, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
                               className="h-full rounded-full bg-primary/40" />
                           </div>
-                          <p className="text-[9px] font-sans text-foreground/40 mt-0.5">{item.detail}</p>
+                          <p className="text-[11px] font-sans text-foreground/40 mt-0.5">{item.detail}</p>
                         </div>
                       ))}
                     </motion.div>
                   )}
+                  <button onClick={() => setShowTrainer(true)}
+                    className="mt-4 w-full flex items-center justify-center gap-2 py-2.5 rounded-pick-md bg-primary/10 border border-pick-border-active transition-colors duration-180 ease-pick [@media(hover:hover)]:hover:bg-primary/15 active:scale-[0.98]">
+                    <Brain className="w-3.5 h-3.5 text-primary" />
+                    <span className="text-primary text-[12px] font-sans font-semibold">Entraîner mes goûts (films, acteurs, réalisateurs)</span>
+                  </button>
+                  <p className="mt-1.5 text-center text-[11px] font-sans text-pick-text-muted">C'est ce qui fait le plus monter ton niveau.</p>
                 </div>
               )}
 
@@ -831,13 +837,7 @@ const Profile = () => {
             </div>
           </div>
 
-          <button onClick={() => setShowTrainer(true)}
-            className="w-full flex items-center justify-center gap-2 py-2.5 mb-8 rounded-xl bg-primary/8 border border-primary/15 hover:bg-primary/12 transition-colors active:scale-[0.98]">
-            <Brain className="w-3.5 h-3.5 text-primary" />
-            <span className="text-primary text-[12px] font-sans font-semibold">Entraîner mes goûts (films, acteurs, réalisateurs)</span>
-          </button>
-
-          <h3 className="mt-2 mb-3 text-[11px] font-sans font-semibold tracking-[0.14em] uppercase text-pick-purple-light">Comment Pick choisit</h3>
+          <h3 className="mt-8 mb-3 text-[11px] font-sans font-semibold tracking-[0.14em] uppercase text-pick-purple-light">Comment Pick choisit</h3>
           <div className="mb-8">
             <p className="text-sm font-sans font-semibold text-foreground/50 uppercase tracking-widest mb-3">Exigence de qualité</p>
             <div className="grid grid-cols-3 gap-2">

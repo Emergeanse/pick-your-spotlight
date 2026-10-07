@@ -55,12 +55,13 @@ function MilestoneButton({
           type="button"
           className={
             size === "preview"
-              ? "w-9 h-9 shrink-0 rounded-full active:scale-95 transition-transform focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/40"
+              ? "w-11 h-11 shrink-0 rounded-full active:scale-95 transition-transform focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/40"
               : "aspect-square w-full rounded-lg active:scale-95 transition-transform focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/40"
           }
         >
           <TrophyBadge
             Icon={milestone.Icon}
+            image={milestone.image}
             reached={reached}
             accentRgb={milestone.accentRgb}
             size={size}
@@ -69,9 +70,9 @@ function MilestoneButton({
       </TooltipTrigger>
       <TooltipContent side="top" className="max-w-[200px] text-center">
         <p className="font-semibold">{reached ? milestone.label : "À débloquer"}</p>
-        <p className="text-[10px] opacity-80 mt-0.5">{milestone.categoryLabel}</p>
+        <p className="text-[11px] opacity-80 mt-0.5">{milestone.categoryLabel}</p>
         {!reached && (
-          <p className="text-[10px] opacity-70 mt-0.5 tabular-nums">
+          <p className="text-[11px] opacity-70 mt-0.5 tabular-nums">
             {remaining} restant{remaining > 1 ? "s" : ""}
           </p>
         )}
@@ -134,7 +135,7 @@ export function TrophySection({ values }: TrophySectionProps) {
         <div className="min-w-0">
           <div className="flex items-center gap-2 mb-1.5">
             <Trophy className="w-3.5 h-3.5 text-amber-400/70 shrink-0" />
-            <span className="text-[10px] font-sans font-semibold text-foreground uppercase tracking-widest">
+            <span className="text-[11px] font-sans font-semibold text-foreground uppercase tracking-widest">
               Trophées
             </span>
           </div>
@@ -183,7 +184,7 @@ export function TrophySection({ values }: TrophySectionProps) {
                   );
                 })}
                 {unlocked.length > PREVIEW_COUNT && (
-                  <span className="text-[10px] font-sans text-foreground/35 tabular-nums shrink-0 pl-0.5">
+                  <span className="text-[11px] font-sans text-foreground/35 tabular-nums shrink-0 pl-0.5">
                     +{unlocked.length - PREVIEW_COUNT}
                   </span>
                 )}
@@ -253,10 +254,10 @@ export function TrophySection({ values }: TrophySectionProps) {
                         return (
                           <div key={cat.key}>
                             <div className="flex items-center justify-between mb-2">
-                              <p className="text-[10px] font-sans font-semibold text-foreground/50 uppercase tracking-widest">
+                              <p className="text-[11px] font-sans font-semibold text-foreground/50 uppercase tracking-widest">
                                 {cat.label}
                               </p>
-                              <span className="text-[10px] font-sans text-primary/50 tabular-nums">
+                              <span className="text-[11px] font-sans text-primary/50 tabular-nums">
                                 {unlockedCount}/{cat.milestones.length}
                               </span>
                             </div>
@@ -276,6 +277,7 @@ export function TrophySection({ values }: TrophySectionProps) {
                                   <TrophyBadge
                                     key={m.count}
                                     Icon={m.Icon}
+                                    image={m.image}
                                     reached={reached}
                                     accentRgb={cat.accentRgb}
                                     size="detail"
@@ -287,7 +289,7 @@ export function TrophySection({ values }: TrophySectionProps) {
                               })}
                             </div>
                             {nextM && (
-                              <p className="text-foreground/45 text-[10px] font-sans mt-2 text-center">
+                              <p className="text-foreground/45 text-[11px] font-sans mt-2 text-center">
                                 Plus que{" "}
                                 <span className="text-primary/60 font-medium tabular-nums">
                                   {nextM.count - value}
@@ -333,7 +335,9 @@ function NextTrophyHint({
     <p className="text-[11px] font-sans text-foreground/50 text-center leading-snug px-1 flex items-center justify-center gap-1.5 flex-wrap">
       <span>Prochain trophée :</span>
       <span className="inline-flex items-center gap-1 text-foreground/70">
-        <NextIcon className="w-3 h-3" style={{ color: hint.milestone.accent }} />
+        {hint.milestone.image
+          ? <img src={hint.milestone.image} alt="" className="w-5 h-5 object-contain" />
+          : <NextIcon className="w-3 h-3" style={{ color: hint.milestone.accent }} />}
         {hint.milestone.label}
       </span>
       <span>

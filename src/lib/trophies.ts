@@ -25,6 +25,8 @@ export type TrophyMilestone = {
   /** Kept for copy / progressive enhancement; UI prefers Lucide. */
   emoji: string;
   Icon: LucideIcon;
+  /** Médaille de la charte (src/assets/trophees/<catégorie>-<rang>.webp). */
+  image?: string;
 };
 
 export type TrophyCategory = {
@@ -106,6 +108,15 @@ export const TROPHY_CATEGORIES: TrophyCategory[] = [
     ],
   },
 ];
+
+// Médailles de la charte, une par palier, à la couleur de la catégorie :
+// violet (recos), rose (likés), or (acteurs), cyan (visionnages).
+const IMAGES_TROPHEES = import.meta.glob<string>("../assets/trophees/*.webp", { eager: true, import: "default" });
+for (const cat of TROPHY_CATEGORIES) {
+  cat.milestones.forEach((m, i) => {
+    m.image = IMAGES_TROPHEES[`../assets/trophees/${cat.key}-${i + 1}.webp`];
+  });
+}
 
 export const TROPHY_TIER_LEVELS = [
   { minUnlocked: 0, title: "Curieux", subtitle: "Chaque trophée raconte une histoire" },

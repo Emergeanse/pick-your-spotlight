@@ -4,6 +4,8 @@ import { cn } from "@/lib/utils";
 
 type TrophyBadgeProps = {
   Icon: LucideIcon;
+  /** Médaille de la charte ; à défaut, l'icône Lucide dessinée. */
+  image?: string;
   reached: boolean;
   accentRgb: string;
   /** compact = grille 7 cols ; preview = rangée collapsed ; detail = cartes catégorie */
@@ -20,6 +22,7 @@ type TrophyBadgeProps = {
  */
 export function TrophyBadge({
   Icon,
+  image,
   reached,
   accentRgb,
   size = "compact",
@@ -30,6 +33,54 @@ export function TrophyBadge({
 }: TrophyBadgeProps) {
   const iconSize =
     size === "detail" ? "w-5 h-5" : size === "preview" ? "w-4 h-4" : "w-3.5 h-3.5";
+
+  if (image) {
+    return (
+      <div
+        className={cn(
+          "flex flex-col items-center gap-1 transition-all",
+          showMeta && "p-2 rounded-pick-md border",
+          showMeta && (reached ? "bg-primary/[0.06] border-pick-border-active" : "bg-card/50 border-pick-border"),
+          className
+        )}
+      >
+        <span
+          className={cn(
+            "relative block",
+            size === "detail" && "w-14 h-14",
+            size === "preview" && "w-11 h-11",
+            size === "compact" && "w-full aspect-square"
+          )}
+        >
+          {/* Verrouillée : la même médaille, éteinte, avec un cadenas. */}
+          <img
+            src={image}
+            alt={label ?? ""}
+            draggable={false}
+            className="w-full h-full object-contain select-none"
+            style={reached ? undefined : { filter: "grayscale(1) brightness(0.55)", opacity: 0.55 }}
+          />
+          {!reached && (
+            <span className="absolute bottom-[4%] right-[4%] w-[34%] h-[34%] max-w-4 max-h-4 rounded-full bg-black/75 border border-white/20 flex items-center justify-center">
+              <Lock className="w-[60%] h-[60%] text-white/70" strokeWidth={2.5} />
+            </span>
+          )}
+        </span>
+        {showMeta && label && (
+          <>
+            <span className={cn("text-[11px] font-sans text-center leading-tight mt-0.5", reached ? "text-foreground/75" : "text-pick-text-muted")}>
+              {label}
+            </span>
+            {typeof threshold === "number" && (
+              <span className={cn("text-[11px] font-sans tabular-nums", reached ? "text-pick-purple-light" : "text-pick-text-muted")}>
+                {threshold}
+              </span>
+            )}
+          </>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div
