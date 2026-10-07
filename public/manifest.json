@@ -6,22 +6,28 @@
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
-  "background_color": "#0a0a0f",
+  "background_color": "#050507",
   "theme_color": "#0a0a0f",
   "orientation": "portrait",
   "lang": "fr",
   "icons": [
     {
-      "src": "/icons/pick-logo-192.png?v=gland2",
+      "src": "/icons/pick-logo-192.png?v=gland3",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/icons/pick-logo-512.png?v=gland2",
+      "src": "/icons/pick-logo-512.png?v=gland3",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
+    },
+    {
+      "src": "/icons/pick-logo-maskable-512.png?v=gland3",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ]
 }
