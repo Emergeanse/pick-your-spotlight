@@ -2483,7 +2483,7 @@ const HomeScreen = ({
             </span>
           )}
         </span>
-        <ChevronRight className="w-3.5 h-3.5 text-pick-text-muted shrink-0" aria-hidden="true" />
+        <ChevronRight className="w-4 h-4 text-pick-purple-light shrink-0" strokeWidth={2.4} aria-hidden="true" />
       </motion.button>
 
       {/* Identité sous le logo, alignée sur son « P » (20 px du bord, 34 px en
