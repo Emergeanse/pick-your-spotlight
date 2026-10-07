@@ -2491,10 +2491,10 @@ const HomeScreen = ({
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.24, duration: 0.4 }}
           onClick={() => navigate("/app/match")}
-          className="flex-1 min-w-0 h-[54px] flex items-center gap-2.5 max-[379px]:gap-2 px-4 max-[379px]:px-3 rounded-full border border-white/[0.10] [border-top-color:rgba(196,181,253,0.35)] bg-[linear-gradient(180deg,rgba(255,255,255,0.07),rgba(255,255,255,0.02))] backdrop-blur-xl shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_6px_18px_rgba(0,0,0,0.25)] text-left transition-colors duration-180 ease-pick [@media(hover:hover)]:hover:border-pick-border-hover active:scale-[0.98]"
+          className="flex-1 min-w-0 h-[54px] flex items-center gap-2 px-3.5 max-[379px]:px-3 rounded-full border border-white/[0.10] [border-top-color:rgba(196,181,253,0.35)] bg-[linear-gradient(180deg,rgba(255,255,255,0.07),rgba(255,255,255,0.02))] backdrop-blur-xl shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_6px_18px_rgba(0,0,0,0.25)] text-left transition-colors duration-180 ease-pick [@media(hover:hover)]:hover:border-pick-border-hover active:scale-[0.98]"
         >
           <Search className="w-[17px] h-[17px] text-pick-purple-light shrink-0" strokeWidth={1.7} aria-hidden="true" />
-          <span className="text-[13px] max-[379px]:text-[12px] font-sans text-foreground/85 truncate">Chercher un film</span>
+          <span className="text-[13px] max-[399px]:text-[12px] font-sans text-foreground/85 truncate">Chercher un film</span>
         </motion.button>
         <motion.button
           type="button"
@@ -2502,15 +2502,15 @@ const HomeScreen = ({
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.26, duration: 0.4 }}
           onClick={() => navigate("/app/adn")}
-          className="group flex-1 min-w-0 h-[54px] flex items-center gap-2 pl-3 pr-4 max-[379px]:pr-3 rounded-full border border-pick-border-active bg-[linear-gradient(180deg,rgba(139,92,246,0.16),rgba(139,92,246,0.05))] backdrop-blur-xl shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_0_14px_rgba(168,85,247,0.16)] text-left transition-colors duration-180 ease-pick [@media(hover:hover)]:hover:bg-pick-surface/70 active:scale-[0.98]"
+          className="group flex-1 min-w-0 h-[54px] flex items-center gap-2 pl-3 pr-3.5 max-[379px]:pr-3 rounded-full border border-pick-border-active bg-[linear-gradient(180deg,rgba(139,92,246,0.16),rgba(139,92,246,0.05))] backdrop-blur-xl shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_0_14px_rgba(168,85,247,0.16)] text-left transition-colors duration-180 ease-pick [@media(hover:hover)]:hover:bg-pick-surface/70 active:scale-[0.98]"
           aria-label="Mon ADN cinéma"
         >
           <IconeCharte repos={adnRepos} actif={adnActif} className="w-5 h-5 shrink-0" />
           <span className="flex-1 min-w-0 flex flex-col gap-0.5 leading-tight">
             <span className="text-[14px] font-sans font-semibold text-white truncate">ADN cinéma</span>
             {interactionCount > 0 && (
-              <span className="text-[11.5px] max-[379px]:text-[11px] font-sans font-medium text-foreground/70 tabular-nums tracking-tight truncate">
-                {interactionCount.toLocaleString("fr-FR")} choix<span className="max-[379px]:hidden"> analysés</span>
+              <span className="text-[11px] font-sans font-medium text-foreground/70 tabular-nums tracking-tight truncate">
+                {interactionCount.toLocaleString("fr-FR")} choix<span className="max-[429px]:hidden"> analysés</span>
               </span>
             )}
           </span>
