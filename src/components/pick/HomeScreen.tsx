@@ -2419,9 +2419,8 @@ const HomeScreen = ({
       <div className="absolute inset-0 bg-gradient-to-b from-transparent from-55% to-background/80" />
 
       {/* Avatar en haut à droite, sur la ligne de l'en-tête (40 px, centré sur
-          elle : photo de 28 px, centre à 26 px du haut, 38 px en grand écran ; le
-          cadre fait 1,8 fois la photo, assez pour se voir, pas assez pour être
-          coupé par le haut de l'écran), dans son cadre : le cadre
+          elle : photo de 36 px, centre à 26 px du haut, 38 px en grand écran ; le
+          cadre fait 1,5 fois la photo, pour tenir sous le haut de l'écran), dans son cadre : le cadre
           suit les trophées obtenus, ou le statut d'Ambassadeur (voir lib/cadres)
           et déborde de la photo. Mène au profil. */}
       <motion.button
@@ -2430,7 +2429,7 @@ const HomeScreen = ({
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.22, duration: 0.4 }}
         onClick={() => navigate("/app/profile")}
-        className="absolute right-[18px] md:right-[30px] top-[calc(12px+env(safe-area-inset-top))] md:top-[24px] z-40 w-7 h-7 rounded-full active:scale-[0.97] transition-transform duration-120 ease-pick"
+        className="absolute right-[18px] md:right-[30px] top-[calc(8px+env(safe-area-inset-top))] md:top-[20px] z-40 w-9 h-9 rounded-full active:scale-[0.97] transition-transform duration-120 ease-pick"
         aria-label="Mon profil (avatar)"
       >
         {/* Le cadre derrière, la photo par-dessus : elle recouvre le bord
@@ -2442,13 +2441,13 @@ const HomeScreen = ({
             aria-hidden="true"
             draggable={false}
             className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 max-w-none pointer-events-none select-none"
-            style={{ width: "180%", height: "180%" }}
+            style={{ width: "150%", height: "150%" }}
           />
         )}
         <span className={`absolute inset-0 rounded-full overflow-hidden bg-primary/20 flex items-center justify-center ${cadre.image ? "" : "ring-1 ring-pick-border-hover"}`}>
           {avatarAffiche(avatarUrl)
             ? <img src={avatarAffiche(avatarUrl)} alt="" className="w-full h-full object-cover" />
-            : <span className="text-[12px] font-bold text-primary leading-none">{(firstName || "?").charAt(0).toUpperCase()}</span>
+            : <span className="text-[15px] font-bold text-primary leading-none">{(firstName || "?").charAt(0).toUpperCase()}</span>
           }
         </span>
       </motion.button>
