@@ -2616,9 +2616,9 @@ const HomeScreen = ({
               draggable={false}
               width={1100}
               height={252}
-              className="block w-full h-auto pointer-events-none select-none [filter:brightness(0.92)_saturate(0.9)]"
+              className="block w-full h-auto pointer-events-none select-none"
             />
-            {/* Version lumineuse au survol (souris) et pendant l'appui. */}
+            {/* Version lumineuse en permanence : c'est l'action phare de l'accueil. */}
             <img
               src={trouverFilmBoutonActif}
               alt=""
@@ -2626,7 +2626,7 @@ const HomeScreen = ({
               draggable={false}
               width={1100}
               height={252}
-              className="absolute inset-0 w-full h-auto pointer-events-none select-none opacity-0 group-active:opacity-100 group-focus-visible:opacity-100 [@media(hover:hover)]:group-hover:opacity-100 transition-opacity duration-200"
+              className="absolute inset-0 w-full h-auto pointer-events-none select-none opacity-100 group-active:brightness-110 transition-[filter] duration-200"
             />
             <span
               aria-hidden="true"
