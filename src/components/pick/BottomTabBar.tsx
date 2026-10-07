@@ -48,13 +48,9 @@ const BottomTabBar = () => {
           <div className="relative flex items-center justify-center flex-1">
             <motion.button
               whileTap={{ scale: 0.9 }}
-              onClick={() => {
-                if (location.pathname === "/app") {
-                  window.dispatchEvent(new CustomEvent("open-find-choice"));
-                } else {
-                  navigate("/app?openFindChoice=1");
-                }
-              }}
+              // « Nouvelle soirée » crée une soirée ; la recherche instantanée
+              // est le gros bouton de l'accueil.
+              onClick={() => navigate("/app/soiree/nouvelle")}
               className="group absolute -top-5 w-14 h-14 rounded-full flex items-center justify-center active:scale-[0.96] transition-transform"
               aria-label="Créer une nouvelle soirée ciné"
             >

@@ -8,7 +8,7 @@ import { clearRevealIntent, type RevealIntent, peekForReveal, consumeForReveal, 
 import { fetchGroupTasteProfile, fetchAdHocGroupProfile, isUsableGroupProfile, toGroupOverrides } from "@/lib/group-taste";
 import { programFilmForEvent } from "@/lib/event-program";
 import { toast } from "sonner";
-import { Sparkles, WandSparkles, Clapperboard, ChevronRight, Flame, Eye, Coffee, Heart, Shuffle, Star } from "lucide-react";
+import { Sparkles, WandSparkles, Clapperboard, ChevronRight, CalendarPlus, Flame, Eye, Coffee, Heart, Shuffle, Star } from "lucide-react";
 
 import { formatPlatformNamesForLoading, resolveProviders } from "@/lib/platforms";
 import type { Movie, MovieDetail } from "@/lib/tmdb";
@@ -46,8 +46,8 @@ import PostSoireeFlow, { type PostSoireeEvent } from "./PostSoireeFlow";
 import { fetchVisibleProfiles } from "@/lib/visible-profiles";
 import { type AmbianceMood } from "./HomeAmbianceSection";
 import homeBackground from "@/assets/home-background.webp";
-import creerSoireeBouton from "@/assets/creer-soiree-bouton.webp";
-import creerSoireeBoutonActif from "@/assets/creer-soiree-bouton-actif.webp";
+import trouverFilmBouton from "@/assets/trouver-film-bouton.webp";
+import trouverFilmBoutonActif from "@/assets/trouver-film-bouton-actif.webp";
 import groupeSurprise from "@/assets/groupe-surprise.webp";
 import DerniereNotification from "./DerniereNotification";
 import { PropositionNotificationsTelephone } from "./NotificationsTelephone";
@@ -2448,30 +2448,32 @@ const HomeScreen = ({
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.18, duration: 0.5 }}
           >
-            <h1 className="mt-1.5 font-serif text-foreground text-[24px] leading-[1.15] tracking-tight">
-              Créez une soirée cinéma<br />
+            {/* La recherche instantanée d'abord : c'est le geste le plus fréquent.
+                Organiser une soirée pour plus tard a son propre bouton. */}
+            <h1 className="mt-1.5 font-serif text-foreground text-[26px] leading-[1.15] tracking-tight">
+              Le film parfait,{" "}
               <span className="italic text-primary" style={{ textShadow: "0 0 18px hsl(var(--primary)/0.5)" }}>
-                et trouvez le film parfait
+                ce soir.
               </span>
-              <span className="not-italic text-foreground"> pour tous&nbsp;!</span>
             </h1>
+            <p className="mt-1 text-[13px] font-sans text-pick-text-secondary">Seul, à deux, en famille ou entre amis.</p>
           </motion.div>
 
-          {/* CTA Créer une soirée */}
+          {/* CTA recherche instantanée */}
           <motion.button
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.30, duration: 0.45 }}
             whileTap={{ scale: 0.97 }}
             onClick={() => { setFindChoiceContext("solo"); setShowFindChoice(true); }}
-            className="group relative mt-3 block w-full rounded-full"
-            aria-label="Créer une soirée ciné"
+            className="group relative mt-3 block w-full rounded-full [container-type:inline-size]"
+            aria-label="Trouve-moi LE film"
           >
-            {/* Le texte est dessiné dans l'image : seul l'aria-label le donne
-                aux lecteurs d'écran. Le halo de l'image remplace l'ancienne
-                ombre portée. */}
+            {/* Le ticket, la flèche et le halo viennent de l'image ; le texte,
+                effacé de l'image, est écrit par-dessus pour rester modifiable.
+                Sa taille suit la largeur du bouton (unités cqw). */}
             <img
-              src={creerSoireeBouton}
+              src={trouverFilmBouton}
               alt=""
               aria-hidden="true"
               draggable={false}
@@ -2481,7 +2483,7 @@ const HomeScreen = ({
             />
             {/* Version lumineuse au survol (souris) et pendant l'appui. */}
             <img
-              src={creerSoireeBoutonActif}
+              src={trouverFilmBoutonActif}
               alt=""
               aria-hidden="true"
               draggable={false}
@@ -2489,6 +2491,13 @@ const HomeScreen = ({
               height={252}
               className="absolute inset-0 w-full h-auto pointer-events-none select-none opacity-0 group-active:opacity-100 group-focus-visible:opacity-100 [@media(hover:hover)]:group-hover:opacity-100 transition-opacity duration-200"
             />
+            <span
+              aria-hidden="true"
+              className="absolute inset-y-0 left-[30.5%] right-[19%] flex items-center pointer-events-none select-none font-sans font-semibold text-white whitespace-nowrap [text-shadow:0_0_14px_rgba(196,181,253,0.45)]"
+              style={{ fontSize: "5.4cqw" }}
+            >
+              Trouve-moi&nbsp;<span className="font-serif italic font-bold text-[1.12em] text-pick-purple-light">LE</span>&nbsp;film
+            </span>
           </motion.button>
 
           {/* 4 widgets côte à côte — la carte choisie est toujours violette, et la
@@ -2543,6 +2552,17 @@ const HomeScreen = ({
               <p className={`font-sans text-[12px] font-semibold leading-tight text-center ${activeWidget === "amis" ? "text-pick-purple-light" : "text-foreground"}`}>Entre<br/>amis</p>
             </motion.button>
           </div>
+
+          {/* Organiser une soirée (date, invités) : distinct de la recherche. */}
+          <button
+            type="button"
+            onClick={() => navigate("/app/soiree/nouvelle")}
+            className="mt-3 w-full flex items-center justify-center gap-2 py-2.5 rounded-pick-md border border-pick-border bg-pick-surface/70 backdrop-blur-md text-[13px] font-sans font-semibold text-pick-purple-light transition-colors duration-180 ease-pick [@media(hover:hover)]:hover:border-pick-border-hover active:scale-[0.98]"
+          >
+            <CalendarPlus className="w-4 h-4" strokeWidth={1.9} />
+            Organiser une soirée pour plus tard
+            <ChevronRight className="w-4 h-4 opacity-70" />
+          </button>
         </section>
 
         {/* ─── Prochaine soirée (compact) ─── */}
