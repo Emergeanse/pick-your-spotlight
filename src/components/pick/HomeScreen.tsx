@@ -9,7 +9,7 @@ import { clearRevealIntent, type RevealIntent, peekForReveal, consumeForReveal, 
 import { fetchGroupTasteProfile, fetchAdHocGroupProfile, isUsableGroupProfile, toGroupOverrides } from "@/lib/group-taste";
 import { programFilmForEvent } from "@/lib/event-program";
 import { toast } from "sonner";
-import { Sparkles, WandSparkles, Clapperboard, ChevronRight, Flame, Eye, Coffee, Heart, Shuffle, Star } from "lucide-react";
+import { Sparkles, WandSparkles, Clapperboard, ChevronRight, Dna, Flame, Eye, Coffee, Heart, Shuffle, Star } from "lucide-react";
 
 import { formatPlatformNamesForLoading, resolveProviders } from "@/lib/platforms";
 import type { Movie, MovieDetail } from "@/lib/tmdb";
@@ -2459,6 +2459,29 @@ const HomeScreen = ({
         className="absolute inset-x-5 md:inset-x-8 top-[calc(56px+env(safe-area-inset-top))] md:top-[68px] z-20 h-px pointer-events-none bg-gradient-to-r from-transparent via-pick-purple-light/40 to-transparent"
       />
 
+      {/* Raccourci discret vers l'ADN cinéma, sous l'avatar, aligné à droite :
+          montre que Pick apprend (nombre de choix analysés). */}
+      <motion.button
+        type="button"
+        initial={{ opacity: 0, y: -4 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.26, duration: 0.4 }}
+        onClick={() => navigate("/app/adn")}
+        className="absolute right-4 md:right-7 top-[calc(66px+env(safe-area-inset-top))] md:top-[78px] z-20 flex items-center gap-2 pl-2.5 pr-1.5 py-1.5 rounded-pick-md border border-pick-border bg-pick-surface/75 backdrop-blur-md text-left transition-colors duration-180 ease-pick [@media(hover:hover)]:hover:border-pick-border-hover active:scale-[0.98]"
+        aria-label="Mon ADN cinéma"
+      >
+        <Dna className="w-4 h-4 text-pick-purple-light shrink-0" strokeWidth={1.8} aria-hidden="true" />
+        <span className="flex flex-col leading-tight">
+          <span className="text-[12px] font-sans font-semibold text-foreground/90">ADN cinéma</span>
+          {interactionCount > 0 && (
+            <span className="text-[11px] font-sans text-pick-text-muted tabular-nums">
+              {interactionCount.toLocaleString("fr-FR")} choix analysés
+            </span>
+          )}
+        </span>
+        <ChevronRight className="w-3.5 h-3.5 text-pick-text-muted shrink-0" aria-hidden="true" />
+      </motion.button>
+
       {/* Identité sous le logo, alignée sur son « P » (20 px du bord, 34 px en
           grand écran). Le logo finit vers 40 px du haut (54 px en grand écran). */}
       <motion.button
@@ -2495,7 +2518,7 @@ const HomeScreen = ({
 
       <div className="relative z-10 h-full overflow-y-auto overscroll-y-contain touch-[pan-y_pinch-zoom] scrollbar-hide pb-[calc(6rem+env(safe-area-inset-bottom))]">
         {/* ─── Hero ─── */}
-        <section className="relative pt-[calc(10.5rem+env(safe-area-inset-top))] pb-2 px-5 md:px-8">
+        <section className="relative pt-[calc(8.25rem+env(safe-area-inset-top))] pb-2 px-5 md:px-8">
           <motion.div
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
