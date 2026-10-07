@@ -178,7 +178,7 @@ const InvitePage = () => {
       >
         {/* Logo */}
         <div className="flex justify-center mb-8">
-          <img src={pickLogo} alt="Pick" className="h-12 w-auto object-contain" />
+          <img src={pickLogo} alt="Pick" className="h-24 w-auto object-contain -my-5" />
         </div>
 
         <AnimatePresence mode="wait">

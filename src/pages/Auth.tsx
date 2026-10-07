@@ -164,7 +164,7 @@ const Auth = () => {
 
         {/* Logo */}
         <div className="flex justify-center mb-8">
-          <img src={pickLogo} alt="Pick" className="h-14 w-auto object-contain" />
+          <img src={pickLogo} alt="Pick" className="h-28 w-auto object-contain -my-6" />
         </div>
 
         {/* ── Mode RESET (nouveau mot de passe) ── */}
