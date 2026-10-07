@@ -172,6 +172,7 @@ const CinemaDNAPage = () => {
   const [adn, setAdn] = useState<Adn | null>(null);
   const [adnRecent, setAdnRecent] = useState<Adn | null>(null);
   const [narrative, setNarrative] = useState<string | null>(null);
+  const [confiance, setConfiance] = useState<number | null>(null);
 
   // Films adorés / podium
   const [lovedFilms, setLovedFilms] = useState<any[]>([]);
@@ -341,6 +342,7 @@ const CinemaDNAPage = () => {
         if (!actif) return;
         setAdn(calculerAdn(profil?.stableTasteVector));
         setAdnRecent(calculerAdn(profil?.recentTasteVector));
+        setConfiance(profil?.stableConfidence ?? null);
       })
       .catch(() => {});
     return () => { actif = false; };
@@ -549,6 +551,8 @@ const CinemaDNAPage = () => {
           narrative={narrative}
           genres={univers}
           titre={isOwnProfile ? "Ton ADN cinéma" : "Son ADN cinéma"}
+          archetype={dnaArchetype || dnaTitle}
+          confiance={confiance}
         />
 
         {!loading && (

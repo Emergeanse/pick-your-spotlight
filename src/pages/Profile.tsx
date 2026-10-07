@@ -268,6 +268,7 @@ const Profile = () => {
   const [adn, setAdn] = useState<Adn | null>(null);
   const [adnRecent, setAdnRecent] = useState<Adn | null>(null);
   const [narrative, setNarrative] = useState<string | null>(null);
+  const [confiance, setConfiance] = useState<number | null>(null);
   const [movieVsSeries, setMovieVsSeries] = useState({ movies: 0, series: 0 });
   const [showConfidenceDetail, setShowConfidenceDetail] = useState(false);
   const [peopleEvaluated, setPeopleEvaluated] = useState(0);
@@ -370,6 +371,7 @@ const Profile = () => {
         if (!actif) return;
         setAdn(calculerAdn(profil?.stableTasteVector));
         setAdnRecent(calculerAdn(profil?.recentTasteVector));
+        setConfiance(profil?.stableConfidence ?? null);
       })
       .catch(() => {});
     return () => { actif = false; };
@@ -750,7 +752,7 @@ const Profile = () => {
               )}
 
               {/* ADN cinéma — remplace le radar de genres (« Drame 100 % ») */}
-              <AdnCinema adn={adn} adnRecent={adnRecent} narrative={narrative} genres={univers} />
+              <AdnCinema adn={adn} adnRecent={adnRecent} narrative={narrative} genres={univers} archetype={dnaArchetype || dnaTitle} confiance={confiance} />
 
             </div>
           )}

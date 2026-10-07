@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { calculerAdn, evolutionAdn, traitsDominants, universFavoris } from "@/lib/adn";
+import { calculerAdn, evolutionAdn, fiabiliteAdn, traitsDominants, universFavoris } from "@/lib/adn";
 
 /** Vecteur « catalogue moyen » : chaque dimension à sa moyenne. */
 const moyen = () => {
@@ -15,29 +15,34 @@ describe("ADN cinéma : six traits calculés sur le vecteur de goût", () => {
     expect(Object.values(adn).every((x) => x === 50)).toBe(true);
   });
 
-  it("monte l'émotion pour qui aime les films profonds et chaleureux", () => {
-    const v = moyen(); v[1] = 0.9; v[14] = 0.8;
+  it("monte l'émotion pour qui aime les films profonds", () => {
+    const v = moyen(); v[1] = 0.95;
     const adn = calculerAdn(v)!;
     expect(adn.emotion).toBeGreaterThan(80);
     expect(traitsDominants(adn, 1)[0].id).toBe("emotion");
   });
 
-  it("oppose action et contemplation sur le rythme", () => {
-    const lent = moyen(); lent[2] = 0.4;
-    const adn = calculerAdn(lent)!;
+  it("distingue rythme et contemplation", () => {
+    const v = moyen(); v[2] = 0.4; v[8] = 0.2; v[23] = 0.85;
+    const adn = calculerAdn(v)!;
+    expect(adn.rythme).toBeLessThan(50);
     expect(adn.contemplation).toBeGreaterThan(50);
-    expect(adn.action).toBeLessThan(50);
+  });
+
+  it("monte la légèreté avec l'humour et la chaleur, la baisse avec la noirceur", () => {
+    const v = moyen(); v[3] = 0.9; v[14] = 0.8; v[4] = 0.2;
+    expect(calculerAdn(v)!.legerete).toBeGreaterThan(80);
   });
 
   it("reste entre 5 et 99, et refuse un vecteur absent", () => {
     const extreme = moyen(); extreme[3] = 5;
-    expect(calculerAdn(extreme)!.humour).toBe(99);
+    expect(calculerAdn(extreme)!.legerete).toBe(99);
     expect(calculerAdn(null)).toBeNull();
   });
 
   it("ne signale que les variations d'au moins 3 points", () => {
     const fond = calculerAdn(moyen())!;
-    const recent = { ...fond, imaginaire: fond.imaginaire + 8, humour: fond.humour + 2 };
+    const recent = { ...fond, imaginaire: fond.imaginaire + 8, legerete: fond.legerete + 2 };
     expect(evolutionAdn(fond, recent).map((e) => [e.id, e.ecart])).toEqual([["imaginaire", 8]]);
   });
 });
@@ -60,5 +65,25 @@ describe("univers favoris : le drame ne domine plus par défaut", () => {
 
   it("se rabat sur les plus présents pour un profil encore jeune", () => {
     expect(universFavoris([{ genre: "Horreur", count: 1 }, { genre: "Drame", count: 2 }])).toEqual(["Drame", "Horreur"]);
+  });
+});
+
+describe("fiabilité de l'ADN", () => {
+  it("en construction, assez précis, puis précis", () => {
+    expect(fiabiliteAdn(30)!.libelle).toBe("ADN en construction");
+    expect(fiabiliteAdn(60)!.libelle).toBe("ADN assez précis");
+    expect(fiabiliteAdn(100)!.libelle).toBe("ADN précis");
+  });
+
+  it("dit sur combien de films, et combien en noter pour progresser", () => {
+    const f = fiabiliteAdn(60)!; // √25 × 12 = 60 → 25 films
+    expect(f.detail).toBe("Basé sur environ 25 films notés.");
+    expect(f.conseil).toBe("Encore 26 films à noter pour l'affiner."); // palier 85 → 51 films
+    expect(fiabiliteAdn(100)!.conseil).toBeNull();
+  });
+
+  it("ne dit rien sans indice", () => {
+    expect(fiabiliteAdn(null)).toBeNull();
+    expect(fiabiliteAdn(0)).toBeNull();
   });
 });

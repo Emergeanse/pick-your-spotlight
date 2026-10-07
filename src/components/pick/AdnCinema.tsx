@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { Sparkles } from "lucide-react";
-import { TRAITS, evolutionAdn, traitsDominants, type Adn } from "@/lib/adn";
+import { TRAITS, evolutionAdn, fiabiliteAdn, traitsDominants, type Adn } from "@/lib/adn";
 
 /**
  * « Ton ADN cinéma » : la signature de goût, en constellation à six branches
@@ -17,6 +17,10 @@ interface AdnCinemaProps {
   narrative: string | null;
   genres: string[];
   titre?: string;
+  /** Archétype de Pick (« Architecte de tension »), affiché en tête. */
+  archetype?: string | null;
+  /** Indice de confiance du moteur (0–100), pour la fiabilité. */
+  confiance?: number | null;
 }
 
 // Plus large que haut : les libellés des côtés (« Contemplation ») ont besoin de place.
@@ -94,9 +98,10 @@ function Constellation({ adn }: { adn: Adn }) {
   );
 }
 
-export default function AdnCinema({ adn, adnRecent, narrative, genres, titre = "Ton ADN cinéma" }: AdnCinemaProps) {
+export default function AdnCinema({ adn, adnRecent, narrative, genres, titre = "Ton ADN cinéma", archetype, confiance }: AdnCinemaProps) {
   const dominants = adn ? traitsDominants(adn) : [];
   const evolution = evolutionAdn(adn, adnRecent);
+  const fiabilite = fiabiliteAdn(confiance);
   if (!adn && genres.length === 0) return null;
 
   return (
@@ -111,8 +116,11 @@ export default function AdnCinema({ adn, adnRecent, narrative, genres, titre = "
         <h2 className="text-[11px] font-sans font-semibold tracking-[0.14em] uppercase text-pick-purple-light">{titre}</h2>
       </div>
 
+      {archetype && (
+        <p className="mt-2 text-[18px] font-sans font-bold uppercase tracking-wide text-foreground leading-tight">{archetype}</p>
+      )}
       {dominants.length > 0 && (
-        <p className="mt-2 text-[16px] font-sans font-bold text-foreground capitalize">
+        <p className={`${archetype ? "mt-0.5 text-[14px] font-semibold text-pick-purple-light" : "mt-2 text-[16px] font-bold text-foreground"} font-sans capitalize`}>
           {dominants.map((d) => d.adjectif).join(" · ")}
         </p>
       )}
@@ -132,6 +140,20 @@ export default function AdnCinema({ adn, adnRecent, narrative, genres, titre = "
             ))}
           </ul>
           <p className="mt-1.5 text-[11px] font-sans text-pick-text-muted">50 = la moyenne des films de Pick.</p>
+
+          {fiabilite && (
+            <div className="mt-3 flex items-start gap-2.5">
+              <span className="mt-0.5 flex gap-0.5 shrink-0" aria-hidden="true">
+                {[1, 2, 3].map((n) => (
+                  <span key={n} className={`w-1.5 h-3.5 rounded-full ${n <= fiabilite.niveau ? "bg-pick-purple-light" : "bg-foreground/15"}`} />
+                ))}
+              </span>
+              <p className="text-[12px] font-sans text-pick-text-secondary leading-snug">
+                <span className="font-semibold text-foreground">{fiabilite.libelle}</span> — {fiabilite.detail}
+                {fiabilite.conseil && <span className="block text-pick-text-muted">{fiabilite.conseil}</span>}
+              </p>
+            </div>
+          )}
 
           {evolution.length > 0 && (
             <div className="mt-3 rounded-pick-md border border-pick-border bg-primary/[0.06] px-3 py-2">

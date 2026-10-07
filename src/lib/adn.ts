@@ -26,15 +26,17 @@ const CATALOGUE: Record<number, [number, number]> = {
   22: [0.31, 0.25], 23: [0.54, 0.21],
 };
 
-export type TraitId = "emotion" | "tension" | "imaginaire" | "humour" | "action" | "contemplation";
+export type TraitId = "emotion" | "tension" | "imaginaire" | "contemplation" | "rythme" | "legerete";
 
 export const TRAITS: { id: TraitId; libelle: string; adjectif: string; composantes: [number, 1 | -1][] }[] = [
-  { id: "emotion",       libelle: "Émotion",       adjectif: "émotionnel",  composantes: [[D.emotional_depth, 1], [D.warmth, 1]] },
-  { id: "tension",       libelle: "Tension",       adjectif: "intense",     composantes: [[D.suspense, 1], [D.darkness, 1]] },
-  { id: "imaginaire",    libelle: "Imaginaire",    adjectif: "rêveur",      composantes: [[D.world_building, 1], [D.supernatural, 1], [D.realism, -1]] },
-  { id: "humour",        libelle: "Humour",        adjectif: "léger",       composantes: [[D.humor, 1]] },
-  { id: "action",        libelle: "Action",        adjectif: "énergique",   composantes: [[D.action_intensity, 1], [D.pacing, 1]] },
-  { id: "contemplation", libelle: "Contemplation", adjectif: "contemplatif", composantes: [[D.pacing, -1], [D.artistic, 1], [D.cerebral, 1]] },
+  // Dimensions transversales : elles distinguent deux personnes qui aiment les
+  // mêmes genres (Interstellar et Star Wars sont tous deux de la SF).
+  { id: "emotion",       libelle: "Émotion",       adjectif: "émotionnel",   composantes: [[D.emotional_depth, 1]] },
+  { id: "tension",       libelle: "Tension",       adjectif: "intense",      composantes: [[D.suspense, 1], [D.darkness, 1]] },
+  { id: "imaginaire",    libelle: "Imaginaire",    adjectif: "rêveur",       composantes: [[D.world_building, 1], [D.supernatural, 1], [D.realism, -1]] },
+  { id: "contemplation", libelle: "Contemplation", adjectif: "contemplatif", composantes: [[D.artistic, 1], [D.cerebral, 1]] },
+  { id: "rythme",        libelle: "Rythme",        adjectif: "énergique",    composantes: [[D.pacing, 1], [D.action_intensity, 1]] },
+  { id: "legerete",      libelle: "Légèreté",      adjectif: "léger",        composantes: [[D.humor, 1], [D.warmth, 1], [D.darkness, -1]] },
 ];
 
 /**
@@ -75,6 +77,26 @@ export function evolutionAdn(fond: Adn | null, recent: Adn | null) {
     .filter((t) => Math.abs(t.ecart) >= 3)
     .sort((a, b) => Math.abs(b.ecart) - Math.abs(a.ecart))
     .slice(0, 2);
+}
+
+// ── Fiabilité ──────────────────────────────────────────────────────────────
+
+/**
+ * Fiabilité de l'ADN, à partir de l'indice de confiance du moteur
+ * (stableConfidence = √(films notés) × 12, plafonné à 100). Plus Pick apprend,
+ * plus l'empreinte est précise : on le dit, sans en faire un jeu.
+ */
+export function fiabiliteAdn(confiance: number | null | undefined) {
+  if (confiance == null || confiance <= 0) return null;
+  const films = Math.round((Math.min(confiance, 99) / 12) ** 2);
+  const prochainPalier = confiance < 45 ? 45 : confiance < 85 ? 85 : null;
+  const manquants = prochainPalier ? Math.max(1, Math.ceil((prochainPalier / 12) ** 2) - films) : 0;
+  return {
+    libelle: confiance < 45 ? "ADN en construction" : confiance < 85 ? "ADN assez précis" : "ADN précis",
+    detail: confiance >= 100 ? "Basé sur plus de 70 films notés." : `Basé sur environ ${films} film${films > 1 ? "s" : ""} noté${films > 1 ? "s" : ""}.`,
+    conseil: prochainPalier ? `Encore ${manquants} film${manquants > 1 ? "s" : ""} à noter pour l'affiner.` : null,
+    niveau: confiance < 45 ? 1 : confiance < 85 ? 2 : 3,
+  };
 }
 
 // ── Univers favoris ─────────────────────────────────────────────────────────
