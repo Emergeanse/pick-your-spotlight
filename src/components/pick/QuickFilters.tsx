@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Film, Tv, Clapperboard, Clock, RotateCcw, Target, Star, Hash } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
+import { createPortal } from "react-dom";
 import AppOverlayPortal from "./AppOverlayPortal";
 import IconeCharte from "./IconeCharte";
 import filtresRepos from "@/assets/icones/filtres-repos.webp";
@@ -41,9 +42,18 @@ interface QuickFiltersProps {
   filters: QuickFilterState;
   onFiltersChange: (f: QuickFilterState) => void;
   profileDefaults?: ProfileDefaults;
+  /** Posé dans une fenêtre déjà au premier plan (« Ce soir ») : le panneau
+   *  s'ouvre au-dessus d'elle plutôt que dans le calque de l'application. */
+  audessus?: boolean;
 }
 
-const QuickFilters = ({ filters, onFiltersChange, profileDefaults }: QuickFiltersProps) => {
+/** Calque du panneau : celui de l'application, ou le corps de la page au-dessus de tout. */
+function Calque({ audessus, children }: { audessus: boolean; children: React.ReactNode }) {
+  if (!audessus) return <AppOverlayPortal>{children}</AppOverlayPortal>;
+  return createPortal(<div className="fixed inset-0 z-[80] pointer-events-none [&>*]:pointer-events-auto">{children}</div>, document.body);
+}
+
+const QuickFilters = ({ filters, onFiltersChange, profileDefaults, audessus = false }: QuickFiltersProps) => {
   const [open, setOpen] = useState(false);
   // L'app est toujours dans un conteneur ≤420px → toujours bottom-sheet
   const isMobile = true;
@@ -95,7 +105,7 @@ const QuickFilters = ({ filters, onFiltersChange, profileDefaults }: QuickFilter
       {/* Rendu dans le calque des panneaux de l'application, et non sous le
           bouton : l'en-tête qui contient ce bouton passe sous la barre d'onglets,
           qui recouvrait alors le bas du menu (« Note minimale » inaccessible). */}
-      <AppOverlayPortal>
+      <Calque audessus={audessus}>
       <AnimatePresence>
         {open && (
           <>
@@ -116,7 +126,7 @@ const QuickFilters = ({ filters, onFiltersChange, profileDefaults }: QuickFilter
               transition={{ duration: 0.25, ease: [0.32, 0.72, 0, 1] }}
               className={
                 isMobile
-                  ? "fixed inset-x-0 bottom-0 rounded-t-3xl bg-card border-t border-border/20 shadow-2xl overflow-hidden max-h-[88vh] flex flex-col"
+                  ? "fixed inset-x-0 bottom-0 md:mx-auto md:max-w-[420px] rounded-t-3xl bg-card border-t border-border/20 shadow-2xl overflow-hidden max-h-[88vh] flex flex-col"
                   : "absolute right-0 top-full mt-2 z-50 w-80 rounded-2xl bg-card border border-border/20 shadow-xl overflow-hidden max-h-[70vh] overflow-y-auto"
               }
             >
@@ -277,7 +287,7 @@ const QuickFilters = ({ filters, onFiltersChange, profileDefaults }: QuickFilter
           </>
         )}
       </AnimatePresence>
-      </AppOverlayPortal>
+      </Calque>
     </div>
   );
 };

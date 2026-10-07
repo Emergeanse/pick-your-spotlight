@@ -54,7 +54,7 @@ const BrandHeader = ({ showBack, onBack, extraActions, reserveDroite }: BrandHea
       {/* Boutons de 44 px, même construction : les icônes s'alignent
           au pixel. Tailles ajustées pour une même hauteur de dessin visible
           (~22 px), chaque image ne remplissant pas son cadre de la même façon. */}
-      <div className={reserveDroite ? "flex-1 flex items-center justify-center" : "flex items-center gap-1"}>
+      <div className={reserveDroite ? "flex-1 flex items-center justify-end pr-1" : "flex items-center gap-1"}>
         {extraActions}
         {/* La recherche est sur l'accueil (sous « Trouve-moi LE film »), les amis
             dans la barre du bas. */}

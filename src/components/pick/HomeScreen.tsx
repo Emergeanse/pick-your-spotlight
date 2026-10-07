@@ -2408,12 +2408,7 @@ const HomeScreen = ({
           elle ne transmet pas le défilement (overscroll-contain), l'accueil
           entier restait figé dès que le contenu dépassait l'écran. */}
       <div className={`h-full ${hideHomeDuringReveal ? "invisible" : ""}`}>
-      <BrandHeader
-        reserveDroite={52}
-        extraActions={
-          <QuickFilters filters={quickFilters} onFiltersChange={setQuickFilters} profileDefaults={profileDefaults} />
-        }
-      />
+      <BrandHeader reserveDroite={52} />
 
       {/* Le fond couvre le haut seulement (hero), l'écureuil à droite du
           titre ; il s'éteint vers le bas dans le noir de la page. */}
@@ -2472,13 +2467,6 @@ const HomeScreen = ({
         </span>
       </motion.button>
 
-      {/* Césure fine sous l'en-tête : sépare la barre (logo, icônes, avatar)
-          du reste de l'accueil, et s'efface vers les bords. */}
-      <div
-        aria-hidden="true"
-        className="absolute inset-x-5 md:inset-x-8 top-[calc(64px+env(safe-area-inset-top))] md:top-[68px] z-20 h-px pointer-events-none bg-gradient-to-r from-transparent via-pick-purple-light/40 to-transparent"
-      />
-
       {/* Raccourci discret vers l'ADN cinéma, sous l'avatar, aligné à droite :
           montre que Pick apprend (nombre de choix analysés). */}
       <motion.button
@@ -2522,7 +2510,8 @@ const HomeScreen = ({
         </span>
       </motion.button>
 
-      <div className="relative z-10 h-full overflow-y-auto overscroll-y-contain touch-[pan-y_pinch-zoom] scrollbar-hide pb-[calc(5.25rem+env(safe-area-inset-bottom))]">
+      {/* L'accueil tient sur un écran : pas de défilement. */}
+      <div className="relative z-10 h-full overflow-hidden pb-[calc(5.25rem+env(safe-area-inset-bottom))]">
         {/* ─── Hero ─── */}
         <section className="relative pt-[calc(8rem+env(safe-area-inset-top))] [@media(max-height:800px)]:pt-[calc(7.75rem+env(safe-area-inset-top))] [@media(min-height:860px)]:pt-[calc(8.75rem+env(safe-area-inset-top))] pb-1 px-5 md:px-8">
           <motion.div
@@ -2833,6 +2822,8 @@ const HomeScreen = ({
         onAutoPick={handleAutoPick}
         initialDuoId={findChoiceContext === "duo" ? findChoiceDuoId : undefined}
         initialContext={findChoiceContext}
+        // Les filtres rapides réglent la recherche : ils vivent dans sa fenêtre.
+        filtres={<QuickFilters filters={quickFilters} onFiltersChange={setQuickFilters} profileDefaults={profileDefaults} audessus />}
         onOpenChat={() => {
           setShowFindChoice(false);
           onOpenChat();
