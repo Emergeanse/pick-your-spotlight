@@ -2467,7 +2467,7 @@ const HomeScreen = ({
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.26, duration: 0.4 }}
         onClick={() => navigate("/app/adn")}
-        className="absolute right-4 md:right-7 top-[calc(66px+env(safe-area-inset-top))] md:top-[78px] z-20 flex items-center gap-2 pl-2.5 pr-1.5 py-1.5 rounded-pick-md border border-pick-border bg-pick-surface/75 backdrop-blur-md text-left transition-colors duration-180 ease-pick [@media(hover:hover)]:hover:border-pick-border-hover active:scale-[0.98]"
+        className="absolute right-4 md:right-7 top-[calc(66px+env(safe-area-inset-top))] md:top-[78px] z-20 flex items-center gap-2 pl-2.5 pr-1.5 py-1.5 rounded-pick-md border border-pick-border bg-pick-surface/30 backdrop-blur-md text-left transition-colors duration-180 ease-pick [@media(hover:hover)]:hover:border-pick-border-hover active:scale-[0.98]"
         aria-label="Mon ADN cinéma"
       >
         <Dna className="w-4 h-4 text-pick-purple-light shrink-0" strokeWidth={1.8} aria-hidden="true" />
@@ -2546,10 +2546,10 @@ const HomeScreen = ({
               transition={{ delay: 0.38, duration: 0.4 }}
               whileTap={{ scale: 0.93 }}
               onClick={() => { setFindChoiceContext("surprise"); setActiveWidget("surprise"); setTimeout(() => setShowFindChoice(true), 150); }}
-              className={`flex-1 min-w-0 flex flex-col items-center gap-2 py-3 px-2 rounded-pick-lg backdrop-blur-md transition-all duration-180 ease-pick ${activeWidget === "surprise" ? "border border-pick-border-active bg-primary/15 shadow-pick-active" : "border border-pick-border bg-pick-surface/45 [@media(hover:hover)]:hover:border-pick-border-hover [@media(hover:hover)]:hover:bg-pick-surface-hover [@media(hover:hover)]:hover:shadow-pick-hover"}`}
+              className={`flex-1 min-w-0 flex flex-col items-center gap-1.5 py-2 px-1.5 rounded-pick-lg backdrop-blur-md transition-all duration-180 ease-pick ${activeWidget === "surprise" ? "border border-pick-border-active bg-primary/15 shadow-pick-active" : "border border-pick-border bg-pick-surface/25 [@media(hover:hover)]:hover:border-pick-border-hover [@media(hover:hover)]:hover:bg-pick-surface-hover [@media(hover:hover)]:hover:shadow-pick-hover"}`}
             >
-              <img src={groupeSurprise} alt="" aria-hidden="true" draggable={false} className="w-10 h-10 shrink-0 pointer-events-none select-none" />
-              <p className={`font-sans text-[12px] font-semibold leading-tight text-center ${activeWidget === "surprise" ? "text-pick-purple-light" : "text-foreground"}`}>Surprise<br/>solo</p>
+              <img src={groupeSurprise} alt="" aria-hidden="true" draggable={false} className="w-8 h-8 shrink-0 pointer-events-none select-none" />
+              <p className={`font-sans text-[11px] font-semibold leading-tight text-center ${activeWidget === "surprise" ? "text-pick-purple-light" : "text-foreground"}`}>Surprise<br/>solo</p>
             </motion.button>
 
             {/* Soirée Duo */}
@@ -2558,10 +2558,10 @@ const HomeScreen = ({
               transition={{ delay: 0.44, duration: 0.4 }}
               whileTap={{ scale: 0.93 }}
               onClick={() => { setFindChoiceContext("duo"); setActiveWidget("duo"); setTimeout(() => setShowFindChoice(true), 150); }}
-              className={`flex-1 min-w-0 flex flex-col items-center gap-2 py-3 px-2 rounded-pick-lg backdrop-blur-md transition-all duration-180 ease-pick ${activeWidget === "duo" ? "border border-pick-border-active bg-primary/15 shadow-pick-active" : "border border-pick-border bg-pick-surface/45 [@media(hover:hover)]:hover:border-pick-border-hover [@media(hover:hover)]:hover:bg-pick-surface-hover [@media(hover:hover)]:hover:shadow-pick-hover"}`}
+              className={`flex-1 min-w-0 flex flex-col items-center gap-1.5 py-2 px-1.5 rounded-pick-lg backdrop-blur-md transition-all duration-180 ease-pick ${activeWidget === "duo" ? "border border-pick-border-active bg-primary/15 shadow-pick-active" : "border border-pick-border bg-pick-surface/25 [@media(hover:hover)]:hover:border-pick-border-hover [@media(hover:hover)]:hover:bg-pick-surface-hover [@media(hover:hover)]:hover:shadow-pick-hover"}`}
             >
-              <img src={groupeDuo} alt="" aria-hidden="true" draggable={false} className="w-10 h-10 shrink-0 pointer-events-none select-none" />
-              <p className={`font-sans text-[12px] font-semibold leading-tight text-center ${activeWidget === "duo" ? "text-pick-purple-light" : "text-foreground"}`}>Soirée<br/>Duo</p>
+              <img src={groupeDuo} alt="" aria-hidden="true" draggable={false} className="w-8 h-8 shrink-0 pointer-events-none select-none" />
+              <p className={`font-sans text-[11px] font-semibold leading-tight text-center ${activeWidget === "duo" ? "text-pick-purple-light" : "text-foreground"}`}>Soirée<br/>Duo</p>
             </motion.button>
 
             {/* Film en famille */}
@@ -2570,10 +2570,10 @@ const HomeScreen = ({
               transition={{ delay: 0.50, duration: 0.4 }}
               whileTap={{ scale: 0.93 }}
               onClick={() => { setFindChoiceContext("famille"); setActiveWidget("famille"); setTimeout(() => setShowFindChoice(true), 150); }}
-              className={`flex-1 min-w-0 flex flex-col items-center gap-2 py-3 px-2 rounded-pick-lg backdrop-blur-md transition-all duration-180 ease-pick ${activeWidget === "famille" ? "border border-pick-border-active bg-primary/15 shadow-pick-active" : "border border-pick-border bg-pick-surface/45 [@media(hover:hover)]:hover:border-pick-border-hover [@media(hover:hover)]:hover:bg-pick-surface-hover [@media(hover:hover)]:hover:shadow-pick-hover"}`}
+              className={`flex-1 min-w-0 flex flex-col items-center gap-1.5 py-2 px-1.5 rounded-pick-lg backdrop-blur-md transition-all duration-180 ease-pick ${activeWidget === "famille" ? "border border-pick-border-active bg-primary/15 shadow-pick-active" : "border border-pick-border bg-pick-surface/25 [@media(hover:hover)]:hover:border-pick-border-hover [@media(hover:hover)]:hover:bg-pick-surface-hover [@media(hover:hover)]:hover:shadow-pick-hover"}`}
             >
-              <img src={groupeFamille} alt="" aria-hidden="true" draggable={false} className="w-10 h-10 shrink-0 pointer-events-none select-none" />
-              <p className={`font-sans text-[12px] font-semibold leading-tight text-center ${activeWidget === "famille" ? "text-pick-purple-light" : "text-foreground"}`}>Film en<br/>famille</p>
+              <img src={groupeFamille} alt="" aria-hidden="true" draggable={false} className="w-8 h-8 shrink-0 pointer-events-none select-none" />
+              <p className={`font-sans text-[11px] font-semibold leading-tight text-center ${activeWidget === "famille" ? "text-pick-purple-light" : "text-foreground"}`}>Film en<br/>famille</p>
             </motion.button>
 
             {/* Entre amis */}
@@ -2582,10 +2582,10 @@ const HomeScreen = ({
               transition={{ delay: 0.56, duration: 0.4 }}
               whileTap={{ scale: 0.93 }}
               onClick={() => { setFindChoiceContext("amis"); setActiveWidget("amis"); setTimeout(() => setShowFindChoice(true), 150); }}
-              className={`flex-1 min-w-0 flex flex-col items-center gap-2 py-3 px-2 rounded-pick-lg backdrop-blur-md transition-all duration-180 ease-pick ${activeWidget === "amis" ? "border border-pick-border-active bg-primary/15 shadow-pick-active" : "border border-pick-border bg-pick-surface/45 [@media(hover:hover)]:hover:border-pick-border-hover [@media(hover:hover)]:hover:bg-pick-surface-hover [@media(hover:hover)]:hover:shadow-pick-hover"}`}
+              className={`flex-1 min-w-0 flex flex-col items-center gap-1.5 py-2 px-1.5 rounded-pick-lg backdrop-blur-md transition-all duration-180 ease-pick ${activeWidget === "amis" ? "border border-pick-border-active bg-primary/15 shadow-pick-active" : "border border-pick-border bg-pick-surface/25 [@media(hover:hover)]:hover:border-pick-border-hover [@media(hover:hover)]:hover:bg-pick-surface-hover [@media(hover:hover)]:hover:shadow-pick-hover"}`}
             >
-              <img src={groupeAmis} alt="" aria-hidden="true" draggable={false} className="w-10 h-10 shrink-0 pointer-events-none select-none" />
-              <p className={`font-sans text-[12px] font-semibold leading-tight text-center ${activeWidget === "amis" ? "text-pick-purple-light" : "text-foreground"}`}>Entre<br/>amis</p>
+              <img src={groupeAmis} alt="" aria-hidden="true" draggable={false} className="w-8 h-8 shrink-0 pointer-events-none select-none" />
+              <p className={`font-sans text-[11px] font-semibold leading-tight text-center ${activeWidget === "amis" ? "text-pick-purple-light" : "text-foreground"}`}>Entre<br/>amis</p>
             </motion.button>
           </div>
 
