@@ -294,6 +294,8 @@ interface TonightPickOverlayProps {
   userGenres?: string[];
   revealEventId?: string | null;
   confirmLoading?: boolean;
+  /** Un seul film ouvert (fiche commune) : ni flèches ni « autres suggestions ». */
+  filmSeul?: boolean;
 }
 
 const TonightPickOverlay = ({
@@ -322,6 +324,7 @@ const TonightPickOverlay = ({
   userGenres = [],
   revealEventId,
   confirmLoading = false,
+  filmSeul = false,
 }: TonightPickOverlayProps) => {
   const interaction = useMovieInteraction(movie?.id);
   const displayCount = expectedCount ?? tonightPool.length;
@@ -800,7 +803,7 @@ const TonightPickOverlay = ({
 
           {/* Poster + flèches de navigation de chaque côté */}
           <div className="relative z-10 flex items-center justify-center gap-4 mt-4">
-            <FlecheRonde direction="gauche" onClick={onPrev} disabled={!canGoPrev} label="Proposition précédente" tailleClasse="w-10 h-10" />
+            {!filmSeul && <FlecheRonde direction="gauche" onClick={onPrev} disabled={!canGoPrev} label="Proposition précédente" tailleClasse="w-10 h-10" />}
 
             {movie.poster_path && (
               <button
@@ -828,7 +831,7 @@ const TonightPickOverlay = ({
               </button>
             )}
 
-            <FlecheRonde direction="droite" onClick={onNext} disabled={!canGoNext} label="Proposition suivante" tailleClasse="w-10 h-10" />
+            {!filmSeul && <FlecheRonde direction="droite" onClick={onNext} disabled={!canGoNext} label="Proposition suivante" tailleClasse="w-10 h-10" />}
           </div>
 
           {/* Bottom-anchored info block */}
@@ -929,7 +932,7 @@ const TonightPickOverlay = ({
             {/* Bouton "nouvelles suggestions" :
                 - proposition unique → actif immédiatement (on l'a forcément vue)
                 - plusieurs propositions → actif seulement quand toutes visitées */}
-            {(tonightPool.length <= 1 || tonightAllVisited || tonightLoading) && (
+            {!filmSeul && (tonightPool.length <= 1 || tonightAllVisited || tonightLoading) && (
               <button
                 onClick={onMoreSuggestions}
                 disabled={tonightLoading}

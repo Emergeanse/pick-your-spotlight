@@ -32,9 +32,9 @@ export default function MatchPage() {
   // Pendant ce temps, le mur d'affiches qui défilent (comme « Ce soir ») plutôt
   // que l'écran de recherche : il n'y a rien à taper, seulement à patienter.
   // Lu dès le premier rendu pour ne pas montrer l'écran de recherche un instant.
-  const [murAttente, setMurAttente] = useState(
-    () => Number(new URLSearchParams(window.location.search).get("film")) > 0,
-  );
+  // Le film ouvert par l'adresse (?film=) passe désormais par la fiche
+  // commune (FicheFilmHost) : ce mur ne sert plus qu'en secours.
+  const [murAttente, setMurAttente] = useState(false);
   useEffect(() => { if (murAttente) void preloadPosterWallCache(); }, [murAttente]);
   useEffect(() => { if (state === "result" || state === "error") setMurAttente(false); }, [state]);
 
@@ -95,6 +95,8 @@ export default function MatchPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   useEffect(() => {
     const filmId = Number(searchParams.get("film"));
+    // La fiche commune (FicheFilmHost) s'en charge : fiche principale, puis détail.
+    if (filmId > 0) return;
     if (!(filmId > 0) || !user) return;
     const media = searchParams.get("media") === "tv" ? "tv" : "movie";
     setSearchParams({}, { replace: true });

@@ -2487,7 +2487,7 @@ const HomeScreen = ({
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.26, duration: 0.4 }}
         onClick={() => navigate("/app/adn")}
-        className="group absolute right-4 md:right-7 top-[calc(80px+env(safe-area-inset-top))] md:top-[84px] [@media(min-height:860px)]:top-[calc(90px+env(safe-area-inset-top))] [@media(min-height:860px)]:md:top-[92px] z-20 max-w-[168px] flex items-center gap-1 pl-1 pr-1 py-1 rounded-pick-md border border-pick-border bg-pick-surface/30 backdrop-blur-md text-left transition-colors duration-180 ease-pick [@media(hover:hover)]:hover:border-pick-border-hover active:scale-[0.98]"
+        className="group absolute right-4 md:right-7 top-[calc(70px+env(safe-area-inset-top))] md:top-[74px] z-20 max-w-[168px] flex items-center gap-1 pl-1 pr-1 py-1 rounded-pick-md border border-pick-border bg-pick-surface/30 backdrop-blur-md text-left transition-colors duration-180 ease-pick [@media(hover:hover)]:hover:border-pick-border-hover active:scale-[0.98]"
         aria-label="Mon ADN cinéma"
       >
         <IconeCharte repos={adnRepos} actif={adnActif} className="w-5 h-5 shrink-0" />
@@ -2510,7 +2510,7 @@ const HomeScreen = ({
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.22, duration: 0.4 }}
         onClick={() => navigate("/app/profile")}
-        className="absolute left-5 md:left-[34px] top-[calc(74px+env(safe-area-inset-top))] md:top-[78px] z-20 flex flex-col items-start text-left [text-shadow:0_1px_8px_rgba(0,0,0,0.7)] active:scale-[0.98] transition-transform"
+        className="absolute left-5 md:left-[34px] top-[calc(80px+env(safe-area-inset-top))] md:top-[84px] z-20 flex flex-col items-start text-left [text-shadow:0_1px_8px_rgba(0,0,0,0.7)] active:scale-[0.98] transition-transform"
         aria-label="Mon profil"
       >
         <span className="flex flex-col items-start gap-1 min-w-0">

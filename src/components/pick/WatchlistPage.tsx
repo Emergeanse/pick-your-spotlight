@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { ficheFilm } from "@/lib/fiche-film";
 import { motion, AnimatePresence, useMotionValue, useTransform, PanInfo } from "framer-motion";
 import { Bookmark, Heart, Loader2, Sparkles, X, Clock, Search, ThumbsDown, ThumbsUp, Trash2, CheckCircle, SlidersHorizontal } from "lucide-react";
 import { getWatchlist, removeFromWatchlist } from "@/lib/watchlist";
@@ -667,17 +668,10 @@ const WatchlistPage = ({ tabs: allowedTabs, title, defaultTab }: WatchlistPagePr
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
+  // Fiche principale d'abord, comme partout (voir lib/fiche-film).
   const handleOpenDetail = async (item: any) => {
-    setDetailLoading(true);
-    try {
-      const mediaType = item.media_type || (item.first_air_date ? "tv" : "movie");
-      const movie = await getMovieDetails(item.tmdb_id, mediaType);
-      setDetailMovie(movie);
-    } catch {
-      toast.error("Impossible d'ouvrir la fiche");
-    } finally {
-      setDetailLoading(false);
-    }
+    const mediaType = item.media_type || (item.first_air_date ? "tv" : "movie");
+    ficheFilm.ouvrir({ tmdbId: item.tmdb_id, media: mediaType === "tv" ? "tv" : "movie" });
   };
 
   const hour = new Date().getHours();
@@ -1004,7 +998,7 @@ const WatchlistPage = ({ tabs: allowedTabs, title, defaultTab }: WatchlistPagePr
               // Un film conseillé par un ami s'ouvre sur l'écran où Pick dit s'il va
               // plaire, et pourquoi — comme depuis la notification.
               onSelect={() => item.conseilId
-                ? navigate(`/app/match?film=${item.tmdb_id}&media=${item.media_type === "tv" ? "tv" : "movie"}`)
+                ? ficheFilm.ouvrir({ tmdbId: item.tmdb_id, media: item.media_type === "tv" ? "tv" : "movie" })
                 : handleOpenDetail(item)}
               onRemove={() => handleRemove(item)}
               interaction={interactions[item.tmdb_id]}
