@@ -2505,12 +2505,13 @@ const HomeScreen = ({
             {/* La recherche instantanée d'abord : c'est le geste le plus fréquent.
                 Organiser une soirée pour plus tard a son propre bouton. */}
             <h1 className="mt-1.5 font-serif text-foreground text-[clamp(30px,8.8vw,40px)] leading-[1.02] tracking-tight [text-shadow:0_2px_18px_rgba(0,0,0,0.55)]">
-              Le film parfait,<br />
-              <span className="italic text-primary" style={{ textShadow: "0 0 18px hsl(var(--primary)/0.5)" }}>
+              LE film parfait,<br />
+              <span className="text-primary" style={{ textShadow: "0 0 18px hsl(var(--primary)/0.5)" }}>
                 ce soir.
               </span>
             </h1>
-            <p className="mt-2 text-[14px] font-sans text-foreground/75 [text-shadow:0_1px_10px_rgba(0,0,0,0.6)]">Choisi pour toi — ou pour vous.</p>
+            {/* Même police que le titre : seul « ce soir. » change de couleur. */}
+            <p className="mt-2 font-serif text-[clamp(17px,4.8vw,21px)] leading-tight text-foreground/85 [text-shadow:0_1px_10px_rgba(0,0,0,0.6)]">Pour toi ou vous.</p>
           </motion.div>
 
           {/* CTA recherche instantanée */}
