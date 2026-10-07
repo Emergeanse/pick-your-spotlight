@@ -2560,7 +2560,7 @@ const HomeScreen = ({
           {/* 4 widgets côte à côte — la carte choisie est toujours violette, et la
               carte survolée à la souris prend le même halo : une
               couleur par carte faisait clinquant à côté des illustrations. */}
-          <div className="flex gap-2 mt-6 [@media(max-height:800px)]:mt-3 overflow-x-auto scrollbar-hide pb-1 -mx-1 px-1">
+          <div className="flex gap-2 mt-6 [@media(max-height:800px)]:mt-3 [@media(min-height:860px)]:mt-9 overflow-x-auto scrollbar-hide pb-1 -mx-1 px-1">
             {/* Surprise solo */}
             <motion.button
               initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
@@ -2618,7 +2618,7 @@ const HomeScreen = ({
             transition={{ delay: 0.30, duration: 0.45 }}
             whileTap={{ scale: 0.97 }}
             onClick={() => { setFindChoiceContext("solo"); setShowFindChoice(true); }}
-            className="group relative mt-2 block w-full rounded-full [container-type:inline-size]"
+            className="group relative mt-2 [@media(min-height:860px)]:mt-4 block w-full rounded-full [container-type:inline-size]"
             aria-label="Trouve-moi LE film"
           >
             {/* Le ticket, la flèche et le halo viennent de l'image ; le texte,
@@ -2675,7 +2675,7 @@ const HomeScreen = ({
             transition={{ delay: 0.54, duration: 0.5 }}
             whileTap={{ scale: 0.985 }}
             onClick={() => navigate(`/app/soirees/${nextEvent.id}`)}
-            className={`mx-5 mt-2.5 w-[calc(100%-2.5rem)] block px-3.5 py-2.5 text-left ${CARTE_PICK}`}
+            className={`mx-5 mt-2.5 [@media(min-height:860px)]:mt-5 w-[calc(100%-2.5rem)] block px-3.5 py-2.5 text-left ${CARTE_PICK}`}
           >
             <span className="flex items-center gap-2">
               <CalendarDays className="w-[18px] h-[18px] text-pick-purple-light shrink-0" strokeWidth={1.8} aria-hidden="true" />
@@ -2761,7 +2761,7 @@ const HomeScreen = ({
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.62, duration: 0.45 }}
-          className="mt-3 [@media(max-height:800px)]:mt-2"
+          className="mt-3 [@media(max-height:800px)]:mt-2 [@media(min-height:860px)]:mt-6"
         >
           <div className="px-5 flex items-center justify-between mb-2">
             <h2 className="pl-2 flex items-center gap-2 text-[16px] font-sans font-bold text-foreground">
@@ -2788,7 +2788,7 @@ const HomeScreen = ({
                   const list = quickRecos.length > 0 ? quickRecos.slice(0, 3) : trendingFallback.slice(0, 3);
                   await openHomeBrowseAt(list, i);
                 }}
-                className="group w-[70px] [@media(max-height:800px)]:w-[54px] shrink-0 text-left relative"
+                className="group w-[70px] [@media(max-height:800px)]:w-[54px] [@media(min-height:860px)]:w-[80px] shrink-0 text-left relative"
               >
                 <div className="w-full aspect-[2/3] rounded-[10px] overflow-hidden bg-pick-surface border border-pick-border shadow-pick-card transition-transform duration-180 ease-pick [@media(hover:hover)]:group-hover:scale-[1.025]">
                   {item?.poster_path ? (
