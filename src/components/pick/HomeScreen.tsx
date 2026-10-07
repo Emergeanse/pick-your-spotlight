@@ -2448,18 +2448,18 @@ const HomeScreen = ({
         </span>
       </motion.button>
 
-      {/* Identité sous l'avatar, alignée à droite (le cadre de l'avatar descend
-          jusqu'à ~62 px du haut, 82 px en grand écran). Le côté gauche reste au titre. */}
+      {/* Identité sous le logo, alignée sur son « P » (20 px du bord, 34 px en
+          grand écran). Le logo finit vers 40 px du haut (54 px en grand écran). */}
       <motion.button
         type="button"
         initial={{ opacity: 0, y: -4 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.22, duration: 0.4 }}
         onClick={() => navigate("/app/profile")}
-        className="absolute right-5 md:right-8 top-[calc(72px+env(safe-area-inset-top))] md:top-[90px] z-20 flex flex-col items-end text-right [text-shadow:0_1px_8px_rgba(0,0,0,0.7)] active:scale-[0.98] transition-transform"
+        className="absolute left-5 md:left-[34px] top-[calc(50px+env(safe-area-inset-top))] md:top-[64px] z-20 flex flex-col items-start text-left [text-shadow:0_1px_8px_rgba(0,0,0,0.7)] active:scale-[0.98] transition-transform"
         aria-label="Mon profil"
       >
-        <span className="flex flex-col items-end gap-1 min-w-0">
+        <span className="flex flex-col items-start gap-1 min-w-0">
           <span className="text-foreground/75 text-[13px] font-sans leading-tight max-w-[11rem] truncate">
             {firstName ? `Bonsoir ${firstName} 👋` : "Bonsoir 👋"}
           </span>
