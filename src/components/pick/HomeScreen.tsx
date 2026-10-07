@@ -9,7 +9,7 @@ import { clearRevealIntent, type RevealIntent, peekForReveal, consumeForReveal, 
 import { fetchGroupTasteProfile, fetchAdHocGroupProfile, isUsableGroupProfile, toGroupOverrides } from "@/lib/group-taste";
 import { programFilmForEvent } from "@/lib/event-program";
 import { toast } from "sonner";
-import { Sparkles, WandSparkles, Clapperboard, ChevronRight, Dna, Flame, Eye, Coffee, Heart, Shuffle, Star } from "lucide-react";
+import { Sparkles, WandSparkles, Clapperboard, ChevronRight, Flame, Eye, Coffee, Heart, Shuffle, Star } from "lucide-react";
 
 import { formatPlatformNamesForLoading, resolveProviders } from "@/lib/platforms";
 import type { Movie, MovieDetail } from "@/lib/tmdb";
@@ -48,6 +48,9 @@ import { fetchVisibleProfiles } from "@/lib/visible-profiles";
 import { type AmbianceMood } from "./HomeAmbianceSection";
 import homeBackground from "@/assets/accueil-salle.webp";
 import trouverFilmBouton from "@/assets/trouver-film-bouton.webp";
+import IconeCharte from "./IconeCharte";
+import adnRepos from "@/assets/icones/adn-repos.webp";
+import adnActif from "@/assets/icones/adn-actif.webp";
 import { cadrePour } from "@/lib/cadres";
 import { clesDebloquees, lireValeursTrophees } from "@/lib/distinctions";
 import { estAmbassadeur } from "@/lib/invitation";
@@ -2467,10 +2470,10 @@ const HomeScreen = ({
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.26, duration: 0.4 }}
         onClick={() => navigate("/app/adn")}
-        className="absolute right-4 md:right-7 top-[calc(66px+env(safe-area-inset-top))] md:top-[78px] z-20 flex items-center gap-2 pl-2.5 pr-1.5 py-1.5 rounded-pick-md border border-pick-border bg-pick-surface/30 backdrop-blur-md text-left transition-colors duration-180 ease-pick [@media(hover:hover)]:hover:border-pick-border-hover active:scale-[0.98]"
+        className="group absolute right-4 md:right-7 top-[calc(66px+env(safe-area-inset-top))] md:top-[78px] z-20 flex items-center gap-1.5 pl-1.5 pr-1.5 py-1.5 rounded-pick-md border border-pick-border bg-pick-surface/30 backdrop-blur-md text-left transition-colors duration-180 ease-pick [@media(hover:hover)]:hover:border-pick-border-hover active:scale-[0.98]"
         aria-label="Mon ADN cinéma"
       >
-        <Dna className="w-4 h-4 text-pick-purple-light shrink-0" strokeWidth={1.8} aria-hidden="true" />
+        <IconeCharte repos={adnRepos} actif={adnActif} className="w-6 h-6 shrink-0" />
         <span className="flex flex-col leading-tight">
           <span className="text-[12px] font-sans font-semibold text-foreground/90">ADN cinéma</span>
           {interactionCount > 0 && (
@@ -2697,7 +2700,7 @@ const HomeScreen = ({
         <DerniereNotification className={CARTE_PICK} />
         <PropositionNotificationsTelephone className={CARTE_PICK} />
 
-        {/* ─── 3 films qui pourraient te plaire ─── */}
+        {/* ─── Picks du moment (3 films qui pourraient plaire) ─── */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -2706,7 +2709,7 @@ const HomeScreen = ({
         >
           <div className="px-5 flex items-center justify-between mb-3">
             <h2 className="text-[16px] font-sans font-bold text-foreground">
-              3 films qui pourraient te plaire
+              Picks du moment
             </h2>
             {quickRecos.length > 0 && (
               <button
