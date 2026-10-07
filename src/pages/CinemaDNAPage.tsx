@@ -2,6 +2,8 @@ import { useState, useEffect, useMemo } from "react";
 import { comparerAdn, enregistrerAdn, lireAdnVisible, phraseComparaison, type AdnVisible } from "@/lib/adn-public";
 import FlecheRonde from "@/components/pick/FlecheRonde";
 import AdnCinema from "@/components/pick/AdnCinema";
+import Distinctions from "@/components/pick/Distinctions";
+import { clesDebloquees, enregistrerDistinctions, lireValeursTrophees } from "@/lib/distinctions";
 import { calculerAdn, universFavoris, type Adn } from "@/lib/adn";
 import { computeMultiVectorProfile } from "@/lib/taste-engine";
 import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
@@ -340,6 +342,9 @@ const CinemaDNAPage = () => {
   // autre se lit via get_adn_visible, selon la relation et son réglage.
   const [monAdn, setMonAdn] = useState<Adn | null>(null);
   const [adnAutre, setAdnAutre] = useState<AdnVisible | null>(null);
+  // Ses propres distinctions : calculées ici, épinglées lues dans l'ADN enregistré.
+  const [mesDistinctions, setMesDistinctions] = useState<string[] | null>(null);
+  const [mesEpinglees, setMesEpinglees] = useState<string[]>([]);
   useEffect(() => {
     if (!user?.id) return;
     let actif = true;
@@ -359,6 +364,10 @@ const CinemaDNAPage = () => {
       lireAdnVisible(targetUserId).then((v) => { if (actif) setAdnAutre(v); });
     } else {
       setAdnAutre(null);
+      lireValeursTrophees(user.id)
+        .then((valeurs) => { if (actif) setMesDistinctions(clesDebloquees(valeurs)); })
+        .catch(() => { if (actif) setMesDistinctions([]); });
+      lireAdnVisible(user.id).then((v) => { if (actif && v) setMesEpinglees(v.epinglees); });
     }
     return () => { actif = false; };
   }, [isOwnProfile, user?.id, targetUserId]);
@@ -366,8 +375,11 @@ const CinemaDNAPage = () => {
   // Son ADN est enregistré à chaque ouverture : c'est ce que voient ses amis.
   useEffect(() => {
     if (!isOwnProfile || !user?.id || !adn || loading) return;
-    enregistrerAdn(user.id, adn, univers);
-  }, [isOwnProfile, user?.id, adn, univers, loading]);
+    // Les distinctions après l'ADN : elles complètent la même ligne.
+    enregistrerAdn(user.id, adn, univers).then(() => {
+      if (mesDistinctions) enregistrerDistinctions(user.id, mesDistinctions);
+    });
+  }, [isOwnProfile, user?.id, adn, univers, loading, mesDistinctions]);
 
   // Personne consultée : bio et podium de la fonction ADN quand le profil visible
   // ne les donne pas (personne seulement croisée en soirée).
@@ -637,6 +649,13 @@ const CinemaDNAPage = () => {
             <PodiumSlot rank={3} film={podiumFilms[2]} onSelect={isOwnProfile ? () => setSelectingRank(3) : () => {}} />
           </div>
         </motion.div>
+        )}
+
+        {!loading && isOwnProfile && user?.id && mesDistinctions && (
+          <Distinctions debloquees={mesDistinctions} epinglees={mesEpinglees} userId={user.id} onEpinglees={setMesEpinglees} />
+        )}
+        {!loading && !isOwnProfile && adnAutre && adnAutre.niveau !== "aucun" && (
+          <Distinctions debloquees={adnAutre.distinctions} epinglees={adnAutre.epinglees} prenom={displayName || undefined} />
         )}
 
         {/* « Films adorés » et « Mon cercle cinéphile » ne figurent plus ici :

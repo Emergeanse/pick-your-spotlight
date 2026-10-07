@@ -47,6 +47,7 @@ import { classeChip, etatSuivant, type EtatPreference } from "@/lib/preference-e
 import CinemaAvatar from "@/components/pick/CinemaAvatar";
 import { calculerAdn, traitsDominants, type Adn } from "@/lib/adn";
 import { enregistrerAdn } from "@/lib/adn-public";
+import { clesDebloquees, enregistrerDistinctions } from "@/lib/distinctions";
 import ReglageVisibiliteAdn from "@/components/pick/ReglageVisibiliteAdn";
 import { computeMultiVectorProfile } from "@/lib/taste-engine";
 import profileBackground from "@/assets/profile-background.webp";
@@ -423,6 +424,19 @@ const Profile = () => {
   }, [confidence, selectedDecades, selectedPlatforms.length]);
 
   const togglePlatform = (id: number) => setSelectedPlatforms(prev => prev.includes(id) ? prev.filter(p => p !== id) : [...prev, id]);
+
+  // Trophées obtenus, enregistrés pour l'ADN que voient les amis.
+  // Données pas (ou mal) chargées : ne rien écrire, pour ne jamais effacer.
+  const clesDistinctions = cinemaLoading || !engagement ? null : clesDebloquees({
+    recos: engagement?.totalRecommendations || 0,
+    liked: likedMovies.length,
+    people: peopleEvaluated,
+    seen: seenCount,
+  }).join(",");
+  useEffect(() => {
+    if (!user?.id || clesDistinctions == null || !adn) return;
+    enregistrerDistinctions(user.id, clesDistinctions ? clesDistinctions.split(",") : []);
+  }, [user?.id, clesDistinctions, adn]);
 
   const handleSaveName = async () => {
     if (!user || !displayName.trim()) return;

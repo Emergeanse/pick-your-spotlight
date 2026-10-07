@@ -19,6 +19,9 @@ export interface AdnVisible {
   bio: string | null;
   podium: number[] | null;
   visibilite: VisibiliteAdn | null;
+  /** Trophées obtenus (« recos-3 »…) et, au plus trois, ceux épinglés. */
+  distinctions: string[];
+  epinglees: string[];
 }
 
 /** Enregistre son ADN, pour que ses amis puissent le voir. Silencieux en cas d'échec. */
@@ -41,6 +44,8 @@ export async function lireAdnVisible(userId: string): Promise<AdnVisible | null>
     bio: d.bio ?? null,
     podium: d.podium ?? null,
     visibilite: d.visibilite ?? null,
+    distinctions: d.distinctions ?? [],
+    epinglees: d.epinglees ?? [],
   };
 }
 
