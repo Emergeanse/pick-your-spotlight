@@ -738,6 +738,10 @@ const Profile = () => {
           </p>
 
           <h3 className="mt-2 mb-3 text-[11px] font-sans font-semibold tracking-[0.14em] uppercase text-pick-purple-light">Ce que j'aime</h3>
+          {/* Une seule légende pour les genres et les époques, qui se règlent pareil. */}
+          <p className="mb-4 text-[11px] font-sans text-pick-text-secondary">
+            1 clic = j&apos;aime ✓ &nbsp;·&nbsp; 2 clics = je n&apos;aime pas ✕ &nbsp;·&nbsp; 3 clics = neutre
+          </p>
           {/* Genres & Styles — même schéma que les Époques : liste dépliable,
               modifications enregistrées par le bouton en bas de la page. */}
           <div className="mb-5">
@@ -747,7 +751,7 @@ const Profile = () => {
               aria-expanded={showGenres}
               className="w-full flex items-center justify-between mb-2 group"
             >
-              <span className="text-[10px] font-sans font-semibold text-foreground uppercase tracking-widest">Genres & styles</span>
+              <span className="text-[11px] font-sans font-semibold text-foreground uppercase tracking-widest">Genres & styles</span>
               <span className="flex items-center gap-1 text-[11px] font-sans font-medium text-primary/70 group-hover:text-primary transition-colors">
                 {showGenres ? "Réduire" : "Tout gérer"}
                 <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${showGenres ? "rotate-180" : ""}`} />
@@ -764,11 +768,6 @@ const Profile = () => {
                 )}
                 {genresSelected === 0 && genresExcluded === 0 && "Aucun genre configuré"}
               </p>
-              {showGenres && (
-                <p className="text-[11px] font-sans text-foreground/50">
-                  1 clic = tu aimes ✓ &nbsp;·&nbsp; 2 clics = tu n&apos;aimes pas ✕ &nbsp;·&nbsp; 3 clics = neutre
-                </p>
-              )}
               <GenrePreferences
                 ref={genrePrefsRef}
                 mode="full"
@@ -784,13 +783,10 @@ const Profile = () => {
 
           {/* Époques */}
           <div className="mb-5">
-            <span className="text-[10px] font-sans font-semibold text-foreground uppercase tracking-widest mb-2 block">
+            <span className="text-[11px] font-sans font-semibold text-foreground uppercase tracking-widest mb-2 block">
               Époques
             </span>
             <div className="rounded-2xl bg-card/80 backdrop-blur-sm border border-border/15 px-4 py-3">
-              <p className="text-[11px] font-sans text-foreground/50 mb-3">
-                1 clic = préférée ✓ &nbsp;·&nbsp; 2 clics = exclue ✕ &nbsp;·&nbsp; 3 clics = neutre
-              </p>
               <div className="flex flex-wrap gap-2">
                 {([
                   { label: "Avant 1970", value: 1900 },
