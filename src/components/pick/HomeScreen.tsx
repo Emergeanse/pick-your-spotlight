@@ -2517,10 +2517,10 @@ const HomeScreen = ({
         </motion.button>
       </div>
 
-      {/* L'accueil tient sur un écran : pas de défilement. */}
-      <div className="relative z-10 h-full overflow-hidden pb-[calc(5.25rem+env(safe-area-inset-bottom))]">
+      {/* L'accueil tient sur un écran : pas de défilement (sauf écrans très courts). */}
+      <div className="relative z-10 h-full overflow-hidden [@media(max-height:780px)]:overflow-y-auto scrollbar-hide overscroll-y-contain pb-[calc(5.25rem+env(safe-area-inset-bottom))]">
         {/* ─── Hero ─── */}
-        <section className="relative pt-[calc(9.375rem+env(safe-area-inset-top))] [@media(max-height:800px)]:pt-[calc(9.125rem+env(safe-area-inset-top))] [@media(min-height:860px)]:pt-[calc(9.875rem+env(safe-area-inset-top))] pb-1 px-5 md:px-8">
+        <section className="relative pt-[calc(9.375rem+env(safe-area-inset-top))] [@media(max-height:800px)]:pt-[calc(9.125rem+env(safe-area-inset-top))] [@media(min-height:860px)]:pt-[calc(9.5rem+env(safe-area-inset-top))] pb-1 px-5 md:px-8">
           <motion.div
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
@@ -2541,7 +2541,7 @@ const HomeScreen = ({
           {/* 4 widgets côte à côte — la carte choisie est toujours violette, et la
               carte survolée à la souris prend le même halo : une
               couleur par carte faisait clinquant à côté des illustrations. */}
-          <div className="flex gap-2 mt-11 [@media(max-height:800px)]:mt-8 [@media(min-height:860px)]:mt-14 overflow-x-auto scrollbar-hide pb-1 -mx-1 px-1">
+          <div className="flex gap-2 mt-11 [@media(max-height:800px)]:mt-8 [@media(min-height:860px)]:mt-10 overflow-x-auto scrollbar-hide pb-1 -mx-1 px-1">
             {/* Surprise solo */}
             <motion.button
               initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
@@ -2648,6 +2648,9 @@ const HomeScreen = ({
             : groupeSurprise;
           const vignette = !surprise && nextEvent.filmAffiche ? getPosterUrl(nextEvent.filmAffiche, "w185") : null;
           const delai = heures <= 0 ? "ce soir" : heures < 48 ? `dans ${heures} h` : `dans ${Math.round(heures / 24)} j`;
+          // Statut en tête de carte : « Ce soir », « Demain » ou « Dans N j ».
+          const jours = Math.round((new Date(nextEvent.event_date + "T12:00:00").getTime() - new Date(new Date().toDateString() + " 12:00").getTime()) / 86_400_000);
+          const statut = jours <= 0 ? "Ce soir" : jours === 1 ? "Demain" : `Dans ${jours} j`;
           return (
           <motion.button
             type="button"
@@ -2656,34 +2659,38 @@ const HomeScreen = ({
             transition={{ delay: 0.54, duration: 0.5 }}
             whileTap={{ scale: 0.985 }}
             onClick={() => navigate(`/app/soirees/${nextEvent.id}`)}
-            className={`mx-5 mt-2.5 [@media(min-height:860px)]:mt-5 w-[calc(100%-2.5rem)] block px-3.5 py-3 text-left ${CARTE_PICK}`}
+            className={`mx-5 mt-2.5 [@media(min-height:860px)]:mt-4 w-[calc(100%-2.5rem)] block px-3.5 py-3 text-left ${CARTE_PICK}`}
           >
             <span className="flex items-center gap-2">
               <CalendarDays className="w-[18px] h-[18px] text-pick-purple-light shrink-0" strokeWidth={1.8} aria-hidden="true" />
               <span className="flex-1 font-serif text-[18px] text-foreground leading-none">Prochaine soirée</span>
+              {/* Micro-accent du statut : un point lumineux et l'échéance. */}
+              <span className="inline-flex items-center gap-1.5 h-6 px-2.5 rounded-full border border-pick-purple-light/45 bg-primary/15 text-[11px] font-sans font-semibold text-pick-purple-light">
+                <span className="w-1.5 h-1.5 rounded-full bg-pick-purple-light shadow-[0_0_6px_rgba(196,181,253,0.9)]" aria-hidden="true" />
+                {statut}
+              </span>
               <ChevronRight className="w-4 h-4 text-pick-text-muted shrink-0" aria-hidden="true" />
             </span>
-            <span className="mt-2 flex items-center gap-3">
-              <span className="relative shrink-0 w-[76px] h-[52px] rounded-pick-sm overflow-hidden border border-pick-border bg-background/60 flex items-center justify-center">
+            <span className="mt-2.5 flex items-center gap-3">
+              <span className="relative shrink-0 w-[92px] h-[64px] max-[379px]:w-[68px] max-[379px]:h-[52px] rounded-pick-md overflow-hidden border border-pick-border-hover bg-[radial-gradient(circle_at_50%_40%,rgba(139,92,246,0.25),rgba(0,0,0,0.6))] flex items-center justify-center shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
                 {vignette
                   ? <img src={vignette} alt="" className="w-full h-full object-cover" />
-                  : <img src={illustration} alt="" aria-hidden="true" className="w-10 h-10 object-contain" />}
+                  : <img src={illustration} alt="" aria-hidden="true" className="w-12 h-12 max-[379px]:w-9 max-[379px]:h-9 object-contain" />}
                 {nextEvent.partnerAvatar && (
                   <img src={nextEvent.partnerAvatar} alt="" className="absolute bottom-1 right-1 w-5 h-5 rounded-full object-cover border border-background" />
                 )}
               </span>
               <span className="flex-1 min-w-0">
-                <span className="block text-[13px] font-sans leading-tight truncate">
-                  <span className="font-semibold text-foreground">{nextEvent.title.split(" · ")[0]}</span>
-                  <span className="text-pick-text-secondary">
-                    {" · "}{new Date(nextEvent.event_date + "T12:00:00").toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "long" })}
-                    {nextEvent.event_time ? ` · ${nextEvent.event_time.slice(0, 5)}` : ""}
-                  </span>
+                {/* Le titre a sa propre ligne ; la date dessous. */}
+                <span className="block text-[16px] font-sans font-bold text-white leading-tight truncate">{nextEvent.title.split(" · ")[0]}</span>
+                <span className="mt-0.5 block text-[12px] font-sans text-pick-text-secondary leading-tight truncate capitalize">
+                  {new Date(nextEvent.event_date + "T12:00:00").toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })}
+                  {nextEvent.event_time ? ` · ${nextEvent.event_time.slice(0, 5)}` : ""}
                 </span>
-                <span className="mt-2 flex items-center gap-3">
+                <span className="mt-2 flex items-center gap-2.5">
                   {nextEvent.affiniteDuo != null ? (
                     <span className="flex-1 min-w-0">
-                      <span className="flex items-center gap-1.5 text-[14px] font-sans text-foreground/90 leading-none whitespace-nowrap">
+                      <span className="flex items-center gap-1.5 text-[14px] max-[379px]:text-[13px] font-sans text-foreground/90 leading-none whitespace-nowrap">
                         <Heart className="w-3.5 h-3.5 fill-pick-purple-light text-pick-purple-light shrink-0" aria-hidden="true" />
                         Affinité <span className="font-semibold tabular-nums">{nextEvent.affiniteDuo}&nbsp;%</span>
                       </span>
@@ -2696,13 +2703,13 @@ const HomeScreen = ({
                       {nextEvent.partnerName && nextEvent.partnerName !== "?" ? `Avec ${nextEvent.partnerName}` : "Soirée ciné"}
                     </span>
                   )}
-                  <span className="w-px self-stretch bg-pick-border shrink-0" aria-hidden="true" />
-                  <span className="flex items-center gap-1.5 shrink-0 max-w-[42%]">
-                    <Clock className="w-4 h-4 text-pick-purple-light shrink-0" strokeWidth={1.8} aria-hidden="true" />
+                  {/* Le compte à rebours dans son propre petit cadre, bien séparé de l'affinité. */}
+                  <span className="flex items-center gap-1.5 shrink-0 px-2 py-1.5 rounded-pick-md border border-white/[0.08] bg-white/[0.04] whitespace-nowrap">
+                    <Clock className="w-4 h-4 max-[379px]:hidden text-pick-purple-light shrink-0" strokeWidth={1.8} aria-hidden="true" />
                     <span className="text-[12px] font-sans leading-tight text-pick-text-secondary min-w-0">
                       {surprise
                         ? <>Film révélé<br /><span className="font-semibold text-foreground">{delai}</span></>
-                        : <>Film choisi<br /><span className="block font-semibold text-foreground truncate">{nextEvent.filmTitre}</span></>}
+                        : <>Film choisi<br /><span className="block max-w-[9rem] font-semibold text-foreground truncate">{nextEvent.filmTitre}</span></>}
                     </span>
                   </span>
                 </span>
@@ -2744,7 +2751,7 @@ const HomeScreen = ({
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.62, duration: 0.45 }}
-          className="mt-3 [@media(max-height:800px)]:mt-2 [@media(min-height:860px)]:mt-6"
+          className="mt-3 [@media(max-height:800px)]:mt-2 [@media(min-height:860px)]:mt-4"
         >
           <div className="px-5 flex items-center justify-between mb-2">
             <div className="pl-2 min-w-0">
