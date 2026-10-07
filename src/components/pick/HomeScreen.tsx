@@ -9,7 +9,7 @@ import { clearRevealIntent, type RevealIntent, peekForReveal, consumeForReveal, 
 import { fetchGroupTasteProfile, fetchAdHocGroupProfile, isUsableGroupProfile, toGroupOverrides } from "@/lib/group-taste";
 import { programFilmForEvent } from "@/lib/event-program";
 import { toast } from "sonner";
-import { Sparkles, WandSparkles, Clapperboard, ChevronRight, CalendarPlus, Flame, Eye, Coffee, Heart, Shuffle, Star } from "lucide-react";
+import { Sparkles, WandSparkles, Clapperboard, ChevronRight, Flame, Eye, Coffee, Heart, Shuffle, Star } from "lucide-react";
 
 import { formatPlatformNamesForLoading, resolveProviders } from "@/lib/platforms";
 import type { Movie, MovieDetail } from "@/lib/tmdb";
@@ -2592,16 +2592,6 @@ const HomeScreen = ({
             </motion.button>
           </div>
 
-          {/* Organiser une soirée (date, invités) : distinct de la recherche. */}
-          <button
-            type="button"
-            onClick={() => navigate("/app/soiree/nouvelle")}
-            className="mt-3 w-full flex items-center justify-center gap-2 py-2.5 rounded-pick-md border border-pick-border bg-pick-surface/70 backdrop-blur-md text-[13px] font-sans font-semibold text-pick-purple-light transition-colors duration-180 ease-pick [@media(hover:hover)]:hover:border-pick-border-hover active:scale-[0.98]"
-          >
-            <CalendarPlus className="w-4 h-4" strokeWidth={1.9} />
-            Organiser une soirée pour plus tard
-            <ChevronRight className="w-4 h-4 opacity-70" />
-          </button>
         </section>
 
         {/* ─── Prochaine soirée (compact) ─── */}
