@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import AdhesionBadge from "./AdhesionBadge";
 import { Dices, Loader2, Info } from "lucide-react";
 import FlecheRonde from "./FlecheRonde";
+import CroixRonde from "./CroixRonde";
 import { getBackdropUrl, getDisplayTitle, getPosterUrl, getMovieDetailsWithCredits, normalizePosterPath, type MovieDetail } from "@/lib/tmdb";
 import {
   FALLBACK_POSTER_PATHS,
@@ -773,9 +774,9 @@ const TonightPickOverlay = ({
           <div className="absolute inset-0 pointer-events-none bg-gradient-to-t from-background via-background/85 to-transparent" />
           <div className="absolute inset-0 pointer-events-none bg-gradient-to-b from-background/50 via-transparent to-transparent h-32" />
 
-          {/* Top bar: back + match ring */}
+          {/* Barre du haut : fermer (l'écran est posé sur l'accueil) + adhésion */}
           <div className="relative z-10 flex justify-between items-center px-6 pt-[calc(1rem+env(safe-area-inset-top))]">
-            <FlecheRonde direction="gauche" onClick={onClose} label="Retour" />
+            <CroixRonde onClick={onClose} />
 
             {movie && adhesionScore != null && <AdhesionBadge score={adhesionScore} size={96} />}
           </div>
