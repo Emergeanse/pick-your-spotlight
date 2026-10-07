@@ -2491,10 +2491,10 @@ const HomeScreen = ({
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.24, duration: 0.4 }}
           onClick={() => navigate("/app/match")}
-          className="flex-1 min-w-0 h-12 flex items-center gap-2.5 px-4 rounded-full border border-white/[0.10] [border-top-color:rgba(196,181,253,0.35)] bg-[linear-gradient(180deg,rgba(255,255,255,0.07),rgba(255,255,255,0.02))] backdrop-blur-xl shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_6px_18px_rgba(0,0,0,0.25)] text-left transition-colors duration-180 ease-pick [@media(hover:hover)]:hover:border-pick-border-hover active:scale-[0.98]"
+          className="flex-1 min-w-0 h-12 flex items-center gap-2.5 max-[379px]:gap-2 px-4 max-[379px]:px-3 rounded-full border border-white/[0.10] [border-top-color:rgba(196,181,253,0.35)] bg-[linear-gradient(180deg,rgba(255,255,255,0.07),rgba(255,255,255,0.02))] backdrop-blur-xl shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_6px_18px_rgba(0,0,0,0.25)] text-left transition-colors duration-180 ease-pick [@media(hover:hover)]:hover:border-pick-border-hover active:scale-[0.98]"
         >
           <Search className="w-[17px] h-[17px] text-pick-purple-light shrink-0" strokeWidth={1.7} aria-hidden="true" />
-          <span className="text-[13px] font-sans text-foreground/85 truncate">Chercher un film</span>
+          <span className="text-[13px] max-[379px]:text-[12px] font-sans text-foreground/85 truncate">Chercher un film</span>
         </motion.button>
         <motion.button
           type="button"
@@ -2747,10 +2747,13 @@ const HomeScreen = ({
           className="mt-3 [@media(max-height:800px)]:mt-2 [@media(min-height:860px)]:mt-6"
         >
           <div className="px-5 flex items-center justify-between mb-2">
-            <h2 className="pl-2 flex items-center gap-2 text-[16px] font-sans font-bold text-foreground">
-              <Star className="w-4 h-4 fill-pick-gold text-pick-gold" aria-hidden="true" />
-              Picks du moment
-            </h2>
+            <div className="pl-2 min-w-0">
+              <h2 className="flex items-center gap-2 text-[16px] font-sans font-bold text-foreground whitespace-nowrap">
+                <Star className="w-4 h-4 fill-pick-gold text-pick-gold" aria-hidden="true" />
+                Picks du moment
+              </h2>
+              <p className="pl-6 text-[11px] font-sans italic text-pick-text-secondary leading-tight">Pour toi, aujourd&apos;hui</p>
+            </div>
             {quickRecos.length > 0 && (
               <button
                 onClick={() => setShowFindChoice(true)}
@@ -2791,6 +2794,16 @@ const HomeScreen = ({
                       <span className="text-[11px] font-sans text-white/85 truncate leading-tight">{item.recommendedBy}</span>
                     </div>
                   )}
+                  {/* L'adhésion Pick, la valeur propre à Pick, sur l'affiche. */}
+                  {(() => {
+                    const m = item?.matchData as { matchScore?: number; score?: number } | undefined;
+                    const score = m?.matchScore ?? m?.score;
+                    return typeof score === "number" && score > 0 ? (
+                      <span className="absolute bottom-1.5 left-1/2 -translate-x-1/2 px-1.5 py-[3px] rounded-full bg-black/70 backdrop-blur-sm border border-pick-purple-light/40 text-[11px] font-sans font-semibold text-pick-purple-light leading-none tabular-nums whitespace-nowrap">
+                        {Math.round(score)}&nbsp;%
+                      </span>
+                    ) : null;
+                  })()}
                   {loadingMovieId === item?.id && (
                     <div className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-[10px]">
                       <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
