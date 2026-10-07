@@ -46,7 +46,7 @@ import FlipCardDetail from "./FlipCardDetail";
 import PostSoireeFlow, { type PostSoireeEvent } from "./PostSoireeFlow";
 import { fetchVisibleProfiles } from "@/lib/visible-profiles";
 import { type AmbianceMood } from "./HomeAmbianceSection";
-import homeBackground from "@/assets/home-background.webp";
+import homeBackground from "@/assets/accueil-salle.webp";
 import trouverFilmBouton from "@/assets/trouver-film-bouton.webp";
 import { cadrePour, ECHELLE_CADRE } from "@/lib/cadres";
 import { clesDebloquees, lireValeursTrophees } from "@/lib/distinctions";
@@ -2391,22 +2391,27 @@ const HomeScreen = ({
         }
       />
 
+      {/* Le fond couvre le haut seulement (hero), l'écureuil à droite du
+          titre ; il s'éteint vers le bas dans le noir de la page. */}
       <div
-        className="absolute inset-0 bg-cover bg-no-repeat"
-        style={{ backgroundImage: `url(${homeBackground})`, backgroundPosition: "50% 0%", backgroundSize: "cover" }}
+        className="absolute inset-x-0 top-0 h-[calc(580px+env(safe-area-inset-top))] bg-cover bg-no-repeat"
+        style={{
+          backgroundImage: `url(${homeBackground})`,
+          backgroundPosition: "68% 100%",
+          maskImage: "linear-gradient(to bottom, black 62%, transparent 100%)",
+          WebkitMaskImage: "linear-gradient(to bottom, black 62%, transparent 100%)",
+        }}
       />
 
-      {/* Vignettage : l'écureuil reste dans la lumière, les affiches de cinéma
-          autour (Le Parrain, Casablanca…) s'éteignent vers les bords. Elles font
-          partie de la même image que lui : impossible de les atténuer seules.
-          Le fond doit se ressentir, pas se lire. */}
+      {/* Salle de cinéma floue, l'écureuil assis à droite : le côté gauche,
+          déjà sombre, s'assombrit encore un peu pour porter le titre. */}
       <div
         className="absolute inset-0 pointer-events-none"
-        style={{ background: "radial-gradient(ellipse 62% 42% at 52% 25%, transparent 45%, hsl(var(--background) / 0.6) 100%)" }}
+        style={{ background: "linear-gradient(to right, hsl(var(--background) / 0.55) 0%, hsl(var(--background) / 0.2) 45%, transparent 70%)" }}
       />
 
       {/* Dégradé : image visible en haut, fond opaque en bas */}
-      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background/55 to-background" />
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent from-55% to-background/80" />
 
       {/* Avatar à droite, sous la cloche (48 px), dans son cadre : le cadre
           suit les trophées obtenus, ou le statut d'Ambassadeur (voir lib/cadres) et déborde de
@@ -2489,13 +2494,13 @@ const HomeScreen = ({
           >
             {/* La recherche instantanée d'abord : c'est le geste le plus fréquent.
                 Organiser une soirée pour plus tard a son propre bouton. */}
-            <h1 className="mt-1.5 font-serif text-foreground text-[26px] leading-[1.15] tracking-tight">
-              Le film parfait,{" "}
+            <h1 className="mt-1.5 font-serif text-foreground text-[clamp(30px,8.8vw,40px)] leading-[1.02] tracking-tight [text-shadow:0_2px_18px_rgba(0,0,0,0.55)]">
+              Le film parfait,<br />
               <span className="italic text-primary" style={{ textShadow: "0 0 18px hsl(var(--primary)/0.5)" }}>
                 ce soir.
               </span>
             </h1>
-            <p className="mt-1 text-[13px] font-sans text-pick-text-secondary">Seul, à deux, en famille ou entre amis.</p>
+            <p className="mt-2 text-[14px] font-sans text-foreground/75 [text-shadow:0_1px_10px_rgba(0,0,0,0.6)]">Choisi pour toi — ou pour vous.</p>
           </motion.div>
 
           {/* CTA recherche instantanée */}
