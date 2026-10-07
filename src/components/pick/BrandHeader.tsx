@@ -16,9 +16,14 @@ interface BrandHeaderProps {
   showBack?: boolean;
   onBack?: () => void;
   extraActions?: ReactNode;
+  /**
+   * Accueil : largeur (px) laissée libre à droite pour l'avatar, posé par
+   * l'écran. Les icônes se centrent alors entre le logo et lui, tout en haut.
+   */
+  reserveDroite?: number;
 }
 
-const BrandHeader = ({ showBack, onBack, extraActions }: BrandHeaderProps) => {
+const BrandHeader = ({ showBack, onBack, extraActions, reserveDroite }: BrandHeaderProps) => {
   const navigate = useNavigate();
 
   return (
@@ -26,7 +31,7 @@ const BrandHeader = ({ showBack, onBack, extraActions }: BrandHeaderProps) => {
       initial={{ opacity: 0, y: -8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay: 0.1 }}
-      className="absolute top-0 left-0 right-0 z-30 p-3 pt-[calc(0.75rem+env(safe-area-inset-top))] md:p-6 flex items-center justify-between gap-2"
+      className={`absolute top-0 left-0 right-0 z-30 p-3 md:p-6 flex items-center justify-between gap-2 ${reserveDroite ? "pt-[calc(0.25rem+env(safe-area-inset-top))] md:pt-4" : "pt-[calc(0.75rem+env(safe-area-inset-top))]"}`}
     >
       {showBack ? (
         <button
@@ -54,7 +59,7 @@ const BrandHeader = ({ showBack, onBack, extraActions }: BrandHeaderProps) => {
       {/* Quatre boutons de 44 px, même construction : les icônes s'alignent
           au pixel. Tailles ajustées pour une même hauteur de dessin visible
           (~22 px), chaque image ne remplissant pas son cadre de la même façon. */}
-      <div className="flex items-center gap-1">
+      <div className={reserveDroite ? "flex-1 flex items-center justify-center" : "flex items-center gap-1"}>
         {extraActions}
         <button
           onClick={() => navigate("/app/match")}
@@ -72,6 +77,7 @@ const BrandHeader = ({ showBack, onBack, extraActions }: BrandHeaderProps) => {
         </button>
         <NotificationBell />
       </div>
+      {reserveDroite ? <div aria-hidden="true" className="shrink-0" style={{ width: reserveDroite }} /> : null}
     </motion.div>
   );
 };

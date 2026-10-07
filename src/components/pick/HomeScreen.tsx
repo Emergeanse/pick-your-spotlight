@@ -2386,6 +2386,7 @@ const HomeScreen = ({
           entier restait figé dès que le contenu dépassait l'écran. */}
       <div className={`h-full ${hideHomeDuringReveal ? "invisible" : ""}`}>
       <BrandHeader
+        reserveDroite={52}
         extraActions={
           <QuickFilters filters={quickFilters} onFiltersChange={setQuickFilters} profileDefaults={profileDefaults} />
         }
@@ -2413,17 +2414,18 @@ const HomeScreen = ({
       {/* Dégradé : image visible en haut, fond opaque en bas */}
       <div className="absolute inset-0 bg-gradient-to-b from-transparent from-55% to-background/80" />
 
-      {/* Avatar à droite, sous la cloche (48 px), dans son cadre : le cadre
-          suit les trophées obtenus, ou le statut d'Ambassadeur (voir lib/cadres) et déborde de
-          la photo — d'où la photo un peu en retrait du bord et sous la cloche.
-          Mène au profil. */}
+      {/* Avatar en haut à droite, sur la ligne de l'en-tête (40 px, centré sur
+          elle à quelques pixels près : un peu plus bas que les icônes, pour que son
+          cadre ne soit pas coupé par le haut de l'écran), dans son cadre : le cadre
+          suit les trophées obtenus, ou le statut d'Ambassadeur (voir lib/cadres)
+          et déborde de la photo. Mène au profil. */}
       <motion.button
         type="button"
         initial={{ opacity: 0, y: -4 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.22, duration: 0.4 }}
         onClick={() => navigate("/app/profile")}
-        className="absolute right-[28px] md:right-[40px] top-[calc(88px+env(safe-area-inset-top))] md:top-[106px] z-20 w-12 h-12 rounded-full active:scale-[0.97] transition-transform duration-120 ease-pick"
+        className="absolute right-[18px] md:right-[30px] top-[calc(14px+env(safe-area-inset-top))] md:top-[30px] z-40 w-10 h-10 rounded-full active:scale-[0.97] transition-transform duration-120 ease-pick"
         aria-label="Mon profil (avatar)"
       >
         {/* Le cadre derrière, la photo par-dessus : elle recouvre le bord
@@ -2446,16 +2448,15 @@ const HomeScreen = ({
         </span>
       </motion.button>
 
-      {/* Identité en haut à droite, à gauche de l'avatar et centrée sur lui
-          (avatar : 48 px, centre à 112 px du haut, 130 px en grand écran ; son
-          cadre déborde d'environ 18 px). Le côté gauche reste au titre. */}
+      {/* Identité sous l'avatar, alignée à droite (le cadre de l'avatar descend
+          jusqu'à ~62 px du haut, 82 px en grand écran). Le côté gauche reste au titre. */}
       <motion.button
         type="button"
         initial={{ opacity: 0, y: -4 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.22, duration: 0.4 }}
         onClick={() => navigate("/app/profile")}
-        className="absolute right-[92px] md:right-[104px] top-[calc(112px-1.75rem+env(safe-area-inset-top))] md:top-[calc(130px-1.75rem)] h-14 z-20 flex flex-col items-end justify-center text-right [text-shadow:0_1px_8px_rgba(0,0,0,0.7)] active:scale-[0.98] transition-transform"
+        className="absolute right-5 md:right-8 top-[calc(72px+env(safe-area-inset-top))] md:top-[90px] z-20 flex flex-col items-end text-right [text-shadow:0_1px_8px_rgba(0,0,0,0.7)] active:scale-[0.98] transition-transform"
         aria-label="Mon profil"
       >
         <span className="flex flex-col items-end gap-1 min-w-0">
