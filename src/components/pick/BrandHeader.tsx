@@ -48,6 +48,9 @@ const BrandHeader = ({ showBack, onBack, extraActions }: BrandHeaderProps) => {
         </div>
       )}
 
+      {/* Quatre boutons de 44 px, même construction : les icônes s'alignent
+          au pixel. Tailles ajustées pour une même hauteur de dessin visible
+          (~22 px), chaque image ne remplissant pas son cadre de la même façon. */}
       <div className="flex items-center gap-1">
         {extraActions}
         <button
@@ -55,14 +58,14 @@ const BrandHeader = ({ showBack, onBack, extraActions }: BrandHeaderProps) => {
           className="group relative w-11 h-11 flex items-center justify-center rounded-full transition-transform active:scale-[0.96]"
           aria-label="Rechercher un film"
         >
-          <IconeCharte repos={rechercheRepos} actif={rechercheActif} className="w-[24px] h-[24px]" />
+          <IconeCharte repos={rechercheRepos} actif={rechercheActif} className="w-[23px] h-[23px]" />
         </button>
         <button
           onClick={() => navigate("/app/duo")}
           className="group relative w-11 h-11 flex items-center justify-center rounded-full transition-transform active:scale-[0.96]"
           aria-label="Mes amis & Duo"
         >
-          <IconeCharte repos={amisRepos} actif={amisActif} className="w-[26px] h-[26px]" />
+          <IconeCharte repos={amisRepos} actif={amisActif} className="w-[29px] h-[29px]" />
         </button>
         <NotificationBell />
       </div>

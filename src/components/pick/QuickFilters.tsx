@@ -74,10 +74,10 @@ const QuickFilters = ({ filters, onFiltersChange, profileDefaults }: QuickFilter
     <div className="relative">
       <button
         onClick={() => setOpen(!open)}
-        className="group relative p-2 rounded-full"
+        className="group relative w-11 h-11 flex items-center justify-center rounded-full"
         aria-label={(profileDefaults ? isOverridden : hasActiveFilters) ? "Filtres rapides (modifiés pour cette recherche)" : "Filtres rapides"}
       >
-        <IconeCharte repos={filtresRepos} actif={filtresActif} className="w-[24px] h-[24px]" active={open} />
+        <IconeCharte repos={filtresRepos} actif={filtresActif} className="w-[25px] h-[25px]" active={open} />
         {/* Point violet : les filtres du moment diffèrent des préférences du
             profil. Comparé jusqu'ici à des valeurs fixes (80 %, 3 suggestions…),
             il restait allumé en permanence chez qui avait réglé son profil

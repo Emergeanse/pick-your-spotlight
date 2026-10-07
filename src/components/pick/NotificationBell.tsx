@@ -140,15 +140,15 @@ const NotificationBell = () => {
     <div className="relative">
       <button
         onClick={() => { setOpen(!open); if (!open) markAllRead(); }}
-        className="group relative p-2 rounded-full"
+        className="group relative w-11 h-11 flex items-center justify-center rounded-full"
         aria-label="Notifications"
       >
-        <IconeCharte repos={notificationsRepos} actif={notificationsActif} className="w-[26px] h-[26px]" active={open} />
+        <IconeCharte repos={notificationsRepos} actif={notificationsActif} className="w-[23px] h-[23px]" active={open} />
         {unreadCount > 0 && (
           <motion.span
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
-            className="absolute -top-0.5 -right-0.5 w-4.5 h-4.5 min-w-[18px] rounded-full bg-primary text-primary-foreground text-[10px] font-sans font-bold flex items-center justify-center"
+            className="absolute top-0 right-0 w-4.5 h-4.5 min-w-[18px] rounded-full bg-primary text-primary-foreground text-[11px] font-sans font-bold flex items-center justify-center"
           >
             {unreadCount > 9 ? "9+" : unreadCount}
           </motion.span>
