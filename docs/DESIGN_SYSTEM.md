@@ -218,3 +218,35 @@ texte sous 11 px hors barre d'onglets.
   360 px). Passer la navigation à 12 px demande de revoir la place des libellés, qui
   se touchaient déjà à 360 px : décision en attente (libellés plus courts ou sur deux
   lignes).
+
+## 17. Golden master (7 octobre 2026)
+
+L'accueil refait est la référence de Pick : chaque écran doit appartenir au même
+produit, sans copier l'accueil. Aucun style ne s'invente localement.
+
+**Cinq principes non négociables**
+1. Base noir / violet nuit.
+2. **Or** pour l'éditorial et le prestige (prénom, logo, distinctions, raretés).
+3. **Violet** pour l'action et la sélection.
+4. **Une seule zone très lumineuse par écran** — le « moment Pick ». Accueil : le
+   bouton « Trouve-moi LE film » et la mascotte ; fiche film : l'affiche et le score
+   d'adhésion ; soirée : l'événement et son statut ; ADN : le profil et la Carte Pick.
+   Le reste est calme (pas d'effet « sapin de Noël »).
+5. DM Serif Display pour le cinéma (titres), Inter pour l'interface.
+
+Mêmes rayons, surfaces, bordures, espacements et états repos / actif partout
+(composants de l'accueil : pastilles verre fumé, mode actif en dégradé violet avec
+relief, inactif mat, cartes `CARTE_PICK`, adhésion en pastille violette).
+
+**Méthode** : 1) industrialiser les composants communs (en-tête, cloche, avatar et
+cadre, bouton principal et secondaire, pastilles, cartes, adhésion, recherche, barre
+du bas, titres de section, affiches, modales, états vides) ; 2) reprendre chaque
+écran en ne changeant que sa composition ; 3) QA globale.
+
+**Grille des 3 secondes** — si une réponse est non, on retravaille : où suis-je ?
+quelle est l'action principale ? quelle information est propre à Pick ? est-ce
+immédiatement la même application que l'accueil ?
+
+**Ordre des écrans** : 1. fiche film (principale puis détaillée) · 2. Créer une
+soirée · 3. Mes soirées et détail · 4. ADN cinéma public · 5. Profil · 6. Biblio ·
+7. Amis, social, notifications · 8. Onboarding, connexion, états vides.
