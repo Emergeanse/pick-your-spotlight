@@ -2422,8 +2422,9 @@ const HomeScreen = ({
       <div className="absolute inset-0 bg-gradient-to-b from-transparent from-55% to-background/80" />
 
       {/* Avatar en haut à droite, sur la ligne de l'en-tête (40 px, centré sur
-          elle : photo de 36 px, centre à 26 px du haut, 38 px en grand écran ; le
-          cadre fait 1,5 fois la photo, pour tenir sous le haut de l'écran), dans son cadre : le cadre
+          elle : photo de 36 px, centre à 34 px du haut, 38 px en grand écran ; le
+          cadre fait 1,9 fois la photo : en dessous, son ouverture devient plus
+          petite que la photo et l'anneau disparaît derrière elle), dans son cadre : le cadre
           suit les trophées obtenus, ou le statut d'Ambassadeur (voir lib/cadres)
           et déborde de la photo. Mène au profil. */}
       <motion.button
@@ -2432,7 +2433,7 @@ const HomeScreen = ({
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.22, duration: 0.4 }}
         onClick={() => navigate("/app/profile")}
-        className="absolute right-[18px] md:right-[30px] top-[calc(8px+env(safe-area-inset-top))] md:top-[20px] z-40 w-9 h-9 rounded-full active:scale-[0.97] transition-transform duration-120 ease-pick"
+        className="absolute right-[18px] md:right-[30px] top-[calc(16px+env(safe-area-inset-top))] md:top-[20px] z-40 w-9 h-9 rounded-full active:scale-[0.97] transition-transform duration-120 ease-pick"
         aria-label="Mon profil (avatar)"
       >
         {/* Le cadre derrière, la photo par-dessus : elle recouvre le bord
@@ -2444,7 +2445,7 @@ const HomeScreen = ({
             aria-hidden="true"
             draggable={false}
             className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 max-w-none pointer-events-none select-none"
-            style={{ width: "150%", height: "150%" }}
+            style={{ width: "190%", height: "190%" }}
           />
         )}
         <span className={`absolute inset-0 rounded-full overflow-hidden bg-primary/20 flex items-center justify-center ${cadre.image ? "" : "ring-1 ring-pick-border-hover"}`}>
@@ -2459,7 +2460,7 @@ const HomeScreen = ({
           du reste de l'accueil, et s'efface vers les bords. */}
       <div
         aria-hidden="true"
-        className="absolute inset-x-5 md:inset-x-8 top-[calc(56px+env(safe-area-inset-top))] md:top-[68px] z-20 h-px pointer-events-none bg-gradient-to-r from-transparent via-pick-purple-light/40 to-transparent"
+        className="absolute inset-x-5 md:inset-x-8 top-[calc(64px+env(safe-area-inset-top))] md:top-[68px] z-20 h-px pointer-events-none bg-gradient-to-r from-transparent via-pick-purple-light/40 to-transparent"
       />
 
       {/* Raccourci discret vers l'ADN cinéma, sous l'avatar, aligné à droite :
@@ -2470,7 +2471,7 @@ const HomeScreen = ({
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.26, duration: 0.4 }}
         onClick={() => navigate("/app/adn")}
-        className="group absolute right-4 md:right-7 top-[calc(66px+env(safe-area-inset-top))] md:top-[78px] z-20 flex items-center gap-1.5 pl-1.5 pr-1.5 py-1.5 rounded-pick-md border border-pick-border bg-pick-surface/30 backdrop-blur-md text-left transition-colors duration-180 ease-pick [@media(hover:hover)]:hover:border-pick-border-hover active:scale-[0.98]"
+        className="group absolute right-4 md:right-7 top-[calc(74px+env(safe-area-inset-top))] md:top-[78px] z-20 flex items-center gap-1.5 pl-1.5 pr-1.5 py-1.5 rounded-pick-md border border-pick-border bg-pick-surface/30 backdrop-blur-md text-left transition-colors duration-180 ease-pick [@media(hover:hover)]:hover:border-pick-border-hover active:scale-[0.98]"
         aria-label="Mon ADN cinéma"
       >
         <IconeCharte repos={adnRepos} actif={adnActif} className="w-6 h-6 shrink-0" />
@@ -2493,7 +2494,7 @@ const HomeScreen = ({
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.22, duration: 0.4 }}
         onClick={() => navigate("/app/profile")}
-        className="absolute left-5 md:left-[34px] top-[calc(66px+env(safe-area-inset-top))] md:top-[78px] z-20 flex flex-col items-start text-left [text-shadow:0_1px_8px_rgba(0,0,0,0.7)] active:scale-[0.98] transition-transform"
+        className="absolute left-5 md:left-[34px] top-[calc(74px+env(safe-area-inset-top))] md:top-[78px] z-20 flex flex-col items-start text-left [text-shadow:0_1px_8px_rgba(0,0,0,0.7)] active:scale-[0.98] transition-transform"
         aria-label="Mon profil"
       >
         <span className="flex flex-col items-start gap-1 min-w-0">
@@ -2521,7 +2522,7 @@ const HomeScreen = ({
 
       <div className="relative z-10 h-full overflow-y-auto overscroll-y-contain touch-[pan-y_pinch-zoom] scrollbar-hide pb-[calc(6rem+env(safe-area-inset-bottom))]">
         {/* ─── Hero ─── */}
-        <section className="relative pt-[calc(8.25rem+env(safe-area-inset-top))] pb-2 px-5 md:px-8">
+        <section className="relative pt-[calc(8.75rem+env(safe-area-inset-top))] pb-2 px-5 md:px-8">
           <motion.div
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}

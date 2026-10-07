@@ -31,7 +31,7 @@ const BrandHeader = ({ showBack, onBack, extraActions, reserveDroite }: BrandHea
       initial={{ opacity: 0, y: -8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay: 0.1 }}
-      className={`absolute top-0 left-0 right-0 z-30 p-3 md:p-6 flex items-center justify-between gap-2 ${reserveDroite ? "pt-[calc(0.25rem+env(safe-area-inset-top))] md:pt-4" : "pt-[calc(0.75rem+env(safe-area-inset-top))]"}`}
+      className={`absolute top-0 left-0 right-0 z-30 p-3 md:p-6 flex items-center justify-between gap-2 ${reserveDroite ? "pt-[calc(0.75rem+env(safe-area-inset-top))] md:pt-4" : "pt-[calc(0.75rem+env(safe-area-inset-top))]"}`}
     >
       {showBack ? (
         <button
