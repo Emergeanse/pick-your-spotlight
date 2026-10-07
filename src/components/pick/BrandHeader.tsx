@@ -3,6 +3,8 @@ import { ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { ReactNode } from "react";
 import pickLogo from "@/assets/pick-logo.webp";
+// Le mot seul, sans marge : l'en-tête ne descend plus à cause du vide de l'image carrée.
+import pickLogoMot from "@/assets/pick-logo-mot.webp";
 import NotificationBell from "./NotificationBell";
 import IconeCharte from "./IconeCharte";
 import rechercheRepos from "@/assets/icones/recherche-repos.webp";
@@ -43,7 +45,8 @@ const BrandHeader = ({ showBack, onBack, extraActions }: BrandHeaderProps) => {
             onClick={() => navigate("/app/profile")}
             className="active:scale-[0.98] transition-transform shrink-0"
           >
-            <img src={pickLogo} alt="Pick" className="h-[62px] md:h-[75px] w-auto max-w-none object-contain" />
+            {/* Le « P » reste aligné sur la colonne « Bonsoir » (20 px, 34 px en grand écran). */}
+            <img src={pickLogoMot} alt="Pick" className="ml-[8px] md:ml-[10px] h-[28px] md:h-[32px] w-auto max-w-none object-contain" />
           </button>
         </div>
       )}
