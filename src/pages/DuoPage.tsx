@@ -35,9 +35,7 @@ const DuoAvatar = ({
 
   const Circle = ({ url, name, cls }: { url?: string | null; name?: string | null; cls: string }) => (
     <div className={`absolute ${cfg.circle} rounded-full border-2 border-background overflow-hidden bg-primary/20 flex items-center justify-center ${cls}`}>
-      {url
-        ? <img src={url} alt={name ?? ""} className="w-full h-full object-cover" />
-        : <span className={`${cfg.text} font-semibold text-primary`}>{name?.[0]?.toUpperCase() ?? "?"}</span>}
+      <img src={avatarAffiche(url)} alt={name ?? ""} className="w-full h-full object-cover" />
     </div>
   );
 

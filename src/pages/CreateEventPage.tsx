@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { avatarAffiche } from "@/lib/avatars";
 import groupeDuo from "@/assets/groupe-duo.webp";
 import groupeFamille from "@/assets/groupe-famille.webp";
 import groupeAmis from "@/assets/groupe-amis.webp";
@@ -427,9 +428,7 @@ const CreateEventPage = () => {
                             className={`relative flex items-center gap-3 p-3.5 rounded-pick-lg border text-left transition-all duration-180 ease-pick overflow-hidden ${isSelected ? "border-pick-border-active shadow-pick-active" : "border-pick-border bg-pick-surface/90"}`}
                           >
                             {isSelected && <div className="absolute inset-0 rounded-pick-lg" style={{ background: TAB_ACTIVE }} />}
-                            <div className="relative w-8 h-8 rounded-full bg-primary/20 border border-primary/20 flex items-center justify-center shrink-0">
-                              <span className="text-[13px] font-semibold text-primary">{friend.displayName[0].toUpperCase()}</span>
-                            </div>
+                            <img src={avatarAffiche(friend.avatarUrl)} alt="" className="relative w-8 h-8 rounded-full object-cover border border-primary/20 shrink-0" />
                             <p className="relative flex-1 font-sans text-[13px] font-medium text-foreground">{friend.displayName}</p>
                             {isSelected && <Check className="relative w-4 h-4 text-primary shrink-0" />}
                           </button>

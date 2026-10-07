@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef, useCallback } from "react";
+import { avatarAffiche } from "@/lib/avatars";
 import { useParams, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -56,6 +57,8 @@ type Participant = {
   guest_email?: string | null;
   status: "invited" | "confirmed" | "declined";
   display_name?: string;
+  /** Comptes inscrits : photo ou avatar choisi (l'écureuil à défaut). */
+  avatar_url?: string | null;
 };
 
 type EventRecommendation = {
@@ -158,7 +161,7 @@ const EventDetailPage = () => {
   const [deleting, setDeleting] = useState(false);
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
   const [leaving, setLeaving] = useState(false);
-  const [duoPartner, setDuoPartner] = useState<{ id: string; name: string } | null>(null);
+  const [duoPartner, setDuoPartner] = useState<{ id: string; name: string; avatarUrl?: string | null } | null>(null);
   const [addingPartner, setAddingPartner] = useState(false);
   const [isRevealing, setIsRevealing] = useState(false);
   const [recommendations, setRecommendations] = useState<EventRecommendation[]>([]);
@@ -327,7 +330,7 @@ const EventDetailPage = () => {
                 : (duo as any).user2_display_name;
             }
           }
-          return { ...ep, display_name: name ?? "Participant" };
+          return { ...ep, display_name: name ?? "Participant", avatar_url: p?.avatar_url ?? null };
         }
         return { ...ep, display_name: ep.guest_name ?? "Invité" };
       })
@@ -357,6 +360,7 @@ const EventDetailPage = () => {
           setDuoPartner({
             id: partnerId,
             name: pProfile?.display_name ?? "Ton duo",
+            avatarUrl: pProfile?.avatar_url ?? null,
           });
         } else {
           setDuoPartner(null);
@@ -864,9 +868,7 @@ const EventDetailPage = () => {
               initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }}
               className="rounded-2xl bg-primary/[0.08] border border-primary/25 p-4 flex items-center gap-3"
             >
-              <div className="w-9 h-9 rounded-full bg-primary/20 flex items-center justify-center text-[14px] font-serif font-semibold text-primary shrink-0">
-                {duoPartner.name[0].toUpperCase()}
-              </div>
+              <img src={avatarAffiche(duoPartner.avatarUrl)} alt="" className="w-9 h-9 rounded-full object-cover shrink-0" />
               <div className="flex-1 min-w-0">
                 <p className="text-[13px] font-sans font-semibold text-foreground">{duoPartner.name}</p>
                 <p className="text-[11px] text-foreground/40 mt-0.5">Pas encore invité·e à cette soirée</p>
@@ -932,7 +934,9 @@ const EventDetailPage = () => {
                     <div className={`relative w-10 h-10 rounded-full flex items-center justify-center text-[15px] font-serif font-semibold shrink-0 ring-2 ${statusConfig.ring} ${
                       isOwner ? "bg-primary/25 text-primary" : "bg-white/10 text-foreground/70"
                     }`}>
-                      {(p.display_name ?? "?")[0].toUpperCase()}
+                      {p.user_id
+                        ? <img src={avatarAffiche(p.avatar_url)} alt="" className="w-full h-full rounded-full object-cover" />
+                        : (p.display_name ?? "?")[0].toUpperCase()}
                       {/* Dot de statut */}
                       <span className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-background ${statusConfig.dot}`} />
                     </div>
