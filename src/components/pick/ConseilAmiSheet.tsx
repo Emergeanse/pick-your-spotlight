@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { avatarAffiche } from "@/lib/avatars";
 import { useLocation, useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { Check, X } from "lucide-react";
@@ -131,8 +132,8 @@ const ConseilAmiSheet = () => {
                             }`}
                           >
                             <span className="w-9 h-9 rounded-full overflow-hidden bg-primary/20 flex items-center justify-center shrink-0">
-                              {ami.avatarUrl
-                                ? <img src={ami.avatarUrl} alt="" className="w-full h-full object-cover" />
+                              {avatarAffiche(ami.avatarUrl)
+                                ? <img src={avatarAffiche(ami.avatarUrl)} alt="" className="w-full h-full object-cover" />
                                 : <span className="text-[13px] font-bold text-primary">{ami.displayName.charAt(0).toUpperCase()}</span>}
                             </span>
                             <span className="flex-1 min-w-0 text-[14px] font-sans font-medium text-foreground truncate">{ami.displayName}</span>

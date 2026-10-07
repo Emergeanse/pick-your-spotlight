@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { avatarAffiche } from "@/lib/avatars";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { ArrowLeft, Check, Copy, Loader2, Mail, QrCode, Share2, UserPlus, Users, X, ChevronRight } from "lucide-react";
@@ -184,7 +185,7 @@ const Friends = () => {
                 <div key={f.friendshipId} className="flex items-center justify-between p-3 rounded-xl bg-card border border-primary/15">
                   <div className="flex items-center gap-3">
                     <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                      {f.avatarUrl ? <img src={f.avatarUrl} alt="" className="w-full h-full rounded-full object-cover" /> :
+                      {avatarAffiche(f.avatarUrl) ? <img src={avatarAffiche(f.avatarUrl)} alt="" className="w-full h-full rounded-full object-cover" /> :
                         <span className="text-xs font-bold text-primary">{(f.displayName || "A")[0].toUpperCase()}</span>}
                     </div>
                     <div>
@@ -218,7 +219,7 @@ const Friends = () => {
                 <button key={f.friendshipId} onClick={() => handleViewFriendProfile(f)}
                   className="w-full flex items-center gap-3 p-3 rounded-xl bg-card/50 border border-border/10 hover:border-border/25 transition-all text-left active:scale-[0.98]">
                   <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden shrink-0">
-                    {f.avatarUrl ? <img src={f.avatarUrl} alt={f.displayName} className="w-full h-full object-cover" /> :
+                    {avatarAffiche(f.avatarUrl) ? <img src={avatarAffiche(f.avatarUrl)} alt={f.displayName} className="w-full h-full object-cover" /> :
                       <span className="text-sm font-sans font-bold text-primary">{(f.displayName || "A")[0].toUpperCase()}</span>}
                   </div>
                   <span className="text-sm font-sans flex-1">{f.displayName}</span>
@@ -307,7 +308,7 @@ const Friends = () => {
                   <div className="space-y-5">
                     <div className="flex flex-col items-center py-4">
                       <div className="w-16 h-16 rounded-full bg-primary/10 border-2 border-primary/15 flex items-center justify-center overflow-hidden mb-3">
-                        {friendProfile.avatarUrl ? <img src={friendProfile.avatarUrl} alt={friendProfile.displayName} className="w-full h-full object-cover" /> :
+                        {avatarAffiche(friendProfile.avatarUrl) ? <img src={avatarAffiche(friendProfile.avatarUrl)} alt={friendProfile.displayName} className="w-full h-full object-cover" /> :
                           <span className="text-xl font-serif font-bold text-primary">{(friendProfile.displayName || "A")[0].toUpperCase()}</span>}
                       </div>
                       <p className="text-lg font-serif">{friendProfile.displayName}</p>

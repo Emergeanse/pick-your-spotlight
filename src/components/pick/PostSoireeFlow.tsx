@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { avatarAffiche } from "@/lib/avatars";
 import { envoyerConseil } from "@/lib/conseils";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -428,8 +429,8 @@ export default function PostSoireeFlow({ event, onClose, onComplete }: Props) {
                               : "border-border/20 hover:border-border/40"
                           }`}
                         >
-                          {p.avatarUrl ? (
-                            <img src={p.avatarUrl} alt={p.name} className="w-8 h-8 rounded-full object-cover shrink-0" />
+                          {avatarAffiche(p.avatarUrl) ? (
+                            <img src={avatarAffiche(p.avatarUrl)} alt={p.name} className="w-8 h-8 rounded-full object-cover shrink-0" />
                           ) : (
                             <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-sm font-sans font-semibold text-primary shrink-0">
                               {p.name.charAt(0).toUpperCase()}

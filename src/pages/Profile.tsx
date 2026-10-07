@@ -1,4 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from "react";
+import { avatarAffiche } from "@/lib/avatars";
+import ChoixAvatar from "@/components/pick/ChoixAvatar";
 import { ReglageNotificationsTelephone } from "@/components/pick/NotificationsTelephone";
 import type { GenrePreferencesHandle } from "@/components/pick/GenrePreferences";
 import { motion, AnimatePresence } from "framer-motion";
@@ -444,6 +446,20 @@ const Profile = () => {
     if (!error) { setProfile((prev: any) => ({ ...prev, display_name: displayName.trim() })); setEditingName(false); toast({ title: "Pseudo mis à jour" }); }
   };
 
+  const [choixAvatarOuvert, setChoixAvatarOuvert] = useState(false);
+  const choisirAvatar = async (url: string) => {
+    if (!user) return;
+    const avant = avatarUrl;
+    setAvatarUrl(url);
+    const { error } = await supabase.from("profiles").update({ avatar_url: url } as never).eq("id", user.id);
+    if (error) { setAvatarUrl(avant); toast({ title: "Erreur", variant: "destructive" }); return; }
+    setProfile((prev: typeof profile) => ({ ...prev, avatar_url: url }));
+    try {
+      const cache = JSON.parse(localStorage.getItem("pys_greeting") || "{}");
+      localStorage.setItem("pys_greeting", JSON.stringify({ ...cache, avatarUrl: url }));
+    } catch { /* l'accueil relira le profil */ }
+  };
+
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !user) return;
@@ -633,17 +649,16 @@ const Profile = () => {
         <section>
           {/* Avatar + nom */}
           <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="flex items-center gap-4 mb-5">
-            <label className="relative cursor-pointer group shrink-0">
-              <input type="file" accept="image/*" onChange={handleAvatarUpload} className="hidden" disabled={uploadingAvatar} />
+            <button type="button" onClick={() => setChoixAvatarOuvert((v) => !v)} aria-expanded={choixAvatarOuvert} aria-label="Changer de photo ou d'avatar" className="relative group shrink-0">
               <div className="w-16 h-16 rounded-full bg-primary/10 border-2 border-primary/20 flex items-center justify-center overflow-hidden">
-                {avatarUrl
-                  ? <img src={avatarUrl} alt={nameDisplay} className="w-full h-full object-cover" />
+                {avatarAffiche(avatarUrl)
+                  ? <img src={avatarAffiche(avatarUrl)} alt={nameDisplay} className="w-full h-full object-cover" />
                   : <span className="text-lg font-serif font-bold text-primary">{initials}</span>}
               </div>
               <div className="absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full bg-card border border-border/30 flex items-center justify-center">
                 {uploadingAvatar ? <Loader2 className="w-2.5 h-2.5 text-primary animate-spin" /> : <Camera className="w-2.5 h-2.5 text-foreground/40" />}
               </div>
-            </label>
+            </button>
             <div className="flex-1 min-w-0">
               {editingName ? (
                 <div className="flex items-center gap-2">
@@ -666,6 +681,27 @@ const Profile = () => {
               <p className="text-foreground/40 text-[11px] font-sans mt-0.5">{user.email}</p>
             </div>
           </motion.div>
+          <AnimatePresence initial={false}>
+            {choixAvatarOuvert && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.26, ease: [0.2, 0.8, 0.2, 1] }}
+                className="overflow-hidden"
+              >
+                <div className="mb-5 rounded-pick-lg border border-pick-border bg-pick-surface/90 p-4">
+                  <p className="mb-3 text-[11px] font-sans font-semibold uppercase tracking-widest text-foreground/60">Choisis ton avatar</p>
+                  <ChoixAvatar valeur={avatarUrl} onChoisir={choisirAvatar} desactive={uploadingAvatar} />
+                  <label className="mt-4 flex items-center justify-center gap-2 py-2.5 rounded-pick-md border border-pick-border-active bg-primary/10 text-[13px] font-sans font-semibold text-pick-purple-light cursor-pointer active:scale-[0.98] transition-transform duration-120 ease-pick">
+                    <input type="file" accept="image/*" onChange={handleAvatarUpload} className="hidden" disabled={uploadingAvatar} />
+                    {uploadingAvatar ? <Loader2 className="w-4 h-4 animate-spin" /> : <Camera className="w-4 h-4" />}
+                    Mettre ma propre photo
+                  </label>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           {/* Aperçu de l'ADN : le profil est privé, l'ADN est la carte d'identité
               cinéphile que les autres voient — ici, seulement une miniature. */}

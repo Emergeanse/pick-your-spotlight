@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import ChoixAvatar from "./ChoixAvatar";
 import { AnimatePresence, motion } from "framer-motion";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -19,20 +20,25 @@ const PrenomRequis = () => {
   const [manquant, setManquant] = useState(false);
   const [saisie, setSaisie] = useState("");
   const [envoi, setEnvoi] = useState(false);
+  // Avatar proposé seulement à qui n'a pas déjà de photo.
+  const [sansPhoto, setSansPhoto] = useState(false);
+  const [avatar, setAvatar] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isReady || !user?.id) return;
     let actif = true;
     supabase
       .from("profiles")
-      .select("display_name")
+      .select("display_name, avatar_url")
       .eq("id", user.id)
       .maybeSingle()
       .then(({ data, error }) => {
         // En cas d'erreur de lecture, ne rien imposer : mieux vaut ne pas
         // demander que bloquer quelqu'un qui a déjà un prénom.
         if (!actif || error) return;
-        const actuel = (data as { display_name: string | null } | null)?.display_name?.trim();
+        const ligne = data as { display_name: string | null; avatar_url: string | null } | null;
+        const actuel = ligne?.display_name?.trim();
+        setSansPhoto(!ligne?.avatar_url);
         if (!actuel) {
           const suggestion = (user.user_metadata?.display_name ?? user.user_metadata?.full_name ?? user.user_metadata?.name ?? "") as string;
           setSaisie(suggestion.trim().slice(0, PRENOM_MAX));
@@ -47,7 +53,9 @@ const PrenomRequis = () => {
   const valider = async () => {
     if (!user || !prenom) return;
     setEnvoi(true);
-    const { error } = await supabase.from("profiles").update({ display_name: prenom } as never).eq("id", user.id);
+    const maj: Record<string, string> = { display_name: prenom };
+    if (sansPhoto && avatar) maj.avatar_url = avatar;
+    const { error } = await supabase.from("profiles").update(maj as never).eq("id", user.id);
     setEnvoi(false);
     if (error) {
       toast.error("Impossible d'enregistrer ton prénom pour le moment.");
@@ -56,7 +64,7 @@ const PrenomRequis = () => {
     // L'accueil affiche le prénom depuis ce cache avant même de lire le profil.
     try {
       const cache = JSON.parse(localStorage.getItem("pys_greeting") || "{}");
-      localStorage.setItem("pys_greeting", JSON.stringify({ ...cache, firstName: prenom }));
+      localStorage.setItem("pys_greeting", JSON.stringify({ ...cache, firstName: prenom, ...(sansPhoto && avatar ? { avatarUrl: avatar } : {}) }));
     } catch { /* sans stockage, l'accueil le relira au prochain chargement */ }
     setManquant(false);
     toast.success(`Enchanté ${prenom} !`);
@@ -97,6 +105,13 @@ const PrenomRequis = () => {
               autoComplete="given-name"
               className="mt-5 w-full rounded-pick-md border border-pick-border bg-background/60 px-4 py-3 text-[16px] font-sans text-foreground placeholder:text-pick-text-muted focus:outline-none focus:border-pick-border-active"
             />
+            {sansPhoto && (
+              <div className="mt-5">
+                <p className="mb-3 text-[13px] font-sans font-semibold text-pick-text-secondary">Et ton avatar&nbsp;?</p>
+                <ChoixAvatar valeur={avatar} onChoisir={setAvatar} taille={52} />
+                <p className="mt-2 text-[11px] font-sans text-pick-text-muted">Tu pourras le changer ou mettre ta photo depuis ton profil.</p>
+              </div>
+            )}
             <button
               type="submit"
               disabled={!prenom || envoi}

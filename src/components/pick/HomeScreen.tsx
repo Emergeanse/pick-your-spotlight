@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { avatarAffiche } from "@/lib/avatars";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate, useLocation } from "react-router-dom";
 import { consumePendingDuoPick } from "@/lib/duo-pending";
@@ -2432,8 +2433,8 @@ const HomeScreen = ({
           />
         )}
         <span className={`absolute inset-0 rounded-full overflow-hidden bg-primary/20 flex items-center justify-center ${cadre.image ? "" : "ring-1 ring-pick-border-hover"}`}>
-          {avatarUrl
-            ? <img src={avatarUrl} alt="" className="w-full h-full object-cover" />
+          {avatarAffiche(avatarUrl)
+            ? <img src={avatarAffiche(avatarUrl)} alt="" className="w-full h-full object-cover" />
             : <span className="text-[17px] font-bold text-primary leading-none">{(firstName || "?").charAt(0).toUpperCase()}</span>
           }
         </span>
@@ -2619,8 +2620,8 @@ const HomeScreen = ({
                 <span className="text-[11px] font-bold text-white leading-none">{nextEvent.partnerInitial}</span>
               </div>
               <div className="absolute left-4 top-0 w-8 h-8 rounded-full overflow-hidden border-2 border-[hsl(240_22%_6%)] bg-primary/20 flex items-center justify-center">
-                {avatarUrl ? (
-                  <img src={avatarUrl} alt="" className="w-full h-full object-cover" />
+                {avatarAffiche(avatarUrl) ? (
+                  <img src={avatarAffiche(avatarUrl)} alt="" className="w-full h-full object-cover" />
                 ) : (
                   <span className="text-[11px] font-bold text-primary leading-none">
                     {(firstName || "?").charAt(0).toUpperCase()}

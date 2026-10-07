@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
+import { avatarAffiche } from "@/lib/avatars";
 import FlecheRonde from "@/components/pick/FlecheRonde";
 import { toast } from "sonner";
 import duoBg from "@/assets/duo-background.webp";
@@ -508,7 +509,7 @@ const CreateFlow = ({ userId, displayName, onCreated, onCancel }: {
               className="flex items-center gap-3 px-3 py-3 rounded-2xl bg-foreground/[0.04] border border-border/15 hover:border-primary/30 hover:bg-foreground/[0.07] transition-all text-left"
             >
               <Avatar className="h-9 w-9 ring-1 ring-white/10 shrink-0">
-                {friend.avatarUrl && <AvatarImage src={friend.avatarUrl} alt={friend.displayName} />}
+                {avatarAffiche(friend.avatarUrl) && <AvatarImage src={avatarAffiche(friend.avatarUrl)} alt={friend.displayName} />}
                 <AvatarFallback className="bg-primary/20 text-foreground text-xs font-bold">
                   {friend.displayName.charAt(0).toUpperCase()}
                 </AvatarFallback>
@@ -764,8 +765,8 @@ export default function DuoPage() {
                         className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl bg-white/[0.05] border border-white/[0.08] text-left hover:bg-white/[0.08] transition-colors"
                       >
                         <div className="w-10 h-10 rounded-full overflow-hidden bg-primary/20 border border-white/10 shrink-0 flex items-center justify-center">
-                          {f.avatarUrl
-                            ? <img src={f.avatarUrl} alt={f.displayName} className="w-full h-full object-cover" />
+                          {avatarAffiche(f.avatarUrl)
+                            ? <img src={avatarAffiche(f.avatarUrl)} alt={f.displayName} className="w-full h-full object-cover" />
                             : <span className="text-[13px] font-bold text-primary">{f.displayName.charAt(0).toUpperCase()}</span>}
                         </div>
                         <div className="flex-1 min-w-0">
