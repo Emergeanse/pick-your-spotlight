@@ -2550,10 +2550,10 @@ const HomeScreen = ({
               transition={{ delay: 0.38, duration: 0.4 }}
               whileTap={{ scale: 0.93 }}
               onClick={() => { setFindChoiceContext("surprise"); setActiveWidget("surprise"); setTimeout(() => setShowFindChoice(true), 150); }}
-              className={`flex-1 min-w-0 flex flex-col items-center gap-1.5 py-2 px-1.5 rounded-pick-lg backdrop-blur-md transition-all duration-180 ease-pick ${activeWidget === "surprise" ? "border border-pick-border-active bg-primary/15 shadow-pick-active" : "border border-pick-border bg-pick-surface/25 [@media(hover:hover)]:hover:border-pick-border-hover [@media(hover:hover)]:hover:bg-pick-surface-hover [@media(hover:hover)]:hover:shadow-pick-hover"}`}
+              className={`flex-1 min-w-0 flex flex-row items-center justify-center gap-1.5 h-11 px-1.5 rounded-pick-md backdrop-blur-md transition-all duration-180 ease-pick ${activeWidget === "surprise" ? "border border-pick-border-active bg-primary/15 shadow-pick-active" : "border border-pick-border bg-pick-surface/25 [@media(hover:hover)]:hover:border-pick-border-hover [@media(hover:hover)]:hover:bg-pick-surface-hover [@media(hover:hover)]:hover:shadow-pick-hover"}`}
             >
-              <img src={groupeSurprise} alt="" aria-hidden="true" draggable={false} className="w-8 h-8 shrink-0 pointer-events-none select-none" />
-              <p className={`font-sans text-[11px] font-semibold leading-tight text-center ${activeWidget === "surprise" ? "text-pick-purple-light" : "text-foreground"}`}>Surprise<br/>solo</p>
+              <img src={groupeSurprise} alt="" aria-hidden="true" draggable={false} className="w-6 h-6 shrink-0 pointer-events-none select-none" />
+              <p className={`font-sans text-[12px] font-semibold leading-none whitespace-nowrap ${activeWidget === "surprise" ? "text-pick-purple-light" : "text-foreground"}`}>Solo</p>
             </motion.button>
 
             {/* Soirée Duo */}
@@ -2562,10 +2562,10 @@ const HomeScreen = ({
               transition={{ delay: 0.44, duration: 0.4 }}
               whileTap={{ scale: 0.93 }}
               onClick={() => { setFindChoiceContext("duo"); setActiveWidget("duo"); setTimeout(() => setShowFindChoice(true), 150); }}
-              className={`flex-1 min-w-0 flex flex-col items-center gap-1.5 py-2 px-1.5 rounded-pick-lg backdrop-blur-md transition-all duration-180 ease-pick ${activeWidget === "duo" ? "border border-pick-border-active bg-primary/15 shadow-pick-active" : "border border-pick-border bg-pick-surface/25 [@media(hover:hover)]:hover:border-pick-border-hover [@media(hover:hover)]:hover:bg-pick-surface-hover [@media(hover:hover)]:hover:shadow-pick-hover"}`}
+              className={`flex-1 min-w-0 flex flex-row items-center justify-center gap-1.5 h-11 px-1.5 rounded-pick-md backdrop-blur-md transition-all duration-180 ease-pick ${activeWidget === "duo" ? "border border-pick-border-active bg-primary/15 shadow-pick-active" : "border border-pick-border bg-pick-surface/25 [@media(hover:hover)]:hover:border-pick-border-hover [@media(hover:hover)]:hover:bg-pick-surface-hover [@media(hover:hover)]:hover:shadow-pick-hover"}`}
             >
-              <img src={groupeDuo} alt="" aria-hidden="true" draggable={false} className="w-8 h-8 shrink-0 pointer-events-none select-none" />
-              <p className={`font-sans text-[11px] font-semibold leading-tight text-center ${activeWidget === "duo" ? "text-pick-purple-light" : "text-foreground"}`}>Soirée<br/>Duo</p>
+              <img src={groupeDuo} alt="" aria-hidden="true" draggable={false} className="w-6 h-6 shrink-0 pointer-events-none select-none" />
+              <p className={`font-sans text-[12px] font-semibold leading-none whitespace-nowrap ${activeWidget === "duo" ? "text-pick-purple-light" : "text-foreground"}`}>Duo</p>
             </motion.button>
 
             {/* Film en famille */}
@@ -2574,10 +2574,10 @@ const HomeScreen = ({
               transition={{ delay: 0.50, duration: 0.4 }}
               whileTap={{ scale: 0.93 }}
               onClick={() => { setFindChoiceContext("famille"); setActiveWidget("famille"); setTimeout(() => setShowFindChoice(true), 150); }}
-              className={`flex-1 min-w-0 flex flex-col items-center gap-1.5 py-2 px-1.5 rounded-pick-lg backdrop-blur-md transition-all duration-180 ease-pick ${activeWidget === "famille" ? "border border-pick-border-active bg-primary/15 shadow-pick-active" : "border border-pick-border bg-pick-surface/25 [@media(hover:hover)]:hover:border-pick-border-hover [@media(hover:hover)]:hover:bg-pick-surface-hover [@media(hover:hover)]:hover:shadow-pick-hover"}`}
+              className={`flex-1 min-w-0 flex flex-row items-center justify-center gap-1.5 h-11 px-1.5 rounded-pick-md backdrop-blur-md transition-all duration-180 ease-pick ${activeWidget === "famille" ? "border border-pick-border-active bg-primary/15 shadow-pick-active" : "border border-pick-border bg-pick-surface/25 [@media(hover:hover)]:hover:border-pick-border-hover [@media(hover:hover)]:hover:bg-pick-surface-hover [@media(hover:hover)]:hover:shadow-pick-hover"}`}
             >
-              <img src={groupeFamille} alt="" aria-hidden="true" draggable={false} className="w-8 h-8 shrink-0 pointer-events-none select-none" />
-              <p className={`font-sans text-[11px] font-semibold leading-tight text-center ${activeWidget === "famille" ? "text-pick-purple-light" : "text-foreground"}`}>Film en<br/>famille</p>
+              <img src={groupeFamille} alt="" aria-hidden="true" draggable={false} className="w-6 h-6 shrink-0 pointer-events-none select-none" />
+              <p className={`font-sans text-[12px] font-semibold leading-none whitespace-nowrap ${activeWidget === "famille" ? "text-pick-purple-light" : "text-foreground"}`}>Famille</p>
             </motion.button>
 
             {/* Entre amis */}
@@ -2586,10 +2586,10 @@ const HomeScreen = ({
               transition={{ delay: 0.56, duration: 0.4 }}
               whileTap={{ scale: 0.93 }}
               onClick={() => { setFindChoiceContext("amis"); setActiveWidget("amis"); setTimeout(() => setShowFindChoice(true), 150); }}
-              className={`flex-1 min-w-0 flex flex-col items-center gap-1.5 py-2 px-1.5 rounded-pick-lg backdrop-blur-md transition-all duration-180 ease-pick ${activeWidget === "amis" ? "border border-pick-border-active bg-primary/15 shadow-pick-active" : "border border-pick-border bg-pick-surface/25 [@media(hover:hover)]:hover:border-pick-border-hover [@media(hover:hover)]:hover:bg-pick-surface-hover [@media(hover:hover)]:hover:shadow-pick-hover"}`}
+              className={`flex-1 min-w-0 flex flex-row items-center justify-center gap-1.5 h-11 px-1.5 rounded-pick-md backdrop-blur-md transition-all duration-180 ease-pick ${activeWidget === "amis" ? "border border-pick-border-active bg-primary/15 shadow-pick-active" : "border border-pick-border bg-pick-surface/25 [@media(hover:hover)]:hover:border-pick-border-hover [@media(hover:hover)]:hover:bg-pick-surface-hover [@media(hover:hover)]:hover:shadow-pick-hover"}`}
             >
-              <img src={groupeAmis} alt="" aria-hidden="true" draggable={false} className="w-8 h-8 shrink-0 pointer-events-none select-none" />
-              <p className={`font-sans text-[11px] font-semibold leading-tight text-center ${activeWidget === "amis" ? "text-pick-purple-light" : "text-foreground"}`}>Entre<br/>amis</p>
+              <img src={groupeAmis} alt="" aria-hidden="true" draggable={false} className="w-6 h-6 shrink-0 pointer-events-none select-none" />
+              <p className={`font-sans text-[12px] font-semibold leading-none whitespace-nowrap ${activeWidget === "amis" ? "text-pick-purple-light" : "text-foreground"}`}>Amis</p>
             </motion.button>
           </div>
 
@@ -2709,7 +2709,8 @@ const HomeScreen = ({
           className="mt-4 pb-3"
         >
           <div className="px-5 flex items-center justify-between mb-3">
-            <h2 className="text-[16px] font-sans font-bold text-foreground">
+            <h2 className="pl-2 flex items-center gap-2 text-[16px] font-sans font-bold text-foreground">
+              <Star className="w-4 h-4 fill-pick-gold text-pick-gold" aria-hidden="true" />
               Picks du moment
             </h2>
             {quickRecos.length > 0 && (
