@@ -48,7 +48,7 @@ import { fetchVisibleProfiles } from "@/lib/visible-profiles";
 import { type AmbianceMood } from "./HomeAmbianceSection";
 import homeBackground from "@/assets/accueil-salle.webp";
 import trouverFilmBouton from "@/assets/trouver-film-bouton.webp";
-import { cadrePour, ECHELLE_CADRE } from "@/lib/cadres";
+import { cadrePour } from "@/lib/cadres";
 import { clesDebloquees, lireValeursTrophees } from "@/lib/distinctions";
 import { estAmbassadeur } from "@/lib/invitation";
 import trouverFilmBoutonActif from "@/assets/trouver-film-bouton-actif.webp";
@@ -426,7 +426,7 @@ const HomeScreen = ({
   const [loadingMovieId, setLoadingMovieId] = useState<number | null>(null);
   const [nextEvent, setNextEvent] = useState<{
     id: string; title: string; event_date: string; event_time: string | null;
-    context: string | null; partnerInitial: string; partnerName: string;
+    context: string | null; partnerInitial: string; partnerName: string; partnerAvatar: string | null;
   } | null>(null);
   const [activeWidget, setActiveWidget] = useState<"duo" | "famille" | "amis" | "surprise">("surprise");
   const [findChoiceContext, setFindChoiceContext] = useState<LaunchContext>("solo");
@@ -864,9 +864,12 @@ const HomeScreen = ({
         .limit(1);
       const partner = eps?.[0];
       let partnerName = "?";
+      let partnerAvatar: string | null = null;
       if (partner?.user_id) {
         const prof = await fetchVisibleProfile(partner.user_id);
         partnerName = prof?.display_name || partner.guest_name || "Invité";
+        // Compte inscrit : sa photo, son avatar choisi, ou l'écureuil.
+        partnerAvatar = avatarAffiche(prof?.avatar_url);
       } else if (partner?.guest_name) {
         partnerName = partner.guest_name;
       }
@@ -879,6 +882,7 @@ const HomeScreen = ({
         context: chosen.context,
         partnerInitial: partnerName.charAt(0).toUpperCase(),
         partnerName,
+        partnerAvatar,
       });
     })();
   }, [user]);
@@ -2415,8 +2419,9 @@ const HomeScreen = ({
       <div className="absolute inset-0 bg-gradient-to-b from-transparent from-55% to-background/80" />
 
       {/* Avatar en haut à droite, sur la ligne de l'en-tête (40 px, centré sur
-          elle à quelques pixels près : un peu plus bas que les icônes, pour que son
-          cadre ne soit pas coupé par le haut de l'écran), dans son cadre : le cadre
+          elle : photo de 28 px, centre à 26 px du haut, 38 px en grand écran ; le
+          cadre fait 1,8 fois la photo, assez pour se voir, pas assez pour être
+          coupé par le haut de l'écran), dans son cadre : le cadre
           suit les trophées obtenus, ou le statut d'Ambassadeur (voir lib/cadres)
           et déborde de la photo. Mène au profil. */}
       <motion.button
@@ -2425,7 +2430,7 @@ const HomeScreen = ({
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.22, duration: 0.4 }}
         onClick={() => navigate("/app/profile")}
-        className="absolute right-[18px] md:right-[30px] top-[calc(14px+env(safe-area-inset-top))] md:top-[30px] z-40 w-10 h-10 rounded-full active:scale-[0.97] transition-transform duration-120 ease-pick"
+        className="absolute right-[18px] md:right-[30px] top-[calc(12px+env(safe-area-inset-top))] md:top-[24px] z-40 w-7 h-7 rounded-full active:scale-[0.97] transition-transform duration-120 ease-pick"
         aria-label="Mon profil (avatar)"
       >
         {/* Le cadre derrière, la photo par-dessus : elle recouvre le bord
@@ -2437,16 +2442,23 @@ const HomeScreen = ({
             aria-hidden="true"
             draggable={false}
             className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 max-w-none pointer-events-none select-none"
-            style={{ width: `${ECHELLE_CADRE * 100}%`, height: `${ECHELLE_CADRE * 100}%` }}
+            style={{ width: "180%", height: "180%" }}
           />
         )}
         <span className={`absolute inset-0 rounded-full overflow-hidden bg-primary/20 flex items-center justify-center ${cadre.image ? "" : "ring-1 ring-pick-border-hover"}`}>
           {avatarAffiche(avatarUrl)
             ? <img src={avatarAffiche(avatarUrl)} alt="" className="w-full h-full object-cover" />
-            : <span className="text-[17px] font-bold text-primary leading-none">{(firstName || "?").charAt(0).toUpperCase()}</span>
+            : <span className="text-[12px] font-bold text-primary leading-none">{(firstName || "?").charAt(0).toUpperCase()}</span>
           }
         </span>
       </motion.button>
+
+      {/* Césure fine sous l'en-tête : sépare la barre (logo, icônes, avatar)
+          du reste de l'accueil, et s'efface vers les bords. */}
+      <div
+        aria-hidden="true"
+        className="absolute inset-x-5 md:inset-x-8 top-[calc(56px+env(safe-area-inset-top))] md:top-[68px] z-20 h-px pointer-events-none bg-gradient-to-r from-transparent via-pick-purple-light/40 to-transparent"
+      />
 
       {/* Identité sous le logo, alignée sur son « P » (20 px du bord, 34 px en
           grand écran). Le logo finit vers 40 px du haut (54 px en grand écran). */}
@@ -2456,7 +2468,7 @@ const HomeScreen = ({
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.22, duration: 0.4 }}
         onClick={() => navigate("/app/profile")}
-        className="absolute left-5 md:left-[34px] top-[calc(50px+env(safe-area-inset-top))] md:top-[64px] z-20 flex flex-col items-start text-left [text-shadow:0_1px_8px_rgba(0,0,0,0.7)] active:scale-[0.98] transition-transform"
+        className="absolute left-5 md:left-[34px] top-[calc(66px+env(safe-area-inset-top))] md:top-[78px] z-20 flex flex-col items-start text-left [text-shadow:0_1px_8px_rgba(0,0,0,0.7)] active:scale-[0.98] transition-transform"
         aria-label="Mon profil"
       >
         <span className="flex flex-col items-start gap-1 min-w-0">
@@ -2610,8 +2622,10 @@ const HomeScreen = ({
           >
             {/* Avatars empilés : partenaire (derrière) + utilisateur (devant) */}
             <div className="relative flex-shrink-0 w-11 h-8">
-              <div className="absolute left-0 top-0 w-8 h-8 rounded-full bg-gradient-to-br from-primary to-pick-pink border-2 border-[hsl(240_22%_6%)] flex items-center justify-center">
-                <span className="text-[11px] font-bold text-white leading-none">{nextEvent.partnerInitial}</span>
+              <div className="absolute left-0 top-0 w-8 h-8 rounded-full overflow-hidden bg-gradient-to-br from-primary to-pick-pink border-2 border-[hsl(240_22%_6%)] flex items-center justify-center">
+                {nextEvent.partnerAvatar
+                  ? <img src={nextEvent.partnerAvatar} alt="" className="w-full h-full object-cover" />
+                  : <span className="text-[11px] font-bold text-white leading-none">{nextEvent.partnerInitial}</span>}
               </div>
               <div className="absolute left-4 top-0 w-8 h-8 rounded-full overflow-hidden border-2 border-[hsl(240_22%_6%)] bg-primary/20 flex items-center justify-center">
                 {avatarAffiche(avatarUrl) ? (
