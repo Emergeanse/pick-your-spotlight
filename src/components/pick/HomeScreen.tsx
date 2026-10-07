@@ -56,7 +56,6 @@ import { clesDebloquees, lireValeursTrophees } from "@/lib/distinctions";
 import { estAmbassadeur } from "@/lib/invitation";
 import trouverFilmBoutonActif from "@/assets/trouver-film-bouton-actif.webp";
 import groupeSurprise from "@/assets/groupe-surprise.webp";
-import DerniereNotification from "./DerniereNotification";
 import { PropositionNotificationsTelephone } from "./NotificationsTelephone";
 import groupeDuo from "@/assets/groupe-duo.webp";
 import groupeFamille from "@/assets/groupe-famille.webp";
@@ -2752,8 +2751,10 @@ const HomeScreen = ({
           </motion.button>
         )}
 
-        {/* ─── Dernière notification (vraie) ─── */}
-        <DerniereNotification className={CARTE_PICK} />
+        {/* La dernière notification ne s'affiche plus ici, pour alléger
+            l'accueil : la cloche de l'en-tête les rassemble. Seule reste,
+            tant qu'elles ne sont pas activées, la proposition d'autoriser
+            les notifications sur le téléphone. */}
         <PropositionNotificationsTelephone className={CARTE_PICK} />
 
         {/* ─── Picks du moment (3 films qui pourraient plaire) ─── */}
