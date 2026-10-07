@@ -11,7 +11,7 @@ import {
 
 /**
  * La Carte Pick plein écran : recto et verso, retournés d'un toucher, et
- * partagés en image. La finition holographique est réservée à Pick+.
+ * partagés en image. La finition nacre est réservée à Pick+.
  */
 interface CartePickProps {
   ouvert: boolean;
@@ -27,7 +27,7 @@ const CartePick = ({ ouvert, onFermer, donnees, rarete, pickPlus }: CartePickPro
   const [retournee, setRetournee] = useState(false);
   const [holo, setHolo] = useState(false);
   const [pret, setPret] = useState(false);
-  const finition: Finition = holo && pickPlus ? "holo" : rarete;
+  const finition: Finition = holo && pickPlus ? "nacre" : rarete;
 
   useEffect(() => {
     if (!ouvert || !recto.current || !verso.current) return;
@@ -122,7 +122,7 @@ const CartePick = ({ ouvert, onFermer, donnees, rarete, pickPlus }: CartePickPro
                 className={`mt-3 inline-flex items-center gap-1.5 h-9 px-3.5 rounded-full border text-[12px] font-sans font-semibold transition-colors duration-180 ease-pick ${holo ? "border-pick-gold/60 bg-pick-gold/10 text-pick-gold" : "border-pick-border text-pick-text-secondary"}`}
               >
                 <Sparkles className="w-3.5 h-3.5" aria-hidden="true" />
-                Finition holographique · Pick+
+                Finition nacre · Pick+
               </button>
             )}
           </motion.div>

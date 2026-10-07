@@ -539,7 +539,7 @@ const CinemaDNAPage = () => {
             onClick={() => setCarteOuverte(true)}
             className="w-full flex items-center gap-3 rounded-pick-lg border border-pick-gold/35 bg-gradient-to-r from-pick-gold/[0.10] via-primary/[0.08] to-transparent px-4 py-3 text-left active:scale-[0.98] transition-transform duration-120 ease-pick"
           >
-            <span className="w-9 h-12 shrink-0 rounded-[6px] border border-pick-gold/60 bg-[url('/cartes/or.webp')] bg-cover bg-center shadow-pick-card" aria-hidden="true" />
+            <span className="w-9 h-12 shrink-0 rounded-[6px] border border-pick-gold/60 bg-[url('/cartes/recto-or.webp')] bg-cover bg-center shadow-pick-card" aria-hidden="true" />
             <span className="flex-1 min-w-0">
               <span className="block font-serif text-[17px] text-foreground leading-tight">Ma Carte Pick</span>
               <span className="block text-[12px] font-sans text-pick-text-secondary">Ta carte cinéphile à retourner et partager</span>
