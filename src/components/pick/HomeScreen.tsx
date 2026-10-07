@@ -2548,10 +2548,10 @@ const HomeScreen = ({
               transition={{ delay: 0.38, duration: 0.4 }}
               whileTap={{ scale: 0.93 }}
               onClick={() => { setFindChoiceContext("surprise"); setActiveWidget("surprise"); setTimeout(() => setShowFindChoice(true), 150); }}
-              className={`flex-1 min-w-0 flex flex-row items-center justify-center gap-1.5 h-11 px-1.5 rounded-pick-md backdrop-blur-md transition-all duration-180 ease-pick ${activeWidget === "surprise" ? "border border-pick-purple-light/45 bg-primary/[0.12]" : "border border-pick-border bg-pick-surface/25 [@media(hover:hover)]:hover:border-pick-border-hover [@media(hover:hover)]:hover:bg-pick-surface-hover "}`}
+              className={`flex-1 min-w-0 flex flex-row items-center justify-center gap-1.5 h-11 px-1.5 rounded-pick-md backdrop-blur-md transition-all duration-180 ease-pick ${activeWidget === "surprise" ? "border border-pick-purple-light/70 bg-[linear-gradient(180deg,rgba(192,132,252,0.32),rgba(139,92,246,0.14))] shadow-[inset_0_1px_0_rgba(255,255,255,0.14),0_4px_14px_rgba(0,0,0,0.25),0_0_16px_rgba(168,85,247,0.32)]" : "border border-white/[0.06] bg-black/30 opacity-80 [@media(hover:hover)]:hover:border-pick-border-hover [@media(hover:hover)]:hover:bg-pick-surface-hover "}`}
             >
-              <img src={groupeSurprise} alt="" aria-hidden="true" draggable={false} className="w-6 h-6 shrink-0 pointer-events-none select-none" />
-              <p className={`font-sans text-[12px] font-semibold leading-none whitespace-nowrap ${activeWidget === "surprise" ? "text-pick-purple-light" : "text-foreground"}`}>Solo</p>
+              <img src={groupeSurprise} alt="" aria-hidden="true" draggable={false} className={`w-6 h-6 shrink-0 pointer-events-none select-none transition-[filter] duration-180 ease-pick ${activeWidget === "surprise" ? "brightness-125 drop-shadow-[0_0_6px_rgba(216,180,254,0.7)]" : "saturate-50"}`} />
+              <p className={`font-sans text-[12px] font-semibold leading-none whitespace-nowrap ${activeWidget === "surprise" ? "text-white" : "text-foreground/75"}`}>Solo</p>
             </motion.button>
 
             {/* Soirée Duo */}
@@ -2560,10 +2560,10 @@ const HomeScreen = ({
               transition={{ delay: 0.44, duration: 0.4 }}
               whileTap={{ scale: 0.93 }}
               onClick={() => { setFindChoiceContext("duo"); setActiveWidget("duo"); setTimeout(() => setShowFindChoice(true), 150); }}
-              className={`flex-1 min-w-0 flex flex-row items-center justify-center gap-1.5 h-11 px-1.5 rounded-pick-md backdrop-blur-md transition-all duration-180 ease-pick ${activeWidget === "duo" ? "border border-pick-purple-light/45 bg-primary/[0.12]" : "border border-pick-border bg-pick-surface/25 [@media(hover:hover)]:hover:border-pick-border-hover [@media(hover:hover)]:hover:bg-pick-surface-hover "}`}
+              className={`flex-1 min-w-0 flex flex-row items-center justify-center gap-1.5 h-11 px-1.5 rounded-pick-md backdrop-blur-md transition-all duration-180 ease-pick ${activeWidget === "duo" ? "border border-pick-purple-light/70 bg-[linear-gradient(180deg,rgba(192,132,252,0.32),rgba(139,92,246,0.14))] shadow-[inset_0_1px_0_rgba(255,255,255,0.14),0_4px_14px_rgba(0,0,0,0.25),0_0_16px_rgba(168,85,247,0.32)]" : "border border-white/[0.06] bg-black/30 opacity-80 [@media(hover:hover)]:hover:border-pick-border-hover [@media(hover:hover)]:hover:bg-pick-surface-hover "}`}
             >
-              <img src={groupeDuo} alt="" aria-hidden="true" draggable={false} className="w-6 h-6 shrink-0 pointer-events-none select-none" />
-              <p className={`font-sans text-[12px] font-semibold leading-none whitespace-nowrap ${activeWidget === "duo" ? "text-pick-purple-light" : "text-foreground"}`}>Duo</p>
+              <img src={groupeDuo} alt="" aria-hidden="true" draggable={false} className={`w-6 h-6 shrink-0 pointer-events-none select-none transition-[filter] duration-180 ease-pick ${activeWidget === "duo" ? "brightness-125 drop-shadow-[0_0_6px_rgba(216,180,254,0.7)]" : "saturate-50"}`} />
+              <p className={`font-sans text-[12px] font-semibold leading-none whitespace-nowrap ${activeWidget === "duo" ? "text-white" : "text-foreground/75"}`}>Duo</p>
             </motion.button>
 
             {/* Film en famille */}
@@ -2572,10 +2572,10 @@ const HomeScreen = ({
               transition={{ delay: 0.50, duration: 0.4 }}
               whileTap={{ scale: 0.93 }}
               onClick={() => { setFindChoiceContext("famille"); setActiveWidget("famille"); setTimeout(() => setShowFindChoice(true), 150); }}
-              className={`flex-1 min-w-0 flex flex-row items-center justify-center gap-1.5 h-11 px-1.5 rounded-pick-md backdrop-blur-md transition-all duration-180 ease-pick ${activeWidget === "famille" ? "border border-pick-purple-light/45 bg-primary/[0.12]" : "border border-pick-border bg-pick-surface/25 [@media(hover:hover)]:hover:border-pick-border-hover [@media(hover:hover)]:hover:bg-pick-surface-hover "}`}
+              className={`flex-1 min-w-0 flex flex-row items-center justify-center gap-1.5 h-11 px-1.5 rounded-pick-md backdrop-blur-md transition-all duration-180 ease-pick ${activeWidget === "famille" ? "border border-pick-purple-light/70 bg-[linear-gradient(180deg,rgba(192,132,252,0.32),rgba(139,92,246,0.14))] shadow-[inset_0_1px_0_rgba(255,255,255,0.14),0_4px_14px_rgba(0,0,0,0.25),0_0_16px_rgba(168,85,247,0.32)]" : "border border-white/[0.06] bg-black/30 opacity-80 [@media(hover:hover)]:hover:border-pick-border-hover [@media(hover:hover)]:hover:bg-pick-surface-hover "}`}
             >
-              <img src={groupeFamille} alt="" aria-hidden="true" draggable={false} className="w-6 h-6 shrink-0 pointer-events-none select-none" />
-              <p className={`font-sans text-[12px] font-semibold leading-none whitespace-nowrap ${activeWidget === "famille" ? "text-pick-purple-light" : "text-foreground"}`}>Famille</p>
+              <img src={groupeFamille} alt="" aria-hidden="true" draggable={false} className={`w-6 h-6 shrink-0 pointer-events-none select-none transition-[filter] duration-180 ease-pick ${activeWidget === "famille" ? "brightness-125 drop-shadow-[0_0_6px_rgba(216,180,254,0.7)]" : "saturate-50"}`} />
+              <p className={`font-sans text-[12px] font-semibold leading-none whitespace-nowrap ${activeWidget === "famille" ? "text-white" : "text-foreground/75"}`}>Famille</p>
             </motion.button>
 
             {/* Entre amis */}
@@ -2584,10 +2584,10 @@ const HomeScreen = ({
               transition={{ delay: 0.56, duration: 0.4 }}
               whileTap={{ scale: 0.93 }}
               onClick={() => { setFindChoiceContext("amis"); setActiveWidget("amis"); setTimeout(() => setShowFindChoice(true), 150); }}
-              className={`flex-1 min-w-0 flex flex-row items-center justify-center gap-1.5 h-11 px-1.5 rounded-pick-md backdrop-blur-md transition-all duration-180 ease-pick ${activeWidget === "amis" ? "border border-pick-purple-light/45 bg-primary/[0.12]" : "border border-pick-border bg-pick-surface/25 [@media(hover:hover)]:hover:border-pick-border-hover [@media(hover:hover)]:hover:bg-pick-surface-hover "}`}
+              className={`flex-1 min-w-0 flex flex-row items-center justify-center gap-1.5 h-11 px-1.5 rounded-pick-md backdrop-blur-md transition-all duration-180 ease-pick ${activeWidget === "amis" ? "border border-pick-purple-light/70 bg-[linear-gradient(180deg,rgba(192,132,252,0.32),rgba(139,92,246,0.14))] shadow-[inset_0_1px_0_rgba(255,255,255,0.14),0_4px_14px_rgba(0,0,0,0.25),0_0_16px_rgba(168,85,247,0.32)]" : "border border-white/[0.06] bg-black/30 opacity-80 [@media(hover:hover)]:hover:border-pick-border-hover [@media(hover:hover)]:hover:bg-pick-surface-hover "}`}
             >
-              <img src={groupeAmis} alt="" aria-hidden="true" draggable={false} className="w-6 h-6 shrink-0 pointer-events-none select-none" />
-              <p className={`font-sans text-[12px] font-semibold leading-none whitespace-nowrap ${activeWidget === "amis" ? "text-pick-purple-light" : "text-foreground"}`}>Amis</p>
+              <img src={groupeAmis} alt="" aria-hidden="true" draggable={false} className={`w-6 h-6 shrink-0 pointer-events-none select-none transition-[filter] duration-180 ease-pick ${activeWidget === "amis" ? "brightness-125 drop-shadow-[0_0_6px_rgba(216,180,254,0.7)]" : "saturate-50"}`} />
+              <p className={`font-sans text-[12px] font-semibold leading-none whitespace-nowrap ${activeWidget === "amis" ? "text-white" : "text-foreground/75"}`}>Amis</p>
             </motion.button>
           </div>
 
