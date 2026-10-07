@@ -9,7 +9,7 @@ import { clearRevealIntent, type RevealIntent, peekForReveal, consumeForReveal, 
 import { fetchGroupTasteProfile, fetchAdHocGroupProfile, isUsableGroupProfile, toGroupOverrides } from "@/lib/group-taste";
 import { programFilmForEvent } from "@/lib/event-program";
 import { toast } from "sonner";
-import { Sparkles, WandSparkles, Clapperboard, ChevronRight, CalendarDays, Clock, Flame, Eye, Coffee, Heart, Shuffle, Star } from "lucide-react";
+import { Sparkles, WandSparkles, Clapperboard, ChevronRight, Search, CalendarDays, Clock, Flame, Eye, Coffee, Heart, Shuffle, Star } from "lucide-react";
 
 import { formatPlatformNamesForLoading, resolveProviders } from "@/lib/platforms";
 import type { Movie, MovieDetail } from "@/lib/tmdb";
@@ -2636,6 +2636,16 @@ const HomeScreen = ({
               Trouve-moi&nbsp;<span className="font-serif italic font-bold text-[1.12em] text-pick-purple-light">LE</span>&nbsp;film
             </span>
           </motion.button>
+
+          {/* Recherche d'un film précis (titre, voix, photo) : discrète, sous l'action phare. */}
+          <button
+            type="button"
+            onClick={() => navigate("/app/match")}
+            className="mt-2 mx-auto flex items-center gap-1.5 py-1.5 text-[12px] font-sans text-pick-text-secondary [@media(hover:hover)]:hover:text-pick-purple-light transition-colors duration-180 ease-pick"
+          >
+            <Search className="w-3.5 h-3.5" aria-hidden="true" />
+            Chercher un film précis
+          </button>
         </section>
 
         {/* ─── Prochaine soirée (compact) ─── */}

@@ -9,10 +9,11 @@ import soireesRepos from "@/assets/icones/soirees-repos.webp";
 import soireesActif from "@/assets/icones/soirees-actif.webp";
 import biblioRepos from "@/assets/icones/biblio-repos.webp";
 import biblioActif from "@/assets/icones/biblio-actif.webp";
-import profilRepos from "@/assets/icones/profil-repos.webp";
-import profilActif from "@/assets/icones/profil-actif.webp";
+import amisRepos from "@/assets/icones/amis-repos.webp";
+import amisActif from "@/assets/icones/amis-actif.webp";
 
-export type TabId = "home" | "soirees" | "cinema" | "profile";
+// Le profil s'ouvre depuis l'avatar de l'en-tête ; les amis prennent sa place.
+export type TabId = "home" | "soirees" | "amis" | "cinema";
 
 // Illustrations de la charte Pick : `icon` au repos, `activeIcon` quand l'onglet est
 // sélectionné ou survolé.
@@ -21,8 +22,8 @@ type TabDef = { id: TabId; label: string; icon: string; activeIcon: string; path
 const tabs: TabDef[] = [
   { id: "home",    label: "Accueil",       icon: accueilRepos, activeIcon: accueilActif, path: "/app" },
   { id: "soirees", label: "Mes soirées",   icon: soireesRepos, activeIcon: soireesActif, path: "/app/soirees" },
+  { id: "amis",    label: "Amis",          icon: amisRepos,    activeIcon: amisActif,    path: "/app/duo" },
   { id: "cinema",  label: "Biblio",        icon: biblioRepos,  activeIcon: biblioActif,  path: "/app/my-cinema" },
-  { id: "profile", label: "Profil",        icon: profilRepos,  activeIcon: profilActif,  path: "/app/profile" },
 ];
 
 const BottomTabBar = () => {
@@ -31,7 +32,9 @@ const BottomTabBar = () => {
 
   const currentTab =
     tabs.find((t) => location.pathname === t.path)?.id ||
-    (location.pathname.startsWith("/app/soiree") ? "soirees" : "home");
+    (location.pathname.startsWith("/app/soiree") ? "soirees"
+      : location.pathname.startsWith("/app/friends") ? "amis"
+      : "home");
 
   return (
     <nav className="fixed md:absolute bottom-0 left-0 right-0 z-[51] pb-[env(safe-area-inset-bottom)] md:pb-0">

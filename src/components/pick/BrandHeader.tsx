@@ -6,11 +6,6 @@ import pickLogo from "@/assets/pick-logo.webp";
 // Le mot seul, sans marge : l'en-tête ne descend plus à cause du vide de l'image carrée.
 import pickLogoMot from "@/assets/pick-logo-mot.webp";
 import NotificationBell from "./NotificationBell";
-import IconeCharte from "./IconeCharte";
-import rechercheRepos from "@/assets/icones/recherche-repos.webp";
-import rechercheActif from "@/assets/icones/recherche-actif.webp";
-import amisRepos from "@/assets/icones/amis-repos.webp";
-import amisActif from "@/assets/icones/amis-actif.webp";
 
 interface BrandHeaderProps {
   showBack?: boolean;
@@ -56,25 +51,13 @@ const BrandHeader = ({ showBack, onBack, extraActions, reserveDroite }: BrandHea
         </div>
       )}
 
-      {/* Quatre boutons de 44 px, même construction : les icônes s'alignent
+      {/* Boutons de 44 px, même construction : les icônes s'alignent
           au pixel. Tailles ajustées pour une même hauteur de dessin visible
           (~22 px), chaque image ne remplissant pas son cadre de la même façon. */}
       <div className={reserveDroite ? "flex-1 flex items-center justify-center" : "flex items-center gap-1"}>
         {extraActions}
-        <button
-          onClick={() => navigate("/app/match")}
-          className="group relative w-11 h-11 flex items-center justify-center rounded-full transition-transform active:scale-[0.96]"
-          aria-label="Rechercher un film"
-        >
-          <IconeCharte repos={rechercheRepos} actif={rechercheActif} className="w-[23px] h-[23px]" />
-        </button>
-        <button
-          onClick={() => navigate("/app/duo")}
-          className="group relative w-11 h-11 flex items-center justify-center rounded-full transition-transform active:scale-[0.96]"
-          aria-label="Mes amis & Duo"
-        >
-          <IconeCharte repos={amisRepos} actif={amisActif} className="w-[29px] h-[29px]" />
-        </button>
+        {/* La recherche est sur l'accueil (sous « Trouve-moi LE film »), les amis
+            dans la barre du bas. */}
         <NotificationBell />
       </div>
       {reserveDroite ? <div aria-hidden="true" className="shrink-0" style={{ width: reserveDroite }} /> : null}
