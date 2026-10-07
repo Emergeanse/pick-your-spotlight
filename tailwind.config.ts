@@ -66,6 +66,7 @@ export default {
           magenta: "hsl(var(--pick-magenta))",
           pink: "hsl(var(--pick-pink))",
           gold: "hsl(var(--pick-gold))",
+          exclude: "hsl(var(--pick-exclude))",
           "text-secondary": "hsl(var(--pick-text-secondary))",
           "text-muted": "hsl(var(--pick-text-muted))",
           border: "rgb(139 92 246 / 0.18)",

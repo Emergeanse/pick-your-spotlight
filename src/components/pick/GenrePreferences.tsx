@@ -1,4 +1,6 @@
 import { useState, useEffect, useCallback, useRef, forwardRef, useImperativeHandle } from "react";
+import { IconeEtat, GroupesPreferences } from "./PreferenceChips";
+import { classeChip, type EtatPreference } from "@/lib/preference-etats";
 
 import { motion } from "framer-motion";
 
@@ -88,7 +90,7 @@ interface GenrePreferencesProps {
 
   /** Preview: read-only chips for summary row. Full: interactive grid (default). */
 
-  mode?: "full" | "preview";
+  mode?: "full" | "preview" | "resume";
 
   /** Limit preview chips (liked first, then excluded). */
 
@@ -206,7 +208,8 @@ const GenrePreferences = forwardRef<GenrePreferencesHandle, GenrePreferencesProp
 
           const originTags = allTags.filter((t) => ORIGIN_KEYS.has(t.key));
 
-          if (deferSave) {
+          // Le résumé du profil est en lecture : il n’écrit jamais.
+          if (deferSave || mode === "resume") {
 
             originTags.forEach((t) => initial.set(t.key, "selected"));
 
@@ -510,6 +513,17 @@ const GenrePreferences = forwardRef<GenrePreferencesHandle, GenrePreferencesProp
 
   const genres = tags.filter((t) => !ORIGIN_KEYS.has(t.key));
 
+  // Résumé du profil : aimés puis exclus, cinémas avant genres, en lecture.
+  if (mode === "resume") {
+    const ordre = [...tags.filter((t) => ORIGIN_KEYS.has(t.key)), ...genres];
+    return (
+      <GroupesPreferences
+        aimes={ordre.filter((t) => states.get(t.key) === "selected").map((t) => t.label)}
+        exclus={ordre.filter((t) => states.get(t.key) === "rejected").map((t) => t.label)}
+      />
+    );
+  }
+
   const origins = tags.filter((t) => ORIGIN_KEYS.has(t.key));
 
 
@@ -588,19 +602,8 @@ const GenrePreferences = forwardRef<GenrePreferencesHandle, GenrePreferencesProp
 
 
 
-    const chipClass = `relative flex items-center gap-1 px-3 py-1.5 rounded-full text-[11px] font-sans font-medium transition-all duration-200 border ${
-
-      state === "selected"
-
-        ? "bg-primary/15 border-primary text-primary neon-glow"
-
-        : state === "rejected"
-
-        ? "bg-destructive/10 border-destructive/40 text-destructive"
-
-        : "bg-card/50 border-border/20 text-foreground/50 hover:border-primary/30 hover:text-foreground/70"
-
-    } ${isPending || saving ? "opacity-60" : ""}`;
+    const etat: EtatPreference = state === "selected" ? "aime" : state === "rejected" ? "exclu" : "neutre";
+    const chipClass = `${classeChip(etat, interactive)} ${isPending || saving ? "opacity-60" : ""}`;
 
 
 
@@ -610,7 +613,7 @@ const GenrePreferences = forwardRef<GenrePreferencesHandle, GenrePreferencesProp
 
         <span key={tag.key} className={chipClass}>
 
-          {state === "rejected" && <Ban className="w-2.5 h-2.5 shrink-0" />}
+          <IconeEtat etat={etat} />
 
           <span>{tag.label}</span>
 
@@ -628,13 +631,11 @@ const GenrePreferences = forwardRef<GenrePreferencesHandle, GenrePreferencesProp
 
         key={tag.key}
 
-        initial={{ opacity: 0, scale: 0.92 }}
+        initial={{ opacity: 0 }}
 
-        animate={{ opacity: 1, scale: 1 }}
+        animate={{ opacity: 1 }}
 
-        transition={{ delay: i * 0.02, duration: 0.2 }}
-
-        whileTap={{ scale: 0.93 }}
+        transition={{ delay: i * 0.015, duration: 0.15 }}
 
         onClick={() => toggle(tag)}
 
@@ -644,7 +645,7 @@ const GenrePreferences = forwardRef<GenrePreferencesHandle, GenrePreferencesProp
 
       >
 
-        {state === "rejected" && <Ban className="w-2.5 h-2.5 shrink-0" />}
+        <IconeEtat etat={etat} />
 
         <span>{tag.label}</span>
 
@@ -701,7 +702,7 @@ const GenrePreferences = forwardRef<GenrePreferencesHandle, GenrePreferencesProp
 
       {header && (
 
-        <p className="text-[9px] font-sans text-foreground/40 uppercase tracking-widest mb-2">
+        <p className="text-[11px] font-sans font-semibold text-pick-text-muted uppercase tracking-widest mb-2">
 
           {header}
 
@@ -729,7 +730,7 @@ const GenrePreferences = forwardRef<GenrePreferencesHandle, GenrePreferencesProp
 
         // La règle des clics est énoncée une fois par le parent, au-dessus des
         // deux sections — inutile de la répéter ici.
-        showOriginHeader ? "Langues d'origine" : null,
+        showOriginHeader ? "Cinémas" : null,
 
         visibleGenres.length,
 
@@ -777,7 +778,7 @@ const GenrePreferences = forwardRef<GenrePreferencesHandle, GenrePreferencesProp
 
       {deferSave && mode === "full" && !hideSaveHint && (
 
-        <p className="text-[10px] font-sans text-foreground/45">
+        <p className="text-[11px] font-sans text-foreground/45">
 
           Tes changements seront enregistrés avec le bouton en bas de la page.
 

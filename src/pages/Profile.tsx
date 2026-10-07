@@ -42,6 +42,8 @@ import { resetProfileForOnboarding, onboardingErrorMessage } from "@/lib/onboard
 import CinemaDNA from "@/components/pick/CinemaDNA";
 import TasteTrainer from "@/components/pick/TasteTrainer";
 import GenrePreferences from "@/components/pick/GenrePreferences";
+import { CartePreferences, FeuillePreferences, GroupesPreferences, IconeEtat } from "@/components/pick/PreferenceChips";
+import { classeChip, etatSuivant, type EtatPreference } from "@/lib/preference-etats";
 import CinemaAvatar from "@/components/pick/CinemaAvatar";
 import { calculerAdn, traitsDominants, type Adn } from "@/lib/adn";
 import { enregistrerAdn } from "@/lib/adn-public";
@@ -119,6 +121,16 @@ function computeDetailedConfidence(data: {
     ],
   };
 }
+
+const EPOQUES = [
+  { label: "Avant 1970", value: 1900 },
+  { label: "Années 70", value: 1970 },
+  { label: "Années 80", value: 1980 },
+  { label: "Années 90", value: 1990 },
+  { label: "Années 2000", value: 2000 },
+  { label: "Années 2010", value: 2010 },
+  { label: "Depuis 2020", value: 2020 },
+] as const;
 
 const Profile = () => {
   const { user, isReady, signOut } = useAuth();
@@ -272,9 +284,11 @@ const Profile = () => {
   const [peopleEvaluated, setPeopleEvaluated] = useState(0);
   const [genresSelected, setGenresSelected] = useState(0);
   const [genresExcluded, setGenresExcluded] = useState(0);
-  const [showGenres, setShowGenres] = useState(false);
-  const [genresDirty, setGenresDirty] = useState(false);
-  const genrePrefsRef = useRef<GenrePreferencesHandle>(null);
+  const [feuille, setFeuille] = useState<null | "genres" | "epoques">(null);
+  const [enregistrementFeuille, setEnregistrementFeuille] = useState(false);
+  const [cleResumeGenres, setCleResumeGenres] = useState(0);
+  const [brouillonEpoques, setBrouillonEpoques] = useState<{ aimes: number[]; exclus: number[] }>({ aimes: [], exclus: [] });
+  const genresFeuilleRef = useRef<GenrePreferencesHandle>(null);
   const [showStats, setShowStats] = useState(false);
   const [seenCount, setSeenCount] = useState(0);
 
@@ -464,7 +478,6 @@ const Profile = () => {
           setSinglePreference("duration", durationKey, "explicit"),
         ]);
       } catch (e) { console.warn("preferences mirror failed", e); }
-      await genrePrefsRef.current?.save();
       setProfile((prev: any) => ({
         ...prev,
         preferred_platforms: [...selectedPlatforms],
@@ -477,7 +490,6 @@ const Profile = () => {
         default_max_duration: defaultMaxDuration,
         default_recommendation_count: recommendationCount,
       }));
-      setGenresDirty(false);
       toast({ title: "Préférences enregistrées" });
     } catch (e) { console.error(e); toast({ title: "Erreur", variant: "destructive" }); }
     finally { setSaving(false); }
@@ -494,7 +506,39 @@ const Profile = () => {
     defaultMaxDuration !== ((profile as any)?.default_max_duration ?? null) ||
     recommendationCount !== ((profile as any)?.default_recommendation_count ?? 3)
   );
-  const hasChanges = Boolean(hasProfileFieldChanges || genresDirty);
+  const hasChanges = Boolean(hasProfileFieldChanges);
+
+  const enregistrerGenres = async () => {
+    setEnregistrementFeuille(true);
+    try {
+      // Rien de modifié : rien à réécrire.
+      if (genresFeuilleRef.current?.isDirty()) await genresFeuilleRef.current.save();
+      setCleResumeGenres((k) => k + 1);
+      setFeuille(null);
+      toast({ title: "Genres enregistrés" });
+    } catch (e) { console.error(e); toast({ title: "Erreur", variant: "destructive" }); }
+    finally { setEnregistrementFeuille(false); }
+  };
+
+  const enregistrerEpoques = async () => {
+    if (!user) return;
+    setEnregistrementFeuille(true);
+    try {
+      const { aimes, exclus } = brouillonEpoques;
+      const { error } = await supabase.from("profiles").update({
+        preferred_decades: aimes,
+        excluded_decades: exclus,
+      } as never).eq("id", user.id);
+      if (error) throw error;
+      setSelectedDecades(aimes);
+      setExcludedDecades(exclus);
+      // Le profil de référence suit, pour ne pas réafficher « Enregistrer mes préférences ».
+      setProfile((prev: typeof profile) => ({ ...prev, preferred_decades: [...aimes], excluded_decades: [...exclus] }));
+      setFeuille(null);
+      toast({ title: "Époques enregistrées" });
+    } catch (e) { console.error(e); toast({ title: "Erreur", variant: "destructive" }); }
+    finally { setEnregistrementFeuille(false); }
+  };
 
   if (!isReady || profileLoading) return (
     <div className="fixed inset-0 bg-background flex items-center justify-center">
@@ -744,98 +788,89 @@ const Profile = () => {
           </p>
 
           <h3 className="mt-2 mb-3 text-[11px] font-sans font-semibold tracking-[0.14em] uppercase text-pick-purple-light">Ce que j'aime</h3>
-          {/* Une seule légende pour les genres et les époques, qui se règlent pareil. */}
-          <p className="mb-4 text-[11px] font-sans text-pick-text-secondary">
-            1 clic = j&apos;aime ✓ &nbsp;·&nbsp; 2 clics = je n&apos;aime pas ✕ &nbsp;·&nbsp; 3 clics = neutre
-          </p>
-          {/* Genres & Styles — même schéma que les Époques : liste dépliable,
-              modifications enregistrées par le bouton en bas de la page. */}
-          <div className="mb-5">
-            <button
-              type="button"
-              onClick={() => setShowGenres((v) => !v)}
-              aria-expanded={showGenres}
-              className="w-full flex items-center justify-between mb-2 group"
-            >
-              <span className="text-[11px] font-sans font-semibold text-foreground uppercase tracking-widest">Genres & styles</span>
-              <span className="flex items-center gap-1 text-[11px] font-sans font-medium text-primary/70 group-hover:text-primary transition-colors">
-                {showGenres ? "Réduire" : "Tout gérer"}
-                <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${showGenres ? "rotate-180" : ""}`} />
-              </span>
-            </button>
-            <div className="rounded-2xl bg-card/80 backdrop-blur-sm border border-border/15 px-4 py-3 space-y-2.5">
-              <p className="text-[11px] font-sans text-foreground/50">
-                {genresSelected > 0 && (
-                  <span className="text-primary/70">{genresSelected} aimé{genresSelected > 1 ? "s" : ""}</span>
-                )}
-                {genresSelected > 0 && genresExcluded > 0 && " · "}
-                {genresExcluded > 0 && (
-                  <span className="text-destructive/70">{genresExcluded} exclu{genresExcluded > 1 ? "s" : ""}</span>
-                )}
-                {genresSelected === 0 && genresExcluded === 0 && "Aucun genre configuré"}
-              </p>
-              <GenrePreferences
-                ref={genrePrefsRef}
-                mode="full"
-                deferSave
-                hideSaveHint
-                collapsed={!showGenres}
-                onCountChange={setGenresSelected}
-                onRejectedCountChange={setGenresExcluded}
-                onDirtyChange={setGenresDirty}
-              />
-            </div>
-          </div>
+          <CartePreferences
+            titre="Genres & styles"
+            aimes={genresSelected}
+            exclus={genresExcluded}
+            onModifier={() => setFeuille("genres")}
+          >
+            <GenrePreferences
+              key={cleResumeGenres}
+              mode="resume"
+              deferSave
+              onCountChange={setGenresSelected}
+              onRejectedCountChange={setGenresExcluded}
+            />
+          </CartePreferences>
 
-          {/* Époques */}
-          <div className="mb-5">
-            <span className="text-[11px] font-sans font-semibold text-foreground uppercase tracking-widest mb-2 block">
-              Époques
-            </span>
-            <div className="rounded-2xl bg-card/80 backdrop-blur-sm border border-border/15 px-4 py-3">
-              <div className="flex flex-wrap gap-2">
-                {([
-                  { label: "Avant 1970", value: 1900 },
-                  { label: "Années 70", value: 1970 },
-                  { label: "Années 80", value: 1980 },
-                  { label: "Années 90", value: 1990 },
-                  { label: "Années 2000", value: 2000 },
-                  { label: "Années 2010", value: 2010 },
-                  { label: "Depuis 2020", value: 2020 },
-                ] as const).map((d) => {
-                  const preferred = selectedDecades.includes(d.value);
-                  const excluded = excludedDecades.includes(d.value);
-                  const state = preferred ? "preferred" : excluded ? "excluded" : "neutral";
-                  return (
-                    <button
-                      key={d.value}
-                      type="button"
-                      onClick={() => {
-                        if (state === "neutral") {
-                          setSelectedDecades((p) => [...p, d.value]);
-                        } else if (state === "preferred") {
-                          setSelectedDecades((p) => p.filter((x) => x !== d.value));
-                          setExcludedDecades((p) => [...p, d.value]);
-                        } else {
-                          setExcludedDecades((p) => p.filter((x) => x !== d.value));
-                        }
-                      }}
-                      className={`px-3 py-1.5 rounded-full text-[11px] font-sans font-medium border transition-all active:scale-[0.97] ${
-                        state === "preferred"
-                          ? "bg-primary/15 border-primary/50 text-primary"
-                          : state === "excluded"
-                          ? "bg-red-500/10 border-red-500/40 text-red-400"
-                          : "bg-card/50 border-border/20 text-foreground/50 hover:border-primary/30 hover:text-foreground/70"
-                      }`}
-                    >
-                      {state === "preferred" ? "✓ " : state === "excluded" ? "✕ " : ""}
-                      {d.label}
-                    </button>
-                  );
-                })}
-              </div>
+          <CartePreferences
+            titre="Époques"
+            aimes={selectedDecades.length}
+            exclus={excludedDecades.length}
+            feminin
+            onModifier={() => {
+              setBrouillonEpoques({ aimes: [...selectedDecades], exclus: [...excludedDecades] });
+              setFeuille("epoques");
+            }}
+          >
+            <GroupesPreferences
+              feminin
+              aimes={EPOQUES.filter((d) => selectedDecades.includes(d.value)).map((d) => d.label)}
+              exclus={EPOQUES.filter((d) => excludedDecades.includes(d.value)).map((d) => d.label)}
+              neutres={
+                selectedDecades.length + excludedDecades.length > 0
+                  ? EPOQUES.filter((d) => !selectedDecades.includes(d.value) && !excludedDecades.includes(d.value)).map((d) => d.label)
+                  : undefined
+              }
+            />
+          </CartePreferences>
+
+          {/* Édition : chaque feuille enregistre elle-même, fermer sans enregistrer annule. */}
+          <FeuillePreferences
+            ouvert={feuille === "genres"}
+            titre="Genres & styles"
+            premiereFois={genresSelected + genresExcluded === 0}
+            enregistrement={enregistrementFeuille}
+            onFermer={() => setFeuille(null)}
+            onEnregistrer={enregistrerGenres}
+          >
+            <GenrePreferences ref={genresFeuilleRef} mode="full" deferSave hideSaveHint orderKey="feuille" />
+          </FeuillePreferences>
+
+          <FeuillePreferences
+            ouvert={feuille === "epoques"}
+            titre="Époques"
+            feminin
+            premiereFois={selectedDecades.length + excludedDecades.length === 0}
+            enregistrement={enregistrementFeuille}
+            onFermer={() => setFeuille(null)}
+            onEnregistrer={enregistrerEpoques}
+          >
+            <div className="flex flex-wrap gap-2">
+              {EPOQUES.map((d) => {
+                const etat: EtatPreference = brouillonEpoques.aimes.includes(d.value)
+                  ? "aime"
+                  : brouillonEpoques.exclus.includes(d.value) ? "exclu" : "neutre";
+                return (
+                  <button
+                    key={d.value}
+                    type="button"
+                    onClick={() => {
+                      const suivant = etatSuivant(etat);
+                      setBrouillonEpoques((b) => ({
+                        aimes: suivant === "aime" ? [...b.aimes, d.value] : b.aimes.filter((x) => x !== d.value),
+                        exclus: suivant === "exclu" ? [...b.exclus, d.value] : b.exclus.filter((x) => x !== d.value),
+                      }));
+                    }}
+                    className={classeChip(etat, true)}
+                  >
+                    <IconeEtat etat={etat} />
+                    {d.label}
+                  </button>
+                );
+              })}
             </div>
-          </div>
+          </FeuillePreferences>
 
           <h3 className="mt-8 mb-3 text-[11px] font-sans font-semibold tracking-[0.14em] uppercase text-pick-purple-light">Comment Pick choisit</h3>
           <div className="mb-8">

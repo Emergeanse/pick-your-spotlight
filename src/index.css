@@ -60,6 +60,7 @@
     --pick-magenta: 292 84% 61%;         /* #D946EF */
     --pick-pink: 330 81% 60%;            /* #EC4899 */
     --pick-gold: 39 75% 64%;             /* #E8B85C — or chaleureux */
+    --pick-exclude: 350 79% 78%;         /* #F29AA9 — préférence exclue, rose désaturé */
     --pick-text-secondary: 259 9% 67%;   /* #A8A3B3 */
     --pick-text-muted: 264 7% 45%;       /* #716B7A */
     --sidebar-accent: 260 15% 11%;

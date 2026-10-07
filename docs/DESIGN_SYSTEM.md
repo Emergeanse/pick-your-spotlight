@@ -37,6 +37,7 @@ Jamais de violet, de rose ou de magenta écrit en dur dans un composant
 | Magenta | `#D946EF` | `pick-magenta` |
 | Rose | `#EC4899` | `pick-pink` |
 | Or chaleureux | `#E8B85C` | `pick-gold` |
+| Exclu (rose désaturé) | `#F29AA9` | `pick-exclude` |
 | Texte principal | blanc | `text-foreground` |
 | Texte secondaire | `#A8A3B3` | `text-pick-text-secondary` |
 | Texte discret | `#716B7A` | `text-pick-text-muted` |
@@ -120,6 +121,19 @@ Chaque élément interactif a **Normal → Survol → Pressé → Actif → Dés
 - **Désactivé** : opacité ~35 %, aucune lueur, non interactif.
 
 Aucune information importante ne doit dépendre uniquement du survol.
+
+### Préférences à trois états (genres, époques)
+
+Une seule capsule, `classeChip` (`src/lib/preference-etats.ts`) : hauteur 32 px,
+espacement 8 px, 18–20 px entre groupes.
+
+- **Aimé** — Pick favorise : violet légèrement rempli, `pick-purple-light`, sans halo au repos.
+- **Exclu** — Pick évite fortement : `pick-exclude`, discret, icône ⊘.
+- **Neutre** — aucune préférence : gris-violet très effacé.
+
+En lecture, les groupes sont séparés (Aimés, Exclus, Sans préférence) et jamais
+mélangés ; on modifie dans une feuille du bas (`FeuillePreferences`), où un
+toucher fait passer neutre → aimé → exclu → neutre.
 
 ## 8. Icônes
 
