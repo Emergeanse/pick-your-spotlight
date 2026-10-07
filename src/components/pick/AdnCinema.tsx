@@ -1,4 +1,6 @@
 import { motion } from "framer-motion";
+import SignaturesAdn from "./SignaturesAdn";
+import { signaturesAdn } from "@/lib/signatures";
 import { Sparkles } from "lucide-react";
 import { TRAITS, evolutionAdn, fiabiliteAdn, traitsDominants, type Adn } from "@/lib/adn";
 
@@ -109,6 +111,7 @@ export default function AdnCinema({ adn, adnRecent, narrative, genres, titre = "
   const dominants = adn ? traitsDominants(adn) : [];
   const evolution = evolutionAdn(adn, adnRecent);
   const fiabilite = fiabiliteAdn(confiance);
+  const signatures = signaturesAdn(adn, genres);
   if (!adn && genres.length === 0) return null;
 
   return (
@@ -132,6 +135,9 @@ export default function AdnCinema({ adn, adnRecent, narrative, genres, titre = "
         </p>
       )}
       {narrative && <p className="mt-1.5 text-[13px] font-sans text-pick-text-secondary leading-snug">{narrative}</p>}
+
+      {/* Signatures : l'ADN en trois ou quatre mots, visibles aussi des amis. */}
+      {signatures.length > 0 && <div className="mt-3"><SignaturesAdn signatures={signatures} /></div>}
 
       {adn && (
         <>
