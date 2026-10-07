@@ -23,12 +23,13 @@ import {
 } from "@/lib/onboarding-people";
 
 describe("parcours initiatique — constantes & étapes", () => {
-  it("définit 5 étapes dans le bon ordre", () => {
+  it("définit 6 étapes dans le bon ordre, l’invitation juste avant la recherche", () => {
     expect(ONBOARDING_STEPS).toEqual([
       "welcome",
       "genres",
       "films",
       "platforms",
+      "invite",
       "search",
     ]);
   });

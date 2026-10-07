@@ -31,6 +31,7 @@ export type OnboardingStep =
   | "genres"
   | "films"
   | "platforms"
+  | "invite"
   | "search";
 
 export const ONBOARDING_STEPS: OnboardingStep[] = [
@@ -38,6 +39,7 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
   "genres",
   "films",
   "platforms",
+  "invite",
   "search",
 ];
 

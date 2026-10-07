@@ -9,6 +9,7 @@ const STEP_LABELS: Record<OnboardingStep, string> = {
   genres: "Genres",
   films: "Films",
   platforms: "Plateformes",
+  invite: "Premier ami",
   search: "Recherche",
 };
 

@@ -50,6 +50,7 @@ import homeBackground from "@/assets/home-background.webp";
 import trouverFilmBouton from "@/assets/trouver-film-bouton.webp";
 import { cadrePour, ECHELLE_CADRE } from "@/lib/cadres";
 import { clesDebloquees, lireValeursTrophees } from "@/lib/distinctions";
+import { estAmbassadeur } from "@/lib/invitation";
 import trouverFilmBoutonActif from "@/assets/trouver-film-bouton-actif.webp";
 import groupeSurprise from "@/assets/groupe-surprise.webp";
 import DerniereNotification from "./DerniereNotification";
@@ -790,7 +791,7 @@ const HomeScreen = ({
       .catch(() => {});
     return () => { actif = false; };
   }, [user]);
-  const cadre = cadrePour(nbTrophees);
+  const cadre = cadrePour(nbTrophees, estAmbassadeur(user?.user_metadata));
 
   // Prénom + avatar + compteur pour le greeting
   useEffect(() => {
@@ -2408,7 +2409,7 @@ const HomeScreen = ({
       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background/55 to-background" />
 
       {/* Avatar à droite, sous la cloche (48 px), dans son cadre : le cadre
-          suit les trophées obtenus (13 cadres, voir lib/cadres) et déborde de
+          suit les trophées obtenus, ou le statut d'Ambassadeur (voir lib/cadres) et déborde de
           la photo — d'où la photo un peu en retrait du bord et sous la cloche.
           Mène au profil. */}
       <motion.button

@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import OnboardingInviteStep from "@/components/onboarding/OnboardingInviteStep";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, Loader2, Star, Sparkles, Ban, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -24,7 +25,8 @@ const PREVIOUS_STEP: Partial<Record<OnboardingStep, OnboardingStep>> = {
   genres: "welcome",
   films: "genres",
   platforms: "films",
-  search: "platforms",
+  invite: "platforms",
+  search: "invite",
 };
 
 const ONBOARDING_GENRES = [
@@ -155,7 +157,7 @@ const Onboarding = () => {
       platformIds: ids,
       paused: false,
     });
-    setStep("search");
+    setStep("invite");
   };
 
   const handleFinish = async () => {
@@ -393,6 +395,17 @@ const Onboarding = () => {
           </motion.div>
         )}
 
+        {step === "invite" && (
+          <motion.div
+            key="invite"
+            initial={{ opacity: 0, x: 40 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -40 }}
+            transition={{ duration: 0.3 }}
+          >
+            <OnboardingInviteStep onContinue={() => setStep("search")} />
+          </motion.div>
+        )}
         {step === "search" && (
           <motion.div
             key="search"
