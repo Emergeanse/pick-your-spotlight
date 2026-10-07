@@ -49,6 +49,7 @@ export const USER_DATA_TABLES: UserDataTable[] = [
   // — Social —
   { table: "notifications", columns: ["user_id"], label: "Notifications reçues" },
   { table: "push_subscriptions", columns: ["user_id"], label: "Téléphones autorisés à recevoir des notifications" },
+  { table: "adn_cinema", columns: ["user_id"], label: "ADN cinéma (traits, univers, visibilité)" },
   { table: "shared_recommendations", columns: ["sender_id", "receiver_id"], label: "Recommandations partagées" },
   { table: "friendships", columns: ["requester_id", "addressee_id"], label: "Amitiés" },
   { table: "duo_taste_profiles", columns: ["user1_id", "user2_id"], label: "Duos" },

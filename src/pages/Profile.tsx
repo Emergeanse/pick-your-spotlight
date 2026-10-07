@@ -44,6 +44,8 @@ import TasteTrainer from "@/components/pick/TasteTrainer";
 import GenrePreferences from "@/components/pick/GenrePreferences";
 import CinemaAvatar from "@/components/pick/CinemaAvatar";
 import { calculerAdn, traitsDominants, type Adn } from "@/lib/adn";
+import { enregistrerAdn } from "@/lib/adn-public";
+import ReglageVisibiliteAdn from "@/components/pick/ReglageVisibiliteAdn";
 import { computeMultiVectorProfile } from "@/lib/taste-engine";
 import profileBackground from "@/assets/profile-background.webp";
 import squirrelHappy from "@/assets/happy.webp";
@@ -364,7 +366,10 @@ const Profile = () => {
     computeMultiVectorProfile(user.id)
       .then((profil) => {
         if (!actif) return;
-        setAdn(calculerAdn(profil?.stableTasteVector));
+        const fond = calculerAdn(profil?.stableTasteVector);
+        setAdn(fond);
+        // Enregistré pour que les amis le voient, même sans ouvrir la page ADN.
+        if (fond) enregistrerAdn(user.id, fond);
       })
       .catch(() => {});
     return () => { actif = false; };
@@ -1107,6 +1112,7 @@ const Profile = () => {
               <RotateCcw className="w-3.5 h-3.5" /> Réinitialiser mon parcours initiatique
             </Button>
             <ReglageNotificationsTelephone />
+            <ReglageVisibiliteAdn />
             <MyDataSection />
             <div className="flex flex-wrap gap-x-4 gap-y-1 px-3 pt-1">
               <Link to="/confidentialite" className="text-[11px] font-sans text-foreground/30 hover:text-foreground/60 transition-colors">

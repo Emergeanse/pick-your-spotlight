@@ -21,6 +21,13 @@ interface AdnCinemaProps {
   archetype?: string | null;
   /** Indice de confiance du moteur (0–100), pour la fiabilité. */
   confiance?: number | null;
+  /**
+   * Version allégée (personne croisée en soirée) : la forme de la
+   * constellation reste, les chiffres disparaissent.
+   */
+  chiffresMasques?: boolean;
+  /** « Vous et Chris » : affinité (amis seulement) et phrase de comparaison. */
+  comparaison?: { prenom: string; affinite: number | null; phrase: string } | null;
 }
 
 // Plus large que haut : les libellés des côtés (« Contemplation ») ont besoin de place.
@@ -36,14 +43,14 @@ function point(index: number, valeur: number) {
   return { x: CX + r * Math.cos(angle), y: CY + r * Math.sin(angle), angle };
 }
 
-function Constellation({ adn }: { adn: Adn }) {
+function Constellation({ adn, chiffresMasques = false }: { adn: Adn; chiffresMasques?: boolean }) {
   const sommets = TRAITS.map((t, i) => ({ ...point(i, adn[t.id]), t }));
   // Les trois traits dominants brillent un peu plus fort.
   const dominants = new Set(traitsDominants(adn).map((d) => d.id));
   const forme = sommets.map((s) => `${s.x.toFixed(1)},${s.y.toFixed(1)}`).join(" ");
   return (
     <svg viewBox={`0 0 ${LARGEUR} ${HAUTEUR}`} className="w-full max-w-[340px] mx-auto" role="img"
-      aria-label={`Constellation de goûts : ${TRAITS.map((t) => `${t.libelle} ${adn[t.id]}`).join(", ")}`}>
+      aria-label={chiffresMasques ? `Constellation de goûts, dominantes : ${traitsDominants(adn).map((d) => d.libelle).join(", ")}` : `Constellation de goûts : ${TRAITS.map((t) => `${t.libelle} ${adn[t.id]}`).join(", ")}`}>
       <defs>
         <radialGradient id="adn-fond" cx="50%" cy="50%" r="50%">
           <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="0.22" />
@@ -98,7 +105,7 @@ function Constellation({ adn }: { adn: Adn }) {
   );
 }
 
-export default function AdnCinema({ adn, adnRecent, narrative, genres, titre = "Ton ADN cinéma", archetype, confiance }: AdnCinemaProps) {
+export default function AdnCinema({ adn, adnRecent, narrative, genres, titre = "Ton ADN cinéma", archetype, confiance, chiffresMasques = false, comparaison }: AdnCinemaProps) {
   const dominants = adn ? traitsDominants(adn) : [];
   const evolution = evolutionAdn(adn, adnRecent);
   const fiabilite = fiabiliteAdn(confiance);
@@ -128,18 +135,34 @@ export default function AdnCinema({ adn, adnRecent, narrative, genres, titre = "
 
       {adn && (
         <>
-          <div className="mt-3"><Constellation adn={adn} /></div>
+          <div className="mt-3"><Constellation adn={adn} chiffresMasques={chiffresMasques} /></div>
 
-          <h3 className="mt-2 text-[11px] font-sans font-semibold tracking-[0.14em] uppercase text-pick-text-secondary">Tes traits dominants</h3>
-          <ul className="mt-2 grid grid-cols-3 gap-2">
-            {dominants.map((d) => (
-              <li key={d.id} className="rounded-pick-md border border-pick-border bg-background/40 px-2 py-2 text-center">
-                <span className="block text-[11px] font-sans text-pick-text-secondary">{d.libelle}</span>
-                <span className="block text-[20px] font-sans font-bold text-foreground tabular-nums leading-tight">{d.valeur}</span>
-              </li>
-            ))}
-          </ul>
-          <p className="mt-1.5 text-[11px] font-sans text-pick-text-muted">50 = la moyenne des films de Pick.</p>
+          {comparaison && (
+            <div className="mt-2 rounded-pick-md border border-pick-border-hover bg-primary/[0.08] px-3 py-2.5">
+              <p className="text-[12px] font-sans font-semibold text-foreground">
+                Vous et {comparaison.prenom}
+                {comparaison.affinite != null && (
+                  <span className="ml-1.5 text-pick-purple-light">· {comparaison.affinite} % d&apos;affinité cinéma</span>
+                )}
+              </p>
+              <p className="mt-0.5 text-[12px] font-sans text-pick-text-secondary leading-snug">{comparaison.phrase}</p>
+            </div>
+          )}
+
+          {!chiffresMasques && (
+            <>
+              <h3 className="mt-2 text-[11px] font-sans font-semibold tracking-[0.14em] uppercase text-pick-text-secondary">Traits dominants</h3>
+              <ul className="mt-2 grid grid-cols-3 gap-2">
+                {dominants.map((d) => (
+                  <li key={d.id} className="rounded-pick-md border border-pick-border bg-background/40 px-2 py-2 text-center">
+                    <span className="block text-[11px] font-sans text-pick-text-secondary">{d.libelle}</span>
+                    <span className="block text-[20px] font-sans font-bold text-foreground tabular-nums leading-tight">{d.valeur}</span>
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-1.5 text-[11px] font-sans text-pick-text-muted">50 = la moyenne des films de Pick.</p>
+            </>
+          )}
 
           {fiabilite && (
             <div className="mt-3 flex items-start gap-2.5">
@@ -168,7 +191,7 @@ export default function AdnCinema({ adn, adnRecent, narrative, genres, titre = "
 
       {genres.length > 0 && (
         <>
-          <h3 className="mt-4 text-[11px] font-sans font-semibold tracking-[0.14em] uppercase text-pick-text-secondary">Tes univers favoris</h3>
+          <h3 className="mt-4 text-[11px] font-sans font-semibold tracking-[0.14em] uppercase text-pick-text-secondary">Univers favoris</h3>
           <div className="mt-2 flex flex-wrap gap-1.5">
             {genres.slice(0, 6).map((g) => (
               <span key={g} className="px-2.5 py-1 rounded-full border border-pick-border-hover bg-primary/10 text-[12px] font-sans font-medium text-pick-purple-light">

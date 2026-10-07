@@ -21,6 +21,7 @@ const SECTIONS: LegalSection[] = [
         "Tes préférences : genres aimés et exclus, plateformes de streaming, décennies, note minimale, durée maximale, type de contenu.",
         "Ton usage : films aimés, watchlist, envies, titres vus ou passés, historique des recommandations, scores calculés par film et profil de goût.",
         "Ta vie sociale sur Pick : amitiés, duos, soirées organisées ou rejointes, votes, avis, notifications, recommandations partagées.",
+        "Ton ADN cinéma : six traits de goût calculés par Pick (émotion, tension, imaginaire…) et tes genres favoris. Par défaut, tes amis le voient en entier et les personnes qui partagent une soirée avec toi en version allégée, sans chiffres. Tu peux le réserver à tes amis ou à toi seul, depuis ton profil.",
         "Tes téléphones autorisés, si tu actives les notifications : l'adresse technique fournie par le navigateur pour joindre l'appareil, et le modèle de navigateur. Couper les notifications depuis ton profil l'efface.",
         "Ta voix, si tu t'en sers : l'enregistrement est transmis pour être transcrit en texte. Pick ne le conserve pas.",
         "Les incidents techniques : quand quelque chose casse dans l'application, le message d'erreur, la page concernée et ton navigateur sont enregistrés pour qu'on puisse corriger. Ces traces sont purgées au bout de 90 jours et ne sont lisibles que par l'équipe Pick.",

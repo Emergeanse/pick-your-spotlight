@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { comparerAdn, enregistrerAdn, lireAdnVisible, phraseComparaison, type AdnVisible } from "@/lib/adn-public";
 import FlecheRonde from "@/components/pick/FlecheRonde";
 import AdnCinema from "@/components/pick/AdnCinema";
 import { calculerAdn, universFavoris, type Adn } from "@/lib/adn";
@@ -335,20 +336,63 @@ const CinemaDNAPage = () => {
 
   const univers = useMemo(() => universFavoris(genreStats), [genreStats]);
 
-  // Traits calculés sur ses propres vecteurs : ceux d'un autre ne sont pas lisibles.
+  // Son propre ADN se calcule sur ses vecteurs, dans le téléphone. Celui d'un
+  // autre se lit via get_adn_visible, selon la relation et son réglage.
+  const [monAdn, setMonAdn] = useState<Adn | null>(null);
+  const [adnAutre, setAdnAutre] = useState<AdnVisible | null>(null);
   useEffect(() => {
-    if (!isOwnProfile || !user?.id) return;
+    if (!user?.id) return;
     let actif = true;
     computeMultiVectorProfile(user.id)
       .then((profil) => {
         if (!actif) return;
-        setAdn(calculerAdn(profil?.stableTasteVector));
-        setAdnRecent(calculerAdn(profil?.recentTasteVector));
-        setConfiance(profil?.stableConfidence ?? null);
+        const fond = calculerAdn(profil?.stableTasteVector);
+        setMonAdn(fond);
+        if (isOwnProfile) {
+          setAdn(fond);
+          setAdnRecent(calculerAdn(profil?.recentTasteVector));
+          setConfiance(profil?.stableConfidence ?? null);
+        }
       })
       .catch(() => {});
+    if (!isOwnProfile && targetUserId) {
+      lireAdnVisible(targetUserId).then((v) => { if (actif) setAdnAutre(v); });
+    } else {
+      setAdnAutre(null);
+    }
     return () => { actif = false; };
-  }, [isOwnProfile, user?.id]);
+  }, [isOwnProfile, user?.id, targetUserId]);
+
+  // Son ADN est enregistré à chaque ouverture : c'est ce que voient ses amis.
+  useEffect(() => {
+    if (!isOwnProfile || !user?.id || !adn || loading) return;
+    enregistrerAdn(user.id, adn, univers);
+  }, [isOwnProfile, user?.id, adn, univers, loading]);
+
+  // Personne consultée : bio et podium de la fonction ADN quand le profil visible
+  // ne les donne pas (personne seulement croisée en soirée).
+  useEffect(() => {
+    if (!adnAutre || adnAutre.niveau === "aucun") return;
+    if (adnAutre.bio && !bio) setBio(adnAutre.bio);
+    if (adnAutre.podium?.length && podiumIds.every((id) => id == null)) {
+      const ids = adnAutre.podium;
+      setPodiumIds([ids[0] ?? null, ids[1] ?? null, ids[2] ?? null]);
+      supabase.from("catalog_items" as never).select("tmdb_id, title, poster_path").in("tmdb_id", ids.filter(Boolean))
+        .then(({ data }) => {
+          const films = (data ?? []) as { tmdb_id: number; title: string; poster_path: string | null }[];
+          setLovedFilms((prev) => [...prev, ...films.filter((f) => !prev.some((m) => m.tmdb_id === f.tmdb_id))]);
+        });
+    }
+  // Ne réagit qu'à l'arrivée de l'ADN consulté.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [adnAutre]);
+
+  const comparaison = useMemo(() => {
+    if (isOwnProfile || !monAdn || !adnAutre?.traits || adnAutre.niveau === "aucun") return null;
+    const c = comparerAdn(monAdn, adnAutre.traits);
+    const prenom = displayName || "cette personne";
+    return { prenom, affinite: adnAutre.niveau === "ami" ? c.affinite : null, phrase: phraseComparaison(c, prenom) };
+  }, [isOwnProfile, monAdn, adnAutre, displayName]);
 
   const podiumFilms = useMemo(() => {
     return podiumIds.map(id =>
@@ -551,15 +595,34 @@ const CinemaDNAPage = () => {
         )}
 
         {/* ══ 2. ADN CINÉMA ══ */}
-        <AdnCinema
-          adn={adn}
-          adnRecent={adnRecent}
-          narrative={narrative}
-          genres={univers}
-          titre={isOwnProfile ? "Ton ADN cinéma" : "Son ADN cinéma"}
-          archetype={dnaArchetype || dnaTitle}
-          confiance={confiance}
-        />
+        {isOwnProfile ? (
+          <AdnCinema
+            adn={adn}
+            adnRecent={adnRecent}
+            narrative={narrative}
+            genres={univers}
+            titre="Ton ADN cinéma"
+            archetype={dnaArchetype || dnaTitle}
+            confiance={confiance}
+          />
+        ) : adnAutre && adnAutre.niveau !== "aucun" && (adnAutre.traits || adnAutre.univers.length > 0) ? (
+          <AdnCinema
+            adn={adnAutre.traits}
+            adnRecent={null}
+            narrative={adnAutre.narrative}
+            genres={adnAutre.univers}
+            titre={`L'ADN cinéma de ${displayName || "ce Picker"}`}
+            archetype={adnAutre.archetype}
+            chiffresMasques={adnAutre.niveau === "soiree"}
+            comparaison={comparaison}
+          />
+        ) : adnAutre ? (
+          <p className="rounded-pick-lg border border-pick-border bg-pick-surface/90 p-4 text-[13px] font-sans text-pick-text-secondary">
+            {adnAutre.niveau === "aucun"
+              ? `${displayName || "Cette personne"} n'a pas rendu son ADN cinéma visible.`
+              : `${displayName || "Cette personne"} n'a pas encore d'ADN cinéma : il apparaîtra quand elle aura ouvert le sien.`}
+          </p>
+        ) : null}
 
         {!loading && (
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.14 }}>
