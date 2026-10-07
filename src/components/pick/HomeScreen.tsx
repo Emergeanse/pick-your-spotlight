@@ -2537,9 +2537,9 @@ const HomeScreen = ({
         </span>
       </motion.button>
 
-      <div className="relative z-10 h-full overflow-y-auto overscroll-y-contain touch-[pan-y_pinch-zoom] scrollbar-hide pb-[calc(6rem+env(safe-area-inset-bottom))]">
+      <div className="relative z-10 h-full overflow-y-auto overscroll-y-contain touch-[pan-y_pinch-zoom] scrollbar-hide pb-[calc(5.25rem+env(safe-area-inset-bottom))]">
         {/* ─── Hero ─── */}
-        <section className="relative pt-[calc(8.75rem+env(safe-area-inset-top))] pb-2 px-5 md:px-8">
+        <section className="relative pt-[calc(8rem+env(safe-area-inset-top))] [@media(max-height:800px)]:pt-[calc(7.75rem+env(safe-area-inset-top))] pb-1 px-5 md:px-8">
           <motion.div
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
@@ -2547,7 +2547,7 @@ const HomeScreen = ({
           >
             {/* La recherche instantanée d'abord : c'est le geste le plus fréquent.
                 Organiser une soirée pour plus tard a son propre bouton. */}
-            <h1 className="mt-1.5 font-serif text-foreground text-[clamp(30px,8.8vw,40px)] leading-[1.02] tracking-tight [text-shadow:0_2px_18px_rgba(0,0,0,0.55)]">
+            <h1 className="mt-1.5 font-serif text-foreground text-[clamp(28px,7.8vw,35px)] [@media(max-height:800px)]:text-[28px] leading-[1.02] tracking-tight [text-shadow:0_2px_18px_rgba(0,0,0,0.55)]">
               LE film parfait,<br />
               <span className="text-primary" style={{ textShadow: "0 0 18px hsl(var(--primary)/0.5)" }}>
                 ce soir.
@@ -2560,7 +2560,7 @@ const HomeScreen = ({
           {/* 4 widgets côte à côte — la carte choisie est toujours violette, et la
               carte survolée à la souris prend le même halo : une
               couleur par carte faisait clinquant à côté des illustrations. */}
-          <div className="flex gap-2 mt-14 overflow-x-auto scrollbar-hide pb-1 -mx-1 px-1">
+          <div className="flex gap-2 mt-6 [@media(max-height:800px)]:mt-3 overflow-x-auto scrollbar-hide pb-1 -mx-1 px-1">
             {/* Surprise solo */}
             <motion.button
               initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
@@ -2675,14 +2675,14 @@ const HomeScreen = ({
             transition={{ delay: 0.54, duration: 0.5 }}
             whileTap={{ scale: 0.985 }}
             onClick={() => navigate(`/app/soirees/${nextEvent.id}`)}
-            className={`mx-5 mt-3 w-[calc(100%-2.5rem)] block px-3.5 pt-3 pb-3.5 text-left ${CARTE_PICK}`}
+            className={`mx-5 mt-2.5 w-[calc(100%-2.5rem)] block px-3.5 py-2.5 text-left ${CARTE_PICK}`}
           >
             <span className="flex items-center gap-2">
               <CalendarDays className="w-[18px] h-[18px] text-pick-purple-light shrink-0" strokeWidth={1.8} aria-hidden="true" />
               <span className="flex-1 font-serif text-[18px] text-foreground leading-none">Prochaine soirée</span>
               <ChevronRight className="w-4 h-4 text-pick-text-muted shrink-0" aria-hidden="true" />
             </span>
-            <span className="mt-3 flex items-center gap-3">
+            <span className="mt-2 flex items-center gap-3">
               <span className="relative shrink-0 w-[76px] h-[52px] rounded-pick-sm overflow-hidden border border-pick-border bg-background/60 flex items-center justify-center">
                 {vignette
                   ? <img src={vignette} alt="" className="w-full h-full object-cover" />
@@ -2761,9 +2761,9 @@ const HomeScreen = ({
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.62, duration: 0.45 }}
-          className="mt-4 pb-3"
+          className="mt-3 [@media(max-height:800px)]:mt-2"
         >
-          <div className="px-5 flex items-center justify-between mb-3">
+          <div className="px-5 flex items-center justify-between mb-2">
             <h2 className="pl-2 flex items-center gap-2 text-[16px] font-sans font-bold text-foreground">
               <Star className="w-4 h-4 fill-pick-gold text-pick-gold" aria-hidden="true" />
               Picks du moment
@@ -2788,7 +2788,7 @@ const HomeScreen = ({
                   const list = quickRecos.length > 0 ? quickRecos.slice(0, 3) : trendingFallback.slice(0, 3);
                   await openHomeBrowseAt(list, i);
                 }}
-                className="group w-[80px] shrink-0 text-left relative"
+                className="group w-[70px] [@media(max-height:800px)]:w-[54px] shrink-0 text-left relative"
               >
                 <div className="w-full aspect-[2/3] rounded-[10px] overflow-hidden bg-pick-surface border border-pick-border shadow-pick-card transition-transform duration-180 ease-pick [@media(hover:hover)]:group-hover:scale-[1.025]">
                   {item?.poster_path ? (

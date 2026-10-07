@@ -35,7 +35,7 @@ const DerniereNotification = ({ className }: { className: string }) => {
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.26, ease: [0.2, 0.8, 0.2, 1] }}
-      className={`mx-5 mt-3 flex items-center gap-3 px-3 py-2 ${className}`}
+      className={`mx-5 mt-2.5 flex items-center gap-3 px-3 py-2 ${className}`}
     >
       <button type="button" onClick={ouvrir} className="flex-1 min-w-0 flex items-center gap-3 text-left">
         <span className="relative w-9 h-9 shrink-0 rounded-full bg-primary/15 border border-pick-border flex items-center justify-center text-[16px]" aria-hidden="true">
