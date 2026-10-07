@@ -185,7 +185,7 @@ const HomeScreenChoiceModal = ({
             <div className="absolute inset-0 rounded-[32px] bg-card/55 backdrop-blur-2xl border border-white/[0.07] shadow-[0_40px_120px_-20px_rgba(0,0,0,0.7),0_0_60px_-12px_hsl(var(--primary)/0.35)] pointer-events-none" />
             <div className="absolute inset-x-0 top-0 h-px rounded-t-[32px] pointer-events-none" style={{ background: "linear-gradient(90deg, transparent, hsl(var(--primary) / 0.4), transparent)" }} />
 
-            {filtres && <div className="absolute top-3 right-3 z-10">{filtres}</div>}
+            {filtres && <div className="absolute top-4 right-4 z-10">{filtres}</div>}
 
             {/* ── TITRE ── */}
             <div className="relative flex flex-col gap-1 text-center mb-1">

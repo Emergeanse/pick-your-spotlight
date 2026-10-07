@@ -84,10 +84,14 @@ const QuickFilters = ({ filters, onFiltersChange, profileDefaults, audessus = fa
     <div className="relative">
       <button
         onClick={() => setOpen(!open)}
-        className="group relative w-11 h-11 flex items-center justify-center rounded-full"
+        className={audessus
+          // Dans la fenêtre « Ce soir » : une pastille avec son libellé, bien visible.
+          ? "group relative h-9 pl-2 pr-3 flex items-center gap-1.5 rounded-full border border-pick-border-active bg-primary/15 text-[12px] font-sans font-semibold text-pick-purple-light active:scale-[0.97] transition-transform duration-120 ease-pick"
+          : "group relative w-11 h-11 flex items-center justify-center rounded-full"}
         aria-label={(profileDefaults ? isOverridden : hasActiveFilters) ? "Filtres rapides (modifiés pour cette recherche)" : "Filtres rapides"}
       >
-        <IconeCharte repos={filtresRepos} actif={filtresActif} className="w-[25px] h-[25px]" active={open} />
+        <IconeCharte repos={filtresRepos} actif={filtresActif} className={audessus ? "w-[20px] h-[20px]" : "w-[25px] h-[25px]"} active={open} />
+        {audessus && <span>Filtres</span>}
         {/* Point violet : les filtres du moment diffèrent des préférences du
             profil. Comparé jusqu'ici à des valeurs fixes (80 %, 3 suggestions…),
             il restait allumé en permanence chez qui avait réglé son profil
