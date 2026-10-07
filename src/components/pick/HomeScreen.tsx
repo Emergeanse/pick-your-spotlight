@@ -2543,7 +2543,7 @@ const HomeScreen = ({
           {/* 4 widgets côte à côte — la carte choisie est toujours violette, et la
               carte survolée à la souris prend le même halo : une
               couleur par carte faisait clinquant à côté des illustrations. */}
-          <div className="flex gap-2 mt-9 overflow-x-auto scrollbar-hide pb-1 -mx-1 px-1">
+          <div className="flex gap-2 mt-14 overflow-x-auto scrollbar-hide pb-1 -mx-1 px-1">
             {/* Surprise solo */}
             <motion.button
               initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
