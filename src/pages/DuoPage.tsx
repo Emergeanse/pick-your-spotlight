@@ -624,9 +624,9 @@ export default function DuoPage() {
 
   if (!isReady || loading) {
     return (
-      <div className="relative min-h-screen">
-        <div className="absolute inset-0 bg-cover bg-center bg-no-repeat" style={{ backgroundImage: `url(${duoBg})` }} />
-        <div className="absolute inset-0 bg-gradient-to-b from-background/55 via-background/75 to-background/97" />
+      <div className="fixed inset-0 overflow-y-auto overscroll-y-contain scrollbar-hide">
+        <div className="fixed inset-0 bg-cover bg-center bg-no-repeat" style={{ backgroundImage: `url(${duoBg})` }} />
+        <div className="fixed inset-0 bg-gradient-to-b from-background/55 via-background/75 to-background/97" />
         <div className="relative z-10 pb-28 px-4 pt-[calc(4.5rem+env(safe-area-inset-top))] md:pt-32 max-w-lg mx-auto animate-pulse">
           {/* Header */}
           <div className="flex items-center justify-between mb-6">
@@ -657,13 +657,15 @@ export default function DuoPage() {
   }
 
   return (
-    <div className="relative min-h-screen">
-      {/* Fond d'écran */}
+    <div className="fixed inset-0 overflow-y-auto overscroll-y-contain scrollbar-hide">
+      {/* La page a sa propre zone de défilement (comme Amis) : dans le cadre
+          téléphone des grands écrans, la fenêtre ne défile pas. Le fond reste
+          fixe derrière la liste. */}
       <div
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
         style={{ backgroundImage: `url(${duoBg})` }}
       />
-      <div className="absolute inset-0 bg-gradient-to-b from-background/55 via-background/75 to-background/97" />
+      <div className="fixed inset-0 bg-gradient-to-b from-background/55 via-background/75 to-background/97" />
 
       {/* Contenu */}
       <div className="relative z-10 pb-28 px-4 pt-[calc(4.5rem+env(safe-area-inset-top))] md:pt-32 max-w-lg mx-auto w-full">
