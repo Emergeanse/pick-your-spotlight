@@ -8,7 +8,7 @@ import { calculerAdn, universFavoris, type Adn } from "@/lib/adn";
 import { computeMultiVectorProfile } from "@/lib/taste-engine";
 import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Pencil, Check, X, Plus, Trophy, Sparkles, Film, CalendarDays, Share2 } from "lucide-react";
+import { Pencil, Check, X, Plus, Trophy, Sparkles, Film, CalendarDays, Share2, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchVisibleProfile } from "@/lib/visible-profiles";
@@ -18,6 +18,12 @@ import { getLikedMovies } from "@/lib/liked-movies";
 import { listFeedbackByType } from "@/lib/feedback";
 import { getMyPreferences } from "@/lib/preferences";
 import squirrelHappy from "@/assets/happy.webp";
+import CartePick from "@/components/pick/CartePick";
+import { rareteCarte, type DonneesCarte } from "@/lib/carte-pick";
+import { signaturesAdn } from "@/lib/signatures";
+import { distinctionsAffichees, tropheeParCle } from "@/lib/distinctions";
+import { avatarAffiche } from "@/lib/avatars";
+import { usePickPlus } from "@/hooks/use-pick-plus";
 import squirrelCritique from "@/assets/critique.webp";
 import squirrelExigeant from "@/assets/exigeant.webp";
 
@@ -412,6 +418,35 @@ const CinemaDNAPage = () => {
     );
   }, [podiumIds, lovedFilms]);
 
+  // ── Carte Pick (son propre ADN) ──
+  const { isPremium } = usePickPlus();
+  const [carteOuverte, setCarteOuverte] = useState(false);
+  const [comptesCarte, setComptesCarte] = useState<{ choix: number; coeurs: number }>({ choix: 0, coeurs: 0 });
+  useEffect(() => {
+    if (!carteOuverte || !user?.id) return;
+    Promise.all([
+      supabase.from("user_item_feedback").select("id", { count: "exact", head: true }).eq("user_id", user.id),
+      supabase.from("user_item_feedback").select("id", { count: "exact", head: true }).eq("user_id", user.id).in("feedback_type", ["like", "love"]),
+    ]).then(([a, b]) => setComptesCarte({ choix: a.count ?? 0, coeurs: b.count ?? 0 }));
+  }, [carteOuverte, user?.id]);
+  const donneesCarte = useMemo<DonneesCarte>(() => ({
+    prenom: displayName,
+    archetype: dnaArchetype || dnaTitle,
+    photo: avatarAffiche(avatarUrl),
+    signatures: signaturesAdn(adn, univers),
+    adn,
+    univers,
+    podium: [0, 1, 2].map((i) => {
+      const f = podiumFilms[i] as { poster_path?: string | null } | null;
+      return f?.poster_path ? poster(f.poster_path, "w185") : null;
+    }),
+    distinctions: distinctionsAffichees(mesDistinctions ?? [], mesEpinglees, 5)
+      .map((c) => tropheeParCle(c)?.image)
+      .filter((x): x is string => Boolean(x)),
+    choixAnalyses: comptesCarte.choix,
+    coupsDeCoeur: comptesCarte.coeurs,
+  }), [displayName, dnaArchetype, dnaTitle, avatarUrl, adn, univers, podiumFilms, mesDistinctions, mesEpinglees, comptesCarte]);
+
   const saveBio = async () => {
     if (!user) return;
     setSavingBio(true);
@@ -496,6 +531,29 @@ const CinemaDNAPage = () => {
       </div>
 
       <div className={`px-4 pt-5 flex flex-col gap-6 ${isOwnProfile ? "pb-[calc(6rem+env(safe-area-inset-bottom))]" : "pb-[calc(9rem+env(safe-area-inset-bottom))]"}`}>
+
+        {/* ── Carte Pick : la carte à collectionner, recto et verso ── */}
+        {isOwnProfile && !loading && (
+          <button
+            type="button"
+            onClick={() => setCarteOuverte(true)}
+            className="w-full flex items-center gap-3 rounded-pick-lg border border-pick-gold/35 bg-gradient-to-r from-pick-gold/[0.10] via-primary/[0.08] to-transparent px-4 py-3 text-left active:scale-[0.98] transition-transform duration-120 ease-pick"
+          >
+            <span className="w-9 h-12 shrink-0 rounded-[6px] border border-pick-gold/60 bg-[url('/cartes/or.webp')] bg-cover bg-center shadow-pick-card" aria-hidden="true" />
+            <span className="flex-1 min-w-0">
+              <span className="block font-serif text-[17px] text-foreground leading-tight">Ma Carte Pick</span>
+              <span className="block text-[12px] font-sans text-pick-text-secondary">Ta carte cinéphile à retourner et partager</span>
+            </span>
+            <ChevronRight className="w-4 h-4 text-pick-gold shrink-0" aria-hidden="true" />
+          </button>
+        )}
+        <CartePick
+          ouvert={carteOuverte}
+          onFermer={() => setCarteOuverte(false)}
+          donnees={donneesCarte}
+          rarete={rareteCarte(mesDistinctions?.length ?? 0)}
+          pickPlus={isPremium}
+        />
 
         {/* ── Skeleton chargement ── */}
         {loading && (
