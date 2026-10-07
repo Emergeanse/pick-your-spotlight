@@ -2537,7 +2537,7 @@ const HomeScreen = ({
               </span>
             </h1>
             {/* Même police que le titre : seul « ce soir. » change de couleur. */}
-            <p className="mt-2 font-serif text-[clamp(17px,4.8vw,21px)] leading-tight text-foreground/85 [text-shadow:0_1px_10px_rgba(0,0,0,0.6)]">Pour toi ou vous.</p>
+            <p className="mt-2 font-serif text-[15px] leading-tight text-foreground/80 [text-shadow:0_1px_10px_rgba(0,0,0,0.6)]">Pour toi ou vous.</p>
           </motion.div>
 
           {/* 4 widgets côte à côte — la carte choisie est toujours violette, et la
