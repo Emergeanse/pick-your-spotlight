@@ -48,15 +48,15 @@ const BottomTabBar = () => {
           <div className="relative flex items-center justify-center flex-1">
             <motion.button
               whileTap={{ scale: 0.9 }}
-              // « Nouvelle soirée » crée une soirée ; la recherche instantanée
+              // « Crée une soirée » crée une soirée ; la recherche instantanée
               // est le gros bouton de l'accueil.
               onClick={() => navigate("/app/soiree/nouvelle")}
-              className="group absolute -top-5 w-14 h-14 rounded-full flex items-center justify-center active:scale-[0.96] transition-transform"
-              aria-label="Créer une nouvelle soirée ciné"
+              className="group absolute -top-8 w-[68px] h-[68px] rounded-full flex items-center justify-center active:scale-[0.96] transition-transform"
+              aria-label="Crée une soirée ciné"
             >
               {/* Le disque occupe les trois quarts de l'image, le reste est son
                   halo : l'image déborde du bouton pour que le disque, lui,
-                  garde les 56 px de l'ancien « + ». Version calme au repos, version
+                  fasse 68 px — plus grand que les onglets, c'est l'action phare. Version calme au repos, version
                   lumineuse au survol (souris seulement : sur écran tactile le survol
                   resterait collé après l'appui) et pendant l'appui. */}
               <img
@@ -64,21 +64,21 @@ const BottomTabBar = () => {
                 alt=""
                 aria-hidden="true"
                 draggable={false}
-                className="absolute w-[76px] h-[76px] max-w-none pointer-events-none select-none"
+                className="absolute w-[92px] h-[92px] max-w-none pointer-events-none select-none"
               />
               <img
                 src={creerSoireeActif}
                 alt=""
                 aria-hidden="true"
                 draggable={false}
-                className="absolute w-[76px] h-[76px] max-w-none pointer-events-none select-none opacity-0 group-active:opacity-100 group-focus-visible:opacity-100 [@media(hover:hover)]:group-hover:opacity-100 transition-opacity duration-200"
+                className="absolute w-[92px] h-[92px] max-w-none pointer-events-none select-none opacity-0 group-active:opacity-100 group-focus-visible:opacity-100 [@media(hover:hover)]:group-hover:opacity-100 transition-opacity duration-200"
               />
             </motion.button>
             <span
               aria-hidden="true"
               className="pointer-events-none absolute bottom-1 left-1/2 -translate-x-1/2 text-[clamp(8.5px,2.6vw,10px)] font-sans tracking-tight text-foreground/90 font-semibold whitespace-nowrap [text-shadow:0_0_8px_hsl(var(--accent)/0.9),0_0_16px_hsl(var(--accent)/0.5)]"
             >
-              Nouvelle soirée
+              Crée une soirée
             </span>
           </div>
 

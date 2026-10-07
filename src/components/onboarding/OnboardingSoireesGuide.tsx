@@ -109,7 +109,7 @@ export default function OnboardingSoireesGuide({ onFinish, finishing }: Onboardi
       <div className="rounded-xl border border-border/25 bg-card/40 px-4 py-3 mb-6 flex gap-3">
         <CalendarDays className="w-4 h-4 text-primary shrink-0 mt-0.5" />
         <p className="text-xs font-sans text-foreground/55 leading-relaxed">
-          Tu peux aussi en créer une avec le bouton <strong className="text-foreground/75">Nouvelle soirée</strong>, au centre de la barre d&apos;onglets.
+          Tu peux aussi en créer une avec le bouton <strong className="text-foreground/75">Crée une soirée</strong>, au centre de la barre d&apos;onglets.
         </p>
       </div>
 
