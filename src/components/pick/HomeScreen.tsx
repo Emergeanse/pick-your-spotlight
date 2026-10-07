@@ -2385,7 +2385,7 @@ const HomeScreen = ({
       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background/55 to-background" />
 
       {/* Avatar à droite, sous la cloche et centré sur elle (33 px du bord droit
-          sur téléphone, 45 px en grand écran — mesuré), pour alléger la colonne
+          sur téléphone, 45 px en grand écran — mesuré ; 48 px de diamètre), pour alléger la colonne
           de gauche. Mène au profil. */}
       <motion.button
         type="button"
@@ -2393,12 +2393,12 @@ const HomeScreen = ({
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.22, duration: 0.4 }}
         onClick={() => navigate("/app/profile")}
-        className="absolute right-[13px] md:right-[25px] top-[calc(75px+env(safe-area-inset-top))] md:top-[94px] z-20 w-10 h-10 rounded-full overflow-hidden ring-1 ring-pick-border-hover bg-primary/20 flex items-center justify-center active:scale-[0.97] transition-transform duration-120 ease-pick"
+        className="absolute right-[9px] md:right-[21px] top-[calc(73px+env(safe-area-inset-top))] md:top-[92px] z-20 w-12 h-12 rounded-full overflow-hidden ring-1 ring-pick-border-hover bg-primary/20 flex items-center justify-center active:scale-[0.97] transition-transform duration-120 ease-pick"
         aria-label="Mon profil (avatar)"
       >
         {avatarUrl
           ? <img src={avatarUrl} alt="" className="w-full h-full object-cover" />
-          : <span className="text-[14px] font-bold text-primary leading-none">{(firstName || "?").charAt(0).toUpperCase()}</span>
+          : <span className="text-[17px] font-bold text-primary leading-none">{(firstName || "?").charAt(0).toUpperCase()}</span>
         }
       </motion.button>
 
