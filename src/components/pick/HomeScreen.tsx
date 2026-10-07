@@ -2446,22 +2446,19 @@ const HomeScreen = ({
         </span>
       </motion.button>
 
-      {/* Identité sous la BrandHeader, en colonne sous le logo : salut,
-          compteur, puis statut. Alignée sur le « P », qui commence à 13 % de
-          l’image du logo : 12 + 8 px sur téléphone, 24 + 10 px en grand écran,
-          où l’en-tête élargit sa marge et passe le logo de 62 à 75 px.
-          Posée sous le logo (62 px + marge haute) et non plus à sa hauteur, où
-          le salut passait derrière lui. */}
+      {/* Identité en haut à droite, à gauche de l'avatar et centrée sur lui
+          (avatar : 48 px, centre à 112 px du haut, 130 px en grand écran ; son
+          cadre déborde d'environ 18 px). Le côté gauche reste au titre. */}
       <motion.button
         type="button"
         initial={{ opacity: 0, y: -4 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.22, duration: 0.4 }}
         onClick={() => navigate("/app/profile")}
-        className="absolute left-5 md:left-[34px] top-[calc(0.75rem+62px+0.25rem+env(safe-area-inset-top))] md:top-[calc(1.5rem+75px+0.25rem)] z-20 flex flex-col items-start gap-1.5 text-left active:scale-[0.98] transition-transform"
+        className="absolute right-[92px] md:right-[104px] top-[calc(112px-1.75rem+env(safe-area-inset-top))] md:top-[calc(130px-1.75rem)] h-14 z-20 flex flex-col items-end justify-center text-right [text-shadow:0_1px_8px_rgba(0,0,0,0.7)] active:scale-[0.98] transition-transform"
         aria-label="Mon profil"
       >
-        <span className="flex flex-col items-start gap-1 min-w-0">
+        <span className="flex flex-col items-end gap-1 min-w-0">
           <span className="text-foreground/75 text-[13px] font-sans leading-tight max-w-[11rem] truncate">
             {firstName ? `Bonsoir ${firstName} 👋` : "Bonsoir 👋"}
           </span>
@@ -2486,7 +2483,7 @@ const HomeScreen = ({
 
       <div className="relative z-10 h-full overflow-y-auto overscroll-y-contain touch-[pan-y_pinch-zoom] scrollbar-hide pb-[calc(6rem+env(safe-area-inset-bottom))]">
         {/* ─── Hero ─── */}
-        <section className="relative pt-[calc(12rem+env(safe-area-inset-top))] pb-2 px-5 md:px-8">
+        <section className="relative pt-[calc(10.5rem+env(safe-area-inset-top))] pb-2 px-5 md:px-8">
           <motion.div
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
