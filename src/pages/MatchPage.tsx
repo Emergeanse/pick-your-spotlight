@@ -13,6 +13,7 @@ import FlecheRonde from "@/components/pick/FlecheRonde";
 import matchBackground from "@/assets/match-background.webp";
 import MovieActionBar from "@/components/pick/MovieActionBar";
 import FlipCardDetail from "@/components/pick/FlipCardDetail";
+import TonightPickOverlay, { preloadPosterWallCache } from "@/components/pick/TonightPickOverlay";
 
 type MatchState = "idle" | "listening" | "identifying" | "result" | "error";
 
@@ -28,6 +29,14 @@ export default function MatchPage() {
   const [detailOpen, setDetailOpen] = useState(false);
   // Film ouvert directement (conseil d'un ami) : pas une recherche à corriger.
   const [filmDirect, setFilmDirect] = useState(false);
+  // Pendant ce temps, le mur d'affiches qui défilent (comme « Ce soir ») plutôt
+  // que l'écran de recherche : il n'y a rien à taper, seulement à patienter.
+  // Lu dès le premier rendu pour ne pas montrer l'écran de recherche un instant.
+  const [murAttente, setMurAttente] = useState(
+    () => Number(new URLSearchParams(window.location.search).get("film")) > 0,
+  );
+  useEffect(() => { if (murAttente) void preloadPosterWallCache(); }, [murAttente]);
+  useEffect(() => { if (state === "result" || state === "error") setMurAttente(false); }, [state]);
 
   const recognitionRef = useRef<any>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -195,6 +204,27 @@ export default function MatchPage() {
       <div
         className="absolute inset-0 pointer-events-none"
         style={{ background: "linear-gradient(to bottom, transparent 0%, hsl(var(--background)/0.3) 60%, hsl(var(--background)/0.9) 85%, hsl(var(--background)) 100%)" }}
+      />
+
+      <TonightPickOverlay
+        open={murAttente}
+        movie={null}
+        tonightPool={[]}
+        tonightPickIndex={0}
+        tonightSeenMovieIds={new Set()}
+        tonightProviders={[]}
+        movieMatchData={{}}
+        canGoPrev={false}
+        canGoNext={false}
+        tonightAllVisited={false}
+        tonightLoading
+        onClose={() => { setMurAttente(false); if (window.history.length > 1) window.history.back(); else reset(); }}
+        onPrev={() => {}}
+        onNext={() => {}}
+        onOpenDetail={() => {}}
+        onConfirm={() => {}}
+        onInteraction={() => {}}
+        onMoreSuggestions={() => {}}
       />
 
       <AnimatePresence mode="wait">
