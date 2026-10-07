@@ -47,6 +47,8 @@ import { fetchVisibleProfiles } from "@/lib/visible-profiles";
 import { type AmbianceMood } from "./HomeAmbianceSection";
 import homeBackground from "@/assets/home-background.webp";
 import trouverFilmBouton from "@/assets/trouver-film-bouton.webp";
+import { cadrePour, ECHELLE_CADRE } from "@/lib/cadres";
+import { clesDebloquees, lireValeursTrophees } from "@/lib/distinctions";
 import trouverFilmBoutonActif from "@/assets/trouver-film-bouton-actif.webp";
 import groupeSurprise from "@/assets/groupe-surprise.webp";
 import DerniereNotification from "./DerniereNotification";
@@ -768,6 +770,26 @@ const HomeScreen = ({
     window.addEventListener("pick-voice-search", handler);
     return () => window.removeEventListener("pick-voice-search", handler);
   }, []);
+
+  // Trophées obtenus, pour le cadre de la photo : gardés en mémoire pour
+  // l'afficher d'emblée, puis recalculés en arrière-plan.
+  const [nbTrophees, setNbTrophees] = useState<number>(() => {
+    try { return Number(localStorage.getItem("pys_cadre_trophees")) || 0; } catch { return 0; }
+  });
+  useEffect(() => {
+    if (!user) return;
+    let actif = true;
+    lireValeursTrophees(user.id)
+      .then((v) => {
+        if (!actif) return;
+        const n = clesDebloquees(v).length;
+        setNbTrophees(n);
+        try { localStorage.setItem("pys_cadre_trophees", String(n)); } catch { /* stockage indisponible */ }
+      })
+      .catch(() => {});
+    return () => { actif = false; };
+  }, [user]);
+  const cadre = cadrePour(nbTrophees);
 
   // Prénom + avatar + compteur pour le greeting
   useEffect(() => {
@@ -2384,22 +2406,35 @@ const HomeScreen = ({
       {/* Dégradé : image visible en haut, fond opaque en bas */}
       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background/55 to-background" />
 
-      {/* Avatar à droite, sous la cloche et centré sur elle (33 px du bord droit
-          sur téléphone, 45 px en grand écran — mesuré ; 48 px de diamètre), pour alléger la colonne
-          de gauche. Mène au profil. */}
+      {/* Avatar à droite, sous la cloche (48 px), dans son cadre : le cadre
+          suit les trophées obtenus (13 cadres, voir lib/cadres) et déborde de
+          la photo — d'où la photo un peu en retrait du bord et sous la cloche.
+          Mène au profil. */}
       <motion.button
         type="button"
         initial={{ opacity: 0, y: -4 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.22, duration: 0.4 }}
         onClick={() => navigate("/app/profile")}
-        className="absolute right-[9px] md:right-[21px] top-[calc(73px+env(safe-area-inset-top))] md:top-[92px] z-20 w-12 h-12 rounded-full overflow-hidden ring-1 ring-pick-border-hover bg-primary/20 flex items-center justify-center active:scale-[0.97] transition-transform duration-120 ease-pick"
+        className="absolute right-[28px] md:right-[40px] top-[calc(88px+env(safe-area-inset-top))] md:top-[106px] z-20 w-12 h-12 rounded-full active:scale-[0.97] transition-transform duration-120 ease-pick"
         aria-label="Mon profil (avatar)"
       >
-        {avatarUrl
-          ? <img src={avatarUrl} alt="" className="w-full h-full object-cover" />
-          : <span className="text-[17px] font-bold text-primary leading-none">{(firstName || "?").charAt(0).toUpperCase()}</span>
-        }
+        <span className={`absolute inset-0 rounded-full overflow-hidden bg-primary/20 flex items-center justify-center ${cadre.image ? "" : "ring-1 ring-pick-border-hover"}`}>
+          {avatarUrl
+            ? <img src={avatarUrl} alt="" className="w-full h-full object-cover" />
+            : <span className="text-[17px] font-bold text-primary leading-none">{(firstName || "?").charAt(0).toUpperCase()}</span>
+          }
+        </span>
+        {cadre.image && (
+          <img
+            src={cadre.image}
+            alt=""
+            aria-hidden="true"
+            draggable={false}
+            className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 max-w-none pointer-events-none select-none"
+            style={{ width: `${ECHELLE_CADRE * 100}%`, height: `${ECHELLE_CADRE * 100}%` }}
+          />
+        )}
       </motion.button>
 
       {/* Identité sous la BrandHeader, en colonne sous le logo : salut,
