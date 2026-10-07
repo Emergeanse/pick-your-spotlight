@@ -2422,7 +2422,7 @@ const HomeScreen = ({
       <div className="absolute inset-0 bg-gradient-to-b from-transparent from-55% to-background/80" />
 
       {/* Avatar en haut à droite, sur la ligne de l'en-tête (40 px, centré sur
-          elle : photo de 36 px, centre à 34 px du haut, 38 px en grand écran ; le
+          elle : photo de 42 px, centre à 34 px du haut, 38 px en grand écran ; le
           cadre fait 1,9 fois la photo : en dessous, son ouverture devient plus
           petite que la photo et l'anneau disparaît derrière elle), dans son cadre : le cadre
           suit les trophées obtenus, ou le statut d'Ambassadeur (voir lib/cadres)
@@ -2433,7 +2433,7 @@ const HomeScreen = ({
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.22, duration: 0.4 }}
         onClick={() => navigate("/app/profile")}
-        className="absolute right-[18px] md:right-[30px] top-[calc(16px+env(safe-area-inset-top))] md:top-[20px] z-40 w-9 h-9 rounded-full active:scale-[0.97] transition-transform duration-120 ease-pick"
+        className="absolute right-[18px] md:right-[30px] top-[calc(13px+env(safe-area-inset-top))] md:top-[17px] z-40 w-[42px] h-[42px] rounded-full active:scale-[0.97] transition-transform duration-120 ease-pick"
         aria-label="Mon profil (avatar)"
       >
         {/* Le cadre derrière, la photo par-dessus : elle recouvre le bord
