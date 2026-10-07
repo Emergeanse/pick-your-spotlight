@@ -2419,12 +2419,8 @@ const HomeScreen = ({
         className="absolute right-[28px] md:right-[40px] top-[calc(88px+env(safe-area-inset-top))] md:top-[106px] z-20 w-12 h-12 rounded-full active:scale-[0.97] transition-transform duration-120 ease-pick"
         aria-label="Mon profil (avatar)"
       >
-        <span className={`absolute inset-0 rounded-full overflow-hidden bg-primary/20 flex items-center justify-center ${cadre.image ? "" : "ring-1 ring-pick-border-hover"}`}>
-          {avatarUrl
-            ? <img src={avatarUrl} alt="" className="w-full h-full object-cover" />
-            : <span className="text-[17px] font-bold text-primary leading-none">{(firstName || "?").charAt(0).toUpperCase()}</span>
-          }
-        </span>
+        {/* Le cadre derrière, la photo par-dessus : elle recouvre le bord
+            intérieur du cadre. */}
         {cadre.image && (
           <img
             src={cadre.image}
@@ -2435,6 +2431,12 @@ const HomeScreen = ({
             style={{ width: `${ECHELLE_CADRE * 100}%`, height: `${ECHELLE_CADRE * 100}%` }}
           />
         )}
+        <span className={`absolute inset-0 rounded-full overflow-hidden bg-primary/20 flex items-center justify-center ${cadre.image ? "" : "ring-1 ring-pick-border-hover"}`}>
+          {avatarUrl
+            ? <img src={avatarUrl} alt="" className="w-full h-full object-cover" />
+            : <span className="text-[17px] font-bold text-primary leading-none">{(firstName || "?").charAt(0).toUpperCase()}</span>
+          }
+        </span>
       </motion.button>
 
       {/* Identité sous la BrandHeader, en colonne sous le logo : salut,
