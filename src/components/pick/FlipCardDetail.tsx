@@ -598,7 +598,7 @@ const PersonDetailContent = ({
               className="flex flex-col items-center gap-1.5 group cursor-pointer"
             >
               <img
-                src={f.poster_path ? `https://image.tmdb.org/t/p/w92${f.poster_path}` : "/placeholder.svg"}
+                src={f.poster_path ? `https://image.tmdb.org/t/p/w92${f.poster_path}` : "/affiche-vide.webp"}
                 alt={f.title}
                 className="w-full aspect-[2/3] rounded-xl object-cover border border-border/15 group-hover:border-primary/35 transition-colors shadow-sm"
               />

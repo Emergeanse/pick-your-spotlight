@@ -81,10 +81,13 @@ function normalizePosterPath(path: string | null | undefined): string | null {
   return trimmed.startsWith("/") ? trimmed : `/${trimmed}`;
 }
 
+/** Film sans affiche : un clap noir de la charte (format affiche 2:3). */
+export const AFFICHE_VIDE = "/affiche-vide.webp";
+
 function hasUsablePoster(posterPath: string | null | undefined): boolean {
   const normalized = normalizePosterPath(posterPath);
   if (!normalized) return false;
-  return !getPosterUrl(normalized).endsWith("/placeholder.svg");
+  return getPosterUrl(normalized) !== AFFICHE_VIDE;
 }
 
 function hasMoviePoster(movie: Pick<Movie, "poster_path">): boolean {
@@ -93,7 +96,7 @@ function hasMoviePoster(movie: Pick<Movie, "poster_path">): boolean {
 
 function getPosterUrl(path: string | null, size: string = "w500"): string {
   const normalized = normalizePosterPath(path);
-  if (!normalized) return "/placeholder.svg";
+  if (!normalized) return AFFICHE_VIDE;
   return `${IMG_BASE}/${size}${normalized}`;
 }
 

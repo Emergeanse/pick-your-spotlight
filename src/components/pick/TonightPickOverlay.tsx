@@ -137,7 +137,7 @@ function preloadPosterImages(paths: string[], size: string = WALL_POSTER_SIZE) {
   unique.forEach((path) => {
     if (confirmedPaths.has(path) || rejectedPaths.has(path)) return;
     const src = getPosterUrl(path, size);
-    if (!src || src.endsWith("/placeholder.svg")) { rejectedPaths.add(path); return; }
+    if (!src || src.endsWith("/placeholder.svg") || src.endsWith("/affiche-vide.webp")) { rejectedPaths.add(path); return; }
     const img = new Image();
     img.decoding = "async";
     img.onload  = () => {
