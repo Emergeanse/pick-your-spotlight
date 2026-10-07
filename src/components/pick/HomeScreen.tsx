@@ -9,12 +9,12 @@ import { clearRevealIntent, type RevealIntent, peekForReveal, consumeForReveal, 
 import { fetchGroupTasteProfile, fetchAdHocGroupProfile, isUsableGroupProfile, toGroupOverrides } from "@/lib/group-taste";
 import { programFilmForEvent } from "@/lib/event-program";
 import { toast } from "sonner";
-import { Sparkles, WandSparkles, Clapperboard, ChevronRight, Flame, Eye, Coffee, Heart, Shuffle, Star } from "lucide-react";
+import { Sparkles, WandSparkles, Clapperboard, ChevronRight, CalendarDays, Clock, Flame, Eye, Coffee, Heart, Shuffle, Star } from "lucide-react";
 
 import { formatPlatformNamesForLoading, resolveProviders } from "@/lib/platforms";
 import type { Movie, MovieDetail } from "@/lib/tmdb";
 import type { VoiceSearchFilters } from "./VoiceChat";
-import { getTrendingMovies, getBackdropUrl, getMovieDetails, getDisplayTitle } from "@/lib/tmdb";
+import { getTrendingMovies, getBackdropUrl, getMovieDetails, getDisplayTitle, getPosterUrl } from "@/lib/tmdb";
 import { getLikedMovies } from "@/lib/liked-movies";
 import { trackInteraction, getUserTasteProfile } from "@/lib/interactions";
 import { useAuth } from "@/hooks/use-auth";
@@ -430,6 +430,7 @@ const HomeScreen = ({
   const [nextEvent, setNextEvent] = useState<{
     id: string; title: string; event_date: string; event_time: string | null;
     context: string | null; partnerInitial: string; partnerName: string; partnerAvatar: string | null;
+    revealMode: string | null; filmTitre: string | null; filmAffiche: string | null; affiniteDuo: number | null;
   } | null>(null);
   const [activeWidget, setActiveWidget] = useState<"duo" | "famille" | "amis" | "surprise">("surprise");
   const [findChoiceContext, setFindChoiceContext] = useState<LaunchContext>("solo");
@@ -822,7 +823,7 @@ const HomeScreen = ({
       // Soirées en tant qu'organisateur
       const { data: orgEvents } = await (supabase as any)
         .from("events")
-        .select("id, title, event_date, event_time, context, organizer_id")
+        .select("id, title, event_date, event_time, context, organizer_id, reveal_mode, final_pick_title, final_pick_poster")
         .eq("organizer_id", user.id)
         .gte("event_date", today)
         .not("status", "in", '("done","cancelled")')
@@ -840,7 +841,7 @@ const HomeScreen = ({
       if (participatingIds.length > 0) {
         const { data } = await (supabase as any)
           .from("events")
-          .select("id, title, event_date, event_time, context, organizer_id")
+          .select("id, title, event_date, event_time, context, organizer_id, reveal_mode, final_pick_title, final_pick_poster")
           .in("id", participatingIds)
           .neq("organizer_id", user.id)
           .gte("event_date", today)
@@ -868,11 +869,23 @@ const HomeScreen = ({
       const partner = eps?.[0];
       let partnerName = "?";
       let partnerAvatar: string | null = null;
+      let affiniteDuo: number | null = null;
       if (partner?.user_id) {
         const prof = await fetchVisibleProfile(partner.user_id);
         partnerName = prof?.display_name || partner.guest_name || "Invité";
         // Compte inscrit : sa photo, son avatar choisi, ou l'écureuil.
         partnerAvatar = avatarAffiche(prof?.avatar_url);
+        // Soirée Duo : l'affinité calculée pour ce duo, s'il est actif.
+        if (chosen.context === "duo") {
+          const { data: duo } = await supabase
+            .from("duo_taste_profiles" as never)
+            .select("affinity_score")
+            .eq("status", "active")
+            .or(`and(user1_id.eq.${user.id},user2_id.eq.${partner.user_id}),and(user1_id.eq.${partner.user_id},user2_id.eq.${user.id})`)
+            .maybeSingle();
+          const a = (duo as { affinity_score?: number } | null)?.affinity_score;
+          if (typeof a === "number" && a > 0) affiniteDuo = Math.round(a);
+        }
       } else if (partner?.guest_name) {
         partnerName = partner.guest_name;
       }
@@ -886,6 +899,10 @@ const HomeScreen = ({
         partnerInitial: partnerName.charAt(0).toUpperCase(),
         partnerName,
         partnerAvatar,
+        revealMode: chosen.reveal_mode ?? null,
+        filmTitre: chosen.final_pick_title ?? null,
+        filmAffiche: chosen.final_pick_poster ?? null,
+        affiniteDuo,
       });
     })();
   }, [user]);
@@ -2637,7 +2654,20 @@ const HomeScreen = ({
         </section>
 
         {/* ─── Prochaine soirée (compact) ─── */}
-        {nextEvent && (
+        {nextEvent && (() => {
+          // Vignette : l'affiche du film s'il est connu et visible, sinon
+          // l'illustration du type de soirée.
+          const debutSoiree = new Date(`${nextEvent.event_date}T${(nextEvent.event_time ?? "20:00").slice(0, 5)}:00`);
+          const heures = Math.round((debutSoiree.getTime() - Date.now()) / 3_600_000);
+          // Pas encore révélé : aucun film choisi, ou film surprise avant l'heure.
+          const surprise = !nextEvent.filmTitre || (nextEvent.revealMode === "surprise" && heures > 0);
+          const illustration = nextEvent.context === "duo" ? groupeDuo
+            : nextEvent.context === "famille" ? groupeFamille
+            : nextEvent.context === "amis" || nextEvent.context === "groupe" ? groupeAmis
+            : groupeSurprise;
+          const vignette = !surprise && nextEvent.filmAffiche ? getPosterUrl(nextEvent.filmAffiche, "w185") : null;
+          const delai = heures <= 0 ? "ce soir" : heures < 48 ? `dans ${heures} h` : `dans ${Math.round(heures / 24)} j`;
+          return (
           <motion.button
             type="button"
             initial={{ opacity: 0, y: 12 }}
@@ -2645,38 +2675,61 @@ const HomeScreen = ({
             transition={{ delay: 0.54, duration: 0.5 }}
             whileTap={{ scale: 0.985 }}
             onClick={() => navigate(`/app/soirees/${nextEvent.id}`)}
-            className={`mx-5 mt-3 w-[calc(100%-2.5rem)] flex items-center gap-3 px-3 py-2 text-left ${CARTE_PICK}`}
+            className={`mx-5 mt-3 w-[calc(100%-2.5rem)] block px-3.5 pt-3 pb-3.5 text-left ${CARTE_PICK}`}
           >
-            {/* Avatars empilés : partenaire (derrière) + utilisateur (devant) */}
-            <div className="relative flex-shrink-0 w-11 h-8">
-              <div className="absolute left-0 top-0 w-8 h-8 rounded-full overflow-hidden bg-gradient-to-br from-primary to-pick-pink border-2 border-[hsl(240_22%_6%)] flex items-center justify-center">
-                {nextEvent.partnerAvatar
-                  ? <img src={nextEvent.partnerAvatar} alt="" className="w-full h-full object-cover" />
-                  : <span className="text-[11px] font-bold text-white leading-none">{nextEvent.partnerInitial}</span>}
-              </div>
-              <div className="absolute left-4 top-0 w-8 h-8 rounded-full overflow-hidden border-2 border-[hsl(240_22%_6%)] bg-primary/20 flex items-center justify-center">
-                {avatarAffiche(avatarUrl) ? (
-                  <img src={avatarAffiche(avatarUrl)} alt="" className="w-full h-full object-cover" />
-                ) : (
-                  <span className="text-[11px] font-bold text-primary leading-none">
-                    {(firstName || "?").charAt(0).toUpperCase()}
-                  </span>
+            <span className="flex items-center gap-2">
+              <CalendarDays className="w-[18px] h-[18px] text-pick-purple-light shrink-0" strokeWidth={1.8} aria-hidden="true" />
+              <span className="flex-1 font-serif text-[18px] text-foreground leading-none">Prochaine soirée</span>
+              <ChevronRight className="w-4 h-4 text-pick-text-muted shrink-0" aria-hidden="true" />
+            </span>
+            <span className="mt-3 flex items-center gap-3">
+              <span className="relative shrink-0 w-[76px] h-[52px] rounded-pick-sm overflow-hidden border border-pick-border bg-background/60 flex items-center justify-center">
+                {vignette
+                  ? <img src={vignette} alt="" className="w-full h-full object-cover" />
+                  : <img src={illustration} alt="" aria-hidden="true" className="w-10 h-10 object-contain" />}
+                {nextEvent.partnerAvatar && (
+                  <img src={nextEvent.partnerAvatar} alt="" className="absolute bottom-1 right-1 w-5 h-5 rounded-full object-cover border border-background" />
                 )}
-              </div>
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="font-sans font-semibold text-foreground text-[14px] leading-tight truncate">{nextEvent.title}</p>
-              <p className="mt-0.5 text-[12px] font-sans leading-tight truncate">
-                <span className="text-[11px] font-semibold tracking-[0.12em] uppercase text-pick-purple-light">Prochaine soirée</span>
-                <span className="text-pick-text-secondary capitalize">
-                  {" · "}{new Date(nextEvent.event_date + "T12:00:00").toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" })}
-                  {nextEvent.event_time ? ` · ${nextEvent.event_time.slice(0, 5)}` : ""}
+              </span>
+              <span className="flex-1 min-w-0">
+                <span className="block text-[12px] font-sans leading-tight truncate">
+                  <span className="font-semibold text-foreground">{nextEvent.title.split(" · ")[0]}</span>
+                  <span className="text-pick-text-secondary">
+                    {" · "}{new Date(nextEvent.event_date + "T12:00:00").toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "long" })}
+                    {nextEvent.event_time ? ` · ${nextEvent.event_time.slice(0, 5)}` : ""}
+                  </span>
                 </span>
-              </p>
-            </div>
-            <ChevronRight className="w-4 h-4 text-pick-text-muted flex-shrink-0" />
+                <span className="mt-2 flex items-center gap-3">
+                  {nextEvent.affiniteDuo != null ? (
+                    <span className="flex-1 min-w-0">
+                      <span className="flex items-center gap-1.5 text-[12px] font-sans text-foreground/85 leading-none whitespace-nowrap">
+                        <Heart className="w-3.5 h-3.5 fill-pick-purple-light text-pick-purple-light shrink-0" aria-hidden="true" />
+                        Affinité <span className="font-semibold tabular-nums">{nextEvent.affiniteDuo}&nbsp;%</span>
+                      </span>
+                      <span className="mt-1.5 block h-1.5 rounded-full bg-foreground/10 overflow-hidden">
+                        <span className="block h-full rounded-full bg-gradient-to-r from-primary to-pick-magenta" style={{ width: `${Math.min(100, nextEvent.affiniteDuo)}%` }} />
+                      </span>
+                    </span>
+                  ) : (
+                    <span className="flex-1 min-w-0 text-[12px] font-sans text-pick-text-secondary truncate">
+                      {nextEvent.partnerName && nextEvent.partnerName !== "?" ? `Avec ${nextEvent.partnerName}` : "Soirée ciné"}
+                    </span>
+                  )}
+                  <span className="w-px self-stretch bg-pick-border shrink-0" aria-hidden="true" />
+                  <span className="flex items-center gap-1.5 shrink-0 max-w-[42%]">
+                    <Clock className="w-4 h-4 text-pick-purple-light shrink-0" strokeWidth={1.8} aria-hidden="true" />
+                    <span className="text-[11px] font-sans leading-tight text-pick-text-secondary min-w-0">
+                      {surprise
+                        ? <>Film révélé<br /><span className="font-semibold text-foreground">{delai}</span></>
+                        : <>Film choisi<br /><span className="block font-semibold text-foreground truncate">{nextEvent.filmTitre}</span></>}
+                    </span>
+                  </span>
+                </span>
+              </span>
+            </span>
           </motion.button>
-        )}
+          );
+        })()}
 
         {/* ─── Carte post-soirée persistante ─── */}
         {pendingFeedbackEvent && !showPostSoiree && (
