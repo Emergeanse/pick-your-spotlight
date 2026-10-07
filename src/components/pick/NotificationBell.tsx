@@ -1,8 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { X } from "lucide-react";
-import IconeCharte from "./IconeCharte";
-import notificationsRepos from "@/assets/icones/notifications-repos.webp";
-import notificationsActif from "@/assets/icones/notifications-actif.webp";
+import clocheRonde from "@/assets/icones/cloche-ronde.webp";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchVisibleProfiles } from "@/lib/visible-profiles";
@@ -143,7 +141,14 @@ const NotificationBell = () => {
         className="group relative w-11 h-11 flex items-center justify-center rounded-full"
         aria-label="Notifications"
       >
-        <IconeCharte repos={notificationsRepos} actif={notificationsActif} className="w-[23px] h-[23px]" active={open} />
+        {/* Cloche dans sa bulle de verre ; plus lumineuse ouverte ou à l'appui. */}
+        <img
+          src={clocheRonde}
+          alt=""
+          aria-hidden="true"
+          draggable={false}
+          className={`w-[38px] h-[38px] select-none pointer-events-none transition-[filter] duration-180 ease-pick drop-shadow-[0_0_8px_rgba(168,85,247,0.45)] ${open ? "brightness-125" : "group-active:brightness-125 [@media(hover:hover)]:group-hover:brightness-110"}`}
+        />
         {unreadCount > 0 && (
           <motion.span
             initial={{ scale: 0 }}
