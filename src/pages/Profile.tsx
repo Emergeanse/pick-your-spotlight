@@ -43,8 +43,7 @@ import CinemaDNA from "@/components/pick/CinemaDNA";
 import TasteTrainer from "@/components/pick/TasteTrainer";
 import GenrePreferences from "@/components/pick/GenrePreferences";
 import CinemaAvatar from "@/components/pick/CinemaAvatar";
-import AdnCinema from "@/components/pick/AdnCinema";
-import { calculerAdn, universFavoris, type Adn } from "@/lib/adn";
+import { calculerAdn, traitsDominants, type Adn } from "@/lib/adn";
 import { computeMultiVectorProfile } from "@/lib/taste-engine";
 import profileBackground from "@/assets/profile-background.webp";
 import squirrelHappy from "@/assets/happy.webp";
@@ -264,11 +263,8 @@ const Profile = () => {
   const [dnaLevel, setDnaLevel] = useState<string | null>(null);
   const [dnaArchetype, setDnaArchetype] = useState<string | null>(null);
   const [genreStats, setGenreStats] = useState<{ genre: string; count: number }[]>([]);
-  // ADN cinéma : même carte que la page ADN (six traits + univers favoris).
+  // Aperçu de l'ADN : les trois traits dominants (la carte complète est sur /app/adn).
   const [adn, setAdn] = useState<Adn | null>(null);
-  const [adnRecent, setAdnRecent] = useState<Adn | null>(null);
-  const [narrative, setNarrative] = useState<string | null>(null);
-  const [confiance, setConfiance] = useState<number | null>(null);
   const [movieVsSeries, setMovieVsSeries] = useState({ movies: 0, series: 0 });
   const [showConfidenceDetail, setShowConfidenceDetail] = useState(false);
   const [peopleEvaluated, setPeopleEvaluated] = useState(0);
@@ -329,7 +325,7 @@ const Profile = () => {
       const [engData, likedData, dnaData, { count: wlCount }, { count: peopleCount }, myPrefs, { count: seenCnt }] = await Promise.all([
         getEngagementData(user.id),
         getLikedMovies().catch(() => []),
-        supabase.from("cinematic_profiles" as any).select("personality_title, dna_archetype, global_level, narrative").eq("user_id", user.id).maybeSingle(),
+        supabase.from("cinematic_profiles" as any).select("personality_title, dna_archetype, global_level").eq("user_id", user.id).maybeSingle(),
         supabase.from("watchlist").select("id", { count: "exact", head: true }).eq("user_id", user.id),
         supabase.from("user_people_preferences" as any).select("id", { count: "exact", head: true }).eq("user_id", user.id),
         getMyPreferences().catch(() => []),
@@ -347,7 +343,6 @@ const Profile = () => {
         setDnaTitle(d.personality_title || null);
         setDnaLevel(d.global_level || null);
         setDnaArchetype(d.dna_archetype || null);
-        setNarrative(d.narrative || null);
       }
       const genreCounts: Record<string, number> = {};
       let movies = 0, series = 0;
@@ -361,7 +356,7 @@ const Profile = () => {
     finally { setCinemaLoading(false); }
   };
 
-  const univers = useMemo(() => universFavoris(genreStats), [genreStats]);
+  const dominantsAdn = useMemo(() => (adn ? traitsDominants(adn) : []), [adn]);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -370,8 +365,6 @@ const Profile = () => {
       .then((profil) => {
         if (!actif) return;
         setAdn(calculerAdn(profil?.stableTasteVector));
-        setAdnRecent(calculerAdn(profil?.recentTasteVector));
-        setConfiance(profil?.stableConfidence ?? null);
       })
       .catch(() => {});
     return () => { actif = false; };
@@ -611,27 +604,35 @@ const Profile = () => {
             </div>
           </motion.div>
 
-          {/* Carte ADN Cinéma → nouvelle page dédiée */}
+          {/* Aperçu de l'ADN : le profil est privé, l'ADN est la carte d'identité
+              cinéphile que les autres voient — ici, seulement une miniature. */}
           <motion.button initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
             onClick={() => navigate("/app/adn")}
-            className="w-full text-left rounded-2xl p-4 border border-primary/15 bg-gradient-to-br from-card via-card to-primary/[0.03] hover:border-primary/30 transition-all group relative overflow-hidden active:scale-[0.98]">
+            className="w-full text-left rounded-pick-lg p-4 border border-pick-border bg-pick-surface/90 [@media(hover:hover)]:hover:border-pick-border-hover transition-colors duration-180 ease-pick group relative overflow-hidden active:scale-[0.98]">
             {/* Halo arrière */}
             <div className="absolute -top-8 -right-8 w-32 h-32 rounded-full pointer-events-none"
               style={{ background: "radial-gradient(circle, hsl(var(--primary)/0.2), transparent 70%)", filter: "blur(20px)" }} />
             <div className="relative z-10 flex items-center gap-4">
               <div className="flex-1 min-w-0">
-                <p className="text-[10px] uppercase tracking-[0.2em] text-primary/40 font-sans font-semibold mb-1.5">Mon ADN Cinéma</p>
+                <p className="text-[11px] uppercase tracking-[0.14em] text-pick-purple-light font-sans font-semibold mb-1.5">Mon ADN cinéma</p>
                 {dnaTitle ? (
                   <>
                     <h2 className="text-lg font-serif mb-0.5 group-hover:text-primary/90 transition-colors leading-tight">{dnaTitle}</h2>
                     {dnaArchetype && dnaArchetype !== dnaTitle && <p className="text-primary/50 text-xs font-sans mb-1">{dnaArchetype}</p>}
-                    {dnaLevel && <span className="inline-block text-[10px] px-2 py-0.5 rounded-full bg-primary/8 text-primary/60 font-sans">{dnaLevel}</span>}
+                    {dominantsAdn.length > 0 && (
+                      <p className="text-[12px] font-sans text-pick-text-secondary">{dominantsAdn.map((d) => d.libelle).join(" · ")}</p>
+                    )}
+                  </>
+                ) : dominantsAdn.length > 0 ? (
+                  <>
+                    <h2 className="text-[16px] font-sans font-bold text-foreground capitalize leading-tight">{dominantsAdn.map((d) => d.adjectif).join(" · ")}</h2>
+                    <p className="text-[12px] font-sans text-pick-text-secondary mt-0.5">{dominantsAdn.map((d) => `${d.libelle} ${d.valeur}`).join(" · ")}</p>
                   </>
                 ) : (
-                  <h2 className="text-sm font-serif text-foreground/50">Découvre ton profil cinématographique</h2>
+                  <h2 className="text-[14px] font-sans text-pick-text-secondary">Découvre ton profil cinématographique</h2>
                 )}
                 <div className="flex items-center gap-1 mt-2 text-primary/30 group-hover:text-primary/50 transition-colors">
-                  <span className="text-[11px] font-sans">Voir mon profil complet</span>
+                  <span className="text-[12px] font-sans font-medium text-pick-purple-light">Voir mon ADN</span>
                   <ChevronRight className="w-3 h-3" />
                 </div>
               </div>
@@ -681,10 +682,10 @@ const Profile = () => {
         </section>
 
         {/* ════════════════════════════════
-            3. MON CINÉMA
+            3. MES DONNÉES CINÉMA
         ════════════════════════════════ */}
         <section>
-          <h2 className="text-sm font-sans font-semibold text-foreground uppercase tracking-widest mb-4">Mon Cinéma</h2>
+          <h2 className="text-sm font-sans font-semibold text-foreground uppercase tracking-widest mb-4">Mes données cinéma</h2>
 
           {cinemaLoading ? (
             <div className="flex justify-center py-8"><Loader2 className="w-5 h-5 text-primary/30 animate-spin" /></div>
@@ -751,8 +752,6 @@ const Profile = () => {
                 </div>
               )}
 
-              {/* ADN cinéma — remplace le radar de genres (« Drame 100 % ») */}
-              <AdnCinema adn={adn} adnRecent={adnRecent} narrative={narrative} genres={univers} archetype={dnaArchetype || dnaTitle} confiance={confiance} />
 
             </div>
           )}

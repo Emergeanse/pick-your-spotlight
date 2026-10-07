@@ -1,10 +1,12 @@
 import { useState, useEffect, useMemo } from "react";
+import FlecheRonde from "@/components/pick/FlecheRonde";
 import AdnCinema from "@/components/pick/AdnCinema";
 import { calculerAdn, universFavoris, type Adn } from "@/lib/adn";
 import { computeMultiVectorProfile } from "@/lib/taste-engine";
 import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Pencil, Check, X, Plus, Trophy, Heart, Users, Sparkles, Film, CalendarDays } from "lucide-react";
+import { Pencil, Check, X, Plus, Trophy, Sparkles, Film, CalendarDays, Share2 } from "lucide-react";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchVisibleProfile } from "@/lib/visible-profiles";
 import { useAuth } from "@/hooks/use-auth";
@@ -380,6 +382,17 @@ const CinemaDNAPage = () => {
 
   const archetypeImg = dnaArchetype ? ARCHETYPE_ICONS[dnaArchetype] ?? null : null;
 
+  // Partage du lien vers son ADN (feuille de partage du téléphone, sinon copie).
+  const partagerAdn = async () => {
+    if (!user) return;
+    const url = `${window.location.origin}/app/adn?userId=${user.id}`;
+    const texte = dnaArchetype || dnaTitle ? `Mon ADN cinéma sur Pick : ${dnaArchetype || dnaTitle}` : "Mon ADN cinéma sur Pick";
+    try {
+      if (navigator.share) await navigator.share({ title: "Mon ADN cinéma", text: texte, url });
+      else { await navigator.clipboard.writeText(url); toast.success("Lien copié"); }
+    } catch { /* partage annulé : rien à faire */ }
+  };
+
   return (
     <div className="fixed inset-0 bg-background overflow-y-auto scrollbar-hide">
       {/* Sélecteur podium */}
@@ -399,18 +412,30 @@ const CinemaDNAPage = () => {
       <div className="sticky top-0 z-30 pt-[env(safe-area-inset-top)] px-4 pb-3 backdrop-blur-xl border-b border-white/[0.04]"
         style={{ background: "hsl(var(--background)/0.88)" }}>
         <div className="flex items-center gap-3 pt-3">
-          <button
+          <FlecheRonde
+            direction="gauche"
+            label="Retour"
+            tailleClasse="w-10 h-10"
             onClick={() => {
-              const from = (location.state as any)?.from;
+              const from = (location.state as { from?: string } | null)?.from;
               if (from === "amis") navigate("/app/duo", { state: { tab: "amis" } });
               else navigate(-1);
             }}
-            className="w-11 h-11 -ml-2 flex items-center justify-center rounded-full hover:bg-white/5 transition-colors">
-            <ArrowLeft className="w-5 h-5 text-foreground/60" />
-          </button>
+          />
           <h1 className="font-serif text-[20px] text-foreground leading-tight">
             {isOwnProfile ? "Mon ADN Cinéma" : (displayName ? `ADN de ${displayName}` : "Profil cinéphile")}
           </h1>
+          {/* Son propre ADN se partage : c'est une carte de visite cinéphile. */}
+          {isOwnProfile && user && (
+            <button
+              type="button"
+              onClick={partagerAdn}
+              className="ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-pick-border-hover text-[13px] font-sans font-semibold text-pick-purple-light active:scale-[0.97] transition-transform duration-120 ease-pick"
+            >
+              <Share2 className="w-3.5 h-3.5" aria-hidden="true" />
+              Partager
+            </button>
+          )}
         </div>
       </div>
 
@@ -487,25 +512,6 @@ const CinemaDNAPage = () => {
             <div className="flex-1 min-w-0 pt-1">
               <h2 className="font-serif text-[22px] text-foreground leading-tight truncate">{displayName}</h2>
 
-              {/* Stats chips */}
-              <div className="flex gap-2 mt-2 flex-wrap">
-                {lovedCount > 0 && (
-                  <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-rose-500/15 border border-rose-500/20 text-[10px] font-sans text-rose-400">
-                    <Heart className="w-2.5 h-2.5" />{lovedCount} adorés
-                  </span>
-                )}
-                {isOwnProfile && duos.length > 0 && (
-                  <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-violet-500/15 border border-violet-500/20 text-[10px] font-sans text-violet-400">
-                    💑 {duos.length} duo{duos.length > 1 ? "s" : ""}
-                  </span>
-                )}
-                {seenCount > 0 && (
-                  <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary/15 border border-primary/20 text-[10px] font-sans text-primary/80">
-                    🎬 {seenCount} vus
-                  </span>
-                )}
-              </div>
-
               {/* Bio */}
               <div className="mt-3">
                 {isOwnProfile && editingBio ? (
@@ -570,115 +576,10 @@ const CinemaDNAPage = () => {
         </motion.div>
         )}
 
-        {/* ══ 4. FILMS ADORÉS ══ */}
-        {lovedFilms.length > 0 && (
-          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <Heart className="w-3.5 h-3.5 text-rose-400/70" />
-                <p className="text-[10px] font-sans font-semibold tracking-[0.18em] uppercase text-foreground/40">{isOwnProfile ? "Films adorés" : "Films adorés"}</p>
-              </div>
-              <span className="text-[10px] font-sans text-foreground/45">{lovedCount > 0 ? lovedCount : lovedFilms.length} films</span>
-            </div>
-            <div className="flex gap-2.5 overflow-x-auto scrollbar-hide pb-1 -mx-4 px-4">
-              {lovedFilms.slice(0, 20).map((film: any) => {
-                const id = film.tmdb_id ?? film.id;
-                return (
-                  <div key={id} className="shrink-0 w-20">
-                    <div className="w-20 h-[120px] rounded-xl overflow-hidden border border-white/[0.07]">
-                      {film.poster_path ? (
-                        <img src={poster(film.poster_path) ?? ""} alt={film.title}
-                          className="w-full h-full object-cover" />
-                      ) : (
-                        <div className="w-full h-full bg-white/5 flex items-center justify-center">
-                          <span className="text-foreground/40 text-xs">?</span>
-                        </div>
-                      )}
-                    </div>
-                    <p className="text-[8.5px] font-sans text-foreground/40 mt-1 line-clamp-1 text-center">{film.title}</p>
-                  </div>
-                );
-              })}
-            </div>
-          </motion.div>
-        )}
-
-        {/* ══ 5. CERCLE SOCIAL ══ */}
-        {(duos.length > 0 || friends.length > 0) && (
-          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.26 }}>
-            <div className="flex items-center gap-2 mb-3">
-              <Users className="w-3.5 h-3.5 text-violet-400/70" />
-              <p className="text-[10px] font-sans font-semibold tracking-[0.18em] uppercase text-foreground/40">Mon cercle cinéphile</p>
-            </div>
-
-            {/* Duos */}
-            {duos.length > 0 && (
-              <div className="flex flex-col gap-2 mb-3">
-                {duos.map(duo => {
-                  const partnerName = duo.user1_id === user?.id ? duo.user2_display_name : duo.user1_display_name;
-                  const partnerAvatar = duo.user1_id === user?.id ? duo.user2_avatar_url : duo.user1_avatar_url;
-                  const affinity = duo.affinity_score ?? 0;
-                  const hue = affinity > 75 ? "emerald" : affinity > 50 ? "primary" : "amber";
-                  const hueClass = hue === "emerald" ? "bg-emerald-400" : hue === "amber" ? "bg-amber-400" : "bg-primary";
-                  return (
-                    <button key={duo.id} onClick={() => navigate("/app/duo")}
-                      className="flex items-center gap-3 p-3.5 rounded-2xl border border-white/[0.06] text-left transition-all hover:border-primary/20"
-                      style={{ background: "hsl(var(--card)/0.5)" }}>
-                      {/* Avatars superposés */}
-                      <div className="relative shrink-0 w-10 h-10">
-                        {partnerAvatar ? (
-                          <img src={partnerAvatar} alt={partnerName ?? ""}
-                            className="w-10 h-10 rounded-full object-cover border-2 border-background" />
-                        ) : (
-                          <div className="w-10 h-10 rounded-full bg-violet-500/20 border-2 border-background flex items-center justify-center">
-                            <span className="text-sm font-semibold text-violet-400">
-                              {(partnerName ?? "?")[0].toUpperCase()}
-                            </span>
-                          </div>
-                        )}
-                        <span className="absolute -bottom-0.5 -right-0.5 text-[11px]">💑</span>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-sans font-semibold text-[13px] text-foreground truncate">{duo.duo_name}</p>
-                        <p className="font-sans text-[11px] text-foreground/45 truncate">avec {partnerName ?? "…"}</p>
-                        {/* Barre affinité */}
-                        {affinity > 0 && (
-                          <div className="flex items-center gap-1.5 mt-1.5">
-                            <div className="flex-1 h-1 rounded-full bg-white/[0.06] overflow-hidden">
-                              <div className={`h-full rounded-full ${hueClass}`}
-                                style={{ width: `${affinity}%`, opacity: 0.75 }} />
-                            </div>
-                            <span className="text-[10px] font-sans text-foreground/40 shrink-0">{affinity}%</span>
-                          </div>
-                        )}
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-
-            {/* Amis */}
-            {friends.length > 0 && (
-              <div className="flex flex-wrap gap-2">
-                {friends.map(friend => (
-                  <button key={friend.id}
-                    onClick={() => navigate(`/app/adn?userId=${friend.id}`)}
-                    className="flex items-center gap-2 px-3 py-2 rounded-full border border-white/[0.06] hover:border-primary/20 transition-colors"
-                    style={{ background: "hsl(var(--card)/0.5)" }}>
-                    <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
-                      <span className="text-[10px] font-semibold text-primary">
-                        {friend.displayName[0].toUpperCase()}
-                      </span>
-                    </div>
-                    <span className="text-[11px] font-sans text-foreground/60">{friend.displayName}</span>
-                  </button>
-                ))}
-              </div>
-            )}
-          </motion.div>
-        )}
-
+        {/* « Films adorés » et « Mon cercle cinéphile » ne figurent plus ici :
+            ils relèvent du compte (Biblio, Amis & Duo), pas de l'identité
+            cinéphile que les autres voient. Le podium, choisi par l'utilisateur,
+            dit déjà quels films le représentent. */}
       </div>
 
       {/* ── CTA Regarder ensemble (profil ami uniquement) ── */}

@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "build:dev": "vite build --mode development",
-    "lint": "eslint . --max-warnings 1017",
+    "lint": "eslint . --max-warnings 1015",
     "preview": "vite preview",
     "test": "vitest run",
     "test:unit": "vitest run",
