@@ -2488,7 +2488,7 @@ const HomeScreen = ({
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.26, duration: 0.4 }}
         onClick={() => navigate("/app/adn")}
-        className="group absolute right-4 md:right-7 top-[calc(74px+env(safe-area-inset-top))] md:top-[78px] z-20 flex items-center gap-1.5 pl-1.5 pr-1.5 py-1.5 rounded-pick-md border border-pick-border bg-pick-surface/30 backdrop-blur-md text-left transition-colors duration-180 ease-pick [@media(hover:hover)]:hover:border-pick-border-hover active:scale-[0.98]"
+        className="group absolute right-4 md:right-7 top-[calc(74px+env(safe-area-inset-top))] md:top-[78px] [@media(min-height:860px)]:top-[calc(84px+env(safe-area-inset-top))] [@media(min-height:860px)]:md:top-[86px] z-20 flex items-center gap-1.5 pl-1.5 pr-1.5 py-1.5 rounded-pick-md border border-pick-border bg-pick-surface/30 backdrop-blur-md text-left transition-colors duration-180 ease-pick [@media(hover:hover)]:hover:border-pick-border-hover active:scale-[0.98]"
         aria-label="Mon ADN cinéma"
       >
         <IconeCharte repos={adnRepos} actif={adnActif} className="w-6 h-6 shrink-0" />
@@ -2539,7 +2539,7 @@ const HomeScreen = ({
 
       <div className="relative z-10 h-full overflow-y-auto overscroll-y-contain touch-[pan-y_pinch-zoom] scrollbar-hide pb-[calc(5.25rem+env(safe-area-inset-bottom))]">
         {/* ─── Hero ─── */}
-        <section className="relative pt-[calc(8rem+env(safe-area-inset-top))] [@media(max-height:800px)]:pt-[calc(7.75rem+env(safe-area-inset-top))] pb-1 px-5 md:px-8">
+        <section className="relative pt-[calc(8rem+env(safe-area-inset-top))] [@media(max-height:800px)]:pt-[calc(7.75rem+env(safe-area-inset-top))] [@media(min-height:860px)]:pt-[calc(8.75rem+env(safe-area-inset-top))] pb-1 px-5 md:px-8">
           <motion.div
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
@@ -2560,7 +2560,7 @@ const HomeScreen = ({
           {/* 4 widgets côte à côte — la carte choisie est toujours violette, et la
               carte survolée à la souris prend le même halo : une
               couleur par carte faisait clinquant à côté des illustrations. */}
-          <div className="flex gap-2 mt-6 [@media(max-height:800px)]:mt-3 [@media(min-height:860px)]:mt-9 overflow-x-auto scrollbar-hide pb-1 -mx-1 px-1">
+          <div className="flex gap-2 mt-6 [@media(max-height:800px)]:mt-3 [@media(min-height:860px)]:mt-11 overflow-x-auto scrollbar-hide pb-1 -mx-1 px-1">
             {/* Surprise solo */}
             <motion.button
               initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
