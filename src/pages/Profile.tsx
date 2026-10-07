@@ -651,43 +651,7 @@ const Profile = () => {
         </section>
 
         {/* ════════════════════════════════
-            2. MON PROFIL CINÉPHILE
-        ════════════════════════════════ */}
-        <section className="rounded-2xl bg-card/80 backdrop-blur-sm border border-border/15 p-4">
-          <div className="flex items-center gap-2 mb-4">
-            <Film className="w-3.5 h-3.5 text-primary/30" />
-            <h2 className="text-xs font-sans font-semibold text-foreground uppercase tracking-widest">Mon profil cinéphile</h2>
-          </div>
-          <div className="grid grid-cols-3 gap-2">
-            {([
-              { label: "Je suis ouvert",    img: squirrelHappy,    value: 5 },
-              { label: "Je suis sélectif",  img: squirrelCritique, value: 6 },
-              { label: "Je suis intraitable",  img: squirrelExigeant, value: 7 },
-            ] as const).map(opt => {
-              const active = opt.value === 5 ? minRating <= 5 : opt.value === 7 ? minRating >= 7 : minRating === 6;
-              return (
-                <button
-                  key={opt.value}
-                  onClick={() => setMinRating(opt.value)}
-                  className={`relative overflow-hidden rounded-xl border transition-all aspect-square ${
-                    active
-                      ? "border-primary/60 ring-2 ring-primary/30 opacity-100"
-                      : "border-border/20 opacity-40 hover:opacity-60"
-                  }`}
-                >
-                  <img src={opt.img} alt={opt.label} className="w-full h-full object-cover" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
-                  <span className={`absolute bottom-1.5 inset-x-1 font-sans text-[11px] font-semibold leading-tight text-center ${active ? "text-white" : "text-white/70"}`}>
-                    {opt.label}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </section>
-
-        {/* ════════════════════════════════
-            3. MES DONNÉES CINÉMA
+            2. MES DONNÉES CINÉMA
         ════════════════════════════════ */}
         <section>
           <h2 className="text-sm font-sans font-semibold text-foreground uppercase tracking-widest mb-4">Mes données cinéma</h2>
@@ -749,11 +713,6 @@ const Profile = () => {
                       ))}
                     </motion.div>
                   )}
-                  <button onClick={() => setShowTrainer(true)}
-                    className="w-full flex items-center justify-center gap-2 py-2.5 mt-4 rounded-xl bg-primary/8 border border-primary/15 hover:bg-primary/12 transition-colors active:scale-[0.98]">
-                    <Brain className="w-3.5 h-3.5 text-primary" />
-                    <span className="text-primary text-[12px] font-sans font-semibold">Entraîner mes goûts</span>
-                  </button>
                 </div>
               )}
 
@@ -763,14 +722,22 @@ const Profile = () => {
         </section>
 
         {/* ════════════════════════════════
-            3. MES PRÉFÉRENCES
+            3. MES RECOMMANDATIONS
+            Tous les réglages qui orientent le choix des films, au même endroit,
+            en trois blocs : ce que j'aime, comment Pick choisit, ce que je
+            regarde. Rangement seulement : valeurs, enregistrement et effet sur
+            le moteur inchangés.
         ════════════════════════════════ */}
         <section className="rounded-2xl bg-card/80 backdrop-blur-sm border border-border/15 p-4">
-          <div className="flex items-center gap-2 mb-4">
+          <div className="flex items-center gap-2 mb-1">
             <Sparkles className="w-3.5 h-3.5 text-primary/30" />
-            <h2 className="text-xs font-sans font-semibold text-foreground uppercase tracking-widest">Mes préférences</h2>
+            <h2 className="text-xs font-sans font-semibold text-foreground uppercase tracking-widest">Mes recommandations</h2>
           </div>
+          <p className="text-[12px] font-sans text-pick-text-secondary mb-4">
+            Les filtres rapides de l'accueil modifient ces réglages le temps d'une recherche.
+          </p>
 
+          <h3 className="mt-2 mb-3 text-[11px] font-sans font-semibold tracking-[0.14em] uppercase text-pick-purple-light">Ce que j'aime</h3>
           {/* Genres & Styles — même schéma que les Époques : liste dépliable,
               modifications enregistrées par le bouton en bas de la page. */}
           <div className="mb-5">
@@ -868,8 +835,45 @@ const Profile = () => {
             </div>
           </div>
 
-          {/* ProfilePreferences (seuil, type média, durée) */}
+          <button onClick={() => setShowTrainer(true)}
+            className="w-full flex items-center justify-center gap-2 py-2.5 mb-8 rounded-xl bg-primary/8 border border-primary/15 hover:bg-primary/12 transition-colors active:scale-[0.98]">
+            <Brain className="w-3.5 h-3.5 text-primary" />
+            <span className="text-primary text-[12px] font-sans font-semibold">Entraîner mes goûts (films, acteurs, réalisateurs)</span>
+          </button>
+
+          <h3 className="mt-2 mb-3 text-[11px] font-sans font-semibold tracking-[0.14em] uppercase text-pick-purple-light">Comment Pick choisit</h3>
+          <div className="mb-8">
+            <p className="text-sm font-sans font-semibold text-foreground/50 uppercase tracking-widest mb-3">Exigence de qualité</p>
+            <div className="grid grid-cols-3 gap-2">
+              {([
+                { label: "Je suis ouvert",    img: squirrelHappy,    value: 5 },
+                { label: "Je suis sélectif",  img: squirrelCritique, value: 6 },
+                { label: "Je suis intraitable",  img: squirrelExigeant, value: 7 },
+              ] as const).map(opt => {
+                const active = opt.value === 5 ? minRating <= 5 : opt.value === 7 ? minRating >= 7 : minRating === 6;
+                return (
+                  <button
+                    key={opt.value}
+                    onClick={() => setMinRating(opt.value)}
+                    className={`relative overflow-hidden rounded-xl border transition-all aspect-square ${
+                      active
+                        ? "border-primary/60 ring-2 ring-primary/30 opacity-100"
+                        : "border-border/20 opacity-40 hover:opacity-60"
+                    }`}
+                  >
+                    <img src={opt.img} alt={opt.label} className="w-full h-full object-cover" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
+                    <span className={`absolute bottom-1.5 inset-x-1 font-sans text-[11px] font-semibold leading-tight text-center ${active ? "text-white" : "text-white/70"}`}>
+                      {opt.label}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+            <p className="text-[11px] text-foreground/50 mt-3">La note minimale des films proposés.</p>
+          </div>
           <ProfilePreferences
+            parties={["correspondance","decouverte"]}
             matchThreshold={matchThreshold}
             onMatchThresholdChange={setMatchThreshold}
             explorationLevel={explorationLevel}
@@ -880,16 +884,7 @@ const Profile = () => {
             onMaxDurationChange={setDefaultMaxDuration}
           />
 
-          {/* Nombre de recommandations */}
-          <div className="bg-card rounded-xl p-4 mb-5">
-            <div className="flex items-center justify-between mb-3">
-              <span className="font-sans text-sm font-medium">{recommendationCount} proposition{recommendationCount > 1 ? "s" : ""}</span>
-              <span className="text-[10px] text-foreground/50">1 à 3</span>
-            </div>
-            <Slider value={[recommendationCount]} onValueChange={([value]) => setRecommendationCount(value)} min={1} max={3} step={1} className="w-full" />
-            <p className="text-[11px] text-foreground/50 mt-3">Combien de recommandations Pick te propose par défaut.</p>
-          </div>
-
+          <h3 className="mt-2 mb-3 text-[11px] font-sans font-semibold tracking-[0.14em] uppercase text-pick-purple-light">Ce que je regarde</h3>
           {/* Plateformes */}
           <motion.section ref={platformSectionRef} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
             <button onClick={() => setShowPlatforms((v) => !v)} className="w-full flex items-center justify-between mb-3 group">
@@ -934,6 +929,29 @@ const Profile = () => {
               )}
             </AnimatePresence>
           </motion.section>
+
+
+          <ProfilePreferences
+            parties={["type","duree"]}
+            matchThreshold={matchThreshold}
+            onMatchThresholdChange={setMatchThreshold}
+            explorationLevel={explorationLevel}
+            onExplorationLevelChange={setExplorationLevel}
+            mediaType={defaultMediaType}
+            onMediaTypeChange={setDefaultMediaType}
+            maxDuration={defaultMaxDuration}
+            onMaxDurationChange={setDefaultMaxDuration}
+          />
+
+          {/* Nombre de recommandations */}
+          <div className="bg-card rounded-xl p-4 mb-5">
+            <div className="flex items-center justify-between mb-3">
+              <span className="font-sans text-sm font-medium">{recommendationCount} proposition{recommendationCount > 1 ? "s" : ""}</span>
+              <span className="text-[10px] text-foreground/50">1 à 3</span>
+            </div>
+            <Slider value={[recommendationCount]} onValueChange={([value]) => setRecommendationCount(value)} min={1} max={3} step={1} className="w-full" />
+            <p className="text-[11px] text-foreground/50 mt-3">Combien de recommandations Pick te propose par défaut.</p>
+          </div>
 
         </section>
 

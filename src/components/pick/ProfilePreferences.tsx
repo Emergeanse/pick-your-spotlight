@@ -27,7 +27,15 @@ interface ProfilePreferencesProps {
   onMediaTypeChange: (v: "both" | "movie" | "tv") => void;
   maxDuration: number | null;
   onMaxDurationChange: (v: number | null) => void;
+  /**
+   * Blocs à afficher : le profil les répartit entre « Comment Pick choisit »
+   * (correspondance, découverte) et « Ce que je regarde » (type, durée).
+   */
+  parties?: PartiePreferences[];
 }
+
+export type PartiePreferences = "correspondance" | "decouverte" | "type" | "duree";
+const TOUTES: PartiePreferences[] = ["correspondance", "decouverte", "type", "duree"];
 
 const ProfilePreferences = ({
   matchThreshold,
@@ -38,14 +46,17 @@ const ProfilePreferences = ({
   onMediaTypeChange,
   maxDuration,
   onMaxDurationChange,
+  parties = TOUTES,
 }: ProfilePreferencesProps) => {
+  const voir = (x: PartiePreferences) => parties.includes(x);
   return (
     <>
-      {/* ─── Match threshold ─── */}
+      {/* ─── Correspondance minimale (ex « Exigence des reco ») ─── */}
+      {voir("correspondance") && (
       <motion.section initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="mb-8">
         <div className="flex items-center gap-2 mb-3">
           <Target className="w-3.5 h-3.5 text-primary/60" />
-          <h2 className="text-sm font-sans font-semibold text-foreground/50 uppercase tracking-widest">Exigence des reco</h2>
+          <h2 className="text-sm font-sans font-semibold text-foreground/50 uppercase tracking-widest">Correspondance minimale</h2>
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild><button className="text-foreground/40"><Info className="w-3 h-3" /></button></TooltipTrigger>
@@ -66,10 +77,13 @@ const ProfilePreferences = ({
         </div>
       </motion.section>
 
+      )}
+
       {/* ─── Profondeur de découverte ─── */}
-      {/* Distinct de l'exigence ci-dessus : celle-ci porte sur la QUALITÉ,
+      {/* Distinct de la correspondance ci-dessus : celle-ci porte sur la QUALITÉ,
           celui-ci sur la DISTANCE à tes goûts. La note minimale reste un
           plancher quelle que soit la profondeur choisie. */}
+      {voir("decouverte") && (
       <motion.section initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.075 }} className="mb-8">
         <div className="flex items-center gap-2 mb-3">
           <Compass className="w-3.5 h-3.5 text-primary/60" />
@@ -116,7 +130,10 @@ const ProfilePreferences = ({
         </div>
       </motion.section>
 
+      )}
+
       {/* ─── Media type ─── */}
+      {voir("type") && (
       <motion.section initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="mb-8">
         <h2 className="text-sm font-sans font-semibold text-foreground/50 uppercase tracking-widest mb-3">Type de contenu</h2>
         <div className="flex gap-1.5">
@@ -141,8 +158,10 @@ const ProfilePreferences = ({
         </div>
       </motion.section>
 
+      )}
+
       {/* ─── Duration ─── */}
-      {mediaType !== "tv" && (
+      {voir("duree") && mediaType !== "tv" && (
         <motion.section initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="mb-8">
           <div className="flex items-center gap-1.5 mb-3">
             <Clock className="w-3.5 h-3.5 text-foreground/40" />
