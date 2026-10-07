@@ -2467,53 +2467,61 @@ const HomeScreen = ({
         </span>
       </motion.button>
 
-      {/* Raccourci discret vers l'ADN cinéma, sous l'avatar, aligné à droite :
-          montre que Pick apprend (nombre de choix analysés). */}
-      <motion.button
-        type="button"
-        initial={{ opacity: 0, y: -4 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.26, duration: 0.4 }}
-        onClick={() => navigate("/app/adn")}
-        className="group absolute right-4 md:right-7 top-[calc(70px+env(safe-area-inset-top))] md:top-[74px] z-20 max-w-[168px] flex items-center gap-1 pl-1 pr-1 py-1 rounded-pick-md border border-pick-border bg-pick-surface/30 backdrop-blur-md text-left transition-colors duration-180 ease-pick [@media(hover:hover)]:hover:border-pick-border-hover active:scale-[0.98]"
-        aria-label="Mon ADN cinéma"
-      >
-        <IconeCharte repos={adnRepos} actif={adnActif} className="w-5 h-5 shrink-0" />
-        <span className="flex flex-col leading-tight">
-          <span className="text-[12px] font-sans font-semibold text-foreground/85">ADN cinéma</span>
-          {interactionCount > 0 && (
-            <span className="text-[11px] font-sans text-pick-text-muted tabular-nums">
-              {interactionCount.toLocaleString("fr-FR")} choix analysés
-            </span>
-          )}
-        </span>
-        <ChevronRight className="w-4 h-4 text-pick-purple-light shrink-0" strokeWidth={2.4} aria-hidden="true" />
-      </motion.button>
-
-      {/* Identité sous le logo, alignée sur son « P » (20 px du bord, 34 px en
-          grand écran). Le logo finit vers 40 px du haut (54 px en grand écran). */}
+      {/* Salut juste sous le logo, aligné sur son « P » ; le prénom en doré. */}
       <motion.button
         type="button"
         initial={{ opacity: 0, y: -4 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.22, duration: 0.4 }}
         onClick={() => navigate("/app/profile")}
-        className="absolute left-5 md:left-[34px] top-[calc(80px+env(safe-area-inset-top))] md:top-[84px] z-20 flex flex-col items-start text-left [text-shadow:0_1px_8px_rgba(0,0,0,0.7)] active:scale-[0.98] transition-transform"
+        className="absolute left-5 md:left-[34px] top-[calc(50px+env(safe-area-inset-top))] md:top-[62px] z-20 text-left [text-shadow:0_1px_8px_rgba(0,0,0,0.7)] active:scale-[0.98] transition-transform"
         aria-label="Mon profil"
       >
-        <span className="flex flex-col items-start gap-1 min-w-0">
-          <span className="text-foreground/80 text-[14px] font-sans leading-tight max-w-[11rem] truncate">
-            {firstName ? `Bonsoir ${firstName} 👋` : "Bonsoir 👋"}
-          </span>
-          {/* Le nombre de films est dans la carte ADN, le statut Early Picker
-              dans le profil : le haut de l'accueil reste léger. */}
+        <span className="text-foreground/85 text-[16px] font-sans leading-tight">
+          Bonsoir{firstName ? <> <span className="text-pick-gold font-semibold">{firstName}</span></> : null} 👋
         </span>
       </motion.button>
+
+      {/* Deux raccourcis côte à côte : chercher un film précis, et l'ADN cinéma
+          (qui montre que Pick apprend). */}
+      <div className="absolute left-5 right-5 md:left-[34px] md:right-[34px] top-[calc(82px+env(safe-area-inset-top))] md:top-[94px] z-20 flex gap-2.5">
+        <motion.button
+          type="button"
+          initial={{ opacity: 0, y: -4 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.24, duration: 0.4 }}
+          onClick={() => navigate("/app/match")}
+          className="flex-1 min-w-0 h-11 flex items-center gap-2 px-3.5 rounded-full border border-pick-border-active bg-pick-surface/45 backdrop-blur-md shadow-[0_0_14px_rgba(168,85,247,0.18)] text-left transition-colors duration-180 ease-pick [@media(hover:hover)]:hover:bg-pick-surface/70 active:scale-[0.98]"
+        >
+          <Search className="w-4 h-4 text-pick-purple-light shrink-0" strokeWidth={2.2} aria-hidden="true" />
+          <span className="text-[13px] font-sans text-foreground/70 truncate">Chercher un film</span>
+        </motion.button>
+        <motion.button
+          type="button"
+          initial={{ opacity: 0, y: -4 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.26, duration: 0.4 }}
+          onClick={() => navigate("/app/adn")}
+          className="group flex-1 min-w-0 h-11 flex items-center gap-1.5 pl-2.5 pr-2 rounded-full border border-pick-border-active bg-pick-surface/45 backdrop-blur-md shadow-[0_0_14px_rgba(168,85,247,0.18)] text-left transition-colors duration-180 ease-pick [@media(hover:hover)]:hover:bg-pick-surface/70 active:scale-[0.98]"
+          aria-label="Mon ADN cinéma"
+        >
+          <IconeCharte repos={adnRepos} actif={adnActif} className="w-5 h-5 shrink-0" />
+          <span className="flex-1 min-w-0 flex flex-col leading-tight">
+            <span className="text-[13px] font-sans font-semibold text-foreground/90 truncate">ADN cinéma</span>
+            {interactionCount > 0 && (
+              <span className="text-[11px] font-sans text-pick-text-muted tabular-nums truncate">
+                {interactionCount.toLocaleString("fr-FR")} choix analysés
+              </span>
+            )}
+          </span>
+          <ChevronRight className="w-4 h-4 text-pick-purple-light shrink-0" strokeWidth={2.4} aria-hidden="true" />
+        </motion.button>
+      </div>
 
       {/* L'accueil tient sur un écran : pas de défilement. */}
       <div className="relative z-10 h-full overflow-hidden pb-[calc(5.25rem+env(safe-area-inset-bottom))]">
         {/* ─── Hero ─── */}
-        <section className="relative pt-[calc(8rem+env(safe-area-inset-top))] [@media(max-height:800px)]:pt-[calc(7.75rem+env(safe-area-inset-top))] [@media(min-height:860px)]:pt-[calc(8.75rem+env(safe-area-inset-top))] pb-1 px-5 md:px-8">
+        <section className="relative pt-[calc(9rem+env(safe-area-inset-top))] [@media(max-height:800px)]:pt-[calc(8.75rem+env(safe-area-inset-top))] [@media(min-height:860px)]:pt-[calc(9.5rem+env(safe-area-inset-top))] pb-1 px-5 md:px-8">
           <motion.div
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
@@ -2625,16 +2633,6 @@ const HomeScreen = ({
               Trouve-moi&nbsp;<span className="font-serif italic font-bold text-[1.12em] text-pick-purple-light">LE</span>&nbsp;film
             </span>
           </motion.button>
-
-          {/* Recherche d'un film précis (titre, voix, photo) : discrète, sous l'action phare. */}
-          <button
-            type="button"
-            onClick={() => navigate("/app/match")}
-            className="mt-2 mx-auto flex items-center gap-1.5 py-1.5 text-[12px] font-sans text-pick-text-secondary [@media(hover:hover)]:hover:text-pick-purple-light transition-colors duration-180 ease-pick"
-          >
-            <Search className="w-3.5 h-3.5" aria-hidden="true" />
-            Chercher un film précis
-          </button>
         </section>
 
         {/* ─── Prochaine soirée (compact) ─── */}
