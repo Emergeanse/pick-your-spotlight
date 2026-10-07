@@ -2645,7 +2645,7 @@ const HomeScreen = ({
             transition={{ delay: 0.54, duration: 0.5 }}
             whileTap={{ scale: 0.985 }}
             onClick={() => navigate(`/app/soirees/${nextEvent.id}`)}
-            className={`mx-5 mt-3 w-[calc(100%-2.5rem)] flex items-center gap-3 p-3 text-left ${CARTE_PICK}`}
+            className={`mx-5 mt-3 w-[calc(100%-2.5rem)] flex items-center gap-3 px-3 py-2 text-left ${CARTE_PICK}`}
           >
             {/* Avatars empilés : partenaire (derrière) + utilisateur (devant) */}
             <div className="relative flex-shrink-0 w-11 h-8">
@@ -2665,11 +2665,13 @@ const HomeScreen = ({
               </div>
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-[11px] font-sans font-semibold tracking-[0.12em] uppercase text-pick-purple-light leading-none">Prochaine soirée</p>
-              <p className="mt-1 font-sans font-semibold text-foreground text-[14px] leading-tight truncate">{nextEvent.title}</p>
-              <p className="mt-0.5 text-pick-text-secondary text-[12px] font-sans capitalize">
-                {new Date(nextEvent.event_date + "T12:00:00").toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })}
-                {nextEvent.event_time ? ` · ${nextEvent.event_time.slice(0, 5)}` : ""}
+              <p className="font-sans font-semibold text-foreground text-[14px] leading-tight truncate">{nextEvent.title}</p>
+              <p className="mt-0.5 text-[12px] font-sans leading-tight truncate">
+                <span className="text-[11px] font-semibold tracking-[0.12em] uppercase text-pick-purple-light">Prochaine soirée</span>
+                <span className="text-pick-text-secondary capitalize">
+                  {" · "}{new Date(nextEvent.event_date + "T12:00:00").toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" })}
+                  {nextEvent.event_time ? ` · ${nextEvent.event_time.slice(0, 5)}` : ""}
+                </span>
               </p>
             </div>
             <ChevronRight className="w-4 h-4 text-pick-text-muted flex-shrink-0" />
