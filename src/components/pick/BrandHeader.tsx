@@ -5,6 +5,7 @@ import { ReactNode } from "react";
 import pickLogo from "@/assets/pick-logo.webp";
 // Le mot seul, sans marge : l'en-tête ne descend plus à cause du vide de l'image carrée.
 import pickLogoMot from "@/assets/pick-logo-mot.webp";
+import glandPick from "@/assets/gland-pick.webp";
 import NotificationBell from "./NotificationBell";
 
 interface BrandHeaderProps {
@@ -43,10 +44,12 @@ const BrandHeader = ({ showBack, onBack, extraActions, reserveDroite }: BrandHea
         <div className="flex items-center shrink-0">
           <button
             onClick={() => navigate("/app/profile")}
-            className="active:scale-[0.98] transition-transform shrink-0"
+            className="flex items-center gap-1.5 ml-[6px] md:ml-[8px] active:scale-[0.98] transition-transform shrink-0"
+            aria-label="Pick"
           >
-            {/* Le « P » reste aligné sur la colonne « Bonsoir » (20 px, 34 px en grand écran). */}
-            <img src={pickLogoMot} alt="Pick" className="ml-[8px] md:ml-[10px] h-[28px] md:h-[32px] w-auto max-w-none object-contain" />
+            {/* Le gland et le mot, comme sur l'affiche ; le bloc reste aligné sur « Bonsoir ». */}
+            <img src={glandPick} alt="" aria-hidden="true" className="h-[34px] md:h-[38px] w-auto drop-shadow-[0_2px_10px_rgba(229,194,107,0.35)]" />
+            <img src={pickLogoMot} alt="" aria-hidden="true" className="h-[28px] md:h-[32px] w-auto max-w-none object-contain" />
           </button>
         </div>
       )}
