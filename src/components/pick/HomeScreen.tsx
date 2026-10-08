@@ -48,6 +48,7 @@ import { fetchVisibleProfiles } from "@/lib/visible-profiles";
 import { type AmbianceMood } from "./HomeAmbianceSection";
 import homeBackground from "@/assets/accueil-salle.webp";
 import trouverFilmBouton from "@/assets/trouver-film-bouton.webp";
+import glandPick from "@/assets/gland-pick.webp";
 import IconeCharte from "./IconeCharte";
 import adnRepos from "@/assets/icones/adn-repos.webp";
 import adnActif from "@/assets/icones/adn-actif.webp";
@@ -2756,7 +2757,7 @@ const HomeScreen = ({
           <div className="px-5 flex items-center justify-between mb-2">
             <div className="pl-2 min-w-0">
               <h2 className="flex items-center gap-2 text-[16px] font-sans font-bold text-foreground whitespace-nowrap">
-                <Star className="w-4 h-4 fill-pick-gold text-pick-gold" aria-hidden="true" />
+                <img src={glandPick} alt="" aria-hidden="true" className="w-[18px] h-auto drop-shadow-[0_1px_6px_rgba(229,194,107,0.35)]" />
                 Picks du moment
               </h2>
               <p className="pl-6 text-[11px] font-sans italic text-pick-text-secondary leading-tight">Pour toi, aujourd&apos;hui</p>
