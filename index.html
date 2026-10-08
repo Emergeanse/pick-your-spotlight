@@ -32,6 +32,15 @@
 
   <body>
     <div id="root"></div>
+    <!-- Chrome annonce « installable » parfois avant que l'app soit chargée :
+         on garde l'événement dès maintenant, la bannière le reprendra. -->
+    <script>
+      window.addEventListener("beforeinstallprompt", function (e) {
+        e.preventDefault();
+        window.__pickInstall = e;
+        window.dispatchEvent(new Event("pick-install-pret"));
+      });
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

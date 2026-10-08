@@ -140,7 +140,10 @@ export interface InstallPrompt {
 }
 
 export function useInstallPrompt(): InstallPrompt {
-  const [evenement, setEvenement] = useState<BeforeInstallPromptEvent | null>(null);
+  // L'événement a pu arriver avant le chargement de l'app (voir index.html).
+  const [evenement, setEvenement] = useState<BeforeInstallPromptEvent | null>(
+    () => (window as Window & { __pickInstall?: BeforeInstallPromptEvent }).__pickInstall ?? null,
+  );
   const [iosSafari] = useState(detecterIosSafari);
   // Sur iOS aucun événement ne disparaît au refus : il faut s'en souvenir ici.
   const [rangee, setRangee] = useState(false);
@@ -152,7 +155,12 @@ export function useInstallPrompt(): InstallPrompt {
       e.preventDefault();
       setEvenement(e as BeforeInstallPromptEvent);
     };
+    const repris = () => {
+      const e = (window as Window & { __pickInstall?: BeforeInstallPromptEvent }).__pickInstall;
+      if (e) setEvenement(e);
+    };
     const installee = () => {
+      (window as Window & { __pickInstall?: BeforeInstallPromptEvent }).__pickInstall = undefined;
       setEvenement(null);
       // L'application est posée sur l'écran d'accueil : la sourdine n'a plus
       // d'objet, et la garder fausserait une réinstallation plus tard.
@@ -160,9 +168,11 @@ export function useInstallPrompt(): InstallPrompt {
     };
 
     window.addEventListener("beforeinstallprompt", capturer);
+    window.addEventListener("pick-install-pret", repris);
     window.addEventListener("appinstalled", installee);
     return () => {
       window.removeEventListener("beforeinstallprompt", capturer);
+      window.removeEventListener("pick-install-pret", repris);
       window.removeEventListener("appinstalled", installee);
     };
   }, []);
@@ -172,6 +182,7 @@ export function useInstallPrompt(): InstallPrompt {
     // L'événement n'est utilisable qu'une fois : on le retire d'abord, pour
     // qu'un double appui ne déclenche pas deux fenêtres.
     setEvenement(null);
+    (window as Window & { __pickInstall?: BeforeInstallPromptEvent }).__pickInstall = undefined;
     await evenement.prompt();
     const choix = await evenement.userChoice;
     if (choix.outcome === "dismissed") noterRefus();
