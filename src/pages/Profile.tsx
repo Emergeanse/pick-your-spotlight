@@ -1,4 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from "react";
+import SectionRepliable from "@/components/pick/SectionRepliable";
+import { SlidersHorizontal, Trophy, User as UserIcon } from "lucide-react";
 import { usePickPlus } from "@/hooks/use-pick-plus";
 import { avatarAffiche } from "@/lib/avatars";
 import ChoixAvatar from "@/components/pick/ChoixAvatar";
@@ -643,7 +645,7 @@ const Profile = () => {
           background: "linear-gradient(to bottom, transparent 0%, hsl(var(--background)/0.35) 55%, hsl(var(--background)/0.92) 85%, hsl(var(--background)) 100%)",
         }}
       />
-      <div className="max-w-lg mx-auto px-5 pt-[calc(1.5rem+env(safe-area-inset-top))] pb-32 space-y-10">
+      <div className="max-w-lg mx-auto px-5 pt-[calc(1.5rem+env(safe-area-inset-top))] pb-32 space-y-3 [&>section:first-child]:mb-7">
 
         {/* ════════════════════════════════
             1. IDENTITÉ
@@ -756,8 +758,12 @@ const Profile = () => {
         {/* ════════════════════════════════
             2. MES DONNÉES CINÉMA
         ════════════════════════════════ */}
-        <section>
-          <h2 className="text-sm font-sans font-semibold text-foreground uppercase tracking-widest mb-4">Mes données cinéma</h2>
+        <SectionRepliable
+          id="donnees"
+          titre="Mes données cinéma"
+          icone={<Sparkles className="w-4 h-4" />}
+          resume={confidence ? `Personnalisation ${confidenceTotal}/100 · ${confidenceLabel}` : "Ce que Pick sait de tes goûts"}
+        >
 
           {cinemaLoading ? (
             <div className="flex justify-center py-8"><Loader2 className="w-5 h-5 text-primary/30 animate-spin" /></div>
@@ -828,7 +834,7 @@ const Profile = () => {
 
             </div>
           )}
-        </section>
+        </SectionRepliable>
 
         {/* ════════════════════════════════
             3. MES RECOMMANDATIONS
@@ -837,11 +843,17 @@ const Profile = () => {
             regarde. Rangement seulement : valeurs, enregistrement et effet sur
             le moteur inchangés.
         ════════════════════════════════ */}
-        <section className="rounded-2xl bg-card/80 backdrop-blur-sm border border-border/15 p-4">
-          <div className="flex items-center gap-2 mb-1">
-            <Sparkles className="w-3.5 h-3.5 text-primary/30" />
-            <h2 className="text-xs font-sans font-semibold text-foreground uppercase tracking-widest">Mes recommandations</h2>
-          </div>
+        <SectionRepliable
+          id="recommandations"
+          titre="Mes recommandations"
+          icone={<SlidersHorizontal className="w-4 h-4" />}
+          resume={[
+            `${genresSelected} genre${genresSelected > 1 ? "s" : ""} aimé${genresSelected > 1 ? "s" : ""}`,
+            minRating >= 7 ? "Intraitable" : minRating >= 6 ? "Sélectif" : "Ouvert",
+            `correspondance ${matchThreshold} %`,
+            `${selectedPlatforms.length} plateforme${selectedPlatforms.length > 1 ? "s" : ""}`,
+          ].join(" · ")}
+        >
           <p className="text-[12px] font-sans text-pick-text-secondary mb-4">
             Les filtres rapides de l'accueil modifient ces réglages le temps d'une recherche.
           </p>
@@ -1043,13 +1055,19 @@ const Profile = () => {
             <p className="text-[11px] text-foreground/50 mt-3">Combien de recommandations Pick te propose par défaut.</p>
           </div>
 
-        </section>
+        </SectionRepliable>
 
         {/* ════════════════════════════════
             4. STATISTIQUES & TROPHÉES
         ════════════════════════════════ */}
         {!cinemaLoading && (
-          <section className="space-y-5">
+          <SectionRepliable
+            id="stats"
+            titre="Statistiques & trophées"
+            icone={<Trophy className="w-4 h-4" />}
+            resume={`${totalRecos} recos · ${likedMovies.length} films aimés · ${clesDistinctions ? clesDistinctions.split(",").filter(Boolean).length : 0}/28 trophées`}
+          >
+          <div className="space-y-5 pt-3">
 
             {/* Statistiques */}
             <div>
@@ -1093,14 +1111,19 @@ const Profile = () => {
             {/* Trophées */}
             <TrophySection values={trophyValues} />
 
-          </section>
+          </div>
+          </SectionRepliable>
         )}
 
         {/* ════════════════════════════════
             5. COMPTE
         ════════════════════════════════ */}
-        <section>
-          <h2 className="text-sm font-sans font-semibold text-foreground uppercase tracking-widest mb-3">Compte</h2>
+        <SectionRepliable
+          id="compte"
+          titre="Compte"
+          icone={<UserIcon className="w-4 h-4" />}
+          resume="Notifications, visibilité de l'ADN, déconnexion"
+        >
           <div className="flex flex-col gap-1 border-t border-border/5 pt-3">
             {isAdmin && (
               <Accordion type="single" collapsible className="mb-2">
@@ -1237,7 +1260,7 @@ const Profile = () => {
               <LogOut className="w-3.5 h-3.5" /> Déconnexion
             </Button>
           </div>
-        </section>
+        </SectionRepliable>
 
       </div>
 
