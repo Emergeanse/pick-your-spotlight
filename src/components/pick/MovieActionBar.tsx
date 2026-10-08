@@ -21,6 +21,8 @@ interface MovieActionBarProps {
   initialFeedback?: FeedbackLabel | null;
   sessionId?: string | null;
   contextType?: "solo_session" | "group_session" | "browse";
+  /** Un libellé sous chaque icône (fiches film) : les six gestes deviennent lisibles. */
+  libelles?: boolean;
 }
 
 const DEBUG = true;
@@ -36,6 +38,7 @@ const MovieActionBar = ({
   initialFeedback,
   sessionId,
   contextType,
+  libelles = false,
 }: MovieActionBarProps) => {
   const { user } = useAuth();
   const currentMovieIdRef = useRef(movie.id);
@@ -386,8 +389,18 @@ const MovieActionBar = ({
   const notForMeFilledClass =
     "bg-rose-600 border-rose-300/70 text-white ring-1 ring-white/10 shadow-[0_0_24px_rgba(225,29,72,0.45)]";
 
+  // Avec libellés : chaque bouton dans une colonne, son nom dessous.
+  const avec = (bouton: React.ReactNode, libelle: string, actif = false) =>
+    libelles ? (
+      <div className="flex flex-col items-center gap-1 w-[54px]">
+        {bouton}
+        <span className={`text-[11px] leading-[1.15] text-center font-sans ${actif ? "text-white font-semibold" : "text-white/55"}`}>{libelle}</span>
+      </div>
+    ) : bouton;
+
   return (
-    <div className={`flex items-center justify-center ${rowGap} ${className}`}>
+    <div className={`flex ${libelles ? "items-start justify-between px-1" : "items-center justify-center"} ${rowGap} ${className}`}>
+      {avec(
       <button
         type="button"
         disabled={loading}
@@ -400,8 +413,10 @@ const MovieActionBar = ({
         aria-pressed={thumbsUp}
       >
         <ThumbsUp className={`${iconSize} ${thumbsUp ? "fill-current" : ""}`} />
-      </button>
+      </button>,
+        "J'aime", thumbsUp)}
 
+      {avec(
       <button
         type="button"
         disabled={loading}
@@ -414,8 +429,10 @@ const MovieActionBar = ({
         aria-pressed={loved}
       >
         <Heart className={`${iconSize} ${loved ? "fill-current" : ""}`} />
-      </button>
+      </button>,
+        "J'adore", loved)}
 
+      {avec(
       <button
         type="button"
         disabled={loading}
@@ -428,8 +445,10 @@ const MovieActionBar = ({
         aria-pressed={bookmarked}
       >
         <Bookmark className={`${iconSize} ${bookmarked ? "fill-current" : ""}`} />
-      </button>
+      </button>,
+        "À voir", bookmarked)}
 
+      {avec(
       <button
         type="button"
         disabled={loading}
@@ -442,8 +461,10 @@ const MovieActionBar = ({
         aria-pressed={seenActive}
       >
         <Eye className={iconSize} />
-      </button>
+      </button>,
+        "Déjà vu", seenActive)}
 
+      {avec(
       <button
         type="button"
         disabled={loading}
@@ -456,8 +477,10 @@ const MovieActionBar = ({
         aria-pressed={activeFeedback === "not_for_me"}
       >
         <ThumbsDown className={iconSize} />
-      </button>
+      </button>,
+        "Pas pour moi", activeFeedback === "not_for_me")}
 
+      {avec(
       <button
         type="button"
         onClick={() => { if (requireAuth()) ouvrirConseil(); }}
@@ -466,7 +489,8 @@ const MovieActionBar = ({
         aria-label="Conseiller à un ami"
       >
         <Send className={iconSize} />
-      </button>
+      </button>,
+        "Conseiller", false)}
     </div>
   );
 };

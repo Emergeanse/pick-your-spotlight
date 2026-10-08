@@ -358,6 +358,8 @@ const TonightPickOverlay = ({
   const rawReason = movie
     ? ((recReason && recReason.length > 40 ? recReason : null) ||
        (matchReason && matchReason.length > 40 ? matchReason : null) ||
+       // L'accroche de l'explication (« Prépare-toi à une aventure épique ! ») vaut mieux qu'une phrase générique.
+       asStr(rec?.headline) ||
        `Pick pense que ${movie.first_air_date ? "cette série est faite" : "ce film est fait"} pour toi.`)
     : "";
   const stripped = rawReason.replace(/^[^\s,]+,\s*/, "");
@@ -607,7 +609,8 @@ const TonightPickOverlay = ({
   const year = movie
     ? ((movie.release_date || (movie as any).first_air_date) as string | undefined)?.substring(0, 4)
     : undefined;
-  const primaryGenre = movie?.genres?.[0]?.name;
+  // Un seul mot de genre en pastille : « Science-Fiction & Fantastique » → « Science-Fiction ».
+  const primaryGenre = ((movie?.genres?.[0]?.name) as string | undefined)?.split(/\s*&\s*/)[0];
 
 
   const instantCover = tonightLoading && !movie;
@@ -839,12 +842,12 @@ const TonightPickOverlay = ({
             {/* Chips: year, genre, first streaming platform */}
             <div className="flex gap-2 mb-4 flex-wrap">
               {year && (
-                <span className="px-2.5 py-1.5 bg-white/10 backdrop-blur-xl border border-white/10 rounded-lg text-[9px] text-foreground uppercase tracking-widest font-bold font-sans">
+                <span className="inline-flex items-center h-8 px-3 rounded-full border border-white/[0.10] [border-top-color:rgba(196,181,253,0.30)] bg-[linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.02))] backdrop-blur-xl text-[11px] text-foreground/90 uppercase tracking-[0.12em] font-semibold font-sans">
                   {year}
                 </span>
               )}
               {primaryGenre && (
-                <span className="px-2.5 py-1.5 bg-white/10 backdrop-blur-xl border border-white/10 rounded-lg text-[9px] text-foreground uppercase tracking-widest font-bold font-sans">
+                <span className="inline-flex items-center h-8 px-3 rounded-full border border-white/[0.10] [border-top-color:rgba(196,181,253,0.30)] bg-[linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.02))] backdrop-blur-xl text-[11px] text-foreground/90 uppercase tracking-[0.12em] font-semibold font-sans">
                   {primaryGenre}
                 </span>
               )}
@@ -854,7 +857,7 @@ const TonightPickOverlay = ({
                   src={`https://image.tmdb.org/t/p/original${p.logo_path}`}
                   alt={p.name}
                   title={p.name}
-                  className="h-9 w-9 rounded-xl object-cover"
+                  className="h-8 w-8 rounded-full object-cover ring-1 ring-white/15"
                 />
               ))}
             </div>
@@ -886,16 +889,17 @@ const TonightPickOverlay = ({
             </motion.div>
 
             {/* Glass action bar (Save / Like / Seen via MovieActionBar) */}
-            <div className="mb-5 rounded-3xl bg-white/5 backdrop-blur-2xl border border-white/[0.06] p-1.5">
-              <MovieActionBar key={movie.id} movie={movie} onInteraction={onInteraction} />
+            <div className="mb-5 rounded-pick-lg border border-white/[0.08] [border-top-color:rgba(196,181,253,0.22)] bg-[linear-gradient(180deg,rgba(255,255,255,0.06),rgba(255,255,255,0.015))] backdrop-blur-2xl px-1.5 pt-2.5 pb-2">
+              <MovieActionBar key={movie.id} movie={movie} onInteraction={onInteraction} libelles />
             </div>
 
-            {/* Primary CTA: white pill — premium contrast */}
+            {/* Bouton principal : le violet lumineux de « Trouve-moi LE film » —
+                la seule zone vraiment lumineuse avec l'affiche et son score. */}
             <motion.button
               whileTap={{ scale: confirmLoading ? 1 : 0.97 }}
               onClick={onConfirm}
               disabled={confirmLoading}
-              className="w-full py-[18px] bg-foreground text-background rounded-3xl font-sans font-bold text-[13px] tracking-[0.18em] uppercase mb-5 shadow-[0_18px_50px_-12px_rgba(255,255,255,0.25)] disabled:opacity-60"
+              className="w-full h-[58px] rounded-full border-[1.5px] border-pick-purple-light/80 bg-[linear-gradient(180deg,#3a2470,#1c1040)] text-white font-sans font-semibold text-[17px] mb-5 shadow-[0_0_0_4px_rgba(139,92,246,0.14),0_0_34px_rgba(168,85,247,0.55)] disabled:opacity-60"
             >
               {confirmLoading
                 ? "Programmation…"
