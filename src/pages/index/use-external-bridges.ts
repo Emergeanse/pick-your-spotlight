@@ -1,4 +1,5 @@
 import { useCallback, useEffect } from "react";
+import { ficheFilm } from "@/lib/fiche-film";
 import { useLocation } from "react-router-dom";
 import type { MovieDetail } from "@/lib/tmdb";
 import type { RecommendationMovieDetail } from "@/lib/recommendation-batch";
@@ -48,10 +49,9 @@ export function useExternalBridges({
       window.history.replaceState({}, "", "/app");
     }
     if (state.selectedMovie) {
+      // Un film précis : la fiche commune (principale, puis détaillée).
       const movie = state.selectedMovie as MovieDetail;
-      normalizeRecommendationBatch([movie], [movie.id])
-        .then((batch) => openRecommendationBatch(batch, "external"))
-        .catch(() => openRecommendationBatch([movie], "external"));
+      ficheFilm.ouvrir({ tmdbId: movie.id, media: (movie as { media_type?: string }).media_type === "tv" || (movie as { first_air_date?: string }).first_air_date ? "tv" : "movie" });
       window.history.replaceState({}, "", "/app");
     }
   }, [location.state, normalizeRecommendationBatch, openRecommendationBatch, onOpenTrainerOnMount]);
@@ -62,16 +62,14 @@ export function useExternalBridges({
     if (stored) {
       try {
         const movie = JSON.parse(stored) as MovieDetail;
-        normalizeRecommendationBatch([movie], [movie.id])
-          .then((batch) => openRecommendationBatch(batch, "external"))
-          .catch(() => openRecommendationBatch([movie], "external"));
+        ficheFilm.ouvrir({ tmdbId: movie.id, media: (movie as { media_type?: string }).media_type === "tv" || (movie as { first_air_date?: string }).first_air_date ? "tv" : "movie" });
       } catch {
         /* ignore */
       }
       sessionStorage.removeItem("pick-fab-movie");
     }
     window.history.replaceState({}, "", "/app");
-  }, [normalizeRecommendationBatch, openRecommendationBatch]);
+  }, []);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { ficheFilm } from "@/lib/fiche-film";
 import { toast } from "sonner";
 import type { User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
@@ -219,11 +220,10 @@ export function useRecommendationEngine({
 
   const handleMovieSelect = useCallback(
     async (movie: MovieDetail) => {
-      const desiredCount = profilePrefs.recommendationBatchSize || RECOMMENDATION_BATCH_SIZE;
-      const batch = await normalizeRecommendationBatch([movie], [movie.id], desiredCount);
-      openRecommendationBatch(batch, "home", 0, undefined, desiredCount);
+      // Un film précis choisi (Découvertes…) : la fiche commune.
+      ficheFilm.ouvrir({ tmdbId: movie.id, media: (movie as { media_type?: string }).media_type === "tv" || (movie as { first_air_date?: string }).first_air_date ? "tv" : "movie" });
     },
-    [normalizeRecommendationBatch, openRecommendationBatch, profilePrefs.recommendationBatchSize],
+    [],
   );
 
   const handleShowAnother = useCallback(
