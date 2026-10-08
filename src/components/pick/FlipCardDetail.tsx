@@ -178,10 +178,10 @@ const FlipCardDetail = ({
             className="absolute inset-0 z-[55] flex flex-col bg-background"
           >
           {/* Sticky top bar */}
-          <div className="sticky top-0 z-10 flex items-center justify-between bg-background/95 backdrop-blur-md border-b border-border/15 px-4 pt-[calc(0.75rem+env(safe-area-inset-top))] pb-3">
+          <div className="sticky top-0 z-10 flex items-center justify-between bg-gradient-to-b from-background/90 via-background/60 to-transparent px-4 pt-[calc(0.75rem+env(safe-area-inset-top))] pb-3">
             <button
               onClick={navigateBack}
-              className="flex items-center gap-1.5 text-foreground/55 hover:text-foreground text-sm font-sans transition-colors px-1 py-0.5"
+              className="flex items-center gap-1.5 h-9 pl-2 pr-3.5 rounded-full border border-white/[0.10] bg-black/40 backdrop-blur-md text-foreground/85 text-[13px] font-sans font-medium transition-colors [@media(hover:hover)]:hover:text-white"
             >
               <ChevronLeft className="h-4 w-4" />
               {navStack.length > 0 ? "Retour" : "Fermer"}
@@ -189,14 +189,15 @@ const FlipCardDetail = ({
 
             <button
               onClick={onClose}
-              className="rounded-full bg-foreground/8 hover:bg-foreground/12 p-2 transition-colors"
+              className="w-9 h-9 flex items-center justify-center rounded-full border border-white/[0.10] bg-black/40 backdrop-blur-md transition-colors"
+              aria-label="Fermer"
             >
-              <X className="h-4 w-4 text-foreground/50" />
+              <X className="h-4 w-4 text-foreground/80" />
             </button>
           </div>
 
           <div
-            className="flex-1 overflow-y-auto overscroll-contain scrollbar-dark"
+            className="flex-1 -mt-[calc(3.75rem+env(safe-area-inset-top))] overflow-y-auto overscroll-contain scrollbar-dark"
             style={{ paddingBottom: overlayDetailScrollPaddingBottom }}
           >
             {loading ? (
@@ -256,6 +257,9 @@ const MovieDetailContent = ({
   onPosterClick?: () => void;
 }) => {
   const interaction = useMovieInteraction(item?.id);
+  const [pourquoiOuvert, setPourquoiOuvert] = useState(false);
+  const [synopsisOuvert, setSynopsisOuvert] = useState(false);
+  const fond = detail?.backdrop_path || item?.backdrop_path;
 
   const summary =
     recommendationText?.summary ||
@@ -272,100 +276,108 @@ const MovieDetailContent = ({
 
   return (
     <div className="pb-8 max-w-2xl mx-auto">
-      {/* Hero poster + metadata — larger, more cinematic */}
-      <div className="flex gap-4 px-5 pt-5 mb-5">
-        <div className="relative shrink-0">
-          {onPosterClick ? (
-            <button
-              type="button"
-              onClick={onPosterClick}
-              aria-label="Retour à la sélection"
-              className="block rounded-2xl transition-transform active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
-            >
+      {/* Héros cinéma : le fond du film se fond dans le noir, l'affiche et le
+          titre par-dessus ; le score d'adhésion est l'information principale. */}
+      <div className="relative">
+        {fond && (
+          <div
+            aria-hidden="true"
+            className="absolute inset-x-0 top-0 h-[300px] bg-cover bg-center"
+            style={{
+              backgroundImage: `url(${IMG_BASE}/w780${fond})`,
+              maskImage: "linear-gradient(to bottom, rgba(0,0,0,0.85) 30%, transparent 100%)",
+              WebkitMaskImage: "linear-gradient(to bottom, rgba(0,0,0,0.85) 30%, transparent 100%)",
+            }}
+          />
+        )}
+        <div aria-hidden="true" className="absolute inset-x-0 top-0 h-[300px] bg-[radial-gradient(ellipse_at_30%_100%,hsl(var(--background))_10%,transparent_70%)]" />
+        <div className="relative flex gap-4 px-5 pt-[calc(4.5rem+env(safe-area-inset-top))] mb-5">
+          <div className="relative shrink-0">
+            {onPosterClick ? (
+              <button
+                type="button"
+                onClick={onPosterClick}
+                aria-label="Retour à la sélection"
+                className="block rounded-pick-lg transition-transform active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+              >
+                <img
+                  src={getPosterUrl(item.poster_path, "w342")}
+                  alt={getDisplayTitle(item)}
+                  className="h-52 w-auto rounded-pick-lg shadow-[0_20px_50px_-10px_rgba(0,0,0,0.7)] ring-1 ring-white/15"
+                />
+              </button>
+            ) : (
               <img
                 src={getPosterUrl(item.poster_path, "w342")}
                 alt={getDisplayTitle(item)}
-                className="h-52 w-auto rounded-2xl shadow-[0_16px_40px_-8px_rgba(0,0,0,0.5)] border border-white/8"
+                className="h-52 w-auto rounded-pick-lg shadow-[0_20px_50px_-10px_rgba(0,0,0,0.7)] ring-1 ring-white/15"
               />
-            </button>
-          ) : (
-            <img
-              src={getPosterUrl(item.poster_path, "w342")}
-              alt={getDisplayTitle(item)}
-              className="h-52 w-auto rounded-2xl shadow-[0_16px_40px_-8px_rgba(0,0,0,0.5)] border border-white/8"
-            />
-          )}
-          {interaction.hasInteraction && (
-            <div className="absolute top-2 left-2 pointer-events-none">
-              <FeedbackBadge
-                type={interaction.primaryStatus}
-                inWatchlist={interaction.watchlist}
-                seen={interaction.seen}
-                size="sm"
-              />
-            </div>
-          )}
-        </div>
+            )}
+            {interaction.hasInteraction && (
+              <div className="absolute top-2 left-2 pointer-events-none">
+                <FeedbackBadge
+                  type={interaction.primaryStatus}
+                  inWatchlist={interaction.watchlist}
+                  seen={interaction.seen}
+                  size="sm"
+                />
+              </div>
+            )}
+          </div>
 
-        <div className="flex-1 min-w-0 pt-1">
-          <h3 className="text-xl font-serif font-bold leading-tight text-foreground mb-1.5">
-            {getDisplayTitle(item)}
-          </h3>
+          <div className="flex-1 min-w-0 pt-6 flex flex-col">
+            <h3 className="text-[26px] font-serif leading-[1.05] text-white mb-1.5 [text-shadow:0_2px_14px_rgba(0,0,0,0.6)]">
+              {getDisplayTitle(item)}
+            </h3>
+            {(detail?.release_date || detail?.first_air_date) && (
+              <p className="text-[13px] text-foreground/70 font-sans mb-3">
+                {(detail.release_date || detail.first_air_date).substring(0, 4)}
+                {isTV
+                  ? detail?.number_of_seasons
+                    ? ` · ${detail.number_of_seasons} saison${detail.number_of_seasons > 1 ? "s" : ""}`
+                    : ""
+                  : detail?.runtime
+                    ? ` · ${Math.floor(detail.runtime / 60)} h ${String(detail.runtime % 60).padStart(2, "0")}`
+                    : ""}
+              </p>
+            )}
 
-          {/* Year + runtime/seasons */}
-          {(detail?.release_date || detail?.first_air_date) && (
-            <p className="text-sm text-foreground/50 font-sans mb-1.5">
-              {(detail.release_date || detail.first_air_date).substring(0, 4)}
-              {isTV
-                ? detail?.number_of_seasons
-                  ? ` · ${detail.number_of_seasons} saison${detail.number_of_seasons > 1 ? "s" : ""}`
-                  : ""
-                : detail?.runtime
-                  ? ` · ${detail.runtime} min`
-                  : ""}
-            </p>
-          )}
-
-          {/* TMDB rating */}
-          {detail?.vote_average > 0 && (
-            <p className="text-sm text-foreground/55 font-sans mb-2">
-              <span className="text-yellow-400">★</span> {detail.vote_average.toFixed(1)}
-              <span className="text-foreground/45">/10</span>
-            </p>
-          )}
-
-          {/* Match score badge — if available */}
-          {score != null && (
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary/15 border border-primary/25 mb-2">
-              <Sparkles className="w-3 h-3 text-primary" />
-              <span className="text-primary text-xs font-sans font-bold">{score}% d'adhésion</span>
-            </div>
-          )}
-
-          {/* Genre tags */}
-          {detail?.genres && (
-            <div className="flex flex-wrap gap-1">
-              {detail.genres.slice(0, 4).map((g: any) => (
-                <span key={g.id} className="rounded-full bg-foreground/8 px-2.5 py-0.5 text-[11px] text-foreground/55 font-sans">
-                  {g.name}
-                </span>
-              ))}
-            </div>
-          )}
+            {/* Le score Pick d'abord ; la note publique, plus discrète. */}
+            {score != null && (
+              <div className="flex items-baseline gap-1.5">
+                <span className="font-serif text-[34px] leading-none text-pick-purple-light [text-shadow:0_0_20px_rgba(139,92,246,0.55)] tabular-nums">{score}&nbsp;%</span>
+                <span className="text-[12px] font-sans font-semibold text-pick-purple-light/85">d'adhésion</span>
+              </div>
+            )}
+            {detail?.vote_average > 0 && (
+              <p className="mt-1.5 text-[12px] text-foreground/55 font-sans">
+                <span className="text-pick-gold">★</span> {detail.vote_average.toFixed(1).replace(".", ",")} /10 · avis du public
+              </p>
+            )}
+          </div>
         </div>
       </div>
 
-      {/* Action bar — compact (~50 % footprint) */}
-      <div className="mx-5 mb-3 rounded-xl bg-white/5 backdrop-blur-xl border border-white/[0.06] px-1 py-0.5">
-        <MovieActionBar movie={detail || item} size="xs" />
+      {/* Genres, en pastilles de verre */}
+      {detail?.genres?.length > 0 && (
+        <div className="flex flex-wrap gap-2 px-5 mb-4">
+          {detail.genres.slice(0, 4).map((g: any) => (
+            <span key={g.id} className="inline-flex items-center h-7 px-3 rounded-full border border-white/[0.10] bg-white/[0.04] text-[12px] text-foreground/80 font-sans">
+              {g.name}
+            </span>
+          ))}
+        </div>
+      )}
+
+      {/* Les six gestes, avec leur libellé */}
+      <div className="mx-5 mb-6 rounded-pick-lg border border-white/[0.08] [border-top-color:rgba(196,181,253,0.22)] bg-[linear-gradient(180deg,rgba(255,255,255,0.06),rgba(255,255,255,0.015))] px-1.5 pt-2.5 pb-2">
+        <MovieActionBar movie={detail || item} size="sm" libelles />
       </div>
 
       {streamingLinks.length > 0 && (
-        <div className="mx-5 mb-5">
-          <p className="text-[10px] uppercase tracking-widest text-foreground/45 font-sans font-semibold mb-2">
-            Où regarder
-          </p>
-          <div className="flex flex-wrap gap-2">
+        <div className="mx-5 mb-6">
+          <h4 className="mb-2.5 text-[17px] font-serif text-pick-gold">Où regarder</h4>
+          <div className="flex flex-wrap gap-2.5">
             {streamingLinks.map((link) => (
               <a
                 key={link.providerId}
@@ -373,13 +385,13 @@ const MovieDetailContent = ({
                 target="_blank"
                 rel="noopener noreferrer"
                 title={link.name}
-                className="opacity-80 hover:opacity-100 transition-opacity"
+                className="rounded-full ring-1 ring-white/15 overflow-hidden transition-transform active:scale-[0.96]"
               >
                 {link.logo_path && (
                   <img
                     src={`${IMG_BASE}/original${link.logo_path}`}
                     alt={link.name}
-                    className="h-10 w-10 object-cover rounded-xl"
+                    className="h-11 w-11 object-cover"
                   />
                 )}
               </a>
@@ -388,14 +400,11 @@ const MovieDetailContent = ({
         </div>
       )}
 
-      {/* Divider */}
-      <div className="border-t border-border/10 mx-5 mb-5" />
-
       {/* AI recommendation block — visually impactful */}
       {(headline || summary || reasons.length > 0 || perfectFor || funFact || isEnriching) && (
-        <div className="mx-5 mb-5 rounded-2xl bg-primary/[0.06] border border-primary/20 overflow-hidden">
+        <div className="mx-5 mb-6 rounded-pick-xl border border-pick-border-active bg-[linear-gradient(180deg,rgba(139,92,246,0.14),rgba(139,92,246,0.04))] shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] overflow-hidden">
           {/* Header strip */}
-          <div className="flex items-center gap-2 px-4 py-3 border-b border-primary/10 bg-primary/[0.04]">
+          <div className="flex items-center gap-2 px-4 pt-3.5">
             <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
               {isEnriching && !headline ? (
                 <Loader2 className="w-3.5 h-3.5 text-primary animate-spin" />
@@ -403,12 +412,12 @@ const MovieDetailContent = ({
                 <Sparkles className="w-3.5 h-3.5 text-primary" />
               )}
             </div>
-            <p className="text-[11px] uppercase tracking-widest text-primary/70 font-sans font-semibold flex-1">
-              Pourquoi c'est pour toi !
+            <p className="text-[11px] uppercase tracking-[0.16em] text-pick-purple-light font-sans font-semibold flex-1">
+              Pourquoi c'est pour toi
             </p>
           </div>
           {/* Body */}
-          <div className="px-4 py-3.5">
+          <div className="px-4 pt-2 pb-4">
             {isEnriching && !headline ? (
               // Placeholder flou pendant la génération des textes
               <motion.div
@@ -438,28 +447,35 @@ const MovieDetailContent = ({
                 transition={{ duration: 0.7, ease: "easeOut" }}
               >
                 {headline && (
-                  <p className="text-foreground/90 text-[14px] font-sans font-semibold leading-snug mb-2">{headline}</p>
+                  <p className="text-white text-[20px] font-serif leading-snug mb-2">{headline}</p>
                 )}
                 {summary && (
-                  <p className="text-foreground/65 text-[13px] font-sans leading-relaxed mb-2.5">{summary}</p>
+                  <>
+                    <p className={`text-foreground/75 text-[14px] font-sans leading-relaxed ${pourquoiOuvert ? "mb-2.5" : "line-clamp-3 mb-1"}`}>{summary}</p>
+                    {!pourquoiOuvert && summary.length > 160 && (
+                      <button type="button" onClick={() => setPourquoiOuvert(true)} className="mb-3 text-[13px] font-sans font-semibold text-pick-purple-light">
+                        Lire la suite
+                      </button>
+                    )}
+                  </>
                 )}
                 {reasons.length > 0 && (
                   <div className="flex flex-wrap gap-1.5 mb-2.5">
                     {reasons.map((reason: string, i: number) => (
                       <span
                         key={i}
-                        className="text-[11px] font-sans text-primary/80 bg-primary/10 px-2.5 py-0.5 rounded-full border border-primary/15"
+                        className="inline-flex items-center h-7 px-3 rounded-full bg-background/60 border border-pick-purple-light/40 text-[12px] font-sans font-medium text-foreground/90"
                       >
                         {reason}
                       </span>
                     ))}
                   </div>
                 )}
-                {perfectFor && (
-                  <p className="text-foreground/50 text-[12px] font-sans italic mb-1.5">{perfectFor}</p>
+                {(pourquoiOuvert || !summary || summary.length <= 160) && perfectFor && (
+                  <p className="text-foreground/60 text-[13px] font-sans italic mb-1.5">{perfectFor}</p>
                 )}
-                {funFact && (
-                  <p className="text-foreground/45 text-[12px] font-sans leading-snug mt-1">
+                {(pourquoiOuvert || !summary || summary.length <= 160) && funFact && (
+                  <p className="text-foreground/55 text-[12px] font-sans leading-snug mt-1">
                     💡 {funFact}
                   </p>
                 )}
@@ -472,24 +488,23 @@ const MovieDetailContent = ({
       {/* Synopsis */}
       {detail?.overview && (
         <div className="px-5 mb-5">
-          <h4 className="mb-2 text-[11px] font-sans font-semibold uppercase tracking-wider text-foreground/50 flex items-center gap-1.5">
-            <span className="w-4 h-px bg-foreground/20 inline-block" />
-            Synopsis
-          </h4>
-          <p className="text-[13px] leading-relaxed text-foreground/60">{detail.overview}</p>
+          <h4 className="mb-2 text-[17px] font-serif text-pick-gold">Synopsis</h4>
+          <p className={`text-[14px] leading-relaxed text-foreground/70 ${synopsisOuvert ? "" : "line-clamp-4"}`}>{detail.overview}</p>
+          {!synopsisOuvert && detail.overview.length > 220 && (
+            <button type="button" onClick={() => setSynopsisOuvert(true)} className="mt-1 text-[13px] font-sans font-semibold text-pick-purple-light">
+              Lire la suite
+            </button>
+          )}
         </div>
       )}
 
       {/* Director */}
       {director && (
         <div className="px-5 mb-4">
-          <h4 className="mb-2 text-[11px] font-sans font-semibold uppercase tracking-wider text-foreground/50 flex items-center gap-1.5">
-            <Clapperboard className="h-3 w-3" />
-            {isTV ? "Créateur" : "Réalisateur"}
-          </h4>
+          <h4 className="mb-1.5 text-[17px] font-serif text-pick-gold">{isTV ? "Création" : "Réalisation"}</h4>
           <button
             onClick={() => onPersonClick({ id: director.id, name: director.name, profile_path: director.profile_path })}
-            className="text-[13px] text-foreground/65 hover:text-primary transition-colors cursor-pointer font-sans"
+            className="text-[14px] text-foreground/85 [@media(hover:hover)]:hover:text-pick-purple-light transition-colors cursor-pointer font-sans"
           >
             {director.name} →
           </button>
@@ -499,10 +514,7 @@ const MovieDetailContent = ({
       {/* Cast grid */}
       {cast.length > 0 && (
         <div className="px-5">
-          <h4 className="mb-3 text-[11px] font-sans font-semibold uppercase tracking-wider text-foreground/50 flex items-center gap-1.5">
-            <User className="h-3 w-3" />
-            Casting
-          </h4>
+          <h4 className="mb-3 text-[17px] font-serif text-pick-gold">Casting</h4>
           <div className="grid grid-cols-3 gap-3">
             {cast.map((c: any) => (
               <button
@@ -519,7 +531,7 @@ const MovieDetailContent = ({
                   {c.name}
                 </span>
                 {c.character && (
-                  <span className="text-center text-[10px] text-foreground/45 leading-tight font-sans">{c.character}</span>
+                  <span className="text-center text-[11px] text-foreground/45 leading-tight font-sans">{c.character}</span>
                 )}
               </button>
             ))}
