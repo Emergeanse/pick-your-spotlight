@@ -114,6 +114,18 @@ export async function activerPush(userId: string): Promise<EtatPush> {
   return "actif";
 }
 
+/**
+ * Chrome garde l'autorisation des notifications après une désinstallation ou
+ * un cache vidé, mais l'abonnement, lui, disparaît : sans rien proposer (la
+ * permission est déjà donnée), Pick n'enverrait plus rien. On réabonne alors
+ * ce téléphone en silence. Sans effet si la permission n'est pas accordée.
+ */
+export async function retablirPushSiAutorise(userId: string): Promise<void> {
+  if (!pushPrisEnCharge() || Notification.permission !== "granted") return;
+  if (await abonnementActuel()) return;
+  await activerPush(userId).catch(() => {});
+}
+
 /** Désabonne ce téléphone et l'oublie côté serveur. */
 export async function desactiverPush(): Promise<void> {
   const abonnement = await abonnementActuel();

@@ -1,4 +1,7 @@
 import { useLocation } from "react-router-dom";
+import { retablirPushSiAutorise } from "@/lib/push";
+import { useAuth } from "@/hooks/use-auth";
+import { useEffect } from "react";
 import { Loader2 } from "lucide-react";
 import BottomTabBar from "@/components/pick/BottomTabBar";
 import BrandHeader from "@/components/pick/BrandHeader";
@@ -17,6 +20,11 @@ import { APP_OVERLAY_PORTAL_ID } from "@/lib/app-chrome";
  * BottomTabBar stays `fixed` but is constrained to the frame via CSS on md+.
  */
 const AppLayout = ({ children }: { children: React.ReactNode }) => {
+  // Notifications : réabonner ce téléphone s'il avait déjà dit oui (voir lib/push).
+  const { user: utilisateurPush } = useAuth();
+  useEffect(() => {
+    if (utilisateurPush?.id) void retablirPushSiAutorise(utilisateurPush.id);
+  }, [utilisateurPush?.id]);
   const location = useLocation();
   const { checking } = useOnboardingGate();
   // Ces pages gèrent leur propre header — pas besoin du BrandHeader global
