@@ -1,10 +1,11 @@
 import { useEffect, useState, useRef, useCallback } from "react";
+import salonSoiree from "@/assets/soiree-salon.webp";
 import { avatarAffiche } from "@/lib/avatars";
 import { useParams, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowLeft, Calendar, MapPin, Wifi, Copy, Share2, Check,
-  Loader2, Users, Sparkles, Film, Crown, Trash2, AlertTriangle, LogOut, Clock, Vote, Star, ChevronRight,
+  Loader2, Users, Sparkles, Film, Crown, Trash2, AlertTriangle, LogOut, Clock, Vote, Star, ChevronRight, WandSparkles,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchVisibleProfile } from "@/lib/visible-profiles";
@@ -747,46 +748,62 @@ const EventDetailPage = () => {
 
   return (
     <div className="fixed inset-0 bg-background flex flex-col">
+      {/* Le salon de la soirée en fond, fondu dans le noir. */}
+      <div
+        aria-hidden="true"
+        className="absolute inset-x-0 top-0 h-[360px] bg-cover bg-no-repeat pointer-events-none"
+        style={{
+          backgroundImage: `url(${salonSoiree})`,
+          backgroundPosition: "60% 30%",
+          maskImage: "linear-gradient(to bottom, black 30%, transparent 100%)",
+          WebkitMaskImage: "linear-gradient(to bottom, black 30%, transparent 100%)",
+          opacity: 0.5,
+        }}
+      />
+      <div aria-hidden="true" className="absolute inset-x-0 top-0 h-[360px] pointer-events-none bg-[linear-gradient(90deg,hsl(var(--background)/0.85)_0%,hsl(var(--background)/0.3)_65%,transparent_90%)]" />
+
       {/* Header */}
-      <div className="pt-[calc(3rem+env(safe-area-inset-top))] px-5 pb-4 shrink-0">
+      <div className="relative z-10 pt-[calc(1rem+env(safe-area-inset-top))] px-5 pb-4 shrink-0">
         <div className="flex items-center justify-between mb-3">
-          <button aria-label="Retour aux soirées" onClick={() => navigate("/app/soirees")} className="w-11 h-11 -ml-2 flex items-center justify-center rounded-full hover:bg-white/5 transition-colors">
-            <ArrowLeft className="w-5 h-5 text-foreground/60" />
+          <button aria-label="Retour aux soirées" onClick={() => navigate("/app/soirees")} className="w-10 h-10 flex items-center justify-center rounded-full border border-white/[0.12] bg-black/40 backdrop-blur-md">
+            <ArrowLeft className="w-5 h-5 text-foreground/85" />
           </button>
           {isOrganizer ? (
             <button
               onClick={() => setShowDeleteConfirm(true)}
-              className="p-2 rounded-full hover:bg-red-500/10 transition-colors"
+              aria-label="Supprimer la soirée"
+              className="w-10 h-10 flex items-center justify-center rounded-full border border-white/[0.12] bg-black/40 backdrop-blur-md"
             >
-              <Trash2 className="w-4.5 h-4.5 text-red-400/60" />
+              <Trash2 className="w-4 h-4 text-foreground/60" />
             </button>
           ) : myParticipation ? (
             <button
               onClick={() => setShowLeaveConfirm(true)}
-              className="p-2 rounded-full hover:bg-red-500/10 transition-colors"
+              aria-label="Quitter la soirée"
+              className="w-10 h-10 flex items-center justify-center rounded-full border border-white/[0.12] bg-black/40 backdrop-blur-md"
             >
-              <LogOut className="w-4.5 h-4.5 text-red-400/60" />
+              <LogOut className="w-4 h-4 text-foreground/60" />
             </button>
           ) : null}
         </div>
 
-        <p className="text-[10px] font-sans font-semibold tracking-[0.18em] uppercase text-primary/70 mb-0.5">
+        <p className="mt-6 text-[11px] font-sans font-semibold tracking-[0.18em] uppercase text-pick-gold mb-1">
           {event.context ? ({ duo: "Soirée Duo", famille: "Soirée Famille", amis: "Soirée entre amis", solo: "Soirée solo" }[event.context] ?? "Soirée ciné") : "Soirée ciné"}
         </p>
-        <h1 className="font-serif text-[24px] text-foreground leading-tight">{event.title}</h1>
+        <h1 className="font-serif text-[32px] text-white leading-[1.05] [text-shadow:0_2px_16px_rgba(0,0,0,0.6)]">{event.title.split(" · ")[0]}</h1>
 
         {/* Méta */}
         <div className="flex flex-col gap-1.5 mt-3">
-          <div className="flex items-center gap-2 text-[13px] font-sans text-foreground/60">
-            <Calendar className="w-3.5 h-3.5 text-primary/50 shrink-0" />
+          <div className="flex items-center gap-2 text-[14px] font-sans text-foreground/80">
+            <Calendar className="w-3.5 h-3.5 text-pick-gold/80 shrink-0" />
             <span className="capitalize">{formatDate(event.event_date, event.event_time)}</span>
           </div>
-          <div className="flex items-center gap-2 text-[13px] font-sans text-foreground/60">
-            {event.is_remote ? <Wifi className="w-3.5 h-3.5 text-primary/50 shrink-0" /> : <MapPin className="w-3.5 h-3.5 text-primary/50 shrink-0" />}
+          <div className="flex items-center gap-2 text-[14px] font-sans text-foreground/80">
+            {event.is_remote ? <Wifi className="w-3.5 h-3.5 text-pick-gold/80 shrink-0" /> : <MapPin className="w-3.5 h-3.5 text-pick-gold/80 shrink-0" />}
             <span>{event.is_remote ? "À distance" : (event.location || "Lieu à confirmer")}</span>
           </div>
-          <div className="flex items-center gap-2 text-[13px] font-sans text-foreground/60">
-            <Film className="w-3.5 h-3.5 text-primary/50 shrink-0" />
+          <div className="flex items-center gap-2 text-[14px] font-sans text-foreground/80">
+            <Film className="w-3.5 h-3.5 text-pick-gold/80 shrink-0" />
             <span>{
               event.reveal_mode === "timed"
                 ? "Surprise sur le moment · révélation à l'heure de la soirée"
@@ -797,19 +814,19 @@ const EventDetailPage = () => {
           </div>
           {(event.genre_tags?.length || event.mood) && (
             <div className="flex items-start gap-2 mt-1.5">
-              <Sparkles className="w-3.5 h-3.5 text-primary/50 shrink-0 mt-0.5" />
+              <Sparkles className="w-3.5 h-3.5 text-pick-gold/80 shrink-0 mt-0.5" />
               <div className="flex flex-col gap-1.5">
                 {event.genre_tags && event.genre_tags.length > 0 && (
                   <div className="flex flex-wrap gap-1.5">
                     {event.genre_tags.map(tag => (
-                      <span key={tag} className="px-2.5 py-0.5 rounded-full text-[11px] font-sans font-semibold bg-primary/20 border border-primary/35 text-primary">
+                      <span key={tag} className="inline-flex items-center h-7 px-3 rounded-full text-[12px] font-sans font-medium bg-white/[0.05] border border-white/[0.10] text-foreground/85">
                         {tag}
                       </span>
                     ))}
                   </div>
                 )}
                 {event.mood && (
-                  <span className="text-[12.5px] font-sans text-foreground/55 italic">"{event.mood}"</span>
+                  <span className="text-[13px] font-sans text-foreground/70 italic">« {event.mood} »</span>
                 )}
               </div>
             </div>
@@ -818,7 +835,7 @@ const EventDetailPage = () => {
       </div>
 
       {/* Contenu scrollable */}
-      <div className="flex-1 overflow-y-auto px-5 pb-[calc(6rem+env(safe-area-inset-bottom))] space-y-5">
+      <div className="relative z-10 flex-1 overflow-y-auto px-5 pb-[calc(6rem+env(safe-area-inset-bottom))] space-y-6">
 
         {/* ── Ma participation (si pas organisateur) ── */}
         {!isOrganizer && (
@@ -827,16 +844,16 @@ const EventDetailPage = () => {
               <motion.div
                 key="cta-confirm"
                 initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-                className="rounded-2xl bg-primary/10 border border-primary/30 p-4 flex items-center justify-between gap-3"
+                className="rounded-pick-lg bg-pick-surface/80 border border-pick-border-active p-4 flex items-center justify-between gap-3"
               >
                 <div>
                   <p className="text-[13px] font-sans font-semibold text-foreground">Tu participes ?</p>
-                  <p className="text-[11.5px] text-foreground/45 mt-0.5">Confirme ta présence pour que l'organisateur le sache.</p>
+                  <p className="text-[12px] text-pick-text-secondary mt-0.5">Confirme ta présence pour que l'organisateur le sache.</p>
                 </div>
                 <button
                   onClick={confirm}
                   disabled={confirming}
-                  className="shrink-0 px-4 py-2 rounded-xl bg-primary text-primary-foreground text-[12.5px] font-sans font-semibold flex items-center gap-1.5 disabled:opacity-60"
+                  className="shrink-0 h-10 px-4 rounded-full border-[1.5px] border-pick-purple-light/80 bg-[linear-gradient(180deg,#3a2470,#1c1040)] text-white shadow-[0_0_0_4px_rgba(139,92,246,0.14),0_0_28px_rgba(168,85,247,0.5)] active:scale-[0.98] transition-transform duration-120 ease-pick text-[13px] font-sans font-semibold flex items-center gap-1.5 disabled:opacity-60"
                 >
                   {confirming ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
                   Confirmer
@@ -846,13 +863,13 @@ const EventDetailPage = () => {
               <motion.div
                 key="confirmed-badge"
                 initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }}
-                className="rounded-2xl bg-emerald-500/10 border border-emerald-500/25 px-4 py-3 flex items-center gap-3"
+                className="rounded-pick-lg bg-primary/10 border border-pick-border-active px-4 py-3 flex items-center gap-3"
               >
-                <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+                <Check className="w-4 h-4 text-pick-purple-light shrink-0" />
                 <div className="flex-1">
-                  <p className="text-[13px] font-sans font-semibold text-emerald-400">Ta présence est confirmée</p>
+                  <p className="text-[13px] font-sans font-semibold text-pick-purple-light">Ta présence est confirmée</p>
                 </div>
-                <button onClick={decline} className="text-[11px] text-foreground/45 font-sans hover:text-foreground/60 transition-colors">
+                <button onClick={decline} className="text-[12px] text-pick-text-secondary font-sans [@media(hover:hover)]:hover:text-foreground/80 transition-colors">
                   Annuler
                 </button>
               </motion.div>
@@ -887,14 +904,9 @@ const EventDetailPage = () => {
         {/* ── Participants ── */}
         <div>
           <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2">
-              <Users className="w-4 h-4 text-primary/60" />
-              <p className="text-[11px] font-sans font-semibold tracking-[0.18em] uppercase text-foreground/40">
-                Participants
-              </p>
-            </div>
+            <h2 className="font-serif text-[18px] text-pick-gold leading-none">Participants</h2>
             {participants.length > 0 && (
-              <span className="text-[11px] font-sans font-semibold text-emerald-400">
+              <span className="text-[12px] font-sans font-semibold text-pick-purple-light">
                 {confirmed.length}/{participants.length} confirmé{confirmed.length > 1 ? "s" : ""}
               </span>
             )}
@@ -912,9 +924,9 @@ const EventDetailPage = () => {
               {participants.map((p, i) => {
                 const isOwner = p.user_id === event.organizer_id;
                 const statusConfig = {
-                  confirmed: { label: "Confirmé",   dot: "bg-emerald-400", text: "text-emerald-400",  ring: "ring-emerald-400/30" },
-                  invited:   { label: "En attente", dot: "bg-amber-400 animate-pulse", text: "text-amber-400/80", ring: "ring-amber-400/20" },
-                  declined:  { label: "Décliné",    dot: "bg-red-400",     text: "text-red-400/70",   ring: "ring-transparent" },
+                  confirmed: { label: "Confirmé",   dot: "bg-pick-purple-light", text: "text-pick-purple-light", ring: "ring-pick-purple-light/40" },
+                  invited:   { label: "En attente", dot: "bg-foreground/40",     text: "text-pick-text-secondary", ring: "ring-white/10" },
+                  declined:  { label: "Décliné",    dot: "bg-foreground/20",     text: "text-pick-text-muted line-through", ring: "ring-transparent" },
                 }[p.status] ?? { label: p.status, dot: "bg-white/20", text: "text-foreground/40", ring: "ring-transparent" };
 
                 return (
@@ -922,12 +934,10 @@ const EventDetailPage = () => {
                     key={p.id}
                     initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: i * 0.05 }}
-                    className={`flex items-center gap-3.5 px-4 py-3.5 rounded-2xl border transition-colors ${
+                    className={`flex items-center gap-3.5 px-4 py-3 rounded-pick-lg border transition-colors ${
                       p.status === "confirmed"
-                        ? "bg-emerald-500/5 border-emerald-500/15"
-                        : p.status === "invited"
-                          ? "bg-amber-500/5 border-amber-500/15"
-                          : "bg-white/5 border-white/10"
+                        ? "bg-pick-surface/80 border-pick-border-hover"
+                        : "bg-pick-surface/50 border-pick-border"
                     }`}
                   >
                     {/* Avatar */}
@@ -945,7 +955,7 @@ const EventDetailPage = () => {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5">
                         <span className="text-[13.5px] font-sans font-semibold text-foreground truncate">{p.display_name}</span>
-                        {isOwner && <Crown className="w-3 h-3 text-primary/50 shrink-0" />}
+                        {isOwner && <Crown className="w-3.5 h-3.5 text-pick-gold shrink-0" aria-label="Organisateur" />}
                       </div>
                       <span className={`text-[11px] font-sans font-medium ${statusConfig.text}`}>
                         {statusConfig.label}
@@ -953,7 +963,7 @@ const EventDetailPage = () => {
                     </div>
 
                     {/* Icône statut */}
-                    {p.status === "confirmed" && <Check className="w-4 h-4 text-emerald-400 shrink-0" />}
+                    {p.status === "confirmed" && <Check className="w-4 h-4 text-pick-purple-light shrink-0" />}
                   </motion.div>
                 );
               })}
@@ -962,28 +972,23 @@ const EventDetailPage = () => {
         </div>
 
         {/* ── Lien d'invitation (organisateur, hors soirée Duo) ── */}
-        {isOrganizer && event.context !== "duo" && (
+        {isOrganizer && event.context !== "duo" && event.status !== "done" && (
           <div>
-            <p className="text-[11px] font-sans font-semibold tracking-[0.18em] uppercase text-foreground/40 mb-2">
-              Inviter des amis
-            </p>
-            <div className="rounded-xl bg-card border border-border/30 px-4 py-2.5 mb-2">
-              <p className="text-[11.5px] font-sans text-foreground/50 truncate">{inviteLink}</p>
-            </div>
+            <h2 className="font-serif text-[18px] text-pick-gold leading-none mb-3">Inviter des amis</h2>
             <div className="flex gap-2">
               <button
                 onClick={copyLink}
-                className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border text-[12.5px] font-sans font-medium transition-all ${copied ? "border-primary/40 bg-primary/10 text-primary" : "border-white/[0.10] bg-white/[0.04] text-foreground/70"}`}
+                className={`flex-1 flex items-center justify-center gap-2 h-12 rounded-full border text-[14px] font-sans font-medium transition-all ${copied ? "border-pick-border-active bg-primary/10 text-pick-purple-light" : "border-white/[0.10] bg-white/[0.04] text-foreground/85"}`}
               >
                 {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-                {copied ? "Copié !" : "Copier"}
+                {copied ? "Lien copié" : "Copier le lien"}
               </button>
               <button
                 onClick={shareLink}
-                className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-gradient-to-r from-primary to-accent text-primary-foreground text-[12.5px] font-sans font-semibold"
+                className="flex-[1.3] flex items-center justify-center gap-2 h-12 rounded-full border-[1.5px] border-pick-purple-light/80 bg-[linear-gradient(180deg,#3a2470,#1c1040)] text-white shadow-[0_0_0_4px_rgba(139,92,246,0.14),0_0_28px_rgba(168,85,247,0.5)] active:scale-[0.98] transition-transform duration-120 ease-pick text-[14px] font-sans font-semibold"
               >
-                <Share2 className="w-3.5 h-3.5" />
-                Partager
+                <Share2 className="w-4 h-4" />
+                Inviter sur WhatsApp
               </button>
             </div>
           </div>
@@ -991,15 +996,15 @@ const EventDetailPage = () => {
 
         {/* ── Révéler le film (organisateur — surprise / timed) ── */}
         {isOrganizer && (event.reveal_mode === "surprise" || event.reveal_mode === "timed") && event.status !== "done" && (
-          <div className="rounded-2xl bg-white/[0.03] border border-white/[0.06] p-4">
+          <div className="rounded-pick-xl border border-pick-border-active bg-[linear-gradient(180deg,rgba(139,92,246,0.14),rgba(139,92,246,0.04))] p-4">
             {event.reveal_mode === "timed" && timeLeft !== null && timeLeft > 0 ? (
               <div className="flex items-center gap-3">
-                <Clock className="w-6 h-6 text-primary/60 shrink-0" />
+                <span className="w-11 h-11 rounded-full bg-primary/20 flex items-center justify-center shrink-0"><Clock className="w-5 h-5 text-pick-purple-light" /></span>
                 <div className="flex-1 min-w-0">
-                  <p className="text-[13px] font-sans font-semibold text-foreground">Surprise sur le moment</p>
-                  <p className="text-[11.5px] text-foreground/40 mt-0.5">
+                  <p className="font-serif text-[18px] text-white leading-tight">Le film arrive bientôt</p>
+                  <p className="text-[13px] text-pick-text-secondary mt-0.5">
                     Révélation automatique dans{" "}
-                    <span className="text-primary/70 font-semibold tabular-nums">{formatCountdown(timeLeft)}</span>
+                    <span className="text-pick-purple-light font-semibold tabular-nums">{formatCountdown(timeLeft)}</span>
                   </p>
                   <EventPickSummary event={event} />
                 </div>
@@ -1015,9 +1020,9 @@ const EventDetailPage = () => {
               </div>
             ) : (
               <div className="flex items-center gap-3">
-                <span className="text-2xl shrink-0">🎩</span>
+                <span className="w-11 h-11 rounded-full bg-primary/20 flex items-center justify-center shrink-0"><WandSparkles className="w-5 h-5 text-pick-purple-light" /></span>
                 <div className="flex-1 min-w-0">
-                  <p className="text-[13px] font-sans font-semibold text-foreground">
+                  <p className="font-serif text-[18px] text-white leading-tight">
                     {event.reveal_mode === "timed" ? "L'heure est venue !" : "Révéler le film"}
                   </p>
                   <p className="text-[11.5px] text-foreground/40 mt-0.5">
@@ -1030,7 +1035,7 @@ const EventDetailPage = () => {
                 <button
                   onClick={revealFilm}
                   disabled={isRevealing}
-                  className="shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl bg-primary/15 border border-primary/25 text-primary text-[12px] font-sans font-semibold disabled:opacity-50 disabled:pointer-events-none"
+                  className="shrink-0 flex items-center gap-1.5 h-10 px-4 rounded-full border-[1.5px] border-pick-purple-light/80 bg-[linear-gradient(180deg,#3a2470,#1c1040)] text-white shadow-[0_0_0_4px_rgba(139,92,246,0.14),0_0_28px_rgba(168,85,247,0.5)] active:scale-[0.98] transition-transform duration-120 ease-pick text-[13px] font-sans font-semibold disabled:opacity-50 disabled:pointer-events-none"
                 >
                   <Sparkles className="w-3.5 h-3.5" />
                   Révéler
@@ -1042,9 +1047,9 @@ const EventDetailPage = () => {
 
         {/* ── Mode vote ── */}
         {event.reveal_mode === "vote" && event.status !== "done" && (
-          <div className="rounded-2xl bg-white/[0.03] border border-white/[0.06] p-4 flex flex-col gap-3">
+          <div className="rounded-pick-xl border border-pick-border-active bg-[linear-gradient(180deg,rgba(139,92,246,0.12),rgba(139,92,246,0.03))] p-4 flex flex-col gap-3">
             <div className="flex items-start gap-3">
-              <Vote className="w-5 h-5 text-violet-400 shrink-0 mt-0.5" />
+              <Vote className="w-5 h-5 text-pick-purple-light shrink-0 mt-0.5" />
               <div className="flex-1 min-w-0">
                 <p className="text-[13px] font-sans font-semibold text-foreground">Vote pour le film</p>
                 <p className="text-[11.5px] text-foreground/40 mt-0.5">
@@ -1109,7 +1114,7 @@ const EventDetailPage = () => {
                       ) : isMine ? (
                         <Check className="w-4 h-4 text-primary shrink-0" />
                       ) : canVote ? (
-                        <span className="text-[10px] font-sans font-semibold text-primary/70 shrink-0">Voter</span>
+                        <span className="text-[12px] font-sans font-semibold text-pick-purple-light shrink-0">Voter</span>
                       ) : null}
                     </button>
                   );
@@ -1141,28 +1146,28 @@ const EventDetailPage = () => {
             type="button"
             onClick={() => void openFinalPickFiche()}
             disabled={loadingFilmFiche}
-            className="group w-full rounded-2xl overflow-hidden border border-primary/25 text-left cursor-pointer transition-all hover:border-primary/40 hover:bg-primary/[0.03] active:scale-[0.99] disabled:opacity-70 disabled:pointer-events-none"
+            className="group w-full rounded-pick-xl overflow-hidden border border-pick-gold/45 bg-[linear-gradient(135deg,rgba(42,26,82,0.85),rgba(18,14,30,0.85))] shadow-[0_18px_40px_-14px_rgba(0,0,0,0.7),0_0_26px_-8px_rgba(229,194,107,0.35)] text-left cursor-pointer transition-all active:scale-[0.99] disabled:opacity-70 disabled:pointer-events-none"
             aria-label={`Voir la fiche : ${event.final_pick_title}`}
           >
-            <div className="flex items-center gap-3 px-4 py-2.5 bg-primary/[0.08]">
-              <span className="text-base">🎩</span>
-              <p className="text-[11px] font-sans font-semibold tracking-[0.15em] uppercase text-primary/80">Le pick de la soirée</p>
+            <div className="flex items-center gap-2 px-4 pt-3.5">
+              <WandSparkles className="w-4 h-4 text-pick-gold" aria-hidden="true" />
+              <p className="text-[11px] font-sans font-semibold tracking-[0.18em] uppercase text-pick-gold">Le Pick de la soirée</p>
               {loadingFilmFiche && <Loader2 className="w-3.5 h-3.5 animate-spin text-primary/60 ml-auto" />}
             </div>
-            <div className="flex gap-3 p-3 bg-white/[0.02]">
+            <div className="flex gap-4 p-4">
               {event.final_pick_poster ? (
                 <img
                   src={`https://image.tmdb.org/t/p/w185${event.final_pick_poster}`}
                   alt={event.final_pick_title}
-                  className="w-16 h-24 object-cover rounded-xl shrink-0 pointer-events-none"
+                  className="w-24 h-36 object-cover rounded-pick-md shrink-0 pointer-events-none ring-1 ring-white/15 shadow-[0_14px_30px_-10px_rgba(0,0,0,0.8)]"
                 />
               ) : (
-                <div className="w-16 h-24 rounded-xl bg-white/[0.06] flex items-center justify-center shrink-0 pointer-events-none">
+                <div className="w-24 h-36 rounded-pick-md bg-white/[0.06] flex items-center justify-center shrink-0 pointer-events-none">
                   <Film className="w-5 h-5 text-foreground/40" />
                 </div>
               )}
               <div className="flex-1 flex flex-col justify-center gap-1 min-w-0">
-                <p className="font-serif text-[16px] text-foreground leading-tight">{event.final_pick_title}</p>
+                <p className="font-serif text-[22px] text-white leading-tight">{event.final_pick_title}</p>
                 {cardProviders.length > 0 && (
                   <div className="flex flex-wrap gap-1 mt-0.5 pointer-events-none">
                     {cardProviders.slice(0, 4).map((p) => p.logo_path && (
@@ -1171,13 +1176,13 @@ const EventDetailPage = () => {
                         src={`https://image.tmdb.org/t/p/w45${p.logo_path}`}
                         alt={p.name}
                         title={p.name}
-                        className="h-4 w-auto rounded object-contain"
+                        className="h-6 w-6 rounded-full object-cover ring-1 ring-white/15"
                       />
                     ))}
                   </div>
                 )}
-                <p className="text-[11px] font-sans font-semibold text-primary/70 group-hover:text-primary/90 transition-colors">
-                  Voir la fiche
+                <p className="mt-1 text-[13px] font-sans font-semibold text-pick-purple-light">
+                  Voir la fiche du film
                 </p>
               </div>
               <ChevronRight className="w-5 h-5 text-primary/50 shrink-0 self-center group-hover:text-primary/80 group-hover:translate-x-0.5 transition-all pointer-events-none" />
@@ -1189,22 +1194,22 @@ const EventDetailPage = () => {
         {event.status === "done" && !hasFeedback && (
           <button
             onClick={() => setShowPostSoiree(true)}
-            className="w-full flex items-center gap-3 p-4 rounded-2xl bg-primary/[0.07] border border-primary/20 hover:bg-primary/[0.11] transition-all text-left"
+            className="w-full flex items-center gap-3 p-4 rounded-pick-lg bg-pick-surface/80 border border-pick-border-hover [@media(hover:hover)]:hover:border-pick-border-active transition-all text-left"
           >
             <div className="w-9 h-9 rounded-xl bg-primary/15 flex items-center justify-center shrink-0">
               <Star className="w-4.5 h-4.5 text-primary" />
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-[13px] font-sans font-semibold text-foreground">Comment c'était ?</p>
-              <p className="text-[11px] font-sans text-foreground/45 mt-0.5">Évalue la soirée et le film</p>
+              <p className="text-[12px] font-sans text-pick-text-secondary mt-0.5">Évalue la soirée et le film</p>
             </div>
-            <span className="text-[11px] font-sans font-semibold text-primary shrink-0">Évaluer →</span>
+            <span className="text-[13px] font-sans font-semibold text-pick-purple-light shrink-0">Évaluer</span>
           </button>
         )}
         {event.status === "done" && hasFeedback && (
-          <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-white/[0.02] border border-white/[0.06]">
-            <Check className="w-4 h-4 text-primary/60 shrink-0" />
-            <p className="text-[12px] font-sans text-foreground/40">Tu as évalué cette soirée</p>
+          <div className="flex items-center gap-3 px-4 py-3 rounded-pick-lg bg-pick-surface/50 border border-pick-border">
+            <Check className="w-4 h-4 text-pick-purple-light shrink-0" />
+            <p className="text-[13px] font-sans text-pick-text-secondary">Tu as évalué cette soirée</p>
           </div>
         )}
       </div>
