@@ -9,6 +9,11 @@ import { formatAvecQui } from "@/lib/avec-qui";
 import soireesBackground from "@/assets/soirees-background.webp";
 import creerSoiree from "@/assets/creer-soiree.webp";
 import creerSoireeActif from "@/assets/creer-soiree-actif.webp";
+import groupeDuo from "@/assets/groupe-duo.webp";
+import groupeFamille from "@/assets/groupe-famille.webp";
+import groupeAmis from "@/assets/groupe-amis.webp";
+import groupeSurprise from "@/assets/groupe-surprise.webp";
+import salonSoiree from "@/assets/soiree-salon.webp";
 
 type ParticipantSummary = {
   total: number;
@@ -40,12 +45,14 @@ const CONTEXT_ICON: Record<string, React.ComponentType<any>> = {
   solo:    User,
 };
 
-const CONTEXT_COLOR: Record<string, { card: string; iconBg: string; iconText: string }> = {
-  duo:     { card: "bg-pink-500/10 border-pink-500/20",     iconBg: "bg-pink-500/15",    iconText: "text-pink-400" },
-  famille: { card: "bg-indigo-500/10 border-indigo-500/20", iconBg: "bg-indigo-500/15",  iconText: "text-indigo-400" },
-  amis:    { card: "bg-emerald-500/10 border-emerald-500/20", iconBg: "bg-emerald-500/15", iconText: "text-emerald-400" },
-  solo:    { card: "bg-orange-400/10 border-orange-400/20", iconBg: "bg-orange-400/15",  iconText: "text-orange-400" },
+// Mêmes illustrations que l'accueil et la création de soirée.
+const CONTEXT_ILLUSTRATION: Record<string, string> = {
+  duo: groupeDuo, famille: groupeFamille, amis: groupeAmis, solo: groupeSurprise,
 };
+
+// Pastilles d'état : or pour le film révélé (prestige), violet pour ce qui reste à venir.
+const PASTILLE = "inline-flex items-center gap-1 h-6 px-2 rounded-full border text-[11px] font-sans font-semibold whitespace-nowrap";
+const TITRE_SECTION = "font-serif text-[18px] text-pick-gold px-1";
 
 const isUpcoming = (dateStr: string) =>
   new Date(dateStr + "T23:59:59") >= new Date();
@@ -162,9 +169,8 @@ const SoireesPage = () => {
   const upcoming = events.filter(e => isUpcoming(e.event_date));
   const past     = events.filter(e => !isUpcoming(e.event_date));
 
-  const EventCard = ({ evt, i }: { evt: EventRow; i: number }) => {
-    const Icon = CONTEXT_ICON[evt.context ?? "solo"] ?? UsersRound;
-    const colors = CONTEXT_COLOR[evt.context ?? "solo"] ?? CONTEXT_COLOR.solo;
+  const EventCard = ({ evt, i, avenir = false }: { evt: EventRow; i: number; avenir?: boolean }) => {
+    const illustration = CONTEXT_ILLUSTRATION[evt.context ?? "solo"] ?? groupeSurprise;
     const isOrganizer = evt.organizer_id === user?.id;
     const { total, confirmed } = evt.participants;
     const invites = Math.max(0, total - 1);
@@ -177,8 +183,8 @@ const SoireesPage = () => {
     // Badge mon statut (vue invité)
     const myStatusBadge = !isOrganizer && evt.myStatus ? (
       evt.myStatus === "confirmed"
-        ? <span className="flex items-center gap-1 text-[10px] font-sans font-semibold text-emerald-400"><Check className="w-3 h-3" />Confirmé</span>
-        : <span className="text-[10px] font-sans font-medium text-amber-400/80">En attente</span>
+        ? <span className="flex items-center gap-1 text-[11px] font-sans font-semibold text-pick-purple-light"><Check className="w-3 h-3" />Confirmé</span>
+        : <span className="text-[11px] font-sans font-medium text-pick-text-secondary">En attente de ta réponse</span>
     ) : null;
 
     return (
@@ -187,8 +193,10 @@ const SoireesPage = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: i * 0.06, duration: 0.35 }}
         onClick={() => navigate(`/app/soirees/${evt.id}`)}
-        className={`w-full flex items-center gap-3.5 p-4 rounded-2xl border text-left transition-colors backdrop-blur-sm ${
-          hasFilm ? "bg-white/[0.03] border-white/[0.08]" : colors.card
+        className={`w-full flex items-center gap-3.5 text-left backdrop-blur-md transition-colors duration-180 ease-pick active:scale-[0.99] ${
+          avenir
+            ? "p-4 rounded-pick-lg border border-pick-gold/40 bg-[linear-gradient(135deg,rgba(42,26,82,0.85),rgba(18,14,30,0.85))] shadow-[0_14px_34px_-14px_rgba(0,0,0,0.7),0_0_20px_-8px_rgba(229,194,107,0.3)]"
+            : "p-3.5 rounded-pick-lg border border-pick-border bg-pick-surface/70 [@media(hover:hover)]:hover:border-pick-border-hover"
         }`}
       >
         {/* Icône ou affiche du film */}
@@ -197,7 +205,7 @@ const SoireesPage = () => {
             <img
               src={`https://image.tmdb.org/t/p/w92${evt.final_pick_poster}`}
               alt={evt.final_pick_title!}
-              className="w-10 h-14 object-cover rounded-xl shrink-0 shadow-md"
+              className="w-10 h-14 object-cover rounded-pick-sm shrink-0 shadow-md ring-1 ring-white/10"
             />
           ) : (
             <div className="w-10 h-14 rounded-xl bg-white/[0.06] flex items-center justify-center shrink-0">
@@ -205,20 +213,20 @@ const SoireesPage = () => {
             </div>
           )
         ) : (
-          <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${colors.iconBg}`}>
-            <Icon className={`w-5 h-5 ${colors.iconText}`} strokeWidth={1.7} />
+          <div className={`${avenir ? "w-14 h-14" : "w-10 h-14"} rounded-pick-md flex items-center justify-center shrink-0 border border-pick-border bg-[radial-gradient(circle_at_50%_40%,rgba(139,92,246,0.25),rgba(0,0,0,0.5))]`}>
+            <img src={illustration} alt="" aria-hidden="true" className={`${avenir ? "w-10 h-10" : "w-8 h-8"} object-contain`} />
           </div>
         )}
 
         {/* Infos */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5">
-            <p className="text-[13.5px] font-sans font-semibold text-foreground truncate">{evt.title}</p>
+            <p className={`${avenir ? "font-serif text-[18px] text-white" : "text-[14px] font-sans font-semibold text-foreground"} leading-tight truncate`}>{evt.title.split(" · ")[0]}</p>
             {!isOrganizer && (
-              <span className="text-[9px] font-sans font-semibold tracking-wide uppercase text-primary/50 bg-primary/10 px-1.5 py-0.5 rounded-full shrink-0">invité</span>
+              <span className="text-[11px] font-sans font-semibold text-pick-purple-light bg-primary/15 px-1.5 py-0.5 rounded-full shrink-0">invité</span>
             )}
           </div>
-          <p className="text-[11px] text-foreground/45 mt-0.5 capitalize">{formatDate(evt.event_date, evt.event_time)}</p>
+          <p className="text-[12px] text-pick-text-secondary mt-0.5 capitalize">{formatDate(evt.event_date, evt.event_time)}</p>
           {evt.avecQui.length > 0 && (
             <p className="text-[12px] font-sans text-pick-text-secondary mt-0.5 truncate">
               avec <span className="font-semibold text-foreground/85">{formatAvecQui(evt.avecQui)}</span>
@@ -227,16 +235,16 @@ const SoireesPage = () => {
 
           {/* Film révélé */}
           {hasFilm && (
-            <p className="text-[11px] font-sans font-medium text-primary/70 mt-1 truncate italic">
+            <p className="text-[12px] font-serif text-pick-gold mt-1 truncate">
               {evt.final_pick_title}
             </p>
           )}
 
           {/* Vue organisateur : statut des invités (si pas révélé) */}
           {!isRevealed && isOrganizer && invites > 0 && (
-            <div className={`flex items-center gap-1 mt-1.5 ${allConfirmed ? "text-emerald-400" : someConfirmed ? "text-amber-400" : "text-foreground/45"}`}>
+            <div className={`flex items-center gap-1 mt-1.5 ${allConfirmed ? "text-pick-purple-light" : someConfirmed ? "text-foreground/80" : "text-pick-text-muted"}`}>
               {allConfirmed ? <Check className="w-3 h-3" /> : <Clock className="w-3 h-3" />}
-              <span className="text-[10.5px] font-sans font-medium">
+              <span className="text-[11px] font-sans font-medium">
                 {allConfirmed
                   ? `${invites} invité${invites > 1 ? "s" : ""} confirmé${invites > 1 ? "s" : ""}`
                   : confirmedInvites > 0
@@ -254,26 +262,21 @@ const SoireesPage = () => {
         {/* Badge mode / état + chevron */}
         <div className="flex flex-col items-end gap-2 shrink-0">
           {hasFilm ? (
-            <div className="flex items-center gap-1 px-2 py-1 rounded-xl bg-emerald-500/15 border border-emerald-500/25">
-              <Check className="w-3 h-3 text-emerald-400" />
-              <span className="text-[10px] font-sans font-semibold text-emerald-400">Film révélé</span>
-            </div>
+            <span className={`${PASTILLE} border-pick-gold/45 bg-pick-gold/10 text-pick-gold`}>
+              <Check className="w-3 h-3" /> Film révélé
+            </span>
           ) : isRevealed ? (
-            <div className="flex items-center gap-1 px-2 py-1 rounded-xl bg-white/[0.06] border border-white/[0.1]">
-              <span className="text-[10px] font-sans font-semibold text-foreground/40">Terminée</span>
-            </div>
+            <span className={`${PASTILLE} border-white/[0.08] bg-white/[0.04] text-pick-text-muted`}>Terminée</span>
           ) : evt.reveal_mode === "timed" ? (
-            <div className="flex items-center gap-1 px-2 py-1 rounded-xl bg-amber-500/15 border border-amber-500/25">
-              <Timer className="w-3 h-3 text-amber-400" />
-              <span className="text-[10px] font-sans font-semibold text-amber-400">Surprise</span>
-            </div>
+            <span className={`${PASTILLE} border-pick-purple-light/45 bg-primary/15 text-pick-purple-light`}>
+              <Timer className="w-3 h-3" /> Surprise
+            </span>
           ) : (
-            <div className="flex items-center gap-1 px-2 py-1 rounded-xl bg-violet-500/15 border border-violet-500/25">
-              <Eye className="w-3 h-3 text-violet-400" />
-              <span className="text-[10px] font-sans font-semibold text-violet-400">Révélation</span>
-            </div>
+            <span className={`${PASTILLE} border-pick-purple-light/45 bg-primary/15 text-pick-purple-light`}>
+              <Eye className="w-3 h-3" /> À révéler
+            </span>
           )}
-          <ChevronRight className="w-3.5 h-3.5 text-foreground/40" />
+          <ChevronRight className="w-4 h-4 text-pick-text-muted" />
         </div>
       </motion.button>
     );
@@ -283,19 +286,26 @@ const SoireesPage = () => {
     <div className="fixed inset-0 bg-background flex flex-col">
       {/* Background image — screen blend : les noirs deviennent transparents, les lueurs violettes ressortent */}
       <div
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat pointer-events-none"
-        style={{ backgroundImage: `url(${soireesBackground})`, opacity: 0.18 }}
+        aria-hidden="true"
+        className="absolute inset-x-0 top-0 h-[380px] bg-cover bg-no-repeat pointer-events-none"
+        style={{
+          backgroundImage: `url(${salonSoiree})`,
+          backgroundPosition: "60% 30%",
+          maskImage: "linear-gradient(to bottom, black 35%, transparent 100%)",
+          WebkitMaskImage: "linear-gradient(to bottom, black 35%, transparent 100%)",
+          opacity: 0.55,
+        }}
       />
+      <div aria-hidden="true" className="absolute inset-x-0 top-0 h-[380px] pointer-events-none bg-[linear-gradient(90deg,hsl(var(--background)/0.8)_0%,hsl(var(--background)/0.25)_60%,transparent_85%)]" />
       <div className="relative pt-[calc(3.5rem+env(safe-area-inset-top))] px-5 pb-4 shrink-0">
         <div className="flex items-start justify-between">
           <div>
-            <div className="flex items-center gap-2 mb-1">
-              <CalendarDays className="w-5 h-5 text-primary" strokeWidth={1.8} />
-              <span className="text-[11px] font-sans font-semibold tracking-[0.12em] uppercase text-primary/80">Soirées</span>
-            </div>
-            <h1 className="text-[28px] font-serif font-bold text-foreground leading-tight">
-              Tes soirées<br /><span className="italic text-primary">ciné</span>
+            <h1 className="font-serif text-[34px] text-white leading-[1.02] [text-shadow:0_2px_16px_rgba(0,0,0,0.6)]">
+              Tes soirées<br /><span className="text-pick-purple-light">ciné.</span>
             </h1>
+            <p className="mt-1.5 text-[13px] font-sans text-foreground/75">
+              {upcoming.length > 0 ? `${upcoming.length} à venir · ${past.length} passée${past.length > 1 ? "s" : ""}` : "Organise la prochaine."}
+            </p>
           </div>
           <button
             onClick={() => navigate("/app/soiree/nouvelle")}
@@ -329,27 +339,27 @@ const SoireesPage = () => {
           </div>
         ) : events.length === 0 ? (
           <div className="flex flex-col items-center gap-3 pt-16 text-center px-4">
-            <span className="text-4xl">🎬</span>
-            <p className="font-serif text-xl text-foreground">Aucune soirée pour l'instant</p>
-            <p className="text-foreground/40 text-sm font-sans">Organise ta première soirée ciné avec Pick.</p>
+            <img src={groupeDuo} alt="" aria-hidden="true" className="w-16 h-16 object-contain" />
+            <p className="font-serif text-[22px] text-foreground">Aucune soirée pour l'instant</p>
+            <p className="text-pick-text-secondary text-[14px] font-sans">Choisis une date, invite qui tu veux : Pick trouve le film pour tout le monde.</p>
             <button
               onClick={() => navigate("/app/soiree/nouvelle")}
-              className="mt-3 px-5 py-2.5 rounded-2xl bg-gradient-to-r from-primary to-accent text-primary-foreground text-sm font-sans font-semibold"
+              className="mt-3 h-12 px-6 rounded-full border-[1.5px] border-pick-purple-light/80 bg-[linear-gradient(180deg,#3a2470,#1c1040)] text-white text-[15px] font-sans font-semibold shadow-[0_0_0_4px_rgba(139,92,246,0.14),0_0_30px_rgba(168,85,247,0.5)]"
             >
-              Créer une soirée
+              Crée ta première soirée
             </button>
           </div>
         ) : (
           <>
             {upcoming.length > 0 && (
-              <div className="space-y-2">
-                <p className="text-[11px] font-sans font-semibold tracking-widest uppercase text-foreground/50 px-1">À venir</p>
-                {upcoming.map((evt, i) => <EventCard key={evt.id} evt={evt} i={i} />)}
+              <div className="space-y-2.5">
+                <h2 className={TITRE_SECTION}>À venir</h2>
+                {upcoming.map((evt, i) => <EventCard key={evt.id} evt={evt} i={i} avenir />)}
               </div>
             )}
             {past.length > 0 && (
               <div className="space-y-2">
-                <p className="text-[11px] font-sans font-semibold tracking-widest uppercase text-foreground/50 px-1">Passées</p>
+                <h2 className={TITRE_SECTION}>Souvenirs</h2>
                 {past.map((evt, i) => <EventCard key={evt.id} evt={evt} i={i} />)}
               </div>
             )}
