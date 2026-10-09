@@ -4,11 +4,12 @@ import groupeDuo from "@/assets/groupe-duo.webp";
 import groupeFamille from "@/assets/groupe-famille.webp";
 import groupeAmis from "@/assets/groupe-amis.webp";
 import groupeSurprise from "@/assets/groupe-surprise.webp";
+import salonSoiree from "@/assets/soiree-salon.webp";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowLeft, ArrowRight, Heart, Home, Users, MapPin, Wifi,
-  Sparkles, Vote, Film, Tv, LayoutGrid, Copy, Share2, Check, Loader2, ChevronRight,
+  Sparkles, Vote, Film, Tv, LayoutGrid, Copy, Share2, Check, Loader2, ChevronRight, Clock, WandSparkles, CalendarDays,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -60,6 +61,57 @@ const autoTitle = (context: EventContext | null, date: string) => {
   return dateStr ? `${prefix} · ${dateStr}` : prefix;
 };
 
+// Titres de section : serif doré, comme les fiches film.
+const TITRE_SECTION = "font-serif text-[17px] text-pick-gold leading-none";
+
+/** Les prochains jours, en pastilles : « Ce soir », « Demain », puis le jour et la date. */
+const prochainsJours = (n: number) => {
+  const jours: { valeur: string; libelle: string }[] = [];
+  for (let i = 0; i < n; i++) {
+    const d = new Date();
+    d.setDate(d.getDate() + i);
+    const valeur = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    const libelle = i === 0 ? "Ce soir" : i === 1 ? "Demain"
+      : d.toLocaleDateString("fr-FR", { weekday: "short", day: "numeric" }).replace(".", "");
+    jours.push({ valeur, libelle });
+  }
+  return jours;
+};
+const HEURES = ["19:00", "20:30", "21:30"];
+
+const PASTILLE = "relative inline-flex items-center justify-center h-10 px-4 rounded-full border text-[13px] font-sans font-medium transition-all duration-180 ease-pick active:scale-[0.97]";
+const PASTILLE_ACTIVE = "border-pick-purple-light/80 text-white bg-[linear-gradient(180deg,rgba(192,132,252,0.40),rgba(139,92,246,0.18))] shadow-[inset_0_1px_0_rgba(255,255,255,0.16),0_0_16px_rgba(168,85,247,0.35)]";
+const PASTILLE_REPOS = "border-white/[0.08] bg-white/[0.04] text-foreground/75 [@media(hover:hover)]:hover:border-pick-border-hover";
+
+/**
+ * Le billet de la soirée : il se remplit en direct pendant la création, puis
+ * devient l'objet à partager. Talon à gauche (type de soirée), corps à droite.
+ */
+function BilletSoiree({ context, titre, date, heure, lieu, grand = false }: {
+  context: EventContext | null; titre: string; date: string; heure: string; lieu: string; grand?: boolean;
+}) {
+  const jour = date
+    ? new Date(date + "T12:00:00").toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })
+    : "Date à choisir";
+  return (
+    <div className={`relative flex rounded-pick-lg overflow-hidden border border-pick-gold/45 bg-[linear-gradient(135deg,rgba(42,26,82,0.92),rgba(18,14,30,0.92))] backdrop-blur-xl shadow-[0_18px_40px_-14px_rgba(0,0,0,0.7),0_0_24px_-8px_rgba(229,194,107,0.35)] ${grand ? "min-h-[150px]" : ""}`}>
+      {/* Encoches du billet */}
+      <span aria-hidden="true" className="absolute left-[76px] -top-2 w-4 h-4 rounded-full bg-background border border-pick-gold/45" />
+      <span aria-hidden="true" className="absolute left-[76px] -bottom-2 w-4 h-4 rounded-full bg-background border border-pick-gold/45" />
+      <div className="w-[84px] shrink-0 flex flex-col items-center justify-center gap-1.5 border-r-[1.5px] border-dashed border-pick-gold/40 py-3">
+        <img src={context ? CONTEXT_ILLUSTRATION[context] : groupeSurprise} alt="" aria-hidden="true" className={`${grand ? "w-12 h-12" : "w-10 h-10"} object-contain`} />
+        <span className="text-[11px] font-sans font-semibold uppercase tracking-[0.14em] text-pick-gold">{context ? CONTEXT_CONFIG[context].label : "Soirée"}</span>
+      </div>
+      <div className="flex-1 min-w-0 px-4 py-3 flex flex-col justify-center gap-1">
+        <p className="text-[11px] font-sans font-semibold uppercase tracking-[0.18em] text-pick-gold/80">Pick · soirée ciné</p>
+        <p className={`font-serif ${grand ? "text-[24px]" : "text-[19px]"} leading-tight text-white truncate`}>{(titre || "Soirée ciné").split(" · ")[0]}</p>
+        <p className={`text-[13px] font-sans text-foreground/80 truncate ${date ? "capitalize" : ""}`}>{jour}{heure ? ` · ${heure.slice(0, 5)}` : ""}</p>
+        <p className="text-[12px] font-sans text-pick-text-secondary truncate">{lieu}</p>
+      </div>
+    </div>
+  );
+}
+
 // ─────────────────────────────────────────
 // Component
 // ─────────────────────────────────────────
@@ -87,7 +139,9 @@ const CreateEventPage = () => {
   const [title, setTitle]           = useState("");
   const [titleEdited, setTitleEdited] = useState(false);
   const [date, setDate]             = useState(preDate);
-  const [time, setTime]             = useState(preTime);
+  const [time, setTime]             = useState(preTime || "20:30");
+  const [autreDate, setAutreDate]   = useState(false);
+  const [autreHeure, setAutreHeure] = useState(false);
   const [isRemote, setIsRemote]     = useState(preRemote);
   const [location, setLocation]     = useState(preLocation);
 
@@ -303,22 +357,39 @@ const CreateEventPage = () => {
 
   return (
     <div className="fixed inset-0 bg-background flex flex-col">
+      {/* Le salon prêt pour la soirée, qui se fond dans le noir. */}
+      <div
+        aria-hidden="true"
+        className="absolute inset-x-0 top-0 h-[460px] bg-cover bg-no-repeat pointer-events-none"
+        style={{
+          backgroundImage: `url(${salonSoiree})`,
+          backgroundPosition: "60% 35%",
+          maskImage: "linear-gradient(to bottom, black 45%, transparent 100%)",
+          WebkitMaskImage: "linear-gradient(to bottom, black 45%, transparent 100%)",
+          opacity: 0.85,
+        }}
+      />
+      <div aria-hidden="true" className="absolute inset-x-0 top-0 h-[460px] pointer-events-none bg-[linear-gradient(90deg,hsl(var(--background)/0.75)_0%,hsl(var(--background)/0.2)_55%,transparent_80%)]" />
+
       {/* Header */}
-      <div className="pt-[calc(3rem+env(safe-area-inset-top))] px-5 pb-4 flex items-center gap-3 shrink-0">
+      <div className="relative z-10 pt-[calc(1rem+env(safe-area-inset-top))] px-5 pb-3 flex items-start gap-3 shrink-0">
         <button
           onClick={() => (step > 0 && !(step === 1 && preContext && preDate)) ? setStep(s => s - 1) : navigate(-1)}
-          className="p-2 -ml-2 rounded-full hover:bg-white/5 transition-colors"
+          aria-label="Retour"
+          className="mt-1 w-10 h-10 shrink-0 flex items-center justify-center rounded-full border border-white/[0.12] bg-black/40 backdrop-blur-md"
         >
-          <ArrowLeft className="w-5 h-5 text-foreground/60" />
+          <ArrowLeft className="w-5 h-5 text-foreground/85" />
         </button>
-        <div className="flex-1">
-          <p className="text-[11px] font-sans font-semibold tracking-[0.14em] uppercase text-pick-purple-light">
-            Nouvelle soirée
+        <div className="flex-1 pt-14">
+          <h1 className="font-serif text-[34px] leading-[1.02] text-white [text-shadow:0_2px_16px_rgba(0,0,0,0.6)]">
+            {step === 2 ? <>C&apos;est <span className="text-pick-purple-light">parti !</span></> : <>Crée ta <span className="text-pick-purple-light">soirée.</span></>}
+          </h1>
+          <p className="mt-1 text-[13px] font-sans text-foreground/75 [text-shadow:0_1px_8px_rgba(0,0,0,0.6)]">
+            Étape {step + 1} sur 3 · {STEPS[step]}
           </p>
-          <h1 className="font-serif text-[20px] text-foreground leading-tight">{STEPS[step]}</h1>
         </div>
         {/* Indicateur de progression */}
-        <div className="flex gap-1.5">
+        <div className="mt-4 flex gap-1.5">
           {STEPS.map((_, i) => (
             <div key={i} className={`h-1.5 rounded-full transition-all ${i === step ? "w-5 bg-primary" : i < step ? "w-1.5 bg-primary/40" : "w-1.5 bg-foreground/15"}`} />
           ))}
@@ -326,7 +397,18 @@ const CreateEventPage = () => {
       </div>
 
       {/* Contenu */}
-      <div className="flex-1 overflow-y-auto scrollbar-hide pb-[calc(6rem+env(safe-area-inset-bottom))]">
+      <div className="relative z-10 flex-1 overflow-y-auto scrollbar-hide pb-[calc(9rem+env(safe-area-inset-bottom))]">
+        {step < 2 && (
+          <div className="px-5 pt-2 pb-5">
+            <BilletSoiree
+              context={context}
+              titre={title}
+              date={date}
+              heure={time}
+              lieu={isRemote ? "À distance" : (location.trim() || "Lieu à préciser")}
+            />
+          </div>
+        )}
         <AnimatePresence mode="wait">
 
           {/* ── Step 0 : La soirée ── */}
@@ -335,7 +417,7 @@ const CreateEventPage = () => {
 
               {/* Contexte */}
               <div className="flex flex-col gap-2">
-                <label className="text-[11px] font-sans font-semibold tracking-[0.14em] uppercase text-pick-text-secondary">Pour qui ?</label>
+                <label className={TITRE_SECTION}>Pour qui ?</label>
                 <div className="flex gap-2">
                   {(Object.entries(CONTEXT_CONFIG) as [EventContext, typeof CONTEXT_CONFIG["duo"]][]).map(([key, cfg]) => (
                     <button
@@ -359,7 +441,7 @@ const CreateEventPage = () => {
               {/* Sélection du duo */}
               {context === "duo" && (
                 <div className="flex flex-col gap-2">
-                  <label className="text-[11px] font-sans font-semibold tracking-[0.14em] uppercase text-pick-text-secondary">Avec qui ?</label>
+                  <label className={TITRE_SECTION}>Avec qui ?</label>
                   {!duosLoaded ? (
                     <div className="flex items-center justify-center py-4">
                       <Loader2 className="w-5 h-5 animate-spin text-foreground/45" />
@@ -412,7 +494,7 @@ const CreateEventPage = () => {
               {/* Sélection des participants groupe */}
               {(context === "famille" || context === "amis") && (
                 <div className="flex flex-col gap-2">
-                  <label className="text-[11px] font-sans font-semibold tracking-[0.14em] uppercase text-pick-text-secondary">Qui invite-t-on ?</label>
+                  <label className={TITRE_SECTION}>Qui invite-t-on ?</label>
                   {groupFriends.length === 0 ? (
                     <p className="text-sm text-foreground/40 font-sans py-2">Aucun ami pour l'instant — commence par en ajouter.</p>
                   ) : (
@@ -441,7 +523,7 @@ const CreateEventPage = () => {
 
               {/* Titre */}
               <div className="flex flex-col gap-2">
-                <label className="text-[11px] font-sans font-semibold tracking-[0.14em] uppercase text-pick-text-secondary">Titre</label>
+                <label className={TITRE_SECTION}>Nom de la soirée</label>
                 <input
                   type="text"
                   value={title}
@@ -452,32 +534,62 @@ const CreateEventPage = () => {
                 />
               </div>
 
-              {/* Date + Heure */}
-              <div className="flex gap-3">
-                <div className="flex flex-col gap-2 flex-1">
-                  <label className="text-[11px] font-sans font-semibold tracking-[0.14em] uppercase text-pick-text-secondary">Date *</label>
+              {/* Date : pastilles des prochains jours, ou le calendrier. */}
+              <div className="flex flex-col gap-2.5">
+                <label className={TITRE_SECTION}>Quand ?</label>
+                <div className="flex flex-wrap gap-2">
+                  {prochainsJours(5).map(j => (
+                    <button key={j.valeur} type="button" onClick={() => { setDate(j.valeur); setAutreDate(false); }}
+                      className={`${PASTILLE} ${date === j.valeur && !autreDate ? PASTILLE_ACTIVE : PASTILLE_REPOS}`}>
+                      {j.libelle}
+                    </button>
+                  ))}
+                  <button type="button" onClick={() => setAutreDate(true)}
+                    className={`${PASTILLE} gap-1.5 ${autreDate ? PASTILLE_ACTIVE : PASTILLE_REPOS}`}>
+                    <CalendarDays className="w-4 h-4" aria-hidden="true" /> Autre
+                  </button>
+                </div>
+                {autreDate && (
                   <input
                     type="date"
                     value={date}
                     onChange={e => setDate(e.target.value)}
                     min={new Date().toISOString().split("T")[0]}
-                    className="bg-pick-surface/90 border border-pick-border rounded-pick-md px-4 py-3 text-[14px] font-sans text-foreground outline-none focus:border-pick-border-active transition-colors duration-180 ease-pick [color-scheme:dark]"
+                    aria-label="Date de la soirée"
+                    className="bg-white/[0.04] border border-pick-border rounded-pick-md px-4 py-3 text-[14px] font-sans text-foreground outline-none focus:border-pick-border-active transition-colors duration-180 ease-pick [color-scheme:dark]"
                   />
+                )}
+              </div>
+
+              {/* Heure : 20:30 par défaut. */}
+              <div className="flex flex-col gap-2.5">
+                <label className={TITRE_SECTION}>À quelle heure ?</label>
+                <div className="flex flex-wrap gap-2">
+                  {HEURES.map(h => (
+                    <button key={h} type="button" onClick={() => { setTime(h); setAutreHeure(false); }}
+                      className={`${PASTILLE} tabular-nums ${time === h && !autreHeure ? PASTILLE_ACTIVE : PASTILLE_REPOS}`}>
+                      {h}
+                    </button>
+                  ))}
+                  <button type="button" onClick={() => setAutreHeure(true)}
+                    className={`${PASTILLE} gap-1.5 ${autreHeure ? PASTILLE_ACTIVE : PASTILLE_REPOS}`}>
+                    <Clock className="w-4 h-4" aria-hidden="true" /> Autre
+                  </button>
                 </div>
-                <div className="flex flex-col gap-2 w-28">
-                  <label className="text-[11px] font-sans font-semibold tracking-[0.14em] uppercase text-pick-text-secondary">Heure</label>
+                {autreHeure && (
                   <input
                     type="time"
                     value={time}
                     onChange={e => setTime(e.target.value)}
-                    className="bg-pick-surface/90 border border-pick-border rounded-pick-md px-4 py-3 text-[14px] font-sans text-foreground outline-none focus:border-pick-border-active transition-colors duration-180 ease-pick [color-scheme:dark]"
+                    aria-label="Heure de la soirée"
+                    className="w-36 bg-white/[0.04] border border-pick-border rounded-pick-md px-4 py-3 text-[14px] font-sans text-foreground outline-none focus:border-pick-border-active transition-colors duration-180 ease-pick [color-scheme:dark]"
                   />
-                </div>
+                )}
               </div>
 
               {/* Lieu / À distance */}
               <div className="flex flex-col gap-2">
-                <label className="text-[11px] font-sans font-semibold tracking-[0.14em] uppercase text-pick-text-secondary">Où ?</label>
+                <label className={TITRE_SECTION}>Où ?</label>
                 <div className="flex gap-2 p-1 rounded-pick-lg bg-pick-surface/90 border border-pick-border">
                   <button
                     onClick={() => setIsRemote(false)}
@@ -519,11 +631,11 @@ const CreateEventPage = () => {
 
               {/* Mode surprise / vote */}
               <div className="flex flex-col gap-2">
-                <label className="text-[11px] font-sans font-semibold tracking-[0.14em] uppercase text-pick-text-secondary">Mode</label>
+                <label className={TITRE_SECTION}>Mode</label>
                 <div className="flex gap-3">
                   {([
-                    { id: "surprise" as RevealMode, label: "Révélation avant",      desc: "Tu lances le film quand tu veux, avant la soirée",     emoji: "🎩" },
-                    { id: "timed"    as RevealMode, label: "Surprise sur le moment", desc: "Révélation automatique à l'heure de la soirée",          emoji: "⏰" },
+                    { id: "surprise" as RevealMode, label: "Révélation avant",      desc: "Tu lances le film quand tu veux, avant la soirée",     Icone: WandSparkles },
+                    { id: "timed"    as RevealMode, label: "Surprise sur le moment", desc: "Révélation automatique à l'heure de la soirée",          Icone: Clock },
                   ]).map(opt => (
                     <button
                       key={opt.id}
@@ -531,7 +643,7 @@ const CreateEventPage = () => {
                       className={`relative flex-1 flex flex-col gap-2 p-4 rounded-pick-lg border text-left transition-all duration-180 ease-pick overflow-hidden ${revealMode === opt.id ? "border-pick-border-active text-foreground shadow-pick-active" : "border-pick-border bg-pick-surface/90 text-pick-text-secondary"}`}
                     >
                       {revealMode === opt.id && <div className="absolute inset-0" style={{ background: TAB_ACTIVE }} />}
-                      <span className="relative text-2xl">{opt.emoji}</span>
+                      <span className={`relative w-10 h-10 rounded-full flex items-center justify-center ${revealMode === opt.id ? "bg-primary/30 text-white" : "bg-white/[0.05] text-pick-purple-light"}`}><opt.Icone className="w-5 h-5" aria-hidden="true" /></span>
                       <div className="relative">
                         <p className="font-sans font-semibold text-[13px]">{opt.label}</p>
                         <p className="text-[11px] text-foreground/50 mt-0.5 leading-snug">{opt.desc}</p>
@@ -543,7 +655,7 @@ const CreateEventPage = () => {
 
               {/* Type de média */}
               <div className="flex flex-col gap-2">
-                <label className="text-[11px] font-sans font-semibold tracking-[0.14em] uppercase text-pick-text-secondary">Type de contenu</label>
+                <label className={TITRE_SECTION}>Type de contenu</label>
                 <div className="flex gap-1 p-1 rounded-pick-lg bg-pick-surface/90 border border-pick-border">
                   {([
                     { id: "movie" as MediaType, label: "Film",   Icon: Film },
@@ -563,25 +675,37 @@ const CreateEventPage = () => {
                 </div>
               </div>
 
-              {/* Mood libre */}
+              {/* Mood libre, avec quelques idées à toucher */}
               <div className="flex flex-col gap-2">
-                <label className="text-[11px] font-sans font-semibold tracking-[0.14em] uppercase text-pick-text-secondary">
+                <label className={TITRE_SECTION}>
                   Ambiance <span className="normal-case font-normal text-foreground/45">(optionnel)</span>
                 </label>
                 <textarea
                   value={mood}
                   onChange={e => setMood(e.target.value)}
                   placeholder="Un film d'action plutôt drôle, quelque chose de court, ambiance feel-good…"
-                  rows={3}
+                  rows={2}
                   className="bg-pick-surface/90 border border-pick-border rounded-pick-md px-4 py-3 text-[14px] font-sans text-foreground placeholder:text-pick-text-muted outline-none focus:border-pick-border-active transition-colors resize-none"
                 />
+                <div className="flex flex-wrap gap-2">
+                  {["Feel good", "Frissons", "À pleurer", "Grand spectacle", "Court", "Culte"].map(idee => {
+                    const pris = mood.toLowerCase().includes(idee.toLowerCase());
+                    return (
+                      <button key={idee} type="button"
+                        onClick={() => setMood(m => pris ? m : (m.trim() ? `${m.trim()}, ${idee.toLowerCase()}` : idee))}
+                        className={`${PASTILLE} h-8 px-3 text-[12px] ${pris ? PASTILLE_ACTIVE : PASTILLE_REPOS}`}>
+                        {idee}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
             </motion.div>
           )}
 
           {/* ── Step 2 : C'est parti ── */}
           {step === 2 && (
-            <motion.div key="step2" initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }} className="px-5 pt-4 flex flex-col gap-5">
+            <motion.div key="step2" initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }} className="px-5 pt-6 flex flex-col gap-4">
 
               {creating ? (
                 <div className="flex flex-col items-center gap-4 py-12">
@@ -591,71 +715,46 @@ const CreateEventPage = () => {
                 </div>
               ) : (
                 <>
-                  {/* Succès */}
-                  <div className="flex flex-col items-center gap-2 pt-4 text-center">
-                    <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                      className="w-16 h-16 rounded-full bg-primary/20 border border-primary/40 flex items-center justify-center mb-1"
-                    >
-                      <Sparkles className="w-7 h-7 text-primary" />
-                    </motion.div>
-                    <h2 className="font-serif text-[22px] text-foreground">{title}</h2>
-                    <p className="text-foreground/45 text-sm font-sans">
-                      {new Date(date + "T12:00:00").toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })}
-                      {time ? ` · ${time.slice(0, 5)}` : ""}
-                      {" · "}{isRemote ? "À distance" : (location || "Lieu à confirmer")}
-                    </p>
-                  </div>
+                  {/* Le billet terminé : l'objet à partager. */}
+                  <motion.div initial={{ y: 16, opacity: 0, rotate: -2 }} animate={{ y: 0, opacity: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 180, damping: 16 }}>
+                    <BilletSoiree
+                      grand
+                      context={context}
+                      titre={title}
+                      date={date}
+                      heure={time}
+                      lieu={isRemote ? "À distance" : (location.trim() || "Lieu à préciser")}
+                    />
+                  </motion.div>
 
-                  {/* Lien d'invitation */}
-                  <div className="flex flex-col gap-2">
-                    <p className="text-[11px] font-sans font-semibold tracking-[0.14em] uppercase text-pick-text-secondary">Lien d'invitation</p>
-                    <div className="flex items-center gap-2 bg-pick-surface/90 border border-pick-border rounded-pick-md px-4 py-3">
-                      <p className="flex-1 text-[12px] font-sans text-foreground/60 truncate">{inviteLink}</p>
-                    </div>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={copyLink}
-                        className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-full border text-[14px] font-sans font-medium transition-all duration-180 ease-pick ${copied ? "border-pick-border-active bg-primary/10 text-pick-purple-light" : "border-pick-border-hover bg-pick-surface/90 text-foreground"}`}
-                      >
-                        {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                        {copied ? "Copié !" : "Copier"}
-                      </button>
-                      <button
-                        onClick={shareLink}
-                        className="flex-1 flex items-center justify-center gap-2 py-3 rounded-full bg-gradient-to-r from-primary to-accent text-primary-foreground text-[14px] font-sans font-semibold shadow-pick-active"
-                      >
-                        <Share2 className="w-4 h-4" />
-                        Partager
-                      </button>
-                    </div>
-                  </div>
+                  <p className="text-[13px] font-sans text-pick-text-secondary text-center leading-snug">
+                    {revealMode === "timed"
+                      ? "Le film sera révélé automatiquement à l'heure de la soirée."
+                      : "Tu lanceras la révélation du film quand tu veux, depuis la soirée."}
+                  </p>
 
-                  {/* Infos sur le mode */}
-                  <div className="rounded-pick-lg bg-pick-surface/90 border border-pick-border px-4 py-3.5 flex items-start gap-3">
-                    <span className="text-xl shrink-0 mt-0.5">{revealMode === "timed" ? "⏰" : "🎩"}</span>
-                    <div>
-                      <p className="text-[12.5px] font-sans font-semibold text-foreground/80">
-                        {revealMode === "timed" ? "Surprise sur le moment" : "Révélation avant"}
-                      </p>
-                      <p className="text-[12px] text-pick-text-secondary font-sans mt-0.5 leading-snug">
-                        {revealMode === "timed"
-                          ? "Le film sera révélé automatiquement à l'heure de la soirée."
-                          : "Tu pourras lancer la révélation quand tu le souhaites depuis la fiche soirée."}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* CTA vers la gestion */}
+                  {/* Inviter : la seule action lumineuse de l'écran. */}
                   <button
-                    onClick={() => navigate("/app/soirees")}
-                    className="w-full flex items-center justify-between px-4 py-3.5 rounded-pick-lg bg-pick-surface/90 border border-pick-border text-left"
+                    onClick={shareLink}
+                    className="w-full h-[58px] flex items-center justify-center gap-2.5 rounded-full border-[1.5px] border-pick-purple-light/80 bg-[linear-gradient(180deg,#3a2470,#1c1040)] text-white font-sans font-semibold text-[17px] shadow-[0_0_0_4px_rgba(139,92,246,0.14),0_0_34px_rgba(168,85,247,0.55)] active:scale-[0.98] transition-transform duration-120 ease-pick"
                   >
-                    <div>
-                      <p className="text-[13px] font-sans font-semibold text-foreground">Gérer la soirée</p>
-                      <p className="text-[11px] text-foreground/45 mt-0.5">Participants, votes, révélation</p>
-                    </div>
-                    <ChevronRight className="w-4 h-4 text-foreground/45 shrink-0" />
+                    <Share2 className="w-5 h-5" aria-hidden="true" /> Inviter sur WhatsApp
                   </button>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={copyLink}
+                      className={`flex-1 flex items-center justify-center gap-2 h-11 rounded-full border text-[14px] font-sans font-medium transition-all duration-180 ease-pick ${copied ? "border-pick-border-active bg-primary/10 text-pick-purple-light" : "border-white/[0.10] bg-white/[0.04] text-foreground/85"}`}
+                    >
+                      {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                      {copied ? "Lien copié" : "Copier le lien"}
+                    </button>
+                    <button
+                      onClick={() => navigate(eventId ? `/app/soirees/${eventId}` : "/app/soirees")}
+                      className="flex-1 flex items-center justify-center gap-1.5 h-11 rounded-full border border-white/[0.10] bg-white/[0.04] text-[14px] font-sans font-medium text-foreground/85"
+                    >
+                      Voir la soirée <ChevronRight className="w-4 h-4" aria-hidden="true" />
+                    </button>
+                  </div>
                 </>
               )}
             </motion.div>
@@ -665,21 +764,25 @@ const CreateEventPage = () => {
       </div>
 
       {/* Footer CTA */}
-      <div className="absolute bottom-0 inset-x-0 pb-[calc(5.5rem+env(safe-area-inset-bottom))] px-5 pt-6 bg-gradient-to-t from-background via-background/95 to-transparent">
+      <div className="absolute z-20 bottom-0 inset-x-0 pb-[calc(5.5rem+env(safe-area-inset-bottom))] px-5 pt-6 bg-gradient-to-t from-background via-background/95 to-transparent">
         {step === 0 && (
           <button
             onClick={() => setStep(1)}
             disabled={!step1Valid}
-            className="w-full py-3.5 rounded-full bg-gradient-to-r from-primary to-accent text-primary-foreground font-sans font-semibold text-[15px] flex items-center justify-center gap-2 shadow-pick-cta active:scale-[0.97] transition-transform duration-120 ease-pick disabled:shadow-none disabled:opacity-40 transition-opacity"
+            className="w-full h-[56px] rounded-full border-[1.5px] border-pick-purple-light/80 bg-[linear-gradient(180deg,#3a2470,#1c1040)] text-white font-sans font-semibold text-[16px] flex items-center justify-center gap-2 shadow-[0_0_0_4px_rgba(139,92,246,0.14),0_0_30px_rgba(168,85,247,0.5)] active:scale-[0.97] transition-transform duration-120 ease-pick disabled:opacity-60 disabled:shadow-none disabled:border-white/15 disabled:bg-white/[0.06]"
           >
-            Continuer <ArrowRight className="w-4 h-4" />
+            {step1Valid
+              ? <>Continuer <ArrowRight className="w-4 h-4" /></>
+              : !context ? "Choisis pour qui"
+              : !date ? "Choisis une date"
+              : "Choisis ton duo"}
           </button>
         )}
         {step === 1 && (
           <button
             onClick={createEvent}
             disabled={creating}
-            className="w-full py-3.5 rounded-full bg-gradient-to-r from-primary to-accent text-primary-foreground font-sans font-semibold text-[15px] flex items-center justify-center gap-2 shadow-pick-cta active:scale-[0.97] transition-transform duration-120 ease-pick disabled:shadow-none"
+            className="w-full h-[56px] rounded-full border-[1.5px] border-pick-purple-light/80 bg-[linear-gradient(180deg,#3a2470,#1c1040)] text-white font-sans font-semibold text-[16px] flex items-center justify-center gap-2 shadow-[0_0_0_4px_rgba(139,92,246,0.14),0_0_30px_rgba(168,85,247,0.5)] active:scale-[0.97] transition-transform duration-120 ease-pick disabled:opacity-70"
           >
             {creating ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Sparkles className="w-4 h-4" /> Créer la soirée</>}
           </button>
