@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import DerniereNotification from "./DerniereNotification";
 import { avatarAffiche } from "@/lib/avatars";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -2521,7 +2522,7 @@ const HomeScreen = ({
       {/* L'accueil tient sur un écran : pas de défilement (sauf écrans très courts). */}
       <div className="relative z-10 h-full overflow-hidden [@media(max-height:780px)]:overflow-y-auto scrollbar-hide overscroll-y-contain pb-[calc(5.25rem+env(safe-area-inset-bottom))]">
         {/* ─── Hero ─── */}
-        <section className="relative pt-[calc(9.375rem+env(safe-area-inset-top))] [@media(max-height:800px)]:pt-[calc(9.125rem+env(safe-area-inset-top))] [@media(min-height:860px)]:pt-[calc(9.5rem+env(safe-area-inset-top))] pb-1 px-5 md:px-8">
+        <section className="relative pt-[calc(10rem+env(safe-area-inset-top))] [@media(max-height:800px)]:pt-[calc(9.5rem+env(safe-area-inset-top))] [@media(min-height:860px)]:pt-[calc(10.5rem+env(safe-area-inset-top))] pb-1 px-5 md:px-8">
           <motion.div
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
@@ -2635,91 +2636,6 @@ const HomeScreen = ({
           </motion.button>
         </section>
 
-        {/* ─── Prochaine soirée (compact) ─── */}
-        {nextEvent && (() => {
-          // Vignette : l'affiche du film s'il est connu et visible, sinon
-          // l'illustration du type de soirée.
-          const debutSoiree = new Date(`${nextEvent.event_date}T${(nextEvent.event_time ?? "20:00").slice(0, 5)}:00`);
-          const heures = Math.round((debutSoiree.getTime() - Date.now()) / 3_600_000);
-          // Pas encore révélé : aucun film choisi, ou film surprise avant l'heure.
-          const surprise = !nextEvent.filmTitre || (nextEvent.revealMode === "surprise" && heures > 0);
-          const illustration = nextEvent.context === "duo" ? groupeDuo
-            : nextEvent.context === "famille" ? groupeFamille
-            : nextEvent.context === "amis" || nextEvent.context === "groupe" ? groupeAmis
-            : groupeSurprise;
-          const vignette = !surprise && nextEvent.filmAffiche ? getPosterUrl(nextEvent.filmAffiche, "w185") : null;
-          const delai = heures <= 0 ? "ce soir" : heures < 48 ? `dans ${heures} h` : `dans ${Math.round(heures / 24)} j`;
-          // Statut en tête de carte : « Ce soir », « Demain » ou « Dans N j ».
-          const jours = Math.round((new Date(nextEvent.event_date + "T12:00:00").getTime() - new Date(new Date().toDateString() + " 12:00").getTime()) / 86_400_000);
-          const statut = jours <= 0 ? "Ce soir" : jours === 1 ? "Demain" : `Dans ${jours} j`;
-          return (
-          <motion.button
-            type="button"
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.54, duration: 0.5 }}
-            whileTap={{ scale: 0.985 }}
-            onClick={() => navigate(`/app/soirees/${nextEvent.id}`)}
-            className={`mx-5 mt-2.5 [@media(min-height:860px)]:mt-4 w-[calc(100%-2.5rem)] block px-3.5 py-3 text-left ${CARTE_PICK}`}
-          >
-            <span className="flex items-center gap-2">
-              <CalendarDays className="w-[18px] h-[18px] text-pick-purple-light shrink-0" strokeWidth={1.8} aria-hidden="true" />
-              <span className="flex-1 font-serif text-[18px] text-foreground leading-none">Prochaine soirée</span>
-              {/* Micro-accent du statut : un point lumineux et l'échéance. */}
-              <span className="inline-flex items-center gap-1.5 h-6 px-2.5 rounded-full border border-pick-purple-light/45 bg-primary/15 text-[11px] font-sans font-semibold text-pick-purple-light">
-                <span className="w-1.5 h-1.5 rounded-full bg-pick-purple-light shadow-[0_0_6px_rgba(196,181,253,0.9)]" aria-hidden="true" />
-                {statut}
-              </span>
-              <ChevronRight className="w-4 h-4 text-pick-text-muted shrink-0" aria-hidden="true" />
-            </span>
-            <span className="mt-2.5 flex items-center gap-3">
-              <span className="relative shrink-0 w-[92px] h-[64px] max-[379px]:w-[68px] max-[379px]:h-[52px] rounded-pick-md overflow-hidden border border-pick-border-hover bg-[radial-gradient(circle_at_50%_40%,rgba(139,92,246,0.25),rgba(0,0,0,0.6))] flex items-center justify-center shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
-                {vignette
-                  ? <img src={vignette} alt="" className="w-full h-full object-cover" />
-                  : <img src={illustration} alt="" aria-hidden="true" className="w-12 h-12 max-[379px]:w-9 max-[379px]:h-9 object-contain" />}
-                {nextEvent.partnerAvatar && (
-                  <img src={nextEvent.partnerAvatar} alt="" className="absolute bottom-1 right-1 w-5 h-5 rounded-full object-cover border border-background" />
-                )}
-              </span>
-              <span className="flex-1 min-w-0">
-                {/* Le titre a sa propre ligne ; la date dessous. */}
-                <span className="block text-[16px] font-sans font-bold text-white leading-tight truncate">{nextEvent.title.split(" · ")[0]}</span>
-                <span className="mt-0.5 block text-[12px] font-sans text-pick-text-secondary leading-tight truncate capitalize">
-                  {new Date(nextEvent.event_date + "T12:00:00").toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })}
-                  {nextEvent.event_time ? ` · ${nextEvent.event_time.slice(0, 5)}` : ""}
-                </span>
-                <span className="mt-2 flex items-center gap-2.5">
-                  {nextEvent.affiniteDuo != null ? (
-                    <span className="flex-1 min-w-0">
-                      <span className="flex items-center gap-1.5 text-[14px] max-[379px]:text-[13px] font-sans text-foreground/90 leading-none whitespace-nowrap">
-                        <Heart className="w-3.5 h-3.5 fill-pick-purple-light text-pick-purple-light shrink-0" aria-hidden="true" />
-                        Affinité <span className="font-semibold tabular-nums">{nextEvent.affiniteDuo}&nbsp;%</span>
-                      </span>
-                      <span className="mt-2 block h-1.5 rounded-full bg-foreground/10 overflow-hidden">
-                        <span className="block h-full rounded-full bg-gradient-to-r from-primary to-pick-magenta" style={{ width: `${Math.min(100, nextEvent.affiniteDuo)}%` }} />
-                      </span>
-                    </span>
-                  ) : (
-                    <span className="flex-1 min-w-0 text-[12px] font-sans text-pick-text-secondary truncate">
-                      {nextEvent.partnerName && nextEvent.partnerName !== "?" ? `Avec ${nextEvent.partnerName}` : "Soirée ciné"}
-                    </span>
-                  )}
-                  {/* Le compte à rebours dans son propre petit cadre, bien séparé de l'affinité. */}
-                  <span className="flex items-center gap-1.5 shrink-0 px-2 py-1.5 rounded-pick-md border border-white/[0.08] bg-white/[0.04] whitespace-nowrap">
-                    <Clock className="w-4 h-4 max-[379px]:hidden text-pick-purple-light shrink-0" strokeWidth={1.8} aria-hidden="true" />
-                    <span className="text-[12px] font-sans leading-tight text-pick-text-secondary min-w-0">
-                      {surprise
-                        ? <>Film révélé<br /><span className="font-semibold text-foreground">{delai}</span></>
-                        : <>Film choisi<br /><span className="block max-w-[9rem] font-semibold text-foreground truncate">{nextEvent.filmTitre}</span></>}
-                    </span>
-                  </span>
-                </span>
-              </span>
-            </span>
-          </motion.button>
-          );
-        })()}
-
         {/* ─── Carte post-soirée persistante ─── */}
         {pendingFeedbackEvent && !showPostSoiree && (
           <motion.button
@@ -2752,7 +2668,7 @@ const HomeScreen = ({
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.62, duration: 0.45 }}
-          className="mt-3 [@media(max-height:800px)]:mt-2 [@media(min-height:860px)]:mt-4"
+          className="mt-5 [@media(max-height:800px)]:mt-3 [@media(min-height:860px)]:mt-7"
         >
           <div className="px-5 flex items-center justify-between mb-2">
             <div className="pl-2 min-w-0">
@@ -2822,6 +2738,71 @@ const HomeScreen = ({
             ))}
           </div>
         </motion.div>
+
+        {/* ─── Sous les Picks : la prochaine soirée en une rangée, ou à défaut
+            la dernière notification reçue. ─── */}
+        {nextEvent ? (() => {
+          const debutSoiree = new Date(`${nextEvent.event_date}T${(nextEvent.event_time ?? "20:00").slice(0, 5)}:00`);
+          const heures = Math.round((debutSoiree.getTime() - Date.now()) / 3_600_000);
+          // Pas encore révélé : aucun film choisi, ou film surprise avant l'heure.
+          const surprise = !nextEvent.filmTitre || (nextEvent.revealMode === "surprise" && heures > 0);
+          const illustration = nextEvent.context === "duo" ? groupeDuo
+            : nextEvent.context === "famille" ? groupeFamille
+            : nextEvent.context === "amis" || nextEvent.context === "groupe" ? groupeAmis
+            : groupeSurprise;
+          const vignette = !surprise && nextEvent.filmAffiche ? getPosterUrl(nextEvent.filmAffiche, "w185") : null;
+          const delai = heures <= 0 ? "ce soir" : heures < 48 ? `dans ${heures} h` : `dans ${Math.round(heures / 24)} j`;
+          const jours = Math.round((new Date(nextEvent.event_date + "T12:00:00").getTime() - new Date(new Date().toDateString() + " 12:00").getTime()) / 86_400_000);
+          const statut = jours <= 0 ? "Ce soir" : jours === 1 ? "Demain" : `Dans ${jours} j`;
+          return (
+          <motion.button
+            type="button"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.7, duration: 0.45 }}
+            whileTap={{ scale: 0.985 }}
+            onClick={() => navigate(`/app/soirees/${nextEvent.id}`)}
+            className={`mx-5 mt-3 [@media(min-height:860px)]:mt-4 w-[calc(100%-2.5rem)] flex items-center gap-3 px-3 py-2.5 text-left ${CARTE_PICK}`}
+            aria-label={`Prochaine soirée : ${nextEvent.title}`}
+          >
+            <span className="relative shrink-0 w-12 h-12 rounded-pick-md overflow-hidden border border-pick-border-hover bg-[radial-gradient(circle_at_50%_40%,rgba(139,92,246,0.25),rgba(0,0,0,0.6))] flex items-center justify-center">
+              {vignette
+                ? <img src={vignette} alt="" className="w-full h-full object-cover" />
+                : <img src={illustration} alt="" aria-hidden="true" className="w-8 h-8 object-contain" />}
+              {nextEvent.partnerAvatar && (
+                <img src={nextEvent.partnerAvatar} alt="" className="absolute bottom-0.5 right-0.5 w-4 h-4 rounded-full object-cover border border-background" />
+              )}
+            </span>
+            <span className="flex-1 min-w-0">
+              <span className="flex items-center gap-1.5 min-w-0">
+                <span className="text-[14px] font-sans font-bold text-white leading-tight truncate">{nextEvent.title.split(" · ")[0]}</span>
+                <span className="shrink-0 inline-flex items-center gap-1 h-5 px-2 rounded-full border border-pick-purple-light/45 bg-primary/15 text-[11px] font-sans font-semibold text-pick-purple-light">
+                  <span className="w-1.5 h-1.5 rounded-full bg-pick-purple-light shadow-[0_0_6px_rgba(196,181,253,0.9)]" aria-hidden="true" />
+                  {statut}
+                </span>
+              </span>
+              <span className="mt-0.5 flex items-center gap-1.5 text-[12px] font-sans text-pick-text-secondary leading-tight min-w-0">
+                {nextEvent.event_time && <span className="shrink-0 tabular-nums">{nextEvent.event_time.slice(0, 5)}</span>}
+                {nextEvent.affiniteDuo != null ? (
+                  <span className="shrink-0 inline-flex items-center gap-1">
+                    <span aria-hidden="true">·</span>
+                    <Heart className="w-3 h-3 fill-pick-purple-light text-pick-purple-light" aria-hidden="true" />
+                    <span className="tabular-nums text-foreground/85">{nextEvent.affiniteDuo}&nbsp;%</span>
+                  </span>
+                ) : nextEvent.partnerName && nextEvent.partnerName !== "?" ? (
+                  <span className="truncate">· avec {nextEvent.partnerName}</span>
+                ) : null}
+                <span className="truncate">
+                  · {surprise ? <><span className="max-[379px]:hidden">film </span>révélé <span className="text-foreground/85 font-semibold">{delai}</span></> : <span className="text-foreground/85 font-semibold">{nextEvent.filmTitre}</span>}
+                </span>
+              </span>
+            </span>
+            <ChevronRight className="w-4 h-4 text-pick-text-muted shrink-0" aria-hidden="true" />
+          </motion.button>
+          );
+        })() : (
+          <DerniereNotification className={CARTE_PICK} />
+        )}
 
         <DiscoverySection
           onMovieSelect={onMovieSelect}
