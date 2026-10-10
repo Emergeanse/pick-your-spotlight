@@ -147,6 +147,7 @@ const MOOD_CONFIGS: Record<AmbianceMood, MoodConfig> = {
 
 type QuickReco = { id: number; title: string; poster_path: string | null; vote_average?: number; media_type?: string; detail?: MovieDetail; matchData?: RecommendationMatch; recommendedBy?: string };
 const QUICK_RECO_KEY = "pick_last_reco_v2";
+const EXPLICATION_ADHESION_KEY = "pys_explication_adhesion";
 
 /**
  * Base commune des cartes de l'accueil (docs/DESIGN_SYSTEM.md, § Cartes) :
@@ -983,6 +984,18 @@ const HomeScreen = ({
   // sur sa fiche) ; à défaut (tendances, films conseillés), un conseil calculé
   // une fois puis gardé.
   const [adhesionsPicks, setAdhesionsPicks] = useState<Record<string, number>>({});
+  // Les premières visites (5), une ligne explique ce que sont les pourcentages ;
+  // elle s'efface pour de bon dès qu'on a touché un Pick.
+  const [explicationAdhesion, setExplicationAdhesion] = useState(() => {
+    try { return Number(localStorage.getItem(EXPLICATION_ADHESION_KEY) || 0) < 5; } catch { return false; }
+  });
+  useEffect(() => {
+    try { localStorage.setItem(EXPLICATION_ADHESION_KEY, String(Number(localStorage.getItem(EXPLICATION_ADHESION_KEY) || 0) + 1)); } catch { /* stockage indisponible */ }
+  }, []);
+  const explicationComprise = () => {
+    setExplicationAdhesion(false);
+    try { localStorage.setItem(EXPLICATION_ADHESION_KEY, "99"); } catch { /* stockage indisponible */ }
+  };
   useEffect(() => {
     if (!user?.id) return;
     const mediaDe = (q: QuickReco): "movie" | "tv" => (q.media_type === "tv" ? "tv" : "movie");
@@ -2562,7 +2575,7 @@ const HomeScreen = ({
           <span className="flex-1 min-w-0 flex flex-col gap-0.5 leading-tight">
             <span className="text-[14px] font-sans font-semibold text-white truncate">ADN cinéma</span>
             {interactionCount > 0 && (
-              <span className="text-[11px] font-sans font-medium text-foreground/70 tabular-nums tracking-tight truncate">
+              <span className="text-[12px] font-sans font-medium text-foreground/80 tabular-nums tracking-tight truncate">
                 {interactionCount.toLocaleString("fr-FR")} choix<span className="max-[429px]:hidden"> analysés</span>
               </span>
             )}
@@ -2727,7 +2740,7 @@ const HomeScreen = ({
                 <img src={glandPick} alt="" aria-hidden="true" className="w-[20px] h-auto drop-shadow-[0_1px_6px_rgba(229,194,107,0.35)]" />
                 Picks du moment
               </h2>
-              <p className="pl-7 text-[11px] font-sans italic text-pick-text-secondary leading-tight">Pour toi, aujourd&apos;hui</p>
+              <p className="pl-7 text-[12px] font-sans italic text-foreground/75 leading-tight">Pour toi, aujourd&apos;hui</p>
             </div>
             <button
               onClick={() => setShowFindChoice(true)}
@@ -2744,6 +2757,7 @@ const HomeScreen = ({
                 whileTap={{ scale: 0.95 }}
                 disabled={loadingMovieId !== null}
                 onClick={async () => {
+                  explicationComprise();
                   if (!item?.id) { setShowFindChoice(true); return; }
                   const list = quickRecos.length > 0 ? quickRecos.slice(0, 3) : trendingFallback.slice(0, 3);
                   await openHomeBrowseAt(list, i);
@@ -2789,6 +2803,11 @@ const HomeScreen = ({
               </motion.button>
             ))}
           </div>
+          {explicationAdhesion && Object.keys(adhesionsPicks).length + quickRecos.filter((q) => getRecommendationScore(q.matchData) != null).length > 0 && (
+            <p className="mt-1.5 px-5 text-center text-[11px] font-sans italic text-foreground/65 leading-snug truncate">
+              % = ce que tu devrais aimer, d&apos;après ton ADN cinéma
+            </p>
+          )}
         </motion.div>
 
         {/* ─── Sous les Picks : la prochaine soirée en une rangée, ou à défaut
@@ -2803,8 +2822,10 @@ const HomeScreen = ({
             : nextEvent.context === "amis" || nextEvent.context === "groupe" ? groupeAmis
             : groupeSurprise;
           const vignette = !surprise && nextEvent.filmAffiche ? getPosterUrl(nextEvent.filmAffiche, "w185") : null;
-          const delai = heures <= 0 ? "ce soir" : heures < 48 ? `dans ${heures} h` : `dans ${Math.round(heures / 24)} j`;
           const jours = Math.round((new Date(nextEvent.event_date + "T12:00:00").getTime() - new Date(new Date().toDateString() + " 12:00").getTime()) / 86_400_000);
+          // Le badge porte déjà le jour (« Dans 8 j ») : la ligne ne redonne pas
+          // un second décompte, qui pouvait différer d'un jour selon l'heure.
+          const revelation = jours >= 1 ? null : heures > 0 ? `dans ${heures} h` : "ce soir";
           const statut = jours <= 0 ? "Ce soir" : jours === 1 ? "Demain" : `Dans ${jours} j`;
           return (
           <motion.button
@@ -2833,19 +2854,23 @@ const HomeScreen = ({
                   {statut}
                 </span>
               </span>
-              <span className="mt-0.5 flex items-center gap-1.5 text-[12px] font-sans text-pick-text-secondary leading-tight min-w-0">
+              <span className="mt-0.5 flex items-center gap-1.5 text-[12px] font-sans text-foreground/75 leading-tight min-w-0">
                 {nextEvent.event_time && <span className="shrink-0 tabular-nums">{nextEvent.event_time.slice(0, 5)}</span>}
                 {nextEvent.affiniteDuo != null ? (
                   <span className="shrink-0 inline-flex items-center gap-1">
                     <span aria-hidden="true">·</span>
                     <Heart className="w-3 h-3 fill-pick-purple-light text-pick-purple-light" aria-hidden="true" />
-                    <span className="tabular-nums text-foreground/85">{nextEvent.affiniteDuo}&nbsp;%</span>
+                    <span className="tabular-nums text-foreground/90">{nextEvent.affiniteDuo}&nbsp;%<span className="max-[379px]:hidden"> d&apos;affinité</span></span>
                   </span>
                 ) : nextEvent.partnerName && nextEvent.partnerName !== "?" ? (
                   <span className="truncate">· avec {nextEvent.partnerName}</span>
                 ) : null}
                 <span className="truncate">
-                  · {surprise ? <><span className="max-[379px]:hidden">film </span>révélé <span className="text-foreground/85 font-semibold">{delai}</span></> : <span className="text-foreground/85 font-semibold">{nextEvent.filmTitre}</span>}
+                  · {surprise
+                    ? revelation
+                      ? <><span className="max-[429px]:hidden">film </span>révélé <span className="text-foreground/90 font-semibold">{revelation}</span></>
+                      : <>film <span className="text-foreground/90 font-semibold">surprise</span></>
+                    : <span className="text-foreground/90 font-semibold">{nextEvent.filmTitre}</span>}
                 </span>
               </span>
             </span>
