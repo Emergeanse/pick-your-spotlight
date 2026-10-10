@@ -30,6 +30,7 @@ import {
   RECOMMENDATION_BATCH_SIZE,
   type RecommendationMovieDetail,
 } from "@/lib/recommendation-batch";
+import { evaluerAdhesion } from "@/lib/adhesion";
 import { resolveEffectiveExclusions, diagnoseNoResults } from "@/lib/recommendation-pipeline";
 import { isOffline, OFFLINE_MESSAGE } from "@/lib/connectivity";
 import { getEngagementData, getProgressionMessage, type EngagementData } from "@/lib/engagement";
@@ -146,6 +147,15 @@ const MOOD_CONFIGS: Record<AmbianceMood, MoodConfig> = {
 
 type QuickReco = { id: number; title: string; poster_path: string | null; vote_average?: number; media_type?: string; detail?: MovieDetail; matchData?: RecommendationMatch; recommendedBy?: string };
 const QUICK_RECO_KEY = "pick_last_reco_v2";
+// Adhésion des Picks du moment qui n'en ont pas (tendances, films conseillés) :
+// calculée une fois par film et par jour, gardée dans le téléphone.
+const ADHESION_PICKS_KEY = "pys_adhesion_picks";
+function lireAdhesionsPicks(): Record<string, number> {
+  try {
+    const brut = JSON.parse(localStorage.getItem(ADHESION_PICKS_KEY) || "{}") as { jour?: string; scores?: Record<string, number> };
+    return brut.jour === new Date().toDateString() ? brut.scores ?? {} : {};
+  } catch { return {}; }
+}
 
 /**
  * Base commune des cartes de l'accueil (docs/DESIGN_SYSTEM.md, § Cartes) :
@@ -957,6 +967,36 @@ const HomeScreen = ({
       setQuickRecos(toSave);
     } catch {}
   }, [chatMoviesPool, movieMatchData]);
+
+  const picksAffiches = useMemo(
+    () => (quickRecos.length > 0 ? quickRecos.slice(0, 3) : trendingFallback.slice(0, 3)),
+    [quickRecos, trendingFallback],
+  );
+  const [adhesionsPicks, setAdhesionsPicks] = useState<Record<string, number>>(lireAdhesionsPicks);
+  useEffect(() => {
+    if (!user?.id) return;
+    const manquants = picksAffiches.filter((q) => q?.id && getRecommendationScore(q.matchData) == null && adhesionsPicks[q.id] == null);
+    if (manquants.length === 0) return;
+    let actif = true;
+    (async () => {
+      for (const q of manquants) {
+        try {
+          const d = await getMovieDetails(q.id, q.media_type || "movie");
+          const m = await evaluerAdhesion(user.id, d);
+          const score = getRecommendationScore(m);
+          if (!actif || typeof score !== "number" || !(score > 0)) continue;
+          setAdhesionsPicks((prev) => {
+            const suivant = { ...prev, [q.id]: Math.round(score) };
+            try { localStorage.setItem(ADHESION_PICKS_KEY, JSON.stringify({ jour: new Date().toDateString(), scores: suivant })); } catch { /* stockage indisponible */ }
+            return suivant;
+          });
+        } catch { /* l'adhésion n'est jamais bloquante */ }
+      }
+    })();
+    return () => { actif = false; };
+  // adhesionsPicks est lu, pas suivi : sinon chaque score relancerait la boucle.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [picksAffiches, user?.id]);
 
   const tonightPool = useMemo(() => chatMoviesPool || [], [chatMoviesPool]);
   const canGoPrev = tonightPickIndex > 0;
@@ -2717,22 +2757,24 @@ const HomeScreen = ({
                       <span className="text-[11px] font-sans text-white/85 truncate leading-tight">{item.recommendedBy}</span>
                     </div>
                   )}
-                  {/* L'adhésion Pick, la valeur propre à Pick, sur l'affiche. */}
-                  {(() => {
-                    const m = item?.matchData as { matchScore?: number; score?: number } | undefined;
-                    const score = m?.matchScore ?? m?.score;
-                    return typeof score === "number" && score > 0 ? (
-                      <span className="absolute bottom-1.5 left-1/2 -translate-x-1/2 px-1.5 py-[3px] rounded-full bg-black/70 backdrop-blur-sm border border-pick-purple-light/40 text-[11px] font-sans font-semibold text-pick-purple-light leading-none tabular-nums whitespace-nowrap">
-                        {Math.round(score)}&nbsp;%
-                      </span>
-                    ) : null;
-                  })()}
                   {loadingMovieId === item?.id && (
                     <div className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-[10px]">
                       <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                     </div>
                   )}
                 </div>
+                {/* L'adhésion Pick, la valeur propre à Pick, sous l'affiche.
+                    La place est réservée pour que rien ne saute à l'arrivée du score. */}
+                {(() => {
+                  const brut = getRecommendationScore(item?.matchData) ?? (item?.id ? adhesionsPicks[item.id] : null);
+                  const score = typeof brut === "number" && brut > 0 ? Math.round(brut) : null;
+                  return (
+                    <span className={`mt-1.5 flex items-center justify-center gap-1 text-[12px] font-sans font-semibold text-foreground/90 leading-none tabular-nums whitespace-nowrap transition-opacity duration-260 ease-pick ${score ? "opacity-100" : "opacity-0"}`}>
+                      <Heart className="w-3.5 h-3.5 fill-pick-purple-light text-pick-purple-light" aria-hidden="true" />
+                      {score ?? 0}&nbsp;%
+                    </span>
+                  );
+                })()}
               </motion.button>
             ))}
           </div>
