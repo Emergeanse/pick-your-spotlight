@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import TonightPickOverlay from "./TonightPickOverlay";
 import FlipCardDetail from "./FlipCardDetail";
 import { useAuth } from "@/hooks/use-auth";
-import { evaluerAdhesion } from "@/lib/adhesion";
+import { lireConseil, obtenirConseil } from "@/lib/conseils-films";
 import { ficheFilm, useFilmOuvert } from "@/lib/fiche-film";
 import { getMovieDetails, getWatchProviders, type MovieDetail } from "@/lib/tmdb";
 
@@ -45,9 +45,17 @@ const FicheFilmHost = () => {
       try {
         const d = await getMovieDetails(film.tmdbId, film.media);
         getWatchProviders(d.id, film.media).then((f) => { if (actif) setFournisseurs(f); }).catch(() => {});
-        // L'adhésion rejoint le film : la fiche principale l'affiche comme pour une recommandation.
-        const adhesion = user ? await evaluerAdhesion(user.id, d) : null;
-        if (actif) setDetail(adhesion ? ({ ...d, recommendationTexts: adhesion } as MovieDetail) : d);
+        // Le conseil (adhésion et texte) rejoint le film : la fiche principale
+        // l'affiche comme pour une recommandation. Un film déjà conseillé
+        // retrouve son conseil gardé, tout de suite ; un nouveau s'affiche
+        // aussitôt et reçoit son conseil quand l'IA l'a écrit.
+        const avec = (c: unknown) => (c ? ({ ...d, recommendationTexts: c } as MovieDetail) : d);
+        const garde = user ? await lireConseil(user.id, d.id, film.media) : null;
+        if (!actif) return;
+        setDetail(avec(garde));
+        if (!user || (garde && (garde.whyItMatches || garde.headline || garde.detailedExplanation))) return;
+        const nouveau = await obtenirConseil(user.id, d, film.media);
+        if (actif && nouveau) setDetail(avec(nouveau));
       } catch {
         if (!actif) return;
         toast.error("Impossible d'ouvrir ce film pour le moment.");

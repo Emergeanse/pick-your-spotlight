@@ -30,7 +30,7 @@ import {
   RECOMMENDATION_BATCH_SIZE,
   type RecommendationMovieDetail,
 } from "@/lib/recommendation-batch";
-import { evaluerAdhesion } from "@/lib/adhesion";
+import { conseilEnMemoire, enregistrerConseil, obtenirConseil } from "@/lib/conseils-films";
 import { resolveEffectiveExclusions, diagnoseNoResults } from "@/lib/recommendation-pipeline";
 import { isOffline, OFFLINE_MESSAGE } from "@/lib/connectivity";
 import { getEngagementData, getProgressionMessage, type EngagementData } from "@/lib/engagement";
@@ -147,15 +147,6 @@ const MOOD_CONFIGS: Record<AmbianceMood, MoodConfig> = {
 
 type QuickReco = { id: number; title: string; poster_path: string | null; vote_average?: number; media_type?: string; detail?: MovieDetail; matchData?: RecommendationMatch; recommendedBy?: string };
 const QUICK_RECO_KEY = "pick_last_reco_v2";
-// Adhésion des Picks du moment qui n'en ont pas (tendances, films conseillés) :
-// calculée une fois par film et par jour, gardée dans le téléphone.
-const ADHESION_PICKS_KEY = "pys_adhesion_picks";
-function lireAdhesionsPicks(): Record<string, number> {
-  try {
-    const brut = JSON.parse(localStorage.getItem(ADHESION_PICKS_KEY) || "{}") as { jour?: string; scores?: Record<string, number> };
-    return brut.jour === new Date().toDateString() ? brut.scores ?? {} : {};
-  } catch { return {}; }
-}
 
 /**
  * Base commune des cartes de l'accueil (docs/DESIGN_SYSTEM.md, § Cartes) :
@@ -966,36 +957,56 @@ const HomeScreen = ({
       localStorage.setItem(QUICK_RECO_KEY, JSON.stringify(toSave));
       setQuickRecos(toSave);
     } catch {}
+    // Chaque conseil de la recherche est gardé, avec le score que la fiche
+    // affiche (jamais sous l'estimation initiale) : rouvert depuis une liste,
+    // le film retrouve la même note et le même texte, sans rappeler l'IA.
+    if (user?.id) {
+      for (const m of chatMoviesPool) {
+        const textes = (m as RecommendationMovieDetail).recommendationTexts ?? null;
+        const estimation = movieMatchData[m.id]?.confidence;
+        const brut = getRecommendationScore(textes);
+        const score = brut != null && estimation != null ? Math.max(brut, estimation) : brut ?? estimation;
+        if (score == null) continue;
+        const conseil = { ...(textes ?? {}), ...(textes ? {} : { reason: movieMatchData[m.id]?.reason }), matchScore: score };
+        void enregistrerConseil(user.id, m.id, m.media_type === "tv" || m.first_air_date ? "tv" : "movie", conseil);
+      }
+    }
+  // L'utilisateur ne change pas en cours de recherche.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chatMoviesPool, movieMatchData]);
 
   const picksAffiches = useMemo(
     () => (quickRecos.length > 0 ? quickRecos.slice(0, 3) : trendingFallback.slice(0, 3)),
     [quickRecos, trendingFallback],
   );
-  const [adhesionsPicks, setAdhesionsPicks] = useState<Record<string, number>>(lireAdhesionsPicks);
+  // Adhésion des Picks du moment : le conseil gardé pour le film (le même que
+  // sur sa fiche) ; à défaut (tendances, films conseillés), un conseil calculé
+  // une fois puis gardé.
+  const [adhesionsPicks, setAdhesionsPicks] = useState<Record<string, number>>({});
   useEffect(() => {
     if (!user?.id) return;
-    const manquants = picksAffiches.filter((q) => q?.id && getRecommendationScore(q.matchData) == null && adhesionsPicks[q.id] == null);
+    const mediaDe = (q: QuickReco): "movie" | "tv" => (q.media_type === "tv" ? "tv" : "movie");
+    const connus: Record<string, number> = {};
+    for (const q of picksAffiches) {
+      const s = getRecommendationScore(q?.id ? conseilEnMemoire(user.id, q.id, mediaDe(q)) : null);
+      if (typeof s === "number" && s > 0) connus[q.id] = Math.round(s);
+    }
+    setAdhesionsPicks(connus);
+    const manquants = picksAffiches.filter((q) => q?.id && connus[q.id] == null && getRecommendationScore(q.matchData) == null);
     if (manquants.length === 0) return;
     let actif = true;
     (async () => {
       for (const q of manquants) {
         try {
-          const d = await getMovieDetails(q.id, q.media_type || "movie");
-          const m = await evaluerAdhesion(user.id, d);
-          const score = getRecommendationScore(m);
-          if (!actif || typeof score !== "number" || !(score > 0)) continue;
-          setAdhesionsPicks((prev) => {
-            const suivant = { ...prev, [q.id]: Math.round(score) };
-            try { localStorage.setItem(ADHESION_PICKS_KEY, JSON.stringify({ jour: new Date().toDateString(), scores: suivant })); } catch { /* stockage indisponible */ }
-            return suivant;
-          });
+          const d = await getMovieDetails(q.id, mediaDe(q));
+          const score = getRecommendationScore(await obtenirConseil(user.id, d, mediaDe(q)));
+          if (actif && typeof score === "number" && score > 0) {
+            setAdhesionsPicks((prev) => ({ ...prev, [q.id]: Math.round(score) }));
+          }
         } catch { /* l'adhésion n'est jamais bloquante */ }
       }
     })();
     return () => { actif = false; };
-  // adhesionsPicks est lu, pas suivi : sinon chaque score relancerait la boucle.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [picksAffiches, user?.id]);
 
   const tonightPool = useMemo(() => chatMoviesPool || [], [chatMoviesPool]);
@@ -2766,7 +2777,7 @@ const HomeScreen = ({
                 {/* L'adhésion Pick, la valeur propre à Pick, sous l'affiche.
                     La place est réservée pour que rien ne saute à l'arrivée du score. */}
                 {(() => {
-                  const brut = getRecommendationScore(item?.matchData) ?? (item?.id ? adhesionsPicks[item.id] : null);
+                  const brut = (item?.id ? adhesionsPicks[item.id] : null) ?? getRecommendationScore(item?.matchData);
                   const score = typeof brut === "number" && brut > 0 ? Math.round(brut) : null;
                   return (
                     <span className={`mt-1.5 flex items-center justify-center gap-1 text-[12px] font-sans font-semibold text-foreground/90 leading-none tabular-nums whitespace-nowrap transition-opacity duration-260 ease-pick ${score ? "opacity-100" : "opacity-0"}`}>
