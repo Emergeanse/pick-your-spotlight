@@ -4,11 +4,11 @@ import FlecheRonde from "@/components/pick/FlecheRonde";
 import AdnCinema from "@/components/pick/AdnCinema";
 import Distinctions from "@/components/pick/Distinctions";
 import { clesDebloquees, enregistrerDistinctions, lireValeursTrophees } from "@/lib/distinctions";
-import { calculerAdn, universFavoris, type Adn } from "@/lib/adn";
+import { calculerAdn, traitsDominants, universFavoris, type Adn } from "@/lib/adn";
 import { computeMultiVectorProfile } from "@/lib/taste-engine";
 import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Pencil, Check, X, Plus, Trophy, Sparkles, Film, CalendarDays, Share2, ChevronRight } from "lucide-react";
+import { Pencil, Check, X, Plus, Film, CalendarDays, Share2, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchVisibleProfile } from "@/lib/visible-profiles";
@@ -17,25 +17,22 @@ import { fetchMyDuos, loadAcceptedFriends, type DuoProfile, type DuoFriendCandid
 import { getLikedMovies } from "@/lib/liked-movies";
 import { listFeedbackByType } from "@/lib/feedback";
 import { getMyPreferences } from "@/lib/preferences";
-import squirrelHappy from "@/assets/happy.webp";
+import salleCinema from "@/assets/accueil-salle.webp";
+import glandPick from "@/assets/gland-pick.webp";
+import PhotoEncadree from "@/components/pick/PhotoEncadree";
+import SignaturesAdn from "@/components/pick/SignaturesAdn";
+import { cadrePour } from "@/lib/cadres";
+import { estAmbassadeur } from "@/lib/invitation";
 import CartePick from "@/components/pick/CartePick";
 import { rareteCarte, type DonneesCarte } from "@/lib/carte-pick";
 import { signaturesAdn } from "@/lib/signatures";
 import { distinctionsAffichees, tropheeParCle } from "@/lib/distinctions";
 import { avatarAffiche } from "@/lib/avatars";
 import { usePickPlus } from "@/hooks/use-pick-plus";
-import squirrelCritique from "@/assets/critique.webp";
-import squirrelExigeant from "@/assets/exigeant.webp";
 
 const TMDB_IMG = "https://image.tmdb.org/t/p/";
 const poster = (path: string | null, size = "w342") =>
   path ? `${TMDB_IMG}${size}${path}` : null;
-
-const ARCHETYPE_ICONS: Record<string, string> = {
-  squirrel_happy:    squirrelHappy,
-  squirrel_critique: squirrelCritique,
-  squirrel_exigeant: squirrelExigeant,
-};
 
 const PODIUM_COLORS = ["#F59E0B", "#94A3B8", "#CD7C3A"]; // or, argent, bronze
 
@@ -47,7 +44,6 @@ const PodiumSlot = ({
   film: any | null;
   onSelect: () => void;
 }) => {
-  const medals = ["🥇", "🥈", "🥉"];
   const heights = ["h-44", "h-36", "h-32"];
   const color = PODIUM_COLORS[rank - 1];
 
@@ -58,8 +54,8 @@ const PodiumSlot = ({
       className={`relative flex flex-col items-center gap-2 flex-1 ${rank === 1 ? "-mt-4" : ""}`}
     >
       {/* Poster */}
-      <div className={`relative w-full ${heights[rank - 1]} rounded-2xl overflow-hidden border-2`}
-        style={{ borderColor: color + "60" }}>
+      <div className={`relative w-full ${heights[rank - 1]} rounded-pick-md overflow-hidden border`}
+        style={{ borderColor: color + "90", boxShadow: rank === 1 && film ? `0 0 28px ${color}45` : undefined }}>
         {film ? (
           <>
             <img src={poster(film.poster_path) ?? ""} alt={film.title}
@@ -74,11 +70,12 @@ const PodiumSlot = ({
           </div>
         )}
         {/* Médaille */}
-        <span className="absolute top-1.5 left-1.5 text-lg drop-shadow">{medals[rank - 1]}</span>
+        <span className="absolute top-1.5 left-1.5 w-6 h-6 rounded-full flex items-center justify-center font-serif text-[14px] leading-none text-black shadow-[0_2px_8px_rgba(0,0,0,0.5)]"
+          style={{ background: color }}>{rank}</span>
       </div>
 
       {/* Titre */}
-      <p className="text-[10px] font-sans text-foreground/60 text-center leading-tight line-clamp-2 w-full px-1">
+      <p className="text-[11px] font-sans text-pick-text-secondary text-center leading-tight line-clamp-2 w-full px-1">
         {film ? film.title : <span style={{ color: color + "80" }}>Choisir</span>}
       </p>
     </motion.button>
@@ -471,7 +468,17 @@ const CinemaDNAPage = () => {
     setSelectingRank(null);
   };
 
-  const archetypeImg = dnaArchetype ? ARCHETYPE_ICONS[dnaArchetype] ?? null : null;
+  // La fiche montre son propre ADN, ou celui de la personne consultée s'il est visible.
+  const adnVisible = !isOwnProfile && adnAutre && adnAutre.niveau !== "aucun" ? adnAutre : null;
+  const adnAffiche = isOwnProfile ? adn : adnVisible?.traits ?? null;
+  const archetypeAffiche = isOwnProfile ? (dnaArchetype || dnaTitle) : adnVisible?.archetype ?? null;
+  const narrativeAffichee = isOwnProfile ? narrative : adnVisible?.narrative ?? null;
+  const dominantsAffiches = adnAffiche ? traitsDominants(adnAffiche) : [];
+  const signaturesAffichees = signaturesAdn(adnAffiche, isOwnProfile ? univers : adnVisible?.univers ?? []);
+  // Le cadre de la photo suit les trophées, comme sur l'accueil.
+  const cadre = isOwnProfile
+    ? cadrePour(mesDistinctions?.length ?? 0, estAmbassadeur(user?.user_metadata))
+    : cadrePour(adnVisible?.distinctions.length ?? 0);
 
   // Partage du lien vers son ADN (feuille de partage du téléphone, sinon copie).
   const partagerAdn = async () => {
@@ -485,7 +492,7 @@ const CinemaDNAPage = () => {
   };
 
   return (
-    <div className="fixed inset-0 bg-background overflow-y-auto scrollbar-hide">
+    <div className="fixed inset-0 bg-background overflow-y-auto overflow-x-hidden scrollbar-hide">
       {/* Sélecteur podium */}
       <AnimatePresence>
         {selectingRank != null && (
@@ -499,50 +506,182 @@ const CinemaDNAPage = () => {
         )}
       </AnimatePresence>
 
-      {/* ── Header ── */}
-      <div className="sticky top-0 z-30 pt-[env(safe-area-inset-top)] px-4 pb-3 backdrop-blur-xl border-b border-white/[0.04]"
-        style={{ background: "hsl(var(--background)/0.88)" }}>
-        <div className="flex items-center gap-3 pt-3">
-          <FlecheRonde
-            direction="gauche"
-            label="Retour"
-            tailleClasse="w-10 h-10"
-            onClick={() => {
-              const from = (location.state as { from?: string } | null)?.from;
-              if (from === "amis") navigate("/app/duo", { state: { tab: "amis" } });
-              else navigate(-1);
-            }}
-          />
-          <h1 className="font-serif text-[20px] text-foreground leading-tight">
-            {isOwnProfile ? "Mon ADN Cinéma" : (displayName ? `ADN de ${displayName}` : "Profil cinéphile")}
-          </h1>
-          {/* Son propre ADN se partage : c'est une carte de visite cinéphile. */}
-          {isOwnProfile && user && (
-            <button
-              type="button"
-              onClick={partagerAdn}
-              className="ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-pick-border-hover text-[13px] font-sans font-semibold text-pick-purple-light active:scale-[0.97] transition-transform duration-120 ease-pick"
-            >
-              <Share2 className="w-3.5 h-3.5" aria-hidden="true" />
-              Partager
-            </button>
-          )}
-        </div>
+      {/* Décor : la salle de l'accueil, fondue dans la nuit. */}
+      <div
+        aria-hidden="true"
+        className="absolute inset-x-0 top-0 h-[520px] bg-cover bg-no-repeat pointer-events-none"
+        style={{
+          backgroundImage: `url(${salleCinema})`,
+          backgroundPosition: "50% 25%",
+          maskImage: "linear-gradient(to bottom, black 15%, transparent 100%)",
+          WebkitMaskImage: "linear-gradient(to bottom, black 15%, transparent 100%)",
+          opacity: 0.32,
+        }}
+      />
+
+      {/* ── En-tête ── */}
+      <div className="relative z-10 pt-[calc(0.75rem+env(safe-area-inset-top))] px-4 flex items-center">
+        <FlecheRonde
+          direction="gauche"
+          label="Retour"
+          tailleClasse="w-10 h-10"
+          onClick={() => {
+            const from = (location.state as { from?: string } | null)?.from;
+            if (from === "amis") navigate("/app/duo", { state: { tab: "amis" } });
+            else navigate(-1);
+          }}
+        />
+        <h1 className="flex-1 pr-10 text-center text-[11px] font-sans font-semibold tracking-[0.3em] uppercase text-pick-gold">
+          {isOwnProfile ? "Mon ADN cinéma" : "ADN cinéma"}
+        </h1>
       </div>
 
-      <div className={`px-4 pt-5 flex flex-col gap-6 ${isOwnProfile ? "pb-[calc(6rem+env(safe-area-inset-bottom))]" : "pb-[calc(9rem+env(safe-area-inset-bottom))]"}`}>
+      <div className={`relative px-4 pt-4 flex flex-col gap-7 ${isOwnProfile ? "pb-[calc(6rem+env(safe-area-inset-bottom))]" : "pb-[calc(10rem+env(safe-area-inset-bottom))]"}`}>
+
+        {/* ── Skeleton chargement ── */}
+        {loading && (
+          <div className="flex flex-col gap-6 animate-pulse">
+            <div className="rounded-pick-xl border border-pick-gold/15 px-5 pt-10 pb-8 flex flex-col items-center gap-3" style={{ background: "hsl(var(--card)/0.4)" }}>
+              <div className="w-28 h-28 rounded-full bg-foreground/[0.08]" />
+              <div className="h-7 w-40 rounded-xl bg-foreground/[0.08] mt-3" />
+              <div className="h-5 w-52 rounded-xl bg-foreground/[0.06]" />
+              <div className="h-3 w-64 rounded bg-foreground/[0.06] mt-4" />
+              <div className="h-3 w-48 rounded bg-foreground/[0.06]" />
+            </div>
+            <div className="h-[260px] rounded-pick-xl bg-foreground/[0.05]" />
+          </div>
+        )}
+
+        {/* ══ 1. LA FICHE : l'identité cinéphile, le moment Pick de l'écran ══ */}
+        {!loading && (
+          <motion.section
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, ease: [0.2, 0.8, 0.2, 1] }}
+            className="relative rounded-pick-xl border border-pick-gold/35 overflow-hidden shadow-[0_24px_60px_rgba(0,0,0,0.55)] bg-[radial-gradient(120%_60%_at_50%_0%,rgba(139,92,246,0.30),transparent_62%),linear-gradient(180deg,rgba(24,17,44,0.94),rgba(9,7,16,0.97))]"
+          >
+            {/* Double filet doré : la fiche se lit comme un carton d'avant-première. */}
+            <div aria-hidden="true" className="absolute inset-[6px] rounded-pick-lg border border-pick-gold/15 pointer-events-none" />
+
+            <div className="relative flex flex-col items-center text-center px-5 pt-3 pb-6">
+              <div className="p-[46px]">
+                <PhotoEncadree photo={avatarUrl} cadre={cadre.image} taille={104} />
+              </div>
+
+              <p className="-mt-3 font-serif text-[34px] leading-[1.05] text-white [text-wrap:balance]">{displayName || "Picker"}</p>
+              {archetypeAffiche && (
+                <p className="mt-1.5 font-serif italic text-[20px] leading-tight text-pick-gold [text-wrap:balance]">{archetypeAffiche}</p>
+              )}
+              {dominantsAffiches.length > 0 && (
+                <p className="mt-2.5 text-[11px] font-sans font-semibold tracking-[0.22em] uppercase text-pick-purple-light">
+                  {dominantsAffiches.map((d) => d.adjectif).join(" · ")}
+                </p>
+              )}
+
+              {/* Filet doré marqué du gland : la signature de Pick. */}
+              <div aria-hidden="true" className="mt-5 flex items-center gap-3 w-full max-w-[240px]">
+                <span className="flex-1 h-px bg-gradient-to-r from-transparent to-pick-gold/55" />
+                <img src={glandPick} alt="" className="w-4 h-4 object-contain opacity-90" />
+                <span className="flex-1 h-px bg-gradient-to-l from-transparent to-pick-gold/55" />
+              </div>
+
+              {narrativeAffichee && (
+                <p className="mt-4 max-w-[34ch] text-[14px] font-sans leading-relaxed text-pick-text-secondary">{narrativeAffichee}</p>
+              )}
+              {signaturesAffichees.length > 0 && (
+                <div className="mt-4"><SignaturesAdn signatures={signaturesAffichees} centre /></div>
+              )}
+
+              {/* Bio : sa phrase de cinéphile, en citation. */}
+              <div className="mt-5 w-full max-w-[320px]">
+                {isOwnProfile && editingBio ? (
+                  <div className="flex flex-col gap-2">
+                    <textarea
+                      autoFocus value={bioDraft}
+                      onChange={e => setBioDraft(e.target.value)}
+                      maxLength={120}
+                      rows={2}
+                      placeholder="En une phrase, ton rapport au cinéma…"
+                      className="w-full bg-white/[0.06] border border-pick-border-hover rounded-pick-md px-3 py-2 text-[14px] font-serif italic text-foreground/90 placeholder:text-foreground/45 focus:outline-none focus:border-pick-purple-light/60 resize-none text-center"
+                    />
+                    <div className="flex gap-2 justify-center">
+                      <button onClick={() => { setEditingBio(false); setBioDraft(bio); }} aria-label="Annuler"
+                        className="w-10 h-10 flex items-center justify-center rounded-full border border-pick-border active:scale-[0.97] transition-transform duration-120 ease-pick"><X className="w-4 h-4 text-foreground/60" /></button>
+                      <button onClick={saveBio} disabled={savingBio} aria-label="Enregistrer"
+                        className="w-10 h-10 flex items-center justify-center rounded-full bg-primary/20 border border-pick-purple-light/50 active:scale-[0.97] transition-transform duration-120 ease-pick">
+                        <Check className="w-4 h-4 text-pick-purple-light" />
+                      </button>
+                    </div>
+                  </div>
+                ) : isOwnProfile ? (
+                  <button onClick={() => { setBioDraft(bio); setEditingBio(true); }}
+                    className="inline-flex items-start gap-2 text-left active:scale-[0.98] transition-transform duration-120 ease-pick">
+                    <span className={`font-serif italic text-[15px] leading-snug ${bio ? "text-foreground/85" : "text-pick-text-muted"}`}>
+                      {bio ? `« ${bio} »` : "Ajoute ta phrase de cinéphile"}
+                    </span>
+                    <Pencil className="w-3.5 h-3.5 text-pick-text-muted shrink-0 mt-1" aria-hidden="true" />
+                  </button>
+                ) : bio ? (
+                  <p className="font-serif italic text-[15px] leading-snug text-foreground/85">« {bio} »</p>
+                ) : null}
+              </div>
+
+              {/* Son ADN : trois chiffres, puis le partage. */}
+              {isOwnProfile && (
+                <>
+                  <dl className="mt-6 w-full grid grid-cols-3 divide-x divide-pick-gold/20 border-y border-pick-gold/20 py-3">
+                    {[
+                      { valeur: lovedCount, libelle: lovedCount > 1 ? "coups de cœur" : "coup de cœur" },
+                      { valeur: seenCount, libelle: seenCount > 1 ? "films vus" : "film vu" },
+                      { valeur: mesDistinctions?.length ?? 0, libelle: (mesDistinctions?.length ?? 0) > 1 ? "distinctions" : "distinction" },
+                    ].map((c) => (
+                      <div key={c.libelle} className="flex flex-col-reverse items-center px-1">
+                        <dt className="text-[11px] font-sans text-pick-text-secondary leading-tight">{c.libelle}</dt>
+                        <dd className="font-serif text-[26px] leading-none text-white tabular-nums">{c.valeur}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                  <button
+                    type="button"
+                    onClick={partagerAdn}
+                    className="mt-6 w-full h-[52px] inline-flex items-center justify-center gap-2 rounded-full border-[1.5px] border-pick-purple-light/80 bg-[linear-gradient(180deg,#3a2470,#1c1040)] shadow-[0_0_0_4px_rgba(139,92,246,0.14),0_0_34px_rgba(168,85,247,0.55)] text-[15px] font-sans font-semibold text-white active:scale-[0.98] transition-transform duration-120 ease-pick"
+                  >
+                    <Share2 className="w-4 h-4" aria-hidden="true" />
+                    Partager mon ADN
+                  </button>
+                </>
+              )}
+
+              {/* L'ADN d'un ami : ce qui vous rapproche. */}
+              {comparaison && (
+                <div className="mt-6 w-full border-t border-pick-gold/20 pt-5">
+                  {comparaison.affinite != null && (
+                    <>
+                      <p className="font-serif text-[44px] leading-none text-pick-gold tabular-nums">{comparaison.affinite}&nbsp;%</p>
+                      <p className="mt-1 text-[11px] font-sans font-semibold tracking-[0.2em] uppercase text-pick-text-secondary">d&apos;affinité cinéma entre vous</p>
+                    </>
+                  )}
+                  <p className="mt-3 mx-auto max-w-[34ch] text-[13px] font-sans leading-snug text-pick-text-secondary">{comparaison.phrase}</p>
+                </div>
+              )}
+            </div>
+          </motion.section>
+        )}
 
         {/* ── Carte Pick : la carte à collectionner, recto et verso ── */}
         {isOwnProfile && !loading && (
           <button
             type="button"
             onClick={() => setCarteOuverte(true)}
-            className="w-full flex items-center gap-3 rounded-pick-lg border border-pick-gold/35 bg-gradient-to-r from-pick-gold/[0.10] via-primary/[0.08] to-transparent px-4 py-3 text-left active:scale-[0.98] transition-transform duration-120 ease-pick"
+            className="-mt-2 w-full flex items-center gap-4 rounded-pick-lg border border-pick-gold/35 bg-[linear-gradient(100deg,rgba(232,184,92,0.12),rgba(139,92,246,0.08)_55%,transparent)] px-4 py-3.5 text-left active:scale-[0.98] transition-transform duration-120 ease-pick"
           >
-            <span className="w-9 h-12 shrink-0 rounded-[6px] border border-pick-gold/60 bg-[url('/cartes/recto-or.webp')] bg-cover bg-center shadow-pick-card" aria-hidden="true" />
+            <span className="relative w-11 h-[60px] shrink-0" aria-hidden="true">
+              <span className="absolute inset-0 rounded-[6px] border border-pick-gold/40 bg-[url('/cartes/verso-or.webp')] bg-cover bg-center -rotate-6 opacity-70" />
+              <span className="absolute inset-0 rounded-[6px] border border-pick-gold/70 bg-[url('/cartes/recto-or.webp')] bg-cover bg-center rotate-3 shadow-pick-card" />
+            </span>
             <span className="flex-1 min-w-0">
-              <span className="block font-serif text-[17px] text-foreground leading-tight">Ma Carte Pick</span>
-              <span className="block text-[12px] font-sans text-pick-text-secondary">Ta carte cinéphile à retourner et partager</span>
+              <span className="block font-serif text-[18px] text-pick-gold leading-tight">Ma Carte Pick</span>
+              <span className="block mt-0.5 text-[12px] font-sans text-pick-text-secondary">Recto, verso : ta carte de cinéphile à offrir</span>
             </span>
             <ChevronRight className="w-4 h-4 text-pick-gold shrink-0" aria-hidden="true" />
           </button>
@@ -555,138 +694,28 @@ const CinemaDNAPage = () => {
           pickPlus={isPremium}
         />
 
-        {/* ── Skeleton chargement ── */}
-        {loading && (
-          <div className="flex flex-col gap-6 animate-pulse">
-            <div className="rounded-3xl border border-white/[0.06] p-5 flex gap-4" style={{ background: "hsl(var(--card)/0.4)" }}>
-              <div className="w-20 h-20 rounded-2xl bg-foreground/[0.08] shrink-0" />
-              <div className="flex-1 flex flex-col gap-2 pt-1">
-                <div className="h-5 w-36 rounded-xl bg-foreground/[0.08]" />
-                <div className="flex gap-2 mt-1">
-                  <div className="h-4 w-16 rounded-full bg-foreground/[0.06]" />
-                  <div className="h-4 w-12 rounded-full bg-foreground/[0.06]" />
-                </div>
-                <div className="h-3 w-full rounded bg-foreground/[0.06] mt-2" />
-                <div className="h-3 w-2/3 rounded bg-foreground/[0.06]" />
-              </div>
-            </div>
-            <div className="rounded-3xl border border-white/[0.06] p-4" style={{ background: "hsl(var(--card)/0.4)" }}>
-              <div className="h-3 w-44 rounded bg-foreground/[0.06] mb-4" />
-              <div className="h-[220px] rounded-2xl bg-foreground/[0.05] mb-4" />
-              {[1,2,3,4].map(i => (
-                <div key={i} className="flex items-center gap-2 mb-1.5">
-                  <div className="h-2.5 w-24 rounded bg-foreground/[0.06]" />
-                  <div className="flex-1 h-1.5 rounded-full bg-foreground/[0.06]" />
-                  <div className="h-2.5 w-8 rounded bg-foreground/[0.06]" />
-                </div>
-              ))}
-            </div>
-            <div>
-              <div className="h-3 w-20 rounded bg-foreground/[0.06] mb-3" />
-              <div className="flex items-end gap-3">
-                <div className="flex-1 h-36 rounded-2xl bg-foreground/[0.06]" />
-                <div className="flex-1 h-44 rounded-2xl bg-foreground/[0.08]" />
-                <div className="flex-1 h-32 rounded-2xl bg-foreground/[0.06]" />
-              </div>
-            </div>
-          </div>
-        )}
-        {!loading && (
-        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
-          className="relative rounded-3xl overflow-hidden border border-white/[0.06]"
-          style={{ background: "linear-gradient(145deg, hsl(var(--primary)/0.25) 0%, hsl(var(--background)/0.6) 50%, hsl(var(--accent)/0.15) 100%)" }}>
-          {/* Halo */}
-          <div className="absolute -top-12 -right-12 w-48 h-48 rounded-full pointer-events-none"
-            style={{ background: "radial-gradient(circle, hsl(var(--primary)/0.3), transparent 70%)", filter: "blur(30px)" }} />
-
-          <div className="relative p-5 flex items-start gap-4">
-            {/* Avatar */}
-            <div className="relative shrink-0">
-              {avatarUrl ? (
-                <img src={avatarUrl} alt={displayName}
-                  className="w-20 h-20 rounded-2xl object-cover border-2 border-white/15" />
-              ) : archetypeImg ? (
-                <img src={archetypeImg} alt={dnaTitle ?? ""}
-                  className="w-20 h-20 rounded-2xl object-cover border-2 border-primary/30" />
-              ) : (
-                <div className="w-20 h-20 rounded-2xl bg-primary/20 border-2 border-primary/30 flex items-center justify-center">
-                  <span className="text-3xl">🎬</span>
-                </div>
-              )}
-              {/* Badge archétype */}
-              {dnaTitle && (
-                <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 whitespace-nowrap px-2 py-0.5 rounded-full text-[9px] font-sans font-semibold border"
-                  style={{ background: "hsl(var(--primary)/0.25)", borderColor: "hsl(var(--primary)/0.4)", color: "hsl(var(--primary)/0.9)" }}>
-                  {dnaTitle}
-                </div>
-              )}
-            </div>
-
-            {/* Infos */}
-            <div className="flex-1 min-w-0 pt-1">
-              <h2 className="font-serif text-[22px] text-foreground leading-tight truncate">{displayName}</h2>
-
-              {/* Bio */}
-              <div className="mt-3">
-                {isOwnProfile && editingBio ? (
-                  <div className="flex flex-col gap-2">
-                    <textarea
-                      autoFocus value={bioDraft}
-                      onChange={e => setBioDraft(e.target.value)}
-                      maxLength={120}
-                      rows={2}
-                      placeholder="En 1-2 phrases, ton rapport au cinéma…"
-                      className="w-full bg-white/[0.06] border border-white/[0.12] rounded-xl px-3 py-2 text-[12px] font-sans text-foreground/80 placeholder:text-foreground/45 focus:outline-none focus:border-primary/40 resize-none"
-                    />
-                    <div className="flex gap-2 justify-end">
-                      <button onClick={() => { setEditingBio(false); setBioDraft(bio); }}
-                        className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-white/5 active:scale-[0.97] transition-colors"><X className="w-3.5 h-3.5 text-foreground/40" /></button>
-                      <button onClick={saveBio} disabled={savingBio}
-                        className="w-9 h-9 flex items-center justify-center rounded-lg bg-primary/20 border border-primary/30 active:scale-[0.97] transition-colors">
-                        <Check className="w-3.5 h-3.5 text-primary" />
-                      </button>
-                    </div>
-                  </div>
-                ) : isOwnProfile ? (
-                  <button onClick={() => { setBioDraft(bio); setEditingBio(true); }}
-                    className="flex items-start gap-1.5 group text-left w-full">
-                    <p className={`text-[12px] font-sans leading-snug flex-1 ${bio ? "text-foreground/60" : "text-foreground/45 italic"}`}>
-                      {bio || "Ajoute une courte description…"}
-                    </p>
-                    <Pencil className="w-3 h-3 text-foreground/40 group-hover:text-foreground/50 shrink-0 mt-0.5 transition-colors" />
-                  </button>
-                ) : bio ? (
-                  <p className="text-[12px] font-sans leading-snug text-foreground/60">{bio}</p>
-                ) : null}
-              </div>
-            </div>
-          </div>
-        </motion.div>
-        )}
-
-        {/* ══ 2. ADN CINÉMA ══ */}
+        {/* ══ 2. LA CONSTELLATION ══ */}
         {isOwnProfile ? (
           <AdnCinema
             adn={adn}
             adnRecent={adnRecent}
-            narrative={narrative}
+            narrative={null}
             genres={univers}
-            titre="Ton ADN cinéma"
-            archetype={dnaArchetype || dnaTitle}
+            titre="Ta constellation"
             confiance={confiance}
+            enTete={false}
           />
         ) : adnAutre && adnAutre.niveau !== "aucun" && (adnAutre.traits || adnAutre.univers.length > 0) ? (
           <AdnCinema
             adn={adnAutre.traits}
             adnRecent={null}
-            narrative={adnAutre.narrative}
+            narrative={null}
             genres={adnAutre.univers}
-            titre={`L'ADN cinéma de ${displayName || "ce Picker"}`}
-            archetype={adnAutre.archetype}
+            titre={`La constellation de ${displayName || "ce Picker"}`}
             chiffresMasques={adnAutre.niveau === "soiree"}
-            comparaison={comparaison}
+            enTete={false}
           />
-        ) : adnAutre ? (
+        ) : adnAutre && !loading ? (
           <p className="rounded-pick-lg border border-pick-border bg-pick-surface/90 p-4 text-[13px] font-sans text-pick-text-secondary">
             {adnAutre.niveau === "aucun"
               ? `${displayName || "Cette personne"} n'a pas rendu son ADN cinéma visible.`
@@ -694,19 +723,20 @@ const CinemaDNAPage = () => {
           </p>
         ) : null}
 
+        {/* ══ 3. LE PODIUM ══ */}
         {!loading && (
-        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.14 }}>
-          <div className="flex items-center gap-2 mb-3">
-            <Trophy className="w-3.5 h-3.5 text-amber-400/70" />
-            <p className="text-[10px] font-sans font-semibold tracking-[0.18em] uppercase text-foreground/40">Mon podium</p>
-          </div>
-          <div className="flex items-end gap-3">
-            {/* Ordre visuel podium : 🥈 | 🥇 | 🥉 */}
+        <motion.section initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.14 }}>
+          <h2 className="font-serif text-[18px] text-pick-gold px-1">{isOwnProfile ? "Mon podium" : "Son podium"}</h2>
+          <p className="px-1 mb-4 text-[12px] font-sans text-pick-text-muted">
+            {isOwnProfile ? "Les trois films qui te racontent." : `Les trois films qui racontent ${displayName || "ce Picker"}.`}
+          </p>
+          <div className="flex items-end gap-3 px-1">
+            {/* Ordre visuel podium : 2 | 1 | 3 */}
             <PodiumSlot rank={2} film={podiumFilms[1]} onSelect={isOwnProfile ? () => setSelectingRank(2) : () => {}} />
             <PodiumSlot rank={1} film={podiumFilms[0]} onSelect={isOwnProfile ? () => setSelectingRank(1) : () => {}} />
             <PodiumSlot rank={3} film={podiumFilms[2]} onSelect={isOwnProfile ? () => setSelectingRank(3) : () => {}} />
           </div>
-        </motion.div>
+        </motion.section>
         )}
 
         {!loading && isOwnProfile && user?.id && mesDistinctions && (
@@ -729,17 +759,17 @@ const CinemaDNAPage = () => {
           <div className="flex gap-2.5 pointer-events-auto">
             <button
               onClick={() => navigate("/app/soiree/nouvelle", { state: { friendId: targetUserId, friendName: displayName } })}
-              className="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-2xl border border-primary/25 bg-primary/10 active:scale-[0.97] transition-transform"
+              className="flex-1 flex items-center justify-center gap-2 h-[52px] rounded-full border border-pick-border-hover bg-white/[0.06] backdrop-blur-md active:scale-[0.97] transition-transform duration-120 ease-pick"
             >
-              <CalendarDays className="w-4 h-4 text-primary" strokeWidth={1.8} />
-              <span className="text-[13px] font-sans font-semibold text-primary">Soirée ciné</span>
+              <CalendarDays className="w-4 h-4 text-pick-purple-light" strokeWidth={1.8} />
+              <span className="text-[14px] font-sans font-semibold text-foreground">Soirée ciné</span>
             </button>
             <button
               onClick={() => navigate("/app", { state: { friendId: targetUserId, friendName: displayName, mode: "duo" } })}
-              className="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-gradient-to-r from-primary to-accent active:scale-[0.97] transition-transform"
+              className="flex-[1.3] flex items-center justify-center gap-2 h-[52px] rounded-full border-[1.5px] border-pick-purple-light/80 bg-[linear-gradient(180deg,#3a2470,#1c1040)] shadow-[0_0_0_4px_rgba(139,92,246,0.14),0_0_34px_rgba(168,85,247,0.55)] active:scale-[0.97] transition-transform duration-120 ease-pick"
             >
-              <Film className="w-4 h-4 text-primary-foreground" strokeWidth={1.8} />
-              <span className="text-[13px] font-sans font-semibold text-primary-foreground">Regarder ensemble</span>
+              <Film className="w-4 h-4 text-white" strokeWidth={1.8} />
+              <span className="text-[14px] font-sans font-semibold text-white">Regarder ensemble</span>
             </button>
           </div>
         </div>

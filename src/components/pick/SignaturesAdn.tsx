@@ -21,10 +21,10 @@ const STYLE: Record<SignatureId, { Icon: LucideIcon; couleur: string }> = {
   polar: { Icon: Search, couleur: "148 163 184" },
 };
 
-const SignaturesAdn = ({ signatures }: { signatures: Signature[] }) => {
+const SignaturesAdn = ({ signatures, centre = false }: { signatures: Signature[]; centre?: boolean }) => {
   if (signatures.length === 0) return null;
   return (
-    <ul className="flex flex-wrap gap-2" aria-label="Signatures cinéma">
+    <ul className={`flex flex-wrap gap-2 ${centre ? "justify-center" : ""}`} aria-label="Signatures cinéma">
       {signatures.map((s) => {
         const { Icon, couleur } = STYLE[s.id];
         return (

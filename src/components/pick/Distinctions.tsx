@@ -136,7 +136,7 @@ const Distinctions = ({ debloquees, epinglees, userId, prenom, onEpinglees }: Di
 };
 
 function Titre({ texte }: { texte: string }) {
-  return <p className="text-[11px] font-sans font-semibold tracking-[0.18em] uppercase text-foreground/50">{texte}</p>;
+  return <h2 className="font-serif text-[18px] text-pick-gold px-1">{texte}</h2>;
 }
 
 export default Distinctions;

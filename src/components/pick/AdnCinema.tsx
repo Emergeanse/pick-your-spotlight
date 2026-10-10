@@ -1,7 +1,6 @@
 import { motion } from "framer-motion";
 import SignaturesAdn from "./SignaturesAdn";
 import { signaturesAdn } from "@/lib/signatures";
-import { Sparkles } from "lucide-react";
 import { TRAITS, evolutionAdn, fiabiliteAdn, traitsDominants, type Adn } from "@/lib/adn";
 
 /**
@@ -30,6 +29,11 @@ interface AdnCinemaProps {
   chiffresMasques?: boolean;
   /** « Vous et Chris » : affinité (amis seulement) et phrase de comparaison. */
   comparaison?: { prenom: string; affinite: number | null; phrase: string } | null;
+  /**
+   * Archétype, mots dominants, phrase et signatures en tête. Désactivé quand la
+   * page les montre déjà sur la fiche d'identité.
+   */
+  enTete?: boolean;
 }
 
 // Plus large que haut : les libellés des côtés (« Contemplation ») ont besoin de place.
@@ -107,7 +111,7 @@ function Constellation({ adn, chiffresMasques = false }: { adn: Adn; chiffresMas
   );
 }
 
-export default function AdnCinema({ adn, adnRecent, narrative, genres, titre = "Ton ADN cinéma", archetype, confiance, chiffresMasques = false, comparaison }: AdnCinemaProps) {
+export default function AdnCinema({ adn, adnRecent, narrative, genres, titre = "Ton ADN cinéma", archetype, confiance, chiffresMasques = false, comparaison, enTete = true }: AdnCinemaProps) {
   const dominants = adn ? traitsDominants(adn) : [];
   const evolution = evolutionAdn(adn, adnRecent);
   const fiabilite = fiabiliteAdn(confiance);
@@ -121,27 +125,24 @@ export default function AdnCinema({ adn, adnRecent, narrative, genres, titre = "
       transition={{ delay: 0.08 }}
       className="rounded-pick-xl border border-pick-border bg-pick-surface/90 shadow-pick-card p-4"
     >
-      <div className="flex items-center gap-2">
-        <Sparkles className="w-3.5 h-3.5 text-pick-purple-light" aria-hidden="true" />
-        <h2 className="text-[11px] font-sans font-semibold tracking-[0.14em] uppercase text-pick-purple-light">{titre}</h2>
-      </div>
+      <h2 className="font-serif text-[18px] text-pick-gold leading-tight">{titre}</h2>
 
-      {archetype && (
+      {enTete && archetype && (
         <p className="mt-2 text-[18px] font-sans font-bold uppercase tracking-wide text-foreground leading-tight">{archetype}</p>
       )}
-      {dominants.length > 0 && (
+      {enTete && dominants.length > 0 && (
         <p className={`${archetype ? "mt-0.5 text-[14px] font-semibold text-pick-purple-light" : "mt-2 text-[16px] font-bold text-foreground"} font-sans capitalize`}>
           {dominants.map((d) => d.adjectif).join(" · ")}
         </p>
       )}
-      {narrative && <p className="mt-1.5 text-[13px] font-sans text-pick-text-secondary leading-snug">{narrative}</p>}
+      {enTete && narrative && <p className="mt-1.5 text-[13px] font-sans text-pick-text-secondary leading-snug">{narrative}</p>}
 
       {/* Signatures : l'ADN en trois ou quatre mots, visibles aussi des amis. */}
-      {signatures.length > 0 && <div className="mt-3"><SignaturesAdn signatures={signatures} /></div>}
+      {enTete && signatures.length > 0 && <div className="mt-3"><SignaturesAdn signatures={signatures} /></div>}
 
       {adn && (
         <>
-          <div className="mt-3"><Constellation adn={adn} chiffresMasques={chiffresMasques} /></div>
+          <div className={enTete ? "mt-3" : "mt-1"}><Constellation adn={adn} chiffresMasques={chiffresMasques} /></div>
 
           {comparaison && (
             <div className="mt-2 rounded-pick-md border border-pick-border-hover bg-primary/[0.08] px-3 py-2.5">
