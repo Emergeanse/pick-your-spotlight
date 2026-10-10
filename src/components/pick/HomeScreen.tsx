@@ -10,7 +10,7 @@ import { clearRevealIntent, type RevealIntent, peekForReveal, consumeForReveal, 
 import { fetchGroupTasteProfile, fetchAdHocGroupProfile, isUsableGroupProfile, toGroupOverrides } from "@/lib/group-taste";
 import { programFilmForEvent } from "@/lib/event-program";
 import { toast } from "sonner";
-import { Sparkles, WandSparkles, Clapperboard, ChevronRight, Search, CalendarDays, Clock, Flame, Eye, Coffee, Heart, Shuffle, Star } from "lucide-react";
+import { Sparkles, WandSparkles, Clapperboard, ChevronRight, Search, CalendarDays, Clock, Flame, Eye, Coffee, Heart, Shuffle, Star, RefreshCw } from "lucide-react";
 
 import { formatPlatformNamesForLoading, resolveProviders } from "@/lib/platforms";
 import type { Movie, MovieDetail } from "@/lib/tmdb";
@@ -2476,7 +2476,7 @@ const HomeScreen = ({
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.22, duration: 0.4 }}
         onClick={() => navigate("/app/profile")}
-        className="absolute left-5 md:left-[34px] top-[calc(50px+env(safe-area-inset-top))] md:top-[62px] z-20 text-left [text-shadow:0_1px_8px_rgba(0,0,0,0.7)] active:scale-[0.98] transition-transform"
+        className="absolute left-5 md:left-[34px] top-[calc(56px+env(safe-area-inset-top))] md:top-[68px] z-20 text-left [text-shadow:0_1px_8px_rgba(0,0,0,0.7)] active:scale-[0.98] transition-transform"
         aria-label="Mon profil"
       >
         <span className="text-foreground/85 text-[16px] font-sans leading-tight">
@@ -2486,7 +2486,7 @@ const HomeScreen = ({
 
       {/* Deux raccourcis côte à côte : chercher un film précis, et l'ADN cinéma
           (qui montre que Pick apprend). */}
-      <div className="absolute left-5 right-5 md:left-[34px] md:right-[34px] top-[calc(82px+env(safe-area-inset-top))] md:top-[94px] z-20 flex gap-2.5">
+      <div className="absolute left-5 right-5 md:left-[34px] md:right-[34px] top-[calc(90px+env(safe-area-inset-top))] md:top-[102px] z-20 flex gap-2.5">
         <motion.button
           type="button"
           initial={{ opacity: 0, y: -4 }}
@@ -2522,7 +2522,7 @@ const HomeScreen = ({
       {/* L'accueil tient sur un écran : pas de défilement (sauf écrans très courts). */}
       <div className="relative z-10 h-full overflow-hidden [@media(max-height:780px)]:overflow-y-auto scrollbar-hide overscroll-y-contain pb-[calc(5.25rem+env(safe-area-inset-bottom))]">
         {/* ─── Hero ─── */}
-        <section className="relative pt-[calc(10rem+env(safe-area-inset-top))] [@media(max-height:800px)]:pt-[calc(9.5rem+env(safe-area-inset-top))] [@media(min-height:860px)]:pt-[calc(10.5rem+env(safe-area-inset-top))] pb-1 px-5 md:px-8">
+        <section className="relative pt-[calc(10.5rem+env(safe-area-inset-top))] [@media(max-height:800px)]:pt-[calc(10rem+env(safe-area-inset-top))] [@media(min-height:860px)]:pt-[calc(11.25rem+env(safe-area-inset-top))] pb-1 px-5 md:px-8">
           <motion.div
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
@@ -2672,20 +2672,19 @@ const HomeScreen = ({
         >
           <div className="px-5 flex items-center justify-between mb-2">
             <div className="pl-2 min-w-0">
-              <h2 className="flex items-center gap-2 text-[16px] font-sans font-bold text-foreground whitespace-nowrap">
-                <img src={glandPick} alt="" aria-hidden="true" className="w-[18px] h-auto drop-shadow-[0_1px_6px_rgba(229,194,107,0.35)]" />
+              <h2 className="flex items-center gap-2 font-serif text-[19px] text-white leading-tight whitespace-nowrap">
+                <img src={glandPick} alt="" aria-hidden="true" className="w-[20px] h-auto drop-shadow-[0_1px_6px_rgba(229,194,107,0.35)]" />
                 Picks du moment
               </h2>
-              <p className="pl-6 text-[11px] font-sans italic text-pick-text-secondary leading-tight">Pour toi, aujourd&apos;hui</p>
+              <p className="pl-7 text-[11px] font-sans italic text-pick-text-secondary leading-tight">Pour toi, aujourd&apos;hui</p>
             </div>
-            {quickRecos.length > 0 && (
-              <button
-                onClick={() => setShowFindChoice(true)}
-                className="text-[12px] font-sans font-medium text-pick-purple-light/80 [@media(hover:hover)]:hover:text-pick-purple-light transition-colors duration-180 ease-pick"
-              >
-                Actualiser
-              </button>
-            )}
+            <button
+              onClick={() => setShowFindChoice(true)}
+              className="shrink-0 -my-2 py-2 inline-flex items-center gap-1.5 text-[12px] font-sans font-medium text-pick-purple-light/85 [@media(hover:hover)]:hover:text-pick-purple-light transition-colors duration-180 ease-pick"
+            >
+              <RefreshCw className="w-3.5 h-3.5" aria-hidden="true" />
+              Actualiser
+            </button>
           </div>
           <div className="px-5 flex items-start justify-center gap-8">
             {(quickRecos.length > 0 ? quickRecos.slice(0, 3) : trendingFallback.length > 0 ? trendingFallback.slice(0, 3) : [null, null, null]).map((item: QuickReco | null, i: number) => (
@@ -2762,7 +2761,7 @@ const HomeScreen = ({
             transition={{ delay: 0.7, duration: 0.45 }}
             whileTap={{ scale: 0.985 }}
             onClick={() => navigate(`/app/soirees/${nextEvent.id}`)}
-            className={`mx-5 mt-3 [@media(min-height:860px)]:mt-4 w-[calc(100%-2.5rem)] flex items-center gap-3 px-3 py-2.5 text-left ${CARTE_PICK}`}
+            className={`mx-5 mt-4 [@media(min-height:860px)]:mt-6 w-[calc(100%-2.5rem)] flex items-center gap-3 px-3 py-2.5 text-left ${CARTE_PICK}`}
             aria-label={`Prochaine soirée : ${nextEvent.title}`}
           >
             <span className="relative shrink-0 w-12 h-12 rounded-pick-md overflow-hidden border border-pick-border-hover bg-[radial-gradient(circle_at_50%_40%,rgba(139,92,246,0.25),rgba(0,0,0,0.6))] flex items-center justify-center">
